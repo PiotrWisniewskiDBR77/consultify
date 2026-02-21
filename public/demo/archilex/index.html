@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Archilex Transformation Demo — Consultinity</title>
+    <meta
+      name="description"
+      content="A lightweight, static demo page for the Archilex transformation storyline in Consultinity."
+    />
+    <style>
+      :root {
+        --bg: #0b1220;
+        --card: rgba(255, 255, 255, 0.06);
+        --card-strong: rgba(255, 255, 255, 0.1);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.72);
+        --line: rgba(255, 255, 255, 0.14);
+        --accent: #7c3aed;
+        --accent2: #22c55e;
+        --shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Helvetica,
+          Arial,
+          'Apple Color Emoji',
+          'Segoe UI Emoji';
+        background:
+          radial-gradient(1200px 700px at 10% 10%, rgba(124, 58, 237, 0.22), transparent 60%),
+          radial-gradient(900px 650px at 90% 20%, rgba(34, 197, 94, 0.18), transparent 55%),
+          radial-gradient(900px 650px at 50% 90%, rgba(59, 130, 246, 0.14), transparent 60%),
+          var(--bg);
+        color: var(--text);
+      }
+      a {
+        color: inherit;
+      }
+      .wrap {
+        max-width: 1120px;
+        padding: 28px 18px 64px;
+        margin: 0 auto;
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid var(--line);
+        background: rgba(0, 0, 0, 0.18);
+        padding: 8px 12px;
+        border-radius: 999px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .badge-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--accent), #60a5fa);
+        box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+      }
+      .hero {
+        margin-top: 26px;
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+        box-shadow: var(--shadow);
+        border-radius: 18px;
+        overflow: hidden;
+      }
+      .hero-inner {
+        padding: 28px 22px;
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 18px;
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: 40px;
+        line-height: 1.08;
+        letter-spacing: -0.02em;
+      }
+      .sub {
+        margin: 0;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.6;
+        max-width: 62ch;
+      }
+      .cta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: rgba(0, 0, 0, 0.2);
+        text-decoration: none;
+        color: var(--text);
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .btn-primary {
+        border-color: rgba(124, 58, 237, 0.55);
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.28), rgba(59, 130, 246, 0.22));
+      }
+      .kpi {
+        border-left: 1px solid var(--line);
+        padding-left: 16px;
+        color: var(--muted);
+      }
+      .kpi h2 {
+        margin: 0 0 10px;
+        font-size: 14px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.7);
+      }
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .kpi-item {
+        padding: 12px 12px;
+        border: 1px solid var(--line);
+        background: rgba(0, 0, 0, 0.16);
+        border-radius: 14px;
+      }
+      .kpi-item strong {
+        display: block;
+        color: var(--text);
+        font-size: 18px;
+        margin-bottom: 4px;
+      }
+      .kpi-item span {
+        font-size: 13px;
+      }
+      .grid {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--card);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+        padding: 18px 16px;
+      }
+      .card h3 {
+        margin: 0 0 10px;
+        font-size: 16px;
+      }
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 14px;
+      }
+      .list {
+        margin: 12px 0 0;
+        padding-left: 18px;
+        color: var(--muted);
+        line-height: 1.7;
+        font-size: 14px;
+      }
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .pill {
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(0, 0, 0, 0.16);
+        color: rgba(255, 255, 255, 0.78);
+      }
+      .pill.good {
+        border-color: rgba(34, 197, 94, 0.5);
+        background: rgba(34, 197, 94, 0.12);
+      }
+      .pill.risk {
+        border-color: rgba(251, 191, 36, 0.5);
+        background: rgba(251, 191, 36, 0.12);
+      }
+      .footer {
+        margin-top: 20px;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 13px;
+      }
+      @media (max-width: 900px) {
+        .hero-inner {
+          grid-template-columns: 1fr;
+        }
+        .kpi {
+          border-left: 0;
+          padding-left: 0;
+          border-top: 1px solid var(--line);
+          padding-top: 14px;
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <div class="badge"><span class="badge-dot"></span> Demo storyline • Archilex</div>
+        <div class="badge">Static page (V2 closeout)</div>
+      </div>
+
+      <section class="hero">
+        <div class="hero-inner">
+          <div>
+            <h1>Archilex Transformation Demo</h1>
+            <p class="sub">
+              A lightweight demo story that shows how Consultinity can structure a transformation program from
+              diagnosis to initiative execution and sponsor-ready reporting.
+            </p>
+            <div class="cta-row">
+              <a class="btn btn-primary" href="#initiatives">View initiatives</a>
+              <a class="btn" href="#timeline">Read the timeline</a>
+              <a class="btn" href="#reporting">See reporting outputs</a>
+            </div>
+            <div class="pill-row" style="margin-top: 14px">
+              <span class="pill good">Evidence-driven governance</span>
+              <span class="pill good">Initiative portfolio</span>
+              <span class="pill">AI-assisted execution</span>
+              <span class="pill risk">Known risks tracked</span>
+            </div>
+          </div>
+          <aside class="kpi">
+            <h2>Outcome snapshot</h2>
+            <div class="kpi-grid">
+              <div class="kpi-item">
+                <strong>-18%</strong>
+                <span>Lead time reduction (target)</span>
+              </div>
+              <div class="kpi-item">
+                <strong>+12pp</strong>
+                <span>On-time delivery improvement (target)</span>
+              </div>
+              <div class="kpi-item">
+                <strong>90 days</strong>
+                <span>First value milestone</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="card" id="timeline">
+          <h3>Timeline (example)</h3>
+          <p>
+            The storyline is intentionally short and readable; it can be expanded into a full case study later.
+          </p>
+          <ul class="list">
+            <li><strong>Week 1–2:</strong> baseline assessment, data capture, stakeholder map, constraints</li>
+            <li><strong>Week 3–4:</strong> initiative portfolio, owners, gates, initial ROI assumptions</li>
+            <li><strong>Month 2:</strong> execution cadence, KPI architecture, reporting rhythm</li>
+            <li><strong>Month 3:</strong> first measurable outcomes, sponsor review, next-wave roadmap</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Transformation context</h3>
+          <p>
+            Archilex is a mid-size industrial organization with fragmented execution, uneven KPI ownership, and
+            limited visibility for sponsors.
+          </p>
+          <ul class="list">
+            <li>Disconnected initiatives across departments</li>
+            <li>Decisions made without consistent evidence</li>
+            <li>Reporting is manual and late</li>
+            <li>Execution cadence varies by team</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="grid" id="initiatives" style="margin-top: 14px">
+        <div class="card">
+          <h3>Initiative portfolio (sample)</h3>
+          <p>These are example initiatives to demonstrate the “portfolio, not wish-list” model.</p>
+          <ul class="list">
+            <li><strong>Digital work instructions:</strong> reduce rework and improve quality evidence</li>
+            <li><strong>Planning &amp; scheduling optimization:</strong> stabilize flow and on-time delivery</li>
+            <li><strong>Maintenance reliability loop:</strong> prevent downtime through KPI-driven action</li>
+            <li><strong>Supplier performance dashboard:</strong> reduce variability and stockouts</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Governance and gates (sample)</h3>
+          <p>Each initiative uses simple gates that enforce clarity without blocking progress.</p>
+          <ul class="list">
+            <li><strong>Gate 0:</strong> problem framing + baseline</li>
+            <li><strong>Gate 1:</strong> scope + owner + success metrics</li>
+            <li><strong>Gate 2:</strong> plan + risks + ROI assumptions</li>
+            <li><strong>Gate 3:</strong> execution + reporting cadence</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="grid" id="reporting" style="margin-top: 14px">
+        <div class="card">
+          <h3>Reporting outputs (sample)</h3>
+          <p>Consultinity outputs can be converted into sponsor-ready artifacts.</p>
+          <ul class="list">
+            <li>Status report with KPI trends, narrative, and evidence links</li>
+            <li>Sponsor deck: outcomes, decisions, risks, next milestones</li>
+            <li>Initiative health summary and escalation log</li>
+          </ul>
+        </div>
+        <div class="card" style="background: var(--card-strong)">
+          <h3>Next step</h3>
+          <p>
+            If you want to wire this demo into the app navigation later, map this page into a route or embed it
+            in the public landing flow.
+          </p>
+          <div class="footer">
+            File: <code>public/demo/archilex/index.html</code>
+          </div>
+        </div>
+      </section>
+
+      <div class="footer">
+        This is a static placeholder demo page for V2 closeout. It can be replaced with a richer, routed demo
+        experience later.
+      </div>
+    </div>
+  </body>
+</html>
+

@@ -11,7 +11,6 @@ import {
   CheckCircle,
   ChevronRight,
   Clock,
-  ExternalLink,
   FileText,
   HelpCircle,
   Lightbulb,
@@ -46,8 +45,17 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
   language = 'en',
   showFeedback = true,
 }) => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const lang = language || (i18n.language === 'pl' ? 'pl' : 'en');
+
+  const getLocalized = (value: any, fallback = ''): string => {
+    if (!value) return fallback;
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object') {
+      return value[lang] || value.en || value.pl || fallback;
+    }
+    return fallback;
+  };
 
   // Get content based on type
   const content = useMemo(() => {
@@ -80,6 +88,20 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
   if (contentType === 'overview') {
     const module = content as any; // Type from MODULE_HELP_CONTENT
 
+    const moduleTitle =
+      module.translationKey && typeof module.translationKey === 'string'
+        ? getLocalized(
+            t(`${module.translationKey}.name`, { defaultValue: module.title || module.id })
+          )
+        : getLocalized(module.name, module.title || module.id);
+
+    const moduleDescription =
+      module.translationKey && typeof module.translationKey === 'string'
+        ? getLocalized(
+            t(`${module.translationKey}.description`, { defaultValue: module.description || '' })
+          )
+        : getLocalized(module.description, '');
+
     return (
       <article className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
         {/* Header */}
@@ -88,73 +110,79 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
               <DynamicIcon name={module.icon} size={24} />
             </div>
-            <h1 className="text-2xl font-bold">{module.name[lang]}</h1>
+            <h1 className="text-2xl font-bold">{moduleTitle}</h1>
           </div>
-          <p className="text-white/90">{module.description[lang]}</p>
+          <p className="text-white/90">{moduleDescription}</p>
         </div>
 
         {/* Content */}
         <div className="p-8 space-y-8">
-          {/* Purpose */}
-          <section>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-              <Lightbulb size={20} className="text-amber-500" />
-              {lang === 'pl' ? 'Cel' : 'Purpose'}
-            </h2>
-            <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-              {module.purpose[lang]}
-            </p>
-          </section>
+          {/* Overview */}
+          {module.content && (
+            <section>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <Book size={20} className="text-purple-600 dark:text-purple-400" />
+                {lang === 'pl' ? 'Przegląd' : 'Overview'}
+              </h2>
+              <p className="text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+                {module.content}
+              </p>
+            </section>
+          )}
 
           {/* Target Audience */}
-          <section>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-              <Users size={20} className="text-blue-500" />
-              {lang === 'pl' ? 'Dla kogo' : 'Target Audience'}
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {module.targetAudience.map((audience: string, i: number) => (
-                <span
-                  key={i}
-                  className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm"
-                >
-                  {audience}
-                </span>
-              ))}
-            </div>
-          </section>
+          {Array.isArray(module.targetAudience) && module.targetAudience.length > 0 && (
+            <section>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <Users size={20} className="text-blue-500" />
+                {lang === 'pl' ? 'Dla kogo' : 'Target Audience'}
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {module.targetAudience.map((audience: string, i: number) => (
+                  <span
+                    key={i}
+                    className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm"
+                  >
+                    {audience}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Key Features */}
-          <section>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-              <CheckCircle size={20} className="text-green-500" />
-              {lang === 'pl' ? 'Kluczowe funkcje' : 'Key Features'}
-            </h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              {module.keyFeatures.map((feature: any, i: number) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-                    <DynamicIcon
-                      name={feature.icon}
-                      size={16}
-                      className="text-purple-600 dark:text-purple-400"
-                    />
+          {Array.isArray(module.keyFeatures) && module.keyFeatures.length > 0 && (
+            <section>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                <CheckCircle size={20} className="text-green-500" />
+                {lang === 'pl' ? 'Kluczowe funkcje' : 'Key Features'}
+              </h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                {module.keyFeatures.map((feature: any, i: number) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                      <DynamicIcon
+                        name={feature.icon}
+                        size={16}
+                        className="text-purple-600 dark:text-purple-400"
+                      />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-slate-900 dark:text-white">
+                        {getLocalized(feature.title, '')}
+                      </h4>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                        {getLocalized(feature.description, '')}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-medium text-slate-900 dark:text-white">
-                      {feature.title[lang]}
-                    </h4>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                      {feature.description[lang]}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Workflow Steps */}
           {module.workflowSteps && module.workflowSteps.length > 0 && (
@@ -176,10 +204,10 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                       </div>
                       <div>
                         <h4 className="font-medium text-slate-900 dark:text-white">
-                          {step.title[lang]}
+                          {getLocalized(step.title, '')}
                         </h4>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                          {step.description[lang]}
+                          {getLocalized(step.description, '')}
                         </p>
                       </div>
                     </div>
@@ -190,20 +218,30 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
           )}
 
           {/* Tips */}
-          <section className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-amber-800 dark:text-amber-200 mb-3 flex items-center gap-2">
-              <Lightbulb size={20} />
-              {lang === 'pl' ? 'Wskazówki' : 'Tips'}
-            </h2>
-            <ul className="space-y-2">
-              {module.tips[lang].map((tip: string, i: number) => (
-                <li key={i} className="flex items-start gap-2 text-amber-700 dark:text-amber-300">
-                  <span className="text-amber-500 mt-0.5">•</span>
-                  {tip}
-                </li>
-              ))}
-            </ul>
-          </section>
+          {module.tips && (
+            <section className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-amber-800 dark:text-amber-200 mb-3 flex items-center gap-2">
+                <Lightbulb size={20} />
+                {lang === 'pl' ? 'Wskazówki' : 'Tips'}
+              </h2>
+              <ul className="space-y-2">
+                {(Array.isArray(module.tips)
+                  ? module.tips
+                  : getLocalized(module.tips, '').split('\n')
+                )
+                  .filter(Boolean)
+                  .map((tip: string, i: number) => (
+                    <li
+                      key={i}
+                      className="flex items-start gap-2 text-amber-700 dark:text-amber-300"
+                    >
+                      <span className="text-amber-500 mt-0.5">•</span>
+                      {tip}
+                    </li>
+                  ))}
+              </ul>
+            </section>
+          )}
 
           {/* Related Modules */}
           {module.relatedModules && module.relatedModules.length > 0 && (
@@ -379,6 +417,14 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
   // Render Video
   if (contentType === 'video') {
     const video = content as any; // Type from VIDEO_TUTORIALS
+    const videoTitle =
+      lang === 'pl'
+        ? video.titlePl || getLocalized(video.title, '')
+        : getLocalized(video.title, '');
+    const videoDescription =
+      lang === 'pl'
+        ? video.descriptionPl || getLocalized(video.description, '')
+        : getLocalized(video.description, '');
 
     return (
       <article className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
@@ -398,8 +444,8 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
             <Clock size={14} className="text-slate-400 dark:text-slate-500" />
             <span className="text-slate-500 dark:text-slate-400">{video.duration}</span>
           </div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">{video.title[lang]}</h1>
-          <p className="text-slate-600 dark:text-slate-300 mt-2">{video.description[lang]}</p>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">{videoTitle}</h1>
+          <p className="text-slate-600 dark:text-slate-300 mt-2">{videoDescription}</p>
         </div>
 
         {/* Feedback */}
