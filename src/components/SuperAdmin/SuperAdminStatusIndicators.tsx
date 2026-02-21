@@ -292,9 +292,21 @@ export const SuperAdminStatusIndicators: React.FC = () => {
       if (dbRes.status === 'fulfilled' && dbRes.value.ok) {
         try {
           const data = await dbRes.value.json();
+          const connected =
+            typeof data?.database?.connected === 'boolean'
+              ? data.database.connected
+              : String(data?.database?.status || '').toLowerCase() === 'healthy';
+
+          const latency =
+            data?.database?.latency ??
+            data?.database?.latencyMs ??
+            data?.database?.responseTime ??
+            data?.latency ??
+            undefined;
+
           setDbHealth({
-            status: data.database?.connected ? 'online' : 'offline',
-            latency: data.database?.latency || data.latency,
+            status: connected ? 'online' : 'offline',
+            latency: typeof latency === 'number' ? latency : undefined,
           });
         } catch {
           setDbHealth({ status: 'offline' });
