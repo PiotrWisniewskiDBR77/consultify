@@ -31,7 +31,7 @@ const DEFAULT_TEMPLATE: MiniAssessmentTemplate = {
   id: 'default_v1',
   name: 'Digital Transformation Readiness',
   description: {
-    en: 'Quick assessment of your organization\'s digital transformation readiness',
+    en: "Quick assessment of your organization's digital transformation readiness",
     pl: 'Szybka ocena gotowości Twojej organizacji do transformacji cyfrowej',
   },
   estimatedMinutes: 3,
@@ -47,8 +47,14 @@ const DEFAULT_TEMPLATE: MiniAssessmentTemplate = {
       options: [
         { value: 'none', label: { en: 'No strategy', pl: 'Brak strategii' } },
         { value: 'informal', label: { en: 'Informal / ad-hoc', pl: 'Nieformalna / ad-hoc' } },
-        { value: 'documented', label: { en: 'Documented strategy', pl: 'Udokumentowana strategia' } },
-        { value: 'aligned', label: { en: 'Aligned with business goals', pl: 'Powiązana z celami biznesowymi' } },
+        {
+          value: 'documented',
+          label: { en: 'Documented strategy', pl: 'Udokumentowana strategia' },
+        },
+        {
+          value: 'aligned',
+          label: { en: 'Aligned with business goals', pl: 'Powiązana z celami biznesowymi' },
+        },
       ],
       required: true,
     },
@@ -68,15 +74,24 @@ const DEFAULT_TEMPLATE: MiniAssessmentTemplate = {
       id: 'q3_data',
       order: 3,
       text: {
-        en: 'How would you describe your organization\'s data maturity?',
+        en: "How would you describe your organization's data maturity?",
         pl: 'Jak opisałbyś dojrzałość danych w Twojej organizacji?',
       },
       type: 'single_choice',
       options: [
-        { value: 'siloed', label: { en: 'Data siloed in departments', pl: 'Dane w silosach departamentowych' } },
+        {
+          value: 'siloed',
+          label: { en: 'Data siloed in departments', pl: 'Dane w silosach departamentowych' },
+        },
         { value: 'partial', label: { en: 'Partially integrated', pl: 'Częściowo zintegrowane' } },
-        { value: 'centralized', label: { en: 'Centralized data platform', pl: 'Scentralizowana platforma danych' } },
-        { value: 'ai_ready', label: { en: 'AI-ready data ecosystem', pl: 'Ekosystem danych gotowy na AI' } },
+        {
+          value: 'centralized',
+          label: { en: 'Centralized data platform', pl: 'Scentralizowana platforma danych' },
+        },
+        {
+          value: 'ai_ready',
+          label: { en: 'AI-ready data ecosystem', pl: 'Ekosystem danych gotowy na AI' },
+        },
       ],
       required: true,
     },
@@ -138,12 +153,26 @@ export async function createAssessment(params: {
 }): Promise<{ id: string; token: string }> {
   const id = uuidv4();
   const token = uuidv4().replace(/-/g, '').substring(0, 16);
-  const { language = 'en', templateId = 'default_v1', partnerCode, sourceCampaign, utmParams } = params;
+  const {
+    language = 'en',
+    templateId = 'default_v1',
+    partnerCode,
+    sourceCampaign,
+    utmParams,
+  } = params;
 
   await dbRun(
     `INSERT INTO public_mini_assessments (id, token, language, template_id, partner_code, source_campaign, utm_params)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [id, token, language, templateId, partnerCode || null, sourceCampaign || null, JSON.stringify(utmParams || {})]
+    [
+      id,
+      token,
+      language,
+      templateId,
+      partnerCode || null,
+      sourceCampaign || null,
+      JSON.stringify(utmParams || {}),
+    ]
   );
 
   return { id, token };
@@ -232,9 +261,10 @@ function generateAIResult(
     }
     totalScore += score;
 
-    const maxDim = q.type === 'scale' ? (q.scaleMax || 5) : 4;
+    const maxDim = q.type === 'scale' ? q.scaleMax || 5 : 4;
     const pct = score / maxDim;
-    const level = pct >= 0.75 ? 'advanced' : pct >= 0.5 ? 'developing' : pct >= 0.25 ? 'basic' : 'initial';
+    const level =
+      pct >= 0.75 ? 'advanced' : pct >= 0.5 ? 'developing' : pct >= 0.25 ? 'basic' : 'initial';
     dimensions.push({
       name: dimensionNames[q.id]?.[language] || dimensionNames[q.id]?.en || q.id,
       score,
@@ -244,7 +274,14 @@ function generateAIResult(
   }
 
   const overallPct = maxScore > 0 ? totalScore / maxScore : 0;
-  const overallLevel = overallPct >= 0.75 ? 'advanced' : overallPct >= 0.5 ? 'developing' : overallPct >= 0.25 ? 'basic' : 'initial';
+  const overallLevel =
+    overallPct >= 0.75
+      ? 'advanced'
+      : overallPct >= 0.5
+        ? 'developing'
+        : overallPct >= 0.25
+          ? 'basic'
+          : 'initial';
 
   const insightTemplates: Record<string, Record<string, string[]>> = {
     advanced: {
@@ -303,10 +340,18 @@ function generateAIResult(
     overallScore: Math.round(overallPct * 100),
     overallLevel,
     dimensions,
-    insights: insightTemplates[overallLevel]?.[language] || insightTemplates[overallLevel]?.en || [],
-    assumptions: language === 'pl'
-      ? ['Wynik oparty wyłącznie na podanych odpowiedziach', 'Pełna diagnoza wymaga pogłębionego wywiadu']
-      : ['Result based solely on provided answers', 'Full diagnosis requires an in-depth interview'],
+    insights:
+      insightTemplates[overallLevel]?.[language] || insightTemplates[overallLevel]?.en || [],
+    assumptions:
+      language === 'pl'
+        ? [
+            'Wynik oparty wyłącznie na podanych odpowiedziach',
+            'Pełna diagnoza wymaga pogłębionego wywiadu',
+          ]
+        : [
+            'Result based solely on provided answers',
+            'Full diagnosis requires an in-depth interview',
+          ],
     biggestChallenge: freeTextAnswer ? String(freeTextAnswer) : null,
     generatedAt: new Date().toISOString(),
   };
@@ -314,16 +359,20 @@ function generateAIResult(
 
 export async function listAssessments(organizationId?: string): Promise<any[]> {
   if (organizationId) {
-    return (await dbAll(
-      `SELECT id, token, language, status, respondent_email, respondent_name, partner_code, created_at, completed_at
+    return (
+      (await dbAll(
+        `SELECT id, token, language, status, respondent_email, respondent_name, partner_code, created_at, completed_at
        FROM public_mini_assessments WHERE organization_id = ? ORDER BY created_at DESC`,
-      [organizationId]
-    )) || [];
+        [organizationId]
+      )) || []
+    );
   }
-  return (await dbAll(
-    `SELECT id, token, language, status, respondent_email, respondent_name, partner_code, created_at, completed_at
+  return (
+    (await dbAll(
+      `SELECT id, token, language, status, respondent_email, respondent_name, partner_code, created_at, completed_at
      FROM public_mini_assessments ORDER BY created_at DESC LIMIT 100`
-  )) || [];
+    )) || []
+  );
 }
 
 export async function getAssessmentById(id: string): Promise<any> {

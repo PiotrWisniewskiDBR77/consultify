@@ -57,8 +57,10 @@ router.get(
       language: assessment.language,
       template,
       answers: assessment.answers_json ? JSON.parse(assessment.answers_json) : [],
-      aiResult: assessment.status === 'completed' && assessment.ai_result_json
-        ? JSON.parse(assessment.ai_result_json) : null,
+      aiResult:
+        assessment.status === 'completed' && assessment.ai_result_json
+          ? JSON.parse(assessment.ai_result_json)
+          : null,
     });
   })
 );
@@ -71,7 +73,10 @@ router.post(
       return res.status(400).json({ error: 'answers array is required' });
     }
 
-    const ipAddress = req.ip || req.socket?.remoteAddress || (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim();
+    const ipAddress =
+      req.ip ||
+      req.socket?.remoteAddress ||
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim();
     const userAgent = req.headers['user-agent'] || '';
 
     try {
@@ -85,8 +90,10 @@ router.post(
       });
       res.json({ success: true, ...result });
     } catch (err: any) {
-      if (err.message === 'Assessment not found') return res.status(404).json({ error: err.message });
-      if (err.message === 'Assessment already completed') return res.status(409).json({ error: err.message });
+      if (err.message === 'Assessment not found')
+        return res.status(404).json({ error: err.message });
+      if (err.message === 'Assessment already completed')
+        return res.status(409).json({ error: err.message });
       throw err;
     }
   })

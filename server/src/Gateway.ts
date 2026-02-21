@@ -155,7 +155,6 @@ import portfolioOptimizationRoutes from './routes/portfolioOptimization.routes.j
 import premiumReportsRoutes from './routes/premiumReports.routes.js';
 import presentationsRoutes from './routes/presentations.routes.js';
 import promptAssistantRoutes from './routes/prompt-assistant.routes.js';
-import sponsorReportsRoutes from './routes/sponsor-reports.routes.js';
 import publicMiniAssessmentRoutes from './routes/public-mini-assessment.routes.js';
 import publicOutreachRoutes from './routes/public-outreach.routes.js';
 import raidRoutes from './routes/raid.routes.js';
@@ -175,6 +174,7 @@ import securityRoutes from './routes/security.routes.js';
 import securityPoliciesRoutes from './routes/securityPolicies.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
 import skillsGapRoutes from './routes/skills-gap.routes.js';
+import sponsorReportsRoutes from './routes/sponsor-reports.routes.js';
 import stabilizationRoutes from './routes/stabilization.routes.js';
 import stageGatesRoutes from './routes/stageGates.routes.js';
 import stakeholderCommRoutes from './routes/stakeholder-comm.routes.js';

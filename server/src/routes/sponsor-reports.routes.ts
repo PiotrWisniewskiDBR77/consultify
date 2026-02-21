@@ -4,6 +4,7 @@
  */
 
 import { Request, Response, Router } from 'express';
+import { createRequire } from 'module';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
@@ -12,6 +13,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
+const require = createRequire(import.meta.url);
 
 interface AuthRequest extends Request {
   user?: { id: string; organizationId: string; role: string };
@@ -114,34 +116,89 @@ router.get(
       pptx.author = 'Consultinity';
       pptx.title = reportData.title;
 
-      const BRAND = { primary: '6366F1', text: '1E293B', textLight: '64748B', bg: 'FFFFFF', surface: 'F8FAFC' };
+      const BRAND = {
+        primary: '6366F1',
+        text: '1E293B',
+        textLight: '64748B',
+        bg: 'FFFFFF',
+        surface: 'F8FAFC',
+      };
 
       const coverSlide = pptx.addSlide();
-      coverSlide.addShape('rect', { x: 0, y: 0, w: '100%', h: '100%', fill: { color: BRAND.primary } });
-      coverSlide.addText(reportData.title, { x: 0.8, y: 2.0, w: 8.4, fontSize: 32, color: 'FFFFFF', bold: true });
-      coverSlide.addText('CONFIDENTIAL', { x: 0.8, y: 4.5, w: 8.4, fontSize: 12, color: 'CCCCFF', italic: true });
+      coverSlide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: '100%',
+        h: '100%',
+        fill: { color: BRAND.primary },
+      });
+      coverSlide.addText(reportData.title, {
+        x: 0.8,
+        y: 2.0,
+        w: 8.4,
+        fontSize: 32,
+        color: 'FFFFFF',
+        bold: true,
+      });
+      coverSlide.addText('CONFIDENTIAL', {
+        x: 0.8,
+        y: 4.5,
+        w: 8.4,
+        fontSize: 12,
+        color: 'CCCCFF',
+        italic: true,
+      });
 
       for (const section of reportData.sections) {
         const slide = pptx.addSlide();
         slide.addShape('rect', { x: 0, y: 0, w: '100%', h: 0.8, fill: { color: BRAND.primary } });
-        slide.addText(section.title, { x: 0.5, y: 0.1, w: 9, fontSize: 18, color: 'FFFFFF', bold: true });
+        slide.addText(section.title, {
+          x: 0.5,
+          y: 0.1,
+          w: 9,
+          fontSize: 18,
+          color: 'FFFFFF',
+          bold: true,
+        });
 
         const bullets = section.content.split('\n').filter((l: string) => l.trim());
         const bodyText = bullets.map((b: string) => ({
-          text: b.replace(/^\d+\.\s*/, '').replace(/^[•\-]\s*/, '').replace(/\*\*/g, ''),
+          text: b
+            .replace(/^\d+\.\s*/, '')
+            .replace(/^[•-]\s*/, '')
+            .replace(/\*\*/g, ''),
           options: { fontSize: 13, color: BRAND.text, bullet: true, breakType: 'none' as const },
         }));
 
-        slide.addText(bodyText.length > 0 ? bodyText : [{ text: section.content, options: { fontSize: 13, color: BRAND.text } }], {
-          x: 0.5, y: 1.2, w: 9, h: 4,
-        });
+        slide.addText(
+          bodyText.length > 0
+            ? bodyText
+            : [{ text: section.content, options: { fontSize: 13, color: BRAND.text } }],
+          {
+            x: 0.5,
+            y: 1.2,
+            w: 9,
+            h: 4,
+          }
+        );
       }
 
       if (reportData.assumptions.length > 0 || reportData.unknowns.length > 0) {
         const caveatSlide = pptx.addSlide();
-        caveatSlide.addShape('rect', { x: 0, y: 0, w: '100%', h: 0.8, fill: { color: BRAND.primary } });
+        caveatSlide.addShape('rect', {
+          x: 0,
+          y: 0,
+          w: '100%',
+          h: 0.8,
+          fill: { color: BRAND.primary },
+        });
         caveatSlide.addText(reportData.language === 'pl' ? 'Zastrzeżenia' : 'Caveats', {
-          x: 0.5, y: 0.1, w: 9, fontSize: 18, color: 'FFFFFF', bold: true,
+          x: 0.5,
+          y: 0.1,
+          w: 9,
+          fontSize: 18,
+          color: 'FFFFFF',
+          bold: true,
         });
         const items = [
           ...reportData.assumptions.map((a: string) => `[Assumption] ${a}`),
@@ -149,24 +206,47 @@ router.get(
           ...reportData.counterpoints.map((c: string) => `[Counterpoint] ${c}`),
         ];
         caveatSlide.addText(
-          items.map((t: string) => ({ text: t, options: { fontSize: 11, color: BRAND.textLight, bullet: true } })),
+          items.map((t: string) => ({
+            text: t,
+            options: { fontSize: 11, color: BRAND.textLight, bullet: true },
+          })),
           { x: 0.5, y: 1.2, w: 9, h: 4 }
         );
       }
 
       const thankSlide = pptx.addSlide();
-      thankSlide.addShape('rect', { x: 0, y: 0, w: '100%', h: '100%', fill: { color: BRAND.primary } });
+      thankSlide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: '100%',
+        h: '100%',
+        fill: { color: BRAND.primary },
+      });
       thankSlide.addText(reportData.language === 'pl' ? 'Dziękujemy' : 'Thank You', {
-        x: 0.8, y: 2.5, w: 8.4, fontSize: 36, color: 'FFFFFF', bold: true, align: 'center',
+        x: 0.8,
+        y: 2.5,
+        w: 8.4,
+        fontSize: 36,
+        color: 'FFFFFF',
+        bold: true,
+        align: 'center',
       });
       thankSlide.addText('Powered by Consultinity', {
-        x: 0.8, y: 4.0, w: 8.4, fontSize: 14, color: 'CCCCFF', align: 'center',
+        x: 0.8,
+        y: 4.0,
+        w: 8.4,
+        fontSize: 14,
+        color: 'CCCCFF',
+        align: 'center',
       });
 
       const buffer = await pptx.write({ outputType: 'nodebuffer' });
       const filename = `sponsor-report-${reportData.reportId.substring(0, 8)}.pptx`;
 
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+      );
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.send(buffer);
     } catch (err) {

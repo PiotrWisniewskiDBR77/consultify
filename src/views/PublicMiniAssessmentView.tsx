@@ -18,7 +18,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { SurveyShell, type SurveyAnswer, type SurveySection } from '../components/Survey/SurveyShell';
+import {
+  type SurveyAnswer,
+  type SurveySection,
+  SurveyShell,
+} from '../components/Survey/SurveyShell';
 import { trackFunnelEvent } from '../services/funnelAnalytics';
 
 const API_BASE = '/api/public/mini-assessment';
@@ -168,10 +172,14 @@ export const PublicMiniAssessmentView: React.FC = () => {
 
   const levelColor = (level: string) => {
     switch (level) {
-      case 'advanced': return 'text-green-600';
-      case 'developing': return 'text-blue-600';
-      case 'basic': return 'text-yellow-600';
-      default: return 'text-red-600';
+      case 'advanced':
+        return 'text-green-600';
+      case 'developing':
+        return 'text-blue-600';
+      case 'basic':
+        return 'text-yellow-600';
+      default:
+        return 'text-red-600';
     }
   };
 
@@ -198,7 +206,10 @@ export const PublicMiniAssessmentView: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
         <div className="text-center max-w-md">
           <p className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">{error}</p>
-          <button onClick={() => window.location.reload()} className="text-indigo-600 hover:underline text-sm">
+          <button
+            onClick={() => window.location.reload()}
+            className="text-indigo-600 hover:underline text-sm"
+          >
             {t('publicAssessment.tryAgain', 'Try again')}
           </button>
         </div>
@@ -208,8 +219,10 @@ export const PublicMiniAssessmentView: React.FC = () => {
 
   if (viewState === 'intro') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950 flex items-center justify-center p-4"
-        dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <div
+        className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950 flex items-center justify-center p-4"
+        dir={lang === 'ar' ? 'rtl' : 'ltr'}
+      >
         <div className="max-w-lg w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
           <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <BarChart3 className="w-8 h-8 text-indigo-600" />
@@ -218,11 +231,15 @@ export const PublicMiniAssessmentView: React.FC = () => {
             {t('publicAssessment.title', 'Digital Transformation Readiness Check')}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mb-6">
-            {t('publicAssessment.subtitle', 'Answer a few quick questions and get an AI-powered snapshot of your readiness.')}
+            {t(
+              'publicAssessment.subtitle',
+              'Answer a few quick questions and get an AI-powered snapshot of your readiness.'
+            )}
           </p>
           <div className="flex items-center justify-center gap-4 text-xs text-gray-400 mb-6">
             <span className="flex items-center gap-1">
-              <Star className="w-3 h-3" /> {assessmentData?.template?.questions?.length || 6} {t('publicAssessment.questions', 'questions')}
+              <Star className="w-3 h-3" /> {assessmentData?.template?.questions?.length || 6}{' '}
+              {t('publicAssessment.questions', 'questions')}
             </span>
             <span className="flex items-center gap-1">
               <Sparkles className="w-3 h-3" /> {t('publicAssessment.aiResult', 'AI-powered result')}
@@ -256,7 +273,10 @@ export const PublicMiniAssessmentView: React.FC = () => {
           </button>
 
           <p className="text-xs text-gray-400 mt-4">
-            {t('publicAssessment.disclaimer', 'Your answers are used only to generate your result. No account required.')}
+            {t(
+              'publicAssessment.disclaimer',
+              'Your answers are used only to generate your result. No account required.'
+            )}
           </p>
         </div>
       </div>
@@ -278,8 +298,10 @@ export const PublicMiniAssessmentView: React.FC = () => {
 
   if (viewState === 'result' && aiResult) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950 p-4 md:p-8"
-        dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <div
+        className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950 p-4 md:p-8"
+        dir={lang === 'ar' ? 'rtl' : 'ltr'}
+      >
         <div className="max-w-2xl mx-auto">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
             {/* Score header */}
@@ -288,7 +310,9 @@ export const PublicMiniAssessmentView: React.FC = () => {
                 {t('publicAssessment.resultTitle', 'Your Readiness Score')}
               </h1>
               <div className="text-5xl font-bold mb-2">{aiResult.overallScore}%</div>
-              <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium bg-white/20`}>
+              <span
+                className={`inline-block px-3 py-1 rounded-full text-sm font-medium bg-white/20`}
+              >
                 {levelLabel(aiResult.overallLevel)}
               </span>
             </div>
@@ -326,7 +350,10 @@ export const PublicMiniAssessmentView: React.FC = () => {
               </h2>
               <ul className="space-y-2">
                 {aiResult.insights.map((insight, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                  <li
+                    key={idx}
+                    className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300"
+                  >
                     <TrendingUp className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" />
                     {insight}
                   </li>
@@ -336,9 +363,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
 
             {/* Assumptions */}
             <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30">
-              <p className="text-xs text-gray-400 italic">
-                {aiResult.assumptions.join(' • ')}
-              </p>
+              <p className="text-xs text-gray-400 italic">{aiResult.assumptions.join(' • ')}</p>
             </div>
 
             {/* CTA */}
@@ -373,9 +398,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
             </div>
           </div>
 
-          <p className="text-center text-xs text-gray-400 mt-6">
-            Powered by Consultinity
-          </p>
+          <p className="text-center text-xs text-gray-400 mt-6">Powered by Consultinity</p>
         </div>
       </div>
     );

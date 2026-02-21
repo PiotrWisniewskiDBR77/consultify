@@ -78,10 +78,7 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isRTL = language === 'ar';
 
-  const allQuestions = useMemo(
-    () => sections.flatMap((s) => s.questions),
-    [sections]
-  );
+  const allQuestions = useMemo(() => sections.flatMap((s) => s.questions), [sections]);
 
   const answeredCount = useMemo(
     () => allQuestions.filter((q) => answers.has(q.id)).length,
@@ -93,7 +90,8 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
     [allQuestions]
   );
 
-  const progressPct = allQuestions.length > 0 ? Math.round((answeredCount / allQuestions.length) * 100) : 0;
+  const progressPct =
+    allQuestions.length > 0 ? Math.round((answeredCount / allQuestions.length) * 100) : 0;
 
   const canSubmit = useMemo(() => {
     const requiredIds = allQuestions.filter((q) => q.required).map((q) => q.id);
@@ -104,7 +102,10 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     autosaveTimer.current = setTimeout(() => {
       if (onAutosave) {
-        const answerArray = Array.from(answers.entries()).map(([questionId, value]) => ({ questionId, value }));
+        const answerArray = Array.from(answers.entries()).map(([questionId, value]) => ({
+          questionId,
+          value,
+        }));
         onAutosave(answerArray, currentSection);
       }
     }, 2000);
@@ -133,7 +134,10 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
   const handleSubmit = useCallback(() => {
     if (!canSubmit || locked) return;
     setIsSubmitting(true);
-    const answerArray = Array.from(answers.entries()).map(([questionId, value]) => ({ questionId, value }));
+    const answerArray = Array.from(answers.entries()).map(([questionId, value]) => ({
+      questionId,
+      value,
+    }));
     onSubmit(answerArray);
   }, [canSubmit, locked, answers, onSubmit]);
 
@@ -188,14 +192,17 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
                   disabled={locked}
                   onClick={() => handleAnswer(question.id, opt.value)}
                   className={`w-full text-left px-4 py-3 rounded-lg border transition-all text-sm
-                    ${isSelected
-                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
-                      : 'border-gray-200 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500 text-gray-700 dark:text-gray-300'
+                    ${
+                      isSelected
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500 text-gray-700 dark:text-gray-300'
                     } ${locked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
                   <span className="flex items-center gap-2">
-                    <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0
-                      ${isSelected ? 'border-indigo-500 bg-indigo-500' : 'border-gray-300 dark:border-gray-500'}`}>
+                    <span
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0
+                      ${isSelected ? 'border-indigo-500 bg-indigo-500' : 'border-gray-300 dark:border-gray-500'}`}
+                    >
                       {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
                     </span>
                     {optLabel}
@@ -220,20 +227,26 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
                   onClick={() => {
                     const arr = Array.isArray(currentValue) ? [...currentValue] : [];
                     if (isSelected) {
-                      handleAnswer(question.id, arr.filter((v) => v !== opt.value));
+                      handleAnswer(
+                        question.id,
+                        arr.filter((v) => v !== opt.value)
+                      );
                     } else {
                       handleAnswer(question.id, [...arr, opt.value]);
                     }
                   }}
                   className={`w-full text-left px-4 py-3 rounded-lg border transition-all text-sm
-                    ${isSelected
-                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                      : 'border-gray-200 dark:border-gray-600 hover:border-indigo-300 text-gray-700 dark:text-gray-300'
+                    ${
+                      isSelected
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-indigo-300 text-gray-700 dark:text-gray-300'
                     } ${locked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
                   <span className="flex items-center gap-2">
-                    <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0
-                      ${isSelected ? 'border-indigo-500 bg-indigo-500' : 'border-gray-300 dark:border-gray-500'}`}>
+                    <span
+                      className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0
+                      ${isSelected ? 'border-indigo-500 bg-indigo-500' : 'border-gray-300 dark:border-gray-500'}`}
+                    >
                       {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
                     </span>
                     {optLabel}
@@ -258,9 +271,10 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
                   disabled={locked}
                   onClick={() => handleAnswer(question.id, val)}
                   className={`w-12 h-12 rounded-lg border-2 font-semibold text-sm transition-all
-                    ${isSelected
-                      ? 'border-indigo-500 bg-indigo-500 text-white'
-                      : 'border-gray-200 dark:border-gray-600 hover:border-indigo-300 text-gray-600 dark:text-gray-400'
+                    ${
+                      isSelected
+                        ? 'border-indigo-500 bg-indigo-500 text-white'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-indigo-300 text-gray-600 dark:text-gray-400'
                     } ${locked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
                   {val}
@@ -268,7 +282,8 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
               );
             })}
             <span className="text-xs text-gray-400 ml-2">
-              {question.scaleMin || 1} = {t('survey.scaleLow', 'Low')} — {question.scaleMax || 5} = {t('survey.scaleHigh', 'High')}
+              {question.scaleMin || 1} = {t('survey.scaleLow', 'Low')} — {question.scaleMax || 5} ={' '}
+              {t('survey.scaleHigh', 'High')}
             </span>
           </div>
         )}
@@ -290,14 +305,21 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
   };
 
   return (
-    <div className={`flex flex-col lg:flex-row min-h-0 ${isRTL ? 'direction-rtl' : ''} ${className}`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div
+      className={`flex flex-col lg:flex-row min-h-0 ${isRTL ? 'direction-rtl' : ''} ${className}`}
+      dir={isRTL ? 'rtl' : 'ltr'}
+    >
       {/* Left Nav — Section list (hidden in focus mode on mobile) */}
       {!focusMode && (
         <nav className="w-full lg:w-64 flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 p-4">
           <div className="mb-4">
             <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-1">
               <Clock className="w-3 h-3" />
-              {estimatedMinutes && <span>~{estimatedMinutes} {t('survey.minutes', 'min')}</span>}
+              {estimatedMinutes && (
+                <span>
+                  ~{estimatedMinutes} {t('survey.minutes', 'min')}
+                </span>
+              )}
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
               <div
@@ -321,9 +343,10 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
                     type="button"
                     onClick={() => goToSection(idx)}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-2
-                      ${isCurrent
-                        ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      ${
+                        isCurrent
+                          ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                       }`}
                   >
                     {isComplete ? (
@@ -332,7 +355,9 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
                       <span className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600 flex-shrink-0" />
                     )}
                     <span className="truncate">{section.title[language] || section.title.en}</span>
-                    <span className="ml-auto text-xs text-gray-400">{sectionAnswered}/{sectionTotal}</span>
+                    <span className="ml-auto text-xs text-gray-400">
+                      {sectionAnswered}/{sectionTotal}
+                    </span>
                   </button>
                 </li>
               );
@@ -367,7 +392,8 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
               >
                 <ArrowLeft className="w-4 h-4" /> {t('survey.back', 'Back')}
               </button>
-              {currentSection === sections.length - 1 && focusQuestionIdx === currentQuestions.length - 1 ? (
+              {currentSection === sections.length - 1 &&
+              focusQuestionIdx === currentQuestions.length - 1 ? (
                 <button
                   type="button"
                   onClick={handleSubmit}
@@ -375,7 +401,11 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
                   className="flex items-center gap-1 px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg
                     hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  {isSubmitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4" />
+                  )}
                   {t('survey.submit', 'Submit')}
                 </button>
               ) : (
@@ -426,7 +456,11 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
                   className="flex items-center gap-1 px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg
                     hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  {isSubmitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4" />
+                  )}
                   {t('survey.submit', 'Submit')}
                 </button>
               )}
@@ -448,23 +482,32 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
             </div>
             <div>
               <span className="text-gray-400 text-xs">{t('survey.answered', 'Answered')}</span>
-              <p className="font-medium text-gray-700 dark:text-gray-300">{answeredCount} / {allQuestions.length}</p>
+              <p className="font-medium text-gray-700 dark:text-gray-300">
+                {answeredCount} / {allQuestions.length}
+              </p>
             </div>
             <div>
               <span className="text-gray-400 text-xs">{t('survey.required', 'Required')}</span>
               <p className="font-medium text-gray-700 dark:text-gray-300">
-                {allQuestions.filter((q) => q.required && answers.has(q.id)).length} / {totalRequired}
+                {allQuestions.filter((q) => q.required && answers.has(q.id)).length} /{' '}
+                {totalRequired}
               </p>
             </div>
             {estimatedMinutes && (
               <div>
-                <span className="text-gray-400 text-xs">{t('survey.estimatedTime', 'Est. time')}</span>
-                <p className="font-medium text-gray-700 dark:text-gray-300">~{estimatedMinutes} min</p>
+                <span className="text-gray-400 text-xs">
+                  {t('survey.estimatedTime', 'Est. time')}
+                </span>
+                <p className="font-medium text-gray-700 dark:text-gray-300">
+                  ~{estimatedMinutes} min
+                </p>
               </div>
             )}
             <div>
               <span className="text-gray-400 text-xs">{t('survey.language', 'Language')}</span>
-              <p className="font-medium text-gray-700 dark:text-gray-300">{language.toUpperCase()}</p>
+              <p className="font-medium text-gray-700 dark:text-gray-300">
+                {language.toUpperCase()}
+              </p>
             </div>
           </div>
         </aside>
