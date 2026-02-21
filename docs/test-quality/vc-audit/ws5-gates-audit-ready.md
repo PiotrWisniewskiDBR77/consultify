@@ -45,3 +45,11 @@ rg "test\\.skip\\(|describe\\.skip\\(" tests -S
   - `test:security`: **PASS**
   - `test:performance`: **PASS**
 - `rg ... skip scan`: **FOUND** (items listed above)
+
+---
+
+## Integration log (facts only)
+
+- 2026-02-21 20:12:47 +0100 — `merge(L1)` applied on `Londyn` (`45e2d3105`)
+  - `npm run test:quality-check`: **PASS** (REAL: 945, PLACEHOLDER: 0)
+  - `npm run test:l1:coverage`: **PASS** (Coverage thresholds OK)
