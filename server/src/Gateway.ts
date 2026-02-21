@@ -56,6 +56,7 @@ import budgetRoutes from './routes/budget.routes.js';
 import budgetsRoutes from './routes/budgets.routes.js';
 import capabilityRoutes from './routes/capability.routes.js';
 import changeSentimentRoutes from './routes/change-sentiment.routes.js';
+import cvMatchingRoutes from './routes/cv-matching.routes.js';
 import chatProjectsRoutes from './routes/chat-projects.routes.js';
 import cloudRoutes from './routes/cloud.routes.js';
 import competencyRoutes from './routes/competency.routes.js';
@@ -367,6 +368,7 @@ export class ApiGateway {
       app.use('/api/feedback', feedbackRoutes);
       app.use('/api/capabilities', capabilityRoutes);
       app.use('/api/competency', competencyRoutes);
+      app.use('/api/cv-matching', cvMatchingRoutes);
       app.use('/api/skills-gap', skillsGapRoutes);
       app.use('/api/change-sentiment', changeSentimentRoutes);
       app.use('/api/stakeholder-comm', stakeholderCommRoutes);
