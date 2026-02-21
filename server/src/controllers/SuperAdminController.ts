@@ -126,7 +126,16 @@ const deps: {
     addTag: async () => ({}),
     removeTag: async () => ({}),
   } as any,
-  OrganizationHealthService: { calculateHealthScore: async () => ({}) } as any,
+  OrganizationHealthService: {
+    calculateHealthScore: async (orgId: string) => {
+      try {
+        const svc = await import('../services/behaviorIntelligenceService.js');
+        return svc.calculateHealthScore(orgId);
+      } catch {
+        return { overallScore: 0, churnRisk: 'UNKNOWN', healthTrend: 'unknown', dimensions: {} };
+      }
+    },
+  } as any,
   OrganizationRelationshipService: { getRelationships: async () => [] } as any,
   OrganizationSegmentService: { getSegments: async () => [] } as any,
   OrganizationAnalyticsService: { getAnalytics: async () => ({}) } as any,

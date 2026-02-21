@@ -1881,27 +1881,42 @@
       "registered": {
         "name": "Zarejestrowany",
         "requirement": "Zacznij tutaj",
-        "benefits": ["Podstawowe narzędzia", "Wpis w katalogu"]
+        "benefits": [
+          "Podstawowe narzędzia",
+          "Wpis w katalogu"
+        ]
       },
       "bronze": {
         "name": "Brązowy",
         "requirement": "3+ klientów, €5K ARR",
-        "benefits": ["Priorytetowe wsparcie", "Materiały szkoleniowe"]
+        "benefits": [
+          "Priorytetowe wsparcie",
+          "Materiały szkoleniowe"
+        ]
       },
       "silver": {
         "name": "Srebrny",
         "requirement": "10+ klientów, €25K ARR",
-        "benefits": ["Dedykowany manager", "Dostęp do beta funkcji"]
+        "benefits": [
+          "Dedykowany manager",
+          "Dostęp do beta funkcji"
+        ]
       },
       "gold": {
         "name": "Złoty",
         "requirement": "25+ klientów, €75K ARR",
-        "benefits": ["Co-marketing", "Wystąpienia na konferencjach"]
+        "benefits": [
+          "Co-marketing",
+          "Wystąpienia na konferencjach"
+        ]
       },
       "platinum": {
         "name": "Platynowy",
         "requirement": "50+ klientów, €200K+",
-        "benefits": ["Zwiększony udział w przychodach", "Partnerstwo na poziomie zarządu"]
+        "benefits": [
+          "Zwiększony udział w przychodach",
+          "Partnerstwo na poziomie zarządu"
+        ]
       }
     },
     "onboarding": {
@@ -2077,28 +2092,12 @@
     "openInProvider": "Otwórz u dostawcy"
   },
   "chat": {
-    "coThinker": {
-      "title": "Co-Thinker",
-      "strategist": "Strateg",
-      "devilAdvocate": "Adwokat diabła",
-      "coach": "Coach",
-      "analyst": "Analityk",
-      "innovator": "Innowator",
-      "activated": "Co-Thinker: {{mode}}",
-      "deactivated": "Co-Thinker wyłączony"
-    },
-    "deepThinking": {
-      "title": "Głębokie myślenie",
-      "started": "Głębokie myślenie rozpoczęte",
-      "reportGenerated": "Raport wygenerowany",
-      "exported": "Raport wyeksportowany"
-    },
-    "marketResearch": {
-      "title": "Badanie rynku",
-      "started": "Badanie rynku rozpoczęte",
-      "reportGenerated": "Raport rynkowy wygenerowany",
-      "exported": "Raport rynkowy wyeksportowany"
-    }
+    "business": "Akcje biznesowe",
+    "businessTooltip": "Przejrzyj oczekujące akcje biznesowe i zatwierdzenia",
+    "newChat": "Nowa rozmowa",
+    "history": "Historia rozmów",
+    "autoReadOn": "Włącz czytanie na głos",
+    "autoReadOff": "Wyłącz czytanie na głos"
   },
   "aiChat": {
     "language": "Język rozmowy",
@@ -3478,14 +3477,6 @@
       "groupAdmin": "ADMINISTRACJA"
     }
   },
-  "chat": {
-    "business": "Akcje biznesowe",
-    "businessTooltip": "Przejrzyj oczekujące akcje biznesowe i zatwierdzenia",
-    "newChat": "Nowa rozmowa",
-    "history": "Historia rozmów",
-    "autoReadOn": "Włącz czytanie na głos",
-    "autoReadOff": "Wyłącz czytanie na głos"
-  },
   "superadmin": {
     "confirm": {
       "title": "Potwierdź akcję",
@@ -3821,5 +3812,82 @@
     "confirm": "Potwierdź akcję",
     "cancel": "Anuluj",
     "auditLogged": "Ta akcja zostanie zapisana w dzienniku audytu"
+  },
+  "transactionReadiness": {
+    "title": "Gotowość transakcyjna",
+    "score": "Wynik gotowości",
+    "tier": "Poziom",
+    "ranking": "Ranking organizacji",
+    "recompute": "Przelicz wynik",
+    "recomputeConfirm": "Czy na pewno chcesz przeliczyć wynik gotowości?",
+    "history": "Historia wyników",
+    "breakdown": "Rozbicie czynników",
+    "blockers": "Blokery",
+    "noData": "Brak danych o gotowości",
+    "dimensions": {
+      "D1": "Tożsamość i bezpieczeństwo",
+      "D2": "Aktywacja produktu",
+      "D3": "Zarządzanie i realizacja",
+      "D4": "Gotowość rozliczeniowa",
+      "D5": "Zgodność"
+    },
+    "tiers": {
+      "LOW": "Niski",
+      "MEDIUM": "Średni",
+      "HIGH": "Wysoki",
+      "READY": "Gotowy"
+    },
+    "penalties": "Kary"
+  },
+  "sellixIntegration": {
+    "title": "Integracja Sellix",
+    "enabled": "Integracja włączona",
+    "disabled": "Integracja wyłączona",
+    "threshold": "Próg gotowości",
+    "cooldown": "Cooldown (godziny)",
+    "endpoint": "Endpoint Sellix",
+    "pathway": "Domyślna ścieżka",
+    "secret": "Klucz webhook",
+    "testEvent": "Wyślij zdarzenie testowe",
+    "testEventConfirm": "Wysłać testowy sygnał gotowości do Sellix?",
+    "status": "Status dostarczenia",
+    "deliveries": "Ostatnie dostarczenia",
+    "inboundEvents": "Zdarzenia przychodzące",
+    "configSaved": "Konfiguracja zapisana",
+    "noDeliveries": "Brak dostarczeń"
+  },
+  "feedback": {
+    "title": "Opinie użytkowników i triage",
+    "subtitle": "Zarządzaj zgłoszeniami, pomysłami i prośbami o funkcje.",
+    "search": "Szukaj...",
+    "allStatuses": "Wszystkie statusy",
+    "allTypes": "Wszystkie typy",
+    "allSeverities": "Wszystkie priorytety",
+    "noResults": "Nie znaleziono opinii spełniających kryteria.",
+    "backToList": "Wróć do listy",
+    "context": "Kontekst i metadane",
+    "statusHistory": "Historia statusów",
+    "adminResponse": "Odpowiedź admina",
+    "noResponse": "Brak odpowiedzi",
+    "responsePlaceholder": "Wpisz swoją odpowiedź...",
+    "send": "Wyślij",
+    "confirmationId": "Numer zgłoszenia",
+    "feedbackSent": "Dziękujemy! Twoja opinia została przesłana.",
+    "feedbackError": "Nie udało się wysłać opinii. Spróbuj ponownie."
+  },
+  "behaviorIntelligence": {
+    "journeyTracked": "Zdarzenie ścieżki zarejestrowane",
+    "activationChanged": "Faza aktywacji zmieniona",
+    "churnWarning": "Wykryto sygnał rezygnacji",
+    "adoptionMetrics": "Metryki adopcji",
+    "engagementScore": "Wskaźnik zaangażowania",
+    "activationPhase": "Faza aktywacji",
+    "loginActivity": "Aktywność logowań",
+    "topFeatures": "Najczęściej używane funkcje",
+    "churnRisk": "Ryzyko rezygnacji",
+    "healthScore": "Wskaźnik zdrowia",
+    "optOutLabel": "Analityka zachowań",
+    "optOutEnabled": "Włączona",
+    "optOutDisabled": "Wyłączona"
   }
 }

@@ -2205,6 +2205,51 @@ router.get(
   })
 );
 
+// T113: Organization behavior summary
+router.get(
+  '/organizations/:id/behavior-summary',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    try {
+      const svc = await import('../services/behaviorIntelligenceService.js');
+      const summary = await svc.getOrgBehaviorSummary(id);
+      res.json(summary);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to get behavior summary' });
+    }
+  })
+);
+
+// T113: Enhanced user adoption metrics (real data)
+router.get(
+  '/users/:id/journey-timeline',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    try {
+      const svc = await import('../services/behaviorIntelligenceService.js');
+      const metrics = await svc.getAdoptionMetrics(id);
+      res.json(metrics);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to get journey timeline' });
+    }
+  })
+);
+
+// T113: Generate churn warnings for org
+router.post(
+  '/organizations/:id/churn-warnings/generate',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    try {
+      const svc = await import('../services/behaviorIntelligenceService.js');
+      const warnings = await svc.generateChurnWarnings(id);
+      res.json({ generated: warnings.length, warnings });
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to generate churn warnings' });
+    }
+  })
+);
+
 // ==========================================
 // ENTERPRISE CUSTOMERS MODULE - Compliance
 // ==========================================

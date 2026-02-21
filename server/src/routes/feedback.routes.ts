@@ -102,17 +102,42 @@ router.post(
     }
 
     if (cols.has('metadata')) {
-      // Keep original metadata but enrich with email/name/type if present
+      const contextFields = ['routePath', 'deviceType', 'screenSize', 'uiLanguage', 'uiTheme', 'workspaceContext'];
+      const contextMeta: Record<string, unknown> = {};
+      for (const field of contextFields) {
+        if (req.body[field] !== undefined) contextMeta[field] = req.body[field];
+      }
       insertCols.push('metadata');
       values.push(
         JSON.stringify({
           ...(metadata || {}),
+          ...contextMeta,
           ...(userEmail ? { userEmail } : {}),
           ...(userName ? { userName } : {}),
           ...(type ? { type } : {}),
           ...(severity ? { severity } : {}),
         })
       );
+    }
+
+    // T106: Write context to dedicated columns if available
+    const contextCols: Record<string, string> = {
+      route_path: req.body.routePath,
+      device_type: req.body.deviceType,
+      screen_size: req.body.screenSize,
+      ui_language: req.body.uiLanguage,
+      ui_theme: req.body.uiTheme,
+      workspace_context_json: req.body.workspaceContext ? JSON.stringify(req.body.workspaceContext) : undefined,
+    };
+    for (const [col, val] of Object.entries(contextCols)) {
+      if (val !== undefined && cols.has(col)) {
+        insertCols.push(col);
+        values.push(val);
+      }
+    }
+    if (severity && cols.has('severity')) {
+      insertCols.push('severity');
+      values.push(severity);
     }
 
     if (cols.has('status')) {
@@ -207,21 +232,34 @@ router.get(
 router.patch(
   '/:id/status',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { status } = req.body;
+    const { status, note } = req.body;
     const { id } = req.params;
+    const changedBy = (req as any).user?.id || req.body.userId || null;
 
     const validStatuses = ['NEW', 'PENDING', 'IN_PROGRESS', 'REVIEWED', 'RESOLVED', 'ARCHIVED'];
     if (!validStatuses.includes(status.toUpperCase())) {
       return res.status(400).json({ error: 'Invalid status' });
     }
 
-    const sql = `UPDATE system_feedback SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+    const current = await dbGet<{ status: string }>(`SELECT status FROM system_feedback WHERE id = ?`, [id]);
+    const fromStatus = current?.status || null;
 
+    const sql = `UPDATE system_feedback SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
     const runResult = await dbRun(sql, [status.toUpperCase(), id]);
 
     if (!runResult.success) {
       throw new Error(runResult.error || 'Failed to update feedback status');
     }
+
+    // T106: Record status change in history
+    try {
+      const { v4: histUuid } = await import('uuid');
+      await dbRun(
+        `INSERT INTO feedback_status_history (id, feedback_id, from_status, to_status, changed_by, note, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [histUuid(), id, fromStatus, status.toUpperCase(), changedBy, note || null]
+      );
+    } catch { /* History table may not exist yet */ }
 
     return res.json({ success: true });
   })
@@ -318,7 +356,15 @@ router.get(
       return res.status(404).json({ error: 'Feedback not found' });
     }
 
-    return res.json(row);
+    let statusHistory: unknown[] = [];
+    try {
+      statusHistory = await dbAll(
+        `SELECT * FROM feedback_status_history WHERE feedback_id = ? ORDER BY created_at ASC`,
+        [id]
+      );
+    } catch { /* Table may not exist */ }
+
+    return res.json({ ...row, statusHistory });
   })
 );
 

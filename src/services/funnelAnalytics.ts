@@ -293,7 +293,17 @@ export type FunnelEventName =
   | 'cv_extracted'
   | 'cv_competencies_approved'
   | 'cv_match_viewed'
-  | 'cv_match_applied';
+  | 'cv_match_applied'
+  // T106 — Advanced User Feedback System
+  | 'feedback_opened'
+  | 'feedback_submitted'
+  | 'feedback_status_changed'
+  | 'feature_request_submitted'
+  | 'feature_vote_cast'
+  // T113 — User Behavioral Intelligence
+  | 'journey_event_tracked'
+  | 'activation_phase_changed'
+  | 'churn_warning_created';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

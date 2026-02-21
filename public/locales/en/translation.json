@@ -394,27 +394,42 @@
       "registered": {
         "name": "Registered",
         "requirement": "Start here",
-        "benefits": ["Basic tools", "Directory listing"]
+        "benefits": [
+          "Basic tools",
+          "Directory listing"
+        ]
       },
       "bronze": {
         "name": "Bronze",
         "requirement": "3+ clients, €5K ARR",
-        "benefits": ["Priority support", "Training materials"]
+        "benefits": [
+          "Priority support",
+          "Training materials"
+        ]
       },
       "silver": {
         "name": "Silver",
         "requirement": "10+ clients, €25K ARR",
-        "benefits": ["Dedicated manager", "Beta feature access"]
+        "benefits": [
+          "Dedicated manager",
+          "Beta feature access"
+        ]
       },
       "gold": {
         "name": "Gold",
         "requirement": "25+ clients, €75K ARR",
-        "benefits": ["Co-marketing", "Conference speaking"]
+        "benefits": [
+          "Co-marketing",
+          "Conference speaking"
+        ]
       },
       "platinum": {
         "name": "Platinum",
         "requirement": "50+ clients, €200K+",
-        "benefits": ["Revenue share boost", "Executive partnership"]
+        "benefits": [
+          "Revenue share boost",
+          "Executive partnership"
+        ]
       }
     },
     "onboarding": {
@@ -2077,28 +2092,12 @@
     "openInProvider": "Open in provider"
   },
   "chat": {
-    "coThinker": {
-      "title": "Co-Thinker",
-      "strategist": "Strategist",
-      "devilAdvocate": "Devil's Advocate",
-      "coach": "Coach",
-      "analyst": "Analyst",
-      "innovator": "Innovator",
-      "activated": "Co-Thinker: {{mode}}",
-      "deactivated": "Co-Thinker disabled"
-    },
-    "deepThinking": {
-      "title": "Deep Thinking",
-      "started": "Deep Thinking started",
-      "reportGenerated": "Report generated",
-      "exported": "Report exported"
-    },
-    "marketResearch": {
-      "title": "Market Research",
-      "started": "Market Research started",
-      "reportGenerated": "Market report generated",
-      "exported": "Market report exported"
-    }
+    "business": "Business actions",
+    "businessTooltip": "View pending business actions and approvals",
+    "newChat": "New chat",
+    "history": "Chat history",
+    "autoReadOn": "Turn on auto-read",
+    "autoReadOff": "Turn off auto-read"
   },
   "aiChat": {
     "language": "Conversation language",
@@ -3478,14 +3477,6 @@
       "groupAdmin": "ADMIN"
     }
   },
-  "chat": {
-    "business": "Business actions",
-    "businessTooltip": "View pending business actions and approvals",
-    "newChat": "New chat",
-    "history": "Chat history",
-    "autoReadOn": "Turn on auto-read",
-    "autoReadOff": "Turn off auto-read"
-  },
   "superadmin": {
     "confirm": {
       "title": "Confirm Action",
@@ -3770,7 +3761,6 @@
     "healthCheck": "System Health",
     "duplicateMounts": "Duplicate Route Mounts"
   },
-<<<<<<< HEAD
   "cv": {
     "searchCandidates": "Search candidates...",
     "addCandidate": "Add Candidate",
@@ -3809,7 +3799,7 @@
     "typeVendor": "Vendor",
     "cancel": "Cancel",
     "create": "Create"
-=======
+  },
   "impersonation": {
     "banner": "You are impersonating another user",
     "exit": "Stop Impersonating",
@@ -3822,6 +3812,82 @@
     "confirm": "Confirm Action",
     "cancel": "Cancel",
     "auditLogged": "This action will be logged in the audit trail"
->>>>>>> origin/bundle-30b-superadmin-control-testing-cursor
+  },
+  "transactionReadiness": {
+    "title": "Transaction Readiness",
+    "score": "Readiness Score",
+    "tier": "Tier",
+    "ranking": "Organization Ranking",
+    "recompute": "Recompute Score",
+    "recomputeConfirm": "Are you sure you want to recompute the readiness score?",
+    "history": "Score History",
+    "breakdown": "Factor Breakdown",
+    "blockers": "Blockers",
+    "noData": "No readiness data available",
+    "dimensions": {
+      "D1": "Identity & Security",
+      "D2": "Product Activation",
+      "D3": "Governance & Execution",
+      "D4": "Billing Readiness",
+      "D5": "Compliance"
+    },
+    "tiers": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High",
+      "READY": "Ready"
+    },
+    "penalties": "Penalties"
+  },
+  "sellixIntegration": {
+    "title": "Sellix Integration",
+    "enabled": "Integration Enabled",
+    "disabled": "Integration Disabled",
+    "threshold": "Readiness Threshold",
+    "cooldown": "Cooldown (hours)",
+    "endpoint": "Sellix Endpoint",
+    "pathway": "Default Pathway",
+    "secret": "Webhook Secret",
+    "testEvent": "Send Test Event",
+    "testEventConfirm": "Send a test readiness signal to Sellix?",
+    "status": "Delivery Status",
+    "deliveries": "Recent Deliveries",
+    "inboundEvents": "Inbound Events",
+    "configSaved": "Configuration saved",
+    "noDeliveries": "No deliveries yet"
+  },
+  "feedback": {
+    "title": "User Feedback & Triage",
+    "subtitle": "Manage incoming reports, ideas, and feature requests.",
+    "search": "Search...",
+    "allStatuses": "All Statuses",
+    "allTypes": "All Types",
+    "allSeverities": "All Severities",
+    "noResults": "No feedback found matching your criteria.",
+    "backToList": "Back to list",
+    "context": "Context & Metadata",
+    "statusHistory": "Status History",
+    "adminResponse": "Admin Response",
+    "noResponse": "No response yet",
+    "responsePlaceholder": "Type your response...",
+    "send": "Send",
+    "confirmationId": "Confirmation ID",
+    "feedbackSent": "Thank you! Your feedback has been submitted.",
+    "feedbackError": "Failed to submit feedback. Please try again."
+  },
+  "behaviorIntelligence": {
+    "journeyTracked": "Journey event tracked",
+    "activationChanged": "Activation phase changed",
+    "churnWarning": "Churn warning detected",
+    "adoptionMetrics": "Adoption Metrics",
+    "engagementScore": "Engagement Score",
+    "activationPhase": "Activation Phase",
+    "loginActivity": "Login Activity",
+    "topFeatures": "Top Features",
+    "churnRisk": "Churn Risk",
+    "healthScore": "Health Score",
+    "optOutLabel": "Behavior analytics",
+    "optOutEnabled": "Enabled",
+    "optOutDisabled": "Disabled"
   }
 }
