@@ -20,7 +20,7 @@ import aiInfrastructureRoutes from './routes/ai/ai-infrastructure.routes.js';
 import aiMemoryRoutes from './routes/ai/ai-memory.routes.js';
 import aiOperationsRoutes from './routes/ai/ai-operations.routes.js';
 import aiPreferencesExtendedRoutes from './routes/ai/ai-preferences-extended.routes.js';
-import aiPromptsRoutes from './routes/ai/ai-prompts.routes.js';
+import aiPromptsRoutes from './routes/ai-prompts.routes.js';
 import aiSecurityRoutes from './routes/ai/ai-security.routes.js';
 import aiSettingsRoutes from './routes/ai/ai-settings.routes.js';
 import aiTrainingRoutes from './routes/ai/ai-training.routes.js';
@@ -312,6 +312,7 @@ export class ApiGateway {
       app.use('/api/ai-memory', aiMemoryRoutes);
       app.use('/api/ai-drafts', aiDraftsRoutes);
       app.use('/api/ai-prompts', aiPromptsRoutes);
+      app.use('/api/ai/prompts', aiPromptsRoutes);
       app.use('/api/ai-security', aiSecurityRoutes);
       app.use('/api/ai-settings', aiSettingsRoutes);
       app.use('/api/ai-budgets', aiBudgetsRoutes);

@@ -6,6 +6,7 @@
  */
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { promptAssembler } from './promptAssembler.js';
 
 export const CONFIG = {
   MIN_FEEDBACK_FOR_PATTERN: 3,
@@ -101,16 +102,28 @@ class LearningSystemService {
   }
 
   async enhancePrompt(basePrompt: string, orgId: string) {
+    // T116: delegate to canonical Prompt Assembler for org instruction loading
+    try {
+      const instructions = await promptAssembler.loadOrgInstructions(orgId);
+      if (instructions?.length) {
+        const instrSection = instructions
+          .map((a: string, i: number) => `${i + 1}. ${a}`)
+          .join('\n');
+        return {
+          enhancedPrompt: basePrompt + '\n\n[Learned Instructions]\n' + instrSection,
+          appliedPatterns: instructions.map((_: string, i: number) => `instr_${i + 1}`),
+        };
+      }
+    } catch {
+      // Assembler unavailable — fall through to legacy
+    }
+
+    // Legacy fallback: direct DB queries with schema compat
     let instr: any[] = [];
-    // Try schemas in order: 251 has suggested_instruction (no instruction col), 520 has instruction+org_id
     const queries = [
       {
         sql: `SELECT suggested_instruction as instruction FROM ai_instruction_suggestions WHERE organization_id=? AND status='applied' ORDER BY confidence_score DESC LIMIT 5`,
         params: [orgId],
-      },
-      {
-        sql: `SELECT suggested_instruction as instruction FROM ai_instruction_suggestions WHERE status='applied' ORDER BY confidence_score DESC LIMIT 5`,
-        params: [],
       },
       {
         sql: `SELECT instruction FROM ai_instruction_suggestions WHERE organization_id=? AND status='applied' ORDER BY confidence DESC LIMIT 5`,
