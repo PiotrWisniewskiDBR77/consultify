@@ -247,6 +247,10 @@ describe('escapeLikePattern (L1)', () => {
 // security.utils.ts — CSRF token management
 // ═══════════════════════════════════════════════
 describe('CSRF token management (L1)', () => {
+  beforeEach(() => {
+    vi.useRealTimers();
+  });
+
   it('generates unique tokens per session', () => {
     const t1 = generateCsrfToken('s1');
     const t2 = generateCsrfToken('s2');
@@ -276,6 +280,24 @@ describe('CSRF token management (L1)', () => {
     const token = generateCsrfToken('sess-inv');
     invalidateCsrfToken('sess-inv');
     expect(validateCsrfToken('sess-inv', token)).toBe(false);
+  });
+
+  it('expires tokens after 1 hour and cleanup removes expired sessions', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2020-01-01T00:00:00.000Z'));
+
+    const oldToken = generateCsrfToken('sess-old');
+
+    // After expiry window
+    vi.setSystemTime(new Date('2020-01-01T02:00:00.000Z'));
+
+    // Generating another token triggers cleanup of expired sessions
+    const newToken = generateCsrfToken('sess-new');
+
+    expect(validateCsrfToken('sess-old', oldToken)).toBe(false);
+    expect(validateCsrfToken('sess-new', newToken)).toBe(true);
+
+    vi.useRealTimers();
   });
 });
 

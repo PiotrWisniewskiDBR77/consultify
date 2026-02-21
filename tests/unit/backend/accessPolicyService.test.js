@@ -821,4 +821,181 @@ describe('AccessPolicyService (L1 REAL)', () => {
       expect.objectContaining({ allowed: false, reason: expect.any(String) })
     );
   });
+
+  it('checkAccess: blocks write actions when subscription is past_due (dunning gate)', async () => {
+    mockDbPromiseGet.mockImplementation(async (_db, sql) => {
+      const s = String(sql);
+      if (s.includes('FROM organization_billing')) return { status: 'past_due' };
+      if (s.includes('onboarding_status')) return { onboarding_status: 'ORG_SETUP_COMPLETED' };
+      return null;
+    });
+
+    await expect(checkAccess('org-1', 'write')).resolves.toEqual(
+      expect.objectContaining({ allowed: false, errorCode: 'SUBSCRIPTION_PAST_DUE' })
+    );
+  });
+
+  it.each(['active', 'trialing', 'canceling', 'cancelling'])(
+    'checkAccess: treats subscription status %s as effectively PAID',
+    async (status) => {
+      mockDbPromiseGet.mockImplementation(async (_db, sql) => {
+        const s = String(sql);
+        if (s.includes('FROM organization_billing')) return { status };
+        if (s.includes('onboarding_status')) return { onboarding_status: 'ORG_SETUP_COMPLETED' };
+        return null;
+      });
+
+      limitService.getOrganizationType.mockResolvedValueOnce(
+        makeOrgInfo({ organizationType: ORG_TYPES.TRIAL })
+      );
+      // Even with restrictive limits, PAID short-circuits to allowed:true
+      limitService.getOrganizationLimits.mockResolvedValueOnce(makeLimits({ maxProjects: 0 }));
+      resourceService.countOrgProjects.mockResolvedValueOnce(999);
+
+      await expect(checkAccess('org-1', 'create_project')).resolves.toEqual(
+        expect.objectContaining({ allowed: true })
+      );
+    }
+  );
+
+  it.each(['canceled', 'cancelled'])(
+    'checkAccess: does not treat status %s as paid (enforces limits)',
+    async (status) => {
+      mockDbPromiseGet.mockImplementation(async (_db, sql) => {
+        const s = String(sql);
+        if (s.includes('FROM organization_billing')) return { status };
+        if (s.includes('onboarding_status')) return { onboarding_status: 'ORG_SETUP_COMPLETED' };
+        return null;
+      });
+
+      limitService.getOrganizationType.mockResolvedValueOnce(
+        makeOrgInfo({ organizationType: ORG_TYPES.TRIAL })
+      );
+      limitService.getOrganizationLimits.mockResolvedValueOnce(makeLimits({ maxProjects: 1 }));
+      resourceService.countOrgProjects.mockResolvedValueOnce(1);
+
+      await expect(checkAccess('org-1', 'create_project')).resolves.toEqual(
+        expect.objectContaining({ allowed: false, errorCode: 'PROJECT_LIMIT_REACHED' })
+      );
+    }
+  );
+
+  it('buildPolicySnapshot: past_due sets banner, blocked actions, and Fix Payment CTA', async () => {
+    mockDbPromiseGet.mockImplementation(async (_db, sql) => {
+      const s = String(sql);
+      if (s.includes('FROM organization_billing'))
+        return { status: 'past_due', subscription_plan_id: null };
+      if (s.includes('FROM payment_methods')) return { count: 0 };
+      return null;
+    });
+
+    const snap = await buildPolicySnapshot('org-1');
+    expect(snap.subscriptionStatus).toBe('past_due');
+    expect(snap.blockedActions).toEqual(
+      expect.arrayContaining(['AI_DO_ACTIONS', 'CREATE_PROJECT', 'CREATE_INITIATIVE', 'INVITES'])
+    );
+    expect(snap.messages.bannerTextKey).toBe('access.banner.pastDue');
+    expect(snap.upgradeCtas.primaryAction).toBe('Fix Payment');
+    expect(snap.upgradeCtas.reason).toBe('payment_failed');
+  });
+
+  it('buildPolicySnapshot: approaching usage limits triggers warning banner when no other banner applies', async () => {
+    trialService.checkTrialStatus.mockResolvedValueOnce(
+      makeTrialStatus({ expired: false, warningLevel: 'none', daysRemaining: 9 })
+    );
+    limitService.getOrganizationType.mockResolvedValueOnce(
+      makeOrgInfo({ organizationType: ORG_TYPES.TRIAL })
+    );
+    limitService.getOrganizationLimits.mockResolvedValueOnce(makeLimits({ maxAICallsPerDay: 10 }));
+    usageService.getDailyUsage.mockResolvedValueOnce(makeUsage({ aiCallsCount: 7 })); // 70% => APPROACHING
+
+    mockDbPromiseGet.mockImplementation(async (_db, sql) => {
+      const s = String(sql);
+      if (s.includes('FROM organization_billing')) return { status: null, subscription_plan_id: null };
+      if (s.includes('FROM payment_methods')) return { count: 0 };
+      return null;
+    });
+
+    const snap = await buildPolicySnapshot('org-1');
+    expect(snap.messages.bannerTextKey).toBe('access.banner.approachingLimits');
+    expect(snap.messages.bannerText).toContain('approaching your usage limits');
+  });
+
+  it('buildPolicySnapshot: token budget exceeded suggests Add Payment Method CTA', async () => {
+    trialService.checkTrialStatus.mockResolvedValueOnce(
+      makeTrialStatus({ expired: false, warningLevel: 'none', daysRemaining: 9 })
+    );
+    limitService.getOrganizationType.mockResolvedValueOnce(
+      makeOrgInfo({ organizationType: ORG_TYPES.TRIAL })
+    );
+    limitService.getOrganizationLimits.mockResolvedValueOnce(makeLimits({ maxTotalTokens: 100 }));
+    usageService.getTrialUsage.mockResolvedValueOnce(makeTrialUsage({ tokensUsed: 100 }));
+
+    mockDbPromiseGet.mockImplementation(async (_db, sql) => {
+      const s = String(sql);
+      if (s.includes('FROM organization_billing')) return { status: null, subscription_plan_id: null };
+      if (s.includes('FROM payment_methods')) return { count: 0 };
+      return null;
+    });
+
+    const snap = await buildPolicySnapshot('org-1');
+    expect(snap.upgradeCtas.primaryActionKey).toBe('access.cta.addPaymentMethod');
+    expect(snap.upgradeCtas.reason).toBe('token_budget_exceeded');
+  });
+
+  it('buildPolicySnapshot: critical trial warning uses critical banner copy', async () => {
+    trialService.checkTrialStatus.mockResolvedValueOnce(
+      makeTrialStatus({ expired: false, warningLevel: 'critical', daysRemaining: 3 })
+    );
+    limitService.getOrganizationType.mockResolvedValueOnce(
+      makeOrgInfo({ organizationType: ORG_TYPES.TRIAL })
+    );
+
+    const snap = await buildPolicySnapshot('org-1');
+    expect(snap.messages.bannerTextKey).toBe('access.banner.trialCritical');
+    expect(snap.messages.bannerText).toContain('Trial expires in 3 day');
+  });
+
+  it('buildPolicySnapshot: resolves limits from subscribed plan JSON when org limits are missing', async () => {
+    limitService.getOrganizationType.mockResolvedValueOnce(
+      makeOrgInfo({ organizationType: ORG_TYPES.TRIAL })
+    );
+    limitService.getOrganizationLimits.mockResolvedValueOnce(null);
+    resourceService.countOrgInitiatives.mockRejectedValueOnce(new Error('no initiatives table'));
+
+    mockDbPromiseGet.mockImplementation(async (_db, sql) => {
+      const s = String(sql);
+      if (s.includes('FROM organization_billing'))
+        return { status: null, subscription_plan_id: 'plan-1' };
+      if (s.includes('FROM subscription_plans'))
+        return { limits: JSON.stringify({ tokens: 123, storage_gb: 2 }), token_limit: null, storage_limit_gb: null };
+      if (s.includes('FROM payment_methods')) return { count: 0 };
+      return null;
+    });
+
+    const snap = await buildPolicySnapshot('org-1');
+    expect(snap.limits.maxTotalTokens).toBe(123);
+    expect(snap.limits.maxStorageMb).toBe(2048);
+  });
+
+  it('buildPolicySnapshot: falls back to token_limit/storage_limit_gb when plan JSON does not specify values', async () => {
+    limitService.getOrganizationType.mockResolvedValueOnce(
+      makeOrgInfo({ organizationType: ORG_TYPES.TRIAL })
+    );
+    limitService.getOrganizationLimits.mockResolvedValueOnce(makeLimits({ maxTotalTokens: 999, maxStorageMb: 999 }));
+
+    mockDbPromiseGet.mockImplementation(async (_db, sql) => {
+      const s = String(sql);
+      if (s.includes('FROM organization_billing'))
+        return { status: null, subscription_plan_id: 'plan-2' };
+      if (s.includes('FROM subscription_plans'))
+        return { limits: null, token_limit: 456, storage_limit_gb: 1.5 };
+      if (s.includes('FROM payment_methods')) return { count: 0 };
+      return null;
+    });
+
+    const snap = await buildPolicySnapshot('org-1');
+    expect(snap.limits.maxTotalTokens).toBe(456);
+    expect(snap.limits.maxStorageMb).toBe(1536);
+  });
 });
