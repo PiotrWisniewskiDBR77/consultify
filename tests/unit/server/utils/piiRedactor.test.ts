@@ -37,6 +37,62 @@ describe('server utils/piiRedactor', () => {
     expect((redacted as any).message).toContain(REDACTION_PLACEHOLDER);
   });
 
+  it.each([
+    'Bearer abc.def.ghi',
+    'abc.def.ghi',
+    'BEARER abc.def.ghi',
+    'Bearer abc-DEF_123.def-456_GHI.789-jkl_MNO',
+    'prefix abc.def.ghi suffix',
+  ])('redacts token variant in free text: %s', (tokenish) => {
+    const out = PiiRedactor.redact(`token=${tokenish}`) as any;
+    expect(String(out)).toContain(REDACTION_PLACEHOLDER);
+    expect(String(out)).not.toContain('abc.def.ghi');
+  });
+
+  it.each([
+    'user@example.com',
+    'USER@EXAMPLE.COM',
+    'user.name+tag@sub.example.co.uk',
+    'u@e.io',
+  ])('redacts email variant in free text: %s', (email) => {
+    const out = PiiRedactor.redact(`contact:${email}`) as any;
+    expect(String(out)).toContain(REDACTION_PLACEHOLDER);
+    expect(String(out)).not.toContain(email);
+  });
+
+  it('redactEmails redacts multiple emails in one string', () => {
+    const out = PiiRedactor.redactEmails('a@a.io b@b.io') as any;
+    expect(String(out)).toBe(`${REDACTION_PLACEHOLDER} ${REDACTION_PLACEHOLDER}`);
+  });
+
+  it('redactTokens redacts multiple JWT-like tokens in one string', () => {
+    const out = PiiRedactor.redactTokens('a.b.c x.y.z') as any;
+    expect(String(out)).toBe(`${REDACTION_PLACEHOLDER} ${REDACTION_PLACEHOLDER}`);
+  });
+
+  it.each([
+    ['EmailAddress', 'user@example.com'],
+    ['user_email', 'user@example.com'],
+    ['phoneNumber', '+1 555 123 4567'],
+    ['apiKeyValue', 'sk_live_123'],
+    ['authorizationHeader', 'Bearer abc.def.ghi'],
+  ])('redacts PII-ish key by substring match: %s', (key, value) => {
+    const input: any = { [key]: value, ok: 'safe' };
+    const redacted: any = PiiRedactor.redact(input);
+    expect(redacted[key]).toBe(REDACTION_PLACEHOLDER);
+    expect(redacted.ok).toBe('safe');
+  });
+
+  it('redacts nested arrays (array-of-arrays) by walking array indices', () => {
+    const input = {
+      payload: [['user@example.com'], ['ok', 'Bearer abc.def.ghi']],
+    };
+    const out: any = PiiRedactor.redact(input);
+    expect(out.payload[0][0]).toBe(REDACTION_PLACEHOLDER);
+    expect(out.payload[1][0]).toBe('ok');
+    expect(out.payload[1][1]).toBe(REDACTION_PLACEHOLDER);
+  });
+
   it('redacts primitive string values (not only object fields)', () => {
     const input = 'email user@example.com token abc.def.ghi';
     const out = PiiRedactor.redact(input);
@@ -65,11 +121,23 @@ describe('server utils/piiRedactor', () => {
     expect((redacted as any).events[2]).toBe('ok');
   });
 
+  it('redacts array string items even when key is not PII-ish', () => {
+    const input = { items: ['user@example.com', 'abc.def.ghi'] };
+    const out: any = PiiRedactor.redact(input);
+    expect(out.items).toEqual([REDACTION_PLACEHOLDER, REDACTION_PLACEHOLDER]);
+  });
+
   it('redactKeys redacts specified keys shallowly', () => {
     const input = { a: 1, secret: 'x', nested: { secret: 'y' } };
     const redacted = PiiRedactor.redactKeys(input, ['secret']);
     expect(redacted.secret).toBe(REDACTION_PLACEHOLDER);
     expect((redacted as any).nested.secret).toBe('y');
+  });
+
+  it('redactKeys does not add missing keys (no-op for absent)', () => {
+    const input: any = { a: 1 };
+    const redacted: any = PiiRedactor.redactKeys(input, ['missing']);
+    expect(redacted).toEqual({ a: 1 });
   });
 
   it('createAuditSnapshot JSON-stringifies redacted output', () => {
