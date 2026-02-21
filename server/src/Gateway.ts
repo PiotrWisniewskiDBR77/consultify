@@ -155,6 +155,7 @@ import portfolioOptimizationRoutes from './routes/portfolioOptimization.routes.j
 import premiumReportsRoutes from './routes/premiumReports.routes.js';
 import presentationsRoutes from './routes/presentations.routes.js';
 import promptAssistantRoutes from './routes/prompt-assistant.routes.js';
+import sponsorReportsRoutes from './routes/sponsor-reports.routes.js';
 import publicMiniAssessmentRoutes from './routes/public-mini-assessment.routes.js';
 import publicOutreachRoutes from './routes/public-outreach.routes.js';
 import raidRoutes from './routes/raid.routes.js';
@@ -537,6 +538,7 @@ export class ApiGateway {
       app.use('/api/sync-hub', syncHubRoutes);
       app.use('/api/studio', studioRoutes);
       app.use('/api/intelligence', intelligenceRoutes);
+      app.use('/api/sponsor-reports', sponsorReportsRoutes);
       app.use('/api/interview', interviewRoutes);
       app.use('/api/agents', agentsRoutes);
       mountStub('/api/workqueue', workqueueRoutes, 'workqueueRoutes');

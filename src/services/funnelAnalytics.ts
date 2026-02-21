@@ -270,7 +270,10 @@ export type FunnelEventName =
   // T117 — Core Documentation Layer
   | 'core_docs_reindexed'
   | 'core_docs_drift_detected'
-  | 'ai_citation_verification_score';
+  | 'ai_citation_verification_score'
+  // T014 — Survey Shell (additional granularity)
+  | 'survey_question_answered'
+  | 'survey_section_completed';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

@@ -321,6 +321,11 @@ const DocsSecurityView = React.lazy(() =>
   import('@/views/docs/DocsSecurityView').then((m) => ({ default: m.DocsSecurityView }))
 );
 
+// Public Mini Assessment (T015)
+const PublicMiniAssessmentView = React.lazy(() =>
+  import('@/views/PublicMiniAssessmentView').then((m) => ({ default: m.PublicMiniAssessmentView }))
+);
+
 // Education Hub (Public)
 const ToolsShowcasePage = React.lazy(() =>
   import('@/views/ToolsShowcasePage').then((m) => ({ default: m.ToolsShowcasePage }))
@@ -536,6 +541,16 @@ export const AppRoutes: React.FC = () => {
           <Route path=":categorySlug" element={<DocsCategoryView />} />
           <Route path=":categorySlug/:articleSlug" element={<DocsArticleView />} />
         </Route>
+
+        {/* Public Mini Assessment (T015) */}
+        <Route
+          path="/assess/:token?"
+          element={
+            <Suspense fallback={<LoadingScreen message="Loading assessment..." />}>
+              <PublicMiniAssessmentView />
+            </Suspense>
+          }
+        />
 
         {/* Tools Showcase - Education Hub (Public) */}
         <Route
