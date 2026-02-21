@@ -394,27 +394,42 @@
       "registered": {
         "name": "Registered",
         "requirement": "Start here",
-        "benefits": ["Basic tools", "Directory listing"]
+        "benefits": [
+          "Basic tools",
+          "Directory listing"
+        ]
       },
       "bronze": {
         "name": "Bronze",
         "requirement": "3+ clients, €5K ARR",
-        "benefits": ["Priority support", "Training materials"]
+        "benefits": [
+          "Priority support",
+          "Training materials"
+        ]
       },
       "silver": {
         "name": "Silver",
         "requirement": "10+ clients, €25K ARR",
-        "benefits": ["Dedicated manager", "Beta feature access"]
+        "benefits": [
+          "Dedicated manager",
+          "Beta feature access"
+        ]
       },
       "gold": {
         "name": "Gold",
         "requirement": "25+ clients, €75K ARR",
-        "benefits": ["Co-marketing", "Conference speaking"]
+        "benefits": [
+          "Co-marketing",
+          "Conference speaking"
+        ]
       },
       "platinum": {
         "name": "Platinum",
         "requirement": "50+ clients, €200K+",
-        "benefits": ["Revenue share boost", "Executive partnership"]
+        "benefits": [
+          "Revenue share boost",
+          "Executive partnership"
+        ]
       }
     },
     "onboarding": {

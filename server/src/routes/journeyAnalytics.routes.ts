@@ -1,17 +1,46 @@
 /**
  * Journey Analytics Routes
- * API endpoints for customer journey tracking
+ * API endpoints for customer journey tracking + event ingest (T113)
  */
 import { Request, Response, Router } from 'express';
 
-import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
+import { type AuthRequest, isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
+import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import behaviorIntelligenceService from '../services/behaviorIntelligenceService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
 
 const router = Router();
-interface AuthRequest extends Request {
-  user?: { id: string; organizationId: string };
-}
+
+// T113: POST /track — single event ingest
+router.post(
+  '/track',
+  apiAuthRateLimiter,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = (req as any).user?.id || req.body.userId;
+    const organizationId = (req as any).user?.organizationId || req.body.organizationId || null;
+    if (!userId) return res.status(401).json({ error: 'User ID required' });
+    const { eventType, eventName, phase, metadata } = req.body;
+    if (!eventType || !eventName) return res.status(400).json({ error: 'eventType and eventName are required' });
+    const result = await behaviorIntelligenceService.ingestJourneyEvent(userId, organizationId, { eventType, eventName, phase, metadata });
+    return res.json({ success: true, id: result.id });
+  })
+);
+
+// T113: POST /track/batch — batch event ingest
+router.post(
+  '/track/batch',
+  apiAuthRateLimiter,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = (req as any).user?.id || req.body.userId;
+    const organizationId = (req as any).user?.organizationId || req.body.organizationId || null;
+    if (!userId) return res.status(401).json({ error: 'User ID required' });
+    const { events } = req.body;
+    if (!Array.isArray(events)) return res.status(400).json({ error: 'events array is required' });
+    const result = await behaviorIntelligenceService.ingestJourneyBatch(userId, organizationId, events);
+    return res.json({ success: true, ingested: result.ingested });
+  })
+);
 
 router.get(
   '/',

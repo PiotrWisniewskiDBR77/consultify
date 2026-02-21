@@ -1,5 +1,6 @@
 import type { Express } from 'express';
 
+import apiLoggingMiddleware from './middleware/apiLogging.middleware.js';
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
 import accessControlRoutes from './routes/access-control.routes.js';
 import accessCodeRoutes from './routes/accessCodes.routes.js';
@@ -273,6 +274,9 @@ export class ApiGateway {
       app.use('/api/admin-data', adminDataRoutes);
       app.use('/api/admin', adminBulkRoutes);
 
+      // T113: API request logging (no PII)
+      app.use(apiLoggingMiddleware);
+
       // Demo Mode middleware - switches context and protects against writes
       app.use(demoContextMiddleware);
       app.use(
@@ -412,7 +416,7 @@ export class ApiGateway {
 
       // User management routes
       app.use('/api/onboarding', onboardingRoutes);
-      mountStub('/api/analytics/journey', journeyAnalyticsRoutes, 'journeyAnalyticsRoutes');
+      app.use('/api/analytics/journey', journeyAnalyticsRoutes);
       mountStub('/api/referrals', referralRoutes, 'referralRoutes');
       mountStub('/api/consultants', consultantRoutes, 'consultantRoutes');
       app.use('/api/consultant-project-access', consultantProjectAccessRoutes);

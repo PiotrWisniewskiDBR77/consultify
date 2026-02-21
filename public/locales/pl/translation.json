@@ -1881,27 +1881,42 @@
       "registered": {
         "name": "Zarejestrowany",
         "requirement": "Zacznij tutaj",
-        "benefits": ["Podstawowe narzędzia", "Wpis w katalogu"]
+        "benefits": [
+          "Podstawowe narzędzia",
+          "Wpis w katalogu"
+        ]
       },
       "bronze": {
         "name": "Brązowy",
         "requirement": "3+ klientów, €5K ARR",
-        "benefits": ["Priorytetowe wsparcie", "Materiały szkoleniowe"]
+        "benefits": [
+          "Priorytetowe wsparcie",
+          "Materiały szkoleniowe"
+        ]
       },
       "silver": {
         "name": "Srebrny",
         "requirement": "10+ klientów, €25K ARR",
-        "benefits": ["Dedykowany manager", "Dostęp do beta funkcji"]
+        "benefits": [
+          "Dedykowany manager",
+          "Dostęp do beta funkcji"
+        ]
       },
       "gold": {
         "name": "Złoty",
         "requirement": "25+ klientów, €75K ARR",
-        "benefits": ["Co-marketing", "Wystąpienia na konferencjach"]
+        "benefits": [
+          "Co-marketing",
+          "Wystąpienia na konferencjach"
+        ]
       },
       "platinum": {
         "name": "Platynowy",
         "requirement": "50+ klientów, €200K+",
-        "benefits": ["Zwiększony udział w przychodach", "Partnerstwo na poziomie zarządu"]
+        "benefits": [
+          "Zwiększony udział w przychodach",
+          "Partnerstwo na poziomie zarządu"
+        ]
       }
     },
     "onboarding": {
