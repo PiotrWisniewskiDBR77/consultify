@@ -779,6 +779,48 @@
       "metrics": "Key Metrics",
       "stakeholders": "Stakeholders",
       "gaps": "Open Gaps"
+    },
+    "conversational": {
+      "title": "Conversational Mode",
+      "inputPlaceholder": "Type your answer...",
+      "parseToAnswers": "Parse to Answers",
+      "reviewing": "Review Draft Answers",
+      "acceptAll": "Accept All",
+      "acceptAnswer": "Accept",
+      "rejectAnswer": "Reject",
+      "noMappings": "No answers could be mapped from the transcript.",
+      "progress": "Progress",
+      "startConversation": "Start Conversation"
+    },
+    "inference": {
+      "title": "Insight Pack",
+      "runInference": "Run Inference",
+      "running": "Generating insights...",
+      "completed": "Inference completed",
+      "failed": "Inference failed",
+      "categories": {
+        "risk": "Risk",
+        "opportunity": "Opportunity",
+        "constraint": "Constraint",
+        "priority": "Priority",
+        "trend": "Trend",
+        "gap": "Gap"
+      },
+      "whyItMatters": "Why it matters",
+      "recommendation": "Recommendation",
+      "evidence": "Evidence",
+      "unknowns": "Unknowns",
+      "counterpoints": "Counterpoints",
+      "assumptions": "Assumptions",
+      "confidence": "Confidence",
+      "approve": "Approve",
+      "needsReview": "Needs Review",
+      "regenerate": "Regenerate",
+      "export": "Export",
+      "noInsights": "No insights generated yet. Run inference to analyze interview data.",
+      "draft": "Draft",
+      "reviewed": "Reviewed",
+      "approved": "Approved"
     }
   },
   "assessment": {
@@ -3460,6 +3502,102 @@
       "bootstrapLabel": "Bootstrap Test Tenant",
       "cleanupLabel": "Cleanup Test Data",
       "gatingNotice": "Available only in test environment with proper credentials."
+    }
+  },
+  "aiPrompts": {
+    "title": "AI Prompt Management",
+    "registry": "Prompt Registry",
+    "assembler": "Prompt Assembler",
+    "blocks": "Prompt Blocks",
+    "testBench": "Test Bench",
+    "learning": "Learning System",
+    "experiments": "A/B Experiments",
+    "version": "Version",
+    "rollback": "Rollback",
+    "rollbackReason": "Reason for rollback",
+    "rollbackConfirm": "Are you sure you want to rollback to this version?",
+    "createPrompt": "Create Prompt",
+    "editPrompt": "Edit Prompt",
+    "promptKey": "Prompt Key",
+    "category": "Category",
+    "variables": "Variables",
+    "preview": "Preview",
+    "compile": "Compile",
+    "suggestions": "Instruction Suggestions",
+    "approve": "Approve",
+    "reject": "Reject",
+    "apply": "Apply",
+    "pending": "Pending",
+    "applied": "Applied",
+    "experiment": {
+      "create": "Create Experiment",
+      "start": "Start",
+      "stop": "Stop",
+      "promoteWinner": "Promote Winner",
+      "status": "Status",
+      "variants": "Variants",
+      "sampleSize": "Min Sample Size",
+      "confidence": "Confidence Level"
+    }
+  },
+  "competency": {
+    "catalog": {
+      "title": "Competency Catalog",
+      "subtitle": "Define competency taxonomy, categories and skill levels"
+    },
+    "categories": {
+      "title": "Categories",
+      "add": "Add",
+      "all": "All",
+      "namePlaceholder": "Category name (EN)",
+      "namePlaceholderPl": "Name (PL)"
+    },
+    "levels": {
+      "title": "Proficiency Levels"
+    },
+    "search": "Search competencies...",
+    "add": "Add Competency",
+    "form": {
+      "name": "Competency name",
+      "description": "Description (optional)",
+      "noCategory": "— No category —"
+    },
+    "table": {
+      "name": "Competency",
+      "category": "Category",
+      "initiatives": "Initiatives",
+      "users": "Users",
+      "empty": "No competencies found"
+    },
+    "empty": {
+      "title": "No competency catalog yet",
+      "description": "Start by creating a default taxonomy with categories and skill levels, then customize it for your organization.",
+      "seedDefaults": "Create Default Taxonomy"
+    },
+    "defaults": {
+      "seeded": "Default taxonomy created"
+    },
+    "error": {
+      "loadFailed": "Failed to load competency data"
+    },
+    "requirements": {
+      "title": "Competency Requirements",
+      "add": "Add Requirement",
+      "addBtn": "Add",
+      "empty": "No competency requirements defined",
+      "emptyHint": "Define what competencies this initiative needs so the team can be properly resourced.",
+      "competency": "Competency",
+      "select": "— Select —",
+      "selectCompetency": "Select a competency",
+      "minLevel": "Min. Level",
+      "priority": "Priority",
+      "mustHave": "Must-have",
+      "niceToHave": "Nice-to-have",
+      "headcount": "Headcount / FTE",
+      "justification": "Justification",
+      "justificationPlaceholder": "Why needed?",
+      "addFailed": "Failed to add requirement",
+      "deleteFailed": "Failed to remove requirement"
     }
   }
 }

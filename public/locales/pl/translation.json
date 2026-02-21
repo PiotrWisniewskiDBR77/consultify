@@ -202,6 +202,48 @@
       "metrics": "Kluczowe Metryki",
       "stakeholders": "Interesariusze",
       "gaps": "Luki Informacyjne"
+    },
+    "conversational": {
+      "title": "Tryb konwersacyjny",
+      "inputPlaceholder": "Wpisz swoją odpowiedź...",
+      "parseToAnswers": "Parsuj na odpowiedzi",
+      "reviewing": "Przegląd propozycji odpowiedzi",
+      "acceptAll": "Akceptuj wszystkie",
+      "acceptAnswer": "Akceptuj",
+      "rejectAnswer": "Odrzuć",
+      "noMappings": "Nie udało się zmapować odpowiedzi z transkryptu.",
+      "progress": "Postęp",
+      "startConversation": "Rozpocznij rozmowę"
+    },
+    "inference": {
+      "title": "Pakiet Insightów",
+      "runInference": "Uruchom analizę",
+      "running": "Generowanie insightów...",
+      "completed": "Analiza zakończona",
+      "failed": "Analiza nie powiodła się",
+      "categories": {
+        "risk": "Ryzyko",
+        "opportunity": "Szansa",
+        "constraint": "Ograniczenie",
+        "priority": "Priorytet",
+        "trend": "Trend",
+        "gap": "Luka"
+      },
+      "whyItMatters": "Dlaczego to ważne",
+      "recommendation": "Rekomendacja",
+      "evidence": "Dowody",
+      "unknowns": "Niewiadome",
+      "counterpoints": "Kontrargumenty",
+      "assumptions": "Założenia",
+      "confidence": "Pewność",
+      "approve": "Zatwierdź",
+      "needsReview": "Wymaga przeglądu",
+      "regenerate": "Wygeneruj ponownie",
+      "export": "Eksportuj",
+      "noInsights": "Brak wygenerowanych insightów. Uruchom analizę, aby przeanalizować dane z wywiadów.",
+      "draft": "Szkic",
+      "reviewed": "Przejrzany",
+      "approved": "Zatwierdzony"
     }
   },
   "assessment": {
@@ -3460,6 +3502,102 @@
       "bootstrapLabel": "Utwórz tenant testowy",
       "cleanupLabel": "Wyczyść dane testowe",
       "gatingNotice": "Dostępne tylko w środowisku testowym z odpowiednimi poświadczeniami."
+    }
+  },
+  "aiPrompts": {
+    "title": "Zarządzanie promptami AI",
+    "registry": "Rejestr promptów",
+    "assembler": "Kompilator promptów",
+    "blocks": "Bloki promptów",
+    "testBench": "Bench testowy",
+    "learning": "System uczenia",
+    "experiments": "Eksperymenty A/B",
+    "version": "Wersja",
+    "rollback": "Przywróć wersję",
+    "rollbackReason": "Powód przywrócenia wersji",
+    "rollbackConfirm": "Czy na pewno chcesz przywrócić tę wersję?",
+    "createPrompt": "Utwórz prompt",
+    "editPrompt": "Edytuj prompt",
+    "promptKey": "Klucz promptu",
+    "category": "Kategoria",
+    "variables": "Zmienne",
+    "preview": "Podgląd",
+    "compile": "Kompiluj",
+    "suggestions": "Sugestie instrukcji",
+    "approve": "Zatwierdź",
+    "reject": "Odrzuć",
+    "apply": "Zastosuj",
+    "pending": "Oczekujące",
+    "applied": "Zastosowane",
+    "experiment": {
+      "create": "Utwórz eksperyment",
+      "start": "Uruchom",
+      "stop": "Zatrzymaj",
+      "promoteWinner": "Promuj zwycięzcę",
+      "status": "Status",
+      "variants": "Warianty",
+      "sampleSize": "Min. wielkość próby",
+      "confidence": "Poziom ufności"
+    }
+  },
+  "competency": {
+    "catalog": {
+      "title": "Katalog kompetencji",
+      "subtitle": "Definiuj taksonomię kompetencji, kategorie i poziomy umiejętności"
+    },
+    "categories": {
+      "title": "Kategorie",
+      "add": "Dodaj",
+      "all": "Wszystkie",
+      "namePlaceholder": "Nazwa kategorii (EN)",
+      "namePlaceholderPl": "Nazwa (PL)"
+    },
+    "levels": {
+      "title": "Poziomy biegłości"
+    },
+    "search": "Szukaj kompetencji...",
+    "add": "Dodaj kompetencję",
+    "form": {
+      "name": "Nazwa kompetencji",
+      "description": "Opis (opcjonalny)",
+      "noCategory": "— Brak kategorii —"
+    },
+    "table": {
+      "name": "Kompetencja",
+      "category": "Kategoria",
+      "initiatives": "Inicjatywy",
+      "users": "Użytkownicy",
+      "empty": "Nie znaleziono kompetencji"
+    },
+    "empty": {
+      "title": "Brak katalogu kompetencji",
+      "description": "Zacznij od utworzenia domyślnej taksonomii z kategoriami i poziomami umiejętności, a następnie dostosuj ją do swojej organizacji.",
+      "seedDefaults": "Utwórz domyślną taksonomię"
+    },
+    "defaults": {
+      "seeded": "Utworzono domyślną taksonomię"
+    },
+    "error": {
+      "loadFailed": "Nie udało się załadować danych kompetencji"
+    },
+    "requirements": {
+      "title": "Wymagania kompetencyjne",
+      "add": "Dodaj wymaganie",
+      "addBtn": "Dodaj",
+      "empty": "Brak zdefiniowanych wymagań kompetencyjnych",
+      "emptyHint": "Określ, jakie kompetencje potrzebuje ta inicjatywa, aby zespół mógł być odpowiednio zasobowany.",
+      "competency": "Kompetencja",
+      "select": "— Wybierz —",
+      "selectCompetency": "Wybierz kompetencję",
+      "minLevel": "Min. poziom",
+      "priority": "Priorytet",
+      "mustHave": "Wymagane",
+      "niceToHave": "Mile widziane",
+      "headcount": "Etat / FTE",
+      "justification": "Uzasadnienie",
+      "justificationPlaceholder": "Dlaczego potrzebne?",
+      "addFailed": "Nie udało się dodać wymagania",
+      "deleteFailed": "Nie udało się usunąć wymagania"
     }
   }
 }

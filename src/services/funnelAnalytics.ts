@@ -216,6 +216,12 @@ export type FunnelEventName =
   | 'capability_match_viewed'
   | 'capability_assignment_suggestion_generated'
   | 'capability_assignment_applied'
+  // T065 — Competency Taxonomy
+  | 'competency_created'
+  | 'competency_updated'
+  | 'competency_deleted'
+  | 'initiative_requirement_added'
+  | 'initiative_requirement_removed'
   // T044 — Change Sentiment
   | 'change_pulse_submitted'
   | 'change_sentiment_trend_changed'
