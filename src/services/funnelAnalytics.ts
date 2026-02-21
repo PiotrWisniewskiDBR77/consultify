@@ -272,6 +272,19 @@ export type FunnelEventName =
   | 'core_docs_reindexed'
   | 'core_docs_drift_detected'
   | 'ai_citation_verification_score'
+  // T118 — Web Search Governance
+  | 'ai_web_search_used'
+  | 'ai_web_search_blocked'
+  // T119 — Org Context Governance
+  | 'ai_context_category_used'
+  | 'ai_context_blocked'
+  // T120 — User Privacy
+  | 'ai_private_mode_enabled'
+  | 'ai_private_mode_disabled'
+  | 'ai_memory_write_blocked'
+  // T121 — Document Governance
+  | 'ai_doc_used'
+  | 'ai_doc_blocked'
   // T014 — Survey Shell (additional granularity)
   | 'survey_question_answered'
   | 'survey_section_completed';

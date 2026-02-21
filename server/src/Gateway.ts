@@ -26,6 +26,7 @@ import aiTrainingRoutes from './routes/ai/ai-training.routes.js';
 import aiAnalyticsRoutesV2 from './routes/ai/aiAnalytics.routes.js';
 import aiAsyncRoutes from './routes/ai/aiAsync.routes.js';
 import aiDomainRoutes from './routes/ai/index.js';
+import aiGovernanceRoutes from './routes/ai-governance.routes.js';
 import aiPromptsRoutes from './routes/ai-prompts.routes.js';
 import aiSuggestionsRoutes from './routes/ai-suggestions.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
@@ -316,6 +317,9 @@ export class ApiGateway {
       app.use('/api/ai-drafts', aiDraftsRoutes);
       app.use('/api/ai-prompts', aiPromptsRoutes);
       app.use('/api/ai/prompts', aiPromptsRoutes);
+      app.use('/api/ai-governance', aiGovernanceRoutes);
+      app.use('/api/admin/ai/governance', aiGovernanceRoutes);
+      app.use('/api/settings/ai', aiGovernanceRoutes);
       app.use('/api/ai-security', aiSecurityRoutes);
       app.use('/api/ai-settings', aiSettingsRoutes);
       app.use('/api/ai-budgets', aiBudgetsRoutes);
