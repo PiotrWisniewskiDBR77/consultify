@@ -1,4 +1,4 @@
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, URL as NodeURL } from 'node:url';
 
 import { describe, it, expect, vi } from 'vitest';
 
@@ -19,8 +19,9 @@ describe('inputSanitizationMiddleware loader fallback (L1)', () => {
 
     const sanitizeObject = vi.fn((x: any) => ({ ...x, __fromFallback: true }));
 
-    const tsUrl = new URL('../../../../server/src/utils/security.utils.ts', import.meta.url);
-    const jsUrl = new URL('../../../../server/src/utils/security.utils.js', import.meta.url);
+    // Use Node's URL implementation (Vitest may run with JSDOM where global URL is window.URL)
+    const tsUrl = new NodeURL('../../../../server/src/utils/security.utils.ts', import.meta.url);
+    const jsUrl = new NodeURL('../../../../server/src/utils/security.utils.js', import.meta.url);
     const tsPath = fileURLToPath(tsUrl);
     const jsPath = fileURLToPath(jsUrl);
 
