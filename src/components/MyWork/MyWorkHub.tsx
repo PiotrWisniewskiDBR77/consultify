@@ -53,6 +53,8 @@ import { IdeaDetailView } from './IdeaDetailView';
 import { InboxContent } from './InboxContent';
 import { type MyIdea, MyIdeasListContent } from './MyIdeasListContent';
 import { MyTasksListContent } from './MyTasksListContent';
+import { NotebookContent } from './NotebookContent';
+import { TasksCalendarView } from './TasksCalendarView';
 import { NotificationDetailView } from './NotificationDetailView';
 import { NotificationsContent } from './NotificationsContent';
 import { NotificationsKanbanBoard } from './NotificationsKanbanBoard';
@@ -65,11 +67,12 @@ type ModuleTab =
   | 'inbox'
   | 'focus'
   | 'tasks'
+  | 'notebook'
   | 'ideas'
   | 'decisions'
   | 'notifications';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
-type TasksViewMode = 'table' | 'kanban';
+type TasksViewMode = 'table' | 'kanban' | 'calendar';
 type DecisionsViewMode = 'list' | 'kanban';
 type NotificationsViewMode = 'list' | 'kanban';
 type DecisionFilter = 'my' | 'awaiting';
@@ -91,6 +94,7 @@ interface TabCounts {
   inbox: number;
   focus: number;
   tasks: number;
+  notebook: number;
   ideas: number;
   decisions: number;
   notifications: number;
@@ -221,6 +225,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     inbox: 0,
     focus: 0,
     tasks: 0,
+    notebook: 0,
     ideas: 0,
     decisions: 0,
     notifications: 0,
@@ -370,6 +375,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         icon: <CheckSquare size={16} />,
         count: tabCounts.tasks,
         color: 'bg-blue-500',
+        requiresExecutiveAccess: false,
+      },
+      {
+        id: 'notebook' as ModuleTab,
+        label: isPolish ? 'Notatnik' : 'Notebook',
+        icon: <FileText size={16} />,
+        count: tabCounts.notebook,
+        color: 'bg-slate-500',
         requiresExecutiveAccess: false,
       },
       {
@@ -983,6 +996,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             onCreateTask={handleCreateTask}
             onCountsChange={handleTaskCountsChange}
           />
+        ) : tasksViewMode === 'calendar' ? (
+          <TasksCalendarView
+            activeFilter={taskFilter}
+            searchQuery={searchQuery}
+            onTaskClick={handleTaskClick}
+            onCreateTask={handleCreateTask}
+            onCountsChange={handleTaskCountsChange}
+          />
         ) : (
           <MyTasksListContent
             activeFilter={taskFilter}
@@ -999,6 +1020,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             onIdeaClick={handleIdeaClick}
             onCreateIdea={handleCreateIdea}
             onCountsChange={(counts) => setTabCounts((prev) => ({ ...prev, ideas: counts.total }))}
+          />
+        );
+      case 'notebook':
+        return (
+          <NotebookContent
+            projectId={null}
+            searchQuery={searchQuery}
+            onCountsChange={(counts) =>
+              setTabCounts((prev) => ({ ...prev, notebook: counts.total }))
+            }
           />
         );
       case 'decisions':
@@ -1138,6 +1169,19 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   aria-checked={tasksViewMode === 'kanban'}
                 >
                   <Kanban size={16} />
+                </button>
+                <button
+                  onClick={() => setTasksViewMode('calendar')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    tasksViewMode === 'calendar'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Widok kalendarza' : 'Calendar view'}
+                  role="radio"
+                  aria-checked={tasksViewMode === 'calendar'}
+                >
+                  <CalendarDays size={16} />
                 </button>
               </div>
             )}
