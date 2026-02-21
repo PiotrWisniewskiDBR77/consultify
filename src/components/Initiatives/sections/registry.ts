@@ -11,6 +11,7 @@ import type React from 'react';
 // Section component imports
 import { AttachmentsSection } from './AttachmentsSection';
 import { CommentsSection } from './CommentsSection';
+import { CompetencyRequirementsSection } from './CompetencyRequirementsSection';
 import { ControlSection } from './ControlSection';
 import { DecisionsSection } from './DecisionsSection';
 import { DependenciesSection } from './DependenciesSection';
@@ -58,6 +59,7 @@ export const SECTION_REGISTRY: Record<string, React.ComponentType<InitiativeSect
   financialAnalysis: FinancialAnalysisSection,
   financialImpact: FinancialImpactSection,
   kpis: KpisSection,
+  competencyRequirements: CompetencyRequirementsSection,
   pilot: PilotSection,
   comments: CommentsSection,
   history: HistorySection,
@@ -105,6 +107,7 @@ export const DEFAULT_SECTION_ORDER: Record<string, number> = {
   financialAnalysis: 90,
   financialImpact: 100,
   kpis: 110,
+  competencyRequirements: 115,
   pilot: 120,
   comments: 130,
   history: 140,
@@ -142,6 +145,7 @@ export const DEFAULT_VISIBLE_SECTIONS: Record<string, boolean> = {
   financialAnalysis: true,
   financialImpact: true,
   kpis: true,
+  competencyRequirements: true,
   comments: true,
   history: true,
   control: true,

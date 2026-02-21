@@ -54,6 +54,7 @@ import tokenBillingRoutes from './routes/billing/tokenBilling.routes.js';
 import budgetRoutes from './routes/budget.routes.js';
 import budgetsRoutes from './routes/budgets.routes.js';
 import capabilityRoutes from './routes/capability.routes.js';
+import competencyRoutes from './routes/competency.routes.js';
 import changeSentimentRoutes from './routes/change-sentiment.routes.js';
 import chatProjectsRoutes from './routes/chat-projects.routes.js';
 import cloudRoutes from './routes/cloud.routes.js';
@@ -359,6 +360,7 @@ export class ApiGateway {
       app.use('/api/analytics', analyticsRoutes);
       app.use('/api/feedback', feedbackRoutes);
       app.use('/api/capabilities', capabilityRoutes);
+      app.use('/api/competency', competencyRoutes);
       app.use('/api/change-sentiment', changeSentimentRoutes);
       app.use('/api/stakeholder-comm', stakeholderCommRoutes);
       app.use('/api/access-control', accessControlRoutes);

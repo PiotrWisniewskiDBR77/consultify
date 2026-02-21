@@ -25,6 +25,7 @@ import { StrategicSynthesisModule } from './ContextBuilder/modules/StrategicSynt
 
 const ADMIN_SECTIONS: OrganizationSection[] = [
   'members',
+  'competencies',
   'billing',
   'limits',
   'domains',
@@ -70,6 +71,12 @@ const sectionMeta: Record<
     title: 'Members & Roles',
     subtitleKey: 'organization.sections.members.subtitle',
     subtitle: 'Manage team members, invitations and access roles',
+  },
+  competencies: {
+    titleKey: 'competency.catalog.title',
+    title: 'Competency Catalog',
+    subtitleKey: 'competency.catalog.subtitle',
+    subtitle: 'Define competency taxonomy, categories and skill levels',
   },
   billing: {
     titleKey: 'organization.sections.billing.title',

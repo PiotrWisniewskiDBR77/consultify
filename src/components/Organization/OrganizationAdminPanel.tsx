@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import { CompetencyCatalog } from './CompetencyCatalog';
 import type { OrganizationSection } from './OrganizationSidebar';
 
 interface OrganizationAdminPanelProps {
@@ -68,6 +69,8 @@ export const OrganizationAdminPanel: React.FC<OrganizationAdminPanelProps> = ({ 
   switch (section) {
     case 'members':
       return <MembersSection orgData={orgData} members={members} onRefresh={fetchOrgData} />;
+    case 'competencies':
+      return <CompetencyCatalog />;
     case 'billing':
       return <BillingSection orgData={orgData} />;
     case 'limits':
