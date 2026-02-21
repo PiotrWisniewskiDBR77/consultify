@@ -60,7 +60,7 @@
     "test:quality-check": "node --experimental-strip-types scripts/testing/quality-check.ts",
     "test:skip-scan": "node --experimental-strip-types scripts/testing/skip-scan-gate.ts",
     "test:integrity": "node scripts/testing/verify-integrity.js",
-    "security:integrity": "npx tsx scripts/security/verify-security-integrity.ts",
+    "security:integrity": "node --experimental-strip-types scripts/security/verify-security-integrity.ts",
     "test:protect": "npm run test:quality-check && npm run security:integrity && npm run test:unit:critical",
     "test:l1:coverage": "node -e \"require('fs').mkdirSync('test-results/coverage/l1',{recursive:true})\" && VITEST_HEAP_MB=8192 vitest run --config vitest.l1.config.ts --coverage --maxWorkers=1 --maxConcurrency=2 --reporter=json --outputFile test-results/l1-vitest.json && node --experimental-strip-types scripts/testing/coverage-thresholds.ts --report test-results/l1-vitest.json --profile l1",
     "test:l2:coverage": "node -e \"require('fs').mkdirSync('test-results/coverage/l2',{recursive:true})\" && VITEST_HEAP_MB=8192 vitest run --config vitest.l2.config.ts --coverage --maxWorkers=1 --maxConcurrency=2 --reporter=json --outputFile test-results/l2-vitest.json && node --experimental-strip-types scripts/testing/coverage-thresholds.ts --report test-results/l2-vitest.json --profile l2",
