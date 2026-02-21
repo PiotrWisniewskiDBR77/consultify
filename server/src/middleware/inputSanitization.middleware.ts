@@ -95,6 +95,28 @@ function truncateStrings(obj: unknown, maxLen: number = MAX_STRING_LENGTH): unkn
 }
 
 /**
+ * Neutralize common inline event-handler patterns in plain text.
+ *
+ * We do NOT try to parse HTML here. This is a defensive pass that ensures
+ * strings cannot resemble active attributes like `onerror=...` even after
+ * entity-escaping. We only target `on*=` patterns; we intentionally keep
+ * normal `/` and `=` intact for legitimate URLs/tokens/base64.
+ */
+function neutralizeInlineEventHandlers(obj: unknown): unknown {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj === 'string') {
+    return obj.replace(/\bon[a-z]+\s*=/gi, (m) => m.replace('=', '&#61;'));
+  }
+  if (Array.isArray(obj)) return obj.map((x) => neutralizeInlineEventHandlers(x));
+  if (typeof obj === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) out[k] = neutralizeInlineEventHandlers(v);
+    return out;
+  }
+  return obj;
+}
+
+/**
  * Log suspicious payloads for security monitoring
  */
 function checkForSuspiciousContent(body: unknown, path: string, method: string): void {
@@ -146,16 +168,18 @@ export const inputSanitizationMiddleware = async (
 
       // Sanitize HTML entities in all string values
       req.body = sanitizeObject(req.body, MAX_BODY_DEPTH);
+      req.body = neutralizeInlineEventHandlers(req.body);
     }
 
     // Sanitize query parameters (mutate in place - req.query may be read-only for reassignment)
     if (req.query && typeof req.query === 'object') {
       const sanitized = sanitizeObject(req.query, MAX_BODY_DEPTH) as Record<string, unknown>;
+      const normalized = neutralizeInlineEventHandlers(sanitized) as Record<string, unknown>;
       try {
         for (const key of Object.keys(req.query)) {
           delete (req.query as Record<string, unknown>)[key];
         }
-        Object.assign(req.query, sanitized);
+        Object.assign(req.query, normalized);
       } catch {
         // req.query may be frozen/sealed in some setups - skip query sanitization
       }
