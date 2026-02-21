@@ -51,7 +51,6 @@ import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
 // import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { PendingActionsIndicator } from './PendingActionsIndicator';
-import { useAIActionsStore } from '../../store/useAIActionsStore';
 
 // ============================================================================
 // Types
@@ -174,6 +173,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   } = useConversationStore();
 
   const { addArtifact, togglePanel: toggleArtifactsPanel, exportArtifact } = useArtifactsStore();
+
+  const pendingActionsCount = useAIActionsStore((s) => s.pendingCount);
 
   // ========================================================================
   // Local state (must be declared before hooks that depend on them)

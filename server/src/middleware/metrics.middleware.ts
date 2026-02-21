@@ -28,17 +28,23 @@ const metrics: MetricsBucket = {
   requests: 0,
   errors: 0,
   latencySum: 0,
-  latencyBuckets: Object.fromEntries(LATENCY_BUCKETS.map(b => [`le_${b}`, 0])),
+  latencyBuckets: Object.fromEntries(LATENCY_BUCKETS.map((b) => [`le_${b}`, 0])),
   byStatus: {},
   byMethod: {},
   rateLimitHits: 0,
   aiTimeouts: 0,
 };
 
-export function incrementRateLimitHits(): void { metrics.rateLimitHits++; }
-export function incrementAiTimeouts(): void { metrics.aiTimeouts++; }
+export function incrementRateLimitHits(): void {
+  metrics.rateLimitHits++;
+}
+export function incrementAiTimeouts(): void {
+  metrics.aiTimeouts++;
+}
 
-export function getRequestMetrics(): MetricsBucket { return { ...metrics }; }
+export function getRequestMetrics(): MetricsBucket {
+  return { ...metrics };
+}
 
 export function getPrometheusMetrics(): string {
   const lines: string[] = [];
@@ -55,7 +61,9 @@ export function getPrometheusMetrics(): string {
   lines.push(`http_request_duration_ms_sum ${metrics.latencySum.toFixed(0)}`);
 
   for (const bucket of LATENCY_BUCKETS) {
-    lines.push(`http_request_duration_ms_bucket{le="${bucket}"} ${metrics.latencyBuckets[`le_${bucket}`]}`);
+    lines.push(
+      `http_request_duration_ms_bucket{le="${bucket}"} ${metrics.latencyBuckets[`le_${bucket}`]}`
+    );
   }
   lines.push(`http_request_duration_ms_bucket{le="+Inf"} ${metrics.requests}`);
 

@@ -197,7 +197,9 @@ export class HealthCheckController {
       try {
         const { isRedisConnected } = await import('../services/ai/redisClient.js');
         connected = isRedisConnected();
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       components.redis = { status: connected ? 'healthy' : 'degraded' };
       if (!connected && overall === 'healthy') overall = 'degraded';
     } catch {
@@ -210,7 +212,11 @@ export class HealthCheckController {
       const stats = getWatchdogStats();
       components.api = {
         status: stats.windowFiveXx > 10 ? 'degraded' : 'healthy',
-        details: { totalRequests: stats.totalRequests, fiveXxRate: stats.totalFiveXx, p95Ms: stats.p95Ms },
+        details: {
+          totalRequests: stats.totalRequests,
+          fiveXxRate: stats.totalFiveXx,
+          p95Ms: stats.p95Ms,
+        },
       };
       if (stats.windowFiveXx > 10 && overall === 'healthy') overall = 'degraded';
     } catch {
@@ -220,12 +226,22 @@ export class HealthCheckController {
     try {
       const { getRequestMetrics } = await import('../middleware/metrics.middleware.js');
       const m = getRequestMetrics();
-      components.metrics = { status: 'healthy', details: { requests: m.requests, errors: m.errors, rateLimitHits: m.rateLimitHits, aiTimeouts: m.aiTimeouts } };
+      components.metrics = {
+        status: 'healthy',
+        details: {
+          requests: m.requests,
+          errors: m.errors,
+          rateLimitHits: m.rateLimitHits,
+          aiTimeouts: m.aiTimeouts,
+        },
+      };
     } catch {
       components.metrics = { status: 'healthy' };
     }
 
     const httpStatus = overall === 'down' ? 503 : 200;
-    res.status(httpStatus).json({ status: overall, timestamp, uptime: process.uptime(), components });
+    res
+      .status(httpStatus)
+      .json({ status: overall, timestamp, uptime: process.uptime(), components });
   }
 }
