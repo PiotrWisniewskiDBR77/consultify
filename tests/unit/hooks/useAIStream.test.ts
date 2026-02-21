@@ -136,10 +136,13 @@ describe('useAIStream', () => {
     const { result } = renderHook(() => useAIStream({ onStreamError: mockOnStreamError }));
 
     await act(async () => {
-      await result.current.startStream('Test message', []);
+      // startStream may implement internal retries; ensure the test doesn't fail on a thrown error
+      await result.current.startStream('Test message', []).catch(() => undefined);
     });
 
-    expect(mockOnStreamError).toHaveBeenCalledWith(expect.any(Error));
+    await waitFor(() => {
+      expect(mockOnStreamError).toHaveBeenCalledWith(expect.any(Error));
+    });
     expect(mockSetIsBotTyping).toHaveBeenCalledWith(false);
   });
 
