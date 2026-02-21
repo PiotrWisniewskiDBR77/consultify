@@ -60,7 +60,9 @@ export const AICardDraftModal: React.FC<AICardDraftModalProps> = ({
 
   const handleGenerate = useCallback(async () => {
     if (brief.trim().length < 10) {
-      toast.error(isPolish ? 'Opis musi mieć min. 10 znaków' : 'Brief must be at least 10 characters');
+      toast.error(
+        isPolish ? 'Opis musi mieć min. 10 znaków' : 'Brief must be at least 10 characters'
+      );
       return;
     }
 
@@ -80,14 +82,13 @@ export const AICardDraftModal: React.FC<AICardDraftModalProps> = ({
       }
 
       setDraft(generatedDraft);
-      setSelectedFields(
-        Object.fromEntries(Object.keys(generatedDraft).map((k) => [k, true]))
-      );
-      trackFunnelEvent('ai_card_generated', { artifactType, fieldCount: Object.keys(generatedDraft).length });
+      setSelectedFields(Object.fromEntries(Object.keys(generatedDraft).map((k) => [k, true])));
+      trackFunnelEvent('ai_card_generated', {
+        artifactType,
+        fieldCount: Object.keys(generatedDraft).length,
+      });
     } catch (err: any) {
-      toast.error(
-        err?.message || t('aiAuthoring.draftFailed', 'Failed to generate draft')
-      );
+      toast.error(err?.message || t('aiAuthoring.draftFailed', 'Failed to generate draft'));
     } finally {
       setLoading(false);
     }
@@ -107,7 +108,11 @@ export const AICardDraftModal: React.FC<AICardDraftModalProps> = ({
     }
 
     onApplyFields(applied);
-    trackFunnelEvent('ai_authoring_applied', { artifactType, fieldCount: Object.keys(applied).length, source: 'card_draft' });
+    trackFunnelEvent('ai_authoring_applied', {
+      artifactType,
+      fieldCount: Object.keys(applied).length,
+      source: 'card_draft',
+    });
 
     Api.post('/ai/authoring-audit', {
       artifactType,
@@ -162,7 +167,10 @@ export const AICardDraftModal: React.FC<AICardDraftModalProps> = ({
                 value={brief}
                 onChange={(e) => setBrief(e.target.value)}
                 rows={5}
-                placeholder={t('aiAuthoring.briefPlaceholder', 'Describe the initiative/task/decision in 3-8 bullet points...')}
+                placeholder={t(
+                  'aiAuthoring.briefPlaceholder',
+                  'Describe the initiative/task/decision in 3-8 bullet points...'
+                )}
                 className="w-full px-3 py-2.5 rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/50 dark:bg-navy-800/50 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/30 resize-none"
               />
               <button
@@ -205,7 +213,9 @@ export const AICardDraftModal: React.FC<AICardDraftModalProps> = ({
 
               {Object.entries(draft).map(([key, value]) => {
                 const label = FIELD_LABELS[key]
-                  ? (isPolish ? FIELD_LABELS[key].pl : FIELD_LABELS[key].en)
+                  ? isPolish
+                    ? FIELD_LABELS[key].pl
+                    : FIELD_LABELS[key].en
                   : key;
                 return (
                   <label

@@ -21,186 +21,328 @@
  */
 
 import { Request, Response, Router } from 'express';
-import { verifyToken, isAuthenticated } from '../middleware/auth.middleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.js';
+
+import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import {
-  createModel, getModel, listModels, updateModel, approveModel,
-  addEvent, updateEvent, deleteEvent, listEvents,
-  computeModel, persistComputeResult,
-  getOutputs, getValidations,
+  addEvent,
+  approveModel,
+  computeModel,
+  createModel,
+  deleteEvent,
+  getModel,
+  getOutputs,
+  getValidations,
+  listEvents,
+  listModels,
+  persistComputeResult,
+  updateEvent,
+  updateModel,
 } from '../services/financialModelingService.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 import { run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
-interface AuthRequest extends Request { user?: { id: string; organizationId: string }; }
+interface AuthRequest extends Request {
+  user?: { id: string; organizationId: string };
+}
 
 // ════════════════════════════════════════════════
 // Models CRUD
 // ════════════════════════════════════════════════
 
-router.post('/models', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const orgId = req.user?.organizationId!;
-  const userId = req.user?.id!;
-  const { name, description, currency, horizonMonths, startDate, granularity, scenario, assumptions, projectId, initiativeId } = req.body;
-  if (!name || !startDate) return res.status(400).json({ error: 'name and startDate required' });
+router.post(
+  '/models',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+    const {
+      name,
+      description,
+      currency,
+      horizonMonths,
+      startDate,
+      granularity,
+      scenario,
+      assumptions,
+      projectId,
+      initiativeId,
+    } = req.body;
+    if (!name || !startDate) return res.status(400).json({ error: 'name and startDate required' });
 
-  const id = await createModel({
-    organizationId: orgId, projectId, initiativeId,
-    name, description, currency, horizonMonths, startDate, granularity, scenario, assumptions,
-    createdBy: userId,
-  });
+    const id = await createModel({
+      organizationId: orgId,
+      projectId,
+      initiativeId,
+      name,
+      description,
+      currency,
+      horizonMonths,
+      startDate,
+      granularity,
+      scenario,
+      assumptions,
+      createdBy: userId,
+    });
 
-  logger.info(`[FinancialModeling] Model created: ${id} by ${userId}`);
-  res.status(201).json({ success: true, id });
-}));
+    logger.info(`[FinancialModeling] Model created: ${id} by ${userId}`);
+    res.status(201).json({ success: true, id });
+  })
+);
 
-router.get('/models', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const models = await listModels(req.user?.organizationId!);
-  res.json(models);
-}));
+router.get(
+  '/models',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const models = await listModels(orgId);
+    res.json(models);
+  })
+);
 
-router.get('/models/:id', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const model = await getModel(req.params.id);
-  if (!model) return res.status(404).json({ error: 'Model not found' });
+router.get(
+  '/models/:id',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const model = await getModel(req.params.id);
+    if (!model) return res.status(404).json({ error: 'Model not found' });
 
-  const events = await listEvents(req.params.id);
-  res.json({ ...model, events });
-}));
+    const events = await listEvents(req.params.id);
+    res.json({ ...model, events });
+  })
+);
 
-router.put('/models/:id', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const model = await getModel(req.params.id);
-  if (!model) return res.status(404).json({ error: 'Model not found' });
+router.put(
+  '/models/:id',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const model = await getModel(req.params.id);
+    if (!model) return res.status(404).json({ error: 'Model not found' });
 
-  await updateModel(req.params.id, req.body);
-  res.json({ success: true });
-}));
+    await updateModel(req.params.id, req.body);
+    res.json({ success: true });
+  })
+);
 
-router.delete('/models/:id', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const model = await getModel(req.params.id);
-  if (!model) return res.status(404).json({ error: 'Model not found' });
-  if (model.status === 'approved') return res.status(400).json({ error: 'Cannot delete approved model. Archive it instead.' });
+router.delete(
+  '/models/:id',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const model = await getModel(req.params.id);
+    if (!model) return res.status(404).json({ error: 'Model not found' });
+    if (model.status === 'approved')
+      return res.status(400).json({ error: 'Cannot delete approved model. Archive it instead.' });
 
-  await dbRun(`DELETE FROM financial_model_outputs WHERE model_id = ?`, [req.params.id]);
-  await dbRun(`DELETE FROM financial_model_validations WHERE model_id = ?`, [req.params.id]);
-  await dbRun(`DELETE FROM financial_model_events WHERE model_id = ?`, [req.params.id]);
-  await dbRun(`DELETE FROM financial_models WHERE id = ?`, [req.params.id]);
+    await dbRun(`DELETE FROM financial_model_outputs WHERE model_id = ?`, [req.params.id]);
+    await dbRun(`DELETE FROM financial_model_validations WHERE model_id = ?`, [req.params.id]);
+    await dbRun(`DELETE FROM financial_model_events WHERE model_id = ?`, [req.params.id]);
+    await dbRun(`DELETE FROM financial_models WHERE id = ?`, [req.params.id]);
 
-  res.json({ success: true, deleted: req.params.id });
-}));
+    res.json({ success: true, deleted: req.params.id });
+  })
+);
 
 // ════════════════════════════════════════════════
 // Compute & Workflow
 // ════════════════════════════════════════════════
 
-router.post('/models/:id/compute', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const model = await getModel(req.params.id);
-  if (!model) return res.status(404).json({ error: 'Model not found' });
+router.post(
+  '/models/:id/compute',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const model = await getModel(req.params.id);
+    if (!model) return res.status(404).json({ error: 'Model not found' });
 
-  try {
-    const result = await computeModel(req.params.id);
-    await persistComputeResult(req.params.id, result, model.scenario || 'base');
+    try {
+      const result = await computeModel(req.params.id);
+      await persistComputeResult(req.params.id, result, model.scenario || 'base');
 
-    res.json({
-      success: true,
-      overallStatus: result.overallStatus,
-      periodCount: result.periods.length,
-      validationSummary: {
-        total: result.validations.length,
-        pass: result.validations.filter(v => v.status === 'pass').length,
-        fail: result.validations.filter(v => v.status === 'fail').length,
-        warning: result.validations.filter(v => v.status === 'warning').length,
-      },
-    });
-  } catch (e: any) {
-    return res.status(500).json({ error: 'Computation failed', detail: e.message });
-  }
-}));
+      res.json({
+        success: true,
+        overallStatus: result.overallStatus,
+        periodCount: result.periods.length,
+        validationSummary: {
+          total: result.validations.length,
+          pass: result.validations.filter((v) => v.status === 'pass').length,
+          fail: result.validations.filter((v) => v.status === 'fail').length,
+          warning: result.validations.filter((v) => v.status === 'warning').length,
+        },
+      });
+    } catch (e: any) {
+      return res.status(500).json({ error: 'Computation failed', detail: e.message });
+    }
+  })
+);
 
-router.post('/models/:id/submit-review', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const model = await getModel(req.params.id);
-  if (!model) return res.status(404).json({ error: 'Model not found' });
-  if (model.status !== 'draft') return res.status(400).json({ error: 'Only draft models can be submitted for review' });
+router.post(
+  '/models/:id/submit-review',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const model = await getModel(req.params.id);
+    if (!model) return res.status(404).json({ error: 'Model not found' });
+    if (model.status !== 'draft')
+      return res.status(400).json({ error: 'Only draft models can be submitted for review' });
 
-  await updateModel(req.params.id, { status: 'review' });
-  res.json({ success: true, status: 'review' });
-}));
+    await updateModel(req.params.id, { status: 'review' });
+    res.json({ success: true, status: 'review' });
+  })
+);
 
-router.post('/models/:id/approve', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const result = await approveModel(req.params.id, req.user?.id!);
-  if (!result.success) {
-    return res.status(400).json({ error: result.error });
-  }
-  res.json({ success: true, status: 'approved' });
-}));
+router.post(
+  '/models/:id/approve',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const result = await approveModel(req.params.id, userId);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+    res.json({ success: true, status: 'approved' });
+  })
+);
 
 // ════════════════════════════════════════════════
 // Events CRUD
 // ════════════════════════════════════════════════
 
-router.post('/models/:id/events', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const model = await getModel(req.params.id);
-  if (!model) return res.status(404).json({ error: 'Model not found' });
+router.post(
+  '/models/:id/events',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const model = await getModel(req.params.id);
+    if (!model) return res.status(404).json({ error: 'Model not found' });
 
-  const { eventType, name, description, amount, periodStart, periodEnd, recurrence, growthRate, cfClassification, postingRules, parameters, sortOrder } = req.body;
-  if (!eventType || !name || amount === undefined || !periodStart || !cfClassification) {
-    return res.status(400).json({ error: 'eventType, name, amount, periodStart, cfClassification required' });
-  }
+    const {
+      eventType,
+      name,
+      description,
+      amount,
+      periodStart,
+      periodEnd,
+      recurrence,
+      growthRate,
+      cfClassification,
+      postingRules,
+      parameters,
+      sortOrder,
+    } = req.body;
+    if (!eventType || !name || amount === undefined || !periodStart || !cfClassification) {
+      return res
+        .status(400)
+        .json({ error: 'eventType, name, amount, periodStart, cfClassification required' });
+    }
 
-  const id = await addEvent({
-    modelId: req.params.id, eventType, name, description, amount, periodStart, periodEnd,
-    recurrence, growthRate, cfClassification, postingRules, parameters, sortOrder,
-    createdBy: req.user?.id,
-  });
+    const id = await addEvent({
+      modelId: req.params.id,
+      eventType,
+      name,
+      description,
+      amount,
+      periodStart,
+      periodEnd,
+      recurrence,
+      growthRate,
+      cfClassification,
+      postingRules,
+      parameters,
+      sortOrder,
+      createdBy: req.user?.id,
+    });
 
-  res.status(201).json({ success: true, id });
-}));
+    res.status(201).json({ success: true, id });
+  })
+);
 
-router.get('/models/:id/events', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const events = await listEvents(req.params.id);
-  res.json(events);
-}));
+router.get(
+  '/models/:id/events',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const events = await listEvents(req.params.id);
+    res.json(events);
+  })
+);
 
-router.put('/events/:eventId', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  await updateEvent(req.params.eventId, req.body);
-  res.json({ success: true });
-}));
+router.put(
+  '/events/:eventId',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await updateEvent(req.params.eventId, req.body);
+    res.json({ success: true });
+  })
+);
 
-router.delete('/events/:eventId', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  await deleteEvent(req.params.eventId);
-  res.json({ success: true });
-}));
+router.delete(
+  '/events/:eventId',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await deleteEvent(req.params.eventId);
+    res.json({ success: true });
+  })
+);
 
 // ════════════════════════════════════════════════
 // Outputs & Validations
 // ════════════════════════════════════════════════
 
-router.get('/models/:id/outputs', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const scenario = req.query.scenario as string | undefined;
-  const outputs = await getOutputs(req.params.id, scenario);
+router.get(
+  '/models/:id/outputs',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const scenario = req.query.scenario as string | undefined;
+    const outputs = await getOutputs(req.params.id, scenario);
 
-  // Group by period → statement type → lines
-  const grouped: Record<string, Record<string, Array<{ lineCode: string; lineName: string; value: number }>>> = {};
-  for (const row of outputs) {
-    if (!grouped[row.period_label]) grouped[row.period_label] = {};
-    if (!grouped[row.period_label][row.statement_type]) grouped[row.period_label][row.statement_type] = [];
-    grouped[row.period_label][row.statement_type].push({
-      lineCode: row.line_code, lineName: row.line_name, value: row.value,
-    });
-  }
+    // Group by period → statement type → lines
+    const grouped: Record<
+      string,
+      Record<string, Array<{ lineCode: string; lineName: string; value: number }>>
+    > = {};
+    for (const row of outputs) {
+      if (!grouped[row.period_label]) grouped[row.period_label] = {};
+      if (!grouped[row.period_label][row.statement_type])
+        grouped[row.period_label][row.statement_type] = [];
+      grouped[row.period_label][row.statement_type].push({
+        lineCode: row.line_code,
+        lineName: row.line_name,
+        value: row.value,
+      });
+    }
 
-  res.json({ raw: outputs, grouped });
-}));
+    res.json({ raw: outputs, grouped });
+  })
+);
 
-router.get('/models/:id/validations', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const validations = await getValidations(req.params.id);
-  const summary = {
-    total: validations.length,
-    pass: validations.filter((v: any) => v.status === 'pass').length,
-    fail: validations.filter((v: any) => v.status === 'fail').length,
-    warning: validations.filter((v: any) => v.status === 'warning').length,
-  };
-  res.json({ validations, summary });
-}));
+router.get(
+  '/models/:id/validations',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const validations = await getValidations(req.params.id);
+    const summary = {
+      total: validations.length,
+      pass: validations.filter((v: any) => v.status === 'pass').length,
+      fail: validations.filter((v: any) => v.status === 'fail').length,
+      warning: validations.filter((v: any) => v.status === 'warning').length,
+    };
+    res.json({ validations, summary });
+  })
+);
 
 export default router;

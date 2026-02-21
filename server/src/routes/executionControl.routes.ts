@@ -207,11 +207,7 @@ router.get(
     const warnings: TimelineWarning[] = [];
 
     for (const row of rows) {
-      if (
-        row.planned_end_date &&
-        new Date(row.planned_end_date) < now &&
-        row.status !== 'DONE'
-      ) {
+      if (row.planned_end_date && new Date(row.planned_end_date) < now && row.status !== 'DONE') {
         const days = Math.floor(
           (now.getTime() - new Date(row.planned_end_date).getTime()) / 86400000
         );
@@ -234,7 +230,8 @@ router.get(
           initiativeName: row.name,
           type: 'blocked',
           severity: blockedDays > 10 ? 'high' : 'medium',
-          message: row.blocked_reason || `Blocked${blockedDays > 0 ? ` for ${blockedDays} days` : ''}`,
+          message:
+            row.blocked_reason || `Blocked${blockedDays > 0 ? ` for ${blockedDays} days` : ''}`,
         });
       }
     }
@@ -255,14 +252,10 @@ router.get(
 const MitigationUpdateSchema = z.object({
   raidItemId: z.string().min(1),
   mitigationPlan: z.string().optional(),
-  responseStrategy: z
-    .enum(['AVOID', 'TRANSFER', 'MITIGATE', 'ACCEPT', 'ESCALATE'])
-    .optional(),
+  responseStrategy: z.enum(['AVOID', 'TRANSFER', 'MITIGATE', 'ACCEPT', 'ESCALATE']).optional(),
   mitigationOwnerId: z.string().optional(),
   mitigationDueDate: z.string().optional(),
-  mitigationStatus: z
-    .enum(['OPEN', 'IN_PROGRESS', 'MITIGATED', 'ACCEPTED', 'CLOSED'])
-    .optional(),
+  mitigationStatus: z.enum(['OPEN', 'IN_PROGRESS', 'MITIGATED', 'ACCEPTED', 'CLOSED']).optional(),
 });
 
 router.patch(
@@ -303,7 +296,7 @@ router.patch(
       return res.status(400).json({ error: 'No fields to update' });
     }
 
-    updates.push("updated_at = NOW()");
+    updates.push('updated_at = NOW()');
     params.push(req.params.id, orgId);
 
     await dbRun(

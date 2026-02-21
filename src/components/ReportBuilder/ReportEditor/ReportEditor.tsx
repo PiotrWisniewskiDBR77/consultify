@@ -29,8 +29,8 @@ import {
   RefreshCw,
   Save,
   Settings,
-  Shield,
   Share2,
+  Shield,
   Sparkles,
   Trash2,
   Type,
@@ -43,10 +43,10 @@ import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 
 import { Api } from '../../../services/api';
-import { QualityGatesPanel } from '../QualityGatesPanel';
-import { ReportAgentChat } from '../ReportAgentChat';
 import { SmartBlockRenderer } from '../blocks/SmartBlockRenderer';
 import { ExportSharePanel } from '../ExportSharePanel';
+import { QualityGatesPanel } from '../QualityGatesPanel';
+import { ReportAgentChat } from '../ReportAgentChat';
 import type {
   Report,
   ReportSection,

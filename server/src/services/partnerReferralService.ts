@@ -617,7 +617,9 @@ export async function createAttribution(params: CreateAttributionParams): Promis
     if (!Number.isFinite(resolvedCommissionRatePercent) || resolvedCommissionRatePercent <= 0) {
       const tierOrder = ['REGISTERED', 'BRONZE', 'SILVER', 'GOLD', 'PLATINUM'] as const;
       const rank = (t: unknown): number => {
-        const upper = String(t || '').trim().toUpperCase();
+        const upper = String(t || '')
+          .trim()
+          .toUpperCase();
         const idx = tierOrder.indexOf(upper as any);
         return idx >= 0 ? idx : 0;
       };
@@ -628,7 +630,10 @@ export async function createAttribution(params: CreateAttributionParams): Promis
         if (v === 'certified') return 'SILVER';
         return 'REGISTERED';
       };
-      const maxTier = (a: unknown, b: unknown): string => (rank(a) >= rank(b) ? String(a || 'REGISTERED').toUpperCase() : String(b || 'REGISTERED').toUpperCase());
+      const maxTier = (a: unknown, b: unknown): string =>
+        rank(a) >= rank(b)
+          ? String(a || 'REGISTERED').toUpperCase()
+          : String(b || 'REGISTERED').toUpperCase();
 
       const org = await DbPromise.get<any>(
         db,
@@ -638,7 +643,10 @@ export async function createAttribution(params: CreateAttributionParams): Promis
         [partnerOrgId]
       );
       const legacy = legacyToCanonical(org?.tier);
-      const effectiveTier = maxTier(maxTier(legacy, org?.tier_override), org?.certification_tier_floor);
+      const effectiveTier = maxTier(
+        maxTier(legacy, org?.tier_override),
+        org?.certification_tier_floor
+      );
 
       const rateRow = await DbPromise.get<{ rate: number }>(
         db,

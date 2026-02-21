@@ -172,9 +172,7 @@ export const CloudDataSettings: React.FC = () => {
       )}
 
       {loading ? (
-        <div className="text-center py-8 text-slate-400">
-          {t('common.loading', 'Loading...')}
-        </div>
+        <div className="text-center py-8 text-slate-400">{t('common.loading', 'Loading...')}</div>
       ) : sources.length === 0 ? (
         <div className="text-center py-8 text-slate-400 dark:text-slate-500">
           <Cloud size={32} className="mx-auto mb-2 opacity-50" />

@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 
 import { DemoLoadingOverlay } from '../components/demo/DemoLoadingOverlay';
-import { DocumentationSection } from '../components/Landing/DocumentationSection';
 import { DemoModeModal } from '../components/Landing/DemoModeModal';
+import { DocumentationSection } from '../components/Landing/DocumentationSection';
 import { EntryFooter } from '../components/Landing/EntryFooter';
 import { EntryTopBar } from '../components/Landing/EntryTopBar';
 import { HeroSection } from '../components/Landing/HeroSection';

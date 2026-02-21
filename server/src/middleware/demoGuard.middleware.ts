@@ -7,8 +7,8 @@
 
 import type { NextFunction, Request, Response } from 'express';
 
-import type { AuthRequest } from './auth.middleware.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
 // CONSTANTS
@@ -216,17 +216,25 @@ export const getDemoStats = async (): Promise<DemoStats> => {
         [DEMO_ORG_ID],
         { fallback: false }
       ),
-      dbGet<{ c: number }>(`SELECT COUNT(*) as c FROM tasks WHERE organization_id = ?`, [DEMO_ORG_ID], {
-        fallback: false,
-      }),
+      dbGet<{ c: number }>(
+        `SELECT COUNT(*) as c FROM tasks WHERE organization_id = ?`,
+        [DEMO_ORG_ID],
+        {
+          fallback: false,
+        }
+      ),
       dbGet<{ c: number }>(
         `SELECT COUNT(*) as c FROM decisions WHERE organization_id = ?`,
         [DEMO_ORG_ID],
         { fallback: false }
       ),
-      dbGet<{ c: number }>(`SELECT COUNT(*) as c FROM users WHERE organization_id = ?`, [DEMO_ORG_ID], {
-        fallback: false,
-      }),
+      dbGet<{ c: number }>(
+        `SELECT COUNT(*) as c FROM users WHERE organization_id = ?`,
+        [DEMO_ORG_ID],
+        {
+          fallback: false,
+        }
+      ),
     ]);
 
     return {

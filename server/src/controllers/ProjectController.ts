@@ -555,7 +555,8 @@ export class ProjectController {
 
       // Check admin permission (roles are normalized by auth middleware)
       const role = String(req.user?.role || '').toLowerCase();
-      const isAdmin = role === 'admin' || role === 'administrator' || role === 'owner' || role === 'superadmin';
+      const isAdmin =
+        role === 'admin' || role === 'administrator' || role === 'owner' || role === 'superadmin';
       if (!isAdmin) {
         res.status(403).json({
           error: 'Only admins can change project AI role',
@@ -630,7 +631,11 @@ export class ProjectController {
         RegulatoryModeGuard.__unavailable__ === true ||
         typeof RegulatoryModeGuard.getStatus !== 'function'
       ) {
-        res.status(503).json({ success: false, code: 'FEATURE_UNAVAILABLE', error: 'Regulatory mode is not available' });
+        res.status(503).json({
+          success: false,
+          code: 'FEATURE_UNAVAILABLE',
+          error: 'Regulatory mode is not available',
+        });
         return;
       }
       const status = await RegulatoryModeGuard.getStatus(id);
@@ -661,7 +666,8 @@ export class ProjectController {
 
       // Check admin permission (roles are normalized by auth middleware)
       const role = String(req.user?.role || '').toLowerCase();
-      const isAdmin = role === 'admin' || role === 'administrator' || role === 'owner' || role === 'superadmin';
+      const isAdmin =
+        role === 'admin' || role === 'administrator' || role === 'owner' || role === 'superadmin';
       if (!isAdmin) {
         res.status(403).json({
           error: 'Only admins can change Regulatory Mode settings',
@@ -686,7 +692,11 @@ export class ProjectController {
         typeof RegulatoryModeGuard.isEnabled !== 'function' ||
         typeof RegulatoryModeGuard.setEnabled !== 'function'
       ) {
-        res.status(503).json({ success: false, code: 'FEATURE_UNAVAILABLE', error: 'Regulatory mode is not available' });
+        res.status(503).json({
+          success: false,
+          code: 'FEATURE_UNAVAILABLE',
+          error: 'Regulatory mode is not available',
+        });
         return;
       }
 

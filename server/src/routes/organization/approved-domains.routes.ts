@@ -112,7 +112,9 @@ router.post(
     }
 
     const normalizedRole = (userRole || '').toLowerCase();
-    if (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(normalizedRole)) {
+    if (
+      !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(normalizedRole)
+    ) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
@@ -184,7 +186,9 @@ router.put(
     }
 
     const normalizedRole = (userRole || '').toLowerCase();
-    if (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(normalizedRole)) {
+    if (
+      !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(normalizedRole)
+    ) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
@@ -218,7 +222,9 @@ router.delete(
     }
 
     const normalizedRole = (userRole || '').toLowerCase();
-    if (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(normalizedRole)) {
+    if (
+      !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(normalizedRole)
+    ) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 

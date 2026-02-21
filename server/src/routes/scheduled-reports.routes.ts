@@ -538,17 +538,13 @@ router.get(
  * POST /api/scheduled-reports/process
  * Manually trigger processing of all due time-based schedules
  */
-router.post(
-  '/process',
-  authenticateToken,
-  async (req: any, res: Response, next: NextFunction) => {
-    try {
-      const result = await scheduledReportService.processScheduledReports();
-      res.json({ success: true, data: result });
-    } catch (error) {
-      next(error);
-    }
+router.post('/process', authenticateToken, async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const result = await scheduledReportService.processScheduledReports();
+    res.json({ success: true, data: result });
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 export default router;

@@ -6,6 +6,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -125,7 +126,16 @@ export function detectStatementType(text: string): DetectionResult {
   // Detect language
   const language = detectLanguage(lower);
 
-  return { statementType, confidence: Math.round(confidence * 100) / 100, periodStart, periodEnd, periodLabel, currency, scaling, language };
+  return {
+    statementType,
+    confidence: Math.round(confidence * 100) / 100,
+    periodStart,
+    periodEnd,
+    periodLabel,
+    currency,
+    scaling,
+    language,
+  };
 }
 
 function detectCurrency(text: string): string {
@@ -151,9 +161,15 @@ function detectScaling(text: string): DetectionResult['scaling'] {
   return 'units';
 }
 
-function detectPeriod(text: string): { periodStart: string | null; periodEnd: string | null; periodLabel: string | null } {
+function detectPeriod(text: string): {
+  periodStart: string | null;
+  periodEnd: string | null;
+  periodLabel: string | null;
+} {
   // Try "for the year ended YYYY-MM-DD" / "za rok obrotowy YYYY"
-  const yearMatch = text.match(/(?:for the (?:year|period) ended|za rok(?: obrotowy)?)\s+(\d{4}(?:[.\-/]\d{1,2}[.\-/]\d{1,2})?)/i);
+  const yearMatch = text.match(
+    /(?:for the (?:year|period) ended|za rok(?: obrotowy)?)\s+(\d{4}(?:[.\-/]\d{1,2}[.\-/]\d{1,2})?)/i
+  );
   if (yearMatch) {
     const raw = yearMatch[1];
     if (raw.length === 4) {
@@ -163,20 +179,40 @@ function detectPeriod(text: string): { periodStart: string | null; periodEnd: st
 
   // Try standalone 4-digit year near header
   const headerLines = text.substring(0, 2000);
-  const years = [...headerLines.matchAll(/\b(20[1-3]\d)\b/g)].map(m => parseInt(m[1]));
+  const years = [...headerLines.matchAll(/\b(20[1-3]\d)\b/g)].map((m) => parseInt(m[1]));
   if (years.length >= 1) {
     const latest = Math.max(...years);
-    return { periodStart: `${latest}-01-01`, periodEnd: `${latest}-12-31`, periodLabel: String(latest) };
+    return {
+      periodStart: `${latest}-01-01`,
+      periodEnd: `${latest}-12-31`,
+      periodLabel: String(latest),
+    };
   }
 
   return { periodStart: null, periodEnd: null, periodLabel: null };
 }
 
 function detectLanguage(text: string): DetectionResult['language'] {
-  const plMarkers = ['przychody', 'zysk', 'zobowiązania', 'aktywa', 'bilans', 'kapitał', 'amortyzacja'];
-  const enMarkers = ['revenue', 'profit', 'liabilities', 'assets', 'balance', 'equity', 'depreciation'];
+  const plMarkers = [
+    'przychody',
+    'zysk',
+    'zobowiązania',
+    'aktywa',
+    'bilans',
+    'kapitał',
+    'amortyzacja',
+  ];
+  const enMarkers = [
+    'revenue',
+    'profit',
+    'liabilities',
+    'assets',
+    'balance',
+    'equity',
+    'depreciation',
+  ];
   const deMarkers = ['umsatz', 'gewinn', 'verbindlichkeiten', 'vermögen', 'bilanz', 'eigenkapital'];
-  const countHits = (markers: string[]) => markers.filter(m => text.includes(m)).length;
+  const countHits = (markers: string[]) => markers.filter((m) => text.includes(m)).length;
   const pl = countHits(plMarkers);
   const en = countHits(enMarkers);
   const de = countHits(deMarkers);
@@ -201,7 +237,9 @@ export function extractFinancialLines(text: string, detectedType: string): Extra
     let s = raw.trim();
     const isNeg = s.startsWith('(') && s.endsWith(')');
     if (isNeg) s = s.slice(1, -1);
-    if (s.startsWith('-')) { s = s.slice(1); }
+    if (s.startsWith('-')) {
+      s = s.slice(1);
+    }
 
     // Detect separator style: "1,234.56" vs "1.234,56" vs "1 234,56"
     s = s.replace(/\s/g, '');
@@ -217,7 +255,7 @@ export function extractFinancialLines(text: string, detectedType: string): Extra
 
     const num = parseFloat(s);
     if (!Number.isFinite(num)) return null;
-    return (isNeg || raw.trim().startsWith('-')) ? -num : num;
+    return isNeg || raw.trim().startsWith('-') ? -num : num;
   };
 
   for (let i = 0; i < rawLines.length; i++) {
@@ -225,7 +263,7 @@ export function extractFinancialLines(text: string, detectedType: string): Extra
     if (!line) continue;
 
     // Pattern: "Label ... number" or "Label: number" with possible multi-column
-    const match = line.match(/^(.{3,80}?)\s{2,}([\d\s().,\-]+)$/);
+    const match = line.match(/^(.{3,80}?)\s{2,}([\d\s().,-]+)$/);
     if (!match) continue;
 
     const label = match[1].trim();
@@ -247,7 +285,9 @@ export function extractFinancialLines(text: string, detectedType: string): Extra
   }
 
   if (lines.length === 0) {
-    warnings.push('No structured financial lines detected. The PDF may require OCR or manual entry.');
+    warnings.push(
+      'No structured financial lines detected. The PDF may require OCR or manual entry.'
+    );
   }
 
   return { lines, rawTableCount, warnings };
@@ -258,15 +298,42 @@ export function extractFinancialLines(text: string, detectedType: string): Extra
 // ---------------------------------------------------------------------------
 
 const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
-  'fsl-pl-revenue': ['revenue', 'przychody', 'przychody ze sprzedaży', 'net revenue', 'sales', 'sprzedaż', 'total revenue'],
+  'fsl-pl-revenue': [
+    'revenue',
+    'przychody',
+    'przychody ze sprzedaży',
+    'net revenue',
+    'sales',
+    'sprzedaż',
+    'total revenue',
+  ],
   'fsl-pl-cogs': ['cost of goods', 'cogs', 'koszt sprzedanych', 'koszt własny', 'cost of sales'],
   'fsl-pl-gross': ['gross profit', 'gross margin', 'zysk brutto', 'marża brutto'],
-  'fsl-pl-opex': ['operating expenses', 'sg&a', 'koszty operacyjne', 'koszty ogólne', 'opex', 'selling general'],
+  'fsl-pl-opex': [
+    'operating expenses',
+    'sg&a',
+    'koszty operacyjne',
+    'koszty ogólne',
+    'opex',
+    'selling general',
+  ],
   'fsl-pl-ebitda': ['ebitda'],
-  'fsl-pl-ebit': ['ebit', 'operating profit', 'operating income', 'zysk operacyjny', 'zysk z działalności operacyjnej'],
+  'fsl-pl-ebit': [
+    'ebit',
+    'operating profit',
+    'operating income',
+    'zysk operacyjny',
+    'zysk z działalności operacyjnej',
+  ],
   'fsl-pl-net': ['net income', 'net profit', 'zysk netto', 'zysk/strata netto', 'net earnings'],
   'fsl-pl-interest': ['interest expense', 'koszty odsetkowe', 'koszty finansowe', 'finance costs'],
-  'fsl-pl-depreciation': ['depreciation', 'amortization', 'amortyzacja', 'd&a', 'depreciation and amortization'],
+  'fsl-pl-depreciation': [
+    'depreciation',
+    'amortization',
+    'amortyzacja',
+    'd&a',
+    'depreciation and amortization',
+  ],
   'fsl-pl-tax': ['income tax', 'tax expense', 'podatek dochodowy', 'podatek'],
   'fsl-bs-total-assets': ['total assets', 'aktywa ogółem', 'aktywa razem'],
   'fsl-bs-current-assets': ['current assets', 'aktywa obrotowe', 'aktywa bieżące'],
@@ -277,11 +344,30 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   'fsl-bs-wc': ['working capital', 'kapitał obrotowy'],
   'fsl-bs-fixed': ['fixed assets', 'property plant', 'aktywa trwałe', 'ppe', 'non-current assets'],
   'fsl-bs-total-liabilities': ['total liabilities', 'zobowiązania ogółem', 'zobowiązania razem'],
-  'fsl-bs-current-liabilities': ['current liabilities', 'zobowiązania krótkoterminowe', 'zobowiązania bieżące'],
-  'fsl-bs-long-term-debt': ['long-term debt', 'long term liabilities', 'zobowiązania długoterminowe', 'non-current liabilities'],
+  'fsl-bs-current-liabilities': [
+    'current liabilities',
+    'zobowiązania krótkoterminowe',
+    'zobowiązania bieżące',
+  ],
+  'fsl-bs-long-term-debt': [
+    'long-term debt',
+    'long term liabilities',
+    'zobowiązania długoterminowe',
+    'non-current liabilities',
+  ],
   'fsl-bs-equity': ['equity', 'shareholders equity', 'kapitał własny', 'total equity'],
-  'fsl-cf-operating': ['operating cash flow', 'cash from operations', 'przepływy operacyjne', 'cfo'],
-  'fsl-cf-capex': ['capital expenditures', 'capex', 'nakłady inwestycyjne', 'purchases of property'],
+  'fsl-cf-operating': [
+    'operating cash flow',
+    'cash from operations',
+    'przepływy operacyjne',
+    'cfo',
+  ],
+  'fsl-cf-capex': [
+    'capital expenditures',
+    'capex',
+    'nakłady inwestycyjne',
+    'purchases of property',
+  ],
   'fsl-cf-fcf': ['free cash flow', 'fcf', 'wolne przepływy'],
   'fsl-cf-financing': ['financing cash flow', 'cash from financing', 'przepływy z finansowania'],
   'fsl-cf-investing': ['investing cash flow', 'cash from investing', 'przepływy z inwestycji'],
@@ -296,14 +382,14 @@ export async function autoMapLines(
     []
   )) as CanonicalLine[];
 
-  return extractedLines.map(line => {
+  return extractedLines.map((line) => {
     const label = line.originalLabel.toLowerCase();
     let bestMatch: { id: string; name: string; score: number } | null = null;
 
     for (const [canonId, hints] of Object.entries(CANONICAL_MAPPING_HINTS)) {
       for (const hint of hints) {
         if (label.includes(hint)) {
-          const canonical = canonicalLines.find(c => c.id === canonId);
+          const canonical = canonicalLines.find((c) => c.id === canonId);
           const score = hint.length / label.length;
           if (canonical && (!bestMatch || score > bestMatch.score)) {
             bestMatch = { id: canonical.id, name: canonical.line_name, score };
@@ -335,7 +421,7 @@ export function validateStatement(
   const messages: ValidationMessage[] = [];
 
   const getValue = (lineId: string): number | null => {
-    const found = lines.find(l => l.canonicalLineId === lineId);
+    const found = lines.find((l) => l.canonicalLineId === lineId);
     return found ? found.value : null;
   };
 
@@ -355,10 +441,19 @@ export function validateStatement(
           details: `Assets: ${totalAssets}, Liabilities + Equity: ${totalLiabilities + equity}, Diff: ${diff.toFixed(2)}`,
         });
       } else {
-        messages.push({ type: 'info', code: 'BS_EQUATION_OK', message: 'Balance sheet equation verified' });
+        messages.push({
+          type: 'info',
+          code: 'BS_EQUATION_OK',
+          message: 'Balance sheet equation verified',
+        });
       }
     } else {
-      messages.push({ type: 'warning', code: 'BS_EQUATION_INCOMPLETE', message: 'Cannot verify balance sheet equation — missing Total Assets, Total Liabilities, or Equity' });
+      messages.push({
+        type: 'warning',
+        code: 'BS_EQUATION_INCOMPLETE',
+        message:
+          'Cannot verify balance sheet equation — missing Total Assets, Total Liabilities, or Equity',
+      });
     }
   }
 
@@ -380,14 +475,18 @@ export function validateStatement(
     }
   }
 
-  const mappedCount = lines.filter(l => l.canonicalLineId).length;
+  const mappedCount = lines.filter((l) => l.canonicalLineId).length;
   const totalCount = lines.length;
   if (totalCount > 0 && mappedCount / totalCount < 0.5) {
-    messages.push({ type: 'warning', code: 'LOW_MAPPING_COVERAGE', message: `Only ${Math.round((mappedCount / totalCount) * 100)}% of lines are mapped to canonical categories` });
+    messages.push({
+      type: 'warning',
+      code: 'LOW_MAPPING_COVERAGE',
+      message: `Only ${Math.round((mappedCount / totalCount) * 100)}% of lines are mapped to canonical categories`,
+    });
   }
 
-  const hasErrors = messages.some(m => m.type === 'error');
-  const hasWarnings = messages.some(m => m.type === 'warning');
+  const hasErrors = messages.some((m) => m.type === 'error');
+  const hasWarnings = messages.some((m) => m.type === 'warning');
   const status = hasErrors ? 'needs_review' : hasWarnings ? 'warnings' : 'pass';
 
   return { status, messages };
@@ -415,23 +514,50 @@ export async function createStatement(params: {
   await dbRun(
     `INSERT INTO financial_statements (id, organization_id, statement_type, period_start, period_end, period_label, currency, scaling, source_file_name, source_file_path, parse_method, overall_confidence, created_by)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, params.organizationId, params.statementType, params.periodStart, params.periodEnd,
-     params.periodLabel || null, params.currency || 'PLN', params.scaling || 'units',
-     params.sourceFileName || null, params.sourceFilePath || null,
-     params.parseMethod || 'text_extraction', params.overallConfidence || 0, params.createdBy]
+    [
+      id,
+      params.organizationId,
+      params.statementType,
+      params.periodStart,
+      params.periodEnd,
+      params.periodLabel || null,
+      params.currency || 'PLN',
+      params.scaling || 'units',
+      params.sourceFileName || null,
+      params.sourceFilePath || null,
+      params.parseMethod || 'text_extraction',
+      params.overallConfidence || 0,
+      params.createdBy,
+    ]
   );
   return id;
 }
 
 export async function saveStatementValues(
   statementId: string,
-  values: Array<{ canonicalLineId: string | null; originalLabel: string; value: number; confidence: number; sourceRow?: number; mappingStatus?: string }>
+  values: Array<{
+    canonicalLineId: string | null;
+    originalLabel: string;
+    value: number;
+    confidence: number;
+    sourceRow?: number;
+    mappingStatus?: string;
+  }>
 ): Promise<void> {
   for (const v of values) {
     await dbRun(
       `INSERT INTO financial_statement_values (id, statement_id, canonical_line_id, original_label, value, confidence, source_row, mapping_status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [uuidv4(), statementId, v.canonicalLineId || null, v.originalLabel, v.value, v.confidence, v.sourceRow || null, v.mappingStatus || 'auto']
+      [
+        uuidv4(),
+        statementId,
+        v.canonicalLineId || null,
+        v.originalLabel,
+        v.value,
+        v.confidence,
+        v.sourceRow || null,
+        v.mappingStatus || 'auto',
+      ]
     );
   }
 }
@@ -444,14 +570,16 @@ export async function updateStatementStatus(
 ): Promise<void> {
   await dbRun(
     `UPDATE financial_statements SET status = ?, validation_status = COALESCE(?, validation_status), validation_messages = COALESCE(?, validation_messages), updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-    [status, validationStatus || null, validationMessages ? JSON.stringify(validationMessages) : null, statementId]
+    [
+      status,
+      validationStatus || null,
+      validationMessages ? JSON.stringify(validationMessages) : null,
+      statementId,
+    ]
   );
 }
 
-export async function confirmStatement(
-  statementId: string,
-  userId: string
-): Promise<void> {
+export async function confirmStatement(statementId: string, userId: string): Promise<void> {
   await dbRun(
     `UPDATE financial_statements SET status = 'confirmed', confirmed_by = ?, confirmed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
     [userId, statementId]

@@ -258,7 +258,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
   const handlePause = async (id: string) => {
     setActionLoading(id);
     try {
-      await Api.post(`/api/scheduled-reports/${id}/pause`);
+      await Api.post(`/api/scheduled-reports/${id}/pause`, {});
       setSchedules((prev) => prev.map((s) => (s.id === id ? { ...s, isActive: false } : s)));
       trackFunnelEvent('report_schedule_paused', { scheduleId: id });
       toast.success(tp('pausing'));
@@ -272,7 +272,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
   const handleResume = async (id: string) => {
     setActionLoading(id);
     try {
-      await Api.post(`/api/scheduled-reports/${id}/resume`);
+      await Api.post(`/api/scheduled-reports/${id}/resume`, {});
       await loadSchedules();
       toast.success(tp('resuming'));
     } catch {
@@ -300,10 +300,11 @@ export const ReportingAutomationWorkspace: React.FC = () => {
   const handleRunNow = async (id: string) => {
     setActionLoading(`run-${id}`);
     try {
-      const res = await Api.post(`/api/scheduled-reports/${id}/execute`);
+      const res = await Api.post(`/api/scheduled-reports/${id}/execute`, {});
+      const resData = (res as any)?.data || res;
       trackFunnelEvent('report_schedule_run_completed', {
         scheduleId: id,
-        status: res.data?.data?.status,
+        status: resData?.status,
       });
       toast.success(tp('runStarted'));
       loadExecutions(id);
@@ -354,8 +355,8 @@ export const ReportingAutomationWorkspace: React.FC = () => {
   const handleEvaluateTriggers = async () => {
     setActionLoading('evaluate');
     try {
-      const res = await Api.post('/api/scheduled-reports/evaluate-triggers');
-      const data = res.data?.data;
+      const res = await Api.post('/api/scheduled-reports/evaluate-triggers', {});
+      const data = (res as any)?.data || res;
       trackFunnelEvent('report_schedule_trigger_fired', {
         evaluated: data?.evaluated,
         fired: data?.fired,
@@ -404,7 +405,9 @@ export const ReportingAutomationWorkspace: React.FC = () => {
       pending: 'bg-amber-600 text-white',
     };
     return (
-      <span className={`px-2 py-0.5 text-xs font-medium rounded ${colors[status || ''] || 'bg-slate-600 text-slate-300'}`}>
+      <span
+        className={`px-2 py-0.5 text-xs font-medium rounded ${colors[status || ''] || 'bg-slate-600 text-slate-300'}`}
+      >
         {status ? tp(`execution${status.charAt(0).toUpperCase() + status.slice(1)}`) : tp('active')}
       </span>
     );
@@ -693,10 +696,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                         <p className="text-xs text-slate-500">
                           {tp('throttleHours')}: {rule.throttleHours}h · Fires: {rule.fireCount}
                           {rule.conditions && Object.keys(rule.conditions).length > 0 && (
-                            <span>
-                              {' '}
-                              · {JSON.stringify(rule.conditions)}
-                            </span>
+                            <span> · {JSON.stringify(rule.conditions)}</span>
                           )}
                         </p>
                       </div>
@@ -704,7 +704,9 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <span
                         className={`px-2 py-0.5 text-[10px] font-medium rounded ${
-                          rule.isActive ? 'bg-emerald-600 text-white' : 'bg-slate-700 text-slate-300'
+                          rule.isActive
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-slate-700 text-slate-300'
                         }`}
                       >
                         {rule.isActive ? tp('active') : tp('paused')}

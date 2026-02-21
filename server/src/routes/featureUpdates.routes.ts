@@ -10,8 +10,8 @@ import crypto from 'crypto';
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import notificationService from '../services/notificationService.js';
 import EmailService from '../services/emailService.js';
+import notificationService from '../services/notificationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -35,7 +35,7 @@ type UpdateRow = {
 
 const nowIso = () => new Date().toISOString();
 
-const safeJson = <T,>(value: unknown, fallback: T): T => {
+const safeJson = <T>(value: unknown, fallback: T): T => {
   try {
     if (typeof value === 'string') return JSON.parse(value) as T;
     return fallback;
@@ -405,11 +405,20 @@ router.put(
       fallback: false,
     });
     if (!row) return res.status(404).json({ error: 'Not found' });
-    if (row.status !== 'draft') return res.status(400).json({ error: 'Only draft updates can be edited' });
+    if (row.status !== 'draft')
+      return res.status(400).json({ error: 'Only draft updates can be edited' });
 
     await dbRun(
       `UPDATE feature_updates SET title = ?, body_md = ?, tags = ?, importance = ?, action_payload = ?, updated_at = ? WHERE id = ?`,
-      [title || row.title, bodyMd || row.body_md, JSON.stringify(tags), importance, JSON.stringify(actionPayload || {}), nowIso(), updateId],
+      [
+        title || row.title,
+        bodyMd || row.body_md,
+        JSON.stringify(tags),
+        importance,
+        JSON.stringify(actionPayload || {}),
+        nowIso(),
+        updateId,
+      ],
       { fallback: false }
     );
 
@@ -428,11 +437,16 @@ router.post(
     const orgId = (req.user as any)?.organization_id || (req.user as any)?.organizationId || null;
     const actorId = req.user?.id || null;
 
-    const update = await dbGet<UpdateRow>(`SELECT * FROM feature_updates WHERE id = ?`, [updateId], {
-      fallback: false,
-    });
+    const update = await dbGet<UpdateRow>(
+      `SELECT * FROM feature_updates WHERE id = ?`,
+      [updateId],
+      {
+        fallback: false,
+      }
+    );
     if (!update) return res.status(404).json({ error: 'Not found' });
-    if (update.status !== 'draft') return res.status(400).json({ error: 'Only draft updates can be published' });
+    if (update.status !== 'draft')
+      return res.status(400).json({ error: 'Only draft updates can be published' });
 
     // Throttling (email only): max N per 7 days per org
     const MAX_EMAIL_PER_WEEK = 3;
@@ -468,7 +482,9 @@ router.post(
     const notifType = 'FEATURE_UPDATE';
     const actionPayload = safeJson<Record<string, unknown>>(update.action_payload, {});
     const actionHint =
-      typeof (actionPayload as any)?.label === 'string' ? String((actionPayload as any).label) : null;
+      typeof (actionPayload as any)?.label === 'string'
+        ? String((actionPayload as any).label)
+        : null;
 
     for (const u of users) {
       try {
@@ -477,9 +493,7 @@ router.post(
           organizationId: orgId,
           type: notifType,
           title: update.title,
-          message: actionHint
-            ? `${update.title} — ${actionHint}`
-            : update.title,
+          message: actionHint ? `${update.title} — ${actionHint}` : update.title,
           severity: update.importance === 'high' ? 'WARNING' : 'INFO',
           priority: update.importance === 'high' ? 'high' : 'normal',
           metadata: {
@@ -499,7 +513,8 @@ router.post(
 
     // Email distribution (optional): only if SMTP configured + not too noisy + non-low importance
     const emailConfigured = await isSmtpConfigured();
-    const shouldEmail = emailConfigured && recentCount < MAX_EMAIL_PER_WEEK && update.importance !== 'low';
+    const shouldEmail =
+      emailConfigured && recentCount < MAX_EMAIL_PER_WEEK && update.importance !== 'low';
     if (shouldEmail) {
       const subject = `[Consultinity] ${update.title}`;
       const html =
@@ -522,4 +537,3 @@ router.post(
 );
 
 export default router;
-

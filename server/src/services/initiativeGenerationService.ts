@@ -153,11 +153,20 @@ When asked to write in Polish, use professional business Polish.`;
 
     const llm = await getLLMServiceInstance();
     if (!llm) {
-      throw new AppError(
-        'AI initiative generation is not available (LLM not configured)',
-        503,
-        'FEATURE_UNAVAILABLE'
-      );
+      const name = context.initiativeName || 'Initiative';
+      const lang = String(context.language || 'en').toLowerCase();
+      const content =
+        lang === 'pl' || lang === 'polish'
+          ? `Uzupełnij sekcję "${sectionKey}" dla inicjatywy "${name}". (Placeholder — moduł AI/LLM nie jest skonfigurowany lub niedostępny.)`
+          : `Fill in section "${sectionKey}" for initiative "${name}". (Placeholder — AI/LLM is not configured or unavailable.)`;
+
+      return {
+        content,
+        isJson: false,
+        parsedContent: undefined,
+        tokensUsed: 0,
+        model: 'placeholder',
+      };
     }
 
     try {
@@ -218,17 +227,31 @@ When asked to write in Polish, use professional business Polish.`;
   ): Promise<{ key: string; reason: string; priority: 'high' | 'medium' | 'low' }[]> {
     const llm = await getLLMServiceInstance();
     if (!llm) {
-      throw new AppError(
-        'AI section suggestions are not available (LLM not configured)',
-        503,
-        'FEATURE_UNAVAILABLE'
-      );
+      return [
+        {
+          key: 'overview',
+          reason: 'Core summary for stakeholders and context',
+          priority: 'high',
+        },
+        {
+          key: 'tasks',
+          reason: 'Concrete execution plan and ownership',
+          priority: 'medium',
+        },
+        {
+          key: 'decisions',
+          reason: 'Key decisions and approvals required to proceed',
+          priority: 'medium',
+        },
+      ];
     }
 
     // Get all available section types
     let allSections: any[] = [];
     try {
-      allSections = await initiativeSectionTypeService.getAllSectionTypes(organizationId || undefined);
+      allSections = await initiativeSectionTypeService.getAllSectionTypes(
+        organizationId || undefined
+      );
     } catch (err: unknown) {
       const msg = (err as Error)?.message || String(err);
       if (msg.includes('no such table') || msg.includes('SQLITE_ERROR')) {
@@ -279,7 +302,9 @@ Return valid JSON array only.`;
       const msg = (err as Error)?.message || String(err);
       logger.error('[InitiativeGeneration] suggestSections failed:', msg);
       if (err instanceof AppError) throw err;
-      throw new AppError('AI section suggestions failed', 503, 'FEATURE_UNAVAILABLE', { message: msg });
+      throw new AppError('AI section suggestions failed', 503, 'FEATURE_UNAVAILABLE', {
+        message: msg,
+      });
     }
   }
 

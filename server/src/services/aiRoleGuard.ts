@@ -94,7 +94,9 @@ const AIRoleGuard = {
 
     const type = String(actionType || '').toUpperCase();
     const requiresDrafts =
-      type.startsWith('CREATE_DRAFT_') || type === 'GENERATE_REPORT' || type === 'PREPARE_DECISION_SUMMARY';
+      type.startsWith('CREATE_DRAFT_') ||
+      type === 'GENERATE_REPORT' ||
+      type === 'PREPARE_DECISION_SUMMARY';
     const requiresExecute = type === 'SUGGEST_ROADMAP_CHANGE';
 
     if (requiresExecute && !caps.canExecuteActions) {

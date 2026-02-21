@@ -189,13 +189,26 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   }, []);
 
   // Use global store values
-  const { deepResearch, webSearch, showReasoning, responseStyle, textToSpeech, ttsRate, ttsVoice, marketResearch, coThinkerMode } =
-    aiConfig as any;
+  const {
+    deepResearch,
+    webSearch,
+    showReasoning,
+    responseStyle,
+    textToSpeech,
+    ttsRate,
+    ttsVoice,
+    marketResearch,
+    coThinkerMode,
+  } = aiConfig as any;
 
   // Count active modes for badge
-  const activeModeCount = [deepResearch, webSearch, showReasoning, textToSpeech, marketResearch].filter(
-    Boolean
-  ).length;
+  const activeModeCount = [
+    deepResearch,
+    webSearch,
+    showReasoning,
+    textToSpeech,
+    marketResearch,
+  ].filter(Boolean).length;
 
   // AI Modes - using global store values
   const AI_MODES: ToolMode[] = [
@@ -381,11 +394,27 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           </div>
           <div className="px-3 pb-2 flex flex-wrap gap-1.5">
             {[
-              { id: 'multi_consultant', label: t('chat.coThinker.multiConsultant', 'Multi-Consultant Panel'), icon: '👥' },
+              {
+                id: 'multi_consultant',
+                label: t('chat.coThinker.multiConsultant', 'Multi-Consultant Panel'),
+                icon: '👥',
+              },
               { id: 'idea_maker', label: t('chat.coThinker.ideaMaker', 'Idea Maker'), icon: '💡' },
-              { id: 'competitive_analyst', label: t('chat.coThinker.competitiveAnalyst', 'Competitive Analyst'), icon: '🎯' },
-              { id: 'risk_challenger', label: t('chat.coThinker.riskChallenger', 'Risk Challenger'), icon: '⚠️' },
-              { id: 'executive_editor', label: t('chat.coThinker.executiveEditor', 'Executive Editor'), icon: '📋' },
+              {
+                id: 'competitive_analyst',
+                label: t('chat.coThinker.competitiveAnalyst', 'Competitive Analyst'),
+                icon: '🎯',
+              },
+              {
+                id: 'risk_challenger',
+                label: t('chat.coThinker.riskChallenger', 'Risk Challenger'),
+                icon: '⚠️',
+              },
+              {
+                id: 'executive_editor',
+                label: t('chat.coThinker.executiveEditor', 'Executive Editor'),
+                icon: '📋',
+              },
             ].map((mode) => {
               const isActive = coThinkerMode === mode.id;
               return (
@@ -395,9 +424,14 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                     const newMode = isActive ? null : mode.id;
                     setAIConfig({ coThinkerMode: newMode } as any);
                     if (newMode) {
-                      toast.success(t('chat.coThinker.activated', 'Co-Thinker: {{mode}}', { mode: mode.label }), { duration: 2000, icon: mode.icon });
+                      toast.success(
+                        t('chat.coThinker.activated', 'Co-Thinker: {{mode}}', { mode: mode.label }),
+                        { duration: 2000, icon: mode.icon }
+                      );
                     } else {
-                      toast.success(t('chat.coThinker.deactivated', 'Co-Thinker disabled'), { duration: 1500 });
+                      toast.success(t('chat.coThinker.deactivated', 'Co-Thinker disabled'), {
+                        duration: 1500,
+                      });
                     }
                     onToolSelect(`cothinker:${newMode || 'off'}`);
                   }}

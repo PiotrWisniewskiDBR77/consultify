@@ -197,7 +197,8 @@ export async function detectDelaySignals(
         if (plannedStart < now) {
           const daysLate = Math.floor((now.getTime() - plannedStart.getTime()) / 86400000);
           if (daysLate >= thresholds.warningDays) {
-            const severity: DelaySeverity = daysLate >= thresholds.criticalDays ? 'CRITICAL' : 'WARNING';
+            const severity: DelaySeverity =
+              daysLate >= thresholds.criticalDays ? 'CRITICAL' : 'WARNING';
             const whySlip = await analyzeWhySlip(init, organizationId);
             signals.push({
               id: `late-start-${init.id}`,
@@ -222,7 +223,8 @@ export async function detectDelaySignals(
       const endDate = init.planned_end_date || init.sla_deadline;
       if (endDate && new Date(endDate) < now && init.status !== 'DONE') {
         const daysOverdue = Math.floor((now.getTime() - new Date(endDate).getTime()) / 86400000);
-        const severity: DelaySeverity = daysOverdue >= thresholds.criticalDays ? 'CRITICAL' : 'WARNING';
+        const severity: DelaySeverity =
+          daysOverdue >= thresholds.criticalDays ? 'CRITICAL' : 'WARNING';
         const whySlip = await analyzeWhySlip(init, organizationId);
         signals.push({
           id: `overdue-${init.id}`,
@@ -249,7 +251,14 @@ export async function detectDelaySignals(
         if (daysUntilEnd > 0 && daysUntilEnd <= thresholds.criticalDays) {
           const progress = init.progress || 0;
           const totalDuration = init.planned_start_date
-            ? Math.max(1, Math.floor((new Date(init.planned_end_date).getTime() - new Date(init.planned_start_date).getTime()) / 86400000))
+            ? Math.max(
+                1,
+                Math.floor(
+                  (new Date(init.planned_end_date).getTime() -
+                    new Date(init.planned_start_date).getTime()) /
+                    86400000
+                )
+              )
             : 30;
           const elapsed = totalDuration - daysUntilEnd;
           const expectedProgress = Math.min(100, Math.round((elapsed / totalDuration) * 100));
@@ -339,7 +348,9 @@ export async function detectDelaySignals(
         daysDeviation: daysOverdue,
         plannedDate: dueDate,
         actualOrCurrent: null,
-        whySlipReasons: task.assignee_id ? [] : [{ reason: 'NO_OWNER', detail: 'Task has no assignee' }],
+        whySlipReasons: task.assignee_id
+          ? []
+          : [{ reason: 'NO_OWNER', detail: 'Task has no assignee' }],
         alertSentAt: null,
         isDismissed: false,
         createdAt: now.toISOString(),
@@ -383,9 +394,17 @@ export async function persistDelaySignals(
            why_slip_reasons = EXCLUDED.why_slip_reasons,
            updated_at = NOW()`,
         [
-          sig.id, organizationId, sig.entityType, sig.entityId, sig.entityName,
-          sig.deviationType, sig.severity, sig.daysDeviation, sig.plannedDate,
-          sig.actualOrCurrent, JSON.stringify(sig.whySlipReasons),
+          sig.id,
+          organizationId,
+          sig.entityType,
+          sig.entityId,
+          sig.entityName,
+          sig.deviationType,
+          sig.severity,
+          sig.daysDeviation,
+          sig.plannedDate,
+          sig.actualOrCurrent,
+          JSON.stringify(sig.whySlipReasons),
         ]
       );
       persisted++;
@@ -447,7 +466,8 @@ export async function getPersistedDelaySignals(
     params.push(options.entityType);
   }
 
-  query += ' ORDER BY CASE severity WHEN \'CRITICAL\' THEN 1 WHEN \'WARNING\' THEN 2 END, days_deviation DESC';
+  query +=
+    " ORDER BY CASE severity WHEN 'CRITICAL' THEN 1 WHEN 'WARNING' THEN 2 END, days_deviation DESC";
   query += ` LIMIT ?`;
   params.push(options?.limit || 50);
 
@@ -477,9 +497,10 @@ export async function getPersistedDelaySignals(
     daysDeviation: r.days_deviation,
     plannedDate: r.planned_date,
     actualOrCurrent: r.actual_or_current,
-    whySlipReasons: typeof r.why_slip_reasons === 'string'
-      ? JSON.parse(r.why_slip_reasons)
-      : r.why_slip_reasons || [],
+    whySlipReasons:
+      typeof r.why_slip_reasons === 'string'
+        ? JSON.parse(r.why_slip_reasons)
+        : r.why_slip_reasons || [],
     alertSentAt: r.alert_sent_at,
     isDismissed: r.is_dismissed,
     createdAt: r.created_at,

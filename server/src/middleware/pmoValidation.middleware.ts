@@ -255,12 +255,7 @@ export const logStatusChange = (entityType: string) => {
 
     (res.json as any) = async (data: unknown) => {
       // Only log if successful and status changed, and we have a valid org context
-      if (
-        res.statusCode < 400 &&
-        req.previousStatus &&
-        req.body.status &&
-        req.organizationId
-      ) {
+      if (res.statusCode < 400 && req.previousStatus && req.body.status && req.organizationId) {
         const logSql = `INSERT INTO activity_logs 
                     (id, organization_id, user_id, action, entity_type, entity_id, old_value, new_value, created_at)
                     VALUES (?, ?, ?, 'status_changed', ?, ?, ?, ?, CURRENT_TIMESTAMP)`;

@@ -76,7 +76,8 @@ router.get(
     const orgId = req.user?.organizationId ?? '';
     const alerts = await sentimentSvc.getAlerts(orgId, {
       initiativeId: req.query.initiativeId as string | undefined,
-      acknowledged: req.query.acknowledged !== undefined ? req.query.acknowledged === 'true' : undefined,
+      acknowledged:
+        req.query.acknowledged !== undefined ? req.query.acknowledged === 'true' : undefined,
     });
     res.json({ data: alerts });
   })

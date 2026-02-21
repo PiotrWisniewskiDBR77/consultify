@@ -56,14 +56,14 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
     [published]
   );
 
-  const completed = useMemo(
-    () => published.filter((p) => p.status === 'COMPLETED'),
-    [published]
-  );
+  const completed = useMemo(() => published.filter((p) => p.status === 'COMPLETED'), [published]);
 
   const totalTime = useMemo(() => {
     if (!selected?.steps?.length) return 0;
-    return selected.steps.reduce((acc: number, s: any) => acc + Number(s.expectedTimeMinutes || 0), 0);
+    return selected.steps.reduce(
+      (acc: number, s: any) => acc + Number(s.expectedTimeMinutes || 0),
+      0
+    );
   }, [selected]);
 
   const openPlaybook = async (p: Playbook) => {
@@ -101,7 +101,10 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
   const handleNext = async () => {
     if (!selected?.steps?.length || !currentStep) return;
 
-    await logEvent(selected.key, 'STEP_COMPLETED', { stepId: currentStep.id, stepOrder: currentStep.stepOrder });
+    await logEvent(selected.key, 'STEP_COMPLETED', {
+      stepId: currentStep.id,
+      stepOrder: currentStep.stepOrder,
+    });
 
     if (stepIndex < selected.steps.length - 1) {
       setStepIndex((v) => v + 1);
@@ -162,7 +165,9 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
           {totalTime > 0 && (
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 pt-1">
               <Clock size={14} className="text-purple-500" />
-              <span>{t('help.onboarding.totalTime', 'Expected time')}: {formatMinutes(totalTime)}</span>
+              <span>
+                {t('help.onboarding.totalTime', 'Expected time')}: {formatMinutes(totalTime)}
+              </span>
             </div>
           )}
         </div>
@@ -171,7 +176,9 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
           {/* Steps map (resume + status) */}
           <div className="space-y-1 mb-4">
             {selected.steps.map((s: any, idx: number) => {
-              const st = s.status || (idx < stepIndex ? 'DONE' : idx === stepIndex ? 'IN_PROGRESS' : 'NOT_STARTED');
+              const st =
+                s.status ||
+                (idx < stepIndex ? 'DONE' : idx === stepIndex ? 'IN_PROGRESS' : 'NOT_STARTED');
               return (
                 <button
                   key={s.id || idx}
@@ -187,7 +194,10 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
                   ) : st === 'IN_PROGRESS' ? (
                     <Circle size={16} className="text-purple-500 fill-current flex-shrink-0" />
                   ) : (
-                    <Circle size={16} className="text-slate-300 dark:text-slate-600 flex-shrink-0" />
+                    <Circle
+                      size={16}
+                      className="text-slate-300 dark:text-slate-600 flex-shrink-0"
+                    />
                   )}
                   <span className="text-xs text-slate-700 dark:text-slate-200 truncate">
                     {String(t(s.title, s.id || String(idx + 1)))}
@@ -238,7 +248,8 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
                 <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                   <Clock size={14} className="text-slate-400" />
                   <span>
-                    {t('help.onboarding.expectedTime', 'Expected time')}: {formatMinutes(Number(currentStep.expectedTimeMinutes))}
+                    {t('help.onboarding.expectedTime', 'Expected time')}:{' '}
+                    {formatMinutes(Number(currentStep.expectedTimeMinutes))}
                   </span>
                 </div>
               )}
@@ -281,10 +292,19 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
   const Card: React.FC<{ p: Playbook }> = ({ p }) => {
     const status =
       p.status === 'COMPLETED'
-        ? { labelKey: 'help.onboarding.status.completed', cls: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' }
+        ? {
+            labelKey: 'help.onboarding.status.completed',
+            cls: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+          }
         : p.status === 'IN_PROGRESS'
-          ? { labelKey: 'help.onboarding.status.inProgress', cls: 'bg-amber-500/10 text-amber-700 dark:text-amber-300' }
-          : { labelKey: 'help.onboarding.status.available', cls: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300' };
+          ? {
+              labelKey: 'help.onboarding.status.inProgress',
+              cls: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+            }
+          : {
+              labelKey: 'help.onboarding.status.available',
+              cls: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
+            };
 
     return (
       <div className="group relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
@@ -298,7 +318,9 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
                 <div className="text-sm font-bold text-slate-900 dark:text-white truncate">
                   {t(p.title, p.key)}
                 </div>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${status.cls}`}>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${status.cls}`}
+                >
                   {t(status.labelKey, p.status)}
                 </span>
               </div>

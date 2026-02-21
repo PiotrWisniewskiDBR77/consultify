@@ -63,10 +63,22 @@ interface ReportAgentChatProps {
 // ── Quick Actions ──────────────────────────────────────────────
 
 const QUICK_ACTIONS = [
-  { label: 'Suggest structure', message: 'Suggest a best practice structure for this report', icon: <Sparkles size={13} /> },
-  { label: 'Quality check', message: 'Check what\'s missing in this report', icon: <CheckCircle2 size={13} /> },
+  {
+    label: 'Suggest structure',
+    message: 'Suggest a best practice structure for this report',
+    icon: <Sparkles size={13} />,
+  },
+  {
+    label: 'Quality check',
+    message: "Check what's missing in this report",
+    icon: <CheckCircle2 size={13} />,
+  },
   { label: 'Add KPI section', message: 'Add a KPI Dashboard section', icon: <Zap size={13} /> },
-  { label: 'Add Next Steps', message: 'Add a Next Steps & Actions section', icon: <ArrowRight size={13} /> },
+  {
+    label: 'Add Next Steps',
+    message: 'Add a Next Steps & Actions section',
+    icon: <ArrowRight size={13} />,
+  },
 ];
 
 // ── Component ──────────────────────────────────────────────────
@@ -93,12 +105,16 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
     if (!isOpen || !reportId) return;
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/report-builder/${reportId}/agent/messages`, { headers: getHeaders() });
+        const res = await fetch(`${API_URL}/report-builder/${reportId}/agent/messages`, {
+          headers: getHeaders(),
+        });
         if (res.ok) {
           const data = await res.json();
           setMessages(data.messages || []);
         }
-      } catch { /* */ }
+      } catch {
+        /* */
+      }
     })();
   }, [isOpen, reportId]);
 
@@ -130,7 +146,10 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
       if (res.ok) {
         const data = await res.json();
         setMessages((prev) => [...prev.filter((m) => m.id !== tempUserMsg.id), tempUserMsg, data]);
-        trackFunnelEvent('report_agent_message_sent', { reportId, actionType: data.structuredAction?.type });
+        trackFunnelEvent('report_agent_message_sent', {
+          reportId,
+          actionType: data.structuredAction?.type,
+        });
       }
     } catch {
       toast.error('Failed to send message');
@@ -148,9 +167,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
         headers: getHeaders(),
       });
       if (res.ok) {
-        setMessages((prev) =>
-          prev.map((m) => (m.id === messageId ? { ...m, applied: true } : m))
-        );
+        setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, applied: true } : m)));
         toast.success(t('reports.agent.changesApplied', 'Changes applied'));
         onStructureChanged?.();
       }
@@ -187,8 +204,12 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
             <Bot size={18} className="text-violet-400" />
           </div>
           <div>
-            <div className="text-sm font-medium text-white">{t('reports.agent.title', 'Report Agent')}</div>
-            <div className="text-xs text-slate-500">{t('reports.agent.subtitle', 'Edit structure via chat')}</div>
+            <div className="text-sm font-medium text-white">
+              {t('reports.agent.title', 'Report Agent')}
+            </div>
+            <div className="text-xs text-slate-500">
+              {t('reports.agent.subtitle', 'Edit structure via chat')}
+            </div>
           </div>
         </div>
         <button
@@ -204,8 +225,15 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
         {messages.length === 0 && (
           <div className="text-center py-8">
             <Bot className="mx-auto text-slate-600 mb-3" size={32} />
-            <p className="text-sm text-slate-400 mb-1">{t('reports.agent.welcome', "I'm your report assistant")}</p>
-            <p className="text-xs text-slate-500">{t('reports.agent.welcomeDesc', 'Ask me to modify your report structure, add sections, or check quality.')}</p>
+            <p className="text-sm text-slate-400 mb-1">
+              {t('reports.agent.welcome', "I'm your report assistant")}
+            </p>
+            <p className="text-xs text-slate-500">
+              {t(
+                'reports.agent.welcomeDesc',
+                'Ask me to modify your report structure, add sections, or check quality.'
+              )}
+            </p>
 
             <div className="mt-4 space-y-1.5">
               {QUICK_ACTIONS.map((qa) => (
@@ -242,44 +270,60 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
               </div>
 
               {/* Diff preview + Apply button */}
-              {msg.role === 'assistant' && msg.diffPreview && msg.diffPreview.changes.length > 0 && (
-                <div className="mt-2 rounded-lg bg-navy-800/60 border border-navy-700 p-2.5">
-                  <div className="text-xs text-slate-500 mb-1.5 font-medium">{t('reports.agent.proposedChanges', 'Proposed changes:')}</div>
-                  <div className="space-y-1">
-                    {msg.diffPreview.changes.map((c, i) => (
-                      <div key={i} className="flex items-center gap-2 text-xs">
-                        <span className={`px-1 py-0.5 rounded text-[10px] font-medium ${
-                          c.type === 'add' ? 'bg-emerald-500/10 text-emerald-400' :
-                          c.type === 'remove' ? 'bg-red-500/10 text-red-400' :
-                          c.type === 'modify' ? 'bg-blue-500/10 text-blue-400' :
-                          'bg-amber-500/10 text-amber-400'
-                        }`}>
-                          {c.type}
-                        </span>
-                        <span className="text-slate-400 truncate">{c.after || c.before || c.sectionKey}</span>
-                      </div>
-                    ))}
-                  </div>
-                  {!msg.applied ? (
-                    <button
-                      onClick={() => handleApply(msg.id)}
-                      disabled={applying === msg.id}
-                      className="mt-2 w-full px-3 py-1.5 text-xs bg-violet-600 hover:bg-violet-500 text-white rounded-lg flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
-                    >
-                      {applying === msg.id ? (
-                        <><Loader2 size={12} className="animate-spin" /> {t('reports.agent.applying', 'Applying…')}</>
-                      ) : (
-                        <><Check size={12} /> {t('reports.agent.applyChanges', 'Apply Changes')}</>
-                      )}
-                    </button>
-                  ) : (
-                    <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-400">
-                      <CheckCircle2 size={12} />
-                      {t('reports.agent.applied', 'Applied')}
+              {msg.role === 'assistant' &&
+                msg.diffPreview &&
+                msg.diffPreview.changes.length > 0 && (
+                  <div className="mt-2 rounded-lg bg-navy-800/60 border border-navy-700 p-2.5">
+                    <div className="text-xs text-slate-500 mb-1.5 font-medium">
+                      {t('reports.agent.proposedChanges', 'Proposed changes:')}
                     </div>
-                  )}
-                </div>
-              )}
+                    <div className="space-y-1">
+                      {msg.diffPreview.changes.map((c, i) => (
+                        <div key={i} className="flex items-center gap-2 text-xs">
+                          <span
+                            className={`px-1 py-0.5 rounded text-[10px] font-medium ${
+                              c.type === 'add'
+                                ? 'bg-emerald-500/10 text-emerald-400'
+                                : c.type === 'remove'
+                                  ? 'bg-red-500/10 text-red-400'
+                                  : c.type === 'modify'
+                                    ? 'bg-blue-500/10 text-blue-400'
+                                    : 'bg-amber-500/10 text-amber-400'
+                            }`}
+                          >
+                            {c.type}
+                          </span>
+                          <span className="text-slate-400 truncate">
+                            {c.after || c.before || c.sectionKey}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    {!msg.applied ? (
+                      <button
+                        onClick={() => handleApply(msg.id)}
+                        disabled={applying === msg.id}
+                        className="mt-2 w-full px-3 py-1.5 text-xs bg-violet-600 hover:bg-violet-500 text-white rounded-lg flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+                      >
+                        {applying === msg.id ? (
+                          <>
+                            <Loader2 size={12} className="animate-spin" />{' '}
+                            {t('reports.agent.applying', 'Applying…')}
+                          </>
+                        ) : (
+                          <>
+                            <Check size={12} /> {t('reports.agent.applyChanges', 'Apply Changes')}
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-400">
+                        <CheckCircle2 size={12} />
+                        {t('reports.agent.applied', 'Applied')}
+                      </div>
+                    )}
+                  </div>
+                )}
             </div>
             {msg.role === 'user' && (
               <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center shrink-0 mt-1">

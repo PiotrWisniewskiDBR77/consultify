@@ -1,6 +1,6 @@
 /**
  * Safe i18n helpers
- * 
+ *
  * These helpers ensure i18n.language is always defined, preventing
  * "Cannot read property 'split' of undefined" errors when i18n
  * hasn't been initialized yet.

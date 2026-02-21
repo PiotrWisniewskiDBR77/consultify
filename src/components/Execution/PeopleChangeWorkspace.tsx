@@ -149,7 +149,9 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
       const reqData = await reqRes.json();
       setCapabilities(capData.data ?? []);
       setRequirements(reqData.data ?? []);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setCapLoading(false);
   }, [qs]);
 
@@ -159,7 +161,9 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
       const data = await res.json();
       setCandidates(data.data ?? []);
       trackFunnelEvent('capability_match_viewed');
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [qs]);
 
   const fetchSentiment = useCallback(async () => {
@@ -173,7 +177,9 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
       const alertData = await alertRes.json();
       setPulseSummary(pulseData.data ?? null);
       setAlerts(alertData.data ?? []);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setSentLoading(false);
   }, [qs]);
 
@@ -194,14 +200,20 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
       setPlans(planData.data ?? []);
       setOverduePlans(overdueData.data ?? []);
       setSendLog(logData.data ?? []);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setCommLoading(false);
   }, [qs]);
 
   useEffect(() => {
-    if (activeSubTab === 'capability') { fetchCapabilities(); }
-    else if (activeSubTab === 'sentiment') { fetchSentiment(); }
-    else if (activeSubTab === 'communication') { fetchComm(); }
+    if (activeSubTab === 'capability') {
+      fetchCapabilities();
+    } else if (activeSubTab === 'sentiment') {
+      fetchSentiment();
+    } else if (activeSubTab === 'communication') {
+      fetchComm();
+    }
   }, [activeSubTab, fetchCapabilities, fetchSentiment, fetchComm]);
 
   /* ---------------------------------------------------------------- */
@@ -227,7 +239,9 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
       setPulseRating(0);
       setPulseComment('');
       fetchSentiment();
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setSubmittingPulse(false);
   };
 
@@ -236,7 +250,9 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
       await fetch(`/api/change-sentiment/alerts/${alertId}/acknowledge`, { method: 'POST' });
       trackFunnelEvent('change_resistance_alert_clicked');
       fetchSentiment();
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   /* ---------------------------------------------------------------- */
@@ -244,9 +260,17 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
   /* ---------------------------------------------------------------- */
 
   const subTabs: { id: SubTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'capability', label: t('capability.title', 'Capabilities'), icon: <BookOpen size={14} /> },
+    {
+      id: 'capability',
+      label: t('capability.title', 'Capabilities'),
+      icon: <BookOpen size={14} />,
+    },
     { id: 'sentiment', label: t('change.title', 'Change Pulse'), icon: <Heart size={14} /> },
-    { id: 'communication', label: t('stakeholder.title', 'Communication'), icon: <Mail size={14} /> },
+    {
+      id: 'communication',
+      label: t('stakeholder.title', 'Communication'),
+      icon: <Mail size={14} />,
+    },
   ];
 
   /* ---------------------------------------------------------------- */
@@ -261,22 +285,38 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
           <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
             {t('capability.catalog', 'Capability Catalog')}
           </h3>
-          <span className="text-xs text-slate-500">{capabilities.length} {t('capability.items', 'capabilities')}</span>
+          <span className="text-xs text-slate-500">
+            {capabilities.length} {t('capability.items', 'capabilities')}
+          </span>
         </div>
         {capLoading ? (
-          <div className="flex items-center justify-center py-8"><Loader2 className="animate-spin" size={20} /></div>
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="animate-spin" size={20} />
+          </div>
         ) : capabilities.length === 0 ? (
-          <p className="text-sm text-slate-500 py-4 text-center">{t('capability.empty', 'No capabilities defined yet.')}</p>
+          <p className="text-sm text-slate-500 py-4 text-center">
+            {t('capability.empty', 'No capabilities defined yet.')}
+          </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {capabilities.map((cap) => (
-              <div key={cap.id} className="border border-slate-200 dark:border-navy-700 rounded-lg p-3">
-                <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{cap.name}</div>
+              <div
+                key={cap.id}
+                className="border border-slate-200 dark:border-navy-700 rounded-lg p-3"
+              >
+                <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  {cap.name}
+                </div>
                 <div className="text-xs text-slate-500 mt-1">{cap.domain}</div>
                 {cap.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2">
                     {cap.tags.slice(0, 3).map((tag) => (
-                      <span key={tag} className="px-1.5 py-0.5 text-[10px] rounded bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400">{tag}</span>
+                      <span
+                        key={tag}
+                        className="px-1.5 py-0.5 text-[10px] rounded bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400"
+                      >
+                        {tag}
+                      </span>
                     ))}
                   </div>
                 )}
@@ -295,15 +335,24 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
           <span className="text-xs text-slate-500">{requirements.length}</span>
         </div>
         {requirements.length === 0 ? (
-          <p className="text-sm text-slate-500 text-center py-3">{t('capability.noRequirements', 'No requirements set.')}</p>
+          <p className="text-sm text-slate-500 text-center py-3">
+            {t('capability.noRequirements', 'No requirements set.')}
+          </p>
         ) : (
           <div className="space-y-2">
             {requirements.map((r) => {
               const cap = capabilities.find((c) => c.id === r.capabilityId);
               return (
-                <div key={r.id} className="flex items-center justify-between border-b border-slate-100 dark:border-navy-800 pb-2">
-                  <span className="text-sm text-slate-800 dark:text-slate-200">{cap?.name ?? r.capabilityId}</span>
-                  <span className="text-xs text-slate-500">{t('capability.minLevel', 'Min Level')}: {r.minLevel} · {r.priority}</span>
+                <div
+                  key={r.id}
+                  className="flex items-center justify-between border-b border-slate-100 dark:border-navy-800 pb-2"
+                >
+                  <span className="text-sm text-slate-800 dark:text-slate-200">
+                    {cap?.name ?? r.capabilityId}
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {t('capability.minLevel', 'Min Level')}: {r.minLevel} · {r.priority}
+                  </span>
                 </div>
               );
             })}
@@ -326,18 +375,29 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
           </button>
         </div>
         {candidates.length === 0 ? (
-          <p className="text-sm text-slate-500 text-center py-3">{t('capability.noCandidates', 'Run matching to see candidates.')}</p>
+          <p className="text-sm text-slate-500 text-center py-3">
+            {t('capability.noCandidates', 'Run matching to see candidates.')}
+          </p>
         ) : (
           <div className="space-y-2">
             {candidates.map((c) => (
-              <div key={c.userId} className="flex items-center justify-between border-b border-slate-100 dark:border-navy-800 pb-2">
+              <div
+                key={c.userId}
+                className="flex items-center justify-between border-b border-slate-100 dark:border-navy-800 pb-2"
+              >
                 <div>
-                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{c.userId}</span>
+                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                    {c.userId}
+                  </span>
                   {c.gaps.length > 0 && (
-                    <span className="ml-2 text-xs text-amber-500">{c.gaps.length} {t('capability.gaps', 'gaps')}</span>
+                    <span className="ml-2 text-xs text-amber-500">
+                      {c.gaps.length} {t('capability.gaps', 'gaps')}
+                    </span>
                   )}
                 </div>
-                <div className={`text-sm font-semibold ${c.matchScore >= 80 ? 'text-green-600' : c.matchScore >= 50 ? 'text-amber-600' : 'text-red-500'}`}>
+                <div
+                  className={`text-sm font-semibold ${c.matchScore >= 80 ? 'text-green-600' : c.matchScore >= 50 ? 'text-amber-600' : 'text-red-500'}`}
+                >
                   {c.matchScore}%
                 </div>
               </div>
@@ -357,28 +417,37 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
       {/* Alerts */}
       {alerts.filter((a) => !a.isAcknowledged).length > 0 && (
         <div className="space-y-2">
-          {alerts.filter((a) => !a.isAcknowledged).map((alert) => (
-            <div key={alert.id} className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3 flex items-start gap-3">
-              <AlertTriangle className="text-red-500 shrink-0 mt-0.5" size={16} />
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-red-800 dark:text-red-300">{alert.message}</div>
-                {alert.recommendations.length > 0 && (
-                  <ul className="mt-1 space-y-0.5">
-                    {alert.recommendations.map((r, i) => (
-                      <li key={i} className="text-xs text-red-600 dark:text-red-400">• {r}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => handleAcknowledgeAlert(alert.id)}
-                className="text-xs text-red-600 hover:text-red-800 font-medium shrink-0"
+          {alerts
+            .filter((a) => !a.isAcknowledged)
+            .map((alert) => (
+              <div
+                key={alert.id}
+                className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3 flex items-start gap-3"
               >
-                {t('change.acknowledge', 'Acknowledge')}
-              </button>
-            </div>
-          ))}
+                <AlertTriangle className="text-red-500 shrink-0 mt-0.5" size={16} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-red-800 dark:text-red-300">
+                    {alert.message}
+                  </div>
+                  {alert.recommendations.length > 0 && (
+                    <ul className="mt-1 space-y-0.5">
+                      {alert.recommendations.map((r, i) => (
+                        <li key={i} className="text-xs text-red-600 dark:text-red-400">
+                          • {r}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleAcknowledgeAlert(alert.id)}
+                  className="text-xs text-red-600 hover:text-red-800 font-medium shrink-0"
+                >
+                  {t('change.acknowledge', 'Acknowledge')}
+                </button>
+              </div>
+            ))}
         </div>
       )}
 
@@ -398,10 +467,16 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
         </div>
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
           <div className="flex items-center justify-center gap-1">
-            {pulseSummary?.trend === 'improving' && <TrendingUp className="text-green-500" size={18} />}
-            {pulseSummary?.trend === 'declining' && <TrendingDown className="text-red-500" size={18} />}
+            {pulseSummary?.trend === 'improving' && (
+              <TrendingUp className="text-green-500" size={18} />
+            )}
+            {pulseSummary?.trend === 'declining' && (
+              <TrendingDown className="text-red-500" size={18} />
+            )}
             <span className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              {pulseSummary?.trend ? t(`change.trend.${pulseSummary.trend}`, pulseSummary.trend) : '–'}
+              {pulseSummary?.trend
+                ? t(`change.trend.${pulseSummary.trend}`, pulseSummary.trend)
+                : '–'}
             </span>
           </div>
           <div className="text-xs text-slate-500 mt-1">{t('change.trend.label', 'Trend')}</div>
@@ -424,7 +499,9 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
               <Star size={24} fill={pulseRating >= n ? 'currentColor' : 'none'} />
             </button>
           ))}
-          <span className="ml-2 text-sm text-slate-500">{pulseRating > 0 ? `${pulseRating}/5` : ''}</span>
+          <span className="ml-2 text-sm text-slate-500">
+            {pulseRating > 0 ? `${pulseRating}/5` : ''}
+          </span>
         </div>
         <textarea
           value={pulseComment}
@@ -453,7 +530,12 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
           </h3>
           <div className="space-y-2">
             {pulseSummary.recentComments.map((c, i) => (
-              <div key={i} className="text-sm text-slate-700 dark:text-slate-300 border-l-2 border-slate-200 dark:border-navy-600 pl-3">{c}</div>
+              <div
+                key={i}
+                className="text-sm text-slate-700 dark:text-slate-300 border-l-2 border-slate-200 dark:border-navy-600 pl-3"
+              >
+                {c}
+              </div>
             ))}
           </div>
         </div>
@@ -479,7 +561,8 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
           <div className="space-y-1">
             {overduePlans.map((p) => (
               <div key={p.id} className="text-xs text-amber-700 dark:text-amber-400">
-                {p.description ?? p.cadence} — {t('stakeholder.dueSince', 'due since')} {p.nextDueAt ? new Date(p.nextDueAt).toLocaleDateString() : '?'}
+                {p.description ?? p.cadence} — {t('stakeholder.dueSince', 'due since')}{' '}
+                {p.nextDueAt ? new Date(p.nextDueAt).toLocaleDateString() : '?'}
               </div>
             ))}
           </div>
@@ -496,15 +579,28 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
           <span className="text-xs text-slate-500">{segments.length}</span>
         </div>
         {commLoading ? (
-          <div className="flex items-center justify-center py-6"><Loader2 className="animate-spin" size={20} /></div>
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="animate-spin" size={20} />
+          </div>
         ) : segments.length === 0 ? (
-          <p className="text-sm text-slate-500 text-center py-3">{t('stakeholder.noSegments', 'No segments defined.')}</p>
+          <p className="text-sm text-slate-500 text-center py-3">
+            {t('stakeholder.noSegments', 'No segments defined.')}
+          </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {segments.map((s) => (
-              <div key={s.id} className="border border-slate-200 dark:border-navy-700 rounded-lg p-3">
-                <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{s.name}</div>
-                <div className="text-xs text-slate-500 mt-0.5">{s.segmentType ?? 'general'} · {Array.isArray(s.membersJson) ? s.membersJson.length : 0} {t('stakeholder.members', 'members')}</div>
+              <div
+                key={s.id}
+                className="border border-slate-200 dark:border-navy-700 rounded-lg p-3"
+              >
+                <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  {s.name}
+                </div>
+                <div className="text-xs text-slate-500 mt-0.5">
+                  {s.segmentType ?? 'general'} ·{' '}
+                  {Array.isArray(s.membersJson) ? s.membersJson.length : 0}{' '}
+                  {t('stakeholder.members', 'members')}
+                </div>
               </div>
             ))}
           </div>
@@ -517,20 +613,29 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
           {t('stakeholder.plans', 'Communication Plans')}
         </h3>
         {plans.length === 0 ? (
-          <p className="text-sm text-slate-500 text-center py-3">{t('stakeholder.noPlans', 'No communication plans yet.')}</p>
+          <p className="text-sm text-slate-500 text-center py-3">
+            {t('stakeholder.noPlans', 'No communication plans yet.')}
+          </p>
         ) : (
           <div className="space-y-2">
             {plans.map((p) => (
-              <div key={p.id} className="flex items-center justify-between border-b border-slate-100 dark:border-navy-800 pb-2">
+              <div
+                key={p.id}
+                className="flex items-center justify-between border-b border-slate-100 dark:border-navy-800 pb-2"
+              >
                 <div>
-                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{p.description ?? t('stakeholder.untitled', 'Untitled plan')}</span>
+                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                    {p.description ?? t('stakeholder.untitled', 'Untitled plan')}
+                  </span>
                   <span className="ml-2 text-xs text-slate-500">{p.cadence}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {p.isActive ? (
                     <CheckCircle2 size={14} className="text-green-500" />
                   ) : (
-                    <span className="text-xs text-slate-400">{t('stakeholder.inactive', 'Inactive')}</span>
+                    <span className="text-xs text-slate-400">
+                      {t('stakeholder.inactive', 'Inactive')}
+                    </span>
                   )}
                 </div>
               </div>
@@ -546,13 +651,23 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
           {t('stakeholder.sendLog', 'Send Log')}
         </h3>
         {sendLog.length === 0 ? (
-          <p className="text-sm text-slate-500 text-center py-3">{t('stakeholder.noSends', 'No communications sent yet.')}</p>
+          <p className="text-sm text-slate-500 text-center py-3">
+            {t('stakeholder.noSends', 'No communications sent yet.')}
+          </p>
         ) : (
           <div className="space-y-2">
             {sendLog.map((entry) => (
-              <div key={entry.id} className="flex items-center justify-between text-sm border-b border-slate-100 dark:border-navy-800 pb-2">
-                <span className="text-slate-800 dark:text-slate-200">{entry.channel ?? 'email'} · {entry.recipientCount} {t('stakeholder.recipients', 'recipients')}</span>
-                <span className="text-xs text-slate-500">{new Date(entry.sentAt).toLocaleDateString()}</span>
+              <div
+                key={entry.id}
+                className="flex items-center justify-between text-sm border-b border-slate-100 dark:border-navy-800 pb-2"
+              >
+                <span className="text-slate-800 dark:text-slate-200">
+                  {entry.channel ?? 'email'} · {entry.recipientCount}{' '}
+                  {t('stakeholder.recipients', 'recipients')}
+                </span>
+                <span className="text-xs text-slate-500">
+                  {new Date(entry.sentAt).toLocaleDateString()}
+                </span>
               </div>
             ))}
           </div>

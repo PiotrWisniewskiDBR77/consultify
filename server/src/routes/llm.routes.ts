@@ -7,10 +7,10 @@ import { Router } from 'express';
 
 import { LLMController } from '../controllers/ai/LLMController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
+import circuitBreaker from '../services/ai/circuitBreaker.js';
 import llmConfigService from '../services/ai/llmConfigService.js';
 import { llmService } from '../services/ai/llmService.js';
-import circuitBreaker from '../services/ai/circuitBreaker.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
 
@@ -26,7 +26,9 @@ function summarizeProviderHealth(providers: any[]) {
   const configured = (providers || []).filter((p) => (p as any)?.isConfigured !== false).length;
   const healthy = (providers || []).filter((p) => (p as any)?.healthStatus === 'healthy').length;
   const degraded = (providers || []).filter((p) => (p as any)?.healthStatus === 'degraded').length;
-  const unhealthy = (providers || []).filter((p) => (p as any)?.healthStatus === 'unhealthy').length;
+  const unhealthy = (providers || []).filter(
+    (p) => (p as any)?.healthStatus === 'unhealthy'
+  ).length;
   return { total, configured, healthy, degraded, unhealthy };
 }
 
@@ -140,7 +142,11 @@ async function buildStatusSnapshot(options?: { timeoutMs?: number }) {
     timestamp: new Date().toISOString(),
     providers: enrichedProviders,
     defaultProvider: defaultProvider
-      ? { provider: defaultProvider.provider, model: defaultProvider.model_id, name: defaultProvider.name }
+      ? {
+          provider: defaultProvider.provider,
+          model: defaultProvider.model_id,
+          name: defaultProvider.name,
+        }
       : null,
     fallbackChains,
     circuitBreakers,
@@ -162,7 +168,9 @@ router.get(
   '/status',
   asyncHandler(async (req, res) => {
     const timeoutMsRaw = Number((req.query.timeoutMs as string) || 5000);
-    const timeoutMs = Number.isFinite(timeoutMsRaw) ? Math.min(20000, Math.max(300, timeoutMsRaw)) : 5000;
+    const timeoutMs = Number.isFinite(timeoutMsRaw)
+      ? Math.min(20000, Math.max(300, timeoutMsRaw))
+      : 5000;
     const snapshot = await buildStatusSnapshot({ timeoutMs });
     return res.json(snapshot);
   })
@@ -188,9 +196,13 @@ router.post(
   '/status/test/:provider',
   asyncHandler(async (req, res) => {
     const providerName = String(req.params.provider || '').toLowerCase();
-    if (!providerName) return res.status(400).json({ success: false, error: 'Provider is required' });
+    if (!providerName)
+      return res.status(400).json({ success: false, error: 'Provider is required' });
     const cfg = await llmConfigService.getProviderConfig(providerName);
-    if (!cfg) return res.status(404).json({ success: false, reachable: false, error: 'Provider not configured' });
+    if (!cfg)
+      return res
+        .status(404)
+        .json({ success: false, reachable: false, error: 'Provider not configured' });
     const startedAt = Date.now();
     const result = (await llmService.testConnection({
       provider: providerName,
@@ -219,7 +231,9 @@ router.get(
     const organizationId = String(req.params.organizationId || '');
     if (!organizationId) return res.status(400).json({ error: 'organizationId is required' });
     const providers = await llmConfigService.getOrganizationProviders(organizationId);
-    const enabled = (providers || []).filter((p: any) => p.is_enabled_for_org !== false && p.is_active);
+    const enabled = (providers || []).filter(
+      (p: any) => p.is_enabled_for_org !== false && p.is_active
+    );
     const tiers: Record<string, any[]> = {};
     for (const p of enabled) {
       const tier = String(p.tier || 'STANDARD').toUpperCase();

@@ -58,4 +58,3 @@ const NotificationOutboxService = {
 };
 
 export default NotificationOutboxService;
-

@@ -30,7 +30,10 @@ const ERROR_CODE_CTA_MAP: Record<string, { labelKey: string; href: string }> = {
   DEMO_READ_ONLY: { labelKey: 'access.cta.startTrial', href: '/auth?mode=register' },
   TRIAL_EXPIRED: { labelKey: 'access.cta.upgradeNow', href: '/settings?tab=billing' },
   AI_LIMIT_REACHED: { labelKey: 'access.cta.upgradePlan', href: '/settings?tab=billing' },
-  AI_TOKEN_BUDGET_EXCEEDED: { labelKey: 'access.cta.addPaymentMethod', href: '/settings?tab=billing' },
+  AI_TOKEN_BUDGET_EXCEEDED: {
+    labelKey: 'access.cta.addPaymentMethod',
+    href: '/settings?tab=billing',
+  },
   INSUFFICIENT_TOKENS: { labelKey: 'access.cta.addPaymentMethod', href: '/settings?tab=billing' },
   PROJECT_LIMIT_REACHED: { labelKey: 'access.cta.upgradePlan', href: '/settings?tab=billing' },
   INITIATIVE_LIMIT_REACHED: { labelKey: 'access.cta.upgradePlan', href: '/settings?tab=billing' },
@@ -57,7 +60,8 @@ export const AccessBlockedModal: React.FC = () => {
         : t('access.blocked.default'));
 
     const ctaConfig = ERROR_CODE_CTA_MAP[code];
-    const cta: AccessBlockedCTA | undefined = detail.cta ||
+    const cta: AccessBlockedCTA | undefined =
+      detail.cta ||
       (ctaConfig
         ? { label: t(ctaConfig.labelKey), labelKey: ctaConfig.labelKey, href: ctaConfig.href }
         : undefined);

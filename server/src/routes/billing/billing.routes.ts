@@ -27,6 +27,7 @@ import logger from '../../utils/Logger.js';
 import {
   BillingStatsQuerySchema,
   CancelSubscriptionRequestSchema,
+  ChangePlanRequestSchema,
   CreateCreditNoteRequestSchema,
   CreateInvoiceRequestSchema,
   CreatePlanRequestSchema,
@@ -40,6 +41,7 @@ import {
   PlanIdParamSchema,
   RecordUsageRequestSchema,
   SpendingAlertIdParamSchema,
+  SubscribeToPlanRequestSchema,
   SubscriptionIdParamSchema,
   ToggleSpendingAlertRequestSchema,
   UpdateInvoiceRequestSchema,
@@ -1070,27 +1072,28 @@ router.get(
         return res.json({ data: null });
       }
 
-      const sub = await dbGet(
-        `SELECT s.*, sp.name as plan_name, sp.price_monthly, sp.price_yearly
-         FROM subscriptions s
-         JOIN subscription_plans sp ON s.plan_id = sp.id
-         WHERE s.organization_id = ?
-         ORDER BY s.created_at DESC LIMIT 1`,
+      const billing = await dbGet(
+        `SELECT ob.subscription_plan_id, ob.status, ob.current_period_end,
+                sp.name as plan_name, sp.price_monthly, sp.price_yearly
+         FROM organization_billing ob
+         LEFT JOIN subscription_plans sp ON ob.subscription_plan_id = sp.id
+         WHERE ob.organization_id = ?
+         LIMIT 1`,
         [orgId]
       );
 
-      if (!sub) {
+      if (!billing || !(billing as any).subscription_plan_id) {
         return res.json({ data: null });
       }
 
       return res.json({
         data: {
-          plan: (sub as any).plan_id,
-          planName: (sub as any).plan_name,
-          status: (sub as any).status || 'trialing',
-          currentPeriodEnd: (sub as any).current_period_end,
-          cancelAtPeriodEnd: (sub as any).cancel_at_period_end === 1,
-          priceMonthly: (sub as any).price_monthly,
+          plan: (billing as any).subscription_plan_id,
+          planName: (billing as any).plan_name,
+          status: (billing as any).status || 'trialing',
+          currentPeriodEnd: (billing as any).current_period_end,
+          cancelAtPeriodEnd: (billing as any).status === 'canceling',
+          priceMonthly: (billing as any).price_monthly,
         },
       });
     } catch (error: any) {
@@ -1153,6 +1156,116 @@ router.get(
     } catch (error: any) {
       logger.error('[Billing] Usage fetch error:', error);
       return res.json({ data: null });
+    }
+  })
+);
+
+// ==========================================
+// SUBSCRIPTION ACTIONS (Stripe-backed)
+// ==========================================
+
+/**
+ * POST /billing/subscribe
+ * Subscribe current organization to a plan (Stripe is SSOT).
+ */
+router.post(
+  '/subscribe',
+  verifyToken,
+  validateBody(SubscribeToPlanRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const orgId = req.user!.organizationId;
+      const userId = req.user!.id;
+      const { planId, paymentMethodId } = req.body as {
+        planId: string;
+        paymentMethodId?: string;
+      };
+
+      const user = (await dbGet(`SELECT email FROM users WHERE id = ?`, [userId])) as {
+        email: string;
+      } | null;
+      const org = (await dbGet(`SELECT name FROM organizations WHERE id = ?`, [orgId])) as {
+        name: string;
+      } | null;
+
+      const email = user?.email;
+      const orgName = org?.name || 'Organization';
+      if (!email) {
+        return res.status(400).json({ error: 'User email not found' });
+      }
+
+      let pmId = paymentMethodId;
+      if (!pmId) {
+        const pm = (await dbGet(
+          `SELECT stripe_payment_method_id
+           FROM payment_methods
+           WHERE organization_id = ?
+           ORDER BY is_default DESC, created_at DESC
+           LIMIT 1`,
+          [orgId]
+        )) as { stripe_payment_method_id?: string } | null;
+        pmId = pm?.stripe_payment_method_id;
+      }
+
+      if (!pmId) {
+        return res.status(400).json({ error: 'Payment method is required' });
+      }
+
+      const BillingService = await import('../../services/BillingService.js');
+      const subscription = await BillingService.createSubscription(
+        orgId,
+        planId,
+        pmId,
+        email,
+        orgName
+      );
+
+      return res.json({ success: true, subscription });
+    } catch (error: any) {
+      logger.error('[Billing] Subscribe error:', error);
+      return res.status(500).json({ error: error?.message || 'Failed to subscribe' });
+    }
+  })
+);
+
+/**
+ * POST /billing/change-plan
+ * Change current organization's plan (Stripe is SSOT).
+ */
+router.post(
+  '/change-plan',
+  verifyToken,
+  validateBody(ChangePlanRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const orgId = req.user!.organizationId;
+      const { newPlanId } = req.body as { newPlanId: string };
+      const BillingService = await import('../../services/BillingService.js');
+      const subscription = await BillingService.changePlan(orgId, newPlanId);
+      return res.json({ success: true, subscription });
+    } catch (error: any) {
+      logger.error('[Billing] Change plan error:', error);
+      return res.status(500).json({ error: error?.message || 'Failed to change plan' });
+    }
+  })
+);
+
+/**
+ * POST /billing/cancel
+ * Cancel current organization's subscription (grace period when supported).
+ */
+router.post(
+  '/cancel',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const orgId = req.user!.organizationId;
+      const BillingService = await import('../../services/BillingService.js');
+      const result = await BillingService.cancelSubscription(orgId);
+      return res.json({ success: true, result });
+    } catch (error: any) {
+      logger.error('[Billing] Cancel subscription error:', error);
+      return res.status(500).json({ error: error?.message || 'Failed to cancel subscription' });
     }
   })
 );
@@ -1523,15 +1636,16 @@ router.get(
     try {
       const orgId = req.user!.organizationId;
 
-      // Get current subscription
-      const subscription = (await dbGet(
+      // Stripe is SSOT; read canonical state from organization_billing.
+      const billing = (await dbGet(
         `
-                SELECT s.*, sp.name as plan_name, sp.price_monthly, sp.price_yearly,
-                       sp.token_limit, sp.storage_limit_gb, sp.features
-                FROM subscriptions s
-                JOIN subscription_plans sp ON s.plan_id = sp.id
-                WHERE s.organization_id = ? AND s.status IN ('active', 'trialing')
-                ORDER BY s.created_at DESC LIMIT 1
+                SELECT ob.subscription_plan_id, ob.status, ob.current_period_start, ob.current_period_end,
+                       sp.name as plan_name, sp.price_monthly, sp.price_yearly,
+                       sp.token_limit, sp.storage_limit_gb, sp.features, sp.limits
+                FROM organization_billing ob
+                LEFT JOIN subscription_plans sp ON ob.subscription_plan_id = sp.id
+                WHERE ob.organization_id = ?
+                LIMIT 1
             `,
         [orgId]
       )) as any;
@@ -1539,55 +1653,76 @@ router.get(
       // Get usage info from organization
       const org = (await dbGet(
         `
-                SELECT token_balance, trial_tokens_used, plan
+                SELECT trial_tokens_used, trial_expires_at, plan
                 FROM organizations WHERE id = ?
             `,
         [orgId]
       )) as any;
 
-      if (!subscription) {
-        // Return default/free plan info if no subscription
+      if (!billing || !billing.subscription_plan_id) {
+        // Fall back to policy snapshot (no UI hardcoded limits).
+        let snapshot: any = null;
+        try {
+          const accessPolicyService = (await import('../../services/accessPolicyService.js'))
+            .default;
+          snapshot = await accessPolicyService.buildPolicySnapshot(orgId);
+        } catch {
+          // ignore
+        }
+
+        const tokenLimit = snapshot?.limits?.maxTotalTokens ?? null;
+        const storageLimitMb = snapshot?.limits?.maxStorageMb ?? null;
+
         return res.json({
           billing: {
             subscription_plan_id: null,
-            status: 'inactive',
+            status: snapshot?.subscriptionStatus || 'inactive',
             current_period_end: null,
-            trial_ends_at: null,
+            trial_ends_at: snapshot?.trialExpiresAt || org?.trial_expires_at || null,
           },
           plan: {
-            name: org?.plan || 'Free',
+            name: snapshot?.isTrial ? 'Trial' : org?.plan || 'Free',
             price_monthly: 0,
-            token_limit: 50000,
-            storage_limit_gb: 1,
+            token_limit: tokenLimit,
+            storage_limit_gb: typeof storageLimitMb === 'number' ? storageLimitMb / 1024 : null,
+            features: [],
           },
           usage: {
-            tokensUsed: org?.trial_tokens_used || 0,
-            tokenLimit: 50000,
-            storageUsed: 0,
-            storageLimit: 1,
+            tokensUsed: snapshot?.usageToday?.tokensUsed ?? org?.trial_tokens_used ?? 0,
+            tokenLimit,
+            storageUsed: snapshot?.usageToday?.storageMb ?? 0,
+            storageLimit: typeof storageLimitMb === 'number' ? storageLimitMb / 1024 : null,
           },
         });
       }
 
+      const planLimits = billing.limits ? JSON.parse(billing.limits) : {};
+      const tokenLimit =
+        typeof planLimits?.tokens === 'number' ? planLimits.tokens : billing.token_limit;
+      const storageLimitGb =
+        typeof planLimits?.storage_gb === 'number'
+          ? planLimits.storage_gb
+          : billing.storage_limit_gb;
+
       return res.json({
         billing: {
-          subscription_plan_id: subscription.plan_id,
-          status: subscription.status,
-          current_period_end: subscription.current_period_end,
-          trial_ends_at: subscription.trial_end,
+          subscription_plan_id: billing.subscription_plan_id,
+          status: billing.status,
+          current_period_end: billing.current_period_end,
+          trial_ends_at: org?.trial_expires_at || null,
         },
         plan: {
-          name: subscription.plan_name,
-          price_monthly: subscription.price_monthly,
-          token_limit: subscription.token_limit,
-          storage_limit_gb: subscription.storage_limit_gb,
-          features: subscription.features ? JSON.parse(subscription.features) : [],
+          name: billing.plan_name,
+          price_monthly: billing.price_monthly,
+          token_limit: tokenLimit,
+          storage_limit_gb: storageLimitGb,
+          features: billing.features ? JSON.parse(billing.features) : [],
         },
         usage: {
           tokensUsed: org?.trial_tokens_used || 0,
-          tokenLimit: subscription.token_limit,
+          tokenLimit,
           storageUsed: 0,
-          storageLimit: subscription.storage_limit_gb,
+          storageLimit: storageLimitGb,
         },
       });
     } catch (error: unknown) {

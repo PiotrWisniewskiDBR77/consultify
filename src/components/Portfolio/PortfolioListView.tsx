@@ -18,7 +18,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { getPriorityStyle, getStatusStyle } from '../../constants/statusColors';
-import { PortfolioAiPanel } from './PortfolioAiPanel';
 import { STATUS_METADATA } from '../../services/initiativeLifecycle';
 import { InitiativeStatus, PortfolioInitiative } from '../../types';
 import {
@@ -27,6 +26,7 @@ import {
   getHealthInfo,
   getNextStep,
 } from '../../utils/initiativeHelpers';
+import { PortfolioAiPanel } from './PortfolioAiPanel';
 
 interface PortfolioListViewProps {
   initiatives: PortfolioInitiative[];
@@ -221,7 +221,9 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
     <div className="h-full overflow-auto p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="text-xs text-slate-500 dark:text-slate-400">
-          {t('portfolio.ai.selectionCount', '{{count}} selected', { count: selectedInitiatives.length })}
+          {t('portfolio.ai.selectionCount', '{{count}} selected', {
+            count: selectedInitiatives.length,
+          })}
         </div>
         <button
           onClick={() => setAiOpen(true)}

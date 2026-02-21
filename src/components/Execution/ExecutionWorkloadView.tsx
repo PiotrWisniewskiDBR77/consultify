@@ -523,7 +523,9 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
     const suggestions = Array.isArray(aiData?.suggestions) ? aiData.suggestions : [];
     const picked = suggestions.filter((s: any) => aiSelectedTaskIds.has(String(s.taskId)));
     if (picked.length === 0) {
-      toast.error(t('execution.workloadAi.noneSelected', 'Select at least one suggestion to apply.'));
+      toast.error(
+        t('execution.workloadAi.noneSelected', 'Select at least one suggestion to apply.')
+      );
       return;
     }
     setAiLoading(true);
@@ -869,8 +871,9 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                                 {String(s.taskTitle || '')}
                               </div>
                               <div className="text-xs text-slate-500 dark:text-slate-400">
-                                {t('execution.workloadAi.moveFromTo', 'Move')}: {String(s.fromUserName)} →{' '}
-                                {String(s.toUserName)} · {Number(s.estimatedHours || 0)}h
+                                {t('execution.workloadAi.moveFromTo', 'Move')}:{' '}
+                                {String(s.fromUserName)} → {String(s.toUserName)} ·{' '}
+                                {Number(s.estimatedHours || 0)}h
                               </div>
                             </div>
                           </label>
@@ -879,7 +882,10 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                     </div>
                   ) : (
                     <div className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                      {t('execution.workloadAi.noSuggestions', 'No reassignment suggestions found.')}
+                      {t(
+                        'execution.workloadAi.noSuggestions',
+                        'No reassignment suggestions found.'
+                      )}
                     </div>
                   )}
                 </div>

@@ -821,7 +821,9 @@ router.post('/readiness-analysis', async (req: any, res: any) => {
       });
     }
 
-    return res.status(statusCode).json({ error: 'Failed to analyze readiness', message: err?.message });
+    return res
+      .status(statusCode)
+      .json({ error: 'Failed to analyze readiness', message: err?.message });
   }
 });
 

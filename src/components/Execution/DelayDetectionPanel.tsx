@@ -45,8 +45,18 @@ interface DelayDetectionPanelProps {
 // ── Config ─────────────────────────────────────────────────────
 
 const SEVERITY_CONFIG = {
-  CRITICAL: { bg: 'bg-red-500/15', border: 'border-red-500/30', text: 'text-red-400', icon: AlertTriangle },
-  WARNING: { bg: 'bg-amber-500/15', border: 'border-amber-500/30', text: 'text-amber-400', icon: Clock },
+  CRITICAL: {
+    bg: 'bg-red-500/15',
+    border: 'border-red-500/30',
+    text: 'text-red-400',
+    icon: AlertTriangle,
+  },
+  WARNING: {
+    bg: 'bg-amber-500/15',
+    border: 'border-amber-500/30',
+    text: 'text-amber-400',
+    icon: Clock,
+  },
 };
 
 const DEVIATION_ICONS: Record<string, React.FC<{ size?: number; className?: string }>> = {
@@ -112,29 +122,29 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
     });
   }, [signals, severityFilter, entityFilter]);
 
-  const handleDismiss = useCallback(
-    async (signal: DelaySignalItem) => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-        await fetch('/api/execution-control/delay-signals/dismiss', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            signalId: signal.id,
-            entityType: signal.entityType,
-            entityId: signal.entityId,
-            deviationType: signal.deviationType,
-          }),
-        });
-        setSignals((prev) => prev.filter((s) => s.id !== signal.id));
-        trackFunnelEvent('delay_signal_dismissed', { deviationType: signal.deviationType, severity: signal.severity });
-      } catch {
-        // non-blocking
-      }
-    },
-    []
-  );
+  const handleDismiss = useCallback(async (signal: DelaySignalItem) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      await fetch('/api/execution-control/delay-signals/dismiss', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          signalId: signal.id,
+          entityType: signal.entityType,
+          entityId: signal.entityId,
+          deviationType: signal.deviationType,
+        }),
+      });
+      setSignals((prev) => prev.filter((s) => s.id !== signal.id));
+      trackFunnelEvent('delay_signal_dismissed', {
+        deviationType: signal.deviationType,
+        severity: signal.severity,
+      });
+    } catch {
+      // non-blocking
+    }
+  }, []);
 
   const criticalCount = signals.filter((s) => s.severity === 'CRITICAL').length;
   const warningCount = signals.filter((s) => s.severity === 'WARNING').length;
@@ -224,7 +234,8 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
                     </p>
                   </div>
                   <span className={`text-sm font-bold tabular-nums ${config.text}`}>
-                    {signal.deviationType === 'LATE_FINISH_RISK' || signal.deviationType === 'DEADLINE_RISK'
+                    {signal.deviationType === 'LATE_FINISH_RISK' ||
+                    signal.deviationType === 'DEADLINE_RISK'
                       ? `${signal.daysDeviation}d ${t('execution.delay.remaining')}`
                       : `${signal.daysDeviation}d`}
                   </span>
@@ -241,7 +252,8 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
                     {signal.plannedDate && (
                       <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
                         <span>
-                          {t('execution.delay.planned')}: {new Date(signal.plannedDate).toLocaleDateString()}
+                          {t('execution.delay.planned')}:{' '}
+                          {new Date(signal.plannedDate).toLocaleDateString()}
                         </span>
                         {signal.actualOrCurrent && (
                           <span>

@@ -4,8 +4,9 @@
  * API endpoints for managing cloud storage connections and file imports.
  */
 
-import { Router, Response } from 'express';
-import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { Response, Router } from 'express';
+
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();

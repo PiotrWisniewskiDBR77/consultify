@@ -22,7 +22,9 @@ function tierRank(t: string | null | undefined): number {
 }
 
 function maxTier(a: string | null | undefined, b: string | null | undefined): CanonicalTier {
-  return tierRank(a) >= tierRank(b) ? (String(a || 'REGISTERED').toUpperCase() as CanonicalTier) : (String(b || 'REGISTERED').toUpperCase() as CanonicalTier);
+  return tierRank(a) >= tierRank(b)
+    ? (String(a || 'REGISTERED').toUpperCase() as CanonicalTier)
+    : (String(b || 'REGISTERED').toUpperCase() as CanonicalTier);
 }
 
 function toLanguage(input: unknown): PartnerResourceLanguage {
@@ -116,7 +118,9 @@ export async function ensureSalesCertification(params: {
   return created;
 }
 
-export async function getSalesModules(language: PartnerResourceLanguage): Promise<LearningModuleRow[]> {
+export async function getSalesModules(
+  language: PartnerResourceLanguage
+): Promise<LearningModuleRow[]> {
   const db = getDatabase();
   const rows = await DbPromise.all<LearningModuleRow>(
     db,
@@ -162,7 +166,8 @@ export async function recalcCertificationProgress(certificationId: string): Prom
   const completed = agg?.completed || 0;
   const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-  const newStatus = completed > 0 ? (completed === total ? 'completed' : 'in_progress') : 'not_started';
+  const newStatus =
+    completed > 0 ? (completed === total ? 'completed' : 'in_progress') : 'not_started';
   const completedAt = completed === total ? 'NOW()' : 'NULL';
   await DbPromise.run(
     db,
@@ -289,9 +294,10 @@ export async function submitSalesExam(params: {
   if (attempt.submitted_at) throw new Error('Attempt already submitted');
   if (new Date(attempt.deadline_at).getTime() < Date.now()) throw new Error('Attempt expired');
 
-  const questionIds = (Array.isArray(attempt.questions_json)
-    ? attempt.questions_json
-    : JSON.parse(attempt.questions_json || '[]')
+  const questionIds = (
+    Array.isArray(attempt.questions_json)
+      ? attempt.questions_json
+      : JSON.parse(attempt.questions_json || '[]')
   ).map((q: any) => q.questionId);
 
   const correct = await DbPromise.all<{ id: string; correct_option_id: string }>(

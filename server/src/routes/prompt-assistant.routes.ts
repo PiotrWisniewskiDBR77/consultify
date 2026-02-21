@@ -15,8 +15,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
-import logger from '../utils/Logger.js';
 import { AppError } from '../utils/ErrorHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -288,7 +288,9 @@ router.post(
     } catch (err: any) {
       logger.warn('[prompt-assistant] test failed', err);
       if (err instanceof AppError) {
-        return res.status(err.statusCode).json({ success: false, error: err.message, code: err.code });
+        return res
+          .status(err.statusCode)
+          .json({ success: false, error: err.message, code: err.code });
       }
       return res.status(500).json({ success: false, error: 'Test execution failed' });
     }
@@ -348,7 +350,9 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
   } catch (err: any) {
     logger.warn('[prompt-assistant] chat failed', err);
     if (err instanceof AppError) {
-      return res.status(err.statusCode).json({ success: false, error: err.message, code: err.code });
+      return res
+        .status(err.statusCode)
+        .json({ success: false, error: err.message, code: err.code });
     }
     return res.status(500).json({ success: false, error: 'Chat failed' });
   }

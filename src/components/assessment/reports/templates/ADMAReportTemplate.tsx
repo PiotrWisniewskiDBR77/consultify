@@ -437,13 +437,25 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
               {strongPillars.map((pillar) => {
                 const IconComponent = getPillarIcon(pillar.id);
                 return (
-                  <div key={pillar.id} className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/30 rounded-lg p-4 flex items-center gap-3">
-                    <IconComponent size={24} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <div
+                    key={pillar.id}
+                    className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/30 rounded-lg p-4 flex items-center gap-3"
+                  >
+                    <IconComponent
+                      size={24}
+                      className="text-emerald-600 dark:text-emerald-400 shrink-0"
+                    />
                     <div>
-                      <span className="font-medium text-navy-900 dark:text-white">{pillar.config.name}</span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400 block">{pillar.config.namePL}</span>
+                      <span className="font-medium text-navy-900 dark:text-white">
+                        {pillar.config.name}
+                      </span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 block">
+                        {pillar.config.namePL}
+                      </span>
                     </div>
-                    <span className="ml-auto text-lg font-bold text-emerald-600 dark:text-emerald-400">{pillar.score.toFixed(1)}/5</span>
+                    <span className="ml-auto text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                      {pillar.score.toFixed(1)}/5
+                    </span>
                   </div>
                 );
               })}
@@ -454,7 +466,9 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
 
       {/* Data Gaps */}
       {(() => {
-        const gaps = dimensionsWithGaps.filter((d) => d.current === 0 || (d.current <= 1 && d.target === 0));
+        const gaps = dimensionsWithGaps.filter(
+          (d) => d.current === 0 || (d.current <= 1 && d.target === 0)
+        );
         return gaps.length > 0 ? (
           <section className="mb-8">
             <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
@@ -467,7 +481,9 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
                   <div key={dim.id} className="flex items-center gap-2 text-sm">
                     <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
                     <span className="text-navy-900 dark:text-white">{dim.namePL}</span>
-                    <span className="text-xs text-amber-600 dark:text-amber-400">{dim.current === 0 ? '(Not assessed)' : '(No target)'}</span>
+                    <span className="text-xs text-amber-600 dark:text-amber-400">
+                      {dim.current === 0 ? '(Not assessed)' : '(No target)'}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -494,25 +510,37 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
             <div className="grid grid-cols-3 gap-4">
               {quickWins.length > 0 && (
                 <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4">
-                  <h4 className="font-semibold text-emerald-700 dark:text-emerald-400 mb-2 text-sm">Quick Wins (gap 1)</h4>
+                  <h4 className="font-semibold text-emerald-700 dark:text-emerald-400 mb-2 text-sm">
+                    Quick Wins (gap 1)
+                  </h4>
                   {quickWins.map((d) => (
-                    <p key={d.id} className="text-xs text-navy-900 dark:text-white">{d.namePL}: {d.current} → {d.target}</p>
+                    <p key={d.id} className="text-xs text-navy-900 dark:text-white">
+                      {d.namePL}: {d.current} → {d.target}
+                    </p>
                   ))}
                 </div>
               )}
               {strategic.length > 0 && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
-                  <h4 className="font-semibold text-blue-700 dark:text-blue-400 mb-2 text-sm">Strategic (gap 2)</h4>
+                  <h4 className="font-semibold text-blue-700 dark:text-blue-400 mb-2 text-sm">
+                    Strategic (gap 2)
+                  </h4>
                   {strategic.map((d) => (
-                    <p key={d.id} className="text-xs text-navy-900 dark:text-white">{d.namePL}: {d.current} → {d.target}</p>
+                    <p key={d.id} className="text-xs text-navy-900 dark:text-white">
+                      {d.namePL}: {d.current} → {d.target}
+                    </p>
                   ))}
                 </div>
               )}
               {longTermItems.length > 0 && (
                 <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4">
-                  <h4 className="font-semibold text-purple-700 dark:text-purple-400 mb-2 text-sm">Long-term (gap 3+)</h4>
+                  <h4 className="font-semibold text-purple-700 dark:text-purple-400 mb-2 text-sm">
+                    Long-term (gap 3+)
+                  </h4>
                   {longTermItems.map((d) => (
-                    <p key={d.id} className="text-xs text-navy-900 dark:text-white">{d.namePL}: {d.current} → {d.target}</p>
+                    <p key={d.id} className="text-xs text-navy-900 dark:text-white">
+                      {d.namePL}: {d.current} → {d.target}
+                    </p>
                   ))}
                 </div>
               )}
@@ -530,25 +558,37 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
         <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-6">
           <div className="grid grid-cols-4 gap-4 mb-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{data.overallMaturity?.toFixed(1) || '0.0'}/5</div>
+              <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                {data.overallMaturity?.toFixed(1) || '0.0'}/5
+              </div>
               <div className="text-xs text-slate-500 dark:text-slate-400">Overall Maturity</div>
-              <div className="text-xs font-medium text-indigo-600">{getLevelName(data.overallMaturity || 0)}</div>
+              <div className="text-xs font-medium text-indigo-600">
+                {getLevelName(data.overallMaturity || 0)}
+              </div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-navy-900 dark:text-white">{dimensionsWithGaps.filter((d) => d.current > 0).length}/{ADMA_DIMENSIONS.length}</div>
+              <div className="text-2xl font-bold text-navy-900 dark:text-white">
+                {dimensionsWithGaps.filter((d) => d.current > 0).length}/{ADMA_DIMENSIONS.length}
+              </div>
               <div className="text-xs text-slate-500 dark:text-slate-400">Dimensions Assessed</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{dimensionsWithGaps.filter((d) => d.gap > 0).length}</div>
+              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                {dimensionsWithGaps.filter((d) => d.gap > 0).length}
+              </div>
               <div className="text-xs text-slate-500 dark:text-slate-400">Gaps Identified</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-navy-900 dark:text-white">{dimensionsWithGaps[0]?.namePL || 'N/A'}</div>
+              <div className="text-2xl font-bold text-navy-900 dark:text-white">
+                {dimensionsWithGaps[0]?.namePL || 'N/A'}
+              </div>
               <div className="text-xs text-slate-500 dark:text-slate-400">Top Priority</div>
             </div>
           </div>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            <strong>Next steps:</strong> Review findings with key stakeholders, prioritize initiatives based on gap analysis, create improvement roadmap, schedule follow-up assessment.
+            <strong>Next steps:</strong> Review findings with key stakeholders, prioritize
+            initiatives based on gap analysis, create improvement roadmap, schedule follow-up
+            assessment.
           </p>
         </div>
       </section>

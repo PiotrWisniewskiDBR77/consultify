@@ -4,13 +4,35 @@
  * Mirrors the Settings pattern: single Sidebar entry → Organization page → internal left menu.
  */
 
-import { Building2, ChevronDown, Goal, Map, ShieldAlert, Target } from 'lucide-react';
+import {
+  Building2,
+  ChevronDown,
+  CreditCard,
+  Gauge,
+  Globe,
+  Goal,
+  Map,
+  Palette,
+  ShieldAlert,
+  Target,
+  Users,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../lib/utils';
 
-export type OrganizationSection = 'profile' | 'goals' | 'challenges' | 'megatrends' | 'strategy';
+export type OrganizationSection =
+  | 'profile'
+  | 'goals'
+  | 'challenges'
+  | 'megatrends'
+  | 'strategy'
+  | 'members'
+  | 'billing'
+  | 'limits'
+  | 'domains'
+  | 'branding';
 
 interface NavItem {
   id: OrganizationSection;
@@ -78,6 +100,43 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
             labelKey: 'organization.sidebar.strategy',
             defaultLabel: 'Strategy',
             icon: Target,
+          },
+        ],
+      },
+      {
+        id: 'admin',
+        labelKey: 'organization.sidebar.adminGroup',
+        defaultLabel: 'ADMINISTRATION',
+        items: [
+          {
+            id: 'members',
+            labelKey: 'organization.sidebar.members',
+            defaultLabel: 'Members',
+            icon: Users,
+          },
+          {
+            id: 'billing',
+            labelKey: 'organization.sidebar.billing',
+            defaultLabel: 'Billing',
+            icon: CreditCard,
+          },
+          {
+            id: 'limits',
+            labelKey: 'organization.sidebar.limits',
+            defaultLabel: 'Limits',
+            icon: Gauge,
+          },
+          {
+            id: 'domains',
+            labelKey: 'organization.sidebar.domains',
+            defaultLabel: 'Domains',
+            icon: Globe,
+          },
+          {
+            id: 'branding',
+            labelKey: 'organization.sidebar.branding',
+            defaultLabel: 'Branding',
+            icon: Palette,
           },
         ],
       },

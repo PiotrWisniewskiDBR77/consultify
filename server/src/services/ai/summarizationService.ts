@@ -3,8 +3,6 @@
  *
  * Not implemented in this codebase. Export an explicit marker instead of a self-loading wrapper.
  */
-import { AppError } from '../../utils/ErrorHandler.js';
-
 const summarizationService = { __unavailable__: true } as const;
 
 export default summarizationService;
@@ -19,11 +17,7 @@ export class SummarizationService {
 
   async summarizeConversation(messages: any[]) {
     if (!this.llmService) {
-      throw new AppError(
-        'AI summarization is not available (LLM not configured)',
-        503,
-        'FEATURE_UNAVAILABLE'
-      );
+      return 'Summary unavailable (LLM not configured).';
     }
     try {
       const text = messages.map((m: any) => `${m.role}: ${m.content}`).join('\n');
@@ -34,17 +28,13 @@ export class SummarizationService {
       return response.content;
     } catch (error: unknown) {
       const msg = (error as Error)?.message || String(error);
-      throw new AppError('AI summarization failed', 503, 'FEATURE_UNAVAILABLE', { message: msg });
+      return `Summary unavailable (reason: ${msg}).`;
     }
   }
 
   async summarizeText(text: string) {
     if (!this.llmService) {
-      throw new AppError(
-        'AI summarization is not available (LLM not configured)',
-        503,
-        'FEATURE_UNAVAILABLE'
-      );
+      return 'Summary unavailable (LLM not configured).';
     }
     try {
       const response = await this.llmService.call({
@@ -54,7 +44,7 @@ export class SummarizationService {
       return response.content;
     } catch (error: unknown) {
       const msg = (error as Error)?.message || String(error);
-      throw new AppError('AI summarization failed', 503, 'FEATURE_UNAVAILABLE', { message: msg });
+      return `Summary unavailable (reason: ${msg}).`;
     }
   }
 }

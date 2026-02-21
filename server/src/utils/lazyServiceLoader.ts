@@ -152,11 +152,7 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
   }
 }
 
-function createUnavailableProxy<T>(
-  servicePath: string,
-  absolutePath?: string,
-  cause?: unknown
-): T {
+function createUnavailableProxy<T>(servicePath: string, absolutePath?: string, cause?: unknown): T {
   // Fail loudly on usage, but avoid unhandled promise rejections at import-time.
   // This prevents "fake success" (e.g. returning []/null) while keeping optional modules non-fatal.
   const err = new Error(

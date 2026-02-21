@@ -180,7 +180,10 @@ const TemplateCard: FC<{
       {template.sections && template.sections.length > 0 && (
         <div className="border-t border-slate-200 dark:border-navy-700">
           <button
-            onClick={(e) => { e.stopPropagation(); setShowOutline(!showOutline); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowOutline(!showOutline);
+            }}
             className="w-full flex items-center gap-1.5 px-4 py-1.5 text-[10px] text-slate-500 dark:text-slate-400 hover:text-purple-500 dark:hover:text-purple-400 transition-colors"
           >
             {showOutline ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
@@ -190,11 +193,17 @@ const TemplateCard: FC<{
             <div className="px-4 pb-3 space-y-0.5">
               {template.sections.map((s, i) => (
                 <div key={s.key || i} className="flex items-center gap-2 text-[10px]">
-                  <span className="text-slate-500 dark:text-slate-600 w-4 text-right">{i + 1}.</span>
-                  <span className={`${s.required ? 'text-slate-800 dark:text-slate-300 font-medium' : 'text-slate-600 dark:text-slate-400'}`}>
+                  <span className="text-slate-500 dark:text-slate-600 w-4 text-right">
+                    {i + 1}.
+                  </span>
+                  <span
+                    className={`${s.required ? 'text-slate-800 dark:text-slate-300 font-medium' : 'text-slate-600 dark:text-slate-400'}`}
+                  >
                     {s.title}
                   </span>
-                  {s.required && <span className="text-[8px] text-purple-500 font-semibold">REQ</span>}
+                  {s.required && (
+                    <span className="text-[8px] text-purple-500 font-semibold">REQ</span>
+                  )}
                 </div>
               ))}
             </div>
@@ -272,7 +281,10 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
 
   // Group templates with filter
   const { systemTemplates, orgTemplates } = useMemo(() => {
-    const filtered = categoryFilter === 'all' ? templates : templates.filter((t) => (t.category || 'general') === categoryFilter);
+    const filtered =
+      categoryFilter === 'all'
+        ? templates
+        : templates.filter((t) => (t.category || 'general') === categoryFilter);
     const system = filtered.filter((t) => t.isSystem);
     const org = filtered.filter((t) => !t.isSystem);
     return { systemTemplates: system, orgTemplates: org };

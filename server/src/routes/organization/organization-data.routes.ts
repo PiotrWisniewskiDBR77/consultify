@@ -4,6 +4,7 @@
  * Provides data export, stats, and retention settings for Data Management UI.
  */
 import { Response, Router } from 'express';
+
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
@@ -39,7 +40,10 @@ router.get(
   '/stats',
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
-      return featureUnavailable(res, 'Organization data stats unavailable (no real implementation)');
+      return featureUnavailable(
+        res,
+        'Organization data stats unavailable (no real implementation)'
+      );
     } catch (err) {
       logger.error('[organization-data] stats error', err);
       return res.status(500).json({ success: false, error: 'Failed to fetch stats' });

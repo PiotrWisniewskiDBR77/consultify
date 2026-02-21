@@ -186,9 +186,8 @@ export const Scheduler = {
     // 10. Scheduled Emails - Run every 15 minutes
     const job10 = cron.schedule('*/15 * * * *', async () => {
       try {
-        const { processPartnerOutreachDueMessages } = await import(
-          '../services/partnerOutreachService.js'
-        );
+        const { processPartnerOutreachDueMessages } =
+          await import('../services/partnerOutreachService.js');
         await processPartnerOutreachDueMessages({ limit: 100 });
       } catch (err: any) {
         logger.error('[Scheduler] Partner outreach processing failed:', err?.message || err);

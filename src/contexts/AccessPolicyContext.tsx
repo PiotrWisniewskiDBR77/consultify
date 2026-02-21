@@ -51,7 +51,7 @@ interface PolicyMessages {
   modalTextKey: string | null;
 }
 
-export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'cancelled';
+export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceling' | 'canceled';
 
 export interface PolicySnapshot {
   orgType: 'DEMO' | 'TRIAL' | 'PAID';

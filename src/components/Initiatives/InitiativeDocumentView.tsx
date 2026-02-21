@@ -5301,8 +5301,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 ? 'Nieznane zdarzenie'
                 : 'Unknown event'
               : eventType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-          const description =
-            notes || eventTypeLabel;
+          const description = notes || eventTypeLabel;
           return {
             id: e.id,
             type: eventType,

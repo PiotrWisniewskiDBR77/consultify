@@ -44,8 +44,8 @@ import { v4 as uuidv4 } from 'uuid';
 import config from '../config/Config.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import ActivityService from '../services/ActivityService.js';
-import logger from '../utils/Logger.js';
 import { AppError } from '../utils/ErrorHandler.js';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting to all auth routes
 router.use(authRateLimiter);

@@ -17,8 +17,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { AppError } from '../utils/ErrorHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { AppError } from '../utils/ErrorHandler.js';
 
 // Helper: safe JSON parse
 const parseJSON = <T>(value: any, fallback: T): T => {

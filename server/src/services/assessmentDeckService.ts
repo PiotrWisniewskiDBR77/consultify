@@ -92,40 +92,62 @@ const FRAMEWORK_DESCRIPTION: Record<FrameworkType, Record<'en' | 'pl', string>> 
 // ---------------------------------------------------------------------------
 
 type LangKey =
-  | 'confidential' | 'agenda' | 'methodology' | 'overallScore'
-  | 'categoryBreakdown' | 'gapAnalysis' | 'strengths' | 'dataGaps'
-  | 'roadmap' | 'nextSteps' | 'thankYou' | 'assessmentApproach'
-  | 'scaleExplanation' | 'shortTerm' | 'mediumTerm' | 'longTerm'
-  | 'dimension' | 'current' | 'target' | 'gap' | 'category'
-  | 'score' | 'area' | 'reason' | 'noDataGaps'
-  | 'agendaItems' | 'nextStepsItems' | 'contactLine' | 'brandLine';
+  | 'confidential'
+  | 'agenda'
+  | 'methodology'
+  | 'overallScore'
+  | 'categoryBreakdown'
+  | 'gapAnalysis'
+  | 'strengths'
+  | 'dataGaps'
+  | 'roadmap'
+  | 'nextSteps'
+  | 'thankYou'
+  | 'assessmentApproach'
+  | 'scaleExplanation'
+  | 'shortTerm'
+  | 'mediumTerm'
+  | 'longTerm'
+  | 'dimension'
+  | 'current'
+  | 'target'
+  | 'gap'
+  | 'category'
+  | 'score'
+  | 'area'
+  | 'reason'
+  | 'noDataGaps'
+  | 'agendaItems'
+  | 'nextStepsItems'
+  | 'contactLine'
+  | 'brandLine';
 
 const LABELS: Record<LangKey, Record<'en' | 'pl', string>> = {
-  confidential:      { en: 'CONFIDENTIAL', pl: 'POUFNE' },
-  agenda:            { en: 'Agenda', pl: 'Agenda' },
-  methodology:       { en: 'Methodology Overview', pl: 'Przegląd Metodologii' },
-  overallScore:      { en: 'Overall Maturity Score', pl: 'Ogólny Wynik Dojrzałości' },
+  confidential: { en: 'CONFIDENTIAL', pl: 'POUFNE' },
+  agenda: { en: 'Agenda', pl: 'Agenda' },
+  methodology: { en: 'Methodology Overview', pl: 'Przegląd Metodologii' },
+  overallScore: { en: 'Overall Maturity Score', pl: 'Ogólny Wynik Dojrzałości' },
   categoryBreakdown: { en: 'Category Breakdown', pl: 'Rozkład Kategorii' },
-  gapAnalysis:       { en: 'Gap Analysis', pl: 'Analiza Luk' },
-  strengths:         { en: 'Key Strengths', pl: 'Kluczowe Mocne Strony' },
-  dataGaps:          { en: 'Data Gaps & Unknowns', pl: 'Luki Danych i Niewiadome' },
-  roadmap:           { en: 'Priorities & Roadmap', pl: 'Priorytety i Roadmapa' },
-  nextSteps:         { en: 'Next Steps', pl: 'Następne Kroki' },
-  thankYou:          { en: 'Thank You', pl: 'Dziękujemy' },
-  assessmentApproach:{ en: 'Assessment Approach', pl: 'Podejście do Oceny' },
-  scaleExplanation:  { en: 'Maturity scale', pl: 'Skala dojrzałości' },
-  shortTerm:         { en: 'Short-term (0-3 months)', pl: 'Krótkoterminowe (0-3 mies.)' },
-  mediumTerm:        { en: 'Medium-term (3-12 months)', pl: 'Średnioterminowe (3-12 mies.)' },
-  longTerm:          { en: 'Long-term (12+ months)', pl: 'Długoterminowe (12+ mies.)' },
-  dimension:         { en: 'Dimension', pl: 'Wymiar' },
-  current:           { en: 'Current', pl: 'Obecny' },
-  target:            { en: 'Target', pl: 'Docelowy' },
-  gap:               { en: 'Gap', pl: 'Luka' },
-  category:          { en: 'Category', pl: 'Kategoria' },
-  score:             { en: 'Score', pl: 'Wynik' },
-  area:              { en: 'Area', pl: 'Obszar' },
-  reason:            { en: 'Reason', pl: 'Powód' },
-  noDataGaps:        { en: 'No data gaps identified.', pl: 'Nie zidentyfikowano luk w danych.' },
+  gapAnalysis: { en: 'Gap Analysis', pl: 'Analiza Luk' },
+  strengths: { en: 'Key Strengths', pl: 'Kluczowe Mocne Strony' },
+  dataGaps: { en: 'Data Gaps & Unknowns', pl: 'Luki Danych i Niewiadome' },
+  roadmap: { en: 'Priorities & Roadmap', pl: 'Priorytety i Roadmapa' },
+  nextSteps: { en: 'Next Steps', pl: 'Następne Kroki' },
+  thankYou: { en: 'Thank You', pl: 'Dziękujemy' },
+  assessmentApproach: { en: 'Assessment Approach', pl: 'Podejście do Oceny' },
+  scaleExplanation: { en: 'Maturity scale', pl: 'Skala dojrzałości' },
+  shortTerm: { en: 'Short-term (0-3 months)', pl: 'Krótkoterminowe (0-3 mies.)' },
+  mediumTerm: { en: 'Medium-term (3-12 months)', pl: 'Średnioterminowe (3-12 mies.)' },
+  longTerm: { en: 'Long-term (12+ months)', pl: 'Długoterminowe (12+ mies.)' },
+  dimension: { en: 'Dimension', pl: 'Wymiar' },
+  current: { en: 'Current', pl: 'Obecny' },
+  target: { en: 'Target', pl: 'Docelowy' },
+  gap: { en: 'Gap', pl: 'Luka' },
+  category: { en: 'Category', pl: 'Kategoria' },
+  score: { en: 'Score', pl: 'Wynik' },
+  area: { en: 'Area', pl: 'Obszar' },
+  reason: { en: 'Reason', pl: 'Powód' },
+  noDataGaps: { en: 'No data gaps identified.', pl: 'Nie zidentyfikowano luk w danych.' },
   agendaItems: {
     en: '1. Methodology Overview\n2. Overall Maturity Score\n3. Category Breakdown & Dimensions\n4. Gap Analysis\n5. Key Strengths\n6. Priorities & Roadmap\n7. Next Steps',
     pl: '1. Przegląd Metodologii\n2. Ogólny Wynik Dojrzałości\n3. Rozkład Kategorii i Wymiary\n4. Analiza Luk\n5. Kluczowe Mocne Strony\n6. Priorytety i Roadmapa\n7. Następne Kroki',
@@ -154,28 +176,45 @@ function t(key: LangKey, lang: 'en' | 'pl'): string {
 
 function headerBar(slide: any, fwColor: string): void {
   slide.addShape('rect', {
-    x: 0, y: 0, w: 13.33, h: 0.06,
+    x: 0,
+    y: 0,
+    w: 13.33,
+    h: 0.06,
     fill: { color: fwColor },
   });
 }
 
 function slideNumber(slide: any, num: number): void {
   slide.addText(String(num), {
-    x: 12.4, y: 7.1, w: 0.7, h: 0.3,
-    fontSize: 9, color: BRAND.textLight, align: 'right',
+    x: 12.4,
+    y: 7.1,
+    w: 0.7,
+    h: 0.3,
+    fontSize: 9,
+    color: BRAND.textLight,
+    align: 'right',
     fontFace: 'Calibri',
   });
 }
 
 function sectionTitle(slide: any, text: string, opts?: { y?: number }): void {
   slide.addText(text, {
-    x: 0.6, y: opts?.y ?? 0.3, w: 12.0, h: 0.6,
-    fontSize: 24, bold: true, color: BRAND.secondary,
+    x: 0.6,
+    y: opts?.y ?? 0.3,
+    w: 12.0,
+    h: 0.6,
+    fontSize: 24,
+    bold: true,
+    color: BRAND.secondary,
     fontFace: 'Calibri',
   });
 }
 
-function bodyText(slide: any, text: string, opts?: { x?: number; y?: number; w?: number; h?: number; fontSize?: number }): void {
+function bodyText(
+  slide: any,
+  text: string,
+  opts?: { x?: number; y?: number; w?: number; h?: number; fontSize?: number }
+): void {
   slide.addText(text, {
     x: opts?.x ?? 0.6,
     y: opts?.y ?? 1.2,
@@ -208,45 +247,83 @@ function gapColor(gap: number, max: number): string {
 // Slide builders
 // ---------------------------------------------------------------------------
 
-function addCoverSlide(pptx: any, data: AssessmentDeckData, fwColor: string, lang: 'en' | 'pl'): void {
+function addCoverSlide(
+  pptx: any,
+  data: AssessmentDeckData,
+  fwColor: string,
+  lang: 'en' | 'pl'
+): void {
   const slide = pptx.addSlide();
   slide.background = { color: BRAND.secondary };
 
   slide.addShape('rect', {
-    x: 0, y: 0, w: 13.33, h: 0.12,
+    x: 0,
+    y: 0,
+    w: 13.33,
+    h: 0.12,
     fill: { color: fwColor },
   });
 
   slide.addText(data.framework, {
-    x: 0.8, y: 1.2, w: 11.5, h: 0.8,
-    fontSize: 18, color: fwColor, fontFace: 'Calibri',
+    x: 0.8,
+    y: 1.2,
+    w: 11.5,
+    h: 0.8,
+    fontSize: 18,
+    color: fwColor,
+    fontFace: 'Calibri',
     bold: true,
   });
 
   slide.addText(data.assessmentName, {
-    x: 0.8, y: 2.0, w: 11.5, h: 1.2,
-    fontSize: 36, bold: true, color: BRAND.background,
+    x: 0.8,
+    y: 2.0,
+    w: 11.5,
+    h: 1.2,
+    fontSize: 36,
+    bold: true,
+    color: BRAND.background,
     fontFace: 'Calibri',
   });
 
   slide.addText(data.organizationName + (data.projectName ? `  |  ${data.projectName}` : ''), {
-    x: 0.8, y: 3.4, w: 11.5, h: 0.6,
-    fontSize: 16, color: BRAND.textLight, fontFace: 'Calibri Light',
+    x: 0.8,
+    y: 3.4,
+    w: 11.5,
+    h: 0.6,
+    fontSize: 16,
+    color: BRAND.textLight,
+    fontFace: 'Calibri Light',
   });
 
   slide.addText(data.assessmentDate, {
-    x: 0.8, y: 4.2, w: 11.5, h: 0.5,
-    fontSize: 14, color: BRAND.textLight, fontFace: 'Calibri Light',
+    x: 0.8,
+    y: 4.2,
+    w: 11.5,
+    h: 0.5,
+    fontSize: 14,
+    color: BRAND.textLight,
+    fontFace: 'Calibri Light',
   });
 
   slide.addShape('rect', {
-    x: 10.5, y: 0.5, w: 2.2, h: 0.4,
+    x: 10.5,
+    y: 0.5,
+    w: 2.2,
+    h: 0.4,
     fill: { color: BRAND.danger },
   });
   slide.addText(t('confidential', lang), {
-    x: 10.5, y: 0.5, w: 2.2, h: 0.4,
-    fontSize: 10, bold: true, color: BRAND.background,
-    align: 'center', valign: 'middle', fontFace: 'Calibri',
+    x: 10.5,
+    y: 0.5,
+    w: 2.2,
+    h: 0.4,
+    fontSize: 10,
+    bold: true,
+    color: BRAND.background,
+    align: 'center',
+    valign: 'middle',
+    fontFace: 'Calibri',
   });
 }
 
@@ -258,12 +335,21 @@ function addAgendaSlide(pptx: any, fwColor: string, lang: 'en' | 'pl', num: numb
   slideNumber(slide, num);
 }
 
-function addMethodologySlide(pptx: any, data: AssessmentDeckData, fwColor: string, lang: 'en' | 'pl', num: number): void {
+function addMethodologySlide(
+  pptx: any,
+  data: AssessmentDeckData,
+  fwColor: string,
+  lang: 'en' | 'pl',
+  num: number
+): void {
   const slide = pptx.addSlide();
   headerBar(slide, fwColor);
   sectionTitle(slide, t('methodology', lang));
 
-  const desc = FRAMEWORK_DESCRIPTION[data.framework]?.[lang] || FRAMEWORK_DESCRIPTION[data.framework]?.en || '';
+  const desc =
+    FRAMEWORK_DESCRIPTION[data.framework]?.[lang] ||
+    FRAMEWORK_DESCRIPTION[data.framework]?.en ||
+    '';
   const scale = FRAMEWORK_SCALE[data.framework];
 
   const content = [
@@ -281,38 +367,66 @@ function addMethodologySlide(pptx: any, data: AssessmentDeckData, fwColor: strin
   slideNumber(slide, num);
 }
 
-function addOverallScoreSlide(pptx: any, data: AssessmentDeckData, fwColor: string, lang: 'en' | 'pl', num: number): void {
+function addOverallScoreSlide(
+  pptx: any,
+  data: AssessmentDeckData,
+  fwColor: string,
+  lang: 'en' | 'pl',
+  num: number
+): void {
   const slide = pptx.addSlide();
   headerBar(slide, fwColor);
   sectionTitle(slide, t('overallScore', lang));
 
   const scoreStr = data.overallScore.toFixed(1);
   slide.addText(scoreStr, {
-    x: 0.6, y: 1.6, w: 4.0, h: 2.4,
-    fontSize: 72, bold: true, color: fwColor,
-    fontFace: 'Calibri', align: 'center', valign: 'middle',
+    x: 0.6,
+    y: 1.6,
+    w: 4.0,
+    h: 2.4,
+    fontSize: 72,
+    bold: true,
+    color: fwColor,
+    fontFace: 'Calibri',
+    align: 'center',
+    valign: 'middle',
   });
   slide.addText(`/ ${data.scaleMax}`, {
-    x: 4.6, y: 2.6, w: 1.5, h: 0.8,
-    fontSize: 28, color: BRAND.textLight,
-    fontFace: 'Calibri Light', valign: 'middle',
+    x: 4.6,
+    y: 2.6,
+    w: 1.5,
+    h: 0.8,
+    fontSize: 28,
+    color: BRAND.textLight,
+    fontFace: 'Calibri Light',
+    valign: 'middle',
   });
   slide.addText(interpretScore(data.overallScore, data.scaleMax), {
-    x: 0.6, y: 4.1, w: 4.0, h: 0.5,
-    fontSize: 16, color: BRAND.textLight,
-    fontFace: 'Calibri Light', align: 'center',
+    x: 0.6,
+    y: 4.1,
+    w: 4.0,
+    h: 0.5,
+    fontSize: 16,
+    color: BRAND.textLight,
+    fontFace: 'Calibri Light',
+    align: 'center',
   });
 
   if (data.categories.length > 0) {
-    const chartData = [{
-      name: lang === 'pl' ? 'Wynik' : 'Score',
-      labels: data.categories.map(c => c.name),
-      values: data.categories.map(c => c.score),
-    }];
+    const chartData = [
+      {
+        name: lang === 'pl' ? 'Wynik' : 'Score',
+        labels: data.categories.map((c) => c.name),
+        values: data.categories.map((c) => c.score),
+      },
+    ];
 
     try {
       slide.addChart(pptx.charts.BAR, chartData, {
-        x: 6.2, y: 1.2, w: 6.5, h: 5.2,
+        x: 6.2,
+        y: 1.2,
+        w: 6.5,
+        h: 5.2,
         barDir: 'bar',
         showValue: true,
         valAxisMaxVal: data.scaleMax,
@@ -322,8 +436,12 @@ function addOverallScoreSlide(pptx: any, data: AssessmentDeckData, fwColor: stri
         valAxisOrientation: 'minMax',
       });
     } catch (chartErr: any) {
-      logger.warn('[AssessmentDeck] Chart rendering failed, using text fallback', { error: chartErr?.message });
-      const fallback = data.categories.map(c => `${c.name}: ${c.score.toFixed(1)} / ${data.scaleMax}`).join('\n');
+      logger.warn('[AssessmentDeck] Chart rendering failed, using text fallback', {
+        error: chartErr?.message,
+      });
+      const fallback = data.categories
+        .map((c) => `${c.name}: ${c.score.toFixed(1)} / ${data.scaleMax}`)
+        .join('\n');
       bodyText(slide, fallback, { x: 6.2, y: 1.2, w: 6.5, h: 5.2, fontSize: 13 });
     }
   }
@@ -331,7 +449,13 @@ function addOverallScoreSlide(pptx: any, data: AssessmentDeckData, fwColor: stri
   slideNumber(slide, num);
 }
 
-function addCategoryBreakdownSlides(pptx: any, data: AssessmentDeckData, fwColor: string, lang: 'en' | 'pl', startNum: number): number {
+function addCategoryBreakdownSlides(
+  pptx: any,
+  data: AssessmentDeckData,
+  fwColor: string,
+  lang: 'en' | 'pl',
+  startNum: number
+): number {
   const perSlide = 4;
   let num = startNum;
 
@@ -339,31 +463,54 @@ function addCategoryBreakdownSlides(pptx: any, data: AssessmentDeckData, fwColor
     const batch = data.categories.slice(i, i + perSlide);
     const slide = pptx.addSlide();
     headerBar(slide, fwColor);
-    sectionTitle(slide, t('categoryBreakdown', lang) + (data.categories.length > perSlide ? ` (${Math.floor(i / perSlide) + 1})` : ''));
+    sectionTitle(
+      slide,
+      t('categoryBreakdown', lang) +
+        (data.categories.length > perSlide ? ` (${Math.floor(i / perSlide) + 1})` : '')
+    );
 
     let yPos = 1.2;
     for (const cat of batch) {
       slide.addText(cat.name, {
-        x: 0.6, y: yPos, w: 5.0, h: 0.35,
-        fontSize: 14, bold: true, color: BRAND.secondary,
+        x: 0.6,
+        y: yPos,
+        w: 5.0,
+        h: 0.35,
+        fontSize: 14,
+        bold: true,
+        color: BRAND.secondary,
         fontFace: 'Calibri',
       });
       slide.addText(`${cat.score.toFixed(1)} / ${data.scaleMax}`, {
-        x: 5.6, y: yPos, w: 1.5, h: 0.35,
-        fontSize: 14, bold: true, color: fwColor,
-        fontFace: 'Calibri', align: 'right',
+        x: 5.6,
+        y: yPos,
+        w: 1.5,
+        h: 0.35,
+        fontSize: 14,
+        bold: true,
+        color: fwColor,
+        fontFace: 'Calibri',
+        align: 'right',
       });
 
       yPos += 0.4;
       if (cat.dimensions.length > 0) {
-        const dimLines = cat.dimensions.map(d =>
-          `  ${d.name}:  ${d.current.toFixed(1)} → ${d.target.toFixed(1)}  (${lang === 'pl' ? 'luka' : 'gap'}: ${d.gap.toFixed(1)})`
-        ).join('\n');
+        const dimLines = cat.dimensions
+          .map(
+            (d) =>
+              `  ${d.name}:  ${d.current.toFixed(1)} → ${d.target.toFixed(1)}  (${lang === 'pl' ? 'luka' : 'gap'}: ${d.gap.toFixed(1)})`
+          )
+          .join('\n');
         const dimH = Math.min(cat.dimensions.length * 0.24 + 0.15, 1.5);
         slide.addText(dimLines, {
-          x: 0.8, y: yPos, w: 11.5, h: dimH,
-          fontSize: 11, color: BRAND.textLight,
-          fontFace: 'Calibri Light', valign: 'top',
+          x: 0.8,
+          y: yPos,
+          w: 11.5,
+          h: dimH,
+          fontSize: 11,
+          color: BRAND.textLight,
+          fontFace: 'Calibri Light',
+          valign: 'top',
         });
         yPos += dimH + 0.15;
       }
@@ -376,17 +523,66 @@ function addCategoryBreakdownSlides(pptx: any, data: AssessmentDeckData, fwColor
   return num;
 }
 
-function addGapAnalysisSlide(pptx: any, data: AssessmentDeckData, fwColor: string, lang: 'en' | 'pl', num: number): void {
+function addGapAnalysisSlide(
+  pptx: any,
+  data: AssessmentDeckData,
+  fwColor: string,
+  lang: 'en' | 'pl',
+  num: number
+): void {
   const slide = pptx.addSlide();
   headerBar(slide, fwColor);
   sectionTitle(slide, t('gapAnalysis', lang));
 
   const headerRow = [
-    { text: t('area', lang), options: { bold: true, fontSize: 11, color: BRAND.background, fill: { color: BRAND.secondary } } },
-    { text: t('category', lang), options: { bold: true, fontSize: 11, color: BRAND.background, fill: { color: BRAND.secondary } } },
-    { text: t('current', lang), options: { bold: true, fontSize: 11, color: BRAND.background, fill: { color: BRAND.secondary }, align: 'center' } },
-    { text: t('target', lang), options: { bold: true, fontSize: 11, color: BRAND.background, fill: { color: BRAND.secondary }, align: 'center' } },
-    { text: t('gap', lang), options: { bold: true, fontSize: 11, color: BRAND.background, fill: { color: BRAND.secondary }, align: 'center' } },
+    {
+      text: t('area', lang),
+      options: {
+        bold: true,
+        fontSize: 11,
+        color: BRAND.background,
+        fill: { color: BRAND.secondary },
+      },
+    },
+    {
+      text: t('category', lang),
+      options: {
+        bold: true,
+        fontSize: 11,
+        color: BRAND.background,
+        fill: { color: BRAND.secondary },
+      },
+    },
+    {
+      text: t('current', lang),
+      options: {
+        bold: true,
+        fontSize: 11,
+        color: BRAND.background,
+        fill: { color: BRAND.secondary },
+        align: 'center',
+      },
+    },
+    {
+      text: t('target', lang),
+      options: {
+        bold: true,
+        fontSize: 11,
+        color: BRAND.background,
+        fill: { color: BRAND.secondary },
+        align: 'center',
+      },
+    },
+    {
+      text: t('gap', lang),
+      options: {
+        bold: true,
+        fontSize: 11,
+        color: BRAND.background,
+        fill: { color: BRAND.secondary },
+        align: 'center',
+      },
+    },
   ];
 
   const rows: any[][] = [headerRow];
@@ -404,7 +600,9 @@ function addGapAnalysisSlide(pptx: any, data: AssessmentDeckData, fwColor: strin
   }
 
   slide.addTable(rows, {
-    x: 0.6, y: 1.2, w: 12.0,
+    x: 0.6,
+    y: 1.2,
+    w: 12.0,
     colW: [3.6, 2.8, 1.6, 1.6, 1.6],
     border: { pt: 0.5, color: 'E2E8F0' },
     fontFace: 'Calibri',
@@ -414,7 +612,13 @@ function addGapAnalysisSlide(pptx: any, data: AssessmentDeckData, fwColor: strin
   slideNumber(slide, num);
 }
 
-function addStrengthsSlide(pptx: any, data: AssessmentDeckData, fwColor: string, lang: 'en' | 'pl', num: number): void {
+function addStrengthsSlide(
+  pptx: any,
+  data: AssessmentDeckData,
+  fwColor: string,
+  lang: 'en' | 'pl',
+  num: number
+): void {
   const slide = pptx.addSlide();
   headerBar(slide, fwColor);
   sectionTitle(slide, t('strengths', lang));
@@ -424,23 +628,45 @@ function addStrengthsSlide(pptx: any, data: AssessmentDeckData, fwColor: string,
 
   for (const s of items) {
     slide.addShape('rect', {
-      x: 0.6, y: yPos, w: 0.08, h: 0.55,
+      x: 0.6,
+      y: yPos,
+      w: 0.08,
+      h: 0.55,
       fill: { color: BRAND.accent },
     });
     slide.addText(s.name, {
-      x: 0.9, y: yPos, w: 7.0, h: 0.3,
-      fontSize: 13, bold: true, color: BRAND.text,
+      x: 0.9,
+      y: yPos,
+      w: 7.0,
+      h: 0.3,
+      fontSize: 13,
+      bold: true,
+      color: BRAND.text,
       fontFace: 'Calibri',
     });
-    slide.addText(`${t('score', lang)}: ${s.score.toFixed(1)} / ${data.scaleMax}  •  ${s.category}`, {
-      x: 0.9, y: yPos + 0.28, w: 7.0, h: 0.25,
-      fontSize: 10, color: BRAND.textLight,
-      fontFace: 'Calibri Light',
-    });
+    slide.addText(
+      `${t('score', lang)}: ${s.score.toFixed(1)} / ${data.scaleMax}  •  ${s.category}`,
+      {
+        x: 0.9,
+        y: yPos + 0.28,
+        w: 7.0,
+        h: 0.25,
+        fontSize: 10,
+        color: BRAND.textLight,
+        fontFace: 'Calibri Light',
+      }
+    );
     slide.addText(s.score.toFixed(1), {
-      x: 10.5, y: yPos, w: 2.0, h: 0.55,
-      fontSize: 22, bold: true, color: BRAND.accent,
-      fontFace: 'Calibri', align: 'center', valign: 'middle',
+      x: 10.5,
+      y: yPos,
+      w: 2.0,
+      h: 0.55,
+      fontSize: 22,
+      bold: true,
+      color: BRAND.accent,
+      fontFace: 'Calibri',
+      align: 'center',
+      valign: 'middle',
     });
     yPos += 0.7;
   }
@@ -448,7 +674,13 @@ function addStrengthsSlide(pptx: any, data: AssessmentDeckData, fwColor: string,
   slideNumber(slide, num);
 }
 
-function addDataGapsSlide(pptx: any, data: AssessmentDeckData, fwColor: string, lang: 'en' | 'pl', num: number): void {
+function addDataGapsSlide(
+  pptx: any,
+  data: AssessmentDeckData,
+  fwColor: string,
+  lang: 'en' | 'pl',
+  num: number
+): void {
   const slide = pptx.addSlide();
   headerBar(slide, fwColor);
   sectionTitle(slide, t('dataGaps', lang));
@@ -457,8 +689,24 @@ function addDataGapsSlide(pptx: any, data: AssessmentDeckData, fwColor: string, 
     bodyText(slide, t('noDataGaps', lang), { y: 2.5, fontSize: 16 });
   } else {
     const headerRow = [
-      { text: t('area', lang), options: { bold: true, fontSize: 11, color: BRAND.background, fill: { color: BRAND.secondary } } },
-      { text: t('reason', lang), options: { bold: true, fontSize: 11, color: BRAND.background, fill: { color: BRAND.secondary } } },
+      {
+        text: t('area', lang),
+        options: {
+          bold: true,
+          fontSize: 11,
+          color: BRAND.background,
+          fill: { color: BRAND.secondary },
+        },
+      },
+      {
+        text: t('reason', lang),
+        options: {
+          bold: true,
+          fontSize: 11,
+          color: BRAND.background,
+          fill: { color: BRAND.secondary },
+        },
+      },
     ];
 
     const rows: any[][] = [headerRow];
@@ -470,7 +718,9 @@ function addDataGapsSlide(pptx: any, data: AssessmentDeckData, fwColor: string, 
     }
 
     slide.addTable(rows, {
-      x: 0.6, y: 1.2, w: 12.0,
+      x: 0.6,
+      y: 1.2,
+      w: 12.0,
       colW: [4.0, 8.0],
       border: { pt: 0.5, color: 'E2E8F0' },
       fontFace: 'Calibri',
@@ -481,20 +731,38 @@ function addDataGapsSlide(pptx: any, data: AssessmentDeckData, fwColor: string, 
   slideNumber(slide, num);
 }
 
-function addRoadmapSlide(pptx: any, data: AssessmentDeckData, fwColor: string, lang: 'en' | 'pl', num: number): void {
+function addRoadmapSlide(
+  pptx: any,
+  data: AssessmentDeckData,
+  fwColor: string,
+  lang: 'en' | 'pl',
+  num: number
+): void {
   const slide = pptx.addSlide();
   headerBar(slide, fwColor);
   sectionTitle(slide, t('roadmap', lang));
 
   const sorted = [...data.topGaps].sort((a, b) => b.gap - a.gap);
-  const critical = sorted.filter(g => g.gap / data.scaleMax >= 0.5);
-  const medium = sorted.filter(g => g.gap / data.scaleMax >= 0.25 && g.gap / data.scaleMax < 0.5);
-  const minor = sorted.filter(g => g.gap / data.scaleMax < 0.25);
+  const critical = sorted.filter((g) => g.gap / data.scaleMax >= 0.5);
+  const medium = sorted.filter((g) => g.gap / data.scaleMax >= 0.25 && g.gap / data.scaleMax < 0.5);
+  const minor = sorted.filter((g) => g.gap / data.scaleMax < 0.25);
 
   const phases: Array<{ label: string; color: string; items: string[] }> = [
-    { label: t('shortTerm', lang), color: BRAND.danger, items: critical.slice(0, 4).map(g => g.name) },
-    { label: t('mediumTerm', lang), color: BRAND.warning, items: medium.slice(0, 4).map(g => g.name) },
-    { label: t('longTerm', lang), color: BRAND.accent, items: minor.slice(0, 4).map(g => g.name) },
+    {
+      label: t('shortTerm', lang),
+      color: BRAND.danger,
+      items: critical.slice(0, 4).map((g) => g.name),
+    },
+    {
+      label: t('mediumTerm', lang),
+      color: BRAND.warning,
+      items: medium.slice(0, 4).map((g) => g.name),
+    },
+    {
+      label: t('longTerm', lang),
+      color: BRAND.accent,
+      items: minor.slice(0, 4).map((g) => g.name),
+    },
   ];
 
   let xPos = 0.6;
@@ -502,23 +770,41 @@ function addRoadmapSlide(pptx: any, data: AssessmentDeckData, fwColor: string, l
 
   for (const phase of phases) {
     slide.addShape('rect', {
-      x: xPos, y: 1.3, w: colW, h: 0.45,
+      x: xPos,
+      y: 1.3,
+      w: colW,
+      h: 0.45,
       fill: { color: phase.color },
     });
     slide.addText(phase.label, {
-      x: xPos, y: 1.3, w: colW, h: 0.45,
-      fontSize: 12, bold: true, color: BRAND.background,
-      fontFace: 'Calibri', align: 'center', valign: 'middle',
+      x: xPos,
+      y: 1.3,
+      w: colW,
+      h: 0.45,
+      fontSize: 12,
+      bold: true,
+      color: BRAND.background,
+      fontFace: 'Calibri',
+      align: 'center',
+      valign: 'middle',
     });
 
-    const itemsText = phase.items.length > 0
-      ? phase.items.map((n, i) => `${i + 1}. ${n}`).join('\n')
-      : (lang === 'pl' ? '— Brak elementów —' : '— No items —');
+    const itemsText =
+      phase.items.length > 0
+        ? phase.items.map((n, i) => `${i + 1}. ${n}`).join('\n')
+        : lang === 'pl'
+          ? '— Brak elementów —'
+          : '— No items —';
 
     slide.addText(itemsText, {
-      x: xPos + 0.15, y: 1.9, w: colW - 0.3, h: 4.5,
-      fontSize: 11, color: BRAND.text,
-      fontFace: 'Calibri Light', valign: 'top',
+      x: xPos + 0.15,
+      y: 1.9,
+      w: colW - 0.3,
+      h: 4.5,
+      fontSize: 11,
+      color: BRAND.text,
+      fontFace: 'Calibri Light',
+      valign: 'top',
     });
 
     xPos += colW + 0.25;
@@ -540,26 +826,45 @@ function addThankYouSlide(pptx: any, fwColor: string, lang: 'en' | 'pl', num: nu
   slide.background = { color: BRAND.secondary };
 
   slide.addShape('rect', {
-    x: 0, y: 0, w: 13.33, h: 0.12,
+    x: 0,
+    y: 0,
+    w: 13.33,
+    h: 0.12,
     fill: { color: fwColor },
   });
 
   slide.addText(t('thankYou', lang), {
-    x: 0.6, y: 2.2, w: 12.0, h: 1.2,
-    fontSize: 44, bold: true, color: BRAND.background,
-    fontFace: 'Calibri', align: 'center',
+    x: 0.6,
+    y: 2.2,
+    w: 12.0,
+    h: 1.2,
+    fontSize: 44,
+    bold: true,
+    color: BRAND.background,
+    fontFace: 'Calibri',
+    align: 'center',
   });
 
   slide.addText(t('contactLine', lang), {
-    x: 0.6, y: 3.8, w: 12.0, h: 0.6,
-    fontSize: 14, color: BRAND.textLight,
-    fontFace: 'Calibri Light', align: 'center',
+    x: 0.6,
+    y: 3.8,
+    w: 12.0,
+    h: 0.6,
+    fontSize: 14,
+    color: BRAND.textLight,
+    fontFace: 'Calibri Light',
+    align: 'center',
   });
 
   slide.addText(t('brandLine', lang), {
-    x: 0.6, y: 6.5, w: 12.0, h: 0.4,
-    fontSize: 11, color: fwColor,
-    fontFace: 'Calibri', align: 'center',
+    x: 0.6,
+    y: 6.5,
+    w: 12.0,
+    h: 0.4,
+    fontSize: 11,
+    color: fwColor,
+    fontFace: 'Calibri',
+    align: 'center',
   });
 
   slideNumber(slide, num);
@@ -569,11 +874,15 @@ function addThankYouSlide(pptx: any, fwColor: string, lang: 'en' | 'pl', num: nu
 // Main export
 // ---------------------------------------------------------------------------
 
-export async function generateAssessmentDeck(data: AssessmentDeckData): Promise<DeckGenerationResult> {
+export async function generateAssessmentDeck(
+  data: AssessmentDeckData
+): Promise<DeckGenerationResult> {
   const lang = data.language ?? 'en';
   const fwColor = FRAMEWORK_COLORS[data.framework] ?? BRAND.primary;
 
-  logger.info(`[AssessmentDeck] Generating ${data.framework} deck for "${data.assessmentName}" (${lang})`);
+  logger.info(
+    `[AssessmentDeck] Generating ${data.framework} deck for "${data.assessmentName}" (${lang})`
+  );
 
   const pptx = new PptxGenJS();
   pptx.layout = 'LAYOUT_WIDE';
@@ -617,13 +926,15 @@ export async function generateAssessmentDeck(data: AssessmentDeckData): Promise<
 
   addThankYouSlide(pptx, fwColor, lang, slideNum);
 
-  const buffer = await pptx.write({ outputType: 'nodebuffer' }) as Buffer;
+  const buffer = (await pptx.write({ outputType: 'nodebuffer' })) as Buffer;
 
   const safeOrg = data.organizationName.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
   const dateStr = data.assessmentDate.replace(/[^0-9-]/g, '').slice(0, 10);
   const filename = `${data.framework}_Assessment_${safeOrg}_${dateStr}.pptx`;
 
-  logger.info(`[AssessmentDeck] Generated ${slideNum} slides (${(buffer.length / 1024).toFixed(0)} KB)`);
+  logger.info(
+    `[AssessmentDeck] Generated ${slideNum} slides (${(buffer.length / 1024).toFixed(0)} KB)`
+  );
 
   return { buffer, slideCount: slideNum, filename };
 }

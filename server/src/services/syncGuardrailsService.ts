@@ -9,7 +9,13 @@ import _logger from '../utils/Logger.js';
 
 // ── Types ──────────────────────────────────────────────────────
 
-export type SyncErrorType = 'AUTH' | 'RATE_LIMIT' | 'NETWORK' | 'VALIDATION' | 'PROVIDER' | 'UNKNOWN';
+export type SyncErrorType =
+  | 'AUTH'
+  | 'RATE_LIMIT'
+  | 'NETWORK'
+  | 'VALIDATION'
+  | 'PROVIDER'
+  | 'UNKNOWN';
 
 export interface RateLimitStatus {
   integrationId: string;
@@ -78,7 +84,12 @@ export async function checkRateLimit(
        WHERE integration_id = ? AND window_start > ?
        ORDER BY window_start DESC LIMIT 1`,
       [integrationId, windowStart.toISOString()]
-    )) as Array<{ request_count: number; max_requests: number; is_throttled: boolean; window_start: string }> | null;
+    )) as Array<{
+      request_count: number;
+      max_requests: number;
+      is_throttled: boolean;
+      window_start: string;
+    }> | null;
 
     const current = rows?.[0];
 
@@ -105,7 +116,9 @@ export async function checkRateLimit(
     }
 
     if (current && current.request_count >= maxRequests * 0.8) {
-      warnings.push(`Approaching rate limit: ${current.request_count}/${maxRequests} (${Math.round((current.request_count / maxRequests) * 100)}%)`);
+      warnings.push(
+        `Approaching rate limit: ${current.request_count}/${maxRequests} (${Math.round((current.request_count / maxRequests) * 100)}%)`
+      );
     }
 
     return { allowed: true, warnings };
@@ -145,7 +158,10 @@ export async function recordRequest(
 
 // ── Error Handling & Retry ─────────────────────────────────────
 
-export function classifyError(error: Error | string): { type: SyncErrorType; isRetryable: boolean } {
+export function classifyError(error: Error | string): {
+  type: SyncErrorType;
+  isRetryable: boolean;
+} {
   const msg = typeof error === 'string' ? error : error.message;
   const lower = msg.toLowerCase();
 
@@ -188,16 +204,27 @@ export async function logSyncError(
   )) as Array<{ id: string; retry_count: number }> | null;
 
   const retryCount = existing?.[0]?.retry_count ? existing[0].retry_count + 1 : 0;
-  const nextRetryAt = isRetryable && retryCount < 3
-    ? new Date(Date.now() + calculateRetryDelay(retryCount)).toISOString()
-    : null;
+  const nextRetryAt =
+    isRetryable && retryCount < 3
+      ? new Date(Date.now() + calculateRetryDelay(retryCount)).toISOString()
+      : null;
 
   const id = `se-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
   await dbRun(
     `INSERT INTO sync_error_log
        (id, organization_id, integration_id, sync_run_id, error_type, error_message, is_retryable, retry_count, max_retries, next_retry_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 3, ?)`,
-    [id, organizationId, integrationId, syncRunId || null, type, msg, isRetryable, retryCount, nextRetryAt]
+    [
+      id,
+      organizationId,
+      integrationId,
+      syncRunId || null,
+      type,
+      msg,
+      isRetryable,
+      retryCount,
+      nextRetryAt,
+    ]
   );
 
   // Increment error count on integration
@@ -239,9 +266,16 @@ export async function getUnresolvedErrors(
   query += ' ORDER BY created_at DESC LIMIT 50';
 
   const rows = ((await dbAll(query, params)) || []) as Array<{
-    id: string; integration_id: string; error_type: string; error_code: string | null;
-    error_message: string; is_retryable: boolean; retry_count: number; max_retries: number;
-    next_retry_at: string | null; created_at: string;
+    id: string;
+    integration_id: string;
+    error_type: string;
+    error_code: string | null;
+    error_message: string;
+    is_retryable: boolean;
+    retry_count: number;
+    max_retries: number;
+    next_retry_at: string | null;
+    created_at: string;
   }>;
 
   return rows.map((r) => ({
@@ -259,10 +293,7 @@ export async function getUnresolvedErrors(
 }
 
 export async function resolveError(errorId: string): Promise<void> {
-  await dbRun(
-    `UPDATE sync_error_log SET resolved_at = NOW() WHERE id = ?`,
-    [errorId]
-  );
+  await dbRun(`UPDATE sync_error_log SET resolved_at = NOW() WHERE id = ?`, [errorId]);
 }
 
 // ── Health Check ───────────────────────────────────────────────

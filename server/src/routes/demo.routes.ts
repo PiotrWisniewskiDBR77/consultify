@@ -9,9 +9,9 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import {
+  checkUserDemoPreference,
   DEMO_ORG_ID,
   DEMO_ORG_NAME,
-  checkUserDemoPreference,
   getDemoOrganization,
   getDemoStats,
   setUserDemoPreference,

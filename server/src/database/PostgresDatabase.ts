@@ -304,10 +304,13 @@ function adaptQuery(sql: string): string {
     /date\s*\(\s*['"]now['"]\s*,\s*['"]start\s+of\s+month['"]\s*\)/gi,
     "date_trunc('month', CURRENT_DATE)"
   );
-  
+
   // Debug: Log if date functions are still present (for troubleshooting)
   if (adapted.includes("date('now'") || adapted.includes('date("now"')) {
-    logger.warn('[Postgres] adaptQuery: Date function still present after replacement:', adapted.substring(0, 200));
+    logger.warn(
+      '[Postgres] adaptQuery: Date function still present after replacement:',
+      adapted.substring(0, 200)
+    );
   }
 
   // Replace date('now') with CURRENT_DATE
@@ -329,7 +332,7 @@ function adaptQuery(sql: string): string {
   // Match datetime(column) where column is not 'now' or a string literal
   adapted = adapted.replace(/datetime\s*\(\s*([^'"]+?)\s*\)/gi, (match, content) => {
     // Skip if it looks like datetime('now', ...) that wasn't caught
-    if (content.trim().startsWith('now') || content.trim().startsWith("now")) {
+    if (content.trim().startsWith('now') || content.trim().startsWith('now')) {
       return match; // Don't replace
     }
     // Return just the column/expression - PostgreSQL timestamps can be compared directly
@@ -364,10 +367,10 @@ function adaptQuery(sql: string): string {
   // Handle both single-line and multi-line INSERT statements
   // Track if we replaced INSERT OR IGNORE so we only add ON CONFLICT for those
   const hadInsertOrIgnore = /INSERT\s+OR\s+IGNORE/gi.test(adapted);
-  
+
   // Step 1: Replace INSERT OR IGNORE with INSERT
   adapted = adapted.replace(/INSERT\s+OR\s+IGNORE/gi, 'INSERT');
-  
+
   // Step 2: Add ON CONFLICT clause AFTER VALUES for INSERT statements that had INSERT OR IGNORE
   // Only process if we actually replaced INSERT OR IGNORE (don't modify regular INSERT statements)
   // CRITICAL: Double-check that we're not processing a regular INSERT INTO statement
@@ -375,17 +378,17 @@ function adaptQuery(sql: string): string {
     // Handle multi-line INSERT statements where column list and VALUES might span multiple lines
     // Pattern: INSERT INTO table (columns...)\nVALUES (values...)
     // We need to find VALUES and add ON CONFLICT after the VALUES clause, not before
-    
+
     // Strategy: Find the VALUES keyword and insert ON CONFLICT after the VALUES clause
     // Match: INSERT INTO table (columns) ... VALUES (values)
     // Use non-greedy matching with [\s\S] to handle newlines and match balanced parentheses
-    
+
     // Extract the column list first to get the first column for conflict target
     const insertMatch = adapted.match(/INSERT\s+INTO\s+\w+\s*\(([\s\S]+?)\)/i);
     if (insertMatch) {
       const columns = insertMatch[1];
       const firstColumn = columns.split(',')[0].trim().split(/\s+/)[0];
-      
+
       // Find the position of VALUES in the INSERT statement
       const valuesMatch = adapted.match(/\bVALUES\s*\(/i);
       if (valuesMatch && valuesMatch.index !== undefined) {
@@ -394,7 +397,9 @@ function adaptQuery(sql: string): string {
         const afterValues = adapted.substring(valuesMatch.index);
         const lastParen = afterValues.lastIndexOf(')');
         const foundEnd = lastParen >= 0;
-        const valuesEndPos = foundEnd ? valuesMatch.index + lastParen + 1 : valuesMatch.index + valuesMatch[0].length;
+        const valuesEndPos = foundEnd
+          ? valuesMatch.index + lastParen + 1
+          : valuesMatch.index + valuesMatch[0].length;
 
         if (foundEnd) {
           // CRITICAL: Verify VALUES comes before any existing ON CONFLICT
@@ -804,10 +809,18 @@ export async function initDb(): Promise<void> {
     // CRITICAL: Ensure initiatives has created_by/updated_by early (table may exist from migrations)
     if (await tableExists('initiatives')) {
       if (!(await columnExists('initiatives', 'created_by'))) {
-        await querySafe('ALTER TABLE initiatives ADD COLUMN created_by TEXT', [], 'initiatives.created_by');
+        await querySafe(
+          'ALTER TABLE initiatives ADD COLUMN created_by TEXT',
+          [],
+          'initiatives.created_by'
+        );
       }
       if (!(await columnExists('initiatives', 'updated_by'))) {
-        await querySafe('ALTER TABLE initiatives ADD COLUMN updated_by TEXT', [], 'initiatives.updated_by');
+        await querySafe(
+          'ALTER TABLE initiatives ADD COLUMN updated_by TEXT',
+          [],
+          'initiatives.updated_by'
+        );
       }
     }
 

@@ -283,4 +283,3 @@ export const HELP_PLAYBOOK_STEPS_SEED: HelpPlaybookStepSeed[] = [
     },
   },
 ];
-

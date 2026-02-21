@@ -75,7 +75,11 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
         });
         trackFunnelEvent('my_idea_saved', { source: 'my_work', ideaId: saved?.id });
       } else {
-        saved = await Api.updateMyIdea(ideaId, { title: trimmedTitle, body: body?.trim() || '', tags });
+        saved = await Api.updateMyIdea(ideaId, {
+          title: trimmedTitle,
+          body: body?.trim() || '',
+          tags,
+        });
         trackFunnelEvent('my_idea_edited', { source: 'my_work', ideaId });
       }
       onSaved(saved as MyIdea);
@@ -134,7 +138,11 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
           </button>
           <div className="min-w-0">
             <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-              {isNew ? (isPolish ? 'Nowy pomysł' : 'New idea') : title || (isPolish ? 'Pomysł' : 'Idea')}
+              {isNew
+                ? isPolish
+                  ? 'Nowy pomysł'
+                  : 'New idea'
+                : title || (isPolish ? 'Pomysł' : 'Idea')}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
               {t('myWork.ideas.private', 'Private')}
@@ -241,4 +249,3 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
 };
 
 export default IdeaDetailView;
-

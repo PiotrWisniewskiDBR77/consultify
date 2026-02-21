@@ -56,8 +56,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
       try {
         const path = typeof window !== 'undefined' ? window.location.pathname : 'unknown';
         const key = `__route_error_boundary_hard_reload__:${path}`;
-        const already =
-          typeof window !== 'undefined' ? window.sessionStorage.getItem(key) : '1';
+        const already = typeof window !== 'undefined' ? window.sessionStorage.getItem(key) : '1';
         if (!already && typeof window !== 'undefined') {
           window.sessionStorage.setItem(key, String(Date.now()));
           this.setState({ didAutoReload: true }, () => {

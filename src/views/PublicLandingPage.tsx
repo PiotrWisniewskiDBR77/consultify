@@ -11,8 +11,8 @@ import {
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { KnowledgePreviewSection } from '../components/Landing/KnowledgePreviewSection';
 import { DocumentationSection } from '../components/Landing/DocumentationSection';
+import { KnowledgePreviewSection } from '../components/Landing/KnowledgePreviewSection';
 
 /**
  * PublicLandingPage — Phase A: Pre-Entry

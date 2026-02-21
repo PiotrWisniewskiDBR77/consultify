@@ -5,7 +5,6 @@
  */
 
 import crypto from 'crypto';
-
 import { Request, Response, Router } from 'express';
 
 import { getDatabase } from '../database/Database.js';
@@ -155,4 +154,3 @@ router.get('/track/click', async (req: Request, res: Response) => {
 });
 
 export default router;
-

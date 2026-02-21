@@ -53,7 +53,12 @@ export interface OverspendSignal {
   id: string;
   initiativeId: string | null;
   initiativeName: string;
-  signalType: 'THRESHOLD_WARNING' | 'THRESHOLD_CRITICAL' | 'THRESHOLD_EXCEEDED' | 'BURN_RATE_HIGH' | 'FORECAST_OVERSPEND';
+  signalType:
+    | 'THRESHOLD_WARNING'
+    | 'THRESHOLD_CRITICAL'
+    | 'THRESHOLD_EXCEEDED'
+    | 'BURN_RATE_HIGH'
+    | 'FORECAST_OVERSPEND';
   severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   plannedAmount: number;
   actualAmount: number;
@@ -100,10 +105,19 @@ export async function createBudgetEntry(
         amount, currency, description, period_month, period_year, source, created_by)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      id, organizationId, data.initiativeId, data.entryType, data.costType,
-      data.category || 'General', data.amount, data.currency || 'PLN',
-      data.description || null, data.periodMonth || null, data.periodYear || null,
-      data.source || 'manual', data.createdBy || null,
+      id,
+      organizationId,
+      data.initiativeId,
+      data.entryType,
+      data.costType,
+      data.category || 'General',
+      data.amount,
+      data.currency || 'PLN',
+      data.description || null,
+      data.periodMonth || null,
+      data.periodYear || null,
+      data.source || 'manual',
+      data.createdBy || null,
     ]
   );
 
@@ -124,10 +138,19 @@ export async function getBudgetEntries(
      ORDER BY period_year DESC NULLS LAST, period_month DESC NULLS LAST, created_at DESC`,
     [organizationId, initiativeId]
   )) || []) as Array<{
-    id: string; initiative_id: string; entry_type: string; cost_type: string;
-    category: string; amount: number; currency: string; description: string | null;
-    period_month: number | null; period_year: number | null; source: string;
-    created_by: string | null; created_at: string;
+    id: string;
+    initiative_id: string;
+    entry_type: string;
+    cost_type: string;
+    category: string;
+    amount: number;
+    currency: string;
+    description: string | null;
+    period_month: number | null;
+    period_year: number | null;
+    source: string;
+    created_by: string | null;
+    created_at: string;
   }>;
 
   return rows.map((r) => ({
@@ -152,10 +175,10 @@ export async function deleteBudgetEntry(
   entryId: string,
   initiativeId: string
 ): Promise<void> {
-  await dbRun(
-    `DELETE FROM budget_entries WHERE id = ? AND organization_id = ?`,
-    [entryId, organizationId]
-  );
+  await dbRun(`DELETE FROM budget_entries WHERE id = ? AND organization_id = ?`, [
+    entryId,
+    organizationId,
+  ]);
   await recalcInitiativeActualTotal(organizationId, initiativeId);
 }
 
@@ -182,8 +205,12 @@ export async function getInitiativeBudgetSummary(
   if (!initRow.length) return null;
 
   const currency = planned[0]?.currency || initRow[0]?.budget_currency || 'PLN';
-  const plannedCapex = planned.filter((p) => p.cost_type === 'CAPEX').reduce((s, p) => s + Number(p.total_amount), 0);
-  const plannedOpex = planned.filter((p) => p.cost_type === 'OPEX').reduce((s, p) => s + Number(p.total_amount), 0);
+  const plannedCapex = planned
+    .filter((p) => p.cost_type === 'CAPEX')
+    .reduce((s, p) => s + Number(p.total_amount), 0);
+  const plannedOpex = planned
+    .filter((p) => p.cost_type === 'OPEX')
+    .reduce((s, p) => s + Number(p.total_amount), 0);
   const plannedTotal = plannedCapex + plannedOpex;
 
   // Actual budget from budget_entries
@@ -195,8 +222,12 @@ export async function getInitiativeBudgetSummary(
     [initiativeId, organizationId]
   )) || []) as ActualRow[];
 
-  const actualCapex = actuals.filter((a) => a.cost_type === 'CAPEX').reduce((s, a) => s + Number(a.total_amount), 0);
-  const actualOpex = actuals.filter((a) => a.cost_type === 'OPEX').reduce((s, a) => s + Number(a.total_amount), 0);
+  const actualCapex = actuals
+    .filter((a) => a.cost_type === 'CAPEX')
+    .reduce((s, a) => s + Number(a.total_amount), 0);
+  const actualOpex = actuals
+    .filter((a) => a.cost_type === 'OPEX')
+    .reduce((s, a) => s + Number(a.total_amount), 0);
   const actualTotal = actualCapex + actualOpex;
 
   const varianceTotal = actualTotal - plannedTotal;
@@ -204,9 +235,10 @@ export async function getInitiativeBudgetSummary(
   const burnRate = plannedTotal > 0 ? Math.round((actualTotal / plannedTotal) * 100) : 0;
 
   // Simple forecast: extrapolate from current burn rate
-  const forecastTotal = plannedTotal > 0 && burnRate > 0
-    ? Math.round(actualTotal * (100 / Math.max(burnRate, 1)))
-    : actualTotal;
+  const forecastTotal =
+    plannedTotal > 0 && burnRate > 0
+      ? Math.round(actualTotal * (100 / Math.max(burnRate, 1)))
+      : actualTotal;
 
   let status: 'GREEN' | 'AMBER' | 'RED' = 'GREEN';
   if (variancePercent >= 100) status = 'RED';
@@ -247,7 +279,10 @@ export async function getPortfolioBudgetSummary(
   initQuery += ' GROUP BY i.id, i.name, i.budget_currency';
 
   const initRows = ((await dbAll(initQuery, params)) || []) as Array<{
-    id: string; name: string; budget_currency: string; planned_total: number;
+    id: string;
+    name: string;
+    budget_currency: string;
+    planned_total: number;
   }>;
 
   const summaries: InitiativeBudgetSummary[] = [];
@@ -363,7 +398,10 @@ export async function detectOverspendSignals(
 
 // ── Helpers ────────────────────────────────────────────────────
 
-async function recalcInitiativeActualTotal(organizationId: string, initiativeId: string): Promise<void> {
+async function recalcInitiativeActualTotal(
+  organizationId: string,
+  initiativeId: string
+): Promise<void> {
   try {
     const result = ((await dbAll(
       `SELECT COALESCE(SUM(amount), 0) as total FROM budget_entries
@@ -372,10 +410,10 @@ async function recalcInitiativeActualTotal(organizationId: string, initiativeId:
     )) || []) as Array<{ total: number }>;
 
     const total = result[0]?.total || 0;
-    await dbRun(
-      `UPDATE initiatives SET actual_budget_total = ?, updated_at = NOW() WHERE id = ?`,
-      [total, initiativeId]
-    );
+    await dbRun(`UPDATE initiatives SET actual_budget_total = ?, updated_at = NOW() WHERE id = ?`, [
+      total,
+      initiativeId,
+    ]);
   } catch (err) {
     logger.error(`Failed to recalc actual budget total for ${initiativeId}`, err);
   }

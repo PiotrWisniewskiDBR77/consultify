@@ -195,9 +195,7 @@ class TrialServiceImpl {
    */
   async sendTrialWarnings(): Promise<number> {
     const now = new Date();
-    const warningDate = new Date(
-      now.getTime() + TRIAL_WARNING_DAYS.WARNING * 24 * 60 * 60 * 1000
-    );
+    const warningDate = new Date(now.getTime() + TRIAL_WARNING_DAYS.WARNING * 24 * 60 * 60 * 1000);
     const criticalDate = new Date(
       now.getTime() + TRIAL_WARNING_DAYS.CRITICAL * 24 * 60 * 60 * 1000
     );

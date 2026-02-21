@@ -56,7 +56,9 @@ ceo@example.com,Example Co,Ada,Lovelace,US,NA,manual,legitimate_interest`,
     try {
       setImporting(true);
       const content = csv.trim().length > 0 ? csv : exampleCsv;
-      const resp = await Api.post('/api/superadmin/partner-outreach/leads/import', { csv: content });
+      const resp = await Api.post('/api/superadmin/partner-outreach/leads/import', {
+        csv: content,
+      });
       if (!resp?.success) throw new Error(resp?.error || 'Import failed');
       toast.success(
         t('partners.outreach.importSuccess', 'Leads imported') +
@@ -228,7 +230,10 @@ ceo@example.com,Example Co,Ada,Lovelace,US,NA,manual,legitimate_interest`,
           <textarea
             value={stepBodyText}
             onChange={(e) => setStepBodyText(e.target.value)}
-            placeholder={t('partners.outreach.stepBody', 'Step 1 body (text). Use {FirstName}, {Company}.')}
+            placeholder={t(
+              'partners.outreach.stepBody',
+              'Step 1 body (text). Use {FirstName}, {Company}.'
+            )}
             className="w-full h-24 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm"
           />
         </div>
@@ -257,7 +262,9 @@ ceo@example.com,Example Co,Ada,Lovelace,US,NA,manual,legitimate_interest`,
             {campaigns.map((c) => (
               <div key={c.id} className="py-3 flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="font-medium text-slate-900 dark:text-white truncate">{c.name}</div>
+                  <div className="font-medium text-slate-900 dark:text-white truncate">
+                    {c.name}
+                  </div>
                   <div className="text-xs text-slate-500 dark:text-slate-500">
                     {t('partners.outreach.status', 'Status')}: {c.status} •{' '}
                     {t('partners.outreach.enrollments', 'Enrollments')}: {c.enrollments_total || 0}{' '}
@@ -267,7 +274,9 @@ ceo@example.com,Example Co,Ada,Lovelace,US,NA,manual,legitimate_interest`,
                 <div className="flex items-center gap-2 shrink-0">
                   {c.status === 'draft' || c.status === 'paused' ? (
                     <button
-                      onClick={() => (c.status === 'paused' ? resumeCampaign(c.id) : startCampaign(c.id))}
+                      onClick={() =>
+                        c.status === 'paused' ? resumeCampaign(c.id) : startCampaign(c.id)
+                      }
                       className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm"
                     >
                       <Play className="w-4 h-4" />
@@ -295,4 +304,3 @@ ceo@example.com,Example Co,Ada,Lovelace,US,NA,manual,legitimate_interest`,
 };
 
 export default PartnerOutreachPanel;
-

@@ -14,9 +14,10 @@ export const checkMemoryQuota = async (req: AuthRequest, res: Response, next: Ne
   }
 
   try {
-    const orgPlan = await queryOne('SELECT subscription_plan_id FROM organizations WHERE id = ?', [
-      orgId,
-    ]);
+    const orgPlan = await queryOne(
+      'SELECT subscription_plan_id FROM organization_billing WHERE organization_id = ?',
+      [orgId]
+    );
     if (!orgPlan || !(orgPlan as Record<string, unknown>).subscription_plan_id) {
       next();
       return;
@@ -68,9 +69,10 @@ export const checkCPUQuota = async (req: AuthRequest, res: Response, next: NextF
   }
 
   try {
-    const orgPlan = await queryOne('SELECT subscription_plan_id FROM organizations WHERE id = ?', [
-      orgId,
-    ]);
+    const orgPlan = await queryOne(
+      'SELECT subscription_plan_id FROM organization_billing WHERE organization_id = ?',
+      [orgId]
+    );
     if (!orgPlan || !(orgPlan as Record<string, unknown>).subscription_plan_id) {
       next();
       return;

@@ -82,8 +82,13 @@ router.get(
            WHERE integration_id = ? ORDER BY started_at DESC LIMIT 1`,
           [int.id]
         )) || []) as Array<{
-          id: string; status: string; items_processed: number; duration_ms: number;
-          started_at: string; completed_at: string; error_summary: string;
+          id: string;
+          status: string;
+          items_processed: number;
+          duration_ms: number;
+          started_at: string;
+          completed_at: string;
+          error_summary: string;
         }>;
 
         return {
@@ -158,11 +163,17 @@ router.post(
     const result = await connectIntegration(orgId, connectorId, config);
 
     if (displayName) {
-      await dbRun(`UPDATE integrations SET display_name = ? WHERE id = ?`, [displayName, result.id]);
+      await dbRun(`UPDATE integrations SET display_name = ? WHERE id = ?`, [
+        displayName,
+        result.id,
+      ]);
     }
 
     const scopes = connector.capabilities.map((c: string) => `read:${c}`);
-    await dbRun(`UPDATE integrations SET scopes = ?::JSONB WHERE id = ?`, [JSON.stringify(scopes), result.id]);
+    await dbRun(`UPDATE integrations SET scopes = ?::JSONB WHERE id = ?`, [
+      JSON.stringify(scopes),
+      result.id,
+    ]);
 
     await updateIntegrationStatus(result.id, 'connected');
 
@@ -217,8 +228,13 @@ router.post(
     setTimeout(async () => {
       try {
         await updateIntegrationStatus(intId, 'connected');
-        await dbRun(`UPDATE integrations SET error_count = 0, last_healthy_at = NOW() WHERE id = ?`, [intId]);
-      } catch { /* non-blocking */ }
+        await dbRun(
+          `UPDATE integrations SET error_count = 0, last_healthy_at = NOW() WHERE id = ?`,
+          [intId]
+        );
+      } catch {
+        /* non-blocking */
+      }
     }, 2000);
 
     const actorName = `${req.user?.firstName || ''} ${req.user?.lastName || ''}`.trim() || userId;
@@ -299,7 +315,8 @@ router.post(
 
     if (!integration.length) return res.status(404).json({ error: 'Integration not found' });
     if (integration[0].is_paused) return res.status(400).json({ error: 'Integration is paused' });
-    if (integration[0].status === 'disconnected') return res.status(400).json({ error: 'Integration is disconnected' });
+    if (integration[0].status === 'disconnected')
+      return res.status(400).json({ error: 'Integration is disconnected' });
 
     const rateCheck = await checkRateLimit(orgId, intId, integration[0].connector_id);
     if (!rateCheck.allowed) {
@@ -333,10 +350,9 @@ router.post(
         [result.recordsSynced, result.duration, runId]
       );
 
-      await dbRun(
-        `UPDATE integrations SET last_healthy_at = NOW(), error_count = 0 WHERE id = ?`,
-        [intId]
-      );
+      await dbRun(`UPDATE integrations SET last_healthy_at = NOW(), error_count = 0 WHERE id = ?`, [
+        intId,
+      ]);
 
       const actorName = `${req.user?.firstName || ''} ${req.user?.lastName || ''}`.trim() || userId;
       await logAudit(orgId, intId, 'sync_completed', userId, actorName, {

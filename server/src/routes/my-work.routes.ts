@@ -88,7 +88,11 @@ const parseTagsArray = (input: unknown): string[] => {
     } catch {
       // ignore
     }
-    if (s.includes(',')) return s.split(',').map((x) => x.trim()).filter(Boolean);
+    if (s.includes(','))
+      return s
+        .split(',')
+        .map((x) => x.trim())
+        .filter(Boolean);
   }
   return [];
 };
@@ -160,7 +164,9 @@ const ensureMyIdeasTable = async () => {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`
   );
-  await queryHelpers.queryRun(`CREATE INDEX IF NOT EXISTS idx_my_ideas_user_id ON my_ideas(user_id)`);
+  await queryHelpers.queryRun(
+    `CREATE INDEX IF NOT EXISTS idx_my_ideas_user_id ON my_ideas(user_id)`
+  );
   await queryHelpers.queryRun(
     `CREATE INDEX IF NOT EXISTS idx_my_ideas_org_id ON my_ideas(organization_id)`
   );
@@ -259,7 +265,8 @@ router.get(
       params.push(status);
     }
     if (q) {
-      whereExtra += " AND (lower(coalesce(t.title,'')) LIKE ? OR lower(coalesce(t.description,'')) LIKE ?)";
+      whereExtra +=
+        " AND (lower(coalesce(t.title,'')) LIKE ? OR lower(coalesce(t.description,'')) LIKE ?)";
       params.push(`%${q}%`, `%${q}%`);
     }
 
@@ -310,7 +317,8 @@ router.post(
       return;
     }
 
-    const description = typeof req.body?.description === 'string' ? req.body.description : undefined;
+    const description =
+      typeof req.body?.description === 'string' ? req.body.description : undefined;
     const status = String(req.body?.status || 'todo').trim() || 'todo';
     const priority = String(req.body?.priority || 'medium').trim() || 'medium';
     const dueDate = req.body?.dueDate ? String(req.body.dueDate).trim() : undefined;
@@ -1436,11 +1444,10 @@ router.delete(
     await ensureMyIdeasTable();
 
     const id = String(req.params.id || '').trim();
-    await queryHelpers.queryRun(`DELETE FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ?`, [
-      id,
-      userId,
-      orgId,
-    ]);
+    await queryHelpers.queryRun(
+      `DELETE FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ?`,
+      [id, userId, orgId]
+    );
     res.status(204).send();
   })
 );

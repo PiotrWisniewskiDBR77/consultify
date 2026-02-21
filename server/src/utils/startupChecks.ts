@@ -1,6 +1,6 @@
 /**
  * Startup Configuration Checks
- * 
+ *
  * Validates critical configuration before server starts.
  * Prevents cryptic runtime errors by failing fast with clear messages.
  */
@@ -37,9 +37,7 @@ function checkDatabaseFile(): CheckResult {
   }
 
   // Resolve path relative to server directory
-  const resolvedPath = path.isAbsolute(dbPath)
-    ? dbPath
-    : path.resolve(process.cwd(), dbPath);
+  const resolvedPath = path.isAbsolute(dbPath) ? dbPath : path.resolve(process.cwd(), dbPath);
 
   if (!fs.existsSync(resolvedPath)) {
     return {

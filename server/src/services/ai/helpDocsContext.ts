@@ -1,5 +1,5 @@
-import KnowledgeBaseService from '../KnowledgeBaseService.js';
 import logger from '../../utils/Logger.js';
+import KnowledgeBaseService from '../KnowledgeBaseService.js';
 
 type SupportedKbLang = 'en' | 'pl';
 
@@ -155,12 +155,12 @@ function safeSlice(text: string, maxChars: number): string {
 // Guardrails: sanitize AI-facing content to reduce hallucination surface
 // ---------------------------------------------------------------------------
 function sanitizeExcerpt(raw: string): string {
-  let cleaned = raw
-    .replace(/<[^>]+>/g, '')          // strip HTML
-    .replace(/!\[.*?\]\(.*?\)/g, '')  // strip markdown images
+  const cleaned = raw
+    .replace(/<[^>]+>/g, '') // strip HTML
+    .replace(/!\[.*?\]\(.*?\)/g, '') // strip markdown images
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // markdown links → text
-    .replace(/#{1,6}\s*/g, '')        // strip heading markers
-    .replace(/\n{3,}/g, '\n\n');      // collapse excess newlines
+    .replace(/#{1,6}\s*/g, '') // strip heading markers
+    .replace(/\n{3,}/g, '\n\n'); // collapse excess newlines
   return cleaned.trim();
 }
 
@@ -248,7 +248,9 @@ export async function buildHelpDocsContext(opts: {
 
     const citations: HelpDocsCitation[] = resolved.map((a: any, idx: number) => {
       const link =
-        a.category_slug && a.slug ? `/docs/${String(a.category_slug)}/${String(a.slug)}` : undefined;
+        a.category_slug && a.slug
+          ? `/docs/${String(a.category_slug)}/${String(a.slug)}`
+          : undefined;
       return {
         id: `kb_${String(a.id || idx + 1)}`,
         type: 'external',
@@ -283,7 +285,7 @@ export async function buildHelpDocsContext(opts: {
         const budgetLeft = Math.max(0, MAX_TOTAL_KB_CHARS - totalChars);
         const content = safeSlice(rawContent, Math.min(maxCharsPerArticle, budgetLeft));
 
-        totalChars += (summary.length + content.length);
+        totalChars += summary.length + content.length;
 
         return [
           `### [KB${i + 1}] ${title}`,

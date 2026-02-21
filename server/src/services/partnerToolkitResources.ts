@@ -1,10 +1,9 @@
 import fs from 'fs';
-import path from 'path';
-import { PassThrough } from 'stream';
-
 import JSZip from 'jszip';
+import path from 'path';
 import PDFDocument from 'pdfkit';
 import PptxGenJS from 'pptxgenjs';
+import { PassThrough } from 'stream';
 
 export type PartnerResourceLanguage = 'en' | 'pl';
 
@@ -104,7 +103,9 @@ export async function generatePartnerToolkitResourceFile(params: {
 
     return {
       buffer: Buffer.from(content, 'utf8'),
-      fileName: params.fileNameHint || (language === 'pl' ? 'consultify-email-pack-pl-v1.txt' : 'consultify-email-pack-en-v1.txt'),
+      fileName:
+        params.fileNameHint ||
+        (language === 'pl' ? 'consultify-email-pack-pl-v1.txt' : 'consultify-email-pack-en-v1.txt'),
       mimeType: 'text/plain',
     };
   }
@@ -113,14 +114,21 @@ export async function generatePartnerToolkitResourceFile(params: {
     const pptx = new (PptxGenJS as any)();
     pptx.layout = 'LAYOUT_WIDE';
 
-    const title = language === 'pl' ? 'Consultify — Deck partnerski' : 'Consultify — Partner Sales Deck';
+    const title =
+      language === 'pl' ? 'Consultify — Deck partnerski' : 'Consultify — Partner Sales Deck';
     const subtitle =
       language === 'pl'
         ? 'Bezpieczne claimy • discovery-first • evidence-backed'
         : 'Safe claims • discovery-first • evidence-backed';
 
     const slide1 = pptx.addSlide();
-    slide1.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: '4F46E5' } });
+    slide1.addShape(pptx.ShapeType.rect, {
+      x: 0,
+      y: 0,
+      w: 13.33,
+      h: 7.5,
+      fill: { color: '4F46E5' },
+    });
     slide1.addText(title, {
       x: 0.7,
       y: 2.4,
@@ -179,9 +187,11 @@ export async function generatePartnerToolkitResourceFile(params: {
     return {
       buffer,
       fileName:
-        params.fileNameHint || (language === 'pl' ? 'consultify-sales-deck-pl-v1.pptx' : 'consultify-sales-deck-en-v1.pptx'),
-      mimeType:
-        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        params.fileNameHint ||
+        (language === 'pl'
+          ? 'consultify-sales-deck-pl-v1.pptx'
+          : 'consultify-sales-deck-en-v1.pptx'),
+      mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     };
   }
 
@@ -258,12 +268,18 @@ export async function generatePartnerToolkitResourceFile(params: {
     fileKey === 'generated:case_study_pack'
   ) {
     const titles: Record<string, { en: string; pl: string }> = {
-      'generated:one_pager': { en: 'Consultify — Product One‑pager', pl: 'Consultify — One‑pager produktu' },
+      'generated:one_pager': {
+        en: 'Consultify — Product One‑pager',
+        pl: 'Consultify — One‑pager produktu',
+      },
       'generated:discovery_script': {
         en: 'Consultify — Discovery Call Script',
         pl: 'Consultify — Skrypt rozmowy discovery',
       },
-      'generated:case_study_pack': { en: 'Consultify — Case Study Pack', pl: 'Consultify — Pakiet Case Study' },
+      'generated:case_study_pack': {
+        en: 'Consultify — Case Study Pack',
+        pl: 'Consultify — Pakiet Case Study',
+      },
     };
 
     const bodyText =
@@ -385,4 +401,3 @@ export async function generatePartnerToolkitResourceFile(params: {
     mimeType: 'text/plain',
   };
 }
-

@@ -47,9 +47,24 @@ interface QualityGatesPanelProps {
 // ── Severity config ────────────────────────────────────────────
 
 const SEVERITY_CONFIG = {
-  error: { icon: <XCircle size={14} />, color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
-  warning: { icon: <AlertTriangle size={14} />, color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
-  info: { icon: <Info size={14} />, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
+  error: {
+    icon: <XCircle size={14} />,
+    color: 'text-red-400',
+    bg: 'bg-red-500/10',
+    border: 'border-red-500/20',
+  },
+  warning: {
+    icon: <AlertTriangle size={14} />,
+    color: 'text-amber-400',
+    bg: 'bg-amber-500/10',
+    border: 'border-amber-500/20',
+  },
+  info: {
+    icon: <Info size={14} />,
+    color: 'text-blue-400',
+    bg: 'bg-blue-500/10',
+    border: 'border-blue-500/20',
+  },
 };
 
 // ── Component ──────────────────────────────────────────────────
@@ -67,14 +82,19 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
     if (!reportId) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/report-builder/${reportId}/quality-gates`, { headers: getHeaders() });
+      const res = await fetch(`${API_URL}/report-builder/${reportId}/quality-gates`, {
+        headers: getHeaders(),
+      });
       if (res.ok) {
         const data = await res.json();
         setReport(data);
         trackFunnelEvent('report_quality_check_run', { reportId, score: data.score });
       }
-    } catch { /* */ }
-    finally { setLoading(false); }
+    } catch {
+      /* */
+    } finally {
+      setLoading(false);
+    }
   }, [reportId]);
 
   useEffect(() => {
@@ -83,7 +103,12 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
 
   if (!report && !loading) return null;
 
-  const scoreColor = (report?.score ?? 0) >= 80 ? 'text-emerald-400' : (report?.score ?? 0) >= 50 ? 'text-amber-400' : 'text-red-400';
+  const scoreColor =
+    (report?.score ?? 0) >= 80
+      ? 'text-emerald-400'
+      : (report?.score ?? 0) >= 50
+        ? 'text-amber-400'
+        : 'text-red-400';
   const errors = report?.gates.filter((g) => g.severity === 'error') || [];
   const warnings = report?.gates.filter((g) => g.severity === 'warning') || [];
   const infos = report?.gates.filter((g) => g.severity === 'info') || [];
@@ -93,7 +118,9 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Shield size={16} className="text-violet-400" />
-          <span className="text-sm font-medium text-white">{t('reports.qualityGates.title', 'Quality Check')}</span>
+          <span className="text-sm font-medium text-white">
+            {t('reports.qualityGates.title', 'Quality Check')}
+          </span>
         </div>
         <button
           onClick={runCheck}
@@ -114,15 +141,19 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
           <div className="flex items-center gap-3 mb-4">
             <div className={`text-3xl font-bold ${scoreColor}`}>{report.score}</div>
             <div>
-              <div className="text-xs text-slate-400">{t('reports.qualityGates.readinessScore', 'Readiness Score')}</div>
+              <div className="text-xs text-slate-400">
+                {t('reports.qualityGates.readinessScore', 'Readiness Score')}
+              </div>
               <div className="flex items-center gap-3 mt-0.5">
                 {report.canExport ? (
                   <span className="text-xs text-emerald-400 flex items-center gap-1">
-                    <CheckCircle2 size={11} /> {t('reports.qualityGates.exportReady', 'Export ready')}
+                    <CheckCircle2 size={11} />{' '}
+                    {t('reports.qualityGates.exportReady', 'Export ready')}
                   </span>
                 ) : (
                   <span className="text-xs text-red-400 flex items-center gap-1">
-                    <XCircle size={11} /> {t('reports.qualityGates.notExportReady', 'Not export ready')}
+                    <XCircle size={11} />{' '}
+                    {t('reports.qualityGates.notExportReady', 'Not export ready')}
                   </span>
                 )}
               </div>
@@ -133,7 +164,9 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
           {report.gates.length === 0 ? (
             <div className="text-center py-4">
               <CheckCircle2 className="mx-auto text-emerald-400 mb-2" size={24} />
-              <p className="text-xs text-emerald-400">{t('reports.qualityGates.allPassed', 'All quality checks passed!')}</p>
+              <p className="text-xs text-emerald-400">
+                {t('reports.qualityGates.allPassed', 'All quality checks passed!')}
+              </p>
             </div>
           ) : (
             <div className="space-y-1.5">

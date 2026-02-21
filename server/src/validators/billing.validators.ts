@@ -51,6 +51,19 @@ export const CancelSubscriptionRequestSchema = z.object({
   immediately: z.boolean().default(false),
 });
 
+// ==========================================
+// ORG SELF-SERVE SUBSCRIPTION ACTIONS (Stripe-backed)
+// ==========================================
+
+export const SubscribeToPlanRequestSchema = z.object({
+  planId: z.string().min(1),
+  paymentMethodId: z.string().min(1).optional(),
+});
+
+export const ChangePlanRequestSchema = z.object({
+  newPlanId: z.string().min(1),
+});
+
 // Create Subscription Plan Request
 export const CreatePlanRequestSchema = z.object({
   name: z.string().min(1),
@@ -161,6 +174,8 @@ export type UpdateInvoiceRequest = z.infer<typeof UpdateInvoiceRequestSchema>;
 export type CreateSubscriptionRequest = z.infer<typeof CreateSubscriptionRequestSchema>;
 export type UpdateSubscriptionRequest = z.infer<typeof UpdateSubscriptionRequestSchema>;
 export type CancelSubscriptionRequest = z.infer<typeof CancelSubscriptionRequestSchema>;
+export type SubscribeToPlanRequest = z.infer<typeof SubscribeToPlanRequestSchema>;
+export type ChangePlanRequest = z.infer<typeof ChangePlanRequestSchema>;
 export type CreatePlanRequest = z.infer<typeof CreatePlanRequestSchema>;
 export type UpdatePlanRequest = z.infer<typeof UpdatePlanRequestSchema>;
 export type CreateCreditNoteRequest = z.infer<typeof CreateCreditNoteRequestSchema>;

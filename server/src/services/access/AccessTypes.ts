@@ -32,6 +32,35 @@ export const DEFAULT_DEMO_LIMITS = {
 
 export const TRIAL_DURATION_DAYS = 14;
 
+// Subscription statuses used across policy snapshots and banners.
+// Keep aligned with Stripe vocabulary where possible (e.g. `canceled`, `past_due`).
+export const SUBSCRIPTION_STATUSES = {
+  TRIALING: 'trialing',
+  ACTIVE: 'active',
+  PAST_DUE: 'past_due',
+  CANCELED: 'canceled',
+  CANCELING: 'canceling',
+} as const;
+
+export type SubscriptionStatus =
+  | (typeof SUBSCRIPTION_STATUSES)[keyof typeof SUBSCRIPTION_STATUSES]
+  | null;
+
+// Percent thresholds for usage banners/meters.
+export const USAGE_THRESHOLD_PERCENT = {
+  APPROACHING: 70,
+  EXCEEDED: 100,
+} as const;
+
+// Entitlements matrix (feature-level) consumed by AccessPolicyService.
+export const ENTITLEMENTS_MATRIX: Record<OrgType, Record<string, 'allowed' | 'blocked'>> = {
+  DEMO: {
+    SSO: 'blocked',
+  },
+  TRIAL: {},
+  PAID: {},
+};
+
 export interface OrganizationType {
   id: string;
   name: string;

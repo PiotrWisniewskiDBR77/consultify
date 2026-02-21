@@ -100,8 +100,11 @@ function mapPulse(row: any): PulseCheckin {
     isAnonymous: Boolean(row.is_anonymous),
     rating: row.rating,
     comment: row.comment,
-    questionsJson: typeof row.questions_json === 'string' ? JSON.parse(row.questions_json) : row.questions_json ?? [],
-    metadata: typeof row.metadata === 'string' ? JSON.parse(row.metadata) : row.metadata ?? {},
+    questionsJson:
+      typeof row.questions_json === 'string'
+        ? JSON.parse(row.questions_json)
+        : (row.questions_json ?? []),
+    metadata: typeof row.metadata === 'string' ? JSON.parse(row.metadata) : (row.metadata ?? {}),
     createdAt: row.created_at,
   };
 }
@@ -117,8 +120,9 @@ function mapFeedback(row: any): ChangeFeedback {
     content: row.content,
     sentiment: row.sentiment,
     sentimentScore: row.sentiment_score != null ? Number(row.sentiment_score) : null,
-    categories: typeof row.categories === 'string' ? JSON.parse(row.categories) : row.categories ?? [],
-    metadata: typeof row.metadata === 'string' ? JSON.parse(row.metadata) : row.metadata ?? {},
+    categories:
+      typeof row.categories === 'string' ? JSON.parse(row.categories) : (row.categories ?? []),
+    metadata: typeof row.metadata === 'string' ? JSON.parse(row.metadata) : (row.metadata ?? {}),
     createdAt: row.created_at,
   };
 }
@@ -134,8 +138,14 @@ function mapSnapshot(row: any): SentimentSnapshot {
     avgRating: row.avg_rating != null ? Number(row.avg_rating) : null,
     totalResponses: row.total_responses,
     trend: row.trend,
-    topConcerns: typeof row.top_concerns === 'string' ? JSON.parse(row.top_concerns) : row.top_concerns ?? [],
-    distribution: typeof row.distribution === 'string' ? JSON.parse(row.distribution) : row.distribution ?? {},
+    topConcerns:
+      typeof row.top_concerns === 'string'
+        ? JSON.parse(row.top_concerns)
+        : (row.top_concerns ?? []),
+    distribution:
+      typeof row.distribution === 'string'
+        ? JSON.parse(row.distribution)
+        : (row.distribution ?? {}),
     createdAt: row.created_at,
   };
 }
@@ -149,7 +159,10 @@ function mapAlert(row: any): ResistanceAlert {
     alertType: row.alert_type,
     severity: row.severity,
     message: row.message,
-    recommendations: typeof row.recommendations === 'string' ? JSON.parse(row.recommendations) : row.recommendations ?? [],
+    recommendations:
+      typeof row.recommendations === 'string'
+        ? JSON.parse(row.recommendations)
+        : (row.recommendations ?? []),
     isAcknowledged: Boolean(row.is_acknowledged),
     acknowledgedBy: row.acknowledged_by,
     acknowledgedAt: row.acknowledged_at,
@@ -174,8 +187,38 @@ function mapCoaching(row: any): CoachingAction {
 /*  Simple keyword-based sentiment analysis                            */
 /* ------------------------------------------------------------------ */
 
-const POSITIVE_WORDS = ['great', 'good', 'excellent', 'happy', 'love', 'amazing', 'fantastic', 'positive', 'wonderful', 'helpful', 'excited', 'confident', 'progress'];
-const NEGATIVE_WORDS = ['bad', 'terrible', 'awful', 'hate', 'frustrated', 'confused', 'worried', 'unclear', 'slow', 'difficult', 'problem', 'issue', 'concern', 'fear', 'resist'];
+const POSITIVE_WORDS = [
+  'great',
+  'good',
+  'excellent',
+  'happy',
+  'love',
+  'amazing',
+  'fantastic',
+  'positive',
+  'wonderful',
+  'helpful',
+  'excited',
+  'confident',
+  'progress',
+];
+const NEGATIVE_WORDS = [
+  'bad',
+  'terrible',
+  'awful',
+  'hate',
+  'frustrated',
+  'confused',
+  'worried',
+  'unclear',
+  'slow',
+  'difficult',
+  'problem',
+  'issue',
+  'concern',
+  'fear',
+  'resist',
+];
 
 function analyzeSentiment(text: string): { sentiment: ChangeFeedback['sentiment']; score: number } {
   const lower = text.toLowerCase();
@@ -202,9 +245,14 @@ function analyzeSentiment(text: string): { sentiment: ChangeFeedback['sentiment'
 export async function submitPulse(
   orgId: string,
   data: {
-    initiativeId?: string; projectId?: string; userId?: string;
-    isAnonymous?: boolean; rating: number; comment?: string;
-    questionsJson?: unknown[]; metadata?: Record<string, unknown>;
+    initiativeId?: string;
+    projectId?: string;
+    userId?: string;
+    isAnonymous?: boolean;
+    rating: number;
+    comment?: string;
+    questionsJson?: unknown[];
+    metadata?: Record<string, unknown>;
   }
 ): Promise<PulseCheckin> {
   const id = uuidv4();
@@ -213,9 +261,14 @@ export async function submitPulse(
     `INSERT INTO change_pulse_checkins (id, organization_id, initiative_id, project_id, user_id, is_anonymous, rating, comment, questions_json, metadata)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
     [
-      id, orgId, data.initiativeId ?? null, data.projectId ?? null,
+      id,
+      orgId,
+      data.initiativeId ?? null,
+      data.projectId ?? null,
       anonymous ? null : (data.userId ?? null),
-      anonymous, data.rating, data.comment ?? null,
+      anonymous,
+      data.rating,
+      data.comment ?? null,
       JSON.stringify(data.questionsJson ?? []),
       JSON.stringify(data.metadata ?? {}),
     ]
@@ -232,8 +285,14 @@ export async function getPulseSummary(
   const params: unknown[] = [orgId, days];
   let where = `organization_id = $1 AND created_at >= NOW() - ($2 || ' days')::interval`;
   let idx = 3;
-  if (filters?.initiativeId) { where += ` AND initiative_id = $${idx++}`; params.push(filters.initiativeId); }
-  if (filters?.projectId) { where += ` AND project_id = $${idx++}`; params.push(filters.projectId); }
+  if (filters?.initiativeId) {
+    where += ` AND initiative_id = $${idx++}`;
+    params.push(filters.initiativeId);
+  }
+  if (filters?.projectId) {
+    where += ` AND project_id = $${idx++}`;
+    params.push(filters.projectId);
+  }
 
   const aggRow: any = await dbGet(
     `SELECT AVG(rating) AS avg_rating, COUNT(*) AS total FROM change_pulse_checkins WHERE ${where}`,
@@ -275,8 +334,12 @@ export async function getPulseSummary(
 export async function submitFeedback(
   orgId: string,
   data: {
-    initiativeId?: string; projectId?: string; userId?: string;
-    isAnonymous?: boolean; content: string; categories?: string[];
+    initiativeId?: string;
+    projectId?: string;
+    userId?: string;
+    isAnonymous?: boolean;
+    content: string;
+    categories?: string[];
     metadata?: Record<string, unknown>;
   }
 ): Promise<ChangeFeedback> {
@@ -287,9 +350,15 @@ export async function submitFeedback(
     `INSERT INTO change_feedback (id, organization_id, initiative_id, project_id, user_id, is_anonymous, content, sentiment, sentiment_score, categories, metadata)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
     [
-      id, orgId, data.initiativeId ?? null, data.projectId ?? null,
+      id,
+      orgId,
+      data.initiativeId ?? null,
+      data.projectId ?? null,
       anonymous ? null : (data.userId ?? null),
-      anonymous, data.content, sentiment, score,
+      anonymous,
+      data.content,
+      sentiment,
+      score,
       JSON.stringify(data.categories ?? []),
       JSON.stringify(data.metadata ?? {}),
     ]
@@ -305,11 +374,23 @@ export async function getFeedbackList(
   const params: unknown[] = [orgId];
   let sql = `SELECT * FROM change_feedback WHERE organization_id = $1`;
   let idx = 2;
-  if (filters?.initiativeId) { sql += ` AND initiative_id = $${idx++}`; params.push(filters.initiativeId); }
-  if (filters?.projectId) { sql += ` AND project_id = $${idx++}`; params.push(filters.projectId); }
+  if (filters?.initiativeId) {
+    sql += ` AND initiative_id = $${idx++}`;
+    params.push(filters.initiativeId);
+  }
+  if (filters?.projectId) {
+    sql += ` AND project_id = $${idx++}`;
+    params.push(filters.projectId);
+  }
   sql += ` ORDER BY created_at DESC`;
-  if (filters?.limit) { sql += ` LIMIT $${idx++}`; params.push(filters.limit); }
-  if (filters?.offset) { sql += ` OFFSET $${idx++}`; params.push(filters.offset); }
+  if (filters?.limit) {
+    sql += ` LIMIT $${idx++}`;
+    params.push(filters.limit);
+  }
+  if (filters?.offset) {
+    sql += ` OFFSET $${idx++}`;
+    params.push(filters.offset);
+  }
   const rows = await dbAll(sql, params);
   return rows.map(mapFeedback);
 }
@@ -325,8 +406,14 @@ async function computeTrend(
   const params: unknown[] = [orgId];
   let where = `organization_id = $1`;
   let idx = 2;
-  if (filters?.initiativeId) { where += ` AND initiative_id = $${idx++}`; params.push(filters.initiativeId); }
-  if (filters?.projectId) { where += ` AND project_id = $${idx++}`; params.push(filters.projectId); }
+  if (filters?.initiativeId) {
+    where += ` AND initiative_id = $${idx++}`;
+    params.push(filters.initiativeId);
+  }
+  if (filters?.projectId) {
+    where += ` AND project_id = $${idx++}`;
+    params.push(filters.projectId);
+  }
 
   const recentRow: any = await dbGet(
     `SELECT AVG(rating) AS avg FROM change_pulse_checkins WHERE ${where} AND created_at >= NOW() - INTERVAL '7 days'`,
@@ -370,8 +457,12 @@ export async function checkAndCreateAlerts(
     `INSERT INTO change_resistance_alerts (id, organization_id, initiative_id, project_id, alert_type, severity, message, recommendations)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
     [
-      id, orgId, filters?.initiativeId ?? null, filters?.projectId ?? null,
-      'declining_trend', 'high',
+      id,
+      orgId,
+      filters?.initiativeId ?? null,
+      filters?.projectId ?? null,
+      'declining_trend',
+      'high',
       'Sentiment trend is declining over the past 7 days compared to the prior week.',
       JSON.stringify([
         'Schedule a team retrospective to surface concerns',
@@ -391,14 +482,24 @@ export async function getAlerts(
   const params: unknown[] = [orgId];
   let sql = `SELECT * FROM change_resistance_alerts WHERE organization_id = $1`;
   let idx = 2;
-  if (filters?.initiativeId) { sql += ` AND initiative_id = $${idx++}`; params.push(filters.initiativeId); }
-  if (filters?.acknowledged !== undefined) { sql += ` AND is_acknowledged = $${idx++}`; params.push(filters.acknowledged); }
+  if (filters?.initiativeId) {
+    sql += ` AND initiative_id = $${idx++}`;
+    params.push(filters.initiativeId);
+  }
+  if (filters?.acknowledged !== undefined) {
+    sql += ` AND is_acknowledged = $${idx++}`;
+    params.push(filters.acknowledged);
+  }
   sql += ` ORDER BY created_at DESC`;
   const rows = await dbAll(sql, params);
   return rows.map(mapAlert);
 }
 
-export async function acknowledgeAlert(orgId: string, alertId: string, userId: string): Promise<ResistanceAlert | null> {
+export async function acknowledgeAlert(
+  orgId: string,
+  alertId: string,
+  userId: string
+): Promise<ResistanceAlert | null> {
   await dbRun(
     `UPDATE change_resistance_alerts SET is_acknowledged = TRUE, acknowledged_by = $1, acknowledged_at = NOW()
      WHERE id = $2 AND organization_id = $3`,
@@ -413,11 +514,46 @@ export async function acknowledgeAlert(orgId: string, alertId: string, userId: s
 /* ------------------------------------------------------------------ */
 
 const DEFAULT_COACHING_ACTIONS: Omit<CoachingAction, 'id' | 'createdAt'>[] = [
-  { organizationId: null, title: 'Hold a listening session', description: 'Create a safe space for team members to share concerns about the change.', category: 'engagement', triggerSignal: 'declining_trend', isGlobal: true },
-  { organizationId: null, title: 'Increase 1:1 check-ins', description: 'Schedule more frequent one-on-one meetings to address individual concerns.', category: 'support', triggerSignal: 'low_rating', isGlobal: true },
-  { organizationId: null, title: 'Share quick wins', description: 'Communicate early successes to build momentum and confidence.', category: 'communication', triggerSignal: 'low_morale', isGlobal: true },
-  { organizationId: null, title: 'Clarify the "why"', description: 'Revisit and communicate the reasons behind the change initiative.', category: 'communication', triggerSignal: 'confusion', isGlobal: true },
-  { organizationId: null, title: 'Provide training resources', description: 'Offer additional training or resources to help people adapt.', category: 'enablement', triggerSignal: 'skill_gap', isGlobal: true },
+  {
+    organizationId: null,
+    title: 'Hold a listening session',
+    description: 'Create a safe space for team members to share concerns about the change.',
+    category: 'engagement',
+    triggerSignal: 'declining_trend',
+    isGlobal: true,
+  },
+  {
+    organizationId: null,
+    title: 'Increase 1:1 check-ins',
+    description: 'Schedule more frequent one-on-one meetings to address individual concerns.',
+    category: 'support',
+    triggerSignal: 'low_rating',
+    isGlobal: true,
+  },
+  {
+    organizationId: null,
+    title: 'Share quick wins',
+    description: 'Communicate early successes to build momentum and confidence.',
+    category: 'communication',
+    triggerSignal: 'low_morale',
+    isGlobal: true,
+  },
+  {
+    organizationId: null,
+    title: 'Clarify the "why"',
+    description: 'Revisit and communicate the reasons behind the change initiative.',
+    category: 'communication',
+    triggerSignal: 'confusion',
+    isGlobal: true,
+  },
+  {
+    organizationId: null,
+    title: 'Provide training resources',
+    description: 'Offer additional training or resources to help people adapt.',
+    category: 'enablement',
+    triggerSignal: 'skill_gap',
+    isGlobal: true,
+  },
 ];
 
 export async function getCoachingActions(orgId: string): Promise<CoachingAction[]> {

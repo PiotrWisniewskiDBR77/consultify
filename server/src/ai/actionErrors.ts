@@ -50,7 +50,11 @@ export const ACTION_ERROR_CODES = {
 function classifyError(error: any, defaultCode = ACTION_ERROR_CODES.EXECUTION_ERROR) {
   const message = (error?.message || String(error)).toLowerCase();
 
-  if (message.includes('feature unavailable') || message.includes('not implemented') || message.includes('unavailable')) {
+  if (
+    message.includes('feature unavailable') ||
+    message.includes('not implemented') ||
+    message.includes('unavailable')
+  ) {
     return ACTION_ERROR_CODES.FEATURE_UNAVAILABLE;
   }
 

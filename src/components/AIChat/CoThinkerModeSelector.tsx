@@ -9,14 +9,7 @@
  * 5. Executive Editor
  */
 
-import {
-  FileText,
-  Lightbulb,
-  ShieldAlert,
-  Target,
-  Users,
-  X,
-} from 'lucide-react';
+import { FileText, Lightbulb, ShieldAlert, Target, Users, X } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -85,9 +78,7 @@ interface CoThinkerModeSelectorProps {
   className?: string;
 }
 
-export const CoThinkerModeSelector: React.FC<CoThinkerModeSelectorProps> = ({
-  className = '',
-}) => {
+export const CoThinkerModeSelector: React.FC<CoThinkerModeSelectorProps> = ({ className = '' }) => {
   const { t } = useTranslation();
   const { aiConfig, setAIConfig } = useAppStore();
   const activeMode = aiConfig?.coThinkerMode as CoThinkerMode | null;

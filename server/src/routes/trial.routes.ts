@@ -165,11 +165,7 @@ router.post(
     } catch (error: unknown) {
       logger.error('Trial Conversion Error:', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
-      const status = message.includes('not found')
-        ? 404
-        : message.includes('already')
-          ? 409
-          : 500;
+      const status = message.includes('not found') ? 404 : message.includes('already') ? 409 : 500;
       return res.status(status).json({ error: message });
     }
   })

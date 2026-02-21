@@ -72,7 +72,7 @@ const PDFParserService = {
     // Fallback: extract a few "Finding:" lines
     if (findings.length === 0) {
       for (const line of lines) {
-        const m = line.match(/^(finding|issue|risk)\s*[:\-]\s*(.+)$/i);
+        const m = line.match(/^(finding|issue|risk)\s*[:-]\s*(.+)$/i);
         if (m?.[2] && m[2].length >= 20) findings.push(m[2]);
         if (findings.length >= 10) break;
       }
@@ -91,4 +91,3 @@ const PDFParserService = {
 };
 
 export default PDFParserService;
-

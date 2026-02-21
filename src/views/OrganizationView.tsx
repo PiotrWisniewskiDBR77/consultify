@@ -53,6 +53,12 @@ const sectionMeta: Record<
     subtitleKey: 'organization.sections.challenges.subtitle',
     subtitle: 'Challenge map, evidence and root causes',
   },
+  megatrends: {
+    titleKey: 'organization.sections.megatrends.title',
+    title: 'Megatrends',
+    subtitleKey: 'organization.sections.megatrends.subtitle',
+    subtitle: 'Redirected to Discovery Tools → Strategic Megatrends',
+  },
   strategy: {
     titleKey: 'organization.sections.strategy.title',
     title: 'Strategic Synthesis',

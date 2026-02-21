@@ -780,22 +780,28 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         if (personalPayload?.dueDate) {
           trackFunnelEvent('personal_task_due_date_set', { source: 'detail', taskId });
         }
-        if (personalPayload?.status === 'completed') {
+        if (personalPayload?.status === 'done') {
           trackFunnelEvent('personal_task_completed', { source: 'detail', taskId });
         }
         onSaved?.({ ...personalPayload, id: taskId });
       } else {
         const created = await Api.createPersonalTask(personalPayload);
         if (!silent) toast.success(isPolish ? 'Zadanie utworzone' : 'Task created');
-        trackFunnelEvent('personal_task_created', { source: 'detail', taskId: created?.id || null });
+        trackFunnelEvent('personal_task_created', {
+          source: 'detail',
+          taskId: created?.id || null,
+        });
         if (personalPayload?.dueDate) {
           trackFunnelEvent('personal_task_due_date_set', {
             source: 'detail',
             taskId: created?.id || null,
           });
         }
-        if (personalPayload?.status === 'completed') {
-          trackFunnelEvent('personal_task_completed', { source: 'detail', taskId: created?.id || null });
+        if (personalPayload?.status === 'done') {
+          trackFunnelEvent('personal_task_completed', {
+            source: 'detail',
+            taskId: created?.id || null,
+          });
         }
         onSaved?.({ ...personalPayload, id: created?.id || null });
       }
@@ -1037,7 +1043,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         tasksRes.status === 'fulfilled'
           ? Array.isArray(tasksRes.value)
             ? tasksRes.value
-            : tasksRes.value?.tasks || []
+            : (tasksRes.value as any)?.tasks || []
           : [];
       const initiatives =
         initiativesRes.status === 'fulfilled'
@@ -2105,11 +2111,12 @@ Return ONLY the final comment text.`;
                     <Callout
                       variant="info"
                       title={t('myWork.ideas.suggestionsEmptyTitle', 'No suggestions')}
-                      description={t(
+                    >
+                      {t(
                         'myWork.ideas.suggestionsEmpty',
                         'Save ideas from chat to build your private library.'
                       )}
-                    />
+                    </Callout>
                   ) : (
                     <div className="space-y-2">
                       {suggestedIdeas.map((idea) => (
@@ -2140,7 +2147,10 @@ Return ONLY the final comment text.`;
                                     .filter(Boolean)
                                     .join('\n');
                                   setDescription((prev) => `${prev || ''}${insert}`.trim());
-                                  trackFunnelEvent('my_idea_used', { surface: 'task', ideaId: idea.id });
+                                  trackFunnelEvent('my_idea_used', {
+                                    surface: 'task',
+                                    ideaId: idea.id,
+                                  });
                                   toast.success(
                                     t('myWork.ideas.insertedToast', 'Inserted into description')
                                   );
@@ -2155,7 +2165,12 @@ Return ONLY the final comment text.`;
                                     const { setMyWorkIntent } = useAppStore.getState() as any;
                                     setMyWorkIntent?.({
                                       tab: 'ideas',
-                                      open: { type: 'idea', id: idea.id, name: idea.title, data: idea },
+                                      open: {
+                                        type: 'idea',
+                                        id: idea.id,
+                                        name: idea.title,
+                                        data: idea,
+                                      },
                                     });
                                   } catch {
                                     /* ignore */

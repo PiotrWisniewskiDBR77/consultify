@@ -23,21 +23,93 @@ import { Link, useNavigate } from 'react-router-dom';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
 const DOC_CARDS = [
-  { titleKey: 'gettingStarted', descKey: 'gettingStartedDesc', icon: BookOpen, href: '/docs', color: 'violet', target: 'getting_started' },
-  { titleKey: 'security', descKey: 'securityDesc', icon: Shield, href: '/docs/security', color: 'emerald', target: 'security' },
-  { titleKey: 'apiReference', descKey: 'apiReferenceDesc', icon: Terminal, href: '/docs/api', color: 'blue', target: 'api' },
-  { titleKey: 'changelog', descKey: 'changelogDesc', icon: History, href: '/docs/changelog', color: 'amber', target: 'changelog' },
-  { titleKey: 'legalCenter', descKey: 'legalCenterDesc', icon: Gavel, href: '/legal', color: 'slate', target: 'legal' },
-  { titleKey: 'integrations', descKey: 'integrationsDesc', icon: FileText, href: '/docs/integrations', color: 'purple', target: 'integrations' },
+  {
+    titleKey: 'gettingStarted',
+    descKey: 'gettingStartedDesc',
+    icon: BookOpen,
+    href: '/docs',
+    color: 'violet',
+    target: 'getting_started',
+  },
+  {
+    titleKey: 'security',
+    descKey: 'securityDesc',
+    icon: Shield,
+    href: '/docs/security',
+    color: 'emerald',
+    target: 'security',
+  },
+  {
+    titleKey: 'apiReference',
+    descKey: 'apiReferenceDesc',
+    icon: Terminal,
+    href: '/docs/api',
+    color: 'blue',
+    target: 'api',
+  },
+  {
+    titleKey: 'changelog',
+    descKey: 'changelogDesc',
+    icon: History,
+    href: '/docs/changelog',
+    color: 'amber',
+    target: 'changelog',
+  },
+  {
+    titleKey: 'legalCenter',
+    descKey: 'legalCenterDesc',
+    icon: Gavel,
+    href: '/legal',
+    color: 'slate',
+    target: 'legal',
+  },
+  {
+    titleKey: 'integrations',
+    descKey: 'integrationsDesc',
+    icon: FileText,
+    href: '/docs/integrations',
+    color: 'purple',
+    target: 'integrations',
+  },
 ] as const;
 
 const COLOR_MAP: Record<string, { bg: string; text: string; border: string; hover: string }> = {
-  violet: { bg: 'bg-violet-500/10', text: 'text-violet-400', border: 'border-violet-500/20', hover: 'hover:border-violet-500/40 hover:bg-violet-500/15' },
-  emerald: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20', hover: 'hover:border-emerald-500/40 hover:bg-emerald-500/15' },
-  blue: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20', hover: 'hover:border-blue-500/40 hover:bg-blue-500/15' },
-  amber: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20', hover: 'hover:border-amber-500/40 hover:bg-amber-500/15' },
-  slate: { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/20', hover: 'hover:border-slate-500/40 hover:bg-slate-500/15' },
-  purple: { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/20', hover: 'hover:border-purple-500/40 hover:bg-purple-500/15' },
+  violet: {
+    bg: 'bg-violet-500/10',
+    text: 'text-violet-400',
+    border: 'border-violet-500/20',
+    hover: 'hover:border-violet-500/40 hover:bg-violet-500/15',
+  },
+  emerald: {
+    bg: 'bg-emerald-500/10',
+    text: 'text-emerald-400',
+    border: 'border-emerald-500/20',
+    hover: 'hover:border-emerald-500/40 hover:bg-emerald-500/15',
+  },
+  blue: {
+    bg: 'bg-blue-500/10',
+    text: 'text-blue-400',
+    border: 'border-blue-500/20',
+    hover: 'hover:border-blue-500/40 hover:bg-blue-500/15',
+  },
+  amber: {
+    bg: 'bg-amber-500/10',
+    text: 'text-amber-400',
+    border: 'border-amber-500/20',
+    hover: 'hover:border-amber-500/40 hover:bg-amber-500/15',
+  },
+  slate: {
+    bg: 'bg-slate-500/10',
+    text: 'text-slate-400',
+    border: 'border-slate-500/20',
+    hover: 'hover:border-slate-500/40 hover:bg-slate-500/15',
+  },
+  purple: {
+    bg: 'bg-purple-500/10',
+    text: 'text-purple-400',
+    border: 'border-purple-500/20',
+    hover: 'hover:border-purple-500/40 hover:bg-purple-500/15',
+  },
 };
 
 interface DocumentationSectionProps {
@@ -98,7 +170,10 @@ export const DocumentationSection: React.FC<DocumentationSectionProps> = ({ clas
               className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/80 dark:bg-navy-800/80 border border-slate-200 dark:border-navy-700 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition-shadow backdrop-blur-sm"
             />
           </div>
-          <button type="submit" className="px-5 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors flex items-center gap-2">
+          <button
+            type="submit"
+            className="px-5 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors flex items-center gap-2"
+          >
             <Search size={14} />
             {tp('searchBtn', 'Search')}
           </button>
@@ -115,12 +190,20 @@ export const DocumentationSection: React.FC<DocumentationSectionProps> = ({ clas
                 onClick={() => handleCardClick(card.target)}
                 className={`group p-6 rounded-xl border transition-all duration-300 ${colors.border} ${colors.hover} bg-white/50 dark:bg-navy-900/50 backdrop-blur-sm`}
               >
-                <div className={`w-10 h-10 rounded-lg ${colors.bg} flex items-center justify-center mb-4`}>
+                <div
+                  className={`w-10 h-10 rounded-lg ${colors.bg} flex items-center justify-center mb-4`}
+                >
                   <IconComp size={20} className={colors.text} />
                 </div>
-                <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-2">{tp(card.titleKey)}</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-3">{tp(card.descKey)}</p>
-                <span className={`inline-flex items-center gap-1 text-xs font-medium ${colors.text} group-hover:gap-2 transition-all`}>
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-2">
+                  {tp(card.titleKey)}
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+                  {tp(card.descKey)}
+                </p>
+                <span
+                  className={`inline-flex items-center gap-1 text-xs font-medium ${colors.text} group-hover:gap-2 transition-all`}
+                >
                   {tp('explore', 'Explore')}
                   <ArrowRight size={12} />
                 </span>
@@ -136,8 +219,12 @@ export const DocumentationSection: React.FC<DocumentationSectionProps> = ({ clas
             className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-violet-400 transition-colors"
           >
             <History size={14} />
-            <span>{tp('lastUpdated', 'Last updated')}: {tp('lastUpdatedDate', 'February 2026')}</span>
-            <span className="text-violet-400 font-medium">\u2014 {tp('whatsNew', "See what\'s new")}</span>
+            <span>
+              {tp('lastUpdated', 'Last updated')}: {tp('lastUpdatedDate', 'February 2026')}
+            </span>
+            <span className="text-violet-400 font-medium">
+              \u2014 {tp('whatsNew', "See what's new")}
+            </span>
           </Link>
         </div>
       </div>

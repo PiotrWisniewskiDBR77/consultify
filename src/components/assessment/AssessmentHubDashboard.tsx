@@ -73,7 +73,10 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
 
   if (loading) {
     return (
-      <SplitLayout title={t('licensedTools.hubTitle', 'Licensed Tools Hub')} currentView={AppView.ASSESSMENT}>
+      <SplitLayout
+        title={t('licensedTools.hubTitle', 'Licensed Tools Hub')}
+        currentView={AppView.ASSESSMENT}
+      >
         <div className="flex items-center justify-center h-64">
           <div className="text-gray-500 dark:text-gray-400">Loading assessment overview...</div>
         </div>
@@ -103,7 +106,10 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
 
   if (!overview) {
     return (
-      <SplitLayout title={t('licensedTools.hubTitle', 'Licensed Tools Hub')} currentView={AppView.ASSESSMENT}>
+      <SplitLayout
+        title={t('licensedTools.hubTitle', 'Licensed Tools Hub')}
+        currentView={AppView.ASSESSMENT}
+      >
         <div className="flex items-center justify-center h-64">
           <div className="text-gray-500 dark:text-gray-400">No assessment data available</div>
         </div>
@@ -115,7 +121,10 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
   const readinessPercentage = (consolidated.overallReadiness / 7) * 100;
 
   return (
-    <SplitLayout title={t('licensedTools.hubTitle', 'Licensed Tools Hub')} currentView={AppView.ASSESSMENT}>
+    <SplitLayout
+      title={t('licensedTools.hubTitle', 'Licensed Tools Hub')}
+      currentView={AppView.ASSESSMENT}
+    >
       <div className="p-6 max-w-7xl mx-auto overflow-y-auto h-full">
         {/* Header */}
         <div className="mb-8">

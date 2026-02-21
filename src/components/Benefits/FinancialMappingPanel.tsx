@@ -85,7 +85,10 @@ export const FinancialMappingPanel: React.FC = () => {
   const [formAssumptions, setFormAssumptions] = useState('');
 
   const [kpiOptions, setKpiOptions] = useState<{ id: string; name: string; unit: string }[]>([]);
-  const [impactData, setImpactData] = useState<{ kpiId: string; impacts: FinancialImpact[] } | null>(null);
+  const [impactData, setImpactData] = useState<{
+    kpiId: string;
+    impacts: FinancialImpact[];
+  } | null>(null);
 
   useEffect(() => {
     loadData();
@@ -207,8 +210,12 @@ export const FinancialMappingPanel: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('kpi.financial.title', 'KPI → Financial Statement Mapping')}</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t('kpi.financial.subtitle', 'Link KPIs to P&L, Balance Sheet, and Cash Flow items')}</p>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('kpi.financial.title', 'KPI → Financial Statement Mapping')}
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('kpi.financial.subtitle', 'Link KPIs to P&L, Balance Sheet, and Cash Flow items')}
+          </p>
         </div>
         <button
           onClick={() => setShowForm(true)}
@@ -225,19 +232,31 @@ export const FinancialMappingPanel: React.FC = () => {
         const isExpanded = expandedType === stmtType;
 
         return (
-          <div key={stmtType} className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+          <div
+            key={stmtType}
+            className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden"
+          >
             <button
               className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-navy-800/50"
               onClick={() => setExpandedType(isExpanded ? null : stmtType)}
             >
               <div className="flex items-center gap-3">
-                {isExpanded ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}
+                {isExpanded ? (
+                  <ChevronDown size={16} className="text-slate-400" />
+                ) : (
+                  <ChevronRight size={16} className="text-slate-400" />
+                )}
                 <FileText size={18} className={label.color} />
-                <span className="font-semibold text-slate-900 dark:text-white">{isPl ? label.pl : label.en}</span>
-                <span className="text-xs text-slate-400">({stmtLines.length} {t('kpi.financial.lines', 'lines')})</span>
+                <span className="font-semibold text-slate-900 dark:text-white">
+                  {isPl ? label.pl : label.en}
+                </span>
+                <span className="text-xs text-slate-400">
+                  ({stmtLines.length} {t('kpi.financial.lines', 'lines')})
+                </span>
               </div>
               <span className="text-sm text-slate-400">
-                {stmtLines.reduce((c, l) => c + (mappingsByLine[l.id]?.length || 0), 0)} {t('kpi.financial.mappings', 'mappings')}
+                {stmtLines.reduce((c, l) => c + (mappingsByLine[l.id]?.length || 0), 0)}{' '}
+                {t('kpi.financial.mappings', 'mappings')}
               </span>
             </button>
 
@@ -249,32 +268,57 @@ export const FinancialMappingPanel: React.FC = () => {
                     <div key={line.id} className="px-4 py-3">
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="font-mono text-xs text-slate-400 mr-2">{line.line_code}</span>
-                          <span className="text-sm font-medium text-slate-900 dark:text-white">{isPl && line.line_name_pl ? line.line_name_pl : line.line_name}</span>
+                          <span className="font-mono text-xs text-slate-400 mr-2">
+                            {line.line_code}
+                          </span>
+                          <span className="text-sm font-medium text-slate-900 dark:text-white">
+                            {isPl && line.line_name_pl ? line.line_name_pl : line.line_name}
+                          </span>
                         </div>
                         {lineMappings.length > 0 && (
-                          <span className="text-xs bg-purple-500/10 text-purple-500 px-2 py-0.5 rounded-full">{lineMappings.length} KPIs</span>
+                          <span className="text-xs bg-purple-500/10 text-purple-500 px-2 py-0.5 rounded-full">
+                            {lineMappings.length} KPIs
+                          </span>
                         )}
                       </div>
                       {lineMappings.length > 0 && (
                         <div className="mt-2 space-y-1 pl-4">
                           {lineMappings.map((m) => (
-                            <div key={m.id} className="flex items-center justify-between text-sm group">
+                            <div
+                              key={m.id}
+                              className="flex items-center justify-between text-sm group"
+                            >
                               <div className="flex items-center gap-2">
                                 <Link size={12} className="text-slate-400" />
-                                <span className="text-slate-600 dark:text-slate-300">{m.kpi_name}</span>
+                                <span className="text-slate-600 dark:text-slate-300">
+                                  {m.kpi_name}
+                                </span>
                                 <ArrowRight size={12} className="text-slate-300" />
-                                <span className={`text-xs font-medium ${m.direction === 'positive' ? 'text-green-500' : m.direction === 'negative' ? 'text-red-500' : 'text-slate-400'}`}>
-                                  {m.direction === 'positive' ? '↑ improves' : m.direction === 'negative' ? '↓ worsens' : '—'}
+                                <span
+                                  className={`text-xs font-medium ${m.direction === 'positive' ? 'text-green-500' : m.direction === 'negative' ? 'text-red-500' : 'text-slate-400'}`}
+                                >
+                                  {m.direction === 'positive'
+                                    ? '↑ improves'
+                                    : m.direction === 'negative'
+                                      ? '↓ worsens'
+                                      : '—'}
                                 </span>
                                 <span className="text-xs text-slate-400">×{m.multiplier}</span>
                                 <ConfBadgeSmall level={m.confidence} />
                               </div>
                               <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleViewImpact(m.kpi_id)} className="text-blue-400 hover:text-blue-300" title="View impact">
+                                <button
+                                  onClick={() => handleViewImpact(m.kpi_id)}
+                                  className="text-blue-400 hover:text-blue-300"
+                                  title="View impact"
+                                >
                                   <DollarSign size={14} />
                                 </button>
-                                <button onClick={() => handleDelete(m.id)} className="text-red-400 hover:text-red-300" title="Remove">
+                                <button
+                                  onClick={() => handleDelete(m.id)}
+                                  className="text-red-400 hover:text-red-300"
+                                  title="Remove"
+                                >
                                   <Trash2 size={14} />
                                 </button>
                               </div>
@@ -295,27 +339,44 @@ export const FinancialMappingPanel: React.FC = () => {
       {impactData && impactData.impacts.length > 0 && (
         <div className="bg-blue-50 dark:bg-blue-500/5 border border-blue-200 dark:border-blue-500/20 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-medium text-blue-800 dark:text-blue-400">{t('kpi.financial.impactPreview', 'Financial Impact Preview')}</h4>
-            <button onClick={() => setImpactData(null)} className="text-blue-400 hover:text-blue-300"><X size={16} /></button>
+            <h4 className="font-medium text-blue-800 dark:text-blue-400">
+              {t('kpi.financial.impactPreview', 'Financial Impact Preview')}
+            </h4>
+            <button
+              onClick={() => setImpactData(null)}
+              className="text-blue-400 hover:text-blue-300"
+            >
+              <X size={16} />
+            </button>
           </div>
           <div className="space-y-2">
             {impactData.impacts.map((imp, i) => (
               <div key={i} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-xs text-slate-400">{imp.lineCode}</span>
-                  <span className="text-slate-700 dark:text-slate-300">{isPl && imp.lineNamePl ? imp.lineNamePl : imp.lineName}</span>
+                  <span className="text-slate-700 dark:text-slate-300">
+                    {isPl && imp.lineNamePl ? imp.lineNamePl : imp.lineName}
+                  </span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-slate-400">Δ KPI: {imp.kpiDelta.toFixed(2)}</span>
-                  <span className={`font-medium ${imp.estimatedImpact >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {imp.estimatedImpact >= 0 ? '+' : ''}{imp.estimatedImpact.toFixed(2)}
+                  <span
+                    className={`font-medium ${imp.estimatedImpact >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                  >
+                    {imp.estimatedImpact >= 0 ? '+' : ''}
+                    {imp.estimatedImpact.toFixed(2)}
                   </span>
                   <ConfBadgeSmall level={imp.confidence} />
                 </div>
               </div>
             ))}
           </div>
-          <p className="text-xs text-blue-400 mt-3 italic">{t('kpi.financial.impactDisclaimer', 'Impact estimates are based on stated multipliers and assumptions.')}</p>
+          <p className="text-xs text-blue-400 mt-3 italic">
+            {t(
+              'kpi.financial.impactDisclaimer',
+              'Impact estimates are based on stated multipliers and assumptions.'
+            )}
+          </p>
         </div>
       )}
 
@@ -324,54 +385,116 @@ export const FinancialMappingPanel: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-lg">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('kpi.financial.addMapping', 'Add Financial Mapping')}</h3>
-              <button onClick={() => { setShowForm(false); resetForm(); }} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {t('kpi.financial.addMapping', 'Add Financial Mapping')}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowForm(false);
+                  resetForm();
+                }}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X size={20} />
+              </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">KPI</label>
-                <select value={formKpiId} onChange={(e) => setFormKpiId(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm text-slate-900 dark:text-white">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  KPI
+                </label>
+                <select
+                  value={formKpiId}
+                  onChange={(e) => setFormKpiId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm text-slate-900 dark:text-white"
+                >
                   <option value="">{t('kpi.financial.selectKpi', 'Select KPI...')}</option>
-                  {kpiOptions.map((k) => <option key={k.id} value={k.id}>{k.name} ({k.unit})</option>)}
+                  {kpiOptions.map((k) => (
+                    <option key={k.id} value={k.id}>
+                      {k.name} ({k.unit})
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('kpi.financial.statementLine', 'Statement Line')}</label>
-                <select value={formLineId} onChange={(e) => setFormLineId(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm text-slate-900 dark:text-white">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t('kpi.financial.statementLine', 'Statement Line')}
+                </label>
+                <select
+                  value={formLineId}
+                  onChange={(e) => setFormLineId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm text-slate-900 dark:text-white"
+                >
                   <option value="">{t('kpi.financial.selectLine', 'Select line...')}</option>
                   {['P&L', 'BS', 'CF'].map((st) => (
                     <optgroup key={st} label={STMT_LABELS[st]?.[isPl ? 'pl' : 'en'] || st}>
-                      {(grouped[st] || []).map((l) => <option key={l.id} value={l.id}>{l.line_code} — {isPl && l.line_name_pl ? l.line_name_pl : l.line_name}</option>)}
+                      {(grouped[st] || []).map((l) => (
+                        <option key={l.id} value={l.id}>
+                          {l.line_code} — {isPl && l.line_name_pl ? l.line_name_pl : l.line_name}
+                        </option>
+                      ))}
                     </optgroup>
                   ))}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('kpi.financial.direction', 'Direction')}</label>
-                  <select value={formDirection} onChange={(e) => setFormDirection(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm text-slate-900 dark:text-white">
-                    <option value="positive">{t('kpi.financial.positive', 'Positive (improves)')}</option>
-                    <option value="negative">{t('kpi.financial.negative', 'Negative (worsens)')}</option>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    {t('kpi.financial.direction', 'Direction')}
+                  </label>
+                  <select
+                    value={formDirection}
+                    onChange={(e) => setFormDirection(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm text-slate-900 dark:text-white"
+                  >
+                    <option value="positive">
+                      {t('kpi.financial.positive', 'Positive (improves)')}
+                    </option>
+                    <option value="negative">
+                      {t('kpi.financial.negative', 'Negative (worsens)')}
+                    </option>
                     <option value="neutral">{t('kpi.financial.neutral', 'Neutral')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('kpi.financial.multiplier', 'Multiplier')}</label>
-                  <input type="number" step="0.01" value={formMultiplier} onChange={(e) => setFormMultiplier(parseFloat(e.target.value) || 1)} className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm text-slate-900 dark:text-white" />
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    {t('kpi.financial.multiplier', 'Multiplier')}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formMultiplier}
+                    onChange={(e) => setFormMultiplier(parseFloat(e.target.value) || 1)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm text-slate-900 dark:text-white"
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('kpi.financial.relType', 'Relationship')}</label>
-                  <select value={formType} onChange={(e) => setFormType(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm text-slate-900 dark:text-white">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    {t('kpi.financial.relType', 'Relationship')}
+                  </label>
+                  <select
+                    value={formType}
+                    onChange={(e) => setFormType(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm text-slate-900 dark:text-white"
+                  >
                     <option value="linear">{t('kpi.financial.linear', 'Linear')}</option>
-                    <option value="percentage">{t('kpi.financial.percentage', 'Percentage')}</option>
+                    <option value="percentage">
+                      {t('kpi.financial.percentage', 'Percentage')}
+                    </option>
                     <option value="step">{t('kpi.financial.step', 'Step function')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('kpi.financial.confidence', 'Confidence')}</label>
-                  <select value={formConfidence} onChange={(e) => setFormConfidence(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm text-slate-900 dark:text-white">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    {t('kpi.financial.confidence', 'Confidence')}
+                  </label>
+                  <select
+                    value={formConfidence}
+                    onChange={(e) => setFormConfidence(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm text-slate-900 dark:text-white"
+                  >
                     <option value="high">{t('kpi.financial.confHigh', 'High')}</option>
                     <option value="medium">{t('kpi.financial.confMedium', 'Medium')}</option>
                     <option value="low">{t('kpi.financial.confLow', 'Low')}</option>
@@ -379,13 +502,35 @@ export const FinancialMappingPanel: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('kpi.financial.assumptions', 'Assumptions')}</label>
-                <textarea value={formAssumptions} onChange={(e) => setFormAssumptions(e.target.value)} rows={2} placeholder={t('kpi.financial.assumptionsPlaceholder', 'Describe the relationship and any assumptions...')} className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm text-slate-900 dark:text-white" />
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t('kpi.financial.assumptions', 'Assumptions')}
+                </label>
+                <textarea
+                  value={formAssumptions}
+                  onChange={(e) => setFormAssumptions(e.target.value)}
+                  rows={2}
+                  placeholder={t(
+                    'kpi.financial.assumptionsPlaceholder',
+                    'Describe the relationship and any assumptions...'
+                  )}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm text-slate-900 dark:text-white"
+                />
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => { setShowForm(false); resetForm(); }} className="px-4 py-2 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white">{t('common.cancel', 'Cancel')}</button>
-              <button onClick={handleSaveMapping} className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-500">
+              <button
+                onClick={() => {
+                  setShowForm(false);
+                  resetForm();
+                }}
+                className="px-4 py-2 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white"
+              >
+                {t('common.cancel', 'Cancel')}
+              </button>
+              <button
+                onClick={handleSaveMapping}
+                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-500"
+              >
                 <Save size={14} /> {t('common.save', 'Save')}
               </button>
             </div>
@@ -396,7 +541,12 @@ export const FinancialMappingPanel: React.FC = () => {
       {/* Disclaimer */}
       <div className="flex items-start gap-2 text-xs text-slate-400">
         <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-        <p className="italic">{t('kpi.financial.disclaimer', 'Financial mappings are approximations. Actual relationships may vary by industry and context. Always verify with finance team.')}</p>
+        <p className="italic">
+          {t(
+            'kpi.financial.disclaimer',
+            'Financial mappings are approximations. Actual relationships may vary by industry and context. Always verify with finance team.'
+          )}
+        </p>
       </div>
     </div>
   );
@@ -408,7 +558,11 @@ const ConfBadgeSmall: React.FC<{ level: string }> = ({ level }) => {
     medium: 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400',
     low: 'bg-red-500/20 text-red-600 dark:text-red-400',
   };
-  return <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${cls[level] || cls.low}`}>{level}</span>;
+  return (
+    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${cls[level] || cls.low}`}>
+      {level}
+    </span>
+  );
 };
 
 export default FinancialMappingPanel;

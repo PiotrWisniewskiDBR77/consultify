@@ -4,7 +4,7 @@
  * Coach questions, evidence guidance, micro-lessons, and common mistakes
  * for each phase (MEASURE/OPTIMIZE/AUTOMATE) and dimension (PROCESSES/WORKSTATIONS).
  */
-import type { DBR77Phase, DBR77Dimension, WasteType } from '../dbr77LeanStructure';
+import type { DBR77Dimension, DBR77Phase, WasteType } from '../dbr77LeanStructure';
 
 export type LeanLevelKnowledge = {
   coachQuestions: [string, string, string];
@@ -139,7 +139,7 @@ const PHASE_KNOWLEDGE: Record<PhaseKey, Record<number, LeanLevelKnowledge>> = {
       microLesson:
         'World-class measurement integrates Lean with Industry 4.0: IoT sensors feed AI models that predict and prevent waste.',
       commonMistakes: [
-        'Technology for technology\'s sake — ensure digital tools solve real Lean problems.',
+        "Technology for technology's sake — ensure digital tools solve real Lean problems.",
         'Losing the gemba mindset when moving to digital.',
         'Not maintaining human capability to intervene when systems fail.',
       ],
@@ -171,7 +171,7 @@ const PHASE_KNOWLEDGE: Record<PhaseKey, Record<number, LeanLevelKnowledge>> = {
       evidenceGuidance:
         'Check for documented task lists, skill matrices, error logs/quality records, and overtime tracking.',
       microLesson:
-        'Cross-training coverage is a leading indicator of resilience. If only one person can do a critical task, that\'s a single point of failure.',
+        "Cross-training coverage is a leading indicator of resilience. If only one person can do a critical task, that's a single point of failure.",
       commonMistakes: [
         'Assuming high utilization means high productivity.',
         'Not distinguishing between operator errors and system-caused errors.',
@@ -180,7 +180,7 @@ const PHASE_KNOWLEDGE: Record<PhaseKey, Record<number, LeanLevelKnowledge>> = {
     },
     3: {
       coachQuestions: [
-        'What percentage of this role\'s time is spent on value-adding activities?',
+        "What percentage of this role's time is spent on value-adding activities?",
         'Are there documented standard work procedures?',
         'How does the operator signal problems and get help?',
       ],
@@ -202,8 +202,7 @@ const PHASE_KNOWLEDGE: Record<PhaseKey, Record<number, LeanLevelKnowledge>> = {
       ],
       evidenceGuidance:
         'Look for balanced workload charts (yamazumi), kaizen event records, and digital tools assisting operators.',
-      microLesson:
-        'At Level 4, the operator becomes a problem-solver, not just a task-executor.',
+      microLesson: 'At Level 4, the operator becomes a problem-solver, not just a task-executor.',
       commonMistakes: [
         'Optimizing individual workstations without balancing across the value stream.',
         'Implementing technology that deskills operators.',
@@ -236,8 +235,7 @@ const PHASE_KNOWLEDGE: Record<PhaseKey, Record<number, LeanLevelKnowledge>> = {
       ],
       evidenceGuidance:
         'Check for waste walk reports, 5S audit scores, and bottleneck identification.',
-      microLesson:
-        'Before optimizing, you must see the waste. TIMWOODS is your checklist.',
+      microLesson: 'Before optimizing, you must see the waste. TIMWOODS is your checklist.',
       commonMistakes: [
         'Jumping to solutions before understanding the current state.',
         'Trying to optimize everything at once instead of focusing on the constraint.',
@@ -364,8 +362,7 @@ const PHASE_KNOWLEDGE: Record<PhaseKey, Record<number, LeanLevelKnowledge>> = {
         'What is the suggestion system implementation rate?',
         'How is ergonomic risk assessed?',
       ],
-      evidenceGuidance:
-        'Look for kaizen board, implementation rate > 50%, ergonomic assessments.',
+      evidenceGuidance: 'Look for kaizen board, implementation rate > 50%, ergonomic assessments.',
       microLesson:
         'Toyota achieves 90%+ implementation rate. The secret: small improvements operators can implement themselves.',
       commonMistakes: [
@@ -380,8 +377,7 @@ const PHASE_KNOWLEDGE: Record<PhaseKey, Record<number, LeanLevelKnowledge>> = {
         'What innovation capabilities exist at workstation level?',
         'How is human-machine collaboration optimized?',
       ],
-      evidenceGuidance:
-        'Look for role evolution plans, reskilling programs, innovation records.',
+      evidenceGuidance: 'Look for role evolution plans, reskilling programs, innovation records.',
       microLesson:
         'The future workstation is a human-machine team. Operator focuses on judgment and creativity.',
       commonMistakes: [
@@ -572,39 +568,123 @@ const WASTE_KNOWLEDGE: Record<WasteType, LeanWasteKnowledge> = {
     ],
   },
   INVENTORY: {
-    whatToLookFor: ['WIP piling up between stations', 'Raw material stored "just in case"', 'Finished goods aging'],
-    typicalEvidence: ['Inventory turns ratio', 'Days of supply metrics', 'Photos of WIP accumulation'],
-    coachQuestions: ['What is minimum inventory for flow?', 'What causes the buffer?', 'How much capital is tied up?'],
+    whatToLookFor: [
+      'WIP piling up between stations',
+      'Raw material stored "just in case"',
+      'Finished goods aging',
+    ],
+    typicalEvidence: [
+      'Inventory turns ratio',
+      'Days of supply metrics',
+      'Photos of WIP accumulation',
+    ],
+    coachQuestions: [
+      'What is minimum inventory for flow?',
+      'What causes the buffer?',
+      'How much capital is tied up?',
+    ],
   },
   MOTION: {
-    whatToLookFor: ['Operator walking, reaching, bending unnecessarily', 'Searching for tools', 'Multiple system switches'],
-    typicalEvidence: ['Spaghetti diagram of movement', 'Reach zone analysis', 'Screen recording of system switches'],
-    coachQuestions: ['Can the workstation bring everything within arm\'s reach?', 'Walking distance per shift?', 'Ergonomic concerns?'],
+    whatToLookFor: [
+      'Operator walking, reaching, bending unnecessarily',
+      'Searching for tools',
+      'Multiple system switches',
+    ],
+    typicalEvidence: [
+      'Spaghetti diagram of movement',
+      'Reach zone analysis',
+      'Screen recording of system switches',
+    ],
+    coachQuestions: [
+      "Can the workstation bring everything within arm's reach?",
+      'Walking distance per shift?',
+      'Ergonomic concerns?',
+    ],
   },
   WAITING: {
-    whatToLookFor: ['People waiting for materials, information, approvals', 'Machines idle between batches', 'Queues of WIP'],
-    typicalEvidence: ['Time studies showing wait %', 'Changeover time logs', 'Queue length observations'],
-    coachQuestions: ['Root cause of waiting?', 'Can wait convert to productive time?', 'Would reducing batch size help?'],
+    whatToLookFor: [
+      'People waiting for materials, information, approvals',
+      'Machines idle between batches',
+      'Queues of WIP',
+    ],
+    typicalEvidence: [
+      'Time studies showing wait %',
+      'Changeover time logs',
+      'Queue length observations',
+    ],
+    coachQuestions: [
+      'Root cause of waiting?',
+      'Can wait convert to productive time?',
+      'Would reducing batch size help?',
+    ],
   },
   OVERPRODUCTION: {
-    whatToLookFor: ['Making more than demand', 'Large batches from changeover avoidance', 'Running machines for utilization'],
-    typicalEvidence: ['Production vs. demand comparison', 'Batch size vs. takt analysis', 'Finished goods aging report'],
-    coachQuestions: ['What drives batch size?', 'Would smaller batches improve flow?', 'Is scheduling push or pull?'],
+    whatToLookFor: [
+      'Making more than demand',
+      'Large batches from changeover avoidance',
+      'Running machines for utilization',
+    ],
+    typicalEvidence: [
+      'Production vs. demand comparison',
+      'Batch size vs. takt analysis',
+      'Finished goods aging report',
+    ],
+    coachQuestions: [
+      'What drives batch size?',
+      'Would smaller batches improve flow?',
+      'Is scheduling push or pull?',
+    ],
   },
   OVER_PROCESSING: {
-    whatToLookFor: ['Tighter tolerances than required', 'Extra approval steps', 'Reports nobody reads'],
-    typicalEvidence: ['Tolerance comparison', 'Process map with approvals', 'Report readership analysis'],
-    coachQuestions: ['Does customer need this quality?', 'Which approvals can be eliminated?', 'What reports are unread?'],
+    whatToLookFor: [
+      'Tighter tolerances than required',
+      'Extra approval steps',
+      'Reports nobody reads',
+    ],
+    typicalEvidence: [
+      'Tolerance comparison',
+      'Process map with approvals',
+      'Report readership analysis',
+    ],
+    coachQuestions: [
+      'Does customer need this quality?',
+      'Which approvals can be eliminated?',
+      'What reports are unread?',
+    ],
   },
   DEFECTS: {
-    whatToLookFor: ['Rework, scrap, warranty returns', 'Inspection that should be unnecessary', 'Customer complaints'],
-    typicalEvidence: ['Scrap/rework rates', 'Cost of poor quality (COPQ)', 'Pareto chart of defects'],
-    coachQuestions: ['Where are defects created vs. detected?', 'What poka-yoke can prevent this?', 'Total cost of this defect?'],
+    whatToLookFor: [
+      'Rework, scrap, warranty returns',
+      'Inspection that should be unnecessary',
+      'Customer complaints',
+    ],
+    typicalEvidence: [
+      'Scrap/rework rates',
+      'Cost of poor quality (COPQ)',
+      'Pareto chart of defects',
+    ],
+    coachQuestions: [
+      'Where are defects created vs. detected?',
+      'What poka-yoke can prevent this?',
+      'Total cost of this defect?',
+    ],
   },
   SKILLS: {
-    whatToLookFor: ['Underutilized capabilities', 'No suggestion system', 'Over-reliance on key individuals'],
-    typicalEvidence: ['Skill matrix with gaps', 'Improvement suggestion records', 'Single-point-of-failure analysis'],
-    coachQuestions: ['Are operators involved in improvement?', 'What skills are underutilized?', 'Cross-training coverage?'],
+    whatToLookFor: [
+      'Underutilized capabilities',
+      'No suggestion system',
+      'Over-reliance on key individuals',
+    ],
+    typicalEvidence: [
+      'Skill matrix with gaps',
+      'Improvement suggestion records',
+      'Single-point-of-failure analysis',
+    ],
+    coachQuestions: [
+      'Are operators involved in improvement?',
+      'What skills are underutilized?',
+      'Cross-training coverage?',
+    ],
   },
 };
 
@@ -624,7 +704,8 @@ export function getLeanKnowledge(
       'What evidence supports the assessment?',
       'What would improvement look like?',
     ],
-    evidenceGuidance: 'Observe the actual work, collect data, and verify with the people doing the work.',
+    evidenceGuidance:
+      'Observe the actual work, collect data, and verify with the people doing the work.',
     microLesson: 'Go to gemba, observe the real process, and talk to the real people.',
     commonMistakes: [
       'Assessing from a desk instead of walking the floor.',
@@ -635,13 +716,17 @@ export function getLeanKnowledge(
 }
 
 export function getLeanWasteKnowledge(wasteType: WasteType): LeanWasteKnowledge {
-  return WASTE_KNOWLEDGE[wasteType] || {
-    whatToLookFor: ['Observe the process for signs of this waste type.'],
-    typicalEvidence: ['Time studies', 'Process observations', 'Data collection sheets'],
-    coachQuestions: ['Where do you see this waste?', 'What is the impact?', 'Root cause?'],
-  };
+  return (
+    WASTE_KNOWLEDGE[wasteType] || {
+      whatToLookFor: ['Observe the process for signs of this waste type.'],
+      typicalEvidence: ['Time studies', 'Process observations', 'Data collection sheets'],
+      coachQuestions: ['Where do you see this waste?', 'What is the impact?', 'Root cause?'],
+    }
+  );
 }
 
-export function getLeanLevelMeaning(level: number): { title: string; meaning: string; evidencePattern: string } | null {
+export function getLeanLevelMeaning(
+  level: number
+): { title: string; meaning: string; evidencePattern: string } | null {
   return LEAN_LEVEL_MEANINGS[level] || null;
 }

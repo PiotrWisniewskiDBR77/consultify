@@ -153,9 +153,19 @@ export const getHeaders = () => {
 };
 
 // Wrapper for fetch that handles 401 with automatic token refresh
-const fetchWithRetry = async (url: string, options: RequestInit = {}): Promise<Response> => {
-  const headers = { ...getHeaders(), ...((options.headers as Record<string, string>) || {}) };
-  const hasExternalSignal = !!options.signal;
+type FetchWithRetryOptions = RequestInit & { skipDefaultHeaders?: boolean };
+
+const fetchWithRetry = async (
+  url: string,
+  options: FetchWithRetryOptions = {}
+): Promise<Response> => {
+  const { skipDefaultHeaders, ...fetchOptions } = options;
+  const baseHeaders = skipDefaultHeaders ? {} : getHeaders();
+  const headers = {
+    ...baseHeaders,
+    ...((fetchOptions.headers as Record<string, string>) || {}),
+  };
+  const hasExternalSignal = !!fetchOptions.signal;
   const shouldApplyTimeout =
     !hasExternalSignal && typeof url === 'string' && url.includes('/api/ai/refine-text');
   const timeoutMs = shouldApplyTimeout ? 25000 : null;
@@ -172,7 +182,11 @@ const fetchWithRetry = async (url: string, options: RequestInit = {}): Promise<R
 
   let res: Response;
   try {
-    res = await fetch(url, { ...options, headers, signal: options.signal || controller?.signal });
+    res = await fetch(url, {
+      ...fetchOptions,
+      headers,
+      signal: fetchOptions.signal || controller?.signal,
+    });
   } catch (err: any) {
     if (controller && err?.name === 'AbortError') {
       const e: any = new Error('AI request timed out');
@@ -191,7 +205,11 @@ const fetchWithRetry = async (url: string, options: RequestInit = {}): Promise<R
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
       // Note: keep the same abort signal (if any) for the retry.
-      res = await fetch(url, { ...options, headers, signal: options.signal || controller?.signal });
+      res = await fetch(url, {
+        ...fetchOptions,
+        headers,
+        signal: fetchOptions.signal || controller?.signal,
+      });
     } else {
       // Token refresh failed, notify app
       window.dispatchEvent(new CustomEvent('auth:token-expired'));
@@ -3772,7 +3790,7 @@ export const Api = {
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'Failed to fetch plans');
-    return json;
+    return Array.isArray(json) ? json : json.plans || [];
   },
 
   // Subscription changes - connected to real API
@@ -5905,6 +5923,21 @@ export const Api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Request failed');
+  },
+
+  postMultipart: async (url: string, formData: FormData) => {
+    const fullUrl = url.startsWith('/api') ? url : `${API_URL}${url}`;
+    const headers = getHeaders();
+    // Browser must set multipart boundary; do not send Content-Type.
+    delete headers['Content-Type'];
+
+    const res = await fetchWithRetry(fullUrl, {
+      method: 'POST',
+      headers,
+      body: formData,
+      skipDefaultHeaders: true,
     });
     return handleResponse(res, 'Request failed');
   },

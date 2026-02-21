@@ -246,7 +246,7 @@ export interface TableColumnInfo {
 
 export async function getTableColumns(tableName: string): Promise<TableColumnInfo[]> {
   const dbType = getDatabaseType();
-  
+
   if (dbType === 'postgres') {
     // PostgreSQL: Query information_schema
     const sql = `SELECT 
@@ -266,7 +266,7 @@ export async function getTableColumns(tableName: string): Promise<TableColumnInf
     FROM information_schema.columns 
     WHERE table_schema = 'public' AND table_name = $1
     ORDER BY ordinal_position`;
-    
+
     return queryAll<TableColumnInfo>(sql, [tableName]);
   } else {
     // SQLite: Use PRAGMA table_info

@@ -358,7 +358,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <p className="text-sm text-indigo-800 dark:text-indigo-300 text-center">
           <span className="font-medium">{t('auth.loginAs', 'You will be logged in as:')}</span>
           <br />
-          <code className="text-indigo-600 dark:text-indigo-400 font-mono">demo@consultinity.com</code>
+          <code className="text-indigo-600 dark:text-indigo-400 font-mono">
+            demo@consultinity.com
+          </code>
         </p>
       </div>
 

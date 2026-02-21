@@ -4,8 +4,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import redisConfig from '../config/QueueConfig.js';
-import { AppError } from '../utils/ErrorHandler.js';
 import { aiLogger } from '../services/ai/logger.js';
+import { AppError } from '../utils/ErrorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,20 +15,10 @@ let aiQueue;
 const createUnavailableQueue = (reason) => ({
   isUnavailable: true,
   add: async () => {
-    throw new AppError(
-      `AI queue unavailable: ${reason}`,
-      503,
-      'FEATURE_UNAVAILABLE',
-      { reason }
-    );
+    throw new AppError(`AI queue unavailable: ${reason}`, 503, 'FEATURE_UNAVAILABLE', { reason });
   },
   getJob: async () => {
-    throw new AppError(
-      `AI queue unavailable: ${reason}`,
-      503,
-      'FEATURE_UNAVAILABLE',
-      { reason }
-    );
+    throw new AppError(`AI queue unavailable: ${reason}`, 503, 'FEATURE_UNAVAILABLE', { reason });
   },
   defaultJobOptions: {},
   on: () => {},

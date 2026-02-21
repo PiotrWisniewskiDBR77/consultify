@@ -1,18 +1,19 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AppView, SessionMode } from '../../src/types';
-import { useAppStore } from '../../src/store/useAppStore';
 
 describe('useAppStore (src/store/useAppStore.ts)', () => {
-  beforeEach(() => {
+  let useAppStore: any;
+
+  beforeEach(async () => {
     localStorage.clear();
     sessionStorage.clear();
-  });
-
-  afterEach(() => {
-    // Persist layer can schedule debounced writes
-    vi.runOnlyPendingTimers?.();
+    vi.resetModules();
+    vi.unmock('@/store/useAppStore');
+    vi.unmock('../../src/store/useAppStore');
+    const mod = await import('../../src/store/useAppStore');
+    useAppStore = (mod as any).useAppStore;
   });
 
   it('has expected defaults (auth + ui + chat)', () => {

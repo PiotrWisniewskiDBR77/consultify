@@ -1,6 +1,5 @@
-import { PassThrough } from 'stream';
-
 import PDFDocument from 'pdfkit';
+import { PassThrough } from 'stream';
 
 export async function generatePartnerCertificatePdf(params: {
   certificateId: string;
@@ -73,4 +72,3 @@ export async function generatePartnerCertificatePdf(params: {
   doc.end();
   return endPromise;
 }
-

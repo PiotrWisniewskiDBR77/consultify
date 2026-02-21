@@ -113,7 +113,10 @@ export const DemoSignupModal: React.FC<DemoSignupModalProps> = ({
                     {t('demo.signup.title', 'Start Your Free Trial')}
                   </h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
-                    {t('demo.signup.subtitle', 'Continue where you left off with your own workspace.')}
+                    {t(
+                      'demo.signup.subtitle',
+                      'Continue where you left off with your own workspace.'
+                    )}
                   </p>
 
                   <div className="flex gap-3 mb-5">
@@ -177,9 +180,7 @@ export const DemoSignupModal: React.FC<DemoSignupModalProps> = ({
                       />
                     </div>
 
-                    {error && (
-                      <p className="text-xs text-red-500 dark:text-red-400">{error}</p>
-                    )}
+                    {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
 
                     <button
                       type="submit"
