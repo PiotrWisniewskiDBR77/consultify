@@ -195,7 +195,7 @@ function isPlaceholder(content: string): boolean {
   const placeholderPattern = /const\s+\w+\s*=\s*\{[^}]*\}[\s\S]{0,200}expect\s*\(\s*\w+\.\w+/;
   // Explicit markers
   const markerPattern =
-    /@test-quality\s+PLACEHOLDER|needs real implementation|NOT IMPLEMENTED|PLACEHOLDER/i;
+    /@test-quality\s+PLACEHOLDER|needs real implementation|NOT IMPLEMENTED|\bPLACEHOLDER\b/i;
   return placeholderPattern.test(content) || markerPattern.test(content);
 }
 
