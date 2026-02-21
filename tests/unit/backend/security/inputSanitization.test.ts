@@ -97,6 +97,10 @@ describe('sanitizeString (L1)', () => {
     // Keep '=' and '/' intact; security relies on escaping HTML special chars.
     expect(result).toContain('onerror=');
   });
+
+  it('escapes all special characters in one pass', () => {
+    expect(sanitizeString(`&<>"'\``)).toBe('&amp;&lt;&gt;&quot;&#x27;&#96;');
+  });
 });
 
 // ═══════════════════════════════════════════════

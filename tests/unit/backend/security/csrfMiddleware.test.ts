@@ -234,7 +234,7 @@ describe('CSRF middleware (L1)', () => {
       expect(next).toHaveBeenCalled();
     });
 
-    it('accepts header token when provided under uppercase header key', () => {
+    it('accepts matching cookie and header when header is provided with uppercase key', () => {
       const tok = 'x'.repeat(64);
       const { req, res, next } = createMocks({
         method: 'POST',
@@ -256,7 +256,6 @@ describe('CSRF middleware (L1)', () => {
       csrfValidationMiddleware(req, res, next);
       expect(next).toHaveBeenCalled();
     });
-
     // Exempt paths
     it.each([
       '/api/auth/login',

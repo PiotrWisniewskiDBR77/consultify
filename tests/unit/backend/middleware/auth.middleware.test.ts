@@ -322,6 +322,114 @@ describe('AuthMiddleware', () => {
       expect(mockReq.user?.id).toBe('test-user-id');
       expect(mockNext).toHaveBeenCalled();
     });
+
+    it('E2E_MODE: accepts decoded token with e2e claim without signature verification', async () => {
+      const origE2E = process.env.E2E_MODE;
+      try {
+        process.env.E2E_MODE = 'true';
+
+        vi.resetModules();
+        const e2eJwt = {
+          verify: vi.fn(),
+          decode: vi.fn().mockReturnValue({
+            e2e: true,
+            id: 'e2e-user-1',
+            organizationId: 'e2e-org-1',
+            role: 'ADMIN',
+            email: 'e2e@local.test',
+            name: 'E2E User',
+          }),
+        };
+
+        // Prevent runtime DB writes in the E2E seed block.
+        const mockRun = vi.fn().mockResolvedValue(undefined);
+        vi.doMock('../../../../server/src/utils/DbPromise.js', async () => {
+          const actual: any = await vi.importActual('../../../../server/src/utils/DbPromise.js');
+          return { ...actual, run: mockRun };
+        });
+
+        const mod = await import(
+          '../../../../server/src/middleware/auth.middleware.ts?e2e_mode_bypass=1'
+        );
+        mod.setDependencies({
+          jwt: e2eJwt as any,
+          config: mockConfig,
+          PermissionService: mockPermissionService,
+          dbGet: mockDbGet,
+        });
+
+        const req: any = {
+          headers: { authorization: 'Bearer any-e2e-token' },
+          body: {},
+          query: {},
+          cookies: {},
+          path: '/test',
+        };
+        const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+        const next = vi.fn();
+
+        await mod.verifyToken(req, res, next);
+
+        expect(e2eJwt.verify).not.toHaveBeenCalled();
+        expect(e2eJwt.decode).toHaveBeenCalled();
+        expect(mockRun).toHaveBeenCalled(); // best-effort seed
+        expect(req.user?.id).toBe('e2e-user-1');
+        expect(req.organizationId).toBe('e2e-org-1');
+        expect(next).toHaveBeenCalled();
+      } finally {
+        if (origE2E === undefined) delete process.env.E2E_MODE;
+        else process.env.E2E_MODE = origE2E;
+        vi.doUnmock('../../../../server/src/utils/DbPromise.js');
+      }
+    });
+
+    it('should reject token issued before revoke-all marker (jti-based)', async () => {
+      mockReq.headers!['authorization'] = 'Bearer revoke-all-token';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        // iat in seconds -> tokenIssuedAt = 100_000ms
+        callback(null, { id: 'user-123', jti: 'tok-1', iat: 100 });
+      });
+      mockDbGet
+        .mockResolvedValueOnce(null) // token not revoked
+        .mockResolvedValueOnce({ jti: 'revoke-all-200000' }); // revokeTime=200_000ms
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({ error: expect.stringContaining('revoked') })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should allow token issued after revoke-all marker', async () => {
+      mockReq.headers!['authorization'] = 'Bearer revoke-all-ok';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        // iat in seconds -> tokenIssuedAt = 300_000ms
+        callback(null, { id: 'user-123', jti: 'tok-2', iat: 300 });
+      });
+      mockDbGet
+        .mockResolvedValueOnce(null) // token not revoked
+        .mockResolvedValueOnce({ jti: 'revoke-all-200000' }); // revokeTime=200_000ms
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockReq.user?.id).toBe('user-123');
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('continues when revocation DB lookup fails (does not block user)', async () => {
+      mockReq.headers!['authorization'] = 'Bearer db-fail';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'user-123', jti: 'tok-3' });
+      });
+      mockDbGet.mockRejectedValueOnce(new Error('db down'));
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockReq.user?.id).toBe('user-123');
+      expect(mockNext).toHaveBeenCalled();
+    });
   });
 
   describe('isAuthenticated', () => {
@@ -370,6 +478,14 @@ describe('AuthMiddleware', () => {
   });
 
   describe('requireRole', () => {
+    it('should return 401 when user is missing', () => {
+      const middleware = requireRole('administrator');
+      middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Authentication required' });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
     it('should allow access if user has required role', () => {
       mockReq.user = { role: 'administrator' } as any;
       const middleware = requireRole('administrator');
@@ -386,6 +502,13 @@ describe('AuthMiddleware', () => {
   });
 
   describe('requireSuperAdmin', () => {
+    it('should return 401 when user is missing', () => {
+      requireSuperAdmin(mockReq as AuthRequest, mockRes as Response, mockNext);
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Authentication required' });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
     it('should allow if user is superadmin', () => {
       mockReq.user = { isSuperAdmin: true } as any;
       requireSuperAdmin(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -413,6 +536,28 @@ describe('AuthMiddleware', () => {
   });
 
   describe('requirePermission', () => {
+    it('should return 401 when user is missing', () => {
+      const middleware = requirePermission('edit_project');
+      middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Authentication required' });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should deny when req.can is missing (no permission helper attached)', () => {
+      mockReq.user = { id: 'u1' } as any;
+      delete (mockReq as any).can;
+
+      const middleware = requirePermission('edit_project');
+      middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({ error: 'Permission denied', required: 'edit_project' })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
     it('should allow if user has permission', () => {
       mockReq.user = { id: 'u1' } as any;
       mockReq.can = vi.fn().mockReturnValue(true);
