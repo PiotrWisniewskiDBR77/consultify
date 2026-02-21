@@ -1,0 +1,412 @@
+/**
+ * PublicMiniAssessmentView (T015)
+ * Public-facing mini assessment with focus-flow UX, AI result, and CTA.
+ */
+
+import {
+  ArrowRight,
+  BarChart3,
+  CheckCircle2,
+  ExternalLink,
+  Loader2,
+  Mail,
+  Sparkles,
+  Star,
+  TrendingUp,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+
+import { SurveyShell, type SurveyAnswer, type SurveySection } from '../components/Survey/SurveyShell';
+import { trackFunnelEvent } from '../services/funnelAnalytics';
+
+const API_BASE = '/api/public/mini-assessment';
+
+type ViewState = 'loading' | 'intro' | 'survey' | 'submitting' | 'result' | 'error';
+
+interface AIResult {
+  overallScore: number;
+  overallLevel: string;
+  dimensions: Array<{ name: string; score: number; maxScore: number; level: string }>;
+  insights: string[];
+  assumptions: string[];
+  biggestChallenge: string | null;
+}
+
+export const PublicMiniAssessmentView: React.FC = () => {
+  const { token } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+
+  const [viewState, setViewState] = useState<ViewState>('loading');
+  const [assessmentData, setAssessmentData] = useState<any>(null);
+  const [aiResult, setAiResult] = useState<AIResult | null>(null);
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+
+  const lang = searchParams.get('lang') || i18n.language || 'en';
+
+  useEffect(() => {
+    if (!token) {
+      startNewAssessment();
+    } else {
+      loadAssessment(token);
+    }
+  }, [token]);
+
+  const startNewAssessment = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          language: lang,
+          partnerCode: searchParams.get('partner') || undefined,
+          sourceCampaign: searchParams.get('source') || undefined,
+          utm: {
+            utm_source: searchParams.get('utm_source') || undefined,
+            utm_medium: searchParams.get('utm_medium') || undefined,
+            utm_campaign: searchParams.get('utm_campaign') || undefined,
+          },
+        }),
+      });
+      const data = await res.json();
+      if (data.token) {
+        window.history.replaceState(null, '', `/assess/${data.token}?lang=${lang}`);
+        await loadAssessment(data.token);
+      }
+    } catch {
+      setViewState('error');
+      setError('Failed to start assessment');
+    }
+  };
+
+  const loadAssessment = async (t: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/${t}`);
+      if (!res.ok) throw new Error('Not found');
+      const data = await res.json();
+      setAssessmentData(data);
+
+      if (data.status === 'completed' && data.aiResult) {
+        setAiResult(data.aiResult);
+        setViewState('result');
+        trackFunnelEvent('external_assessment_result_viewed');
+      } else {
+        setViewState('intro');
+        trackFunnelEvent('external_assessment_opened');
+      }
+    } catch {
+      setViewState('error');
+      setError('Assessment not found');
+    }
+  };
+
+  const surveySections: SurveySection[] = useMemo(() => {
+    if (!assessmentData?.template?.questions) return [];
+    const questions = assessmentData.template.questions;
+    return [
+      {
+        id: 'main',
+        title: {
+          en: 'Digital Transformation Readiness',
+          pl: 'Gotowość do transformacji cyfrowej',
+        },
+        questions,
+      },
+    ];
+  }, [assessmentData]);
+
+  const handleStart = useCallback(() => {
+    setViewState('survey');
+    trackFunnelEvent('external_assessment_started');
+  }, []);
+
+  const handleAnswer = useCallback((answer: SurveyAnswer) => {
+    // No-op for public assessment — answers tracked internally by SurveyShell
+  }, []);
+
+  const handleSubmit = useCallback(
+    async (answers: SurveyAnswer[]) => {
+      const currentToken = token || assessmentData?.token;
+      if (!currentToken) return;
+      setViewState('submitting');
+
+      try {
+        const res = await fetch(`${API_BASE}/${currentToken}/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answers, respondentEmail: email || undefined }),
+        });
+        const data = await res.json();
+        if (data.success && data.aiResult) {
+          setAiResult(data.aiResult);
+          setViewState('result');
+          trackFunnelEvent('external_assessment_completed');
+        } else {
+          throw new Error(data.error || 'Submit failed');
+        }
+      } catch (err: any) {
+        setViewState('survey');
+        setError(err.message);
+      }
+    },
+    [token, assessmentData, email]
+  );
+
+  const handleCTA = useCallback(
+    (action: string) => {
+      trackFunnelEvent('external_assessment_cta_clicked', { action });
+      if (action === 'trial') navigate('/register');
+      else if (action === 'demo') navigate('/demo');
+      else if (action === 'contact') navigate('/contact');
+    },
+    [navigate]
+  );
+
+  const levelColor = (level: string) => {
+    switch (level) {
+      case 'advanced': return 'text-green-600';
+      case 'developing': return 'text-blue-600';
+      case 'basic': return 'text-yellow-600';
+      default: return 'text-red-600';
+    }
+  };
+
+  const levelLabel = (level: string) => {
+    const labels: Record<string, Record<string, string>> = {
+      advanced: { en: 'Advanced', pl: 'Zaawansowany' },
+      developing: { en: 'Developing', pl: 'Rozwijający się' },
+      basic: { en: 'Basic', pl: 'Podstawowy' },
+      initial: { en: 'Initial', pl: 'Początkowy' },
+    };
+    return labels[level]?.[lang] || labels[level]?.en || level;
+  };
+
+  if (viewState === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+      </div>
+    );
+  }
+
+  if (viewState === 'error') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
+        <div className="text-center max-w-md">
+          <p className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">{error}</p>
+          <button onClick={() => window.location.reload()} className="text-indigo-600 hover:underline text-sm">
+            {t('publicAssessment.tryAgain', 'Try again')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (viewState === 'intro') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950 flex items-center justify-center p-4"
+        dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="max-w-lg w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
+          <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <BarChart3 className="w-8 h-8 text-indigo-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            {t('publicAssessment.title', 'Digital Transformation Readiness Check')}
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 mb-6">
+            {t('publicAssessment.subtitle', 'Answer a few quick questions and get an AI-powered snapshot of your readiness.')}
+          </p>
+          <div className="flex items-center justify-center gap-4 text-xs text-gray-400 mb-6">
+            <span className="flex items-center gap-1">
+              <Star className="w-3 h-3" /> {assessmentData?.template?.questions?.length || 6} {t('publicAssessment.questions', 'questions')}
+            </span>
+            <span className="flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> {t('publicAssessment.aiResult', 'AI-powered result')}
+            </span>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1 text-left">
+              {t('publicAssessment.emailOptional', 'Email (optional — to receive your results)')}
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700
+                  text-sm text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={handleStart}
+            className="w-full py-3 px-6 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition-colors
+              flex items-center justify-center gap-2 text-sm"
+          >
+            {t('publicAssessment.startButton', 'Start Assessment')}
+            <ArrowRight className="w-4 h-4" />
+          </button>
+
+          <p className="text-xs text-gray-400 mt-4">
+            {t('publicAssessment.disclaimer', 'Your answers are used only to generate your result. No account required.')}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (viewState === 'submitting') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">
+            {t('publicAssessment.analyzing', 'Analyzing your responses...')}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (viewState === 'result' && aiResult) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950 p-4 md:p-8"
+        dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+            {/* Score header */}
+            <div className="bg-indigo-600 text-white p-8 text-center">
+              <h1 className="text-xl font-bold mb-2">
+                {t('publicAssessment.resultTitle', 'Your Readiness Score')}
+              </h1>
+              <div className="text-5xl font-bold mb-2">{aiResult.overallScore}%</div>
+              <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium bg-white/20`}>
+                {levelLabel(aiResult.overallLevel)}
+              </span>
+            </div>
+
+            {/* Dimensions */}
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+              <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">
+                {t('publicAssessment.dimensions', 'Breakdown by Dimension')}
+              </h2>
+              <div className="space-y-3">
+                {aiResult.dimensions.map((dim) => (
+                  <div key={dim.name}>
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className="text-gray-700 dark:text-gray-300">{dim.name}</span>
+                      <span className={`font-medium ${levelColor(dim.level)}`}>
+                        {dim.score}/{dim.maxScore}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
+                      <div
+                        className="bg-indigo-500 h-2 rounded-full transition-all"
+                        style={{ width: `${(dim.score / dim.maxScore) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Insights */}
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+              <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                <Sparkles className="w-4 h-4 inline mr-1" />
+                {t('publicAssessment.keyInsights', 'Key Insights')}
+              </h2>
+              <ul className="space-y-2">
+                {aiResult.insights.map((insight, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <TrendingUp className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" />
+                    {insight}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Assumptions */}
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30">
+              <p className="text-xs text-gray-400 italic">
+                {aiResult.assumptions.join(' • ')}
+              </p>
+            </div>
+
+            {/* CTA */}
+            <div className="p-6">
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
+                {t('publicAssessment.nextSteps', 'Ready to take the next step?')}
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button
+                  onClick={() => handleCTA('trial')}
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-xl
+                    hover:bg-indigo-700 text-sm font-medium transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  {t('publicAssessment.startTrial', 'Start Free Trial')}
+                </button>
+                <button
+                  onClick={() => handleCTA('demo')}
+                  className="flex items-center justify-center gap-2 px-4 py-3 border border-indigo-300 dark:border-indigo-600
+                    text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-sm font-medium"
+                >
+                  {t('publicAssessment.bookDemo', 'Book a Demo')}
+                </button>
+                <button
+                  onClick={() => handleCTA('contact')}
+                  className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 dark:border-gray-600
+                    text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium"
+                >
+                  {t('publicAssessment.contactUs', 'Contact Us')}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-center text-xs text-gray-400 mt-6">
+            Powered by Consultinity
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Survey state
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          <h1 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            {t('publicAssessment.title', 'Digital Transformation Readiness Check')}
+          </h1>
+          <span className="text-xs text-gray-400">Consultinity</span>
+        </div>
+      </header>
+      <div className="max-w-3xl mx-auto py-6">
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+        <SurveyShell
+          sections={surveySections}
+          language={lang}
+          focusMode={true}
+          estimatedMinutes={assessmentData?.template?.estimatedMinutes || 3}
+          onAnswer={handleAnswer}
+          onSubmit={handleSubmit}
+        />
+      </div>
+    </div>
+  );
+};

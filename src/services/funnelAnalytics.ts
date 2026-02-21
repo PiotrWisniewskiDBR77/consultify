@@ -224,6 +224,9 @@ export type FunnelEventName =
   | 'competency_deleted'
   | 'initiative_requirement_added'
   | 'initiative_requirement_removed'
+  // T066 — Skills Gap Analysis
+  | 'skills_gap_viewed'
+  | 'skills_gap_action_created'
   // T044 — Change Sentiment
   | 'change_pulse_submitted'
   | 'change_sentiment_trend_changed'
@@ -263,7 +266,28 @@ export type FunnelEventName =
   | 'prompt_ab_experiment_started'
   | 'prompt_ab_experiment_winner_promoted'
   | 'ai_feedback_submitted'
-  | 'ai_learning_instruction_applied';
+  | 'ai_learning_instruction_applied'
+  // T014 — Survey Shell
+  | 'survey_started'
+  | 'survey_resumed'
+  | 'survey_question_answered'
+  | 'survey_section_completed'
+  | 'survey_completed'
+  | 'survey_abandoned'
+  // T015 — Public Mini Assessment
+  | 'external_assessment_opened'
+  | 'external_assessment_started'
+  | 'external_assessment_completed'
+  | 'external_assessment_result_viewed'
+  | 'external_assessment_cta_clicked'
+  // T017 — Sponsor Report
+  | 'sponsor_report_created'
+  | 'sponsor_report_generated'
+  | 'sponsor_report_section_edited'
+  | 'sponsor_report_approved'
+  | 'sponsor_report_rejected'
+  | 'sponsor_report_exported'
+  | 'sponsor_report_utilized';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

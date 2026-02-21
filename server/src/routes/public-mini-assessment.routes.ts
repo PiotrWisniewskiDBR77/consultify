@@ -1,24 +1,95 @@
 /**
- * Public Mini Assessment Routes (T0xx)
- *
- * Placeholder router used by Gateway wiring and tests.
- * The real public mini-assessment flow is not implemented yet.
+ * Public Mini Assessment Routes (T015)
+ * Public endpoints for the self-assessment flow — no auth required.
+ * Rate limited to prevent abuse.
  */
-import { Router } from 'express';
+
+import { Request, Response, Router } from 'express';
+
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import * as miniAssessmentService from '../services/publicMiniAssessmentService.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
+
+router.use(authRateLimiter);
 
 router.get('/health', (_req, res) => {
   res.json({ success: true });
 });
 
-// Placeholder endpoint for public links (e.g. /api/public/mini-assessment/:token)
-router.get('/:token', (req, res) => {
-  res.status(501).json({
-    success: false,
-    error: 'Public mini assessment is not implemented',
-    token: req.params.token,
-  });
-});
+router.post(
+  '/start',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { language, templateId, partnerCode, sourceCampaign, utm } = req.body;
+    const result = await miniAssessmentService.createAssessment({
+      language,
+      templateId,
+      partnerCode,
+      sourceCampaign,
+      utmParams: utm,
+    });
+    res.status(201).json({ success: true, ...result });
+  })
+);
+
+router.get(
+  '/template/:templateId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const template = miniAssessmentService.getTemplate(req.params.templateId);
+    if (!template) return res.status(404).json({ error: 'Template not found' });
+    res.json(template);
+  })
+);
+
+router.get(
+  '/:token',
+  asyncHandler(async (req: Request, res: Response) => {
+    const assessment = await miniAssessmentService.getAssessmentByToken(req.params.token);
+    if (!assessment) return res.status(404).json({ error: 'Assessment not found' });
+
+    const template = miniAssessmentService.getTemplate(assessment.template_id);
+    res.json({
+      id: assessment.id,
+      token: assessment.token,
+      status: assessment.status,
+      language: assessment.language,
+      template,
+      answers: assessment.answers_json ? JSON.parse(assessment.answers_json) : [],
+      aiResult: assessment.status === 'completed' && assessment.ai_result_json
+        ? JSON.parse(assessment.ai_result_json) : null,
+    });
+  })
+);
+
+router.post(
+  '/:token/submit',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { answers, respondentEmail, respondentName } = req.body;
+    if (!answers || !Array.isArray(answers)) {
+      return res.status(400).json({ error: 'answers array is required' });
+    }
+
+    const ipAddress = req.ip || req.socket?.remoteAddress || (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim();
+    const userAgent = req.headers['user-agent'] || '';
+
+    try {
+      const result = await miniAssessmentService.submitAnswers({
+        token: req.params.token,
+        answers,
+        respondentEmail,
+        respondentName,
+        ipAddress,
+        userAgent,
+      });
+      res.json({ success: true, ...result });
+    } catch (err: any) {
+      if (err.message === 'Assessment not found') return res.status(404).json({ error: err.message });
+      if (err.message === 'Assessment already completed') return res.status(409).json({ error: err.message });
+      throw err;
+    }
+  })
+);
 
 export default router;
