@@ -394,6 +394,23 @@ describe('AuthMiddleware', () => {
       );
     });
 
+    it('normalizes permission role VIEWER when decoded role is VIEWER', async () => {
+      mockReq.headers!['authorization'] = 'Bearer viewer-token';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'viewer-1', role: 'VIEWER' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      mockReq.can?.('cap');
+      expect(mockPermissionService.can).toHaveBeenCalledWith(
+        expect.objectContaining({ role: 'VIEWER' }),
+        'cap',
+        expect.any(Object)
+      );
+    });
+
     it('defaults role to team_member when role is missing', async () => {
       mockReq.headers!['authorization'] = 'Bearer no-role';
       mockJwt.verify.mockImplementation((_token, _secret, callback) => {
@@ -404,6 +421,23 @@ describe('AuthMiddleware', () => {
       await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
       expect(mockReq.user?.role).toBe('team_member');
+    });
+
+    it('normalizes permission role PROJECT_MANAGER when decoded role is PROJECT_MANAGER', async () => {
+      mockReq.headers!['authorization'] = 'Bearer pm-token';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'pm-1', role: 'PROJECT_MANAGER' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      mockReq.can?.('cap');
+      expect(mockPermissionService.can).toHaveBeenCalledWith(
+        expect.objectContaining({ role: 'PROJECT_MANAGER' }),
+        'cap',
+        expect.any(Object)
+      );
     });
 
     it('should skip revocation DB check when decoded token has no jti', async () => {
@@ -430,6 +464,22 @@ describe('AuthMiddleware', () => {
       await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
 
       expect(mockReq.user?.id).toBe('user-123');
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('handles revoke-all marker with missing timestamp and decoded iat missing (fail open)', async () => {
+      mockReq.headers!['authorization'] = 'Bearer revokeall-token';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'user-1', jti: 'token-jti' });
+      });
+
+      mockDbGet
+        .mockResolvedValueOnce(null) // token not revoked
+        .mockResolvedValueOnce({ jti: 'revoke-all-' }); // split().pop() === '' -> fallback '0'
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockRes.status).not.toHaveBeenCalledWith(401);
       expect(mockNext).toHaveBeenCalled();
     });
 

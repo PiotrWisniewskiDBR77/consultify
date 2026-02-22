@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import PiiRedactor, { REDACTION_PLACEHOLDER } from '../../../../server/src/utils/piiRedactor.js';
+import PiiRedactor, { REDACTION_PLACEHOLDER } from '../../../../server/src/utils/piiRedactor.ts';
 
 describe('server utils/piiRedactor', () => {
   it('redacts known PII keys (deep)', () => {
@@ -172,5 +172,11 @@ describe('server utils/piiRedactor', () => {
   it('_redactRecursive no-ops on non-objects (runtime guard)', () => {
     expect(() => (PiiRedactor as any)._redactRecursive(null, ['email'])).not.toThrow();
     expect(() => (PiiRedactor as any)._redactRecursive('x', ['email'])).not.toThrow();
+  });
+
+  it('_redactRecursive redacts string items inside arrays (direct coverage of array branch)', () => {
+    const obj: any = { arr: ['user@example.com', 'abc.def.ghi', 'ok'] };
+    (PiiRedactor as any)._redactRecursive(obj, []);
+    expect(obj.arr).toEqual([REDACTION_PLACEHOLDER, REDACTION_PLACEHOLDER, 'ok']);
   });
 });

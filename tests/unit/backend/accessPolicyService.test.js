@@ -33,7 +33,10 @@ vi.mock('../../../server/src/utils/DbPromise.js', async () => {
 });
 
 vi.mock('../../../server/src/services/seatManagementService.js', () => ({
-  default: mockedSeatModule,
+  // Make default falsy so AccessPolicyService.initDeps uses the `seatModule` branch:
+  //   seatModule.default || seatModule
+  default: null,
+  ...mockedSeatModule,
 }));
 
 const {
@@ -485,6 +488,48 @@ describe('AccessPolicyService (L1 REAL)', () => {
     );
   });
 
+  it('denies AI call when token budget exceeded and payment method count is null (treated as 0)', async () => {
+    limitService.getOrganizationType.mockResolvedValue(
+      makeOrgInfo({ organizationType: ORG_TYPES.TRIAL })
+    );
+    limitService.getOrganizationLimits.mockResolvedValue(
+      makeLimits({ maxAICallsPerDay: 5, maxTotalTokens: 100 })
+    );
+    usageService.getDailyUsage.mockResolvedValue(makeUsage({ aiCallsCount: 1 }));
+    usageService.getTrialUsage.mockResolvedValue(makeTrialUsage({ tokensUsed: 100 }));
+    mockDbPromiseGet.mockImplementation(async (_db, sql) => {
+      const s = String(sql);
+      if (s.includes('onboarding_status')) return { onboarding_status: 'ORG_SETUP_COMPLETED' };
+      if (s.includes('FROM payment_methods')) return { count: null };
+      return null;
+    });
+
+    await expect(checkAccess('org-1', 'ai_call')).resolves.toEqual(
+      expect.objectContaining({ allowed: false, errorCode: 'AI_TOKEN_BUDGET_EXCEEDED' })
+    );
+  });
+
+  it('denies AI call when token budget exceeded and payment method count is not parseable (treated as 0)', async () => {
+    limitService.getOrganizationType.mockResolvedValue(
+      makeOrgInfo({ organizationType: ORG_TYPES.TRIAL })
+    );
+    limitService.getOrganizationLimits.mockResolvedValue(
+      makeLimits({ maxAICallsPerDay: 5, maxTotalTokens: 100 })
+    );
+    usageService.getDailyUsage.mockResolvedValue(makeUsage({ aiCallsCount: 1 }));
+    usageService.getTrialUsage.mockResolvedValue(makeTrialUsage({ tokensUsed: 100 }));
+    mockDbPromiseGet.mockImplementation(async (_db, sql) => {
+      const s = String(sql);
+      if (s.includes('onboarding_status')) return { onboarding_status: 'ORG_SETUP_COMPLETED' };
+      if (s.includes('FROM payment_methods')) return { count: 'not-a-number' };
+      return null;
+    });
+
+    await expect(checkAccess('org-1', 'ai_call')).resolves.toEqual(
+      expect.objectContaining({ allowed: false, errorCode: 'AI_TOKEN_BUDGET_EXCEEDED' })
+    );
+  });
+
   it('allows AI call when token budget exceeded but payment method exists (hybrid trial)', async () => {
     limitService.getOrganizationType.mockResolvedValue(
       makeOrgInfo({ organizationType: ORG_TYPES.TRIAL })
@@ -656,6 +701,30 @@ describe('AccessPolicyService (L1 REAL)', () => {
     expect(mockLogger.warn).toHaveBeenCalled();
   });
 
+  it('getSeatAvailabilityEnhanced: coerces missing/zero seatConfig fields to safe defaults', async () => {
+    mockedSeatModule.getSeatConfiguration.mockResolvedValueOnce({
+      total_seats_available: 0,
+      seats_used: undefined,
+      seats_remaining: undefined,
+      utilization_percent: undefined,
+      base_seats_included: undefined,
+      additional_seats_purchased: undefined,
+      auto_add_seats_on_invite: 0,
+    });
+
+    await expect(getSeatAvailabilityEnhanced('org-1')).resolves.toEqual(
+      expect.objectContaining({
+        maxSeats: -1,
+        currentSeats: 0,
+        seatsRemaining: 0,
+        utilizationPercent: 0,
+        baseSeatsIncluded: 0,
+        additionalSeatsPurchased: 0,
+        autoAddEnabled: false,
+      })
+    );
+  });
+
   it('isAIRoleAllowed: defaults to ADVISOR when limits missing', async () => {
     limitService.getOrganizationLimits.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
     await expect(isAIRoleAllowed('org-1', 'ADVISOR')).resolves.toEqual({
@@ -701,6 +770,23 @@ describe('AccessPolicyService (L1 REAL)', () => {
     const paid = await getAIAccessContext('org-1');
     expect(paid.aiResponseBadge).toBeNull();
     expect(paid.canExecuteAIActions).toBe(true);
+  });
+
+  it('getAIAccessContext: falls back to TRIAL when orgInfo has no organizationType and limits missing', async () => {
+    limitService.getOrganizationType.mockResolvedValueOnce(makeOrgInfo({ organizationType: undefined }));
+    limitService.getOrganizationLimits.mockResolvedValueOnce(null);
+    usageService.getDailyUsage.mockResolvedValueOnce(makeUsage({ aiCallsCount: 5 }));
+
+    const ctx = await getAIAccessContext('org-1');
+    expect(ctx.organizationType).toBe(ORG_TYPES.TRIAL);
+    expect(ctx.allowedAIRoles).toEqual(['ADVISOR']);
+    expect(ctx.dailyAIUsage).toEqual(
+      expect.objectContaining({
+        used: 5,
+        limit: 50,
+        remaining: 45,
+      })
+    );
   });
 
   it('buildPolicySnapshot: returns null when org not found', async () => {
@@ -752,6 +838,114 @@ describe('AccessPolicyService (L1 REAL)', () => {
     expect(snap.blockedActions).toContain('CREATE_PROJECT');
     expect(snap.blockedActions).toContain('INVITES');
     expect(snap.blockedActions).toContain('AI_CALL');
+  });
+
+  it('buildPolicySnapshot: critical banner uses singular day when daysRemaining=1', async () => {
+    limitService.getOrganizationType.mockResolvedValueOnce(
+      makeOrgInfo({ organizationType: ORG_TYPES.TRIAL })
+    );
+    trialService.checkTrialStatus.mockResolvedValueOnce(
+      makeTrialStatus({ expired: false, warningLevel: 'critical', daysRemaining: 1 })
+    );
+
+    const snap = await buildPolicySnapshot('org-1');
+    expect(snap.messages.bannerTextKey).toBe('access.banner.trialCritical');
+    expect(snap.messages.bannerText).toContain('1 day.');
+    expect(snap.messages.bannerText).not.toContain('1 days');
+  });
+
+  it('buildPolicySnapshot: unknown orgType falls back to empty entitlements', async () => {
+    limitService.getOrganizationType.mockResolvedValueOnce(makeOrgInfo({ organizationType: 'WEIRD' }));
+    mockDbPromiseGet.mockImplementation(async (_db, sql) => {
+      const s = String(sql);
+      if (s.includes('FROM organization_billing'))
+        return { status: null, subscription_plan_id: null };
+      if (s.includes('FROM payment_methods')) return { count: 0 };
+      return null;
+    });
+
+    const snap = await buildPolicySnapshot('org-1');
+    expect(snap.orgType).toBe('WEIRD');
+    expect(snap.blockedFeatures).toEqual([]);
+  });
+
+  it('buildPolicySnapshot: keeps existing limits when plan row has no token/storage values', async () => {
+    limitService.getOrganizationLimits.mockResolvedValueOnce(
+      makeLimits({ maxTotalTokens: 111, maxStorageMb: 222 })
+    );
+    mockDbPromiseGet.mockImplementation(async (_db, sql) => {
+      const s = String(sql);
+      if (s.includes('FROM organization_billing'))
+        return { status: null, subscription_plan_id: 'plan-1' };
+      if (s.includes('FROM subscription_plans'))
+        return { limits: '{}', token_limit: null, storage_limit_gb: null };
+      if (s.includes('FROM payment_methods')) return { count: 0 };
+      return null;
+    });
+
+    const snap = await buildPolicySnapshot('org-1');
+    expect(snap.limits).toEqual(expect.objectContaining({ maxTotalTokens: 111, maxStorageMb: 222 }));
+  });
+
+  it('buildPolicySnapshot: creates -1 token/storage limits when org limits missing and plan has none', async () => {
+    limitService.getOrganizationLimits.mockResolvedValueOnce(null);
+    mockDbPromiseGet.mockImplementation(async (_db, sql) => {
+      const s = String(sql);
+      if (s.includes('FROM organization_billing'))
+        return { status: null, subscription_plan_id: 'plan-2' };
+      if (s.includes('FROM subscription_plans'))
+        return { limits: '{}', token_limit: null, storage_limit_gb: null };
+      if (s.includes('FROM payment_methods')) return { count: 0 };
+      return null;
+    });
+
+    const snap = await buildPolicySnapshot('org-1');
+    expect(snap.limits).toEqual(
+      expect.objectContaining({
+        maxStorageMb: -1,
+        maxTotalTokens: -1,
+      })
+    );
+  });
+
+  it('buildPolicySnapshot: hasPaymentMethod treats missing count as 0 (no payment method)', async () => {
+    limitService.getOrganizationType.mockResolvedValueOnce(
+      makeOrgInfo({ organizationType: ORG_TYPES.TRIAL })
+    );
+    limitService.getOrganizationLimits.mockResolvedValueOnce(makeLimits({ maxTotalTokens: 10 }));
+    usageService.getTrialUsage.mockResolvedValueOnce(makeTrialUsage({ tokensUsed: 10 }));
+    mockDbPromiseGet.mockImplementation(async (_db, sql) => {
+      const s = String(sql);
+      if (s.includes('FROM organization_billing'))
+        return { status: null, subscription_plan_id: null };
+      if (s.includes('FROM payment_methods')) return { count: null };
+      return null;
+    });
+
+    const snap = await buildPolicySnapshot('org-1');
+    expect(snap.hasPaymentMethod).toBe(false);
+    expect(snap.blockedActions).toContain('AI_TOKEN_BUDGET');
+  });
+
+  it('buildPolicySnapshot: returns limits=null when org limits missing and no subscribed plan', async () => {
+    limitService.getOrganizationLimits.mockResolvedValueOnce(null);
+    mockDbPromiseGet.mockImplementation(async (_db, sql) => {
+      const s = String(sql);
+      if (s.includes('FROM organization_billing'))
+        return { status: null, subscription_plan_id: null };
+      if (s.includes('FROM payment_methods')) return { count: 0 };
+      return null;
+    });
+
+    const snap = await buildPolicySnapshot('org-1');
+    expect(snap.limits).toBeNull();
+    expect(snap.usagePercent).toEqual(
+      expect.objectContaining({
+        projects: 0,
+        users: 0,
+        aiCalls: 0,
+      })
+    );
   });
 
   it('buildPolicySnapshot: unknown billing status normalizes to null', async () => {
@@ -829,6 +1023,48 @@ describe('AccessPolicyService (L1 REAL)', () => {
 
     const out2 = await fresh.getSeatAvailabilityEnhanced('org-1');
     expect(out2.maxSeats).toBe(2);
+  });
+
+  it('initDeps: uses seat module object when default export is falsy', async () => {
+    vi.resetModules();
+
+    const seat = {
+      canAddUser: vi.fn().mockResolvedValue(true),
+      getSeatConfiguration: vi.fn().mockResolvedValue({
+        total_seats_available: 9,
+        seats_used: 4,
+        seats_remaining: 5,
+        utilization_percent: '44.4',
+        base_seats_included: 1,
+        additional_seats_purchased: 8,
+        auto_add_seats_on_invite: 1,
+      }),
+    };
+
+    vi.doMock('../../../server/src/services/seatManagementService.js', () => ({
+      default: null,
+      ...seat,
+    }));
+
+    const fresh = await import('../../../server/src/services/accessPolicyService.ts');
+    fresh.setDependencies({
+      db,
+      limitService,
+      usageService,
+      trialService,
+      resourceService,
+    });
+
+    const out = await fresh.getSeatAvailabilityEnhanced('org-1');
+    expect(seat.getSeatConfiguration).toHaveBeenCalledWith('org-1');
+    expect(out).toEqual(
+      expect.objectContaining({
+        maxSeats: 9,
+        currentSeats: 4,
+        seatsRemaining: 5,
+        autoAddEnabled: true,
+      })
+    );
   });
 
   it('canInviteUsers: denies for ORG_NOT_FOUND / DEMO / TRIAL_EXPIRED', async () => {

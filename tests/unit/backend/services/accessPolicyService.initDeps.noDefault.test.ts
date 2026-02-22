@@ -13,12 +13,15 @@ vi.mock('../../../../server/src/utils/Logger.js', () => ({
   default: mockLogger,
 }));
 
-// No default export on purpose: forces `seatModule.default || seatModule` to take the `seatModule` branch.
+// Force `seatModule.default || seatModule` to take the `seatModule` branch by making `default` falsy.
 const seatModuleObject = {
   canAddUser: vi.fn(),
   getSeatConfiguration: vi.fn(),
 };
-vi.mock('../../../../server/src/services/seatManagementService.js', () => seatModuleObject);
+vi.mock('../../../../server/src/services/seatManagementService.js', () => ({
+  default: null,
+  ...seatModuleObject,
+}));
 
 describe('AccessPolicyService initDeps (no default export)', () => {
   beforeEach(() => {
@@ -72,4 +75,3 @@ describe('AccessPolicyService initDeps (no default export)', () => {
     );
   });
 });
-
