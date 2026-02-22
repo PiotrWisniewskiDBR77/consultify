@@ -15,6 +15,7 @@ dist-ssr
 # temp
 __tmp_ai_agent__
 .codex-worktrees/
+.tmp/
 
 # Editor directories and files
 .vscode/*

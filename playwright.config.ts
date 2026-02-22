@@ -12,6 +12,7 @@ const sqlitePath = path.isAbsolute(sqlitePathRaw)
   ? sqlitePathRaw
   : path.resolve(process.cwd(), sqlitePathRaw);
 const resetSqlite = process.env.E2E_SQLITE_RESET === 'true';
+const e2eTmpDir = path.resolve(process.cwd(), '.tmp', 'e2e');
 const allowLocalhostRemote = process.env.E2E_ALLOW_LOCALHOST_REMOTE === 'true';
 const backendPort = (() => {
   try {
@@ -86,8 +87,8 @@ export default defineConfig({
           // Sandbox fallback: `E2E_BACKEND_RUNNER=build` (compile to dist/, then run node).
           command:
             backendRunner === 'build'
-              ? `${sqliteBootstrapCmd} && cd server && npm run build && PORT=${backendPort} NODE_ENV=test ENABLE_TEST_GATEWAY=true ENABLE_TEST_SUPPORT=true TEST_SUPPORT_KEY=${testSupportKey} E2E_MODE=${process.env.E2E_MODE || 'false'} DB_TYPE=sqlite SQLITE_PATH=${sqlitePath} MOCK_DB=false node dist/src/index.js`
-              : `${sqliteBootstrapCmd} && cd server && TMPDIR=/tmp PORT=${backendPort} NODE_ENV=test ENABLE_TEST_GATEWAY=true ENABLE_TEST_SUPPORT=true TEST_SUPPORT_KEY=${testSupportKey} E2E_MODE=${process.env.E2E_MODE || 'false'} DB_TYPE=sqlite SQLITE_PATH=${sqlitePath} MOCK_DB=false npx tsx src/index.ts`,
+              ? `${sqliteBootstrapCmd} && mkdir -p "${e2eTmpDir}" && cd server && npm run build && PORT=${backendPort} NODE_ENV=test ENABLE_TEST_GATEWAY=true ENABLE_TEST_SUPPORT=true TEST_SUPPORT_KEY=${testSupportKey} E2E_MODE=${process.env.E2E_MODE || 'false'} DB_TYPE=sqlite SQLITE_PATH=${sqlitePath} MOCK_DB=false node dist/src/index.js`
+              : `${sqliteBootstrapCmd} && mkdir -p "${e2eTmpDir}" && cd server && TMPDIR="${e2eTmpDir}" PORT=${backendPort} NODE_ENV=test ENABLE_TEST_GATEWAY=true ENABLE_TEST_SUPPORT=true TEST_SUPPORT_KEY=${testSupportKey} E2E_MODE=${process.env.E2E_MODE || 'false'} DB_TYPE=sqlite SQLITE_PATH=${sqlitePath} MOCK_DB=false npx tsx src/index.ts`,
           url: `${backendUrl.replace(/\/$/, '')}/api/health/ping`,
           reuseExistingServer: !process.env.CI,
           timeout: backendRunner === 'build' ? 600000 : 120000,
