@@ -13,13 +13,11 @@ import type { NextFunction, Request, Response } from 'express';
 import { Router } from 'express';
 
 import {
-  markSellixInboundProcessed,
-  recordSellixInboundEvent,
-  verifySellixInboundSignature,
+  getConfig,
+  processInboundEvent,
+  verifySignature,
 } from '../../services/sellixIntegrationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { run as dbRun } from '../../utils/DbPromise.js';
-import { getTableColumns } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
@@ -43,8 +41,10 @@ router.post(
       return res.status(400).json({ error: 'Missing signature headers' });
     }
 
-    const ok = verifySellixInboundSignature({ timestamp, rawBody: raw, signature });
-    if (!ok) return res.status(401).json({ error: 'Invalid signature' });
+    const age = Date.now() - new Date(timestamp).getTime();
+    if (Number.isFinite(age) && (age > 300000 || age < -60000)) {
+      return res.status(401).json({ error: 'Timestamp out of range' });
+    }
 
     let body: any;
     try {
@@ -56,69 +56,22 @@ router.post(
     const eventId = String(body.eventId || body.id || body.event_id || '');
     const eventType = String(body.eventType || body.type || eventHeader || 'sellix.unknown');
     const organizationId = body.organizationId ? String(body.organizationId) : null;
-    const userId = body.userId ? String(body.userId) : 'system';
 
     if (!eventId) return res.status(400).json({ error: 'Missing eventId' });
 
-    const rec = await recordSellixInboundEvent({
+    const config = await getConfig();
+    if (config?.webhookSecret) {
+      const ok = verifySignature(raw, signature, config.webhookSecret);
+      if (!ok) return res.status(401).json({ error: 'Invalid signature' });
+    }
+
+    const result = await processInboundEvent({
       eventId,
       eventType,
-      organizationId,
-      payload: body,
+      organizationId: organizationId || undefined,
+      data: body?.data || body,
     });
-    if (rec.deduped) return res.json({ received: true, deduped: true });
-
-    // Best-effort analytics integration: journey_events + conversion_events when available.
-    try {
-      const journeyCols = await getTableColumns('journey_events');
-      if (journeyCols.size > 0) {
-        const id = `${eventId}`; // stable id for dedupe across retries
-        const insertCols: string[] = [
-          'id',
-          'organization_id',
-          'user_id',
-          'event_type',
-          'event_name',
-        ];
-        const insertVals: unknown[] = [
-          id,
-          organizationId || 'system',
-          userId,
-          'milestone',
-          eventType,
-        ];
-        if (journeyCols.has('phase')) {
-          insertCols.push('phase');
-          insertVals.push('sellix');
-        }
-        const meta = { source: 'sellix' };
-        if (journeyCols.has('metadata_json')) {
-          insertCols.push('metadata_json');
-          insertVals.push(JSON.stringify(meta));
-        } else if (journeyCols.has('metadata')) {
-          insertCols.push('metadata');
-          insertVals.push(JSON.stringify(meta));
-        }
-        if (journeyCols.has('created_at')) {
-          insertCols.push('created_at');
-          insertVals.push(new Date().toISOString());
-        }
-        const placeholders = insertCols.map(() => '?').join(', ');
-        await dbRun(
-          `INSERT INTO journey_events (${insertCols.join(', ')}) VALUES (${placeholders})
-           ON CONFLICT(id) DO NOTHING`,
-          insertVals
-        );
-      }
-    } catch (err) {
-      // ignore
-    }
-
-    try {
-      await markSellixInboundProcessed({ eventId });
-    } catch {
-      // ignore
-    }
+    if (result.duplicate) return res.json({ received: true, deduped: true });
 
     logger.info(`[Sellix] inbound processed: ${eventType} (${eventId})`);
     return res.json({ received: true });
