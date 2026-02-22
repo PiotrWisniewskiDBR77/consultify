@@ -14,6 +14,7 @@ dist-ssr
 
 # temp
 __tmp_ai_agent__
+.tmp/
 .codex-worktrees/
 
 # Editor directories and files
@@ -173,6 +174,9 @@ _quarantine/
 
 # Server logs (prevent committing huge log files)
 server/logs/
+
+# Local server backup artifacts
+server/backups/
 
 # iCloud/Finder duplicates (macOS numbered copies)
 * [0-9]*.*
