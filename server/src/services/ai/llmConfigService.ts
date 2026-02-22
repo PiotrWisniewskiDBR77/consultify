@@ -313,7 +313,7 @@ export class LLMConfigService {
             CREATE TABLE IF NOT EXISTS llm_tier_assignments (
                 id TEXT PRIMARY KEY,
                 provider_id TEXT NOT NULL,
-                tier TEXT NOT NULL CHECK(tier IN ('BUDGET', 'STANDARD', 'PREMIUM', 'REASONING')),
+                tier TEXT NOT NULL CHECK(tier IN ('BUDGET', 'STANDARD', 'PREMIUM', 'REASONING', 'FREE')),
                 priority INTEGER DEFAULT 0,
                 is_active INTEGER DEFAULT 1,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -365,18 +365,45 @@ export class LLMConfigService {
   }
 
   async migrateTable(): Promise<void> {
+    const isSQLite = String(process.env.DB_TYPE || '').toLowerCase() === 'sqlite';
+
+    // SQLite does not support `ADD COLUMN IF NOT EXISTS`. Use PRAGMA table_info to detect columns.
+    const existingColumns = new Set<string>();
+    if (isSQLite) {
+      try {
+        const rows = await this.allAsync<{ name: string }>('PRAGMA table_info(llm_providers)');
+        for (const r of rows || []) existingColumns.add(String((r as any).name || ''));
+      } catch (err: unknown) {
+        aiLogger.warn(
+          'LLMConfigService',
+          `SQLite PRAGMA table_info failed: ${(err as any)?.message}`
+        );
+      }
+    }
+
     const migrations = [
-      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 0',
-      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS last_health_check TEXT',
-      "ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS health_status TEXT DEFAULT 'unknown'",
-      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS updated_at TEXT',
-      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS description TEXT',
-      "ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS tier TEXT DEFAULT 'STANDARD'",
+      { col: 'priority', sql: 'ALTER TABLE llm_providers ADD COLUMN priority INTEGER DEFAULT 0' },
+      {
+        col: 'last_health_check',
+        sql: 'ALTER TABLE llm_providers ADD COLUMN last_health_check TEXT',
+      },
+      {
+        col: 'health_status',
+        sql: "ALTER TABLE llm_providers ADD COLUMN health_status TEXT DEFAULT 'unknown'",
+      },
+      { col: 'updated_at', sql: 'ALTER TABLE llm_providers ADD COLUMN updated_at TEXT' },
+      { col: 'description', sql: 'ALTER TABLE llm_providers ADD COLUMN description TEXT' },
+      { col: 'tier', sql: "ALTER TABLE llm_providers ADD COLUMN tier TEXT DEFAULT 'STANDARD'" },
     ];
 
-    for (const sql of migrations) {
+    for (const m of migrations) {
+      if (isSQLite && existingColumns.has(m.col)) continue;
       try {
-        await this.runAsync(sql);
+        if (isSQLite) {
+          await this.runAsync(m.sql);
+        } else {
+          await this.runAsync(m.sql.replace('ADD COLUMN', 'ADD COLUMN IF NOT EXISTS'));
+        }
       } catch (error: unknown) {
         const err = error as Error;
         if (!err.message.includes('duplicate column') && !err.message.includes('already exists')) {
@@ -386,16 +413,18 @@ export class LLMConfigService {
     }
 
     // Allow FREE tier in llm_tier_assignments (Railway Postgres has a CHECK constraint without it)
-    try {
-      await this.runAsync(
-        'ALTER TABLE llm_tier_assignments DROP CONSTRAINT IF EXISTS llm_tier_assignments_tier_check'
-      );
-      await this.runAsync(
-        "ALTER TABLE llm_tier_assignments ADD CONSTRAINT llm_tier_assignments_tier_check CHECK ((tier = ANY (ARRAY['BUDGET'::text, 'STANDARD'::text, 'PREMIUM'::text, 'REASONING'::text, 'FREE'::text])))"
-      );
-    } catch (error: unknown) {
-      const err = error as Error;
-      aiLogger.warn('LLMConfigService', `Tier constraint migration warning: ${err.message}`);
+    if (!isSQLite) {
+      try {
+        await this.runAsync(
+          'ALTER TABLE llm_tier_assignments DROP CONSTRAINT IF EXISTS llm_tier_assignments_tier_check'
+        );
+        await this.runAsync(
+          "ALTER TABLE llm_tier_assignments ADD CONSTRAINT llm_tier_assignments_tier_check CHECK ((tier = ANY (ARRAY['BUDGET'::text, 'STANDARD'::text, 'PREMIUM'::text, 'REASONING'::text, 'FREE'::text])))"
+        );
+      } catch (error: unknown) {
+        const err = error as Error;
+        aiLogger.warn('LLMConfigService', `Tier constraint migration warning: ${err.message}`);
+      }
     }
   }
 
@@ -640,11 +669,23 @@ export class LLMConfigService {
       return this.providerCache.get(providerId) || null;
     }
 
-    const dbProvider = await this.getProviderFromDb(providerId);
-    if (dbProvider) {
-      const enriched = this.enrichProviderConfig(dbProvider);
-      this.providerCache.set(providerId, enriched);
-      return enriched;
+    // Best-effort initialization so callers can use the service without
+    // explicitly calling `initialize()` (e.g. during cold-start or tests).
+    // If DB is unavailable, fall back to env-only config.
+    try {
+      await this.initialize();
+      const dbProvider = await this.getProviderFromDb(providerId);
+      if (dbProvider) {
+        const enriched = this.enrichProviderConfig(dbProvider);
+        this.providerCache.set(providerId, enriched);
+        return enriched;
+      }
+    } catch (err: unknown) {
+      aiLogger.warn(
+        'LLMConfigService',
+        `DB-backed provider config unavailable for ${providerId} (falling back to env)`,
+        err
+      );
     }
 
     const definition = PROVIDER_DEFINITIONS[providerId];

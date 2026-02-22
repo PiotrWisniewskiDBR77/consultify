@@ -24,8 +24,7 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import feedbackAIService from '../services/feedbackAIService.js';
 import NotificationService from '../services/notificationService.js';
-// import WhatsAppService from '../services/WhatsAppService.js';
-const WhatsAppService = {} as any; // Stubbed missing service
+import WhatsAppService from '../services/WhatsAppService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';

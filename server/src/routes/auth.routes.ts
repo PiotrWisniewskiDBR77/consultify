@@ -10,8 +10,6 @@ import { Response, Router } from 'express';
 import { login } from '../controllers/AuthController.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
-// import _emailVerificationService from '../services/EmailVerificationService.js';
-const _emailVerificationService = {} as any; // Stubbed missing service
 import mfaService from '../services/MFAService.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -82,47 +80,6 @@ router.post(
     try {
       if (!refreshToken) {
         return res.status(400).json({ error: 'Refresh token is required' });
-      }
-
-      // ------------------------------------------------------------
-      // E2E_MODE: deterministic token refresh (no DB / sessions needed)
-      // ------------------------------------------------------------
-      if (process.env.E2E_MODE === 'true') {
-        const base64Url = (obj: unknown) =>
-          Buffer.from(JSON.stringify(obj), 'utf8')
-            .toString('base64')
-            .replace(/=/g, '')
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_');
-
-        const now = Math.floor(Date.now() / 1000);
-        const header = base64Url({ alg: 'none', typ: 'JWT' });
-        const payload = base64Url({
-          e2e: true,
-          id: 'e2e-user-id',
-          email: 'e2e@local.test',
-          name: 'E2E User',
-          role: 'ADMIN',
-          userRole: 'ADMIN',
-          organizationId: 'e2e-org-id',
-          isSuperAdmin: true,
-          iat: now,
-          exp: now + 60 * 60 * 24 * 7,
-        });
-        const token = `${header}.${payload}.e2e`;
-
-        try {
-          // Provide cookie-based auth in E2E_MODE as well (best-effort).
-          setAuthCookies(res, token, refreshToken || 'e2e-refresh');
-        } catch {
-          // ignore
-        }
-
-        return res.json({
-          token,
-          refreshToken: refreshToken || 'e2e-refresh',
-          expiresIn: 60 * 60 * 24 * 7,
-        });
       }
 
       const result = await refreshTokenService.refreshAccessToken(refreshToken, {
@@ -1207,73 +1164,18 @@ router.post(
     const { token } = req.body;
 
     try {
-      const user = await dbGet<{
-        id: string;
-        email_verification_expires_at: string;
-      }>('SELECT * FROM users WHERE email_verification_token = ?', [token]);
+      const emailVerificationService = (await import('../services/emailVerificationService.js'))
+        .default;
+      const result = await emailVerificationService.verifyEmail(String(token || ''));
 
-      if (!user) {
-        return res.status(400).json({ error: 'Invalid token' });
-        return;
-      }
-
-      if (new Date(user.email_verification_expires_at) < new Date()) {
-        return res.status(400).json({ error: 'Token expired' });
-        return;
-      }
-
-      const runResult = await dbRun(
-        `UPDATE users SET 
-             email_verified = 1, 
-             email_verification_token = NULL, 
-             email_verification_expires_at = NULL 
-             WHERE id = ?`,
-        [user.id]
-      );
-
-      if (!runResult.success) {
-        throw new Error(runResult.error || 'Failed to verify email');
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
       }
 
       return res.json({ success: true, message: 'Email verified successfully' });
     } catch (error: unknown) {
       logger.error('Email verify error:', error);
       return res.status(500).json({ error: 'Verification failed' });
-    }
-  })
-);
-
-router.post(
-  '/resend-verification',
-  verifyToken,
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user!.id;
-    const { default: EmailService } = await import('../services/emailService.js');
-
-    try {
-      const token = crypto.randomBytes(32).toString('hex');
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
-      await dbRun(
-        `UPDATE users SET 
-                 email_verification_token = ?, 
-                 email_verification_expires_at = ?,
-                 email_verification_sent_at = datetime('now')
-                 WHERE id = ?`,
-        [token, expiresAt, userId]
-      );
-
-      const verifyLink = `${process.env.APP_URL || 'http://localhost:3000'}/auth/verify-email?token=${token}`;
-      await EmailService.sendEmail(
-        req.user!.email || '',
-        'Verify your Email',
-        `<a href="${verifyLink}">Click here to verify your email</a>`
-      );
-
-      return res.json({ success: true, message: 'Verification email sent' });
-    } catch (error: unknown) {
-      logger.error('Resend verify error:', error);
-      return res.status(500).json({ error: 'Failed to send email' });
     }
   })
 );

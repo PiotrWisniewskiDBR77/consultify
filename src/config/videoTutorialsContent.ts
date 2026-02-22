@@ -148,6 +148,257 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
     durationSeconds: 90,
     tags: ['my-work', 'personal', 'tasks'],
   },
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // Education / Knowledge library (T074–T085) — V2 content registry
+  //
+  // NOTE:
+  // - KnowledgeBaseView renders "video" items as an educational card.
+  // - Playback hosting can be wired later; V2 closeout focuses on canonical metadata + i18n.
+  // ────────────────────────────────────────────────────────────────────────────
+
+  // T074 — Platform Fundamentals (min 5)
+  {
+    id: 'edu-fundamentals-01-navigation',
+    moduleId: 'knowledge',
+    title: 'Platform Fundamentals: Navigation and modules map',
+    titlePl: 'Fundamenty platformy: nawigacja i mapa modułów',
+    description:
+      'A fast orientation: how the modules connect and where to start depending on your goal.',
+    descriptionPl: 'Szybka orientacja: jak łączą się moduły i gdzie zacząć w zależności od celu.',
+    videoUrl: '#',
+    duration: '3:00',
+    durationSeconds: 180,
+    tags: ['education', 'fundamentals', 'navigation', 'T074'],
+  },
+  {
+    id: 'edu-fundamentals-02-tools-to-outputs',
+    moduleId: 'knowledge',
+    title: 'Platform Fundamentals: Tools → outputs → initiatives',
+    titlePl: 'Fundamenty platformy: narzędzia → outputy → inicjatywy',
+    description:
+      'How to go from frameworks to concrete outputs and turn them into an initiative portfolio.',
+    descriptionPl:
+      'Jak przejść od frameworków do konkretnych outputów i zamienić je w portfel inicjatyw.',
+    videoUrl: '#',
+    duration: '3:30',
+    durationSeconds: 210,
+    tags: ['education', 'fundamentals', 'tools', 'initiatives', 'T074'],
+  },
+  {
+    id: 'edu-fundamentals-03-execution-basics',
+    moduleId: 'knowledge',
+    title: 'Platform Fundamentals: Initiatives and execution basics',
+    titlePl: 'Fundamenty platformy: inicjatywy i podstawy realizacji',
+    description:
+      'Governance, milestones, and daily execution — the minimum discipline to deliver outcomes.',
+    descriptionPl:
+      'Governance, kamienie milowe i codzienna realizacja — minimalna dyscyplina dowożenia wyników.',
+    videoUrl: '#',
+    duration: '4:00',
+    durationSeconds: 240,
+    tags: ['education', 'fundamentals', 'execution', 'T074'],
+  },
+  {
+    id: 'edu-fundamentals-04-reports-and-presentations',
+    moduleId: 'knowledge',
+    title: 'Platform Fundamentals: Reports and presentations',
+    titlePl: 'Fundamenty platformy: raporty i prezentacje',
+    description: 'How to produce sponsor-grade reports and decks from your work artifacts.',
+    descriptionPl: 'Jak tworzyć sponsor-grade raporty i decki na bazie artefaktów pracy.',
+    videoUrl: '#',
+    duration: '3:45',
+    durationSeconds: 225,
+    tags: ['education', 'fundamentals', 'reports', 'presentations', 'T074'],
+  },
+  {
+    id: 'edu-fundamentals-05-admin-basics',
+    moduleId: 'knowledge',
+    title: 'Platform Fundamentals: Organization and admin basics',
+    titlePl: 'Fundamenty platformy: organizacja i podstawy admina',
+    description: 'Roles, access, and team setup — keep governance tight without slowing execution.',
+    descriptionPl: 'Role, dostęp i konfiguracja zespołu — governance bez spowalniania realizacji.',
+    videoUrl: '#',
+    duration: '3:15',
+    durationSeconds: 195,
+    tags: ['education', 'fundamentals', 'admin', 'T074'],
+  },
+
+  // T075 — Change Management Foundations
+  {
+    id: 'edu-change-01-foundations',
+    moduleId: 'knowledge',
+    title: 'Change Foundations: roles, governance, cadence',
+    titlePl: 'Fundamenty zmiany: role, governance, rytm',
+    description:
+      'A consulting-grade baseline for running change: who owns what, how decisions flow, and how often you review.',
+    descriptionPl:
+      'Consulting-grade baseline prowadzenia zmiany: odpowiedzialności, przepływ decyzji i rytm przeglądów.',
+    videoUrl: '#',
+    duration: '5:00',
+    durationSeconds: 300,
+    tags: ['education', 'change', 'governance', 'T075'],
+  },
+
+  // T076 — Prompt Engineering & Advanced AI Usage
+  {
+    id: 'edu-prompting-01-context-first',
+    moduleId: 'knowledge',
+    title: 'Prompting: Context first (artifacts, citations, and constraints)',
+    titlePl: 'Promptowanie: kontekst najpierw (artefakty, cytowania, ograniczenia)',
+    description:
+      'How to ask better questions in Consultinity: reference artifacts, request structure, and demand grounding.',
+    descriptionPl:
+      'Jak zadawać lepsze pytania w Consultinity: odwołuj się do artefaktów, proś o strukturę i wymuszaj grounding.',
+    videoUrl: '#',
+    duration: '6:00',
+    durationSeconds: 360,
+    tags: ['education', 'ai', 'prompting', 'recipes', 'T076'],
+  },
+
+  // T077 — Core Consulting Tools Library
+  {
+    id: 'edu-tools-01-core-consulting-library',
+    moduleId: 'knowledge',
+    title: 'Core consulting tools: how to pick the right framework',
+    titlePl: 'Narzędzia consultingowe: jak dobrać właściwy framework',
+    description:
+      'A practical guide to choosing tools based on the decision you need to make and the outcome you must deliver.',
+    descriptionPl:
+      'Praktyczny przewodnik doboru narzędzi na podstawie decyzji i wyniku, który musisz dowieźć.',
+    videoUrl: '#',
+    duration: '5:30',
+    durationSeconds: 330,
+    tags: ['education', 'tools', 'library', 'T077'],
+  },
+
+  // T078 — Licensed Assessment Tools Library
+  {
+    id: 'edu-tools-02-licensed-assessments',
+    moduleId: 'knowledge',
+    title: 'Licensed assessments: DRD / SIRI / ADMA (trust + integration)',
+    titlePl: 'Licencjonowane oceny: DRD / SIRI / ADMA (zaufanie + integracja)',
+    description:
+      'What each assessment is for, what data you need, and how to interpret the outputs responsibly.',
+    descriptionPl:
+      'Do czego służą poszczególne oceny, jakich danych potrzebujesz i jak odpowiedzialnie interpretować wyniki.',
+    videoUrl: '#',
+    duration: '6:30',
+    durationSeconds: 390,
+    tags: ['education', 'assessment', 'licensed', 'T078'],
+  },
+
+  // T079 — Managing Initiatives in Transformation
+  {
+    id: 'edu-initiatives-01-lifecycle-governance',
+    moduleId: 'knowledge',
+    title: 'Managing initiatives: lifecycle, gates, and execution discipline',
+    titlePl: 'Zarządzanie inicjatywami: cykl życia, bramki i dyscyplina realizacji',
+    description:
+      'How to run an initiative end-to-end with governance that helps — not hurts — delivery.',
+    descriptionPl:
+      'Jak prowadzić inicjatywę end-to-end z governance, który pomaga, a nie przeszkadza w dowiezieniu.',
+    videoUrl: '#',
+    duration: '6:00',
+    durationSeconds: 360,
+    tags: ['education', 'initiatives', 'execution', 'T079'],
+  },
+
+  // T080 — Financial Analysis and Modeling
+  {
+    id: 'edu-finance-01-analysis-and-modeling',
+    moduleId: 'knowledge',
+    title: 'Financial analysis: reading outputs and validating assumptions',
+    titlePl: 'Analiza finansowa: czytanie outputów i walidacja założeń',
+    description:
+      'Sponsor-grade financial thinking: what the numbers mean, what can be trusted, and what must be checked.',
+    descriptionPl:
+      'Sponsor-grade myślenie finansowe: co znaczą liczby, czemu ufać i co trzeba sprawdzić.',
+    videoUrl: '#',
+    duration: '6:30',
+    durationSeconds: 390,
+    tags: ['education', 'finance', 'assumptions', 'T080'],
+  },
+
+  // T081 — Budgeting and Financial Planning
+  {
+    id: 'edu-finance-02-budgeting',
+    moduleId: 'knowledge',
+    title: 'Budgeting: forecasting discipline and scenario thinking',
+    titlePl: 'Budżetowanie: dyscyplina prognoz i scenariusze',
+    description:
+      'A practical budgeting baseline: forecasts, scenarios, and how to avoid false precision.',
+    descriptionPl:
+      'Praktyczny baseline budżetowania: prognozy, scenariusze i jak unikać fałszywej precyzji.',
+    videoUrl: '#',
+    duration: '6:00',
+    durationSeconds: 360,
+    tags: ['education', 'finance', 'budgeting', 'T081'],
+  },
+
+  // T082 — ROI Analysis and Investment Evaluation
+  {
+    id: 'edu-finance-03-roi-literacy',
+    moduleId: 'knowledge',
+    title: 'ROI literacy: investment evaluation and decision discipline',
+    titlePl: 'ROI: ocena inwestycji i dyscyplina decyzyjna',
+    description:
+      'How to think about ROI without self-deception: value drivers, costs, timing, and uncertainty.',
+    descriptionPl:
+      'Jak myśleć o ROI bez samooszukiwania: drivery wartości, koszty, timing i niepewność.',
+    videoUrl: '#',
+    duration: '6:15',
+    durationSeconds: 375,
+    tags: ['education', 'roi', 'finance', 'T082'],
+  },
+
+  // T083 — KPI System Design and Performance Architecture
+  {
+    id: 'edu-kpi-01-cause-effect-architecture',
+    moduleId: 'knowledge',
+    title: 'KPI architecture: cause → effect, initiatives, and performance loops',
+    titlePl: 'Architektura KPI: przyczyna → skutek, inicjatywy i pętle wyników',
+    description:
+      'Design KPIs that drive behavior and outcomes — connect initiatives to measurable performance.',
+    descriptionPl:
+      'Projektuj KPI, które zmieniają zachowania i dowożą wyniki — powiąż inicjatywy z mierzalną efektywnością.',
+    videoUrl: '#',
+    duration: '7:00',
+    durationSeconds: 420,
+    tags: ['education', 'kpi', 'performance', 'T083'],
+  },
+
+  // T084 — Building Presentations in the Platform
+  {
+    id: 'edu-presentations-01-walkthrough',
+    moduleId: 'knowledge',
+    title: 'Presentations: building a Gamma-style deck in Consultinity',
+    titlePl: 'Prezentacje: Gamma-style deck w Consultinity',
+    description:
+      'A step-by-step walkthrough of building a crisp presentation from reports, KPIs, and initiatives.',
+    descriptionPl:
+      'Krok po kroku: jak zbudować zwięzłą prezentację na bazie raportów, KPI i inicjatyw.',
+    videoUrl: '#',
+    duration: '5:45',
+    durationSeconds: 345,
+    tags: ['education', 'presentations', 'reports', 'T084'],
+  },
+
+  // T085 — Report Template Design and Usage
+  {
+    id: 'edu-reports-01-templates',
+    moduleId: 'knowledge',
+    title: 'Reports: sponsor-ready templates and how to use them',
+    titlePl: 'Raporty: sponsor-ready szablony i jak z nich korzystać',
+    description:
+      'How to generate consistent, sponsor-grade reports and avoid common pitfalls in narrative and evidence.',
+    descriptionPl:
+      'Jak generować spójne, sponsor-grade raporty i unikać typowych pułapek w narracji i evidence.',
+    videoUrl: '#',
+    duration: '6:00',
+    durationSeconds: 360,
+    tags: ['education', 'reports', 'templates', 'T085'],
+  },
 ];
 
 export function getVideosForModule(id: string): VideoTutorial[] {

@@ -27,6 +27,9 @@ const SCHEMA_INIT_GUARD_KEY = '__CONSULTINITY_SCHEMA_INIT_IN_PROGRESS__';
 async function ensureSchemaInitialized(db: IDatabase): Promise<void> {
   // Skip schema work for mock DBs
   if ((db as any)?.isMock) return;
+  // Postgres schema is initialized/verified explicitly during server startup via DatabaseInitializer.
+  // Calling DatabaseInitializer from here creates re-entrant initialization (and can crash the dev server).
+  if (databaseConfig.type === 'postgres') return;
   // Avoid deadlocks: DatabaseInitializer calls getDatabaseAsync() internally.
   if ((globalThis as any)[SCHEMA_INIT_GUARD_KEY]) return;
 

@@ -119,6 +119,52 @@ describe('LoginView', () => {
     });
   });
 
+  it('does not store tokens when API returns neither mfaRequired nor token', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(Api, 'post').mockResolvedValue({ data: {} } as any);
+
+    const setItemSpy = vi.spyOn(window.localStorage.__proto__, 'setItem');
+
+    render(<LoginView />);
+    await user.type(screen.getByPlaceholderText('Email'), 'a@b.com');
+    await user.type(screen.getByPlaceholderText('Password'), 'pass');
+    await user.click(screen.getByRole('button', { name: 'Login' }));
+
+    await waitFor(() => {
+      expect(Api.post).toHaveBeenCalledWith('/auth/login', {
+        email: 'a@b.com',
+        password: 'pass',
+        mfaToken: '',
+      });
+    });
+
+    expect(setItemSpy).not.toHaveBeenCalledWith('token', expect.any(String));
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('stores tokens even if window.location.reload throws (JSDOM navigation)', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(Api, 'post').mockResolvedValue({
+      data: { token: 't1', refreshToken: 'rt1' },
+    } as any);
+
+    const setItemSpy = vi.spyOn(window.localStorage.__proto__, 'setItem');
+    vi.spyOn(window.location, 'reload').mockImplementation(() => {
+      throw new Error('Not implemented');
+    });
+
+    render(<LoginView />);
+    await user.type(screen.getByPlaceholderText('Email'), 'a@b.com');
+    await user.type(screen.getByPlaceholderText('Password'), 'pass');
+    await user.click(screen.getByRole('button', { name: 'Login' }));
+
+    await waitFor(() => {
+      expect(setItemSpy).toHaveBeenCalledWith('token', 't1');
+      expect(setItemSpy).toHaveBeenCalledWith('refreshToken', 'rt1');
+    });
+  });
+
   it('shows toast error on login failure', async () => {
     const user = userEvent.setup();
     vi.spyOn(Api, 'post').mockRejectedValue({

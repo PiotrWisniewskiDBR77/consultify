@@ -131,6 +131,50 @@ describe('Permission Middleware - Real Production Tests', () => {
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    it('tries bridged legacy role candidates (USER -> TEAM_MEMBER) until one passes', async () => {
+      mockReq.user.role = 'USER';
+      mockPermissionService.hasPermission
+        .mockResolvedValueOnce(false) // USER
+        .mockResolvedValueOnce(true); // TEAM_MEMBER
+
+      const middleware = requirePermission('PROJECT_CREATE');
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).toHaveBeenCalledTimes(2);
+      expect(mockPermissionService.hasPermission).toHaveBeenNthCalledWith(
+        1,
+        'user-123',
+        'org-456',
+        'PROJECT_CREATE',
+        'USER'
+      );
+      expect(mockPermissionService.hasPermission).toHaveBeenNthCalledWith(
+        2,
+        'user-123',
+        'org-456',
+        'PROJECT_CREATE',
+        'TEAM_MEMBER'
+      );
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('prefers req.userRole over req.user.role and normalizes it for DB', async () => {
+      mockReq.user.role = 'guest';
+      mockReq.userRole = 'administrator';
+      mockPermissionService.hasPermission.mockResolvedValue(true);
+
+      const middleware = requirePermission('ADMIN_ACCESS');
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).toHaveBeenCalledWith(
+        'user-123',
+        'org-456',
+        'ADMIN_ACCESS',
+        'ADMIN'
+      );
+      expect(mockNext).toHaveBeenCalled();
+    });
   });
 
   describe('requireAnyPermission', () => {

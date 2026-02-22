@@ -226,6 +226,20 @@ export class CircuitBreaker {
     this.failures = 0;
     this.totalSuccesses++;
 
+    // If we observe a real success while OPEN (e.g. via out-of-band health checks),
+    // we must not stay OPEN forever. Promote to HALF_OPEN and close after the
+    // configured success threshold.
+    if (this.state === STATES.OPEN) {
+      // Do NOT count this success twice. We reset HALF_OPEN counters and let the
+      // standard HALF_OPEN branch increment once.
+      this.state = STATES.HALF_OPEN;
+      this.successes = 0;
+      aiLogger.info(
+        'CircuitBreaker',
+        `Circuit [${this.name}] promoted OPEN → HALF_OPEN on success`
+      );
+    }
+
     if (this.state === STATES.HALF_OPEN) {
       this.successes++;
       if (this.successes >= this.config.successThreshold) {

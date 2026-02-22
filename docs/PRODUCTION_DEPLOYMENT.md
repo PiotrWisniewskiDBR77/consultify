@@ -14,12 +14,13 @@ npm run dev
 # Starts both frontend (Vite) and backend (tsx watch)
 ```
 
-#### Backend dev notes (SQLite demo data)
+#### Backend dev notes (Postgres by default)
 
-- `npm run dev:backend` uruchamia backend na SQLite i **automatycznie**:
-  - odpala migracje (`db:migrate:safe`)
-  - seeduje demo dane (DBR77), żeby w UI nie było „No assessments found”
-- Domyślna baza dev: `data/dev/consultinity.db` (ustawiane przez `SQLITE_PATH`)
+- `npm run dev:backend` uruchamia backend domyślnie w trybie **PostgreSQL** (`DB_TYPE=postgres`).
+- Jeśli potrzebujesz starego przepływu demo na SQLite:
+  - `npm run dev:backend:sqlite` — SQLite bez ciężkiego seedowania
+  - `npm run dev:backend:sqlite:seeded` — SQLite + migracje + pełny seed demo (DBR77)
+  - Domyślna baza dev: `data/dev/consultinity.db` (ustawiane przez `SQLITE_PATH`)
 
 ### Production (Compiled - Recommended)
 

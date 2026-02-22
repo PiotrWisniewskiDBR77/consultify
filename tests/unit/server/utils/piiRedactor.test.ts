@@ -79,4 +79,30 @@ describe('server utils/piiRedactor', () => {
     expect(snapshot).toContain(REDACTION_PLACEHOLDER);
     expect(snapshot).not.toContain('user@example.com');
   });
+
+  it('redact supports array roots (does not throw, does not mutate)', () => {
+    const input: any[] = [{ email: 'user@example.com' }, 'abc.def.ghi'];
+    const copy = JSON.parse(JSON.stringify(input));
+    const out = PiiRedactor.redact(input as any);
+    expect(Array.isArray(out)).toBe(true);
+    expect(input).toEqual(copy);
+  });
+
+  it('redactEmails returns non-string inputs unchanged (runtime guard)', () => {
+    expect((PiiRedactor as any).redactEmails(123)).toBe(123);
+  });
+
+  it('redactTokens returns non-string inputs unchanged (runtime guard)', () => {
+    expect((PiiRedactor as any).redactTokens({ a: 1 })).toEqual({ a: 1 });
+  });
+
+  it('redactKeys returns non-object inputs unchanged (runtime guard)', () => {
+    expect((PiiRedactor as any).redactKeys(null, ['x'])).toBeNull();
+    expect((PiiRedactor as any).redactKeys(123, ['x'])).toBe(123);
+  });
+
+  it('_redactRecursive no-ops on non-objects (runtime guard)', () => {
+    expect(() => (PiiRedactor as any)._redactRecursive(null, ['email'])).not.toThrow();
+    expect(() => (PiiRedactor as any)._redactRecursive('x', ['email'])).not.toThrow();
+  });
 });

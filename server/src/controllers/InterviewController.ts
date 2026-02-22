@@ -166,17 +166,33 @@ async function resolveValidProjectId(params: {
   const { organizationId } = params;
   const raw = String(params.projectId || '').trim();
   if (raw) {
-    const p = await queryHelpers.queryOne(
-      `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
-      [raw, organizationId]
-    );
-    if (p?.id) return String(p.id);
+    try {
+      const p = await queryHelpers.queryOne(
+        `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+        [raw, organizationId]
+      );
+      if (p?.id) return String(p.id);
+    } catch {
+      // ignore; fallback below
+    }
   }
   // Fallback to first project in org (prevents SQLITE_CONSTRAINT on NOT NULL/FK)
-  const first = await queryHelpers.queryOne(
-    `SELECT id FROM projects WHERE organization_id = ? ORDER BY created_at ASC LIMIT 1`,
-    [organizationId]
-  );
+  let first: any;
+  try {
+    first = await queryHelpers.queryOne(
+      `SELECT id FROM projects WHERE organization_id = ? ORDER BY created_at ASC LIMIT 1`,
+      [organizationId]
+    );
+  } catch {
+    try {
+      first = await queryHelpers.queryOne(
+        `SELECT id FROM projects WHERE organization_id = ? ORDER BY id ASC LIMIT 1`,
+        [organizationId]
+      );
+    } catch {
+      return null;
+    }
+  }
   return first?.id ? String(first.id) : null;
 }
 
@@ -301,13 +317,24 @@ const isLockedSessionStatus = (status?: string): boolean => {
 };
 
 async function assertSessionEditable(sessionId: string, organizationId: string): Promise<any> {
-  const session = await queryHelpers.queryOne(
-    `SELECT s.id, s.status, s.user_id as owner_id 
-     FROM interview_sessions s
-     JOIN projects p ON p.id = s.project_id
-     WHERE s.id = ? AND p.organization_id = ?`,
-    [sessionId, organizationId]
-  );
+  let session: any;
+  try {
+    session = await queryHelpers.queryOne(
+      `SELECT s.id, s.status, s.owner_id as owner_id
+       FROM interview_sessions s
+       JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ? AND p.organization_id = ?`,
+      [sessionId, organizationId]
+    );
+  } catch {
+    session = await queryHelpers.queryOne(
+      `SELECT s.id, s.status, s.user_id as owner_id
+       FROM interview_sessions s
+       JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ? AND p.organization_id = ?`,
+      [sessionId, organizationId]
+    );
+  }
   if (!session) throw new Error('Session not found');
   if (isLockedSessionStatus((session as any).status)) throw new Error('Session is locked');
   return session;
@@ -318,13 +345,24 @@ async function assertSessionOwnedByUser(
   organizationId: string,
   userId: string
 ): Promise<void> {
-  const session = await queryHelpers.queryOne(
-    `SELECT s.id, s.user_id as owner_id 
-     FROM interview_sessions s
-     JOIN projects p ON p.id = s.project_id
-     WHERE s.id = ? AND p.organization_id = ?`,
-    [sessionId, organizationId]
-  );
+  let session: any;
+  try {
+    session = await queryHelpers.queryOne(
+      `SELECT s.id, s.owner_id as owner_id
+       FROM interview_sessions s
+       JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ? AND p.organization_id = ?`,
+      [sessionId, organizationId]
+    );
+  } catch {
+    session = await queryHelpers.queryOne(
+      `SELECT s.id, s.user_id as owner_id
+       FROM interview_sessions s
+       JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ? AND p.organization_id = ?`,
+      [sessionId, organizationId]
+    );
+  }
   if (!session) throw new Error('Session not found');
   if (String((session as any).owner_id) !== String(userId)) throw new Error('Forbidden');
 }
@@ -441,7 +479,7 @@ export const InterviewController = {
       `INSERT INTO interview_sessions
        (id, organization_id, project_id, name, owner_id, status, progress_json,
         started_at, last_activity_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         user.organizationId,

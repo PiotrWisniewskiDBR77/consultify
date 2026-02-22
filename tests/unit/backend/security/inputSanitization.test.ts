@@ -65,11 +65,11 @@ describe('sanitizeString (L1)', () => {
   it('escapes backticks', () => {
     expect(sanitizeString('`code`')).toContain('&#96;');
   });
-  it('escapes forward slashes', () => {
-    expect(sanitizeString('a/b')).toContain('&#x2F;');
+  it('does not escape forward slashes (URLs/tokens must remain intact)', () => {
+    expect(sanitizeString('a/b')).toBe('a/b');
   });
-  it('escapes equals sign', () => {
-    expect(sanitizeString('a=b')).toContain('&#x3D;');
+  it('does not escape equals sign (base64/query-like strings must remain intact)', () => {
+    expect(sanitizeString('a=b')).toBe('a=b');
   });
   it('returns empty string for null', () => {
     expect(sanitizeString(null)).toBe('');
@@ -94,7 +94,8 @@ describe('sanitizeString (L1)', () => {
     const result = sanitizeString(xss);
     expect(result).not.toContain('<');
     expect(result).not.toContain('"');
-    expect(result).not.toContain('=');
+    // Keep '=' and '/' intact; security relies on escaping HTML special chars.
+    expect(result).toContain('onerror=');
   });
 });
 
@@ -296,6 +297,23 @@ describe('CSRF token management (L1)', () => {
 
     expect(validateCsrfToken('sess-old', oldToken)).toBe(false);
     expect(validateCsrfToken('sess-new', newToken)).toBe(true);
+
+    vi.useRealTimers();
+  });
+
+  it('validateCsrfToken deletes expired token entries (expiry branch)', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2020-01-01T00:00:00.000Z'));
+
+    const token = generateCsrfToken('sess-expire-direct');
+
+    // Expire without triggering cleanup via generateCsrfToken()
+    vi.setSystemTime(new Date('2020-01-01T02:00:00.000Z'));
+    expect(validateCsrfToken('sess-expire-direct', token)).toBe(false);
+
+    // Prove the entry was deleted: even if time is "un-expired", it should stay invalid
+    vi.setSystemTime(new Date('2020-01-01T00:30:00.000Z'));
+    expect(validateCsrfToken('sess-expire-direct', token)).toBe(false);
 
     vi.useRealTimers();
   });

@@ -33,4 +33,19 @@ describe('validateQuery (contract)', () => {
     expect(next).toHaveBeenCalledTimes(1);
     expect((req.query as any).limit).toBe(2);
   });
+
+  it('uses defineProperty fallback when req.query is read-only', async () => {
+    const mw = validateQuery(schema);
+    const req: any = {};
+    Object.defineProperty(req, 'query', {
+      get: () => ({ limit: '2' }),
+      configurable: true,
+    });
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    mw(req, res, next);
+    expect(next).toHaveBeenCalledTimes(1);
+    expect((req.query as any).limit).toBe(2);
+  });
 });

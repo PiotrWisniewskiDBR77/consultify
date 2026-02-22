@@ -101,6 +101,16 @@ describe('inputSanitizationMiddleware (L1)', () => {
     expect(__private__.isSuspicious('totally safe text')).toBe(false);
   });
 
+  it.each([
+    ['data:text/html,<h1>x</h1>'],
+    ['eval(alert(1))'],
+    ['document.cookie'],
+    ['window.location'],
+    ['onclick=alert(1)'],
+  ])('detects additional suspicious patterns: %s', (value) => {
+    expect(__private__.isSuspicious(value)).toBe(true);
+  });
+
   it('truncates overly long strings (private helper)', () => {
     const long = 'x'.repeat(10);
     expect(__private__.truncateStrings(long, 5)).toBe('x'.repeat(5));
@@ -108,6 +118,18 @@ describe('inputSanitizationMiddleware (L1)', () => {
     expect(__private__.truncateStrings(['a', long], 5)).toEqual(['a', 'x'.repeat(5)]);
     // Non-string primitives are preserved
     expect(__private__.truncateStrings(123, 5)).toBe(123);
+  });
+
+  it('truncateStrings returns null/undefined unchanged (private helper)', () => {
+    expect(__private__.truncateStrings(null as any, 5)).toBeNull();
+    expect(__private__.truncateStrings(undefined as any, 5)).toBeUndefined();
+  });
+
+  it('truncateStrings traverses nested arrays/objects (private helper)', () => {
+    const long = 'x'.repeat(10);
+    const out = __private__.truncateStrings([{ a: long }, { b: [long] }], 3) as any;
+    expect(out[0].a).toBe('x'.repeat(3));
+    expect(out[1].b[0]).toBe('x'.repeat(3));
   });
 
   it('logs suspicious nested payloads (private helper)', async () => {
@@ -130,6 +152,59 @@ describe('inputSanitizationMiddleware (L1)', () => {
     expect(() =>
       __private__.checkForSuspiciousContent('not-an-object' as any, '/api/test', 'POST')
     ).not.toThrow();
+  });
+
+  it('checkForSuspiciousContent traverses arrays (private helper)', async () => {
+    const logger = (await import('../../../../server/src/utils/Logger.js')).default as any;
+    const origWarn = logger.warn;
+    logger.warn = vi.fn();
+    try {
+      __private__.checkForSuspiciousContent(
+        [{ x: '<script>alert(1)</script>' }],
+        '/api/test',
+        'POST'
+      );
+      expect(logger.warn).toHaveBeenCalled();
+    } finally {
+      logger.warn = origWarn;
+    }
+  });
+
+  it('sanitizes query even when req.body is a primitive', async () => {
+    const req = createReq({
+      body: '<b>not-an-object</b>',
+      query: { q: '<b>bold</b>' },
+    });
+    const next = vi.fn();
+
+    await inputSanitizationMiddleware(req, {} as any, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(req.body).toBe('<b>not-an-object</b>');
+    expect(String(req.query.q)).not.toContain('<b>');
+  });
+
+  it('sanitizes req.body when it is an array (treated as object)', async () => {
+    const req = createReq({
+      body: ['<i>x</i>', { nested: '<b>y</b>' }],
+    });
+    const next = vi.fn();
+
+    await inputSanitizationMiddleware(req, {} as any, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(String(req.body[0])).not.toContain('<i>');
+    expect(String(req.body[1].nested)).not.toContain('<b>');
+  });
+
+  it('does not attempt query sanitization when req.query is null', async () => {
+    const req = createReq({ method: 'GET', query: null as any, body: { x: '<b>y</b>' } });
+    const next = vi.fn();
+
+    await inputSanitizationMiddleware(req, {} as any, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(String(req.body.x)).not.toContain('<b>');
   });
 
   it('in non-test env: logs suspicious content during middleware execution', async () => {
@@ -212,27 +287,66 @@ describe('inputSanitizationMiddleware (L1)', () => {
   });
 
   it('loadSecurityUtils: attempts fallback spec when preferred import fails', async () => {
-    const sanitizeObject = vi.fn((x: unknown) => x);
+    vi.resetModules();
 
+    const sanitizeObject = vi.fn((x: unknown) => x);
+    let loads = 0;
+
+    // Force the preferred dynamic import to fail once, then succeed on fallback import.
+    // NOTE: In Vitest, `.js` imports under `server/src/...` are aliased to `.ts`,
+    // so we mock the TS module and let the fallback spec resolve to the same mocked module.
     vi.doMock('../../../../server/src/utils/security.utils.ts', () => {
-      throw new Error('preferred import failed');
+      loads++;
+      if (loads === 1) throw new Error('preferred import failed');
+      return { sanitizeObject };
     });
-    vi.doMock('../../../../server/src/utils/security.utils.js', () => ({ sanitizeObject }));
 
     try {
       const mod = await import(
-        '../../../../server/src/middleware/inputSanitization.middleware.ts?loader_fallback'
+        '../../../../server/src/middleware/inputSanitization.middleware.ts?loader_fallback_v2'
       );
-      const req = createReq({ body: { html: '<b>bold</b>' } });
+      const req = createReq({ body: { html: '<b>bold</b>' }, query: { q: '<i>x</i>' } });
       const next = vi.fn();
 
       await mod.inputSanitizationMiddleware(req, {} as any, next);
 
       expect(next).toHaveBeenCalled();
       expect(sanitizeObject).toHaveBeenCalled();
+      expect(loads).toBeGreaterThanOrEqual(2);
     } finally {
       vi.unmock('../../../../server/src/utils/security.utils.ts');
-      vi.unmock('../../../../server/src/utils/security.utils.js');
+    }
+  });
+
+  it('loadSecurityUtils caches resolved module across middleware calls', async () => {
+    vi.resetModules();
+
+    const sanitizeObject = vi.fn((x: unknown) => x);
+    let loads = 0;
+
+    vi.doMock('../../../../server/src/utils/security.utils.ts', () => {
+      loads++;
+      return { sanitizeObject };
+    });
+
+    try {
+      const mod = await import(
+        '../../../../server/src/middleware/inputSanitization.middleware.ts?loader_cache'
+      );
+
+      const next1 = vi.fn();
+      const next2 = vi.fn();
+      const req1 = createReq({ body: { x: '<b>y</b>' } });
+      const req2 = createReq({ body: { x: '<i>z</i>' } });
+
+      await mod.inputSanitizationMiddleware(req1, {} as any, next1);
+      await mod.inputSanitizationMiddleware(req2, {} as any, next2);
+
+      expect(next1).toHaveBeenCalled();
+      expect(next2).toHaveBeenCalled();
+      expect(loads).toBe(1);
+    } finally {
+      vi.unmock('../../../../server/src/utils/security.utils.ts');
     }
   });
 });

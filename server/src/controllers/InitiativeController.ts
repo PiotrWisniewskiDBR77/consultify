@@ -316,17 +316,17 @@ export class InitiativeController {
         // Canonical source tracking (preferred): source_type/source_id
         // Backward compatible (legacy): source_assessment_id/source_report_id/created_from
         sql += ` AND (
-          (LOWER(COALESCE(i.source_type,'')) IN ('assessment','assessment_report') AND COALESCE(i.source_id,'') <> '')
+          (i.source_type IN ('assessment','assessment_report','ASSESSMENT','ASSESSMENT_REPORT') AND i.source_id IS NOT NULL AND i.source_id <> '')
           OR i.source_assessment_id IS NOT NULL
           OR i.source_report_id IS NOT NULL
-          OR LOWER(COALESCE(i.created_from,'')) = 'assessment'
+          OR i.created_from IN ('assessment','ASSESSMENT')
         )`;
       }
       if (sourceAssessmentId) {
         // Match both canonical and legacy assessment linkage
         sql += ` AND (
           i.source_assessment_id = ?
-          OR (LOWER(COALESCE(i.source_type,'')) = 'assessment' AND i.source_id = ?)
+          OR (i.source_type IN ('assessment','ASSESSMENT') AND i.source_id = ?)
         )`;
         params.push(sourceAssessmentId, sourceAssessmentId);
       }

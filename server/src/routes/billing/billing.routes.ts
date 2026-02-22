@@ -56,6 +56,19 @@ const router = Router();
 // Apply rate limiting
 router.use(defaultRateLimiter);
 
+function isSchemaMissingError(err: unknown): boolean {
+  const msg = String((err as any)?.message || '').toLowerCase();
+  return (
+    msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')
+  );
+}
+
+function respondSchemaUnavailable(res: Response, feature: string) {
+  return res.status(503).json({
+    error: `${feature} not available (database schema missing or misconfigured)`,
+  });
+}
+
 // Database helpers with proper typing
 type SQLParam = string | number | boolean | null | undefined;
 type SQLParams = SQLParam[];
@@ -202,40 +215,64 @@ router.get(
       // Get MRR snapshots or calculate from subscription events
       const snapshots = await dbAll(
         `
-                SELECT 
-                    DATE(created_at) as date,
-                    SUM(CASE WHEN event_type = 'new' THEN mrr_delta ELSE 0 END) as new_mrr,
-                    SUM(CASE WHEN event_type = 'expansion' THEN mrr_delta ELSE 0 END) as expansion_mrr,
-                    SUM(CASE WHEN event_type IN ('churn', 'contraction') THEN ABS(mrr_delta) ELSE 0 END) as churn_mrr
-                FROM subscription_events
-                WHERE created_at >= ?
-                GROUP BY DATE(created_at)
-                ORDER BY date ASC
-            `,
-        [startDate.toISOString()]
+	                SELECT 
+	                    DATE(created_at) as date,
+	                    SUM(CASE WHEN event_type = 'new' THEN mrr_delta ELSE 0 END) as new_mrr,
+	                    SUM(CASE WHEN event_type = 'expansion' THEN mrr_delta ELSE 0 END) as expansion_mrr,
+	                    SUM(CASE WHEN event_type IN ('churn', 'contraction') THEN ABS(mrr_delta) ELSE 0 END) as churn_mrr
+	                FROM subscription_events
+	                WHERE created_at >= ?
+	                GROUP BY DATE(created_at)
+	                ORDER BY date ASC
+	            `,
+        [startDate.toISOString()],
+        { fallback: false }
       );
 
-      // If no snapshots, generate demo data
-      const data =
-        snapshots && snapshots.length > 0
-          ? snapshots.map((s: any, i: number) => {
-              const baseMRR = 15000 + i * 500;
-              return {
-                date: s.date,
-                mrr: baseMRR + (s.new_mrr || 0) + (s.expansion_mrr || 0) - (s.churn_mrr || 0),
-                new_mrr: s.new_mrr || 0,
-                expansion_mrr: s.expansion_mrr || 0,
-                churn_mrr: s.churn_mrr || 0,
-                growth:
-                  (((s.new_mrr || 0) + (s.expansion_mrr || 0) - (s.churn_mrr || 0)) /
-                    (baseMRR || 1)) *
-                  100,
-              };
-            })
-          : generateDemoMRRTrend(days);
+      const currentMRRRow = (await dbGet(
+        `
+	          SELECT SUM(COALESCE(sp.price_monthly, 0)) as mrr
+	          FROM subscriptions s
+	          LEFT JOIN subscription_plans sp ON s.plan_id = sp.id
+	          WHERE s.status = 'active'
+	        `,
+        [],
+        { fallback: false }
+      )) as any;
+      const currentMRR = Number(currentMRRRow?.mrr || 0);
 
-      const startMRR = data.length > 0 ? data[0].mrr : 0;
-      const endMRR = data.length > 0 ? data[data.length - 1].mrr : 0;
+      const totalNetDelta = (snapshots || []).reduce((sum: number, s: any) => {
+        const newMrr = Number(s?.new_mrr || 0);
+        const expansionMrr = Number(s?.expansion_mrr || 0);
+        const churnMrr = Number(s?.churn_mrr || 0);
+        return sum + (newMrr + expansionMrr - churnMrr);
+      }, 0);
+
+      const startMRR = currentMRR - totalNetDelta;
+      let runningMRR = startMRR;
+
+      const data = (snapshots || []).map((s: any) => {
+        const newMrr = Number(s?.new_mrr || 0);
+        const expansionMrr = Number(s?.expansion_mrr || 0);
+        const churnMrr = Number(s?.churn_mrr || 0);
+        const netDelta = newMrr + expansionMrr - churnMrr;
+        const growth = runningMRR ? (netDelta / (runningMRR || 1)) * 100 : 0;
+        runningMRR += netDelta;
+        return {
+          date: s.date,
+          mrr: runningMRR,
+          new_mrr: newMrr,
+          expansion_mrr: expansionMrr,
+          churn_mrr: churnMrr,
+          growth,
+        };
+      });
+
+      const endMRR = data.length > 0 ? data[data.length - 1].mrr : startMRR;
+      const avgGrowth =
+        data.length > 0
+          ? data.reduce((sum: number, d: any) => sum + Number(d.growth || 0), 0) / data.length
+          : 0;
 
       return res.json({
         trend: {
@@ -245,12 +282,15 @@ router.get(
             startMRR,
             endMRR,
             totalGrowth: `${(((endMRR - startMRR) / (startMRR || 1)) * 100).toFixed(1)}%`,
-            avgGrowth: `${(data.reduce((s: number, d: any) => s + d.growth, 0) / (data.length || 1)).toFixed(1)}%`,
+            avgGrowth: `${avgGrowth.toFixed(1)}%`,
           },
         },
       });
     } catch (error: any) {
       logger.error('[Billing Analytics] MRR trend error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'MRR trend analytics');
+      }
       return res.status(500).json({ error: 'Failed to get MRR trend' });
     }
   })
@@ -269,42 +309,68 @@ router.get(
       const months = 6;
 
       // Get churn data from subscription events or subscriptions table
-      const churnData = await dbAll(`
-                SELECT 
-                    strftime('%Y-%m', canceled_at) as month,
-                    COUNT(*) as churned_customers,
-                    SUM(COALESCE((SELECT price_monthly FROM subscription_plans WHERE id = s.plan_id), 0)) as churned_mrr
-                FROM subscriptions s
-                WHERE s.status = 'canceled' 
-                AND canceled_at >= date('now', '-${months} months')
-                GROUP BY strftime('%Y-%m', canceled_at)
-                ORDER BY month DESC
-            `);
+      const churnData = await dbAll(
+        `
+	                SELECT 
+	                    strftime('%Y-%m', canceled_at) as month,
+	                    COUNT(*) as churned_customers,
+	                    SUM(COALESCE((SELECT price_monthly FROM subscription_plans WHERE id = s.plan_id), 0)) as churned_mrr
+	                FROM subscriptions s
+	                WHERE s.status = 'canceled' 
+	                AND canceled_at >= date('now', '-${months} months')
+	                GROUP BY strftime('%Y-%m', canceled_at)
+	                ORDER BY month DESC
+	            `,
+        [],
+        { fallback: false }
+      );
 
       // Get total active at start of each month for rate calculation
-      const activeStart = (await dbGet(`
-                SELECT COUNT(*) as count FROM subscriptions WHERE status = 'active'
-            `)) as any;
+      const activeStart = (await dbGet(
+        `
+	          SELECT COUNT(*) as count FROM subscriptions WHERE status = 'active'
+	        `,
+        [],
+        { fallback: false }
+      )) as any;
 
-      const totalActive = activeStart?.count || 100;
-      const avgMRR = 15000; // Fallback average
+      const totalActive = Number(activeStart?.count || 0);
+      const currentMRRRow = (await dbGet(
+        `
+	          SELECT SUM(COALESCE(sp.price_monthly, 0)) as mrr
+	          FROM subscriptions s
+	          LEFT JOIN subscription_plans sp ON s.plan_id = sp.id
+	          WHERE s.status = 'active'
+	        `,
+        [],
+        { fallback: false }
+      )) as any;
+      const avgMRR = Number(currentMRRRow?.mrr || 0);
 
-      const data =
-        churnData && churnData.length > 0
-          ? churnData.map((c: any) => ({
-              month: c.month,
-              churnedCustomers: c.churned_customers || 0,
-              churnedMRR: c.churned_mrr || 0,
-              customerChurnRate: `${(((c.churned_customers || 0) / totalActive) * 100).toFixed(1)}%`,
-              mrrChurnRate: `${(((c.churned_mrr || 0) / avgMRR) * 100).toFixed(1)}%`,
-            }))
-          : generateDemoChurnData(months);
+      const data = (churnData || []).map((c: any) => {
+        const churnedCustomers = Number(c?.churned_customers || 0);
+        const churnedMRR = Number(c?.churned_mrr || 0);
+        const customerRate = totalActive > 0 ? (churnedCustomers / totalActive) * 100 : 0;
+        const mrrRate = avgMRR > 0 ? (churnedMRR / avgMRR) * 100 : 0;
+        return {
+          month: c.month,
+          churnedCustomers,
+          churnedMRR,
+          customerChurnRate: `${customerRate.toFixed(1)}%`,
+          mrrChurnRate: `${mrrRate.toFixed(1)}%`,
+        };
+      });
 
       const avgCustomerChurn =
-        data.reduce((s: number, d: any) => s + parseFloat(d.customerChurnRate), 0) /
-        (data.length || 1);
+        data.length > 0
+          ? data.reduce((sum: number, d: any) => sum + parseFloat(String(d.customerChurnRate)), 0) /
+            data.length
+          : 0;
       const avgMRRChurn =
-        data.reduce((s: number, d: any) => s + parseFloat(d.mrrChurnRate), 0) / (data.length || 1);
+        data.length > 0
+          ? data.reduce((sum: number, d: any) => sum + parseFloat(String(d.mrrChurnRate)), 0) /
+            data.length
+          : 0;
 
       return res.json({
         churn: {
@@ -318,6 +384,9 @@ router.get(
       });
     } catch (error: any) {
       logger.error('[Billing Analytics] Churn error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Churn analytics');
+      }
       return res.status(500).json({ error: 'Failed to get churn data' });
     }
   })
@@ -380,26 +449,30 @@ router.get(
       const retentionMonths = 3;
 
       // Get cohort data
-      const cohorts = await dbAll(`
-                SELECT 
-                    strftime('%Y-%m', created_at) as cohort,
-                    COUNT(*) as starting_count,
-                    SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as current_active
-                FROM subscriptions
-                WHERE created_at >= date('now', '-${cohortMonths} months')
-                GROUP BY strftime('%Y-%m', created_at)
-                ORDER BY cohort DESC
-            `);
+      const cohorts = await dbAll(
+        `
+	                SELECT 
+	                    strftime('%Y-%m', created_at) as cohort,
+	                    COUNT(*) as starting_count,
+	                    SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as current_active
+	                FROM subscriptions
+	                WHERE created_at >= date('now', '-${cohortMonths} months')
+	                GROUP BY strftime('%Y-%m', created_at)
+	                ORDER BY cohort DESC
+	            `,
+        [],
+        { fallback: false }
+      );
 
-      const data =
-        cohorts && cohorts.length > 0
-          ? cohorts.map((c: any) => ({
-              cohort: c.cohort,
-              startingCount: c.starting_count || 0,
-              currentActive: c.current_active || 0,
-              retentionRate: `${(((c.current_active || 0) / (c.starting_count || 1)) * 100).toFixed(1)}%`,
-            }))
-          : generateDemoCohortData(cohortMonths);
+      const data = (cohorts || []).map((c: any) => ({
+        cohort: c.cohort,
+        startingCount: Number(c?.starting_count || 0),
+        currentActive: Number(c?.current_active || 0),
+        retentionRate: `${(
+          (Number(c?.current_active || 0) / (Number(c?.starting_count || 0) || 1)) *
+          100
+        ).toFixed(1)}%`,
+      }));
 
       return res.json({
         cohorts: {
@@ -409,6 +482,9 @@ router.get(
       });
     } catch (error: any) {
       logger.error('[Billing Analytics] Cohorts error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Cohort analytics');
+      }
       return res.status(500).json({ error: 'Failed to get cohort data' });
     }
   })
@@ -427,27 +503,28 @@ router.get(
       const months = 6;
 
       // Get expansion/contraction from subscription events
-      const expansionData = await dbAll(`
-                SELECT 
-                    strftime('%Y-%m', created_at) as month,
-                    SUM(CASE WHEN event_type = 'expansion' THEN mrr_delta ELSE 0 END) as expansion_mrr,
-                    SUM(CASE WHEN event_type = 'contraction' THEN ABS(mrr_delta) ELSE 0 END) as contraction_mrr
-                FROM subscription_events
-                WHERE created_at >= date('now', '-${months} months')
-                AND event_type IN ('expansion', 'contraction')
-                GROUP BY strftime('%Y-%m', created_at)
-                ORDER BY month DESC
-            `);
+      const expansionData = await dbAll(
+        `
+	                SELECT 
+	                    strftime('%Y-%m', created_at) as month,
+	                    SUM(CASE WHEN event_type = 'expansion' THEN mrr_delta ELSE 0 END) as expansion_mrr,
+	                    SUM(CASE WHEN event_type = 'contraction' THEN ABS(mrr_delta) ELSE 0 END) as contraction_mrr
+	                FROM subscription_events
+	                WHERE created_at >= date('now', '-${months} months')
+	                AND event_type IN ('expansion', 'contraction')
+	                GROUP BY strftime('%Y-%m', created_at)
+	                ORDER BY month DESC
+	            `,
+        [],
+        { fallback: false }
+      );
 
-      const data =
-        expansionData && expansionData.length > 0
-          ? expansionData.map((e: any) => ({
-              month: e.month,
-              expansion_mrr: e.expansion_mrr || 0,
-              contraction_mrr: e.contraction_mrr || 0,
-              netExpansion: (e.expansion_mrr || 0) - (e.contraction_mrr || 0),
-            }))
-          : generateDemoExpansionData(months);
+      const data = (expansionData || []).map((e: any) => ({
+        month: e.month,
+        expansion_mrr: Number(e?.expansion_mrr || 0),
+        contraction_mrr: Number(e?.contraction_mrr || 0),
+        netExpansion: Number(e?.expansion_mrr || 0) - Number(e?.contraction_mrr || 0),
+      }));
 
       const totalExpansion = data.reduce((s: number, d: any) => s + d.expansion_mrr, 0);
       const totalContraction = data.reduce((s: number, d: any) => s + d.contraction_mrr, 0);
@@ -465,109 +542,39 @@ router.get(
       });
     } catch (error: any) {
       logger.error('[Billing Analytics] Expansion error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Expansion analytics');
+      }
       return res.status(500).json({ error: 'Failed to get expansion data' });
     }
   })
 );
 
-// Helper functions for demo data generation
-function generateDemoMRRTrend(days: number) {
-  const data = [];
-  let baseMRR = 12000;
-  for (let i = 0; i < days; i++) {
-    const date = new Date(Date.now() - (days - i) * 24 * 60 * 60 * 1000);
-    const newMRR = Math.floor(Math.random() * 800) + 200;
-    const expansionMRR = Math.floor(Math.random() * 400);
-    const churnMRR = Math.floor(Math.random() * 300);
-    baseMRR = baseMRR + newMRR + expansionMRR - churnMRR;
-    data.push({
-      date: date.toISOString().split('T')[0],
-      mrr: baseMRR,
-      new_mrr: newMRR,
-      expansion_mrr: expansionMRR,
-      churn_mrr: churnMRR,
-      growth: ((newMRR + expansionMRR - churnMRR) / baseMRR) * 100,
-    });
-  }
-  return data;
-}
-
-function generateDemoChurnData(months: number) {
-  const data = [];
-  for (let i = 0; i < months; i++) {
-    const date = new Date();
-    date.setMonth(date.getMonth() - i);
-    const month = date.toISOString().slice(0, 7);
-    const churnedCustomers = Math.floor(Math.random() * 5) + 1;
-    const churnedMRR = churnedCustomers * (Math.floor(Math.random() * 100) + 50);
-    data.push({
-      month,
-      churnedCustomers,
-      churnedMRR,
-      customerChurnRate: `${((churnedCustomers / 100) * 100).toFixed(1)}%`,
-      mrrChurnRate: `${((churnedMRR / 15000) * 100).toFixed(1)}%`,
-    });
-  }
-  return data;
-}
-
-function generateDemoCohortData(months: number) {
-  const data = [];
-  for (let i = 0; i < months; i++) {
-    const date = new Date();
-    date.setMonth(date.getMonth() - i);
-    const cohort = date.toISOString().slice(0, 7);
-    const startingCount = Math.floor(Math.random() * 20) + 10;
-    const retention = 0.85 - i * 0.05;
-    const currentActive = Math.floor(startingCount * retention);
-    data.push({
-      cohort,
-      startingCount,
-      currentActive,
-      retentionRate: `${((currentActive / startingCount) * 100).toFixed(1)}%`,
-    });
-  }
-  return data;
-}
-
-function generateDemoExpansionData(months: number) {
-  const data = [];
-  for (let i = 0; i < months; i++) {
-    const date = new Date();
-    date.setMonth(date.getMonth() - i);
-    const month = date.toISOString().slice(0, 7);
-    const expansion_mrr = Math.floor(Math.random() * 2000) + 500;
-    const contraction_mrr = Math.floor(Math.random() * 500) + 100;
-    data.push({
-      month,
-      expansion_mrr,
-      contraction_mrr,
-      netExpansion: expansion_mrr - contraction_mrr,
-    });
-  }
-  return data;
-}
-
 router.get(
   '/admin/plans',
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    return res.json([
-      {
-        id: 'plan-enterprise',
-        name: 'Enterprise',
-        price_monthly: 499,
-        token_limit: 1000000,
-        storage_limit_gb: 500,
-        token_overage_rate: 0.002,
-        storage_overage_rate: 0.1,
-        stripe_price_id: null,
-        features: JSON.stringify(['SSO', 'Unlimited Projects']),
-        is_active: 1,
-        created_at: new Date().toISOString(),
-      },
-    ]);
+    try {
+      const plans = await dbAll<any>(
+        `SELECT * FROM subscription_plans ORDER BY sort_order ASC`,
+        [],
+        { fallback: false }
+      );
+      return res.json(
+        (plans || []).map((plan: any) => ({
+          ...plan,
+          features: plan.features ? JSON.parse(plan.features) : [],
+          limits: plan.limits ? JSON.parse(plan.limits) : {},
+        }))
+      );
+    } catch (error: any) {
+      logger.error('[Billing Admin] List plans error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Admin plans');
+      }
+      return res.status(500).json({ error: 'Failed to list plans' });
+    }
   })
 );
 
@@ -575,19 +582,150 @@ router.post(
   '/admin/plans',
   verifyToken,
   requireSuperAdmin,
-  asyncHandler(async (_req, res) => res.json({ success: true, id: uuidv4() }))
+  validateBody(CreatePlanRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const {
+        name,
+        description,
+        priceMonthly,
+        priceYearly,
+        currency,
+        features,
+        limits,
+        trialDays,
+        isPublic,
+        sortOrder,
+      } = req.body;
+
+      const id = uuidv4();
+      await dbRun(
+        `
+	          INSERT INTO subscription_plans (
+	            id, name, description, price_monthly, price_yearly, currency,
+	            features, limits, trial_days, is_public, sort_order
+	          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	        `,
+        [
+          id,
+          name,
+          description,
+          priceMonthly,
+          priceYearly,
+          currency,
+          JSON.stringify(features),
+          JSON.stringify(limits),
+          trialDays,
+          isPublic ? 1 : 0,
+          sortOrder,
+        ],
+        { fallback: false }
+      );
+
+      return res.json({ success: true, id });
+    } catch (error: any) {
+      logger.error('[Billing Admin] Create plan error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Admin plan create');
+      }
+      return res.status(500).json({ error: 'Failed to create plan' });
+    }
+  })
 );
 router.put(
   '/admin/plans/:id',
   verifyToken,
   requireSuperAdmin,
-  asyncHandler(async (_req, res) => res.json({ success: true }))
+  validateParams(PlanIdParamSchema),
+  validateBody(UpdatePlanRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const updates: string[] = [];
+      const params: SQLParams = [];
+
+      const fields = [
+        'name',
+        'description',
+        'price_monthly',
+        'price_yearly',
+        'currency',
+        'trial_days',
+        'is_public',
+        'is_active',
+        'sort_order',
+      ];
+
+      for (const field of fields) {
+        const key = field.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+        if (req.body[key] !== undefined) {
+          updates.push(`${field} = ?`);
+          params.push(typeof req.body[key] === 'boolean' ? (req.body[key] ? 1 : 0) : req.body[key]);
+        }
+      }
+
+      if (req.body.features) {
+        updates.push('features = ?');
+        params.push(JSON.stringify(req.body.features));
+      }
+
+      if (req.body.limits) {
+        updates.push('limits = ?');
+        params.push(JSON.stringify(req.body.limits));
+      }
+
+      if (updates.length === 0) {
+        return res.status(400).json({ error: 'No updates provided' });
+      }
+
+      updates.push('updated_at = datetime("now")');
+      params.push(id);
+
+      const result = await dbRun(
+        `UPDATE subscription_plans SET ${updates.join(', ')} WHERE id = ?`,
+        params,
+        { fallback: false }
+      );
+
+      if (!result?.changes) {
+        return res.status(404).json({ error: 'Plan not found' });
+      }
+
+      return res.json({ success: true });
+    } catch (error: any) {
+      logger.error('[Billing Admin] Update plan error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Admin plan update');
+      }
+      return res.status(500).json({ error: 'Failed to update plan' });
+    }
+  })
 );
 router.delete(
   '/admin/plans/:id',
   verifyToken,
   requireSuperAdmin,
-  asyncHandler(async (_req, res) => res.json({ success: true }))
+  validateParams(PlanIdParamSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const result = await dbRun(`DELETE FROM subscription_plans WHERE id = ?`, [id], {
+        fallback: false,
+      });
+
+      if (!result?.changes) {
+        return res.status(404).json({ success: false, error: 'Plan not found' });
+      }
+
+      return res.json({ success: true });
+    } catch (error: any) {
+      logger.error('[Billing Admin] Delete plan error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Admin plan delete');
+      }
+      return res.status(500).json({ error: 'Failed to delete plan' });
+    }
+  })
 );
 
 router.get(
@@ -595,35 +733,34 @@ router.get(
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    return res.json([
-      {
-        id: 'user-standard',
-        name: 'Standard Seat',
-        price_monthly: 25,
-        features: JSON.stringify(['Core features']),
-        is_active: 1,
-        created_at: new Date().toISOString(),
-      },
-    ]);
+    return res.status(503).json({
+      error: 'User seat plans are not available (no real implementation)',
+    });
   })
 );
 router.post(
   '/admin/user-plans',
   verifyToken,
   requireSuperAdmin,
-  asyncHandler(async (_req, res) => res.json({ success: true, id: uuidv4() }))
+  asyncHandler(async (_req, res) =>
+    res.status(503).json({ success: false, error: 'User seat plans are not available' })
+  )
 );
 router.put(
   '/admin/user-plans/:id',
   verifyToken,
   requireSuperAdmin,
-  asyncHandler(async (_req, res) => res.json({ success: true }))
+  asyncHandler(async (_req, res) =>
+    res.status(503).json({ success: false, error: 'User seat plans are not available' })
+  )
 );
 router.delete(
   '/admin/user-plans/:id',
   verifyToken,
   requireSuperAdmin,
-  asyncHandler(async (_req, res) => res.json({ success: true }))
+  asyncHandler(async (_req, res) =>
+    res.status(503).json({ success: false, error: 'User seat plans are not available' })
+  )
 );
 
 router.get(
@@ -631,7 +768,9 @@ router.get(
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    return res.json({ transactions: [] });
+    return res.status(503).json({
+      error: 'Billing transactions are not available (no real implementation)',
+    });
   })
 );
 
@@ -1111,10 +1250,16 @@ router.get(
   '/usage',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const empty = {
+      usage: [] as unknown[],
+      structuredUsage: {} as Record<string, unknown>,
+      totals: [] as unknown[],
+      data: null as unknown,
+    };
     try {
       const orgId = req.user?.organizationId;
       if (!orgId) {
-        return res.json({ data: null });
+        return res.json(empty);
       }
 
       let accessPolicyService: any = null;
@@ -1128,34 +1273,38 @@ router.get(
       if (accessPolicyService?.buildPolicySnapshot) {
         const snapshot = await accessPolicyService.buildPolicySnapshot(orgId);
         if (snapshot) {
-          return res.json({
-            data: {
-              users: {
-                used: snapshot.usageToday.users,
-                limit: snapshot.limits?.maxUsers ?? -1,
-              },
-              projects: {
-                used: snapshot.usageToday.projects,
-                limit: snapshot.limits?.maxProjects ?? -1,
-              },
-              storage: {
-                used: snapshot.usageToday.storageMb,
-                limit: snapshot.limits?.maxStorageMb ?? -1,
-                unit: 'MB',
-              },
-              aiTokens: {
-                used: snapshot.usageToday.tokensUsed,
-                limit: snapshot.limits?.maxTotalTokens ?? -1,
-              },
+          const data = {
+            users: {
+              used: snapshot.usageToday.users,
+              limit: snapshot.limits?.maxUsers ?? -1,
             },
+            projects: {
+              used: snapshot.usageToday.projects,
+              limit: snapshot.limits?.maxProjects ?? -1,
+            },
+            storage: {
+              used: snapshot.usageToday.storageMb,
+              limit: snapshot.limits?.maxStorageMb ?? -1,
+              unit: 'MB',
+            },
+            aiTokens: {
+              used: snapshot.usageToday.tokensUsed,
+              limit: snapshot.limits?.maxTotalTokens ?? -1,
+            },
+          };
+          return res.json({
+            usage: [],
+            structuredUsage: data,
+            totals: [],
+            data,
           });
         }
       }
 
-      return res.json({ data: null });
+      return res.json(empty);
     } catch (error: any) {
       logger.error('[Billing] Usage fetch error:', error);
-      return res.json({ data: null });
+      return res.json(empty);
     }
   })
 );
@@ -2549,81 +2698,84 @@ router.get(
 
       query += ` GROUP BY metric_name, DATE(recorded_at) ORDER BY date DESC`;
 
-      const usage = await dbAll(query, params);
+      const usage = await dbAll(query, params, { fallback: false });
 
       const org = (await dbGet(
         `
-            SELECT token_balance, plan, trial_tokens_used
-            FROM organizations 
-            WHERE id = ?
-        `,
-        [orgId]
+	          SELECT
+	            o.token_balance,
+	            o.plan,
+	            o.trial_tokens_used,
+	            COALESCE(sp.token_limit, 0) as token_limit,
+	            COALESCE(sp.storage_limit_gb, 0) as storage_limit_gb
+	          FROM organizations o
+	          LEFT JOIN subscriptions s ON s.organization_id = o.id AND s.status = 'active'
+	          LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
+	          WHERE o.id = ?
+	        `,
+        [orgId],
+        { fallback: false }
       )) as {
         token_balance?: number;
         plan?: string;
         trial_tokens_used?: number;
+        token_limit?: number;
+        storage_limit_gb?: number;
       } | null;
 
       const seats = (await dbGet(
         `
-            SELECT COUNT(*) as used, (SELECT COUNT(id) FROM organization_members WHERE organization_id = ?) as total
-            FROM organization_members 
-            WHERE organization_id = ? AND status = 'ACTIVE'
-        `,
-        [orgId, orgId]
+	            SELECT COUNT(*) as used, (SELECT COUNT(id) FROM organization_members WHERE organization_id = ?) as total
+	            FROM organization_members 
+	            WHERE organization_id = ? AND status = 'ACTIVE'
+	        `,
+        [orgId, orgId],
+        { fallback: false }
       )) as {
         used?: number;
         total?: number;
       } | null;
 
-      const structuredUsage = {
-        tokens: {
-          used: org?.trial_tokens_used || 45000,
-          limit: 100000,
-        },
-        storage: {
-          used_gb: 1.5,
-          limit_gb: 10,
-        },
-        seats: {
-          used: seats?.used || 5,
-          total: 10,
-        },
-        spend: {
-          current_period: 62.5,
-          budget: 2000,
-        },
-      };
-
       interface UsageTotalRow {
         metric_name: string;
         total: number;
       }
-      // If no usage records, seed one set for demo purposes
-      if (!usage || usage.length === 0) {
-        const seedId1 = uuidv4();
-        const seedId2 = uuidv4();
-        await dbRun(
-          `INSERT INTO usage_records (id, organization_id, metric_name, quantity, unit, recorded_at)
-                     VALUES (?, ?, 'tokens', 45000, 'count', datetime('now', '-1 day')),
-                            (?, ?, 'storage_gb', 1500, 'mb', datetime('now', '-1 day'))`,
-          [seedId1, orgId, seedId2, orgId]
-        );
-      }
-
       const totals = await dbAll<UsageTotalRow>(
         `SELECT metric_name, SUM(quantity) as total FROM usage_records WHERE organization_id = ? GROUP BY metric_name`,
-        [orgId]
+        [orgId],
+        { fallback: false }
       );
 
-      const usageResult =
-        usage && usage.length
-          ? usage
-          : await dbAll(
-              `SELECT metric_name, SUM(quantity) as total, DATE(recorded_at) as date 
-                       FROM usage_records WHERE organization_id = ? GROUP BY metric_name, DATE(recorded_at)`,
-              [orgId]
-            );
+      const totalsByMetric = new Map<string, number>(
+        (totals || []).map((t) => [String((t as any).metric_name), Number((t as any).total || 0)])
+      );
+
+      const tokensUsedFromRecords = totalsByMetric.get('tokens') || 0;
+      const tokensUsed =
+        Number(org?.trial_tokens_used || 0) > 0
+          ? Number(org?.trial_tokens_used || 0)
+          : tokensUsedFromRecords;
+
+      const structuredUsage = {
+        tokens: {
+          used: tokensUsed,
+          limit: Number(org?.token_limit || 0),
+        },
+        storage: {
+          used_gb: Number(totalsByMetric.get('storage_gb') || 0),
+          limit_gb: Number(org?.storage_limit_gb || 0),
+        },
+        seats: {
+          used: Number(seats?.used || 0),
+          total: Number(seats?.total || 0),
+        },
+        spend: {
+          current_period: Number(totalsByMetric.get('spend_usd') || 0),
+          budget: null as number | null,
+        },
+      };
+
+      const usageResult = usage || [];
 
       return res.json({
         usage: usageResult,
@@ -2635,6 +2787,9 @@ router.get(
       });
     } catch (error: unknown) {
       logger.error('[Billing] Get usage error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Usage tracking');
+      }
       return res.status(500).json({ error: 'Failed to get usage' });
     }
   })
@@ -2644,101 +2799,9 @@ router.get(
   '/usage-summary',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    try {
-      const orgId = req.user!.organizationId;
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      const daysElapsed = now.getDate();
-      const daysRemaining = endOfMonth.getDate() - daysElapsed;
-
-      // Full summary for the dashboard
-      const summary = {
-        currentPeriod: {
-          start: startOfMonth.toISOString(),
-          end: endOfMonth.toISOString(),
-          daysElapsed,
-          daysRemaining,
-        },
-        tokens: {
-          used: 45000,
-          limit: 100000,
-          percentage: 45,
-          trend: 12,
-          requests: 1250,
-        },
-        storage: {
-          used: 1536, // 1.5 GB in MB
-          usedFormatted: '1.5 GB',
-          limit: 10240, // 10 GB in MB
-          limitFormatted: '10 GB',
-          percentage: 15,
-        },
-        seats: {
-          used: 5,
-          limit: 10,
-          percentage: 50,
-        },
-        cost: {
-          current: 62.5,
-          projected: 85.0,
-          planBase: 49.0,
-        },
-        breakdown: {
-          byUser: [
-            {
-              id: '1',
-              name: 'Piotr Wiśniewski',
-              email: 'piotr@example.com',
-              tokens: 25000,
-              cost: 7.5,
-              requests: 650,
-            },
-            {
-              id: '2',
-              name: 'Anna Nowak',
-              email: 'anna@example.com',
-              tokens: 12000,
-              cost: 3.6,
-              requests: 420,
-            },
-            {
-              id: '3',
-              name: 'Jan Kowalski',
-              email: 'jan@example.com',
-              tokens: 8000,
-              cost: 2.4,
-              requests: 180,
-            },
-          ],
-          byProject: [
-            { id: 'p1', name: 'Digital Transformation', tokens: 20000, cost: 6.0, requests: 500 },
-            { id: 'p2', name: 'Process Automation', tokens: 15000, cost: 4.5, requests: 400 },
-            { id: 'p3', name: 'Data Analytics', tokens: 10000, cost: 3.0, requests: 350 },
-          ],
-          byFeature: [
-            { feature: 'Chat Assistant', tokens: 22000, cost: 6.6, requests: 800 },
-            { feature: 'Document Analysis', tokens: 13000, cost: 3.9, requests: 250 },
-            { feature: 'Report Generation', tokens: 10000, cost: 3.0, requests: 200 },
-          ],
-        },
-        trend: Array.from({ length: 14 }, (_, i) => {
-          const date = new Date();
-          date.setDate(date.getDate() - (13 - i));
-          return {
-            date: date.toISOString().split('T')[0],
-            tokens: Math.floor(2000 + Math.random() * 3000),
-            cost: Math.round((2 + Math.random() * 3) * 100) / 100,
-            requests: Math.floor(50 + Math.random() * 100),
-          };
-        }),
-        projectedUsage: 95000,
-      };
-      return res.json(summary);
-    } catch (error: unknown) {
-      logger.error('[Billing] Get usage summary error:', error);
-      return res.status(500).json({ error: 'Failed to get usage summary' });
-    }
+    return res.status(503).json({
+      error: 'Usage summary is not available (no real implementation)',
+    });
   })
 );
 
@@ -3017,42 +3080,59 @@ router.get(
   '/tax-settings',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const orgId = req.user!.organizationId;
-    let settings = await dbGet(`SELECT * FROM billing_tax_settings WHERE organization_id = ?`, [
-      orgId,
-    ]);
-    if (!settings) {
-      await dbRun(
-        `INSERT INTO billing_tax_settings (id, organization_id, tax_id, tax_id_type, tax_exempt, billing_name, billing_email, billing_address_line1, billing_address_line2, billing_city, billing_state, billing_postal_code, billing_country, invoice_prefix, po_number)
-                 VALUES (?, ?, 'PL1234567890', 'VAT', 0, 'Company Legal Name', 'billing@company.com', 'Street address', 'Apartment, suite, etc.', 'City', 'State/Region', '00-000', 'PL', 'ACME-', 'PO-001')`,
-        [uuidv4(), orgId]
+    try {
+      const orgId = req.user!.organizationId;
+      const settings = await dbGet(
+        `SELECT * FROM billing_tax_settings WHERE organization_id = ?`,
+        [orgId],
+        { fallback: false }
       );
-      settings = await dbGet(`SELECT * FROM billing_tax_settings WHERE organization_id = ?`, [
-        orgId,
-      ]);
-    }
 
-    return res.json({
-      company: {
-        legalName: settings.billing_name,
-        billingEmail: settings.billing_email,
-      },
-      tax: {
-        taxIdType: settings.tax_id_type,
-        taxId: settings.tax_id,
-        taxExempt: !!settings.tax_exempt,
-      },
-      address: {
-        line1: settings.billing_address_line1,
-        line2: settings.billing_address_line2,
-        city: settings.billing_city,
-        state: settings.billing_state,
-        postalCode: settings.billing_postal_code,
-        country: settings.billing_country,
-      },
-      invoicePrefix: settings.invoice_prefix,
-      poNumber: settings.po_number,
-    });
+      if (!settings) {
+        return res.json({
+          company: { legalName: null, billingEmail: null },
+          tax: { taxIdType: null, taxId: null, taxExempt: false },
+          address: {
+            line1: null,
+            line2: null,
+            city: null,
+            state: null,
+            postalCode: null,
+            country: null,
+          },
+          invoicePrefix: null,
+          poNumber: null,
+        });
+      }
+
+      return res.json({
+        company: {
+          legalName: (settings as any).billing_name,
+          billingEmail: (settings as any).billing_email,
+        },
+        tax: {
+          taxIdType: (settings as any).tax_id_type,
+          taxId: (settings as any).tax_id,
+          taxExempt: !!(settings as any).tax_exempt,
+        },
+        address: {
+          line1: (settings as any).billing_address_line1,
+          line2: (settings as any).billing_address_line2,
+          city: (settings as any).billing_city,
+          state: (settings as any).billing_state,
+          postalCode: (settings as any).billing_postal_code,
+          country: (settings as any).billing_country,
+        },
+        invoicePrefix: (settings as any).invoice_prefix,
+        poNumber: (settings as any).po_number,
+      });
+    } catch (error: any) {
+      logger.error('[Billing] Get tax settings error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Tax settings');
+      }
+      return res.status(500).json({ error: 'Failed to get tax settings' });
+    }
   })
 );
 
@@ -3060,45 +3140,54 @@ router.put(
   '/tax-settings',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const orgId = req.user!.organizationId;
-    const { company, tax, address, invoicePrefix, poNumber } = req.body || {};
-    await dbRun(
-      `INSERT INTO billing_tax_settings (id, organization_id, tax_id, tax_id_type, tax_exempt, billing_name, billing_email, billing_address_line1, billing_address_line2, billing_city, billing_state, billing_postal_code, billing_country, invoice_prefix, po_number)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-             ON CONFLICT(organization_id) DO UPDATE SET
-                tax_id=excluded.tax_id,
-                tax_id_type=excluded.tax_id_type,
-                tax_exempt=excluded.tax_exempt,
-                billing_name=excluded.billing_name,
-                billing_email=excluded.billing_email,
-                billing_address_line1=excluded.billing_address_line1,
-                billing_address_line2=excluded.billing_address_line2,
-                billing_city=excluded.billing_city,
-                billing_state=excluded.billing_state,
-                billing_postal_code=excluded.billing_postal_code,
-                billing_country=excluded.billing_country,
-                invoice_prefix=excluded.invoice_prefix,
-                po_number=excluded.po_number,
-                updated_at=CURRENT_TIMESTAMP`,
-      [
-        uuidv4(),
-        orgId,
-        tax?.taxId || null,
-        tax?.taxIdType || null,
-        tax?.taxExempt ? 1 : 0,
-        company?.legalName || null,
-        company?.billingEmail || null,
-        address?.line1 || null,
-        address?.line2 || null,
-        address?.city || null,
-        address?.state || null,
-        address?.postalCode || null,
-        address?.country || null,
-        invoicePrefix || null,
-        poNumber || null,
-      ]
-    );
-    return res.json({ success: true });
+    try {
+      const orgId = req.user!.organizationId;
+      const { company, tax, address, invoicePrefix, poNumber } = req.body || {};
+      await dbRun(
+        `INSERT INTO billing_tax_settings (id, organization_id, tax_id, tax_id_type, tax_exempt, billing_name, billing_email, billing_address_line1, billing_address_line2, billing_city, billing_state, billing_postal_code, billing_country, invoice_prefix, po_number)
+	               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	               ON CONFLICT(organization_id) DO UPDATE SET
+	                  tax_id=excluded.tax_id,
+	                  tax_id_type=excluded.tax_id_type,
+	                  tax_exempt=excluded.tax_exempt,
+	                  billing_name=excluded.billing_name,
+	                  billing_email=excluded.billing_email,
+	                  billing_address_line1=excluded.billing_address_line1,
+	                  billing_address_line2=excluded.billing_address_line2,
+	                  billing_city=excluded.billing_city,
+	                  billing_state=excluded.billing_state,
+	                  billing_postal_code=excluded.billing_postal_code,
+	                  billing_country=excluded.billing_country,
+	                  invoice_prefix=excluded.invoice_prefix,
+	                  po_number=excluded.po_number,
+	                  updated_at=CURRENT_TIMESTAMP`,
+        [
+          uuidv4(),
+          orgId,
+          tax?.taxId || null,
+          tax?.taxIdType || null,
+          tax?.taxExempt ? 1 : 0,
+          company?.legalName || null,
+          company?.billingEmail || null,
+          address?.line1 || null,
+          address?.line2 || null,
+          address?.city || null,
+          address?.state || null,
+          address?.postalCode || null,
+          address?.country || null,
+          invoicePrefix || null,
+          poNumber || null,
+        ],
+        { fallback: false }
+      );
+      return res.json({ success: true });
+    } catch (error: any) {
+      logger.error('[Billing] Update tax settings error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Tax settings update');
+      }
+      return res.status(500).json({ error: 'Failed to update tax settings' });
+    }
   })
 );
 
@@ -3186,10 +3275,11 @@ router.post(
       // Check cache first
       const cached = (await dbGet(
         'SELECT * FROM vat_validations WHERE vat_number = ? AND country_code = ? AND expires_at > datetime("now")',
-        [vatNumber, countryCode]
+        [vatNumber, countryCode],
+        { fallback: false }
       )) as any;
 
-      if (cached) {
+      if (cached && String(cached.validation_source || '').toLowerCase() !== 'demo') {
         return res.json({
           validation: {
             isValid: !!cached.is_valid,
@@ -3202,36 +3292,14 @@ router.post(
         });
       }
 
-      // In production: call VIES API or Stripe Tax
-      // For demo/development: simulate validation
-      const isValid = vatNumber.length >= 8;
-      const validationResult = {
-        isValid,
-        companyName: isValid ? 'Demo Company Ltd' : null,
-        companyAddress: isValid ? '123 Business Street, Demo City' : null,
-        validationSource: 'demo',
-        validatedAt: new Date().toISOString(),
-      };
-
-      // Cache the result
-      const cacheId = uuidv4();
-      await dbRun(
-        `INSERT INTO vat_validations (id, vat_number, country_code, is_valid, company_name, company_address, validation_source, validated_at, expires_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now', '+30 days'))`,
-        [
-          cacheId,
-          vatNumber,
-          countryCode,
-          isValid ? 1 : 0,
-          validationResult.companyName,
-          validationResult.companyAddress,
-          'demo',
-        ]
-      );
-
-      return res.json({ validation: validationResult });
+      return res.status(503).json({
+        error: 'VAT validation is not available (no real integration configured)',
+      });
     } catch (error: any) {
       logger.error('[Billing] Validate VAT error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'VAT validation');
+      }
       return res.status(500).json({ error: 'Failed to validate VAT number' });
     }
   })
@@ -3811,95 +3879,9 @@ router.get(
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    try {
-      const { status, organizationId } = req.query as { status?: string; organizationId?: string };
-
-      // For now, return demo data until DB table is created
-      const recognitions = [
-        {
-          id: 'rr-demo-001',
-          organization_id: organizationId || 'org-demo',
-          organization_name: 'TechnoLex Solutions',
-          contract_id: 'contract-001',
-          contract_name: 'Enterprise License - Annual',
-          revenue_amount: 120000,
-          currency: 'USD',
-          recognition_method: 'straight_line',
-          recognition_schedule_json: JSON.stringify(
-            Array.from({ length: 12 }, (_, i) => ({
-              period: `2026-${String(i + 1).padStart(2, '0')}`,
-              amount: 10000,
-              recognized: i < 3,
-              recognized_at: i < 3 ? new Date(2026, i, 15).toISOString() : null,
-            }))
-          ),
-          recognized_amount: 30000,
-          remaining_amount: 90000,
-          status: 'in_progress',
-          created_at: new Date(2025, 11, 15).toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          id: 'rr-demo-002',
-          organization_id: organizationId || 'org-demo',
-          organization_name: 'Digital Partners Inc',
-          contract_id: 'contract-002',
-          contract_name: 'Professional Services',
-          revenue_amount: 45000,
-          currency: 'USD',
-          recognition_method: 'milestone',
-          recognition_schedule_json: JSON.stringify([
-            {
-              period: 'Discovery',
-              amount: 9000,
-              recognized: true,
-              recognized_at: new Date(2025, 11, 20).toISOString(),
-            },
-            {
-              period: 'Development',
-              amount: 18000,
-              recognized: true,
-              recognized_at: new Date(2026, 0, 5).toISOString(),
-            },
-            { period: 'Testing', amount: 9000, recognized: false },
-            { period: 'Deployment', amount: 9000, recognized: false },
-          ]),
-          recognized_amount: 27000,
-          remaining_amount: 18000,
-          status: 'in_progress',
-          created_at: new Date(2025, 10, 1).toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          id: 'rr-demo-003',
-          organization_id: organizationId || 'org-demo',
-          organization_name: 'Acme Corp',
-          contract_id: 'contract-003',
-          contract_name: 'Consulting Package',
-          revenue_amount: 25000,
-          currency: 'USD',
-          recognition_method: 'point_in_time',
-          recognition_schedule_json: JSON.stringify([
-            {
-              period: 'Completion',
-              amount: 25000,
-              recognized: true,
-              recognized_at: new Date(2025, 11, 30).toISOString(),
-            },
-          ]),
-          recognized_amount: 25000,
-          remaining_amount: 0,
-          status: 'completed',
-          created_at: new Date(2025, 9, 15).toISOString(),
-          updated_at: new Date(2025, 11, 30).toISOString(),
-        },
-      ].filter((r) => !status || r.status === status);
-
-      return res.json(recognitions);
-    } catch (error: any) {
-      logger.error('[Billing] Get revenue recognitions error:', error);
-      return res.status(500).json({ error: 'Failed to get revenue recognitions' });
-    }
+    return res.status(503).json({
+      error: 'Revenue recognition (ASC 606) is not available (no real implementation)',
+    });
   })
 );
 
@@ -3909,19 +3891,9 @@ router.get(
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    try {
-      return res.json({
-        totalRevenue: 190000,
-        recognizedRevenue: 82000,
-        remainingRevenue: 108000,
-        pendingItems: 0,
-        inProgressItems: 2,
-        completedItems: 1,
-      });
-    } catch (error: any) {
-      logger.error('[Billing] Get revenue recognition stats error:', error);
-      return res.status(500).json({ error: 'Failed to get revenue recognition stats' });
-    }
+    return res.status(503).json({
+      error: 'Revenue recognition (ASC 606) stats are not available (no real implementation)',
+    });
   })
 );
 
@@ -3930,48 +3902,9 @@ router.get(
   '/revenue-recognitions/:id/schedule',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    try {
-      const { id } = req.params;
-
-      // Demo schedules
-      const schedules: Record<string, any[]> = {
-        'rr-demo-001': Array.from({ length: 12 }, (_, i) => ({
-          period: `2026-${String(i + 1).padStart(2, '0')}`,
-          amount: 10000,
-          recognized: i < 3,
-          recognized_at: i < 3 ? new Date(2026, i, 15).toISOString() : null,
-        })),
-        'rr-demo-002': [
-          {
-            period: 'Discovery',
-            amount: 9000,
-            recognized: true,
-            recognized_at: new Date(2025, 11, 20).toISOString(),
-          },
-          {
-            period: 'Development',
-            amount: 18000,
-            recognized: true,
-            recognized_at: new Date(2026, 0, 5).toISOString(),
-          },
-          { period: 'Testing', amount: 9000, recognized: false },
-          { period: 'Deployment', amount: 9000, recognized: false },
-        ],
-        'rr-demo-003': [
-          {
-            period: 'Completion',
-            amount: 25000,
-            recognized: true,
-            recognized_at: new Date(2025, 11, 30).toISOString(),
-          },
-        ],
-      };
-
-      return res.json({ schedule: schedules[id] || [] });
-    } catch (error: any) {
-      logger.error('[Billing] Get recognition schedule error:', error);
-      return res.status(500).json({ error: 'Failed to get recognition schedule' });
-    }
+    return res.status(503).json({
+      error: 'Revenue recognition (ASC 606) schedule is not available (no real implementation)',
+    });
   })
 );
 
@@ -3981,41 +3914,10 @@ router.post(
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    try {
-      const {
-        organization_id,
-        contract_id,
-        revenue_amount,
-        currency,
-        recognition_method,
-        periods,
-      } = req.body;
-      const id = uuidv4();
-
-      // Generate schedule based on method
-      const schedule = [];
-      if (recognition_method === 'straight_line') {
-        const amountPerPeriod = Math.round(revenue_amount / periods);
-        for (let i = 0; i < periods; i++) {
-          const date = new Date();
-          date.setMonth(date.getMonth() + i);
-          schedule.push({
-            period: date.toISOString().slice(0, 7),
-            amount: amountPerPeriod,
-            recognized: false,
-          });
-        }
-      }
-
-      return res.json({
-        success: true,
-        id,
-        schedule,
-      });
-    } catch (error: any) {
-      logger.error('[Billing] Create revenue recognition error:', error);
-      return res.status(500).json({ error: 'Failed to create revenue recognition' });
-    }
+    return res.status(503).json({
+      success: false,
+      error: 'Revenue recognition (ASC 606) create is not available (no real implementation)',
+    });
   })
 );
 
@@ -4025,17 +3927,10 @@ router.post(
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    try {
-      const { id } = req.params;
-      return res.json({
-        success: true,
-        message: 'Revenue recognized for next period',
-        recognitionId: id,
-      });
-    } catch (error: any) {
-      logger.error('[Billing] Recognize revenue error:', error);
-      return res.status(500).json({ error: 'Failed to recognize revenue' });
-    }
+    return res.status(503).json({
+      success: false,
+      error: 'Revenue recognition (ASC 606) recognize is not available (no real implementation)',
+    });
   })
 );
 
@@ -4050,42 +3945,17 @@ router.get(
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
-      // Generate demo forecasts
-      const forecasts = [];
-      const methods = ['linear', 'exponential', 'moving_average', 'ml_based'];
-      const types = ['monthly', 'quarterly', 'yearly'];
-
-      for (let i = 0; i < 8; i++) {
-        const method = methods[i % methods.length];
-        const forecastType = types[i % types.length];
-        const baseAmount = 50000 + Math.random() * 50000;
-
-        const startDate = new Date();
-        startDate.setMonth(startDate.getMonth() + Math.floor(i / 2));
-
-        const endDate = new Date(startDate);
-        if (forecastType === 'monthly') endDate.setMonth(endDate.getMonth() + 1);
-        else if (forecastType === 'quarterly') endDate.setMonth(endDate.getMonth() + 3);
-        else endDate.setFullYear(endDate.getFullYear() + 1);
-
-        forecasts.push({
-          id: `forecast-${i + 1}`,
-          forecast_type: forecastType,
-          period_start: startDate.toISOString(),
-          period_end: endDate.toISOString(),
-          forecasted_amount: Math.round(baseAmount * (1 + i * 0.05)),
-          currency: 'USD',
-          confidence_level: 0.6 + Math.random() * 0.35,
-          method,
-          input_data_json: JSON.stringify({ historical_periods: 12, data_points: 365 }),
-          created_at: new Date(Date.now() - i * 7 * 24 * 60 * 60 * 1000).toISOString(),
-          updated_at: new Date(Date.now() - i * 7 * 24 * 60 * 60 * 1000).toISOString(),
-        });
-      }
-
-      return res.json(forecasts);
+      const forecasts = await dbAll(
+        `SELECT * FROM revenue_forecasts ORDER BY forecast_date DESC LIMIT 100`,
+        [],
+        { fallback: false }
+      );
+      return res.json(forecasts || []);
     } catch (error: any) {
       logger.error('[Billing] Get revenue forecasts error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Revenue forecasts');
+      }
       return res.status(500).json({ error: 'Failed to get revenue forecasts' });
     }
   })
@@ -4097,23 +3967,9 @@ router.get(
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    try {
-      return res.json({
-        totalForecasts: 8,
-        averageConfidence: 0.78,
-        nextQuarterForecast: 175000,
-        yearlyForecast: 720000,
-        forecastMethods: [
-          { method: 'linear', count: 2 },
-          { method: 'exponential', count: 2 },
-          { method: 'moving_average', count: 2 },
-          { method: 'ml_based', count: 2 },
-        ],
-      });
-    } catch (error: any) {
-      logger.error('[Billing] Get forecast stats error:', error);
-      return res.status(500).json({ error: 'Failed to get forecast statistics' });
-    }
+    return res.status(503).json({
+      error: 'Revenue forecast statistics are not available (no real implementation)',
+    });
   })
 );
 
@@ -4123,37 +3979,10 @@ router.post(
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    try {
-      const { forecastType, periodMonths, method } = req.body;
-      const id = uuidv4();
-
-      const startDate = new Date();
-      const endDate = new Date();
-      endDate.setMonth(endDate.getMonth() + (periodMonths || 3));
-
-      const baseAmount = 50000;
-      const growth = method === 'exponential' ? 1.15 : 1.05;
-      const forecastedAmount = Math.round(baseAmount * Math.pow(growth, periodMonths || 3));
-
-      return res.json({
-        success: true,
-        id,
-        forecast: {
-          id,
-          forecast_type: forecastType || 'quarterly',
-          period_start: startDate.toISOString(),
-          period_end: endDate.toISOString(),
-          forecasted_amount: forecastedAmount,
-          currency: 'USD',
-          confidence_level: 0.75 + Math.random() * 0.2,
-          method: method || 'linear',
-          created_at: new Date().toISOString(),
-        },
-      });
-    } catch (error: any) {
-      logger.error('[Billing] Generate forecast error:', error);
-      return res.status(500).json({ error: 'Failed to generate forecast' });
-    }
+    return res.status(503).json({
+      success: false,
+      error: 'Revenue forecast generation is not available (no real implementation)',
+    });
   })
 );
 
@@ -4165,9 +3994,20 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
-      return res.json({ success: true, message: `Forecast ${id} deleted` });
+      const result = await dbRun(`DELETE FROM revenue_forecasts WHERE id = ?`, [id], {
+        fallback: false,
+      });
+
+      if (!result?.changes) {
+        return res.status(404).json({ success: false, error: 'Forecast not found' });
+      }
+
+      return res.json({ success: true });
     } catch (error: any) {
       logger.error('[Billing] Delete forecast error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Revenue forecast delete');
+      }
       return res.status(500).json({ error: 'Failed to delete forecast' });
     }
   })
@@ -4368,16 +4208,13 @@ router.get(
       query += ` ORDER BY sc.created_at DESC LIMIT ? OFFSET ?`;
       params.push(parseInt(limit as string), parseInt(offset as string));
 
-      const changes = await dbAll(query, params);
-
-      // If no real data, return demo data
-      if (!changes || changes.length === 0) {
-        return res.json(generateDemoSubscriptionChanges());
-      }
-
-      return res.json(changes);
+      const changes = await dbAll(query, params, { fallback: false });
+      return res.json(changes || []);
     } catch (error: any) {
       logger.error('[Billing] Subscription changes error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Subscription changes');
+      }
       return res.status(500).json({ error: 'Failed to get subscription changes' });
     }
   })
@@ -4393,32 +4230,39 @@ router.get(
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
-      const stats = (await dbGet(`
-                SELECT 
-                    COUNT(*) as total,
-                    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
-                    SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
-                    SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected,
-                    SUM(CASE WHEN change_type = 'upgrade' THEN 1 ELSE 0 END) as upgrades,
-                    SUM(CASE WHEN change_type = 'downgrade' THEN 1 ELSE 0 END) as downgrades,
-                    SUM(CASE WHEN change_type = 'cancel' THEN 1 ELSE 0 END) as cancellations,
-                    SUM(COALESCE(proration_amount, 0)) as total_proration
-                FROM subscription_changes
-                WHERE created_at >= date('now', '-30 days')
-            `)) as any;
+      const stats = (await dbGet(
+        `
+	                SELECT 
+	                    COUNT(*) as total,
+	                    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+	                    SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
+	                    SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected,
+	                    SUM(CASE WHEN change_type = 'upgrade' THEN 1 ELSE 0 END) as upgrades,
+	                    SUM(CASE WHEN change_type = 'downgrade' THEN 1 ELSE 0 END) as downgrades,
+	                    SUM(CASE WHEN change_type = 'cancel' THEN 1 ELSE 0 END) as cancellations,
+	                    SUM(COALESCE(proration_amount, 0)) as total_proration
+	                FROM subscription_changes
+	                WHERE created_at >= date('now', '-30 days')
+	            `,
+        [],
+        { fallback: false }
+      )) as any;
 
       return res.json({
-        total: stats?.total || 12,
-        pending: stats?.pending || 3,
-        approved: stats?.approved || 7,
-        rejected: stats?.rejected || 2,
-        upgrades: stats?.upgrades || 5,
-        downgrades: stats?.downgrades || 4,
-        cancellations: stats?.cancellations || 3,
-        totalProration: stats?.total_proration || 450.0,
+        total: Number(stats?.total || 0),
+        pending: Number(stats?.pending || 0),
+        approved: Number(stats?.approved || 0),
+        rejected: Number(stats?.rejected || 0),
+        upgrades: Number(stats?.upgrades || 0),
+        downgrades: Number(stats?.downgrades || 0),
+        cancellations: Number(stats?.cancellations || 0),
+        totalProration: Number(stats?.total_proration || 0),
       });
     } catch (error: any) {
       logger.error('[Billing] Subscription change stats error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Subscription change stats');
+      }
       return res.status(500).json({ error: 'Failed to get subscription change stats' });
     }
   })
@@ -4526,16 +4370,13 @@ router.get(
       query += ` ORDER BY rr.recognition_date DESC LIMIT ? OFFSET ?`;
       params.push(parseInt(limit as string), parseInt(offset as string));
 
-      const recognitions = await dbAll(query, params);
-
-      // If no real data, return demo data
-      if (!recognitions || recognitions.length === 0) {
-        return res.json(generateDemoRevenueRecognitions());
-      }
-
-      return res.json(recognitions);
+      const recognitions = await dbAll(query, params, { fallback: false });
+      return res.json(recognitions || []);
     } catch (error: any) {
       logger.error('[Billing] Revenue recognition error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Revenue recognition');
+      }
       return res.status(500).json({ error: 'Failed to get revenue recognitions' });
     }
   })
@@ -4551,28 +4392,36 @@ router.get(
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
-      const stats = (await dbGet(`
-                SELECT 
-                    COUNT(*) as total,
-                    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
-                    SUM(CASE WHEN status = 'recognized' THEN 1 ELSE 0 END) as recognized,
-                    SUM(CASE WHEN status = 'deferred' THEN 1 ELSE 0 END) as deferred,
-                    SUM(COALESCE(amount, 0)) as total_amount,
-                    SUM(CASE WHEN status = 'recognized' THEN COALESCE(amount, 0) ELSE 0 END) as recognized_amount
-                FROM revenue_recognition
-                WHERE recognition_date >= date('now', '-30 days')
-            `)) as any;
+      const stats = (await dbGet(
+        `
+	                SELECT 
+	                    COUNT(*) as total,
+	                    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+	                    SUM(CASE WHEN status = 'recognized' THEN 1 ELSE 0 END) as recognized,
+	                    SUM(CASE WHEN status = 'deferred' THEN 1 ELSE 0 END) as deferred,
+	                    SUM(COALESCE(amount, 0)) as total_amount,
+	                    SUM(CASE WHEN status = 'recognized' THEN COALESCE(amount, 0) ELSE 0 END) as recognized_amount
+	                FROM revenue_recognition
+	                WHERE recognition_date >= date('now', '-30 days')
+	            `,
+        [],
+        { fallback: false }
+      )) as any;
 
       return res.json({
-        total: stats?.total || 45,
-        pending: stats?.pending || 12,
-        recognized: stats?.recognized || 30,
-        deferred: stats?.deferred || 3,
-        totalAmount: stats?.total_amount || 125000,
-        recognizedAmount: stats?.recognized_amount || 98000,
+        total: Number(stats?.total || 0),
+        pending: Number(stats?.pending || 0),
+        recognized: Number(stats?.recognized || 0),
+        deferred: Number(stats?.deferred || 0),
+        totalAmount: Number(stats?.total_amount || 0),
+        recognizedAmount: Number(stats?.recognized_amount || 0),
+        remainingAmount: Number(stats?.total_amount || 0) - Number(stats?.recognized_amount || 0),
       });
     } catch (error: any) {
       logger.error('[Billing] Revenue recognition stats error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Revenue recognition stats');
+      }
       return res.status(500).json({ error: 'Failed to get revenue recognition stats' });
     }
   })
@@ -4672,16 +4521,13 @@ router.get(
       query += ` ORDER BY forecast_date DESC LIMIT ? OFFSET ?`;
       params.push(parseInt(limit as string), parseInt(offset as string));
 
-      const forecasts = await dbAll(query, params);
-
-      // If no real data, return demo data
-      if (!forecasts || forecasts.length === 0) {
-        return res.json(generateDemoRevenueForecasts());
-      }
-
-      return res.json(forecasts);
+      const forecasts = await dbAll(query, params, { fallback: false });
+      return res.json(forecasts || []);
     } catch (error: any) {
       logger.error('[Billing] Revenue forecast error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Revenue forecast');
+      }
       return res.status(500).json({ error: 'Failed to get revenue forecasts' });
     }
   })
@@ -4697,22 +4543,29 @@ router.get(
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
-      const stats = (await dbGet(`
-                SELECT 
-                    COUNT(*) as total,
-                    AVG(accuracy) as avg_accuracy,
-                    COUNT(DISTINCT scenario) as scenarios
-                FROM revenue_forecasts
-                WHERE created_at >= date('now', '-90 days')
-            `)) as any;
+      const stats = (await dbGet(
+        `
+	                SELECT 
+	                    COUNT(*) as total,
+	                    AVG(accuracy) as avg_accuracy,
+	                    COUNT(DISTINCT scenario) as scenarios
+	                FROM revenue_forecasts
+	                WHERE created_at >= date('now', '-90 days')
+	            `,
+        [],
+        { fallback: false }
+      )) as any;
 
       return res.json({
-        total: stats?.total || 12,
-        accuracy: Math.round((stats?.avg_accuracy || 87.5) * 10) / 10,
-        scenarios: stats?.scenarios || 3,
+        total: Number(stats?.total || 0),
+        accuracy: Math.round(Number(stats?.avg_accuracy || 0) * 10) / 10,
+        scenarios: Number(stats?.scenarios || 0),
       });
     } catch (error: any) {
       logger.error('[Billing] Revenue forecast stats error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Revenue forecast stats');
+      }
       return res.status(500).json({ error: 'Failed to get revenue forecast stats' });
     }
   })
@@ -4732,14 +4585,18 @@ router.post(
       const id = uuidv4();
 
       // Generate forecast data based on current MRR and growth assumptions
-      const currentMRR = (await dbGet(`
-                SELECT SUM(sp.price_monthly) as mrr
-                FROM subscriptions s
-                JOIN subscription_plans sp ON s.plan_id = sp.id
-                WHERE s.status = 'active'
-            `)) as any;
+      const currentMRR = (await dbGet(
+        `
+	                SELECT SUM(sp.price_monthly) as mrr
+	                FROM subscriptions s
+	                JOIN subscription_plans sp ON s.plan_id = sp.id
+	                WHERE s.status = 'active'
+	            `,
+        [],
+        { fallback: false }
+      )) as any;
 
-      const baseMRR = currentMRR?.mrr || 15000;
+      const baseMRR = Number(currentMRR?.mrr || 0);
       const growthRate = assumptions?.growthRate || 0.05; // 5% monthly default
       const churnRate = assumptions?.churnRate || 0.02; // 2% monthly default
 
@@ -4784,6 +4641,9 @@ router.post(
       return res.json({ id, forecast });
     } catch (error: any) {
       logger.error('[Billing] Generate revenue forecast error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Revenue forecast generation');
+      }
       return res.status(500).json({ error: 'Failed to generate revenue forecast' });
     }
   })
@@ -4808,96 +4668,5 @@ router.delete(
     }
   })
 );
-
-// Helper functions for demo data
-function generateDemoSubscriptionChanges() {
-  const changes = [];
-  const types = ['upgrade', 'downgrade', 'cancel', 'reactivate'];
-  const statuses = ['pending', 'approved', 'rejected', 'completed'];
-
-  for (let i = 0; i < 10; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() - i * 3);
-    changes.push({
-      id: `sc-${i + 1}`,
-      organization_id: `org-${i + 1}`,
-      organization_name: `Organization ${i + 1}`,
-      from_plan_id: 'plan-starter',
-      from_plan_name: 'Starter',
-      to_plan_id: 'plan-pro',
-      to_plan_name: 'Professional',
-      change_type: types[i % 4],
-      effective_date: date.toISOString(),
-      proration_amount: Math.round(Math.random() * 100),
-      status: statuses[i % 4],
-      approved_by: i % 2 === 0 ? 'admin-1' : null,
-      approved_at: i % 2 === 0 ? date.toISOString() : null,
-      created_at: date.toISOString(),
-      updated_at: date.toISOString(),
-    });
-  }
-  return changes;
-}
-
-function generateDemoRevenueRecognitions() {
-  const recognitions = [];
-  const statuses = ['pending', 'recognized', 'deferred'];
-
-  for (let i = 0; i < 15; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() - i * 2);
-    recognitions.push({
-      id: `rr-${i + 1}`,
-      organization_id: `org-${(i % 5) + 1}`,
-      organization_name: `Organization ${(i % 5) + 1}`,
-      invoice_id: `inv-${i + 100}`,
-      invoice_number: `INV-2026-${String(i + 100).padStart(4, '0')}`,
-      amount: Math.round(500 + Math.random() * 2000),
-      recognition_date: date.toISOString().split('T')[0],
-      description: `Monthly subscription revenue - Period ${i + 1}`,
-      status: statuses[i % 3],
-      recognized_at: statuses[i % 3] === 'recognized' ? date.toISOString() : null,
-      created_at: date.toISOString(),
-      updated_at: date.toISOString(),
-    });
-  }
-  return recognitions;
-}
-
-function generateDemoRevenueForecasts() {
-  const forecasts = [];
-  const scenarios = ['baseline', 'optimistic', 'conservative'];
-
-  for (let s = 0; s < 3; s++) {
-    const scenario = scenarios[s];
-    const baseMRR = 15000;
-    const growthRate = scenario === 'optimistic' ? 0.08 : scenario === 'conservative' ? 0.02 : 0.05;
-
-    const forecastData = [];
-    let mrr = baseMRR;
-
-    for (let m = 1; m <= 12; m++) {
-      const date = new Date();
-      date.setMonth(date.getMonth() + m);
-      mrr = mrr * (1 + growthRate);
-      forecastData.push({
-        month: date.toISOString().slice(0, 7),
-        projected_mrr: Math.round(mrr),
-        projected_arr: Math.round(mrr * 12),
-      });
-    }
-
-    forecasts.push({
-      id: `forecast-${s + 1}`,
-      scenario,
-      forecast_date: new Date().toISOString(),
-      forecast_data: JSON.stringify(forecastData),
-      assumptions: JSON.stringify({ growthRate, churnRate: 0.02 }),
-      accuracy: 85 + Math.random() * 10,
-      created_at: new Date().toISOString(),
-    });
-  }
-  return forecasts;
-}
 
 export default router;

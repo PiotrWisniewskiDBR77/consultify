@@ -6,12 +6,14 @@
  * - en → AI requests send language: "en"
  *
  * We make this deterministic by:
- * - authenticating via /api/auth/demo-login
+ * - authenticating via test-support bootstrap
  * - creating a project + initiative via authenticated API
  * - intercepting backend endpoints and asserting request body.language
  */
 
 import { expect, Page, test } from '@playwright/test';
+
+import { readTestSupportState } from '../_helpers/testSupportState';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 
@@ -41,51 +43,6 @@ async function dismissTourModal(page: Page) {
     if (!stillVisible) return;
     await page.waitForTimeout(200);
   }
-}
-
-async function demoLogin(page: Page): Promise<{ token: string; userId: string }> {
-  const response = await page.request.post(`${API_BASE_URL}/api/auth/demo-login`);
-  if (!response.ok()) {
-    const bodyText = await response.text().catch(() => '<unreadable>');
-    throw new Error(`Demo login failed: ${response.status()} ${response.statusText()} ${bodyText}`);
-  }
-  const data = await response.json();
-  const userId = String(data?.user?.id || '');
-  if (!userId) throw new Error('Demo login missing user id');
-
-  await page.addInitScript(
-    ({ token, refreshToken }) => {
-      localStorage.setItem('token', token);
-      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-      sessionStorage.setItem('isDemo', 'true');
-
-      // Make demo deterministic: suppress welcome tour / overlays (DemoSessionManager).
-      try {
-        localStorage.setItem(
-          'consultinity_demo_session',
-          JSON.stringify({
-            sessionId: 'e2e',
-            startTime: new Date().toISOString(),
-            hasCompletedTour: true,
-            hasSeenWelcome: true,
-            hasInteractedWithAI: false,
-            aiInteractionsUsed: 0,
-            featuresExplored: [],
-            upgradePromptsShown: 0,
-            exitIntentTriggered: false,
-            milestones: [],
-          })
-        );
-      } catch {
-        // ignore storage failures
-      }
-    },
-    { token: data.token, refreshToken: data.refreshToken }
-  );
-
-  await page.goto('/dashboard');
-  await dismissTourModal(page);
-  return { token: data.token, userId };
 }
 
 async function getFirstProjectId(page: Page, token: string): Promise<string> {
@@ -150,7 +107,9 @@ test.describe('Initiatives — AI language payload (smoke)', () => {
     test.use({ locale: 'pl-PL' });
 
     test('Comments AI refine-text sends correct language (pl)', async ({ page }) => {
-      const { token, userId } = await demoLogin(page);
+      const { token, userId } = readTestSupportState();
+      await page.goto('/dashboard');
+      await dismissTourModal(page);
       const projectId = await getFirstProjectId(page, token);
       const initiativeId = await createInitiative(page, token, userId, projectId);
 
@@ -191,7 +150,9 @@ test.describe('Initiatives — AI language payload (smoke)', () => {
     test.use({ locale: 'en-US' });
 
     test('Team analyze refine-text sends correct language (en)', async ({ page }) => {
-      const { token, userId } = await demoLogin(page);
+      const { token, userId } = readTestSupportState();
+      await page.goto('/dashboard');
+      await dismissTourModal(page);
       const projectId = await getFirstProjectId(page, token);
       const initiativeId = await createInitiative(page, token, userId, projectId);
 

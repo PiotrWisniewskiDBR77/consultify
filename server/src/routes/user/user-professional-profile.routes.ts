@@ -11,8 +11,11 @@ const router = Router();
 
 // Stub for missing JS routes
 router.use((req, res) => {
-  logger.warn(`[user-professional-profile] Route not implemented (stubbed)`);
-  res.status(501).json({ error: 'Not implemented: Route handler missing' });
+  logger.warn(`[user-professional-profile] Route unavailable (no real implementation)`);
+  res.status(503).json({
+    success: false,
+    error: 'User professional profile is not available (no real implementation)',
+  });
 });
 
 export default router;

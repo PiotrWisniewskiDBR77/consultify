@@ -7,12 +7,49 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
-import PDFDocument from 'pdfkit';
-import PptxGenJS from 'pptxgenjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import managementReportRepository from '../repositories/ManagementReportRepository.js';
 import { all, get, run } from '../utils/DbPromise.js';
+
+type ExportDeps = {
+  PDFDocument: any | null;
+  PptxGenJS: any | null;
+};
+
+let exportDepsPromise: Promise<ExportDeps> | null = null;
+async function loadExportDeps(): Promise<ExportDeps> {
+  if (exportDepsPromise) return exportDepsPromise;
+  exportDepsPromise = (async () => {
+    let PDFDocument: any | null = null;
+    let PptxGenJS: any | null = null;
+
+    try {
+      const mod = await import('pdfkit');
+      PDFDocument = (mod as any).default || mod;
+    } catch {
+      PDFDocument = null;
+    }
+
+    try {
+      const mod = await import('pptxgenjs');
+      PptxGenJS = (mod as any).default || mod;
+    } catch {
+      PptxGenJS = null;
+    }
+
+    return { PDFDocument, PptxGenJS };
+  })();
+  return exportDepsPromise;
+}
+
+function dependencyMissing(dep: 'pdfkit' | 'pptxgenjs'): Error {
+  const err = new Error(`Dependency missing: ${dep}`);
+  (err as any).code = 'DEPENDENCY_MISSING';
+  (err as any).dependency = dep;
+  (err as any).status = 503;
+  return err;
+}
 
 const DEFAULT_PERIODS: Record<string, number> = {
   TEAM_MEETING: 7,
@@ -81,6 +118,9 @@ class ManagementReportsService {
   }
 
   private async writePdfReport(report: any, filePath: string): Promise<void> {
+    const { PDFDocument } = await loadExportDeps();
+    if (!PDFDocument) throw dependencyMissing('pdfkit');
+
     const doc = new PDFDocument({ margin: 48 });
     const stream = fs.createWriteStream(filePath);
     doc.pipe(stream);
@@ -122,6 +162,9 @@ class ManagementReportsService {
   }
 
   private async writePptxReport(report: any, filePath: string): Promise<void> {
+    const { PptxGenJS } = await loadExportDeps();
+    if (!PptxGenJS) throw dependencyMissing('pptxgenjs');
+
     const pptx = new PptxGenJS();
     pptx.layout = 'LAYOUT_WIDE';
 
@@ -1071,9 +1114,19 @@ class ManagementReportsService {
   }
 
   async generateExport(reportId, format, userId) {
+    // Make exports deterministic: fail fast if runtime dependencies are missing.
+    if (format === 'pdf' || format === 'pptx') {
+      const deps = await loadExportDeps();
+      if (format === 'pdf' && !deps.PDFDocument) throw dependencyMissing('pdfkit');
+      if (format === 'pptx' && !deps.PptxGenJS) throw dependencyMissing('pptxgenjs');
+    }
+
     const report = await this.getReport(reportId);
     if (!report) {
-      throw new Error('Report not found');
+      const err = new Error('Report not found');
+      (err as any).code = 'NOT_FOUND';
+      (err as any).status = 404;
+      throw err;
     }
 
     const exportDir = await this.ensureExportDir();
