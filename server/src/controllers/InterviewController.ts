@@ -166,11 +166,15 @@ async function resolveValidProjectId(params: {
   const { organizationId } = params;
   const raw = String(params.projectId || '').trim();
   if (raw) {
-    const p = await queryHelpers.queryOne(
-      `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
-      [raw, organizationId]
-    );
-    if (p?.id) return String(p.id);
+    try {
+      const p = await queryHelpers.queryOne(
+        `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+        [raw, organizationId]
+      );
+      if (p?.id) return String(p.id);
+    } catch {
+      // ignore; fallback below
+    }
   }
   // Fallback to first project in org (prevents SQLITE_CONSTRAINT on NOT NULL/FK)
   let first: any;
@@ -180,10 +184,14 @@ async function resolveValidProjectId(params: {
       [organizationId]
     );
   } catch {
-    first = await queryHelpers.queryOne(
-      `SELECT id FROM projects WHERE organization_id = ? ORDER BY id ASC LIMIT 1`,
-      [organizationId]
-    );
+    try {
+      first = await queryHelpers.queryOne(
+        `SELECT id FROM projects WHERE organization_id = ? ORDER BY id ASC LIMIT 1`,
+        [organizationId]
+      );
+    } catch {
+      return null;
+    }
   }
   return first?.id ? String(first.id) : null;
 }
