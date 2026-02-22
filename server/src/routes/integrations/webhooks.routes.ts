@@ -15,6 +15,26 @@ interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
 }
 
+let webhookEventsTableEnsured = false;
+async function ensureWebhookEventsTable(): Promise<void> {
+  if (webhookEventsTableEnsured) return;
+  await dbRun(`
+    CREATE TABLE IF NOT EXISTS webhook_events (
+      id TEXT PRIMARY KEY,
+      provider TEXT NOT NULL,
+      event_type TEXT NOT NULL,
+      payload JSON,
+      processed INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await dbRun(`CREATE INDEX IF NOT EXISTS idx_webhook_events_provider ON webhook_events(provider)`);
+  await dbRun(
+    `CREATE INDEX IF NOT EXISTS idx_webhook_events_created_at ON webhook_events(created_at)`
+  );
+  webhookEventsTableEnsured = true;
+}
+
 // Canonical Stripe webhook handler (signature-verified + idempotent).
 router.use(stripeWebhookRoutes);
 
@@ -22,6 +42,7 @@ router.use(stripeWebhookRoutes);
 router.post(
   '/github',
   asyncHandler(async (req: Request, res: Response) => {
+    await ensureWebhookEventsTable();
     const event = req.headers['x-github-event'] as string;
     logger.info(`[Webhook] GitHub event: ${event}`);
     await dbRun(
@@ -127,6 +148,7 @@ router.post(
 router.post(
   '/:provider',
   asyncHandler(async (req: Request, res: Response) => {
+    await ensureWebhookEventsTable();
     const { provider } = req.params;
     logger.info(`[Webhook] ${provider} event received`);
     await dbRun(
@@ -143,6 +165,7 @@ router.get(
   verifyToken,
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureWebhookEventsTable();
     const events = await dbAll(`SELECT id, provider, event_type, processed, created_at
     FROM webhook_events ORDER BY created_at DESC LIMIT 100`);
     res.json(events || []);
