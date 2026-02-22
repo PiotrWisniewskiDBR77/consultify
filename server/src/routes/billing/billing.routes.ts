@@ -1250,10 +1250,16 @@ router.get(
   '/usage',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const empty = {
+      usage: [] as unknown[],
+      structuredUsage: {} as Record<string, unknown>,
+      totals: [] as unknown[],
+      data: null as unknown,
+    };
     try {
       const orgId = req.user?.organizationId;
       if (!orgId) {
-        return res.json({ data: null });
+        return res.json(empty);
       }
 
       let accessPolicyService: any = null;
@@ -1267,34 +1273,38 @@ router.get(
       if (accessPolicyService?.buildPolicySnapshot) {
         const snapshot = await accessPolicyService.buildPolicySnapshot(orgId);
         if (snapshot) {
-          return res.json({
-            data: {
-              users: {
-                used: snapshot.usageToday.users,
-                limit: snapshot.limits?.maxUsers ?? -1,
-              },
-              projects: {
-                used: snapshot.usageToday.projects,
-                limit: snapshot.limits?.maxProjects ?? -1,
-              },
-              storage: {
-                used: snapshot.usageToday.storageMb,
-                limit: snapshot.limits?.maxStorageMb ?? -1,
-                unit: 'MB',
-              },
-              aiTokens: {
-                used: snapshot.usageToday.tokensUsed,
-                limit: snapshot.limits?.maxTotalTokens ?? -1,
-              },
+          const data = {
+            users: {
+              used: snapshot.usageToday.users,
+              limit: snapshot.limits?.maxUsers ?? -1,
             },
+            projects: {
+              used: snapshot.usageToday.projects,
+              limit: snapshot.limits?.maxProjects ?? -1,
+            },
+            storage: {
+              used: snapshot.usageToday.storageMb,
+              limit: snapshot.limits?.maxStorageMb ?? -1,
+              unit: 'MB',
+            },
+            aiTokens: {
+              used: snapshot.usageToday.tokensUsed,
+              limit: snapshot.limits?.maxTotalTokens ?? -1,
+            },
+          };
+          return res.json({
+            usage: [],
+            structuredUsage: data,
+            totals: [],
+            data,
           });
         }
       }
 
-      return res.json({ data: null });
+      return res.json(empty);
     } catch (error: any) {
       logger.error('[Billing] Usage fetch error:', error);
-      return res.json({ data: null });
+      return res.json(empty);
     }
   })
 );
