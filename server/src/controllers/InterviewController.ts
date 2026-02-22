@@ -471,7 +471,7 @@ export const InterviewController = {
       `INSERT INTO interview_sessions
        (id, organization_id, project_id, name, owner_id, status, progress_json,
         started_at, last_activity_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         user.organizationId,

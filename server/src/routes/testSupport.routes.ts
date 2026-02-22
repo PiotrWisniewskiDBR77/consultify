@@ -43,6 +43,112 @@ async function ensureRunsTable() {
   `);
 }
 
+function isPostgres(): boolean {
+  return (
+    process.env.DB_TYPE === 'postgres' ||
+    (!process.env.DB_TYPE && process.env.DATABASE_URL?.startsWith('postgres'))
+  );
+}
+
+async function ensureWs4SqliteSchema(): Promise<void> {
+  if (isPostgres()) return;
+
+  await DbPromise.exec(`
+    CREATE TABLE IF NOT EXISTS initiative_kpis (
+      id TEXT PRIMARY KEY,
+      initiative_id TEXT,
+      organization_id TEXT,
+      name TEXT,
+      description TEXT,
+      category TEXT,
+      unit TEXT,
+      baseline_value REAL,
+      target_value REAL,
+      current_value REAL,
+      progress_percentage REAL,
+      status TEXT,
+      measurement_frequency TEXT,
+      trend_data TEXT,
+      created_at TEXT,
+      updated_at TEXT
+    );
+  `);
+
+  await DbPromise.exec(`
+    CREATE TABLE IF NOT EXISTS kpi_time_series (
+      id TEXT PRIMARY KEY,
+      kpi_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      value REAL NOT NULL,
+      period_start TEXT NOT NULL,
+      period_end TEXT,
+      source TEXT,
+      notes TEXT,
+      recorded_by TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await DbPromise.exec(`
+    CREATE TABLE IF NOT EXISTS initiative_kpi_mappings (
+      id TEXT PRIMARY KEY,
+      initiative_id TEXT NOT NULL,
+      kpi_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      impact_weight REAL,
+      impact_direction TEXT,
+      expected_delta REAL,
+      expected_delta_unit TEXT,
+      lag_days INTEGER,
+      confidence TEXT,
+      notes TEXT,
+      created_by TEXT,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(initiative_id, kpi_id)
+    );
+  `);
+
+  await DbPromise.exec(`
+    CREATE TABLE IF NOT EXISTS roi_assumptions (
+      id TEXT PRIMARY KEY,
+      initiative_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      capex REAL,
+      opex_annual REAL,
+      expected_roi_percent REAL,
+      expected_npv REAL,
+      expected_payback_months INTEGER,
+      horizon_months INTEGER,
+      baseline_revenue REAL,
+      baseline_cost REAL,
+      expected_revenue_delta REAL,
+      expected_cost_delta REAL,
+      effect_start_date TEXT,
+      assumptions_text TEXT,
+      assumptions_owner TEXT,
+      confidence TEXT,
+      last_updated_by TEXT,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(initiative_id)
+    );
+  `);
+
+  await DbPromise.exec(`
+    CREATE TABLE IF NOT EXISTS budgets (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL,
+      project_id TEXT,
+      category TEXT,
+      planned_amount REAL,
+      actual_amount REAL,
+      currency TEXT,
+      period_start TEXT,
+      period_end TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+}
+
 async function listTables(): Promise<string[]> {
   const isPg =
     process.env.DB_TYPE === 'postgres' ||
@@ -140,6 +246,8 @@ router.post(
       userId = uuidv4();
       const memberId = uuidv4();
       const email = `e2e+${runId.replace(/[^a-zA-Z0-9_.-]/g, '-')}`.slice(0, 64) + '@local.test';
+
+      await ensureWs4SqliteSchema();
 
       await DbPromise.run(
         `INSERT INTO organizations (id, name, plan, status, is_active)

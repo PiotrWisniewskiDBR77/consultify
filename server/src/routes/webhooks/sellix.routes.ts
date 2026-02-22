@@ -43,7 +43,7 @@ router.post(
       return res.status(400).json({ error: 'Missing signature headers' });
     }
 
-    const ok = verifySellixInboundSignature({ timestamp, rawBody: raw, signature });
+    const ok = await verifySellixInboundSignature({ timestamp, rawBody: raw, signature });
     if (!ok) return res.status(401).json({ error: 'Invalid signature' });
 
     let body: any;

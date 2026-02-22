@@ -121,13 +121,21 @@ test.describe('L4 Smoke — deploy gate API (billing)', () => {
     const res = await request.get(`${API_BASE_URL}/api/billing/usage`, { headers: authHeaders(token) });
     await assertOk(res, 'GET /api/billing/usage');
     const data = await res.json().catch(() => null);
-    expect(data).toEqual(
-      expect.objectContaining({
-        usage: expect.any(Array),
-        structuredUsage: expect.any(Object),
-        totals: expect.any(Array),
-      })
-    );
+    expect(data).toEqual(expect.objectContaining({ data: expect.anything() }));
+    if (data?.data) {
+      expect(data.data).toEqual(
+        expect.objectContaining({
+          users: expect.objectContaining({ used: expect.any(Number), limit: expect.any(Number) }),
+          projects: expect.objectContaining({ used: expect.any(Number), limit: expect.any(Number) }),
+          storage: expect.objectContaining({
+            used: expect.any(Number),
+            limit: expect.any(Number),
+            unit: expect.any(String),
+          }),
+          aiTokens: expect.objectContaining({ used: expect.any(Number), limit: expect.any(Number) }),
+        })
+      );
+    }
   });
 
   test('POST /api/billing/usage records usage metric', async ({ request }) => {
@@ -148,7 +156,7 @@ test.describe('L4 Smoke — deploy gate API (billing)', () => {
     });
     await assertOk(res, 'GET /api/billing/usage?metric=e2e_smoke');
     const data = await res.json().catch(() => null);
-    expect(Array.isArray(data?.usage)).toBeTruthy();
+    expect(data).toEqual(expect.objectContaining({ data: expect.anything() }));
   });
 
   test('GET /api/billing/spending-alerts returns array', async ({ request }) => {
