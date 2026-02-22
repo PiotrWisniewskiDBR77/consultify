@@ -88,7 +88,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       setPageProjectId('');
       return;
     }
-    editor.commands.setContent(activePage.contentJson || { type: 'doc', content: [] }, { emitUpdate: false });
+    editor.commands.setContent(activePage.contentJson || { type: 'doc', content: [] }, {
+      emitUpdate: false,
+    });
     setTitle(activePage.title || '');
     setPageProjectId(activePage.projectId || '');
   }, [activePage?.id, editor]); // eslint-disable-line react-hooks/exhaustive-deps
