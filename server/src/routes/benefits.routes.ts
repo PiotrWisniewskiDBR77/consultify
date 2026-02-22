@@ -369,11 +369,16 @@ router.get(
   '/attribution/:kpiId',
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
-    const { kpiId } = req.params;
+    const kpiId = String(req.params.kpiId);
+    const firstQueryValue = (value: unknown): string | undefined => {
+      if (Array.isArray(value)) return typeof value[0] === 'string' ? value[0] : undefined;
+      return typeof value === 'string' ? value : undefined;
+    };
     const periodStart =
-      (req.query.periodStart as string) ||
+      firstQueryValue(req.query.periodStart) ||
       new Date(Date.now() - 180 * 86400000).toISOString().slice(0, 10);
-    const periodEnd = (req.query.periodEnd as string) || new Date().toISOString().slice(0, 10);
+    const periodEnd =
+      firstQueryValue(req.query.periodEnd) || new Date().toISOString().slice(0, 10);
     const result = await computeAttribution(kpiId, orgId, periodStart, periodEnd);
     res.json({ success: true, data: result });
   })
@@ -383,9 +388,9 @@ router.post(
   '/attribution/:kpiId/snapshot',
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
-    const { kpiId } = req.params;
+    const kpiId = String(req.params.kpiId);
     const { periodStart, periodEnd } = req.body;
-    const result = await computeAttribution(kpiId, orgId, periodStart, periodEnd);
+    const result = await computeAttribution(kpiId, orgId, String(periodStart), String(periodEnd));
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
       `INSERT INTO kpi_attribution_snapshots (id, kpi_id, organization_id, period_start, period_end, kpi_delta, contributions, unexplained_remainder, unexplained_percent, overall_confidence, confidence_reasons, assumptions, algorithm_version, computed_by)
@@ -394,8 +399,8 @@ router.post(
         id,
         kpiId,
         orgId,
-        periodStart,
-        periodEnd,
+        String(periodStart),
+        String(periodEnd),
         result.kpiDelta,
         JSON.stringify(result.contributions),
         result.unexplainedRemainder,

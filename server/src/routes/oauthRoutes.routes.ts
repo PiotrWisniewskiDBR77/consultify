@@ -26,7 +26,7 @@ async function logSecurityEvent(event: {
   details?: Record<string, unknown>;
 }): Promise<void> {
   try {
-    const { securityService } = await import('../services/securityService.js');
+    const securityService = (await import('../services/securityService.js')).default as any;
     await securityService.logSecurityEvent(event);
   } catch (err) {
     logger.warn(`[OAuth] Failed to log security event: ${err}`);

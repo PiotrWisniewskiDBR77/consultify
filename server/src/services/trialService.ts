@@ -68,7 +68,7 @@ async function getNotificationService(): Promise<NotificationService | null> {
   if (notificationService) return notificationService;
   try {
     const mod = await import('./notificationService.js');
-    notificationService = (mod.default || mod) as NotificationService;
+    notificationService = (mod.default || mod) as unknown as NotificationService;
     return notificationService;
   } catch {
     logger.warn('[TrialService] NotificationService not available');
@@ -80,7 +80,7 @@ async function getAuditService(): Promise<AuditService | null> {
   if (auditService) return auditService;
   try {
     const mod = await import('./auditService.js');
-    auditService = (mod.default || mod) as AuditService;
+    auditService = (mod.default || mod) as unknown as AuditService;
     return auditService;
   } catch {
     logger.warn('[TrialService] AuditService not available');

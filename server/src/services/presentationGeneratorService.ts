@@ -265,7 +265,6 @@ function buildSlideContent(
         content: {
           type: 'initiative_portfolio',
           initiatives: artifactData._initiatives || [],
-          summary: artifactData._portfolioSummary,
         },
       };
 
@@ -322,10 +321,10 @@ function buildSlideContent(
           item.keyMessage || (isPl ? 'Wyniki oceny dojrzałości' : 'Maturity assessment results'),
         content: {
           type: 'assessment',
-          framework: artifactData._framework || 'DRD',
+          matrix_type: 'maturity',
+          axes: [],
+          scale_max: artifactData._maxScore || 5,
           overall_score: artifactData._overallScore || 0,
-          max_score: artifactData._maxScore || 5,
-          categories: artifactData._categories || [],
         },
       };
 
@@ -335,8 +334,10 @@ function buildSlideContent(
         key_message: item.keyMessage || (isPl ? 'Analiza porównawcza' : 'Comparative analysis'),
         content: {
           type: 'comparison',
-          items: artifactData._comparisonItems || [],
-          chart_type: 'bar',
+          left_label: isPl ? 'Opcja A' : 'Option A',
+          right_label: isPl ? 'Opcja B' : 'Option B',
+          left_items: (artifactData._comparisonItems || []).map((i: any) => String(i?.left || i)),
+          right_items: (artifactData._comparisonItems || []).map((i: any) => String(i?.right || i)),
         },
       };
 
@@ -360,7 +361,6 @@ function buildSlideContent(
               deadline: 'TBD',
             },
           ],
-          decisions: artifactData._decisions || [],
         },
       };
 
@@ -370,14 +370,10 @@ function buildSlideContent(
         key_message: 'Disclaimers & Methodology',
         content: {
           type: 'appendix',
-          sections: [
-            {
-              title: isPl ? 'Zastrzeżenia' : 'Disclaimers',
-              body: isPl
-                ? 'Niniejsza prezentacja została wygenerowana automatycznie na bazie danych z platformy. Wszystkie liczby oparte na zadeklarowanych założeniach.'
-                : 'This presentation was auto-generated from platform data. All figures are based on stated assumptions.',
-            },
-          ],
+          title: isPl ? 'Zastrzeżenia i metodologia' : 'Disclaimers & Methodology',
+          body: isPl
+            ? 'Niniejsza prezentacja została wygenerowana automatycznie na bazie danych z platformy. Wszystkie liczby oparte na zadeklarowanych założeniach.'
+            : 'This presentation was auto-generated from platform data. All figures are based on stated assumptions.',
         },
       };
 

@@ -472,7 +472,7 @@ export const AIAuthoringAuditRequestSchema = z.object({
   outputText: z.string().optional(),
   wasApplied: z.boolean(),
   wasUndone: z.boolean().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 // ── T033: AI Readiness Analysis ────────────────────────────────────

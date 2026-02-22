@@ -87,7 +87,7 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
   metrics.requests++;
   metrics.byMethod[req.method] = (metrics.byMethod[req.method] || 0) + 1;
 
-  const originalEnd = res.end;
+  const originalEnd = res.end.bind(res) as (...args: any[]) => any;
   (res as any).end = function (...args: any[]) {
     const duration = Date.now() - start;
     const status = res.statusCode;
@@ -103,7 +103,7 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
       }
     }
 
-    return originalEnd.apply(res, args);
+    return originalEnd(...args);
   };
 
   next();

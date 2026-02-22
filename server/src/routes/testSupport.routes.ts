@@ -46,7 +46,7 @@ async function ensureRunsTable() {
 function isPostgres(): boolean {
   return (
     process.env.DB_TYPE === 'postgres' ||
-    (!process.env.DB_TYPE && process.env.DATABASE_URL?.startsWith('postgres'))
+    (!process.env.DB_TYPE && !!process.env.DATABASE_URL?.startsWith('postgres'))
   );
 }
 

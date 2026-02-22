@@ -58,7 +58,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    const candidate = await cvService.getCandidate(req.params.candidateId, orgId);
+    const candidate = await cvService.getCandidate(String(req.params.candidateId), orgId);
     if (!candidate) return res.status(404).json({ error: 'Candidate not found' });
     res.json(candidate);
   })
@@ -80,7 +80,7 @@ router.post(
     }
 
     const docId = await cvService.uploadCV({
-      candidateId: req.params.candidateId,
+      candidateId: String(req.params.candidateId),
       organizationId: orgId,
       originalFilename: req.file.originalname,
       storedPath: req.file.path,
@@ -107,7 +107,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    const docs = await cvService.getCandidateDocuments(req.params.candidateId, orgId);
+    const docs = await cvService.getCandidateDocuments(String(req.params.candidateId), orgId);
     res.json(docs);
   })
 );
@@ -119,7 +119,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    const signals = await cvService.mapCompetencies(req.params.documentId, orgId);
+    const signals = await cvService.mapCompetencies(String(req.params.documentId), orgId);
     res.json({ success: true, signals });
   })
 );
@@ -129,7 +129,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    const signals = await cvService.getCandidateSignals(req.params.candidateId, orgId);
+    const signals = await cvService.getCandidateSignals(String(req.params.candidateId), orgId);
     res.json(signals);
   })
 );
@@ -140,7 +140,7 @@ router.put(
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const { overrideLevel } = req.body;
-    await cvService.approveSignal(req.params.signalId, orgId, req.user!.id, overrideLevel);
+    await cvService.approveSignal(String(req.params.signalId), orgId, req.user!.id, overrideLevel);
     res.json({ success: true });
   })
 );
@@ -150,7 +150,7 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    await cvService.rejectSignal(req.params.signalId, orgId);
+    await cvService.rejectSignal(String(req.params.signalId), orgId);
     res.json({ success: true });
   })
 );
@@ -162,7 +162,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    const results = await cvService.matchCandidatesToRequirements(orgId, req.params.initiativeId);
+    const results = await cvService.matchCandidatesToRequirements(orgId, String(req.params.initiativeId));
     res.json(results);
   })
 );
@@ -177,7 +177,7 @@ router.post(
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: 'userId is required' });
     const applied = await cvService.applyToUserProfile(
-      req.params.candidateId,
+      String(req.params.candidateId),
       orgId,
       userId,
       req.user!.id
@@ -193,7 +193,7 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    await cvService.deleteCV(req.params.documentId, orgId, req.user!.id);
+    await cvService.deleteCV(String(req.params.documentId), orgId, req.user!.id);
     res.json({ success: true });
   })
 );

@@ -108,18 +108,18 @@ const getDb = (): Database => {
 /**
  * Promise wrapper for db.all() - returns array of rows
  */
-export function all<T = unknown>(
+export function all<T = any>(
   sql: string,
   params?: unknown[],
   options?: QueryOptions
 ): Promise<T[]>;
-export function all<T = unknown>(
+export function all<T = any>(
   db: Database,
   sql: string,
   params?: unknown[],
   options?: QueryOptions
 ): Promise<T[]>;
-export function all<T = unknown>(
+export function all<T = any>(
   dbOrSql: Database | string,
   sqlOrParams?: string | unknown[],
   paramsOrOptions?: unknown[] | QueryOptions,
@@ -216,18 +216,18 @@ export function all<T = unknown>(
 /**
  * Promise wrapper for db.get() - returns single row
  */
-export function get<T = unknown>(
+export function get<T = any>(
   sql: string,
   params?: unknown[],
   options?: QueryOptions
 ): Promise<T | null>;
-export function get<T = unknown>(
+export function get<T = any>(
   db: Database,
   sql: string,
   params?: unknown[],
   options?: QueryOptions
 ): Promise<T | null>;
-export function get<T = unknown>(
+export function get<T = any>(
   dbOrSql: Database | string,
   sqlOrParams?: string | unknown[],
   paramsOrOptions?: unknown[] | QueryOptions,

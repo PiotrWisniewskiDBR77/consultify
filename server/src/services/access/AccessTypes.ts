@@ -30,7 +30,22 @@ export const DEFAULT_DEMO_LIMITS = {
   ai_roles_enabled_json: '["ADVISOR"]',
 } as const;
 
+export const DEFAULT_PAID_LIMITS = {
+  max_projects: 10000,
+  max_users: 10000,
+  max_ai_calls_per_day: 100000,
+  max_initiatives: 10000,
+  max_storage_mb: 102400,
+  max_total_tokens: 100000000,
+  ai_roles_enabled_json: '["ADVISOR","EXECUTOR","RESEARCHER"]',
+} as const;
+
 export const TRIAL_DURATION_DAYS = 14;
+
+export const TRIAL_WARNING_DAYS = {
+  WARNING: 7,
+  CRITICAL: 3,
+} as const;
 
 // Subscription statuses used across policy snapshots and banners.
 // Keep aligned with Stripe vocabulary where possible (e.g. `canceled`, `past_due`).

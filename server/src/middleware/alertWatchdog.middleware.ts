@@ -117,7 +117,7 @@ const alertWatchdog = (req: Request, res: Response, next: NextFunction): void =>
   const start = Date.now();
   totalRequests++;
 
-  const originalEnd = res.end;
+  const originalEnd = res.end.bind(res) as (...args: any[]) => any;
   (res as any).end = function (...args: any[]) {
     const duration = Date.now() - start;
     const statusCode = res.statusCode;
@@ -134,7 +134,7 @@ const alertWatchdog = (req: Request, res: Response, next: NextFunction): void =>
       }
     }
 
-    return originalEnd.apply(res, args);
+    return originalEnd(...args);
   };
 
   next();

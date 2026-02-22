@@ -17,7 +17,7 @@ function toLanguage(lang: unknown): PartnerResourceLanguage {
   return lang === 'pl' ? 'pl' : 'en';
 }
 
-async function renderPdfToBuffer(build: (doc: PDFDocument) => void): Promise<Buffer> {
+async function renderPdfToBuffer(build: (doc: InstanceType<typeof PDFDocument>) => void): Promise<Buffer> {
   const doc = new PDFDocument({ margin: 48, size: 'A4' });
   const stream = new PassThrough();
   const chunks: Buffer[] = [];
