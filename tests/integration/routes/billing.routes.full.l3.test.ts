@@ -198,14 +198,17 @@ describe('Billing routes integration (L3) - full', () => {
     await initializeDatabase();
     if ((db as any).initPromise) await (db as any).initPromise;
 
-    await dbRun(
-      `CREATE TABLE IF NOT EXISTS organizations (id TEXT PRIMARY KEY, name TEXT, plan TEXT, status TEXT, is_active INTEGER DEFAULT 1)`
-    );
-    await dbRun(
-      `CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, organization_id TEXT, email TEXT, password TEXT, role TEXT, status TEXT, first_name TEXT, last_name TEXT)`
-    );
-    await dbRun(
-      `CREATE TABLE IF NOT EXISTS organization_members (id TEXT PRIMARY KEY, organization_id TEXT, user_id TEXT, role TEXT, status TEXT)`
+	    await dbRun(
+	      `CREATE TABLE IF NOT EXISTS organizations (id TEXT PRIMARY KEY, name TEXT, plan TEXT, status TEXT, is_active INTEGER DEFAULT 1)`
+	    );
+	    await ensureSqliteColumn('organizations', 'token_balance', 'REAL');
+	    await ensureSqliteColumn('organizations', 'trial_tokens_used', 'INTEGER');
+	    await ensureSqliteColumn('organizations', 'trial_expires_at', 'TEXT');
+	    await dbRun(
+	      `CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, organization_id TEXT, email TEXT, password TEXT, role TEXT, status TEXT, first_name TEXT, last_name TEXT)`
+	    );
+	    await dbRun(
+	      `CREATE TABLE IF NOT EXISTS organization_members (id TEXT PRIMARY KEY, organization_id TEXT, user_id TEXT, role TEXT, status TEXT)`
     );
 
     await dbRun(
@@ -225,9 +228,11 @@ describe('Billing routes integration (L3) - full', () => {
         created_at TEXT DEFAULT (datetime('now')),
         updated_at TEXT DEFAULT (datetime('now'))
       )`
-    );
-    await ensureSqliteColumn('subscription_plans', 'token_overage_rate', 'REAL');
-    await ensureSqliteColumn('subscription_plans', 'storage_overage_rate', 'REAL');
+	    );
+	    await ensureSqliteColumn('subscription_plans', 'token_overage_rate', 'REAL');
+	    await ensureSqliteColumn('subscription_plans', 'storage_overage_rate', 'REAL');
+	    await ensureSqliteColumn('subscription_plans', 'token_limit', 'REAL');
+	    await ensureSqliteColumn('subscription_plans', 'storage_limit_gb', 'REAL');
 
     await dbRun(
       `CREATE TABLE IF NOT EXISTS subscriptions (
@@ -256,6 +261,23 @@ describe('Billing routes integration (L3) - full', () => {
         event_type TEXT,
         mrr_delta REAL DEFAULT 0,
         created_at TEXT DEFAULT (datetime('now'))
+      )`
+    );
+
+    await dbRun(
+      `CREATE TABLE IF NOT EXISTS organization_billing (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL UNIQUE,
+        subscription_plan_id TEXT,
+        stripe_customer_id TEXT,
+        stripe_subscription_id TEXT,
+        billing_email TEXT,
+        status TEXT,
+        current_period_start TEXT,
+        current_period_end TEXT,
+        grace_period_ends_at TEXT,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now'))
       )`
     );
 
@@ -323,18 +345,22 @@ describe('Billing routes integration (L3) - full', () => {
       )`
     );
 
-    await dbRun(
-      `CREATE TABLE IF NOT EXISTS usage_records (
-        id TEXT PRIMARY KEY,
-        organization_id TEXT NOT NULL,
-        user_id TEXT,
-        type TEXT NOT NULL,
-        amount INTEGER NOT NULL,
-        action TEXT,
-        metadata TEXT,
-        recorded_at TEXT DEFAULT (datetime('now'))
-      )`
-    );
+	    await dbRun(
+	      `CREATE TABLE IF NOT EXISTS usage_records (
+	        id TEXT PRIMARY KEY,
+	        organization_id TEXT NOT NULL,
+	        user_id TEXT,
+	        type TEXT,
+	        amount INTEGER,
+	        metric_name TEXT,
+	        quantity INTEGER,
+	        action TEXT,
+	        metadata TEXT,
+	        recorded_at TEXT DEFAULT (datetime('now'))
+	      )`
+	    );
+	    await ensureSqliteColumn('usage_records', 'metric_name', 'TEXT');
+	    await ensureSqliteColumn('usage_records', 'quantity', 'INTEGER');
 
     await dbRun(
       `CREATE TABLE IF NOT EXISTS spending_alerts (
@@ -457,6 +483,31 @@ describe('Billing routes integration (L3) - full', () => {
     );
 
     await dbRun(
+      `CREATE TABLE IF NOT EXISTS billing_alerts (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL UNIQUE,
+        token_threshold_80 INTEGER DEFAULT 1,
+        token_threshold_90 INTEGER DEFAULT 1,
+        token_threshold_100 INTEGER DEFAULT 1,
+        cost_cap_monthly REAL DEFAULT 2000,
+        email_notifications INTEGER DEFAULT 1,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now'))
+      )`
+    );
+
+    await dbRun(
+      `CREATE TABLE IF NOT EXISTS billing_addons (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        description TEXT,
+        is_active INTEGER DEFAULT 1,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now'))
+      )`
+    );
+
+    await dbRun(
       `CREATE TABLE IF NOT EXISTS revenue_forecasts (
         id TEXT PRIMARY KEY,
         organization_id TEXT,
@@ -467,11 +518,19 @@ describe('Billing routes integration (L3) - full', () => {
         revenue_amount REAL DEFAULT 0,
         confidence_level REAL DEFAULT 0,
         assumptions TEXT,
+        scenario TEXT,
+        forecast_data TEXT,
+        accuracy REAL DEFAULT 0,
+        created_by TEXT,
         created_at TEXT DEFAULT (datetime('now')),
         updated_at TEXT DEFAULT (datetime('now'))
       )`
     );
     await ensureSqliteColumn('revenue_forecasts', 'forecast_date', 'TEXT');
+    await ensureSqliteColumn('revenue_forecasts', 'scenario', 'TEXT');
+    await ensureSqliteColumn('revenue_forecasts', 'forecast_data', 'TEXT');
+    await ensureSqliteColumn('revenue_forecasts', 'accuracy', 'REAL');
+    await ensureSqliteColumn('revenue_forecasts', 'created_by', 'TEXT');
 
     await dbRun(
       `CREATE TABLE IF NOT EXISTS revenue_recognition (
@@ -480,15 +539,25 @@ describe('Billing routes integration (L3) - full', () => {
         invoice_id TEXT,
         total_amount REAL DEFAULT 0,
         recognized_amount REAL DEFAULT 0,
+        amount REAL,
+        recognition_date TEXT,
+        description TEXT,
         recognition_method TEXT,
         start_date TEXT,
         end_date TEXT,
         status TEXT,
         schedule TEXT,
+        recognized_at TEXT,
+        recognized_by TEXT,
         created_at TEXT DEFAULT (datetime('now')),
         updated_at TEXT DEFAULT (datetime('now'))
       )`
     );
+    await ensureSqliteColumn('revenue_recognition', 'amount', 'REAL');
+    await ensureSqliteColumn('revenue_recognition', 'recognition_date', 'TEXT');
+    await ensureSqliteColumn('revenue_recognition', 'description', 'TEXT');
+    await ensureSqliteColumn('revenue_recognition', 'recognized_at', 'TEXT');
+    await ensureSqliteColumn('revenue_recognition', 'recognized_by', 'TEXT');
 
     await dbRun(
       `CREATE TABLE IF NOT EXISTS subscription_changes (
@@ -523,14 +592,15 @@ describe('Billing routes integration (L3) - full', () => {
       )`
     );
 
-    await dbRun(
-      `INSERT OR IGNORE INTO organizations (id, name, plan, status, is_active) VALUES (?, ?, ?, ?, 1)`,
-      [uuid(101), 'Org A', 'enterprise', 'active']
-    );
-    await dbRun(
-      `INSERT OR IGNORE INTO organizations (id, name, plan, status, is_active) VALUES (?, ?, ?, ?, 1)`,
-      [uuid(202), 'Org B', 'enterprise', 'active']
-    );
+	    await dbRun(
+	      `INSERT OR IGNORE INTO organizations (id, name, plan, status, is_active) VALUES (?, ?, ?, ?, 1)`,
+	      [uuid(101), 'Org A', 'enterprise', 'active']
+	    );
+	    await dbRun(`UPDATE organizations SET token_balance = 0, trial_tokens_used = 0 WHERE id = ?`, [uuid(101)]);
+	    await dbRun(
+	      `INSERT OR IGNORE INTO organizations (id, name, plan, status, is_active) VALUES (?, ?, ?, ?, 1)`,
+	      [uuid(202), 'Org B', 'enterprise', 'active']
+	    );
 
     for (const u of [
       { ...superAdminUser, roleDb: 'SUPERADMIN', email: 'sa@example.com' },
@@ -549,11 +619,11 @@ describe('Billing routes integration (L3) - full', () => {
       );
     }
 
-    await dbRun(
-      `INSERT OR IGNORE INTO subscription_plans (id, name, description, price_monthly, price_yearly, currency, features, limits, trial_days, is_public, is_active, sort_order)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        uuid(1),
+	    await dbRun(
+	      `INSERT OR IGNORE INTO subscription_plans (id, name, description, price_monthly, price_yearly, currency, features, limits, trial_days, is_public, is_active, sort_order)
+	       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	      [
+	        uuid(1),
         'Basic',
         'Basic plan',
         10,
@@ -564,14 +634,15 @@ describe('Billing routes integration (L3) - full', () => {
         0,
         1,
         1,
-        1,
-      ]
-    );
-    await dbRun(
-      `INSERT OR IGNORE INTO subscription_plans (id, name, description, price_monthly, price_yearly, currency, features, limits, trial_days, is_public, is_active, sort_order)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        uuid(2),
+	        1,
+	      ]
+	    );
+	    await dbRun(`UPDATE subscription_plans SET token_limit = 1000, storage_limit_gb = 5 WHERE id = ?`, [uuid(1)]);
+	    await dbRun(
+	      `INSERT OR IGNORE INTO subscription_plans (id, name, description, price_monthly, price_yearly, currency, features, limits, trial_days, is_public, is_active, sort_order)
+	       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	      [
+	        uuid(2),
         'Pro',
         'Pro plan',
         20,
@@ -582,9 +653,10 @@ describe('Billing routes integration (L3) - full', () => {
         14,
         1,
         1,
-        2,
-      ]
-    );
+	        2,
+	      ]
+	    );
+	    await dbRun(`UPDATE subscription_plans SET token_limit = 5000, storage_limit_gb = 50 WHERE id = ?`, [uuid(2)]);
 
     await dbRun(
       `INSERT OR IGNORE INTO subscriptions (id, organization_id, plan_id, status, billing_cycle, created_at)
@@ -614,6 +686,12 @@ describe('Billing routes integration (L3) - full', () => {
     );
 
     await dbRun(
+      `INSERT OR IGNORE INTO organization_billing (id, organization_id, subscription_plan_id, status, current_period_end)
+       VALUES (?, ?, ?, ?, datetime('now', '+7 days'))`,
+      [uuid(201), uuid(101), uuid(1), 'canceling']
+    );
+
+    await dbRun(
       `INSERT OR IGNORE INTO invoices (id, organization_id, invoice_number, status, currency, subtotal, tax_amount, total, amount_paid, amount_due, paid_at, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '-1 day'), datetime('now', '-2 days'))`,
       [uuid(31), uuid(101), 'INV-000001', 'paid', 'USD', 100, 0, 100, 100, 0]
@@ -629,22 +707,38 @@ describe('Billing routes integration (L3) - full', () => {
       [uuid(33), uuid(101), 'INV-000003', 'open', 'USD', 10, 0, 10, 0, 10, 'in_stripe', 'https://stripe.com/invoice.pdf']
     );
 
-    await dbRun(
-      `INSERT OR IGNORE INTO credit_notes (id, organization_id, invoice_id, credit_note_number, total, amount_remaining, currency, reason, memo, status, issued_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '-1 day'))`,
-      [uuid(41), uuid(101), uuid(31), 'CN-000001', 20, 20, 'USD', 'Test credit', null, 'issued']
-    );
+	    await dbRun(
+	      `INSERT OR IGNORE INTO credit_notes (id, organization_id, invoice_id, credit_note_number, total, amount_remaining, currency, reason, memo, status, issued_at)
+	       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '-1 day'))`,
+	      [uuid(41), uuid(101), uuid(31), 'CN-000001', 20, 20, 'USD', 'Test credit', null, 'issued']
+	    );
     await dbRun(
       `INSERT OR IGNORE INTO credit_notes (id, organization_id, invoice_id, credit_note_number, total, amount_remaining, currency, reason, memo, status, issued_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '-1 day'))`,
       [uuid(42), uuid(101), null, 'CN-000002', 10, 10, 'USD', 'Void me', null, 'issued']
     );
 
-    await dbRun(
-      `INSERT OR IGNORE INTO spending_alerts (id, organization_id, type, threshold, threshold_type, action, notify_emails, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
-      [uuid(51), uuid(101), 'usage', 80, 'percentage', 'notify', JSON.stringify(['a@example.com'])]
-    );
+	    await dbRun(
+	      `INSERT OR IGNORE INTO spending_alerts (id, organization_id, type, threshold, threshold_type, action, notify_emails, is_active)
+	       VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+	      [uuid(51), uuid(101), 'usage', 80, 'percentage', 'notify', JSON.stringify(['a@example.com'])]
+	    );
+
+	    await dbRun(
+	      `INSERT OR IGNORE INTO usage_records (id, organization_id, metric_name, quantity, metadata, recorded_at)
+	       VALUES (?, ?, ?, ?, ?, datetime('now', '-1 day'))`,
+	      [uuid(301), uuid(101), 'tokens', 123, JSON.stringify({})]
+	    );
+	    await dbRun(
+	      `INSERT OR IGNORE INTO usage_records (id, organization_id, metric_name, quantity, metadata, recorded_at)
+	       VALUES (?, ?, ?, ?, ?, datetime('now', '-2 day'))`,
+	      [uuid(302), uuid(101), 'storage_gb', 2, JSON.stringify({})]
+	    );
+	    await dbRun(
+	      `INSERT OR IGNORE INTO usage_records (id, organization_id, metric_name, quantity, metadata, recorded_at)
+	       VALUES (?, ?, ?, ?, ?, datetime('now', '-3 day'))`,
+	      [uuid(303), uuid(101), 'spend_usd', 50, JSON.stringify({})]
+	    );
 
     await dbRun(
       `INSERT OR IGNORE INTO payment_methods (id, organization_id, stripe_payment_method_id, type, brand, last4, exp_month, exp_year, holder_name, is_default)
@@ -676,23 +770,41 @@ describe('Billing routes integration (L3) - full', () => {
       [uuid(91)]
     );
 
-    await dbRun(
-      `INSERT OR IGNORE INTO invoice_templates (id, organization_id, name, description, template_type, layout_type, is_default, is_system)
-       VALUES (?, ?, ?, ?, ?, ?, 1, 0)`,
-      [uuid(1011), uuid(101), 'Default', 'Default', 'standard', 'classic']
-    );
+	    await dbRun(
+	      `INSERT OR IGNORE INTO invoice_templates (id, organization_id, name, description, template_type, layout_type, is_default, is_system)
+	       VALUES (?, ?, ?, ?, ?, ?, 1, 0)`,
+	      [uuid(1011), uuid(101), 'Default', 'Default', 'standard', 'classic']
+	    );
 
-    await dbRun(
-      `INSERT OR IGNORE INTO revenue_forecasts (id, organization_id, forecast_type, forecast_date, period_start, period_end, revenue_amount, confidence_level, assumptions)
-       VALUES (?, ?, ?, date('now'), date('now'), date('now','+30 day'), ?, ?, ?)`,
-      [uuid(111), uuid(101), 'manual', 1234, 0.8, JSON.stringify({ note: 'test' })]
-    );
+	    await dbRun(
+	      `INSERT OR IGNORE INTO billing_addons (id, name, description, is_active)
+	       VALUES (?, ?, ?, 1)`,
+	      [uuid(1511), 'Advanced seats', 'Seat overage add-on']
+	    );
 
-    await dbRun(
-      `INSERT OR IGNORE INTO revenue_recognition (id, organization_id, invoice_id, total_amount, recognized_amount, recognition_method, start_date, end_date, status, schedule)
-       VALUES (?, ?, ?, ?, ?, ?, date('now','-10 day'), date('now','+20 day'), ?, ?)`,
-      [uuid(121), uuid(101), uuid(31), 100, 10, 'straight_line', 'active', JSON.stringify([])]
-    );
+	    await dbRun(
+	      `INSERT OR IGNORE INTO revenue_forecasts (id, organization_id, forecast_type, forecast_date, period_start, period_end, revenue_amount, confidence_level, assumptions)
+	       VALUES (?, ?, ?, date('now'), date('now'), date('now','+30 day'), ?, ?, ?)`,
+	      [uuid(111), uuid(101), 'manual', 1234, 0.8, JSON.stringify({ note: 'test' })]
+	    );
+	    await dbRun(
+	      `UPDATE revenue_forecasts
+	       SET scenario = 'baseline', accuracy = 0.8
+	       WHERE id = ?`,
+	      [uuid(111)]
+	    );
+
+	    await dbRun(
+	      `INSERT OR IGNORE INTO revenue_recognition (id, organization_id, invoice_id, total_amount, recognized_amount, recognition_method, start_date, end_date, status, schedule)
+	       VALUES (?, ?, ?, ?, ?, ?, date('now','-10 day'), date('now','+20 day'), ?, ?)`,
+	      [uuid(121), uuid(101), uuid(31), 100, 10, 'straight_line', 'active', JSON.stringify([])]
+	    );
+	    await dbRun(
+	      `UPDATE revenue_recognition
+	       SET recognition_date = datetime('now', '+1 day'), description = 'Init'
+	       WHERE id = ?`,
+	      [uuid(121)]
+	    );
 
     await dbRun(
       `INSERT OR IGNORE INTO subscription_changes (id, organization_id, subscription_id, change_type, from_plan_id, to_plan_id, status, requested_by, metadata)
@@ -862,15 +974,28 @@ describe('Billing routes integration (L3) - full', () => {
     expect([200, 500]).toContain(sendInvoice.status);
   });
 
-  it('covers subscription self-serve + admin subscription CRUD', async () => {
-    const app = await makeApp();
+	  it('covers subscription self-serve + admin subscription CRUD', async () => {
+	    const app = await makeApp();
 
-    const current = await dispatch(app, { method: 'GET', url: '/api/billing/current', user: ownerUser });
-    expect([200, 404]).toContain(current.status);
+	    const current = await dispatch(app, { method: 'GET', url: '/api/billing/current', user: ownerUser });
+	    expect([200, 404]).toContain(current.status);
 
-    const plans = await dispatch(app, { method: 'GET', url: '/api/billing/plans', user: ownerUser, query: { includeInactive: 'true' } });
-    expect(plans.status).toBe(200);
-    expect(plans.body).toEqual(expect.objectContaining({ plans: expect.any(Array) }));
+	    await dbRun(
+	      `INSERT INTO organization_billing (id, organization_id, subscription_plan_id, status)
+	       VALUES (?, ?, NULL, 'inactive')
+	       ON CONFLICT(organization_id) DO UPDATE SET
+	         subscription_plan_id = NULL,
+	         status = 'inactive',
+	         updated_at = datetime('now')`,
+	      [uuid(2021), uuid(101)]
+	    );
+	    const currentFallback = await dispatch(app, { method: 'GET', url: '/api/billing/current', user: ownerUser });
+	    expect(currentFallback.status).toBe(200);
+	    expect(currentFallback.body?.billing?.subscription_plan_id ?? null).toBeNull();
+
+	    const plans = await dispatch(app, { method: 'GET', url: '/api/billing/plans', user: ownerUser, query: { includeInactive: 'true' } });
+	    expect(plans.status).toBe(200);
+	    expect(plans.body).toEqual(expect.objectContaining({ plans: expect.any(Array) }));
 
     const getSub = await dispatch(app, { method: 'GET', url: '/api/billing/subscription', user: ownerUser });
     expect([200, 404]).toContain(getSub.status);
@@ -912,8 +1037,8 @@ describe('Billing routes integration (L3) - full', () => {
     expect(cancelSub.status).toBe(200);
   });
 
-  it('covers plan admin CRUD via /plans and /admin/plans', async () => {
-    const app = await makeApp();
+	  it('covers plan admin CRUD via /plans and /admin/plans', async () => {
+	    const app = await makeApp();
 
     const listAdmin = await dispatch(app, { method: 'GET', url: '/api/billing/admin/plans', user: superAdminUser });
     expect(listAdmin.status).toBe(200);
@@ -956,9 +1081,46 @@ describe('Billing routes integration (L3) - full', () => {
     const del = await dispatch(app, { method: 'DELETE', url: `/api/billing/admin/plans/${createdPlanId}`, user: superAdminUser });
     expect(del.status).toBe(200);
 
-    const listPublic = await dispatch(app, { method: 'GET', url: '/api/billing/plans', user: ownerUser, query: { includeInactive: 'false' } });
-    expect(listPublic.status).toBe(200);
-  });
+	    const listPublic = await dispatch(app, { method: 'GET', url: '/api/billing/plans', user: ownerUser, query: { includeInactive: 'false' } });
+	    expect(listPublic.status).toBe(200);
+
+	    const createPublic = await dispatch(app, {
+	      method: 'POST',
+	      url: '/api/billing/plans',
+	      user: superAdminUser,
+	      body: {
+	        name: 'Team',
+	        description: 'Team plan',
+	        priceMonthly: 15,
+	        priceYearly: 150,
+	        currency: 'USD',
+	        features: ['f1'],
+	        limits: { seats: 5 },
+	        trialDays: 0,
+	        isPublic: true,
+	        sortOrder: 3,
+	      },
+	    });
+	    expect(createPublic.status).toBe(200);
+	    const createdPublicId = createPublic.body?.id as string;
+	    expect(createdPublicId).toBeTruthy();
+
+	    const updatePublicNoop = await dispatch(app, {
+	      method: 'PUT',
+	      url: `/api/billing/plans/${createdPublicId}`,
+	      user: superAdminUser,
+	      body: {},
+	    });
+	    expect(updatePublicNoop.status).toBe(400);
+
+	    const updatePublic = await dispatch(app, {
+	      method: 'PUT',
+	      url: `/api/billing/plans/${createdPublicId}`,
+	      user: superAdminUser,
+	      body: { description: 'Updated', features: ['f1', 'f2'], limits: { seats: 6 } },
+	    });
+	    expect(updatePublic.status).toBe(200);
+	  });
 
   it('covers credit notes endpoints', async () => {
     const app = await makeApp();
@@ -1057,21 +1219,23 @@ describe('Billing routes integration (L3) - full', () => {
     expect([204, 400, 404, 500, 503]).toContain(del.status);
   });
 
-  it('covers usage endpoints (record + list + summary)', async () => {
-    const app = await makeApp();
+	  it('covers usage endpoints (record + list + summary)', async () => {
+	    const app = await makeApp();
 
-    const record = await dispatch(app, { method: 'POST', url: '/api/billing/usage', user: ownerUser, body: { metricName: 'tokens', quantity: 5 } });
-    expect([200, 400, 500, 503]).toContain(record.status);
+	    const record = await dispatch(app, { method: 'POST', url: '/api/billing/usage', user: ownerUser, body: { metricName: 'tokens', quantity: 5 } });
+	    expect(record.status).toBe(200);
+	    expect(record.body).toEqual(expect.objectContaining({ success: true, id: expect.any(String) }));
 
-    const list = await dispatch(app, { method: 'GET', url: '/api/billing/usage', user: superAdminUser, query: { organizationId: uuid(101) } });
-    expect([200, 500, 503]).toContain(list.status);
+	    const list = await dispatch(app, { method: 'GET', url: '/api/billing/usage-records', user: superAdminUser, query: { organizationId: uuid(101) } });
+	    expect(list.status).toBe(200);
+	    expect(list.body).toEqual(expect.objectContaining({ usage: expect.any(Array), structuredUsage: expect.any(Object) }));
 
-    const summary = await dispatch(app, { method: 'GET', url: '/api/billing/usage-summary', user: superAdminUser, query: { organizationId: uuid(101) } });
-    expect([200, 500, 503]).toContain(summary.status);
-  });
+	    const summary = await dispatch(app, { method: 'GET', url: '/api/billing/usage-summary', user: superAdminUser, query: { organizationId: uuid(101) } });
+	    expect([200, 500, 503]).toContain(summary.status);
+	  });
 
-  it('covers spending alerts CRUD + toggles', async () => {
-    const app = await makeApp();
+	  it('covers spending alerts CRUD + toggles', async () => {
+	    const app = await makeApp();
 
     const list = await dispatch(app, { method: 'GET', url: '/api/billing/spending-alerts', user: ownerUser });
     expect([200, 500, 503]).toContain(list.status);
@@ -1099,25 +1263,38 @@ describe('Billing routes integration (L3) - full', () => {
     });
     expect([200, 400, 404, 500, 503]).toContain(update.status);
 
-    const toggle = await dispatch(app, {
-      method: 'POST',
-      url: `/api/billing/spending-alerts/${uuid(51)}/toggle`,
-      user: ownerUser,
-      body: { enabled: false },
-    });
-    expect([200, 400, 404, 500, 503]).toContain(toggle.status);
-  });
+	    const toggle = await dispatch(app, {
+	      method: 'POST',
+	      url: `/api/billing/spending-alerts/${uuid(51)}/toggle`,
+	      user: ownerUser,
+	      body: { enabled: false },
+	    });
+	    expect([200, 400, 404, 500, 503]).toContain(toggle.status);
 
-  it('covers tax settings + tax rates + VAT validation', async () => {
-    const app = await makeApp();
+	    const del = await dispatch(app, { method: 'DELETE', url: `/api/billing/spending-alerts/${uuid(51)}`, user: ownerUser });
+	    expect([200, 404, 500, 503]).toContain(del.status);
+	  });
 
-    const getTax = await dispatch(app, { method: 'GET', url: '/api/billing/tax-settings', user: ownerUser });
-    expect([200, 404, 500, 503]).toContain(getTax.status);
+	  it('covers tax settings + tax rates + VAT validation', async () => {
+	    const app = await makeApp();
 
-    const putTax = await dispatch(app, {
-      method: 'PUT',
-      url: '/api/billing/tax-settings',
-      user: ownerUser,
+	    const getTax = await dispatch(app, { method: 'GET', url: '/api/billing/tax-settings', user: ownerUser });
+	    expect([200, 404, 500, 503]).toContain(getTax.status);
+
+	    await dbRun(`DELETE FROM billing_tax_settings WHERE organization_id = ?`, [uuid(101)]);
+	    const getTaxMissing = await dispatch(app, { method: 'GET', url: '/api/billing/tax-settings', user: ownerUser });
+	    expect(getTaxMissing.status).toBe(200);
+	    expect(getTaxMissing.body).toEqual(
+	      expect.objectContaining({
+	        company: expect.objectContaining({ legalName: null, billingEmail: null }),
+	        tax: expect.objectContaining({ taxIdType: null, taxId: null, taxExempt: false }),
+	      })
+	    );
+
+	    const putTax = await dispatch(app, {
+	      method: 'PUT',
+	      url: '/api/billing/tax-settings',
+	      user: ownerUser,
       body: {
         company: { legalName: 'Org A', billingEmail: 'billing@orga.test' },
         tax: { taxIdType: 'VAT', taxId: 'TAX', taxExempt: false },
@@ -1192,8 +1369,8 @@ describe('Billing routes integration (L3) - full', () => {
     120_000
   );
 
-  it('covers revenue forecasts + revenue recognition endpoints (both legacy and new paths)', async () => {
-    const app = await makeApp();
+	  it('covers revenue forecasts + revenue recognition endpoints (both legacy and new paths)', async () => {
+	    const app = await makeApp();
 
     const listForecasts = await dispatch(app, { method: 'GET', url: '/api/billing/revenue-forecasts', user: superAdminUser });
     expect([200, 500, 503]).toContain(listForecasts.status);
@@ -1225,9 +1402,59 @@ describe('Billing routes integration (L3) - full', () => {
     const legacyStats = await dispatch(app, { method: 'GET', url: '/api/billing/revenue-recognition/stats', user: superAdminUser });
     expect([200, 500, 503]).toContain(legacyStats.status);
 
-    const legacyForecastList = await dispatch(app, { method: 'GET', url: '/api/billing/revenue-forecast', user: superAdminUser });
-    expect([200, 500, 503]).toContain(legacyForecastList.status);
-  });
+	    const legacyForecastList = await dispatch(app, { method: 'GET', url: '/api/billing/revenue-forecast', user: superAdminUser });
+	    expect([200, 500, 503]).toContain(legacyForecastList.status);
+
+	    const legacyForecastStats = await dispatch(app, { method: 'GET', url: '/api/billing/revenue-forecast/stats', user: superAdminUser });
+	    expect([200, 500, 503]).toContain(legacyForecastStats.status);
+
+	    const legacyForecastGenerate = await dispatch(app, {
+	      method: 'POST',
+	      url: '/api/billing/revenue-forecast/generate',
+	      user: superAdminUser,
+	      body: { scenario: 'baseline', months: 2, assumptions: { growthRate: 0.1, churnRate: 0.01 } },
+	    });
+	    expect([200, 400, 500, 503]).toContain(legacyForecastGenerate.status);
+
+	    if (legacyForecastGenerate.status === 200) {
+	      const id = legacyForecastGenerate.body?.id as string;
+	      expect(id).toBeTruthy();
+	      const del = await dispatch(app, { method: 'DELETE', url: `/api/billing/revenue-forecast/${id}`, user: superAdminUser });
+	      expect([200, 404, 500, 503]).toContain(del.status);
+	    }
+
+	    const legacyCreateRec = await dispatch(app, {
+	      method: 'POST',
+	      url: '/api/billing/revenue-recognition',
+	      user: superAdminUser,
+	      body: { organization_id: uuid(101), invoice_id: uuid(31), amount: 10, recognition_date: new Date().toISOString(), description: 'Test' },
+	    });
+	    expect([200, 500, 503]).toContain(legacyCreateRec.status);
+
+	    const legacyRecognize = await dispatch(app, { method: 'POST', url: `/api/billing/revenue-recognition/${uuid(121)}/recognize`, user: superAdminUser });
+	    expect([200, 404, 500, 503]).toContain(legacyRecognize.status);
+	  });
+
+	  it('covers billing alerts + addons endpoints', async () => {
+	    const app = await makeApp();
+
+	    const addons = await dispatch(app, { method: 'GET', url: '/api/billing/addons', user: ownerUser });
+	    expect([200, 500, 503]).toContain(addons.status);
+
+	    const getAlerts = await dispatch(app, { method: 'GET', url: '/api/billing/alerts', user: ownerUser });
+	    expect([200, 500, 503]).toContain(getAlerts.status);
+	    if (getAlerts.status === 200) {
+	      expect(getAlerts.body).toEqual(expect.objectContaining({ alerts: expect.any(Array) }));
+	    }
+
+	    const putAlerts = await dispatch(app, {
+	      method: 'PUT',
+	      url: '/api/billing/alerts',
+	      user: ownerUser,
+	      body: { alerts: [{ type: 'tokens' }, { type: 'spend', threshold: 90 }] },
+	    });
+	    expect([200, 500, 503]).toContain(putAlerts.status);
+	  });
 
   it('covers webhook events endpoints + retry/pending/failed admin endpoints', async () => {
     const app = await makeApp();
@@ -1279,11 +1506,42 @@ describe('Billing routes integration (L3) - full', () => {
   it('covers grace-period + reactivate endpoints', async () => {
     const app = await makeApp();
 
+    await dbRun(
+      `INSERT INTO organization_billing (id, organization_id, subscription_plan_id, status, current_period_end)
+       VALUES (?, ?, ?, ?, datetime('now', '+7 days'))
+       ON CONFLICT(organization_id) DO UPDATE SET
+         subscription_plan_id = excluded.subscription_plan_id,
+         status = excluded.status,
+         current_period_end = excluded.current_period_end,
+         updated_at = datetime('now')`,
+      [uuid(201), uuid(101), uuid(1), 'canceling']
+    );
+
     const grace = await dispatch(app, { method: 'GET', url: '/api/billing/grace-period', user: ownerUser });
-    expect([200, 500, 503]).toContain(grace.status);
+    expect(grace.status).toBe(200);
+    expect(grace.body).toEqual(
+      expect.objectContaining({
+        isInGracePeriod: true,
+        accessUntil: expect.any(String),
+        daysRemaining: expect.any(Number),
+      })
+    );
 
     const reactivate = await dispatch(app, { method: 'POST', url: '/api/billing/reactivate', user: ownerUser });
-    expect([200, 500, 503]).toContain(reactivate.status);
+    expect(reactivate.status).toBe(200);
+    expect(reactivate.body).toEqual(
+      expect.objectContaining({
+        success: true,
+      })
+    );
+
+    const graceAfter = await dispatch(app, { method: 'GET', url: '/api/billing/grace-period', user: ownerUser });
+    expect(graceAfter.status).toBe(200);
+    expect(graceAfter.body).toEqual(
+      expect.objectContaining({
+        isInGracePeriod: false,
+      })
+    );
   });
 
   it('covers per-org billing usage settings endpoints', async () => {

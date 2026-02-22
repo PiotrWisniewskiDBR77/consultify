@@ -79,7 +79,21 @@ export const CreatePlanRequestSchema = z.object({
 });
 
 // Update Plan Request
-export const UpdatePlanRequestSchema = CreatePlanRequestSchema.partial();
+export const UpdatePlanRequestSchema = z
+  .object({
+    name: z.string().min(1),
+    description: z.string().optional(),
+    priceMonthly: z.number().nonnegative(),
+    priceYearly: z.number().nonnegative().optional(),
+    currency: z.string(),
+    features: z.array(z.string()),
+    limits: z.record(z.string(), z.unknown()),
+    trialDays: z.number().int().min(0),
+    isPublic: z.boolean(),
+    sortOrder: z.number().int(),
+    isActive: z.boolean(),
+  })
+  .partial();
 
 // Create Credit Note Request
 export const CreateCreditNoteRequestSchema = z.object({

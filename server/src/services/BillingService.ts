@@ -218,6 +218,16 @@ class BillingServiceClass {
     await this.#ensureInitialized();
     return this.#queryService.getBillingModel(orgId);
   }
+
+  async getGracePeriodStatus(orgId: string) {
+    await this.#ensureInitialized();
+    return this.#commandService.getGracePeriodStatus(orgId);
+  }
+
+  async reactivateSubscription(orgId: string) {
+    await this.#ensureInitialized();
+    return this.#commandService.reactivateSubscription(orgId);
+  }
 }
 
 const billingServiceInstance = new BillingServiceClass();
@@ -284,3 +294,7 @@ export const calculateSeatCost = (orgId: string, quantity: number) =>
 export const processSeatPurchase = (orgId: string, quantity: number, paymentMethodId: string) =>
   billingServiceInstance.processSeatPurchase(orgId, quantity, paymentMethodId);
 export const getBillingModel = (orgId: string) => billingServiceInstance.getBillingModel(orgId);
+export const getGracePeriodStatus = (orgId: string) =>
+  billingServiceInstance.getGracePeriodStatus(orgId);
+export const reactivateSubscription = (orgId: string) =>
+  billingServiceInstance.reactivateSubscription(orgId);
