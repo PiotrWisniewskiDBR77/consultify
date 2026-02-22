@@ -128,7 +128,7 @@
     "deps:security": "npx snyk test && npx snyk monitor || echo 'Snyk not configured, skipping...'",
     "license:check": "npx license-checker --onlyAllow 'MIT;Apache-2.0;BSD-3-Clause;ISC;BSD-2-Clause;0BSD' || echo 'License checker not installed, skipping...'",
     "validate": "npm run lint && npm run type-check && npm run test:unit && npm run test:security",
-    "i18n:check": "npx ts-node scripts/i18n/translate-help.ts --check",
+    "i18n:check": "node scripts/i18n/check-help.mjs",
     "i18n:translate": "npx ts-node scripts/i18n/translate-help.ts --translate",
     "i18n:validate": "node scripts/i18n/validate-help.mjs",
     "branding:generate": "npx tsx scripts/branding/generate-consultinity-assets.ts",
