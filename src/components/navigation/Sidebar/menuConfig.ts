@@ -69,7 +69,7 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
     // 4. Licensed Tools (Assessment module) - DRD/SIRI/ADMA/Lean
     {
       id: 'MODULE_ASSESSMENT',
-      label: t('licensedTools.moduleName', 'Licensed Tools'),
+      label: t('sidebar.assessment', 'Assessment'),
       icon: React.createElement(CheckCircle2, { size: 20 }),
       viewId: AppView.ASSESSMENT_OVERVIEW,
     },
