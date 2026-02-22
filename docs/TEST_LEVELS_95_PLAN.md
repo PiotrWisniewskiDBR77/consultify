@@ -1,12 +1,12 @@
 # Plan dojścia do 95% (L1–L5) i “GO deploy”
 
-Stan na: **2026-02-20**
+Stan na: **2026-02-22**
 
 ## Snapshot (prawda bez placebo)
 
-- `npm run test:quality-check`: **REAL 903 / PLACEHOLDER 0 / OTHER 44** (AUTHENTICITY 100%)
+- `npm run test:quality-check`: **REAL 947 / PLACEHOLDER 0 / OTHER 44** (AUTHENTICITY 100%)
 - L1/L2/L3: coverage gates **OK** (per-file 95% lines / 80% branches / 95% statements / 95% functions)
-- L4: smoke (Playwright, webServer) **OK** (`npm run test:l4` PASS)
+- L4: smoke (Playwright, webServer) **OK** lokalnie (`npm run test:l4:local` PASS); tryb remote/CI wymaga `E2E_API_URL` + `E2E_BASE_URL` (`npm run test:l4`)
 - L5: quality + integrity + security + performance **OK** (`npm run test:l5` PASS)
 
 ## Zasady (żeby system nie “oszukiwał”)
