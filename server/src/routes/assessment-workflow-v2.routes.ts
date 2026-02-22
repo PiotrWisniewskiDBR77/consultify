@@ -957,6 +957,16 @@ router.post(
 
       return res.status(202).json({ runId: run.runId });
     } catch (err: any) {
+      const msg = String(err?.message || '');
+      const missingSchema =
+        msg.includes('no such table: assessment_initiative_generation_runs') ||
+        msg.includes('relation "assessment_initiative_generation_runs" does not exist');
+      if (missingSchema) {
+        return res.status(409).json({
+          error: 'Initiative generation unavailable (missing schema)',
+          code: 'INITIATIVE_GENERATION_SCHEMA_MISSING',
+        });
+      }
       logger.error('[AssessmentWorkflowV2] Error creating initiative generation run:', err);
       return res.status(500).json({ error: 'Failed to create run', message: err.message });
     }
