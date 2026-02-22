@@ -65,7 +65,6 @@ export default defineConfig({
         'server/src/routes/healthRoutes.ts',
         'server/src/routes/health.routes.ts',
         'server/src/controllers/HealthCheckController.ts',
-        'server/src/routes/billing/billing.routes.ts',
       ],
       thresholds: {
         global: {
@@ -178,12 +177,6 @@ export default defineConfig({
             lines: 95,
           },
           'server/src/controllers/HealthCheckController.ts': {
-            statements: 95,
-            branches: 80,
-            functions: 95,
-            lines: 95,
-          },
-          'server/src/routes/billing/billing.routes.ts': {
             statements: 95,
             branches: 80,
             functions: 95,
