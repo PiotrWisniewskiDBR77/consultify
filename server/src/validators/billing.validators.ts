@@ -161,7 +161,7 @@ export const PlanIdParamSchema = z.object({
 });
 
 export const CreditNoteIdParamSchema = z.object({
-  id: z.string().uuid(),
+  creditNoteId: z.string().uuid(),
 });
 
 export const SpendingAlertIdParamSchema = z.object({
