@@ -149,7 +149,7 @@
     "validate": "npm run lint && npm run type-check && npm run test:unit && npm run test:security",
     "i18n:check": "npx ts-node scripts/i18n/translate-help.ts --check",
     "i18n:translate": "npx ts-node scripts/i18n/translate-help.ts --translate",
-    "i18n:validate": "npx ts-node scripts/i18n/translate-help.ts --validate",
+    "i18n:validate": "node scripts/i18n/validate-help.mjs",
     "branding:generate": "npx tsx scripts/branding/generate-consultinity-assets.ts",
     "doctor": "npx tsx scripts/dev/doctor.ts",
     "cleanup:quarantine-duplicates": "npx tsx scripts/dev/quarantine-icloud-duplicates.ts",
