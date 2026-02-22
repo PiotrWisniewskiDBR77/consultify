@@ -754,6 +754,40 @@ describe('AccessPolicyService (L1 REAL)', () => {
     expect(snap.blockedActions).toContain('AI_CALL');
   });
 
+  it('buildPolicySnapshot: unknown billing status normalizes to null', async () => {
+    mockDbPromiseGet.mockImplementation(async (_db, sql) => {
+      const s = String(sql);
+      if (s.includes('FROM organization_billing'))
+        return { status: 'SOMETHING_ELSE', subscription_plan_id: null };
+      if (s.includes('FROM payment_methods')) return { count: 0 };
+      return null;
+    });
+
+    const snap = await buildPolicySnapshot('org-1');
+    expect(snap.subscriptionStatus).toBeNull();
+  });
+
+  it('buildPolicySnapshot: trial initiative limit pressure blocks CREATE_INITIATIVE', async () => {
+    limitService.getOrganizationType.mockResolvedValueOnce(
+      makeOrgInfo({ organizationType: ORG_TYPES.TRIAL })
+    );
+    trialService.checkTrialStatus.mockResolvedValueOnce(
+      makeTrialStatus({ expired: false, warningLevel: 'warning', daysRemaining: 2 })
+    );
+    limitService.getOrganizationLimits.mockResolvedValueOnce(makeLimits({ maxInitiatives: 1 }));
+    resourceService.countOrgInitiatives.mockResolvedValueOnce(1);
+
+    const snap = await buildPolicySnapshot('org-1');
+    expect(snap.blockedActions).toContain('CREATE_INITIATIVE');
+  });
+
+  it('buildPolicySnapshot: fails open when initiative counting throws', async () => {
+    resourceService.countOrgInitiatives.mockRejectedValueOnce(new Error('schema mismatch'));
+    const snap = await buildPolicySnapshot('org-1');
+    expect(snap).toEqual(expect.objectContaining({ usageToday: expect.any(Object) }));
+    expect(snap.usageToday.initiatives).toBe(0);
+  });
+
   it('buildPolicySnapshot: day singular in banner when daysRemaining=1', async () => {
     limitService.getOrganizationType.mockResolvedValueOnce(
       makeOrgInfo({ organizationType: ORG_TYPES.TRIAL })
@@ -763,6 +797,38 @@ describe('AccessPolicyService (L1 REAL)', () => {
     );
     const snap = await buildPolicySnapshot('org-1');
     expect(snap.messages.bannerText).toContain('1 day remaining');
+  });
+
+  it('initDeps: imports SeatManagementService when not injected', async () => {
+    vi.resetModules();
+
+    const fresh = await import('../../../server/src/services/accessPolicyService.ts');
+
+    // Important: omit SeatManagementService so initDeps uses dynamic import.
+    fresh.setDependencies({
+      db,
+      limitService,
+      usageService,
+      trialService,
+      resourceService,
+    });
+
+    mockedSeatModule.getSeatConfiguration.mockReset();
+    mockedSeatModule.getSeatConfiguration.mockResolvedValue({
+      total_seats_available: 2,
+      seats_used: 1,
+      seats_remaining: 1,
+      utilization_percent: '50.0',
+      base_seats_included: 1,
+      additional_seats_purchased: 1,
+      auto_add_seats_on_invite: 0,
+    });
+
+    const out1 = await fresh.getSeatAvailabilityEnhanced('org-1');
+    expect(out1.maxSeats).toBe(2);
+
+    const out2 = await fresh.getSeatAvailabilityEnhanced('org-1');
+    expect(out2.maxSeats).toBe(2);
   });
 
   it('canInviteUsers: denies for ORG_NOT_FOUND / DEMO / TRIAL_EXPIRED', async () => {
