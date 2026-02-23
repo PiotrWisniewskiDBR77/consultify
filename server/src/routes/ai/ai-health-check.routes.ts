@@ -103,7 +103,7 @@ async function checkToolsMenu(): Promise<SubsystemHealth> {
     status: 'healthy',
     message: 'Tools menu is fully functional',
     details: {
-      aiModes: ['deepResearch', 'webSearch', 'showReasoning', 'textToSpeech'],
+      aiModes: ['deepResearch', 'webSearch', 'showReasoning', 'privateMode', 'textToSpeech'],
       knowledgeSources: ['pmoDocuments', 'projectData', 'organizationData'],
       responseStyles: ['normal', 'executive', 'analyst', 'coach', 'concise', 'formal', 'professional', 'friendly'],
     },

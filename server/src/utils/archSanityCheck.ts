@@ -50,7 +50,15 @@ export async function runAIHealthChecks(): Promise<SanityReport['healthChecks']>
 
   try {
     const { all } = await import('../utils/DbPromise.js');
-    const tables = ['ai_system_prompts', 'knowledge_documents', 'knowledge_chunks', 'ai_feedback'];
+    const tables = [
+      'ai_system_prompts',
+      'ai_usage_logs',
+      'knowledge_documents',
+      'knowledge_chunks',
+      'ai_feedback',
+      'ai_doc_usage_log',
+      'ai_doc_access_approvals',
+    ];
     for (const table of tables) {
       try {
         await all(`SELECT 1 FROM ${table} LIMIT 1`);
@@ -80,6 +88,17 @@ export async function runAIHealthChecks(): Promise<SanityReport['healthChecks']>
     status: process.env.TAVILY_API_KEY ? 'ok' : 'warn',
     detail: process.env.TAVILY_API_KEY ? 'Configured' : 'Not configured — web search disabled',
   });
+
+  if (String(process.env.NODE_ENV || '').toLowerCase() === 'production') {
+    checks.push({
+      name: 'env:ENABLE_STUB_ROUTES',
+      status: String(process.env.ENABLE_STUB_ROUTES || '').toLowerCase() === 'true' ? 'error' : 'ok',
+      detail:
+        String(process.env.ENABLE_STUB_ROUTES || '').toLowerCase() === 'true'
+          ? 'Stub routes enabled in production'
+          : 'Stub routes disabled in production',
+    });
+  }
 
   try {
     const mod = await import('../services/ai/promptAssembler.js');
