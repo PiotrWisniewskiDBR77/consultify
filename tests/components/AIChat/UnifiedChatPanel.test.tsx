@@ -8,26 +8,28 @@ import toast from 'react-hot-toast';
 // Mocks (stateful, but scoped to this test file)
 // ---------------------------------------------------------------------------
 
-const trackFunnelEventMock = vi.fn();
-vi.mock('../../../src/services/funnelAnalytics', () => ({
-  trackFunnelEvent: trackFunnelEventMock,
+const h = vi.hoisted(() => ({
+  trackFunnelEventMock: vi.fn(),
+  apiMock: {
+    agentAuditAcceptRun: vi.fn(),
+    agentAuditListAgents: vi.fn(),
+    agentAuditReview: vi.fn(),
+    agentAuditSuggest: vi.fn(),
+    aiFeedback: vi.fn(),
+    chatConfirm: vi.fn(),
+    createMyIdea: vi.fn(),
+    deepThinkingEvent: vi.fn(),
+    saveDeepThinkingDecision: vi.fn(),
+    uploadChatAttachment: vi.fn(),
+  },
 }));
 
-const apiMock = {
-  agentAuditAcceptRun: vi.fn(),
-  agentAuditListAgents: vi.fn(),
-  agentAuditReview: vi.fn(),
-  agentAuditSuggest: vi.fn(),
-  aiFeedback: vi.fn(),
-  chatConfirm: vi.fn(),
-  createMyIdea: vi.fn(),
-  deepThinkingEvent: vi.fn(),
-  saveDeepThinkingDecision: vi.fn(),
-  uploadChatAttachment: vi.fn(),
-};
+vi.mock('../../../src/services/funnelAnalytics', () => ({
+  trackFunnelEvent: h.trackFunnelEventMock,
+}));
 
 vi.mock('../../../src/services/api', () => ({
-  Api: apiMock,
+  Api: h.apiMock,
 }));
 
 const addChatMessageMock = vi.fn();
@@ -58,7 +60,7 @@ let appStoreState: any = {
 const useAppStoreMock: any = () => appStoreState;
 useAppStoreMock.getState = () => appStoreState;
 
-vi.mock('../../../src/store/useAppStore', () => ({
+vi.doMock('../../../src/store/useAppStore', () => ({
   useAppStore: useAppStoreMock,
 }));
 
@@ -95,14 +97,14 @@ let conversationStoreState: any = {
 const useConversationStoreMock: any = () => conversationStoreState;
 useConversationStoreMock.getState = () => conversationStoreState;
 
-vi.mock('../../../src/store/useConversationStore', () => ({
+vi.doMock('../../../src/store/useConversationStore', () => ({
   useConversationStore: useConversationStoreMock,
 }));
 
 const addArtifactMock = vi.fn();
 const toggleArtifactsPanelMock = vi.fn();
 const exportArtifactMock = vi.fn();
-vi.mock('../../../src/store/useArtifactsStore', () => ({
+vi.doMock('../../../src/store/useArtifactsStore', () => ({
   useArtifactsStore: () => ({
     addArtifact: addArtifactMock,
     togglePanel: toggleArtifactsPanelMock,
@@ -111,7 +113,7 @@ vi.mock('../../../src/store/useArtifactsStore', () => ({
 }));
 
 let pendingActionsCountState = 0;
-vi.mock('../../../src/store/useAIActionsStore', () => ({
+vi.doMock('../../../src/store/useAIActionsStore', () => ({
   useAIActionsStore: (selector: any) => selector({ pendingCount: pendingActionsCountState }),
 }));
 
@@ -121,7 +123,7 @@ const updateVoiceSettingsMock = vi.fn();
 let voiceStateState: any = { isSpeaking: false, isListening: false };
 let ttsSupportedState = true;
 
-vi.mock('../../../src/hooks/useUniversalVoice', () => ({
+vi.doMock('../../../src/hooks/useUniversalVoice', () => ({
   useUniversalVoice: () => ({
     speak: speakMock,
     stopSpeaking: stopSpeakingMock,
@@ -142,7 +144,7 @@ let demoState: any = {
   consumeAIInteraction: vi.fn(),
 };
 
-vi.mock('../../../src/hooks/useDemoSession', () => ({
+vi.doMock('../../../src/hooks/useDemoSession', () => ({
   useDemoSession: () => demoState,
 }));
 
@@ -173,14 +175,14 @@ let aiStreamState: any = {
   streamCompletedSignal: 0,
 };
 
-vi.mock('../../../src/hooks/useAIStream', () => ({
+vi.doMock('../../../src/hooks/useAIStream', () => ({
   useAIStream: (options: any) => {
     aiStreamOptionsCaptured = options;
     return { startStream: startStreamMock, ...aiStreamState };
   },
 }));
 
-vi.mock('../../../src/components/AIChat/ChatSlidingPanel', () => ({
+vi.doMock('../../../src/components/AIChat/ChatSlidingPanel', () => ({
   ChatSlidingPanel: ({
     onNewChat,
     onSelectConversation,
@@ -195,11 +197,11 @@ vi.mock('../../../src/components/AIChat/ChatSlidingPanel', () => ({
   ),
 }));
 
-vi.mock('../../../src/components/AIChat/ContextBadge', () => ({
+vi.doMock('../../../src/components/AIChat/ContextBadge', () => ({
   ContextBadge: () => <div data-testid="context-badge" />,
 }));
 
-vi.mock('../../../src/components/AIChat/PendingActionsIndicator', () => ({
+vi.doMock('../../../src/components/AIChat/PendingActionsIndicator', () => ({
   PendingActionsIndicator: ({ onViewAll }: { onViewAll?: () => void }) => (
     <button data-testid="pending-actions" onClick={() => onViewAll?.()}>
       pending-actions
@@ -207,7 +209,7 @@ vi.mock('../../../src/components/AIChat/PendingActionsIndicator', () => ({
   ),
 }));
 
-vi.mock('../../../src/components/AIChat/EnhancedChatInput', () => ({
+vi.doMock('../../../src/components/AIChat/EnhancedChatInput', () => ({
   EnhancedChatInput: ({
     onSend,
     onStopGenerating,
@@ -330,11 +332,10 @@ vi.mock('../../../src/components/AIChat/MessageRenderer', () => ({
   },
 }));
 
-// Import after mocks
-import { UnifiedChatPanel } from '../../../src/components/AIChat/UnifiedChatPanel';
+let UnifiedChatPanel: any;
 
 describe('UnifiedChatPanel (L2)', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
 
     // Clipboard exists in JSDOM, but not always with writeText.
@@ -356,6 +357,8 @@ describe('UnifiedChatPanel (L2)', () => {
       aiInteractionsLimit: 100,
       consumeAIInteraction: vi.fn(),
     };
+
+    ({ UnifiedChatPanel } = await import('../../../src/components/AIChat/UnifiedChatPanel'));
 
     appStoreState = {
       ...appStoreState,
@@ -391,17 +394,17 @@ describe('UnifiedChatPanel (L2)', () => {
     };
     aiStreamOptionsCaptured = null;
 
-    apiMock.uploadChatAttachment.mockResolvedValue({ docId: 'doc-1' });
-    apiMock.chatConfirm.mockResolvedValue({
+    h.apiMock.uploadChatAttachment.mockResolvedValue({ docId: 'doc-1' });
+    h.apiMock.chatConfirm.mockResolvedValue({
       confirm: { understanding: { goal: 'G', context: 'C', constraints: ['X'], expectedOutput: 'O' } },
     });
-    apiMock.agentAuditSuggest.mockResolvedValue({
+    h.apiMock.agentAuditSuggest.mockResolvedValue({
       suggested: {
         orchestratorRunId: 'or-1',
         agents: [{ agentId: 'a-1', whySelected: 'w' }],
       },
     });
-    apiMock.agentAuditReview.mockResolvedValue({
+    h.apiMock.agentAuditReview.mockResolvedValue({
       orchestratorRunId: 'or-2',
       verdict: {
         qualityStatus: 'PASS',
@@ -411,14 +414,14 @@ describe('UnifiedChatPanel (L2)', () => {
       },
       reviews: [{ agentId: 'a-1', status: 'ok' }],
     });
-    apiMock.agentAuditListAgents.mockResolvedValue({
+    h.apiMock.agentAuditListAgents.mockResolvedValue({
       agents: [{ id: 'a-1', displayName: { en: 'Agent 1' } }],
     });
-    apiMock.agentAuditAcceptRun.mockResolvedValue({ ok: true });
-    apiMock.deepThinkingEvent.mockResolvedValue({ ok: true });
-    apiMock.saveDeepThinkingDecision.mockResolvedValue({ ok: true });
-    apiMock.createMyIdea.mockResolvedValue({ id: 'idea-1' });
-    apiMock.aiFeedback.mockResolvedValue({ ok: true });
+    h.apiMock.agentAuditAcceptRun.mockResolvedValue({ ok: true });
+    h.apiMock.deepThinkingEvent.mockResolvedValue({ ok: true });
+    h.apiMock.saveDeepThinkingDecision.mockResolvedValue({ ok: true });
+    h.apiMock.createMyIdea.mockResolvedValue({ id: 'idea-1' });
+    h.apiMock.aiFeedback.mockResolvedValue({ ok: true });
   });
 
   it('derives chat language from explicit preference over store fallbacks', () => {
@@ -468,7 +471,7 @@ describe('UnifiedChatPanel (L2)', () => {
     render(<UnifiedChatPanel />);
 
     fireEvent.click(screen.getByTestId('send-pdf'));
-    await waitFor(() => expect(apiMock.uploadChatAttachment).toHaveBeenCalled());
+    await waitFor(() => expect(h.apiMock.uploadChatAttachment).toHaveBeenCalled());
     expect(addChatMessageMock).toHaveBeenCalledWith(
       expect.objectContaining({ content: expect.stringContaining('Analyzing') })
     );
@@ -505,7 +508,7 @@ describe('UnifiedChatPanel (L2)', () => {
 
     expect(screen.getByText('9+')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('chat-business-button'));
-    expect(trackFunnelEventMock).toHaveBeenCalledWith(
+    expect(h.trackFunnelEventMock).toHaveBeenCalledWith(
       'chat_business_button_clicked',
       expect.objectContaining({ pendingCount: 12 })
     );
@@ -570,7 +573,7 @@ describe('UnifiedChatPanel (L2)', () => {
 
     // Send -> confirm card stored -> dtPendingConfirm set (via local state)
     fireEvent.click(screen.getByTestId('send-button'));
-    await waitFor(() => expect(apiMock.chatConfirm).toHaveBeenCalled());
+    await waitFor(() => expect(h.apiMock.chatConfirm).toHaveBeenCalled());
 
     // Proceed via MessageRenderer mock
     fireEvent.click(screen.getByRole('button', { name: 'dt-proceed' }));
@@ -578,7 +581,7 @@ describe('UnifiedChatPanel (L2)', () => {
 
     // Complete stream: should use streamed verdict (no REST review)
     await aiStreamOptionsCaptured.onStreamDone('report', [], [], {});
-    expect(apiMock.agentAuditReview).not.toHaveBeenCalled();
+    expect(h.apiMock.agentAuditReview).not.toHaveBeenCalled();
     expect(addMessageToConversationMock).toHaveBeenCalledWith(
       expect.objectContaining({ role: 'ai', content: expect.stringContaining('Agent Audit (post Deep Thinking)') })
     );
@@ -593,7 +596,9 @@ describe('UnifiedChatPanel (L2)', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'accept-risk' }));
-    await waitFor(() => expect(apiMock.agentAuditAcceptRun).toHaveBeenCalledWith({ runId: 'run-1' }));
+    await waitFor(() =>
+      expect(h.apiMock.agentAuditAcceptRun).toHaveBeenCalledWith({ runId: 'run-1' })
+    );
     expect(addChatMessageMock).toHaveBeenCalledWith(
       expect.objectContaining({ metadata: expect.objectContaining({ agentAudit: expect.anything() }) })
     );
@@ -615,9 +620,9 @@ describe('UnifiedChatPanel (L2)', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'edit-start' }));
-    fireEvent.change(screen.getByLabelText('edit-input'), { target: { value: 'new text' } });
-    fireEvent.click(screen.getByRole('button', { name: 'edit-commit' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'edit-start' })[0]);
+    fireEvent.change(screen.getAllByLabelText('edit-input')[0], { target: { value: 'new text' } });
+    fireEvent.click(screen.getAllByRole('button', { name: 'edit-commit' })[0]);
 
     await waitFor(() => expect(truncateFromMessageMock).toHaveBeenCalledWith('m1', 'new text'));
     await waitFor(() => expect(startStreamMock).toHaveBeenCalled());

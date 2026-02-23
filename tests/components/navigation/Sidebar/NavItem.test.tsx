@@ -82,7 +82,7 @@ describe('NavItem (L2)', () => {
       />
     );
 
-    expect(screen.getByRole('button').className).toContain('bg-primary-500/10');
+    expect(screen.getByRole('button').className).toContain('bg-white/[0.08]');
 
     rerender(
       <NavItem
@@ -102,7 +102,7 @@ describe('NavItem (L2)', () => {
       />
     );
 
-    expect(screen.getByRole('button').className).toContain('bg-primary-500/10');
+    expect(screen.getByRole('button').className).toContain('bg-white/[0.08]');
     expect(screen.getByRole('button')).toHaveAttribute('data-chat-toggle', 'true');
   });
 
@@ -250,7 +250,7 @@ describe('NavItem (L2)', () => {
       />
     );
 
-    expect(screen.getByRole('button').className).toContain('font-medium');
+    expect(screen.getByRole('button').className).toContain('bg-white/[0.04]');
   });
 
   it('calls onMouseEnter and does not mark parent active when no child matches', () => {

@@ -4,6 +4,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import toast from 'react-hot-toast';
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: any, arg2?: any, arg3?: any) => {
+      if (typeof arg2 === 'string') {
+        if (arg3 && typeof arg3 === 'object') {
+          return arg2.replaceAll('{{label}}', String((arg3 as any).label ?? ''));
+        }
+        return arg2;
+      }
+      return String(key);
+    },
+  }),
+}));
+
 const onToolSelect = vi.fn();
 const setAIConfigMock = vi.fn();
 let aiConfigState: any = {};
@@ -92,7 +106,7 @@ describe('ToolsMenu (L2)', () => {
     expect(onToolSelect).toHaveBeenCalledWith('cothinker:idea_maker');
 
     fireEvent.click(screen.getByRole('button', { name: /styl odpowiedzi/i }));
-    fireEvent.click(screen.getByRole('button', { name: 'aiChat.menu.styles.concise' }));
+    fireEvent.click(screen.getByRole('button', { name: /aiChat\.menu\.styles\.concise/i }));
     expect(setAIConfigMock).toHaveBeenCalledWith({ responseStyle: 'concise' });
     expect(onToolSelect).toHaveBeenCalledWith('style:concise');
   });
@@ -150,4 +164,3 @@ describe('ToolsMenu (L2)', () => {
     expect(screen.queryByText(/tryby ai/i)).not.toBeInTheDocument();
   });
 });
-
