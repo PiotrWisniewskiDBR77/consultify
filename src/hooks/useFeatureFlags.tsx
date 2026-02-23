@@ -98,6 +98,14 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     category: 'beta',
     allowLocalOverride: true,
   },
+  {
+    id: 'abTestingFramework',
+    name: 'A/B Testing Framework',
+    description: 'Experiment platform for A/B testing features with cohort allocation',
+    defaultValue: false,
+    category: 'performance',
+    allowLocalOverride: true,
+  },
 ];
 
 // ============================================

@@ -25,6 +25,7 @@ import {
   ChevronUp,
   Eye,
   Flag,
+  GitBranch,
   RefreshCw,
   Sparkles,
   Trash2,
@@ -66,7 +67,7 @@ interface DevToolsPanelProps {
 const categoryIcons: Record<string, React.ReactNode> = {
   ui: <Eye size={14} />,
   ai: <Brain size={14} />,
-  performance: <Zap size={14} />,
+  performance: <GitBranch size={14} />,
   experimental: <Beaker size={14} />,
   beta: <Sparkles size={14} />,
 };
