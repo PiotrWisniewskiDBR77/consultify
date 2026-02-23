@@ -2097,7 +2097,20 @@
     "newChat": "New chat",
     "history": "Chat history",
     "autoReadOn": "Turn on auto-read",
-    "autoReadOff": "Turn off auto-read"
+    "autoReadOff": "Turn off auto-read",
+    "coThinker": {
+      "title": "Co-Thinker",
+      "active": "Active",
+      "clear": "Clear",
+      "personas": {
+        "consultant": "Consultant",
+        "ideaCreator": "Idea Creator",
+        "analyst": "Analyst",
+        "auditor": "Auditor",
+        "editor": "Editor",
+        "marketResearcher": "Market Researcher"
+      }
+    }
   },
   "aiChat": {
     "language": "Conversation language",
@@ -2105,6 +2118,85 @@
     "openSidebar": "Open sidebar",
     "newChat": "New conversation",
     "dailyBrief": "Daily brief",
+    "quickClicks": {
+      "brief": { "label": "Daily brief" },
+      "savings": {
+        "label": "Savings",
+        "prompt": "Let’s find savings — where can we cut cost fastest without losing quality?"
+      },
+      "newProduct": {
+        "label": "New product",
+        "prompt": "Let’s ideate a new product: 5 concepts + market, ROI, and delivery difficulty."
+      },
+      "planReview": {
+        "label": "Plans",
+        "prompt": "Review our plans and initiatives: priorities, risks, and what to adjust."
+      },
+      "situation": {
+        "label": "Situation",
+        "prompt": "Give me a situation overview: progress, risks, blockers, upcoming decisions, and next steps."
+      },
+      "roi": {
+        "label": "ROI",
+        "prompt": "Analyze initiative ROI and point to the top 3 moves with the highest return."
+      },
+      "risks": {
+        "label": "Risks",
+        "prompt": "Create a top-10 risk map and propose concrete mitigations and owners."
+      },
+      "priorities": {
+        "label": "Priorities",
+        "prompt": "Set weekly priorities: MUST/SHOULD/COULD with rationale."
+      },
+      "kpi": {
+        "label": "KPIs",
+        "prompt": "Review key KPIs: what’s improving, what’s declining, what needs action now."
+      },
+      "scenario": {
+        "label": "Scenarios",
+        "prompt": "Build 3 scenarios (base/optimistic/pessimistic) and how each changes the plan."
+      },
+      "decision": {
+        "label": "Decision",
+        "prompt": "Help me decide: options, trade-offs, risks, costs, and a 5-bullet recommendation."
+      },
+      "stakeholders": {
+        "label": "Stakeholders",
+        "prompt": "Draft a short stakeholder update: status, risks, decisions needed, and next steps."
+      },
+      "governance": {
+        "label": "Governance",
+        "prompt": "Design lightweight governance: cadence, KPIs, decisions, escalations, and ownership."
+      },
+      "budget": {
+        "label": "Budget",
+        "prompt": "Analyze initiative budget: variances, risks, and where we should reallocate."
+      },
+      "timeline": {
+        "label": "Timeline",
+        "prompt": "Check the timeline: delays, critical path, and recommended corrections."
+      },
+      "team": {
+        "label": "Team",
+        "prompt": "Assess team load: overloads, risks, and quick flow improvements."
+      },
+      "benefits": {
+        "label": "Benefits",
+        "prompt": "Build a benefits-realization plan: metrics, baseline, owners, tracking, and reporting."
+      },
+      "capability": {
+        "label": "Skills",
+        "prompt": "What capabilities are missing most? Propose a 6-week upskilling plan (learn + do)."
+      },
+      "dependencies": {
+        "label": "Dependencies",
+        "prompt": "Identify dependencies and bottlenecks across initiatives and propose sequencing."
+      },
+      "quickWins": {
+        "label": "Quick wins",
+        "prompt": "Propose 10 quick wins for the next 2 weeks: value, effort, owner, and first step."
+      }
+    },
     "suggestions": {
       "title": "Suggested for you",
       "startAssessment": "Start your digital maturity assessment"
@@ -2178,6 +2270,74 @@
       "afternoon": "Let's make progress on your initiatives",
       "evening": "Review your transformation journey"
     },
+    "subtitleRotator": {
+      "morning": [
+        "Ready to shape strategy, operations, and execution—end to end?",
+        "Turn ambition into a roadmap, and the roadmap into results.",
+        "From insight to action: align teams, portfolios, and outcomes.",
+        "Design the operating model. Drive the change. Measure the value.",
+        "Build clarity across strategy, delivery, and governance—today.",
+        "Let’s turn complexity into a plan your teams can actually run.",
+        "Make smarter decisions with data, scenarios, and real-world constraints.",
+        "Connect vision, initiatives, budgets, and benefits in one flow.",
+        "Spot risks early, course-correct fast, and keep momentum.",
+        "Create strategic narratives that executives and teams both trust.",
+        "Model options, test assumptions, and choose the winning path.",
+        "Make learning part of execution: upskill while you deliver.",
+        "Bring structure to discovery, rigor to analysis, and speed to delivery.",
+        "Translate strategy into initiatives your organization can own.",
+        "Make governance lightweight—and outcomes unmistakable.",
+        "Plan, execute, and learn in a continuous transformation loop.",
+        "See the whole system: people, process, tech, and economics.",
+        "Elevate conversations from tasks to decisions and trade-offs.",
+        "Run your transformation like a product: iterate, measure, improve.",
+        "Start with a question. End with an actionable next step."
+      ],
+      "afternoon": [
+        "Ready to shape strategy, operations, and execution—end to end?",
+        "Turn ambition into a roadmap, and the roadmap into results.",
+        "From insight to action: align teams, portfolios, and outcomes.",
+        "Design the operating model. Drive the change. Measure the value.",
+        "Build clarity across strategy, delivery, and governance—today.",
+        "Let’s turn complexity into a plan your teams can actually run.",
+        "Make smarter decisions with data, scenarios, and real-world constraints.",
+        "Connect vision, initiatives, budgets, and benefits in one flow.",
+        "Spot risks early, course-correct fast, and keep momentum.",
+        "Create strategic narratives that executives and teams both trust.",
+        "Model options, test assumptions, and choose the winning path.",
+        "Make learning part of execution: upskill while you deliver.",
+        "Bring structure to discovery, rigor to analysis, and speed to delivery.",
+        "Translate strategy into initiatives your organization can own.",
+        "Make governance lightweight—and outcomes unmistakable.",
+        "Plan, execute, and learn in a continuous transformation loop.",
+        "See the whole system: people, process, tech, and economics.",
+        "Elevate conversations from tasks to decisions and trade-offs.",
+        "Run your transformation like a product: iterate, measure, improve.",
+        "Start with a question. End with an actionable next step."
+      ],
+      "evening": [
+        "Ready to shape strategy, operations, and execution—end to end?",
+        "Turn ambition into a roadmap, and the roadmap into results.",
+        "From insight to action: align teams, portfolios, and outcomes.",
+        "Design the operating model. Drive the change. Measure the value.",
+        "Build clarity across strategy, delivery, and governance—today.",
+        "Let’s turn complexity into a plan your teams can actually run.",
+        "Make smarter decisions with data, scenarios, and real-world constraints.",
+        "Connect vision, initiatives, budgets, and benefits in one flow.",
+        "Spot risks early, course-correct fast, and keep momentum.",
+        "Create strategic narratives that executives and teams both trust.",
+        "Model options, test assumptions, and choose the winning path.",
+        "Make learning part of execution: upskill while you deliver.",
+        "Bring structure to discovery, rigor to analysis, and speed to delivery.",
+        "Translate strategy into initiatives your organization can own.",
+        "Make governance lightweight—and outcomes unmistakable.",
+        "Plan, execute, and learn in a continuous transformation loop.",
+        "See the whole system: people, process, tech, and economics.",
+        "Elevate conversations from tasks to decisions and trade-offs.",
+        "Run your transformation like a product: iterate, measure, improve.",
+        "Start with a question. End with an actionable next step."
+      ]
+    },
     "frozenPlaceholder": "AI temporarily unavailable",
     "dictating": "Dictating…",
     "voiceConversation": "Listening… speak naturally",
@@ -2195,6 +2355,9 @@
       "aiModes": "AI modes",
       "knowledgeSources": "Knowledge sources",
       "responseStyle": "Response style",
+      "personalizeTitle": "Personalize AI responses",
+      "personalizeInstructions": "Custom instructions",
+      "personalizeInstructionsPlaceholder": "How should AI respond?",
       "ttsSettings": "Voice settings",
       "ttsSpeed": "Speed",
       "ttsVoice": "Voice",
@@ -2203,6 +2366,11 @@
       "ttsTest": "Test voice",
       "ttsTestUtterance": "Hi, this is a voice test.",
       "addFiles": "Add files",
+      "uploadFile": "Upload file",
+      "connectToProvider": "Connect to {{provider}}",
+      "openProvider": "Open {{provider}}",
+      "recent": "Recent",
+      "recentEmpty": "No recent attachments",
       "uploadFromDevice": "From device",
       "cloudStorage": "Cloud",
       "connectInSettings": "Connect more in Settings → Integrations",
@@ -2247,7 +2415,7 @@
         }
       },
       "styles": {
-        "normal": "Normal",
+        "normal": "Standard",
         "normalDesc": "Balanced, conversational responses",
         "executive": "Executive",
         "executiveDesc": "Concise, decision-focused, 3-5 bullet points",
@@ -2258,10 +2426,32 @@
         "concise": "Concise",
         "conciseDesc": "Key points only, no digressions",
         "formal": "Formal",
-        "formalDesc": "Business/official language, precise and neutral"
+        "formalDesc": "Business/official language, precise and neutral",
+        "professional": "Professional",
+        "professionalDesc": "Consulting tone, McKinsey/BCG structure, recommendations",
+        "friendly": "Friendly",
+        "friendlyDesc": "Warm, casual tone, like chatting with a good friend"
+      },
+      "stylePresets": {
+        "normal": "",
+        "concise": "Respond briefly and directly, using as few words as possible. Focus on the core point without elaboration or follow-up questions.",
+        "executive": "Respond like a senior consulting partner. Start with the recommendation, then 3-5 bullets with rationale. Add risks and next steps. Skip introductions.",
+        "analyst": "Respond like a data analyst. Use tables, metrics, and benchmarks. Cite sources and confidence intervals. Structure data for easy further analysis.",
+        "formal": "Use a formal, professional tone. Write clear, well-structured sentences with precise language. Maintain professionalism and avoid colloquialisms. Provide thorough explanations while remaining concise, as if addressing a board-level colleague.",
+        "coach": "Respond as a coach and mentor. Instead of giving direct answers, ask guiding questions. Walk through reasoning step by step, helping discover insights independently.",
+        "professional": "Respond like an experienced strategy consultant. Use the structure: situation → analysis → recommendation → next steps. Provide specific metrics and KPIs. Reference frameworks (SWOT, Porter, BCG matrix). Use precise business language with a clear action plan.",
+        "friendly": "Respond warmly and casually, like a good friend. Use simple language, add emoji where they fit. Be supportive, enthusiastic, and positive. Keep it approachable but still helpful and on-point."
       },
       "customInstructions": "My instructions",
       "customInstructionsPlaceholder": "e.g. \"Always respond in English\", \"I prefer tables over text\", \"I am a CTO at a manufacturing company\"",
+      "customInstructionsTitle": "My instructions",
+      "customInstructionsDesc": "These preferences are applied to every response in Chat.",
+      "customInstructionsStarters": "Starters (click to insert)",
+      "customInstructionsStarter1": "I prefer short, actionable answers with a checklist and clear owners.",
+      "customInstructionsStarter2": "Use tables when comparing options. Always include risks and mitigations.",
+      "customInstructionsStarter3": "Ask 2-3 clarifying questions when the request is ambiguous before answering.",
+      "customInstructionsStarter4": "Write in Polish and keep a professional consulting tone.",
+      "customInstructionsTip": "Tip: mention your role, industry, and preferred output format.",
       "instructionsSaved": "Instructions saved",
       "instructionsSaveError": "Failed to save instructions",
       "toast": {

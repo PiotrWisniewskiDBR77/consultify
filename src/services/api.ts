@@ -1924,14 +1924,42 @@ export const Api = {
   testLLMConnection: async (
     config: any
   ): Promise<{ success: boolean; message: string; response?: string }> => {
-    const res = await fetch(`${API_URL}/llm/test`, {
+    const res = await fetchWithRetry(`${API_URL}/llm/test`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(config),
     });
-    const data = await res.json();
-    if (!res.ok) return { success: false, message: data.error || 'Connection failed' };
-    return data;
+    let parsed: any = null;
+    let rawText = '';
+    try {
+      parsed = await res.clone().json();
+    } catch {
+      // ignore
+    }
+    if (!parsed) {
+      try {
+        rawText = await res.text();
+      } catch {
+        // ignore
+      }
+    }
+    const data = parsed || {};
+    if (!res.ok) {
+      const msg =
+        data?.error ||
+        data?.message ||
+        rawText ||
+        `HTTP ${res.status} ${res.statusText || 'Request failed'}`;
+      return { success: false, message: msg };
+    }
+    // Normalize response so callers can always show a toast.
+    const success = data?.success === true;
+    const message =
+      data?.message ||
+      (success
+        ? `Connection OK${typeof data?.latency === 'number' ? ` (${data.latency}ms)` : ''}`
+        : data?.error || data?.message || 'Connection failed');
+    return { ...data, success, message };
   },
 
   getOperationalCosts: async (

@@ -120,6 +120,11 @@ interface UnifiedChatPanelProps {
 
   /** Optional messages override for ephemeral/specialized views */
   customMessages?: ChatMessage[];
+
+  /** One-shot kickoff message to auto-send (split panel) */
+  kickoffMessage?: string;
+  /** Callback after kickoff message is consumed */
+  onKickoffConsumed?: () => void;
 }
 
 // ============================================================================
@@ -145,6 +150,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   onOptionSelect,
   onMultiSelectSubmit,
   customMessages,
+  kickoffMessage,
+  onKickoffConsumed,
 }) => {
   const { t, i18n } = useTranslation();
 
@@ -198,6 +205,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [editingText, setEditingText] = useState<string>('');
   const [editBusy, setEditBusy] = useState(false);
   const [signalsOpen, setSignalsOpen] = useState(false);
+  const lastKickoffSentRef = useRef<string | null>(null);
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
     // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
@@ -1230,6 +1238,29 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       addMessageToConversation,
     ]
   );
+
+  // One-shot kickoff: when panel opens in split mode, auto-send the configured message.
+  useEffect(() => {
+    if (!kickoffMessage) return;
+    if (isDisabled) return;
+    if (isStreaming) return;
+    if ((customMessages || []).length > 0) return;
+    if ((activeMessages || []).length > 0) return;
+    if (lastKickoffSentRef.current === kickoffMessage) return;
+
+    // Fire-and-forget; handleSendMessage creates conversation if needed
+    void handleSendMessage(kickoffMessage);
+    lastKickoffSentRef.current = kickoffMessage;
+    onKickoffConsumed?.();
+  }, [
+    kickoffMessage,
+    isDisabled,
+    isStreaming,
+    customMessages,
+    activeMessages,
+    handleSendMessage,
+    onKickoffConsumed,
+  ]);
 
   const handleDeepThinkingProceed = useCallback(async () => {
     if (!dtPendingConfirm) return;

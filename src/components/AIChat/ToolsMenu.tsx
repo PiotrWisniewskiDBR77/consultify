@@ -1,14 +1,12 @@
 /**
  * ToolsMenu
  *
- * Dropdown menu for AI tools (Gemini-style, opens downward):
- * - AI Modes (toggles with visual feedback)
- * - Response Style
- * - Custom Instructions
+ * ChatGPT/Grok-style tools dropdown:
+ * - AI Modes (checkmark toggles, no background boxes)
+ * - Response Style + Custom Instructions (Grok-style modal with card grid)
+ * - Add to project
  *
- * Knowledge Sources removed — always enabled by default.
- *
- * @version 3.0.0
+ * @version 5.0.0
  */
 
 import {
@@ -17,24 +15,22 @@ import {
   Briefcase,
   Check,
   ChevronRight,
-  Globe,
+  FolderPlus,
   GraduationCap,
-  LineChart,
   MessageSquare,
   Pen,
   Search,
-  Settings,
   Sparkles,
-  ToggleLeft,
-  ToggleRight,
   Users,
   Volume2,
+  X,
   Zap,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Button } from '../ui/primitives/Button';
 import { useAppStore } from '../../store/useAppStore';
 
 interface ToolsMenuProps {
@@ -51,53 +47,24 @@ interface ToolMode {
   enabled?: boolean;
 }
 
-// Response Style definitions — domain-specific presets for PMO/consulting
-type ResponseStyle = 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
+type ResponseStyle = 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal' | 'professional' | 'friendly';
 
 interface StyleOption {
   id: ResponseStyle;
-  icon: React.ElementType;
   labelKey: string;
   descKey: string;
+  presetKey: string;
 }
 
 const RESPONSE_STYLES: StyleOption[] = [
-  {
-    id: 'normal',
-    icon: MessageSquare,
-    labelKey: 'aiChat.menu.styles.normal',
-    descKey: 'aiChat.menu.styles.normalDesc',
-  },
-  {
-    id: 'executive',
-    icon: Briefcase,
-    labelKey: 'aiChat.menu.styles.executive',
-    descKey: 'aiChat.menu.styles.executiveDesc',
-  },
-  {
-    id: 'analyst',
-    icon: BarChart3,
-    labelKey: 'aiChat.menu.styles.analyst',
-    descKey: 'aiChat.menu.styles.analystDesc',
-  },
-  {
-    id: 'coach',
-    icon: GraduationCap,
-    labelKey: 'aiChat.menu.styles.coach',
-    descKey: 'aiChat.menu.styles.coachDesc',
-  },
-  {
-    id: 'concise',
-    icon: Zap,
-    labelKey: 'aiChat.menu.styles.concise',
-    descKey: 'aiChat.menu.styles.conciseDesc',
-  },
-  {
-    id: 'formal',
-    icon: Pen,
-    labelKey: 'aiChat.menu.styles.formal',
-    descKey: 'aiChat.menu.styles.formalDesc',
-  },
+  { id: 'normal', labelKey: 'aiChat.menu.styles.normal', descKey: 'aiChat.menu.styles.normalDesc', presetKey: 'aiChat.menu.stylePresets.normal' },
+  { id: 'concise', labelKey: 'aiChat.menu.styles.concise', descKey: 'aiChat.menu.styles.conciseDesc', presetKey: 'aiChat.menu.stylePresets.concise' },
+  { id: 'executive', labelKey: 'aiChat.menu.styles.executive', descKey: 'aiChat.menu.styles.executiveDesc', presetKey: 'aiChat.menu.stylePresets.executive' },
+  { id: 'analyst', labelKey: 'aiChat.menu.styles.analyst', descKey: 'aiChat.menu.styles.analystDesc', presetKey: 'aiChat.menu.stylePresets.analyst' },
+  { id: 'formal', labelKey: 'aiChat.menu.styles.formal', descKey: 'aiChat.menu.styles.formalDesc', presetKey: 'aiChat.menu.stylePresets.formal' },
+  { id: 'coach', labelKey: 'aiChat.menu.styles.coach', descKey: 'aiChat.menu.styles.coachDesc', presetKey: 'aiChat.menu.stylePresets.coach' },
+  { id: 'professional', labelKey: 'aiChat.menu.styles.professional', descKey: 'aiChat.menu.styles.professionalDesc', presetKey: 'aiChat.menu.stylePresets.professional' },
+  { id: 'friendly', labelKey: 'aiChat.menu.styles.friendly', descKey: 'aiChat.menu.styles.friendlyDesc', presetKey: 'aiChat.menu.stylePresets.friendly' },
 ];
 
 export const ToolsMenu: React.FC<ToolsMenuProps> = ({
@@ -108,33 +75,25 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   const { t } = useTranslation();
   const { aiConfig, setAIConfig } = useAppStore();
   const [isOpen, setIsOpen] = useState(false);
-  const [showStyleSubmenu, setShowStyleSubmenu] = useState(false);
-  const [showTTSSubmenu, setShowTTSSubmenu] = useState(false);
-  const [submenuPosition, setSubmenuPosition] = useState<'right' | 'left'>('right');
-  const [showCustomInstructions, setShowCustomInstructions] = useState(false);
+  const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
   const [customInstructions, setCustomInstructions] = useState('');
   const [customInstructionsLoaded, setCustomInstructionsLoaded] = useState(false);
   const [isSavingInstructions, setIsSavingInstructions] = useState(false);
   const [menuMaxHeight, setMenuMaxHeight] = useState<number | undefined>(undefined);
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const styleButtonRef = useRef<HTMLButtonElement>(null);
-  const ttsButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Calculate available space above the trigger button for menu positioning
-  // (menu opens upward to avoid overflowing the bottom of the viewport)
   useEffect(() => {
     if (isOpen && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
-      // Available space above trigger minus some padding
       const availableAbove = rect.top - 24;
-      setMenuMaxHeight(Math.max(200, availableAbove));
+      setMenuMaxHeight(Math.max(240, availableAbove));
     }
   }, [isOpen]);
 
-  // Load custom instructions from AI memory on first open
+  // Load custom instructions
   React.useEffect(() => {
-    if (isOpen && !customInstructionsLoaded) {
+    if ((isOpen || isStyleModalOpen) && !customInstructionsLoaded) {
       fetch('/api/ai-memory', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       })
@@ -146,9 +105,8 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
         })
         .catch(() => setCustomInstructionsLoaded(true));
     }
-  }, [isOpen, customInstructionsLoaded]);
+  }, [isOpen, isStyleModalOpen, customInstructionsLoaded]);
 
-  // Save custom instructions to AI memory
   const handleSaveInstructions = async () => {
     setIsSavingInstructions(true);
     try {
@@ -172,15 +130,12 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     }
   };
 
-  // Get available voices
+  // TTS voices
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      const loadVoices = () => {
-        const voices = window.speechSynthesis.getVoices();
-        setAvailableVoices(voices);
-      };
+      const loadVoices = () => setAvailableVoices(window.speechSynthesis.getVoices());
       loadVoices();
       window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
       return () => window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
@@ -188,101 +143,37 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     return undefined;
   }, []);
 
-  // Use global store values
   const {
     deepResearch,
-    webSearch,
     showReasoning,
     responseStyle,
     textToSpeech,
     ttsRate,
     ttsVoice,
-    marketResearch,
-    coThinkerMode,
   } = aiConfig as any;
 
-  // Count active modes for badge
-  const activeModeCount = [
-    deepResearch,
-    webSearch,
-    showReasoning,
-    textToSpeech,
-    marketResearch,
-  ].filter(Boolean).length;
+  const activeModeCount = [deepResearch, showReasoning, textToSpeech].filter(Boolean).length;
 
-  // AI Modes - using global store values
   const AI_MODES: ToolMode[] = [
-    {
-      id: 'deepResearch',
-      icon: Search,
-      labelKey: 'aiChat.menu.modes.deepResearch.label',
-      descKey: 'aiChat.menu.modes.deepResearch.desc',
-      enabled: deepResearch,
-    },
-    {
-      id: 'webSearch',
-      icon: Globe,
-      labelKey: 'aiChat.menu.modes.webSearch.label',
-      descKey: 'aiChat.menu.modes.webSearch.desc',
-      enabled: webSearch,
-    },
-    {
-      id: 'showReasoning',
-      icon: Sparkles,
-      labelKey: 'aiChat.menu.modes.showReasoning.label',
-      descKey: 'aiChat.menu.modes.showReasoning.desc',
-      enabled: showReasoning,
-    },
-    {
-      id: 'marketResearch',
-      icon: LineChart,
-      labelKey: 'aiChat.menu.modes.marketResearch.label',
-      descKey: 'aiChat.menu.modes.marketResearch.desc',
-      enabled: marketResearch ?? false,
-    },
-    {
-      id: 'multiAgent',
-      icon: Users,
-      labelKey: 'aiChat.menu.modes.multiAgent.label',
-      descKey: 'aiChat.menu.modes.multiAgent.desc',
-      enabled: aiConfig.multiAgent ?? false,
-    },
-    {
-      id: 'textToSpeech',
-      icon: Volume2,
-      labelKey: 'aiChat.menu.modes.textToSpeech.label',
-      descKey: 'aiChat.menu.modes.textToSpeech.desc',
-      enabled: textToSpeech,
-    },
+    { id: 'deepResearch', icon: Search, labelKey: 'aiChat.menu.modes.deepResearch.label', descKey: 'aiChat.menu.modes.deepResearch.desc', enabled: deepResearch },
+    { id: 'showReasoning', icon: Sparkles, labelKey: 'aiChat.menu.modes.showReasoning.label', descKey: 'aiChat.menu.modes.showReasoning.desc', enabled: showReasoning },
+    { id: 'multiAgent', icon: Users, labelKey: 'aiChat.menu.modes.multiAgent.label', descKey: 'aiChat.menu.modes.multiAgent.desc', enabled: aiConfig.multiAgent ?? false },
+    { id: 'textToSpeech', icon: Volume2, labelKey: 'aiChat.menu.modes.textToSpeech.label', descKey: 'aiChat.menu.modes.textToSpeech.desc', enabled: textToSpeech },
   ];
 
-  // Handle click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setIsOpen(false);
     };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    if (isOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  // Toggle AI modes - persists to global store
   const toggleMode = (modeId: string) => {
     const currentValue = aiConfig[modeId as keyof typeof aiConfig];
     const newValue = !currentValue;
     setAIConfig({ [modeId]: newValue });
-
-    // Also sync maxMode when toggling showReasoning
-    if (modeId === 'showReasoning') {
-      setAIConfig({ maxMode: newValue });
-    }
+    if (modeId === 'showReasoning') setAIConfig({ maxMode: newValue });
 
     const label = t(`aiChat.menu.modes.${modeId}.label`, modeId);
     const icon = modeId === 'textToSpeech' ? '🔊' : '✓';
@@ -290,7 +181,6 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       t(newValue ? 'aiChat.menu.toast.enabled' : 'aiChat.menu.toast.disabled', { label }),
       { duration: 2000, icon }
     );
-
     onToolSelect(`toggle:${modeId}`);
   };
 
@@ -303,14 +193,13 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
         disabled={disabled}
         data-testid="chat-tools-button"
         className={`
-                    relative p-2 rounded-lg transition-colors
-                    ${
-                      activeModeCount > 0
-                        ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/30'
-                        : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
-                    }
-                    ${disabled ? 'cursor-not-allowed opacity-50' : ''}
-                `}
+          relative p-2 rounded-lg transition-colors
+          ${activeModeCount > 0
+            ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/30'
+            : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+          }
+          ${disabled ? 'cursor-not-allowed opacity-50' : ''}
+        `}
         title={t('aiChat.menu.tools', 'Narzędzia AI')}
       >
         <IconComponent size={20} />
@@ -321,451 +210,369 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
         )}
       </button>
 
-      {/* Dropdown Menu — opens upward so it doesn't overflow bottom of viewport */}
+      {/* Dropdown Menu */}
       {isOpen && (
         <div
           className="
-                        absolute left-0 bottom-full mb-2 z-50
-                        w-72 py-1
-                        bg-white dark:bg-navy-800
-                        border border-slate-200 dark:border-navy-700
-                        rounded-xl shadow-xl
-                        animate-in fade-in-0 slide-in-from-bottom-2 duration-150
-                        overflow-y-auto
-                    "
+            absolute left-0 bottom-full mb-2 z-50
+            w-[250px] py-1.5
+            bg-white/95 dark:bg-[#1a1d2e]/95 backdrop-blur-xl
+            border border-slate-200/40 dark:border-white/[0.08]
+            rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]
+            animate-in fade-in-0 slide-in-from-bottom-2 duration-150
+            overflow-y-auto overflow-x-visible
+          "
           style={{ maxHeight: menuMaxHeight ? `${menuMaxHeight}px` : '70vh' }}
         >
-          {/* AI Modes Section */}
-          <div className="px-3 py-2 flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              {t('aiChat.menu.aiModes', 'Tryby AI')}
+          {/* Section header */}
+          <div className="px-3.5 pt-1.5 pb-1 flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              {t('aiChat.menu.aiModes', 'AI MODES')}
             </span>
             {activeModeCount > 0 && (
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium">
-                {activeModeCount} {t('common.active', 'aktywne')}
+                {activeModeCount} {t('common.active', 'active')}
               </span>
             )}
           </div>
 
+          {/* AI Modes */}
           {AI_MODES.map((mode) => {
             const Icon = mode.icon;
             const isEnabled = mode.enabled;
-
             return (
               <button
                 key={mode.id}
                 onClick={() => toggleMode(mode.id)}
                 className={`
-                                    w-full flex items-center gap-3 px-3 py-2 text-left
-                                    transition-colors
-                                    ${isEnabled ? 'bg-primary-50 dark:bg-primary-900/20' : 'hover:bg-slate-50 dark:hover:bg-navy-700'}
-                                `}
+                  w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors
+                  ${isEnabled ? 'bg-primary-50/60 dark:bg-primary-900/10' : 'hover:bg-slate-50/80 dark:hover:bg-white/[0.04]'}
+                `}
               >
-                <div
-                  className={`p-1.5 rounded-lg ${isEnabled ? 'bg-primary-100 dark:bg-primary-900/30' : 'bg-slate-100 dark:bg-navy-700'}`}
-                >
-                  <Icon
-                    size={14}
-                    className={
-                      isEnabled ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'
-                    }
-                  />
-                </div>
-                <div
-                  className={`flex-1 text-sm font-medium ${isEnabled ? 'text-primary-700 dark:text-primary-300' : 'text-slate-700 dark:text-slate-300'}`}
-                >
+                <Icon size={16} className={`shrink-0 ${isEnabled ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'}`} />
+                <span className={`flex-1 text-[13px] ${isEnabled ? 'text-primary-700 dark:text-primary-300 font-medium' : 'text-slate-700 dark:text-slate-200'}`}>
                   {t(mode.labelKey)}
-                </div>
-                {isEnabled ? (
-                  <ToggleRight size={22} className="text-primary-500 shrink-0" />
-                ) : (
-                  <ToggleLeft size={22} className="text-slate-300 dark:text-slate-600 shrink-0" />
-                )}
+                </span>
+                {isEnabled && <Check size={16} className="shrink-0 text-primary-500" />}
               </button>
             );
           })}
 
-          {/* Co-Thinker Section */}
-          <div className="my-2 border-t border-slate-200 dark:border-navy-700" />
-          <div className="px-3 py-2">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              {t('chat.coThinker.title', 'Co-Thinker')}
+          {/* Divider */}
+          <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
+
+          {/* Response style — opens Grok-style modal */}
+          <button
+            onClick={() => { setIsStyleModalOpen(true); setIsOpen(false); }}
+            className="w-full flex items-center gap-3 px-3.5 py-2 text-left hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors"
+          >
+            <Pen size={16} className="shrink-0 text-slate-400 dark:text-slate-500" />
+            <span className="flex-1 text-[13px] text-slate-700 dark:text-slate-200">
+              {t('aiChat.menu.responseStyle', 'Response style')}
             </span>
-          </div>
-          <div className="px-3 pb-2 flex flex-wrap gap-1.5">
-            {[
-              {
-                id: 'multi_consultant',
-                label: t('chat.coThinker.multiConsultant', 'Multi-Consultant Panel'),
-                icon: '👥',
-              },
-              { id: 'idea_maker', label: t('chat.coThinker.ideaMaker', 'Idea Maker'), icon: '💡' },
-              {
-                id: 'competitive_analyst',
-                label: t('chat.coThinker.competitiveAnalyst', 'Competitive Analyst'),
-                icon: '🎯',
-              },
-              {
-                id: 'risk_challenger',
-                label: t('chat.coThinker.riskChallenger', 'Risk Challenger'),
-                icon: '⚠️',
-              },
-              {
-                id: 'executive_editor',
-                label: t('chat.coThinker.executiveEditor', 'Executive Editor'),
-                icon: '📋',
-              },
-            ].map((mode) => {
-              const isActive = coThinkerMode === mode.id;
-              return (
-                <button
-                  key={mode.id}
-                  onClick={() => {
-                    const newMode = isActive ? null : mode.id;
-                    setAIConfig({ coThinkerMode: newMode } as any);
-                    if (newMode) {
-                      toast.success(
-                        t('chat.coThinker.activated', 'Co-Thinker: {{mode}}', { mode: mode.label }),
-                        { duration: 2000, icon: mode.icon }
-                      );
-                    } else {
-                      toast.success(t('chat.coThinker.deactivated', 'Co-Thinker disabled'), {
-                        duration: 1500,
-                      });
-                    }
-                    onToolSelect(`cothinker:${newMode || 'off'}`);
-                  }}
-                  className={`px-2.5 py-1.5 text-xs rounded-lg border transition-colors flex items-center gap-1.5 ${
-                    isActive
-                      ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-700 text-primary-600 dark:text-primary-400 font-medium'
-                      : 'bg-slate-50 dark:bg-navy-700 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-600'
-                  }`}
-                >
-                  <span>{mode.icon}</span>
-                  <span>{mode.label}</span>
-                </button>
-              );
-            })}
-          </div>
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 mr-1">
+              {t(`aiChat.menu.styles.${responseStyle || 'normal'}`, 'Normal')}
+            </span>
+            <ChevronRight size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
+          </button>
 
           {/* Divider */}
-          <div className="my-2 border-t border-slate-200 dark:border-navy-700" />
+          <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
 
-          {/* Response Style Section */}
-          <div className="relative">
-            <button
-              ref={styleButtonRef}
-              onClick={() => {
-                // Check if submenu would go off-screen
-                if (styleButtonRef.current) {
-                  const rect = styleButtonRef.current.getBoundingClientRect();
-                  const submenuWidth = 192; // w-48 = 12rem = 192px
-                  const wouldOverflow = rect.right + submenuWidth > window.innerWidth;
-                  setSubmenuPosition(wouldOverflow ? 'left' : 'right');
-                }
-                setShowStyleSubmenu(!showStyleSubmenu);
-                setShowTTSSubmenu(false);
-              }}
-              className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors"
-            >
-              <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-navy-700">
-                <Pen size={14} className="text-slate-400 dark:text-slate-500" />
-              </div>
-              <div className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-300">
-                {t('aiChat.menu.responseStyle', 'Styl odpowiedzi')}
-              </div>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                {t(`aiChat.menu.styles.${responseStyle || 'normal'}`, 'Normal')}
-              </span>
-              <ChevronRight
-                size={14}
-                className={`text-slate-400 shrink-0 transition-transform ${submenuPosition === 'left' ? 'rotate-180' : ''}`}
+          {/* Add to project */}
+          <button
+            onClick={() => {
+              onToolSelect('addToProject');
+              setIsOpen(false);
+              toast(t('aiChat.conversation.addToProject', 'Add to project'), {
+                icon: '📁', duration: 2000,
+                style: { borderRadius: '10px', background: '#334155', color: '#fff' },
+              });
+            }}
+            className="w-full flex items-center gap-3 px-3.5 py-2 text-left hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors"
+          >
+            <FolderPlus size={16} className="shrink-0 text-slate-400 dark:text-slate-500" />
+            <span className="flex-1 text-[13px] text-slate-700 dark:text-slate-200">
+              {t('aiChat.conversation.addToProject', 'Add to project')}
+            </span>
+            <ChevronRight size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
+          </button>
+
+          {/* TTS Settings — only when TTS is enabled */}
+          {textToSpeech && (
+            <>
+              <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
+              <TTSSettings
+                ttsRate={ttsRate}
+                ttsVoice={ttsVoice}
+                availableVoices={availableVoices}
+                setAIConfig={setAIConfig}
+                t={t}
               />
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ─── Grok-style Response Style + Custom Instructions Modal ─── */}
+      {isStyleModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setIsStyleModalOpen(false)}
+          />
+
+          {/* Panel */}
+          <div className="relative w-full max-w-[540px] max-h-[85vh] overflow-y-auto
+            bg-white dark:bg-[#1a1d2e]
+            border border-slate-200/40 dark:border-white/[0.08]
+            rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.2)] dark:shadow-[0_24px_64px_rgba(0,0,0,0.6)]
+            animate-in fade-in-0 zoom-in-95 duration-200"
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setIsStyleModalOpen(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors z-10"
+            >
+              <X size={18} />
             </button>
 
-            {/* Style Submenu - positions left or right based on viewport */}
-            {showStyleSubmenu && (
-              <div
-                className={`absolute top-0 w-56 py-1 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl z-50 ${submenuPosition === 'right' ? 'left-full ml-1' : 'right-full mr-1'}`}
-              >
-                {RESPONSE_STYLES.map((style) => {
-                  const StyleIcon = style.icon;
-                  const isSelected = responseStyle === style.id;
+            <div className="p-6">
+              {/* Title */}
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-5">
+                {t('aiChat.menu.personalizeTitle', 'Personalize AI responses')}
+              </h2>
 
+              {/* Style cards — 2-column grid (last card spans full width if odd count) */}
+              <div className="grid grid-cols-2 gap-2.5 mb-6">
+                {RESPONSE_STYLES.map((style, idx) => {
+                  const isSelected = (responseStyle || 'normal') === style.id;
+                  const isLastOdd = RESPONSE_STYLES.length % 2 === 1 && idx === RESPONSE_STYLES.length - 1;
                   return (
                     <button
                       key={style.id}
                       onClick={() => {
                         setAIConfig({ responseStyle: style.id });
-                        setShowStyleSubmenu(false);
+                        const preset = t(style.presetKey, '');
+                        if (preset) setCustomInstructions(preset);
                         const styleLabel = t(style.labelKey);
-                        toast.success(t('aiChat.menu.toast.responseStyle', { style: styleLabel }), {
-                          duration: 2000,
-                        });
+                        toast.success(t('aiChat.menu.toast.responseStyle', { style: styleLabel }), { duration: 2000 });
                         onToolSelect(`style:${style.id}`);
                       }}
                       className={`
-                        w-full flex items-start gap-3 px-3 py-2.5 text-left transition-colors
-                        ${isSelected ? 'bg-primary-50 dark:bg-primary-900/20' : 'hover:bg-slate-50 dark:hover:bg-navy-700'}
+                        relative text-left p-3.5 rounded-xl border transition-all duration-150
+                        ${isLastOdd ? 'col-span-1' : ''}
+                        ${isSelected
+                          ? 'border-primary-400 dark:border-primary-500 bg-primary-50/50 dark:bg-primary-900/15 ring-1 ring-primary-400/30'
+                          : 'border-slate-200/60 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] hover:border-slate-300 dark:hover:border-white/[0.15] hover:bg-slate-50/50 dark:hover:bg-white/[0.04]'
+                        }
                       `}
                     >
-                      <StyleIcon
-                        size={14}
-                        className={`mt-0.5 shrink-0 ${
-                          isSelected ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'
-                        }`}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <span
-                          className={`block text-sm ${isSelected ? 'text-primary-700 dark:text-primary-300 font-medium' : 'text-slate-700 dark:text-slate-300'}`}
-                        >
-                          {t(style.labelKey)}
-                        </span>
-                        <span className="block text-[10px] text-slate-400 dark:text-slate-500 leading-tight mt-0.5">
-                          {t(style.descKey)}
-                        </span>
+                      <div className={`text-[13px] font-medium mb-1 pr-6 ${isSelected ? 'text-primary-700 dark:text-primary-300' : 'text-slate-800 dark:text-slate-200'}`}>
+                        {t(style.labelKey)}
+                      </div>
+                      <div className="text-[11px] leading-snug text-slate-400 dark:text-slate-500 pr-4">
+                        {t(style.descKey)}
                       </div>
                       {isSelected && (
-                        <Check size={14} className="text-primary-500 shrink-0 mt-0.5" />
+                        <div className="absolute top-3 right-3">
+                          <Check size={16} className="text-primary-500" />
+                        </div>
                       )}
                     </button>
                   );
                 })}
               </div>
-            )}
-          </div>
 
-          {/* Custom Instructions Section */}
-          <div className="my-2 border-t border-slate-200 dark:border-navy-700" />
-          <div className="px-3 py-1">
-            <button
-              onClick={() => setShowCustomInstructions(!showCustomInstructions)}
-              className="w-full flex items-center gap-3 py-2 text-left"
-            >
-              <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-navy-700">
-                <Settings size={14} className="text-slate-400 dark:text-slate-500" />
-              </div>
-              <div className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-300">
-                {t('aiChat.menu.customInstructions', 'Moje instrukcje')}
-              </div>
-              <ChevronRight
-                size={14}
-                className={`text-slate-400 shrink-0 transition-transform ${showCustomInstructions ? 'rotate-90' : ''}`}
-              />
-            </button>
-            {showCustomInstructions && (
-              <div className="mt-1 mb-2">
+              {/* Divider */}
+              <div className="border-t border-slate-100 dark:border-white/[0.06] mb-5" />
+
+              {/* Custom Instructions */}
+              <div>
+                <h3 className="text-[14px] font-medium text-slate-800 dark:text-slate-200 mb-3">
+                  {t('aiChat.menu.personalizeInstructions', 'Custom instructions')}
+                </h3>
+
                 <textarea
                   value={customInstructions}
                   onChange={(e) => setCustomInstructions(e.target.value.slice(0, 1000))}
                   placeholder={t(
-                    'aiChat.menu.customInstructionsPlaceholder',
-                    'np. "Zawsze odpowiadaj po polsku", "Preferuję tabele nad tekstem", "Jestem CTO w firmie produkcyjnej"'
+                    'aiChat.menu.personalizeInstructionsPlaceholder',
+                    'How should AI respond?'
                   )}
-                  className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
-                  rows={3}
+                  className="w-full min-h-[120px] px-4 py-3 text-[13px] leading-relaxed
+                    bg-slate-50/60 dark:bg-white/[0.03]
+                    border border-slate-200/60 dark:border-white/[0.08]
+                    rounded-xl text-slate-800 dark:text-slate-200
+                    placeholder-slate-400 dark:placeholder-slate-600
+                    focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-400
+                    resize-y transition-colors"
                 />
-                <div className="flex items-center justify-between mt-1.5">
-                  <span className="text-[10px] text-slate-400">
+
+                <div className="mt-1.5 text-right">
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500">
                     {customInstructions.length}/1000
                   </span>
-                  <button
-                    onClick={handleSaveInstructions}
-                    disabled={isSavingInstructions}
-                    className="px-3 py-1 text-xs font-medium bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white rounded-lg transition-colors"
-                  >
-                    {isSavingInstructions
-                      ? t('common.saving', 'Zapisuję...')
-                      : t('common.save', 'Zapisz')}
-                  </button>
                 </div>
               </div>
-            )}
+
+              {/* Footer — Reset + Save */}
+              <div className="flex items-center justify-end gap-3 mt-6 pt-5 border-t border-slate-100 dark:border-white/[0.06]">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setCustomInstructions('');
+                    setAIConfig({ responseStyle: 'normal' });
+                  }}
+                  disabled={isSavingInstructions}
+                >
+                  Reset
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={async () => {
+                    await handleSaveInstructions();
+                    setIsStyleModalOpen(false);
+                  }}
+                  loading={isSavingInstructions}
+                >
+                  {t('common.save', 'Save')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── TTS Settings (inline expandable) ────────────────────────────────────────
+
+const TTSSettings: React.FC<{
+  ttsRate: number;
+  ttsVoice: string | null;
+  availableVoices: SpeechSynthesisVoice[];
+  setAIConfig: (cfg: any) => void;
+  t: (key: string, fallback?: string | Record<string, any>) => string;
+}> = ({ ttsRate, ttsVoice, availableVoices, setAIConfig, t }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-3 px-3.5 py-2 text-left hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors"
+      >
+        <Volume2 size={16} className="shrink-0 text-slate-400 dark:text-slate-500" />
+        <span className="flex-1 text-[13px] text-slate-700 dark:text-slate-200">
+          {t('aiChat.menu.ttsSettings', 'Voice settings')}
+        </span>
+        <span className="text-[11px] text-slate-400 dark:text-slate-500">{ttsRate}x</span>
+        <ChevronRight
+          size={13}
+          className={`shrink-0 text-slate-400 dark:text-slate-500 transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}
+        />
+      </button>
+
+      {expanded && (
+        <div className="px-3.5 pb-2 pt-1 space-y-3">
+          <div>
+            <label className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1 block">
+              {t('aiChat.menu.ttsSpeed', 'Speed')} ({ttsRate}x)
+            </label>
+            <input
+              type="range" min="0.5" max="2" step="0.1"
+              value={ttsRate ?? 1}
+              onChange={(e) => setAIConfig({ ttsRate: parseFloat(e.target.value) })}
+              className="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary-500"
+            />
+            <div className="flex justify-between text-[10px] text-slate-400 mt-0.5">
+              <span>0.5x</span><span>1x</span><span>2x</span>
+            </div>
           </div>
 
-          {/* TTS Settings Section - only show when TTS is enabled */}
-          {textToSpeech && (
-            <>
-              <div className="my-2 border-t border-slate-200 dark:border-navy-700" />
-              <div className="relative">
-                <button
-                  ref={ttsButtonRef}
-                  onClick={() => {
-                    if (ttsButtonRef.current) {
-                      const rect = ttsButtonRef.current.getBoundingClientRect();
-                      const submenuWidth = 240;
-                      const wouldOverflow = rect.right + submenuWidth > window.innerWidth;
-                      setSubmenuPosition(wouldOverflow ? 'left' : 'right');
-                    }
-                    setShowTTSSubmenu(!showTTSSubmenu);
-                    setShowStyleSubmenu(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors"
-                >
-                  <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-navy-700">
-                    <Settings size={14} className="text-slate-400 dark:text-slate-500" />
-                  </div>
-                  <div className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-300">
-                    {t('aiChat.menu.ttsSettings', 'Ustawienia głosu')}
-                  </div>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">{ttsRate}x</span>
-                  <ChevronRight
-                    size={14}
-                    className={`text-slate-400 shrink-0 transition-transform ${submenuPosition === 'left' ? 'rotate-180' : ''}`}
-                  />
-                </button>
+          <div>
+            <label className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1 block">
+              {t('aiChat.menu.ttsVoice', 'Voice')}
+            </label>
+            <select
+              value={ttsVoice || ''}
+              onChange={(e) => {
+                setAIConfig({ ttsVoice: e.target.value || null });
+                toast.success(t('aiChat.menu.ttsVoiceChanged', 'Voice changed'), { duration: 1500, icon: '🔊' });
+              }}
+              className="w-full px-2 py-1.5 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/[0.08] rounded-lg text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-primary-500 focus:outline-none"
+            >
+              <option value="">{t('aiChat.menu.ttsAutoVoice', 'Auto (detect language)')}</option>
+              {availableVoices
+                .filter((v) => v.lang.startsWith('pl') || v.lang.startsWith('en'))
+                .map((voice) => (
+                  <option key={voice.voiceURI} value={voice.voiceURI}>
+                    {voice.name} ({voice.lang})
+                  </option>
+                ))}
+            </select>
+          </div>
 
-                {/* TTS Settings Submenu */}
-                {showTTSSubmenu && (
-                  <div
-                    className={`absolute top-0 w-60 py-2 px-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl z-50 ${submenuPosition === 'right' ? 'left-full ml-1' : 'right-full mr-1'}`}
+          <div>
+            <label className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1 block">
+              {t('aiChat.menu.voiceStyle', 'Voice style')}
+            </label>
+            <div className="grid grid-cols-2 gap-1">
+              {[
+                { id: 'formal', label: t('aiChat.menu.voiceFormal', 'Formal'), rate: 0.9, pitch: 0.9 },
+                { id: 'normal', label: t('aiChat.menu.voiceNormal', 'Normal'), rate: 1.0, pitch: 1.0 },
+                { id: 'cheerful', label: t('aiChat.menu.voiceCheerful', 'Cheerful'), rate: 1.1, pitch: 1.15 },
+                { id: 'calm', label: t('aiChat.menu.voiceCalm', 'Calm'), rate: 0.85, pitch: 0.95 },
+              ].map((style) => {
+                const isActive = (ttsRate ?? 1) === style.rate;
+                return (
+                  <button
+                    key={style.id}
+                    onClick={() => {
+                      setAIConfig({ ttsRate: style.rate, ttsPitch: style.pitch } as any);
+                      toast.success(`${style.label} voice style`, { duration: 1200, icon: '🎙️' });
+                    }}
+                    className={`px-2 py-1.5 text-[11px] rounded-lg border transition-colors ${
+                      isActive
+                        ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-700 text-primary-600 dark:text-primary-400 font-medium'
+                        : 'bg-slate-50/60 dark:bg-white/[0.03] border-slate-200/60 dark:border-white/[0.06] text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                    }`}
                   >
-                    {/* Speed slider */}
-                    <div className="mb-3">
-                      <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
-                        {t('aiChat.menu.ttsSpeed', 'Szybkość')} ({ttsRate}x)
-                      </label>
-                      <input
-                        type="range"
-                        min="0.5"
-                        max="2"
-                        step="0.1"
-                        value={ttsRate ?? 1}
-                        onChange={(e) => {
-                          const newRate = parseFloat(e.target.value);
-                          setAIConfig({ ttsRate: newRate });
-                        }}
-                        className="w-full h-2 bg-slate-200 dark:bg-navy-600 rounded-lg appearance-none cursor-pointer accent-primary-500"
-                      />
-                      <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-                        <span>0.5x</span>
-                        <span>1x</span>
-                        <span>2x</span>
-                      </div>
-                    </div>
+                    {style.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-                    {/* Voice selection */}
-                    <div>
-                      <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
-                        {t('aiChat.menu.ttsVoice', 'Głos')}
-                      </label>
-                      <select
-                        value={ttsVoice || ''}
-                        onChange={(e) => {
-                          setAIConfig({ ttsVoice: e.target.value || null });
-                          toast.success(t('aiChat.menu.ttsVoiceChanged', 'Voice changed'), {
-                            duration: 1500,
-                            icon: '🔊',
-                          });
-                        }}
-                        className="w-full px-2 py-1.5 text-sm bg-slate-100 dark:bg-navy-700 border-0 rounded-lg text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-primary-500"
-                      >
-                        <option value="">
-                          {t('aiChat.menu.ttsAutoVoice', 'Auto (wykryj język)')}
-                        </option>
-                        {availableVoices
-                          .filter((v) => v.lang.startsWith('pl') || v.lang.startsWith('en'))
-                          .map((voice) => (
-                            <option key={voice.voiceURI} value={voice.voiceURI}>
-                              {voice.name} ({voice.lang})
-                            </option>
-                          ))}
-                      </select>
-                    </div>
-
-                    {/* C7.2: Voice style presets */}
-                    <div>
-                      <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
-                        {t('aiChat.menu.voiceStyle', 'Voice style')}
-                      </label>
-                      <div className="grid grid-cols-2 gap-1">
-                        {[
-                          {
-                            id: 'formal',
-                            label: t('aiChat.menu.voiceFormal', 'Formal'),
-                            rate: 0.9,
-                            pitch: 0.9,
-                          },
-                          {
-                            id: 'normal',
-                            label: t('aiChat.menu.voiceNormal', 'Normal'),
-                            rate: 1.0,
-                            pitch: 1.0,
-                          },
-                          {
-                            id: 'cheerful',
-                            label: t('aiChat.menu.voiceCheerful', 'Cheerful'),
-                            rate: 1.1,
-                            pitch: 1.15,
-                          },
-                          {
-                            id: 'calm',
-                            label: t('aiChat.menu.voiceCalm', 'Calm'),
-                            rate: 0.85,
-                            pitch: 0.95,
-                          },
-                        ].map((style) => {
-                          const isActive = (ttsRate ?? 1) === style.rate;
-                          return (
-                            <button
-                              key={style.id}
-                              onClick={() => {
-                                setAIConfig({ ttsRate: style.rate, ttsPitch: style.pitch } as any);
-                                toast.success(`${style.label} voice style`, {
-                                  duration: 1200,
-                                  icon: '🎙️',
-                                });
-                              }}
-                              className={`px-2 py-1.5 text-xs rounded-lg border transition-colors ${
-                                isActive
-                                  ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-700 text-primary-600 dark:text-primary-400 font-medium'
-                                  : 'bg-slate-50 dark:bg-navy-700 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-600'
-                              }`}
-                            >
-                              {style.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Test button */}
-                    <button
-                      onClick={() => {
-                        if ('speechSynthesis' in window) {
-                          window.speechSynthesis.cancel();
-                          const utterance = new SpeechSynthesisUtterance(
-                            t('aiChat.menu.ttsTestUtterance', 'Hi, this is a voice test.')
-                          );
-                          utterance.rate = ttsRate ?? 1;
-                          if (ttsVoice) {
-                            const voice = availableVoices.find((v) => v.voiceURI === ttsVoice);
-                            if (voice) {
-                              utterance.voice = voice;
-                              utterance.lang = voice.lang;
-                            }
-                          } else {
-                            const polishVoice = availableVoices.find((v) =>
-                              v.lang.startsWith('pl')
-                            );
-                            if (polishVoice) {
-                              utterance.voice = polishVoice;
-                              utterance.lang = 'pl-PL';
-                            }
-                          }
-                          window.speechSynthesis.speak(utterance);
-                        }
-                      }}
-                      className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 rounded-lg transition-colors"
-                    >
-                      <Volume2 size={14} />
-                      {t('aiChat.menu.ttsTest', 'Testuj głos')}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
+          <button
+            onClick={() => {
+              if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(
+                  t('aiChat.menu.ttsTestUtterance', 'Hi, this is a voice test.')
+                );
+                utterance.rate = ttsRate ?? 1;
+                if (ttsVoice) {
+                  const voice = availableVoices.find((v) => v.voiceURI === ttsVoice);
+                  if (voice) { utterance.voice = voice; utterance.lang = voice.lang; }
+                } else {
+                  const polishVoice = availableVoices.find((v) => v.lang.startsWith('pl'));
+                  if (polishVoice) { utterance.voice = polishVoice; utterance.lang = 'pl-PL'; }
+                }
+                window.speechSynthesis.speak(utterance);
+              }
+            }}
+            className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-[12px] font-medium text-primary-600 dark:text-primary-400 bg-primary-50/60 dark:bg-primary-900/10 hover:bg-primary-100 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+          >
+            <Volume2 size={13} />
+            {t('aiChat.menu.ttsTest', 'Test voice')}
+          </button>
         </div>
       )}
     </div>

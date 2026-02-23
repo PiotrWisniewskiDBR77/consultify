@@ -2097,7 +2097,20 @@
     "newChat": "Nowa rozmowa",
     "history": "Historia rozmów",
     "autoReadOn": "Włącz czytanie na głos",
-    "autoReadOff": "Wyłącz czytanie na głos"
+    "autoReadOff": "Wyłącz czytanie na głos",
+    "coThinker": {
+      "title": "Co-Thinker",
+      "active": "Aktywny",
+      "clear": "Wyłącz",
+      "personas": {
+        "consultant": "Konsultant",
+        "ideaCreator": "Kreator pomysłów",
+        "analyst": "Analityk",
+        "auditor": "Audytor",
+        "editor": "Redaktor",
+        "marketResearcher": "Badacz rynku"
+      }
+    }
   },
   "aiChat": {
     "language": "Język rozmowy",
@@ -2105,6 +2118,85 @@
     "openSidebar": "Otwórz panel boczny",
     "newChat": "Nowa rozmowa",
     "dailyBrief": "Dzienny brief",
+    "quickClicks": {
+      "brief": { "label": "Dzienny brief" },
+      "savings": {
+        "label": "Oszczędności",
+        "prompt": "Poszukajmy oszczędności — gdzie najszybciej możemy obniżyć koszty bez utraty jakości?"
+      },
+      "newProduct": {
+        "label": "Nowy produkt",
+        "prompt": "Wymyślmy pomysł na nowy produkt: 5 koncepcji + ocena rynku, ROI i trudności wdrożenia."
+      },
+      "planReview": {
+        "label": "Plany",
+        "prompt": "Zrób przegląd naszych planów i inicjatyw: priorytety, ryzyka i co do korekty."
+      },
+      "situation": {
+        "label": "Sytuacja",
+        "prompt": "Daj mi przegląd sytuacji: postęp, ryzyka, blokery, najbliższe decyzje i kolejne kroki."
+      },
+      "roi": {
+        "label": "ROI",
+        "prompt": "Przeanalizuj ROI portfela inicjatyw i wskaż top 3 ruchy o najwyższym zwrocie."
+      },
+      "risks": {
+        "label": "Ryzyka",
+        "prompt": "Zrób mapę ryzyk (top 10) i zaproponuj mitygacje oraz właścicieli."
+      },
+      "priorities": {
+        "label": "Priorytety",
+        "prompt": "Ustal priorytety na tydzień: MUST/SHOULD/COULD + uzasadnienie."
+      },
+      "kpi": {
+        "label": "KPI",
+        "prompt": "Zrób przegląd kluczowych KPI: co się poprawia, co spada, co wymaga reakcji."
+      },
+      "scenario": {
+        "label": "Scenariusze",
+        "prompt": "Zbuduj 3 scenariusze (bazowy/optymistyczny/pesymistyczny) i powiedz jak zmieniają plan."
+      },
+      "decision": {
+        "label": "Decyzja",
+        "prompt": "Pomóż podjąć decyzję: warianty, trade‑offy, ryzyka, koszty i rekomendacja w 5 punktach."
+      },
+      "stakeholders": {
+        "label": "Stakeholderzy",
+        "prompt": "Przygotuj krótką aktualizację dla stakeholderów: status, ryzyka, decyzje do podjęcia, next steps."
+      },
+      "governance": {
+        "label": "Governance",
+        "prompt": "Ułóż lekkie governance: rytm, KPI, decyzje, eskalacje i odpowiedzialności."
+      },
+      "budget": {
+        "label": "Budżet",
+        "prompt": "Przeanalizuj budżet inicjatyw: odchylenia, ryzyka i gdzie warto przesunąć środki."
+      },
+      "timeline": {
+        "label": "Harmonogram",
+        "prompt": "Sprawdź harmonogram: opóźnienia, krytyczna ścieżka i rekomendacje korekt."
+      },
+      "team": {
+        "label": "Zespół",
+        "prompt": "Oceń obciążenie zespołu: przeciążenia, ryzyka i szybkie usprawnienia przepływu pracy."
+      },
+      "benefits": {
+        "label": "Korzyści",
+        "prompt": "Ułóż plan realizacji korzyści: metryki, baseline, ownerzy, tracking i raportowanie."
+      },
+      "capability": {
+        "label": "Kompetencje",
+        "prompt": "Jakich kompetencji brakuje? Zaproponuj plan rozwoju (edukacja + praktyka) na 6 tygodni."
+      },
+      "dependencies": {
+        "label": "Zależności",
+        "prompt": "Wskaż zależności i wąskie gardła między inicjatywami oraz zaproponuj sequencing."
+      },
+      "quickWins": {
+        "label": "Quick wins",
+        "prompt": "Zaproponuj 10 quick wins na 2 tygodnie: wartość, wysiłek, owner i pierwszy krok."
+      }
+    },
     "suggestions": {
       "title": "Propozycje dla Ciebie",
       "startAssessment": "Rozpocznij ocenę dojrzałości cyfrowej"
@@ -2178,6 +2270,74 @@
       "afternoon": "Kontynuujmy prace nad Twoimi inicjatywami",
       "evening": "Przejrzyj swoją podróż transformacyjną"
     },
+    "subtitleRotator": {
+      "morning": [
+        "Gotowy ułożyć strategię, operacje i realizację — end‑to‑end?",
+        "Zamień ambicję w mapę drogową, a mapę drogową w wyniki.",
+        "Od insightu do działania: wyrównaj zespoły, portfel i rezultaty.",
+        "Zaprojektuj model operacyjny. Poprowadź zmianę. Zmierz wartość.",
+        "Zbuduj klarowność w strategii, delivery i governance — już dziś.",
+        "Uprość złożoność do planu, który zespoły naprawdę dowiozą.",
+        "Podejmuj lepsze decyzje dzięki danym, scenariuszom i realnym ograniczeniom.",
+        "Połącz wizję, inicjatywy, budżety i korzyści w jednym przepływie.",
+        "Wyłap ryzyka wcześniej, koryguj kurs szybko i utrzymuj momentum.",
+        "Twórz strategiczną narrację, której ufają i zarząd, i zespoły.",
+        "Modeluj opcje, testuj założenia i wybierz najlepszą ścieżkę.",
+        "Wpleć naukę w realizację: rozwijaj kompetencje, dowożąc.",
+        "Daj strukturę discovery, rygor analizie i tempo realizacji.",
+        "Przekuj strategię w inicjatywy, które organizacja weźmie na siebie.",
+        "Uczyń governance lekkim — a rezultaty jednoznacznymi.",
+        "Planuj, realizuj i ucz się w ciągłej pętli transformacji.",
+        "Zobacz cały system: ludzie, proces, technologia i ekonomia.",
+        "Podnieś rozmowę z „zadań” do decyzji i trade‑offów.",
+        "Prowadź transformację jak produkt: iteruj, mierz, ulepszaj.",
+        "Zacznij od pytania. Skończ na konkretnym następnym kroku."
+      ],
+      "afternoon": [
+        "Gotowy ułożyć strategię, operacje i realizację — end‑to‑end?",
+        "Zamień ambicję w mapę drogową, a mapę drogową w wyniki.",
+        "Od insightu do działania: wyrównaj zespoły, portfel i rezultaty.",
+        "Zaprojektuj model operacyjny. Poprowadź zmianę. Zmierz wartość.",
+        "Zbuduj klarowność w strategii, delivery i governance — już dziś.",
+        "Uprość złożoność do planu, który zespoły naprawdę dowiozą.",
+        "Podejmuj lepsze decyzje dzięki danym, scenariuszom i realnym ograniczeniom.",
+        "Połącz wizję, inicjatywy, budżety i korzyści w jednym przepływie.",
+        "Wyłap ryzyka wcześniej, koryguj kurs szybko i utrzymuj momentum.",
+        "Twórz strategiczną narrację, której ufają i zarząd, i zespoły.",
+        "Modeluj opcje, testuj założenia i wybierz najlepszą ścieżkę.",
+        "Wpleć naukę w realizację: rozwijaj kompetencje, dowożąc.",
+        "Daj strukturę discovery, rygor analizie i tempo realizacji.",
+        "Przekuj strategię w inicjatywy, które organizacja weźmie na siebie.",
+        "Uczyń governance lekkim — a rezultaty jednoznacznymi.",
+        "Planuj, realizuj i ucz się w ciągłej pętli transformacji.",
+        "Zobacz cały system: ludzie, proces, technologia i ekonomia.",
+        "Podnieś rozmowę z „zadań” do decyzji i trade‑offów.",
+        "Prowadź transformację jak produkt: iteruj, mierz, ulepszaj.",
+        "Zacznij od pytania. Skończ na konkretnym następnym kroku."
+      ],
+      "evening": [
+        "Gotowy ułożyć strategię, operacje i realizację — end‑to‑end?",
+        "Zamień ambicję w mapę drogową, a mapę drogową w wyniki.",
+        "Od insightu do działania: wyrównaj zespoły, portfel i rezultaty.",
+        "Zaprojektuj model operacyjny. Poprowadź zmianę. Zmierz wartość.",
+        "Zbuduj klarowność w strategii, delivery i governance — już dziś.",
+        "Uprość złożoność do planu, który zespoły naprawdę dowiozą.",
+        "Podejmuj lepsze decyzje dzięki danym, scenariuszom i realnym ograniczeniom.",
+        "Połącz wizję, inicjatywy, budżety i korzyści w jednym przepływie.",
+        "Wyłap ryzyka wcześniej, koryguj kurs szybko i utrzymuj momentum.",
+        "Twórz strategiczną narrację, której ufają i zarząd, i zespoły.",
+        "Modeluj opcje, testuj założenia i wybierz najlepszą ścieżkę.",
+        "Wpleć naukę w realizację: rozwijaj kompetencje, dowożąc.",
+        "Daj strukturę discovery, rygor analizie i tempo realizacji.",
+        "Przekuj strategię w inicjatywy, które organizacja weźmie na siebie.",
+        "Uczyń governance lekkim — a rezultaty jednoznacznymi.",
+        "Planuj, realizuj i ucz się w ciągłej pętli transformacji.",
+        "Zobacz cały system: ludzie, proces, technologia i ekonomia.",
+        "Podnieś rozmowę z „zadań” do decyzji i trade‑offów.",
+        "Prowadź transformację jak produkt: iteruj, mierz, ulepszaj.",
+        "Zacznij od pytania. Skończ na konkretnym następnym kroku."
+      ]
+    },
     "frozenPlaceholder": "AI tymczasowo niedostępne",
     "dictating": "Dyktowanie…",
     "voiceConversation": "Słucham… mów swobodnie",
@@ -2195,6 +2355,9 @@
       "aiModes": "Tryby AI",
       "knowledgeSources": "Źródła wiedzy",
       "responseStyle": "Styl odpowiedzi",
+      "personalizeTitle": "Personalizuj odpowiedzi AI",
+      "personalizeInstructions": "Spersonalizowane instrukcje",
+      "personalizeInstructionsPlaceholder": "Jak AI ma odpowiadać?",
       "ttsSettings": "Ustawienia głosu",
       "ttsSpeed": "Szybkość",
       "ttsVoice": "Głos",
@@ -2203,6 +2366,11 @@
       "ttsTest": "Testuj głos",
       "ttsTestUtterance": "Cześć, to jest test głosu.",
       "addFiles": "Dodaj pliki",
+      "uploadFile": "Wyślij plik",
+      "connectToProvider": "Połącz z {{provider}}",
+      "openProvider": "Otwórz {{provider}}",
+      "recent": "Ostatnie",
+      "recentEmpty": "Brak ostatnich załączników",
       "uploadFromDevice": "Z urządzenia",
       "cloudStorage": "Chmura",
       "connectInSettings": "Połącz więcej w Ustawieniach → Integracje",
@@ -2247,7 +2415,7 @@
         }
       },
       "styles": {
-        "normal": "Normalny",
+        "normal": "Standardowy",
         "normalDesc": "Zbalansowane, konwersacyjne odpowiedzi",
         "executive": "Executivowy",
         "executiveDesc": "Zwięzły, decyzyjny, 3-5 bulletów z rekomendacją",
@@ -2258,10 +2426,32 @@
         "concise": "Zwięzły",
         "conciseDesc": "Tylko najważniejsze punkty, bez dygresji",
         "formal": "Formalny",
-        "formalDesc": "Język urzędowy/biznesowy, precyzyjny i neutralny"
+        "formalDesc": "Język urzędowy/biznesowy, precyzyjny i neutralny",
+        "professional": "Profesjonalny",
+        "professionalDesc": "Ton konsultingowy, struktura McKinsey/BCG, rekomendacje",
+        "friendly": "Przyjaciel",
+        "friendlyDesc": "Ciepły, luźny ton, jak rozmowa z dobrym znajomym"
+      },
+      "stylePresets": {
+        "normal": "",
+        "concise": "Odpowiadaj krótko i bezpośrednio, używając jak najmniej słów. Skup się na sednie, bez rozwijania i dodatkowych pytań.",
+        "executive": "Odpowiadaj jak senior partner w firmie doradczej. Zacznij od rekomendacji, potem 3-5 bulletów z uzasadnieniem. Dodaj ryzyka i następne kroki. Nie pisz wstępów.",
+        "analyst": "Odpowiadaj jak analityk danych. Używaj tabel, metryk i benchmarków. Podawaj źródła i przedziały ufności. Strukturyzuj dane w formacie łatwym do dalszej analizy.",
+        "formal": "Używaj formalnego, profesjonalnego tonu. Pisz jasne, dobrze ustrukturyzowane zdania. Unikaj kolokwializmów. Wyjaśniaj dokładnie, zachowując zwięzłość i szacunek, jak do współpracownika na poziomie zarządu.",
+        "coach": "Odpowiadaj jak coach i mentor. Zamiast dawać gotowe odpowiedzi, zadawaj pytania naprowadzające. Prowadź przez rozumowanie krok po kroku, pomagając odkrywać wnioski samodzielnie.",
+        "professional": "Odpowiadaj jak doświadczony konsultant strategiczny. Używaj struktury: sytuacja → analiza → rekomendacja → następne kroki. Podawaj konkretne metryki i KPI. Odnos się do frameworków (SWOT, Porter, BCG matrix). Pisz językiem biznesowym, precyzyjnym, z jasnym action planem.",
+        "friendly": "Odpowiadaj ciepło i przystępnie, jak dobry przyjaciel. Używaj prostego języka, dodawaj emoji tam gdzie pasują. Bądź wspierający, entuzjastyczny i pozytywny. Skracaj dystans, ale zachowaj merytorykę."
       },
       "customInstructions": "Moje instrukcje",
       "customInstructionsPlaceholder": "np. \"Zawsze odpowiadaj po polsku\", \"Preferuję tabele nad tekstem\", \"Jestem CTO w firmie produkcyjnej\"",
+      "customInstructionsTitle": "Moje instrukcje",
+      "customInstructionsDesc": "Te preferencje są stosowane do każdej odpowiedzi w czacie.",
+      "customInstructionsStarters": "Jak zacząć (kliknij, aby wstawić)",
+      "customInstructionsStarter1": "Preferuję krótkie, konkretne odpowiedzi z checklistą i przypisaniem właścicieli.",
+      "customInstructionsStarter2": "Przy porównaniach używaj tabel. Zawsze dodaj ryzyka i mitigacje.",
+      "customInstructionsStarter3": "Gdy brakuje informacji, zadaj 2-3 pytania doprecyzowujące zanim odpowiesz.",
+      "customInstructionsStarter4": "Pisz po polsku i trzymaj profesjonalny, konsultingowy ton.",
+      "customInstructionsTip": "Wskazówka: podaj swoją rolę, branżę i preferowany format odpowiedzi.",
       "instructionsSaved": "Instrukcje zapisane",
       "instructionsSaveError": "Nie udało się zapisać",
       "toast": {

@@ -23,6 +23,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import type { CloudFile, CloudProviderId } from '../../hooks/useCloudIntegrations';
+import { useDemoSession } from '../../hooks/useDemoSession';
 import { Api } from '../../services/api';
 
 // Cloud provider icons
@@ -94,6 +95,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
   onFileSelect,
 }) => {
   const { t } = useTranslation();
+  const { isDemo } = useDemoSession();
   const [files, setFiles] = useState<CloudFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -162,20 +164,27 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
         const isNotImplemented =
           error?.message?.includes('CLOUD_NOT_IMPLEMENTED') ||
           error?.message?.includes('not implemented');
-        if (isNotImplemented) {
+        if (isNotImplemented && isDemo) {
           console.info('[CloudFilePicker] Cloud integration not implemented, using demo data');
           setIsDemoMode(true);
           setFiles(DEMO_FILES);
         } else {
           console.error('[CloudFilePicker] Failed to load files:', error);
-          toast.error(t('aiChat.cloudPicker.loadError', 'Nie udało się załadować plików'));
+          toast.error(
+            isNotImplemented
+              ? t(
+                  'aiChat.cloudPicker.notAvailable',
+                  'Integracje chmurowe nie są dostępne w tej instalacji'
+                )
+              : t('aiChat.cloudPicker.loadError', 'Nie udało się załadować plików')
+          );
           setFiles([]);
         }
       } finally {
         setIsLoading(false);
       }
     },
-    [provider, t]
+    [isDemo, provider, t]
   );
 
   // Load files when modal opens or path changes

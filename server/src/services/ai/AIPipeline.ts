@@ -1391,6 +1391,10 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
           'Styl Coach: zadawaj pytania naprowadzające, tłumacz krok po kroku, buduj zrozumienie. Zamiast dawać gotowe odpowiedzi — prowadź użytkownika do samodzielnych wniosków.',
         concise: 'Styl zwięzły: tylko najważniejsze punkty, bez dygresji.',
         formal: 'Styl formalny: język urzędowy/biznesowy, precyzyjny i neutralny.',
+        professional:
+          'Styl Professional: odpowiadaj jak doświadczony konsultant strategiczny. Struktura: sytuacja → analiza → rekomendacja → następne kroki. Podawaj konkretne metryki i KPI. Odnoś się do frameworków (SWOT, Porter, BCG matrix, OKR). Język biznesowy, precyzyjny, z jasnym action planem i przypisaniem odpowiedzialności.',
+        friendly:
+          'Styl Friendly: odpowiadaj ciepło, luźno i przystępnie, jak dobry przyjaciel. Używaj prostego języka, emoji tam gdzie pasują, i bądź wspierający. Skracaj dystans, ale zachowaj merytorykę. Bądź entuzjastyczny i pozytywny.',
       };
       instructions.push(`11. Styl odpowiedzi: ${styleMap[responseStyle] || responseStyle}`);
     }

@@ -268,7 +268,7 @@ router.get('/providers/public', asyncHandler(LLMController.listPublicProviders))
  * GET /api/llm/providers/health
  * Get health status of all providers
  */
-router.get('/providers/health', asyncHandler(LLMController.getProvidersHealth));
+router.get('/providers/health', verifyToken, asyncHandler(LLMController.getProvidersHealth));
 
 /**
  * GET /api/llm/providers/recommended

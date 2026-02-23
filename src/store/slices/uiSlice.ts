@@ -22,6 +22,12 @@ export interface UISlice {
   // Side Panels
   activeSidePanel: 'HELP' | 'DOCUMENTS' | 'FEEDBACK' | null;
 
+  // One-shot chat kickoff (cross-module)
+  // Used to open split AI panel and automatically send a first message.
+  chatKickoffMessage: string | null;
+  setChatKickoffMessage: (message: string | null) => void;
+  clearChatKickoffMessage: () => void;
+
   // Unified Navigation
   previousView: AppView | null;
 
@@ -77,6 +83,7 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
 
   activeSidePanel: null,
   previousView: null,
+  chatKickoffMessage: null,
 
   navigateFn: undefined,
   pendingNavigation: null,
@@ -99,6 +106,9 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
   },
   setMyWorkIntent: (intent) => set({ myWorkIntent: intent }),
   clearMyWorkIntent: () => set({ myWorkIntent: null }),
+
+  setChatKickoffMessage: (message) => set({ chatKickoffMessage: message }),
+  clearChatKickoffMessage: () => set({ chatKickoffMessage: null }),
 
   setCurrentView: (view) => {
     const previousView = get().currentView;

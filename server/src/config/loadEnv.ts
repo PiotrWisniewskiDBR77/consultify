@@ -46,6 +46,8 @@ if (!isProductionEnv) {
   // eslint-disable-next-line no-console
   console.log('[Env] OPENAI_API_KEY set:', !!process.env.OPENAI_API_KEY);
   // eslint-disable-next-line no-console
+  console.log('[Env] OPENROUTER_API_KEY set:', !!process.env.OPENROUTER_API_KEY);
+  // eslint-disable-next-line no-console
   console.log(
     '[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:',
     !!process.env.GEMINI_API_KEY || !!process.env.GOOGLE_AI_API_KEY

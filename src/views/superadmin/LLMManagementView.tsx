@@ -73,6 +73,14 @@ export const LLMManagementView: React.FC = () => {
     costPerOutputToken: 0,
   });
   const [testingConnection, setTestingConnection] = useState(false);
+  const [lastTestReport, setLastTestReport] = useState<string | null>(null);
+  const canTestProviderForm = (() => {
+    const isExistingRow =
+      typeof (providerForm as any)?.id === 'string' && String((providerForm as any).id).trim();
+    if (testingConnection) return false;
+    if (isExistingRow) return !!providerForm.provider;
+    return !!providerForm.provider && !!providerForm.api_key;
+  })();
 
   // Usage stats
   const [usageStats, setUsageStats] = useState<any>(null);
@@ -188,15 +196,30 @@ export const LLMManagementView: React.FC = () => {
 
   const handleTestConnection = async (config: Partial<LLMProviderConfig>) => {
     setTestingConnection(true);
+    setLastTestReport('Testing connection…');
     try {
-      const result = await Api.testLLMConnection(config as any);
+      const isExistingRow = typeof (config as any)?.id === 'string' && String((config as any).id).trim();
+      const payload = isExistingRow
+        ? {
+            providerId: (config as any).id,
+            provider: (config as any).provider,
+            model_id: (config as any).model_id,
+            endpoint: (config as any).endpoint,
+          }
+        : config;
+
+      const result = await Api.testLLMConnection(payload as any);
       if (result.success) {
         toast.success(result.message);
+        setLastTestReport(`OK: ${result.message}`);
       } else {
         toast.error(`Connection Failed: ${result.message}`);
+        setLastTestReport(`ERROR: ${result.message}`);
       }
     } catch (err) {
-      toast.error('Test failed to execute');
+      const msg = (err as any)?.message || 'Test failed to execute';
+      toast.error(msg);
+      setLastTestReport(`ERROR: ${msg}`);
     }
     setTestingConnection(false);
   };
@@ -285,6 +308,12 @@ export const LLMManagementView: React.FC = () => {
             </div>
 
             <Card variant="bordered" padding="none">
+              {lastTestReport && (
+                <div className="px-4 py-3 text-xs border-b border-white/[0.04] text-slate-300">
+                  <span className="text-slate-500 dark:text-slate-400">Last test:</span>{' '}
+                  <span className="font-medium">{lastTestReport}</span>
+                </div>
+              )}
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
@@ -383,6 +412,8 @@ export const LLMManagementView: React.FC = () => {
                                   onClick={() => handleTestConnection(p)}
                                   label="Test Connection"
                                   size="sm"
+                                  loading={testingConnection}
+                                  disabled={testingConnection}
                                 />
                                 <IconButton
                                   icon={Edit}
@@ -711,8 +742,12 @@ export const LLMManagementView: React.FC = () => {
                 </Button>
                 <Button
                   variant="secondary"
-                  onClick={() => handleTestConnection(providerForm)}
-                  disabled={!providerForm.provider || !providerForm.api_key || testingConnection}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleTestConnection(providerForm);
+                  }}
+                  disabled={!canTestProviderForm}
                   icon={Wifi}
                   loading={testingConnection}
                 >

@@ -15,11 +15,15 @@
 import {
   BarChart3,
   Brain,
+  Calculator,
+  CheckCircle2,
   FileText,
   PanelLeft,
   RefreshCw,
+  Search,
   Shield,
   Sparkles,
+  Wrench,
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -30,6 +34,7 @@ import remarkGfm from 'remark-gfm';
 import { useAIContext } from '@/contexts/AIContext';
 import { isValidLanguage, type SupportedLanguage } from '@/i18n';
 import { Api } from '@/services/api.ts';
+import { AppView } from '@/types';
 
 import { ChatExportModal } from '../components/AIChat/ChatExportModal';
 // Components
@@ -81,6 +86,11 @@ const getTimeContext = () => {
   }
 };
 
+const prefersReducedMotion = (): boolean => {
+  if (typeof window === 'undefined') return true;
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? true;
+};
+
 /** Download a string as a file */
 function downloadFile(filename: string, content: string, mimeType: string): void {
   const blob = new Blob([content], { type: mimeType });
@@ -99,7 +109,17 @@ export const AIChatWelcomeView: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // App state
-  const { currentUser, currentProjectId, aiConfig, currentOrganization } = useAppStore();
+  const {
+    currentUser,
+    currentProjectId,
+    aiConfig,
+    currentOrganization,
+    setCurrentView,
+    isChatCollapsed,
+    toggleChatCollapse,
+    setAIConfig,
+    setChatKickoffMessage,
+  } = useAppStore();
   const { projectName } = usePMOStore();
   const brandLogoDarkSrc = new URL(
     '../../Logo consultinity/Consultinity_logo_dark_medium.svg',
@@ -331,6 +351,55 @@ export const AIChatWelcomeView: React.FC = () => {
   const timeContext = useMemo(() => getTimeContext(), []);
   const firstName = currentUser?.firstName || '';
   const orgId = currentOrganization?.id || currentUser?.organizationId || null;
+
+  const subtitleVariants: string[] = useMemo(() => {
+    const raw = t(`aiChat.subtitleRotator.${timeContext.greetingKey}`, {
+      returnObjects: true,
+      defaultValue: [],
+    }) as unknown;
+    if (!Array.isArray(raw)) return [];
+    return raw.map((x) => String(x || '').trim()).filter(Boolean);
+  }, [t, i18n.language, timeContext.greetingKey]);
+
+  const [subtitleIndex, setSubtitleIndex] = useState(0);
+  const [subtitleFading, setSubtitleFading] = useState(false);
+
+  // Reset subtitle when language / time bucket changes
+  useEffect(() => {
+    setSubtitleIndex(0);
+    setSubtitleFading(false);
+  }, [i18n.language, timeContext.greetingKey, subtitleVariants.length]);
+
+  // Rotate subtitle variants (welcome header)
+  useEffect(() => {
+    if (subtitleVariants.length < 2) return;
+
+    const reduce = prefersReducedMotion();
+    let fadeTimeout: number | undefined;
+
+    const interval = window.setInterval(() => {
+      if (reduce) {
+        setSubtitleIndex((i) => (i + 1) % subtitleVariants.length);
+        return;
+      }
+
+      setSubtitleFading(true);
+      fadeTimeout = window.setTimeout(() => {
+        setSubtitleIndex((i) => (i + 1) % subtitleVariants.length);
+        setSubtitleFading(false);
+      }, 200);
+    }, 6500);
+
+    return () => {
+      window.clearInterval(interval);
+      if (fadeTimeout) window.clearTimeout(fadeTimeout);
+    };
+  }, [subtitleVariants]);
+
+  const subtitleText =
+    subtitleVariants.length > 0
+      ? subtitleVariants[subtitleIndex]!
+      : t(`aiChat.${timeContext.subtitleKey}`, timeContext.subtitleFallback);
 
   // Fetch org logo for white-label branding (set in Admin → Organization Profile)
   useEffect(() => {
@@ -937,6 +1006,25 @@ For example: REMEMBER: preferred_language: Polish`;
       selectedProject,
       setActiveConversation,
       setConversationChatLanguage,
+    ]
+  );
+
+  const startModuleWithKickoff = useCallback(
+    (view: AppView, aiPatch: any, kickoff: string) => {
+      setAIConfig(aiPatch);
+      setChatKickoffMessage(kickoff);
+      // Ensure a clean conversation so kickoff can auto-send safely
+      clearActiveChat();
+      if (isChatCollapsed) toggleChatCollapse();
+      setCurrentView(view);
+    },
+    [
+      clearActiveChat,
+      isChatCollapsed,
+      setAIConfig,
+      setChatKickoffMessage,
+      setCurrentView,
+      toggleChatCollapse,
     ]
   );
 
@@ -1746,8 +1834,12 @@ For example: REMEMBER: preferred_language: Polish`;
               {t(`aiChat.greeting.${timeContext.greetingKey}`, timeContext.greetingFallback)}
               {firstName && <span className="text-primary-600">, {firstName}</span>}
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-4 text-lg">
-              {t(`aiChat.${timeContext.subtitleKey}`, timeContext.subtitleFallback)}
+            <p
+              className={`text-slate-500 dark:text-slate-400 mt-4 text-lg transition-opacity duration-200 ${
+                subtitleFading ? 'opacity-0' : 'opacity-100'
+              }`}
+            >
+              {subtitleText}
             </p>
           </div>
 

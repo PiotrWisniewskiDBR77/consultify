@@ -15,7 +15,7 @@
  * @version 2.0.0
  */
 
-import { ArrowUp, Mic, Plus, Square, StopCircle, Wrench } from 'lucide-react';
+import { ArrowUp, Mic, Pen, Square, StopCircle } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -23,6 +23,7 @@ import { CloudFile, CloudProviderId, useCloudIntegrations } from '../../hooks/us
 import { useAppStore } from '../../store/useAppStore';
 import { AddFilesMenu } from './AddFilesMenu';
 import { CloudFilePicker } from './CloudFilePicker';
+import { CoThinkerMenu } from './CoThinkerMenu';
 import { ToolsMenu } from './ToolsMenu';
 
 // ============================================================================
@@ -747,8 +748,9 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             <ToolsMenu
               onToolSelect={(tool) => console.log('Tool selected:', tool)}
               disabled={isInputDisabled}
-              icon={Wrench}
+              icon={Pen}
             />
+            <CoThinkerMenu disabled={isInputDisabled} />
           </div>
 
           {/* Right Actions */}

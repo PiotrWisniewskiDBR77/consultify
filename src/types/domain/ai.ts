@@ -13,6 +13,7 @@ export type LLMProviderId =
   | 'openai'
   | 'anthropic'
   | 'google'
+  | 'openrouter'
   | 'mistral'
   | 'groq'
   | 'together'

@@ -363,6 +363,22 @@ export const AppRoutes: React.FC = () => {
 
   const isSuperAdmin = currentUser?.role === 'SUPERADMIN';
 
+  // If user is SUPERADMIN, ensure they land in SuperAdmin panel on generic routes.
+  // This makes "login → superadmin" stable even when the app restores the last route (/chat).
+  React.useEffect(() => {
+    if (!currentUser?.isAuthenticated) return;
+    if (currentUser?.role !== 'SUPERADMIN') return;
+
+    const path = location.pathname || '/';
+    const isAlreadyInSuperAdmin = path === '/superadmin' || path.startsWith('/superadmin/');
+    if (isAlreadyInSuperAdmin) return;
+
+    const isGenericLanding = path === '/' || path === '/chat' || path.startsWith('/chat/');
+    if (isGenericLanding) {
+      navigate('/superadmin', { replace: true });
+    }
+  }, [currentUser?.isAuthenticated, currentUser?.role, location.pathname, navigate]);
+
   // Set navigate function in store so setCurrentView can use React Router
   React.useEffect(() => {
     setNavigateFn(navigate);

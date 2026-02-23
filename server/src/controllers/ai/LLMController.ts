@@ -56,25 +56,78 @@ export class LLMController {
    */
   static async testProvider(req: Request, res: Response) {
     try {
-      const { provider, api_key, model_id, endpoint } = req.body;
+      const { provider, api_key, model_id, endpoint, providerId } = req.body as any;
 
-      if (!provider) {
+      // Allow testing an existing provider without sending secrets from the UI:
+      // client may send { providerId } and we load api_key/model/endpoint from DB.
+      let effectiveProvider = provider;
+      let effectiveApiKey = api_key;
+      let effectiveModelId = model_id;
+      let effectiveEndpoint = endpoint;
+
+      if (providerId && (!effectiveApiKey || !effectiveProvider || !effectiveModelId)) {
+        try {
+          const row = await dbGet('SELECT * FROM llm_providers WHERE id = ?', [providerId]);
+          if (row) {
+            effectiveProvider = effectiveProvider || (row as any).provider;
+            effectiveApiKey = effectiveApiKey || (row as any).api_key;
+            effectiveModelId = effectiveModelId || (row as any).model_id;
+            effectiveEndpoint = effectiveEndpoint || (row as any).endpoint;
+          }
+        } catch {
+          // ignore and let validation below handle missing fields
+        }
+      }
+
+      if (!effectiveProvider) {
         return res.status(400).json({ error: 'Provider is required' });
       }
 
+      // OpenRouter expects namespaced model ids (e.g. "openai/gpt-4o").
+      if (String(effectiveProvider || '').toLowerCase() === 'openrouter') {
+        const raw = String(effectiveModelId || '').trim();
+        if (!raw) {
+          effectiveModelId = 'openai/gpt-4o-mini';
+        }
+        if (raw && !raw.includes('/') && !raw.includes('://')) {
+          const lower = raw.toLowerCase();
+          if (lower === 'gpt-4o') effectiveModelId = 'openai/gpt-4o';
+          else if (lower === 'gpt-4o-mini') effectiveModelId = 'openai/gpt-4o-mini';
+          else if (lower === 'o1-preview') effectiveModelId = 'openai/o1-preview';
+          else if (lower === 'o1-mini' || lower === 'o1') effectiveModelId = 'openai/o1-mini';
+          else if (lower.startsWith('claude')) effectiveModelId = `anthropic/${raw}`;
+          else if (lower.startsWith('gemini')) effectiveModelId = `google/${raw}`;
+        }
+      }
+
       const result = await llmService.testConnection({
-        provider,
-        api_key,
-        apiKey: api_key,
-        id: model_id,
-        endpoint,
+        provider: effectiveProvider,
+        api_key: effectiveApiKey,
+        apiKey: effectiveApiKey,
+        id: effectiveModelId,
+        endpoint: effectiveEndpoint,
       });
 
-      if (result.success) {
-        return res.json(result);
-      } else {
-        return res.status(400).json(result);
+      const ok = (result as any)?.success === true;
+      const latency = (result as any)?.latency;
+      const baseMessage = ok
+        ? `Connection OK${typeof latency === 'number' ? ` (${latency}ms)` : ''}`
+        : String((result as any)?.error || (result as any)?.message || 'Connection failed');
+
+      const payload = {
+        ...result,
+        message: baseMessage,
+      };
+
+      if (ok) {
+        try {
+          await llmService.resetCircuit(String(effectiveProvider || '').toLowerCase());
+        } catch {
+          // ignore reset failures
+        }
+        return res.json(payload);
       }
+      return res.status(400).json(payload);
     } catch (error: any) {
       console.error('[LLMController] Error testing provider:', error);
       return res.status(500).json({ error: error.message });
@@ -374,6 +427,7 @@ export class LLMController {
             id: provider.id,
             name: provider.name,
             providerId: provider.provider,
+            isActive: !!provider.is_active,
             status,
             statusLabel: statusLabels[status],
             isHealthy: status === 'healthy',
@@ -389,22 +443,25 @@ export class LLMController {
         })
       );
 
-      const healthyCount = providerHealthResults.filter((p) => p.status === 'healthy').length;
-      const degradedCount = providerHealthResults.filter((p) => p.status === 'degraded').length;
-      const unhealthyCount = providerHealthResults.filter((p) => p.status === 'unhealthy').length;
+      // Summary should reflect only ACTIVE providers; inactive rows are not part of platform health.
+      const activeResults = providerHealthResults.filter((p: any) => !!p.isActive);
+      const healthyCount = activeResults.filter((p: any) => p.status === 'healthy').length;
+      const degradedCount = activeResults.filter((p: any) => p.status === 'degraded').length;
+      const unhealthyCount = activeResults.filter((p: any) => p.status === 'unhealthy').length;
 
       return res.json({
         success: true,
         providers: providerHealthResults,
         alerts,
         summary: {
-          total: allProviders.length,
+          total: activeResults.length,
           healthy: healthyCount,
           degraded: degradedCount,
           unhealthy: unhealthyCount,
           healthyCount,
           degradedCount,
           unhealthyCount,
+          inactive: (providerHealthResults.length || 0) - (activeResults.length || 0),
           lastCheck: new Date().toISOString(),
         },
       });

@@ -36,7 +36,6 @@ describe('ToolsMenu (L2)', () => {
       coThinkerMode: null,
     };
 
-    // Default fetch mock for custom instructions load/save.
     globalThis.fetch = vi.fn(async (url: any, init?: any) => {
       if (String(url).includes('/api/ai-memory/custom_instructions')) {
         return { ok: true, json: async () => ({ success: true }) } as any;
@@ -49,7 +48,6 @@ describe('ToolsMenu (L2)', () => {
       } as any;
     }) as any;
 
-    // Provide SpeechSynthesis so TTS submenu + test button are executable.
     (globalThis as any).SpeechSynthesisUtterance = class {
       rate = 1;
       lang = '';
@@ -61,7 +59,7 @@ describe('ToolsMenu (L2)', () => {
       getVoices: () => [
         { name: 'Polish Voice', lang: 'pl-PL', voiceURI: 'pl' },
         { name: 'English Voice', lang: 'en-US', voiceURI: 'en' },
-        { name: 'German Voice', lang: 'de-DE', voiceURI: 'de' }, // filtered out
+        { name: 'German Voice', lang: 'de-DE', voiceURI: 'de' },
       ],
       speak: vi.fn(),
       cancel: vi.fn(),
@@ -83,33 +81,35 @@ describe('ToolsMenu (L2)', () => {
     expect(toast.success).toHaveBeenCalled();
   });
 
-  it('supports Co-Thinker toggles and response style selection', async () => {
+  it('supports response style selection via modal card grid', async () => {
     render(<ToolsMenu onToolSelect={onToolSelect} />);
 
     fireEvent.click(screen.getByTestId('chat-tools-button'));
-    fireEvent.click(screen.getByRole('button', { name: /idea maker/i }));
-    expect(setAIConfigMock).toHaveBeenCalledWith({ coThinkerMode: 'idea_maker' });
-    expect(onToolSelect).toHaveBeenCalledWith('cothinker:idea_maker');
 
-    fireEvent.click(screen.getByRole('button', { name: /styl odpowiedzi/i }));
+    // Click "Response style" row to open the Grok-style modal
+    fireEvent.click(screen.getByRole('button', { name: /response style|styl odpowiedzi/i }));
+
+    // Find the concise card in the modal grid and click it
     const concise = await screen.findByRole('button', { name: /aiChat\.menu\.styles\.concise/i });
     fireEvent.click(concise);
     expect(setAIConfigMock).toHaveBeenCalledWith({ responseStyle: 'concise' });
     expect(onToolSelect).toHaveBeenCalledWith('style:concise');
   });
 
-  it('loads and saves custom instructions via API', async () => {
+  it('loads and saves custom instructions via the style modal', async () => {
     render(<ToolsMenu onToolSelect={onToolSelect} />);
 
     fireEvent.click(screen.getByTestId('chat-tools-button'));
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith('/api/ai-memory', expect.anything()));
 
-    fireEvent.click(screen.getByRole('button', { name: /moje instrukcje/i }));
-    const textbox = screen.getByRole('textbox');
+    // Open the style modal (which now contains custom instructions)
+    fireEvent.click(screen.getByRole('button', { name: /response style|styl odpowiedzi/i }));
+
+    const textbox = await screen.findByRole('textbox');
     expect(textbox).toHaveValue('Be concise.');
 
     fireEvent.change(textbox, { target: { value: 'Always answer in Polish.' } });
-    fireEvent.click(screen.getByRole('button', { name: /zapisz/i }));
+    fireEvent.click(screen.getByRole('button', { name: /zapisz|save/i }));
 
     await waitFor(() =>
       expect(globalThis.fetch).toHaveBeenCalledWith(
@@ -124,7 +124,7 @@ describe('ToolsMenu (L2)', () => {
     render(<ToolsMenu onToolSelect={onToolSelect} />);
 
     fireEvent.click(screen.getByTestId('chat-tools-button'));
-    fireEvent.click(screen.getByRole('button', { name: /ustawienia głosu/i }));
+    fireEvent.click(screen.getByRole('button', { name: /voice settings|ustawienia głosu/i }));
 
     const slider = screen.getByRole('slider');
     fireEvent.change(slider, { target: { value: '1.2' } });
@@ -137,7 +137,7 @@ describe('ToolsMenu (L2)', () => {
     fireEvent.click(screen.getByRole('button', { name: /formal/i }));
     expect(setAIConfigMock).toHaveBeenCalledWith({ ttsRate: 0.9, ttsPitch: 0.9 });
 
-    fireEvent.click(screen.getByRole('button', { name: /testuj głos/i }));
+    fireEvent.click(screen.getByRole('button', { name: /test voice|testuj głos/i }));
     expect((window as any).speechSynthesis.speak).toHaveBeenCalled();
   });
 
@@ -147,7 +147,7 @@ describe('ToolsMenu (L2)', () => {
     const trigger = screen.getByTestId('chat-tools-button');
     expect(trigger).toBeDisabled();
     fireEvent.click(trigger);
-    expect(screen.queryByText(/tryby ai/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ai modes/i)).not.toBeInTheDocument();
   });
 
   it('toggling showReasoning twice disables maxMode', () => {
@@ -161,7 +161,6 @@ describe('ToolsMenu (L2)', () => {
     expect(setAIConfigMock).toHaveBeenCalledWith({ showReasoning: true });
     expect(setAIConfigMock).toHaveBeenCalledWith({ maxMode: true });
 
-    // Simulate store update so the second click truly toggles off.
     aiConfigState = { ...aiConfigState, showReasoning: true, maxMode: true };
     rerender(<ToolsMenu onToolSelect={onToolSelect} />);
 
@@ -193,9 +192,12 @@ describe('ToolsMenu (L2)', () => {
     fireEvent.click(screen.getByTestId('chat-tools-button'));
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith('/api/ai-memory', expect.anything()));
 
-    fireEvent.click(screen.getByRole('button', { name: /moje instrukcje/i }));
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'New' } });
-    fireEvent.click(screen.getByRole('button', { name: /zapisz/i }));
+    // Open style modal to access custom instructions
+    fireEvent.click(screen.getByRole('button', { name: /response style|styl odpowiedzi/i }));
+
+    const textbox = await screen.findByRole('textbox');
+    fireEvent.change(textbox, { target: { value: 'New' } });
+    fireEvent.click(screen.getByRole('button', { name: /zapisz|save/i }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
   });
@@ -204,9 +206,9 @@ describe('ToolsMenu (L2)', () => {
     render(<ToolsMenu onToolSelect={onToolSelect} />);
 
     fireEvent.click(screen.getByTestId('chat-tools-button'));
-    expect(screen.getByText(/tryby ai/i)).toBeInTheDocument();
+    expect(screen.getByText(/ai modes/i)).toBeInTheDocument();
 
     fireEvent.mouseDown(document.body);
-    expect(screen.queryByText(/tryby ai/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ai modes/i)).not.toBeInTheDocument();
   });
 });

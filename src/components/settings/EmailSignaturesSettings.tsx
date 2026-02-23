@@ -19,6 +19,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../lib/utils';
+import { useDemoSession } from '../../hooks/useDemoSession';
 import { User } from '../../types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import {
@@ -53,12 +54,23 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
 }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { isDemo } = useDemoSession();
   const [loading, setLoading] = useState(true);
   const [signatures, setSignatures] = useState<EmailSignature[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSignature, setEditingSignature] = useState<EmailSignature | null>(null);
   const [formData, setFormData] = useState({ name: '', content: '' });
   const [saving, setSaving] = useState(false);
+
+  const buildDefaultDemoSignature = useCallback((): EmailSignature => {
+    return {
+      id: 'demo-1',
+      name: 'Professional',
+      content: `Best regards,\n${currentUser.firstName || currentUser.displayName || 'User'} ${currentUser.lastName || ''}\n${currentUser.jobTitle || ''}\n${currentUser.email}`,
+      isDefault: true,
+      createdAt: new Date().toISOString(),
+    };
+  }, [currentUser]);
 
   // Fetch signatures
   useEffect(() => {
@@ -75,36 +87,42 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
           const data = await response.json();
           setSignatures(data.signatures || []);
         } else {
-          // Use demo data if API not available
-          setSignatures([
-            {
-              id: '1',
-              name: 'Professional',
-              content: `Best regards,\n${currentUser.firstName || currentUser.displayName || 'User'} ${currentUser.lastName || ''}\n${currentUser.jobTitle || ''}\n${currentUser.email}`,
-              isDefault: true,
-              createdAt: new Date().toISOString(),
-            },
-          ]);
+          if (isDemo) {
+            setSignatures([buildDefaultDemoSignature()]);
+          } else {
+            setSignatures([]);
+            toast({
+              title: t('settings.signatures.error', 'Error'),
+              description: t(
+                'settings.signatures.loadFailed',
+                'Failed to load signatures. Please try again later.'
+              ),
+              variant: 'destructive',
+            });
+          }
         }
       } catch (error) {
         console.error('Failed to fetch signatures:', error);
-        // Use demo data on error
-        setSignatures([
-          {
-            id: '1',
-            name: 'Professional',
-            content: `Best regards,\n${currentUser.firstName || currentUser.displayName || 'User'} ${currentUser.lastName || ''}\n${currentUser.jobTitle || ''}\n${currentUser.email}`,
-            isDefault: true,
-            createdAt: new Date().toISOString(),
-          },
-        ]);
+        if (isDemo) {
+          setSignatures([buildDefaultDemoSignature()]);
+        } else {
+          setSignatures([]);
+          toast({
+            title: t('settings.signatures.error', 'Error'),
+            description: t(
+              'settings.signatures.loadFailed',
+              'Failed to load signatures. Please try again later.'
+            ),
+            variant: 'destructive',
+          });
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchSignatures();
-  }, [currentUser]);
+  }, [buildDefaultDemoSignature, currentUser, isDemo, t, toast]);
 
   // Handle create/edit signature
   const handleSave = async () => {

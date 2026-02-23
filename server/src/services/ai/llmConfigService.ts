@@ -164,7 +164,8 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     envKey: 'OPENROUTER_API_KEY',
     // NOTE: provider SDK expects a base URL (not the full /chat/completions path)
     defaultEndpoint: 'https://openrouter.ai/api/v1',
-    defaultModel: 'anthropic/claude-3.5-sonnet',
+    // Use a widely available, stable default via OpenRouter.
+    defaultModel: 'openai/gpt-4o',
     costPer1k: 0.008,
     supportsStreaming: true,
     supportsVision: true,
@@ -181,15 +182,26 @@ const TIER_PRIORITY: Record<string, number> = {
   FREE: 1,
 };
 
-export const DEFAULT_FALLBACK_CHAIN = [
-  'openai',
-  'deepseek',
-  'google',
-  'anthropic',
-  'qwen',
-  'cohere',
-  'nvidia',
-];
+export const DEFAULT_FALLBACK_CHAIN = ['openrouter'];
+
+function isPlaceholderKey(value: unknown): boolean {
+  if (typeof value !== 'string') return true;
+  const v = value.trim();
+  if (!v) return true;
+  const u = v.toUpperCase();
+  return (
+    u.includes('YOUR_') ||
+    u.includes('PLACEHOLDER') ||
+    u === 'CHANGEME' ||
+    u === 'REPLACE_ME' ||
+    u === 'YOUR_OPENROUTER_API_KEY_HERE'
+  );
+}
+
+function getEnvSyncAllowlist(): Set<string> {
+  // We currently run platform in "OpenRouter-only" mode to avoid provider conflicts.
+  return new Set(['openrouter']);
+}
 
 export class LLMConfigService {
   private providerCache: Map<string, ProviderConfig>;
@@ -442,9 +454,10 @@ export class LLMConfigService {
   async syncDatabaseWithEnv(): Promise<void> {
     aiLogger.info('LLMConfigService', 'Syncing database with environment definitions...');
 
-    const definedProviderIds = new Set(Object.keys(PROVIDER_DEFINITIONS));
+    const allowlist = getEnvSyncAllowlist();
 
     for (const [providerId, definition] of Object.entries(PROVIDER_DEFINITIONS)) {
+      if (!allowlist.has(providerId)) continue;
       const apiKey = this.getApiKeyFromEnv(providerId);
 
       const changes: Record<string, unknown> = {
@@ -459,12 +472,20 @@ export class LLMConfigService {
       const existingProvider = await this.getProviderFromDb(providerId);
 
       if (existingProvider) {
-        if (apiKey) {
-          changes.api_key = apiKey;
-          changes.is_active = 1;
-        } else {
-          changes.is_active = 0;
+        // DB is the canonical source for secrets. ENV can bootstrap only if DB key is missing/placeholder.
+        const existingKey = String(existingProvider.api_key || '').trim();
+        const envKey = String(apiKey || '').trim();
+        if (envKey && (!existingKey || isPlaceholderKey(existingKey))) {
+          changes.api_key = envKey;
         }
+
+        const effectiveKey = String((changes.api_key ?? existingProvider.api_key ?? '') || '').trim();
+        if (effectiveKey) {
+          changes.is_active = 1;
+        }
+
+        // OpenRouter-only: make it the default when present.
+        changes.is_default = 1;
 
         await this.updateProviderInDb(providerId, changes);
         aiLogger.info('LLMConfigService', `Updated provider ${providerId} (Active: ${!!apiKey})`);
@@ -474,18 +495,10 @@ export class LLMConfigService {
           provider: providerId,
           api_key: apiKey || null,
           is_active: apiKey ? 1 : 0,
-          is_default: definition.id === 'google' ? 1 : 0,
+          is_default: 1,
           ...changes,
         });
         aiLogger.info('LLMConfigService', `Created provider ${providerId} (Active: ${!!apiKey})`);
-      }
-    }
-
-    const rows = await this.allAsync<{ provider: string }>('SELECT provider FROM llm_providers');
-    for (const row of rows || []) {
-      if (!definedProviderIds.has(row.provider)) {
-        await this.updateProviderInDb(row.provider, { is_active: 0 });
-        aiLogger.warn('LLMConfigService', `Deactivated orphan provider: ${row.provider}`);
       }
     }
 

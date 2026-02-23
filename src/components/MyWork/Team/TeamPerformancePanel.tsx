@@ -19,6 +19,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { useDemoSession } from '../../../hooks/useDemoSession';
 import { Api } from '../../../services/api';
 import { BottleneckMap } from './BottleneckMap';
 import { CapacityForecast } from './CapacityForecast';
@@ -93,6 +94,7 @@ export const TeamPerformancePanel: React.FC<TeamPerformancePanelProps> = ({
   onBottleneckResolve,
 }) => {
   const { t } = useTranslation();
+  const { isDemo } = useDemoSession();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [metrics, setMetrics] = useState<TeamMetrics>({
@@ -145,20 +147,30 @@ export const TeamPerformancePanel: React.FC<TeamPerformancePanelProps> = ({
       }
     } catch (error) {
       console.error('Failed to fetch team data:', error);
-      // Use mock data
-      setMetrics({
-        teamSize: 5,
-        avgCapacity: 82,
-        currentVelocity: 15,
-        targetVelocity: 15,
-        bottlenecks: 3,
-        onTimeRate: 78,
-      });
+      if (isDemo) {
+        setMetrics({
+          teamSize: 5,
+          avgCapacity: 82,
+          currentVelocity: 15,
+          targetVelocity: 15,
+          bottlenecks: 3,
+          onTimeRate: 78,
+        });
+      } else {
+        toast.error(t('team.errors.loadFailed', 'Failed to load team analytics'));
+        setMetrics((prev) => ({
+          ...prev,
+          teamSize: prev.teamSize || 0,
+          avgCapacity: prev.avgCapacity || 0,
+          bottlenecks: prev.bottlenecks || 0,
+          onTimeRate: prev.onTimeRate || 0,
+        }));
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [isDemo, t]);
 
   useEffect(() => {
     fetchTeamData();

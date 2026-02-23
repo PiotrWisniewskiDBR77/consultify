@@ -565,7 +565,7 @@ router.post(
         projectData?: boolean;
         organizationData?: boolean;
       };
-      responseStyle?: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
+      responseStyle?: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal' | 'professional' | 'friendly';
     };
 
     const {
@@ -586,17 +586,18 @@ router.post(
     } = body;
 
     // Fast-fail when no LLM provider is configured (dev UX parity with stream)
-    const hasEnvProvider =
-      !!process.env.OPENAI_API_KEY ||
-      !!process.env.GEMINI_API_KEY ||
-      !!process.env.GOOGLE_AI_API_KEY ||
-      !!process.env.ANTHROPIC_API_KEY ||
-      !!process.env.MISTRAL_API_KEY;
+    const hasEnvProvider = !!String(process.env.OPENROUTER_API_KEY || '').trim();
+    const hasDbProvider = !!(await dbGet(
+      `SELECT 1 AS ok
+       FROM llm_providers
+       WHERE is_active = 1 AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
+       LIMIT 1`
+    ));
 
-    if (!hasEnvProvider) {
+    if (!hasEnvProvider && !hasDbProvider) {
       return res.status(500).json({
         error:
-          'No LLM provider configured on the backend. Set OPENAI_API_KEY or GEMINI_API_KEY (or configure providers in llm_providers).',
+          'No LLM provider configured on the backend. Set OPENROUTER_API_KEY or configure OpenRouter in llm_providers.',
         code: 'NO_LLM_PROVIDER',
       });
     }
@@ -815,7 +816,7 @@ router.post(
         projectData?: boolean;
         organizationData?: boolean;
       };
-      responseStyle?: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
+      responseStyle?: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal' | 'professional' | 'friendly';
     };
 
     const {
@@ -1091,18 +1092,19 @@ router.post(
       // --------------------------------------------------------
       // Without at least one provider (env key or configured provider table),
       // the pipeline can end up returning empty content or failing late.
-      const hasEnvProvider =
-        !!process.env.OPENAI_API_KEY ||
-        !!process.env.GEMINI_API_KEY ||
-        !!process.env.GOOGLE_AI_API_KEY ||
-        !!process.env.ANTHROPIC_API_KEY ||
-        !!process.env.MISTRAL_API_KEY;
+      const hasEnvProvider = !!String(process.env.OPENROUTER_API_KEY || '').trim();
+      const hasDbProvider = !!(await dbGet(
+        `SELECT 1 AS ok
+         FROM llm_providers
+         WHERE is_active = 1 AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
+         LIMIT 1`
+      ));
 
-      if (!hasEnvProvider) {
+      if (!hasEnvProvider && !hasDbProvider) {
         res.write(
           `data: ${JSON.stringify({
             error:
-              'No LLM provider configured on the backend. Set OPENAI_API_KEY or GEMINI_API_KEY (or configure providers in llm_providers).',
+              'No LLM provider configured on the backend. Set OPENROUTER_API_KEY or configure OpenRouter in llm_providers.',
             code: 'NO_LLM_PROVIDER',
           })}\n\n`
         );
@@ -2825,16 +2827,17 @@ router.post(
     const { text, mode, systemInstruction, fieldLabel, artifactContext, language } = req.body;
 
     // --- Provider check ---
-    const hasEnvProvider =
-      !!process.env.OPENAI_API_KEY ||
-      !!process.env.GEMINI_API_KEY ||
-      !!process.env.GOOGLE_AI_API_KEY ||
-      !!process.env.ANTHROPIC_API_KEY ||
-      !!process.env.MISTRAL_API_KEY;
+    const hasEnvProvider = !!String(process.env.OPENROUTER_API_KEY || '').trim();
+    const hasDbProvider = !!(await dbGet(
+      `SELECT 1 AS ok
+       FROM llm_providers
+       WHERE is_active = 1 AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
+       LIMIT 1`
+    ));
 
-    if (!hasEnvProvider) {
+    if (!hasEnvProvider && !hasDbProvider) {
       return res.status(500).json({
-        error: 'No LLM provider configured. Set OPENAI_API_KEY or GEMINI_API_KEY.',
+        error: 'No LLM provider configured. Set OPENROUTER_API_KEY or configure OpenRouter.',
         code: 'NO_LLM_PROVIDER',
       });
     }

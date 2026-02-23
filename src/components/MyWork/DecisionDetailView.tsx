@@ -62,6 +62,7 @@ import {
   type CloudProviderId,
   useCloudIntegrations,
 } from '@/hooks/useCloudIntegrations';
+import { useDemoSession } from '@/hooks/useDemoSession';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { ROUTES } from '@/routes/routeConfig';
@@ -645,6 +646,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const { isDemo } = useDemoSession();
   const { isChatCollapsed, toggleChatCollapse, currentProjectId } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
   const {
@@ -1440,7 +1442,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       setDueDate(decision.dueDate ? decision.dueDate.split('T')[0] : '');
       setRationale(
         decision.rationale ||
-          'Delayed decision on report generation approach will block 4 active client projects from receiving their DRD reports on time. Each week of delay increases manual effort costs by ~€8,000 and risks client satisfaction scores dropping below SLA thresholds. Two enterprise clients have contractual deadlines in March 2026.'
+          (isDemo
+            ? 'Delayed decision on report generation approach will block 4 active client projects from receiving their DRD reports on time. Each week of delay increases manual effort costs by ~€8,000 and risks client satisfaction scores dropping below SLA thresholds. Two enterprise clients have contractual deadlines in March 2026.'
+            : '')
       );
       setRequesterName(decision.requestedByName || '');
       setDeciderId(decision.deciderId || '');
@@ -1449,41 +1453,46 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       setDecisionDate(decision.decisionDate || '');
       setCreatedAt(decision.createdAt || '');
       setUpdatedAt(decision.updatedAt || '');
-      // Use API data or fallback to demo data for rich UI testing
+      // Use API data; demo fallback only in demo sessions
       const apiAlternatives = decision.alternatives || [];
       setAlternatives(
-        withProsConsFallback(apiAlternatives.length > 0 ? apiAlternatives : DEMO_ALTERNATIVES)
+        withProsConsFallback(
+          apiAlternatives.length > 0 ? apiAlternatives : isDemo ? DEMO_ALTERNATIVES : []
+        )
       );
       setSelectedAlternativeId(decision.selectedAlternativeId || '');
       if (decision.impact) {
         setImpact(decision.impact);
       }
       const apiAttachments = decision.attachments || [];
-      setAttachments(apiAttachments.length > 0 ? apiAttachments : DEMO_ATTACHMENTS);
+      setAttachments(apiAttachments.length > 0 ? apiAttachments : isDemo ? DEMO_ATTACHMENTS : []);
       const apiComments = decision.comments || [];
-      setComments(apiComments.length > 0 ? apiComments : DEMO_COMMENTS);
+      setComments(apiComments.length > 0 ? apiComments : isDemo ? DEMO_COMMENTS : []);
       const apiLinkedItems = decision.linkedItems || [];
-      setLinkedItems(apiLinkedItems.length > 0 ? apiLinkedItems : DEMO_LINKED_ITEMS);
+      setLinkedItems(apiLinkedItems.length > 0 ? apiLinkedItems : isDemo ? DEMO_LINKED_ITEMS : []);
 
       // Risks — demo fallback
       const apiRisks = decision.risks || [];
-      setRisks(apiRisks.length > 0 ? apiRisks : DEMO_RISKS);
+      setRisks(apiRisks.length > 0 ? apiRisks : isDemo ? DEMO_RISKS : []);
 
       // Reminders & escalation — demo fallback
       const apiReminders = decision.reminders || [];
-      const loadedReminders = (apiReminders.length > 0 ? apiReminders : DEMO_REMINDERS).map(
-        (rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule)
-      );
+      const loadedReminders = (apiReminders.length > 0 ? apiReminders : isDemo ? DEMO_REMINDERS : [])
+        .map((rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule));
       setReminders(loadedReminders);
-      const loadedEscalation = decision.escalation || DEMO_ESCALATION;
+      const loadedEscalation = decision.escalation || (isDemo ? DEMO_ESCALATION : null);
       setEscalation(loadedEscalation);
-      setEscalationRules([
-        normalizeEscalationRule({
-          ...loadedEscalation,
-          warningDays: thresholds.warningDays,
-          criticalDays: thresholds.criticalDays,
-        }),
-      ]);
+      setEscalationRules(
+        loadedEscalation
+          ? [
+              normalizeEscalationRule({
+                ...loadedEscalation,
+                warningDays: thresholds.warningDays,
+                criticalDays: thresholds.criticalDays,
+              }),
+            ]
+          : []
+      );
 
       // Load stakeholders
       try {
@@ -1492,11 +1501,13 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         setStakeholders(
           apiStakeholders.length > 0
             ? apiStakeholders
-            : DEMO_STAKEHOLDERS.map((s) => ({ ...s, decisionId: id }))
+            : isDemo
+              ? DEMO_STAKEHOLDERS.map((s) => ({ ...s, decisionId: id }))
+              : []
         );
       } catch {
-        // Stakeholders endpoint may not exist yet — use demo data
-        setStakeholders(DEMO_STAKEHOLDERS.map((s) => ({ ...s, decisionId: id })));
+        // Stakeholders endpoint may not exist yet — demo fallback only in demo sessions
+        setStakeholders(isDemo ? DEMO_STAKEHOLDERS.map((s) => ({ ...s, decisionId: id })) : []);
       }
 
       // Load decision history from real API

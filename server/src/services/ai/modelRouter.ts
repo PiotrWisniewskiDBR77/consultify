@@ -32,69 +32,41 @@ export const CAPABILITY_TIERS: Record<string, Tier> = {
 };
 
 export const MODEL_PROVIDER_MAP: Record<string, string> = {
-  'gpt-4o': 'openai',
-  'gpt-4o-mini': 'openai',
-  'gpt-4-turbo': 'openai',
-  'gpt-3.5-turbo': 'openai',
-  'o1-preview': 'openai',
-  o1: 'openai',
-  'o1-mini': 'openai',
-  'claude-3-5-sonnet': 'anthropic',
-  'claude-3-5-sonnet-20241022': 'anthropic',
-  'claude-3-opus': 'anthropic',
-  'claude-3-sonnet': 'anthropic',
-  'claude-3-haiku': 'anthropic',
-  'claude-3-haiku-20240307': 'anthropic',
-  'gemini-2.5-pro': 'google',
-  'gemini-2.5-flash': 'google',
-  'gemini-2.0-flash': 'google',
-  'gemini-1.5-flash': 'google', // deprecated alias
-  'gemini-1.5-pro': 'google', // deprecated alias
-  'gemini-pro': 'google', // deprecated alias
-  'deepseek-chat': 'deepseek',
-  'deepseek-coder': 'deepseek',
-  'qwen-max': 'qwen',
-  'qwen-turbo': 'qwen',
-  'qwen-plus': 'qwen',
-  'command-r': 'cohere',
-  'command-r-plus': 'cohere',
-  'meta/llama-3.1-70b-instruct': 'nvidia',
-  'meta/llama3-8b-instruct': 'nvidia',
-  'glm-4-plus': 'zai',
-  'glm-4': 'zai',
-  'glm-4.6': 'zai',
-  // Ollama local models (fallback)
-  'gemma3:27b': 'ollama',
-  'qwen3-coder:30b': 'ollama',
-  'devstral-2:latest': 'ollama',
+  // OpenRouter is our single stable provider; model ids are routed through it.
+  // (We keep this map mainly for legacy non-namespaced ids.)
+  'gpt-4o': 'openrouter',
+  'gpt-4o-mini': 'openrouter',
+  'o1-preview': 'openrouter',
+  'o1-mini': 'openrouter',
+  'claude-3-5-sonnet': 'openrouter',
+  'claude-3-5-sonnet-20241022': 'openrouter',
+  'claude-3-haiku': 'openrouter',
+  'gemini-2.0-flash': 'openrouter',
 };
 
 export const TIER_DEFAULTS: Record<string, string> = {
-  BUDGET: 'gpt-4o-mini',
-  STANDARD: 'gpt-4o',
-  PREMIUM: 'gpt-4o',
-  REASONING: 'gpt-4o',
-  VISION: 'gpt-4o',
+  BUDGET: 'openai/gpt-4o-mini',
+  STANDARD: 'openai/gpt-4o',
+  PREMIUM: 'anthropic/claude-3.5-sonnet',
+  REASONING: 'openai/o1-mini',
+  VISION: 'openai/gpt-4o',
 };
 
-// Ollama local model used as last-resort fallback when all cloud APIs fail
-const OLLAMA_FALLBACK = process.env.OLLAMA_MODEL || 'gemma3:27b';
-
 export const TIER_FALLBACK_CHAINS: Record<string, string[]> = {
-  // Active providers: OpenAI + Gemini + Anthropic + Ollama (local last-resort)
-  BUDGET: ['gpt-4o-mini', 'gemini-2.0-flash', 'claude-3-haiku', OLLAMA_FALLBACK],
-  STANDARD: ['gpt-4o', 'gemini-2.5-flash', 'claude-3-sonnet', OLLAMA_FALLBACK],
-  PREMIUM: ['gpt-4o', 'gemini-2.5-pro', 'claude-3-5-sonnet', OLLAMA_FALLBACK],
-  REASONING: ['o1-preview', 'gpt-4o', 'gemini-2.5-pro', 'claude-3-5-sonnet', OLLAMA_FALLBACK],
-  VISION: ['gpt-4o', 'gemini-2.5-flash', 'claude-3-5-sonnet', OLLAMA_FALLBACK],
+  // OpenRouter-only fallbacks (all are OpenRouter model ids)
+  BUDGET: ['openai/gpt-4o-mini', 'anthropic/claude-3.5-haiku'],
+  STANDARD: ['openai/gpt-4o', 'anthropic/claude-3.5-sonnet'],
+  PREMIUM: ['anthropic/claude-3.5-sonnet', 'openai/gpt-4o'],
+  REASONING: ['openai/o1-mini', 'openai/gpt-4o', 'anthropic/claude-3.5-sonnet'],
+  VISION: ['openai/gpt-4o', 'anthropic/claude-3.5-sonnet'],
 };
 
 export const TIER_FALLBACKS: Record<string, string> = {
-  BUDGET: 'gpt-4o-mini',
-  STANDARD: 'gpt-4o-mini',
-  PREMIUM: 'gpt-4o',
-  REASONING: 'gpt-4o',
-  VISION: 'gemini-2.5-flash',
+  BUDGET: 'openai/gpt-4o-mini',
+  STANDARD: 'openai/gpt-4o-mini',
+  PREMIUM: 'anthropic/claude-3.5-sonnet',
+  REASONING: 'openai/o1-mini',
+  VISION: 'openai/gpt-4o',
 };
 
 type ProviderRow = {
@@ -211,15 +183,10 @@ export class ModelRouter {
       );
     }
 
-    // If an env var is explicitly set to empty string, treat that provider as disabled.
-    // This is used for single-provider local tests (e.g. Gemini-only with OPENAI_API_KEY=).
-    const openaiDisabled =
-      process.env.OPENAI_API_KEY !== undefined && String(process.env.OPENAI_API_KEY).trim() === '';
-
     const availableModelsRaw = await this.getModelsForTier(tier, organizationId);
-    const availableModelsFilteredByProvider = openaiDisabled
-      ? availableModelsRaw.filter((m) => String(m.provider || '').toLowerCase() !== 'openai')
-      : availableModelsRaw;
+    const availableModelsFilteredByProvider = availableModelsRaw.filter(
+      (m) => String(m.provider || '').toLowerCase() === 'openrouter'
+    );
     const availableModels = requirements
       ? availableModelsFilteredByProvider.filter((m) =>
           modelMeetsRequirements(String((m as any).model_id || m.id || ''), requirements)
@@ -280,8 +247,8 @@ export class ModelRouter {
     const defaultProvider = await this.getDefaultProvider();
     if (
       defaultProvider &&
+      String(defaultProvider.provider || '').toLowerCase() === 'openrouter' &&
       defaultProvider.api_key &&
-      !(openaiDisabled && String(defaultProvider.provider || '').toLowerCase() === 'openai') &&
       modelMeetsRequirements(
         String(defaultProvider.model_id || defaultProvider.id || ''),
         requirements
@@ -300,29 +267,8 @@ export class ModelRouter {
       };
     }
 
-    // Static fallback should respect what providers are actually configured.
-    // This enables "Gemini-only" setups without changing DB defaults.
-    const hasOpenAI = !!(process.env.OPENAI_API_KEY || '').trim();
-    const hasGemini = !!(
-      (process.env.GEMINI_API_KEY ||
-        process.env.GOOGLE_AI_API_KEY ||
-        // legacy fallback
-        (process.env as any).GOOGLE_API_KEY ||
-        '') as string
-    ).trim();
-
-    const geminiDefaultByTier: Record<string, string> = {
-      BUDGET: 'gemini-2.0-flash',
-      STANDARD: 'gemini-2.5-flash',
-      PREMIUM: 'gemini-2.5-pro',
-      REASONING: 'gemini-2.5-pro',
-      VISION: 'gemini-2.5-flash',
-    };
-
-    const staticCandidates =
-      !hasOpenAI && hasGemini
-        ? [geminiDefaultByTier[tier] || 'gemini-2.0-flash', ...(TIER_FALLBACK_CHAINS[tier] || [])]
-        : [TIER_DEFAULTS[tier], ...(TIER_FALLBACK_CHAINS[tier] || [])];
+    // Static fallback (OpenRouter-only)
+    const staticCandidates = [TIER_DEFAULTS[tier], ...(TIER_FALLBACK_CHAINS[tier] || [])];
     const staticPick = staticCandidates.find((m) =>
       modelMeetsRequirements(String(m || ''), requirements)
     );
@@ -655,12 +601,28 @@ export class ModelRouter {
   async getProviderConfig(modelId: string, tier: Tier): Promise<ProviderConfig> {
     const providerName = this.inferProvider(modelId);
 
+    const normalizeOpenRouterModelId = (id: string): string => {
+      const raw = String(id || '').trim();
+      if (!raw) return raw;
+      if (raw.includes('/') && !raw.includes('://')) return raw;
+      const lower = raw.toLowerCase();
+      if (lower === 'gpt-4o') return 'openai/gpt-4o';
+      if (lower === 'gpt-4o-mini') return 'openai/gpt-4o-mini';
+      if (lower === 'o1-preview') return 'openai/o1-preview';
+      if (lower === 'o1-mini' || lower === 'o1') return 'openai/o1-mini';
+      if (lower.startsWith('claude')) return `anthropic/${raw}`;
+      if (lower.startsWith('gemini')) return `google/${raw}`;
+      return raw;
+    };
+
+    const requestedModelId = providerName === 'openrouter' ? normalizeOpenRouterModelId(modelId) : modelId;
+
     let provider = await DbPromise.get<ProviderRow>(
       `SELECT * FROM llm_providers 
              WHERE provider = ? AND is_active = 1 
              AND (model_id = ? OR model_id IS NULL OR model_id = '') 
              LIMIT 1`,
-      [providerName, modelId],
+      [providerName, requestedModelId],
       { fallback: true }
     );
 
@@ -672,36 +634,13 @@ export class ModelRouter {
       );
     }
 
-    // Ollama is local and doesn't require an API key - just a reachable URL
-    if (providerName === 'ollama') {
-      const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-      aiLogger.info('ModelRouter', `Using local Ollama at ${ollamaUrl} for model ${modelId}`);
-      return {
-        id: modelId,
-        tier,
-        provider: 'ollama',
-        apiKey: 'ollama', // Dummy key required by OpenAI SDK
-        endpoint: `${ollamaUrl}/v1`,
-        source: 'local',
-        markupMultiplier: 0,
-        raw: provider || null,
-      };
-    }
-
     if (!provider || !provider.api_key) {
       const envKey = this.getEnvKeyForProvider(providerName);
-      const envApiKey =
-        process.env[envKey] ||
-        // Also accept repo-standard + legacy keys for Google/Gemini
-        (providerName === 'google' || providerName === 'gemini'
-          ? process.env.GOOGLE_AI_API_KEY ||
-            process.env.GOOGLE_API_KEY ||
-            process.env.GEMINI_API_KEY
-          : undefined);
+      const envApiKey = process.env[envKey];
       if (envApiKey) {
         aiLogger.info('ModelRouter', `Using env fallback for ${providerName}`);
         return {
-          id: modelId,
+          id: requestedModelId,
           tier,
           provider: providerName,
           apiKey: envApiKey,
@@ -714,7 +653,10 @@ export class ModelRouter {
     }
 
     return {
-      id: provider?.model_id || modelId,
+      id:
+        providerName === 'openrouter'
+          ? normalizeOpenRouterModelId(String(provider?.model_id || requestedModelId))
+          : (provider?.model_id || requestedModelId),
       tier,
       provider: providerName,
       apiKey: provider?.api_key || null,
@@ -775,58 +717,41 @@ export class ModelRouter {
   }
 
   inferProvider(modelId?: string): string {
-    if (!modelId) return 'openai';
+    if (!modelId) return 'openrouter';
+
+    // OpenRouter uses namespaced model IDs like "openai/gpt-4o".
+    // Treat any "org/model" id as OpenRouter unless it is a URL.
+    if (modelId.includes('/') && !modelId.includes('://')) {
+      return 'openrouter';
+    }
 
     const mapped = MODEL_PROVIDER_MAP[modelId];
     if (mapped) return mapped;
 
     const modelLower = modelId.toLowerCase();
-    if (modelLower.startsWith('gpt') || modelLower.startsWith('o1')) return 'openai';
-    if (modelLower.startsWith('claude')) return 'anthropic';
-    if (modelLower.startsWith('gemini')) return 'google';
-    if (modelLower.startsWith('deepseek')) return 'deepseek';
-    if (modelLower.startsWith('qwen')) return 'qwen';
-    if (modelLower.startsWith('command')) return 'cohere';
-    if (modelLower.startsWith('glm')) return 'zai';
-    if (modelLower.includes('llama') || modelLower.includes('meta/')) return 'nvidia';
-    // Ollama local models (typically use name:tag format like "gemma3:27b")
-    if (modelLower.includes('gemma') || modelLower.includes('devstral') || modelLower.includes(':'))
-      return 'ollama';
+    if (
+      modelLower.startsWith('gpt') ||
+      modelLower.startsWith('o1') ||
+      modelLower.startsWith('claude') ||
+      modelLower.startsWith('gemini')
+    ) {
+      return 'openrouter';
+    }
 
-    return 'openai';
+    return 'openrouter';
   }
 
   getEnvKeyForProvider(provider: string): string {
     const envKeys: Record<string, string> = {
-      openai: 'OPENAI_API_KEY',
-      anthropic: 'ANTHROPIC_API_KEY',
-      // Prefer repo-standard names (Gemini). Keep legacy keys as fallback in getProviderConfig.
-      google: 'GEMINI_API_KEY',
-      gemini: 'GEMINI_API_KEY',
-      deepseek: 'DEEPSEEK_API_KEY',
-      cohere: 'COHERE_API_KEY',
-      nvidia: 'NVIDIA_API_KEY',
-      qwen: 'ALIBABA_API_KEY',
-      zai: 'ZAI_API_KEY',
-      ollama: 'OLLAMA_BASE_URL',
+      openrouter: 'OPENROUTER_API_KEY',
     };
     return envKeys[provider] || `${provider.toUpperCase()}_API_KEY`;
   }
 
   getDefaultEndpoint(provider: string): string | null {
-    const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
     const endpoints: Record<string, string> = {
-      openai: 'https://api.openai.com/v1/chat/completions',
-      anthropic: 'https://api.anthropic.com/v1/messages',
-      google: 'https://generativelanguage.googleapis.com/v1beta',
-      gemini: 'https://generativelanguage.googleapis.com/v1beta',
-      deepseek: 'https://api.deepseek.com/chat/completions',
-      cohere: 'https://api.cohere.ai/v1/chat',
-      nvidia: 'https://integrate.api.nvidia.com/v1/chat/completions',
-      qwen: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
-      zai: 'https://api.z.ai/api/paas/v4/chat/completions',
-      openrouter: 'https://openrouter.ai/api/v1/chat/completions',
-      ollama: `${ollamaUrl}/v1`,
+      // Base URL (not the /chat/completions path) — matches our llmService OpenRouter client usage.
+      openrouter: 'https://openrouter.ai/api/v1',
     };
     return endpoints[provider] || null;
   }

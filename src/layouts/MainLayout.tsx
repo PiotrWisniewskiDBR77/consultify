@@ -45,6 +45,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const setIsSidebarOpen = useAppStore((s) => s.setIsSidebarOpen);
   const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
   const toggleChatCollapse = useAppStore((s) => s.toggleChatCollapse);
+  const chatKickoffMessage = useAppStore((s) => s.chatKickoffMessage);
+  const clearChatKickoffMessage = useAppStore((s) => s.clearChatKickoffMessage);
   const currentUser = useAppStore((s) => s.currentUser);
   const currentView = useAppStore((s) => s.currentView);
   const currentProjectId = useAppStore((s) => s.currentProjectId);
@@ -248,6 +250,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     onModeToggle={() => expandToFullScreen()}
                     showHistoryTrigger={true}
                     showFocusMode={true}
+                    kickoffMessage={chatKickoffMessage || undefined}
+                    onKickoffConsumed={clearChatKickoffMessage}
                   />
                 </div>
                 {/* Resizer */}

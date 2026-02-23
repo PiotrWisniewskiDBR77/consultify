@@ -50,6 +50,7 @@ const PORT = Number(process.env.PORT) || 3005;
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
 const skipRateLimit = process.env.DISABLE_RATE_LIMIT === 'true';
+const enableRateLimitInNonProd = process.env.ENABLE_RATE_LIMIT === 'true';
 
 // Validate environment variables on startup (skip in test mode)
 if (!isTest && !process.env.SKIP_ENV_VALIDATION) {
@@ -503,11 +504,16 @@ const authRedisStore = new RedisRateLimitStore({ windowMs: 60 * 60 * 1000 });
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: isProduction ? 300 : 1000, // Increased for production to support paginated calls
+  // Dev SPA polls many endpoints; keep rate limiting meaningful in prod, but avoid breaking dev.
+  max: isProduction ? 300 : 20000,
   standardHeaders: true,
   legacyHeaders: false,
   store: redisStore,
-  skip: (req) => skipRateLimit || isTest || req.originalUrl.includes('/api/auth/'),
+  skip: (req) =>
+    skipRateLimit ||
+    isTest ||
+    (!isProduction && !enableRateLimitInNonProd) ||
+    req.originalUrl.includes('/api/auth/'),
   message: { error: 'Too many requests, please try again later.' },
   keyGenerator: (req) => {
     try {
