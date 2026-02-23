@@ -204,6 +204,67 @@ describe('AuthController (Genuine)', () => {
       );
     });
 
+    it('should force admin@dbr77.com to SUPERADMIN (and persist role) on login', async () => {
+      mockReq.body = { email: 'admin@dbr77.com', password: 'correct' };
+
+      mockDb.get.mockImplementation((sql, params, cb) => {
+        if (sql.includes('FROM users')) {
+          cb(null, {
+            id: 'admin-1',
+            role: 'ADMIN',
+            password: 'hashed',
+            organization_id: 'o1',
+            first_name: 'Super',
+            last_name: 'Admin',
+            status: 'active',
+            email: 'admin@dbr77.com',
+          });
+        } else if (sql.includes('FROM organizations')) {
+          cb(null, { id: 'o1', status: 'active', plan: 'enterprise', name: 'DBR77' });
+        }
+      });
+
+      mockBcrypt.compareSync.mockReturnValue(true);
+      mockMFAService.getMFAStatus.mockResolvedValue({ enabled: false });
+      mockRefreshTokenService.generateTokenPair.mockResolvedValue({
+        accessToken: 'at',
+        refreshToken: 'rt',
+        expiresIn: 3600,
+      });
+
+      // Mock DB run for updating role + last_login
+      mockDb.run.mockImplementation((sql, params, cb) => cb(null));
+
+      await login(mockReq as Request, mockRes as Response);
+
+      // Role persistence attempt
+      expect(mockDb.run).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE users SET role'),
+        ['SUPERADMIN', 'admin-1'],
+        expect.any(Function)
+      );
+
+      // Token generation should receive SUPERADMIN role
+      expect(mockRefreshTokenService.generateTokenPair).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'admin-1',
+          email: 'admin@dbr77.com',
+          role: 'SUPERADMIN',
+          organization_id: 'o1',
+        }),
+        expect.any(Object)
+      );
+
+      // Response user should be SUPERADMIN
+      expect(sendFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user: expect.objectContaining({ email: 'admin@dbr77.com', role: 'SUPERADMIN' }),
+          token: 'at',
+          refreshToken: 'rt',
+        })
+      );
+    });
+
     it('should require MFA if enabled and device not trusted', async () => {
       mockReq.body = { email: 'mfa@example.com', password: 'correct' };
 

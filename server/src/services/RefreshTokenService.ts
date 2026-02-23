@@ -27,6 +27,16 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase, RunResult } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
 
+const FORCED_SUPERADMIN_EMAILS = (() => {
+  const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || 'admin@dbr77.com');
+  return new Set(
+    raw
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean)
+  );
+})();
+
 // ==========================================
 // TYPES
 // ==========================================
@@ -107,6 +117,25 @@ class RefreshTokenService {
     this.db = dbInstance || getDatabase();
   }
 
+  private async enforceForcedSuperAdmin(email: string | undefined, userId: string, role?: string) {
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    if (!normalizedEmail) return { role };
+    if (!FORCED_SUPERADMIN_EMAILS.has(normalizedEmail)) return { role };
+    if (role === 'SUPERADMIN') return { role };
+
+    // Best-effort: persist to DB so all future tokens are consistent.
+    try {
+      await this.dbRun(`UPDATE users SET role = ? WHERE id = ?`, ['SUPERADMIN', userId]);
+    } catch (e: any) {
+      logger.warn('[RefreshToken] Failed to persist forced SUPERADMIN role (continuing)', {
+        email: normalizedEmail,
+        userId,
+        error: e?.message || e,
+      });
+    }
+    return { role: 'SUPERADMIN' };
+  }
+
   /**
    * Set dependencies (for testing)
    */
@@ -164,6 +193,10 @@ class RefreshTokenService {
    */
   async generateTokenPair(user: User, options: TokenPairOptions = {}): Promise<TokenPair> {
     const { deviceInfo = 'Unknown Device', ip = null, userAgent = null } = options;
+
+    // Ensure forced SUPERADMIN accounts never get a downgraded role in tokens.
+    const forced = await this.enforceForcedSuperAdmin(user.email, user.id, user.role);
+    if (forced.role) user.role = forced.role;
 
     // Clean up excess sessions (keep only MAX_SESSIONS)
     await this._enforceSessionLimit(user.id);
@@ -266,6 +299,14 @@ class RefreshTokenService {
           );
 
           if (latestToken) {
+            // Enforce forced SUPERADMIN (best-effort DB fix + in-memory override)
+            const forced = await this.enforceForcedSuperAdmin(
+              latestToken.email,
+              latestToken.user_id,
+              latestToken.role
+            );
+            if (forced.role) latestToken.role = forced.role;
+
             // Found a valid token in the same family - return new tokens based on it
             // but DON'T rotate again (let the original refresh handle that)
             logger.info(
@@ -306,6 +347,14 @@ class RefreshTokenService {
 
       return null;
     }
+
+    // Enforce forced SUPERADMIN (best-effort DB fix + in-memory override)
+    const forced = await this.enforceForcedSuperAdmin(
+      storedToken.email,
+      storedToken.user_id,
+      storedToken.role
+    );
+    if (forced.role) storedToken.role = forced.role;
 
     // Check if user is still active
     if (storedToken.user_status !== 'active') {

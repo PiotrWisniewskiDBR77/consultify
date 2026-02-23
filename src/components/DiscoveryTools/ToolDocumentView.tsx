@@ -57,6 +57,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -417,6 +418,11 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const {
+    setOpen: setHelpOpen,
+    setActiveTab: setHelpTab,
+    setKnowledgeModuleIdOverride,
+  } = useHelpSidePanel();
+  const {
     currentOrganization,
     currentProjectId,
     isChatCollapsed,
@@ -698,6 +704,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     }
   };
 
+  const handleOpenKnowledgeBase = () => {
+    setKnowledgeModuleIdOverride(toolType);
+    setHelpTab('knowledge');
+    setHelpOpen(true);
+  };
+
   const handleCopyToolPermalink = async () => {
     if (!toolSessionId) return;
     try {
@@ -902,6 +914,14 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             >
               <MessageSquare className="w-4 h-4" />
               Chat
+            </button>
+
+            <button
+              onClick={handleOpenKnowledgeBase}
+              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors"
+            >
+              <BookOpen className="w-4 h-4" />
+              {isPolish ? 'How to' : 'How to'}
             </button>
 
             {/* More Menu */}
