@@ -439,7 +439,9 @@ export class ApiGateway {
       app.use('/api/rbac', rbacRoutes);
       app.use('/api/branding', brandingRoutes);
       mountStub('/api/workspace-defaults', workspaceDefaultsRoutes, 'workspaceDefaultsRoutes');
-      mountStub('/api/my-work', myWorkRoutes, 'myWorkRoutes');
+      // My Work is a production-critical module (not a stub).
+      // It must remain available in production to avoid broken navigation from notifications/actionUrl deep links.
+      app.use('/api/my-work', myWorkRoutes);
 
       // Governance routes
       app.use('/api/governance', governanceRoutes);

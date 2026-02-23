@@ -251,6 +251,12 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   >([]);
   const [suggestedIdeasLoading, setSuggestedIdeasLoading] = useState(false);
 
+  // T011: Suggested notebook pages (private/project) while editing task
+  const [suggestedNotes, setSuggestedNotes] = useState<
+    { id: string; title: string; contentText?: string; tags?: string[]; updatedAt?: string }[]
+  >([]);
+  const [suggestedNotesLoading, setSuggestedNotesLoading] = useState(false);
+
   // Escalation & Reminders
   const [reminders, setReminders] = useState<ReminderRule[]>([]);
   const [escalation, setEscalation] = useState<EscalationRule | null>(null);
@@ -565,6 +571,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     const q = `${title || ''} ${description || ''}`.trim();
     if (!q) {
       setSuggestedIdeas([]);
+      setSuggestedNotes([]);
       return;
     }
 
@@ -581,6 +588,20 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         setSuggestedIdeas([]);
       } finally {
         setSuggestedIdeasLoading(false);
+      }
+
+      try {
+        setSuggestedNotesLoading(true);
+        const params = new URLSearchParams();
+        params.set('q', q.slice(0, 300));
+        params.set('limit', '5');
+        const notes = (await Api.get(`/my-work/notebook/pages?${params.toString()}`)) as any;
+        const arr = Array.isArray(notes) ? notes : [];
+        setSuggestedNotes(arr);
+      } catch {
+        setSuggestedNotes([]);
+      } finally {
+        setSuggestedNotesLoading(false);
       }
     }, 450);
 
@@ -2179,6 +2200,88 @@ Return ONLY the final comment text.`;
                                 className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                               >
                                 {t('myWork.ideas.open', 'Open')}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 2.2) Relevant notes (T011) */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                      {t('myWork.notebook.suggestions', 'Relevant notes')}
+                    </label>
+                    {suggestedNotesLoading ? (
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {t('common.loading', 'Loading…')}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {suggestedNotes.length === 0 ? (
+                    <Callout
+                      variant="info"
+                      title={t('myWork.notebook.suggestionsEmptyTitle', 'No suggestions')}
+                    >
+                      {t(
+                        'myWork.notebook.suggestionsEmpty',
+                        'Create notebook pages to build a searchable knowledge base.'
+                      )}
+                    </Callout>
+                  ) : (
+                    <div className="space-y-2">
+                      {suggestedNotes.map((note) => (
+                        <div
+                          key={note.id}
+                          className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/60 px-4 py-3"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+                                {note.title}
+                              </div>
+                              {note.contentText ? (
+                                <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                                  {note.contentText}
+                                </div>
+                              ) : null}
+                            </div>
+                            <div className="flex flex-col gap-2 shrink-0">
+                              <button
+                                onClick={() => {
+                                  const insert = [
+                                    '',
+                                    '---',
+                                    `${t('myWork.notebook.note', 'Note')}: ${note.title}`,
+                                    note.contentText || '',
+                                  ]
+                                    .filter(Boolean)
+                                    .join('\n');
+                                  setDescription((prev) => `${prev || ''}${insert}`.trim());
+                                  toast.success(
+                                    t('myWork.notebook.insertedToast', 'Inserted into description')
+                                  );
+                                }}
+                                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-500/15 border border-primary-500 text-primary-600 dark:text-primary-300 hover:bg-primary-500/20 transition-colors"
+                              >
+                                {t('myWork.notebook.insert', 'Insert')}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  try {
+                                    const { setMyWorkIntent } = useAppStore.getState() as any;
+                                    setMyWorkIntent?.({ tab: 'notebook' });
+                                  } catch {
+                                    /* ignore */
+                                  }
+                                }}
+                                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                              >
+                                {t('myWork.notebook.open', 'Open')}
                               </button>
                             </div>
                           </div>

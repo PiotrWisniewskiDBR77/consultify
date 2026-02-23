@@ -2121,80 +2121,102 @@
     "quickClicks": {
       "brief": { "label": "Dzienny brief" },
       "savings": {
-        "label": "Oszczędności",
+        "label": "Szybkie oszczędności",
         "prompt": "Poszukajmy oszczędności — gdzie najszybciej możemy obniżyć koszty bez utraty jakości?"
       },
       "newProduct": {
-        "label": "Nowy produkt",
+        "label": "Pomysł na produkt",
         "prompt": "Wymyślmy pomysł na nowy produkt: 5 koncepcji + ocena rynku, ROI i trudności wdrożenia."
       },
       "planReview": {
-        "label": "Plany",
+        "label": "Przegląd planów",
         "prompt": "Zrób przegląd naszych planów i inicjatyw: priorytety, ryzyka i co do korekty."
       },
       "situation": {
-        "label": "Sytuacja",
+        "label": "Przegląd sytuacji",
         "prompt": "Daj mi przegląd sytuacji: postęp, ryzyka, blokery, najbliższe decyzje i kolejne kroki."
       },
       "roi": {
-        "label": "ROI",
+        "label": "Analiza ROI",
         "prompt": "Przeanalizuj ROI portfela inicjatyw i wskaż top 3 ruchy o najwyższym zwrocie."
       },
       "risks": {
-        "label": "Ryzyka",
+        "label": "Mapa ryzyk",
         "prompt": "Zrób mapę ryzyk (top 10) i zaproponuj mitygacje oraz właścicieli."
       },
       "priorities": {
-        "label": "Priorytety",
+        "label": "Priorytety tygodnia",
         "prompt": "Ustal priorytety na tydzień: MUST/SHOULD/COULD + uzasadnienie."
       },
       "kpi": {
-        "label": "KPI",
+        "label": "Kluczowe KPI",
         "prompt": "Zrób przegląd kluczowych KPI: co się poprawia, co spada, co wymaga reakcji."
       },
       "scenario": {
-        "label": "Scenariusze",
+        "label": "Scenariusze finansowe",
         "prompt": "Zbuduj 3 scenariusze (bazowy/optymistyczny/pesymistyczny) i powiedz jak zmieniają plan."
       },
       "decision": {
-        "label": "Decyzja",
+        "label": "Wsparcie decyzji",
         "prompt": "Pomóż podjąć decyzję: warianty, trade‑offy, ryzyka, koszty i rekomendacja w 5 punktach."
       },
       "stakeholders": {
-        "label": "Stakeholderzy",
+        "label": "Update dla zarządu",
         "prompt": "Przygotuj krótką aktualizację dla stakeholderów: status, ryzyka, decyzje do podjęcia, next steps."
       },
       "governance": {
-        "label": "Governance",
+        "label": "Lekki governance",
         "prompt": "Ułóż lekkie governance: rytm, KPI, decyzje, eskalacje i odpowiedzialności."
       },
       "budget": {
-        "label": "Budżet",
+        "label": "Przegląd budżetu",
         "prompt": "Przeanalizuj budżet inicjatyw: odchylenia, ryzyka i gdzie warto przesunąć środki."
       },
       "timeline": {
-        "label": "Harmonogram",
+        "label": "Kontrola harmonogramu",
         "prompt": "Sprawdź harmonogram: opóźnienia, krytyczna ścieżka i rekomendacje korekt."
       },
       "team": {
-        "label": "Zespół",
+        "label": "Obciążenie zespołu",
         "prompt": "Oceń obciążenie zespołu: przeciążenia, ryzyka i szybkie usprawnienia przepływu pracy."
       },
       "benefits": {
-        "label": "Korzyści",
+        "label": "Plan korzyści",
         "prompt": "Ułóż plan realizacji korzyści: metryki, baseline, ownerzy, tracking i raportowanie."
       },
       "capability": {
-        "label": "Kompetencje",
+        "label": "Rozwój kompetencji",
         "prompt": "Jakich kompetencji brakuje? Zaproponuj plan rozwoju (edukacja + praktyka) na 6 tygodni."
       },
       "dependencies": {
-        "label": "Zależności",
+        "label": "Zależności w portfelu",
         "prompt": "Wskaż zależności i wąskie gardła między inicjatywami oraz zaproponuj sequencing."
       },
       "quickWins": {
-        "label": "Quick wins",
+        "label": "Lista quick wins",
         "prompt": "Zaproponuj 10 quick wins na 2 tygodnie: wartość, wysiłek, owner i pierwszy krok."
+      }
+    },
+    "homeCards": {
+      "market": {
+        "label": "Analiza rynku",
+        "desc": "Rynek, konkurencja, pozycjonowanie",
+        "kickoff": "Chcę zrobić analizę rynku. Opisz proszę, jakie pytania musisz mi zadać, żeby dobrze zdefiniować: branżę, segment, kraj, klientów, konkurencję i przewagę. Zacznij od 5 pytań."
+      },
+      "finance": {
+        "label": "Analiza finansowa",
+        "desc": "ROI, budżet, scenariusze",
+        "kickoff": "Chcę zrobić analizę finansową. Jakie dane mamy przeanalizować (budżet, koszty, przychody, ROI, CAPEX/OPEX)? Zadaj mi 5 pytań, a potem zaproponuj strukturę analizy."
+      },
+      "consulting": {
+        "label": "Klasyczny consulting",
+        "desc": "Ramy i narzędzia strategiczne",
+        "kickoff": "Chcę użyć klasycznych narzędzi consultingowych. Jaki problem rozwiązujemy i w jakim kontekście? Zadaj mi 5 pytań, a potem zaproponuj 2–3 najlepsze ramy (np. SWOT, 5 Forces, Ansoff, Value Chain)."
+      },
+      "digital": {
+        "label": "Transformacja cyfrowa",
+        "desc": "Diagnozy i narzędzia licencjonowane",
+        "kickoff": "Chcę ocenić gotowość do transformacji cyfrowej. Jakie obszary mamy ocenić i jakie są kryteria? Zadaj mi 5 pytań i zaproponuj szybki plan diagnozy."
       }
     },
     "suggestions": {
@@ -2344,9 +2366,8 @@
     "groups": {
       "pinned": "Przypięte",
       "today": "Dzisiaj",
-      "yesterday": "Wczoraj",
       "thisWeek": "Ten tydzień",
-      "lastMonth": "Ostatni miesiąc",
+      "thisMonth": "Ten miesiąc",
       "older": "Starsze",
       "archived": "Archiwum"
     },
@@ -2390,6 +2411,10 @@
         "multiAgent": {
           "label": "Analiza wieloagentowa",
           "desc": "Perspektywy CFO/CTO/CHRO/COO"
+        },
+        "privateMode": {
+          "label": "Tryb prywatny",
+          "desc": "Bez pamięci i personalizacji w tej rozmowie"
         },
         "textToSpeech": {
           "label": "Czytaj odpowiedzi",

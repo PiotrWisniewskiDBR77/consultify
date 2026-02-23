@@ -236,6 +236,10 @@ export class AIPipeline {
 
       // 6. Select model
       const modelConfig = await this.selectModel(request, capability);
+      (request as any)._modelConfigForLog = {
+        provider: modelConfig?.provider || null,
+        model: modelConfig?.model || null,
+      };
 
       // Check if streaming is requested
       if ((request as any).stream) {
@@ -298,6 +302,7 @@ export class AIPipeline {
 
             usedProvider = providerId;
             usedModel = modelId;
+            (request as any)._modelConfigForLog = { provider: providerId, model: modelId };
             logger.info(`[AIPipeline] Stream started: ${providerId}/${modelId}`);
             break;
           } catch (err: any) {
@@ -396,6 +401,10 @@ export class AIPipeline {
 
       // 6. Select model
       const modelConfig = await this.selectModel(request, capability);
+      (request as any)._modelConfigForLog = {
+        provider: modelConfig?.provider || null,
+        model: modelConfig?.model || null,
+      };
 
       // 7. Execute streaming
       await this.executeStreamingWithProvider(prompt, modelConfig, request.options, onChunk);
@@ -410,8 +419,17 @@ export class AIPipeline {
           traceId,
         },
       });
+
+      // 9. Best-effort usage log (streaming typically has no token usage here)
+      await this.logRequest(
+        request,
+        { content: '', usage: undefined },
+        Date.now() - startTime,
+        traceId
+      );
     } catch (error: unknown) {
       const aiError = this.handleError(error);
+      await this.logError(request, aiError, Date.now() - startTime, traceId);
       onChunk({
         type: 'error',
         error: aiError,
@@ -485,6 +503,37 @@ export class AIPipeline {
     memoryUsed?: boolean;
   }> {
     try {
+      const userId = request.userId;
+
+      // T120: Private mode + retention enforcement (fail-soft)
+      let isPrivateMode: boolean =
+        typeof (request.options as any)?.privateMode === 'boolean'
+          ? Boolean((request.options as any)?.privateMode)
+          : Boolean((request.context as any)?.privateMode);
+      let retentionMode: 'session' | 'extended' | 'none' | null = null;
+      let memoryEnabled = true;
+
+      try {
+        const upMod = (await import('./userPrivacyService.js')) as any;
+        const privacy = (upMod.default || upMod) as any;
+        if (privacy?.getUserPrivacySettings) {
+          const settings = await privacy.getUserPrivacySettings(userId);
+          // If client didn't explicitly set privateMode, apply user's default
+          if (typeof (request.options as any)?.privateMode !== 'boolean') {
+            isPrivateMode = Boolean(settings?.privateModeDefault);
+          }
+          retentionMode =
+            ((request.options as any)?.retentionMode as any) || (settings?.retentionMode ?? null);
+          memoryEnabled = settings?.memoryEnabled !== false;
+        }
+      } catch {
+        // ignore
+      }
+
+      const memoryReadAllowed = Boolean(memoryEnabled && !isPrivateMode && retentionMode !== 'none');
+      (request as any)._privateMode = isPrivateMode;
+      (request as any)._retentionMode = retentionMode;
+
       // Deep Thinking autonomy: do NOT pull external/internal context (org/project/memory/RAG).
       // Use ONLY the conversation-provided context (request.context) when deepThinking is enabled.
       const aiModes =
@@ -498,12 +547,11 @@ export class AIPipeline {
         // for personalized research.
         logger.info('[AIPipeline] Deep Thinking: building light context (org + memory only)');
 
-        const userId = request.userId;
         const organizationId = request.organizationId || null;
 
         const lightContext: any = { ...(request.context || {}) };
 
-        if (userId && organizationId) {
+        if (userId && organizationId && memoryReadAllowed) {
           try {
             // Get org memory (terminology, decision patterns, maturity)
             const aiMemoryMod = await import('./aiMemoryService.js');
@@ -541,14 +589,13 @@ export class AIPipeline {
         return {
           context: lightContext as any,
           ragResults: 0,
-          memoryUsed: true,
+          memoryUsed: memoryReadAllowed,
         };
       }
 
       const AIContextBuilder = await getAIContextBuilder();
 
       // Extract IDs from request
-      const userId = request.userId;
       const organizationId = request.organizationId || null;
       const projectId = (request as any).projectId || (request.context as any)?.projectId || null;
       const screenContext =
@@ -565,56 +612,67 @@ export class AIPipeline {
           currentScreen: screenContext?.screenId || screenContext?.currentScreen || null,
           selectedObjectId: screenContext?.selectedObjectId || null,
           selectedObjectType: screenContext?.selectedObjectType || null,
+          conversationId:
+            (request.context as any)?.conversationId ||
+            (request.context as any)?.sessionId ||
+            (request as any)?.conversationId ||
+            null,
         });
 
         // Enrich with user memory (preferences, expertise, communication style)
         let userMemory = null;
-        try {
-          const aiMemoryMod = await import('./aiMemoryService.js');
-          const aiMemoryService = (aiMemoryMod as any).default || aiMemoryMod;
-          if (aiMemoryService?.getUserMemory) {
-            userMemory = await aiMemoryService.getUserMemory(userId);
+        if (memoryReadAllowed) {
+          try {
+            const aiMemoryMod = await import('./aiMemoryService.js');
+            const aiMemoryService = (aiMemoryMod as any).default || aiMemoryMod;
+            if (aiMemoryService?.getUserMemory) {
+              userMemory = await aiMemoryService.getUserMemory(userId);
+            }
+          } catch (memErr: any) {
+            logger.debug(`[AIPipeline] User memory not available: ${memErr?.message}`);
           }
-        } catch (memErr: any) {
-          logger.debug(`[AIPipeline] User memory not available: ${memErr?.message}`);
         }
 
         // Enrich with org memory (terminology, decision patterns)
         let orgMemory = null;
-        try {
-          const aiMemoryMod = await import('./aiMemoryService.js');
-          const aiMemoryService = (aiMemoryMod as any).default || aiMemoryMod;
-          if (aiMemoryService?.getOrgMemory) {
-            orgMemory = await aiMemoryService.getOrgMemory(organizationId);
+        if (memoryReadAllowed) {
+          try {
+            const aiMemoryMod = await import('./aiMemoryService.js');
+            const aiMemoryService = (aiMemoryMod as any).default || aiMemoryMod;
+            if (aiMemoryService?.getOrgMemory) {
+              orgMemory = await aiMemoryService.getOrgMemory(organizationId);
+            }
+          } catch (memErr: any) {
+            logger.debug(`[AIPipeline] Org memory not available: ${memErr?.message}`);
           }
-        } catch (memErr: any) {
-          logger.debug(`[AIPipeline] Org memory not available: ${memErr?.message}`);
         }
 
         // Load custom instructions (075 schema: key/value; 250 schema: preferences JSON, no key)
         let customInstructions: string | null = null;
-        const { get: dbGet } = await import('../../utils/DbPromise.js');
-        try {
-          const ciRow = (await dbGet(
-            'SELECT value FROM ai_user_memory WHERE user_id = ? AND key = ?',
-            [userId, 'custom_instructions']
-          )) as { value?: string } | null;
-          if (ciRow?.value) {
-            customInstructions = String(ciRow.value).trim().slice(0, 1000);
-          }
-        } catch {
+        if (memoryReadAllowed) {
+          const { get: dbGet } = await import('../../utils/DbPromise.js');
           try {
-            const prefsRow = (await dbGet(
-              'SELECT preferences FROM ai_user_memory WHERE user_id = ?',
-              [userId]
-            )) as { preferences?: string } | null;
-            if (prefsRow?.preferences) {
-              const prefs = JSON.parse(prefsRow.preferences || '{}');
-              const ci = prefs?.customInstructions || prefs?.system_instructions;
-              if (ci) customInstructions = String(ci).trim().slice(0, 1000);
+            const ciRow = (await dbGet(
+              'SELECT value FROM ai_user_memory WHERE user_id = ? AND key = ?',
+              [userId, 'custom_instructions']
+            )) as { value?: string } | null;
+            if (ciRow?.value) {
+              customInstructions = String(ciRow.value).trim().slice(0, 1000);
             }
           } catch {
-            // Schema may differ
+            try {
+              const prefsRow = (await dbGet(
+                'SELECT preferences FROM ai_user_memory WHERE user_id = ?',
+                [userId]
+              )) as { preferences?: string } | null;
+              if (prefsRow?.preferences) {
+                const prefs = JSON.parse(prefsRow.preferences || '{}');
+                const ci = prefs?.customInstructions || prefs?.system_instructions;
+                if (ci) customInstructions = String(ci).trim().slice(0, 1000);
+              }
+            } catch {
+              // Schema may differ
+            }
           }
         }
 
@@ -637,7 +695,41 @@ export class AIPipeline {
               }
             : null,
           customInstructions,
+          privacy: {
+            privateMode: isPrivateMode,
+            retentionMode,
+          },
         };
+
+        // T121: best-effort document usage audit (per chat run)
+        try {
+          const chatRunId = String((request.context as any)?.chatRunId || '').trim();
+          const dg = (fullContext as any)?.knowledge?.docGovernance;
+          if (
+            chatRunId &&
+            dg &&
+            request.organizationId &&
+            request.userId &&
+            typeof dg === 'object'
+          ) {
+            const { logDocumentUsage } = await import('./documentGovernance.js');
+            const used = Array.isArray(dg.allowedDocIds) ? dg.allowedDocIds : [];
+            const blocked = [
+              ...(Array.isArray(dg.blockedDocIds) ? dg.blockedDocIds : []),
+              ...(Array.isArray(dg.requiresApprovalDocIds) ? dg.requiresApprovalDocIds : []),
+            ];
+            await logDocumentUsage(
+              chatRunId,
+              request.organizationId,
+              projectId,
+              request.userId,
+              used,
+              blocked
+            );
+          }
+        } catch {
+          // ignore
+        }
 
         logger.info(`[AIPipeline] Context built successfully`, {
           hasExecution: !!fullContext?.execution,
@@ -650,7 +742,9 @@ export class AIPipeline {
         return {
           context: contextWithMemory,
           ragResults: fullContext?.knowledge?.projectDocuments?.length || 0,
-          memoryUsed: !!fullContext?.execution || !!userMemory || !!orgMemory,
+          memoryUsed:
+            !!fullContext?.execution ||
+            (memoryReadAllowed && (!!userMemory || !!orgMemory || !!customInstructions)),
         };
       }
 
@@ -711,8 +805,9 @@ export class AIPipeline {
       }
     }
 
-    // Enhance system prompt with learned instructions from user feedback
-    if (request.organizationId) {
+    // Enhance system prompt with learned instructions from user feedback.
+    // If SSOT prompt assembler already injected org learned instructions, skip to avoid duplication.
+    if (request.organizationId && !ctx?._promptSsotUsed) {
       try {
         const lsPath = './learningSystem' + '.js';
         const learningMod = await import(/* @vite-ignore */ lsPath);
@@ -795,10 +890,55 @@ export class AIPipeline {
   ): Promise<string> {
     const parts: string[] = [];
 
-    // 1. Role definition with screen-aware persona + language
+    // 1. Role definition with screen-aware persona + language (SSOT prompt registry preferred)
     const conversationLang =
       ctx?.conversationLanguage || ctx?.userMemory?.preferences?.language || null;
-    parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang));
+    const langBase = conversationLang ? String(conversationLang).split('-')[0] : null;
+
+    // Prefer canonical Prompt SSOT (T116). Fail-soft to persona prompt when registry isn't ready.
+    try {
+      const promptKeyRaw =
+        (request.options as any)?.promptKey ||
+        (request as any)?.promptKey ||
+        (request.capability === 'chat' || request.capability === 'chatStream'
+          ? 'chat.default'
+          : `${String(request.capability || 'chat')}.default`);
+
+      const promptKey = String(promptKeyRaw || '').trim();
+      if (promptKey) {
+        const paMod = await import('./promptAssembler.js');
+        const promptAssembler = (paMod as any).default || (paMod as any).promptAssembler || paMod;
+
+        if (promptAssembler?.assemble) {
+          const assembled = await promptAssembler.assemble({
+            promptKey,
+            organizationId: request.organizationId || undefined,
+            language: langBase || 'en',
+          });
+
+          if (assembled?.systemPrompt) {
+            parts.push(String(assembled.systemPrompt));
+            ctx._promptSsotUsed = true;
+            ctx._promptKey = promptKey;
+            ctx._promptVersion = assembled?.metadata?.promptVersion ?? null;
+            ctx._promptMeta = assembled?.metadata || null;
+            (request as any)._promptSsotUsed = true;
+            (request as any)._promptKey = promptKey;
+            (request as any)._promptVersion = assembled?.metadata?.promptVersion ?? null;
+            (request as any)._promptMeta = assembled?.metadata || null;
+          } else {
+            parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang));
+          }
+        } else {
+          parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang));
+        }
+      } else {
+        parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang));
+      }
+    } catch (err: any) {
+      logger.debug(`[AIPipeline] Prompt SSOT unavailable, using persona prompt: ${err?.message}`);
+      parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang));
+    }
 
     // 2. Organization context
     if (ctx?.organization) {
@@ -1065,9 +1205,29 @@ export class AIPipeline {
   private buildPendingApprovalsSection(approvals: any): string {
     if (!approvals || approvals.count === 0) return '';
 
-    return `## OCZEKUJĄCE AKCJE AI
-${approvals.summary}
-Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwierdzić.`;
+    const parts: string[] = [];
+    if (approvals.summary) {
+      parts.push(String(approvals.summary));
+    }
+
+    if (approvals.actions?.length > 0) {
+      parts.push(
+        '### Akcje',
+        ...approvals.actions.slice(0, 5).map((a: any) => `- ${a.title || a.actionType || a.id}`)
+      );
+    }
+
+    if (approvals.documents?.count > 0) {
+      parts.push(
+        '### Dokumenty wymagające zgody',
+        ...(Array.isArray(approvals.documents.documents) ? approvals.documents.documents : [])
+          .slice(0, 5)
+          .map((d: any) => `- ${d.filename || d.id}`),
+        'Aby dopuścić dokument do AI w tej rozmowie, zatwierdź dostęp (conversation-scoped).'
+      );
+    }
+
+    return `## OCZEKUJĄCE ZATWIERDZENIA\n${parts.filter(Boolean).join('\n')}`;
   }
 
   private buildScreenContextSection(ctx: any): string {
@@ -1724,10 +1884,65 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
     latency: number,
     traceId: string
   ): Promise<void> {
-    // TODO: Implement logging
-    logger.info(
-      `[AI Pipeline] ${request.capability} completed in ${latency}ms (trace: ${traceId})`
-    );
+    const meta = {
+      traceId,
+      capability: request.capability,
+      promptKey:
+        (request.options as any)?.promptKey ||
+        (request as any)?._promptKey ||
+        (request as any)?.promptKey ||
+        null,
+      promptVersion: (request as any)?._promptVersion ?? null,
+      promptSsotUsed: (request as any)?._promptSsotUsed ?? false,
+    };
+
+    logger.info(`[AI Pipeline] ${request.capability} completed in ${latency}ms (trace: ${traceId})`, meta);
+
+    // Best-effort DB-backed usage log (208_ai_usage_logs.sql).
+    // Never fail the request if logging is unavailable.
+    try {
+      const { run: dbRun } = await import('../../utils/DbPromise.js');
+      const { v4: uuidv4 } = await import('uuid');
+
+      const usage = _response?.usage || ({} as any);
+      const promptTokens = Number(usage?.promptTokens || 0);
+      const completionTokens = Number(usage?.completionTokens || 0);
+      const tokensUsed = Number(usage?.totalTokens || usage?.tokensUsed || promptTokens + completionTokens || 0);
+
+      const usedProvider =
+        (request as any)?._modelConfigForLog?.provider ||
+        (request as any)?._provider ||
+        'unknown';
+      const usedModel =
+        (request as any)?._modelConfigForLog?.model ||
+        (request as any)?._model ||
+        null;
+
+      await dbRun(
+        `INSERT INTO ai_usage_logs (id, user_id, organization_id, provider, model, action, prompt_tokens, completion_tokens, tokens_used, latency_ms, status, error_message, metadata, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'success', NULL, ?, CURRENT_TIMESTAMP)`,
+        [
+          uuidv4(),
+          request.userId || null,
+          request.organizationId || null,
+          String(usedProvider || 'unknown'),
+          usedModel ? String(usedModel) : null,
+          String(request.capability || 'unknown'),
+          Number.isFinite(promptTokens) ? promptTokens : 0,
+          Number.isFinite(completionTokens) ? completionTokens : 0,
+          Number.isFinite(tokensUsed) ? tokensUsed : 0,
+          Number.isFinite(latency) ? latency : 0,
+          JSON.stringify({
+            traceId,
+            promptKey: (request.options as any)?.promptKey || (request as any)?._promptKey || null,
+            promptVersion: (request as any)?._promptVersion || null,
+            promptSsotUsed: (request as any)?._promptSsotUsed || false,
+          }),
+        ]
+      );
+    } catch {
+      // ignore
+    }
   }
 
   private async logError(

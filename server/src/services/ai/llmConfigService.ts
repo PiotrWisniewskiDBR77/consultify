@@ -248,6 +248,22 @@ export class LLMConfigService {
       );
       await this.runAsync(`CREATE INDEX IF NOT EXISTS idx_llm_logs_status ON llm_logs(status)`);
 
+      await this.runAsync(`
+                CREATE TABLE IF NOT EXISTS llm_health_events (
+                    id TEXT PRIMARY KEY,
+                    provider TEXT NOT NULL,
+                    model TEXT,
+                    status TEXT NOT NULL,
+                    available INTEGER DEFAULT 0,
+                    latency_ms INTEGER DEFAULT 0,
+                    error_message TEXT,
+                    timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+      await this.runAsync(
+        `CREATE INDEX IF NOT EXISTS idx_llm_health_events_provider_timestamp ON llm_health_events(provider, timestamp)`
+      );
+
       this.initialized = true;
       aiLogger.info('LLMConfigService', 'LLM Config Service initialized with analytics storage');
     } catch (error: unknown) {

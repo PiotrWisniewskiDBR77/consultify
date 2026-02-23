@@ -88,11 +88,31 @@ export const LLMManagementView: React.FC = () => {
 
   // Health status
   const [healthStatus, setHealthStatus] = useState<any>(null);
+  const [incidentsLoading, setIncidentsLoading] = useState(false);
+  const [incidentsData, setIncidentsData] = useState<any>(null);
 
   // Load initial data on mount
   useEffect(() => {
     loadInitialData();
   }, []);
+
+  useEffect(() => {
+    if (activeTab !== 'health') return;
+    // Load incidents timeline when viewing health/ops
+    const loadIncidents = async () => {
+      setIncidentsLoading(true);
+      try {
+        const result = await (Api as any).getLLMIncidents?.({ provider: 'openrouter' });
+        setIncidentsData(result);
+      } catch (e) {
+        // ignore; health tab should still work without timeline
+        setIncidentsData(null);
+      } finally {
+        setIncidentsLoading(false);
+      }
+    };
+    loadIncidents();
+  }, [activeTab]);
 
   const loadInitialData = async () => {
     setLoading(true);
@@ -558,6 +578,65 @@ export const LLMManagementView: React.FC = () => {
         {activeTab === 'health' && (
           <div className="p-8 overflow-y-auto h-full">
             <div className="max-w-3xl mx-auto space-y-6">
+              <Card variant="bordered" padding="lg">
+                <SectionHeader
+                  title="LLM Downtime Timeline (last 24h)"
+                  subtitle="Incidents derived from periodic provider health checks"
+                />
+                <div className="mt-4 space-y-2">
+                  {incidentsLoading ? (
+                    <div className="text-sm text-slate-400 dark:text-slate-500">Loading…</div>
+                  ) : incidentsData?.success ? (
+                    <>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        Uptime: <span className="font-medium text-slate-200">{incidentsData?.uptime?.uptimePct}%</span>
+                        {' · '}
+                        Incidents: <span className="font-medium text-slate-200">{(incidentsData?.incidents || []).length}</span>
+                      </div>
+                      {(incidentsData?.incidents || []).length === 0 ? (
+                        <div className="text-sm text-slate-300">No downtime detected.</div>
+                      ) : (
+                        <div className="space-y-2">
+                          {(incidentsData?.incidents || []).slice(0, 20).map((inc: any, idx: number) => {
+                            const start = inc?.start ? new Date(inc.start).toLocaleString() : 'n/a';
+                            const end = inc?.end ? new Date(inc.end).toLocaleString() : 'ongoing';
+                            const durMin = typeof inc?.durationMs === 'number' ? Math.round(inc.durationMs / 60000) : null;
+                            return (
+                              <div
+                                key={idx}
+                                className="p-3 border border-white/[0.04] rounded-lg bg-white/[0.02]"
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <div className="text-sm text-slate-200">
+                                    <span className="font-medium">Down</span>{' '}
+                                    <span className="text-slate-400">({durMin !== null ? `${durMin} min` : 'n/a'})</span>
+                                  </div>
+                                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                                    samples: {inc?.samples || 0}
+                                  </div>
+                                </div>
+                                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                  {start} → {end}
+                                </div>
+                                {inc?.lastError && (
+                                  <div className="mt-2 text-xs text-amber-300/90">
+                                    {String(inc.lastError).slice(0, 220)}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-sm text-slate-400 dark:text-slate-500">
+                      No incident data available yet (health events start accumulating after the server runs for a while).
+                    </div>
+                  )}
+                </div>
+              </Card>
+
               <Card variant="bordered" padding="lg">
                 <div className="flex items-center justify-between mb-4">
                   <SectionHeader title="AI System Status" />

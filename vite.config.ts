@@ -35,6 +35,18 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       host: '0.0.0.0',
+      warmup: {
+        // Dev perf: pre-transform the hottest entry + a few main routes
+        // to reduce "waterfall" latency when navigating between modules.
+        clientFiles: [
+          './index.html',
+          './src/index.tsx',
+          './src/App.tsx',
+          './src/routes/AppRoutes.tsx',
+          './src/views/AIChatWelcomeView.tsx',
+          './src/views/MyWorkView.tsx',
+        ],
+      },
       watch: {
         // Prevent dev-server reload loops caused by generated artifacts and iCloud/Finder duplicates.
         ignored: watchIgnored,
@@ -121,15 +133,34 @@ export default defineConfig(({ mode }) => {
         'use-sync-external-store',
         'use-sync-external-store/shim',
         'use-sync-external-store/shim/with-selector',
+        'use-sync-external-store/with-selector',
         // Ensure react-is matches React 19 version
         'react-is',
         // Prebundle recharts to avoid lodash CJS/ESM import issues
         'recharts',
+        // DnD kit — used by MyWork kanban boards; prebundle to avoid 504 on lazy navigation
+        '@dnd-kit/core',
+        '@dnd-kit/sortable',
+        '@dnd-kit/utilities',
+        // TipTap editor — used by notebook/task detail views
+        '@tiptap/react',
+        '@tiptap/starter-kit',
+        '@tiptap/extension-placeholder',
+        '@tiptap/extension-task-item',
+        '@tiptap/extension-task-list',
+        // i18n
+        'react-i18next',
+        'i18next',
+        // React Query
+        '@tanstack/react-query',
+        // Axios
+        'axios',
+        // PDF / screenshot capture (used by export utilities)
+        'html2canvas',
       ],
       exclude: [
         // Large libs that should be lazy loaded
         'mermaid',
-        '@tiptap/react',
         'jspdf',
         'xlsx',
       ],

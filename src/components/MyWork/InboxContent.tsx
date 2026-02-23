@@ -39,6 +39,16 @@ type InboxItemType =
   | 'decision_request'
   | 'ai_suggestion';
 
+type InboxSection =
+  | 'decisions_required'
+  | 'approvals_gates'
+  | 'assigned_tasks'
+  | 'blocked_escalations'
+  | 'overdue_sla_breach'
+  | 'other';
+
+type SlaLevel = 'none' | 'L1' | 'L2' | 'L3';
+
 type TriageAction = 'accept_today' | 'schedule' | 'delegate' | 'archive' | 'reject';
 
 type InboxItemKey = `task:${string}` | `decision:${string}` | `notification:${string}`;
@@ -46,11 +56,18 @@ type InboxItemKey = `task:${string}` | `decision:${string}` | `notification:${st
 interface InboxItem {
   id: string;
   type: InboxItemType;
+  section: InboxSection;
   title: string;
   description?: string;
   receivedAt: string;
   dueDate?: string;
   urgency: InboxUrgency;
+  sla?: {
+    dueAt: string;
+    remainingMs: number;
+    isBreached: boolean;
+    level: SlaLevel;
+  };
   linkedTaskId?: string;
   linkedDecisionId?: string;
   triaged: boolean;
@@ -173,6 +190,56 @@ const isDueDateOverdue = (dueDate?: string, triaged?: boolean): boolean => {
   return date < today;
 };
 
+const formatSectionLabel = (section: InboxSection, isPolish: boolean): string => {
+  switch (section) {
+    case 'decisions_required':
+      return isPolish ? 'Decyzje' : 'Decisions';
+    case 'approvals_gates':
+      return isPolish ? 'Akceptacje' : 'Approvals';
+    case 'assigned_tasks':
+      return isPolish ? 'Zadania' : 'Tasks';
+    case 'blocked_escalations':
+      return isPolish ? 'Blokady' : 'Blocked';
+    case 'overdue_sla_breach':
+      return isPolish ? 'Po terminie' : 'Overdue';
+    case 'other':
+    default:
+      return isPolish ? 'Inne' : 'Other';
+  }
+};
+
+const slaPill = (
+  sla: InboxItem['sla'] | undefined
+): { label: string; className: string; title?: string } => {
+  if (!sla) {
+    return { label: '-', className: 'text-slate-300 dark:text-slate-600' };
+  }
+  const abs = Math.abs(sla.remainingMs);
+  const days = Math.floor(abs / 86400000);
+  const hours = Math.floor((abs % 86400000) / 3600000);
+  const timeStr = days > 0 ? `${days}d` : `${Math.max(1, hours)}h`;
+
+  const label =
+    sla.level === 'none'
+      ? 'OK'
+      : sla.isBreached
+        ? `${sla.level} +${timeStr}`
+        : `${sla.level} ${timeStr}`;
+
+  const className =
+    sla.level === 'none'
+      ? 'bg-slate-100 text-slate-700 dark:bg-navy-800 dark:text-slate-200'
+      : sla.level === 'L1'
+        ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+        : 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300';
+
+  return {
+    label,
+    className,
+    title: sla.dueAt ? `due: ${sla.dueAt}` : undefined,
+  };
+};
+
 // ── Filter option sets ──
 const INBOX_STATUS_FILTER_OPTIONS = [
   { value: 'new', label: 'New' },
@@ -193,6 +260,15 @@ const INBOX_TYPE_FILTER_OPTIONS = [
   { value: 'review_request', label: 'Review request' },
   { value: 'decision_request', label: 'Decision request' },
   { value: 'ai_suggestion', label: 'AI suggestion' },
+];
+
+const INBOX_SECTION_FILTER_OPTIONS = [
+  { value: 'decisions_required', label: 'Decisions required' },
+  { value: 'approvals_gates', label: 'Approvals & gates' },
+  { value: 'assigned_tasks', label: 'Assigned tasks' },
+  { value: 'blocked_escalations', label: 'Blocked / escalations' },
+  { value: 'overdue_sla_breach', label: 'Overdue / SLA breach' },
+  { value: 'other', label: 'Other' },
 ];
 
 // ── Column definitions ──
@@ -248,6 +324,17 @@ const INBOX_COLUMNS: ColumnDef[] = [
     filterOptions: INBOX_TYPE_FILTER_OPTIONS,
   },
   {
+    id: 'section',
+    label: 'Section',
+    width: 170,
+    minWidth: 130,
+    maxWidth: 240,
+    resizable: true,
+    filterable: true,
+    filterType: 'multiselect',
+    filterOptions: INBOX_SECTION_FILTER_OPTIONS,
+  },
+  {
     id: 'received',
     label: 'Received',
     width: 160,
@@ -262,6 +349,15 @@ const INBOX_COLUMNS: ColumnDef[] = [
     width: 120,
     minWidth: 90,
     maxWidth: 160,
+    resizable: true,
+    filterable: false,
+  },
+  {
+    id: 'sla',
+    label: 'SLA',
+    width: 120,
+    minWidth: 90,
+    maxWidth: 170,
     resizable: true,
     filterable: false,
   },
@@ -357,6 +453,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     const statusFilter = tableFilters.status as string[] | undefined;
     const urgencyFilter = tableFilters.urgency as string[] | undefined;
     const typeFilter = tableFilters.type as string[] | undefined;
+    const sectionFilter = tableFilters.section as string[] | undefined;
 
     if (statusFilter?.length) {
       result = result.filter((item) => {
@@ -369,6 +466,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     }
     if (typeFilter?.length) {
       result = result.filter((item) => typeFilter.includes(item.type));
+    }
+    if (sectionFilter?.length) {
+      result = result.filter((item) => sectionFilter.includes(item.section));
     }
 
     return result;
@@ -669,6 +769,40 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   </th>
 
                   {/* Received — resizable */}
+                  {/* Section — filterable + resizable */}
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.section }}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span
+                        className={
+                          (tableFilters.section as string[])?.length ? 'text-primary-500' : ''
+                        }
+                      >
+                        Section
+                      </span>
+                      <FilterDropdown
+                        column={INBOX_COLUMNS.find((c) => c.id === 'section')!}
+                        value={tableFilters.section as string[]}
+                        onChange={(val) => handleFilterChange('section', val as string[])}
+                        isOpen={openFilterId === 'section'}
+                        onToggle={() =>
+                          setOpenFilterId(openFilterId === 'section' ? null : 'section')
+                        }
+                        onClose={() => setOpenFilterId(null)}
+                      />
+                    </div>
+                    <ColumnResizer
+                      columnId="section"
+                      currentWidth={columnWidths.section}
+                      minWidth={130}
+                      maxWidth={240}
+                      onResize={handleColumnResize}
+                    />
+                  </th>
+
+                  {/* Received — resizable */}
                   <th
                     className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
                     style={{ width: columnWidths.received }}
@@ -694,6 +828,21 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                       currentWidth={columnWidths.dueDate}
                       minWidth={90}
                       maxWidth={160}
+                      onResize={handleColumnResize}
+                    />
+                  </th>
+
+                  {/* SLA — resizable */}
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.sla }}
+                  >
+                    <span>SLA</span>
+                    <ColumnResizer
+                      columnId="sla"
+                      currentWidth={columnWidths.sla}
+                      minWidth={90}
+                      maxWidth={170}
                       onResize={handleColumnResize}
                     />
                   </th>
@@ -817,6 +966,13 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                         </span>
                       </td>
 
+                      {/* Section */}
+                      <td className="px-3 py-2.5" style={{ width: columnWidths.section }}>
+                        <span className="text-xs text-slate-600 dark:text-slate-400">
+                          {formatSectionLabel(item.section, isPolish)}
+                        </span>
+                      </td>
+
                       {/* Received */}
                       <td
                         className="px-3 py-2.5 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap"
@@ -839,6 +995,24 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                           {item.dueDate && <Calendar size={12} />}
                           <span>{formatDueDate(item.dueDate)}</span>
                         </div>
+                      </td>
+
+                      {/* SLA */}
+                      <td className="px-3 py-2.5" style={{ width: columnWidths.sla }}>
+                        {(() => {
+                          const pill = slaPill(item.sla);
+                          if (pill.label === '-') {
+                            return <span className={pill.className}>{pill.label}</span>;
+                          }
+                          return (
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${pill.className}`}
+                              title={pill.title}
+                            >
+                              {pill.label}
+                            </span>
+                          );
+                        })()}
                       </td>
 
                       {/* Actions */}

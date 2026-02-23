@@ -17,13 +17,16 @@
 
 import { ArrowUp, Mic, Pen, Square, StopCircle } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { CloudFile, CloudProviderId, useCloudIntegrations } from '../../hooks/useCloudIntegrations';
 import { useAppStore } from '../../store/useAppStore';
+import { useConversationStore } from '../../store/useConversationStore';
 import { AddFilesMenu } from './AddFilesMenu';
 import { CloudFilePicker } from './CloudFilePicker';
 import { CoThinkerMenu } from './CoThinkerMenu';
+import { MoveToProjectModal } from './MoveToProjectModal';
 import { ToolsMenu } from './ToolsMenu';
 
 // ============================================================================
@@ -62,6 +65,7 @@ interface EnhancedChatInputProps {
   };
   startVoiceListening?: () => void;
   stopVoiceListening?: () => void;
+  onToolSelect?: (tool: string) => void;
 }
 
 // ============================================================================
@@ -84,6 +88,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   voiceState,
   startVoiceListening,
   stopVoiceListening,
+  onToolSelect,
 }) => {
   const { t, i18n } = useTranslation();
   const { aiFreezeStatus } = useAppStore();
@@ -136,6 +141,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   const isInputDisabled = isDisabled || isStreaming;
   const hasText = value.trim().length > 0;
   const canSend = hasText && !isInputDisabled;
+  const { activeConversationId, conversations } = useConversationStore();
+  const [showMoveToProject, setShowMoveToProject] = useState(false);
 
   // Use either internal or external voice state
   const isDictatingVal = isDictating;
@@ -631,6 +638,31 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     [activeProvider, selectFile, closeFilePicker]
   );
 
+  const activeConversation = activeConversationId
+    ? conversations.find((c) => c.id === activeConversationId) || null
+    : null;
+
+  const handleToolSelect = useCallback(
+    (tool: string) => {
+      if (tool === 'addToProject') {
+        if (!activeConversation) {
+          toast.error(
+            t(
+              'aiChat.conversation.addToProjectRequiresConversation',
+              'Najpierw wyślij pierwszą wiadomość, aby dodać rozmowę do projektu.'
+            )
+          );
+          onToolSelect?.(tool);
+          return;
+        }
+        setShowMoveToProject(true);
+      }
+
+      onToolSelect?.(tool);
+    },
+    [activeConversation, onToolSelect, t]
+  );
+
   // ========================================================================
   // Render
   // ========================================================================
@@ -746,7 +778,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               disabled={isInputDisabled}
             />
             <ToolsMenu
-              onToolSelect={(tool) => console.log('Tool selected:', tool)}
+              onToolSelect={handleToolSelect}
               disabled={isInputDisabled}
               icon={Pen}
             />
@@ -814,6 +846,14 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           onClose={closeFilePicker}
           provider={activeProvider}
           onFileSelect={handleCloudFilePickerSelect}
+        />
+      )}
+
+      {activeConversation && (
+        <MoveToProjectModal
+          isOpen={showMoveToProject}
+          onClose={() => setShowMoveToProject(false)}
+          conversation={activeConversation as any}
         />
       )}
     </div>

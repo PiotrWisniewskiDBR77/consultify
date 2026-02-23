@@ -59,14 +59,11 @@ export const ConversationList: React.FC<ConversationListProps> = ({
       icon: Clock,
       iconColor: 'text-green-500',
     },
-    yesterday: {
-      label: t('aiChat.groups.yesterday', 'Wczoraj'),
-    },
     thisWeek: {
       label: t('aiChat.groups.thisWeek', 'Ten tydzień'),
     },
-    lastMonth: {
-      label: t('aiChat.groups.lastMonth', 'Ostatni miesiąc'),
+    thisMonth: {
+      label: t('aiChat.groups.thisMonth', 'Ten miesiąc'),
     },
     older: {
       label: t('aiChat.groups.older', 'Starsze'),
@@ -79,10 +76,10 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   };
 
   // Order of groups (important for display)
-  const groupOrder = ['pinned', 'today', 'yesterday', 'thisWeek', 'lastMonth', 'older', 'archived'];
+  const groupOrder = ['pinned', 'today', 'thisWeek', 'thisMonth', 'older', 'archived'];
 
   return (
-    <div className="space-y-4 pb-6">
+    <div className="space-y-2 pb-4">
       {groupOrder.map((groupKey) => {
         const conversations = groups[groupKey];
         if (!conversations || conversations.length === 0) return null;
@@ -97,8 +94,8 @@ export const ConversationList: React.FC<ConversationListProps> = ({
           : conversations.slice(0, MAX_VISIBLE_PER_GROUP);
 
         return (
-          <div key={groupKey} className="space-y-1">
-            {/* Group Header — T002: clickable to collapse/expand, chevron indicates state */}
+          <div key={groupKey}>
+            {/* Group Header */}
             <div
               role="button"
               tabIndex={0}
@@ -109,12 +106,12 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                   toggleConversationGroupCollapsed(groupKey);
                 }
               }}
-              className="flex items-center gap-1.5 px-3 py-1 cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/50 rounded-lg transition-colors group/header"
+              className="flex items-center gap-1.5 px-2.5 py-1 cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/50 rounded-md transition-colors group/header"
               aria-expanded={!isGroupCollapsed}
               aria-label={t('aiChat.toggleGroup', 'Toggle {{label}}', { label: config.label })}
             >
               <span className="shrink-0 text-slate-400 dark:text-slate-500 group-hover/header:text-slate-600 dark:group-hover/header:text-slate-300">
-                {isGroupCollapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+                {isGroupCollapsed ? <ChevronRight size={11} /> : <ChevronDown size={11} />}
               </span>
               {Icon && (
                 <Icon
@@ -122,18 +119,18 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                   className={config.iconColor || 'text-slate-400 dark:text-slate-500'}
                 />
               )}
-              <h5 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex-1">
+              <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex-1">
                 {config.label}
-              </h5>
-              <span className="text-[9px] text-slate-300 dark:text-slate-600">
+              </span>
+              <span className="text-[9px] tabular-nums text-slate-300 dark:text-slate-600">
                 {conversations.length}
               </span>
             </div>
 
-            {/* Conversations — hidden when group collapsed */}
+            {/* Conversations */}
             {!isGroupCollapsed && (
               <>
-                <div className="space-y-0.5">
+                <div className="mt-0.5">
                   {visibleConversations.map((conv) => (
                     <ConversationItem
                       key={conv.id}
@@ -143,23 +140,22 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                     />
                   ))}
                 </div>
-                {/* Show more / Show less toggle */}
                 {hasMore && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleGroup(groupKey);
                     }}
-                    className="w-full flex items-center justify-center gap-1.5 px-2 py-1 text-[11px] font-medium text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/50 rounded-lg transition-colors"
+                    className="w-full flex items-center justify-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/50 rounded-md transition-colors"
                   >
                     {isExpanded ? (
                       <>
-                        <ChevronRight size={12} className="rotate-[-90deg]" />
+                        <ChevronRight size={10} className="rotate-[-90deg]" />
                         {t('aiChat.showLess', 'Show less')}
                       </>
                     ) : (
                       <>
-                        <ChevronDown size={12} />
+                        <ChevronDown size={10} />
                         {t('aiChat.showMore', 'Show more')} (
                         {conversations.length - MAX_VISIBLE_PER_GROUP})
                       </>

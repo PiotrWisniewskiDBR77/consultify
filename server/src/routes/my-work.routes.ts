@@ -45,9 +45,20 @@ type FocusColumn = 'today' | 'thisWeek' | 'later';
 
 type InboxItemKey = `task:${string}` | `decision:${string}` | `notification:${string}`;
 
+type InboxSection =
+  | 'decisions_required'
+  | 'approvals_gates'
+  | 'assigned_tasks'
+  | 'blocked_escalations'
+  | 'overdue_sla_breach'
+  | 'other';
+
+type SlaLevel = 'none' | 'L1' | 'L2' | 'L3';
+
 interface InboxItem {
   id: string;
   type: InboxItemType;
+  section: InboxSection;
   title: string;
   description?: string;
   source: {
@@ -58,6 +69,13 @@ interface InboxItem {
   };
   receivedAt: string;
   urgency: InboxUrgency;
+  dueDate?: string;
+  sla?: {
+    dueAt: string;
+    remainingMs: number;
+    isBreached: boolean;
+    level: SlaLevel;
+  };
   linkedTaskId?: string;
   linkedDecisionId?: string;
   linkedInitiativeId?: string;
@@ -111,6 +129,45 @@ const urgencyFromPriority = (priority?: string | null): InboxUrgency => {
   return 'normal';
 };
 
+const addDaysIso = (baseIso: string, days: number): string => {
+  const ms = new Date(baseIso).getTime();
+  return new Date(ms + days * 24 * 60 * 60 * 1000).toISOString();
+};
+
+const defaultSlaDaysBySection: Record<InboxSection, number | null> = {
+  decisions_required: 5,
+  approvals_gates: 3,
+  blocked_escalations: 2,
+  overdue_sla_breach: 0,
+  assigned_tasks: 7,
+  other: null,
+};
+
+const computeSla = (
+  nowIso: string,
+  receivedAtIso: string,
+  section: InboxSection,
+  dueAt?: string
+): InboxItem['sla'] => {
+  const effectiveDue =
+    dueAt ||
+    (defaultSlaDaysBySection[section] != null
+      ? addDaysIso(receivedAtIso, defaultSlaDaysBySection[section] as number)
+      : undefined);
+  if (!effectiveDue) return undefined;
+
+  const remainingMs = new Date(effectiveDue).getTime() - new Date(nowIso).getTime();
+  const isBreached = remainingMs < 0;
+  const absMs = Math.abs(remainingMs);
+
+  let level: SlaLevel = 'none';
+  if (!isBreached && remainingMs <= 24 * 60 * 60 * 1000) level = 'L1';
+  if (isBreached && absMs <= 72 * 60 * 60 * 1000) level = 'L2';
+  if (isBreached && absMs > 72 * 60 * 60 * 1000) level = 'L3';
+
+  return { dueAt: effectiveDue, remainingMs, isBreached, level };
+};
+
 const mapNotificationToInboxType = (type?: string | null): InboxItemType => {
   const t = String(type || '').toUpperCase();
   if (t.includes('MENTION')) return 'mention';
@@ -121,60 +178,6 @@ const mapNotificationToInboxType = (type?: string | null): InboxItemType => {
   return 'new_assignment';
 };
 
-const ensureMyWorkTables = async () => {
-  // Triage state: hides already-processed inbox items per user
-  await queryHelpers.queryRun(
-    `CREATE TABLE IF NOT EXISTS my_work_inbox_triage (
-      user_id TEXT NOT NULL,
-      item_key TEXT NOT NULL,
-      action TEXT NOT NULL,
-      params_json TEXT,
-      triaged_at TEXT NOT NULL,
-      PRIMARY KEY (user_id, item_key)
-    )`
-  );
-
-  // Focus state: stores manual column/position for focus items per user+date
-  await queryHelpers.queryRun(
-    `CREATE TABLE IF NOT EXISTS my_work_focus_state (
-      user_id TEXT NOT NULL,
-      focus_date TEXT NOT NULL,
-      item_key TEXT NOT NULL,
-      column_name TEXT NOT NULL,
-      position INTEGER NOT NULL DEFAULT 0,
-      updated_at TEXT NOT NULL,
-      PRIMARY KEY (user_id, focus_date, item_key)
-    )`
-  );
-};
-
-const ensureMyIdeasTable = async () => {
-  await queryHelpers.queryRun(
-    `CREATE TABLE IF NOT EXISTS my_ideas (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      organization_id TEXT NOT NULL,
-      title TEXT NOT NULL,
-      body TEXT,
-      tags TEXT DEFAULT '[]',
-      source_type TEXT,
-      source_conversation_id TEXT,
-      source_message_id TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`
-  );
-  await queryHelpers.queryRun(
-    `CREATE INDEX IF NOT EXISTS idx_my_ideas_user_id ON my_ideas(user_id)`
-  );
-  await queryHelpers.queryRun(
-    `CREATE INDEX IF NOT EXISTS idx_my_ideas_org_id ON my_ideas(organization_id)`
-  );
-  await queryHelpers.queryRun(
-    `CREATE INDEX IF NOT EXISTS idx_my_ideas_created_at ON my_ideas(created_at)`
-  );
-};
-
 const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: string } | null => {
   const userId = (req as any).userId || req.user?.id;
   const orgId = req.user?.organizationId;
@@ -183,6 +186,19 @@ const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: 
     return null;
   }
   return { userId, orgId };
+};
+
+const requireTables = async (res: Response, tables: string[]): Promise<boolean> => {
+  for (const t of tables) {
+    const cols = await getTableColumns(t);
+    if (!cols || cols.size === 0) {
+      res.status(503).json({
+        error: `Database table missing: ${t}. Run migrations (npm run db:migrate:*).`,
+      });
+      return false;
+    }
+  }
+  return true;
 };
 
 /**
@@ -547,6 +563,83 @@ router.delete(
 );
 
 /**
+ * GET /api/my-work/calendar
+ * Query:
+ * - source=personal|project|all (default: all)
+ * - projectId? (optional, for project filtering)
+ * - includeDone=true|false (default: false)
+ * - limit (default: 500)
+ */
+router.get(
+  '/calendar',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const source = String(req.query.source || 'all').toLowerCase();
+    const projectId = req.query.projectId ? String(req.query.projectId) : null;
+    const includeDone = String(req.query.includeDone || 'false') === 'true';
+    const limitRaw = Number(req.query.limit);
+    const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 2000) : 500;
+
+    const where: string[] = ['t.organization_id = ?', 't.assignee_id = ?'];
+    const params: any[] = [orgId, userId];
+
+    if (!includeDone) {
+      where.push("lower(coalesce(t.status,'')) NOT IN ('done','completed','validated')");
+    }
+
+    if (source === 'personal') {
+      where.push("lower(coalesce(t.task_type,'')) = 'personal'");
+    } else if (source === 'project') {
+      where.push('t.project_id IS NOT NULL');
+      where.push("lower(coalesce(t.task_type,'')) != 'personal'");
+    } else if (source !== 'all') {
+      return res.status(400).json({ error: 'Invalid source (expected personal|project|all)' });
+    }
+
+    if (projectId) {
+      where.push('t.project_id = ?');
+      params.push(projectId);
+    }
+
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `
+        SELECT
+          t.id,
+          t.title,
+          t.description,
+          t.status,
+          t.priority,
+          t.due_date as dueDate,
+          t.task_type as taskType,
+          t.project_id as projectId,
+          p.name as projectName,
+          t.initiative_id as initiativeId,
+          i.name as initiativeName,
+          t.created_at as createdAt,
+          t.updated_at as updatedAt
+        FROM tasks t
+        LEFT JOIN projects p ON t.project_id = p.id
+        LEFT JOIN initiatives i ON t.initiative_id = i.id
+        WHERE ${where.join(' AND ')}
+        ORDER BY
+          CASE WHEN t.due_date IS NULL THEN 1 ELSE 0 END,
+          date(COALESCE(t.due_date, '9999-12-31')) ASC,
+          CASE lower(coalesce(t.priority,'')) WHEN 'urgent' THEN 0 WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 2 END,
+          t.updated_at DESC
+        LIMIT ?
+      `,
+        [...params, limit]
+      )) || [];
+
+    res.json({ tasks: rows });
+  })
+);
+
+/**
  * GET /api/my-work/decisions
  * Lightweight list for Focus + Inbox
  */
@@ -612,7 +705,7 @@ router.get(
     const identity = requireUser(req, res);
     if (!identity) return;
     const { userId, orgId } = identity;
-    await ensureMyWorkTables();
+    if (!(await requireTables(res, ['my_work_inbox_triage']))) return;
 
     const limit = Number(req.query.limit) || 50;
     const nowIso = new Date().toISOString();
@@ -654,6 +747,9 @@ router.get(
         `
         SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date as dueDate,
                t.initiative_id as initiativeId, i.name as initiativeName,
+               t.blocked_reason as blockedReason,
+               t.blocked_by_decision_id as blockedByDecisionId,
+               t.blocked_at as blockedAt,
                t.created_at as createdAt
         FROM tasks t
         LEFT JOIN initiatives i ON t.initiative_id = i.id
@@ -663,6 +759,63 @@ router.get(
           AND date(t.due_date) < date(?)
           AND lower(coalesce(t.status,'')) NOT IN ('done','completed','validated')
         ORDER BY date(t.due_date) ASC
+        LIMIT ?
+      `,
+        [orgId, userId, today, Math.min(25, limit)]
+      )) || [];
+
+    // 1b) Blocked tasks (assigned)
+    const blockedTasks =
+      (await queryHelpers.queryAll<any>(
+        `
+        SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date as dueDate,
+               t.initiative_id as initiativeId, i.name as initiativeName,
+               t.blocked_reason as blockedReason,
+               t.blocked_by_decision_id as blockedByDecisionId,
+               t.blocked_at as blockedAt,
+               t.updated_at as updatedAt,
+               t.created_at as createdAt
+        FROM tasks t
+        LEFT JOIN initiatives i ON t.initiative_id = i.id
+        WHERE t.organization_id = ?
+          AND t.assignee_id = ?
+          AND lower(coalesce(t.status,'')) NOT IN ('done','completed','validated')
+          AND (
+            lower(coalesce(t.status,'')) = 'blocked'
+            OR t.blocked_by_decision_id IS NOT NULL
+            OR t.blocked_reason IS NOT NULL
+          )
+        ORDER BY
+          CASE lower(coalesce(t.priority,'')) WHEN 'urgent' THEN 0 WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 2 END,
+          COALESCE(t.updated_at, t.created_at) DESC
+        LIMIT ?
+      `,
+        [orgId, userId, Math.min(25, limit)]
+      )) || [];
+
+    // 1c) Assigned open tasks (non-overdue, non-blocked)
+    const assignedOpenTasks =
+      (await queryHelpers.queryAll<any>(
+        `
+        SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date as dueDate,
+               t.initiative_id as initiativeId, i.name as initiativeName,
+               t.updated_at as updatedAt,
+               t.created_at as createdAt
+        FROM tasks t
+        LEFT JOIN initiatives i ON t.initiative_id = i.id
+        WHERE t.organization_id = ?
+          AND t.assignee_id = ?
+          AND lower(coalesce(t.status,'')) NOT IN ('done','completed','validated')
+          AND lower(coalesce(t.status,'')) != 'blocked'
+          AND (t.blocked_by_decision_id IS NULL AND t.blocked_reason IS NULL)
+          AND (
+            t.due_date IS NULL
+            OR date(t.due_date) >= date(?)
+          )
+        ORDER BY
+          CASE lower(coalesce(t.priority,'')) WHEN 'urgent' THEN 0 WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 2 END,
+          COALESCE(t.due_date, '9999-12-31') ASC,
+          COALESCE(t.updated_at, t.created_at) DESC
         LIMIT ?
       `,
         [orgId, userId, today, Math.min(25, limit)]
@@ -699,6 +852,16 @@ router.get(
       : notifCols.has('body')
         ? 'body as body'
         : `'' as body`;
+    const notifEntityTypeSelect = notifCols.has('entity_type')
+      ? 'entity_type as entityType'
+      : notifCols.has('entityType')
+        ? 'entityType as entityType'
+        : 'NULL as entityType';
+    const notifEntityIdSelect = notifCols.has('entity_id')
+      ? 'entity_id as entityId'
+      : notifCols.has('entityId')
+        ? 'entityId as entityId'
+        : 'NULL as entityId';
 
     const unreadNotifications =
       (await queryHelpers.queryAll<any>(
@@ -709,8 +872,8 @@ router.get(
           title,
           ${notifMessageSelect},
           ${notifPrioritySelect},
-          NULL as entityType,
-          NULL as entityId,
+          ${notifEntityTypeSelect},
+          ${notifEntityIdSelect},
           created_at as createdAt
         FROM notifications
         WHERE user_id = ?
@@ -721,20 +884,122 @@ router.get(
         [userId, Math.min(25, limit)]
       )) || [];
 
+    // Anti-spam aggregation (best-effort): group notifications by (type, entityType, entityId) when possible
+    const aggregatedNotifications: any[] = [];
+    {
+      const byKey = new Map<string, any>();
+      for (const n of unreadNotifications) {
+        const type = String(n.type || '');
+        const entityType = n.entityType ? String(n.entityType) : '';
+        const entityId = n.entityId ? String(n.entityId) : '';
+        const key = entityType && entityId ? `${type}:${entityType}:${entityId}` : `id:${String(n.id)}`;
+        const existing = byKey.get(key);
+        if (!existing) {
+          byKey.set(key, n);
+          continue;
+        }
+        const exTs = new Date(existing.createdAt || 0).getTime();
+        const nTs = new Date(n.createdAt || 0).getTime();
+        if (nTs > exTs) byKey.set(key, n);
+      }
+      aggregatedNotifications.push(...Array.from(byKey.values()));
+    }
+
     const items: InboxItem[] = [];
 
     for (const t of overdueTasks) {
       const key: InboxItemKey = `task:${t.id}`;
       const triaged = triagedMap.get(key);
       const urgency: InboxUrgency = urgencyFromPriority(t.priority);
+      const section: InboxSection = 'overdue_sla_breach';
+      const receivedAt = t.dueDate ? new Date(t.dueDate).toISOString() : nowIso;
+      const dueDate = t.dueDate ? new Date(t.dueDate).toISOString() : undefined;
       items.push({
         id: `inbox-${uuidv4()}`,
+        section,
         type: 'escalation',
         title: t.title,
         description: t.description || undefined,
         source: { type: 'system' },
-        receivedAt: t.dueDate ? new Date(t.dueDate).toISOString() : nowIso,
+        receivedAt,
         urgency: urgency === 'low' ? 'normal' : urgency, // overdue can't be "low" priority in UI
+        dueDate,
+        sla: computeSla(nowIso, receivedAt, section, dueDate),
+        linkedTaskId: t.id,
+        linkedInitiativeId: t.initiativeId || undefined,
+        linkedTask: {
+          id: t.id,
+          title: t.title,
+          status: t.status,
+          priority: t.priority,
+          dueDate: t.dueDate || undefined,
+        },
+        triaged: Boolean(triaged),
+        triagedAt: triaged?.triagedAt,
+        triageAction: triaged?.action,
+        triageParams: triaged?.params,
+        _key: key,
+      });
+    }
+
+    for (const t of blockedTasks) {
+      const key: InboxItemKey = `task:${t.id}`;
+      const triaged = triagedMap.get(key);
+      const section: InboxSection = 'blocked_escalations';
+      const urgency: InboxUrgency = urgencyFromPriority(t.priority);
+      const receivedAt = t.blockedAt || t.updatedAt || t.createdAt || nowIso;
+      const dueDate = t.dueDate ? new Date(t.dueDate).toISOString() : undefined;
+      const descParts = [
+        t.blockedReason ? `Blocked: ${String(t.blockedReason)}` : null,
+        t.description ? String(t.description) : null,
+      ].filter(Boolean);
+      items.push({
+        id: `inbox-${uuidv4()}`,
+        section,
+        type: 'escalation',
+        title: t.title,
+        description: descParts.length ? descParts.join('\n') : undefined,
+        source: { type: 'system' },
+        receivedAt,
+        urgency: urgency === 'low' ? 'normal' : urgency,
+        dueDate,
+        sla: computeSla(nowIso, receivedAt, section, dueDate),
+        linkedTaskId: t.id,
+        linkedDecisionId: t.blockedByDecisionId || undefined,
+        linkedInitiativeId: t.initiativeId || undefined,
+        linkedTask: {
+          id: t.id,
+          title: t.title,
+          status: t.status,
+          priority: t.priority,
+          dueDate: t.dueDate || undefined,
+        },
+        triaged: Boolean(triaged),
+        triagedAt: triaged?.triagedAt,
+        triageAction: triaged?.action,
+        triageParams: triaged?.params,
+        _key: key,
+      });
+    }
+
+    for (const t of assignedOpenTasks) {
+      const key: InboxItemKey = `task:${t.id}`;
+      const triaged = triagedMap.get(key);
+      const section: InboxSection = 'assigned_tasks';
+      const urgency: InboxUrgency = urgencyFromPriority(t.priority);
+      const receivedAt = t.updatedAt || t.createdAt || nowIso;
+      const dueDate = t.dueDate ? new Date(t.dueDate).toISOString() : undefined;
+      items.push({
+        id: `inbox-${uuidv4()}`,
+        section,
+        type: 'new_assignment',
+        title: t.title,
+        description: t.description || undefined,
+        source: { type: 'system' },
+        receivedAt,
+        urgency,
+        dueDate,
+        sla: computeSla(nowIso, receivedAt, section, dueDate),
         linkedTaskId: t.id,
         linkedInitiativeId: t.initiativeId || undefined,
         linkedTask: {
@@ -756,14 +1021,20 @@ router.get(
       const key: InboxItemKey = `decision:${d.id}`;
       const triaged = triagedMap.get(key);
       const urgency = urgencyFromPriority(d.priority);
+      const section: InboxSection = 'decisions_required';
+      const receivedAt = d.createdAt || nowIso;
+      const dueDate = d.dueDate ? new Date(d.dueDate).toISOString() : undefined;
       items.push({
         id: `inbox-${uuidv4()}`,
+        section,
         type: 'decision_request',
         title: d.title,
         description: d.description || undefined,
         source: { type: 'system' },
-        receivedAt: d.createdAt || nowIso,
+        receivedAt,
         urgency,
+        dueDate,
+        sla: computeSla(nowIso, receivedAt, section, dueDate),
         linkedDecisionId: d.id,
         triaged: Boolean(triaged),
         triagedAt: triaged?.triagedAt,
@@ -773,17 +1044,29 @@ router.get(
       });
     }
 
-    for (const n of unreadNotifications) {
+    for (const n of aggregatedNotifications) {
       const key: InboxItemKey = `notification:${n.id}`;
       const triaged = triagedMap.get(key);
+      const inboxType = mapNotificationToInboxType(n.type);
+      const section: InboxSection =
+        inboxType === 'review_request'
+          ? 'approvals_gates'
+          : inboxType === 'decision_request'
+            ? 'decisions_required'
+            : inboxType === 'escalation'
+              ? 'blocked_escalations'
+              : 'other';
+      const receivedAt = n.createdAt || nowIso;
       items.push({
         id: `inbox-${uuidv4()}`,
-        type: mapNotificationToInboxType(n.type),
+        section,
+        type: inboxType,
         title: n.title || 'Notification',
         description: n.body || undefined,
         source: { type: 'system' },
-        receivedAt: n.createdAt || nowIso,
+        receivedAt,
         urgency: urgencyFromPriority(n.priority),
+        sla: computeSla(nowIso, receivedAt, section, undefined),
         triaged: Boolean(triaged),
         triagedAt: triaged?.triagedAt,
         triageAction: triaged?.action,
@@ -837,7 +1120,7 @@ router.post(
     const identity = requireUser(req, res);
     if (!identity) return;
     const { userId, orgId } = identity;
-    await ensureMyWorkTables();
+    if (!(await requireTables(res, ['my_work_inbox_triage', 'my_work_focus_state']))) return;
 
     const action = String(req.body?.action || '') as TriageAction;
     const params = (req.body?.params || undefined) as Record<string, unknown> | undefined;
@@ -950,7 +1233,7 @@ router.post(
     const identity = requireUser(req, res);
     if (!identity) return;
     const { userId } = identity;
-    await ensureMyWorkTables();
+    if (!(await requireTables(res, ['my_work_inbox_triage']))) return;
 
     const action = String(req.body?.action || '') as TriageAction;
     const params = (req.body?.params || undefined) as Record<string, unknown> | undefined;
@@ -989,7 +1272,7 @@ router.put(
     const identity = requireUser(req, res);
     if (!identity) return;
     const { userId } = identity;
-    await ensureMyWorkTables();
+    if (!(await requireTables(res, ['my_work_focus_state']))) return;
 
     const itemId = String(req.body?.itemId || '');
     const column = String(req.body?.column || '') as FocusColumn;
@@ -1017,7 +1300,7 @@ router.put(
     const identity = requireUser(req, res);
     if (!identity) return;
     const { userId } = identity;
-    await ensureMyWorkTables();
+    if (!(await requireTables(res, ['my_work_focus_state']))) return;
 
     const itemId = String(req.body?.itemId || '');
     const column = String(req.body?.column || '') as FocusColumn;
@@ -1030,6 +1313,72 @@ router.put(
       `INSERT OR REPLACE INTO my_work_focus_state (user_id, focus_date, item_key, column_name, position, updated_at)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [userId, todayIsoDate(), itemId, column, position, new Date().toISOString()]
+    );
+
+    res.json({ success: true });
+  })
+);
+
+/**
+ * GET /api/my-work/focus/state?date=YYYY-MM-DD
+ * Returns persisted focus board state for a user/date.
+ */
+router.get(
+  '/focus/state',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId } = identity;
+    if (!(await requireTables(res, ['my_work_focus_state']))) return;
+
+    const focusDate = req.query.date ? String(req.query.date) : todayIsoDate();
+    const rows =
+      (await queryHelpers.queryAll<{
+        item_key: string;
+        column_name: string;
+        position: number;
+        updated_at: string;
+      }>(
+        `SELECT item_key, column_name, position, updated_at
+         FROM my_work_focus_state
+         WHERE user_id = ? AND focus_date = ?
+         ORDER BY column_name ASC, position ASC, updated_at DESC`,
+        [userId, focusDate]
+      )) || [];
+
+    res.json({
+      date: focusDate,
+      items: rows.map((r) => ({
+        itemKey: r.item_key,
+        column: r.column_name as FocusColumn,
+        position: Number(r.position || 0),
+        updatedAt: r.updated_at,
+      })),
+    });
+  })
+);
+
+/**
+ * DELETE /api/my-work/focus/item?itemId=task:<id>|decision:<id>
+ * Removes an item from focus state for the given day.
+ */
+router.delete(
+  '/focus/item',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId } = identity;
+    if (!(await requireTables(res, ['my_work_focus_state']))) return;
+
+    const itemId = String(req.query.itemId || req.body?.itemId || '');
+    const focusDate = req.query.date ? String(req.query.date) : todayIsoDate();
+    if (!itemId || !itemId.includes(':')) {
+      return res.status(400).json({ error: 'Missing itemId' });
+    }
+
+    await queryHelpers.queryRun(
+      `DELETE FROM my_work_focus_state WHERE user_id = ? AND focus_date = ? AND item_key = ?`,
+      [userId, focusDate, itemId]
     );
 
     res.json({ success: true });
@@ -1157,8 +1506,7 @@ router.get(
     const identity = requireUser(req, res);
     if (!identity) return;
     const { userId, orgId } = identity;
-
-    await ensureMyIdeasTable();
+    if (!(await requireTables(res, ['my_ideas']))) return;
 
     const limitRaw = Number(req.query.limit);
     const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 500) : 200;
@@ -1209,8 +1557,7 @@ router.get(
     const identity = requireUser(req, res);
     if (!identity) return;
     const { userId, orgId } = identity;
-
-    await ensureMyIdeasTable();
+    if (!(await requireTables(res, ['my_ideas']))) return;
 
     const q = req.query.q ? String(req.query.q).trim().toLowerCase() : '';
     const limitRaw = Number(req.query.limit);
@@ -1252,8 +1599,7 @@ router.post(
     const identity = requireUser(req, res);
     if (!identity) return;
     const { userId, orgId } = identity;
-
-    await ensureMyIdeasTable();
+    if (!(await requireTables(res, ['my_ideas']))) return;
 
     const title = String(req.body?.title || '').trim();
     if (!title) {
@@ -1318,8 +1664,7 @@ router.get(
     const identity = requireUser(req, res);
     if (!identity) return;
     const { userId, orgId } = identity;
-
-    await ensureMyIdeasTable();
+    if (!(await requireTables(res, ['my_ideas']))) return;
 
     const id = String(req.params.id || '').trim();
     const row = await queryHelpers.queryOne<any>(
@@ -1356,8 +1701,7 @@ router.put(
     const identity = requireUser(req, res);
     if (!identity) return;
     const { userId, orgId } = identity;
-
-    await ensureMyIdeasTable();
+    if (!(await requireTables(res, ['my_ideas']))) return;
 
     const id = String(req.params.id || '').trim();
     const existing = await queryHelpers.queryOne<any>(
@@ -1440,14 +1784,409 @@ router.delete(
     const identity = requireUser(req, res);
     if (!identity) return;
     const { userId, orgId } = identity;
-
-    await ensureMyIdeasTable();
+    if (!(await requireTables(res, ['my_ideas']))) return;
 
     const id = String(req.params.id || '').trim();
     await queryHelpers.queryRun(
       `DELETE FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ?`,
       [id, userId, orgId]
     );
+    res.status(204).send();
+  })
+);
+
+// ============================================================================
+// T011 — Notebook (backend persistence)
+// ============================================================================
+
+type NotebookVisibility = 'private' | 'project';
+
+const safeJsonString = (v: unknown, fallback: string) => {
+  if (typeof v === 'string') {
+    try {
+      JSON.parse(v);
+      return v;
+    } catch {
+      // fall through
+    }
+  }
+  try {
+    return JSON.stringify(v ?? JSON.parse(fallback));
+  } catch {
+    return fallback;
+  }
+};
+
+const canAccessNotebookRow = async (
+  userId: string,
+  orgId: string,
+  row: { owner_user_id?: string; organization_id?: string; visibility?: string; project_id?: string }
+): Promise<boolean> => {
+  if (!row) return false;
+  if (String(row.organization_id || '') !== String(orgId)) return false;
+  const owner = String(row.owner_user_id || '');
+  const vis = String(row.visibility || 'private').toLowerCase() as NotebookVisibility;
+  const projectId = row.project_id ? String(row.project_id) : null;
+
+  if (owner === userId) return true;
+  if (vis !== 'project' || !projectId) return false;
+
+  const pm = await queryHelpers.queryOne<{ ok: number }>(
+    `SELECT 1 as ok FROM project_members WHERE project_id = ? AND user_id = ? LIMIT 1`,
+    [projectId, userId]
+  );
+  return Boolean((pm as any)?.ok);
+};
+
+/**
+ * GET /api/my-work/notebook/pages?projectId?&q?&limit?&offset?
+ */
+router.get(
+  '/notebook/pages',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['notebook_pages']))) return;
+
+    const projectId = req.query.projectId ? String(req.query.projectId) : null;
+    const q = req.query.q ? String(req.query.q).trim().toLowerCase() : '';
+    const limitRaw = Number(req.query.limit);
+    const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 200) : 50;
+    const offsetRaw = Number(req.query.offset);
+    const offset = Number.isFinite(offsetRaw) && offsetRaw >= 0 ? offsetRaw : 0;
+
+    const where: string[] = ['np.organization_id = ?'];
+    const params: any[] = [orgId];
+
+    // Access policy:
+    // - private: owner only
+    // - project: owner OR project member
+    where.push(
+      `( (lower(np.visibility) = 'private' AND np.owner_user_id = ?)
+         OR (lower(np.visibility) = 'project' AND np.project_id IS NOT NULL AND (np.owner_user_id = ? OR pm.user_id IS NOT NULL)) )`
+    );
+    params.push(userId, userId);
+
+    if (projectId) {
+      where.push('np.project_id = ?');
+      params.push(projectId);
+    }
+
+    if (q) {
+      where.push(
+        `(lower(np.title) LIKE ? OR lower(coalesce(np.content_text,'')) LIKE ? OR lower(coalesce(np.tags_json,'')) LIKE ?)`
+      );
+      const like = `%${q}%`;
+      params.push(like, like, like);
+    }
+
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `
+        SELECT
+          np.id,
+          np.owner_user_id as ownerUserId,
+          np.organization_id as organizationId,
+          np.project_id as projectId,
+          np.visibility,
+          np.title,
+          np.content_json as contentJson,
+          np.content_text as contentText,
+          np.tags_json as tags,
+          np.created_at as createdAt,
+          np.updated_at as updatedAt
+        FROM notebook_pages np
+        LEFT JOIN project_members pm
+          ON pm.project_id = np.project_id
+         AND pm.user_id = ?
+        WHERE ${where.join(' AND ')}
+        ORDER BY np.updated_at DESC
+        LIMIT ? OFFSET ?
+      `,
+        [userId, ...params, limit, offset]
+      )) || [];
+
+    res.json(
+      rows.map((r: any) => ({
+        ...r,
+        tags: parseTagsArray(r.tags),
+        contentJson: (() => {
+          try {
+            return r.contentJson ? JSON.parse(r.contentJson) : { type: 'doc', content: [] };
+          } catch {
+            return { type: 'doc', content: [] };
+          }
+        })(),
+      }))
+    );
+  })
+);
+
+/**
+ * POST /api/my-work/notebook/pages
+ */
+router.post(
+  '/notebook/pages',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['notebook_pages']))) return;
+
+    const title = String(req.body?.title || '').trim();
+    if (!title) return res.status(400).json({ error: 'title is required' });
+
+    const projectId = req.body?.projectId ? String(req.body.projectId) : null;
+    const visibility = (req.body?.visibility
+      ? String(req.body.visibility).toLowerCase()
+      : projectId
+        ? 'project'
+        : 'private') as NotebookVisibility;
+
+    if (visibility === 'project' && !projectId) {
+      return res.status(400).json({ error: 'projectId is required for visibility=project' });
+    }
+
+    // If creating a project-visible note, require membership
+    if (visibility === 'project' && projectId) {
+      const pm = await queryHelpers.queryOne<{ ok: number }>(
+        `SELECT 1 as ok FROM project_members WHERE project_id = ? AND user_id = ? LIMIT 1`,
+        [projectId, userId]
+      );
+      if (!pm) return res.status(403).json({ error: 'Not a project member' });
+    }
+
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    const tags = JSON.stringify(parseTagsArray(req.body?.tags));
+    const contentJson = safeJsonString(req.body?.contentJson, JSON.stringify({ type: 'doc', content: [] }));
+    const contentText = typeof req.body?.contentText === 'string' ? req.body.contentText : null;
+
+    await queryHelpers.queryRun(
+      `INSERT INTO notebook_pages
+        (id, owner_user_id, organization_id, project_id, visibility, title, content_json, content_text, tags_json, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, userId, orgId, projectId, visibility, title, contentJson, contentText, tags, now, now]
+    );
+
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT
+        id,
+        owner_user_id as ownerUserId,
+        organization_id as organizationId,
+        project_id as projectId,
+        visibility,
+        title,
+        content_json as contentJson,
+        content_text as contentText,
+        tags_json as tags,
+        created_at as createdAt,
+        updated_at as updatedAt
+       FROM notebook_pages
+       WHERE id = ? LIMIT 1`,
+      [id]
+    );
+
+    res.status(201).json({
+      ...row,
+      tags: parseTagsArray((row as any)?.tags),
+      contentJson: (() => {
+        try {
+          return row?.contentJson ? JSON.parse(row.contentJson) : { type: 'doc', content: [] };
+        } catch {
+          return { type: 'doc', content: [] };
+        }
+      })(),
+    });
+  })
+);
+
+/**
+ * GET /api/my-work/notebook/pages/:id
+ */
+router.get(
+  '/notebook/pages/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['notebook_pages']))) return;
+
+    const id = String(req.params.id || '').trim();
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT
+        id,
+        owner_user_id,
+        organization_id,
+        project_id,
+        visibility,
+        title,
+        content_json as contentJson,
+        content_text as contentText,
+        tags_json as tags,
+        created_at as createdAt,
+        updated_at as updatedAt
+       FROM notebook_pages
+       WHERE id = ?
+       LIMIT 1`,
+      [id]
+    );
+    if (!row) return res.status(404).json({ error: 'Not found' });
+    if (!(await canAccessNotebookRow(userId, orgId, row))) return res.status(403).json({ error: 'Forbidden' });
+
+    res.json({
+      id: row.id,
+      projectId: row.project_id || null,
+      visibility: row.visibility,
+      title: row.title,
+      contentText: row.contentText,
+      tags: parseTagsArray(row.tags),
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      contentJson: (() => {
+        try {
+          return row?.contentJson ? JSON.parse(row.contentJson) : { type: 'doc', content: [] };
+        } catch {
+          return { type: 'doc', content: [] };
+        }
+      })(),
+    });
+  })
+);
+
+/**
+ * PUT /api/my-work/notebook/pages/:id
+ * Owner-only updates.
+ */
+router.put(
+  '/notebook/pages/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['notebook_pages']))) return;
+
+    const id = String(req.params.id || '').trim();
+    const existing = await queryHelpers.queryOne<any>(
+      `SELECT id, owner_user_id, organization_id, project_id, visibility
+       FROM notebook_pages
+       WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    if (!existing) return res.status(404).json({ error: 'Not found' });
+    if (String(existing.organization_id || '') !== String(orgId)) return res.status(403).json({ error: 'Forbidden' });
+    if (String(existing.owner_user_id || '') !== String(userId))
+      return res.status(403).json({ error: 'Owner-only' });
+
+    const setParts: string[] = [];
+    const params: any[] = [];
+    const set = (col: string, val: any) => {
+      setParts.push(`${col} = ?`);
+      params.push(val);
+    };
+
+    if (typeof req.body?.title === 'string') set('title', String(req.body.title).trim());
+    if (req.body?.tags !== undefined) set('tags_json', JSON.stringify(parseTagsArray(req.body.tags)));
+    if (req.body?.contentJson !== undefined)
+      set('content_json', safeJsonString(req.body.contentJson, JSON.stringify({ type: 'doc', content: [] })));
+    if (typeof req.body?.contentText === 'string') set('content_text', req.body.contentText);
+
+    if (req.body?.projectId !== undefined) {
+      const nextProjectId = req.body.projectId ? String(req.body.projectId) : null;
+      set('project_id', nextProjectId);
+      const nextVis = nextProjectId ? 'project' : 'private';
+      set('visibility', nextVis);
+    }
+
+    if (setParts.length === 0) {
+      const row = await queryHelpers.queryOne<any>(
+        `SELECT
+          id,
+          owner_user_id as ownerUserId,
+          organization_id as organizationId,
+          project_id as projectId,
+          visibility,
+          title,
+          content_json as contentJson,
+          content_text as contentText,
+          tags_json as tags,
+          created_at as createdAt,
+          updated_at as updatedAt
+         FROM notebook_pages WHERE id = ? LIMIT 1`,
+        [id]
+      );
+      return res.json({
+        ...row,
+        tags: parseTagsArray((row as any)?.tags),
+        contentJson: (() => {
+          try {
+            return row?.contentJson ? JSON.parse(row.contentJson) : { type: 'doc', content: [] };
+          } catch {
+            return { type: 'doc', content: [] };
+          }
+        })(),
+      });
+    }
+
+    setParts.push(`updated_at = CURRENT_TIMESTAMP`);
+    params.push(id);
+    await queryHelpers.queryRun(`UPDATE notebook_pages SET ${setParts.join(', ')} WHERE id = ?`, params);
+
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT
+        id,
+        owner_user_id as ownerUserId,
+        organization_id as organizationId,
+        project_id as projectId,
+        visibility,
+        title,
+        content_json as contentJson,
+        content_text as contentText,
+        tags_json as tags,
+        created_at as createdAt,
+        updated_at as updatedAt
+       FROM notebook_pages WHERE id = ? LIMIT 1`,
+      [id]
+    );
+
+    res.json({
+      ...row,
+      tags: parseTagsArray((row as any)?.tags),
+      contentJson: (() => {
+        try {
+          return row?.contentJson ? JSON.parse(row.contentJson) : { type: 'doc', content: [] };
+        } catch {
+          return { type: 'doc', content: [] };
+        }
+      })(),
+    });
+  })
+);
+
+/**
+ * DELETE /api/my-work/notebook/pages/:id
+ * Owner-only delete.
+ */
+router.delete(
+  '/notebook/pages/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['notebook_pages']))) return;
+
+    const id = String(req.params.id || '').trim();
+    const existing = await queryHelpers.queryOne<any>(
+      `SELECT id, owner_user_id, organization_id FROM notebook_pages WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    if (!existing) return res.status(404).json({ error: 'Not found' });
+    if (String(existing.organization_id || '') !== String(orgId)) return res.status(403).json({ error: 'Forbidden' });
+    if (String(existing.owner_user_id || '') !== String(userId))
+      return res.status(403).json({ error: 'Owner-only' });
+
+    await queryHelpers.queryRun(`DELETE FROM notebook_pages WHERE id = ?`, [id]);
     res.status(204).send();
   })
 );

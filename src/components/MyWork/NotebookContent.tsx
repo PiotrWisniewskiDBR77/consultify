@@ -8,14 +8,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { useAppStore } from '@/store/useAppStore';
-import {
-  createNotebookPage,
-  deleteNotebookPage,
-  loadNotebookPages,
-  type NotebookPage,
-  upsertNotebookPage,
-} from '@/utils/notebookStorage';
+import { Api } from '@/services/api';
 
 interface NotebookCounts {
   total: number;
@@ -25,6 +18,20 @@ interface NotebookContentProps {
   projectId?: string | null;
   searchQuery: string;
   onCountsChange?: (counts: NotebookCounts) => void;
+}
+
+export type NotebookVisibility = 'private' | 'project';
+
+export interface NotebookPage {
+  id: string;
+  title: string;
+  projectId: string | null;
+  visibility: NotebookVisibility;
+  tags: string[];
+  contentJson: any;
+  contentText: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 const extractText = (json: any): string => {
@@ -49,17 +56,14 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const { currentUser } = useAppStore();
-
-  const userId = currentUser?.id || 'anonymous';
-
-  const [pages, setPages] = useState<NotebookPage[]>(() => loadNotebookPages(userId));
-  const [activeId, setActiveId] = useState<string | null>(pages[0]?.id || null);
+  const [pages, setPages] = useState<NotebookPage[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const activePage = useMemo(() => pages.find((p) => p.id === activeId) || null, [pages, activeId]);
 
   const [title, setTitle] = useState(activePage?.title || '');
   const [pageProjectId, setPageProjectId] = useState(activePage?.projectId || '');
   const saveTimer = useRef<number | null>(null);
+  const isSavingRef = useRef(false);
 
   const editor = useEditor({
     extensions: [
@@ -98,25 +102,33 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     onCountsChange?.({ total: pages.length });
   }, [pages.length, onCountsChange]);
 
-  const filteredPages = useMemo(() => {
-    const q = String(searchQuery || '')
-      .trim()
-      .toLowerCase();
-    let list = pages;
-    if (projectId) {
-      list = list.filter((p) => p.projectId === projectId);
-    }
-    if (!q) return list;
-    return list.filter((p) => {
-      return (
-        p.title.toLowerCase().includes(q) ||
-        String(p.contentText || '')
-          .toLowerCase()
-          .includes(q) ||
-        p.tags.some((t) => t.toLowerCase().includes(q))
-      );
-    });
-  }, [pages, projectId, searchQuery]);
+  const fetchPages = useMemo(
+    () => async () => {
+      try {
+        const params = new URLSearchParams();
+        if (projectId) params.set('projectId', projectId);
+        const q = String(searchQuery || '').trim();
+        if (q) params.set('q', q);
+        params.set('limit', '200');
+
+        const res = (await Api.get(`/my-work/notebook/pages?${params.toString()}`)) as any;
+        const list = Array.isArray(res) ? res : res?.pages || [];
+        setPages(list || []);
+        setActiveId((prev) => prev || list?.[0]?.id || null);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to load notebook pages', e);
+        toast.error(t('myWork.errors.fetchFailed', 'Failed to load'));
+      }
+    },
+    [projectId, searchQuery, t]
+  );
+
+  useEffect(() => {
+    fetchPages();
+  }, [fetchPages]);
+
+  const filteredPages = pages;
 
   const scheduleSave = (next: Partial<NotebookPage>) => {
     if (!activePage) return;
@@ -124,36 +136,61 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     saveTimer.current = window.setTimeout(() => {
       const base = pages.find((p) => p.id === activePage.id);
       if (!base) return;
-      const updated: NotebookPage = {
-        ...base,
-        ...next,
-        updatedAt: new Date().toISOString(),
-      };
-      const nextPages = upsertNotebookPage(userId, updated);
-      setPages(nextPages);
+      const updated: NotebookPage = { ...base, ...next };
+      setPages((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+
+      if (isSavingRef.current) return;
+      isSavingRef.current = true;
+      Api.put(`/my-work/notebook/pages/${encodeURIComponent(updated.id)}`, {
+        title: updated.title,
+        projectId: updated.projectId,
+        visibility: updated.visibility,
+        tags: updated.tags,
+        contentJson: updated.contentJson,
+        contentText: updated.contentText,
+      })
+        .catch((e) => {
+          // eslint-disable-next-line no-console
+          console.error('Failed to save notebook page', e);
+          toast.error(t('myWork.errors.updateFailed', 'Failed to update'));
+        })
+        .finally(() => {
+          isSavingRef.current = false;
+        });
     }, 350);
   };
 
-  const handleNewPage = () => {
-    const page = createNotebookPage(userId, {
-      title: isPolish ? 'Nowa strona' : 'New page',
-      projectId: projectId || null,
-      visibility: projectId ? 'project' : 'private',
-      tags: [],
-      contentJson: { type: 'doc', content: [] },
-      contentText: '',
-    });
-    setPages(loadNotebookPages(userId));
-    setActiveId(page.id);
-    toast.success(isPolish ? 'Utworzono stronę' : 'Page created');
+  const handleNewPage = async () => {
+    try {
+      const created = (await Api.post('/my-work/notebook/pages', {
+        title: isPolish ? 'Nowa strona' : 'New page',
+        projectId: projectId || null,
+        visibility: projectId ? 'project' : 'private',
+        tags: [],
+        contentJson: { type: 'doc', content: [] },
+        contentText: '',
+      })) as any;
+      await fetchPages();
+      if (created?.id) setActiveId(created.id);
+      toast.success(isPolish ? 'Utworzono stronę' : 'Page created');
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to create notebook page', e);
+      toast.error(t('myWork.errors.createFailed', 'Failed to create'));
+    }
   };
 
-  const handleDeletePage = () => {
+  const handleDeletePage = async () => {
     if (!activePage) return;
-    const nextPages = deleteNotebookPage(userId, activePage.id);
-    setPages(nextPages);
-    setActiveId(nextPages[0]?.id || null);
-    toast.success(isPolish ? 'Usunięto stronę' : 'Page deleted');
+    try {
+      await Api.delete(`/my-work/notebook/pages/${encodeURIComponent(activePage.id)}`);
+      await fetchPages();
+      toast.success(isPolish ? 'Usunięto stronę' : 'Page deleted');
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to delete notebook page', e);
+      toast.error(t('myWork.errors.deleteFailed', 'Failed to delete'));
+    }
   };
 
   // Persist editor changes

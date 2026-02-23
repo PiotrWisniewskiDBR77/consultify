@@ -608,7 +608,16 @@ router.post(
         ]
       );
 
-      // Note: Trigger in DB handles updating conversation metadata
+      // Update conversation metadata (message_count, last_message_preview, last_message_at)
+      await dbRun(
+        `UPDATE conversations
+         SET message_count = message_count + 1,
+             last_message_preview = ?,
+             last_message_at = ?,
+             updated_at = ?
+         WHERE id = ?`,
+        [content.slice(0, 200), now, now, conversationId]
+      );
 
       const message = await dbGet(
         `SELECT cm.*, COALESCE(u.first_name || ' ' || u.last_name, u.email) as author_name, u.email as author_email

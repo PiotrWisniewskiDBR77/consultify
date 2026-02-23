@@ -2121,80 +2121,102 @@
     "quickClicks": {
       "brief": { "label": "Daily brief" },
       "savings": {
-        "label": "Savings",
+        "label": "Quick savings",
         "prompt": "Let’s find savings — where can we cut cost fastest without losing quality?"
       },
       "newProduct": {
-        "label": "New product",
+        "label": "Product idea",
         "prompt": "Let’s ideate a new product: 5 concepts + market, ROI, and delivery difficulty."
       },
       "planReview": {
-        "label": "Plans",
+        "label": "Plan review",
         "prompt": "Review our plans and initiatives: priorities, risks, and what to adjust."
       },
       "situation": {
-        "label": "Situation",
+        "label": "Situation overview",
         "prompt": "Give me a situation overview: progress, risks, blockers, upcoming decisions, and next steps."
       },
       "roi": {
-        "label": "ROI",
+        "label": "ROI analysis",
         "prompt": "Analyze initiative ROI and point to the top 3 moves with the highest return."
       },
       "risks": {
-        "label": "Risks",
+        "label": "Risk map",
         "prompt": "Create a top-10 risk map and propose concrete mitigations and owners."
       },
       "priorities": {
-        "label": "Priorities",
+        "label": "Weekly priorities",
         "prompt": "Set weekly priorities: MUST/SHOULD/COULD with rationale."
       },
       "kpi": {
-        "label": "KPIs",
+        "label": "Key KPIs",
         "prompt": "Review key KPIs: what’s improving, what’s declining, what needs action now."
       },
       "scenario": {
-        "label": "Scenarios",
+        "label": "Finance scenarios",
         "prompt": "Build 3 scenarios (base/optimistic/pessimistic) and how each changes the plan."
       },
       "decision": {
-        "label": "Decision",
+        "label": "Decision support",
         "prompt": "Help me decide: options, trade-offs, risks, costs, and a 5-bullet recommendation."
       },
       "stakeholders": {
-        "label": "Stakeholders",
+        "label": "Exec update",
         "prompt": "Draft a short stakeholder update: status, risks, decisions needed, and next steps."
       },
       "governance": {
-        "label": "Governance",
+        "label": "Light governance",
         "prompt": "Design lightweight governance: cadence, KPIs, decisions, escalations, and ownership."
       },
       "budget": {
-        "label": "Budget",
+        "label": "Budget review",
         "prompt": "Analyze initiative budget: variances, risks, and where we should reallocate."
       },
       "timeline": {
-        "label": "Timeline",
+        "label": "Timeline check",
         "prompt": "Check the timeline: delays, critical path, and recommended corrections."
       },
       "team": {
-        "label": "Team",
+        "label": "Team workload",
         "prompt": "Assess team load: overloads, risks, and quick flow improvements."
       },
       "benefits": {
-        "label": "Benefits",
+        "label": "Benefits plan",
         "prompt": "Build a benefits-realization plan: metrics, baseline, owners, tracking, and reporting."
       },
       "capability": {
-        "label": "Skills",
+        "label": "Skills plan",
         "prompt": "What capabilities are missing most? Propose a 6-week upskilling plan (learn + do)."
       },
       "dependencies": {
-        "label": "Dependencies",
+        "label": "Portfolio deps",
         "prompt": "Identify dependencies and bottlenecks across initiatives and propose sequencing."
       },
       "quickWins": {
-        "label": "Quick wins",
+        "label": "Quick wins list",
         "prompt": "Propose 10 quick wins for the next 2 weeks: value, effort, owner, and first step."
+      }
+    },
+    "homeCards": {
+      "market": {
+        "label": "Market analysis",
+        "desc": "Market, competitors, positioning",
+        "kickoff": "I want to do a market analysis. Ask me the questions you need to define the industry, segment, geography, customers, competitors, and differentiation. Start with 5 questions."
+      },
+      "finance": {
+        "label": "Financial analysis",
+        "desc": "ROI, budget, scenarios",
+        "kickoff": "I want to run a financial analysis. What should we analyze (budget, costs, revenue, ROI, CAPEX/OPEX)? Ask me 5 questions, then propose an analysis structure."
+      },
+      "consulting": {
+        "label": "Classic consulting",
+        "desc": "Frameworks and toolkits",
+        "kickoff": "I want to use classic consulting frameworks. What problem are we solving and in what context? Ask me 5 questions, then recommend 2–3 best frameworks (e.g., SWOT, 5 Forces, Ansoff, Value Chain)."
+      },
+      "digital": {
+        "label": "Digital transformation",
+        "desc": "Licensed diagnostics and assessments",
+        "kickoff": "I want to assess digital transformation readiness. Which areas should we evaluate and what criteria should we use? Ask me 5 questions and propose a quick diagnostic plan."
       }
     },
     "suggestions": {
@@ -2344,9 +2366,8 @@
     "groups": {
       "pinned": "Pinned",
       "today": "Today",
-      "yesterday": "Yesterday",
       "thisWeek": "This week",
-      "lastMonth": "Last month",
+      "thisMonth": "This month",
       "older": "Older",
       "archived": "Archived"
     },
@@ -2390,6 +2411,10 @@
         "multiAgent": {
           "label": "Multi-agent analysis",
           "desc": "CFO/CTO/CHRO/COO perspectives"
+        },
+        "privateMode": {
+          "label": "Private mode",
+          "desc": "Disable memory injection and personalization for this chat"
         },
         "textToSpeech": {
           "label": "Read responses",

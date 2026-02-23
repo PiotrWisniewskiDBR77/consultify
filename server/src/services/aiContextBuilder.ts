@@ -28,6 +28,7 @@ export interface ContextOptions {
   currentScreen?: string | null;
   selectedObjectId?: string | null;
   selectedObjectType?: string | null;
+  conversationId?: string | null;
 }
 
 export interface AIContext {
@@ -172,6 +173,7 @@ export const AIContextBuilder = {
     options: ContextOptions = {}
   ): Promise<AIContext> => {
     const focusMode = options.focusMode || 'all';
+    const conversationId = options.conversationId || null;
     const t0 = Date.now();
     logger.debug(
       `[AIContextBuilder] buildContext user=${userId} org=${organizationId} proj=${projectId} focus=${focusMode}`
@@ -186,7 +188,7 @@ export const AIContextBuilder = {
       AIContextBuilder._buildOrganizationContext(organizationId),
       projectId ? AIContextBuilder._buildProjectContext(projectId) : Promise.resolve(null),
       AIContextBuilder._buildExecutionContext(userId, projectId),
-      AIContextBuilder._buildKnowledgeContext(projectId, focusMode),
+      AIContextBuilder._buildKnowledgeContext(projectId, focusMode, conversationId),
       AIContextBuilder._buildExternalContext(organizationId, focusMode),
     ]);
 
@@ -228,6 +230,21 @@ export const AIContextBuilder = {
       AIContextBuilder._buildHistoricalPatternsContext(projectId, organizationId),
     ]);
 
+    // T121: merge doc approvals into pending approvals (conversation scope)
+    let pendingApprovalsMerged: any = pendingApprovals as any;
+    const pendingDocs = (knowledge as any)?.pendingDocumentApprovals;
+    if (pendingDocs?.count > 0) {
+      const existingCount = Number(pendingApprovalsMerged?.count || 0);
+      pendingApprovalsMerged = {
+        ...(pendingApprovalsMerged || { count: 0, actions: [], summary: null }),
+        count: existingCount + Number(pendingDocs.count || 0),
+        documents: pendingDocs,
+        summary:
+          pendingApprovalsMerged?.summary ||
+          `User has ${Number(pendingDocs.count || 0)} document(s) awaiting approval for AI access.`,
+      };
+    }
+
     let systemDocs: any = null;
     try {
       const CoreDocsService = await getCoreDocsService();
@@ -267,7 +284,7 @@ export const AIContextBuilder = {
       knowledge,
       external,
       pmo,
-      pendingApprovals,
+      pendingApprovals: pendingApprovalsMerged,
       aiSettings,
       assessmentData,
       financialData,
@@ -275,7 +292,31 @@ export const AIContextBuilder = {
       systemDocs,
     };
 
-    const filteredContext = AIContextBuilder._applyFocusModeFilter(fullContext, focusMode);
+    let filteredContext = AIContextBuilder._applyFocusModeFilter(fullContext, focusMode);
+
+    // T119: Organization context policy enforcement (SSOT in organization_ai_settings.context_policy_json)
+    try {
+      const govMod = (await import('./ai/contextGovernance.js')) as any;
+      const getOrgContextPolicy = govMod.getOrgContextPolicy || govMod.default?.getOrgContextPolicy;
+      const filterContextByPolicy = govMod.filterContextByPolicy || govMod.default?.filterContextByPolicy;
+
+      if (typeof getOrgContextPolicy === 'function' && typeof filterContextByPolicy === 'function') {
+        const policy = await getOrgContextPolicy(organizationId);
+        filteredContext = filterContextByPolicy(filteredContext as any, policy) as any;
+
+        // Attach a lightweight snapshot for explainability/debug (do not include full JSON policy blob).
+        (filteredContext as any).aiSettings = {
+          ...(filteredContext as any).aiSettings,
+          orgContextPolicy: {
+            categories: policy?.categories || null,
+            retention: policy?.retention || null,
+            piiRedaction: policy?.piiRedaction || null,
+          },
+        };
+      }
+    } catch (err: any) {
+      logger.debug(`[AIContextBuilder] Context policy enforcement skipped: ${err?.message}`);
+    }
 
     // Cap context size to avoid sending excessive tokens to LLM
     const contextSizeEstimate = JSON.stringify(filteredContext).length;
@@ -606,7 +647,11 @@ export const AIContextBuilder = {
   /**
    * Layer 5: Knowledge Context
    */
-  _buildKnowledgeContext: async (projectId: string | null, _focusMode: string = 'all') => {
+  _buildKnowledgeContext: async (
+    projectId: string | null,
+    _focusMode: string = 'all',
+    conversationId: string | null = null
+  ) => {
     const KnowledgeService = await getKnowledgeService();
 
     let organizationId = null;
@@ -692,6 +737,45 @@ export const AIContextBuilder = {
       } catch (err: any) {}
     }
 
+    // T121: Per-document governance (ai_visibility/sensitivity) + conversation-scoped approvals
+    let docGov: any = null;
+    let pendingDocumentApprovals: any = { count: 0, documentIds: [], documents: [] };
+    try {
+      const dgMod = (await import('./ai/documentGovernance.js')) as any;
+      const filterDocumentsByVisibility =
+        dgMod.filterDocumentsByVisibility || dgMod.default?.filterDocumentsByVisibility;
+      if (typeof filterDocumentsByVisibility === 'function' && Array.isArray(documents)) {
+        const docIds = documents.map((d: any) => String(d?.id || '')).filter(Boolean);
+        const access = await filterDocumentsByVisibility(docIds, projectId || undefined, conversationId || undefined);
+        docGov = {
+          allowedDocIds: access.allowed || [],
+          blockedDocIds: access.blocked || [],
+          requiresApprovalDocIds: access.requiresApproval || [],
+          approvedViaConversation: access.approvedViaConversation || [],
+        };
+
+        const allowedSet = new Set<string>(access.allowed || []);
+        const requiresSet = new Set<string>(access.requiresApproval || []);
+
+        const allowedDocs = documents.filter((d: any) => allowedSet.has(String(d?.id || '')));
+        const requiresDocs = documents.filter((d: any) => requiresSet.has(String(d?.id || '')));
+
+        documents = allowedDocs;
+        pendingDocumentApprovals = {
+          count: requiresDocs.length,
+          documentIds: requiresDocs.map((d: any) => String(d?.id || '')).filter(Boolean),
+          documents: requiresDocs.map((d: any) => ({
+            id: d.id,
+            filename: d.filename,
+            category: d.category || null,
+            tags: d.tags ? (typeof d.tags === 'string' ? JSON.parse(d.tags) : d.tags) : [],
+          })),
+        };
+      }
+    } catch {
+      // fail-open
+    }
+
     return {
       ragDisabled: false,
       projectDocuments: documents.map((d: any) => ({
@@ -700,6 +784,8 @@ export const AIContextBuilder = {
         category: d.category || null,
         tags: d.tags ? (typeof d.tags === 'string' ? JSON.parse(d.tags) : d.tags) : [],
       })),
+      pendingDocumentApprovals,
+      docGovernance: docGov,
       previousDecisions: decisions.map((d: any) => ({
         id: d.id,
         title: d.title,

@@ -17,6 +17,7 @@ import {
   ChevronRight,
   FolderPlus,
   GraduationCap,
+  Lock,
   MessageSquare,
   Pen,
   Search,
@@ -150,14 +151,18 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     textToSpeech,
     ttsRate,
     ttsVoice,
+    privateMode,
   } = aiConfig as any;
 
-  const activeModeCount = [deepResearch, showReasoning, textToSpeech].filter(Boolean).length;
+  const activeModeCount = [deepResearch, showReasoning, textToSpeech, privateMode]
+    .filter(Boolean)
+    .length;
 
   const AI_MODES: ToolMode[] = [
     { id: 'deepResearch', icon: Search, labelKey: 'aiChat.menu.modes.deepResearch.label', descKey: 'aiChat.menu.modes.deepResearch.desc', enabled: deepResearch },
     { id: 'showReasoning', icon: Sparkles, labelKey: 'aiChat.menu.modes.showReasoning.label', descKey: 'aiChat.menu.modes.showReasoning.desc', enabled: showReasoning },
     { id: 'multiAgent', icon: Users, labelKey: 'aiChat.menu.modes.multiAgent.label', descKey: 'aiChat.menu.modes.multiAgent.desc', enabled: aiConfig.multiAgent ?? false },
+    { id: 'privateMode', icon: Lock, labelKey: 'aiChat.menu.modes.privateMode.label', descKey: 'aiChat.menu.modes.privateMode.desc', enabled: privateMode },
     { id: 'textToSpeech', icon: Volume2, labelKey: 'aiChat.menu.modes.textToSpeech.label', descKey: 'aiChat.menu.modes.textToSpeech.desc', enabled: textToSpeech },
   ];
 
@@ -457,7 +462,7 @@ const TTSSettings: React.FC<{
   ttsVoice: string | null;
   availableVoices: SpeechSynthesisVoice[];
   setAIConfig: (cfg: any) => void;
-  t: (key: string, fallback?: string | Record<string, any>) => string;
+  t: any;
 }> = ({ ttsRate, ttsVoice, availableVoices, setAIConfig, t }) => {
   const [expanded, setExpanded] = useState(false);
 

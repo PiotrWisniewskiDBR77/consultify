@@ -277,6 +277,12 @@ router.get('/providers/health', verifyToken, asyncHandler(LLMController.getProvi
 router.get('/providers/recommended', asyncHandler(LLMController.getRecommendedProvider));
 
 /**
+ * GET /api/llm/incidents
+ * Timeline of LLM downtime incidents (for SuperAdmin monitoring)
+ */
+router.get('/incidents', verifyToken, asyncHandler(LLMController.getIncidents));
+
+/**
  * POST /api/llm/providers
  * Create a new provider
  */

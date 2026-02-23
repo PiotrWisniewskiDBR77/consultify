@@ -26,6 +26,14 @@ if (!correlationId) {
 
 const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 
+// ----------------------------
+// Lightweight in-memory caches
+// ----------------------------
+// Goal: speed up module switching in dev/prod by avoiding refetch-on-mount patterns.
+// These caches are intentionally short-lived and are invalidated on writes.
+const __personalTasksCache = new Map<string, { at: number; data: any[] }>();
+const PERSONAL_TASKS_CACHE_MS = 15_000;
+
 async function isServerStartingResponse(res: Response): Promise<boolean> {
   if (res.status !== 503) return false;
   try {
@@ -1102,12 +1110,23 @@ export const Api = {
       webSearch?: boolean;
       showReasoning?: boolean;
       multiAgent?: boolean;
+      marketResearch?: boolean;
+      coThinkerMode?: string | null;
+      privateMode?: boolean;
       knowledgeSources?: {
         pmoDocuments?: boolean;
         projectData?: boolean;
         organizationData?: boolean;
       };
-      responseStyle?: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
+      responseStyle?:
+        | 'normal'
+        | 'executive'
+        | 'analyst'
+        | 'coach'
+        | 'concise'
+        | 'formal'
+        | 'professional'
+        | 'friendly';
       selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
       selectedModelId?: string | null;
     }
@@ -1117,6 +1136,9 @@ export const Api = {
       webSearch: options?.webSearch ?? false,
       showReasoning: options?.showReasoning ?? false,
       multiAgent: options?.multiAgent ?? false,
+      marketResearch: options?.marketResearch ?? false,
+      coThinkerMode: options?.coThinkerMode ?? null,
+      privateMode: options?.privateMode ?? false,
     };
 
     const knowledgeSources = {
@@ -1137,6 +1159,7 @@ export const Api = {
       aiModes,
       knowledgeSources,
       responseStyle,
+      privateMode: Boolean(options?.privateMode),
       selectedTier: options?.selectedTier,
       selectedModelId: options?.selectedModelId ?? null,
       projectId: context?.projectId,
@@ -1189,12 +1212,21 @@ export const Api = {
       multiAgent?: boolean;
       marketResearch?: boolean;
       coThinkerMode?: string | null;
+      privateMode?: boolean;
       knowledgeSources?: {
         pmoDocuments?: boolean;
         projectData?: boolean;
         organizationData?: boolean;
       };
-      responseStyle?: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
+      responseStyle?:
+        | 'normal'
+        | 'executive'
+        | 'analyst'
+        | 'coach'
+        | 'concise'
+        | 'formal'
+        | 'professional'
+        | 'friendly';
       selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
       selectedModelId?: string | null;
     },
@@ -1234,6 +1266,7 @@ export const Api = {
         multiAgent: options?.multiAgent ?? false,
         marketResearch: options?.marketResearch ?? false,
         coThinkerMode: options?.coThinkerMode ?? null,
+        privateMode: options?.privateMode ?? false,
       };
 
       const knowledgeSources = {
@@ -1264,6 +1297,7 @@ export const Api = {
           aiModes,
           knowledgeSources,
           responseStyle,
+          privateMode: Boolean((options as any)?.privateMode),
           // Model routing
           selectedTier: options?.selectedTier,
           selectedModelId: options?.selectedModelId ?? localProvider?.modelId ?? null,
@@ -1398,8 +1432,8 @@ export const Api = {
                 const uiLang = getCachedUserLanguage();
                 const friendly =
                   uiLang === 'pl'
-                    ? '⚠️ AI nie zwróciło odpowiedzi. Sprawdź konfigurację providera (OPENAI_API_KEY / GEMINI_API_KEY) oraz logi backendu.'
-                    : '⚠️ AI returned no output. Check LLM provider config (OPENAI_API_KEY / GEMINI_API_KEY) and backend logs.';
+                    ? '⚠️ AI nie zwróciło odpowiedzi. Sprawdź konfigurację providera (OPENROUTER_API_KEY / OpenRouter w panelu SuperAdmin) oraz logi backendu.'
+                    : '⚠️ AI returned no output. Check LLM provider config (OPENROUTER_API_KEY / OpenRouter in SuperAdmin) and backend logs.';
                 onChunk(friendly);
               }
               onDone();
@@ -1416,7 +1450,9 @@ export const Api = {
               if (typeof data.type === 'string' && onThinking && data.type !== 'error') {
                 const hasText =
                   typeof (data as any).text === 'string' && (data as any).text.length > 0;
-                if (hasText) {
+                const hasContent =
+                  typeof (data as any).content === 'string' && (data as any).content.length > 0;
+                if (hasText || hasContent) {
                   // Count as visible output even though we don't pass it through onChunk().
                   // (useAIStream will apply it via handleEvent, e.g. replace strategy)
                   hasAnyVisibleOutput = true;
@@ -2086,6 +2122,40 @@ export const Api = {
     return res.json();
   },
 
+  // LLM Incidents Timeline - downtime analysis based on health events
+  getLLMIncidents: async (params?: {
+    from?: string;
+    to?: string;
+    provider?: string;
+  }): Promise<{
+    success: boolean;
+    provider: string;
+    from: string;
+    to: string;
+    uptime: {
+      totalMs: number;
+      downMs: number;
+      upMs: number;
+      uptimePct: number;
+      samples: number;
+    };
+    incidents: Array<{
+      start: string;
+      end: string | null;
+      durationMs: number;
+      samples: number;
+      lastError: string | null;
+    }>;
+  }> => {
+    const qs = new URLSearchParams();
+    if (params?.from) qs.set('from', params.from);
+    if (params?.to) qs.set('to', params.to);
+    if (params?.provider) qs.set('provider', params.provider);
+    const url = `${API_URL}/llm/incidents${qs.toString() ? `?${qs.toString()}` : ''}`;
+    const res = await fetchWithRetry(url, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to load incidents timeline');
+  },
+
   // Get recommended LLM provider based on current health
   getRecommendedLLMProvider: async (
     tier: string = 'STANDARD'
@@ -2251,9 +2321,17 @@ export const Api = {
       if (filters.limit) params.append('limit', String(filters.limit));
       if (params.toString()) url += `?${params.toString()}`;
     }
+
+    const cached = __personalTasksCache.get(url);
+    if (cached && Date.now() - cached.at < PERSONAL_TASKS_CACHE_MS) {
+      return cached.data;
+    }
+
     const res = await fetch(url, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch personal tasks');
-    return res.json();
+    const data = await res.json();
+    __personalTasksCache.set(url, { at: Date.now(), data });
+    return data;
   },
 
   getPersonalTask: async (id: string): Promise<any> => {
@@ -2275,7 +2353,9 @@ export const Api = {
       headers: getHeaders(),
       body: JSON.stringify(task),
     });
-    return handleResponse(res, 'Failed to create personal task');
+    const created = await handleResponse(res, 'Failed to create personal task');
+    __personalTasksCache.clear();
+    return created;
   },
 
   updatePersonalTask: async (id: string, updates: any): Promise<any> => {
@@ -2284,7 +2364,9 @@ export const Api = {
       headers: getHeaders(),
       body: JSON.stringify(updates),
     });
-    return handleResponse(res, 'Failed to update personal task');
+    const updated = await handleResponse(res, 'Failed to update personal task');
+    __personalTasksCache.clear();
+    return updated;
   },
 
   deletePersonalTask: async (id: string): Promise<void> => {
@@ -2293,6 +2375,7 @@ export const Api = {
       headers: getHeaders(),
     });
     await handleResponse(res, 'Failed to delete personal task');
+    __personalTasksCache.clear();
   },
 
   // ==========================================

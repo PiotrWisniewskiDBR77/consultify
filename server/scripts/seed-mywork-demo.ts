@@ -78,7 +78,7 @@ async function main() {
   const userRow = await (async () => {
     if (seedUserEmail) {
       const r = await db.query<Row<{ id: string; email: string; organization_id: string }>>(
-        `SELECT id, email, organization_id FROM users WHERE email = ? LIMIT 1`,
+        `SELECT id, email, organization_id FROM users WHERE email = $1 LIMIT 1`,
         [seedUserEmail]
       );
       if (r?.rows?.[0]?.id) return r.rows[0];
@@ -86,7 +86,7 @@ async function main() {
     }
 
     const r = await db.query<Row<{ id: string; email: string; organization_id: string }>>(
-      `SELECT id, email, organization_id FROM users WHERE organization_id = ? ORDER BY created_at DESC LIMIT 1`,
+      `SELECT id, email, organization_id FROM users WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 1`,
       [orgId]
     );
     return r?.rows?.[0] || null;
@@ -102,7 +102,7 @@ async function main() {
     seedProjectId ||
     (await (async () => {
       const r = await db.query<Row<{ id: string }>>(
-        `SELECT id FROM projects WHERE organization_id = ? ORDER BY updated_at DESC LIMIT 1`,
+        `SELECT id FROM projects WHERE organization_id = $1 ORDER BY updated_at DESC LIMIT 1`,
         [orgId]
       );
       return r?.rows?.[0]?.id || null;
@@ -172,12 +172,13 @@ async function main() {
     );
 
     await db.run(
-      `INSERT OR IGNORE INTO tasks(
+      `INSERT INTO tasks(
         id, project_id, organization_id, title, description, status, priority,
         assignee_id, reporter_id, due_date, estimated_hours, tags,
         created_at, updated_at, completed_at,
         task_type, risk_rating, step_phase, initiative_id, acceptance_criteria, blocking_issues, why
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
+      ON CONFLICT (id) DO NOTHING`,
       [
         id,
         projectId,
@@ -245,14 +246,15 @@ async function main() {
       status === 'approved' ? (i % 2 === 0 ? 'A' : 'B') : status === 'rejected' ? 'B' : null;
 
     await db.run(
-      `INSERT OR IGNORE INTO decisions(
+      `INSERT INTO decisions(
         id, organization_id, project_id, task_id,
         title, description, type,
-        decision_maker_id, decision_owner_id,
+        decision_maker_id,
         options, criteria, deadline, escalation_deadline,
         status, selected_option, decision_rationale, decided_at,
         created_by, created_at, updated_at
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+      ON CONFLICT (id) DO NOTHING`,
       [
         id,
         orgId,
@@ -261,7 +263,6 @@ async function main() {
         decisionTitles[i],
         `Seeded decision (${dtype}/${status}).`,
         dtype,
-        userId,
         userId,
         options,
         'Impact, effort, risk',
@@ -384,19 +385,19 @@ async function main() {
     });
 
     await db.run(
-      `INSERT OR IGNORE INTO notifications(
-        id, user_id, organization_id,
+      `INSERT INTO notifications(
+        id, user_id,
         type, title, message, body,
         data, metadata,
         read, is_read, severity, priority, icon,
         entity_type, entity_id,
         actor_name, read_at,
         created_at
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+      ON CONFLICT (id) DO NOTHING`,
       [
         id,
         userId,
-        orgId,
         n.type,
         n.title,
         n.message,
@@ -404,7 +405,7 @@ async function main() {
         data,
         JSON.stringify({ seeded: true }),
         isRead ? 1 : 0,
-        isRead,
+        isRead ? 1 : 0,
         n.severity || 'normal',
         n.priority || 'normal',
         n.icon || null,

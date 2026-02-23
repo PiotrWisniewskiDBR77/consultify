@@ -15,22 +15,22 @@ export const ConversationSearch: React.FC<ConversationSearchProps> = ({
   return (
     <div className="relative group">
       <Search
-        size={16}
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-primary-500 transition-colors"
+        size={14}
+        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-primary-500 transition-colors"
       />
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl py-2 pl-9 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+        className="w-full bg-slate-100/60 dark:bg-navy-950/60 border border-slate-200/50 dark:border-navy-700/50 rounded-lg py-1.5 pl-8 pr-7 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
       />
       {value && (
         <button
           onClick={() => onChange('')}
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
         >
-          <X size={14} />
+          <X size={12} />
         </button>
       )}
     </div>

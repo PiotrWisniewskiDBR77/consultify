@@ -44,22 +44,47 @@ import { useUserCan } from '@/hooks/useUserCan';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
-import { DecisionDetailView } from './DecisionDetailView';
-import { DecisionsKanbanBoard } from './DecisionsKanbanBoard';
 import { DecisionsPanelContent } from './DecisionsPanelContent';
-import { ExecutiveDashboard } from './Executive/ExecutiveDashboard';
-import { type FocusItem, FocusView } from './Focus/FocusView';
-import { IdeaDetailView } from './IdeaDetailView';
 import { InboxContent } from './InboxContent';
-import { type MyIdea, MyIdeasListContent } from './MyIdeasListContent';
+import type { FocusItem } from './Focus/FocusView';
+import type { MyIdea } from './MyIdeasListContent';
+import { MyIdeasListContent } from './MyIdeasListContent';
 import { MyTasksListContent } from './MyTasksListContent';
-import { NotebookContent } from './NotebookContent';
-import { NotificationDetailView } from './NotificationDetailView';
 import { NotificationsContent } from './NotificationsContent';
-import { NotificationsKanbanBoard } from './NotificationsKanbanBoard';
-import { TaskDetailView } from './TaskDetailView';
-import { TasksCalendarView } from './TasksCalendarView';
-import { TasksKanbanBoard } from './TasksKanbanBoard';
+
+// Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
+// This keeps initial My Work navigation snappy and avoids loading unused tabs upfront.
+const TaskDetailView = React.lazy(() =>
+  import('./TaskDetailView').then((m) => ({ default: m.TaskDetailView }))
+);
+const IdeaDetailView = React.lazy(() =>
+  import('./IdeaDetailView').then((m) => ({ default: m.IdeaDetailView }))
+);
+const DecisionDetailView = React.lazy(() =>
+  import('./DecisionDetailView').then((m) => ({ default: m.DecisionDetailView }))
+);
+const NotificationDetailView = React.lazy(() =>
+  import('./NotificationDetailView').then((m) => ({ default: m.NotificationDetailView }))
+);
+const ExecutiveDashboard = React.lazy(() =>
+  import('./Executive/ExecutiveDashboard').then((m) => ({ default: m.ExecutiveDashboard }))
+);
+const FocusView = React.lazy(() => import('./Focus/FocusView').then((m) => ({ default: m.FocusView })));
+const NotebookContent = React.lazy(() =>
+  import('./NotebookContent').then((m) => ({ default: m.NotebookContent }))
+);
+const TasksKanbanBoard = React.lazy(() =>
+  import('./TasksKanbanBoard').then((m) => ({ default: m.TasksKanbanBoard }))
+);
+const TasksCalendarView = React.lazy(() =>
+  import('./TasksCalendarView').then((m) => ({ default: m.TasksCalendarView }))
+);
+const DecisionsKanbanBoard = React.lazy(() =>
+  import('./DecisionsKanbanBoard').then((m) => ({ default: m.DecisionsKanbanBoard }))
+);
+const NotificationsKanbanBoard = React.lazy(() =>
+  import('./NotificationsKanbanBoard').then((m) => ({ default: m.NotificationsKanbanBoard }))
+);
 
 // Types
 type ModuleTab =
@@ -202,6 +227,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentUser, myWorkIntent, clearMyWorkIntent } = useAppStore();
 
+  const lazyFallback = (
+    <div className="flex h-[60vh] items-center justify-center">
+      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span>{isPolish ? 'Ładowanie…' : 'Loading…'}</span>
+      </div>
+    </div>
+  );
+
   // A1.2: Role-based access – Executive tab restricted to admin/manager/superadmin
   const { isAdmin, isManager, isSuperAdmin } = useUserCan();
   const canViewExecutive = isAdmin || isManager || isSuperAdmin;
@@ -309,10 +343,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     clearMyWorkIntent();
   }, [myWorkIntent, clearMyWorkIntent, handleOpenDocument]);
 
-  // URL deep link support: /my-work?taskId=... or /my-work?decisionId=...
+  // URL deep link support:
+  // - /my-work?taskId=...
+  // - /my-work?decisionId=...
+  // Back-compat:
+  // - /my-work?decision=...  (used by backend notification actionUrl)
+  // - /my-work?task=...      (legacy/manual links)
   useEffect(() => {
-    const taskId = searchParams.get('taskId');
-    const decisionId = searchParams.get('decisionId');
+    const taskId = searchParams.get('taskId') || searchParams.get('task');
+    const decisionId = searchParams.get('decisionId') || searchParams.get('decision');
     if (!taskId && !decisionId) return;
 
     if (taskId) {
@@ -337,7 +376,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
     const next = new URLSearchParams(searchParams);
     next.delete('taskId');
+    next.delete('task');
     next.delete('decisionId');
+    next.delete('decision');
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams, handleOpenDocument, isPolish]);
 
@@ -892,42 +933,50 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     switch (activeDoc.type) {
       case 'task':
         return (
-          <TaskDetailView
-            taskId={activeDoc.data?.isNew ? null : activeDoc.id}
-            onClose={() => handleCloseDocument(activeDoc.id)}
-            onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
-            onOpenDecision={(decisionId) => handleDecisionClick(decisionId)}
-          />
+          <React.Suspense fallback={lazyFallback}>
+            <TaskDetailView
+              taskId={activeDoc.data?.isNew ? null : activeDoc.id}
+              onClose={() => handleCloseDocument(activeDoc.id)}
+              onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
+              onOpenDecision={(decisionId) => handleDecisionClick(decisionId)}
+            />
+          </React.Suspense>
         );
       case 'idea':
         return (
-          <IdeaDetailView
-            ideaId={activeDoc.id}
-            onClose={() => handleCloseDocument(activeDoc.id)}
-            onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
-          />
+          <React.Suspense fallback={lazyFallback}>
+            <IdeaDetailView
+              ideaId={activeDoc.id}
+              onClose={() => handleCloseDocument(activeDoc.id)}
+              onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
+            />
+          </React.Suspense>
         );
       case 'decision':
         return (
-          <DecisionDetailView
-            decisionId={activeDoc.data?.isNew ? null : activeDoc.id}
-            onClose={() => handleCloseDocument(activeDoc.id)}
-            onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
-          />
+          <React.Suspense fallback={lazyFallback}>
+            <DecisionDetailView
+              decisionId={activeDoc.data?.isNew ? null : activeDoc.id}
+              onClose={() => handleCloseDocument(activeDoc.id)}
+              onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
+            />
+          </React.Suspense>
         );
       case 'notification':
         return (
-          <NotificationDetailView
-            notificationId={activeDoc.id}
-            onClose={() => handleCloseDocument(activeDoc.id)}
-            onNavigateToSource={(type, id) => {
-              if (type === 'task') {
-                handleTaskClick(id);
-              } else if (type === 'decision') {
-                handleDecisionClick(id);
-              }
-            }}
-          />
+          <React.Suspense fallback={lazyFallback}>
+            <NotificationDetailView
+              notificationId={activeDoc.id}
+              onClose={() => handleCloseDocument(activeDoc.id)}
+              onNavigateToSource={(type, id) => {
+                if (type === 'task') {
+                  handleTaskClick(id);
+                } else if (type === 'decision') {
+                  handleDecisionClick(id);
+                }
+              }}
+            />
+          </React.Suspense>
         );
       default:
         return null;
@@ -953,14 +1002,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           );
         }
         return (
-          <ExecutiveDashboard
-            onNavigate={(section) => {
-              if (section === 'tasks') setActiveTab('tasks');
-              if (section === 'decisions') setActiveTab('decisions');
-              if (section === 'focus') setActiveTab('focus');
-              if (section === 'inbox') setActiveTab('inbox');
-            }}
-          />
+          <React.Suspense fallback={lazyFallback}>
+            <ExecutiveDashboard
+              onNavigate={(section) => {
+                if (section === 'tasks') setActiveTab('tasks');
+                if (section === 'decisions') setActiveTab('decisions');
+                if (section === 'focus') setActiveTab('focus');
+                if (section === 'inbox') setActiveTab('inbox');
+              }}
+            />
+          </React.Suspense>
         );
       case 'inbox':
         return (
@@ -974,36 +1025,42 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         );
       case 'focus':
         return (
-          <FocusView
-            onItemClick={(item: FocusItem) => {
-              // FocusView uses ids like task-<id> / decision-<id>
-              if (item.type === 'task') {
-                const id = String(item.id).replace(/^task-/, '');
-                handleTaskClick(id);
-              } else if (item.type === 'decision') {
-                const id = String(item.id).replace(/^decision-/, '');
-                handleDecisionClick(id);
-              }
-            }}
-          />
+          <React.Suspense fallback={lazyFallback}>
+            <FocusView
+              onItemClick={(item: FocusItem) => {
+                // FocusView uses ids like task-<id> / decision-<id>
+                if (item.type === 'task') {
+                  const id = String(item.id).replace(/^task-/, '');
+                  handleTaskClick(id);
+                } else if (item.type === 'decision') {
+                  const id = String(item.id).replace(/^decision-/, '');
+                  handleDecisionClick(id);
+                }
+              }}
+            />
+          </React.Suspense>
         );
       case 'tasks':
         return tasksViewMode === 'kanban' ? (
-          <TasksKanbanBoard
-            activeFilter={taskFilter}
-            searchQuery={searchQuery}
-            onTaskClick={handleTaskClick}
-            onCreateTask={handleCreateTask}
-            onCountsChange={handleTaskCountsChange}
-          />
+          <React.Suspense fallback={lazyFallback}>
+            <TasksKanbanBoard
+              activeFilter={taskFilter}
+              searchQuery={searchQuery}
+              onTaskClick={handleTaskClick}
+              onCreateTask={handleCreateTask}
+              onCountsChange={handleTaskCountsChange}
+            />
+          </React.Suspense>
         ) : tasksViewMode === 'calendar' ? (
-          <TasksCalendarView
-            activeFilter={taskFilter}
-            searchQuery={searchQuery}
-            onTaskClick={handleTaskClick}
-            onCreateTask={handleCreateTask}
-            onCountsChange={handleTaskCountsChange}
-          />
+          <React.Suspense fallback={lazyFallback}>
+            <TasksCalendarView
+              activeFilter={taskFilter}
+              searchQuery={searchQuery}
+              onTaskClick={handleTaskClick}
+              onCreateTask={handleCreateTask}
+              onCountsChange={handleTaskCountsChange}
+            />
+          </React.Suspense>
         ) : (
           <MyTasksListContent
             activeFilter={taskFilter}
@@ -1024,23 +1081,27 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         );
       case 'notebook':
         return (
-          <NotebookContent
-            projectId={null}
-            searchQuery={searchQuery}
-            onCountsChange={(counts) =>
-              setTabCounts((prev) => ({ ...prev, notebook: counts.total }))
-            }
-          />
+          <React.Suspense fallback={lazyFallback}>
+            <NotebookContent
+              projectId={null}
+              searchQuery={searchQuery}
+              onCountsChange={(counts) =>
+                setTabCounts((prev) => ({ ...prev, notebook: counts.total }))
+              }
+            />
+          </React.Suspense>
         );
       case 'decisions':
         return decisionsViewMode === 'kanban' ? (
-          <DecisionsKanbanBoard
-            viewMode={decisionFilter}
-            searchQuery={searchQuery}
-            onDecisionClick={handleDecisionClick}
-            onCreateDecision={handleCreateDecision}
-            onCountsChange={handleDecisionCountsChange}
-          />
+          <React.Suspense fallback={lazyFallback}>
+            <DecisionsKanbanBoard
+              viewMode={decisionFilter}
+              searchQuery={searchQuery}
+              onDecisionClick={handleDecisionClick}
+              onCreateDecision={handleCreateDecision}
+              onCountsChange={handleDecisionCountsChange}
+            />
+          </React.Suspense>
         ) : (
           <DecisionsPanelContent
             viewMode={decisionFilter}
@@ -1051,12 +1112,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         );
       case 'notifications':
         return notificationsViewMode === 'kanban' ? (
-          <NotificationsKanbanBoard
-            filter={notificationFilter}
-            searchQuery={searchQuery}
-            onNotificationClick={handleNotificationClick}
-            onCountsChange={handleNotificationCountsChange}
-          />
+          <React.Suspense fallback={lazyFallback}>
+            <NotificationsKanbanBoard
+              filter={notificationFilter}
+              searchQuery={searchQuery}
+              onNotificationClick={handleNotificationClick}
+              onCountsChange={handleNotificationCountsChange}
+            />
+          </React.Suspense>
         ) : (
           <NotificationsContent
             filter={notificationFilter}

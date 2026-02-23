@@ -139,6 +139,7 @@ export interface MessageRendererProps {
   handleDeepThinkingReconfirm: () => void;
   handleSaveAsDecision: (messageId: string, content: string) => void;
   handleSaveAsIdea: (messageId: string, content: string) => void;
+  handleSaveAsNote: (messageId: string, content: string) => void;
   handleRunDirectedDeepening: (agentAuditPayload: any) => void;
   handleMultiSelectToggle: (value: string) => void;
   handleMultiSelectConfirm: () => void;
@@ -215,6 +216,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   handleDeepThinkingReconfirm,
   handleSaveAsDecision,
   handleSaveAsIdea,
+  handleSaveAsNote,
   handleRunDirectedDeepening,
   handleMultiSelectToggle,
   handleMultiSelectConfirm,
@@ -1165,6 +1167,17 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     title={t('myWork.ideas.saveAsIdea', 'Save as idea')}
                   >
                     <Lightbulb size={12} />
+                  </button>
+                )}
+
+                {/* Save as Note (T011) */}
+                {msg.role === 'ai' && (
+                  <button
+                    onClick={() => handleSaveAsNote(msg.id, msg.content)}
+                    className="p-1 rounded-md text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/10"
+                    title={t('myWork.notebook.saveAsNote', 'Save as note')}
+                  >
+                    <Bookmark size={12} />
                   </button>
                 )}
 

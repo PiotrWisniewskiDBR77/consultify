@@ -88,7 +88,11 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
-  const [minimalOffset, setMinimalOffset] = useState(0);
+  const [minimalVisibleIdx, setMinimalVisibleIdx] = useState<number[]>([0, 1, 2, 3]);
+  const minimalNextIdxRef = React.useRef(4);
+  const minimalSwapSlotRef = React.useRef(0);
+  const minimalFadeTimeoutRef = React.useRef<number | undefined>(undefined);
+  const [minimalFadeSlot, setMinimalFadeSlot] = useState<number | null>(null);
 
   const minimalPool: Array<{ id: string; text: string; prompt: string }> = useMemo(
     () => [
@@ -253,17 +257,46 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
     [t, i18n.language]
   );
 
-  // Rotate the 4 minimal chips from a pool (~20)
+  // Rotate minimal chips from a pool (~20), one-at-a-time (slower)
   useEffect(() => {
     if (variant !== 'minimal') return;
     if (minimalPool.length <= 4) return;
 
-    setMinimalOffset(0);
+    setMinimalVisibleIdx([0, 1, 2, 3].filter((x) => x < minimalPool.length));
+    minimalNextIdxRef.current = 4 % minimalPool.length;
+    minimalSwapSlotRef.current = 0;
+    setMinimalFadeSlot(null);
 
     const reduce = prefersReducedMotion();
-    const intervalMs = reduce ? 10000 : 6500;
+    const intervalMs = reduce ? 15000 : 12000;
     const interval = window.setInterval(() => {
-      setMinimalOffset((v) => (v + 4) % minimalPool.length);
+      // Replace one chip at a time, round-robin slots 0..3
+      const slot = minimalSwapSlotRef.current % 4;
+      minimalSwapSlotRef.current = (minimalSwapSlotRef.current + 1) % 4;
+
+      if (!reduce) {
+        setMinimalFadeSlot(slot);
+        if (minimalFadeTimeoutRef.current) window.clearTimeout(minimalFadeTimeoutRef.current);
+        minimalFadeTimeoutRef.current = window.setTimeout(() => setMinimalFadeSlot(null), 220);
+      }
+
+      setMinimalVisibleIdx((prev) => {
+        const visibleCount = Math.min(4, minimalPool.length);
+        const base = Array.isArray(prev) && prev.length === visibleCount
+          ? [...prev]
+          : Array.from({ length: visibleCount }, (_, i) => i);
+
+        let candidate = minimalNextIdxRef.current % minimalPool.length;
+        let guard = 0;
+        while (base.includes(candidate) && guard < minimalPool.length) {
+          candidate = (candidate + 1) % minimalPool.length;
+          guard += 1;
+        }
+
+        minimalNextIdxRef.current = (candidate + 1) % minimalPool.length;
+        if (slot < base.length) base[slot] = candidate;
+        return base;
+      });
     }, intervalMs);
 
     return () => window.clearInterval(interval);
@@ -328,22 +361,19 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
   if (variant === 'minimal') {
     const pool = minimalPool.length ? minimalPool : [];
     const visibleCount = Math.min(4, pool.length);
-    const start = pool.length ? minimalOffset % pool.length : 0;
-    const minimalSuggestions =
-      pool.length && visibleCount
-        ? Array.from({ length: visibleCount }, (_, i) => pool[(start + i) % pool.length]!)
-        : [];
+    const idx = minimalVisibleIdx.slice(0, visibleCount);
+    const minimalSuggestions = idx.map((i) => pool[i]).filter(Boolean);
 
     return (
-      <div
-        className={`w-full max-w-3xl mx-auto grid grid-cols-4 gap-2 items-center justify-center ${className}`}
-      >
-        {minimalSuggestions.map((item) => (
+      <div className={`w-full max-w-3xl mx-auto flex items-center justify-center gap-2 ${className}`}>
+        {minimalSuggestions.map((item, i) => (
           <button
             key={item.id}
             onClick={() => handleMinimalClick(item.prompt)}
             title={item.text}
-            className="min-w-0 w-full px-2.5 py-1.5 text-[11px] rounded-full border border-slate-200/70 dark:border-navy-700/70 bg-white/60 dark:bg-navy-900/40 text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/50 dark:hover:bg-primary-900/20 transition-all duration-200 backdrop-blur-sm"
+            className={`min-w-0 max-w-[calc(25%-0.5rem)] px-3 py-1.5 text-[11px] rounded-full border border-slate-200/70 dark:border-navy-700/70 bg-white/60 dark:bg-navy-900/40 text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/50 dark:hover:bg-primary-900/20 transition-all duration-200 backdrop-blur-sm ${
+              minimalFadeSlot === i ? 'opacity-0' : 'opacity-100'
+            }`}
           >
             <span className="block min-w-0 truncate">{item.text}</span>
           </button>

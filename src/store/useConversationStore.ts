@@ -192,9 +192,8 @@ export interface ResponseAction {
 type ConversationGroup =
   | 'pinned'
   | 'today'
-  | 'yesterday'
   | 'thisWeek'
-  | 'lastMonth'
+  | 'thisMonth'
   | 'older'
   | 'archived';
 
@@ -207,9 +206,8 @@ function getConversationGroup(conv: Conversation): ConversationGroup {
   const diffDays = Math.floor((now.getTime() - convDate.getTime()) / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) return 'today';
-  if (diffDays === 1) return 'yesterday';
   if (diffDays <= 7) return 'thisWeek';
-  if (diffDays <= 30) return 'lastMonth';
+  if (diffDays <= 30) return 'thisMonth';
   return 'older';
 }
 
@@ -219,9 +217,8 @@ export function groupConversations(
   const groups: Record<ConversationGroup, Conversation[]> = {
     pinned: [],
     today: [],
-    yesterday: [],
     thisWeek: [],
-    lastMonth: [],
+    thisMonth: [],
     older: [],
     archived: [],
   };
@@ -295,7 +292,7 @@ interface ConversationState {
   isSidebarOpen: boolean;
   searchQuery: string;
   showArchived: boolean;
-  /** T002: Collapsed state for conversation list groups (today, yesterday, etc.). true = collapsed (hidden) */
+  /** T002: Collapsed state for conversation list groups (today, thisWeek, etc.). true = collapsed (hidden) */
   collapsedConversationGroups: Record<string, boolean>;
 
   // Derived data (computed)
@@ -441,9 +438,8 @@ export const useConversationStore = create<ConversationState>()(
       groupedConversations: {
         pinned: [],
         today: [],
-        yesterday: [],
         thisWeek: [],
-        lastMonth: [],
+        thisMonth: [],
         older: [],
         archived: [],
       },
@@ -854,6 +850,31 @@ export const useConversationStore = create<ConversationState>()(
             if (shouldRetryBecauseNotEnough && tryNo < TITLE_MAX_RETRIES) {
               const delay = 1200 * (tryNo + 1);
               setTimeout(() => void attempt(tryNo + 1), delay);
+              return;
+            }
+
+            // All retries exhausted or skipped for another reason — use heuristic fallback
+            if (result?.skipped) {
+              const activeConv = get().conversations.find((c) => c.id === id);
+              const firstUserContent = get().activeMessages.find((m) => m.role === 'user')?.content;
+              let fallback: string;
+              if (firstUserContent) {
+                const cleaned = firstUserContent.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+                fallback = cleaned.length > 50 ? cleaned.slice(0, 47) + '...' : cleaned;
+              } else {
+                fallback = `New chat (${new Date().toISOString().slice(0, 10)})`;
+              }
+              const titleLower = String(activeConv?.title || '').trim().toLowerCase();
+              const isStillDefault = !activeConv?.title || titleLower === '' || titleLower === 'new conversation' || titleLower === 'nowa rozmowa';
+              if (isStillDefault) {
+                set((state) => {
+                  const next = state.conversations.map((c) =>
+                    c.id === id ? { ...c, title: fallback, titleSource: 'auto' as const } : c
+                  );
+                  return { conversations: next, groupedConversations: groupConversations(next) };
+                });
+                void get().updateConversation(id, { title: fallback, titleSource: 'auto' });
+              }
             }
           } catch (err) {
             // Network / backend error: retry a few times with backoff

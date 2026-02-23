@@ -323,6 +323,8 @@ const REQUIRED_COLUMNS: Record<string, string[]> = {
     'blocked_reason',
     'blocked_by_decision_id',
     'blocked_at',
+    // Used by My Work stats + personal task completion bookkeeping.
+    'completed_at',
     'created_at',
     'updated_at',
   ],
@@ -945,8 +947,14 @@ async function ensureChatConversationTables(): Promise<void> {
     db.run(
       `CREATE TABLE IF NOT EXISTS chat_projects (
         id TEXT PRIMARY KEY,
-        scope TEXT DEFAULT 'personal',
+        user_id TEXT NOT NULL DEFAULT '',
         organization_id TEXT,
+        name TEXT NOT NULL DEFAULT 'Untitled',
+        description TEXT,
+        color TEXT DEFAULT '#6366f1',
+        icon TEXT DEFAULT 'folder',
+        scope TEXT DEFAULT 'personal',
+        conversation_count INTEGER DEFAULT 0,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
       )`,
@@ -1009,10 +1017,22 @@ async function ensureChatConversationTables(): Promise<void> {
     await addColumn('conversation_messages', `version INTEGER DEFAULT 1`);
 
   const chatProjectCols = await tableColumns('chat_projects');
+  if (!chatProjectCols.has('user_id'))
+    await addColumn('chat_projects', `user_id TEXT NOT NULL DEFAULT ''`);
+  if (!chatProjectCols.has('name'))
+    await addColumn('chat_projects', `name TEXT NOT NULL DEFAULT 'Untitled'`);
+  if (!chatProjectCols.has('description'))
+    await addColumn('chat_projects', `description TEXT`);
+  if (!chatProjectCols.has('color'))
+    await addColumn('chat_projects', `color TEXT DEFAULT '#6366f1'`);
+  if (!chatProjectCols.has('icon'))
+    await addColumn('chat_projects', `icon TEXT DEFAULT 'folder'`);
   if (!chatProjectCols.has('scope'))
     await addColumn('chat_projects', `scope TEXT DEFAULT 'personal'`);
   if (!chatProjectCols.has('organization_id'))
     await addColumn('chat_projects', `organization_id TEXT`);
+  if (!chatProjectCols.has('conversation_count'))
+    await addColumn('chat_projects', `conversation_count INTEGER DEFAULT 0`);
 
   // Notifications route expects `is_dismissed` on some schemas.
   try {

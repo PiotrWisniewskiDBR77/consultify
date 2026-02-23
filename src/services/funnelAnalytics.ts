@@ -68,6 +68,7 @@ export type FunnelEventName =
   | 'my_idea_edited'
   | 'my_idea_suggested'
   | 'my_idea_used'
+  | 'notebook_page_saved'
   | 'tools_hub_opened'
   | 'known_tools_opened'
   | 'known_tool_viewed'

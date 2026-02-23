@@ -1087,6 +1087,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               deepResearch: aiConfig?.deepResearch,
               webSearch: aiConfig?.webSearch,
               showReasoning: aiConfig?.showReasoning,
+              marketResearch: (aiConfig as any)?.marketResearch,
+              coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
+              privateMode: (aiConfig as any)?.privateMode ?? false,
               knowledgeSources: aiConfig?.knowledgeSources,
               responseStyle: aiConfig?.responseStyle,
               selectedTier: (aiConfig as any)?.selectedTier || undefined,
@@ -1431,6 +1434,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           deepResearch: aiConfig?.deepResearch,
           webSearch: aiConfig?.webSearch,
           showReasoning: aiConfig?.showReasoning,
+          marketResearch: (aiConfig as any)?.marketResearch,
+          coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
+          privateMode: (aiConfig as any)?.privateMode ?? false,
           knowledgeSources: aiConfig?.knowledgeSources,
           responseStyle: aiConfig?.responseStyle,
           selectedTier: (aiConfig as any)?.selectedTier || undefined,
@@ -1767,6 +1773,59 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     [activeConversationId, i18n.language, t]
   );
 
+  // T011: Save message output as Notebook page (private)
+  const handleSaveAsNote = useCallback(
+    async (messageId: string, content: string) => {
+      const trimmed = String(content || '').trim();
+      if (!trimmed) return;
+
+      const firstLine =
+        trimmed
+          .split('\n')
+          .map((l) => l.replace(/^#+\s*/, '').trim())
+          .find((l) => !!l) || '';
+      const title = firstLine.slice(0, 120) || (i18n.language === 'pl' ? 'Notatka' : 'Note');
+
+      try {
+        const created = await Api.post('/my-work/notebook/pages', {
+          title,
+          visibility: 'private',
+          tags: [],
+          contentText: trimmed,
+          contentJson: {
+            type: 'doc',
+            content: [
+              {
+                type: 'paragraph',
+                content: [{ type: 'text', text: trimmed }],
+              },
+            ],
+          },
+          source: { type: 'chat', conversationId: activeConversationId, messageId },
+        });
+
+        trackFunnelEvent('notebook_page_saved', {
+          source: 'chat',
+          pageId: (created as any)?.id,
+          messageId,
+        });
+        toast.success(t('myWork.notebook.savedToast', 'Saved to Notebook'));
+
+        try {
+          const { setMyWorkIntent, setCurrentView } = useAppStore.getState() as any;
+          setMyWorkIntent?.({ tab: 'notebook' });
+          setCurrentView?.(AppView.MY_WORK);
+        } catch {
+          // ignore
+        }
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Failed to save note:', err);
+        toast.error(t('myWork.errors.createFailed', 'Failed to create'));
+      }
+    },
+    [activeConversationId, i18n.language, t]
+  );
+
   // Deep Thinking: Enable DT mode from hint banner
   const handleEnableDeepThinking = useCallback(() => {
     setDtHintDismissed(true);
@@ -1905,6 +1964,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               deepResearch: aiConfig?.deepResearch,
               webSearch: aiConfig?.webSearch,
               showReasoning: aiConfig?.showReasoning,
+              marketResearch: (aiConfig as any)?.marketResearch,
+              coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
+              privateMode: (aiConfig as any)?.privateMode ?? false,
               knowledgeSources: aiConfig?.knowledgeSources,
               responseStyle: aiConfig?.responseStyle,
               selectedTier: (aiConfig as any)?.selectedTier || undefined,
@@ -2096,6 +2158,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       handleDeepThinkingReconfirm={handleDeepThinkingReconfirm}
       handleSaveAsDecision={handleSaveAsDecision}
       handleSaveAsIdea={handleSaveAsIdea}
+      handleSaveAsNote={handleSaveAsNote}
       handleRunDirectedDeepening={handleRunDirectedDeepening}
       handleMultiSelectToggle={handleMultiSelectToggle}
       handleMultiSelectConfirm={handleMultiSelectConfirm}

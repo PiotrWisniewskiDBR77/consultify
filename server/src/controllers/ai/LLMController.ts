@@ -14,6 +14,7 @@ import { llmService } from '../../services/ai/llmService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 
 export class LLMController {
+  private static lastHealthEventWriteAt = new Map<string, number>();
   /**
    * GET /api/llm/providers
    * List all configured providers
@@ -365,6 +366,7 @@ export class LLMController {
     try {
       const allProviders = (await dbAll('SELECT * FROM llm_providers', [])) as any[];
       const alerts: any[] = [];
+      const nowIso = new Date().toISOString();
 
       const providerHealthResults = await Promise.all(
         allProviders.map(async (provider: any) => {
@@ -392,6 +394,34 @@ export class LLMController {
                 status = 'unhealthy';
                 rawError = String(result.error || 'Connection failed');
               }
+
+              // Best-effort: persist health events (throttled ~60s/provider)
+              try {
+                const providerKey = String(provider.provider || '').toLowerCase();
+                const lastAt = LLMController.lastHealthEventWriteAt.get(providerKey) || 0;
+                if (Date.now() - lastAt > 60_000) {
+                  LLMController.lastHealthEventWriteAt.set(providerKey, Date.now());
+                  const available = status === 'healthy' || status === 'degraded';
+                  void dbRun(
+                    `INSERT INTO llm_health_events (id, provider, model, status, available, latency_ms, error_message, timestamp)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                      uuidv4(),
+                      providerKey,
+                      provider.model_id || null,
+                      status,
+                      available ? 1 : 0,
+                      responseTime || 0,
+                      available ? null : rawError || 'Unhealthy',
+                      nowIso,
+                    ]
+                  ).catch(() => {
+                    /* ignore */
+                  });
+                }
+              } catch {
+                /* ignore */
+              }
             } catch (e: any) {
               status = 'unhealthy';
               rawError = e.message;
@@ -413,6 +443,32 @@ export class LLMController {
                 code: 'PROVIDER_UNHEALTHY',
                 timestamp: new Date().toISOString(),
               });
+
+              try {
+                const providerKey = String(provider.provider || '').toLowerCase();
+                const lastAt = LLMController.lastHealthEventWriteAt.get(providerKey) || 0;
+                if (Date.now() - lastAt > 60_000) {
+                  LLMController.lastHealthEventWriteAt.set(providerKey, Date.now());
+                  void dbRun(
+                    `INSERT INTO llm_health_events (id, provider, model, status, available, latency_ms, error_message, timestamp)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                      uuidv4(),
+                      providerKey,
+                      provider.model_id || null,
+                      'unhealthy',
+                      0,
+                      responseTime || 0,
+                      String(rawError || 'Unhealthy'),
+                      nowIso,
+                    ]
+                  ).catch(() => {
+                    /* ignore */
+                  });
+                }
+              } catch {
+                /* ignore */
+              }
             }
           }
 
@@ -438,7 +494,7 @@ export class LLMController {
             rawError,
             statusCode,
             responseTime,
-            lastCheck: new Date().toISOString(),
+            lastCheck: nowIso,
           };
         })
       );
@@ -835,7 +891,7 @@ export class LLMController {
           const isLocal = providerId === 'ollama';
 
           if (!hasKey && !isLocal) {
-            return {
+            const row = {
               id: provider.id || provider.model_id || provider.provider,
               name: provider.name || provider.provider,
               provider: provider.provider,
@@ -843,6 +899,7 @@ export class LLMController {
               available: false,
               lastCheck: nowIso,
             };
+            return row;
           }
 
           try {
@@ -861,7 +918,7 @@ export class LLMController {
             );
 
             const ok = !!(result as any)?.success;
-            return {
+            const row = {
               id: provider.id || provider.model_id || provider.provider,
               name: provider.name || provider.provider,
               provider: provider.provider,
@@ -870,8 +927,35 @@ export class LLMController {
               latency: (result as any)?.latency || 0,
               lastCheck: nowIso,
             };
+            // Best-effort: persist health events (throttled ~60s/provider)
+            try {
+              const providerKey = String(provider.provider || '').toLowerCase();
+              const lastAt = LLMController.lastHealthEventWriteAt.get(providerKey) || 0;
+              if (Date.now() - lastAt > 60_000) {
+                LLMController.lastHealthEventWriteAt.set(providerKey, Date.now());
+                void dbRun(
+                  `INSERT INTO llm_health_events (id, provider, model, status, available, latency_ms, error_message, timestamp)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                  [
+                    uuidv4(),
+                    providerKey,
+                    provider.model_id || null,
+                    row.status,
+                    row.available ? 1 : 0,
+                    row.latency || 0,
+                    ok ? null : String((result as any)?.error || 'Unhealthy'),
+                    nowIso,
+                  ]
+                ).catch(() => {
+                  /* ignore */
+                });
+              }
+            } catch {
+              /* ignore */
+            }
+            return row;
           } catch (e: any) {
-            return {
+            const row = {
               id: provider.id || provider.model_id || provider.provider,
               name: provider.name || provider.provider,
               provider: provider.provider,
@@ -880,6 +964,32 @@ export class LLMController {
               error: e?.message || String(e),
               lastCheck: nowIso,
             };
+            try {
+              const providerKey = String(provider.provider || '').toLowerCase();
+              const lastAt = LLMController.lastHealthEventWriteAt.get(providerKey) || 0;
+              if (Date.now() - lastAt > 60_000) {
+                LLMController.lastHealthEventWriteAt.set(providerKey, Date.now());
+                void dbRun(
+                  `INSERT INTO llm_health_events (id, provider, model, status, available, latency_ms, error_message, timestamp)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                  [
+                    uuidv4(),
+                    providerKey,
+                    provider.model_id || null,
+                    'unhealthy',
+                    0,
+                    0,
+                    String(row.error || 'Unhealthy'),
+                    nowIso,
+                  ]
+                ).catch(() => {
+                  /* ignore */
+                });
+              }
+            } catch {
+              /* ignore */
+            }
+            return row;
           }
         })
       );
@@ -953,6 +1063,146 @@ export class LLMController {
     } catch (error: any) {
       console.error('[LLMController] Error getting recommended provider:', error);
       return res.status(500).json({ error: error.message });
+    }
+  }
+
+  /**
+   * GET /api/llm/incidents
+   * Timeline of downtime incidents based on llm_health_events.
+   *
+   * Query:
+   * - from: ISO string (optional)
+   * - to: ISO string (optional)
+   * - provider: provider id (default: openrouter)
+   */
+  static async getIncidents(req: Request, res: Response) {
+    try {
+      const provider = String((req.query.provider as string) || 'openrouter').toLowerCase();
+      const now = Date.now();
+      const fromIso = String(req.query.from || new Date(now - 24 * 60 * 60 * 1000).toISOString());
+      const toIso = String(req.query.to || new Date(now).toISOString());
+
+      const rows = (await dbAll(
+        `SELECT provider, model, status, available, latency_ms, error_message, timestamp
+         FROM llm_health_events
+         WHERE provider = ? AND timestamp >= ? AND timestamp <= ?
+         ORDER BY timestamp ASC`,
+        [provider, fromIso, toIso]
+      )) as Array<{
+        provider: string;
+        model?: string | null;
+        status: string;
+        available: number | boolean;
+        latency_ms?: number | null;
+        error_message?: string | null;
+        timestamp: string;
+      }>;
+
+      const events = (rows || [])
+        .map((r) => {
+          const ts = new Date(String(r.timestamp)).getTime();
+          if (!Number.isFinite(ts)) return null;
+          return {
+            provider: r.provider,
+            model: r.model || null,
+            available: !!r.available,
+            status: String(r.status || ''),
+            latencyMs: typeof r.latency_ms === 'number' ? r.latency_ms : Number(r.latency_ms || 0),
+            error: r.error_message || null,
+            timestamp: new Date(ts).toISOString(),
+            ts,
+          };
+        })
+        .filter(Boolean) as Array<{
+        provider: string;
+        model: string | null;
+        available: boolean;
+        status: string;
+        latencyMs: number;
+        error: string | null;
+        timestamp: string;
+        ts: number;
+      }>;
+
+      // Build incidents: contiguous unavailable periods.
+      const incidents: Array<{
+        start: string;
+        end: string | null;
+        durationMs: number;
+        samples: number;
+        lastError: string | null;
+      }> = [];
+
+      let current: {
+        startTs: number;
+        samples: number;
+        lastError: string | null;
+      } | null = null;
+
+      for (const ev of events) {
+        if (!ev.available) {
+          if (!current) {
+            current = { startTs: ev.ts, samples: 0, lastError: null };
+          }
+          current.samples += 1;
+          if (ev.error) current.lastError = ev.error;
+        } else if (current) {
+          const endTs = ev.ts;
+          incidents.push({
+            start: new Date(current.startTs).toISOString(),
+            end: new Date(endTs).toISOString(),
+            durationMs: Math.max(0, endTs - current.startTs),
+            samples: current.samples,
+            lastError: current.lastError,
+          });
+          current = null;
+        }
+      }
+      if (current) {
+        const endTs = new Date(toIso).getTime();
+        incidents.push({
+          start: new Date(current.startTs).toISOString(),
+          end: null,
+          durationMs: Math.max(0, (Number.isFinite(endTs) ? endTs : Date.now()) - current.startTs),
+          samples: current.samples,
+          lastError: current.lastError,
+        });
+      }
+
+      // Rough uptime estimate using deltas between samples.
+      const windowStartTs = new Date(fromIso).getTime();
+      const windowEndTs = new Date(toIso).getTime();
+      const totalMs =
+        Number.isFinite(windowStartTs) && Number.isFinite(windowEndTs) && windowEndTs > windowStartTs
+          ? windowEndTs - windowStartTs
+          : 0;
+      let downMs = 0;
+      for (const inc of incidents) {
+        const s = new Date(inc.start).getTime();
+        const e = inc.end ? new Date(inc.end).getTime() : windowEndTs;
+        if (Number.isFinite(s) && Number.isFinite(e) && e > s) {
+          downMs += e - s;
+        }
+      }
+      const uptimePct = totalMs > 0 ? Math.max(0, Math.min(100, ((totalMs - downMs) / totalMs) * 100)) : 0;
+
+      return res.json({
+        success: true,
+        provider,
+        from: fromIso,
+        to: toIso,
+        uptime: {
+          totalMs,
+          downMs,
+          upMs: Math.max(0, totalMs - downMs),
+          uptimePct: Number(uptimePct.toFixed(2)),
+          samples: events.length,
+        },
+        incidents,
+      });
+    } catch (error: any) {
+      console.error('[LLMController] Error getting incidents:', error);
+      return res.status(500).json({ success: false, error: error.message });
     }
   }
 

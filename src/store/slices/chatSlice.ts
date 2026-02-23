@@ -22,6 +22,8 @@ export interface ChatSlice {
     showReasoning: boolean; // Pokaż rozumowanie - widoczny tok myślenia AI
     multiAgent: boolean; // Analiza wieloagentowa - perspektywy CFO/CTO/CHRO/COO
     coThinkerMode: string | null; // Tryb Co-Thinker - persona doradcza
+    // Privacy
+    privateMode: boolean; // Private mode - disable memory injection/read/write for this chat session
     // Knowledge Sources (Źródła wiedzy)
     knowledgeSources: {
       pmoDocuments: boolean; // Dokumenty PMO - ISO 21500, PMBOK, PRINCE2
@@ -91,6 +93,7 @@ export const createChatSlice: StateCreator<AppState, [], [], ChatSlice> = (set) 
     showReasoning: false,
     multiAgent: false,
     coThinkerMode: null,
+    privateMode: false,
     // Knowledge Sources (default: use internal context where safe/useful)
     knowledgeSources: {
       pmoDocuments: true,

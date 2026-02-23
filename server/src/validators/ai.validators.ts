@@ -41,12 +41,17 @@ export const ChatConfirmRequestSchema = z.object({
   focusMode: z.string().optional(),
   selectedTier: z.enum(['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING']).optional(),
   selectedModelId: z.union([z.string().min(1), z.null()]).optional(),
+  // Privacy
+  privateMode: z.boolean().optional(),
   aiModes: z
     .object({
       deepResearch: z.boolean().optional(),
       webSearch: z.boolean().optional(),
       showReasoning: z.boolean().optional(),
       multiAgent: z.boolean().optional(),
+      marketResearch: z.boolean().optional(),
+      coThinkerMode: z.union([z.string().min(1), z.null()]).optional(),
+      privateMode: z.boolean().optional(),
     })
     .optional(),
   knowledgeSources: z
@@ -103,12 +108,17 @@ export const ChatStreamRequestSchema = z.object({
   // Explicit provider override (used for per-user local inference like Ollama)
   provider: z.string().min(1).optional(),
   endpoint: z.string().min(1).optional(),
+  // Privacy
+  privateMode: z.boolean().optional(),
   aiModes: z
     .object({
       deepResearch: z.boolean().optional(),
       webSearch: z.boolean().optional(),
       showReasoning: z.boolean().optional(),
       multiAgent: z.boolean().optional(),
+      marketResearch: z.boolean().optional(),
+      coThinkerMode: z.union([z.string().min(1), z.null()]).optional(),
+      privateMode: z.boolean().optional(),
     })
     .optional(),
   knowledgeSources: z

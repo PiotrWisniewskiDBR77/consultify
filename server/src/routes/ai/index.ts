@@ -52,7 +52,9 @@ router.use('/memory-v2', aiMemoryRoutesV2);
 router.use('/nudges', aiNudgesRoutes);
 router.use('/operations', aiOperationsRoutes);
 router.use('/preferences-extended', aiPreferencesExtendedRoutes);
-router.use('/prompts', aiPromptsRoutes);
+// NOTE: `/api/ai/prompts` is reserved as an alias to the canonical SSOT prompt registry
+// (`/api/ai-prompts`). Keep the legacy controller-based prompts API under a distinct path.
+router.use('/ai-prompts', aiPromptsRoutes);
 router.use('/security', aiSecurityRoutes);
 router.use('/settings', aiSettingsRoutes);
 router.use('/training', aiTrainingRoutes);

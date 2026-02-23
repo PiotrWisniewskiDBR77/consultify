@@ -13,18 +13,13 @@
  */
 
 import {
-  BarChart3,
-  Brain,
   Calculator,
   CheckCircle2,
-  FileText,
   PanelLeft,
   RefreshCw,
   Search,
-  Shield,
   Sparkles,
   Wrench,
-  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -339,6 +334,7 @@ export const AIChatWelcomeView: React.FC = () => {
   const [continuousVoiceMode, setContinuousVoiceMode] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [orgLogoUrl, setOrgLogoUrl] = useState<string | null>(null);
+  const [orgLogoLoaded, setOrgLogoLoaded] = useState(false);
   const [aiMemoryContext, setAiMemoryContext] = useState<string | null>(null);
   const [coThinkerPhase, setCoThinkerPhase] = useState<string>('discovery');
   const [messageFeedback, setMessageFeedback] = useState<Record<string, MessageFeedback>>({});
@@ -414,7 +410,10 @@ export const AIChatWelcomeView: React.FC = () => {
       try {
         const resp = await Api.get(`/organization-profiles/${orgId}`);
         const url = resp?.profile?.logoUrl ? String(resp.profile.logoUrl || '') : '';
-        if (!cancelled) setOrgLogoUrl(url || null);
+        if (!cancelled) {
+          setOrgLogoUrl(url || null);
+          setOrgLogoLoaded(false);
+        }
       } catch (err) {
         // Non-blocking: branding is optional.
         if (!cancelled) setOrgLogoUrl(null);
@@ -846,6 +845,9 @@ For example: REMEMBER: preferred_language: Polish`;
               deepResearch: aiConfig?.deepResearch,
               webSearch: aiConfig?.webSearch,
               showReasoning: aiConfig?.showReasoning,
+              marketResearch: (aiConfig as any)?.marketResearch,
+              coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
+              privateMode: (aiConfig as any)?.privateMode ?? false,
               knowledgeSources: aiConfig?.knowledgeSources,
               responseStyle: aiConfig?.responseStyle,
               selectedTier: (aiConfig as any)?.selectedTier || undefined,
@@ -1285,6 +1287,9 @@ For example: REMEMBER: preferred_language: Polish`;
                 deepResearch: aiConfig?.deepResearch,
                 webSearch: aiConfig?.webSearch,
                 showReasoning: aiConfig?.showReasoning,
+                marketResearch: (aiConfig as any)?.marketResearch,
+                coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
+                privateMode: (aiConfig as any)?.privateMode ?? false,
                 knowledgeSources: aiConfig?.knowledgeSources,
                 responseStyle: aiConfig?.responseStyle,
                 selectedTier: (aiConfig as any)?.selectedTier || undefined,
@@ -1894,56 +1899,105 @@ For example: REMEMBER: preferred_language: Polish`;
           <div className="w-full max-w-2xl mt-6 grid grid-cols-2 md:grid-cols-4 gap-2">
             {[
               {
-                icon: Brain,
-                label: t('aiChat.capabilities.deepThinking', 'Deep Thinking'),
+                icon: Search,
+                label: t('aiChat.homeCards.market.label', 'Analiza rynku'),
                 desc: t(
-                  'aiChat.capabilities.deepThinkingDesc',
-                  'Multi-step analysis with web research'
+                  'aiChat.homeCards.market.desc',
+                  'Research a market, competitors, and positioning'
                 ),
                 color: 'text-violet-500',
                 bg: 'bg-violet-50 dark:bg-violet-900/20',
-                prompt: t(
-                  'aiChat.capabilities.deepThinkingPrompt',
-                  'Analyze the biggest risk to our current strategy and suggest 3 mitigations'
-                ),
+                onClick: () => {
+                  const kickoff = t(
+                    'aiChat.homeCards.market.kickoff',
+                    'Chcę zrobić analizę rynku. Opisz proszę, jakie pytania musisz mi zadać, żeby dobrze zdefiniować: branżę, segment, kraj, klientów, konkurencję i przewagę. Zacznij od 5 pytań.'
+                  );
+                  setAIConfig({
+                    deepResearch: true,
+                    marketResearch: true,
+                    webSearch: true,
+                    coThinkerMode: null,
+                    responseStyle: 'analyst',
+                  } as any);
+                  void handleSend(kickoff);
+                },
               },
               {
-                icon: BarChart3,
-                label: t('aiChat.capabilities.scenarios', 'Scenario Modeling'),
-                desc: t('aiChat.capabilities.scenariosDesc', 'Monte Carlo ROI & what-if analysis'),
+                icon: Calculator,
+                label: t('aiChat.homeCards.finance.label', 'Analiza finansowa'),
+                desc: t('aiChat.homeCards.finance.desc', 'Analyze ROI, budgets, and scenarios'),
                 color: 'text-emerald-500',
                 bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-                prompt: t(
-                  'aiChat.capabilities.scenariosPrompt',
-                  'Run a Monte Carlo simulation for the ROI of our top initiative'
-                ),
+                onClick: () => {
+                  const kickoff = t(
+                    'aiChat.homeCards.finance.kickoff',
+                    'Chcę zrobić analizę finansową. Jakie dane mamy przeanalizować (budżet, koszty, przychody, ROI, CAPEX/OPEX)? Zadaj mi 5 pytań, a potem zaproponuj strukturę analizy.'
+                  );
+                  startModuleWithKickoff(
+                    AppView.ECONOMICS,
+                    {
+                      deepResearch: false,
+                      marketResearch: false,
+                      webSearch: false,
+                      coThinkerMode: 'competitive_analyst',
+                      responseStyle: 'analyst',
+                    },
+                    kickoff
+                  );
+                },
               },
               {
-                icon: Shield,
-                label: t('aiChat.capabilities.riskAlerts', 'Risk Alerts'),
-                desc: t('aiChat.capabilities.riskAlertsDesc', 'Predictive risk & budget warnings'),
+                icon: Wrench,
+                label: t('aiChat.homeCards.consulting.label', 'Klasyczny consulting'),
+                desc: t('aiChat.homeCards.consulting.desc', 'Use classic frameworks and tools'),
                 color: 'text-amber-500',
                 bg: 'bg-amber-50 dark:bg-amber-900/20',
-                prompt: t(
-                  'aiChat.capabilities.riskAlertsPrompt',
-                  'What are the top risks in my portfolio right now?'
-                ),
+                onClick: () => {
+                  const kickoff = t(
+                    'aiChat.homeCards.consulting.kickoff',
+                    'Chcę użyć klasycznych narzędzi consultingowych. Jaki problem rozwiązujemy i w jakim kontekście? Zadaj mi 5 pytań, a potem zaproponuj 2–3 najlepsze ramy (np. SWOT, 5 Forces, Ansoff, Value Chain).'
+                  );
+                  startModuleWithKickoff(
+                    AppView.DISCOVERY_TOOLS,
+                    {
+                      deepResearch: false,
+                      marketResearch: false,
+                      webSearch: false,
+                      coThinkerMode: 'multi_consultant',
+                      responseStyle: 'professional',
+                    },
+                    kickoff
+                  );
+                },
               },
               {
-                icon: Zap,
-                label: t('aiChat.capabilities.actions', 'Quick Actions'),
-                desc: t('aiChat.capabilities.actionsDesc', 'Create tasks, decisions & reports'),
+                icon: CheckCircle2,
+                label: t('aiChat.homeCards.digital.label', 'Transformacja cyfrowa'),
+                desc: t('aiChat.homeCards.digital.desc', 'Run licensed diagnostics and assessments'),
                 color: 'text-blue-500',
                 bg: 'bg-blue-50 dark:bg-blue-900/20',
-                prompt: t(
-                  'aiChat.capabilities.actionsPrompt',
-                  'Create a task to review our Q1 roadmap progress'
-                ),
+                onClick: () => {
+                  const kickoff = t(
+                    'aiChat.homeCards.digital.kickoff',
+                    'Chcę ocenić gotowość do transformacji cyfrowej. Jakie obszary mamy ocenić i jakie są kryteria? Zadaj mi 5 pytań i zaproponuj szybki plan diagnozy.'
+                  );
+                  startModuleWithKickoff(
+                    AppView.ASSESSMENT_OVERVIEW,
+                    {
+                      deepResearch: false,
+                      marketResearch: false,
+                      webSearch: false,
+                      coThinkerMode: 'multi_consultant',
+                      responseStyle: 'coach',
+                    },
+                    kickoff
+                  );
+                },
               },
             ].map((cap) => (
               <button
                 key={cap.label}
-                onClick={() => handleSuggestionClick(cap.prompt)}
+                onClick={cap.onClick}
                 className="group flex flex-col items-start gap-1.5 p-2.5 rounded-lg border border-slate-200/60 dark:border-white/5 bg-white/60 dark:bg-white/[0.02] hover:bg-white dark:hover:bg-white/5 hover:border-slate-300 dark:hover:border-white/10 transition-all duration-200 text-left"
               >
                 <div className={`p-1.5 rounded-md ${cap.bg}`}>
@@ -1974,15 +2028,21 @@ For example: REMEMBER: preferred_language: Polish`;
         </div>
       </div>
 
-      {/* Organization logo (if configured in Admin settings) */}
+      {/* Organization logo — visible only after the image loads successfully */}
       {!!orgLogoUrl && (
-        <div className="absolute bottom-4 right-16 sm:right-20 z-20 pointer-events-none select-none">
+        <div
+          className={`absolute bottom-4 right-16 sm:right-20 z-20 pointer-events-none select-none transition-opacity duration-300 ${
+            orgLogoLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
           <div className="rounded-xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-navy-950/40 backdrop-blur-md px-3 py-2 shadow-lg">
             <img
               src={orgLogoUrl}
               alt={currentOrganization?.name || currentUser?.organizationName || 'Organization'}
               className="h-10 sm:h-12 w-auto max-w-[190px] object-contain opacity-95"
               draggable={false}
+              onLoad={() => setOrgLogoLoaded(true)}
+              onError={() => setOrgLogoLoaded(false)}
             />
           </div>
         </div>

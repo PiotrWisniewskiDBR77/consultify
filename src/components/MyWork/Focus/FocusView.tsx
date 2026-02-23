@@ -45,6 +45,7 @@ import {
   Target,
   User,
   UserPlus,
+  X,
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -148,6 +149,7 @@ interface SortableFocusCardProps {
   onComplete: (item: FocusItem) => void;
   onSnooze: (item: FocusItem, column: FocusColumn) => void;
   onDelegate: (item: FocusItem) => void;
+  onRemove: (item: FocusItem) => void;
   onClick: (item: FocusItem) => void;
   isDragging?: boolean;
 }
@@ -157,6 +159,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
   onComplete,
   onSnooze,
   onDelegate,
+  onRemove,
   onClick,
   isDragging,
 }) => {
@@ -326,11 +329,17 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
                   onClick: () => onSnooze(item, nextColumn[item.column]),
                 },
                 {
+                  id: 'remove',
+                  label: t('myWork.focus.actions.remove', 'Remove from focus'),
+                  icon: X,
+                  onClick: () => onRemove(item),
+                  divider: true,
+                },
+                {
                   id: 'delegate',
                   label: t('myWork.focus.actions.delegate', 'Delegate'),
                   icon: UserPlus,
                   onClick: () => onDelegate(item),
-                  divider: true,
                 },
               ];
               return actions;
@@ -384,6 +393,7 @@ interface FocusColumnProps {
   onComplete: (item: FocusItem) => void;
   onSnooze: (item: FocusItem, targetColumn: FocusColumn) => void;
   onDelegate: (item: FocusItem) => void;
+  onRemove: (item: FocusItem) => void;
   onItemClick: (item: FocusItem) => void;
 }
 
@@ -393,6 +403,7 @@ const FocusColumnComponent: React.FC<FocusColumnProps> = ({
   onComplete,
   onSnooze,
   onDelegate,
+  onRemove,
   onItemClick,
 }) => {
   const { t } = useTranslation();
@@ -433,6 +444,7 @@ const FocusColumnComponent: React.FC<FocusColumnProps> = ({
                 onComplete={onComplete}
                 onSnooze={onSnooze}
                 onDelegate={onDelegate}
+                onRemove={onRemove}
                 onClick={onItemClick}
               />
             ))}
@@ -574,6 +586,12 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [delegateItem, setDelegateItem] = useState<FocusItem | null>(null);
 
+  const parseKey = useCallback((key: string): { kind: 'task' | 'decision'; id: string } | null => {
+    const [kind, id] = String(key || '').split(':');
+    if ((kind === 'task' || kind === 'decision') && id) return { kind, id };
+    return null;
+  }, []);
+
   // DnD sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -590,13 +608,26 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
   const loadFocus = useCallback(async () => {
     try {
       setLoading(true);
-      const [tasksRes, decisionsRes] = await Promise.all([
+      const [tasksRes, decisionsRes, focusStateRes] = await Promise.all([
         Api.get('/my-work/tasks').catch(() => ({ tasks: [] })),
         Api.get('/my-work/decisions').catch(() => ({ decisions: [] })),
+        Api.get('/my-work/focus/state').catch(() => ({ items: [] })),
       ]);
 
       const tasks = Array.isArray(tasksRes) ? tasksRes : tasksRes.tasks || [];
       const decisions = Array.isArray(decisionsRes) ? decisionsRes : decisionsRes.decisions || [];
+      const focusStateItems = Array.isArray((focusStateRes as any)?.items)
+        ? (focusStateRes as any).items
+        : [];
+      const focusStateMap = new Map<string, { column: FocusColumn; position: number }>();
+      for (const s of focusStateItems) {
+        const itemKey = String(s?.itemKey || s?.item_key || '');
+        const col = String(s?.column || s?.column_name || '') as FocusColumn;
+        const pos = Number(s?.position || 0);
+        if (!itemKey) continue;
+        if (!['today', 'thisWeek', 'later'].includes(col)) continue;
+        focusStateMap.set(itemKey, { column: col, position: Number.isFinite(pos) ? pos : 0 });
+      }
 
       // Map tasks to FocusItems
       // A3.1: Compute date boundaries once, then assign each task to exactly one column
@@ -609,27 +640,29 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
 
       const taskItems: FocusItem[] = tasks.slice(0, 20).map((task: any, idx: number) => {
         // Determine column based on due date
-        let column: FocusColumn = 'later';
+        const key = `task:${task.id}`;
+        const persisted = focusStateMap.get(key);
+        let column: FocusColumn = persisted?.column || 'later';
         if (task.dueDate) {
           const dueDate = new Date(task.dueDate);
           dueDate.setHours(0, 0, 0, 0);
 
           if (dueDate < tomorrowStart) {
             // Due today or overdue → Today
-            column = 'today';
+            column = persisted?.column || 'today';
           } else if (dueDate < endOfWeek) {
             // Due this week (but NOT today) → This Week
-            column = 'thisWeek';
+            column = persisted?.column || 'thisWeek';
           }
         }
 
         return {
-          id: `task-${task.id}`,
+          id: key,
           type: 'task' as const,
           title: task.title,
           description: task.description,
           column,
-          position: idx,
+          position: persisted?.position ?? idx,
           priority: task.priority,
           status: task.status,
           dueDate: task.dueDate,
@@ -644,24 +677,26 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
       const decisionItems: FocusItem[] = decisions
         .slice(0, 10)
         .map((decision: any, idx: number) => {
-          let column: FocusColumn = 'thisWeek';
+          const key = `decision:${decision.id}`;
+          const persisted = focusStateMap.get(key);
+          let column: FocusColumn = persisted?.column || 'thisWeek';
           if (decision.isOverdue || (decision.daysWaiting && decision.daysWaiting > 5)) {
-            column = 'today';
+            column = persisted?.column || 'today';
           } else if (decision.dueDate) {
             const dueDate = new Date(decision.dueDate);
             dueDate.setHours(0, 0, 0, 0);
             if (dueDate < tomorrowStart) {
-              column = 'today';
+              column = persisted?.column || 'today';
             }
           }
 
           return {
-            id: `decision-${decision.id}`,
+            id: key,
             type: 'decision' as const,
             title: decision.title,
             description: decision.description,
             column,
-            position: idx,
+            position: persisted?.position ?? idx,
             priority: decision.priority?.toLowerCase(),
             dueDate: decision.dueDate,
             isOverdue: decision.isOverdue,
@@ -739,35 +774,61 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
     const activeItem = findItemById(active.id);
     const overItem = findItemById(over.id);
 
-    if (!activeItem) return;
+    if (!activeItem || !overItem) return;
 
-    // If dropped in the same column, reorder
-    if (overItem && activeItem.column === overItem.column) {
-      const columnItems = itemsByColumn[activeItem.column];
-      const oldIndex = columnItems.findIndex((i) => i.id === active.id);
-      const newIndex = columnItems.findIndex((i) => i.id === over.id);
+    const sourceCol = activeItem.column;
+    const targetCol = overItem.column;
 
-      if (oldIndex !== newIndex) {
-        const newColumnItems = arrayMove(columnItems, oldIndex, newIndex);
-        setItems((prev) => {
-          const otherItems = prev.filter((i) => i.column !== activeItem.column);
-          return [
-            ...otherItems,
-            ...newColumnItems.map((item, idx) => ({ ...item, position: idx })),
-          ];
-        });
-      }
-    }
-
-    // Save to API (debounced in real implementation)
     try {
+      if (sourceCol === targetCol) {
+        const columnItems = itemsByColumn[sourceCol];
+        const oldIndex = columnItems.findIndex((i) => i.id === active.id);
+        const newIndex = columnItems.findIndex((i) => i.id === over.id);
+        if (oldIndex === -1 || newIndex === -1) return;
+
+        if (oldIndex !== newIndex) {
+          const newColumnItems = arrayMove(columnItems, oldIndex, newIndex).map((it, idx) => ({
+            ...it,
+            position: idx,
+          }));
+          setItems((prev) => [...prev.filter((i) => i.column !== sourceCol), ...newColumnItems]);
+        }
+
+        await Api.put('/my-work/focus/reorder', {
+          itemId: active.id,
+          column: sourceCol,
+          position: newIndex,
+        });
+        return;
+      }
+
+      // Cross-column move: remove from source, insert into target before overItem
+      const sourceItems = itemsByColumn[sourceCol]
+        .filter((i) => i.id !== active.id)
+        .map((it, idx) => ({ ...it, position: idx }));
+      const targetItems = [...itemsByColumn[targetCol]];
+      const insertAt = targetItems.findIndex((i) => i.id === over.id);
+      const moving: FocusItem = { ...activeItem, column: targetCol };
+      targetItems.splice(insertAt >= 0 ? insertAt : targetItems.length, 0, moving);
+      const targetItemsRe = targetItems.map((it, idx) => ({ ...it, position: idx }));
+
+      setItems((prev) => [
+        ...prev.filter((i) => i.column !== sourceCol && i.column !== targetCol),
+        ...sourceItems,
+        ...targetItemsRe,
+      ]);
+
+      await Api.put('/my-work/focus/move', {
+        itemId: active.id,
+        column: targetCol,
+      });
       await Api.put('/my-work/focus/reorder', {
         itemId: active.id,
-        column: activeItem.column,
-        position: activeItem.position,
+        column: targetCol,
+        position: insertAt >= 0 ? insertAt : targetItemsRe.length - 1,
       });
     } catch (error) {
-      console.error('Failed to save reorder:', error);
+      console.error('Failed to persist focus state:', error);
     }
   };
 
@@ -779,10 +840,9 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
         prev.map((i) => (i.id === item.id ? { ...i, isCompleted: newCompleted } : i))
       );
 
-      const endpoint =
-        item.type === 'task'
-          ? `/tasks/${item.id.replace('task-', '')}`
-          : `/decisions/${item.id.replace('decision-', '')}`;
+      const parsed = parseKey(item.id);
+      if (!parsed) throw new Error('Invalid focus item key');
+      const endpoint = parsed.kind === 'task' ? `/tasks/${parsed.id}` : `/decisions/${parsed.id}`;
 
       await Api.put(endpoint, {
         status: newCompleted
@@ -793,6 +853,11 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
             ? 'todo'
             : 'PENDING',
       });
+
+      if (newCompleted) {
+        // Remove from focus state once completed (roundtrip persist/reload)
+        await Api.delete(`/my-work/focus/item?itemId=${encodeURIComponent(item.id)}`).catch(() => {});
+      }
 
       toast.success(
         newCompleted
@@ -825,20 +890,33 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
     }
   };
 
+  const handleRemoveFromFocus = async (item: FocusItem) => {
+    try {
+      setItems((prev) => prev.filter((i) => i.id !== item.id));
+      await Api.delete(`/my-work/focus/item?itemId=${encodeURIComponent(item.id)}`);
+      toast.success(t('myWork.focus.removed', 'Removed from focus'));
+    } catch (error) {
+      console.error('Failed to remove from focus:', error);
+      loadFocus();
+      toast.error(t('myWork.focus.error', 'Failed to update'));
+    }
+  };
+
   const handleDelegate = async (itemId: string, userId: string) => {
     try {
       const item = findItemById(itemId);
       if (!item) return;
 
+      const parsed = parseKey(itemId);
+      if (!parsed) throw new Error('Invalid focus item key');
       const endpoint =
-        item.type === 'task'
-          ? `/tasks/${itemId.replace('task-', '')}/assign`
-          : `/decisions/${itemId.replace('decision-', '')}/delegate`;
+        parsed.kind === 'task' ? `/tasks/${parsed.id}/assign` : `/decisions/${parsed.id}/delegate`;
 
       await Api.post(endpoint, { userId });
 
       // Remove from list after delegation
       setItems((prev) => prev.filter((i) => i.id !== itemId));
+      await Api.delete(`/my-work/focus/item?itemId=${encodeURIComponent(itemId)}`).catch(() => {});
       toast.success(t('myWork.focus.delegated', 'Successfully delegated'));
     } catch (error) {
       console.error('Failed to delegate:', error);
@@ -876,6 +954,7 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
                 onComplete={handleComplete}
                 onSnooze={handleSnooze}
                 onDelegate={(item) => setDelegateItem(item)}
+                onRemove={handleRemoveFromFocus}
                 onItemClick={(item) => onItemClick?.(item)}
               />
             ))}
