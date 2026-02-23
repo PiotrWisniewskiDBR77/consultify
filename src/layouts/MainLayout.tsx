@@ -13,6 +13,7 @@ import { FeedbackToggleButton } from '../components/Feedback/FeedbackToggleButto
 import { HelpSidePanel } from '../components/Help/HelpSidePanel';
 import { HelpToggleButton } from '../components/Help/HelpToggleButton';
 import { MicroVideoHelpTrigger } from '../components/Help/MicroVideoHelpTrigger';
+import { FeatureFlagsDevToolsToggleButton } from '../components/settings/FeatureFlagsDevToolsToggleButton';
 import { NotificationDropdown } from '../components/layout/NotificationDropdown';
 import { UserProfileMenu } from '../components/layout/UserProfileMenu';
 import { LLMSelector } from '../components/LLMSelector';
@@ -139,6 +140,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
         <div className="pointer-events-auto">
           <DocumentToggleButton />
+        </div>
+        <div className="pointer-events-auto">
+          <FeatureFlagsDevToolsToggleButton />
         </div>
       </div>
       <HelpSidePanel />

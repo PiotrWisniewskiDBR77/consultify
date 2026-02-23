@@ -18,6 +18,7 @@
     "filter": "Filtruj",
     "sort": "Sortuj",
     "view": "Widok",
+    "refresh": "Odśwież",
     "download": "Pobierz",
     "upload": "Wyślij",
     "submit": "Wyślij",
@@ -87,6 +88,10 @@
     "documents": {
       "title": "Dokumenty",
       "tooltip": "Dokumenty"
+    },
+    "ab": {
+      "title": "Eksperymenty A/B",
+      "tooltip": "Eksperymenty A/B"
     }
   },
   "myWork": {
@@ -164,6 +169,25 @@
       "idea": "Pomysł",
       "insert": "Wstaw",
       "open": "Otwórz"
+    },
+    "notebook": {
+      "title": "Notebook",
+      "new": "Nowa strona",
+      "searchHint": "Użyj głównego wyszukiwania u góry",
+      "empty": "Brak stron",
+      "project": "Projekt",
+      "private": "Prywatne",
+      "noSelection": "Wybierz lub utwórz stronę",
+      "autoSaved": "Autozapis",
+      "suggestions": "Powiązane notatki",
+      "suggestionsEmptyTitle": "Brak sugestii",
+      "suggestionsEmpty": "Zapisuj notatki, aby zbudować prywatną bazę wiedzy.",
+      "note": "Notatka",
+      "insertedToast": "Wstawiono do opisu",
+      "insert": "Wstaw",
+      "open": "Otwórz",
+      "saveAsNote": "Zapisz jako notatkę",
+      "savedToast": "Zapisano do Notebook"
     }
   },
   "step1": {
@@ -2118,6 +2142,20 @@
     "openSidebar": "Otwórz panel boczny",
     "newChat": "Nowa rozmowa",
     "dailyBrief": "Dzienny brief",
+    "signals": {
+      "title": "Ważne sygnały",
+      "count": "{{count}} sygnałów",
+      "empty": "Brak sygnałów na teraz.",
+      "untitled": "Sygnał",
+      "noDetails": "Brak szczegółów",
+      "loadFailed": "Nie udało się załadować sygnałów",
+      "saveNotebook": "Zapisz do Notebook",
+      "saveIdeas": "Zapisz do Moich pomysłów",
+      "snooze": "Wycisz",
+      "muteType": "Wycisz typ",
+      "dismiss": "Ukryj",
+      "mutedHint": "Wyciszone typy:"
+    },
     "quickClicks": {
       "brief": { "label": "Dzienny brief" },
       "savings": {

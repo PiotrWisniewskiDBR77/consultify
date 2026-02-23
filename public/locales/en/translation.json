@@ -595,6 +595,7 @@
     "filter": "Filter",
     "sort": "Sort",
     "view": "View",
+    "refresh": "Refresh",
     "download": "Download",
     "upload": "Upload",
     "submit": "Submit",
@@ -664,6 +665,10 @@
     "documents": {
       "title": "Documents",
       "tooltip": "Documents"
+    },
+    "ab": {
+      "title": "A/B Experiments",
+      "tooltip": "A/B Experiments"
     }
   },
   "myWork": {
@@ -741,6 +746,25 @@
       "idea": "Idea",
       "insert": "Insert",
       "open": "Open"
+    },
+    "notebook": {
+      "title": "Notebook",
+      "new": "New page",
+      "searchHint": "Use the main search above",
+      "empty": "No pages yet",
+      "project": "Project",
+      "private": "Private",
+      "noSelection": "Select or create a page",
+      "autoSaved": "Auto-saved",
+      "suggestions": "Relevant notes",
+      "suggestionsEmptyTitle": "No suggestions",
+      "suggestionsEmpty": "Save notes to build your personal knowledge base.",
+      "note": "Note",
+      "insertedToast": "Inserted into description",
+      "insert": "Insert",
+      "open": "Open",
+      "saveAsNote": "Save as note",
+      "savedToast": "Saved to Notebook"
     }
   },
   "step1": {
@@ -2118,6 +2142,20 @@
     "openSidebar": "Open sidebar",
     "newChat": "New conversation",
     "dailyBrief": "Daily brief",
+    "signals": {
+      "title": "Important signals",
+      "count": "{{count}} signals",
+      "empty": "No signals right now.",
+      "untitled": "Signal",
+      "noDetails": "No details",
+      "loadFailed": "Failed to load signals",
+      "saveNotebook": "Save to Notebook",
+      "saveIdeas": "Save to My Ideas",
+      "snooze": "Snooze",
+      "muteType": "Mute type",
+      "dismiss": "Dismiss",
+      "mutedHint": "Muted types:"
+    },
     "quickClicks": {
       "brief": { "label": "Daily brief" },
       "savings": {

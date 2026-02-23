@@ -32,7 +32,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import React, { createContext, useCallback, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 import {
   FeatureFlag,
@@ -54,6 +54,8 @@ export const useFeatureFlagsContext = (): UseFeatureFlagsReturn => {
   }
   return context;
 };
+
+const OPEN_DEVTOOLS_EVENT = 'consultify:openFeatureFlagsDevTools';
 
 // ============================================
 // DEVTOOLS COMPONENT
@@ -231,28 +233,6 @@ const DevToolsPanel: React.FC<DevToolsPanelProps> = ({ featureFlags, onClose }) 
 };
 
 // ============================================
-// DEVTOOLS TRIGGER BUTTON
-// ============================================
-
-interface DevToolsTriggerProps {
-  onClick: () => void;
-}
-
-const DevToolsTrigger: React.FC<DevToolsTriggerProps> = ({ onClick }) => {
-  return (
-    <motion.button
-      onClick={onClick}
-      className="fixed bottom-4 right-4 p-3 bg-primary-500 text-white rounded-full shadow-lg shadow-primary-500/25 hover:bg-primary-600 transition-colors z-[9998]"
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      title="Feature Flags DevTools"
-    >
-      <Flag size={18} />
-    </motion.button>
-  );
-};
-
-// ============================================
 // PROVIDER
 // ============================================
 
@@ -271,9 +251,13 @@ export const FeatureFlagsProvider: React.FC<FeatureFlagsProviderProps> = ({
   const featureFlags = useFeatureFlags(config);
   const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
 
-  const toggleDevTools = useCallback(() => {
-    setIsDevToolsOpen((prev: any) => !prev);
-  }, []);
+  useEffect(() => {
+    if (!showDevTools) return;
+
+    const open = () => setIsDevToolsOpen(true);
+    window.addEventListener(OPEN_DEVTOOLS_EVENT, open);
+    return () => window.removeEventListener(OPEN_DEVTOOLS_EVENT, open);
+  }, [showDevTools]);
 
   return (
     <FeatureFlagsContext.Provider value={featureFlags}>
@@ -285,9 +269,7 @@ export const FeatureFlagsProvider: React.FC<FeatureFlagsProviderProps> = ({
           <AnimatePresence>
             {isDevToolsOpen ? (
               <DevToolsPanel featureFlags={featureFlags} onClose={() => setIsDevToolsOpen(false)} />
-            ) : (
-              <DevToolsTrigger onClick={toggleDevTools} />
-            )}
+            ) : null}
           </AnimatePresence>
         </>
       )}

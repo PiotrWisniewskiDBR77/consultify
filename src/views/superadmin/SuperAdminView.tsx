@@ -28,6 +28,7 @@ import { FeedbackToggleButton } from '../../components/Feedback/FeedbackToggleBu
 // Floating Widgets
 import { HelpSidePanel } from '../../components/Help/HelpSidePanel';
 import { HelpToggleButton } from '../../components/Help/HelpToggleButton';
+import { FeatureFlagsDevToolsToggleButton } from '../../components/settings/FeatureFlagsDevToolsToggleButton';
 import {
   appViewToSection,
   sectionToAppView,
@@ -314,6 +315,9 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         </div>
         <div className="pointer-events-auto">
           <DocumentToggleButton />
+        </div>
+        <div className="pointer-events-auto">
+          <FeatureFlagsDevToolsToggleButton />
         </div>
       </div>
       <HelpSidePanel />
