@@ -100,6 +100,9 @@ export const ChatStreamRequestSchema = z.object({
   focusMode: z.string().optional(),
   selectedTier: z.enum(['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING']).optional(),
   selectedModelId: z.union([z.string().min(1), z.null()]).optional(),
+  // Explicit provider override (used for per-user local inference like Ollama)
+  provider: z.string().min(1).optional(),
+  endpoint: z.string().min(1).optional(),
   aiModes: z
     .object({
       deepResearch: z.boolean().optional(),

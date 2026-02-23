@@ -13,6 +13,12 @@ export default defineConfig(({ mode }) => {
     '**/test-results/**',
     '**/dist/**',
     '**/data/**',
+    // Codex/Cursor scratch worktrees can churn (tsconfig changes) and cause reload loops
+    '**/.codex-worktrees/**',
+    /\/\.codex-worktrees\//,
+    // Temporary runtime caches (e.g. e2e node compile cache)
+    '**/.tmp/**',
+    /\/\.tmp\//,
     '**/.cursor/**',
     '**/agent-transcripts/**',
     // macOS Finder/iCloud duplicate naming patterns (project contains many "... 2.ts", "... 13.tsx", etc.)

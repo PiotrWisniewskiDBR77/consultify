@@ -1201,6 +1201,31 @@ export const Api = {
     abortSignal?: AbortSignal
   ) => {
     try {
+      // Per-user local inference (Ollama): stored in currentUser.aiConfig and persisted locally.
+      // We forward it explicitly so the backend can use the per-user endpoint safely.
+      let localProvider: { provider: 'ollama'; endpoint: string; modelId: string } | null = null;
+      try {
+        const mod = await import('../store/useAppStore');
+        const currentUser = (mod.useAppStore.getState() as any)?.currentUser as any;
+        const cfg = currentUser?.aiConfig as any;
+        if (
+          cfg &&
+          cfg.provider === 'ollama' &&
+          typeof cfg.endpoint === 'string' &&
+          cfg.endpoint.trim().length > 0 &&
+          typeof cfg.modelId === 'string' &&
+          cfg.modelId.trim().length > 0
+        ) {
+          localProvider = {
+            provider: 'ollama',
+            endpoint: cfg.endpoint.trim(),
+            modelId: cfg.modelId.trim(),
+          };
+        }
+      } catch {
+        // ignore (store not available in some test contexts)
+      }
+
       // Build AI config payload from options
       const aiModes = {
         deepResearch: options?.deepResearch ?? false,
@@ -1241,7 +1266,10 @@ export const Api = {
           responseStyle,
           // Model routing
           selectedTier: options?.selectedTier,
-          selectedModelId: options?.selectedModelId ?? null,
+          selectedModelId: options?.selectedModelId ?? localProvider?.modelId ?? null,
+          // Explicit per-user provider override (used for local Ollama)
+          provider: localProvider?.provider,
+          endpoint: localProvider?.endpoint,
           // Common context hints (keep as top-level so backend validator doesn't strip them)
           projectId: context?.projectId,
           screenContext: context?.screenContext,

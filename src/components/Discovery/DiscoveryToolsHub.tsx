@@ -435,6 +435,10 @@ const TOOL_TYPE_TO_SHORT: Record<string, { short: ToolType; category: ToolCatego
   'process-automation': { short: 'PAI', category: 'automation' },
 };
 
+const SHORT_TO_TOOL_TYPE: Record<string, string> = Object.fromEntries(
+  Object.entries(TOOL_TYPE_TO_SHORT).map(([toolType, meta]) => [meta.short, toolType])
+);
+
 // Tool session data from API
 interface ToolSessionData {
   id: string;
@@ -1988,31 +1992,32 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                   <button
                     key={key}
                     onClick={() => {
-                      console.log(
-                        '[DiscoveryToolsHub] Start tool:',
-                        key,
-                        'category:',
-                        selectedCategory
-                      );
-                      setSelectedCategory(null);
-                      // Navigate to strategic tools view with tool parameter
-                      if (selectedCategory === 'strategic') {
-                        // Map short codes to tool IDs
-                        const toolIdMap: Record<string, string> = {
-                          SWT: 'dynamic-swot',
-                          PTR: 'market-forces',
-                          ANS: 'growth-paths',
-                          VCH: 'value-chain',
-                          BCG: 'portfolio-priority',
-                          AMB: 'ambition-decomposer',
-                          FOC: 'focus-tradeoff',
-                          RSK: 'risk-uncertainty',
-                          CAP: 'capability-mapper',
-                          NAR: 'narrative-engine',
-                        };
-                        const toolId = toolIdMap[key] || key.toLowerCase();
-                        navigate(`${ROUTES.DISCOVERY_TOOLS.STRATEGIC}?tool=${toolId}`);
+                      const shortCode = String(key || '').trim();
+                      const toolType = SHORT_TO_TOOL_TYPE[shortCode];
+                      if (!toolType) {
+                        toast.error('Unknown tool type');
+                        return;
                       }
+                      setSelectedCategory(null);
+                      (async () => {
+                        try {
+                          const created = await Api.createToolSession({
+                            toolType,
+                            name: `${meta.name} — Session`,
+                            projectId: currentProjectId ?? null,
+                          });
+                          handleOpenDocument({
+                            id: created.id,
+                            name: `${meta.name} — Session`,
+                            status: created.status || 'DRAFT',
+                            apiToolType: toolType,
+                          });
+                          trackFunnelEvent('tool_session_started_from_library', { toolType });
+                          fetchData(true);
+                        } catch (e) {
+                          toast.error('Failed to create tool session');
+                        }
+                      })();
                     }}
                     className={`
                       flex items-center gap-3 w-full p-3 rounded-lg

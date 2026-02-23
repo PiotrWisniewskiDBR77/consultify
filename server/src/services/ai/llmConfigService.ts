@@ -171,19 +171,6 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     supportsTools: true,
     tier: 'STANDARD',
   },
-  ollama: {
-    id: 'ollama',
-    name: 'Ollama (Local)',
-    envKey: 'OLLAMA_BASE_URL',
-    defaultEndpoint: 'http://localhost:11434/v1',
-    defaultModel: process.env.OLLAMA_MODEL || 'gemma3:27b',
-    costPer1k: 0,
-    supportsStreaming: true,
-    supportsVision: true,
-    supportsTools: false,
-    tier: 'FREE',
-    isLocal: true,
-  },
 };
 
 const TIER_PRIORITY: Record<string, number> = {
@@ -202,7 +189,6 @@ export const DEFAULT_FALLBACK_CHAIN = [
   'qwen',
   'cohere',
   'nvidia',
-  'ollama', // Local fallback - last resort when all cloud APIs are down
 ];
 
 export class LLMConfigService {

@@ -102,6 +102,18 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
   const [localProviders, setLocalProviders] = useState<UserAIProvider[]>([]);
   const [selectedOrgModels, setSelectedOrgModels] = useState<string[]>([]);
   const [loadingModels, setLoadingModels] = useState(true);
+  const [localOllamaModelId, setLocalOllamaModelId] = useState<string>(
+    (currentUser.aiConfig as any)?.provider === 'ollama'
+      ? String((currentUser.aiConfig as any)?.modelId || 'gemma3:27b')
+      : 'gemma3:27b'
+  );
+
+  useEffect(() => {
+    if ((currentUser.aiConfig as any)?.provider === 'ollama') {
+      const m = String((currentUser.aiConfig as any)?.modelId || '').trim();
+      if (m) setLocalOllamaModelId(m);
+    }
+  }, [(currentUser.aiConfig as any)?.provider, (currentUser.aiConfig as any)?.modelId]);
 
   // New Provider Form
   const [showAddProvider, setShowAddProvider] = useState(false);
@@ -161,9 +173,22 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
         }
 
         // 4. Load Local/Personal Providers
-        const stored = localStorage.getItem('user_ai_providers');
-        if (stored) {
-          setLocalProviders(JSON.parse(stored));
+        const perUserKey = `user_ai_providers:${currentUser.id}`;
+        const storedPerUser = localStorage.getItem(perUserKey);
+        if (storedPerUser) {
+          setLocalProviders(JSON.parse(storedPerUser));
+        } else {
+          // Back-compat: migrate legacy global key into per-user key once.
+          const legacy = localStorage.getItem('user_ai_providers');
+          if (legacy) {
+            try {
+              localStorage.setItem(perUserKey, legacy);
+              localStorage.removeItem('user_ai_providers');
+            } catch {
+              // ignore
+            }
+            setLocalProviders(JSON.parse(legacy));
+          }
         }
 
         // 5. Fetch Real-time Health
@@ -228,7 +253,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
       };
 
       onUpdateUser({ aiConfig: updatedAiConfig as any });
-      localStorage.setItem('user_ai_providers', JSON.stringify(localProviders));
+      localStorage.setItem(`user_ai_providers:${currentUser.id}`, JSON.stringify(localProviders));
 
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -267,7 +292,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 
     const updated = [...localProviders, provider];
     setLocalProviders(updated);
-    localStorage.setItem('user_ai_providers', JSON.stringify(updated));
+    localStorage.setItem(`user_ai_providers:${currentUser.id}`, JSON.stringify(updated));
 
     setShowAddProvider(false);
     setNewProvider({ provider: 'openai', isEnabled: true, isLocal: false });
@@ -277,13 +302,43 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
   const removeLocalProvider = (id: string) => {
     const updated = localProviders.filter((p) => p.id !== id);
     setLocalProviders(updated);
-    localStorage.setItem('user_ai_providers', JSON.stringify(updated));
+    localStorage.setItem(`user_ai_providers:${currentUser.id}`, JSON.stringify(updated));
     toast.success('Provider removed');
   };
 
   // Filter providers for current view
   const apiProviders = localProviders.filter((p) => !p.isLocal);
   const localHostProviders = localProviders.filter((p) => p.isLocal);
+  const activeOllamaEndpoint =
+    (currentUser.aiConfig as any)?.provider === 'ollama'
+      ? String((currentUser.aiConfig as any)?.endpoint || '')
+      : '';
+
+  const activateOllama = (endpoint: string) => {
+    if (!endpoint || endpoint.trim().length === 0) {
+      toast.error('Missing Ollama endpoint');
+      return;
+    }
+    const next = {
+      ...(currentUser.aiConfig || {}),
+      provider: 'ollama',
+      endpoint: endpoint.trim(),
+      modelId: String(localOllamaModelId || 'gemma3:27b').trim(),
+    };
+    onUpdateUser({ aiConfig: next as any });
+    toast.success('Local inference enabled');
+  };
+
+  const disableLocalInference = () => {
+    const next = {
+      ...(currentUser.aiConfig || {}),
+      provider: 'system',
+      endpoint: undefined,
+      modelId: undefined,
+    };
+    onUpdateUser({ aiConfig: next as any });
+    toast.success('Local inference disabled');
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">
@@ -775,6 +830,40 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               )}
             </div>
 
+            {/* Active local model settings */}
+            <div className="mb-6 p-4 bg-black/20 border border-white/10 rounded-xl">
+              <div className="flex flex-col md:flex-row md:items-end gap-4">
+                <div className="flex-1">
+                  <label className="block text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold mb-2">
+                    Default Local Model ID
+                  </label>
+                  <input
+                    value={localOllamaModelId}
+                    onChange={(e) => setLocalOllamaModelId(e.target.value)}
+                    placeholder="e.g. gemma3:27b"
+                    className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-600 focus:border-emerald-500/50 outline-none transition-all font-mono"
+                  />
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2">
+                    Used when Chat is routed to Ollama.
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  {(currentUser.aiConfig as any)?.provider === 'ollama' ? (
+                    <button
+                      onClick={disableLocalInference}
+                      className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-red-300 border border-red-500/30 rounded-lg hover:bg-red-500/10 transition-colors"
+                    >
+                      Disable
+                    </button>
+                  ) : (
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 self-center">
+                      Not active (using system routing)
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Premium Local Connect Form */}
             {showAddProvider && (
               <div className="mb-8 p-6 bg-gradient-to-br from-navy-900 to-black border border-white/10 rounded-xl shadow-2xl relative overflow-hidden group">
@@ -852,10 +941,16 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                           </div>
                           <div>
                             <div>{p.name}</div>
-                            <div className="text-[10px] text-emerald-400 flex items-center gap-1 mt-0.5">
-                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                              Active
-                            </div>
+                            {String(p.endpoint || '') === activeOllamaEndpoint ? (
+                              <div className="text-[10px] text-emerald-400 flex items-center gap-1 mt-0.5">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                Active for Chat
+                              </div>
+                            ) : (
+                              <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                Not active
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -868,13 +963,24 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         {p.endpoint}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => removeLocalProvider(p.id)}
-                          className="text-slate-500 dark:text-slate-400 hover:text-red-400 p-2 rounded hover:bg-red-500/10 transition-colors"
-                          title="Disconnect"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          {String(p.endpoint || '') !== activeOllamaEndpoint && (
+                            <button
+                              onClick={() => activateOllama(String(p.endpoint || ''))}
+                              className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-emerald-300 border border-emerald-500/30 rounded-lg hover:bg-emerald-500/10 transition-colors"
+                              title="Use this Ollama endpoint for chat"
+                            >
+                              Use
+                            </button>
+                          )}
+                          <button
+                            onClick={() => removeLocalProvider(p.id)}
+                            className="text-slate-500 dark:text-slate-400 hover:text-red-400 p-2 rounded hover:bg-red-500/10 transition-colors"
+                            title="Disconnect"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

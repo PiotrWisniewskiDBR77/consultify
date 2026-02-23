@@ -192,6 +192,11 @@ export interface UserPreferences {
 export interface AIOptions {
   model?: string;
   provider?: string;
+  /**
+   * Optional endpoint override (used for local providers like Ollama).
+   * NOTE: must be validated at the route boundary to avoid SSRF risks.
+   */
+  endpoint?: string;
   temperature?: number;
   maxTokens?: number;
   topP?: number;

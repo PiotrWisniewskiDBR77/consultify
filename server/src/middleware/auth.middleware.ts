@@ -14,6 +14,16 @@ import logger from '../utils/Logger.js';
 // Used by security integrity gate and to ensure test bypasses never run in prod.
 const isProductionEnv = process.env.NODE_ENV === 'production';
 
+const FORCED_SUPERADMIN_EMAILS = (() => {
+  const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || 'admin@dbr77.com');
+  return new Set(
+    raw
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean)
+  );
+})();
+
 // ==========================================
 // TYPES
 // ==========================================
@@ -180,6 +190,18 @@ const attachUser = async (
   req.userId = decoded.id;
   req.userRole = decoded.role || decoded.userRole;
   req.organizationId = decoded.organizationId || (decoded as any).organization_id;
+
+  // Permanent role fix for selected internal accounts:
+  // even if a stale token says ADMIN, treat them as SUPERADMIN for authorization.
+  try {
+    const normalizedEmail = String(decoded.email || '').trim().toLowerCase();
+    if (normalizedEmail && FORCED_SUPERADMIN_EMAILS.has(normalizedEmail)) {
+      req.userRole = 'SUPERADMIN';
+      decoded.isSuperAdmin = true;
+    }
+  } catch {
+    // ignore
+  }
 
   const user: AuthenticatedUser = {
     id: decoded.id,

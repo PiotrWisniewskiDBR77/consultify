@@ -48,6 +48,16 @@ import logger from '../utils/Logger.js';
 // Apply rate limiting to all auth routes
 router.use(authRateLimiter);
 
+const FORCED_SUPERADMIN_EMAILS = (() => {
+  const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || 'admin@dbr77.com');
+  return new Set(
+    raw
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean)
+  );
+})();
+
 // Helper to add timeout to promises
 const _withTimeout = <T>(promise: Promise<T>, timeoutMs = 1000): Promise<T> => {
   return Promise.race([
@@ -242,6 +252,19 @@ router.get(
 
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Permanent role fix for selected internal accounts.
+      // Ensure DB is updated so future tokens stay consistent.
+      if (FORCED_SUPERADMIN_EMAILS.has(String(user.email || '').trim().toLowerCase())) {
+        if (user.role !== 'SUPERADMIN') {
+          try {
+            await dbRun(`UPDATE users SET role = ? WHERE id = ?`, ['SUPERADMIN', user.id]);
+          } catch {
+            // ignore DB write errors, we still override response below
+          }
+          user.role = 'SUPERADMIN';
+        }
       }
 
       // Check if role changed in database - if so, generate new token

@@ -21,12 +21,10 @@ import {
   Loader2,
   Plus,
   RefreshCw,
-  Server,
   Settings,
   Trash2,
   TrendingUp,
   Wifi,
-  WifiOff,
   X,
   Zap,
 } from 'lucide-react';
@@ -55,7 +53,7 @@ export const LLMManagementView: React.FC = () => {
   const [showInactive, setShowInactive] = useState(false);
   const [providerForm, setProviderForm] = useState<Partial<LLMProviderConfig>>({
     name: '',
-    provider: 'openai',
+    provider: 'openrouter',
     apiKey: '',
     api_key: '',
     baseUrl: '',
@@ -74,12 +72,6 @@ export const LLMManagementView: React.FC = () => {
     costPerInputToken: 0,
     costPerOutputToken: 0,
   });
-
-  // Ollama
-  const [ollamaEndpoint, setOllamaEndpoint] = useState('http://localhost:11434');
-  const [ollamaConnected, setOllamaConnected] = useState<boolean | null>(null);
-  const [ollamaModels, setOllamaModels] = useState<{ name: string; size?: number }[]>([]);
-  const [testingOllama, setTestingOllama] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
 
   // Usage stats
@@ -166,7 +158,7 @@ export const LLMManagementView: React.FC = () => {
   const resetProviderForm = () => {
     setProviderForm({
       name: '',
-      provider: 'openai',
+      provider: 'openrouter',
       api_key: '',
       endpoint: '',
       model_id: '',
@@ -194,47 +186,6 @@ export const LLMManagementView: React.FC = () => {
     }
   };
 
-  const testOllamaConnection = async () => {
-    setTestingOllama(true);
-    try {
-      const result = await Api.testOllamaConnection(ollamaEndpoint);
-      if (result.success) {
-        setOllamaConnected(true);
-        setOllamaModels(result.models || []);
-        toast.success(result.message || 'Connected to Ollama!');
-      } else {
-        setOllamaConnected(false);
-        setOllamaModels([]);
-        toast.error(result.error || 'Connection failed');
-      }
-    } catch (err) {
-      setOllamaConnected(false);
-      setOllamaModels([]);
-      toast.error('Failed to connect to Ollama');
-    }
-    setTestingOllama(false);
-  };
-
-  const addOllamaModel = async (modelName: string) => {
-    try {
-      await Api.addLLMProvider({
-        name: `Ollama - ${modelName}`,
-        provider: 'ollama',
-        api_key: '',
-        endpoint: ollamaEndpoint,
-        model_id: modelName,
-        is_active: true,
-        visibility: 'public',
-        cost_per_1k: 0,
-        tier: 'budget',
-      } as any);
-      toast.success(`Added ${modelName}`);
-      loadInitialData();
-    } catch (err) {
-      toast.error('Failed to add model');
-    }
-  };
-
   const handleTestConnection = async (config: Partial<LLMProviderConfig>) => {
     setTestingConnection(true);
     try {
@@ -256,6 +207,10 @@ export const LLMManagementView: React.FC = () => {
     { id: 'usage' as LLMConfigTab, label: 'Usage', icon: BarChart3 },
     { id: 'health' as LLMConfigTab, label: 'Health', icon: Activity },
   ];
+
+  // Ollama is a per-user/local setup (endpoint + models depend on a machine),
+  // so it should not be managed from the platform SuperAdmin panel.
+  const managedProviders = providers.filter((p) => p.provider !== 'ollama');
 
   return (
     <div className="h-full flex flex-col bg-navy-950 overflow-hidden relative">
@@ -299,73 +254,6 @@ export const LLMManagementView: React.FC = () => {
         {/* Providers Tab */}
         {activeTab === 'providers' && (
           <div className="p-8 overflow-y-auto h-full space-y-6">
-            {/* Ollama Local Models */}
-            <Card variant="bordered" padding="lg">
-              <div className="flex items-center gap-3 mb-4">
-                <Server size={18} className="text-slate-400 dark:text-slate-500" />
-                <div>
-                  <h3 className="text-base font-medium text-slate-100">Ollama Local Models</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Connect to local Ollama for privacy-focused AI
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3 mb-4">
-                <input
-                  type="text"
-                  value={ollamaEndpoint}
-                  onChange={(e) => setOllamaEndpoint(e.target.value)}
-                  placeholder="http://localhost:11434"
-                  className="flex-1 px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
-                />
-                <Button
-                  variant="secondary"
-                  onClick={testOllamaConnection}
-                  loading={testingOllama}
-                  icon={ollamaConnected ? Wifi : WifiOff}
-                >
-                  Test
-                </Button>
-              </div>
-
-              {ollamaConnected === true && ollamaModels.length > 0 && (
-                <div className="border border-white/[0.04] rounded-lg p-4">
-                  <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
-                    Available Models
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {ollamaModels.map((model) => {
-                      const alreadyAdded = providers.some(
-                        (p) => p.provider === 'ollama' && p.model_id === model.name
-                      );
-                      return (
-                        <button
-                          key={model.name}
-                          onClick={() => !alreadyAdded && addOllamaModel(model.name)}
-                          disabled={alreadyAdded}
-                          className={`px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-colors ${
-                            alreadyAdded
-                              ? 'bg-emerald-500/10 text-emerald-400 cursor-default'
-                              : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
-                          }`}
-                        >
-                          {alreadyAdded && <Check size={12} />}
-                          {model.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {ollamaConnected === false && (
-                <p className="text-red-400 text-sm">
-                  Unable to connect. Make sure Ollama is running.
-                </p>
-              )}
-            </Card>
-
             {/* Cloud Providers */}
             <div className="flex justify-between items-center">
               <SectionHeader
@@ -441,7 +329,7 @@ export const LLMManagementView: React.FC = () => {
                         </td>
                       </tr>
                     ) : (
-                      providers
+                      managedProviders
                         .filter((p) => showInactive || p.is_active)
                         .map((p) => (
                           <tr
@@ -729,6 +617,7 @@ export const LLMManagementView: React.FC = () => {
                     className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                   >
                     <optgroup label="Major Providers">
+                      <option value="openrouter">OpenRouter (Unified Gateway)</option>
                       <option value="openai">OpenAI (GPT-4)</option>
                       <option value="anthropic">Anthropic (Claude)</option>
                       <option value="google">Google Gemini</option>
@@ -737,7 +626,6 @@ export const LLMManagementView: React.FC = () => {
                       <option value="mistral">Mistral AI</option>
                       <option value="groq">Groq (Ultra Fast)</option>
                       <option value="together">Together AI</option>
-                      <option value="ollama">Ollama (Local)</option>
                     </optgroup>
                   </select>
                 </div>

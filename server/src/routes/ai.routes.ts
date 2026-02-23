@@ -800,6 +800,8 @@ router.post(
       focusMode?: string;
       selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
       selectedModelId?: string | null;
+      provider?: string;
+      endpoint?: string;
       aiModes?: {
         deepResearch?: boolean;
         webSearch?: boolean;
@@ -830,10 +832,45 @@ router.post(
       focusMode: bodyFocusMode,
       selectedTier,
       selectedModelId,
+      provider: bodyProvider,
+      endpoint: bodyEndpoint,
       aiModes,
       knowledgeSources,
       responseStyle,
     } = body;
+
+    // Security: prevent user-controlled arbitrary endpoints on production by default.
+    // Local inference is expected to be loopback-only unless explicitly allowed.
+    const isLoopbackEndpoint = (raw: string) => {
+      try {
+        const u = new URL(raw);
+        const host = String(u.hostname || '').toLowerCase();
+        return host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host === '::1';
+      } catch {
+        return false;
+      }
+    };
+
+    const providerLower = String(bodyProvider || '').toLowerCase();
+    if (providerLower === 'ollama') {
+      const allowInProd = String(process.env.ENABLE_USER_LOCAL_LLM || '').toLowerCase() === 'true';
+      if (process.env.NODE_ENV === 'production' && !allowInProd) {
+        return res.status(400).json({
+          error: 'Local inference is disabled on this environment.',
+          code: 'LOCAL_LLM_DISABLED',
+        });
+      }
+      if (bodyEndpoint && !isLoopbackEndpoint(bodyEndpoint)) {
+        return res.status(400).json({
+          error: 'Invalid local inference endpoint. Only loopback endpoints are allowed.',
+          code: 'LOCAL_LLM_ENDPOINT_NOT_ALLOWED',
+        });
+      }
+    }
+
+    const effectiveSelectedModelId =
+      selectedModelId ||
+      (providerLower === 'ollama' ? process.env.OLLAMA_MODEL || 'gemma3:27b' : null);
 
     // Market Research → Deep Research conversion
     if (aiModes?.marketResearch && !aiModes?.deepResearch) {
@@ -1198,7 +1235,9 @@ router.post(
           knowledgeSources,
           responseStyle,
           selectedTier,
-          selectedModelId,
+          selectedModelId: effectiveSelectedModelId,
+          provider: bodyProvider,
+          endpoint: bodyEndpoint,
         },
         stream: true,
         options: {
@@ -1209,7 +1248,9 @@ router.post(
           knowledgeSources,
           responseStyle,
           selectedTier,
-          selectedModelId,
+          selectedModelId: effectiveSelectedModelId,
+          provider: bodyProvider,
+          endpoint: bodyEndpoint,
         },
       };
 

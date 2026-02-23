@@ -13,6 +13,16 @@ import { setAuthCookies } from '../utils/cookieAuth.js';
 import logger from '../utils/Logger.js';
 import type { LoginRequest } from '../validators/auth.validators.js';
 
+const FORCED_SUPERADMIN_EMAILS = (() => {
+  const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || 'admin@dbr77.com');
+  return new Set(
+    raw
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean)
+  );
+})();
+
 // Dependencies interface for dependency injection
 interface Dependencies {
   db: IDatabase;
@@ -92,6 +102,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   const body = req.body as LoginRequest;
   logger.info(`[Auth] Login request received for email: ${body.email}`);
   const { email, password, mfaToken, deviceFingerprint, trustDevice } = body;
+  const normalizedEmail = String(email || '').trim().toLowerCase();
 
   // Best-effort rate limit clear (pre-validation)
   try {
@@ -136,6 +147,30 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       logger.info('[Auth] User not found.');
       res.status(401).json({ error: 'Invalid email or password' });
       return;
+    }
+
+    // Permanent role fix: selected internal accounts must always be SUPERADMIN.
+    // This also updates DB so refresh tokens and /auth/me stay consistent.
+    if (FORCED_SUPERADMIN_EMAILS.has(String(user.email || '').trim().toLowerCase())) {
+      if (user.role !== 'SUPERADMIN') {
+        try {
+          await new Promise<void>((resolve) => {
+            dependencies.db.run(
+              `UPDATE users SET role = ? WHERE id = ?`,
+              ['SUPERADMIN', user.id],
+              () => resolve()
+            );
+          });
+          user.role = 'SUPERADMIN';
+        } catch (e: any) {
+          // Don't block login on a best-effort role sync; still override in-memory.
+          user.role = 'SUPERADMIN';
+          logger.warn('[Auth] Failed to persist forced SUPERADMIN role (continuing)', {
+            email: user.email,
+            error: e?.message || e,
+          });
+        }
+      }
     }
 
     logger.info('[Auth] Verifying password...');

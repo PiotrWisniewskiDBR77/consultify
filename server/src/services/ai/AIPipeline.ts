@@ -1493,14 +1493,29 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
     const explicitProvider = request.options?.provider;
 
     if (explicitModel) {
+      // Fast-path for local inference: user-provided Ollama does not require a DB provider row.
+      if (String(explicitProvider || '').toLowerCase() === 'ollama') {
+        const endpointOverride = (request.options as any)?.endpoint as string | undefined;
+        const endpoint = endpointOverride || 'http://localhost:11434/v1';
+        logger.info(`[AIPipeline] Selected explicit model (local): ollama/${explicitModel}`);
+        return {
+          provider: 'ollama',
+          model: explicitModel,
+          maxTokens: request.options?.maxTokens || capability.maxTokens,
+          endpoint,
+          apiKey: null,
+        };
+      }
+
       // If provider not provided, let ModelRouter infer provider & resolve endpoint/apiKey.
       const tierForConfig = (selectedTier || 'STANDARD') as any;
       const cfg = await modelRouter.getProviderConfig(explicitModel, tierForConfig);
       const provider = explicitProvider || cfg.provider;
-      const endpoint =
-        explicitProvider && explicitProvider === 'ollama'
-          ? 'http://localhost:11434/v1'
-          : cfg.endpoint;
+      const endpointOverride = (request.options as any)?.endpoint as string | undefined;
+      const isOllama = String(provider || '').toLowerCase() === 'ollama';
+      const endpoint = isOllama
+        ? endpointOverride || cfg.endpoint || 'http://localhost:11434/v1'
+        : cfg.endpoint;
 
       logger.info(`[AIPipeline] Selected explicit model: ${provider}/${cfg.id}`);
       return {

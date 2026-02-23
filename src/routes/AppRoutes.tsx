@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import React, { Suspense } from 'react';
-import { Navigate, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
 import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -336,6 +336,7 @@ const AuditsShowcasePage = React.lazy(() =>
 
 export const AppRoutes: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     currentView,
     currentUser,
@@ -374,7 +375,8 @@ export const AppRoutes: React.FC = () => {
 
     if (currentUser?.isAuthenticated) {
       setCurrentView(AppView.AI_CHAT);
-      navigate('/chat');
+      // Avoid /chat -> /superadmin bounce for SUPERADMIN accounts.
+      navigate(currentUser.role === 'SUPERADMIN' ? '/superadmin' : '/chat');
       return;
     }
 
@@ -474,15 +476,8 @@ export const AppRoutes: React.FC = () => {
         name: validUser.organizationName || 'Organization',
       });
     }
-
-    // Navigate based on user role - SUPERADMIN goes to SuperAdmin panel
-    if (validUser.role === 'SUPERADMIN') {
-      console.log('[AppRoutes] SUPERADMIN user detected, redirecting to /superadmin');
-      navigate('/superadmin');
-    } else {
-      // Regular users go to chat
-      navigate('/chat');
-    }
+    // IMPORTANT: RouterSync is the single source of truth for auth redirects.
+    // Do not navigate here to avoid competing redirects during rehydration.
   };
 
   // --- RENDER ---
@@ -506,7 +501,11 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.WELCOME}
           element={
             currentUser?.isAuthenticated ? (
-              <Navigate to={ROUTES.AI_CHAT} replace />
+              // IMPORTANT: RouterSync is the single source of truth for auth redirects.
+              // Using <Navigate> here can cause redirect loops during rehydration.
+              <div className="flex h-screen items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+              </div>
             ) : (
               <AuthLayout>
                 <ProductEntryPage
