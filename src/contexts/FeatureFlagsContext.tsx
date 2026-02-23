@@ -109,7 +109,7 @@ const DevToolsPanel: React.FC<DevToolsPanelProps> = ({ featureFlags, onClose }) 
 
   return (
     <motion.div
-      className="fixed bottom-4 right-4 w-80 bg-navy-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden z-[9999]"
+      className="fixed bottom-4 right-4 w-96 bg-navy-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden z-[9999]"
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -117,11 +117,16 @@ const DevToolsPanel: React.FC<DevToolsPanelProps> = ({ featureFlags, onClose }) 
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-navy-800 border-b border-white/10">
-        <div className="flex items-center gap-2">
-          <Flag size={16} className="text-primary-400" />
-          <span className="font-medium text-white text-sm">Feature Flags</span>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1.5">
+            <Flag size={16} className="text-primary-400" />
+            <span className="font-medium text-white text-sm">Feature Flags</span>
+          </div>
+          <p className="text-xs text-slate-400 dark:text-slate-500 leading-snug">
+            Toggle experimental features locally. Changes persist in localStorage. Only tested flags are shown.
+          </p>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 ml-2 flex-shrink-0">
           <button
             onClick={refresh}
             disabled={isLoading}
