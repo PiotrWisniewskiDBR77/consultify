@@ -51,7 +51,11 @@ export const NavItem: React.FC<NavItemProps> = ({
   const isLocked =
     item.requiresView &&
     !completedViews.includes(item.requiresView) &&
-    !(currentUserRole === UserRole.ADMIN || currentUserRole === 'SUPERADMIN');
+    !(
+      currentUserRole === UserRole.ADMIN ||
+      currentUserRole === UserRole.OWNER ||
+      currentUserRole === 'SUPERADMIN'
+    );
 
   const isChildActive = (i: MenuItem): boolean => {
     if (i.viewId === currentView) return true;
