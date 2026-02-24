@@ -8,13 +8,19 @@ import TaskList from '@tiptap/extension-task-list';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {
+  Archive,
   ArrowRight,
   BookOpen,
   CheckSquare,
+  ChevronDown,
   Clock,
   FileText,
+  Filter,
+  Inbox,
   Lightbulb,
   Pen,
+  Pin,
+  Play,
   Plus,
   Scale,
   Sparkles,
@@ -22,6 +28,7 @@ import {
   Target,
   Trash2,
   Type,
+  Users,
   X,
   Zap,
 } from 'lucide-react';
@@ -31,14 +38,25 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { useAppStore } from '@/store/useAppStore';
+import { buildAskAIMessage } from './shared/askAiHelper';
+import type {
+  NotebookCounts,
+  NotebookMaturity,
+  NotebookPage,
+  NotebookPageStatus,
+  NotebookVisibility,
+} from '@/types/myWork';
 
+import { ActionItemsPanel } from './notebook/ActionItemsPanel';
+import { type AICommandType, AIInlineResponse } from './notebook/AIInlineResponse';
+import { ConvertChecklistModal } from './notebook/ConvertChecklistModal';
 import {
   CalloutNode,
   DetailsContentNode,
   DetailsNode,
   DetailsSummaryNode,
 } from './notebook/extensions';
-import { AIInlineResponse, type AICommandType } from './notebook/AIInlineResponse';
 import { KnowledgePulse } from './notebook/KnowledgePulse';
 import { NewPageModal, type PageTemplate } from './notebook/NewPageModal';
 import { NotebookToolbar } from './notebook/NotebookToolbar';
@@ -49,10 +67,6 @@ import {
   type SlashMenuState,
 } from './notebook/SlashMenu';
 
-interface NotebookCounts {
-  total: number;
-}
-
 interface NotebookContentProps {
   projectId?: string | null;
   searchQuery: string;
@@ -62,32 +76,57 @@ interface NotebookContentProps {
   pulseOpen?: boolean;
   onPulseOpenChange?: (open: boolean) => void;
   createPageRequestId?: number;
+  refreshTrigger?: number;
 }
 
-export type NotebookVisibility = 'private' | 'project';
-
-export type NotebookMaturity = 'seed' | 'growing' | 'mature' | 'actionable';
-
-export interface NotebookPage {
-  id: string;
-  title: string;
-  projectId: string | null;
-  visibility: NotebookVisibility;
-  tags: string[];
-  contentJson: any;
-  contentText: string;
-  maturity?: NotebookMaturity;
-  icon?: string | null;
-  summary?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-const MATURITY_CONFIG: Record<NotebookMaturity, { dot: string; bg: string; text: string; border: string; label: string; labelPl: string; icon: string }> = {
-  seed: { dot: 'bg-slate-400', bg: 'bg-slate-500/10', text: 'text-slate-500', border: 'border-slate-400/30', label: 'Seed', labelPl: 'Ziarno', icon: '🌱' },
-  growing: { dot: 'bg-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-500/30', label: 'Growing', labelPl: 'Rośnie', icon: '🌿' },
-  mature: { dot: 'bg-blue-500', bg: 'bg-blue-500/10', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-500/30', label: 'Mature', labelPl: 'Dojrzała', icon: '🎯' },
-  actionable: { dot: 'bg-amber-500', bg: 'bg-amber-500/10', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-500/30', label: 'Actionable', labelPl: 'Do działania', icon: '⚡' },
+const MATURITY_CONFIG: Record<
+  NotebookMaturity,
+  {
+    dot: string;
+    bg: string;
+    text: string;
+    border: string;
+    label: string;
+    labelPl: string;
+    icon: string;
+  }
+> = {
+  seed: {
+    dot: 'bg-slate-400',
+    bg: 'bg-slate-500/10',
+    text: 'text-slate-500',
+    border: 'border-slate-400/30',
+    label: 'Seed',
+    labelPl: 'Ziarno',
+    icon: '🌱',
+  },
+  growing: {
+    dot: 'bg-emerald-500',
+    bg: 'bg-emerald-500/10',
+    text: 'text-emerald-600 dark:text-emerald-400',
+    border: 'border-emerald-500/30',
+    label: 'Growing',
+    labelPl: 'Rośnie',
+    icon: '🌿',
+  },
+  mature: {
+    dot: 'bg-blue-500',
+    bg: 'bg-blue-500/10',
+    text: 'text-blue-600 dark:text-blue-400',
+    border: 'border-blue-500/30',
+    label: 'Mature',
+    labelPl: 'Dojrzała',
+    icon: '🎯',
+  },
+  actionable: {
+    dot: 'bg-amber-500',
+    bg: 'bg-amber-500/10',
+    text: 'text-amber-600 dark:text-amber-400',
+    border: 'border-amber-500/30',
+    label: 'Actionable',
+    labelPl: 'Do działania',
+    icon: '⚡',
+  },
 };
 
 function computeMaturity(page: NotebookPage): NotebookMaturity {
@@ -356,10 +395,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   pulseOpen,
   onPulseOpenChange,
   createPageRequestId,
+  refreshTrigger,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const { emitMyWorkEvent, setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } = useAppStore();
   const [pages, setPages] = useState<NotebookPage[]>([]);
+  const [hasMore, setHasMore] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
   const activePage = useMemo(() => pages.find((p) => p.id === activeId) || null, [pages, activeId]);
 
@@ -427,10 +469,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       setPageTags([]);
       return;
     }
-    editor.commands.setContent(
-      activePage.contentJson || { type: 'doc', content: [] },
-      { emitUpdate: false }
-    );
+    editor.commands.setContent(activePage.contentJson || { type: 'doc', content: [] }, {
+      emitUpdate: false,
+    });
     setTitle(activePage.title || '');
     setPageProjectId(activePage.projectId || '');
     setPageTags(activePage.tags || []);
@@ -438,27 +479,27 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
   // Counts
   useEffect(() => {
-    onCountsChange?.({ total: pages.length });
-  }, [pages.length, onCountsChange]);
+    const inbox = pages.filter((p) => p.status === 'inbox').length;
+    const active = pages.filter((p) => p.status === 'active').length;
+    onCountsChange?.({ total: pages.length, inbox, active });
+  }, [pages, onCountsChange]);
 
   const fetchPages = useMemo(
     () => async () => {
       try {
-        const params = new URLSearchParams();
-        if (projectId) params.set('projectId', projectId);
         const q = String(searchQuery || '').trim();
-        if (q) {
-          params.set('q', q);
-          trackFunnelEvent('notebook_search_used', { query: q });
-        }
-        params.set('limit', '200');
+        if (q) trackFunnelEvent('notebook_search_used', { query: q });
 
-        const res = (await Api.get(`/my-work/notebook/pages?${params.toString()}`)) as any;
-        const list = Array.isArray(res) ? res : res?.pages || [];
-        setPages(list || []);
-        setActiveId((prev) => prev || list?.[0]?.id || null);
+        const list = await Api.getNotebookPages({
+          projectId: projectId || undefined,
+          q: q || undefined,
+          limit: 50,
+        });
+        const arr = list || [];
+        setPages(arr);
+        setHasMore(arr.length >= 50);
+        setActiveId((prev) => prev || arr?.[0]?.id || null);
       } catch (e) {
-        // eslint-disable-next-line no-console
         console.error('Failed to load notebook pages', e);
         toast.error(t('myWork.errors.fetchFailed', 'Failed to load'));
       }
@@ -466,11 +507,72 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     [projectId, searchQuery, t]
   );
 
+  const loadMore = useCallback(async () => {
+    try {
+      const q = String(searchQuery || '').trim();
+      const list = await Api.getNotebookPages({
+        projectId: projectId || undefined,
+        q: q || undefined,
+        limit: 50,
+        offset: pages.length,
+      });
+      const arr = list || [];
+      setPages((prev) => [...prev, ...arr]);
+      if (arr.length < 50) setHasMore(false);
+    } catch (e) {
+      console.error('Failed to load more notebook pages', e);
+      toast.error(t('myWork.errors.fetchFailed', 'Failed to load'));
+    }
+  }, [projectId, searchQuery, pages.length, t]);
+
   useEffect(() => {
     fetchPages();
-  }, [fetchPages]);
+  }, [fetchPages, refreshTrigger]);
 
-  const filteredPages = pages;
+  // Sidebar filters & inbox state
+  const [sidebarTab, setSidebarTab] = useState<'inbox' | 'active' | 'all'>('all');
+  const [sortBy, setSortBy] = useState<'updated' | 'created' | 'title'>('updated');
+  const [maturityFilter, setMaturityFilter] = useState<NotebookMaturity | 'all'>('all');
+  const [showFilters, setShowFilters] = useState(false);
+
+  const [pulseOpenInternal, setPulseOpenInternal] = useState(false);
+  const isPulseOpen = pulseOpen ?? pulseOpenInternal;
+  const setPulseOpen = onPulseOpenChange ?? setPulseOpenInternal;
+
+  const inboxCount = useMemo(() => pages.filter((p) => p.status === 'inbox').length, [pages]);
+  const activeCount = useMemo(() => pages.filter((p) => p.status === 'active').length, [pages]);
+
+  const filteredPages = useMemo(() => {
+    let result = [...pages];
+
+    if (sidebarTab === 'inbox') result = result.filter((p) => p.status === 'inbox');
+    else if (sidebarTab === 'active') result = result.filter((p) => p.status === 'active');
+
+    if (maturityFilter !== 'all') result = result.filter((p) => (p.maturity || 'seed') === maturityFilter);
+
+    result.sort((a, b) => {
+      if ((a.pinned ? 1 : 0) !== (b.pinned ? 1 : 0)) return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+      if (sortBy === 'title') return (a.title || '').localeCompare(b.title || '');
+      if (sortBy === 'created') return (b.createdAt || '').localeCompare(a.createdAt || '');
+      return (b.updatedAt || '').localeCompare(a.updatedAt || '');
+    });
+
+    return result;
+  }, [pages, sidebarTab, sortBy, maturityFilter]);
+
+  const handleTogglePin = useCallback(async (pageId: string) => {
+    try {
+      const result = await Api.pinNotebookPage(pageId);
+      setPages((prev) => prev.map((p) => p.id === pageId ? { ...p, pinned: result.pinned } : p));
+    } catch { toast.error('Failed to pin'); }
+  }, []);
+
+  const handleSetStatus = useCallback(async (pageId: string, status: NotebookPageStatus) => {
+    try {
+      await Api.setNotebookPageStatus(pageId, status);
+      setPages((prev) => prev.map((p) => p.id === pageId ? { ...p, status } : p));
+    } catch { toast.error('Failed to update status'); }
+  }, []);
 
   const generateSummary = useCallback(
     (pageId: string, pageTitle: string, contentText: string) => {
@@ -482,11 +584,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       Api.chatWithAIStream(
         `Summarize this note in 1-2 concise sentences (max 120 chars). Note title: "${pageTitle}". Content: ${contentText.slice(0, 1500)}`,
         [],
-        (chunk) => { summaryText += chunk; },
+        (chunk) => {
+          summaryText += chunk;
+        },
         () => {
           const cleaned = summaryText.trim().slice(0, 200);
           if (cleaned) {
-            Api.put(`/my-work/notebook/pages/${encodeURIComponent(pageId)}`, { summary: cleaned }).catch(() => {});
+            Api.updateNotebookPage(pageId, { summary: cleaned }).catch(() => {});
             setPages((prev) => prev.map((p) => (p.id === pageId ? { ...p, summary: cleaned } : p)));
           }
         },
@@ -498,10 +602,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         isPolish ? 'pl' : 'en',
         undefined,
         { responseStyle: 'concise', selectedTier: 'BUDGET' },
-        controller.signal,
+        controller.signal
       ).catch(() => {});
     },
-    [isPolish],
+    [isPolish]
   );
 
   const scheduleSave = useCallback(
@@ -522,7 +626,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         const newMaturity = computeMaturity(updated);
         updated.maturity = newMaturity;
 
-        Api.put(`/my-work/notebook/pages/${encodeURIComponent(updated.id)}`, {
+        Api.updateNotebookPage(updated.id, {
           title: updated.title,
           projectId: updated.projectId,
           visibility: updated.visibility,
@@ -555,16 +659,22 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   );
 
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
+  const [checklistModalOpen, setChecklistModalOpen] = useState(false);
+  const [actionItemsOpen, setActionItemsOpen] = useState(false);
 
   const handleNewPage = useCallback(
     async (template?: PageTemplate) => {
       try {
         const defaultTitle = template
-          ? (isPolish ? template.defaultTitlePl : template.defaultTitle)
-          : (isPolish ? 'Nowa strona' : 'New page');
+          ? isPolish
+            ? template.defaultTitlePl
+            : template.defaultTitle
+          : isPolish
+            ? 'Nowa strona'
+            : 'New page';
         const contentJson = template?.contentJson || { type: 'doc', content: [] };
 
-        const created = (await Api.post('/my-work/notebook/pages', {
+        const created = await Api.createNotebookPage({
           title: defaultTitle,
           projectId: projectId || null,
           visibility: projectId ? 'project' : 'private',
@@ -572,7 +682,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           contentJson,
           contentText: extractText(contentJson),
           icon: template?.defaultIcon || null,
-        })) as any;
+        });
 
         trackFunnelEvent('notebook_page_created', {
           pageId: created?.id,
@@ -592,7 +702,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         toast.error(t('myWork.errors.createFailed', 'Failed to create'));
       }
     },
-    [fetchPages, isPolish, projectId, t],
+    [fetchPages, isPolish, projectId, t]
   );
 
   // Create page requested from top bar (MyWorkHub) → open template modal
@@ -604,10 +714,49 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     setTemplateModalOpen(true);
   }, [createPageRequestId]);
 
+  // Keyboard shortcuts (Cmd+Shift+N/P/K) + custom events from CommandPalette
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey && e.shiftKey && e.key === 'n') {
+        e.preventDefault();
+        setTemplateModalOpen(true);
+      }
+      if (e.metaKey && e.shiftKey && e.key === 'p') {
+        e.preventDefault();
+        if (activePage) handleTogglePin(activePage.id);
+      }
+      if (e.metaKey && e.shiftKey && e.key === 'k') {
+        e.preventDefault();
+        setPulseOpen(!isPulseOpen);
+      }
+    };
+    const handleNewPage = () => setTemplateModalOpen(true);
+    const handleExtractActions = () => setActionItemsOpen(true);
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('notebook-new-page', handleNewPage);
+    window.addEventListener('notebook-extract-actions', handleExtractActions);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('notebook-new-page', handleNewPage);
+      window.removeEventListener('notebook-extract-actions', handleExtractActions);
+    };
+  }, [activePage, handleTogglePin, isPulseOpen, setPulseOpen]);
+
+  const handleAskAI = () => {
+    if (!activePage) return;
+    setChatKickoffMessage(buildAskAIMessage({
+      type: 'notebook',
+      title: activePage.title || 'Untitled Note',
+      description: (activePage.contentText || extractText(activePage.contentJson))?.slice(0, 500) || undefined,
+    }));
+    if (isChatCollapsed) toggleChatCollapse();
+  };
+
   const handleDeletePage = async () => {
     if (!activePage) return;
     try {
-      await Api.delete(`/my-work/notebook/pages/${encodeURIComponent(activePage.id)}`);
+      await Api.deleteNotebookPage(activePage.id);
       await fetchPages();
       toast.success(isPolish ? 'Usunięto stronę' : 'Page deleted');
     } catch (e) {
@@ -674,9 +823,6 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const ideasOpen = linkedIdeasOpen ?? ideasOpenInternal;
   const setIdeasOpen = onLinkedIdeasOpenChange ?? setIdeasOpenInternal;
 
-  const [pulseOpenInternal, setPulseOpenInternal] = useState(false);
-  const isPulseOpen = pulseOpen ?? pulseOpenInternal;
-  const setPulseOpen = onPulseOpenChange ?? setPulseOpenInternal;
   const [linkedIdeas, setLinkedIdeas] = useState<LinkedIdea[]>([]);
   const [linkedIdeasLoading, setLinkedIdeasLoading] = useState(false);
 
@@ -766,7 +912,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           {filteredPages.length > 0 && (
             <div className="flex items-center gap-0.5 h-1.5 rounded-full overflow-hidden bg-slate-100 dark:bg-navy-800">
               {(['actionable', 'mature', 'growing', 'seed'] as NotebookMaturity[]).map((m) => {
-                const count = filteredPages.filter((p) => (p.maturity || computeMaturity(p)) === m).length;
+                const count = filteredPages.filter(
+                  (p) => (p.maturity || computeMaturity(p)) === m
+                ).length;
                 if (!count) return null;
                 const pct = (count / filteredPages.length) * 100;
                 return (
@@ -782,6 +930,76 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           )}
         </div>
 
+        {/* Inbox/Active/All tab bar */}
+        <div className="flex items-center border-b border-slate-200/60 dark:border-white/[0.06] px-2">
+          {([
+            { key: 'inbox' as const, label: 'Inbox', count: inboxCount, icon: <Inbox size={12} /> },
+            { key: 'active' as const, label: isPolish ? 'Aktywne' : 'Active', count: activeCount, icon: <Play size={12} /> },
+            { key: 'all' as const, label: isPolish ? 'Wszystkie' : 'All', count: pages.length, icon: <FileText size={12} /> },
+          ]).map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setSidebarTab(tab.key)}
+              className={`flex-1 flex items-center justify-center gap-1 py-2 text-[10px] font-semibold transition-all border-b-2 ${
+                sidebarTab === tab.key
+                  ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+              {tab.count > 0 && (
+                <span className={`ml-0.5 px-1 py-0 rounded-full text-[9px] ${
+                  sidebarTab === tab.key
+                    ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+                    : 'bg-slate-100 dark:bg-white/[0.06] text-slate-400'
+                }`}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+          <button
+            onClick={() => setShowFilters((v) => !v)}
+            className={`p-1.5 rounded-md ml-1 transition-colors ${showFilters ? 'bg-indigo-500/10 text-indigo-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+            title={isPolish ? 'Filtry' : 'Filters'}
+          >
+            <Filter size={12} />
+          </button>
+        </div>
+
+        {/* Filter bar (collapsible) */}
+        {showFilters && (
+          <div className="px-2 py-1.5 border-b border-slate-200/60 dark:border-white/[0.06] flex items-center gap-1.5 flex-wrap bg-slate-50/50 dark:bg-white/[0.01]">
+            <div className="relative">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="appearance-none pl-2 pr-5 py-1 rounded-md bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/[0.08] text-[10px] text-slate-600 dark:text-slate-400 font-medium"
+              >
+                <option value="updated">{isPolish ? 'Ostatnio edytowane' : 'Last updated'}</option>
+                <option value="created">{isPolish ? 'Data utworzenia' : 'Created'}</option>
+                <option value="title">{isPolish ? 'Tytuł A-Z' : 'Title A-Z'}</option>
+              </select>
+              <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
+            <div className="relative">
+              <select
+                value={maturityFilter}
+                onChange={(e) => setMaturityFilter(e.target.value as any)}
+                className="appearance-none pl-2 pr-5 py-1 rounded-md bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/[0.08] text-[10px] text-slate-600 dark:text-slate-400 font-medium"
+              >
+                <option value="all">{isPolish ? 'Wszystkie etapy' : 'All stages'}</option>
+                <option value="seed">🌱 Seed</option>
+                <option value="growing">🌿 Growing</option>
+                <option value="mature">🌳 Mature</option>
+                <option value="actionable">⚡ Actionable</option>
+              </select>
+              <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
+          </div>
+        )}
+
         {/* Page list */}
         <div className="flex-1 overflow-y-auto nb-scroll p-2 space-y-1">
           {filteredPages.length === 0 ? (
@@ -790,77 +1008,141 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 <FileText size={20} className="text-slate-400" />
               </div>
               <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                {t('myWork.notebook.empty', 'No pages yet')}
+                {sidebarTab === 'inbox'
+                  ? (isPolish ? 'Inbox pusty!' : 'Inbox zero!')
+                  : t('myWork.notebook.empty', 'No pages yet')}
               </div>
               <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
                 {isPolish ? 'Utwórz pierwszą stronę' : 'Create your first page'}
               </div>
             </div>
           ) : (
-            filteredPages.map((p) => {
+            <>
+            {filteredPages.map((p) => {
               const isActive = p.id === activeId;
               const mat = (p.maturity as NotebookMaturity) || computeMaturity(p);
               const matCfg = MATURITY_CONFIG[mat];
               const timeAgo = relativeTime(p.updatedAt);
+              const statusDot = p.status === 'inbox'
+                ? 'bg-amber-400 animate-pulse'
+                : p.status === 'converted'
+                  ? 'bg-emerald-400'
+                  : p.status === 'archived'
+                    ? 'bg-slate-300 dark:bg-slate-600'
+                    : 'bg-blue-400';
               return (
-                <button
+                <div
                   key={p.id}
-                  onClick={() => setActiveId(p.id)}
-                  className={`group w-full text-left rounded-xl px-3 py-2.5 transition-all duration-200 ${
+                  className={`group relative rounded-xl transition-all duration-200 ${
                     isActive
                       ? 'bg-gradient-to-r from-indigo-500/10 to-violet-500/8 border border-indigo-500/20 dark:border-indigo-400/15 shadow-sm'
                       : 'hover:bg-slate-50 dark:hover:bg-white/[0.03] border border-transparent'
                   }`}
                 >
-                  {/* Top row: icon + title + time */}
-                  <div className="flex items-start gap-2">
-                    <span className="text-lg leading-none mt-0.5 shrink-0">
-                      {p.icon || matCfg.icon}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`font-semibold text-[13px] truncate flex-1 ${
-                          isActive ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-800 dark:text-slate-200'
-                        }`}>
-                          {p.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
-                        </span>
-                        {timeAgo && (
-                          <span className="text-[9px] text-slate-400 dark:text-slate-500 shrink-0 tabular-nums">
-                            {timeAgo}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Summary */}
-                      {p.summary && (
-                        <div className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500 line-clamp-1 leading-relaxed">
-                          {p.summary}
-                        </div>
-                      )}
-
-                      {/* Bottom row: maturity badge + tags */}
-                      <div className="mt-1.5 flex items-center gap-1 flex-wrap">
-                        <span className={`inline-flex items-center gap-0.5 rounded-md ${matCfg.bg} ${matCfg.text} px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${matCfg.dot}`} />
-                          {isPolish ? matCfg.labelPl : matCfg.label}
-                        </span>
-                        {p.tags && p.tags.slice(0, 2).map((tag) => (
+                  <button
+                    onClick={() => setActiveId(p.id)}
+                    className="w-full text-left px-3 py-2.5"
+                  >
+                    <div className="flex items-start gap-2">
+                      <span className="text-lg leading-none mt-0.5 shrink-0">
+                        {p.icon || matCfg.icon}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDot}`} />
+                          {p.pinned && <Pin size={9} className="text-amber-500 shrink-0" />}
+                          {p.visibility === 'project' && <Users size={9} className="text-blue-400 shrink-0" />}
                           <span
-                            key={tag}
-                            className="rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400 px-1.5 py-0.5 text-[9px] font-medium"
+                            className={`font-semibold text-[13px] truncate flex-1 ${
+                              isActive
+                                ? 'text-indigo-700 dark:text-indigo-300'
+                                : 'text-slate-800 dark:text-slate-200'
+                            }`}
                           >
-                            {tag}
+                            {p.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
                           </span>
-                        ))}
-                        {p.tags && p.tags.length > 2 && (
-                          <span className="text-[9px] text-slate-400">+{p.tags.length - 2}</span>
+                          {timeAgo && (
+                            <span className="text-[9px] text-slate-400 dark:text-slate-500 shrink-0 tabular-nums">
+                              {timeAgo}
+                            </span>
+                          )}
+                        </div>
+
+                        {p.summary && (
+                          <div className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500 line-clamp-1 leading-relaxed">
+                            {p.summary}
+                          </div>
                         )}
+
+                        <div className="mt-1.5 flex items-center gap-1 flex-wrap">
+                          <span
+                            className={`inline-flex items-center gap-0.5 rounded-md ${matCfg.bg} ${matCfg.text} px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${matCfg.dot}`} />
+                            {isPolish ? matCfg.labelPl : matCfg.label}
+                          </span>
+                          {p.convertedTo && p.convertedTo.length > 0 && (
+                            <span className="rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 text-[9px] font-medium">
+                              ✓ {p.convertedTo[0].type}
+                            </span>
+                          )}
+                          {p.tags &&
+                            p.tags.slice(0, 2).map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400 px-1.5 py-0.5 text-[9px] font-medium"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          {p.tags && p.tags.length > 2 && (
+                            <span className="text-[9px] text-slate-400">+{p.tags.length - 2}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
+                  </button>
+
+                  {/* Quick triage actions on hover */}
+                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-white/90 dark:bg-navy-900/90 rounded-lg shadow-sm border border-slate-200/60 dark:border-white/[0.08] px-0.5 py-0.5">
+                    {p.status === 'inbox' && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleSetStatus(p.id, 'active'); }}
+                        className="p-1 rounded text-blue-500 hover:bg-blue-500/10 transition-colors"
+                        title={isPolish ? 'Zacznij pracować' : 'Start working'}
+                      >
+                        <Play size={10} />
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleTogglePin(p.id); }}
+                      className={`p-1 rounded transition-colors ${p.pinned ? 'text-amber-500 bg-amber-500/10' : 'text-slate-400 hover:text-amber-500 hover:bg-amber-500/10'}`}
+                      title={isPolish ? 'Przypnij' : 'Pin'}
+                    >
+                      <Pin size={10} />
+                    </button>
+                    {p.status !== 'archived' && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleSetStatus(p.id, 'archived'); }}
+                        className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-500/10 transition-colors"
+                        title={isPolish ? 'Archiwizuj' : 'Archive'}
+                      >
+                        <Archive size={10} />
+                      </button>
+                    )}
                   </div>
-                </button>
+                </div>
               );
-            })
+            })}
+            {hasMore && (
+              <button
+                onClick={loadMore}
+                className="w-full py-2 text-[11px] text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+              >
+                {isPolish ? 'Załaduj więcej' : 'Load more'}
+              </button>
+            )}
+            </>
           )}
         </div>
       </div>
@@ -889,10 +1171,30 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 {/* Quick start templates */}
                 <div className="grid grid-cols-2 gap-3 mb-6">
                   {[
-                    { icon: '📝', label: isPolish ? 'Pusta strona' : 'Blank page', desc: isPolish ? 'Zacznij od zera' : 'Start from scratch', id: 'blank' },
-                    { icon: '🧠', label: isPolish ? 'Obserwacja strategiczna' : 'Strategic observation', desc: isPolish ? 'Zapisz insight' : 'Capture an insight', id: 'strategic' },
-                    { icon: '⚠️', label: isPolish ? 'Analiza ryzyka' : 'Risk analysis', desc: isPolish ? 'Oceń zagrożenie' : 'Assess a threat', id: 'risk' },
-                    { icon: '💬', label: isPolish ? 'Notatki ze spotkania' : 'Meeting notes', desc: isPolish ? 'Ustal i zapisz' : 'Capture & align', id: 'meeting' },
+                    {
+                      icon: '📝',
+                      label: isPolish ? 'Pusta strona' : 'Blank page',
+                      desc: isPolish ? 'Zacznij od zera' : 'Start from scratch',
+                      id: 'blank',
+                    },
+                    {
+                      icon: '🧠',
+                      label: isPolish ? 'Obserwacja strategiczna' : 'Strategic observation',
+                      desc: isPolish ? 'Zapisz insight' : 'Capture an insight',
+                      id: 'strategic',
+                    },
+                    {
+                      icon: '⚠️',
+                      label: isPolish ? 'Analiza ryzyka' : 'Risk analysis',
+                      desc: isPolish ? 'Oceń zagrożenie' : 'Assess a threat',
+                      id: 'risk',
+                    },
+                    {
+                      icon: '💬',
+                      label: isPolish ? 'Notatki ze spotkania' : 'Meeting notes',
+                      desc: isPolish ? 'Ustal i zapisz' : 'Capture & align',
+                      id: 'meeting',
+                    },
                   ].map((tmpl) => (
                     <button
                       key={tmpl.id}
@@ -948,15 +1250,41 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 <div className="flex items-center gap-2 px-4 py-1.5 text-[11px]">
                   {/* Maturity badge */}
                   {(() => {
-                    const mat = (activePage.maturity as NotebookMaturity) || computeMaturity(activePage);
+                    const mat =
+                      (activePage.maturity as NotebookMaturity) || computeMaturity(activePage);
                     const cfg = MATURITY_CONFIG[mat];
                     return (
-                      <span className={`inline-flex items-center gap-1 rounded-md border ${cfg.border} ${cfg.bg} ${cfg.text} px-2 py-0.5 font-semibold uppercase tracking-wide text-[9px]`}>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-md border ${cfg.border} ${cfg.bg} ${cfg.text} px-2 py-0.5 font-semibold uppercase tracking-wide text-[9px]`}
+                      >
                         <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
                         {isPolish ? cfg.labelPl : cfg.label}
                       </span>
                     );
                   })()}
+
+                  {/* Visibility toggle */}
+                  <div className="relative">
+                    <select
+                      value={activePage.visibility === 'project' && activePage.projectId ? `project:${activePage.projectId}` : 'private'}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'private') {
+                          scheduleSave({ projectId: null, visibility: 'private' });
+                          setPages((prev) => prev.map((p) => p.id === activePage.id ? { ...p, projectId: null, visibility: 'private' } : p));
+                        }
+                      }}
+                      className="appearance-none pl-5 pr-2 py-0.5 rounded-md bg-transparent border border-slate-200/60 dark:border-white/[0.08] text-[10px] text-slate-600 dark:text-slate-400 font-medium cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+                    >
+                      <option value="private">{isPolish ? '🔒 Prywatna' : '🔒 Private'}</option>
+                      {activePage.projectId && (
+                        <option value={`project:${activePage.projectId}`}>
+                          {isPolish ? '👥 Projekt' : '👥 Project'}
+                        </option>
+                      )}
+                    </select>
+                    <ChevronDown size={8} className="absolute right-0.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
 
                   {/* Auto-summary */}
                   {activePage?.summary && (
@@ -981,6 +1309,15 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     </span>
                   )}
 
+                  {/* Ask AI */}
+                  <button
+                    onClick={handleAskAI}
+                    className="p-1 rounded-md text-purple-400 hover:text-purple-500 hover:bg-purple-500/10 transition-colors shrink-0"
+                    title={isPolish ? 'Zapytaj AI o tę notatkę' : 'Ask AI about this note'}
+                  >
+                    <Sparkles size={12} />
+                  </button>
+
                   {/* Delete */}
                   <button
                     onClick={handleDeletePage}
@@ -993,53 +1330,88 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               </div>
 
               {/* Convert-to CTA */}
-              {activePage && (activePage.maturity === 'mature' || activePage.maturity === 'actionable') && (
-                <div className="px-4 py-2 border-b border-amber-200/40 dark:border-amber-800/20 bg-gradient-to-r from-amber-50/80 to-orange-50/80 dark:from-amber-950/15 dark:to-orange-950/10">
-                  <div className="mx-auto max-w-4xl flex items-center gap-3 flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <Zap size={12} className="text-amber-600 dark:text-amber-400" />
-                      <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-300">
-                        {isPolish ? 'Gotowa do działania' : 'Ready for action'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => {
-                          trackFunnelEvent('notebook_convert_triggered', { target: 'initiative', noteId: activePage.id });
-                          toast.success(isPolish ? 'Tworzenie inicjatywy z notatki…' : 'Creating initiative from note…');
-                        }}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-semibold hover:bg-blue-500/20 transition-all hover:shadow-sm"
-                      >
-                        <Target size={10} />
-                        {isPolish ? 'Inicjatywa' : 'Initiative'}
-                        <ArrowRight size={8} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          trackFunnelEvent('notebook_convert_triggered', { target: 'task', noteId: activePage.id });
-                          toast.success(isPolish ? 'Tworzenie taska z notatki…' : 'Creating task from note…');
-                        }}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold hover:bg-emerald-500/20 transition-all hover:shadow-sm"
-                      >
-                        <CheckSquare size={10} />
-                        Task
-                        <ArrowRight size={8} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          trackFunnelEvent('notebook_convert_triggered', { target: 'decision', noteId: activePage.id });
-                          toast.success(isPolish ? 'Tworzenie decyzji z notatki…' : 'Creating decision from note…');
-                        }}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-semibold hover:bg-amber-500/20 transition-all hover:shadow-sm"
-                      >
-                        <Scale size={10} />
-                        {isPolish ? 'Decyzja' : 'Decision'}
-                        <ArrowRight size={8} />
-                      </button>
+              {activePage &&
+                (activePage.maturity === 'mature' || activePage.maturity === 'actionable') && (
+                  <div className="px-4 py-2 border-b border-amber-200/40 dark:border-amber-800/20 bg-gradient-to-r from-amber-50/80 to-orange-50/80 dark:from-amber-950/15 dark:to-orange-950/10">
+                    <div className="mx-auto max-w-4xl flex items-center gap-3 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <Zap size={12} className="text-amber-600 dark:text-amber-400" />
+                        <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+                          {isPolish ? 'Gotowa do działania' : 'Ready for action'}
+                        </span>
+                      </div>
+                      {activePage.convertedTo && activePage.convertedTo.length > 0 ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                            {isPolish ? 'Skonwertowano →' : 'Converted →'}
+                          </span>
+                          {activePage.convertedTo.map((ct) => (
+                            <span key={ct.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-medium">
+                              {ct.type === 'task' ? <CheckSquare size={9} /> : ct.type === 'decision' ? <Scale size={9} /> : <Target size={9} />}
+                              {ct.type}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          {(['initiative', 'task', 'decision'] as const).map((target) => (
+                            <button
+                              key={target}
+                              onClick={async () => {
+                                trackFunnelEvent('notebook_convert_triggered', { target, noteId: activePage.id });
+                                try {
+                                  const result = await Api.convertNotebookPage(activePage.id, target);
+                                  toast.success(
+                                    isPolish
+                                      ? `Utworzono ${target === 'task' ? 'task' : target === 'decision' ? 'decyzję' : 'inicjatywę'}: ${result.title}`
+                                      : `Created ${target}: ${result.title}`
+                                  );
+                                  emitMyWorkEvent({ type: 'item:converted', entityType: 'notebook', entityId: activePage.id, meta: { target } });
+                                  setPages((prev) =>
+                                    prev.map((p) =>
+                                      p.id === activePage.id
+                                        ? { ...p, status: 'converted' as const, convertedTo: [...(p.convertedTo || []), { type: target, id: result.id }] }
+                                        : p
+                                    )
+                                  );
+                                } catch (err: any) {
+                                  toast.error(err?.message || 'Conversion failed');
+                                }
+                              }}
+                              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all hover:shadow-sm ${
+                                target === 'initiative'
+                                  ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20'
+                                  : target === 'task'
+                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
+                                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20'
+                              }`}
+                            >
+                              {target === 'initiative' ? <Target size={10} /> : target === 'task' ? <CheckSquare size={10} /> : <Scale size={10} />}
+                              {target === 'initiative' ? (isPolish ? 'Inicjatywa' : 'Initiative') : target === 'task' ? 'Task' : (isPolish ? 'Decyzja' : 'Decision')}
+                              <ArrowRight size={8} />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1.5 ml-auto">
+                        <button
+                          onClick={() => setChecklistModalOpen(true)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-500/10 text-slate-600 dark:text-slate-400 text-[10px] font-medium hover:bg-slate-500/20 transition-all"
+                        >
+                          <CheckSquare size={9} />
+                          {isPolish ? 'Checklist → Taski' : 'Checklist → Tasks'}
+                        </button>
+                        <button
+                          onClick={() => setActionItemsOpen(true)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-all"
+                        >
+                          <Sparkles size={9} />
+                          {isPolish ? 'AI ekstrakcja' : 'AI Extract'}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Editor area */}
               <div className="flex-1 overflow-y-auto nb-scroll relative" ref={editorContainerRef}>
@@ -1047,8 +1419,12 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   {/* Page icon + title — Notion-like */}
                   <div className="mb-4">
                     <div className="flex items-start gap-3 mb-1">
-                      <span className="text-3xl mt-1 cursor-default select-none" title={isPolish ? 'Ikona strony' : 'Page icon'}>
-                        {activePage.icon || MATURITY_CONFIG[(activePage.maturity as NotebookMaturity) || 'seed'].icon}
+                      <span
+                        className="text-3xl mt-1 cursor-default select-none"
+                        title={isPolish ? 'Ikona strony' : 'Page icon'}
+                      >
+                        {activePage.icon ||
+                          MATURITY_CONFIG[(activePage.maturity as NotebookMaturity) || 'seed'].icon}
                       </span>
                       <div className="flex-1 min-w-0">
                         <input
@@ -1106,10 +1482,14 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     noteTitle={title}
                     onInsert={(text) => {
                       if (editor) {
-                        editor.chain().focus().insertContent({
-                          type: 'paragraph',
-                          content: [{ type: 'text', text }],
-                        }).run();
+                        editor
+                          .chain()
+                          .focus()
+                          .insertContent({
+                            type: 'paragraph',
+                            content: [{ type: 'text', text }],
+                          })
+                          .run();
                       }
                       setAiCommand(null);
                     }}
@@ -1140,13 +1520,30 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             noteId={activePage.id}
             onInsertReference={(item) => {
               if (!editor) return;
-              const typeLabel = item.type === 'initiative' ? '🎯' : item.type === 'task' ? '✅' : '⚖️';
-              editor.chain().focus().insertContent({
-                type: 'callout',
-                attrs: { variant: 'info' },
-                content: [{ type: 'paragraph', content: [{ type: 'text', text: `${typeLabel} ${item.title} [${item.type}]` }] }],
-              }).run();
+              const typeLabel =
+                item.type === 'initiative' ? '🎯' : item.type === 'task' ? '✅' : '⚖️';
+              editor
+                .chain()
+                .focus()
+                .insertContent({
+                  type: 'callout',
+                  attrs: { variant: 'info' },
+                  content: [
+                    {
+                      type: 'paragraph',
+                      content: [
+                        { type: 'text', text: `${typeLabel} ${item.title} [${item.type}]` },
+                      ],
+                    },
+                  ],
+                })
+                .run();
               toast.success(isPolish ? 'Wstawiono odniesienie' : 'Reference inserted');
+            }}
+            onOpenItem={(item) => {
+              window.dispatchEvent(new CustomEvent('mywork-open-item', {
+                detail: { type: item.type, id: item.id, name: item.title },
+              }));
             }}
             onClose={() => setPulseOpen(false)}
           />
@@ -1215,6 +1612,16 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             </div>
           </div>
         )}
+
+        {/* AI Action Items right panel */}
+        {actionItemsOpen && activePage && (
+          <ActionItemsPanel
+            open={actionItemsOpen}
+            onClose={() => setActionItemsOpen(false)}
+            noteId={activePage.id}
+            noteTitle={activePage.title}
+          />
+        )}
       </div>
 
       <NewPageModal
@@ -1222,6 +1629,17 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         onClose={() => setTemplateModalOpen(false)}
         onSelectTemplate={(tmpl) => handleNewPage(tmpl)}
       />
+
+      {activePage && (
+        <ConvertChecklistModal
+          open={checklistModalOpen}
+          onClose={() => setChecklistModalOpen(false)}
+          contentJson={activePage.contentJson}
+          noteId={activePage.id}
+          noteTitle={activePage.title}
+          onConverted={() => fetchPages()}
+        />
+      )}
     </div>
   );
 };
