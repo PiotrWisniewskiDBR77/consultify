@@ -53,7 +53,7 @@ import type {
 } from '@/types/myWork';
 
 import { ActionItemsPanel } from './notebook/ActionItemsPanel';
-import { AIChatInlinePanel, AI_BLOCK_MIME } from './notebook/AIChatInlinePanel';
+import { AIChatInlinePanel, AI_BLOCK_MIME, type ConvertTarget } from './notebook/AIChatInlinePanel';
 import { AICommandPrompt } from './notebook/AICommandPrompt';
 import { AITopicsPanel } from './notebook/AITopicsPanel';
 import { type AICommandType, AIInlineResponse } from './notebook/AIInlineResponse';
@@ -954,6 +954,44 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     }
   };
 
+  const handleConvertFromPanel = useCallback(
+    async (target: ConvertTarget) => {
+      if (!activePage) return;
+      trackFunnelEvent('notebook_convert_triggered', { target, noteId: activePage.id });
+
+      if (target === 'idea') {
+        window.dispatchEvent(
+          new CustomEvent('notebook-create-idea', { detail: { text: activePage.title } })
+        );
+        return;
+      }
+
+      if (target === 'assessment' || target === 'report' || target === 'presentation') return;
+
+      const apiTarget = target as 'initiative' | 'task' | 'decision';
+      try {
+        const result = await Api.convertNotebookPage(activePage.id, apiTarget);
+        const label = apiTarget === 'task' ? 'task' : apiTarget === 'decision' ? (isPolish ? 'decyzję' : 'decision') : (isPolish ? 'inicjatywę' : 'initiative');
+        toast.success(
+          isPolish
+            ? `Utworzono ${label}: ${result.title}`
+            : `Created ${apiTarget}: ${result.title}`
+        );
+        emitMyWorkEvent({ type: 'item:converted', entityType: 'notebook', entityId: activePage.id, meta: { target: apiTarget } });
+        setPages((prev) =>
+          prev.map((p) =>
+            p.id === activePage.id
+              ? { ...p, status: 'converted' as const, convertedTo: [...(p.convertedTo || []), { type: apiTarget, id: result.id }] }
+              : p
+          )
+        );
+      } catch (err: any) {
+        toast.error(err?.message || 'Conversion failed');
+      }
+    },
+    [activePage, isPolish, emitMyWorkEvent]
+  );
+
   // Persist editor changes
   useEffect(() => {
     if (!editor || !activePage) return;
@@ -1658,6 +1696,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             getRelativeTime={(iso) => relativeTime(iso)}
             onOpenAIChat={() => setChatOpen(true)}
             onFocusAICommand={() => aiCommandPromptInputRef.current?.focus()}
+            onConvert={handleConvertFromPanel}
           />
         )}
       </div>
