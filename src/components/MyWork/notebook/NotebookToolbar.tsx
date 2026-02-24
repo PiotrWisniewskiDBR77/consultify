@@ -9,15 +9,20 @@ import {
   Heading1,
   Heading2,
   Heading3,
+  Highlighter,
   Italic,
+  Link,
   List,
   ListChecks,
   ListOrdered,
+  Quote,
   Redo,
+  RemoveFormatting,
   Strikethrough,
+  Underline,
   Undo,
 } from 'lucide-react';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface NotebookToolbarProps {
@@ -56,9 +61,19 @@ export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor }) => {
   const { i18n } = useTranslation();
   const pl = i18n.language === 'pl';
 
+  const setLink = useCallback(() => {
+    const prev = editor.getAttributes('link').href;
+    const url = window.prompt(pl ? 'Wklej URL:' : 'Paste URL:', prev || 'https://');
+    if (url === null) return;
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      return;
+    }
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  }, [editor, pl]);
+
   return (
     <div className="flex items-center gap-0.5 px-3 py-1.5 shrink-0 flex-wrap">
-      {/* Historia */}
       <Btn
         icon={Undo}
         onClick={() => editor.chain().focus().undo().run()}
@@ -73,7 +88,6 @@ export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor }) => {
       />
       <Divider />
 
-      {/* Formatowanie inline */}
       <Btn
         icon={Bold}
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -87,10 +101,22 @@ export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor }) => {
         title={pl ? 'Kursywa (Ctrl+I)' : 'Italic (Ctrl+I)'}
       />
       <Btn
+        icon={Underline}
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
+        isActive={editor.isActive('underline')}
+        title={pl ? 'Podkreślenie (Ctrl+U)' : 'Underline (Ctrl+U)'}
+      />
+      <Btn
         icon={Strikethrough}
         onClick={() => editor.chain().focus().toggleStrike().run()}
         isActive={editor.isActive('strike')}
         title={pl ? 'Przekreślenie' : 'Strikethrough'}
+      />
+      <Btn
+        icon={Highlighter}
+        onClick={() => editor.chain().focus().toggleHighlight().run()}
+        isActive={editor.isActive('highlight')}
+        title={pl ? 'Podświetlenie' : 'Highlight'}
       />
       <Btn
         icon={Code}
@@ -98,9 +124,14 @@ export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor }) => {
         isActive={editor.isActive('code')}
         title={pl ? 'Kod inline' : 'Inline code'}
       />
+      <Btn
+        icon={Link}
+        onClick={setLink}
+        isActive={editor.isActive('link')}
+        title={pl ? 'Link (Ctrl+K)' : 'Link (Ctrl+K)'}
+      />
       <Divider />
 
-      {/* Wyrównanie */}
       <Btn
         icon={AlignLeft}
         onClick={() => editor.chain().focus().setTextAlign('left').run()}
@@ -127,7 +158,6 @@ export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor }) => {
       />
       <Divider />
 
-      {/* Nagłówki */}
       <Btn
         icon={Heading1}
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
@@ -148,7 +178,6 @@ export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor }) => {
       />
       <Divider />
 
-      {/* Listy */}
       <Btn
         icon={List}
         onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -166,6 +195,19 @@ export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor }) => {
         onClick={() => editor.chain().focus().toggleTaskList().run()}
         isActive={editor.isActive('taskList')}
         title={pl ? 'Checklista' : 'Todo list'}
+      />
+      <Btn
+        icon={Quote}
+        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        isActive={editor.isActive('blockquote')}
+        title={pl ? 'Cytat' : 'Blockquote'}
+      />
+      <Divider />
+
+      <Btn
+        icon={RemoveFormatting}
+        onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
+        title={pl ? 'Wyczyść formatowanie' : 'Clear formatting'}
       />
 
       <div className="flex-1" />

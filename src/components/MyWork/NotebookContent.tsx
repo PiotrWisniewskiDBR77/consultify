@@ -1,3 +1,5 @@
+import Highlight from '@tiptap/extension-highlight';
+import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import TextAlign from '@tiptap/extension-text-align';
 import { Table } from '@tiptap/extension-table';
@@ -6,6 +8,7 @@ import { TableHeader } from '@tiptap/extension-table-header';
 import { TableRow } from '@tiptap/extension-table-row';
 import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
+import UnderlineExt from '@tiptap/extension-underline';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {
@@ -352,6 +355,31 @@ const EDITOR_STYLES = `
 }
 .dark .ProseMirror blockquote { border-left-color: #818cf8; color: #94a3b8; }
 
+/* Link */
+.ProseMirror .nb-link,
+.ProseMirror a {
+  color: #6366f1;
+  text-decoration: underline;
+  text-decoration-color: rgba(99,102,241,0.3);
+  text-underline-offset: 2px;
+  transition: text-decoration-color 0.15s;
+  cursor: pointer;
+}
+.ProseMirror .nb-link:hover,
+.ProseMirror a:hover { text-decoration-color: #6366f1; }
+.dark .ProseMirror .nb-link,
+.dark .ProseMirror a { color: #a5b4fc; text-decoration-color: rgba(165,180,252,0.3); }
+.dark .ProseMirror .nb-link:hover,
+.dark .ProseMirror a:hover { text-decoration-color: #a5b4fc; }
+
+/* Highlight */
+.ProseMirror mark {
+  background: linear-gradient(120deg, rgba(250,204,21,0.25) 0%, rgba(250,204,21,0.4) 100%);
+  border-radius: 2px;
+  padding: 0.05em 0.1em;
+}
+.dark .ProseMirror mark { background: linear-gradient(120deg, rgba(250,204,21,0.15) 0%, rgba(250,204,21,0.25) 100%); }
+
 /* Lists */
 .ProseMirror ul, .ProseMirror ol { padding-left: 1.5rem; }
 .ProseMirror li::marker { color: #6366f1; }
@@ -444,6 +472,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           : 'Start writing… Type / to insert a block',
       }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      UnderlineExt,
+      Highlight.configure({ multicolor: false }),
+      Link.configure({ openOnClick: false, HTMLAttributes: { class: 'nb-link' } }),
       CalloutNode,
       DetailsNode,
       DetailsSummaryNode,
@@ -668,6 +699,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [checklistModalOpen, setChecklistModalOpen] = useState(false);
   const [actionItemsOpen, setActionItemsOpen] = useState(false);
+  const [ideasOpenInternal, setIdeasOpenInternal] = useState(false);
+  const ideasOpen = linkedIdeasOpen ?? ideasOpenInternal;
+  const setIdeasOpen = onLinkedIdeasOpenChange ?? setIdeasOpenInternal;
   const [topicsOpenInternal, setTopicsOpenInternal] = useState(false);
   const topicsOpenResolved = topicsOpen ?? topicsOpenInternal;
   const setTopicsOpen = onTopicsOpenChange ?? setTopicsOpenInternal;
@@ -962,10 +996,6 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       handleRemoveTag(pageTags[pageTags.length - 1]);
     }
   };
-
-  const [ideasOpenInternal, setIdeasOpenInternal] = useState(false);
-  const ideasOpen = linkedIdeasOpen ?? ideasOpenInternal;
-  const setIdeasOpen = onLinkedIdeasOpenChange ?? setIdeasOpenInternal;
 
   return (
     <div className="flex h-[calc(100vh-220px)] min-h-[520px]">

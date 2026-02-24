@@ -1,6 +1,7 @@
 /**
- * AIChatInlinePanel — menu podręczne notatnika.
- * Przyciski wstawiania elementów + blok tekstu z mikrofonem (drag & drop do notatki).
+ * AIChatInlinePanel — Notebook tools panel.
+ * Premium "Tech Sexy" design: glassmorphism, gradient accents, invisible borders.
+ * Sections: Insert (blocks only), AI (drag & drop text + voice), Page (metadata).
  */
 import type { Editor } from '@tiptap/react';
 import {
@@ -9,13 +10,7 @@ import {
   Clock,
   Columns3,
   GripVertical,
-  Heading1,
-  Heading2,
-  Heading3,
   Info,
-  List,
-  ListChecks,
-  ListOrdered,
   Loader2,
   Mic,
   MicOff,
@@ -60,6 +55,13 @@ interface AIChatInlinePanelProps {
   onOpenAIChat?: () => void;
 }
 
+const MATURITY_STYLE: Record<string, { gradient: string; text: string; glow: string }> = {
+  seed: { gradient: 'from-slate-400/20 to-slate-500/10', text: 'text-slate-500', glow: 'shadow-slate-400/10' },
+  growing: { gradient: 'from-emerald-400/20 to-emerald-500/10', text: 'text-emerald-500', glow: 'shadow-emerald-400/10' },
+  mature: { gradient: 'from-blue-400/20 to-blue-500/10', text: 'text-blue-500', glow: 'shadow-blue-400/10' },
+  actionable: { gradient: 'from-amber-400/20 to-amber-500/10', text: 'text-amber-500', glow: 'shadow-amber-400/10' },
+};
+
 export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
   open,
   onClose,
@@ -82,7 +84,6 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const recognitionRef = useRef<any>(null);
 
-  // Voice input — Web Speech API
   useEffect(() => {
     const SpeechRecognitionAPI =
       typeof window !== 'undefined' && ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
@@ -102,9 +103,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
     rec.onend = () => setIsRecording(false);
     recognitionRef.current = rec;
     return () => {
-      try {
-        rec.abort();
-      } catch {}
+      try { rec.abort(); } catch {}
     };
   }, [isPl]);
 
@@ -209,7 +208,6 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
     [editor, noteTitle, noteTags, isPl]
   );
 
-  // Expose runAIAndInsert for drop handler (via custom event)
   useEffect(() => {
     if (!open) return;
     const handler = (e: CustomEvent<{ text: string }>) => {
@@ -236,211 +234,284 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
   if (!open) return null;
 
   const insertButtons = [
-    { icon: Info, label: 'Callout', labelPl: 'Wyróżnienie', action: () => (editor?.commands as any)?.setCallout({ variant: 'info' }) },
-    { icon: AlertTriangle, label: 'Warning', labelPl: 'Ostrzeżenie', action: () => (editor?.commands as any)?.setCallout({ variant: 'warning' }) },
-    { icon: ToggleRight, label: 'Toggle', labelPl: 'Toggle', action: () => (editor?.commands as any)?.setDetails() },
-    { icon: Columns3, label: 'Table', labelPl: 'Tabela', action: () => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
-    { icon: Minus, label: 'Divider', labelPl: 'Separator', action: () => editor?.chain().focus().setHorizontalRule().run() },
-    { icon: Heading1, label: 'H1', labelPl: 'H1', action: () => editor?.chain().focus().toggleHeading({ level: 1 }).run() },
-    { icon: Heading2, label: 'H2', labelPl: 'H2', action: () => editor?.chain().focus().toggleHeading({ level: 2 }).run() },
-    { icon: Heading3, label: 'H3', labelPl: 'H3', action: () => editor?.chain().focus().toggleHeading({ level: 3 }).run() },
-    { icon: List, label: 'List', labelPl: 'Lista', action: () => editor?.chain().focus().toggleBulletList().run() },
-    { icon: ListOrdered, label: 'Num', labelPl: 'Num.', action: () => editor?.chain().focus().toggleOrderedList().run() },
-    { icon: ListChecks, label: 'Check', labelPl: 'Check', action: () => editor?.chain().focus().toggleTaskList().run() },
+    { icon: Info, label: 'Callout', labelPl: 'Wyróżnienie', action: () => (editor?.commands as any)?.setCallout({ variant: 'info' }), color: 'from-blue-500/20 to-blue-600/10 text-blue-600 dark:text-blue-400' },
+    { icon: AlertTriangle, label: 'Warning', labelPl: 'Ostrzeżenie', action: () => (editor?.commands as any)?.setCallout({ variant: 'warning' }), color: 'from-amber-500/20 to-amber-600/10 text-amber-600 dark:text-amber-400' },
+    { icon: ToggleRight, label: 'Toggle', labelPl: 'Rozwijane', action: () => (editor?.commands as any)?.setDetails(), color: 'from-slate-500/15 to-slate-600/8 text-slate-600 dark:text-slate-400' },
+    { icon: Columns3, label: 'Table', labelPl: 'Tabela', action: () => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(), color: 'from-indigo-500/15 to-indigo-600/8 text-indigo-600 dark:text-indigo-400' },
+    { icon: Minus, label: 'Divider', labelPl: 'Separator', action: () => editor?.chain().focus().setHorizontalRule().run(), color: 'from-slate-500/15 to-slate-600/8 text-slate-600 dark:text-slate-400' },
   ];
 
+  const matStyle = page ? (MATURITY_STYLE[page.maturity] || MATURITY_STYLE.seed) : MATURITY_STYLE.seed;
+
   return (
-    <div className="w-80 shrink-0 border-l border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950 flex flex-col">
-      <div className="flex items-center justify-between px-3 py-3 border-b border-slate-200 dark:border-navy-800">
-        <div className="flex items-center gap-2 text-sm font-semibold text-violet-700 dark:text-violet-300">
-          <Sparkles size={16} />
-          <span>{isPl ? 'Narzędzia notatnika' : 'Notebook tools'}</span>
+    <div className="w-80 shrink-0 border-l border-white/[0.06] bg-gradient-to-b from-white via-white to-slate-50/30 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/20 flex flex-col backdrop-blur-sm">
+      {/* Header — gradient accent */}
+      <div className="relative px-4 py-3 border-b border-slate-200/40 dark:border-white/[0.04]">
+        <div className="absolute inset-0 bg-gradient-to-r from-violet-500/[0.04] via-indigo-500/[0.02] to-transparent pointer-events-none" />
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-sm shadow-violet-500/20">
+              <Sparkles size={13} className="text-white" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
+                {isPl ? 'Narzędzia' : 'Tools'}
+              </div>
+              <div className="text-[9px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                {isPl ? 'Notatnik' : 'Notebook'}
+              </div>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-600 dark:hover:text-slate-300 transition-all">
+            <X size={14} />
+          </button>
         </div>
-        <button onClick={onClose} className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.06]">
-          <X size={14} />
-        </button>
       </div>
 
-      {/* Insert element buttons */}
-      <div className="px-2 py-2 border-b border-slate-200 dark:border-navy-800">
-        <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 px-1 mb-1.5">
-          {isPl ? 'Wstaw' : 'Insert'}
+      {/* Insert blocks */}
+      <div className="px-3 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
+        <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400/80 dark:text-slate-500/80 mb-2">
+          {isPl ? 'Wstaw blok' : 'Insert block'}
         </div>
-        <div className="flex flex-wrap gap-1">
-          <button
-            onClick={deleteContainingBlock}
-            disabled={!editor}
-            className="p-1.5 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 disabled:opacity-50 transition-colors"
-            title={isPl ? 'Usuń blok' : 'Delete block'}
-          >
-            <Trash2 size={14} />
-          </button>
-          {insertButtons.map(({ icon: Icon, label, labelPl, action }) => (
+        <div className="grid grid-cols-5 gap-1.5">
+          {insertButtons.map(({ icon: Icon, label, labelPl, action, color }) => (
             <button
               key={label}
               onClick={() => insertElement(action)}
               disabled={!editor}
-              className="p-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-400 disabled:opacity-50 transition-colors"
+              className={`group relative flex flex-col items-center gap-1 py-2 px-1 rounded-xl bg-gradient-to-b ${color} border border-transparent hover:border-current/10 hover:shadow-sm disabled:opacity-40 transition-all duration-200`}
               title={isPl ? labelPl : label}
             >
-              <Icon size={14} />
+              <Icon size={16} />
+              <span className="text-[8px] font-semibold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">
+                {isPl ? labelPl : label}
+              </span>
             </button>
           ))}
         </div>
+        <button
+          onClick={deleteContainingBlock}
+          disabled={!editor}
+          className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-red-500/[0.06] text-red-500/70 hover:bg-red-500/[0.12] hover:text-red-600 dark:hover:text-red-400 text-[10px] font-medium disabled:opacity-40 transition-all"
+          title={isPl ? 'Usuń blok (⌘⇧⌫)' : 'Delete block (⌘⇧⌫)'}
+        >
+          <Trash2 size={11} />
+          {isPl ? 'Usuń blok' : 'Delete block'}
+        </button>
+      </div>
 
-        {(onFocusAICommand || onOpenAIChat) && (
-          <div className="mt-2 flex items-center gap-1 px-1">
+      {/* AI Quick actions */}
+      {(onFocusAICommand || onOpenAIChat) && (
+        <div className="px-3 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
+          <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400/80 dark:text-slate-500/80 mb-2">
+            AI
+          </div>
+          <div className="flex gap-2">
             {onFocusAICommand && (
               <button
                 onClick={onFocusAICommand}
-                className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-300 px-2 py-1.5 text-[11px] font-semibold hover:bg-violet-500/20 transition-colors"
-                title={isPl ? 'Polecenie AI' : 'AI command'}
+                className="flex-1 group relative overflow-hidden rounded-xl py-2.5 px-3 transition-all duration-200 hover:shadow-md"
               >
-                <Sparkles size={12} />
-                {isPl ? 'Polecenie' : 'Command'}
+                <div className="absolute inset-0 bg-gradient-to-br from-violet-500/15 via-purple-500/10 to-indigo-500/15 group-hover:from-violet-500/25 group-hover:to-indigo-500/25 transition-all" />
+                <div className="absolute inset-0 border border-violet-500/10 group-hover:border-violet-500/20 rounded-xl transition-colors" />
+                <div className="relative flex flex-col items-center gap-1">
+                  <Sparkles size={16} className="text-violet-600 dark:text-violet-400" />
+                  <span className="text-[10px] font-bold text-violet-700 dark:text-violet-300">
+                    {isPl ? 'Polecenie' : 'Command'}
+                  </span>
+                  <span className="text-[8px] text-violet-500/60 font-medium">⌘⇧A</span>
+                </div>
               </button>
             )}
             {onOpenAIChat && (
               <button
                 onClick={onOpenAIChat}
-                className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-slate-500/10 text-slate-700 dark:text-slate-300 px-2 py-1.5 text-[11px] font-semibold hover:bg-slate-500/20 transition-colors"
-                title={isPl ? 'Czat AI' : 'AI chat'}
+                className="flex-1 group relative overflow-hidden rounded-xl py-2.5 px-3 transition-all duration-200 hover:shadow-md"
               >
-                {isPl ? 'Czat' : 'Chat'}
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-500/10 via-slate-400/8 to-slate-500/10 group-hover:from-slate-500/20 group-hover:to-slate-500/15 transition-all" />
+                <div className="absolute inset-0 border border-slate-500/10 group-hover:border-slate-500/20 rounded-xl transition-colors" />
+                <div className="relative flex flex-col items-center gap-1">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500 dark:text-slate-400">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                    {isPl ? 'Czat AI' : 'AI Chat'}
+                  </span>
+                </div>
               </button>
             )}
           </div>
-        )}
-      </div>
-
-      {/* Page meta + actions */}
-      {page && (
-        <div className="px-3 py-3 border-b border-slate-200 dark:border-navy-800 space-y-2">
-          <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            {isPl ? 'Strona' : 'Page'}
-          </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1 rounded-md border border-slate-300/50 dark:border-white/[0.08] bg-slate-500/10 text-slate-600 dark:text-slate-400 px-2 py-0.5 font-semibold uppercase tracking-wide text-[9px]">
-              {page.maturity}
-            </span>
-
-            {onSetVisibility && (
-              <div className="relative">
-                <select
-                  value={page.visibility === 'project' && page.projectId ? 'project' : 'private'}
-                  onChange={(e) => onSetVisibility(e.target.value as 'private' | 'project')}
-                  className="appearance-none pr-6 pl-2 py-0.5 rounded-md bg-transparent border border-slate-200/60 dark:border-white/[0.08] text-[10px] text-slate-600 dark:text-slate-400 font-medium cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
-                >
-                  <option value="private">{isPl ? '🔒 Prywatna' : '🔒 Private'}</option>
-                  {page.projectId && <option value="project">{isPl ? '👥 Projekt' : '👥 Project'}</option>}
-                </select>
-                <ChevronDown size={10} className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            )}
-          </div>
-
-          {page.summary ? (
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 italic line-clamp-2">
-              {page.summary}
-            </div>
-          ) : null}
-
-          <div className="flex items-center gap-3 text-[11px] text-slate-400 dark:text-slate-500">
-            <span className="inline-flex items-center gap-1 tabular-nums">
-              <Type size={12} />
-              {page.wordCount}
-            </span>
-            {page.updatedAt && getRelativeTime ? (
-              <span className="inline-flex items-center gap-1 tabular-nums">
-                <Clock size={12} />
-                {getRelativeTime(page.updatedAt)}
-              </span>
-            ) : null}
-          </div>
-
-          {(onAskAI || onDeletePage) && (
-            <div className="flex items-center gap-2">
-              {onAskAI && (
-                <button
-                  onClick={onAskAI}
-                  className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-300 px-2 py-1.5 text-[11px] font-semibold hover:bg-violet-500/20 transition-colors"
-                >
-                  <Sparkles size={12} />
-                  {isPl ? 'Zapytaj AI' : 'Ask AI'}
-                </button>
-              )}
-              {onDeletePage && (
-                <button
-                  onClick={onDeletePage}
-                  className="inline-flex items-center justify-center rounded-lg bg-red-500/10 text-red-700 dark:text-red-300 px-2 py-1.5 text-[11px] font-semibold hover:bg-red-500/20 transition-colors"
-                  title={isPl ? 'Usuń stronę' : 'Delete page'}
-                >
-                  <Trash2 size={12} />
-                </button>
-              )}
-            </div>
-          )}
         </div>
       )}
 
-      {/* Draggable AI block */}
+      {/* Page metadata */}
+      {page && (
+        <div className="px-3 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
+          <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400/80 dark:text-slate-500/80 mb-2">
+            {isPl ? 'Strona' : 'Page'}
+          </div>
+
+          <div className="space-y-2.5">
+            {/* Maturity + visibility pill row */}
+            <div className="flex items-center gap-2">
+              <span className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r ${matStyle.gradient} ${matStyle.text} px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide shadow-sm ${matStyle.glow}`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+                {page.maturity}
+              </span>
+
+              {onSetVisibility && (
+                <div className="relative">
+                  <select
+                    value={page.visibility === 'project' && page.projectId ? 'project' : 'private'}
+                    onChange={(e) => onSetVisibility(e.target.value as 'private' | 'project')}
+                    className="appearance-none pr-5 pl-2.5 py-1 rounded-lg bg-slate-50/80 dark:bg-white/[0.04] border border-slate-200/40 dark:border-white/[0.06] text-[10px] text-slate-500 dark:text-slate-400 font-medium cursor-pointer hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-all"
+                  >
+                    <option value="private">{isPl ? '🔒 Prywatna' : '🔒 Private'}</option>
+                    {page.projectId && <option value="project">{isPl ? '👥 Projekt' : '👥 Project'}</option>}
+                  </select>
+                  <ChevronDown size={9} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
+              )}
+            </div>
+
+            {/* Summary */}
+            {page.summary && (
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 italic leading-relaxed line-clamp-2 pl-0.5">
+                {page.summary}
+              </div>
+            )}
+
+            {/* Stats row */}
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500 tabular-nums font-medium">
+                <Type size={11} className="opacity-60" />
+                {page.wordCount} {isPl ? 'słów' : 'words'}
+              </span>
+              {page.updatedAt && getRelativeTime && (
+                <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500 tabular-nums font-medium">
+                  <Clock size={11} className="opacity-60" />
+                  {getRelativeTime(page.updatedAt)}
+                </span>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            {(onAskAI || onDeletePage) && (
+              <div className="flex items-center gap-2 pt-0.5">
+                {onAskAI && (
+                  <button
+                    onClick={onAskAI}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[10px] font-bold bg-gradient-to-r from-violet-500/12 to-indigo-500/8 text-violet-700 dark:text-violet-300 hover:from-violet-500/20 hover:to-indigo-500/15 border border-violet-500/10 hover:border-violet-500/20 transition-all"
+                  >
+                    <Sparkles size={11} />
+                    {isPl ? 'Zapytaj AI' : 'Ask AI'}
+                  </button>
+                )}
+                {onDeletePage && (
+                  <button
+                    onClick={onDeletePage}
+                    className="inline-flex items-center justify-center rounded-lg px-2.5 py-1.5 text-[10px] font-medium bg-red-500/[0.06] text-red-400/70 hover:bg-red-500/[0.12] hover:text-red-500 border border-red-500/[0.06] hover:border-red-500/10 transition-all"
+                    title={isPl ? 'Usuń stronę' : 'Delete page'}
+                  >
+                    <Trash2 size={11} />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Draggable AI block — "Tech Sexy" drag strip */}
       <div className="p-3 flex-1 flex flex-col min-h-0">
-        <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 px-1 mb-2">
-          {isPl ? 'Pisz lub mów — przeciągnij do notatki' : 'Type or speak — drag to note'}
+        <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400/80 dark:text-slate-500/80 mb-2">
+          {isPl ? 'Pisz lub mów' : 'Type or speak'}
         </div>
         <div
           draggable={!!input.trim()}
           onDragStart={handleDragStart}
-          className={`rounded-xl border-2 border-dashed p-3 transition-all ${
+          className={`group relative rounded-2xl border transition-all duration-300 ${
             input.trim()
-              ? 'border-violet-400/50 dark:border-violet-500/40 bg-violet-50/50 dark:bg-violet-950/30 cursor-grab active:cursor-grabbing'
-              : 'border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-900/30'
+              ? 'border-violet-400/30 dark:border-violet-500/20 bg-gradient-to-br from-violet-50/60 via-white to-indigo-50/40 dark:from-violet-950/30 dark:via-navy-950 dark:to-indigo-950/20 shadow-lg shadow-violet-500/[0.06] cursor-grab active:cursor-grabbing'
+              : 'border-slate-200/40 dark:border-white/[0.06] bg-slate-50/40 dark:bg-white/[0.02]'
           }`}
         >
-          <div className="flex items-start gap-2">
-            {input.trim() ? (
-              <GripVertical size={14} className="mt-2.5 shrink-0 text-slate-400" />
-            ) : null}
-            <div className="flex-1 min-w-0">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder={isPl ? 'Napisz lub naciśnij mikrofon…' : 'Type or press mic…'}
-                rows={3}
-                className="w-full bg-transparent text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none resize-none"
-              />
-              <div className="flex items-center justify-between mt-2">
-                <button
-                  onClick={toggleMic}
-                  className={`p-2 rounded-lg transition-colors ${
-                    isRecording
-                      ? 'bg-red-500/20 text-red-600 dark:text-red-400'
-                      : 'bg-slate-100 dark:bg-navy-800 text-slate-500 hover:text-violet-600 dark:hover:text-violet-400'
-                  }`}
-                  title={isPl ? 'Mikrofon' : 'Microphone'}
-                >
-                  {isRecording ? <MicOff size={16} /> : <Mic size={16} />}
-                </button>
-                <button
-                  onClick={() => input.trim() && runAIAndInsert(input.trim())}
-                  disabled={!input.trim() || isGenerating}
-                  className="p-2 rounded-lg bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/30 disabled:opacity-50 transition-colors"
-                  title={isPl ? 'Generuj i wstaw' : 'Generate and insert'}
-                >
-                  <Send size={16} />
-                </button>
-                {input.trim() && (
-                  <span className="flex items-center gap-1 text-[10px] text-slate-400">
-                    {isGenerating && <Loader2 size={10} className="animate-spin" />}
-                    {isGenerating
-                      ? (isPl ? 'Generowanie…' : 'Generating…')
-                      : (isPl ? 'Przeciągnij do notatki' : 'Drag to note')}
-                  </span>
-                )}
+          {/* Glow effect when has content */}
+          {input.trim() && (
+            <div className="absolute -inset-px rounded-2xl bg-gradient-to-r from-violet-500/10 via-transparent to-indigo-500/10 pointer-events-none" />
+          )}
+
+          <div className="relative p-3">
+            <div className="flex items-start gap-2">
+              {input.trim() && (
+                <div className="mt-2.5 shrink-0 flex flex-col items-center gap-0.5">
+                  <GripVertical size={14} className="text-violet-400/60 group-hover:text-violet-500 transition-colors" />
+                  <div className="w-0.5 h-4 rounded-full bg-gradient-to-b from-violet-400/40 to-transparent" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={isPl ? 'Napisz lub naciśnij mikrofon…' : 'Type or press mic…'}
+                  rows={3}
+                  className="w-full bg-transparent text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 dark:placeholder:text-slate-500/60 outline-none resize-none leading-relaxed"
+                />
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
+                  {/* Mic button */}
+                  <button
+                    onClick={toggleMic}
+                    className={`relative p-2 rounded-xl transition-all duration-200 ${
+                      isRecording
+                        ? 'bg-red-500/15 text-red-500 shadow-sm shadow-red-500/10'
+                        : 'bg-slate-100/80 dark:bg-white/[0.06] text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-500/10'
+                    }`}
+                    title={isPl ? 'Mikrofon' : 'Microphone'}
+                  >
+                    {isRecording && (
+                      <span className="absolute inset-0 rounded-xl animate-ping bg-red-500/10" />
+                    )}
+                    <span className="relative">
+                      {isRecording ? <MicOff size={16} /> : <Mic size={16} />}
+                    </span>
+                  </button>
+
+                  {/* Status / drag hint */}
+                  {input.trim() && (
+                    <span className="flex items-center gap-1.5 text-[10px] font-medium">
+                      {isGenerating ? (
+                        <>
+                          <Loader2 size={10} className="animate-spin text-violet-500" />
+                          <span className="text-violet-500">{isPl ? 'Generowanie…' : 'Generating…'}</span>
+                        </>
+                      ) : (
+                        <span className="text-slate-400/70 dark:text-slate-500/70">
+                          {isPl ? '← Przeciągnij do notatki' : '← Drag to note'}
+                        </span>
+                      )}
+                    </span>
+                  )}
+
+                  {/* Send button */}
+                  <button
+                    onClick={() => input.trim() && runAIAndInsert(input.trim())}
+                    disabled={!input.trim() || isGenerating}
+                    className="relative p-2 rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/15 text-violet-600 dark:text-violet-400 hover:from-violet-500/30 hover:to-indigo-500/25 hover:shadow-sm disabled:opacity-30 transition-all duration-200"
+                    title={isPl ? 'AI: oczyść i wstaw' : 'AI: polish & insert'}
+                  >
+                    <Send size={16} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Bottom tip */}
+        <div className="mt-3 text-[9px] text-slate-400/60 dark:text-slate-500/50 leading-relaxed">
+          {isPl
+            ? 'Napisz notatkę lub nagraj głosem. AI oczyści tekst i wstawi go jako elegancki blok. Możesz też przeciągnąć pasek bezpośrednio do edytora.'
+            : 'Write a note or record via voice. AI will polish the text and insert it as an elegant block. You can also drag the strip directly into the editor.'}
         </div>
       </div>
     </div>
