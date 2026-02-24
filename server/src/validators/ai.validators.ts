@@ -287,8 +287,31 @@ const InitiativeAIItemSchema = z.object({
   name: z.string(),
   priority: z.string().optional(),
   owner: z.string().optional(),
-  plannedStartDate: z.string().datetime().optional(),
-  plannedEndDate: z.string().datetime().optional(),
+  // Accept both full ISO date-time and HTML date input (YYYY-MM-DD) to match initiative validators.
+  plannedStartDate: z
+    .string()
+    .transform((v) => String(v ?? '').trim())
+    .refine(
+      (v) => {
+        if (!v) return true;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return true;
+        return z.string().datetime().safeParse(v).success;
+      },
+      { message: 'Invalid date format (expected YYYY-MM-DD or ISO datetime)' }
+    )
+    .optional(),
+  plannedEndDate: z
+    .string()
+    .transform((v) => String(v ?? '').trim())
+    .refine(
+      (v) => {
+        if (!v) return true;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return true;
+        return z.string().datetime().safeParse(v).success;
+      },
+      { message: 'Invalid date format (expected YYYY-MM-DD or ISO datetime)' }
+    )
+    .optional(),
   capacity: z.number().optional(),
 });
 

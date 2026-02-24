@@ -1,17 +1,6 @@
-export type NotebookVisibility = 'private' | 'project';
+import type { NotebookPage, NotebookVisibility } from '@/types/myWork';
 
-export interface NotebookPage {
-  id: string;
-  title: string;
-  parentId?: string | null;
-  projectId?: string | null;
-  visibility: NotebookVisibility;
-  tags: string[];
-  contentJson: any;
-  contentText: string;
-  createdAt: string;
-  updatedAt: string;
-}
+export type { NotebookPage, NotebookVisibility };
 
 const STORAGE_PREFIX = 'consultinity-notebook-pages-v1:';
 

@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   ArrowDownUp,
   ArrowUp,
+  BookOpen,
   Calendar,
   Check,
   ChevronDown,
@@ -72,6 +73,7 @@ import { AppView } from '@/types';
 import { buildArtifactCode } from '@/utils/artifactLinks';
 
 import { Api } from '../../services/api';
+import { buildAskAIMessage } from './shared/askAiHelper';
 import { CloudFilePicker } from '../AIChat/CloudFilePicker';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
@@ -644,10 +646,10 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   onClose,
   onSaved,
 }) => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const { isDemo } = useDemoSession();
-  const { isChatCollapsed, toggleChatCollapse, currentProjectId } = useAppStore();
+  const { isChatCollapsed, toggleChatCollapse, setChatKickoffMessage, currentProjectId, emitMyWorkEvent } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
   const {
     connectedProviderIds,
@@ -734,9 +736,17 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const [comments, setComments] = useState<Comment[]>([]);
   const [linkedItems, setLinkedItems] = useState<LinkedItem[]>([]);
 
+  // Origin tracking
+  const [sourceType, setSourceType] = useState<string | null>(null);
+  const [sourceId, setSourceId] = useState<string | null>(null);
+
   // Tags
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
+
+  // Related Notes (notebook pages mentioning decision title)
+  const [relatedNotes, setRelatedNotes] = useState<{ id: string; title: string }[]>([]);
+  const [relatedNotesExpanded, setRelatedNotesExpanded] = useState(true);
 
   // Activity Log
   interface ActivityLogEntry {
@@ -1115,6 +1125,30 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     loadUsers();
   }, []);
 
+  // Fetch related notebook pages that mention the decision title
+  useEffect(() => {
+    const q = (title || '').trim();
+    if (!q) {
+      setRelatedNotes([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const pages = await Api.getNotebookPages({ q, limit: 5 });
+        const arr = Array.isArray(pages) ? pages : [];
+        if (!cancelled) {
+          setRelatedNotes(arr.map((p: any) => ({ id: p.id, title: p.title || '' })));
+        }
+      } catch {
+        if (!cancelled) setRelatedNotes([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [title]);
+
   useEffect(() => {
     setLastPublishedSnapshot('');
     setLastDraftSavedAt(null);
@@ -1470,6 +1504,8 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       setComments(apiComments.length > 0 ? apiComments : isDemo ? DEMO_COMMENTS : []);
       const apiLinkedItems = decision.linkedItems || [];
       setLinkedItems(apiLinkedItems.length > 0 ? apiLinkedItems : isDemo ? DEMO_LINKED_ITEMS : []);
+      setSourceType(decision.sourceType || decision.source_type || null);
+      setSourceId(decision.sourceId || decision.source_id || null);
 
       // Risks — demo fallback
       const apiRisks = decision.risks || [];
@@ -1663,6 +1699,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       if (decisionId) {
         await Api.updateDecision(decisionId, payload);
         if (!silent) toast.success(isPolish ? 'Decyzja zaktualizowana' : 'Decision updated');
+        emitMyWorkEvent({ type: 'item:updated', entityType: 'decision', entityId: decisionId });
       } else {
         await Api.createDecision(payload);
         if (!silent) toast.success(isPolish ? 'Decyzja utworzona' : 'Decision created');
@@ -1680,6 +1717,15 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   };
 
   const handleOpenChat = async () => {
+    setChatKickoffMessage(buildAskAIMessage({
+      type: 'decision',
+      title,
+      status,
+      priority,
+      dueDate: dueDate || undefined,
+      description: description || undefined,
+    }));
+
     // Persist local draft so user never loses input
     persistDraft('chat');
 
@@ -1721,6 +1767,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         isPolish ? 'Zatwierdzona' : 'Approved'
       );
       toast.success(isPolish ? 'Decyzja zatwierdzona' : 'Decision approved');
+      emitMyWorkEvent({ type: 'item:completed', entityType: 'decision', entityId: decisionId! });
       onSaved?.({ title, status: 'approved' });
     } catch (error) {
       toast.error(isPolish ? 'Nie udało się zatwierdzić' : 'Failed to approve');
@@ -1741,6 +1788,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         isPolish ? 'Odrzucona' : 'Rejected'
       );
       toast.success(isPolish ? 'Decyzja odrzucona' : 'Decision rejected');
+      emitMyWorkEvent({ type: 'item:completed', entityType: 'decision', entityId: decisionId! });
       onSaved?.({ title, status: 'rejected' });
     } catch (error) {
       toast.error(isPolish ? 'Nie udało się odrzucić' : 'Failed to reject');
@@ -7390,6 +7438,59 @@ Context: ${JSON.stringify(projectContext)}`;
                       </div>
                     </div>
                   </div>
+
+                  {relatedNotes.length > 0 && (
+                    <div className="bg-white/80 dark:bg-navy-900/80 rounded-2xl border border-slate-200 dark:border-navy-700/60 overflow-hidden">
+                      <motion.button
+                        whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => setRelatedNotesExpanded((e) => !e)}
+                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors duration-200"
+                      >
+                        <div className="flex items-center gap-2.5 text-slate-700 dark:text-slate-200">
+                          <BookOpen size={16} className="text-slate-500 dark:text-slate-400" />
+                          <span className="text-sm font-semibold">
+                            {t('myWork.decisions.relatedNotes', 'Related Notes')}
+                          </span>
+                        </div>
+                        <motion.div
+                          animate={{ rotate: relatedNotesExpanded ? 180 : 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
+                        </motion.div>
+                      </motion.button>
+                      <AnimatePresence>
+                        {relatedNotesExpanded && (
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={{ height: 'auto' }}
+                            exit={{ height: 0 }}
+                            className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                          >
+                            <div className="p-3 space-y-2">
+                              {relatedNotes.map((note) => (
+                                <button
+                                  key={note.id}
+                                  type="button"
+                                  onClick={() => {
+                                    window.dispatchEvent(
+                                      new CustomEvent('mywork-open-item', {
+                                        detail: { type: 'notebook', id: note.id, name: note.title },
+                                      })
+                                    );
+                                  }}
+                                  className="w-full text-left p-2.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/50 dark:bg-navy-800/30 hover:bg-slate-50 dark:hover:bg-navy-800/60 transition-colors text-sm font-medium text-slate-700 dark:text-slate-200 truncate"
+                                >
+                                  {note.title}
+                                </button>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

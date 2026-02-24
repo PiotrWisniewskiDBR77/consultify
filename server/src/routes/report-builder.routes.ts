@@ -31,6 +31,7 @@ import {
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { default as defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { exportReportToNotion } from '../services/ai/integrationHubService.js';
 import { upsertAssessmentReportForBuilder } from '../services/assessmentReportBuilderLinkService.js';
 import notificationService from '../services/notificationService.js';
 import {
@@ -42,6 +43,7 @@ import ReportBuilderCommentsService from '../services/reportBuilderCommentsServi
 import ReportBuilderService from '../services/reportBuilderService.js';
 import ReportGenerationService from '../services/reportGenerationService.js';
 import { checkQualityGates } from '../services/reportQualityGatesService.js';
+import { get as dbGet } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 // ==========================================
@@ -117,6 +119,38 @@ function getAuthContext(req: any): { userId: string; organizationId: string } {
   const userId = req?.user?.id || req?.userId || '';
   const organizationId = req?.user?.organizationId || req?.organizationId || 'org-default';
   return { userId, organizationId };
+}
+
+async function getNotionConfigForUser(userId: string): Promise<{
+  apiKey: string;
+  parentPageId?: string;
+  databaseId?: string;
+} | null> {
+  const prefKey = 'settings:integrations';
+  const row = await dbGet<{ preferences_data: string }>(
+    `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+    [userId, prefKey],
+    { fallback: true } as any
+  );
+
+  if (!row?.preferences_data) return null;
+  let integrations: any[] = [];
+  try {
+    integrations = JSON.parse(row.preferences_data);
+  } catch {
+    integrations = [];
+  }
+
+  const notion = integrations.find((i) => String(i?.provider || '').toLowerCase() === 'notion');
+  if (!notion || notion.status !== 'active') return null;
+
+  const cfg = notion.config || {};
+  const apiKey = String(cfg.apiKey || '').trim();
+  const parentPageId = cfg.parentPageId ? String(cfg.parentPageId) : undefined;
+  const databaseId = cfg.databaseId ? String(cfg.databaseId) : undefined;
+  if (!apiKey) return null;
+  if (!parentPageId && !databaseId) return null;
+  return { apiKey, parentPageId, databaseId };
 }
 
 // Helper to safely extract string from params (handles string | string[])
@@ -2394,6 +2428,69 @@ const writeReportBuilderDocx = async (report: any, sections: any[], filePath: st
  * GET /api/report-builder/:id/export/pdf
  * Export report as PDF
  */
+router.post('/:id/export/notion', async (req: Request, res: Response) => {
+  try {
+    const id = paramStr(req.params.id);
+    const { userId, organizationId } = getAuthContext(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const reportData = await ReportBuilderService.getReport(id, organizationId);
+    if (!reportData) return res.status(404).json({ error: 'Report not found' });
+
+    const notionConfig = await getNotionConfigForUser(userId);
+    if (!notionConfig) {
+      return res.status(400).json({
+        error: 'Notion integration not configured',
+        hint: 'Configure Notion in Settings → Integrations (apiKey + parentPageId/databaseId)',
+      });
+    }
+
+    const sections = (reportData.sections || [])
+      .filter((s: any) => s.enabled !== false)
+      .sort((a: any, b: any) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
+      .map((s: any) => ({
+        title: String(s.title || s.sectionKey || 'Section'),
+        content: String(s.editedContent || s.generatedContent || ''),
+      }));
+
+    const result = await exportReportToNotion(
+      {
+        reportId: id,
+        title: reportData.report.title || 'Report',
+        description: reportData.report.description || undefined,
+        sections,
+        metadata: {
+          createdAt: reportData.report.createdAt,
+          createdBy: reportData.report.createdBy,
+          organizationId,
+          sourceType: reportData.report.sourceType,
+          sourceId: reportData.report.sourceId,
+        },
+      },
+      notionConfig
+    );
+
+    if (!result.success || !result.url) {
+      return res.status(500).json({ error: result.error || 'Failed to export to Notion' });
+    }
+
+    await ReportBuilderService.createExportRecord({
+      reportId: id,
+      reportType: 'report_builder',
+      format: 'notion',
+      filePath: result.url,
+      fileSize: 0,
+      language: 'en',
+      exportedBy: userId,
+    }).catch(() => null);
+
+    return res.json({ success: true, url: result.url });
+  } catch (err: any) {
+    logger.error('[ReportBuilder] Error exporting to Notion:', err);
+    return res.status(500).json({ error: 'Failed to export to Notion', message: err.message });
+  }
+});
+
 router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = paramStr(req.params.id);

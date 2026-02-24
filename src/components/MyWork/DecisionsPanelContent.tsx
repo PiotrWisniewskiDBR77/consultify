@@ -32,6 +32,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { DecisionPreviewPanel } from './DecisionPreviewPanel';
 import {
   BulkActionBar,
   type ColumnDef,
@@ -95,6 +96,7 @@ interface DecisionsPanelContentProps {
   searchQuery: string;
   onDecisionClick?: (id: string, decisionData?: Decision) => void;
   onCountsChange: (counts: DecisionCounts) => void;
+  refreshTrigger?: number;
 }
 
 // Priority config — 5-color semantic palette
@@ -919,11 +921,13 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   searchQuery,
   onDecisionClick,
   onCountsChange,
+  refreshTrigger,
 }) => {
   const { t } = useTranslation();
   const { currentUser } = useAppStore();
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
+  const [previewDecisionId, setPreviewDecisionId] = useState<string | null>(null);
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -953,11 +957,17 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
   useEffect(() => {
     fetchDecisions();
-  }, [fetchDecisions]);
+  }, [fetchDecisions, refreshTrigger]);
 
   // Filter decisions
   const filteredDecisions = useMemo(() => {
     let result = decisions;
+    const userId = currentUser?.id;
+
+    const isMineToDecide = (d: Decision) => Boolean(userId) && d.decisionOwnerId === userId;
+    const isMyRequest = (d: Decision) =>
+      Boolean(userId) && d.requestedById === userId && d.decisionOwnerId !== userId;
+    const isRelevantToMe = (d: Decision) => isMineToDecide(d) || isMyRequest(d);
 
     // Filter by search
     if (searchQuery) {
@@ -970,9 +980,12 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
     // Filter by view mode
     if (viewMode === 'my') {
-      result = result.filter((d) => d.decisionOwnerId === currentUser?.id);
+      result = result.filter(isMineToDecide);
     } else if (viewMode === 'awaiting') {
-      result = result.filter((d) => d.decisionOwnerId !== currentUser?.id);
+      result = result.filter(isMyRequest);
+    } else {
+      // "All" in My Work means "relevant to me" (union), not org-wide.
+      result = result.filter(isRelevantToMe);
     }
 
     // Filter by priority (topbar filter)
@@ -1007,16 +1020,23 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
   // Calculate counts
   useEffect(() => {
-    const myCount = decisions.filter((d) => d.decisionOwnerId === currentUser?.id).length;
-    const awaitingCount = decisions.filter((d) => d.decisionOwnerId !== currentUser?.id).length;
+    const userId = currentUser?.id;
+    const isOpen = (d: Decision) =>
+      ['PENDING', 'ESCALATED'].includes(String(d.status || '').toUpperCase());
+    const myCount = decisions.filter((d) => userId && d.decisionOwnerId === userId && isOpen(d)).length;
+    const awaitingCount = decisions.filter(
+      (d) => userId && d.requestedById === userId && d.decisionOwnerId !== userId && isOpen(d)
+    ).length;
     onCountsChange({
-      total: decisions.length,
+      total: myCount + awaitingCount,
       my: myCount,
       awaiting: awaitingCount,
     });
   }, [decisions, currentUser?.id, onCountsChange]);
 
   // Handlers
+  const openPreview = (decisionId: string) => setPreviewDecisionId(decisionId);
+
   const handleApprove = async (id: string) => {
     try {
       await Api.decideDecision(id, 'approved');
@@ -1043,17 +1063,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
     if (!decision) return;
 
     try {
-      // Create a reminder notification
-      await Api.post('/api/notifications', {
-        type: 'DECISION_REMINDER',
-        title: `Reminder: Decision needed - ${decision.title}`,
-        message: `${currentUser?.displayName || currentUser?.firstName || 'Someone'} is waiting for your decision on "${decision.title}"`,
-        severity:
-          decision.priority === 'HIGH' || decision.priority === 'CRITICAL' ? 'WARNING' : 'INFO',
-        userId: decision.decisionOwnerId,
-        relatedObjectType: 'DECISION',
-        relatedObjectId: id,
-      });
+      await Api.remindDecision(id);
 
       // Update reminder count locally
       setDecisions((prev) =>
@@ -1253,7 +1263,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
           {viewMode === 'my'
             ? 'No decisions awaiting your action'
             : viewMode === 'awaiting'
-              ? 'No delegated decisions'
+              ? 'No requests pending'
               : 'No decisions'}
         </h3>
         <p className="text-sm text-slate-500">All caught up!</p>
@@ -1262,10 +1272,11 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-          <table className="w-full table-fixed" style={{ minWidth: 900 }}>
+    <div className="flex-1 flex h-full overflow-hidden bg-white dark:bg-navy-950">
+      <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+            <table className="w-full table-fixed" style={{ minWidth: 900 }}>
             <thead>
               <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
                 {/* Select All */}
@@ -1420,7 +1431,9 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                       onSelect={handleSelectDecision}
                       onRemind={handleRemind}
                       onEscalate={handleEscalate}
-                      onClick={onDecisionClick}
+                      onClick={(id, d) => {
+                        openPreview(id);
+                      }}
                       columnWidths={columnWidths}
                     />
                   ) : (
@@ -1431,14 +1444,17 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                       onSelect={handleSelectDecision}
                       onApprove={handleApprove}
                       onReject={handleReject}
-                      onClick={onDecisionClick}
+                      onClick={(id, d) => {
+                        openPreview(id);
+                      }}
                       columnWidths={columnWidths}
                     />
                   )
                 )}
               </AnimatePresence>
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -1447,6 +1463,14 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
         selectedCount={selectedIds.size}
         onClearSelection={handleClearSelection}
         actions={bulkActions}
+      />
+
+      <DecisionPreviewPanel
+        decisionId={previewDecisionId}
+        mode={viewMode === 'awaiting' ? 'requests_pending' : viewMode === 'my' ? 'my' : 'all'}
+        onClose={() => setPreviewDecisionId(null)}
+        onDidMutate={() => fetchDecisions()}
+        onOpenFullDetail={(id, data) => onDecisionClick?.(id, data)}
       />
     </div>
   );

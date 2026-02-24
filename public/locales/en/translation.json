@@ -674,7 +674,78 @@
   "myWork": {
     "title": "My Work",
     "inbox": "Inbox",
-    "focus": "Focus",
+    "focus": {
+      "label": "Focus",
+      "columns": {
+        "today": "Today",
+        "thisWeek": "This Week",
+        "later": "Later"
+      },
+      "task": "Task",
+      "decision": "Decision",
+      "emptyColumn": "No items",
+      "actions": {
+        "done": "Done",
+        "snooze": "Snooze",
+        "remove": "Remove from focus",
+        "delegate": "Delegate"
+      },
+      "delegateTitle": "Delegate Task",
+      "completed": "Marked as done!",
+      "reopened": "Reopened",
+      "loadError": "Failed to load focus items",
+      "snoozed": "Snoozed",
+      "movedTo": "Moved to",
+      "removed": "Removed from focus",
+      "delegated": "Successfully delegated",
+      "error": "Failed to update",
+      "empty": {
+        "title": "No items to focus on",
+        "description": "Your tasks and decisions will appear here. Start by checking your inbox."
+      },
+      "goToInbox": "Go to Inbox",
+      "progress": {
+        "done": "done today",
+        "allClear": "All clear!",
+        "total": "total"
+      },
+      "planMyDay": {
+        "title": "Plan Your Day",
+        "subtitle": "Pick items to focus on today. Sorted by priority and urgency.",
+        "addToday": "Today",
+        "skip": "Skip",
+        "done": "Done planning",
+        "noSuggestions": "No more items to suggest."
+      },
+      "filters": {
+        "all": "All",
+        "tasks": "Tasks",
+        "decisions": "Decisions",
+        "hideCompleted": "Hide completed",
+        "sortManual": "Manual",
+        "sortPriority": "Priority",
+        "sortDueDate": "Due date"
+      },
+      "snooze": {
+        "moveTo": "Move to",
+        "thisWeek": "This Week",
+        "later": "Later"
+      },
+      "card": {
+        "blocked": "Blocked",
+        "approve": "Approve",
+        "reject": "Reject"
+      },
+      "shortcuts": {
+        "navigate": "Navigate",
+        "done": "Done",
+        "snooze": "Snooze",
+        "remove": "Remove",
+        "moveToday": "Today",
+        "moveWeek": "Week",
+        "open": "Open"
+      }
+    },
     "calendar": "Calendar",
     "tasks": "Tasks",
     "notifications": {
@@ -686,7 +757,8 @@
       "emptyColumn": "No decisions",
       "emptyTitle": "No decisions yet",
       "emptySubtitle": "Create your first decision to get started",
-      "createCta": "Create Decision"
+      "createCta": "Create Decision",
+      "relatedNotes": "Related Notes"
     },
     "errors": {
       "fetchFailed": "Failed to load",
@@ -710,7 +782,34 @@
         "inProgress": "In progress",
         "blocked": "Blocked"
       },
-      "statusUpdated": "Status updated"
+      "statusUpdated": "Status updated",
+      "deleteTitle": "Delete task?",
+      "deleteDesc": "This task will be permanently deleted.",
+      "bulkDeleteTitle": "Delete selected tasks?",
+      "bulkDeleteDesc": "Selected tasks will be permanently deleted. This cannot be undone.",
+      "smartSort": "Smart sort",
+      "smartSortTooltip": "Smart sort: Overdue → Today → High priority → by due date",
+      "columns": "Columns",
+      "toggleColumns": "Toggle columns"
+    },
+    "triage": {
+      "infoStrip": "New tasks to triage. Use row actions to Accept, Schedule, Snooze, or Archive.",
+      "acceptToday": "Accept (Today)",
+      "acceptedToday": "Accepted for today",
+      "schedule": "Schedule",
+      "scheduled": "Scheduled",
+      "snooze": "Snooze 2 days",
+      "snoozed": "Snoozed for 2 days",
+      "archive": "Archive",
+      "archived": "Archived"
+    },
+    "savedViews": {
+      "label": "Views",
+      "title": "Saved Views",
+      "namePlaceholder": "View name…",
+      "saved": "View saved",
+      "deleted": "View deleted",
+      "empty": "No saved views yet"
     },
     "ideas": {
       "saveAsIdea": "Save as idea",
@@ -1008,6 +1107,14 @@
     "calendar": "Calendar",
     "decisions": "Decisions",
     "heatmap": "Workload Heatmap",
+    "demo": {
+      "label": "Demo",
+      "toggleHint": "Toggle demo data for Execution Center (local only)",
+      "reportsCaption": "Demo report history",
+      "lastGenerated": "Last",
+      "nextRun": "Next",
+      "empty": "No demo items"
+    },
     "execSnapshot": {
       "title": "Executive snapshot",
       "generatedAt": "Generated at",
@@ -1058,7 +1165,13 @@
         "current": "Current",
         "target": "Target",
         "empty": "No KPIs available.",
-        "dataQuality": "Data quality"
+        "dataQuality": "Data quality",
+        "derived": {
+          "initiativesExecuting": "Initiatives executing",
+          "initiativesBlocked": "Initiatives blocked",
+          "tasksOverdue": "Overdue tasks",
+          "decisionsPending": "Pending decisions"
+        }
       },
       "roi": {
         "title": "ROI / financial impact",
@@ -4280,5 +4393,54 @@
     "tokenPurchase": "Token Purchase",
     "tokenCredited": "Tokens Credited",
     "auditTrail": "Audit Trail"
+  },
+  "command": {
+    "placeholder": "Search commands, actions, navigation...",
+    "noResults": "No results found",
+    "tryDifferent": "Try a different search term",
+    "category": {
+      "navigation": "Navigate",
+      "actions": "Actions",
+      "recent": "Recent"
+    },
+    "hint": {
+      "navigate": "Navigate",
+      "select": "Select",
+      "close": "Close",
+      "powered": "Quick Actions"
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "dashboardDesc": "Executive overview",
+      "focus": "Focus Board",
+      "focusDesc": "Daily focus tasks",
+      "inbox": "Inbox",
+      "inboxDesc": "Triage new items",
+      "tasks": "All Tasks",
+      "tasksDesc": "View all tasks",
+      "decisions": "Decisions",
+      "decisionsDesc": "Pending decisions",
+      "team": "Team Performance",
+      "teamDesc": "Team analytics & capacity",
+      "settings": "Settings",
+      "settingsDesc": "Preferences & notifications"
+    },
+    "action": {
+      "createTask": "Create Task",
+      "createTaskDesc": "Add a new task",
+      "approveAll": "Quick Approve",
+      "approveAllDesc": "Approve the next pending decision",
+      "reviewNextDecision": "Review next decision",
+      "reviewNextDecisionDesc": "Queue mode with shortcuts (J/K, A/R/S, ?)",
+      "approved": "Decision approved",
+      "error": "Something went wrong",
+      "noDecisions": "No pending decisions",
+      "markDone": "Mark Task Done",
+      "markDoneDesc": "Complete current task",
+      "filterOverdue": "Show Overdue",
+      "filterOverdueDesc": "Filter overdue tasks",
+      "schedule": "Open Calendar",
+      "scheduleDesc": "View scheduled items"
+    }
   }
 }

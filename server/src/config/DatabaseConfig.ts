@@ -84,6 +84,35 @@ export function getDatabaseType(): 'postgres' {
   logger.info(`[DB Config] DATABASE_URL: ${databaseUrl ? 'SET' : 'NOT SET'}`);
   logger.info(`[DB Config] DB_TYPE: ${process.env.DB_TYPE || 'NOT SET'}`);
 
+  // Safety: never allow staging/prod-like runs to point to localhost.
+  // This prevents accidental writes to local DB when you intended to use staging.
+  if (databaseUrl) {
+    try {
+      const parsed = new URL(databaseUrl);
+      const host = (parsed.hostname || '').toLowerCase();
+      const isLocalHost = host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0';
+      const envFile = String(process.env.ENV_FILE || process.env.DOTENV_PATH || '').toLowerCase();
+      const isStagingLike =
+        process.env.NODE_ENV === 'staging' ||
+        process.env.NODE_ENV === 'production' ||
+        envFile.includes('staging') ||
+        process.env.DISALLOW_LOCALHOST_DB === 'true' ||
+        process.env.DISALLOW_LOCALHOST_DB === '1';
+
+      if (isStagingLike && isLocalHost) {
+        logger.error(
+          '\n\x1b[31m%s\x1b[0m',
+          'FATAL ERROR: DATABASE_URL points to localhost, but this run is staging/prod-like.'
+        );
+        logger.error('Refusing to start to prevent accidental local DB usage.');
+        logger.error('Fix: set DATABASE_URL to staging/remote Postgres or unset ENV_FILE=*.staging*.\n');
+        process.exit(1);
+      }
+    } catch {
+      // ignore URL parse errors here; they will be handled by downstream validation
+    }
+  }
+
   // Validate database configuration (will crash in production if invalid)
   // validateDatabaseConfig();
 

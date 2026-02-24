@@ -157,6 +157,7 @@ class ScheduledReportService {
   private db: any;
   private reportBuilderService: any;
   private emailService: any;
+  private initialized = false;
 
   constructor() {
     // Dependencies will be injected
@@ -166,6 +167,17 @@ class ScheduledReportService {
     this.db = deps.db;
     this.reportBuilderService = deps.reportBuilderService;
     this.emailService = deps.emailService;
+    this.initialized = true;
+  }
+
+  private async ensureInitialized(): Promise<void> {
+    if (this.initialized && this.db) return;
+    // Lazy-init to make cron + routes resilient even when explicit DI is missing.
+    const { getDatabaseAsync } = await import('../database/Database.js');
+    const db = await getDatabaseAsync();
+    const rbMod = await import('./reportBuilderService.js');
+    const reportBuilderService = (rbMod as any).default || rbMod;
+    this.setDependencies({ db, reportBuilderService });
   }
 
   // ============================================
@@ -180,6 +192,7 @@ class ScheduledReportService {
     organizationId: string,
     userId: string
   ): Promise<ReportSchedule> {
+    await this.ensureInitialized();
     const id = uuidv4();
     const now = new Date().toISOString();
 
@@ -274,6 +287,7 @@ class ScheduledReportService {
     organizationId: string,
     updates: ScheduleUpdateRequest
   ): Promise<ReportSchedule | null> {
+    await this.ensureInitialized();
     const existing = await this.getSchedule(scheduleId, organizationId);
     if (!existing) return null;
 
@@ -344,6 +358,7 @@ class ScheduledReportService {
    * Get a schedule by ID
    */
   async getSchedule(scheduleId: string, organizationId: string): Promise<ReportSchedule | null> {
+    await this.ensureInitialized();
     const row = await this.db.get(
       `SELECT * FROM report_schedules WHERE id = ? AND organization_id = ?`,
       [scheduleId, organizationId]
@@ -364,6 +379,7 @@ class ScheduledReportService {
       offset?: number;
     }
   ): Promise<ReportSchedule[]> {
+    await this.ensureInitialized();
     let query = `SELECT * FROM report_schedules WHERE organization_id = ?`;
     const params: any[] = [organizationId];
 
@@ -392,6 +408,7 @@ class ScheduledReportService {
    * Delete a schedule
    */
   async deleteSchedule(scheduleId: string, organizationId: string): Promise<boolean> {
+    await this.ensureInitialized();
     const result = await this.db.run(
       `DELETE FROM report_schedules WHERE id = ? AND organization_id = ?`,
       [scheduleId, organizationId]
@@ -404,6 +421,7 @@ class ScheduledReportService {
    * Pause a schedule
    */
   async pauseSchedule(scheduleId: string, organizationId: string): Promise<ReportSchedule | null> {
+    await this.ensureInitialized();
     return this.updateSchedule(scheduleId, organizationId, { isActive: false });
   }
 
@@ -411,6 +429,7 @@ class ScheduledReportService {
    * Resume a schedule
    */
   async resumeSchedule(scheduleId: string, organizationId: string): Promise<ReportSchedule | null> {
+    await this.ensureInitialized();
     const schedule = await this.getSchedule(scheduleId, organizationId);
     if (!schedule) return null;
 
@@ -434,6 +453,7 @@ class ScheduledReportService {
    * Get schedules due for execution
    */
   async getDueSchedules(): Promise<ReportSchedule[]> {
+    await this.ensureInitialized();
     const now = new Date().toISOString();
 
     const rows = await this.db.all(
@@ -453,6 +473,7 @@ class ScheduledReportService {
     scheduleId: string,
     triggerContext?: { triggerType: string; triggerReason: string }
   ): Promise<ScheduleExecution> {
+    await this.ensureInitialized();
     const executionId = uuidv4();
     const startedAt = new Date().toISOString();
 
@@ -482,7 +503,7 @@ class ScheduledReportService {
       let reportId: string | null = null;
 
       if (this.reportBuilderService) {
-        // Use report builder service to generate report
+        // Step 1: Create report structure from template
         const report = await this.reportBuilderService.generateFromTemplate(
           scheduleData.templateId,
           scheduleData.organizationId,
@@ -490,9 +511,25 @@ class ScheduledReportService {
           {
             assessmentId: scheduleData.sourceAssessmentId,
             projectId: scheduleData.sourceProjectId,
+            config: {
+              // preserve schedule intent in report config for generation "voice"
+              scheduleName: scheduleData.name,
+              scheduleFrequency: scheduleData.frequency,
+            },
           }
         );
         reportId = report?.id;
+
+        // Step 2: Generate content for all sections (minimal recurring pipeline)
+        if (reportId) {
+          const rgMod = await import('./reportGenerationService.js');
+          const generateFullReport = (rgMod as any).generateFullReport as any;
+          if (typeof generateFullReport === 'function') {
+            await generateFullReport(reportId, scheduleData.organizationId, scheduleData.createdBy, {
+              regenerateAll: false,
+            });
+          }
+        }
       }
 
       execution.generatedReportId = reportId || undefined;
@@ -755,6 +792,7 @@ class ScheduledReportService {
     organizationId: string,
     limit: number = 10
   ): Promise<ScheduleExecution[]> {
+    await this.ensureInitialized();
     const rows = await this.db.all(
       `SELECT e.* FROM schedule_executions e
        JOIN report_schedules s ON e.schedule_id = s.id
@@ -802,6 +840,7 @@ class ScheduledReportService {
     succeeded: number;
     failed: number;
   }> {
+    await this.ensureInitialized();
     const dueSchedules = await this.getDueSchedules();
     let succeeded = 0;
     let failed = 0;

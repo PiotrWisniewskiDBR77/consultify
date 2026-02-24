@@ -22,6 +22,7 @@ import {
   Clock,
   Copy,
   CreditCard,
+  FileText,
   ExternalLink,
   Flag,
   FolderOpen,
@@ -256,6 +257,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
   // Mute dropdown
   const [showMuteMenu, setShowMuteMenu] = useState(false);
+
+  // Save as note
+  const [savingAsNote, setSavingAsNote] = useState(false);
 
   // Worksheet analysis (AI fills the notification "sheet" fields)
   const [isAnalyzingWorksheet, setIsAnalyzingWorksheet] = useState(false);
@@ -610,6 +614,27 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     } catch (error) {
       console.error('Failed to mute type', error);
       toast.error(isPolish ? 'Nie udało się wyciszyć typu' : 'Failed to mute type');
+    }
+  };
+
+  const handleSaveAsNote = async () => {
+    if (!notification) return;
+    try {
+      setSavingAsNote(true);
+      const title = notification.title || 'Notification';
+      const body = notification.message || (notification as any).body || '';
+      await Api.createNotebookPage({
+        title,
+        contentText: title + '\n\n' + body,
+        tags: ['from-notification'],
+        status: 'inbox',
+      });
+      toast.success(isPolish ? 'Zapisano jako notatkę' : 'Saved as note');
+    } catch (error) {
+      console.error('Failed to save as note', error);
+      toast.error(isPolish ? 'Nie udało się zapisać jako notatkę' : 'Failed to save as note');
+    } finally {
+      setSavingAsNote(false);
     }
   };
 
@@ -2365,6 +2390,20 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   >
                     <MailOpen size={13} />
                     {isPolish ? 'Przeczytane' : 'Mark Read'}
+                  </button>
+
+                  {/* Save as note */}
+                  <button
+                    onClick={handleSaveAsNote}
+                    disabled={savingAsNote}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {savingAsNote ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <FileText size={13} />
+                    )}
+                    {isPolish ? 'Zapisz jako notatkę' : 'Save as note'}
                   </button>
 
                   {/* Snooze */}

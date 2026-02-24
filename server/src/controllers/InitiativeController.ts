@@ -69,11 +69,13 @@ const safeJsonParseObject = <T extends Record<string, unknown> = Record<string, 
 const getTopBarCapabilities = (status: string, userRoles: string[]) => {
   const currentStatus = normalizeStatus(status);
   const isTerminal = currentStatus === 'CANCELLED' || currentStatus === 'ARCHIVED';
-  const hasEditRole = (userRoles || []).some((r) =>
-    ['PMO', 'PROJECT_MANAGER', 'PROJECT_LEAD', 'INITIATIVE_OWNER', 'PROJECT_SPONSOR'].includes(
-      String(r || '').toUpperCase()
-    )
-  );
+  const rolesUpper = (userRoles || []).map((r) => String(r || '').toUpperCase());
+  const isAdmin = rolesUpper.includes('ADMIN') || rolesUpper.includes('SUPERADMIN');
+  const hasEditRole =
+    isAdmin ||
+    rolesUpper.some((r) =>
+      ['PMO', 'PROJECT_MANAGER', 'PROJECT_LEAD', 'INITIATIVE_OWNER', 'PROJECT_SPONSOR'].includes(r)
+    );
   return {
     canEditPriority: hasEditRole && !isTerminal,
     canEditOwner: hasEditRole && !isTerminal,
@@ -370,6 +372,8 @@ export class InitiativeController {
         estimatedTimeline: i.estimated_timeline,
         plannedStartDate: i.planned_start_date,
         plannedEndDate: i.planned_end_date,
+        baselineVersion: (i as any).baseline_version ? Number((i as any).baseline_version) : null,
+        scheduleBaselineId: (i as any).schedule_baseline_id ?? null,
         actualStartDate: i.actual_start_date,
         actualEndDate: i.actual_end_date,
         createdAt: i.created_at,
@@ -465,6 +469,8 @@ export class InitiativeController {
         sponsorId: (i as any).sponsor_id ?? null,
         plannedStartDate: (i as any).planned_start_date ?? (i as any).start_date ?? null,
         plannedEndDate: (i as any).planned_end_date ?? (i as any).end_date ?? null,
+        baselineVersion: (i as any).baseline_version ? Number((i as any).baseline_version) : null,
+        scheduleBaselineId: (i as any).schedule_baseline_id ?? null,
         targetState: safeJsonParseObject((i as any).target_state as string, {}),
         // UI expects a nested scope object in some places
         scope: {
@@ -1157,10 +1163,23 @@ export class InitiativeController {
           return;
         }
 
-        const row = await queryHelpers.queryOne(
-          `SELECT planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
-          [id, orgId]
-        );
+        let row: any = null;
+        try {
+          row = await queryHelpers.queryOne(
+            `SELECT planned_start_date, planned_end_date, baseline_version
+             FROM initiatives
+             WHERE id = ? AND organization_id = ?`,
+            [id, orgId]
+          );
+        } catch {
+          // Backward-compat: older schemas may not have baseline_version yet
+          row = await queryHelpers.queryOne(
+            `SELECT planned_start_date, planned_end_date
+             FROM initiatives
+             WHERE id = ? AND organization_id = ?`,
+            [id, orgId]
+          );
+        }
         const plannedStart = (row as any)?.planned_start_date;
         const plannedEnd = (row as any)?.planned_end_date;
         if (!plannedStart || !plannedEnd) {
@@ -1195,6 +1214,132 @@ export class InitiativeController {
             rule: 'SCHEDULE_DATES_REQUIRED',
           });
           return;
+        }
+
+        // Require at least one milestone before baselining/scheduling
+        try {
+          const m = await queryHelpers.queryOne(
+            `SELECT COUNT(*) as c
+             FROM initiative_milestones
+             WHERE initiative_id = ? AND organization_id = ?`,
+            [id, orgId]
+          );
+          const c = Number((m as any)?.c || 0);
+          if (c <= 0) {
+            res.status(400).json({
+              error: 'At least one milestone is required to schedule this initiative',
+              rule: 'SCHEDULE_MILESTONES_REQUIRED',
+            });
+            return;
+          }
+        } catch (e: any) {
+          const msg = String(e?.message || e || '').toLowerCase();
+          if (msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')) {
+            res.status(400).json({
+              error: 'Milestones schema is required to schedule (missing initiative_milestones). Run migrations.',
+              rule: 'SCHEDULE_SCHEMA_MISSING',
+              table: 'initiative_milestones',
+            });
+            return;
+          }
+          throw e;
+        }
+
+        // Create schedule baseline snapshot (versioned)
+        const existingBaselineVersion = Number((row as any)?.baseline_version || 0) || 0;
+        const baselineVersion = existingBaselineVersion + 1;
+        const baselineId = uuidv4();
+        const capturedAt = new Date().toISOString();
+
+        const milestones = (await queryHelpers
+          .queryAll(
+            `SELECT id, name, description, target_date, actual_date, status, order_index, is_gate, gate_decision_id
+             FROM initiative_milestones
+             WHERE initiative_id = ? AND organization_id = ?
+             ORDER BY order_index ASC, target_date ASC`,
+            [id, orgId]
+          )
+          .catch(() => [])) as any[];
+
+        const deps = (await queryHelpers
+          .queryAll(
+            `SELECT id, from_initiative_id, to_initiative_id, type
+             FROM initiative_dependencies
+             WHERE organization_id = ?
+               AND (from_initiative_id = ? OR to_initiative_id = ?)
+             ORDER BY created_at ASC`,
+            [orgId, id, id]
+          )
+          .catch(() => [])) as any[];
+
+        const snapshot = {
+          initiativeId: id,
+          statusAtBaseline: currentStatus,
+          plannedStartDate: plannedStart,
+          plannedEndDate: plannedEnd,
+          milestones: (milestones || []).map((mm) => ({
+            id: mm.id,
+            name: mm.name,
+            description: mm.description || null,
+            targetDate: mm.target_date || null,
+            actualDate: mm.actual_date || null,
+            status: mm.status || null,
+            orderIndex: mm.order_index ?? 0,
+            isGate: !!mm.is_gate,
+            gateDecisionId: mm.gate_decision_id || null,
+          })),
+          dependencies: (deps || []).map((d) => ({
+            id: d.id,
+            fromInitiativeId: d.from_initiative_id,
+            toInitiativeId: d.to_initiative_id,
+            type: d.type,
+          })),
+          capturedAt,
+          capturedBy: actorId || null,
+        };
+
+        try {
+          await queryHelpers.queryRun(
+            `INSERT INTO initiative_schedule_baselines
+               (id, organization_id, initiative_id, version, status_at_baseline, planned_start_date, planned_end_date, snapshot, created_by, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              baselineId,
+              orgId,
+              id,
+              baselineVersion,
+              currentStatus,
+              plannedStart,
+              plannedEnd,
+              JSON.stringify(snapshot),
+              actorId || null,
+              capturedAt,
+            ]
+          );
+        } catch (e: any) {
+          const msg = String(e?.message || e || '').toLowerCase();
+          if (msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')) {
+            res.status(400).json({
+              error:
+                'Schedule baseline schema is required to schedule (missing initiative_schedule_baselines). Run migrations.',
+              rule: 'SCHEDULE_BASELINE_SCHEMA_MISSING',
+              table: 'initiative_schedule_baselines',
+            });
+            return;
+          }
+          throw e;
+        }
+
+        // Persist baseline reference on initiative row (so UI can show version + lock state)
+        try {
+          await queryHelpers.queryRun(
+            `UPDATE initiatives
+             SET baseline_version = ?, schedule_baseline_id = ?, updated_at = ?
+             WHERE id = ? AND organization_id = ?`,
+            [baselineVersion, baselineId, capturedAt, id, orgId]
+          );
+        } catch {
+          // best-effort for legacy schemas (do not block if columns missing)
         }
       }
 
@@ -3466,6 +3611,124 @@ export class InitiativeController {
     }
   );
 
+  // ==========================================
+  // TIMELINE BASELINES (Schedule lock snapshots)
+  // ==========================================
+
+  /**
+   * Get schedule baselines for an initiative
+   */
+  static getScheduleBaselines = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId } = req.params;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const initiative = await queryHelpers.queryOne(
+        `SELECT id, baseline_version as baselineVersion, schedule_baseline_id as scheduleBaselineId
+         FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, orgId]
+      );
+      if (!initiative) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      const baselines = await queryHelpers.queryAll(
+        `SELECT
+          id,
+          version,
+          status_at_baseline as statusAtBaseline,
+          planned_start_date as plannedStartDate,
+          planned_end_date as plannedEndDate,
+          created_by as createdBy,
+          created_at as createdAt
+        FROM initiative_schedule_baselines
+        WHERE initiative_id = ? AND organization_id = ?
+        ORDER BY version DESC`,
+        [initiativeId, orgId]
+      );
+
+      res.json({
+        baselines,
+        currentBaselineVersion: Number((initiative as any)?.baselineVersion || 0) || 0,
+        scheduleBaselineId: (initiative as any)?.scheduleBaselineId ?? null,
+      });
+    }
+  );
+
+  /**
+   * Get a single schedule baseline (by version)
+   */
+  static getScheduleBaseline = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId, version } = req.params as any;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const v = Number.parseInt(String(version || ''), 10);
+      if (!Number.isFinite(v) || v <= 0) {
+        res.status(400).json({ error: 'Invalid baseline version' });
+        return;
+      }
+
+      const baseline = await queryHelpers.queryOne(
+        `SELECT
+          id,
+          version,
+          status_at_baseline as statusAtBaseline,
+          planned_start_date as plannedStartDate,
+          planned_end_date as plannedEndDate,
+          snapshot,
+          created_by as createdBy,
+          created_at as createdAt
+        FROM initiative_schedule_baselines
+        WHERE initiative_id = ? AND organization_id = ? AND version = ?
+        LIMIT 1`,
+        [initiativeId, orgId, v]
+      );
+      if (!baseline) {
+        res.status(404).json({ error: 'Baseline not found' });
+        return;
+      }
+
+      const current = await queryHelpers.queryOne(
+        `SELECT planned_start_date as plannedStartDate, planned_end_date as plannedEndDate
+         FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, orgId]
+      );
+
+      const toDayDiff = (from: any, to: any): number | null => {
+        if (!from || !to) return null;
+        const a = new Date(String(from));
+        const b = new Date(String(to));
+        if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return null;
+        return Math.round((b.getTime() - a.getTime()) / 86400000);
+      };
+
+      const snapshotRaw = (baseline as any).snapshot;
+      const snapshot =
+        typeof snapshotRaw === 'string' ? safeJsonParseObject(snapshotRaw, {}) : snapshotRaw || {};
+
+      res.json({
+        baseline: {
+          ...baseline,
+          snapshot,
+        },
+        variance: {
+          startDays: toDayDiff((baseline as any).plannedStartDate, (current as any)?.plannedStartDate),
+          endDays: toDayDiff((baseline as any).plannedEndDate, (current as any)?.plannedEndDate),
+        },
+      });
+    }
+  );
+
   /**
    * Get resources for an initiative
    */
@@ -5054,14 +5317,70 @@ export class InitiativeController {
           'PMO / Portfolio Owner'
         );
       }
+      if (currentStatus === 'APPROVED') {
+        const start = ini.planned_start_date || ini.start_date || null;
+        const end = ini.planned_end_date || ini.end_date || null;
+        addCheck(
+          'timeline_dates',
+          'Planned dates set (start + end)',
+          !!(start && end),
+          'blocking',
+          'Set planned start and end dates before scheduling (baseline lock).',
+          'Project Manager'
+        );
+
+        // Milestones required to baseline schedule
+        try {
+          const m = await queryHelpers.queryOne(
+            `SELECT COUNT(*) as c
+             FROM initiative_milestones
+             WHERE initiative_id = ? AND organization_id = ?`,
+            [initiativeId, orgId]
+          );
+          const c = Number((m as any)?.c || 0);
+          addCheck(
+            'schedule_milestones',
+            'Milestones defined',
+            c > 0,
+            'blocking',
+            'Add at least one milestone to lock the schedule baseline.',
+            'Initiative Owner / Project Manager'
+          );
+        } catch (e: any) {
+          const msg = String(e?.message || e || '').toLowerCase();
+          const missing =
+            msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation');
+          addCheck(
+            'schedule_milestones',
+            missing ? 'Milestones schema available' : 'Milestones defined',
+            false,
+            'blocking',
+            missing
+              ? 'Milestones table is missing. Run migrations (initiative_milestones).'
+              : 'Add at least one milestone to lock the schedule baseline.',
+            'PMO / Platform Admin'
+          );
+        }
+      }
       if (['SCHEDULED', 'EXECUTING', 'BLOCKED', 'DONE', 'TRACKING'].includes(currentStatus)) {
+        const start = ini.planned_start_date || ini.start_date || null;
+        const end = ini.planned_end_date || ini.end_date || null;
         addCheck(
           'timeline',
           'Timeline set',
-          !!(ini.start_date || ini.planned_start_date),
+          !!(start && end),
           'blocking',
           'Set planned start and end dates for baseline scheduling.',
           'Project Manager'
+        );
+        // Baseline version is expected after scheduling; keep as warning to avoid breaking legacy rows.
+        addCheck(
+          'baseline',
+          'Schedule baseline locked',
+          Number(ini.baseline_version || 0) > 0,
+          'warning',
+          'Create a schedule baseline snapshot (re-schedule) to enable variance tracking.',
+          'PMO / Project Manager'
         );
       }
 

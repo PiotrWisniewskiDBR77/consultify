@@ -10,6 +10,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
+  BookOpen,
   Calendar,
   Check,
   CheckCircle2,
@@ -54,6 +55,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Callout } from '@/components/shared/NModeBlocks';
+import { buildAskAIMessage } from './shared/askAiHelper';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Api } from '@/services/api';
@@ -199,7 +201,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 }) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const { isChatCollapsed, toggleChatCollapse } = useAppStore();
+  const { isChatCollapsed, toggleChatCollapse, setChatKickoffMessage, emitMyWorkEvent } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -271,6 +273,10 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const [comments, setComments] = useState<Comment[]>([]);
   const [linkedItems, setLinkedItems] = useState<LinkedItem[]>([]);
 
+  // Origin tracking
+  const [sourceType, setSourceType] = useState<string | null>(null);
+  const [sourceId, setSourceId] = useState<string | null>(null);
+
   // Stakeholders
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
 
@@ -303,6 +309,11 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     { id: 'dec-3', title: 'Go-Live Date Approval', status: 'approved' },
     { id: 'dec-4', title: 'Zatrudnienie Senior Dev', status: 'pending' },
   ]);
+
+  // Related Notes (notebook pages mentioning task title)
+  const [relatedNotes, setRelatedNotes] = useState<
+    { id: string; title: string; maturity?: string }[]
+  >([]);
 
   // New sections state
   const [risks, setRisks] = useState<RiskItem[]>([]);
@@ -568,6 +579,24 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   }, [taskId]);
 
   useEffect(() => {
+    if (!taskId || !title?.trim()) {
+      setRelatedNotes([]);
+      return;
+    }
+    let cancelled = false;
+    Api.getNotebookPages({ q: title, limit: 5 })
+      .then((pages) => {
+        if (!cancelled) setRelatedNotes(Array.isArray(pages) ? pages : []);
+      })
+      .catch(() => {
+        if (!cancelled) setRelatedNotes([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [taskId, title]);
+
+  useEffect(() => {
     const q = `${title || ''} ${description || ''}`.trim();
     if (!q) {
       setSuggestedIdeas([]);
@@ -667,6 +696,8 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       setAttachments(task.attachments || []);
       setComments(task.comments || []);
       setLinkedItems(task.linkedItems || []);
+      setSourceType(task.sourceType || task.source_type || null);
+      setSourceId(task.sourceId || task.source_id || null);
       setBlockedByDecisionId(task.blockedByDecisionId || '');
 
       // Set initiative name if found
@@ -728,6 +759,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     setReminders([]);
     setEscalation(null);
     setBlockedByDecisionId('');
+    setRelatedNotes([]);
   };
 
   const handleSave = async (silent = false) => {
@@ -801,11 +833,13 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       if (taskId) {
         await Api.updatePersonalTask(taskId, personalPayload);
         if (!silent) toast.success(isPolish ? 'Zadanie zaktualizowane' : 'Task updated');
+        emitMyWorkEvent({ type: 'item:updated', entityType: 'task', entityId: taskId });
         if (personalPayload?.dueDate) {
           trackFunnelEvent('personal_task_due_date_set', { source: 'detail', taskId });
         }
         if (personalPayload?.status === 'done') {
           trackFunnelEvent('personal_task_completed', { source: 'detail', taskId });
+          emitMyWorkEvent({ type: 'item:completed', entityType: 'task', entityId: taskId });
         }
         onSaved?.({ ...personalPayload, id: taskId });
       } else {
@@ -846,6 +880,15 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   };
 
   const handleOpenChat = async () => {
+    setChatKickoffMessage(buildAskAIMessage({
+      type: 'task',
+      title,
+      status,
+      priority,
+      dueDate: dueDate || undefined,
+      description: description || undefined,
+    }));
+
     // Persist local draft so user never loses input (even offline)
     const draftKey = `consultinity-task-draft:${taskId || 'new'}`;
     try {
@@ -3613,6 +3656,28 @@ Return ONLY the final comment text.`;
                 ]}
               />
 
+              {/* ── Origin Badge ──────────────────────────────────── */}
+              {sourceType && sourceId && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 text-xs">
+                  {sourceType === 'idea' && <Lightbulb size={14} className="text-amber-500" />}
+                  {sourceType === 'notebook' && <FileText size={14} className="text-blue-500" />}
+                  {sourceType === 'decision' && <Scale size={14} className="text-purple-500" />}
+                  <span className="text-slate-600 dark:text-slate-300">
+                    {sourceType === 'idea' ? 'Created from Idea' : sourceType === 'notebook' ? 'Created from Note' : `Created from ${sourceType}`}
+                  </span>
+                  <button
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent('mywork-open-item', {
+                        detail: { type: sourceType === 'notebook' ? 'notebook' : sourceType, id: sourceId, name: `Source ${sourceType}` }
+                      }));
+                    }}
+                    className="text-amber-600 dark:text-amber-400 hover:underline font-medium"
+                  >
+                    View source →
+                  </button>
+                </div>
+              )}
+
               {/* ── Task Action Bar ──────────────────────────────── */}
               <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
                 <div className="flex items-center gap-2">
@@ -6374,6 +6439,122 @@ Return ONLY the final comment text.`;
               expanded={expandedSections.has('evidence')}
               onToggleExpand={() => toggleSection('evidence')}
             />
+
+            {/* Related Notes */}
+            {relatedNotes.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+              >
+                <div
+                  className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
+                  onClick={() => toggleSection('relatedNotes')}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500/10 to-purple-500/10 dark:from-violet-500/20 dark:to-purple-500/20">
+                      <BookOpen size={18} className="text-violet-500 dark:text-violet-400" />
+                    </div>
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      {isPolish ? 'Powiązane notatki' : 'Related Notes'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                      {relatedNotes.length}
+                    </span>
+                    <motion.div
+                      animate={{ rotate: expandedSections.has('relatedNotes') ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
+                    </motion.div>
+                  </div>
+                </div>
+
+                <AnimatePresence>
+                  {expandedSections.has('relatedNotes') && (
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: 'auto' }}
+                      exit={{ height: 0 }}
+                      className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                    >
+                      <div className="p-4 space-y-2">
+                        {relatedNotes.map((note) => {
+                          const mat = (note.maturity || 'seed') as
+                            | 'seed'
+                            | 'growing'
+                            | 'mature'
+                            | 'actionable';
+                          const maturityStyles: Record<
+                            string,
+                            { dot: string; bg: string; text: string; border: string; label: string }
+                          > = {
+                            seed: {
+                              dot: 'bg-slate-400',
+                              bg: 'bg-slate-500/10',
+                              text: 'text-slate-500',
+                              border: 'border-slate-400/30',
+                              label: isPolish ? 'Ziarno' : 'Seed',
+                            },
+                            growing: {
+                              dot: 'bg-emerald-500',
+                              bg: 'bg-emerald-500/10',
+                              text: 'text-emerald-600 dark:text-emerald-400',
+                              border: 'border-emerald-500/30',
+                              label: isPolish ? 'Rośnie' : 'Growing',
+                            },
+                            mature: {
+                              dot: 'bg-blue-500',
+                              bg: 'bg-blue-500/10',
+                              text: 'text-blue-600 dark:text-blue-400',
+                              border: 'border-blue-500/30',
+                              label: isPolish ? 'Dojrzała' : 'Mature',
+                            },
+                            actionable: {
+                              dot: 'bg-amber-500',
+                              bg: 'bg-amber-500/10',
+                              text: 'text-amber-600 dark:text-amber-400',
+                              border: 'border-amber-500/30',
+                              label: isPolish ? 'Do działania' : 'Actionable',
+                            },
+                          };
+                          const cfg = maturityStyles[mat] || maturityStyles.seed;
+                          return (
+                            <button
+                              key={note.id}
+                              type="button"
+                              onClick={() =>
+                                window.dispatchEvent(
+                                  new CustomEvent('mywork-open-item', {
+                                    detail: { type: 'notebook', id: note.id, name: note.title },
+                                  })
+                                )
+                              }
+                              className="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-navy-600 bg-slate-50/50 dark:bg-navy-800/50 hover:bg-slate-100/80 dark:hover:bg-navy-700/50 transition-colors"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate flex-1 min-w-0">
+                                  {note.title}
+                                </span>
+                                <span
+                                  className={`inline-flex items-center gap-1 rounded-md border ${cfg.border} ${cfg.bg} ${cfg.text} px-2 py-0.5 font-semibold uppercase tracking-wide text-[9px] shrink-0`}
+                                >
+                                  <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                                  {cfg.label}
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            )}
           </div>
         </div>
       </div>

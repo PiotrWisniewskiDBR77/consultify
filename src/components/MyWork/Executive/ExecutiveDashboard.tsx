@@ -37,6 +37,7 @@ interface ExecutiveDashboardProps {
   onNavigate?: (section: string) => void;
   onDecisionApprove?: (id: string) => void;
   onDecisionReject?: (id: string) => void;
+  refreshTrigger?: number;
 }
 
 interface InitiativeProgress {
@@ -103,18 +104,17 @@ const InitiativeCard: React.FC<{
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.01 }}
       onClick={onClick}
-      className="p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:shadow-md transition-all cursor-pointer"
+      className="p-4 rounded-xl bg-slate-50/80 dark:bg-white/[0.03] hover:bg-slate-100/80 dark:hover:bg-white/[0.06] cursor-pointer transition-colors duration-150"
     >
       <div className="flex items-start justify-between mb-2">
-        <h4 className="text-sm font-semibold text-navy-900 dark:text-white line-clamp-1 flex-1">
+        <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100 line-clamp-1 flex-1">
           {initiative.name}
         </h4>
         <span
-          className={`ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+          className={`ml-2 px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${
             statusColors[initiative.status?.toUpperCase()] || statusColors.DRAFT
           }`}
         >
@@ -123,7 +123,7 @@ const InitiativeCard: React.FC<{
       </div>
 
       <div className="flex items-center gap-2 mb-2">
-        <div className="flex-1 h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+        <div className="flex-1 h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${initiative.completionPct}%` }}
@@ -131,17 +131,17 @@ const InitiativeCard: React.FC<{
             className={`h-full rounded-full ${barColor}`}
           />
         </div>
-        <span className="text-xs font-bold text-navy-900 dark:text-white tabular-nums w-10 text-right">
+        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 tabular-nums w-10 text-right">
           {initiative.completionPct}%
         </span>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+      <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
         <span>
           {initiative.tasksDone}/{initiative.tasksTotal} tasks
         </span>
         {initiative.overdueCount > 0 && (
-          <span className="flex items-center gap-1 text-rose-500 font-medium">
+          <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
             <AlertTriangle size={10} />
             {initiative.overdueCount} overdue
           </span>
@@ -162,16 +162,18 @@ const SignalCard: React.FC<{ signal: AISignal; onClick?: () => void }> = ({ sign
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      whileHover={{ backgroundColor: 'rgba(124, 58, 237, 0.05)' }}
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
       onClick={onClick}
-      className={`p-3 border-l-4 ${cfg.border} rounded-r-lg bg-white dark:bg-navy-900 cursor-pointer transition-colors`}
+      className="px-4 py-3 rounded-lg hover:bg-slate-50/60 dark:hover:bg-white/[0.03] cursor-pointer transition-colors duration-150"
     >
-      <div className="flex items-start gap-2">
-        <Lightbulb size={14} className={`${cfg.icon} mt-0.5 shrink-0`} />
+      <div className="flex items-start gap-2.5">
+        <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
+          signal.severity?.toUpperCase() === 'CRITICAL' ? 'bg-rose-500' :
+          signal.severity?.toUpperCase() === 'WARNING' ? 'bg-amber-500' : 'bg-slate-400 dark:bg-slate-500'
+        }`} />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-navy-900 dark:text-white line-clamp-1">
+          <p className="text-sm font-medium text-slate-800 dark:text-slate-100 line-clamp-1">
             {signal.title}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">
@@ -187,6 +189,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   onNavigate,
   onDecisionApprove,
   onDecisionReject,
+  refreshTrigger,
 }) => {
   const { t } = useTranslation();
   const user = useAppStore((state) => state.currentUser);
@@ -565,7 +568,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
     );
 
     return () => clearInterval(interval);
-  }, [fetchDashboardData]);
+  }, [fetchDashboardData, refreshTrigger]);
 
   const handleApprove = async (id: string) => {
     try {
@@ -663,8 +666,8 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         }}
       />
 
-      {/* Two-Column: Decisions + Team Performance */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Three-Column: Decisions + Team Performance + AI Signals */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <DecisionQueuePreview
           decisions={decisions}
           loading={loading}
@@ -680,42 +683,97 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           onViewAll={() => onNavigate?.('team')}
           onMemberClick={(id) => onNavigate?.('team')}
         />
+
+        {/* AI Signals & Insights */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.22 }}
+          className="rounded-xl bg-white dark:bg-navy-900/50 h-full flex flex-col"
+        >
+          <div className="flex items-center justify-between px-5 py-4 shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                <Zap size={16} className="text-amber-500" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {t('executive.signals.title', 'AI Signals & Insights')}
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {t('executive.signals.subtitle', 'Intelligent alerts from your portfolio')}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => onNavigate?.('notifications')}
+              className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 flex items-center gap-1 transition-colors duration-150"
+            >
+              {t('executive.signals.viewAll', 'View all')}
+              <ArrowRight size={13} />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-0.5">
+            {!loading && signals.length > 0 ? (
+              signals.map((signal) => (
+                <SignalCard
+                  key={signal.id}
+                  signal={signal}
+                  onClick={() => onNavigate?.('notifications')}
+                />
+              ))
+            ) : !loading ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <Zap size={20} className="text-slate-300 dark:text-slate-600 mb-2" />
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {t('executive.signals.empty', 'No signals')}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3 animate-pulse">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="h-10 bg-slate-100 dark:bg-white/[0.03] rounded-lg" />
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
       </div>
 
       {/* Initiative Progress Overview */}
       {!loading && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm overflow-hidden"
+          transition={{ duration: 0.22 }}
+          className="rounded-xl bg-white dark:bg-navy-900/50"
         >
-          <div className="px-5 py-4 border-b border-slate-100 dark:border-navy-700">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                  <Folder size={20} className="text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                    {t('executive.initiatives.title', 'Initiative Progress')}
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {initiatives.length}{' '}
-                    {t('executive.initiatives.active', 'active initiatives')}
-                  </p>
-                </div>
+          <div className="flex items-center justify-between px-5 py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                <Folder size={16} className="text-indigo-500" />
               </div>
-              <button
-                onClick={() => onNavigate?.('initiatives')}
-                className="text-sm text-brand font-medium hover:text-brand-hover flex items-center gap-1 transition-colors"
-              >
-                {t('executive.initiatives.viewAll', 'View all')}
-                <ArrowRight size={14} />
-              </button>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {t('executive.initiatives.title', 'Initiative Progress')}
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {initiatives.length}{' '}
+                  {t('executive.initiatives.active', 'active initiatives')}
+                </p>
+              </div>
             </div>
+            <button
+              onClick={() => onNavigate?.('initiatives')}
+              className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 flex items-center gap-1 transition-colors duration-150"
+            >
+              {t('executive.initiatives.viewAll', 'View all')}
+              <ArrowRight size={13} />
+            </button>
           </div>
 
-          <div className="p-4">
+          <div className="px-5 pb-5">
             {initiatives.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                 {initiatives.map((init) => (
@@ -728,56 +786,12 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Folder size={32} className="text-slate-300 dark:text-slate-600 mb-2" />
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <Folder size={24} className="text-slate-300 dark:text-slate-600 mb-2" />
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   {t('executive.initiatives.empty', 'No active initiatives')}
                 </p>
               </div>
             )}
-          </div>
-        </motion.div>
-      )}
-
-      {/* AI Signals & Insights */}
-      {!loading && signals.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm overflow-hidden"
-        >
-          <div className="px-5 py-4 border-b border-slate-100 dark:border-navy-700">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                  <Zap size={20} className="text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                    {t('executive.signals.title', 'AI Signals & Insights')}
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {t('executive.signals.subtitle', 'Intelligent alerts from your portfolio')}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => onNavigate?.('notifications')}
-                className="text-sm text-brand font-medium hover:text-brand-hover flex items-center gap-1 transition-colors"
-              >
-                {t('executive.signals.viewAll', 'View all')}
-                <ArrowRight size={14} />
-              </button>
-            </div>
-          </div>
-
-          <div className="p-4 space-y-2">
-            {signals.map((signal) => (
-              <SignalCard
-                key={signal.id}
-                signal={signal}
-                onClick={() => onNavigate?.('notifications')}
-              />
-            ))}
           </div>
         </motion.div>
       )}

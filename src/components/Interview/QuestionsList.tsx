@@ -32,7 +32,7 @@ import {
   User,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { sendMessageToAI } from '@/services/ai/gemini';
@@ -150,6 +150,11 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
 
   // Filter questions for current category
   const categoryQuestions = category ? questions.filter((q) => q.category === category) : [];
+  const answeredCount = categoryQuestions.filter((q) => q.status === 'answered').length;
+  const totalCount = categoryQuestions.length;
+  const missingCount = totalCount - answeredCount;
+  const percent = totalCount > 0 ? Math.round((answeredCount / totalCount) * 100) : 0;
+  const nextMissing = categoryQuestions.find((q) => q.status !== 'answered');
 
   // Wszystkie pytania domyślnie zamknięte dla czytelności
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -206,6 +211,8 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
           .find((q) => q.status !== 'answered');
         if (nextUnanswered) {
           setExpandedId(nextUnanswered.id);
+        } else {
+          setExpandedId(null);
         }
       } catch (error) {
         console.error('[QuestionsList] Failed to save answer:', error);
@@ -523,7 +530,66 @@ Rules:
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
+      {/* Category progress (quiet) */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+            <span>{isPolish ? 'Postęp w tej sekcji' : 'Progress in this section'}</span>
+            <span className="tabular-nums">
+              {answeredCount}/{totalCount} · {percent}%
+            </span>
+          </div>
+          <div className="h-1.5 rounded-full bg-slate-200/70 dark:bg-navy-800/70 overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${
+                percent === 100 ? 'bg-emerald-500' : 'bg-blue-500'
+              }`}
+              style={{ width: `${percent}%` }}
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={() => nextMissing && setExpandedId(nextMissing.id)}
+          disabled={!nextMissing}
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-900/40 text-slate-700 dark:text-slate-200 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title={
+            nextMissing
+              ? isPolish
+                ? 'Otwórz następne brakujące pytanie w tej sekcji'
+                : 'Open next missing question in this section'
+              : isPolish
+                ? 'Wszystkie pytania uzupełnione'
+                : 'All questions answered'
+          }
+        >
+          <ChevronRight size={14} />
+          {isPolish ? 'Następne brakujące' : 'Next missing'}
+          {missingCount > 0 && (
+            <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-slate-200/80 dark:bg-navy-700/80 text-slate-500 dark:text-slate-400">
+              {missingCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Gentle "start here" hint when nothing expanded */}
+      {!expandedId && nextMissing && (
+        <button
+          onClick={() => setExpandedId(nextMissing.id)}
+          className="w-full flex items-center justify-between px-3 py-2 rounded-xl border border-blue-500/20 bg-blue-500/5 dark:bg-blue-500/10 text-sm text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            <Sparkles size={14} />
+            {isPolish
+              ? 'Zacznij od następnego brakującego pytania'
+              : 'Start with the next missing question'}
+          </span>
+          <ChevronRight size={16} />
+        </button>
+      )}
+
       {/* Questions List */}
       {categoryQuestions.map((question) => {
         const statusConfig = STATUS_CONFIG[question.status];
@@ -534,10 +600,10 @@ Rules:
         return (
           <div
             key={question.id}
-            className={`bg-white dark:bg-navy-900 rounded-lg border transition-all ${
+            className={`rounded-xl border transition-colors ${
               isExpanded
-                ? 'border-blue-300 dark:border-blue-500/50 shadow-md'
-                : 'border-slate-200 dark:border-navy-700'
+                ? 'border-primary-500/30 bg-white/70 dark:bg-navy-900/55'
+                : 'border-slate-200/60 dark:border-navy-700/50 bg-white/55 dark:bg-navy-900/35'
             }`}
           >
             {/* Question Header */}

@@ -19,6 +19,7 @@ import {
   ChevronDown,
   FileText,
   Flame,
+  Flower2,
   GitBranch,
   HeartPulse,
   Hourglass,
@@ -27,33 +28,31 @@ import {
   LayoutGrid,
   LayoutList,
   Lightbulb,
-  Flower2,
   List,
   Loader2,
   Plus,
   Scale,
   Search,
+  Sparkles,
   Target,
   User,
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useUserCan } from '@/hooks/useUserCan';
-import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
 import { DecisionsPanelContent } from './DecisionsPanelContent';
-import { InboxContent } from './InboxContent';
+import { DecisionReviewNext } from './DecisionReviewNext';
 import type { FocusItem } from './Focus/FocusView';
+import { InboxContent } from './InboxContent';
 import type { MyIdea } from './MyIdeasListContent';
 import { MyIdeasListContent } from './MyIdeasListContent';
 import { MyTasksListContent } from './MyTasksListContent';
-import { NotificationsContent } from './NotificationsContent';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
 // This keeps initial My Work navigation snappy and avoids loading unused tabs upfront.
@@ -72,7 +71,9 @@ const NotificationDetailView = React.lazy(() =>
 const ExecutiveDashboard = React.lazy(() =>
   import('./Executive/ExecutiveDashboard').then((m) => ({ default: m.ExecutiveDashboard }))
 );
-const FocusView = React.lazy(() => import('./Focus/FocusView').then((m) => ({ default: m.FocusView })));
+const FocusView = React.lazy(() =>
+  import('./Focus/FocusView').then((m) => ({ default: m.FocusView }))
+);
 const NotebookContent = React.lazy(() =>
   import('./NotebookContent').then((m) => ({ default: m.NotebookContent }))
 );
@@ -85,9 +86,6 @@ const TasksCalendarView = React.lazy(() =>
 const DecisionsKanbanBoard = React.lazy(() =>
   import('./DecisionsKanbanBoard').then((m) => ({ default: m.DecisionsKanbanBoard }))
 );
-const NotificationsKanbanBoard = React.lazy(() =>
-  import('./NotificationsKanbanBoard').then((m) => ({ default: m.NotificationsKanbanBoard }))
-);
 
 // Types
 type ModuleTab =
@@ -97,16 +95,73 @@ type ModuleTab =
   | 'tasks'
   | 'notebook'
   | 'ideas'
-  | 'decisions'
-  | 'notifications';
-type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
+  | 'decisions';
+type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent' | 'new';
 type TasksViewMode = 'table' | 'kanban' | 'calendar';
 type IdeasViewMode = 'list' | 'cards' | 'garden' | 'mindmap';
 type DecisionsViewMode = 'list' | 'kanban';
-type NotificationsViewMode = 'list' | 'kanban';
 type DecisionFilter = 'all' | 'my' | 'awaiting';
 type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
-type NotificationFilter = 'all' | 'unread' | 'today' | 'week';
+
+// Q1: Per-tab system prompts for contextual chat
+const TAB_SYSTEM_PROMPTS: Record<ModuleTab, string> = {
+  executive:
+    'You are a C-level strategic advisor. The user is an executive reviewing portfolio health, KPIs, and team performance. Focus on high-level insights, risks, and strategic recommendations. Be concise and data-driven.',
+  inbox:
+    'You are a triage assistant. Help the user quickly process incoming items — prioritize, categorize, and suggest actions (accept, defer, delegate, dismiss). Be efficient and action-oriented.',
+  focus:
+    'You are a productivity coach. Help the user plan their day, prioritize tasks, manage energy, and stay focused. Suggest time-blocking, task ordering, and delegation when appropriate.',
+  tasks:
+    'You are an execution manager. Help the user manage tasks — break down work, estimate effort, identify blockers, suggest delegation, and track progress. Be practical and specific.',
+  decisions:
+    'You are a decision advisor. Help analyze decisions — weigh pros/cons, assess risks, identify stakeholders, and recommend approaches. Structure thinking clearly.',
+  notebook:
+    'You are a knowledge companion. Help the user develop ideas, structure notes, extract insights, and connect concepts. Be thoughtful and build on existing content.',
+  ideas:
+    'You are an innovation scout. Help evaluate ideas — assess feasibility, market fit, quick wins, and next steps. Be encouraging but realistic.',
+};
+
+// Q3: Per-tab quick prompts shown as chips in the chat panel
+const TAB_QUICK_PROMPTS: Record<ModuleTab, string[]> = {
+  executive: [
+    'Give me a 30-second briefing',
+    'What needs my attention most?',
+    'Portfolio risk summary',
+    'Team capacity overview',
+  ],
+  inbox: [
+    'Triage all new items for me',
+    'Summarize notifications since yesterday',
+    'What needs urgent attention?',
+  ],
+  focus: [
+    'Optimize my Today column',
+    'What should I tackle first?',
+    'Estimate my capacity for today',
+    'Help me plan my day',
+  ],
+  tasks: [
+    'Reprioritize my tasks',
+    'Summarize what I did this week',
+    'Which tasks should I delegate?',
+    'Break down my top task',
+  ],
+  decisions: [
+    'Summarize pending decisions',
+    'Analyze the most urgent decision',
+    'What decisions are blocking progress?',
+  ],
+  notebook: [
+    'Summarize this note',
+    'Extract action items',
+    'What perspectives am I missing?',
+  ],
+  ideas: [
+    'Evaluate my top idea',
+    'Which ideas are ready to promote?',
+    'Find connections between my ideas',
+  ],
+};
 type ItemStatus =
   | 'todo'
   | 'in_progress'
@@ -127,7 +182,6 @@ interface TabCounts {
   notebook: number;
   ideas: number;
   decisions: number;
-  notifications: number;
 }
 
 interface TaskFilterCounts {
@@ -135,17 +189,12 @@ interface TaskFilterCounts {
   today: number;
   week: number;
   urgent: number;
+  newUntriaged: number;
 }
 
 interface DecisionFilterCounts {
   my: number;
   awaiting: number;
-}
-
-interface NotificationFilterCounts {
-  unread: number;
-  today: number;
-  week: number;
 }
 
 // Open Document interface for dynamic tabs
@@ -230,7 +279,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [searchParams, setSearchParams] = useSearchParams();
-  const { currentUser, myWorkIntent, clearMyWorkIntent } = useAppStore();
+  const {
+    currentUser,
+    myWorkIntent,
+    clearMyWorkIntent,
+    myWorkEvent,
+    clearMyWorkEvent,
+    setChatSystemPrompt,
+    setChatQuickPrompts,
+  } = useAppStore();
   const { isEnabled } = useFeatureFlagsContext();
   const notebookEnabled = isEnabled('myWorkNotebookV2');
 
@@ -248,9 +305,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const canViewExecutive = isAdmin || isManager || isSuperAdmin;
 
   // Tab state — managers land on Executive, regular users on Focus
-  const [activeTab, setActiveTab] = useState<ModuleTab>(
-    canViewExecutive ? 'executive' : 'focus'
-  );
+  const [activeTab, setActiveTab] = useState<ModuleTab>(canViewExecutive ? 'executive' : 'focus');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
 
@@ -259,15 +314,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [tasksViewMode, setTasksViewMode] = useState<TasksViewMode>('table');
   const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('garden');
   const [decisionsViewMode, setDecisionsViewMode] = useState<DecisionsViewMode>('list');
-  const [notificationsViewMode, setNotificationsViewMode] = useState<NotificationsViewMode>('list');
   const [notebookLinkedIdeasOpen, setNotebookLinkedIdeasOpen] = useState(false);
   const [notebookPulseOpen, setNotebookPulseOpen] = useState(false);
   const [notebookCreateReqId, setNotebookCreateReqId] = useState(0);
   const [decisionFilter, setDecisionFilter] = useState<DecisionFilter>('my');
   const [decisionPriorityFilter, setDecisionPriorityFilter] =
     useState<DecisionPriorityFilter>('all');
-  const [notificationFilter, setNotificationFilter] = useState<NotificationFilter>('all');
-
+  const [reviewNextOpen, setReviewNextOpen] = useState(false);
   // Counts
   const [tabCounts, setTabCounts] = useState<TabCounts>({
     executive: 0,
@@ -277,28 +330,25 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     notebook: 0,
     ideas: 0,
     decisions: 0,
-    notifications: 0,
   });
   const [taskFilterCounts, setTaskFilterCounts] = useState<TaskFilterCounts>({
     overdue: 0,
     today: 0,
     week: 0,
     urgent: 0,
+    newUntriaged: 0,
   });
   const [decisionFilterCounts, setDecisionFilterCounts] = useState<DecisionFilterCounts>({
     my: 0,
     awaiting: 0,
   });
-  const [notificationFilterCounts, setNotificationFilterCounts] =
-    useState<NotificationFilterCounts>({
-      unread: 0,
-      today: 0,
-      week: 0,
-    });
-
   // Dynamic documents state
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+
+  // EventBus refresh counter — incremented when cross-tab events fire.
+  // Child tab components include this in their fetch dependency arrays.
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Loading state
   const [isLoading, setIsLoading] = useState(false);
@@ -313,9 +363,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   }, []);
 
   // Robust: whenever user switches main tab, always show list view (close any open document)
+  // Also update per-tab chat context (Q1/Q3)
   useEffect(() => {
     setActiveDocumentId(null);
-  }, [activeTab]);
+    setChatSystemPrompt(TAB_SYSTEM_PROMPTS[activeTab] || null);
+    setChatQuickPrompts(TAB_QUICK_PROMPTS[activeTab] || null);
+  }, [activeTab, setChatSystemPrompt, setChatQuickPrompts]);
 
   // Deep link support: header dropdown → open inside My Work
   useEffect(() => {
@@ -361,6 +414,57 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     }
     clearMyWorkIntent();
   }, [myWorkIntent, clearMyWorkIntent, handleOpenDocument]);
+
+  // Command palette integration: allow triggering "Review next" from anywhere.
+  useEffect(() => {
+    const handler = () => {
+      setActiveTab('decisions');
+      setActiveDocumentId(null);
+      setReviewNextOpen(true);
+    };
+    window.addEventListener('mywork-review-next-decisions', handler as any);
+    return () => window.removeEventListener('mywork-review-next-decisions', handler as any);
+  }, []);
+
+  // F1: EventBus — refresh tabs when cross-tab events fire
+  useEffect(() => {
+    if (!myWorkEvent) return;
+    setRefreshTrigger((prev) => prev + 1);
+    clearMyWorkEvent();
+  }, [myWorkEvent, clearMyWorkEvent]);
+
+  // F3: Handle mywork-open-item custom event (dispatched by KnowledgePulse, detail views, etc.)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { type, id, name } = (e as CustomEvent).detail || {};
+      if (!type || !id) return;
+      const tabMap: Record<string, ModuleTab> = {
+        task: 'tasks',
+        decision: 'decisions',
+        idea: 'ideas',
+        notification: 'inbox',
+        notebook: 'notebook',
+      };
+      if (tabMap[type]) setActiveTab(tabMap[type]);
+      if (type !== 'notebook') {
+        handleOpenDocument({
+          id,
+          type,
+          name: name || type,
+          status:
+            type === 'notification'
+              ? ('unread' as const)
+              : type === 'decision'
+                ? ('pending' as const)
+                : type === 'idea'
+                  ? ('idea' as const)
+                  : ('todo' as const),
+        });
+      }
+    };
+    window.addEventListener('mywork-open-item', handler);
+    return () => window.removeEventListener('mywork-open-item', handler);
+  }, [handleOpenDocument]);
 
   // URL deep link support:
   // - /my-work?taskId=...
@@ -445,14 +549,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         color: 'bg-purple-500',
         requiresExecutiveAccess: false,
       },
-      {
-        id: 'notifications' as ModuleTab,
-        label: isPolish ? 'Powiadomienia' : 'Notifications',
-        icon: <Bell size={16} />,
-        count: tabCounts.notifications,
-        color: 'bg-amber-500',
-        requiresExecutiveAccess: false,
-      },
       ...(notebookEnabled
         ? [
             {
@@ -516,6 +612,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         color: 'bg-orange-500',
         count: taskFilterCounts.urgent,
       },
+      {
+        id: 'new' as TaskFilter,
+        label: isPolish ? 'Nowe' : 'New',
+        icon: <Inbox size={12} />,
+        color: 'bg-emerald-500',
+        count: taskFilterCounts.newUntriaged,
+      },
     ],
     [isPolish, taskFilterCounts]
   );
@@ -532,54 +635,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       },
       {
         id: 'my' as DecisionFilter,
-        label: isPolish ? 'Moje decyzje' : 'My Decisions',
+        label: isPolish ? 'Moje do decyzji' : 'My decisions to make',
         icon: <User size={12} />,
         color: 'bg-purple-500',
         count: decisionFilterCounts.my,
       },
       {
         id: 'awaiting' as DecisionFilter,
-        label: isPolish ? 'Oczekujące' : 'Awaiting Others',
+        label: isPolish ? 'Moje prośby (pending)' : 'My requests pending',
         icon: <Hourglass size={12} />,
         color: 'bg-amber-500',
         count: decisionFilterCounts.awaiting,
       },
     ],
     [isPolish, decisionFilterCounts, tabCounts.decisions]
-  );
-
-  // Notification filters configuration
-  const notificationFilters = useMemo(
-    () => [
-      {
-        id: 'all' as NotificationFilter,
-        label: isPolish ? 'Wszystkie' : 'All',
-        icon: <LayoutGrid size={12} />,
-        color: 'bg-slate-400',
-      },
-      {
-        id: 'unread' as NotificationFilter,
-        label: isPolish ? 'Nieprzeczytane' : 'Unread',
-        icon: <Bell size={12} />,
-        color: 'bg-blue-500',
-        count: notificationFilterCounts.unread,
-      },
-      {
-        id: 'today' as NotificationFilter,
-        label: isPolish ? 'Dzisiaj' : 'Today',
-        icon: <Calendar size={12} />,
-        color: 'bg-emerald-500',
-        count: notificationFilterCounts.today,
-      },
-      {
-        id: 'week' as NotificationFilter,
-        label: isPolish ? 'Ten tydzień' : 'This Week',
-        icon: <CalendarDays size={12} />,
-        color: 'bg-slate-500',
-        count: notificationFilterCounts.week,
-      },
-    ],
-    [isPolish, notificationFilterCounts]
   );
 
   // Handlers
@@ -737,13 +806,21 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   // Count update handlers
   const handleTaskCountsChange = useCallback(
-    (counts: { total: number; overdue: number; today: number; week: number; urgent: number }) => {
+    (counts: {
+      total: number;
+      overdue: number;
+      today: number;
+      week: number;
+      urgent: number;
+      newUntriaged?: number;
+    }) => {
       setTabCounts((prev) => ({ ...prev, tasks: counts.total }));
       setTaskFilterCounts({
         overdue: counts.overdue,
         today: counts.today,
         week: counts.week,
         urgent: counts.urgent,
+        newUntriaged: counts.newUntriaged ?? 0,
       });
     },
     []
@@ -760,31 +837,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     []
   );
 
-  const handleNotificationCountsChange = useCallback(
-    (counts: { total: number; unread: number; today: number; week: number }) => {
-      setTabCounts((prev) => ({ ...prev, notifications: counts.total }));
-      setNotificationFilterCounts({
-        unread: counts.unread,
-        today: counts.today,
-        week: counts.week,
-      });
-    },
-    []
-  );
+  const handleIdeaCountsChange = useCallback((counts: { total: number }) => {
+    setTabCounts((prev) => ({ ...prev, ideas: counts.total }));
+  }, []);
 
-  const handleIdeaCountsChange = useCallback(
-    (counts: { total: number }) => {
-      setTabCounts((prev) => ({ ...prev, ideas: counts.total }));
-    },
-    []
-  );
-
-  const handleNotebookCountsChange = useCallback(
-    (counts: { total: number }) => {
-      setTabCounts((prev) => ({ ...prev, notebook: counts.total }));
-    },
-    []
-  );
+  const handleNotebookCountsChange = useCallback((counts: { total: number }) => {
+    setTabCounts((prev) => ({ ...prev, notebook: counts.total }));
+  }, []);
 
   const handleInboxCountsChange = useCallback((counts: { total: number; critical: number }) => {
     setTabCounts((prev) => ({ ...prev, inbox: counts.total }));
@@ -824,23 +883,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           color: 'from-purple-500 to-purple-600',
           variant: 'primary' as const,
         };
-      case 'notifications':
-        return {
-          label: isPolish ? 'Nowe powiadomienie' : 'New Notification',
-          icon: <Plus size={16} />,
-          onClick: () => {
-            const newId = `new-notification-${Date.now()}`;
-            handleOpenDocument({
-              id: newId,
-              type: 'notification',
-              name: isPolish ? 'Nowe powiadomienie' : 'New Notification',
-              status: 'unread',
-              data: { isNew: true },
-            });
-          },
-          color: 'from-amber-500 to-amber-600',
-          variant: 'primary' as const,
-        };
       case 'notebook':
         return {
           label: isPolish ? 'Nowa notatka' : 'New note',
@@ -870,15 +912,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         return taskFilters;
       case 'decisions':
         return decisionFilters;
-      case 'notifications':
-        return notificationFilters;
       case 'executive':
       case 'focus':
       case 'inbox':
       default:
         return [];
     }
-  }, [activeTab, taskFilters, decisionFilters, notificationFilters, activeDocumentId]);
+  }, [activeTab, taskFilters, decisionFilters, activeDocumentId]);
 
   // Get current filter value
   const currentFilterValue = useMemo(() => {
@@ -887,12 +927,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         return taskFilter;
       case 'decisions':
         return decisionFilter;
-      case 'notifications':
-        return notificationFilter;
       default:
         return 'all';
     }
-  }, [activeTab, taskFilter, decisionFilter, notificationFilter]);
+  }, [activeTab, taskFilter, decisionFilter]);
 
   // Handle filter change
   const handleFilterChange = useCallback(
@@ -903,9 +941,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           break;
         case 'decisions':
           setDecisionFilter(filterId as DecisionFilter);
-          break;
-        case 'notifications':
-          setNotificationFilter(filterId as NotificationFilter);
           break;
       }
     },
@@ -1062,6 +1097,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 if (section === 'focus') setActiveTab('focus');
                 if (section === 'inbox') setActiveTab('inbox');
               }}
+              refreshTrigger={refreshTrigger}
             />
           </React.Suspense>
         );
@@ -1073,6 +1109,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             onOpenDecision={(id) => handleDecisionClick(id)}
             onOpenNotification={(id) => handleNotificationClick(id)}
             onCountsChange={handleInboxCountsChange}
+            refreshTrigger={refreshTrigger}
           />
         );
       case 'focus':
@@ -1090,6 +1127,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 }
               }}
               onNavigateToInbox={() => setActiveTab('inbox')}
+              refreshTrigger={refreshTrigger}
             />
           </React.Suspense>
         );
@@ -1102,6 +1140,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               onTaskClick={handleTaskClick}
               onCreateTask={handleCreateTask}
               onCountsChange={handleTaskCountsChange}
+              refreshTrigger={refreshTrigger}
             />
           </React.Suspense>
         ) : tasksViewMode === 'calendar' ? (
@@ -1112,6 +1151,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               onTaskClick={handleTaskClick}
               onCreateTask={handleCreateTask}
               onCountsChange={handleTaskCountsChange}
+              refreshTrigger={refreshTrigger}
             />
           </React.Suspense>
         ) : (
@@ -1121,6 +1161,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             onTaskClick={handleTaskClick}
             onCreateTask={handleCreateTask}
             onCountsChange={handleTaskCountsChange}
+            refreshTrigger={refreshTrigger}
           />
         );
       case 'ideas':
@@ -1131,6 +1172,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             onIdeaClick={handleIdeaClick}
             onCreateIdea={handleCreateIdea}
             onCountsChange={handleIdeaCountsChange}
+            refreshTrigger={refreshTrigger}
           />
         );
       case 'notebook':
@@ -1145,10 +1187,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               onPulseOpenChange={setNotebookPulseOpen}
               createPageRequestId={notebookCreateReqId}
               onCountsChange={handleNotebookCountsChange}
+              refreshTrigger={refreshTrigger}
             />
           </React.Suspense>
         );
       case 'decisions':
+        if (reviewNextOpen) {
+          return (
+            <DecisionReviewNext
+              mode={decisionFilter === 'awaiting' ? 'requests_pending' : 'my'}
+              onExit={() => setReviewNextOpen(false)}
+              onOpenFullDetail={(id, data) => handleDecisionClick(id, data)}
+            />
+          );
+        }
         return decisionsViewMode === 'kanban' ? (
           <React.Suspense fallback={lazyFallback}>
             <DecisionsKanbanBoard
@@ -1158,6 +1210,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               onDecisionClick={handleDecisionClick}
               onCreateDecision={handleCreateDecision}
               onCountsChange={handleDecisionCountsChange}
+              refreshTrigger={refreshTrigger}
             />
           </React.Suspense>
         ) : (
@@ -1167,26 +1220,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             searchQuery={searchQuery}
             onDecisionClick={handleDecisionClick}
             onCountsChange={handleDecisionCountsChange}
-          />
-        );
-      case 'notifications':
-        return notificationsViewMode === 'kanban' ? (
-          <React.Suspense fallback={lazyFallback}>
-            <NotificationsKanbanBoard
-              filter={notificationFilter}
-              searchQuery={searchQuery}
-              onNotificationClick={handleNotificationClick}
-              onCountsChange={handleNotificationCountsChange}
-            />
-          </React.Suspense>
-        ) : (
-          <NotificationsContent
-            filter={notificationFilter}
-            searchQuery={searchQuery}
-            onOpenTask={handleTaskClick}
-            onOpenDecision={handleDecisionClick}
-            onNotificationClick={handleNotificationClick}
-            onCountsChange={handleNotificationCountsChange}
+            refreshTrigger={refreshTrigger}
           />
         );
       default:
@@ -1334,6 +1368,19 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
               >
                 <button
+                  onClick={() => setReviewNextOpen((v) => !v)}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    reviewNextOpen
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Review next' : 'Review next'}
+                  role="radio"
+                  aria-checked={reviewNextOpen}
+                >
+                  <Sparkles size={16} />
+                </button>
+                <button
                   onClick={() => setDecisionsViewMode('list')}
                   className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
                     decisionsViewMode === 'list'
@@ -1424,42 +1471,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               </div>
             )}
 
-            {/* Notifications View Mode Toggle (list / kanban) — only on Notifications tab */}
-            {activeTab === 'notifications' && !activeDocumentId && (
-              <div
-                className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
-                role="radiogroup"
-                aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
-              >
-                <button
-                  onClick={() => setNotificationsViewMode('list')}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
-                    notificationsViewMode === 'list'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                  }`}
-                  title={isPolish ? 'Widok listy' : 'List view'}
-                  role="radio"
-                  aria-checked={notificationsViewMode === 'list'}
-                >
-                  <LayoutList size={16} />
-                </button>
-                <button
-                  onClick={() => setNotificationsViewMode('kanban')}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
-                    notificationsViewMode === 'kanban'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                  }`}
-                  title={isPolish ? 'Widok kanban' : 'Kanban view'}
-                  role="radio"
-                  aria-checked={notificationsViewMode === 'kanban'}
-                >
-                  <Kanban size={16} />
-                </button>
-              </div>
-            )}
-
             {/* Notebook tools — only on Notebook tab */}
             {activeTab === 'notebook' && !activeDocumentId && (
               <div
@@ -1546,21 +1557,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   aria-label={isPolish ? 'Priorytet' : 'Priority'}
                   title={isPolish ? 'Filtr priorytetu' : 'Priority filter'}
                 >
-                  <option value="all">
-                    {isPolish ? 'Priorytet: wszystkie' : 'Priority: all'}
-                  </option>
+                  <option value="all">{isPolish ? 'Priorytet: wszystkie' : 'Priority: all'}</option>
                   <option value="CRITICAL">
                     {isPolish ? 'Priorytet: krytyczne' : 'Priority: critical'}
                   </option>
-                  <option value="HIGH">
-                    {isPolish ? 'Priorytet: wysoki' : 'Priority: high'}
-                  </option>
+                  <option value="HIGH">{isPolish ? 'Priorytet: wysoki' : 'Priority: high'}</option>
                   <option value="MEDIUM">
                     {isPolish ? 'Priorytet: średni' : 'Priority: medium'}
                   </option>
-                  <option value="LOW">
-                    {isPolish ? 'Priorytet: niski' : 'Priority: low'}
-                  </option>
+                  <option value="LOW">{isPolish ? 'Priorytet: niski' : 'Priority: low'}</option>
                 </select>
                 <ChevronDown
                   size={16}
@@ -1613,9 +1618,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                         ? isPolish
                           ? 'Szukaj decyzji...'
                           : 'Search decisions...'
-                        : isPolish
-                          ? 'Szukaj powiadomień...'
-                          : 'Search notifications...'
+                        : activeTab === 'notebook'
+                          ? isPolish
+                            ? 'Szukaj notatek...'
+                            : 'Search notes...'
+                          : isPolish
+                            ? 'Szukaj w Inbox...'
+                            : 'Search inbox...'
                 }
                 autoFocus
                 className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder:text-slate-500 dark:text-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
@@ -1637,9 +1646,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       {renderDynamicTabs()}
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-hidden min-h-0">
-        {renderContent()}
-      </div>
+      <div className="flex-1 overflow-y-auto min-h-0">{renderContent()}</div>
     </div>
   );
 };

@@ -3,8 +3,8 @@ import {
   AlertTriangle,
   ArrowRight,
   Award,
-  Brain,
   BookOpen,
+  Brain,
   Calendar,
   CheckCircle,
   Clock,
@@ -144,7 +144,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
           const arr = Array.isArray(notes) ? notes : [];
           setSuggestedNotes(arr);
           if (arr.length > 0) {
-            trackFunnelEvent('active_notes_suggested', { surface: 'initiative', count: arr.length });
+            trackFunnelEvent('active_notes_suggested', {
+              surface: 'initiative',
+              count: arr.length,
+            });
           }
         } catch {
           setSuggestedNotes([]);
@@ -728,7 +731,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                   .filter(Boolean)
                                   .join('\n');
                                 setInitiative({ ...initiative, applicantOneLiner: insert });
-                                trackFunnelEvent('active_notes_inserted', { surface: 'initiative', noteId: note.id });
+                                trackFunnelEvent('active_notes_inserted', {
+                                  surface: 'initiative',
+                                  noteId: note.id,
+                                });
                                 toast.success(t('myWork.notebook.insertedToast', 'Inserted'));
                               }}
                             >

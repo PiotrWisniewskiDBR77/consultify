@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
-import { llmService } from './ai/llmService.js';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { llmService } from './ai/llmService.js';
 
 export type ExecutiveInsightType = 'OVERVIEW_PARAGRAPH' | 'RECOMMENDED_ACTIONS';
 
@@ -163,10 +163,20 @@ export class ExecutiveInsightsService {
       progressPercent?: number;
       pmoBlockers?: Array<{ type: string; message: string }>;
       risks?: Array<{ title: string; severity?: string; type?: string }>;
-      delaySignals?: Array<{ entityName: string; deviationType: string; severity: string; daysDeviation: number }>;
+      delaySignals?: Array<{
+        entityName: string;
+        deviationType: string;
+        severity: string;
+        daysDeviation: number;
+      }>;
       overspendSignals?: Array<{ signalType: string; severity: string; message?: string }>;
       kpiHighlights?: Array<{ name: string; current?: number; target?: number; unit?: string }>;
-      roiSummary?: { totalProjected?: number; totalRealized?: number; coveragePercent?: number; totalVariance?: number };
+      roiSummary?: {
+        totalProjected?: number;
+        totalRealized?: number;
+        coveragePercent?: number;
+        totalVariance?: number;
+      };
     };
     ttlSeconds?: number;
     modelId?: string;
@@ -250,4 +260,3 @@ ${JSON.stringify(params.context, null, 2)}
 }
 
 export const executiveInsightsService = new ExecutiveInsightsService();
-

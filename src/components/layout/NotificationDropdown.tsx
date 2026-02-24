@@ -126,7 +126,7 @@ export const NotificationDropdown = () => {
     }
 
     setMyWorkIntent({
-      tab: 'notifications',
+      tab: 'inbox',
       open: {
         type: 'notification',
         id: notification.id,
@@ -370,7 +370,7 @@ export const NotificationDropdown = () => {
               </button>
               <button
                 onClick={() => {
-                  setMyWorkIntent({ tab: 'notifications' });
+                  setMyWorkIntent({ tab: 'inbox' });
                   setCurrentView(AppView.MY_WORK);
                   setIsOpen(false);
                 }}

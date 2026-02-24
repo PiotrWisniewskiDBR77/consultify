@@ -79,26 +79,13 @@ const TeamMemberRow: React.FC<{
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      whileHover={{ backgroundColor: 'rgba(124, 58, 237, 0.05)' }}
-      className={`
-                flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors
-                ${isOverloaded ? 'bg-rose-50/50 dark:bg-rose-900/10' : 'hover:bg-slate-50 dark:hover:bg-white/5'}
-            `}
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-slate-50/60 dark:hover:bg-white/[0.03] transition-colors duration-150"
       onClick={onClick}
     >
       {/* Avatar */}
-      <div
-        className={`
-                w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white
-                ${
-                  isOverloaded
-                    ? 'bg-gradient-to-br from-rose-500 to-red-600'
-                    : 'bg-gradient-to-br from-violet-500 to-purple-600'
-                }
-            `}
-      >
+      <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-200/80 dark:bg-white/10">
         {member.initials}
       </div>
 
@@ -178,61 +165,52 @@ export const TeamPerformancePreview: React.FC<TeamPerformancePreviewProps> = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm overflow-hidden h-full flex flex-col"
+      transition={{ duration: 0.22 }}
+      className="rounded-xl bg-white dark:bg-navy-900/50 h-full flex flex-col"
     >
       {/* Header */}
-      <div className="px-5 py-4 border-b border-slate-100 dark:border-navy-700 shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
-              <Users size={20} className="text-white" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                {t('executive.team.title', 'Team Performance')}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                {displayMembers.length} {t('executive.team.members', 'members')}
-              </p>
-            </div>
+      <div className="flex items-center justify-between px-5 py-4 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+            <Users size={16} className="text-cyan-500" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+              {t('executive.team.title', 'Team Performance')}
+            </h3>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              {displayMembers.length} {t('executive.team.members', 'members')}
+            </p>
           </div>
         </div>
       </div>
 
       {/* Quick Stats */}
-      <div className="px-4 py-3 border-b border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-white/5 shrink-0">
-        <div className="grid grid-cols-3 gap-3">
+      <div className="px-5 pb-3 shrink-0">
+        <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
-            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">
               {t('executive.team.avgCapacity', 'Avg Capacity')}
             </p>
-            <p
-              className={`text-lg font-bold ${
-                calculatedAvgCapacity > 90 ? 'text-amber-500' : 'text-navy-900 dark:text-white'
-              }`}
-            >
+            <p className="text-base font-semibold text-slate-800 dark:text-slate-100 tabular-nums">
               {calculatedAvgCapacity}%
             </p>
           </div>
-          <div className="text-center border-x border-slate-200 dark:border-navy-700">
-            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">
+          <div className="text-center">
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">
               {t('executive.team.overloaded', 'Overloaded')}
             </p>
-            <p
-              className={`text-lg font-bold ${overloadedCount > 0 ? 'text-rose-500' : 'text-navy-900 dark:text-white'}`}
-            >
+            <p className={`text-base font-semibold tabular-nums ${overloadedCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-800 dark:text-slate-100'}`}>
               {overloadedCount}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">
               {t('executive.team.available', 'Available')}
             </p>
-            <p
-              className={`text-lg font-bold ${availableCount > 0 ? 'text-emerald-500' : 'text-navy-900 dark:text-white'}`}
-            >
+            <p className={`text-base font-semibold tabular-nums ${availableCount > 0 ? 'text-emerald-500' : 'text-slate-800 dark:text-slate-100'}`}>
               {availableCount}
             </p>
           </div>
@@ -266,13 +244,13 @@ export const TeamPerformancePreview: React.FC<TeamPerformancePreviewProps> = ({
 
       {/* Footer */}
       {onViewAll && (
-        <div className="px-5 py-3 border-t border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-white/5 shrink-0">
+        <div className="px-5 py-3 shrink-0">
           <button
             onClick={onViewAll}
-            className="w-full text-center text-sm font-medium text-brand hover:text-brand-hover flex items-center justify-center gap-1 transition-colors"
+            className="w-full text-center text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 flex items-center justify-center gap-1 transition-colors duration-150"
           >
             {t('executive.team.viewAll', 'View full team report')}
-            <ArrowRight size={14} />
+            <ArrowRight size={13} />
           </button>
         </div>
       )}

@@ -116,6 +116,14 @@ export interface CreateReportParams {
   templateId?: string;
 }
 
+export interface GenerateFromTemplateOptions {
+  assessmentId?: string;
+  projectId?: string;
+  title?: string;
+  description?: string;
+  config?: Record<string, unknown>;
+}
+
 export interface UpdateSectionConfigParams {
   sectionKey: string;
   enabled?: boolean;
@@ -571,6 +579,50 @@ export async function createReport(params: CreateReportParams): Promise<{
   };
 
   return { report, sections };
+}
+
+/**
+ * Generate a new report from a template.
+ *
+ * Used by `ScheduledReportService` when executing recurring schedules.
+ * This creates the report structure (report + sections). Content generation is a separate step.
+ */
+export async function generateFromTemplate(
+  templateId: string | undefined,
+  organizationId: string,
+  userId: string,
+  options?: GenerateFromTemplateOptions
+): Promise<ReportRecord> {
+  const tpl = templateId
+    ? await getTemplateById(templateId, organizationId)
+    : await getTemplateForSource('ASSESSMENT', undefined, organizationId);
+
+  if (!tpl) throw new Error('Template not found');
+
+  const sourceType = String((tpl as any).source_type || 'ASSESSMENT').toUpperCase() as ReportSourceType;
+
+  // Scheduler provides sourceAssessmentId/sourceProjectId in options. We store it as report.source_id.
+  const sourceId = options?.assessmentId || options?.projectId || '';
+  if (!sourceId) {
+    throw new Error('Missing sourceId for template generation (assessmentId/projectId required)');
+  }
+
+  const title =
+    options?.title ||
+    `${String((tpl as any).name || 'Report')} • ${new Date().toISOString().slice(0, 10)}`;
+
+  const created = await createReport({
+    organizationId,
+    sourceType,
+    sourceId,
+    title,
+    description: options?.description || String((tpl as any).description || ''),
+    config: options?.config,
+    createdBy: userId,
+    templateId: String((tpl as any).id || templateId || ''),
+  });
+
+  return created.report;
 }
 
 /**
@@ -1595,7 +1647,7 @@ export interface ReportExportRecord {
   id: string;
   reportId: string;
   reportType: string;
-  format: 'pdf' | 'pptx' | 'docx' | 'xlsx';
+  format: 'pdf' | 'pptx' | 'docx' | 'xlsx' | 'notion';
   filePath?: string;
   fileSize?: number;
   language: string;
@@ -1633,7 +1685,7 @@ export interface PublicLinkRecord {
 export async function createExportRecord(params: {
   reportId: string;
   reportType: string;
-  format: 'pdf' | 'pptx' | 'docx' | 'xlsx';
+  format: 'pdf' | 'pptx' | 'docx' | 'xlsx' | 'notion';
   filePath: string;
   fileSize: number;
   language?: string;
@@ -2435,6 +2487,7 @@ const ReportBuilderService = {
   listAssessmentSources,
   getTemplateForSource,
   createReport,
+  generateFromTemplate,
   getReport,
   listReports,
   listBlockTypes,

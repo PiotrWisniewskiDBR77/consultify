@@ -1021,12 +1021,10 @@ async function ensureChatConversationTables(): Promise<void> {
     await addColumn('chat_projects', `user_id TEXT NOT NULL DEFAULT ''`);
   if (!chatProjectCols.has('name'))
     await addColumn('chat_projects', `name TEXT NOT NULL DEFAULT 'Untitled'`);
-  if (!chatProjectCols.has('description'))
-    await addColumn('chat_projects', `description TEXT`);
+  if (!chatProjectCols.has('description')) await addColumn('chat_projects', `description TEXT`);
   if (!chatProjectCols.has('color'))
     await addColumn('chat_projects', `color TEXT DEFAULT '#6366f1'`);
-  if (!chatProjectCols.has('icon'))
-    await addColumn('chat_projects', `icon TEXT DEFAULT 'folder'`);
+  if (!chatProjectCols.has('icon')) await addColumn('chat_projects', `icon TEXT DEFAULT 'folder'`);
   if (!chatProjectCols.has('scope'))
     await addColumn('chat_projects', `scope TEXT DEFAULT 'personal'`);
   if (!chatProjectCols.has('organization_id'))
@@ -1416,6 +1414,988 @@ async function ensureInitiativeSectionTypesTables(): Promise<void> {
   }
 }
 
+// ==========================================
+// TARGETED SELF-HEAL (REPORT BUILDER + SCHEDULED REPORTS)
+// ==========================================
+
+async function ensureReportBuilderAndSchedulingTables(): Promise<void> {
+  const db = await getDatabaseAsync();
+  const dbType = databaseConfig.type;
+
+  if (dbType === 'postgres') {
+    // Core Report Builder tables (minimal, but compatible with Report Builder routes + services)
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS report_builder_reports (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        project_id TEXT,
+        source_type TEXT NOT NULL,
+        source_id TEXT NOT NULL,
+        source_name TEXT,
+        source_framework TEXT,
+        title TEXT NOT NULL,
+        description TEXT,
+        report_type TEXT NOT NULL,
+        template_id TEXT,
+        config_json TEXT,
+        company_context_json TEXT,
+        status TEXT NOT NULL DEFAULT 'DRAFT',
+        created_by TEXT NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_by TEXT,
+        generated_at TIMESTAMP,
+        finalized_at TIMESTAMP,
+        submitted_at TIMESTAMP,
+        approved_at TIMESTAMP,
+        approved_by TEXT,
+        utilized_at TIMESTAMP,
+        version INTEGER DEFAULT 1,
+        parent_report_id TEXT,
+        pdf_path TEXT,
+        pptx_path TEXT,
+        generation_metadata TEXT
+      )
+    `);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_rb_reports_org ON report_builder_reports(organization_id)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_rb_reports_source ON report_builder_reports(source_type, source_id)`
+    );
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS report_builder_sections (
+        id TEXT PRIMARY KEY,
+        report_id TEXT NOT NULL,
+        section_key TEXT NOT NULL,
+        section_type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        order_index INTEGER NOT NULL DEFAULT 0,
+        enabled BOOLEAN DEFAULT TRUE,
+        required BOOLEAN DEFAULT FALSE,
+        length TEXT DEFAULT 'medium',
+        language TEXT DEFAULT 'business',
+        custom_prompt TEXT,
+        generated_content TEXT,
+        edited_content TEXT,
+        content_format TEXT DEFAULT 'markdown',
+        tiptap_content TEXT,
+        source_data_snapshot TEXT,
+        generated_at TIMESTAMP,
+        tokens_used INTEGER,
+        generation_model TEXT,
+        edited_at TIMESTAMP,
+        edited_by TEXT,
+        repeat_for TEXT,
+        repeat_key TEXT,
+        repeat_name TEXT,
+        repeat_data TEXT,
+        block_type_id TEXT,
+        block_config_json TEXT,
+        render_kind TEXT,
+        chapter_key TEXT,
+        chapter_title TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_rb_sections_report FOREIGN KEY (report_id) REFERENCES report_builder_reports(id) ON DELETE CASCADE,
+        CONSTRAINT uq_rb_sections UNIQUE(report_id, section_key)
+      )
+    `);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_rb_sections_report ON report_builder_sections(report_id)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_rb_sections_order ON report_builder_sections(report_id, order_index)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_rb_sections_block_type ON report_builder_sections(block_type_id)`
+    );
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS report_builder_templates (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT,
+        name TEXT NOT NULL,
+        description TEXT,
+        source_type TEXT NOT NULL,
+        report_type TEXT,
+        sections_json TEXT NOT NULL,
+        default_options_json TEXT,
+        is_system BOOLEAN DEFAULT FALSE,
+        is_default BOOLEAN DEFAULT FALSE,
+        is_public BOOLEAN DEFAULT FALSE,
+        created_by TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_rb_templates_org ON report_builder_templates(organization_id)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_rb_templates_type ON report_builder_templates(source_type, report_type)`
+    );
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS report_builder_sessions (
+        id TEXT PRIMARY KEY,
+        report_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        organization_id TEXT NOT NULL,
+        opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        closed_at TIMESTAMP,
+        last_activity_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        navigation_state TEXT,
+        CONSTRAINT uq_rb_sessions UNIQUE(report_id, user_id)
+      )
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS report_builder_activity (
+        id TEXT PRIMARY KEY,
+        report_id TEXT NOT NULL,
+        action_type TEXT NOT NULL,
+        action_by TEXT NOT NULL,
+        action_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        metadata TEXT
+      )
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS report_builder_versions (
+        id TEXT PRIMARY KEY,
+        report_id TEXT NOT NULL,
+        version_number INTEGER NOT NULL,
+        snapshot_json TEXT NOT NULL,
+        change_summary TEXT,
+        change_type TEXT,
+        previous_status TEXT,
+        new_status TEXT,
+        created_by TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Block Types (library) — include required columns used by DatabaseInitializer validation
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS report_builder_block_types (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT,
+        name TEXT NOT NULL,
+        description TEXT,
+        source_types_json TEXT,
+        render_kind TEXT NOT NULL DEFAULT 'markdown',
+        prompt_template TEXT,
+        input_schema_json TEXT,
+        default_length TEXT DEFAULT 'medium',
+        default_language TEXT DEFAULT 'business',
+        is_system BOOLEAN DEFAULT FALSE,
+        is_active BOOLEAN DEFAULT TRUE,
+        category TEXT DEFAULT 'content',
+        display_order INTEGER DEFAULT 999,
+        slide_intent TEXT,
+        pptx_prompt_template TEXT,
+        pptx_output_schema TEXT,
+        created_by TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_rb_block_types_org ON report_builder_block_types(organization_id)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_rb_block_types_active ON report_builder_block_types(is_active)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_rb_block_types_category ON report_builder_block_types(category)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_rb_block_types_order ON report_builder_block_types(display_order)`
+    );
+
+    // Comments (workflow gates)
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS report_builder_comments (
+        id TEXT PRIMARY KEY,
+        report_id TEXT NOT NULL,
+        section_key TEXT,
+        anchor_type TEXT DEFAULT 'section',
+        range_start INTEGER,
+        range_end INTEGER,
+        quote TEXT,
+        content_hash TEXT,
+        user_id TEXT NOT NULL,
+        user_name TEXT,
+        user_avatar TEXT,
+        comment_type TEXT DEFAULT 'FEEDBACK',
+        content TEXT NOT NULL,
+        ai_response TEXT,
+        ai_suggested_edits TEXT,
+        ai_processed_at TEXT,
+        status TEXT DEFAULT 'OPEN',
+        resolved_by TEXT,
+        resolved_at TEXT,
+        resolution_notes TEXT,
+        parent_comment_id TEXT,
+        thread_position INTEGER DEFAULT 0,
+        priority TEXT DEFAULT 'normal',
+        tags TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_rb_comments_report ON report_builder_comments(report_id)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_rb_comments_section ON report_builder_comments(report_id, section_key)`
+    );
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS report_builder_comment_activity (
+        id TEXT PRIMARY KEY,
+        comment_id TEXT NOT NULL,
+        report_id TEXT NOT NULL,
+        action_type TEXT NOT NULL,
+        action_by TEXT NOT NULL,
+        action_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        old_value TEXT,
+        new_value TEXT,
+        metadata TEXT
+      )
+    `);
+
+    // Exports + public links (used by export endpoints and share UI)
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS report_exports (
+        id TEXT PRIMARY KEY,
+        report_id TEXT NOT NULL,
+        report_type TEXT NOT NULL,
+        format TEXT NOT NULL,
+        file_path TEXT,
+        file_size INTEGER,
+        language TEXT DEFAULT 'en',
+        exported_by TEXT NOT NULL,
+        exported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        download_count INTEGER DEFAULT 0,
+        last_download_at TIMESTAMP
+      )
+    `);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_report_exports_report ON report_exports(report_id)`
+    );
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS report_public_links (
+        id TEXT PRIMARY KEY,
+        report_id TEXT NOT NULL,
+        report_type TEXT NOT NULL,
+        organization_id TEXT NOT NULL,
+        link_token TEXT NOT NULL UNIQUE,
+        password_hash TEXT,
+        expires_at TIMESTAMP,
+        show_company_logo BOOLEAN DEFAULT TRUE,
+        show_consultinity_branding BOOLEAN DEFAULT TRUE,
+        custom_message TEXT,
+        view_count INTEGER DEFAULT 0,
+        last_viewed_at TIMESTAMP,
+        created_by TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        revoked_at TIMESTAMP
+      )
+    `);
+
+    // Scheduled reports tables (T062 baseline + execution log)
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS report_schedules (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        report_template_id TEXT,
+        source_assessment_id TEXT,
+        source_project_id TEXT,
+        schedule_name TEXT NOT NULL,
+        cron_expression TEXT NOT NULL,
+        timezone TEXT DEFAULT 'UTC',
+        next_run_at TIMESTAMP,
+        last_run_at TIMESTAMP,
+        last_run_status TEXT,
+        last_run_report_id TEXT,
+        run_count INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT TRUE,
+        config_json TEXT DEFAULT '{}',
+        created_by TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        schedule_type TEXT DEFAULT 'time_based',
+        deliverable_type TEXT DEFAULT 'report',
+        scope_type TEXT DEFAULT 'organization',
+        scope_id TEXT,
+        description TEXT
+      )
+    `);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_report_schedules_org ON report_schedules(organization_id)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_report_schedules_active ON report_schedules(is_active, next_run_at)`
+    );
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS schedule_executions (
+        id TEXT PRIMARY KEY,
+        schedule_id TEXT NOT NULL,
+        status TEXT NOT NULL,
+        started_at TIMESTAMP NOT NULL,
+        completed_at TIMESTAMP,
+        generated_report_id TEXT,
+        error TEXT,
+        delivery_results_json TEXT DEFAULT '[]',
+        trigger_type TEXT,
+        trigger_reason TEXT,
+        deliverable_type TEXT DEFAULT 'report',
+        generated_presentation_id TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_schedule_exec_schedule FOREIGN KEY (schedule_id) REFERENCES report_schedules(id) ON DELETE CASCADE
+      )
+    `);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_schedule_executions_schedule ON schedule_executions(schedule_id)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_schedule_executions_started ON schedule_executions(started_at DESC)`
+    );
+
+    // Optional: event-triggered scheduling support tables (safe if unused)
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS schedule_trigger_rules (
+        id TEXT PRIMARY KEY,
+        schedule_id TEXT NOT NULL,
+        trigger_type TEXT NOT NULL,
+        conditions_json TEXT DEFAULT '{}',
+        is_active BOOLEAN DEFAULT TRUE,
+        throttle_hours INTEGER DEFAULT 24,
+        last_fired_at TIMESTAMP,
+        fire_count INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_trigger_rules_schedule FOREIGN KEY (schedule_id) REFERENCES report_schedules(id) ON DELETE CASCADE
+      )
+    `);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_trigger_rules_schedule ON schedule_trigger_rules(schedule_id)`
+    );
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS trigger_fire_log (
+        id TEXT PRIMARY KEY,
+        schedule_id TEXT NOT NULL,
+        rule_id TEXT NOT NULL,
+        trigger_type TEXT NOT NULL,
+        scope_type TEXT,
+        scope_id TEXT,
+        project_id TEXT,
+        fired_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        reason TEXT,
+        signal_data_json TEXT DEFAULT '{}',
+        execution_id TEXT,
+        throttled BOOLEAN DEFAULT FALSE,
+        CONSTRAINT fk_trigger_fire_schedule FOREIGN KEY (schedule_id) REFERENCES report_schedules(id) ON DELETE CASCADE,
+        CONSTRAINT fk_trigger_fire_rule FOREIGN KEY (rule_id) REFERENCES schedule_trigger_rules(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Seed minimal system templates (one default + Final Transformation Report)
+    const now = new Date().toISOString();
+    const tplAssessmentDefaultSections = JSON.stringify([
+      { key: 'cover', type: 'cover', title: 'Cover Page', required: true, order: 0 },
+      {
+        key: 'executive_summary',
+        type: 'summary',
+        title: 'Executive Summary',
+        required: true,
+        order: 1,
+        defaultLength: 'medium',
+        defaultLanguage: 'business',
+      },
+      {
+        key: 'recommendations',
+        type: 'recommendations',
+        title: 'Recommendations',
+        required: true,
+        order: 2,
+        defaultLength: 'medium',
+        defaultLanguage: 'business',
+      },
+      {
+        key: 'next_steps',
+        type: 'action_plan',
+        title: 'Next Steps',
+        required: true,
+        order: 3,
+        defaultLength: 'medium',
+        defaultLanguage: 'business',
+      },
+      { key: 'appendix', type: 'appendix', title: 'Appendix', required: false, order: 4 },
+    ]);
+    const tplFinalTransformationSections = JSON.stringify([
+      {
+        key: 'cover',
+        type: 'cover',
+        title: 'Cover Page',
+        required: true,
+        order: 0,
+        defaultLength: 'short',
+        defaultLanguage: 'business',
+      },
+      {
+        key: 'executive_summary',
+        type: 'summary',
+        title: 'Executive Summary',
+        required: true,
+        order: 1,
+        defaultLength: 'medium',
+        defaultLanguage: 'business',
+        promptHints:
+          'Write a board-ready executive summary of the transformation. Focus on outcomes, progress, remaining gaps, and what needs attention next.',
+      },
+      {
+        key: 'transformation_narrative',
+        type: 'custom',
+        title: 'Transformation Narrative (Before → After)',
+        required: true,
+        order: 2,
+        defaultLength: 'long',
+        defaultLanguage: 'business',
+        promptHints:
+          'Describe the transformation story: starting point, key interventions, turning points, and the new operating model. Be concrete and results-focused.',
+      },
+      {
+        key: 'kpi_impact',
+        type: 'custom',
+        title: 'KPI & Performance Impact',
+        required: true,
+        order: 3,
+        defaultLength: 'medium',
+        defaultLanguage: 'business',
+        promptHints:
+          'Summarize KPI impact and trends. Highlight the top 5 KPIs that moved, what drove the change, and what is lagging.',
+      },
+      {
+        key: 'roi_financials',
+        type: 'custom',
+        title: 'ROI / Financial Impact',
+        required: true,
+        order: 4,
+        defaultLength: 'medium',
+        defaultLanguage: 'business',
+        promptHints:
+          'Quantify financial impact where possible: costs, savings, revenue uplift, ROI. Include assumptions and confidence level.',
+      },
+      {
+        key: 'initiatives_portfolio',
+        type: 'initiatives',
+        title: 'Recommended Next Initiatives Portfolio',
+        required: true,
+        order: 5,
+        defaultLength: 'medium',
+        defaultLanguage: 'business',
+        promptHints:
+          'Propose a realistic next-initiatives portfolio aligned to remaining gaps. Prioritize with impact/effort and include ownership hints.',
+      },
+      {
+        key: 'recommendations',
+        type: 'recommendations',
+        title: 'Recommendations & Decisions Required',
+        required: true,
+        order: 6,
+        defaultLength: 'medium',
+        defaultLanguage: 'business',
+        promptHints:
+          'Provide 5-10 recommendations. Explicitly call out 3-5 decisions leadership must make in the next 2 weeks.',
+      },
+      {
+        key: 'next_steps',
+        type: 'action_plan',
+        title: '90-Day Action Plan',
+        required: true,
+        order: 7,
+        defaultLength: 'medium',
+        defaultLanguage: 'business',
+        promptHints:
+          'Create a 90-day action plan broken into 0-30 / 31-60 / 61-90 days with owners and success criteria.',
+      },
+      {
+        key: 'appendix',
+        type: 'appendix',
+        title: 'Appendix (Evidence & Notes)',
+        required: false,
+        order: 8,
+        defaultLength: 'long',
+        defaultLanguage: 'technical',
+        promptHints:
+          'Add supporting evidence summary, risks/mitigations, and references to data sources used in this report.',
+      },
+    ]);
+
+    await db.query(
+      `
+      INSERT INTO report_builder_templates (
+        id, organization_id, name, description, source_type, report_type,
+        sections_json, default_options_json, is_system, is_default, is_public,
+        created_by, created_at, updated_at
+      ) VALUES ($1, NULL, $2, $3, $4, NULL, $5, $6, TRUE, TRUE, FALSE, 'system', $7, $7)
+      ON CONFLICT (id) DO NOTHING
+    `,
+      [
+        'tpl-assessment-default',
+        'Assessment Report (Default)',
+        'Default template for assessment-based reports',
+        'ASSESSMENT',
+        tplAssessmentDefaultSections,
+        JSON.stringify({ length: 'medium', language: 'business', verbosity: 'standard' }),
+        now,
+      ]
+    );
+
+    await db.query(
+      `
+      INSERT INTO report_builder_templates (
+        id, organization_id, name, description, source_type, report_type,
+        sections_json, default_options_json, is_system, is_default, is_public,
+        created_by, created_at, updated_at
+      ) VALUES ($1, NULL, $2, $3, $4, NULL, $5, $6, TRUE, FALSE, FALSE, 'system', $7, $7)
+      ON CONFLICT (id) DO NOTHING
+    `,
+      [
+        'tpl-final-transformation-report',
+        'Final Transformation Report',
+        'Board-ready end-of-phase transformation report: impact, ROI, decisions, and next 90-day plan.',
+        'ASSESSMENT',
+        tplFinalTransformationSections,
+        JSON.stringify({ length: 'long', language: 'business', verbosity: 'detailed' }),
+        now,
+      ]
+    );
+
+    return;
+  }
+
+  // SQLite branch (best-effort, tolerant of existing schema)
+  const run = (sql: string, params: unknown[] = []) =>
+    new Promise<void>((resolve) => {
+      (db as any).run(sql, params as any, () => resolve());
+    });
+
+  // Core tables
+  await run(
+    `CREATE TABLE IF NOT EXISTS report_builder_reports (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL,
+      project_id TEXT,
+      source_type TEXT NOT NULL,
+      source_id TEXT NOT NULL,
+      source_name TEXT,
+      source_framework TEXT,
+      title TEXT NOT NULL,
+      description TEXT,
+      report_type TEXT NOT NULL,
+      template_id TEXT,
+      config_json TEXT,
+      company_context_json TEXT,
+      status TEXT NOT NULL DEFAULT 'DRAFT',
+      created_by TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      updated_by TEXT,
+      generated_at TEXT,
+      finalized_at TEXT,
+      submitted_at TEXT,
+      approved_at TEXT,
+      approved_by TEXT,
+      utilized_at TEXT,
+      version INTEGER DEFAULT 1,
+      parent_report_id TEXT,
+      pdf_path TEXT,
+      pptx_path TEXT,
+      generation_metadata TEXT
+    )`
+  );
+
+  await run(
+    `CREATE TABLE IF NOT EXISTS report_builder_sections (
+      id TEXT PRIMARY KEY,
+      report_id TEXT NOT NULL,
+      section_key TEXT NOT NULL,
+      section_type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      order_index INTEGER NOT NULL DEFAULT 0,
+      enabled INTEGER DEFAULT 1,
+      required INTEGER DEFAULT 0,
+      length TEXT DEFAULT 'medium',
+      language TEXT DEFAULT 'business',
+      custom_prompt TEXT,
+      generated_content TEXT,
+      edited_content TEXT,
+      content_format TEXT DEFAULT 'markdown',
+      tiptap_content TEXT,
+      source_data_snapshot TEXT,
+      generated_at TEXT,
+      tokens_used INTEGER,
+      generation_model TEXT,
+      edited_at TEXT,
+      edited_by TEXT,
+      repeat_for TEXT,
+      repeat_key TEXT,
+      repeat_name TEXT,
+      repeat_data TEXT,
+      block_type_id TEXT,
+      block_config_json TEXT,
+      render_kind TEXT,
+      chapter_key TEXT,
+      chapter_title TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(report_id, section_key)
+    )`
+  );
+
+  await run(
+    `CREATE TABLE IF NOT EXISTS report_builder_templates (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT,
+      name TEXT NOT NULL,
+      description TEXT,
+      source_type TEXT NOT NULL,
+      report_type TEXT,
+      sections_json TEXT NOT NULL,
+      default_options_json TEXT,
+      is_system INTEGER DEFAULT 0,
+      is_default INTEGER DEFAULT 0,
+      is_public INTEGER DEFAULT 0,
+      created_by TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )`
+  );
+
+  await run(
+    `CREATE TABLE IF NOT EXISTS report_builder_block_types (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT,
+      name TEXT NOT NULL,
+      description TEXT,
+      source_types_json TEXT,
+      render_kind TEXT NOT NULL DEFAULT 'markdown',
+      prompt_template TEXT,
+      input_schema_json TEXT,
+      default_length TEXT DEFAULT 'medium',
+      default_language TEXT DEFAULT 'business',
+      is_system INTEGER DEFAULT 0,
+      is_active INTEGER DEFAULT 1,
+      category TEXT DEFAULT 'content',
+      display_order INTEGER DEFAULT 999,
+      slide_intent TEXT,
+      pptx_prompt_template TEXT,
+      pptx_output_schema TEXT,
+      created_by TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )`
+  );
+
+  await run(
+    `CREATE TABLE IF NOT EXISTS report_builder_comments (
+      id TEXT PRIMARY KEY,
+      report_id TEXT NOT NULL,
+      section_key TEXT,
+      anchor_type TEXT DEFAULT 'section',
+      range_start INTEGER,
+      range_end INTEGER,
+      quote TEXT,
+      content_hash TEXT,
+      user_id TEXT NOT NULL,
+      user_name TEXT,
+      user_avatar TEXT,
+      comment_type TEXT DEFAULT 'FEEDBACK',
+      content TEXT NOT NULL,
+      ai_response TEXT,
+      ai_suggested_edits TEXT,
+      ai_processed_at TEXT,
+      status TEXT DEFAULT 'OPEN',
+      resolved_by TEXT,
+      resolved_at TEXT,
+      resolution_notes TEXT,
+      parent_comment_id TEXT,
+      thread_position INTEGER DEFAULT 0,
+      priority TEXT DEFAULT 'normal',
+      tags TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )`
+  );
+  await run(
+    `CREATE TABLE IF NOT EXISTS report_builder_comment_activity (
+      id TEXT PRIMARY KEY,
+      comment_id TEXT NOT NULL,
+      report_id TEXT NOT NULL,
+      action_type TEXT NOT NULL,
+      action_by TEXT NOT NULL,
+      action_at TEXT DEFAULT (datetime('now')),
+      old_value TEXT,
+      new_value TEXT,
+      metadata TEXT
+    )`
+  );
+
+  await run(
+    `CREATE TABLE IF NOT EXISTS report_exports (
+      id TEXT PRIMARY KEY,
+      report_id TEXT NOT NULL,
+      report_type TEXT NOT NULL,
+      format TEXT NOT NULL,
+      file_path TEXT,
+      file_size INTEGER,
+      language TEXT DEFAULT 'en',
+      exported_by TEXT NOT NULL,
+      exported_at TEXT DEFAULT (datetime('now')),
+      download_count INTEGER DEFAULT 0,
+      last_download_at TEXT
+    )`
+  );
+  await run(
+    `CREATE TABLE IF NOT EXISTS report_public_links (
+      id TEXT PRIMARY KEY,
+      report_id TEXT NOT NULL,
+      report_type TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      link_token TEXT NOT NULL UNIQUE,
+      password_hash TEXT,
+      expires_at TEXT,
+      show_company_logo INTEGER DEFAULT 1,
+      show_consultinity_branding INTEGER DEFAULT 1,
+      custom_message TEXT,
+      view_count INTEGER DEFAULT 0,
+      last_viewed_at TEXT,
+      created_by TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      revoked_at TEXT
+    )`
+  );
+
+  await run(
+    `CREATE TABLE IF NOT EXISTS report_schedules (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL,
+      report_template_id TEXT,
+      source_assessment_id TEXT,
+      source_project_id TEXT,
+      schedule_name TEXT NOT NULL,
+      cron_expression TEXT NOT NULL,
+      timezone TEXT DEFAULT 'UTC',
+      next_run_at TEXT,
+      last_run_at TEXT,
+      last_run_status TEXT,
+      last_run_report_id TEXT,
+      run_count INTEGER DEFAULT 0,
+      is_active INTEGER DEFAULT 1,
+      config_json TEXT DEFAULT '{}',
+      created_by TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      schedule_type TEXT DEFAULT 'time_based',
+      deliverable_type TEXT DEFAULT 'report',
+      scope_type TEXT DEFAULT 'organization',
+      scope_id TEXT,
+      description TEXT
+    )`
+  );
+  await run(
+    `CREATE TABLE IF NOT EXISTS schedule_executions (
+      id TEXT PRIMARY KEY,
+      schedule_id TEXT NOT NULL,
+      status TEXT NOT NULL,
+      started_at TEXT NOT NULL,
+      completed_at TEXT,
+      generated_report_id TEXT,
+      error TEXT,
+      delivery_results_json TEXT DEFAULT '[]',
+      trigger_type TEXT,
+      trigger_reason TEXT,
+      deliverable_type TEXT DEFAULT 'report',
+      generated_presentation_id TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )`
+  );
+
+  // Minimal template seeding
+  const now = new Date().toISOString();
+  const tplAssessmentDefaultSections = JSON.stringify([
+    { key: 'cover', type: 'cover', title: 'Cover Page', required: true, order: 0 },
+    {
+      key: 'executive_summary',
+      type: 'summary',
+      title: 'Executive Summary',
+      required: true,
+      order: 1,
+      defaultLength: 'medium',
+      defaultLanguage: 'business',
+    },
+    {
+      key: 'recommendations',
+      type: 'recommendations',
+      title: 'Recommendations',
+      required: true,
+      order: 2,
+      defaultLength: 'medium',
+      defaultLanguage: 'business',
+    },
+    {
+      key: 'next_steps',
+      type: 'action_plan',
+      title: 'Next Steps',
+      required: true,
+      order: 3,
+      defaultLength: 'medium',
+      defaultLanguage: 'business',
+    },
+    { key: 'appendix', type: 'appendix', title: 'Appendix', required: false, order: 4 },
+  ]);
+  const tplFinalTransformationSections = JSON.stringify([
+    {
+      key: 'cover',
+      type: 'cover',
+      title: 'Cover Page',
+      required: true,
+      order: 0,
+      defaultLength: 'short',
+      defaultLanguage: 'business',
+    },
+    {
+      key: 'executive_summary',
+      type: 'summary',
+      title: 'Executive Summary',
+      required: true,
+      order: 1,
+      defaultLength: 'medium',
+      defaultLanguage: 'business',
+      promptHints:
+        'Write a board-ready executive summary of the transformation. Focus on outcomes, progress, remaining gaps, and what needs attention next.',
+    },
+    {
+      key: 'transformation_narrative',
+      type: 'custom',
+      title: 'Transformation Narrative (Before → After)',
+      required: true,
+      order: 2,
+      defaultLength: 'long',
+      defaultLanguage: 'business',
+      promptHints:
+        'Describe the transformation story: starting point, key interventions, turning points, and the new operating model. Be concrete and results-focused.',
+    },
+    {
+      key: 'kpi_impact',
+      type: 'custom',
+      title: 'KPI & Performance Impact',
+      required: true,
+      order: 3,
+      defaultLength: 'medium',
+      defaultLanguage: 'business',
+      promptHints:
+        'Summarize KPI impact and trends. Highlight the top 5 KPIs that moved, what drove the change, and what is lagging.',
+    },
+    {
+      key: 'roi_financials',
+      type: 'custom',
+      title: 'ROI / Financial Impact',
+      required: true,
+      order: 4,
+      defaultLength: 'medium',
+      defaultLanguage: 'business',
+      promptHints:
+        'Quantify financial impact where possible: costs, savings, revenue uplift, ROI. Include assumptions and confidence level.',
+    },
+    {
+      key: 'initiatives_portfolio',
+      type: 'initiatives',
+      title: 'Recommended Next Initiatives Portfolio',
+      required: true,
+      order: 5,
+      defaultLength: 'medium',
+      defaultLanguage: 'business',
+      promptHints:
+        'Propose a realistic next-initiatives portfolio aligned to remaining gaps. Prioritize with impact/effort and include ownership hints.',
+    },
+    {
+      key: 'recommendations',
+      type: 'recommendations',
+      title: 'Recommendations & Decisions Required',
+      required: true,
+      order: 6,
+      defaultLength: 'medium',
+      defaultLanguage: 'business',
+      promptHints:
+        'Provide 5-10 recommendations. Explicitly call out 3-5 decisions leadership must make in the next 2 weeks.',
+    },
+    {
+      key: 'next_steps',
+      type: 'action_plan',
+      title: '90-Day Action Plan',
+      required: true,
+      order: 7,
+      defaultLength: 'medium',
+      defaultLanguage: 'business',
+      promptHints:
+        'Create a 90-day action plan broken into 0-30 / 31-60 / 61-90 days with owners and success criteria.',
+    },
+    {
+      key: 'appendix',
+      type: 'appendix',
+      title: 'Appendix (Evidence & Notes)',
+      required: false,
+      order: 8,
+      defaultLength: 'long',
+      defaultLanguage: 'technical',
+      promptHints:
+        'Add supporting evidence summary, risks/mitigations, and references to data sources used in this report.',
+    },
+  ]);
+
+  await run(
+    `INSERT OR IGNORE INTO report_builder_templates (
+      id, organization_id, name, description, source_type, report_type,
+      sections_json, default_options_json, is_system, is_default, is_public,
+      created_by, created_at, updated_at
+    ) VALUES (?, NULL, ?, ?, 'ASSESSMENT', NULL, ?, ?, 1, 1, 0, 'system', ?, ?)`,
+    [
+      'tpl-assessment-default',
+      'Assessment Report (Default)',
+      'Default template for assessment-based reports',
+      tplAssessmentDefaultSections,
+      JSON.stringify({ length: 'medium', language: 'business', verbosity: 'standard' }),
+      now,
+      now,
+    ]
+  );
+  await run(
+    `INSERT OR IGNORE INTO report_builder_templates (
+      id, organization_id, name, description, source_type, report_type,
+      sections_json, default_options_json, is_system, is_default, is_public,
+      created_by, created_at, updated_at
+    ) VALUES (?, NULL, ?, ?, 'ASSESSMENT', NULL, ?, ?, 1, 0, 0, 'system', ?, ?)`,
+    [
+      'tpl-final-transformation-report',
+      'Final Transformation Report',
+      'Board-ready end-of-phase transformation report: impact, ROI, decisions, and next 90-day plan.',
+      tplFinalTransformationSections,
+      JSON.stringify({ length: 'long', language: 'business', verbosity: 'detailed' }),
+      now,
+      now,
+    ]
+  );
+}
+
 /**
  * Initialize database schema
  * This ensures all tables are created if they don't exist
@@ -1782,6 +2762,16 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
     } catch (e: any) {
       logger.warn(
         '[DatabaseInitializer] ensureBillingCoreTables failed (continuing):',
+        e?.message || e
+      );
+    }
+
+    // Ensure Report Builder + Scheduled Reports tables exist (Reports module + recurring reports).
+    try {
+      await ensureReportBuilderAndSchedulingTables();
+    } catch (e: any) {
+      logger.warn(
+        '[DatabaseInitializer] ensureReportBuilderAndSchedulingTables failed (continuing):',
         e?.message || e
       );
     }

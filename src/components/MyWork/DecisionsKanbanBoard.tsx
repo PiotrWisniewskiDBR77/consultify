@@ -106,6 +106,7 @@ interface DecisionsKanbanBoardProps {
   onDecisionClick?: (id: string, decisionData?: Decision) => void;
   onCreateDecision?: () => void;
   onCountsChange: (counts: DecisionCounts) => void;
+  refreshTrigger?: number;
 }
 
 /* ─── Status columns config (pipeline) ─── */
@@ -582,6 +583,7 @@ export const DecisionsKanbanBoard: React.FC<DecisionsKanbanBoardProps> = ({
   onDecisionClick,
   onCreateDecision,
   onCountsChange,
+  refreshTrigger,
 }) => {
   const { t } = useTranslation();
   const { currentUser } = useAppStore();
@@ -625,12 +627,18 @@ export const DecisionsKanbanBoard: React.FC<DecisionsKanbanBoardProps> = ({
 
   useEffect(() => {
     fetchDecisions();
-  }, [fetchDecisions]);
+  }, [fetchDecisions, refreshTrigger]);
 
   /* ─── Filtering ─── */
 
   const filteredDecisions = useMemo(() => {
     let result = decisions;
+    const userId = currentUser?.id;
+
+    const isMineToDecide = (d: Decision) => Boolean(userId) && d.decisionOwnerId === userId;
+    const isMyRequest = (d: Decision) =>
+      Boolean(userId) && d.requestedById === userId && d.decisionOwnerId !== userId;
+    const isRelevantToMe = (d: Decision) => isMineToDecide(d) || isMyRequest(d);
 
     // Filter by search
     if (searchQuery) {
@@ -643,9 +651,11 @@ export const DecisionsKanbanBoard: React.FC<DecisionsKanbanBoardProps> = ({
 
     // Filter by view mode
     if (viewMode === 'my') {
-      result = result.filter((d) => d.decisionOwnerId === currentUser?.id);
+      result = result.filter(isMineToDecide);
     } else if (viewMode === 'awaiting') {
-      result = result.filter((d) => d.decisionOwnerId !== currentUser?.id);
+      result = result.filter(isMyRequest);
+    } else {
+      result = result.filter(isRelevantToMe);
     }
 
     // Filter by priority
@@ -668,10 +678,15 @@ export const DecisionsKanbanBoard: React.FC<DecisionsKanbanBoardProps> = ({
   /* ─── Counts reporting ─── */
 
   useEffect(() => {
-    const myCount = decisions.filter((d) => d.decisionOwnerId === currentUser?.id).length;
-    const awaitingCount = decisions.filter((d) => d.decisionOwnerId !== currentUser?.id).length;
+    const userId = currentUser?.id;
+    const isOpen = (d: Decision) =>
+      ['PENDING', 'ESCALATED'].includes(String(d.status || '').toUpperCase());
+    const myCount = decisions.filter((d) => userId && d.decisionOwnerId === userId && isOpen(d)).length;
+    const awaitingCount = decisions.filter(
+      (d) => userId && d.requestedById === userId && d.decisionOwnerId !== userId && isOpen(d)
+    ).length;
     onCountsChange({
-      total: decisions.length,
+      total: myCount + awaitingCount,
       my: myCount,
       awaiting: awaitingCount,
     });

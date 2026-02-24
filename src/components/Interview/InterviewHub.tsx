@@ -301,7 +301,6 @@ export const InterviewHub: React.FC = () => {
   const [insightViewStyle, setInsightViewStyle] = useState<CardViewStyle>('d');
   const [insightGroupBy, setInsightGroupBy] = useState<'report' | 'person'>('report');
   const [assignmentStatusFilter, setAssignmentStatusFilter] = useState<string>('all');
-  const [insightsShowExportedOnly, setInsightsShowExportedOnly] = useState<boolean>(false);
   const [showWorkflowGuide, setShowWorkflowGuide] = useState<boolean>(true);
 
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
@@ -533,11 +532,6 @@ export const InterviewHub: React.FC = () => {
       result = result.filter((i) => (i.status || 'completed') === insightStatusFilter);
     }
 
-    // Optional: show only insights exported to Assessment (replaces "Assessments" tab)
-    if (insightsShowExportedOnly) {
-      result = result.filter((i) => Boolean(i.exportedToAssessment));
-    }
-
     // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -548,7 +542,7 @@ export const InterviewHub: React.FC = () => {
     }
 
     return result;
-  }, [insights, searchQuery, insightTypeFilter, insightStatusFilter, insightsShowExportedOnly]);
+  }, [insights, searchQuery, insightTypeFilter, insightStatusFilter]);
 
   // Get unique insight types
   const insightTypes = useMemo(() => {
@@ -587,6 +581,68 @@ export const InterviewHub: React.FC = () => {
 
     return result;
   }, [templates, searchQuery, templateCategoryFilter]);
+
+  // -------------------------
+  // Assignments (Assigned tab) status filter
+  // -------------------------
+  const managedAssignmentStatusCounts = useMemo(() => {
+    const list = managedAssignments || [];
+    return {
+      all: list.length,
+      assigned: list.filter((a) => a.status === 'assigned').length,
+      in_progress: list.filter((a) => a.status === 'in_progress').length,
+      sent_back: list.filter((a) => a.status === 'sent_back').length,
+      submitted: list.filter((a) => a.status === 'submitted').length, // to approve
+      approved: list.filter((a) => a.status === 'approved').length,
+      completed: list.filter((a) => a.status === 'completed').length,
+    };
+  }, [managedAssignments]);
+
+  const managedAssignmentStatusOptions = useMemo(() => {
+    const opts = [
+      { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: managedAssignmentStatusCounts.all },
+      {
+        id: 'submitted',
+        label: isPolish ? 'Do zatwierdzenia' : 'To approve',
+        count: managedAssignmentStatusCounts.submitted,
+      },
+      {
+        id: 'assigned',
+        label: isPolish ? 'Przydzielone' : 'Assigned',
+        count: managedAssignmentStatusCounts.assigned,
+      },
+      {
+        id: 'in_progress',
+        label: isPolish ? 'W trakcie' : 'In progress',
+        count: managedAssignmentStatusCounts.in_progress,
+      },
+      {
+        id: 'sent_back',
+        label: isPolish ? 'Do poprawy' : 'Sent back',
+        count: managedAssignmentStatusCounts.sent_back,
+      },
+      {
+        id: 'approved',
+        label: isPolish ? 'Zatwierdzone' : 'Approved',
+        count: managedAssignmentStatusCounts.approved,
+      },
+      {
+        id: 'completed',
+        label: isPolish ? 'Zakończone' : 'Completed',
+        count: managedAssignmentStatusCounts.completed,
+      },
+    ];
+
+    return opts.map((o) => ({ ...o, display: `${o.label} (${o.count})` }));
+  }, [isPolish, managedAssignmentStatusCounts]);
+
+  const filteredManagedAssignments = useMemo(() => {
+    let result = managedAssignments || [];
+    if (assignmentStatusFilter !== 'all') {
+      result = result.filter((a) => a.status === assignmentStatusFilter);
+    }
+    return result;
+  }, [managedAssignments, assignmentStatusFilter]);
 
   // Get unique template categories
   const templateCategories = useMemo(() => {
@@ -1533,7 +1589,7 @@ export const InterviewHub: React.FC = () => {
   };
 
   // Render insights table
-  const renderInsightsTable = () => (
+  const renderInsightsTable = (rows: typeof filteredInsights = filteredInsights) => (
     <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
       <table className="w-full table-fixed">
         <thead>
@@ -1559,7 +1615,7 @@ export const InterviewHub: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredInsights.map((insight) => {
+          {rows.map((insight) => {
             const promptType =
               (insight as any).promptType || (insight as any).insightType || 'summary';
             const typeConfig = getInsightTypeConfig(promptType);
@@ -2822,45 +2878,6 @@ export const InterviewHub: React.FC = () => {
 
       return (
         <div className="p-4 space-y-4">
-          {/* Insights toolbar: View switcher + Group-by filter */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {/* E4.3: Group-by filter toggle */}
-              <div className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-0.5">
-                <button
-                  onClick={() => setInsightGroupBy('report')}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    insightGroupBy === 'report'
-                      ? 'bg-slate-100 dark:bg-navy-800 text-primary-400 shadow-sm border border-slate-300 dark:border-navy-600'
-                      : 'text-slate-400 hover:text-slate-300'
-                  }`}
-                >
-                  <FileText size={14} />
-                  {isPolish ? 'Wg raportu' : 'By Report'}
-                </button>
-                <button
-                  onClick={() => setInsightGroupBy('person')}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    insightGroupBy === 'person'
-                      ? 'bg-slate-100 dark:bg-navy-800 text-primary-400 shadow-sm border border-slate-300 dark:border-navy-600'
-                      : 'text-slate-400 hover:text-slate-300'
-                  }`}
-                >
-                  <Users size={14} />
-                  {isPolish ? 'Wg osoby' : 'By Person'}
-                </button>
-              </div>
-            </div>
-
-            {/* E4.1: 3-view switcher */}
-            <CardViewSwitcher
-              moduleId="interview-insights"
-              value={insightViewStyle}
-              onChange={setInsightViewStyle}
-              compact
-            />
-          </div>
-
           {/* Render based on view style */}
           {insightViewStyle === 'd' ? (
             // Standard table view with optional grouping headers
@@ -2879,7 +2896,7 @@ export const InterviewHub: React.FC = () => {
                       </span>
                       <span className="text-xs text-slate-500">({groupInsights.length})</span>
                     </div>
-                    {renderInsightsTable()}
+                    {renderInsightsTable(groupInsights)}
                   </div>
                 ))}
               </div>
@@ -3078,7 +3095,7 @@ export const InterviewHub: React.FC = () => {
           )}
 
           {/* Assignments Table */}
-          {renderAssignmentsTable(managedAssignments, true)}
+          {renderAssignmentsTable(filteredManagedAssignments, true)}
         </div>
       );
     }
@@ -3157,6 +3174,21 @@ export const InterviewHub: React.FC = () => {
 
           {/* Right: MINIMAL Action Buttons - kontekstowe per tab */}
           <div className="flex items-center gap-2">
+            {/* Global: + Assignment (PM/Admin/Owner) */}
+            {canAssign && (
+              <button
+                onClick={() => {
+                  setSelectedTemplateForAssign(null);
+                  setShowAssignModal(true);
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white border border-blue-400/30 hover:from-blue-400 hover:to-blue-500 shadow-lg shadow-blue-500/25 transition-all duration-200"
+                title={isPolish ? 'Wyślij prośbę (assignment)' : 'Send assignment request'}
+              >
+                <Plus size={16} />
+                <span>{isPolish ? '+ Przydziel' : '+ Assignment'}</span>
+              </button>
+            )}
+
             {/* Sessions tab: accepted sources (filter only) */}
             {activeTab === 'sessions' && !activeDocumentId && (
               <>
@@ -3181,16 +3213,31 @@ export const InterviewHub: React.FC = () => {
               </>
             )}
 
-            {/* Templates tab: + Nowy szablon (PM/Admin) + Przydziel (PM/Admin) */}
+            {/* Assigned tab (PM/Admin): status filter */}
+            {activeTab === 'managed' && !activeDocumentId && (
+              <div className="relative">
+                <select
+                  value={assignmentStatusFilter}
+                  onChange={(e) => setAssignmentStatusFilter(e.target.value)}
+                  className="appearance-none pr-9 pl-3 py-2 rounded-lg text-sm font-medium border bg-slate-100 dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 hover:border-slate-400 dark:hover:border-slate-500 transition-all duration-200"
+                  title={isPolish ? 'Filtr statusu assignmentów' : 'Assignment status filter'}
+                >
+                  {managedAssignmentStatusOptions.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.display}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+                />
+              </div>
+            )}
+
+            {/* Templates tab: + Nowy szablon (PM/Admin) */}
             {activeTab === 'templates' && !activeDocumentId && canAssign && (
               <>
-                <button
-                  onClick={() => setShowAssignModal(true)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-blue-500/15 border border-blue-500/50 text-blue-400 hover:bg-blue-500/25 hover:border-blue-400 transition-all duration-200"
-                >
-                  <UserPlus size={16} />
-                  <span>{isPolish ? 'Przydziel' : 'Assign'}</span>
-                </button>
                 <button
                   onClick={handleNewTemplate}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/25 transition-all duration-200"
@@ -3201,7 +3248,7 @@ export const InterviewHub: React.FC = () => {
               </>
             )}
 
-            {/* Assigned tab (PM/Admin): + Przydziel + Analityka */}
+            {/* Assigned tab (PM/Admin): Analityka */}
             {activeTab === 'managed' && !activeDocumentId && canAssign && (
               <>
                 <button
@@ -3211,31 +3258,44 @@ export const InterviewHub: React.FC = () => {
                 >
                   <BarChart3 size={16} />
                 </button>
-                <button
-                  onClick={() => setShowAssignModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white border border-blue-400/30 hover:from-blue-400 hover:to-blue-500 shadow-lg shadow-blue-500/25 transition-all duration-200"
-                >
-                  <Plus size={16} />
-                  <span>{isPolish ? 'Przydziel' : 'Assign'}</span>
-                </button>
               </>
             )}
 
-            {/* Insights tab: Exported filter + Generate */}
+            {/* Insights tab: filters + Generate */}
             {activeTab === 'insights' && !activeDocumentId && (
               <>
-                <button
-                  onClick={() => setInsightsShowExportedOnly((v) => !v)}
-                  className={insightsShowExportedOnly ? BUTTON_ACTIVE : BUTTON_INACTIVE}
-                  title={
-                    isPolish
-                      ? 'Pokaż tylko wyeksportowane do Assessment'
-                      : 'Show exported to Assessment only'
-                  }
-                >
-                  <Target size={16} />
-                  <span>{isPolish ? 'Exported' : 'Exported'}</span>
-                </button>
+                <div className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-0.5">
+                  <button
+                    onClick={() => setInsightGroupBy('report')}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+                      insightGroupBy === 'report'
+                        ? 'bg-slate-100 dark:bg-navy-800 text-primary-400 shadow-sm border border-slate-300 dark:border-navy-600'
+                        : 'text-slate-400 hover:text-slate-300'
+                    }`}
+                    title={isPolish ? 'Grupuj: wg raportu' : 'Group: by report'}
+                  >
+                    <FileText size={14} />
+                    {isPolish ? 'Wg raportu' : 'By Report'}
+                  </button>
+                  <button
+                    onClick={() => setInsightGroupBy('person')}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+                      insightGroupBy === 'person'
+                        ? 'bg-slate-100 dark:bg-navy-800 text-primary-400 shadow-sm border border-slate-300 dark:border-navy-600'
+                        : 'text-slate-400 hover:text-slate-300'
+                    }`}
+                    title={isPolish ? 'Grupuj: wg osoby' : 'Group: by person'}
+                  >
+                    <Users size={14} />
+                    {isPolish ? 'Wg osoby' : 'By Person'}
+                  </button>
+                </div>
+                <CardViewSwitcher
+                  moduleId="interview-insights"
+                  value={insightViewStyle}
+                  onChange={setInsightViewStyle}
+                  compact
+                />
                 <button
                   onClick={() => {
                     setSelectedSessionsForInsight([]);

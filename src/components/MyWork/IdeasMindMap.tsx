@@ -7,16 +7,9 @@
  * Only shows titles — lightweight and fast.
  */
 
-import {
-  Bot,
-  Flower2,
-  GitBranch,
-  Link2,
-  Lightbulb,
-  Minus,
-  Plus,
-  RotateCcw,
-} from 'lucide-react';
+import 'reactflow/dist/style.css';
+
+import { Bot, Flower2, GitBranch, Lightbulb, Link2, Minus, Plus, RotateCcw } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import ReactFlow, {
@@ -30,25 +23,70 @@ import ReactFlow, {
   type NodeProps,
   Panel,
   Position,
+  ReactFlowProvider,
   useEdgesState,
   useNodesState,
   useReactFlow,
-  ReactFlowProvider,
 } from 'reactflow';
-import 'reactflow/dist/style.css';
 
 import { Api } from '@/services/api';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import type { MyIdea } from './MyIdeasListContent';
 
-const BRANCH_COLORS: Record<string, { bg: string; border: string; text: string; ring: string; edge: string }> = {
-  strategy:      { bg: 'bg-blue-100 dark:bg-blue-900/30',    border: 'border-blue-400',    text: 'text-blue-700 dark:text-blue-300',    ring: 'ring-blue-400',    edge: '#60a5fa' },
-  product:       { bg: 'bg-emerald-100 dark:bg-emerald-900/30', border: 'border-emerald-400', text: 'text-emerald-700 dark:text-emerald-300', ring: 'ring-emerald-400', edge: '#34d399' },
-  process:       { bg: 'bg-purple-100 dark:bg-purple-900/30',  border: 'border-purple-400',  text: 'text-purple-700 dark:text-purple-300',  ring: 'ring-purple-400',  edge: '#a78bfa' },
-  culture:       { bg: 'bg-rose-100 dark:bg-rose-900/30',    border: 'border-rose-400',    text: 'text-rose-700 dark:text-rose-300',    ring: 'ring-rose-400',    edge: '#fb7185' },
-  tech:          { bg: 'bg-cyan-100 dark:bg-cyan-900/30',    border: 'border-cyan-400',    text: 'text-cyan-700 dark:text-cyan-300',    ring: 'ring-cyan-400',    edge: '#22d3ee' },
-  growth:        { bg: 'bg-amber-100 dark:bg-amber-900/30',   border: 'border-amber-400',   text: 'text-amber-700 dark:text-amber-300',   ring: 'ring-amber-400',   edge: '#fbbf24' },
-  uncategorized: { bg: 'bg-slate-100 dark:bg-slate-800/50',   border: 'border-slate-300',   text: 'text-slate-600 dark:text-slate-400',   ring: 'ring-slate-400',   edge: '#94a3b8' },
+const BRANCH_COLORS: Record<
+  string,
+  { bg: string; border: string; text: string; ring: string; edge: string }
+> = {
+  strategy: {
+    bg: 'bg-blue-100 dark:bg-blue-900/30',
+    border: 'border-blue-400',
+    text: 'text-blue-700 dark:text-blue-300',
+    ring: 'ring-blue-400',
+    edge: '#60a5fa',
+  },
+  product: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/30',
+    border: 'border-emerald-400',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    ring: 'ring-emerald-400',
+    edge: '#34d399',
+  },
+  process: {
+    bg: 'bg-purple-100 dark:bg-purple-900/30',
+    border: 'border-purple-400',
+    text: 'text-purple-700 dark:text-purple-300',
+    ring: 'ring-purple-400',
+    edge: '#a78bfa',
+  },
+  culture: {
+    bg: 'bg-rose-100 dark:bg-rose-900/30',
+    border: 'border-rose-400',
+    text: 'text-rose-700 dark:text-rose-300',
+    ring: 'ring-rose-400',
+    edge: '#fb7185',
+  },
+  tech: {
+    bg: 'bg-cyan-100 dark:bg-cyan-900/30',
+    border: 'border-cyan-400',
+    text: 'text-cyan-700 dark:text-cyan-300',
+    ring: 'ring-cyan-400',
+    edge: '#22d3ee',
+  },
+  growth: {
+    bg: 'bg-amber-100 dark:bg-amber-900/30',
+    border: 'border-amber-400',
+    text: 'text-amber-700 dark:text-amber-300',
+    ring: 'ring-amber-400',
+    edge: '#fbbf24',
+  },
+  uncategorized: {
+    bg: 'bg-slate-100 dark:bg-slate-800/50',
+    border: 'border-slate-300',
+    text: 'text-slate-600 dark:text-slate-400',
+    ring: 'ring-slate-400',
+    edge: '#94a3b8',
+  },
 };
 
 function getBranchForIdea(idea: MyIdea): string {
@@ -103,11 +141,18 @@ CenterNodeComponent.displayName = 'CenterNode';
 const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected }) => {
   const colors = BRANCH_COLORS[data.branchKey] || BRANCH_COLORS.uncategorized;
   return (
-    <div className={`px-4 py-2.5 rounded-2xl border-2 ${colors.border} ${colors.bg} ${selected ? `ring-2 ${colors.ring}` : ''} shadow-md min-w-[100px] text-center`}>
+    <div
+      className={`px-4 py-2.5 rounded-2xl border-2 ${colors.border} ${colors.bg} ${selected ? `ring-2 ${colors.ring}` : ''} shadow-md min-w-[100px] text-center`}
+    >
       <Handle type="target" position={Position.Left} className="!opacity-0 !w-1 !h-1" />
       <Handle type="source" position={Position.Right} id="right" className="!opacity-0 !w-1 !h-1" />
       <Handle type="source" position={Position.Top} id="top" className="!opacity-0 !w-1 !h-1" />
-      <Handle type="source" position={Position.Bottom} id="bottom" className="!opacity-0 !w-1 !h-1" />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="bottom"
+        className="!opacity-0 !w-1 !h-1"
+      />
       <div className={`text-xs font-bold ${colors.text} flex items-center gap-1 justify-center`}>
         <GitBranch size={12} />
         {data.label}
@@ -127,19 +172,33 @@ const handleSource = `${handleBase} !bg-amber-300 dark:!bg-amber-600 !border-amb
 
 const IdeaNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected }) => {
   const colors = BRANCH_COLORS[data.branchKey] || BRANCH_COLORS.uncategorized;
-  const isAI = data.sourceType === 'ai_chat' || data.sourceType === 'ai_hint' || data.sourceType === 'ai_suggestion';
+  const isAI =
+    data.sourceType === 'ai_chat' ||
+    data.sourceType === 'ai_hint' ||
+    data.sourceType === 'ai_suggestion';
   const p = data.priority ?? 50;
   const priorityColor = p >= 75 ? 'bg-emerald-400' : p >= 50 ? 'bg-amber-400' : 'bg-slate-400';
 
   return (
-    <div className={`group px-3 py-2 rounded-xl border-2 ${colors.border} bg-white dark:bg-navy-900 ${selected ? `ring-2 ${colors.ring}` : ''} shadow-sm hover:shadow-lg cursor-pointer max-w-[180px]`}>
+    <div
+      className={`group px-3 py-2 rounded-xl border-2 ${colors.border} bg-white dark:bg-navy-900 ${selected ? `ring-2 ${colors.ring}` : ''} shadow-sm hover:shadow-lg cursor-pointer max-w-[180px]`}
+    >
       <Handle type="target" position={Position.Left} id="target-left" className={handleTarget} />
       <Handle type="target" position={Position.Top} id="target-top" className={handleTarget} />
       <Handle type="source" position={Position.Right} id="source-right" className={handleSource} />
-      <Handle type="source" position={Position.Bottom} id="source-bottom" className={handleSource} />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="source-bottom"
+        className={handleSource}
+      />
       <div className="flex items-start gap-1.5">
         <div className="flex-shrink-0 mt-0.5">
-          {isAI ? <Bot size={10} className="text-purple-500" /> : <Lightbulb size={10} className="text-amber-500" />}
+          {isAI ? (
+            <Bot size={10} className="text-purple-500" />
+          ) : (
+            <Lightbulb size={10} className="text-amber-500" />
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <div className={`text-[11px] font-semibold ${colors.text} line-clamp-2 leading-tight`}>
@@ -149,7 +208,10 @@ const IdeaNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected }) =
       </div>
       <div className="mt-1.5 flex items-center gap-1">
         <div className="w-8 h-0.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-          <div className={`h-full rounded-full ${priorityColor}`} style={{ width: `${Math.max(10, p)}%` }} />
+          <div
+            className={`h-full rounded-full ${priorityColor}`}
+            style={{ width: `${Math.max(10, p)}%` }}
+          />
         </div>
         {data.area && (
           <span className="text-[8px] text-slate-400 truncate max-w-[60px]">{data.area}</span>
@@ -245,7 +307,8 @@ function buildMindMapLayout(ideas: MyIdea[], isPolish: boolean): { nodes: Node[]
       const ideaRadius = 200;
       const ideaAngleSpan = Math.min(Math.PI * 1.2, ideaCount * 0.5);
       sortedIdeas.forEach((idea, iIdx) => {
-        const ideaAngle = angle + (iIdx - (ideaCount - 1) / 2) * (ideaAngleSpan / Math.max(ideaCount - 1, 1));
+        const ideaAngle =
+          angle + (iIdx - (ideaCount - 1) / 2) * (ideaAngleSpan / Math.max(ideaCount - 1, 1));
         const ix = bx + Math.cos(ideaAngle) * ideaRadius;
         const iy = by + Math.sin(ideaAngle) * ideaRadius;
         addIdeaNode(idea, branchKey, branchId, ix, iy, colors, iIdx);
@@ -277,9 +340,13 @@ function buildMindMapLayout(ideas: MyIdea[], isPolish: boolean): { nodes: Node[]
   });
 
   function addIdeaNode(
-    idea: MyIdea, branchKey: string, branchId: string,
-    ix: number, iy: number,
-    colors: typeof BRANCH_COLORS[string], iIdx: number
+    idea: MyIdea,
+    branchKey: string,
+    branchId: string,
+    ix: number,
+    iy: number,
+    colors: (typeof BRANCH_COLORS)[string],
+    iIdx: number
   ) {
     const ideaNodeId = `idea-${idea.id}`;
     nodes.push({
@@ -337,7 +404,11 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
     return keys;
   }, [ideas]);
 
-  const [activeBranches, setActiveBranches] = useState<Set<string>>(() => new Set(Object.keys(BRANCH_LABELS)));
+  const [activeBranches, setActiveBranches] = useState<Set<string>>(
+    () => new Set(Object.keys(BRANCH_LABELS))
+  );
+
+  const ideaIdSet = useMemo(() => new Set(ideas.map((i) => String(i.id))), [ideas]);
 
   const toggleBranch = useCallback((key: string) => {
     setActiveBranches((prev) => {
@@ -356,46 +427,157 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
     setActiveBranches(new Set(Object.keys(BRANCH_LABELS)));
   }, []);
 
+  const applyBranchVisibility = useCallback(
+    (nextNodes: Node[], nextEdges: Edge[]) => {
+      const hiddenBranches = new Set<string>();
+      for (const key of Object.keys(BRANCH_LABELS)) {
+        if (!activeBranches.has(key)) hiddenBranches.add(key);
+      }
+
+      const hiddenNodeIds = new Set<string>();
+      for (const n of nextNodes) {
+        if (n.type === 'branch' && hiddenBranches.has(n.data.branchKey)) hiddenNodeIds.add(n.id);
+        if (n.type === 'idea' && hiddenBranches.has(n.data.branchKey)) hiddenNodeIds.add(n.id);
+      }
+
+      const nodesWithHidden = nextNodes.map((n: Node) =>
+        hiddenNodeIds.has(n.id) ? { ...n, hidden: true } : { ...n, hidden: false }
+      );
+
+      const edgesWithHidden = nextEdges.map((e: Edge) =>
+        hiddenNodeIds.has(e.source) || hiddenNodeIds.has(e.target)
+          ? { ...e, hidden: true }
+          : { ...e, hidden: false }
+      );
+
+      return { nodes: nodesWithHidden, edges: edgesWithHidden };
+    },
+    [activeBranches]
+  );
+
+  // Keep layout nodes/edges in sync when ideas change, but preserve user edges.
   useEffect(() => {
-    const hiddenBranches = new Set<string>();
-    for (const key of Object.keys(BRANCH_LABELS)) {
-      if (!activeBranches.has(key)) hiddenBranches.add(key);
-    }
+    const { nodes: nextNodes } = applyBranchVisibility(initNodes, []);
+    setNodes(nextNodes);
 
-    const hiddenNodeIds = new Set<string>();
-    for (const n of initNodes) {
-      if (n.type === 'branch' && hiddenBranches.has(n.data.branchKey)) hiddenNodeIds.add(n.id);
-      if (n.type === 'idea' && hiddenBranches.has(n.data.branchKey)) hiddenNodeIds.add(n.id);
-    }
+    setEdges((prev) => {
+      const userEdges = (prev || []).filter((e: Edge) => Boolean(e.data?.userCreated));
+      const validUserEdges = userEdges.filter((e: Edge) => {
+        const s = String(e.source || '');
+        const t = String(e.target || '');
+        const sOk = s.startsWith('idea-') ? ideaIdSet.has(s.replace('idea-', '')) : true;
+        const tOk = t.startsWith('idea-') ? ideaIdSet.has(t.replace('idea-', '')) : true;
+        return sOk && tOk;
+      });
 
-    const filteredNodes = initNodes.map((n: Node) =>
-      hiddenNodeIds.has(n.id) ? { ...n, hidden: true } : { ...n, hidden: false }
-    );
-    const filteredEdges = initEdges.map((e: Edge) =>
-      hiddenNodeIds.has(e.source) || hiddenNodeIds.has(e.target) ? { ...e, hidden: true } : { ...e, hidden: false }
-    );
+      const combined = [...initEdges, ...validUserEdges];
+      return applyBranchVisibility(initNodes, combined).edges;
+    });
+  }, [initNodes, initEdges, setNodes, setEdges, applyBranchVisibility, ideaIdSet]);
 
-    setNodes(filteredNodes);
-    setEdges(filteredEdges);
-  }, [initNodes, initEdges, setNodes, setEdges, activeBranches]);
+  // Fetch persisted user edges and merge them into the edge state.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = (await Api.getMyIdeaEdges('all')) as any;
+        const rows = Array.isArray(res?.edges) ? res.edges : [];
 
-  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
-    if (!node.id.startsWith('idea-')) return;
-    const ideaId = node.id.replace('idea-', '');
-    const idea = ideas.find((i) => i.id === ideaId);
-    onIdeaClickRef.current(ideaId, idea);
-  }, [ideas]);
+        const persistedEdges: Edge[] = rows
+          .map((r: any) => {
+            const persistedId = String(r?.id || '').trim();
+            const sourceIdeaId = String(r?.sourceIdeaId || '').trim();
+            const targetIdeaId = String(r?.targetIdeaId || '').trim();
+            if (!persistedId || !sourceIdeaId || !targetIdeaId) return null;
+            if (!ideaIdSet.has(sourceIdeaId) || !ideaIdSet.has(targetIdeaId)) return null;
+
+            return {
+              id: `edge-${persistedId}`,
+              source: `idea-${sourceIdeaId}`,
+              target: `idea-${targetIdeaId}`,
+              type: 'smoothstep',
+              style: { stroke: '#8b5cf6', strokeWidth: 2, opacity: 0.75 },
+              animated: true,
+              data: {
+                userCreated: true,
+                persistedId,
+                kind: String(r?.kind || 'relates_to'),
+                flowState: 'forward',
+                originalSourceIdeaId: sourceIdeaId,
+                originalTargetIdeaId: targetIdeaId,
+              },
+            } as Edge;
+          })
+          .filter(Boolean);
+
+        if (cancelled) return;
+
+        setEdges((prev) => {
+          const prevUser = (prev || []).filter((e: Edge) => Boolean(e.data?.userCreated));
+          const prevTemp = prevUser.filter((e: Edge) => !e.data?.persistedId);
+          const prevPersistedById = new Map<string, Edge>();
+          for (const e of prevUser) {
+            const pid = e.data?.persistedId ? String(e.data.persistedId) : '';
+            if (pid) prevPersistedById.set(pid, e);
+          }
+
+          const mergedPersisted = persistedEdges.map((e) => {
+            const pid = String(e.data?.persistedId || '');
+            const existing = pid ? prevPersistedById.get(pid) : null;
+            // Preserve user toggles like flowState/animated state
+            return existing
+              ? {
+                  ...e,
+                  animated: existing.animated,
+                  style: existing.style,
+                  data: { ...e.data, ...existing.data },
+                }
+              : e;
+          });
+
+          const combined = [...initEdges, ...mergedPersisted, ...prevTemp];
+          return applyBranchVisibility(initNodes, combined).edges;
+        });
+      } catch {
+        // best-effort
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [ideasKey, ideaIdSet, initEdges, initNodes, applyBranchVisibility, setEdges]);
+
+  useEffect(() => {
+    // Re-apply visibility (do not reset user edges)
+    const next = applyBranchVisibility(nodes as any, edges as any);
+    setNodes(next.nodes);
+    setEdges((prev) => applyBranchVisibility(next.nodes, prev as any).edges);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeBranches]);
+
+  const onNodeClick = useCallback(
+    (_: React.MouseEvent, node: Node) => {
+      if (!node.id.startsWith('idea-')) return;
+      const ideaId = node.id.replace('idea-', '');
+      const idea = ideas.find((i) => i.id === ideaId);
+      onIdeaClickRef.current(ideaId, idea);
+    },
+    [ideas]
+  );
 
   const onConnect = useCallback(
-    (connection: Connection) => {
+    async (connection: Connection) => {
       if (!connection.source || !connection.target) return;
       if (connection.source === connection.target) return;
-      const bothIdeas = connection.source.startsWith('idea-') && connection.target.startsWith('idea-');
-      const ideaToBranch = connection.source.startsWith('idea-') || connection.target.startsWith('idea-');
+      const bothIdeas =
+        connection.source.startsWith('idea-') && connection.target.startsWith('idea-');
+      const ideaToBranch =
+        connection.source.startsWith('idea-') || connection.target.startsWith('idea-');
       if (!bothIdeas && !ideaToBranch) return;
 
+      const tempId = `temp-${Date.now()}-${Math.random().toString(16).slice(2)}`;
       const newEdge: Edge = {
-        id: `user-${connection.source}-${connection.target}`,
+        id: tempId,
         source: connection.source,
         target: connection.target,
         sourceHandle: connection.sourceHandle || undefined,
@@ -403,11 +585,59 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
         type: 'smoothstep',
         style: { stroke: '#8b5cf6', strokeWidth: 2, opacity: 0.7 },
         animated: true,
-        data: { userCreated: true },
+        data: {
+          userCreated: true,
+          flowState: 'forward',
+          // PersistedId is filled after backend confirms.
+          persistedId: null,
+          originalSourceIdeaId: connection.source.startsWith('idea-')
+            ? connection.source.replace('idea-', '')
+            : null,
+          originalTargetIdeaId: connection.target.startsWith('idea-')
+            ? connection.target.replace('idea-', '')
+            : null,
+        },
       };
 
       setEdges((prev: Edge[]) => addEdge(newEdge, prev));
-      toast.success(isPolish ? 'Pomysły połączone!' : 'Ideas connected!', { duration: 1500, icon: '🔗' });
+
+      if (bothIdeas) {
+        const sourceIdeaId = connection.source.replace('idea-', '');
+        const targetIdeaId = connection.target.replace('idea-', '');
+        try {
+          const res = (await Api.addMyIdeaEdge(sourceIdeaId, { targetIdeaId, kind: 'relates_to' })) as any;
+          const persistedId = String(res?.edge?.id || '').trim();
+          if (persistedId) {
+            setEdges((prev) =>
+              (prev || []).map((e: Edge) =>
+                e.id === tempId
+                  ? {
+                      ...e,
+                      id: `edge-${persistedId}`,
+                      data: {
+                        ...e.data,
+                        persistedId,
+                        originalSourceIdeaId: sourceIdeaId,
+                        originalTargetIdeaId: targetIdeaId,
+                      },
+                    }
+                  : e
+              )
+            );
+            trackFunnelEvent('idea_edge_created', { sourceIdeaId, targetIdeaId, kind: 'relates_to' });
+          }
+          toast.success(isPolish ? 'Pomysły połączone!' : 'Ideas connected!', {
+            duration: 1500,
+            icon: '🔗',
+          });
+        } catch {
+          // rollback optimistic edge
+          setEdges((prev) => (prev || []).filter((e: Edge) => e.id !== tempId));
+          toast.error(isPolish ? 'Nie udało się zapisać połączenia' : 'Failed to save connection');
+        }
+      } else {
+        toast.success(isPolish ? 'Połączenie dodane' : 'Connection added', { duration: 1000 });
+      }
     },
     [setEdges, isPolish]
   );
@@ -421,8 +651,8 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
       let nearestDist = Infinity;
 
       for (const bn of branchNodes) {
-        const dx = (node.position.x + 90) - (bn.position.x + 50);
-        const dy = (node.position.y + 15) - (bn.position.y + 20);
+        const dx = node.position.x + 90 - (bn.position.x + 50);
+        const dy = node.position.y + 15 - (bn.position.y + 20);
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < nearestDist) {
           nearestDist = dist;
@@ -442,7 +672,9 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
         );
 
         setEdges((prev: Edge[]) => {
-          const filtered = prev.filter((e: Edge) => !(e.target === node.id && !e.data?.userCreated));
+          const filtered = prev.filter(
+            (e: Edge) => !(e.target === node.id && !e.data?.userCreated)
+          );
           return [
             ...filtered,
             {
@@ -470,62 +702,92 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
       const isUser = !!edge.data?.userCreated;
       const currentState = edge.data?.flowState || 'forward'; // forward | stopped | reversed
 
-      setEdges((prev: Edge[]) =>
-        prev.map((e: Edge) => {
-          if (e.id !== edge.id) return e;
+      if (currentState === 'reversed' && isUser) {
+        // Remove user edge (and delete persisted edge if needed)
+        setEdges((prev: Edge[]) => prev.filter((e: Edge) => e.id !== edge.id));
 
-          if (currentState === 'forward') {
-            // Stop the animation
-            return {
-              ...e,
-              animated: false,
-              style: { ...e.style, opacity: 0.8, strokeDasharray: '5 5' },
-              data: { ...e.data, flowState: 'stopped' },
-            };
-          }
-          if (currentState === 'stopped') {
-            // Reverse: swap source↔target and animate again
-            return {
-              ...e,
-              source: e.target,
-              target: e.source,
-              sourceHandle: e.targetHandle,
-              targetHandle: e.sourceHandle,
-              animated: true,
-              style: { ...e.style, opacity: 0.7, strokeDasharray: undefined },
-              data: { ...e.data, flowState: 'reversed' },
-            };
-          }
-          if (currentState === 'reversed') {
-            if (isUser) {
-              // Remove user edge on next click
-              return null as any;
+        const persistedId = edge.data?.persistedId ? String(edge.data.persistedId) : '';
+        const originalSourceIdeaId = edge.data?.originalSourceIdeaId
+          ? String(edge.data.originalSourceIdeaId)
+          : '';
+
+        if (persistedId && originalSourceIdeaId) {
+          Api.deleteMyIdeaEdge(originalSourceIdeaId, persistedId)
+            .then(() => {
+              trackFunnelEvent('idea_edge_deleted', {
+                persistedId,
+                sourceIdeaId: originalSourceIdeaId,
+              });
+            })
+            .catch(() => {
+              toast.error(isPolish ? 'Nie udało się usunąć połączenia' : 'Failed to delete connection');
+              // best-effort restore
+              setEdges((prev: Edge[]) => [edge, ...prev]);
+            });
+        }
+
+        toast.success(isPolish ? 'Połączenie usunięte' : 'Connection removed', {
+          duration: 1200,
+          icon: '🗑',
+        });
+        return;
+      }
+
+      setEdges((prev: Edge[]) =>
+        prev
+          .map((e: Edge) => {
+            if (e.id !== edge.id) return e;
+
+            if (currentState === 'forward') {
+              // Stop the animation
+              return {
+                ...e,
+                animated: false,
+                style: { ...e.style, opacity: 0.8, strokeDasharray: '5 5' },
+                data: { ...e.data, flowState: 'stopped' },
+              };
             }
-            // System edges go back to forward
-            return {
-              ...e,
-              source: e.target,
-              target: e.source,
-              sourceHandle: e.targetHandle,
-              targetHandle: e.sourceHandle,
-              animated: true,
-              style: { ...e.style, opacity: 0.6, strokeDasharray: undefined },
-              data: { ...e.data, flowState: 'forward' },
-            };
-          }
-          return e;
-        }).filter(Boolean)
+            if (currentState === 'stopped') {
+              // Reverse: swap source↔target and animate again
+              return {
+                ...e,
+                source: e.target,
+                target: e.source,
+                sourceHandle: e.targetHandle,
+                targetHandle: e.sourceHandle,
+                animated: true,
+                style: { ...e.style, opacity: 0.7, strokeDasharray: undefined },
+                data: { ...e.data, flowState: 'reversed' },
+              };
+            }
+            if (currentState === 'reversed') {
+              // System edges go back to forward
+              return {
+                ...e,
+                source: e.target,
+                target: e.source,
+                sourceHandle: e.targetHandle,
+                targetHandle: e.sourceHandle,
+                animated: true,
+                style: { ...e.style, opacity: 0.6, strokeDasharray: undefined },
+                data: { ...e.data, flowState: 'forward' },
+              };
+            }
+            return e;
+          })
+          .filter(Boolean)
       );
 
       const labels = {
         forward: { en: 'Flow stopped', pl: 'Przepływ zatrzymany' },
         stopped: { en: 'Flow reversed', pl: 'Przepływ odwrócony' },
-        reversed: isUser
-          ? { en: 'Connection removed', pl: 'Połączenie usunięte' }
-          : { en: 'Flow restored', pl: 'Przepływ przywrócony' },
+        reversed: { en: 'Flow restored', pl: 'Przepływ przywrócony' },
       };
       const msg = labels[currentState as keyof typeof labels];
-      toast.success(isPolish ? msg.pl : msg.en, { duration: 1200, icon: currentState === 'forward' ? '⏸' : currentState === 'stopped' ? '🔄' : '🗑' });
+      toast.success(isPolish ? msg.pl : msg.en, {
+        duration: 1200,
+        icon: currentState === 'forward' ? '⏸' : '🔄',
+      });
     },
     [setEdges, isPolish]
   );
@@ -682,7 +944,9 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
                     style={{ backgroundColor: isActive ? colors.edge : '#94a3b8' }}
                   />
                   <span className="flex-1 text-left">{isPolish ? labels.pl : labels.en}</span>
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${count > 0 ? 'bg-white/60 dark:bg-navy-800/60' : 'opacity-30'}`}>
+                  <span
+                    className={`text-[9px] px-1.5 py-0.5 rounded-full ${count > 0 ? 'bg-white/60 dark:bg-navy-800/60' : 'opacity-30'}`}
+                  >
                     {count}
                   </span>
                 </button>

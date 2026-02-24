@@ -41,6 +41,8 @@ interface NModeShellExtraProps extends NModeShellProps {
   presentationMode: PresentationMode;
   /** Mode change handler */
   onPresentationModeChange: (mode: PresentationMode) => void;
+  /** If false, hides the mode switcher in the header */
+  showModeSwitcher?: boolean;
   /** Build artifact code string from type + id */
   buildArtifactCode?: (type: string, id: string) => string;
   /** Show loading state */
@@ -60,6 +62,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   motionDuration = 0.22,
   presentationMode,
   onPresentationModeChange,
+  showModeSwitcher = true,
   buildArtifactCode,
   loading = false,
   children,
@@ -81,6 +84,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
             {...header}
             presentationMode={presentationMode}
             onPresentationModeChange={onPresentationModeChange}
+            showModeSwitcher={showModeSwitcher}
             buildArtifactCode={buildArtifactCode}
           />
 

@@ -6,18 +6,14 @@ import {
   ExternalLink,
   Flower2,
   Globe,
-  Lightbulb,
   Loader2,
   MessageSquarePlus,
   Rocket,
-  Save,
-  Send,
   Sparkles,
   Sprout,
   Star,
   ThumbsUp,
   Trash2,
-  TreePine,
   TrendingUp,
   X,
   Zap,
@@ -29,10 +25,12 @@ import { useTranslation } from 'react-i18next';
 import { API_URL, getHeaders } from '@/services/api';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { useAppStore } from '@/store/useAppStore';
 
+import { buildAskAIMessage } from './shared/askAiHelper';
 import type { MyIdea } from './MyIdeasListContent';
 
-type IdeaStage = 'seed' | 'expanding' | 'researching' | 'proposing' | 'summary' | 'done';
+type IdeaStage = 'seed' | 'expanding' | 'researching' | 'proposing' | 'summary' | 'ready' | 'promoted';
 
 interface ResearchItem {
   title: string;
@@ -61,7 +59,15 @@ interface IdeaDetailViewProps {
   onSaved: (idea: MyIdea) => void;
 }
 
-const STAGE_ORDER: IdeaStage[] = ['seed', 'expanding', 'researching', 'proposing', 'summary', 'done'];
+const STAGE_ORDER: IdeaStage[] = [
+  'seed',
+  'expanding',
+  'researching',
+  'proposing',
+  'summary',
+  'ready',
+  'promoted',
+];
 
 const POTENTIAL_CONFIG: Record<string, { color: string; label: string; labelPl: string }> = {
   high: { color: 'text-emerald-500', label: 'High potential', labelPl: 'Wysoki potencjał' },
@@ -73,12 +79,15 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
   const { i18n, t } = useTranslation();
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
   const isNew = useMemo(() => ideaId.startsWith('new-idea-'), [ideaId]);
+  const { emitMyWorkEvent, setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } = useAppStore();
 
   const [loading, setLoading] = useState(!isNew);
   const [seedText, setSeedText] = useState('');
   const [title, setTitle] = useState('');
   const [stage, setStage] = useState<IdeaStage>('seed');
   const [developing, setDeveloping] = useState(false);
+  const [convertOpen, setConvertOpen] = useState(false);
+  const [converting, setConverting] = useState(false);
 
   // AI-generated content
   const [aiExpansion, setAiExpansion] = useState('');
@@ -90,6 +99,35 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
 
   const [realId, setRealId] = useState(ideaId);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  const ensureSaved = useCallback(
+    async (seed: string) => {
+      const text = seed.trim();
+      if (!text) {
+        toast.error(isPolish ? 'Opisz swój pomysł' : 'Describe your idea');
+        return null;
+      }
+      if (!isNew) return realId;
+
+      try {
+        const created = await Api.createMyIdea({
+          title: text.split('\n')[0]?.slice(0, 120) || (isPolish ? 'Nowy pomysł' : 'New idea'),
+          body: text,
+          tags: [],
+          sourceType: 'manual',
+        });
+        const nextId = created?.id || realId;
+        setRealId(nextId);
+        setTitle(created?.title || text.split('\n')[0]?.slice(0, 120) || '');
+        onSaved(created as MyIdea);
+        return nextId;
+      } catch {
+        toast.error(isPolish ? 'Nie udało się zapisać' : 'Failed to save');
+        return null;
+      }
+    },
+    [isNew, isPolish, onSaved, realId]
+  );
 
   useEffect(() => {
     if (isNew) { setLoading(false); return; }
@@ -118,28 +156,8 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
   }, []);
 
   const handleDevelop = useCallback(async () => {
-    const text = seedText.trim();
-    if (!text) { toast.error(isPolish ? 'Opisz swój pomysł' : 'Describe your idea'); return; }
-
-    let currentId = realId;
-
-    if (isNew) {
-      try {
-        const created = await Api.createMyIdea({
-          title: text.split('\n')[0]?.slice(0, 120) || (isPolish ? 'Nowy pomysł' : 'New idea'),
-          body: text,
-          tags: [],
-          sourceType: 'manual',
-        });
-        currentId = created?.id || currentId;
-        setRealId(currentId);
-        setTitle(created?.title || text.split('\n')[0]?.slice(0, 120) || '');
-        onSaved(created as MyIdea);
-      } catch {
-        toast.error(isPolish ? 'Nie udało się zapisać' : 'Failed to save');
-        return;
-      }
-    }
+    const currentId = await ensureSaved(seedText);
+    if (!currentId) return;
 
     setDeveloping(true);
     setStage('expanding');
@@ -152,7 +170,7 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
       const res = await fetch(`${API_URL}/my-work/my-ideas/${currentId}/develop`, {
         method: 'POST',
         headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ seedText: text, language: i18n.language }),
+        body: JSON.stringify({ seedText: seedText.trim(), language: i18n.language }),
       });
 
       if (!res.ok) throw new Error('Development failed');
@@ -199,7 +217,7 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
                 scrollToBottom();
                 break;
               case 'done':
-                setStage('done');
+                setStage((event.stage as IdeaStage) || 'ready');
                 break;
               case 'error':
                 toast.error(event.message || 'Error');
@@ -215,19 +233,75 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
     } finally {
       setDeveloping(false);
     }
-  }, [seedText, realId, isNew, isPolish, i18n.language, onSaved, scrollToBottom]);
+  }, [seedText, ensureSaved, i18n.language, scrollToBottom]);
 
   const toggleProposalLike = (idx: number) => {
     setProposals(prev => prev.map((p, i) => i === idx ? { ...p, liked: !p.liked } : p));
   };
 
-  const handlePromoteToChat = () => {
-    toast.success(isPolish ? 'Idea gotowa do omówienia w Team Chat' : 'Idea ready for Team Chat discussion');
+  const handleOpenChat = () => {
+    setChatKickoffMessage(buildAskAIMessage({
+      type: 'idea',
+      title: title || seedText?.slice(0, 80) || 'Untitled Idea',
+      description: seedText || undefined,
+    }));
+    if (isChatCollapsed) toggleChatCollapse();
   };
 
-  const handlePromoteToInitiative = () => {
-    toast.success(isPolish ? 'Idea promowana do inicjatywy' : 'Idea promoted to initiative');
-  };
+  const handleConvert = useCallback(
+    async (target: 'initiative' | 'task_set' | 'decision' | 'team_chat') => {
+      const currentId = await ensureSaved(seedText);
+      if (!currentId) return;
+
+      try {
+        setConverting(true);
+        const result = await Api.convertMyIdea(currentId, {
+          target,
+          options: {
+            language: i18n.language,
+          },
+        });
+
+        trackFunnelEvent(`idea_converted_${target}`, { ideaId: currentId });
+
+        // Refresh state so UI reflects promoted stage
+        try {
+          const updated = (await Api.getMyIdea(currentId)) as any;
+          setStage((updated?.stage as IdeaStage) || 'promoted');
+        } catch {
+          // ignore
+        }
+
+        setConvertOpen(false);
+        toast.success(
+          target === 'initiative'
+            ? isPolish
+              ? 'Utworzono inicjatywę'
+              : 'Initiative created'
+            : target === 'task_set'
+              ? isPolish
+                ? 'Utworzono taski'
+                : 'Tasks created'
+              : target === 'decision'
+                ? isPolish
+                  ? 'Utworzono decyzję'
+                  : 'Decision created'
+                : isPolish
+                  ? 'Wysłano do Team Chat'
+                  : 'Posted to Team Chat'
+        );
+        emitMyWorkEvent({ type: 'item:converted', entityType: 'idea', entityId: currentId, meta: { target } });
+
+        return result;
+      } catch (err: any) {
+        toast.error(err?.message || (isPolish ? 'Nie udało się wykonać konwersji' : 'Convert failed'));
+        return null;
+      } finally {
+        setConverting(false);
+      }
+    },
+    [ensureSaved, i18n.language, isPolish, seedText]
+  );
 
   const stageIndex = STAGE_ORDER.indexOf(stage);
   const isStageReached = (s: IdeaStage) => STAGE_ORDER.indexOf(s) <= stageIndex;
@@ -242,6 +316,154 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
 
   return (
     <div className="flex flex-col min-h-full bg-white dark:bg-navy-950">
+      {/* Convert modal */}
+      <AnimatePresence>
+        {convertOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={() => !converting && setConvertOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              transition={{ type: 'spring', duration: 0.25, bounce: 0.12 }}
+              className="w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-navy-900 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200/60 dark:border-white/[0.06]">
+                <div className="flex items-center gap-2">
+                  <Sparkles size={16} className="text-purple-500" />
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {isPolish ? 'Konwertuj pomysł' : 'Convert idea'}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setConvertOpen(false)}
+                  disabled={converting}
+                  className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:opacity-50"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="px-5 py-4 space-y-3">
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Wybierz, co chcesz zrobić z tym pomysłem. System przeniesie kontekst (opis, AI verdict i next steps).'
+                    : 'Choose what to create from this idea. We will carry over context (description, AI verdict and next steps).'}
+                </div>
+
+                {/* Options */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    onClick={() => handleConvert('initiative')}
+                    disabled={converting}
+                    className="text-left p-3 rounded-xl border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors disabled:opacity-60"
+                  >
+                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                      <Rocket size={16} className="text-amber-500" />
+                      {isPolish ? 'Inicjatywa' : 'Initiative'}
+                    </div>
+                    <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Utwórz inicjatywę w PMO' : 'Create a PMO initiative'}
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => handleConvert('task_set')}
+                    disabled={converting}
+                    className="text-left p-3 rounded-xl border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors disabled:opacity-60"
+                  >
+                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                      <CheckCircle2 size={16} className="text-emerald-500" />
+                      {isPolish ? 'Taski (z next steps)' : 'Tasks (from next steps)'}
+                    </div>
+                    <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                      {isPolish
+                        ? 'Utwórz zestaw personal tasków'
+                        : 'Create a set of personal tasks'}
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => handleConvert('decision')}
+                    disabled={converting}
+                    className="text-left p-3 rounded-xl border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors disabled:opacity-60"
+                  >
+                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                      <Star size={16} className="text-blue-500" />
+                      {isPolish ? 'Decyzja' : 'Decision'}
+                    </div>
+                    <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Utwórz artefakt decyzyjny' : 'Create a decision artifact'}
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => handleConvert('team_chat')}
+                    disabled={converting}
+                    className="text-left p-3 rounded-xl border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors disabled:opacity-60"
+                  >
+                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                      <MessageSquarePlus size={16} className="text-purple-500" />
+                      {isPolish ? 'Team Chat' : 'Team Chat'}
+                    </div>
+                    <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Opublikuj wątek do omówienia' : 'Post a discussion thread'}
+                    </div>
+                  </button>
+                </div>
+
+                {/* Preview: next steps */}
+                {summary?.nextSteps?.length ? (
+                  <div className="mt-2 rounded-xl border border-slate-200/70 dark:border-navy-700 bg-slate-50/60 dark:bg-navy-950/30 px-4 py-3">
+                    <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                      {isPolish ? 'Preview next steps' : 'Next steps preview'}
+                    </div>
+                    <div className="mt-2 space-y-1">
+                      {summary.nextSteps.slice(0, 6).map((s, idx) => (
+                        <div key={idx} className="text-xs text-slate-700 dark:text-slate-300 flex items-start gap-2">
+                          <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                          <span className="line-clamp-2">{s}</span>
+                        </div>
+                      ))}
+                      {summary.nextSteps.length > 6 && (
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                          {isPolish
+                            ? `+${summary.nextSteps.length - 6} kolejnych`
+                            : `+${summary.nextSteps.length - 6} more`}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200/60 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
+                <button
+                  onClick={() => setConvertOpen(false)}
+                  disabled={converting}
+                  className="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-50"
+                >
+                  {isPolish ? 'Zamknij' : 'Close'}
+                </button>
+                {converting && (
+                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <Loader2 size={14} className="animate-spin" />
+                    {isPolish ? 'Tworzę…' : 'Creating…'}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-amber-50/60 via-white to-emerald-50/40 dark:from-navy-900 dark:via-navy-900/90 dark:to-navy-900">
         <div className="flex items-center gap-3 min-w-0">
@@ -261,9 +483,18 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
             </div>
           </div>
         </div>
-        <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
-          <X size={16} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleOpenChat}
+            className="p-2 rounded-xl hover:bg-purple-500/10 text-purple-500 transition-colors"
+            title={isPolish ? 'Zapytaj AI o ten pomysł' : 'Ask AI about this idea'}
+          >
+            <Sparkles size={16} />
+          </button>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+            <X size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Progress Bar */}
@@ -275,6 +506,7 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
               { s: 'researching', icon: Globe, label: isPolish ? 'Badania' : 'Research' },
               { s: 'proposing', icon: Zap, label: isPolish ? 'Propozycje' : 'Proposals' },
               { s: 'summary', icon: Star, label: isPolish ? 'Podsumowanie' : 'Summary' },
+              { s: 'ready', icon: CheckCircle2, label: isPolish ? 'Gotowe' : 'Ready' },
             ].map(({ s, icon: Icon, label }, i) => {
               const reached = isStageReached(s as IdeaStage);
               const active = stage === s;
@@ -520,22 +752,13 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
               {/* Action buttons */}
               <div className="flex flex-wrap gap-3 pt-2">
                 <motion.button
-                  onClick={handlePromoteToChat}
+                  onClick={() => setConvertOpen(true)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-purple-500/10 border border-purple-400/30 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-colors"
                 >
-                  <MessageSquarePlus size={16} />
-                  {isPolish ? 'Omów w Team Chat' : 'Discuss in Team Chat'}
-                </motion.button>
-                <motion.button
-                  onClick={handlePromoteToInitiative}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 transition-all"
-                >
-                  <Rocket size={16} />
-                  {isPolish ? 'Utwórz inicjatywę' : 'Create initiative'}
+                  <Sparkles size={16} />
+                  {isPolish ? 'Konwertuj' : 'Convert'}
                 </motion.button>
                 <motion.button
                   onClick={handleDevelop}
@@ -553,7 +776,7 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
         </AnimatePresence>
 
         {/* Loading placeholder when developing */}
-        {developing && stage !== 'done' && !aiExpansion && (
+        {developing && stage !== 'promoted' && !aiExpansion && (
           <div className="flex items-center justify-center py-12">
             <div className="flex flex-col items-center gap-3">
               <div className="relative">

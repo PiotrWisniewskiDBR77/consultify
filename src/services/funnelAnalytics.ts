@@ -122,6 +122,9 @@ export type FunnelEventName =
   | 'execution_risk_signal_dismissed'
   | 'execution_risk_mitigation_updated'
   | 'execution_warning_clicked'
+  | 'execution_exec_snapshot_loaded'
+  | 'execution_exec_snapshot_ai_toggled'
+  | 'execution_exec_snapshot_refreshed'
   | 'delay_detection_viewed'
   | 'delay_signal_detected'
   | 'delay_signal_dismissed'
@@ -329,7 +332,19 @@ export type FunnelEventName =
   // T113 — User Behavioral Intelligence
   | 'journey_event_tracked'
   | 'activation_phase_changed'
-  | 'churn_warning_created';
+  | 'churn_warning_created'
+  // My Work Tasks — enhanced instrumentation
+  | 'triage_action_used'
+  | 'bulk_edit_opened'
+  | 'bulk_edit_applied'
+  | 'inline_edit_used'
+  | 'undo_used'
+  | 'smart_sort_toggled'
+  | 'saved_view_applied'
+  | 'saved_view_created'
+  | 'column_config_toggled'
+  | 'task_deleted'
+  | 'task_bulk_deleted';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

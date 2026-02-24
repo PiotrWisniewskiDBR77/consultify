@@ -2461,6 +2461,57 @@ export const Api = {
     await handleResponse(res, 'Failed to delete idea');
   },
 
+  // --- My Ideas: Mind Map edges (persistent relationships) ---
+  getMyIdeaEdges: async (ideaId: string | 'all', opts?: { kind?: string }): Promise<any> => {
+    const params = new URLSearchParams();
+    if (opts?.kind) params.set('kind', opts.kind);
+    const qs = params.toString();
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/edges${qs ? `?${qs}` : ''}`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to fetch idea edges');
+  },
+
+  addMyIdeaEdge: async (
+    sourceIdeaId: string,
+    payload: { targetIdeaId: string; kind?: string }
+  ): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(sourceIdeaId)}/edges`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to create idea edge');
+  },
+
+  deleteMyIdeaEdge: async (sourceIdeaId: string | 'all', edgeId: string): Promise<void> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(sourceIdeaId)}/edges/${encodeURIComponent(edgeId)}`,
+      { method: 'DELETE', headers: getHeaders() }
+    );
+    await handleResponse(res, 'Failed to delete idea edge');
+  },
+
+  // --- My Ideas: Convert/Promote ---
+  convertMyIdea: async (
+    ideaId: string,
+    payload: {
+      target: 'initiative' | 'task_set' | 'decision' | 'team_chat';
+      options?: Record<string, unknown>;
+    }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/convert`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to convert idea');
+  },
+
   getTaskComments: async (taskId: string): Promise<any[]> => {
     const res = await fetch(`${API_URL}/tasks/${taskId}/comments`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch comments');
@@ -2846,6 +2897,16 @@ export const Api = {
     return res.json();
   },
 
+  remindDecision: async (id: string, message?: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/decisions/${id}/remind`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ message }),
+    });
+    if (!res.ok) throw new Error('Failed to send reminder');
+    return res.json();
+  },
+
   escalateDecision: async (
     id: string,
     reason?: string,
@@ -2867,6 +2928,72 @@ export const Api = {
       body: JSON.stringify(updates),
     });
     if (!res.ok) throw new Error('Failed to update decision');
+  },
+
+  // ==========================================
+  // MY WORK — DECISIONS QUEUE / SNOOZE / PREFS
+  // ==========================================
+
+  getMyWorkDecisionQueue: async (params?: {
+    mode?: 'my' | 'requests_pending' | 'all' | 'snoozed';
+    limit?: number;
+    cursor?: number | null;
+  }): Promise<{ items: any[]; nextCursor: number | null; mode: string }> => {
+    const mode = params?.mode || 'my';
+    const limit = params?.limit ?? 25;
+    const cursor = params?.cursor ?? null;
+
+    const qs = new URLSearchParams();
+    if (mode) qs.set('mode', mode);
+    if (limit) qs.set('limit', String(limit));
+    if (cursor != null) qs.set('cursor', String(cursor));
+
+    const res = await fetch(`${API_URL}/my-work/decisions/queue?${qs.toString()}`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch decisions queue');
+    const data = await res.json();
+    return {
+      items: Array.isArray(data?.items) ? data.items : [],
+      nextCursor: data?.nextCursor ?? null,
+      mode: data?.mode || mode,
+    };
+  },
+
+  snoozeDecision: async (id: string, input: { until?: string; preset?: string }): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/decisions/${id}/snooze`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(input || {}),
+    });
+    if (!res.ok) throw new Error('Failed to snooze decision');
+    return res.json();
+  },
+
+  unsnoozeDecision: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/decisions/${id}/unsnooze`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to unsnooze decision');
+    return res.json();
+  },
+
+  getDecisionPrefs: async (): Promise<{ prefs: any; updatedAt: string | null }> => {
+    const res = await fetch(`${API_URL}/my-work/decisions/preferences`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch decision preferences');
+    const data = await res.json();
+    return { prefs: data?.prefs || {}, updatedAt: data?.updatedAt ?? null };
+  },
+
+  saveDecisionPrefs: async (prefs: any): Promise<{ success: boolean; prefs: any; updatedAt: string }> => {
+    const res = await fetch(`${API_URL}/my-work/decisions/preferences`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ prefs }),
+    });
+    if (!res.ok) throw new Error('Failed to save decision preferences');
+    return res.json();
   },
 
   createDecision: async (decision: any): Promise<any> => {
@@ -8852,6 +8979,107 @@ export const Api = {
     });
     if (!res.ok) throw new Error('Failed to delete import');
     return res.json();
+  },
+
+  // ==========================================
+  // MY WORK (V2): NOTEBOOK (T011)
+  // ==========================================
+  getNotebookPages: async (filters?: {
+    projectId?: string | null;
+    status?: string;
+    pinned?: boolean;
+    sort?: string;
+    q?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<any[]> => {
+    let url = `${API_URL}/my-work/notebook/pages`;
+    if (filters) {
+      const params = new URLSearchParams();
+      if (filters.projectId) params.append('projectId', filters.projectId);
+      if (filters.status) params.append('status', filters.status);
+      if (filters.pinned !== undefined) params.append('pinned', filters.pinned ? '1' : '0');
+      if (filters.sort) params.append('sort', filters.sort);
+      if (filters.q) params.append('q', filters.q);
+      if (filters.limit) params.append('limit', String(filters.limit));
+      if (filters.offset) params.append('offset', String(filters.offset));
+      if (params.toString()) url += `?${params.toString()}`;
+    }
+    const res = await fetch(url, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch notebook pages');
+    return res.json();
+  },
+
+  createNotebookPage: async (page: {
+    title?: string;
+    projectId?: string | null;
+    visibility?: string;
+    tags?: string[];
+    contentJson?: any;
+    contentText?: string;
+    icon?: string | null;
+    status?: string;
+    template?: string;
+  }): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/notebook/pages`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(page),
+    });
+    return handleResponse(res, 'Failed to create notebook page');
+  },
+
+  updateNotebookPage: async (id: string, updates: Record<string, any>): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updates),
+    });
+    return handleResponse(res, 'Failed to update notebook page');
+  },
+
+  deleteNotebookPage: async (id: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    await handleResponse(res, 'Failed to delete notebook page');
+  },
+
+  pinNotebookPage: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}/pin`, {
+      method: 'PUT',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to toggle pin');
+  },
+
+  setNotebookPageStatus: async (id: string, status: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}/status`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ status }),
+    });
+    return handleResponse(res, 'Failed to update page status');
+  },
+
+  convertNotebookPage: async (
+    id: string,
+    target: 'task' | 'decision' | 'initiative',
+    extra?: { title?: string; description?: string }
+  ): Promise<{ id: string; type: string; title: string }> => {
+    const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}/convert`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ target, ...extra }),
+    });
+    return handleResponse(res, 'Failed to convert notebook page');
+  },
+
+  extractNotebookActions: (id: string): EventSource => {
+    const token = tokenService.getToken();
+    const url = `${API_URL}/my-work/notebook/pages/${id}/extract-actions?token=${encodeURIComponent(token || '')}`;
+    return new EventSource(url);
   },
 };
 

@@ -1,5 +1,7 @@
 import {
+  BarChart,
   Brain,
+  Calendar,
   FileText,
   FlaskConical,
   MessageSquare,
@@ -7,6 +9,7 @@ import {
   ShieldAlert,
   X,
 } from 'lucide-react';
+import { format, getISOWeek } from 'date-fns';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -46,7 +49,7 @@ const callout = (variant: string, text: string) => ({
   content: [p(text)],
 });
 
-export const NOTEBOOK_TEMPLATES: PageTemplate[] = [
+const STATIC_TEMPLATES: PageTemplate[] = [
   {
     id: 'blank',
     icon: <FileText size={20} />,
@@ -204,6 +207,64 @@ export const NOTEBOOK_TEMPLATES: PageTemplate[] = [
   },
 ];
 
+function getNotebookTemplates(): PageTemplate[] {
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const weekNum = getISOWeek(new Date());
+  return [
+    ...STATIC_TEMPLATES,
+    {
+      id: 'daily-log',
+      icon: <Calendar size={20} />,
+      label: 'Daily Log',
+      labelPl: 'Dziennik',
+      description: 'Track focus, notes, decisions and end-of-day review',
+      descriptionPl: 'Śledź fokus, notatki, decyzje i podsumowanie dnia',
+      gradient: 'from-teal-500 to-cyan-600',
+      defaultTitle: `Daily Log — ${today}`,
+      defaultTitlePl: `Dziennik — ${today}`,
+      defaultIcon: '📅',
+      contentJson: {
+        type: 'doc',
+        content: [
+          h2("Today's Focus"),
+          p(''),
+          h2('Notes'),
+          p(''),
+          h2('Decisions Made'),
+          p(''),
+          h2('End-of-day Review'),
+          p(''),
+        ],
+      },
+    },
+    {
+      id: 'weekly-review',
+      icon: <BarChart size={20} />,
+      label: 'Weekly Review',
+      labelPl: 'Przegląd tygodnia',
+      description: 'Reflect on wins, blockers, lessons and next week priorities',
+      descriptionPl: 'Refleksja nad sukcesami, blokerami, wnioskami i priorytetami na przyszły tydzień',
+      gradient: 'from-indigo-500 to-blue-600',
+      defaultTitle: `Weekly Review — Week ${weekNum}`,
+      defaultTitlePl: `Przegląd tygodnia — Tydzień ${weekNum}`,
+      defaultIcon: '📊',
+      contentJson: {
+        type: 'doc',
+        content: [
+          h2('Wins'),
+          p(''),
+          h2('Blockers'),
+          p(''),
+          h2('Lessons Learned'),
+          p(''),
+          h2('Next Week Priorities'),
+          p(''),
+        ],
+      },
+    },
+  ];
+}
+
 interface NewPageModalProps {
   open: boolean;
   onClose: () => void;
@@ -263,7 +324,7 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({ open, onClose, onSel
           </p>
 
           <div className="grid grid-cols-2 gap-3">
-            {NOTEBOOK_TEMPLATES.map((tmpl) => (
+            {getNotebookTemplates().map((tmpl) => (
               <button
                 key={tmpl.id}
                 onClick={() => handleSelect(tmpl)}

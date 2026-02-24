@@ -1049,6 +1049,22 @@ router.put('/:id/milestones/:milestoneId', InitiativeController.updateMilestone)
 router.delete('/:id/milestones/:milestoneId', InitiativeController.deleteMilestone);
 
 // ==========================================
+// ROADMAP MODULE: SCHEDULE BASELINES (Timeline lock)
+// ==========================================
+
+/**
+ * GET /api/initiatives/:id/schedule-baselines
+ * List schedule baseline snapshots
+ */
+router.get('/:id/schedule-baselines', InitiativeController.getScheduleBaselines);
+
+/**
+ * GET /api/initiatives/:id/schedule-baselines/:version
+ * Get a single baseline snapshot (by version)
+ */
+router.get('/:id/schedule-baselines/:version', InitiativeController.getScheduleBaseline);
+
+// ==========================================
 // ROADMAP MODULE: RESOURCES ENDPOINTS
 // ==========================================
 

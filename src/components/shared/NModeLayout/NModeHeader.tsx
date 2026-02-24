@@ -24,6 +24,8 @@ interface NModeHeaderProps extends NModeHeaderConfig {
   presentationMode: PresentationMode;
   /** Mode change handler */
   onPresentationModeChange: (mode: PresentationMode) => void;
+  /** If false, hides the N/C mode switcher (use N-only headers) */
+  showModeSwitcher?: boolean;
   /** Build artifact code string from type + id */
   buildArtifactCode?: (type: ArtifactType, id: string) => string;
   /** Optional id for the title input (for guided focus/jump) */
@@ -46,6 +48,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
   statusDotColor,
   presentationMode,
   onPresentationModeChange,
+  showModeSwitcher = true,
   buildArtifactCode,
   titleInputId,
 }) => {
@@ -144,8 +147,15 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
           )}
 
           {/* Mode Switcher */}
-          <div className="w-px h-6 bg-slate-200/50 dark:bg-navy-700/30" />
-          <PresentationModeSwitcher value={presentationMode} onChange={onPresentationModeChange} />
+          {showModeSwitcher && (
+            <>
+              <div className="w-px h-6 bg-slate-200/50 dark:bg-navy-700/30" />
+              <PresentationModeSwitcher
+                value={presentationMode}
+                onChange={onPresentationModeChange}
+              />
+            </>
+          )}
           {draftSavedLabel && (
             <span className="hidden xl:inline text-xs text-slate-500 dark:text-slate-400">
               {draftSavedLabel}

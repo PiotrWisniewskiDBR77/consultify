@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   CheckSquare,
+  ExternalLink,
   HeartPulse,
   Loader2,
   Scale,
@@ -24,6 +25,7 @@ interface KnowledgePulseProps {
   noteTags: string[];
   noteId: string;
   onInsertReference: (item: PulseItem) => void;
+  onOpenItem?: (item: PulseItem) => void;
   onClose: () => void;
 }
 
@@ -38,6 +40,7 @@ export const KnowledgePulse: React.FC<KnowledgePulseProps> = ({
   noteTags,
   noteId,
   onInsertReference,
+  onOpenItem,
   onClose,
 }) => {
   const { i18n } = useTranslation();
@@ -151,13 +154,24 @@ export const KnowledgePulse: React.FC<KnowledgePulseProps> = ({
                           {item.status}
                         </div>
                       )}
-                      <button
-                        onClick={() => onInsertReference(item)}
-                        className={`mt-1.5 w-full flex items-center justify-center gap-1 rounded-md ${cfg.bg} ${cfg.color} px-2 py-1 text-[10px] font-medium hover:opacity-80 transition-opacity`}
-                      >
-                        <ArrowRight size={10} />
-                        {pl ? 'Wstaw odniesienie' : 'Insert reference'}
-                      </button>
+                      <div className="mt-1.5 flex items-center gap-1">
+                        <button
+                          onClick={() => onInsertReference(item)}
+                          className={`flex-1 flex items-center justify-center gap-1 rounded-md ${cfg.bg} ${cfg.color} px-2 py-1 text-[10px] font-medium hover:opacity-80 transition-opacity`}
+                        >
+                          <ArrowRight size={10} />
+                          {pl ? 'Wstaw' : 'Insert'}
+                        </button>
+                        {onOpenItem && (
+                          <button
+                            onClick={() => onOpenItem(item)}
+                            className="flex items-center justify-center gap-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-2 py-1 text-[10px] font-medium hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
+                          >
+                            <ExternalLink size={10} />
+                            {pl ? 'Otwórz' : 'Open'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

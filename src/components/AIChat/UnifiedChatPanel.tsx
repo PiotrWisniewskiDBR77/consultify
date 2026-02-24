@@ -218,6 +218,9 @@ interface UnifiedChatPanelProps {
   kickoffMessage?: string;
   /** Callback after kickoff message is consumed */
   onKickoffConsumed?: () => void;
+
+  /** Per-tab quick prompt chips shown above the input */
+  quickPrompts?: string[];
 }
 
 // ============================================================================
@@ -245,6 +248,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   customMessages,
   kickoffMessage,
   onKickoffConsumed,
+  quickPrompts,
 }) => {
   const { t, i18n } = useTranslation();
   const { isEnabled } = useFeatureFlagsContext();
@@ -2643,6 +2647,19 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 {t('common.dismiss', 'Dismiss')}
               </button>
             </div>
+          </div>
+        )}
+        {quickPrompts && quickPrompts.length > 0 && messages.length === 0 && !isStreaming && (
+          <div className="flex flex-wrap gap-1.5 px-3 pb-2">
+            {quickPrompts.map((prompt) => (
+              <button
+                key={prompt}
+                onClick={() => handleSendMessage(prompt)}
+                className="px-2.5 py-1 text-[11px] font-medium rounded-full border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-700 hover:text-purple-700 dark:hover:text-purple-300 transition-all"
+              >
+                {prompt}
+              </button>
+            ))}
           </div>
         )}
         <EnhancedChatInput

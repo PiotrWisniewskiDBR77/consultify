@@ -92,6 +92,10 @@ export const UpdateDecisionSchema = z.object({
   delegationNote: z.string().max(500).optional(),
 });
 
+export const RemindDecisionSchema = z.object({
+  message: z.string().max(500).optional(),
+});
+
 // ==========================================
 // QUERY SCHEMAS
 // ==========================================
@@ -111,4 +115,5 @@ export type CreateDecisionRequest = z.infer<typeof CreateDecisionSchema>;
 export type DecideRequest = z.infer<typeof DecideSchema>;
 export type EscalateDecisionRequest = z.infer<typeof EscalateDecisionSchema>;
 export type UpdateDecisionRequest = z.infer<typeof UpdateDecisionSchema>;
+export type RemindDecisionRequest = z.infer<typeof RemindDecisionSchema>;
 export type GetDecisionsQuery = z.infer<typeof GetDecisionsQuerySchema>;

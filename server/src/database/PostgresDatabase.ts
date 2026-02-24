@@ -1744,6 +1744,8 @@ export async function initDb(): Promise<void> {
             resource_tools TEXT DEFAULT '[]',
             tags TEXT DEFAULT '[]',
             target_state TEXT DEFAULT '{}',
+            baseline_version INTEGER DEFAULT 0,
+            schedule_baseline_id TEXT,
             report_id TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -1776,6 +1778,74 @@ export async function initDb(): Promise<void> {
     await ensureColumn('created_from', 'created_from TEXT');
     await ensureColumn('created_by', 'created_by TEXT');
     await ensureColumn('updated_by', 'updated_by TEXT');
+    await ensureColumn('baseline_version', 'baseline_version INTEGER DEFAULT 0');
+    await ensureColumn('schedule_baseline_id', 'schedule_baseline_id TEXT');
+
+    // Initiative timeline tables (baseline snapshots + milestones + dependencies)
+    await query(`CREATE TABLE IF NOT EXISTS initiative_schedule_baselines (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            initiative_id TEXT NOT NULL,
+            version INTEGER NOT NULL,
+            status_at_baseline TEXT,
+            planned_start_date TIMESTAMP,
+            planned_end_date TIMESTAMP,
+            snapshot TEXT NOT NULL DEFAULT '{}',
+            created_by TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+    await query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_ini_schedule_baselines_unique
+        ON initiative_schedule_baselines(initiative_id, version)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_ini_schedule_baselines_org
+        ON initiative_schedule_baselines(organization_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_ini_schedule_baselines_initiative
+        ON initiative_schedule_baselines(initiative_id)`);
+
+    await query(`CREATE TABLE IF NOT EXISTS initiative_milestones (
+            id TEXT PRIMARY KEY,
+            initiative_id TEXT NOT NULL,
+            organization_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            target_date DATE,
+            actual_date DATE,
+            status TEXT DEFAULT 'PENDING',
+            order_index INTEGER DEFAULT 0,
+            is_gate INTEGER DEFAULT 0,
+            gate_decision_id TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_by TEXT,
+            FOREIGN KEY(initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(gate_decision_id) REFERENCES decisions(id) ON DELETE SET NULL
+        )`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_milestones_initiative ON initiative_milestones(initiative_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_milestones_org ON initiative_milestones(organization_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_milestones_target_date ON initiative_milestones(target_date)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_milestones_status ON initiative_milestones(status)`);
+
+    await query(`CREATE TABLE IF NOT EXISTS initiative_dependencies (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            project_id TEXT,
+            from_initiative_id TEXT NOT NULL,
+            to_initiative_id TEXT NOT NULL,
+            type TEXT DEFAULT 'FINISH_TO_START',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_by TEXT,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL,
+            FOREIGN KEY(from_initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE,
+            FOREIGN KEY(to_initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE
+        )`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_initiative_dependencies_org ON initiative_dependencies(organization_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_initiative_dependencies_project ON initiative_dependencies(project_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_initiative_dependencies_from ON initiative_dependencies(from_initiative_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_initiative_dependencies_to ON initiative_dependencies(to_initiative_id)`);
 
     // Task Dependencies
     await query(`CREATE TABLE IF NOT EXISTS task_dependencies(

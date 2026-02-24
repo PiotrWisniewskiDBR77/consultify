@@ -6,7 +6,6 @@
 import { motion } from 'framer-motion';
 import {
   AlertTriangle,
-  ArrowRight,
   CheckCircle2,
   FileQuestion,
   Minus,
@@ -80,64 +79,44 @@ const KPICard: React.FC<{
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
 
   const getTrendColor = () => {
-    // For some metrics, down is good (e.g., overdue, wait time)
     if (trend === 'up') return 'text-emerald-500';
-    if (trend === 'down') return 'text-rose-500';
-    return 'text-slate-500 dark:text-slate-400 dark:text-slate-500';
-  };
-
-  const getStatusBorder = () => {
-    switch (status) {
-      case 'success':
-        return 'border-l-emerald-500';
-      case 'warning':
-        return 'border-l-amber-500';
-      case 'danger':
-        return 'border-l-rose-500';
-      default:
-        return 'border-l-slate-300 dark:border-l-white/20';
-    }
+    if (trend === 'down') return 'text-amber-600 dark:text-amber-400';
+    return 'text-slate-500 dark:text-slate-400';
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: delay * 0.1, duration: 0.4 }}
+      transition={{ delay: delay * 0.08, duration: 0.22 }}
       onClick={onClick}
-      className={`
-                bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 
-                border-l-4 ${getStatusBorder()}
-                p-4 hover:shadow-lg transition-all cursor-pointer group
-            `}
+      className="rounded-xl bg-white dark:bg-navy-900/50 p-4 hover:bg-slate-50/60 dark:hover:bg-white/[0.03] cursor-pointer transition-colors duration-150 group"
     >
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div
-          className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center shadow-lg`}
-        >
+      <div className="flex items-start justify-between mb-3">
+        <div className={`w-8 h-8 rounded-lg ${iconBg} flex items-center justify-center`}>
           {icon}
         </div>
         {trend && (
           <div className={`flex items-center gap-1 ${getTrendColor()}`}>
-            <TrendIcon size={14} />
-            {trendLabel && <span className="text-xs font-medium">{trendLabel}</span>}
+            <TrendIcon size={13} />
+            {trendLabel && <span className="text-[11px] font-medium">{trendLabel}</span>}
           </div>
         )}
       </div>
 
       {/* Title */}
-      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+      <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
         {title}
       </p>
 
       {/* Main Value */}
       <div className="flex items-baseline gap-2 mb-3">
-        <span className="text-3xl font-bold text-navy-900 dark:text-white tabular-nums">
+        <span className="text-2xl font-semibold text-slate-800 dark:text-slate-100 tabular-nums">
           {value}
         </span>
         {subValue && (
-          <span className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
+          <span className="text-xs text-slate-500 dark:text-slate-400">
             {subValue}
           </span>
         )}
@@ -145,13 +124,13 @@ const KPICard: React.FC<{
 
       {/* Details */}
       {details && details.length > 0 && (
-        <div className="space-y-1.5 pt-3 border-t border-slate-100 dark:border-navy-700">
+        <div className="space-y-1 pt-2.5 border-t border-slate-100/50 dark:border-white/[0.04]">
           {details.map((detail, idx) => (
-            <div key={idx} className="flex items-center justify-between text-sm">
+            <div key={idx} className="flex items-center justify-between text-xs">
               <span className="text-slate-500 dark:text-slate-400">{detail.label}</span>
               <span
                 className={`font-semibold tabular-nums ${
-                  detail.highlight ? 'text-rose-500' : 'text-navy-900 dark:text-white'
+                  detail.highlight ? 'text-amber-600 dark:text-amber-400' : 'text-slate-700 dark:text-slate-200'
                 }`}
               >
                 {detail.value}
@@ -160,13 +139,6 @@ const KPICard: React.FC<{
           ))}
         </div>
       )}
-
-      {/* Hover Arrow */}
-      <div className="flex items-center justify-end mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
-        <span className="text-xs text-brand font-medium flex items-center gap-1">
-          View details <ArrowRight size={12} />
-        </span>
-      </div>
     </motion.div>
   );
 };
@@ -285,8 +257,8 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
       {/* Tasks KPI – A1.1: data source: /my-work/stats?period=week */}
       <KPICard
         title={t('executive.kpi.tasks', 'Task Execution')}
-        icon={<CheckCircle2 size={22} className="text-slate-900 dark:text-white" />}
-        iconBg="bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/30"
+        icon={<CheckCircle2 size={16} className="text-emerald-500" />}
+        iconBg="bg-emerald-500/10"
         value={hasTaskData ? `${completionRate}%` : '—'}
         subValue={
           hasTaskData
@@ -325,8 +297,8 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
       {/* Decisions KPI – A1.1: data source: /decisions?limit=10 */}
       <KPICard
         title={t('executive.kpi.decisions', 'Decisions Pending')}
-        icon={<FileQuestion size={22} className="text-slate-900 dark:text-white" />}
-        iconBg="bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/30"
+        icon={<FileQuestion size={16} className="text-violet-500" />}
+        iconBg="bg-violet-500/10"
         value={hasDecisionData ? kpiData.decisions.pending : '—'}
         subValue={
           hasDecisionData
@@ -365,8 +337,8 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
       {/* Team Capacity KPI – A1.1: data source: /my-work/team-workload */}
       <KPICard
         title={t('executive.kpi.teamCapacity', 'Team Capacity')}
-        icon={<Users size={22} className="text-slate-900 dark:text-white" />}
-        iconBg="bg-gradient-to-br from-cyan-500 to-blue-600 shadow-cyan-500/30"
+        icon={<Users size={16} className="text-cyan-500" />}
+        iconBg="bg-cyan-500/10"
         value={hasTeamData ? `${kpiData.team.avgCapacity}%` : '—'}
         subValue={
           hasTeamData
@@ -402,18 +374,18 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
       {/* Risk Level KPI – A1.1: data source: derived from overdue tasks */}
       <KPICard
         title={t('executive.kpi.riskLevel', 'Risk Level')}
-        icon={<AlertTriangle size={22} className="text-slate-900 dark:text-white" />}
-        iconBg={`bg-gradient-to-br ${
-          !hasRiskData
-            ? 'from-slate-400 to-slate-500 shadow-slate-500/30'
-            : kpiData.risk.level === 'critical'
-              ? 'from-rose-500 to-red-600 shadow-rose-500/30'
-              : kpiData.risk.level === 'high'
-                ? 'from-orange-500 to-red-600 shadow-orange-500/30'
-                : kpiData.risk.level === 'medium'
-                  ? 'from-amber-500 to-orange-600 shadow-amber-500/30'
-                  : 'from-emerald-500 to-green-600 shadow-emerald-500/30'
-        }`}
+        icon={<AlertTriangle size={16} className={
+          !hasRiskData ? 'text-slate-400' :
+          kpiData.risk.level === 'critical' ? 'text-rose-500' :
+          kpiData.risk.level === 'high' ? 'text-amber-500' :
+          kpiData.risk.level === 'medium' ? 'text-amber-500' : 'text-emerald-500'
+        } />}
+        iconBg={
+          !hasRiskData ? 'bg-slate-500/10' :
+          kpiData.risk.level === 'critical' ? 'bg-rose-500/10' :
+          kpiData.risk.level === 'high' ? 'bg-amber-500/10' :
+          kpiData.risk.level === 'medium' ? 'bg-amber-500/10' : 'bg-emerald-500/10'
+        }
         value={hasRiskData ? kpiData.risk.level.toUpperCase() : '—'}
         subValue={
           hasRiskData

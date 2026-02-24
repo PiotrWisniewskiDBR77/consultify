@@ -4,8 +4,11 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import {
+  type ExecutiveInsightsPayload,
+  executiveInsightsService,
+} from './executiveInsightsService.js';
 import { getHealthSnapshot } from './pmoHealthService.js';
-import { executiveInsightsService, type ExecutiveInsightsPayload } from './executiveInsightsService.js';
 import { detectRiskSignals } from './riskDetectionService.js';
 
 export type ExecPeriod = 'week' | 'month' | 'quarter' | 'custom';
@@ -58,15 +61,13 @@ export type ExecutiveAggregateSnapshot = {
     dataQuality: 'none' | 'partial' | 'good';
   };
   roi: {
-    summary:
-      | {
-          totalProjected: number;
-          totalRealized: number;
-          totalVariance: number;
-          coveragePercent: number;
-          initiativeCount: number;
-        }
-      | null;
+    summary: {
+      totalProjected: number;
+      totalRealized: number;
+      totalVariance: number;
+      coveragePercent: number;
+      initiativeCount: number;
+    } | null;
     items: Array<{
       initiativeId: string;
       initiativeName: string;
@@ -139,6 +140,104 @@ export class ExecutiveAggregateService {
 
   constructor(db?: IDatabase) {
     this.db = db || getDatabase();
+  }
+
+  private async generateInsightsWithTimeout(
+    params: Parameters<typeof executiveInsightsService.generateInsights>[0],
+    timeoutMs: number
+  ): Promise<ExecutiveInsightsPayload | null> {
+    try {
+      const timeout = new Promise<null>((resolve) => {
+        setTimeout(() => resolve(null), Math.max(500, timeoutMs));
+      });
+
+      const result = await Promise.race([
+        executiveInsightsService.generateInsights(params),
+        timeout,
+      ]);
+      return (result as any) || null;
+    } catch (e: any) {
+      logger.warn(
+        '[ExecutiveAggregateService] generateInsights failed (non-fatal):',
+        e?.message || e
+      );
+      return null;
+    }
+  }
+
+  private async getDerivedKpiHighlights(
+    organizationId: string,
+    projectId: string
+  ): Promise<ExecutiveAggregateSnapshot['kpis']['highlights']> {
+    const nowIso = new Date().toISOString();
+
+    const [executing, blocked, overdueTasks, pendingDecisions] = await Promise.all([
+      DbPromise.get<{ c: number }>(
+        this.db,
+        `SELECT COUNT(*)::int as c FROM initiatives WHERE organization_id = ? AND project_id = ? AND UPPER(status) = 'EXECUTING'`,
+        [organizationId, projectId]
+      ).catch(() => ({ c: 0 })),
+      DbPromise.get<{ c: number }>(
+        this.db,
+        `SELECT COUNT(*)::int as c FROM initiatives WHERE organization_id = ? AND project_id = ? AND UPPER(status) = 'BLOCKED'`,
+        [organizationId, projectId]
+      ).catch(() => ({ c: 0 })),
+      DbPromise.get<{ c: number }>(
+        this.db,
+        `
+        SELECT COUNT(*)::int as c
+        FROM tasks
+        WHERE organization_id = ?
+          AND project_id = ?
+          AND due_date IS NOT NULL
+          AND due_date < ?
+          AND LOWER(COALESCE(status, '')) NOT IN ('completed', 'done', 'closed', 'cancelled')
+      `,
+        [organizationId, projectId, nowIso]
+      ).catch(() => ({ c: 0 })),
+      DbPromise.get<{ c: number }>(
+        this.db,
+        `
+        SELECT COUNT(*)::int as c
+        FROM decisions
+        WHERE organization_id = ?
+          AND project_id = ?
+          AND LOWER(COALESCE(status, '')) IN ('pending', 'escalated')
+      `,
+        [organizationId, projectId]
+      ).catch(() => ({ c: 0 })),
+    ]);
+
+    return [
+      {
+        id: 'derived_initiatives_executing',
+        name: 'Initiatives executing',
+        currentValue: executing?.c ?? 0,
+        targetValue: null,
+        unit: null,
+      },
+      {
+        id: 'derived_initiatives_blocked',
+        name: 'Initiatives blocked',
+        currentValue: blocked?.c ?? 0,
+        targetValue: null,
+        unit: null,
+      },
+      {
+        id: 'derived_tasks_overdue',
+        name: 'Overdue tasks',
+        currentValue: overdueTasks?.c ?? 0,
+        targetValue: null,
+        unit: null,
+      },
+      {
+        id: 'derived_decisions_pending',
+        name: 'Pending decisions',
+        currentValue: pendingDecisions?.c ?? 0,
+        targetValue: null,
+        unit: null,
+      },
+    ];
   }
 
   async ensureSchema(): Promise<void> {
@@ -285,7 +384,9 @@ export class ExecutiveAggregateService {
     );
   }
 
-  async getSnapshot(raw: z.input<typeof ExecAggregateOptionsSchema>): Promise<ExecutiveAggregateSnapshot> {
+  async getSnapshot(
+    raw: z.input<typeof ExecAggregateOptionsSchema>
+  ): Promise<ExecutiveAggregateSnapshot> {
     const opts = ExecAggregateOptionsSchema.parse(raw);
     await this.ensureSchema();
 
@@ -347,7 +448,10 @@ export class ExecutiveAggregateService {
           `SELECT COUNT(*)::int as c FROM initiatives WHERE project_id = ? AND organization_id = ? AND (workstream_id IS NULL OR workstream_id = '')`,
           [opts.projectId, opts.organizationId]
         ).catch(() => ({ c: 0 })),
-        this.getRoiPortfolioSummary(opts.organizationId).catch(() => ({ summary: null, items: [] })),
+        this.getRoiPortfolioSummary(opts.organizationId).catch(() => ({
+          summary: null,
+          items: [],
+        })),
         this.getProjectRaidRisks(opts.organizationId, opts.projectId).catch(() => []),
         this.getKpiHighlights(opts.organizationId, opts.projectId).catch(() => ({
           highlights: [],
@@ -355,10 +459,23 @@ export class ExecutiveAggregateService {
         })),
       ]);
 
+    const effectiveKpis =
+      (kpiHighlights?.highlights || []).length > 0
+        ? kpiHighlights
+        : {
+            highlights: await this.getDerivedKpiHighlights(
+              opts.organizationId,
+              opts.projectId
+            ).catch(() => []),
+            dataQuality: 'partial' as const,
+          };
+
     const progressPercent = clampPercent(
       typeof project.progress_pct === 'number'
         ? project.progress_pct
-        : await this.computeProgressFromInitiatives(opts.organizationId, opts.projectId).catch(() => 0)
+        : await this.computeProgressFromInitiatives(opts.organizationId, opts.projectId).catch(
+            () => 0
+          )
     );
 
     const priorityAlerts = this.buildPriorityAlerts({
@@ -380,45 +497,48 @@ export class ExecutiveAggregateService {
     const aiEnabled = Boolean(opts.includeAI);
     const aiInsights =
       aiEnabled && opts.userId
-        ? await executiveInsightsService.generateInsights({
-            organizationId: opts.organizationId,
-            projectId: opts.projectId,
-            period: opts.period,
-            generatedBy: opts.userId,
-            modelId: opts.modelId,
-            context: {
-              projectName: project.name || null,
-              phase: pmoHealth?.phase?.name || project.current_phase || null,
-              progressPercent,
-              pmoBlockers: (pmoHealth?.blockers || []).map((b: any) => ({
-                type: String(b.type || ''),
-                message: String(b.message || ''),
-              })),
-              risks: (raidRisks || []).slice(0, 10).map((r: any) => ({
-                title: r.title,
-                severity: r.impact,
-                type: r.type,
-              })),
-              delaySignals: (delaySignals || []).slice(0, 10).map((s: any) => ({
-                entityName: s.entity_name,
-                deviationType: s.deviation_type,
-                severity: s.severity,
-                daysDeviation: s.days_deviation,
-              })),
-              overspendSignals: (overspendSignals || []).slice(0, 10).map((s: any) => ({
-                signalType: s.signal_type,
-                severity: s.severity,
-                message: s.message,
-              })),
-              kpiHighlights: (kpiHighlights.highlights || []).slice(0, 4).map((k: any) => ({
-                name: k.name,
-                current: k.currentValue,
-                target: k.targetValue,
-                unit: k.unit,
-              })),
-              roiSummary: roiPortfolio?.summary || null,
+        ? await this.generateInsightsWithTimeout(
+            {
+              organizationId: opts.organizationId,
+              projectId: opts.projectId,
+              period: opts.period,
+              generatedBy: opts.userId,
+              modelId: opts.modelId,
+              context: {
+                projectName: project.name || null,
+                phase: pmoHealth?.phase?.name || project.current_phase || null,
+                progressPercent,
+                pmoBlockers: (pmoHealth?.blockers || []).map((b: any) => ({
+                  type: String(b.type || ''),
+                  message: String(b.message || ''),
+                })),
+                risks: (raidRisks || []).slice(0, 10).map((r: any) => ({
+                  title: r.title,
+                  severity: r.impact,
+                  type: r.type,
+                })),
+                delaySignals: (delaySignals || []).slice(0, 10).map((s: any) => ({
+                  entityName: s.entity_name,
+                  deviationType: s.deviation_type,
+                  severity: s.severity,
+                  daysDeviation: s.days_deviation,
+                })),
+                overspendSignals: (overspendSignals || []).slice(0, 10).map((s: any) => ({
+                  signalType: s.signal_type,
+                  severity: s.severity,
+                  message: s.message,
+                })),
+                kpiHighlights: (effectiveKpis.highlights || []).slice(0, 4).map((k: any) => ({
+                  name: k.name,
+                  current: k.currentValue,
+                  target: k.targetValue,
+                  unit: k.unit,
+                })),
+                roiSummary: roiPortfolio?.summary || undefined,
+              },
             },
-          })
+            6500
+          )
         : null;
 
     const snapshot: ExecutiveAggregateSnapshot = {
@@ -436,7 +556,7 @@ export class ExecutiveAggregateService {
         items: workstreamItems,
         unassignedInitiatives: unassigned?.c || 0,
       },
-      kpis: kpiHighlights,
+      kpis: effectiveKpis,
       roi: roiPortfolio,
       risks: {
         heatmap: this.buildRiskHeatmap(raidRisks),
@@ -504,14 +624,22 @@ export class ExecutiveAggregateService {
       ['HIGH', 'CRITICAL'].includes(String(s.severity || '').toUpperCase())
     );
     if (highOverspend.length > 0) {
-      alerts.push({ type: 'budget', severity: 'high', message: `${highOverspend.length} overspend warnings` });
+      alerts.push({
+        type: 'budget',
+        severity: 'high',
+        message: `${highOverspend.length} overspend warnings`,
+      });
     }
 
     const severeRisks = (params.riskSignals || []).filter((s: any) =>
       ['HIGH', 'CRITICAL'].includes(String(s.severity || '').toUpperCase())
     );
     if (severeRisks.length > 0) {
-      alerts.push({ type: 'risk', severity: 'high', message: `${severeRisks.length} risk signals` });
+      alerts.push({
+        type: 'risk',
+        severity: 'high',
+        message: `${severeRisks.length} risk signals`,
+      });
     }
 
     if (params.pmoHealth?.stageGate && params.pmoHealth.stageGate.isReady === false) {
@@ -526,7 +654,11 @@ export class ExecutiveAggregateService {
       (m: any) => m.targetDate && new Date(m.targetDate).getTime() < Date.now()
     );
     if (overdueMilestones.length > 0) {
-      alerts.push({ type: 'milestone', severity: 'medium', message: `${overdueMilestones.length} overdue milestones` });
+      alerts.push({
+        type: 'milestone',
+        severity: 'medium',
+        message: `${overdueMilestones.length} overdue milestones`,
+      });
     }
 
     return alerts.slice(0, 6);
@@ -550,12 +682,39 @@ export class ExecutiveAggregateService {
     `,
       [orgId, projectId]
     );
-    return (rows || []).map((r: any) => ({
+    const mapped = (rows || []).map((r: any) => ({
       id: String(r.id),
       initiativeId: String(r.initiative_id),
       initiativeName: String(r.initiative_name || ''),
       name: String(r.name || ''),
       targetDate: r.target_date || null,
+      status: String(r.status || 'PENDING'),
+    }));
+
+    // Fallback: if milestones are not used yet, derive "next milestones" from initiative planned end dates.
+    if (mapped.length > 0) return mapped;
+
+    const ini = await DbPromise.all<any>(
+      this.db,
+      `
+      SELECT id, COALESCE(title, name) as initiative_name, planned_end_date, end_date, status
+      FROM initiatives
+      WHERE organization_id = ?
+        AND project_id = ?
+        AND UPPER(COALESCE(status, '')) NOT IN ('COMPLETED', 'DONE')
+        AND (planned_end_date IS NOT NULL OR end_date IS NOT NULL)
+      ORDER BY COALESCE(planned_end_date, end_date) ASC NULLS LAST
+      LIMIT 6
+    `,
+      [orgId, projectId]
+    ).catch(() => []);
+
+    return (ini || []).map((r: any) => ({
+      id: `derived-milestone-${String(r.id)}`,
+      initiativeId: String(r.id),
+      initiativeName: String(r.initiative_name || ''),
+      name: 'Planned end',
+      targetDate: r.planned_end_date || r.end_date || null,
       status: String(r.status || 'PENDING'),
     }));
   }
@@ -626,7 +785,8 @@ export class ExecutiveAggregateService {
       for (const it of items) {
         const id = String(it.id);
         if (delayByInitiative.get(id)) delayed += 1;
-        else if (riskByInitiative.get(id) || String(it.status || '').toUpperCase() === 'BLOCKED') atRisk += 1;
+        else if (riskByInitiative.get(id) || String(it.status || '').toUpperCase() === 'BLOCKED')
+          atRisk += 1;
         else onTrack += 1;
       }
 
@@ -715,13 +875,19 @@ export class ExecutiveAggregateService {
     const highlights = (rows || []).map((r: any) => ({
       id: String(r.id),
       name: String(r.name || ''),
-      currentValue: r.current_value === null || r.current_value === undefined ? null : Number(r.current_value),
-      targetValue: r.target_value === null || r.target_value === undefined ? null : Number(r.target_value),
+      currentValue:
+        r.current_value === null || r.current_value === undefined ? null : Number(r.current_value),
+      targetValue:
+        r.target_value === null || r.target_value === undefined ? null : Number(r.target_value),
       unit: r.unit ? String(r.unit) : null,
     }));
 
     const dataQuality: 'none' | 'partial' | 'good' =
-      highlights.length === 0 ? 'none' : highlights.some((h) => h.currentValue === null) ? 'partial' : 'good';
+      highlights.length === 0
+        ? 'none'
+        : highlights.some((h) => h.currentValue === null)
+          ? 'partial'
+          : 'good';
 
     return { highlights, dataQuality };
   }
@@ -764,7 +930,8 @@ export class ExecutiveAggregateService {
 
     const items = (assumptions || []).map((a: any) => {
       const r = realizedMap[String(a.initiative_id)];
-      const projectedBenefit = Number(a.expected_revenue_delta || 0) + Number(a.expected_cost_delta || 0);
+      const projectedBenefit =
+        Number(a.expected_revenue_delta || 0) + Number(a.expected_cost_delta || 0);
       const realizedBenefit = r
         ? Number(r.total_rev || 0) + Number(r.total_cost || 0) + Number(r.total_savings || 0)
         : 0;
@@ -782,7 +949,9 @@ export class ExecutiveAggregateService {
     const totalProjected = items.reduce((s, i) => s + i.projectedBenefit, 0);
     const totalRealized = items.reduce((s, i) => s + i.realizedBenefit, 0);
     const coveragePercent =
-      items.length > 0 ? Math.round((items.filter((i) => i.hasRealized).length / items.length) * 100) : 0;
+      items.length > 0
+        ? Math.round((items.filter((i) => i.hasRealized).length / items.length) * 100)
+        : 0;
 
     return {
       summary: {
@@ -798,4 +967,3 @@ export class ExecutiveAggregateService {
 }
 
 export const executiveAggregateService = new ExecutiveAggregateService();
-

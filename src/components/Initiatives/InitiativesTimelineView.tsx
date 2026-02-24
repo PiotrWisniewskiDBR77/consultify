@@ -296,9 +296,11 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
       toast.success(t('initiatives.toast.scheduleUpdated', 'Harmonogram zaktualizowany'));
     } catch (error: any) {
       setLocalInitiatives((prev) => [...prev]);
-      toast.error(
-        t('initiatives.toast.scheduleUpdateError', 'Nie udało się zaktualizować harmonogramu')
-      );
+      const msg =
+        error?.data?.error ||
+        error?.message ||
+        t('initiatives.toast.scheduleUpdateError', 'Nie udało się zaktualizować harmonogramu');
+      toast.error(msg);
     }
   }, []);
 
@@ -375,9 +377,11 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
       setAiConflicts(response.conflicts || response);
       setShowConflictsPanel(true);
     } catch (error: any) {
-      toast.error(
-        t('initiatives.toast.aiConflictsError', 'Nie udało się przeanalizować konfliktów')
-      );
+      const msg =
+        error?.data?.error ||
+        error?.message ||
+        t('initiatives.toast.aiConflictsError', 'Nie udało się przeanalizować konfliktów');
+      toast.error(msg);
     } finally {
       setAiLoading(null);
     }
@@ -391,9 +395,11 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
       });
       setAiPriorities(response.priorities || response);
     } catch (error: any) {
-      toast.error(
-        t('initiatives.toast.aiPrioritiesError', 'Nie udało się zasugerować priorytetów')
-      );
+      const msg =
+        error?.data?.error ||
+        error?.message ||
+        t('initiatives.toast.aiPrioritiesError', 'Nie udało się zasugerować priorytetów');
+      toast.error(msg);
     } finally {
       setAiLoading(null);
     }

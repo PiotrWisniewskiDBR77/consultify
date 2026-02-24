@@ -10,14 +10,22 @@ import {
   Sparkles,
   Sprout,
   Tag,
+  Trash2,
   TreePine,
   User,
+  X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { BulkActionBar, type BulkAction } from '@/components/ui/ResizableTable';
 import { Api } from '@/services/api';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
+
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useConfirmDialog } from './shared/ConfirmDialog';
+import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 
 const IdeasMindMap = React.lazy(() => import('./IdeasMindMap'));
 
@@ -63,6 +71,7 @@ interface MyIdeasListContentProps {
   onIdeaClick: (ideaId: string, ideaData?: MyIdea) => void;
   onCreateIdea: () => void;
   onCountsChange: (counts: { total: number }) => void;
+  refreshTrigger?: number;
 }
 
 const STAGE_CONFIG: Record<IdeaStage, {
@@ -132,12 +141,22 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   onIdeaClick,
   onCreateIdea,
   onCountsChange,
+  refreshTrigger,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const [ideas, setIdeas] = useState<MyIdea[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTag, setActiveTag] = useState<string>('all');
+  const [inboxOnly, setInboxOnly] = useState(false);
+  const [convertIdea, setConvertIdea] = useState<MyIdea | null>(null);
+  const [converting, setConverting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [tagModalOpen, setTagModalOpen] = useState(false);
+  const [tagInput, setTagInput] = useState('');
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const { dialog: confirmDialog, confirm: showConfirm } = useConfirmDialog();
 
   const fetchIdeas = useCallback(async () => {
     try {
@@ -158,7 +177,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   useEffect(() => {
     fetchIdeas();
-  }, [fetchIdeas]);
+  }, [fetchIdeas, refreshTrigger]);
 
   useEffect(() => {
     onCountsChange({ total: ideas.length });
@@ -170,12 +189,267 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     return Array.from(s).sort((a, b) => a.localeCompare(b));
   }, [ideas]);
 
+  const inboxIdeas = useMemo(() => {
+    return (ideas || []).filter((i) => {
+      const src = String(i.sourceType || '').toLowerCase();
+      const isIntakeSrc = src === 'chat' || src === 'signal';
+      return isIntakeSrc && (i.stage || 'spark') === 'spark';
+    });
+  }, [ideas]);
+
+  const inboxCount = inboxIdeas.length;
+
   const filteredIdeas = useMemo(() => {
-    if (activeTag === 'all') return ideas;
-    return ideas.filter((i) =>
+    const base = inboxOnly ? inboxIdeas : ideas;
+    if (activeTag === 'all') return base;
+    return base.filter((i) =>
       (i.tags || []).map((x) => String(x).toLowerCase()).includes(activeTag)
     );
-  }, [ideas, activeTag]);
+  }, [ideas, inboxIdeas, inboxOnly, activeTag]);
+
+  const sortedIdeas = useMemo(() => {
+    const list = [...(filteredIdeas || [])];
+    if (!inboxOnly) return list;
+    // Inbox: newest first (faster triage)
+    return list.sort((a, b) => {
+      const ta = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      const tb = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      return tb - ta;
+    });
+  }, [filteredIdeas, inboxOnly]);
+
+  const visibleIdeaIds = useMemo(() => new Set(sortedIdeas.map((i) => i.id)), [sortedIdeas]);
+
+  useEffect(() => {
+    // Keep focused index valid when list changes
+    if (sortedIdeas.length === 0) {
+      setFocusedIndex(-1);
+      return;
+    }
+    setFocusedIndex((idx) => {
+      if (idx < 0) return 0;
+      if (idx >= sortedIdeas.length) return sortedIdeas.length - 1;
+      return idx;
+    });
+  }, [sortedIdeas.length]);
+
+  useEffect(() => {
+    // Drop selected ids that are no longer visible in current filter mode
+    setSelectedIds((prev) => {
+      const next = new Set<string>();
+      for (const id of prev) if (visibleIdeaIds.has(id)) next.add(id);
+      return next;
+    });
+  }, [visibleIdeaIds]);
+
+  const focusedIdea = useMemo(() => {
+    if (focusedIndex < 0 || focusedIndex >= sortedIdeas.length) return null;
+    return sortedIdeas[focusedIndex] || null;
+  }, [focusedIndex, sortedIdeas]);
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
+
+  const selectAllVisible = useCallback(() => {
+    setSelectedIds(new Set(sortedIdeas.map((i) => i.id)));
+  }, [sortedIdeas]);
+
+  const openFocusedIdea = useCallback(() => {
+    if (!focusedIdea) return;
+    onIdeaClick(focusedIdea.id, focusedIdea);
+  }, [focusedIdea, onIdeaClick]);
+
+  const openConvertForSelection = useCallback(() => {
+    if (selectedIds.size === 0 && focusedIdea) {
+      setConvertIdea(focusedIdea);
+      return;
+    }
+    // If multi-select, convert sequentially starting from first selected (modal is single-idea UI)
+    const firstId = Array.from(selectedIds)[0];
+    const first = sortedIdeas.find((i) => i.id === firstId) || focusedIdea;
+    if (first) setConvertIdea(first);
+  }, [focusedIdea, selectedIds, sortedIdeas]);
+
+  const bulkAddTag = useCallback(async () => {
+    const tag = tagInput.trim();
+    if (!tag) return;
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    setBulkBusy(true);
+    try {
+      await Promise.all(
+        ids.map(async (id) => {
+          const idea = ideas.find((i) => i.id === id);
+          const nextTags = Array.from(
+            new Set([...(idea?.tags || []).map((x) => String(x)), tag])
+          );
+          await Api.updateMyIdea(id, { tags: nextTags });
+        })
+      );
+      trackFunnelEvent('idea_triaged', { action: 'tag', count: ids.length, tag });
+      trackFunnelEvent('idea_bulk_tag_added', { count: ids.length, tag });
+      toast.success(
+        isPolish
+          ? `Dodano tag do ${ids.length} pomysłów`
+          : `Added tag to ${ids.length} ideas`
+      );
+      setTagModalOpen(false);
+      setTagInput('');
+      clearSelection();
+      await fetchIdeas();
+    } catch (err: any) {
+      toast.error(err?.message || (isPolish ? 'Nie udało się' : 'Failed'));
+    } finally {
+      setBulkBusy(false);
+    }
+  }, [tagInput, selectedIds, ideas, fetchIdeas, clearSelection, isPolish]);
+
+  const bulkDelete = useCallback(async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    const ok = await showConfirm({
+      title: isPolish ? 'Usunąć zaznaczone pomysły?' : 'Delete selected ideas?',
+      description: isPolish
+        ? `${ids.length} pomysłów zostanie trwale usuniętych.`
+        : `${ids.length} idea(s) will be permanently deleted.`,
+      confirmLabel: isPolish ? 'Usuń' : 'Delete',
+      cancelLabel: isPolish ? 'Anuluj' : 'Cancel',
+      variant: 'danger',
+    });
+    if (!ok) return;
+
+    setBulkBusy(true);
+    try {
+      await Promise.all(ids.map((id) => Api.deleteMyIdea(id)));
+      trackFunnelEvent('idea_triaged', { action: 'delete', count: ids.length });
+      trackFunnelEvent('idea_bulk_deleted', { count: ids.length });
+      toast.success(isPolish ? 'Usunięto' : 'Deleted');
+      clearSelection();
+      await fetchIdeas();
+    } catch (err: any) {
+      toast.error(err?.message || (isPolish ? 'Nie udało się' : 'Failed'));
+    } finally {
+      setBulkBusy(false);
+    }
+  }, [selectedIds, showConfirm, fetchIdeas, clearSelection, isPolish]);
+
+  const bulkActions: BulkAction[] = useMemo(
+    () => [
+      {
+        id: 'convert',
+        label: isPolish ? 'Konwertuj' : 'Convert',
+        icon: <Sparkles size={16} />,
+        onClick: openConvertForSelection,
+        disabled: bulkBusy,
+      },
+      {
+        id: 'tag',
+        label: isPolish ? 'Taguj' : 'Tag',
+        icon: <Tag size={16} />,
+        onClick: () => setTagModalOpen(true),
+        disabled: bulkBusy,
+      },
+      {
+        id: 'delete',
+        label: isPolish ? 'Usuń' : 'Delete',
+        icon: <Trash2 size={16} />,
+        onClick: bulkDelete,
+        variant: 'danger',
+        disabled: bulkBusy,
+      },
+    ],
+    [bulkBusy, bulkDelete, isPolish, openConvertForSelection]
+  );
+
+  const { showHelp, setShowHelp } = useKeyboardShortcuts({
+    enabled: true,
+    onNavigateDown: () => setFocusedIndex((i) => Math.min(sortedIdeas.length - 1, i + 1)),
+    onNavigateUp: () => setFocusedIndex((i) => Math.max(0, i - 1)),
+    onNavigateFirst: () => setFocusedIndex(sortedIdeas.length ? 0 : -1),
+    onNavigateLast: () => setFocusedIndex(sortedIdeas.length ? sortedIdeas.length - 1 : -1),
+    onNew: onCreateIdea,
+    onOpen: openFocusedIdea,
+    onToggleSelection: () => {
+      if (!focusedIdea) return;
+      toggleSelect(focusedIdea.id);
+    },
+    onSelectAll: selectAllVisible,
+    onClearSelection: clearSelection,
+    onSearch: () => {
+      window.dispatchEvent(new CustomEvent('mywork-focus-search'));
+    },
+    onCancel: () => {
+      if (selectedIds.size > 0) {
+        clearSelection();
+        return;
+      }
+      if (convertIdea) {
+        setConvertIdea(null);
+        return;
+      }
+      if (tagModalOpen) {
+        setTagModalOpen(false);
+        return;
+      }
+    },
+  });
+
+  // Ideas-specific single-key shortcuts: c=create, e=open, p=convert
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName);
+      const isEditable = target?.isContentEditable;
+      if (isInput || isEditable) return;
+
+      if (e.key === 'c' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        onCreateIdea();
+      }
+      if (e.key === 'e' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        openFocusedIdea();
+      }
+      if (e.key === 'p' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        openConvertForSelection();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onCreateIdea, openConvertForSelection, openFocusedIdea]);
+
+  const handleConvert = useCallback(
+    async (target: 'initiative' | 'task_set' | 'decision' | 'team_chat') => {
+      if (!convertIdea?.id) return;
+      try {
+        setConverting(true);
+        await Api.convertMyIdea(convertIdea.id, {
+          target,
+          options: { language: i18n.language },
+        });
+        trackFunnelEvent(`idea_converted_${target}`, { ideaId: convertIdea.id, surface: 'ideas-list' });
+        toast.success(isPolish ? 'Gotowe' : 'Done');
+        setConvertIdea(null);
+        await fetchIdeas();
+      } catch (err: any) {
+        toast.error(err?.message || (isPolish ? 'Nie udało się' : 'Failed'));
+      } finally {
+        setConverting(false);
+      }
+    },
+    [convertIdea?.id, fetchIdeas, i18n.language, isPolish]
+  );
 
   if (loading) {
     return (
@@ -184,6 +458,181 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       </div>
     );
   }
+
+  const convertModal = (
+    <MindMapErrorBoundary
+      fallback={null}
+    >
+      {convertIdea && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          onClick={() => !converting && setConvertIdea(null)}
+        >
+          <div
+            className="w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-navy-900 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200/60 dark:border-white/[0.06]">
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-purple-500" />
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {isPolish ? 'Konwertuj pomysł' : 'Convert idea'}
+                </div>
+              </div>
+              <button
+                onClick={() => setConvertIdea(null)}
+                disabled={converting}
+                className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:opacity-50"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="px-5 py-4 space-y-3">
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {convertIdea.title}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  onClick={() => handleConvert('initiative')}
+                  disabled={converting}
+                  className="text-left p-3 rounded-xl border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors disabled:opacity-60"
+                >
+                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    <Rocket size={16} className="text-amber-500" />
+                    {isPolish ? 'Inicjatywa' : 'Initiative'}
+                  </div>
+                  <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Utwórz inicjatywę w PMO' : 'Create a PMO initiative'}
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleConvert('task_set')}
+                  disabled={converting}
+                  className="text-left p-3 rounded-xl border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors disabled:opacity-60"
+                >
+                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    <CheckCircle2 size={16} className="text-emerald-500" />
+                    {isPolish ? 'Taski' : 'Tasks'}
+                  </div>
+                  <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Z next steps (jeśli są)' : 'From next steps (if available)'}
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleConvert('decision')}
+                  disabled={converting}
+                  className="text-left p-3 rounded-xl border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors disabled:opacity-60"
+                >
+                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    <Star size={16} className="text-blue-500" />
+                    {isPolish ? 'Decyzja' : 'Decision'}
+                  </div>
+                  <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Artefakt decyzyjny' : 'Decision artifact'}
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleConvert('team_chat')}
+                  disabled={converting}
+                  className="text-left p-3 rounded-xl border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors disabled:opacity-60"
+                >
+                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    <MessageSquarePlus size={16} className="text-purple-500" />
+                    {isPolish ? 'Team Chat' : 'Team Chat'}
+                  </div>
+                  <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Wątek do omówienia' : 'Discussion thread'}
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200/60 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
+              <button
+                onClick={() => setConvertIdea(null)}
+                disabled={converting}
+                className="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-50"
+              >
+                {isPolish ? 'Zamknij' : 'Close'}
+              </button>
+              {converting && (
+                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                  <Loader2 size={14} className="animate-spin" />
+                  {isPolish ? 'Tworzę…' : 'Creating…'}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </MindMapErrorBoundary>
+  );
+
+  const tagModal = tagModalOpen ? (
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={() => !bulkBusy && setTagModalOpen(false)}
+    >
+      <div
+        className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-navy-900 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200/60 dark:border-white/[0.06]">
+          <div className="flex items-center gap-2">
+            <Tag size={16} className="text-amber-500" />
+            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+              {isPolish ? 'Dodaj tag' : 'Add tag'}
+            </div>
+          </div>
+          <button
+            onClick={() => setTagModalOpen(false)}
+            disabled={bulkBusy}
+            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:opacity-50"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="px-5 py-4 space-y-3">
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {isPolish
+              ? `Zostanie dodany do ${selectedIds.size} pomysłów`
+              : `Will be added to ${selectedIds.size} ideas`}
+          </div>
+          <input
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            placeholder={isPolish ? 'np. backlog' : 'e.g. backlog'}
+            className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+            autoFocus
+          />
+        </div>
+
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200/60 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
+          <button
+            onClick={() => setTagModalOpen(false)}
+            disabled={bulkBusy}
+            className="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-50"
+          >
+            {isPolish ? 'Anuluj' : 'Cancel'}
+          </button>
+          <button
+            onClick={bulkAddTag}
+            disabled={bulkBusy || !tagInput.trim()}
+            className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            {bulkBusy && <Loader2 size={14} className="animate-spin" />}
+            {isPolish ? 'Dodaj' : 'Add'}
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   const renderEmpty = () => (
     <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
@@ -279,6 +728,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   if (viewMode === 'mindmap') {
     return (
       <div className="w-full h-full overflow-hidden">
+        {convertModal}
+        {tagModal}
         <MindMapErrorBoundary fallback={
           <div className="w-full flex flex-col items-center justify-center p-8 text-center" style={{ minHeight: 300 }}>
             <GitBranch size={48} className="text-slate-400 mb-4" />
@@ -309,14 +760,14 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   // ──────────── GARDEN VIEW ────────────
   if (viewMode === 'garden') {
-    if (filteredIdeas.length === 0) return <div className="p-4 overflow-y-auto h-full">{renderEmpty()}</div>;
+    if (sortedIdeas.length === 0) return <div className="p-4 overflow-y-auto h-full">{renderEmpty()}</div>;
 
     const allSections: { stage: IdeaStage; ideas: MyIdea[] }[] = [
-      { stage: 'spark' as IdeaStage, ideas: filteredIdeas.filter((i) => i.stage === 'spark') },
-      { stage: 'incubating' as IdeaStage, ideas: filteredIdeas.filter((i) => i.stage === 'incubating') },
-      { stage: 'shaping' as IdeaStage, ideas: filteredIdeas.filter((i) => i.stage === 'shaping') },
-      { stage: 'ready' as IdeaStage, ideas: filteredIdeas.filter((i) => i.stage === 'ready') },
-      { stage: 'promoted' as IdeaStage, ideas: filteredIdeas.filter((i) => i.stage === 'promoted') },
+      { stage: 'spark' as IdeaStage, ideas: sortedIdeas.filter((i) => i.stage === 'spark') },
+      { stage: 'incubating' as IdeaStage, ideas: sortedIdeas.filter((i) => i.stage === 'incubating') },
+      { stage: 'shaping' as IdeaStage, ideas: sortedIdeas.filter((i) => i.stage === 'shaping') },
+      { stage: 'ready' as IdeaStage, ideas: sortedIdeas.filter((i) => i.stage === 'ready') },
+      { stage: 'promoted' as IdeaStage, ideas: sortedIdeas.filter((i) => i.stage === 'promoted') },
     ];
     const gardenSections = allSections.filter((s) => s.ideas.length > 0);
 
@@ -355,9 +806,40 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
     return (
       <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950">
+        {convertModal}
+        {tagModal}
         <div className="p-4 space-y-6">
           {/* Tag filter */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <button
+              onClick={() =>
+                setInboxOnly((v) => {
+                  const next = !v;
+                  trackFunnelEvent('idea_inbox_opened', {
+                    enabled: next,
+                    viewMode,
+                    count: inboxCount,
+                  });
+                  return next;
+                })
+              }
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                inboxOnly
+                  ? 'bg-purple-500/15 border-purple-500 text-purple-600 dark:text-purple-400'
+                  : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+              }`}
+              title={isPolish ? 'Idea Inbox' : 'Idea Inbox'}
+            >
+              <span className="inline-flex items-center gap-1">
+                <Sparkles size={12} />
+                {isPolish ? 'Inbox' : 'Inbox'}
+                {inboxCount > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 text-[10px] rounded-full bg-white/60 dark:bg-navy-800/60">
+                    {inboxCount}
+                  </span>
+                )}
+              </span>
+            </button>
             <button
               onClick={() => setActiveTag('all')}
               className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
@@ -394,12 +876,12 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             </div>
             <div>
               <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-                {isPolish ? 'Ogród Pomysłów' : 'Idea Garden'}
+                {inboxOnly ? (isPolish ? 'Idea Inbox' : 'Idea Inbox') : isPolish ? 'Ogród Pomysłów' : 'Idea Garden'}
               </h2>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 {isPolish
-                  ? `${filteredIdeas.length} pomysłów rośnie w Twoim ogrodzie`
-                  : `${filteredIdeas.length} ideas growing in your garden`}
+                  ? `${sortedIdeas.length} pomysłów`
+                  : `${sortedIdeas.length} ideas`}
               </p>
             </div>
             <div className="ml-auto">
@@ -444,11 +926,37 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                 {/* Section cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {sectionIdeas.map((idea) => (
-                    <button
+                    <div
                       key={idea.id}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => onIdeaClick(idea.id, idea)}
-                      className={`group text-left p-4 rounded-2xl border ${cfg.borderColor} bg-white dark:bg-navy-900 hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5`}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onIdeaClick(idea.id, idea);
+                        }
+                      }}
+                      className={`group relative text-left p-4 rounded-2xl border ${cfg.borderColor} bg-white dark:bg-navy-900 hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 ${
+                        selectedIds.has(idea.id)
+                          ? 'ring-2 ring-purple-500/40'
+                          : focusedIdea?.id === idea.id
+                            ? 'ring-2 ring-amber-500/30'
+                            : ''
+                      }`}
                     >
+                      <div className="absolute top-3 right-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(idea.id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            toggleSelect(idea.id);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-purple-500 focus:ring-purple-500/30"
+                        />
+                      </div>
                       <div className="flex items-start gap-2.5 mb-2">
                         <div className={`flex-shrink-0 p-1.5 rounded-lg ${cfg.bgColor} group-hover:scale-110 transition-transform`}>
                           <Icon size={14} className={cfg.color} />
@@ -489,7 +997,20 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                           </div>
                         )}
                       </div>
-                    </button>
+                      <div className="mt-3 ml-8 flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConvertIdea(idea);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[11px] font-semibold hover:bg-purple-500/15 transition-colors"
+                          title={isPolish ? 'Konwertuj' : 'Convert'}
+                        >
+                          <Sparkles size={12} />
+                          {isPolish ? 'Konwertuj' : 'Convert'}
+                        </button>
+                      </div>
+                    </div>
                   ))}
 
                   {/* "Plant" card in spark section */}
@@ -512,7 +1033,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           })}
 
           {/* If no sections at all but we have ideas (shouldn't happen, but safety) */}
-          {gardenSections.length === 0 && filteredIdeas.length > 0 && (
+          {gardenSections.length === 0 && sortedIdeas.length > 0 && (
             <div className="text-center py-8 text-sm text-slate-500">
               {isPolish ? 'Brak pomysłów w wybranej kategorii' : 'No ideas matching selected tag'}
             </div>
@@ -526,9 +1047,39 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   if (viewMode === 'cards') {
     return (
       <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950">
+        {convertModal}
+        {tagModal}
         <div className="p-4 space-y-4">
           {/* Tag filter */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <button
+              onClick={() =>
+                setInboxOnly((v) => {
+                  const next = !v;
+                  trackFunnelEvent('idea_inbox_opened', {
+                    enabled: next,
+                    viewMode,
+                    count: inboxCount,
+                  });
+                  return next;
+                })
+              }
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                inboxOnly
+                  ? 'bg-purple-500/15 border-purple-500 text-purple-600 dark:text-purple-400'
+                  : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+              }`}
+            >
+              <span className="inline-flex items-center gap-1">
+                <Sparkles size={12} />
+                {isPolish ? 'Inbox' : 'Inbox'}
+                {inboxCount > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 text-[10px] rounded-full bg-white/60 dark:bg-navy-800/60">
+                    {inboxCount}
+                  </span>
+                )}
+              </span>
+            </button>
             <button
               onClick={() => setActiveTag('all')}
               className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
@@ -558,16 +1109,42 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             ))}
           </div>
 
-          {filteredIdeas.length === 0 ? (
+          {sortedIdeas.length === 0 ? (
             renderEmpty()
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredIdeas.map((idea) => (
-                <button
+              {sortedIdeas.map((idea) => (
+                <div
                   key={idea.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onIdeaClick(idea.id, idea)}
-                  className="group text-left p-5 rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-amber-400/50 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 dark:hover:shadow-amber-500/10 transition-all duration-200 hover:-translate-y-0.5"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onIdeaClick(idea.id, idea);
+                    }
+                  }}
+                  className={`group relative text-left p-5 rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-amber-400/50 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 dark:hover:shadow-amber-500/10 transition-all duration-200 hover:-translate-y-0.5 ${
+                    selectedIds.has(idea.id)
+                      ? 'ring-2 ring-purple-500/40'
+                      : focusedIdea?.id === idea.id
+                        ? 'ring-2 ring-amber-500/30'
+                        : ''
+                  }`}
                 >
+                  <div className="absolute top-4 right-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(idea.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        toggleSelect(idea.id);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-purple-500 focus:ring-purple-500/30"
+                    />
+                  </div>
                   <div className="flex items-start gap-3 mb-3">
                     <div className="flex-shrink-0 p-2 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 group-hover:bg-amber-500/20 dark:group-hover:bg-amber-500/30 transition-colors">
                       <Lightbulb size={20} className="text-amber-500 dark:text-amber-400" />
@@ -611,7 +1188,19 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                       )}
                     </div>
                   )}
-                </button>
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setConvertIdea(idea);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[11px] font-semibold hover:bg-purple-500/15 transition-colors"
+                    >
+                      <Sparkles size={12} />
+                      {isPolish ? 'Konwertuj' : 'Convert'}
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -623,9 +1212,40 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   // ──────────── LIST VIEW ────────────
   return (
     <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950">
+      {convertModal}
+      {tagModal}
+      {confirmDialog}
       <div className="p-4 space-y-4">
         {/* Tag filter */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <button
+            onClick={() =>
+              setInboxOnly((v) => {
+                const next = !v;
+                trackFunnelEvent('idea_inbox_opened', {
+                  enabled: next,
+                  viewMode,
+                  count: inboxCount,
+                });
+                return next;
+              })
+            }
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+              inboxOnly
+                ? 'bg-purple-500/15 border-purple-500 text-purple-600 dark:text-purple-400'
+                : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+            }`}
+          >
+            <span className="inline-flex items-center gap-1">
+              <Sparkles size={12} />
+              {isPolish ? 'Inbox' : 'Inbox'}
+              {inboxCount > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-[10px] rounded-full bg-white/60 dark:bg-navy-800/60">
+                  {inboxCount}
+                </span>
+              )}
+            </span>
+          </button>
           <button
             onClick={() => setActiveTag('all')}
             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
@@ -655,17 +1275,43 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           ))}
         </div>
 
-        {filteredIdeas.length === 0 ? (
+        {sortedIdeas.length === 0 ? (
           renderEmpty()
         ) : (
           <div className="space-y-2">
-            {filteredIdeas.map((idea) => (
-              <button
+            {sortedIdeas.map((idea) => (
+              <div
                 key={idea.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => onIdeaClick(idea.id, idea)}
-                className="w-full text-left p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:bg-slate-50 dark:hover:bg-navy-800/60 transition-colors"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onIdeaClick(idea.id, idea);
+                  }
+                }}
+                className={`w-full text-left p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:bg-slate-50 dark:hover:bg-navy-800/60 transition-colors ${
+                  selectedIds.has(idea.id)
+                    ? 'ring-2 ring-purple-500/40'
+                    : focusedIdea?.id === idea.id
+                      ? 'ring-2 ring-amber-500/30'
+                      : ''
+                }`}
               >
                 <div className="flex items-start justify-between gap-3">
+                  <div className="pt-0.5">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(idea.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        toggleSelect(idea.id);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-purple-500 focus:ring-purple-500/30"
+                    />
+                  </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
@@ -676,6 +1322,17 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                       {renderAreaBadge(idea.area)}
                       {renderPriorityBar(idea.priority)}
                       {renderPotentialDot(idea.potential)}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConvertIdea(idea);
+                        }}
+                        className="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[11px] font-semibold hover:bg-purple-500/15 transition-colors"
+                        title={isPolish ? 'Konwertuj' : 'Convert'}
+                      >
+                        <Sparkles size={12} />
+                        {isPolish ? 'Konwertuj' : 'Convert'}
+                      </button>
                     </div>
                     {idea.body ? (
                       <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
@@ -699,10 +1356,20 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                     {idea.createdAt ? new Date(idea.createdAt).toLocaleDateString() : ''}
                   </span>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         )}
+      </div>
+
+      {/* Bulk actions + shortcuts help */}
+      <div className="relative">
+        <BulkActionBar
+          selectedCount={selectedIds.size}
+          onClearSelection={clearSelection}
+          actions={bulkActions}
+        />
+        <KeyboardShortcutsHelp isOpen={showHelp} onClose={() => setShowHelp(false)} />
       </div>
     </div>
   );

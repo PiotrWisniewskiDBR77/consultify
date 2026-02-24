@@ -97,7 +97,78 @@
   "myWork": {
     "title": "Moja Praca",
     "inbox": "Skrzynka",
-    "focus": "Fokus",
+    "focus": {
+      "label": "Fokus",
+      "columns": {
+        "today": "Dziś",
+        "thisWeek": "Ten tydzień",
+        "later": "Później"
+      },
+      "task": "Zadanie",
+      "decision": "Decyzja",
+      "emptyColumn": "Brak elementów",
+      "actions": {
+        "done": "Gotowe",
+        "snooze": "Odłóż",
+        "remove": "Usuń z fokusa",
+        "delegate": "Deleguj"
+      },
+      "delegateTitle": "Deleguj zadanie",
+      "completed": "Oznaczono jako gotowe!",
+      "reopened": "Przywrócono",
+      "loadError": "Nie udało się załadować elementów",
+      "snoozed": "Odłożono",
+      "movedTo": "Przeniesiono do",
+      "removed": "Usunięto z fokusa",
+      "delegated": "Pomyślnie delegowano",
+      "error": "Nie udało się zaktualizować",
+      "empty": {
+        "title": "Brak elementów do skupienia",
+        "description": "Twoje zadania i decyzje pojawią się tutaj. Zacznij od sprawdzenia skrzynki."
+      },
+      "goToInbox": "Przejdź do skrzynki",
+      "progress": {
+        "done": "gotowe dziś",
+        "allClear": "Wszystko zrobione!",
+        "total": "łącznie"
+      },
+      "planMyDay": {
+        "title": "Zaplanuj dzień",
+        "subtitle": "Wybierz elementy na dziś. Posortowane wg priorytetu i pilności.",
+        "addToday": "Dziś",
+        "skip": "Pomiń",
+        "done": "Gotowe",
+        "noSuggestions": "Brak kolejnych sugestii."
+      },
+      "filters": {
+        "all": "Wszystkie",
+        "tasks": "Zadania",
+        "decisions": "Decyzje",
+        "hideCompleted": "Ukryj ukończone",
+        "sortManual": "Ręcznie",
+        "sortPriority": "Priorytet",
+        "sortDueDate": "Termin"
+      },
+      "snooze": {
+        "moveTo": "Przenieś do",
+        "thisWeek": "Ten tydzień",
+        "later": "Później"
+      },
+      "card": {
+        "blocked": "Zablokowane",
+        "approve": "Zatwierdź",
+        "reject": "Odrzuć"
+      },
+      "shortcuts": {
+        "navigate": "Nawigacja",
+        "done": "Gotowe",
+        "snooze": "Odłóż",
+        "remove": "Usuń",
+        "moveToday": "Dziś",
+        "moveWeek": "Tydzień",
+        "open": "Otwórz"
+      }
+    },
     "calendar": "Kalendarz",
     "tasks": "Zadania",
     "notifications": {
@@ -109,7 +180,8 @@
       "emptyColumn": "Brak decyzji",
       "emptyTitle": "Brak decyzji",
       "emptySubtitle": "Utwórz pierwszą decyzję, aby zacząć",
-      "createCta": "Utwórz decyzję"
+      "createCta": "Utwórz decyzję",
+      "relatedNotes": "Powiązane notatki"
     },
     "errors": {
       "fetchFailed": "Nie udało się załadować",
@@ -133,7 +205,34 @@
         "inProgress": "W toku",
         "blocked": "Zablokowane"
       },
-      "statusUpdated": "Zaktualizowano status"
+      "statusUpdated": "Zaktualizowano status",
+      "deleteTitle": "Usunąć zadanie?",
+      "deleteDesc": "Zadanie zostanie trwale usunięte.",
+      "bulkDeleteTitle": "Usunąć wybrane zadania?",
+      "bulkDeleteDesc": "Wybrane zadania zostaną trwale usunięte. Tej operacji nie można cofnąć.",
+      "smartSort": "Smart sort",
+      "smartSortTooltip": "Smart sort: Zaległe → Dzisiaj → Wysoki priorytet → wg terminu",
+      "columns": "Kolumny",
+      "toggleColumns": "Pokaż/ukryj kolumny"
+    },
+    "triage": {
+      "infoStrip": "Nowe zadania do triażu. Użyj akcji w wierszu, aby zaakceptować, zaplanować, odłożyć lub zarchiwizować.",
+      "acceptToday": "Przyjmij (Dzisiaj)",
+      "acceptedToday": "Przyjęto na dziś",
+      "schedule": "Zaplanuj",
+      "scheduled": "Zaplanowano",
+      "snooze": "Odłóż na 2 dni",
+      "snoozed": "Odłożono na 2 dni",
+      "archive": "Archiwizuj",
+      "archived": "Zarchiwizowano"
+    },
+    "savedViews": {
+      "label": "Widoki",
+      "title": "Zapisane widoki",
+      "namePlaceholder": "Nazwa widoku…",
+      "saved": "Widok zapisany",
+      "deleted": "Widok usunięty",
+      "empty": "Brak zapisanych widoków"
     },
     "ideas": {
       "saveAsIdea": "Zapisz jako pomysł",
@@ -431,6 +530,14 @@
     "calendar": "Kalendarz",
     "decisions": "Decyzje",
     "heatmap": "Mapa obciążenia",
+    "demo": {
+      "label": "Demo",
+      "toggleHint": "Przełącz dane demo dla Centrum Realizacji (tylko lokalnie)",
+      "reportsCaption": "Historia raportów (demo)",
+      "lastGenerated": "Ostatnio",
+      "nextRun": "Następnie",
+      "empty": "Brak elementów demo"
+    },
     "execSnapshot": {
       "title": "Migawka executive",
       "generatedAt": "Wygenerowano",
@@ -481,7 +588,13 @@
         "current": "Aktualnie",
         "target": "Cel",
         "empty": "Brak dostępnych KPI.",
-        "dataQuality": "Jakość danych"
+        "dataQuality": "Jakość danych",
+        "derived": {
+          "initiativesExecuting": "Inicjatywy w realizacji",
+          "initiativesBlocked": "Inicjatywy zablokowane",
+          "tasksOverdue": "Zadania po terminie",
+          "decisionsPending": "Decyzje oczekujące"
+        }
       },
       "roi": {
         "title": "ROI / wpływ finansowy",
@@ -4280,5 +4393,54 @@
     "tokenPurchase": "Zakup tokenów",
     "tokenCredited": "Tokeny zaksięgowane",
     "auditTrail": "Ślad audytu"
+  },
+  "command": {
+    "placeholder": "Szukaj komend, akcji, nawigacji...",
+    "noResults": "Brak wyników",
+    "tryDifferent": "Spróbuj innego hasła",
+    "category": {
+      "navigation": "Nawigacja",
+      "actions": "Akcje",
+      "recent": "Ostatnie"
+    },
+    "hint": {
+      "navigate": "Nawiguj",
+      "select": "Wybierz",
+      "close": "Zamknij",
+      "powered": "Szybkie akcje"
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "dashboardDesc": "Przegląd dla executive",
+      "focus": "Focus board",
+      "focusDesc": "Dzienne priorytety",
+      "inbox": "Inbox",
+      "inboxDesc": "Triage nowych elementów",
+      "tasks": "Wszystkie zadania",
+      "tasksDesc": "Lista zadań",
+      "decisions": "Decyzje",
+      "decisionsDesc": "Oczekujące decyzje",
+      "team": "Zespół",
+      "teamDesc": "Analityka i obciążenie",
+      "settings": "Ustawienia",
+      "settingsDesc": "Preferencje i powiadomienia"
+    },
+    "action": {
+      "createTask": "Utwórz zadanie",
+      "createTaskDesc": "Dodaj nowe zadanie",
+      "approveAll": "Szybko zatwierdź",
+      "approveAllDesc": "Zatwierdź następną oczekującą decyzję",
+      "reviewNextDecision": "Przejrzyj następne",
+      "reviewNextDecisionDesc": "Tryb kolejki ze skrótami (J/K, A/R/S, ?)",
+      "approved": "Decyzja zatwierdzona",
+      "error": "Coś poszło nie tak",
+      "noDecisions": "Brak oczekujących decyzji",
+      "markDone": "Oznacz zadanie jako zrobione",
+      "markDoneDesc": "Zamknij bieżące zadanie",
+      "filterOverdue": "Pokaż zaległe",
+      "filterOverdueDesc": "Filtruj zaległe zadania",
+      "schedule": "Otwórz kalendarz",
+      "scheduleDesc": "Pokaż zaplanowane elementy"
+    }
   }
 }
