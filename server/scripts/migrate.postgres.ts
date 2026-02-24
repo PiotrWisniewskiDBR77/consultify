@@ -215,6 +215,14 @@ function pathToFileUrl(p: string) {
 async function main() {
   dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
   dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+  // Optional: load staging/remote DB config (e.g. ENV_FILE=.env.staging.local)
+  const extraEnv = process.env.ENV_FILE || process.env.DOTENV_PATH;
+  if (extraEnv) {
+    const extraPath = path.resolve(process.cwd(), extraEnv);
+    if (fs.existsSync(extraPath)) {
+      dotenv.config({ path: extraPath, override: true });
+    }
+  }
 
   const args = parseArgs(process.argv.slice(2));
   const migrationsDir = path.resolve(process.cwd(), args.dir || 'server/migrations');
