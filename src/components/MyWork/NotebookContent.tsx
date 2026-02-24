@@ -61,8 +61,8 @@ import {
   DetailsNode,
   DetailsSummaryNode,
 } from './notebook/extensions';
-import { KnowledgePulse } from './notebook/KnowledgePulse';
 import { NewPageModal, type PageTemplate } from './notebook/NewPageModal';
+import { NotebookContextPanel } from './notebook/NotebookContextPanel';
 import { NotebookToolbar } from './notebook/NotebookToolbar';
 import {
   detectSlashTrigger,
@@ -77,8 +77,6 @@ interface NotebookContentProps {
   onCountsChange?: (counts: NotebookCounts) => void;
   linkedIdeasOpen?: boolean;
   onLinkedIdeasOpenChange?: (open: boolean) => void;
-  pulseOpen?: boolean;
-  onPulseOpenChange?: (open: boolean) => void;
   topicsOpen?: boolean;
   onTopicsOpenChange?: (open: boolean) => void;
   chatOpen?: boolean;
@@ -402,8 +400,6 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   onCountsChange,
   linkedIdeasOpen,
   onLinkedIdeasOpenChange,
-  pulseOpen,
-  onPulseOpenChange,
   topicsOpen,
   onTopicsOpenChange,
   chatOpen,
@@ -549,10 +545,6 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [sortBy, setSortBy] = useState<'updated' | 'created' | 'title'>('updated');
   const [maturityFilter, setMaturityFilter] = useState<NotebookMaturity | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
-
-  const [pulseOpenInternal, setPulseOpenInternal] = useState(false);
-  const isPulseOpen = pulseOpen ?? pulseOpenInternal;
-  const setPulseOpen = onPulseOpenChange ?? setPulseOpenInternal;
 
   const inboxCount = useMemo(() => pages.filter((p) => p.status === 'inbox').length, [pages]);
   const activeCount = useMemo(() => pages.filter((p) => p.status === 'active').length, [pages]);
@@ -749,7 +741,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       }
       if (e.metaKey && e.shiftKey && e.key === 'k') {
         e.preventDefault();
-        setPulseOpen(!isPulseOpen);
+        setIdeasOpen(!ideasOpen);
       }
       if (e.metaKey && e.shiftKey && e.key === 'a') {
         e.preventDefault();
@@ -783,7 +775,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       window.removeEventListener('notebook-new-page', handleNewPage);
       window.removeEventListener('notebook-extract-actions', handleExtractActions);
     };
-  }, [activePage, handleTogglePin, isPulseOpen, setPulseOpen, editor, isPolish]);
+  }, [activePage, handleTogglePin, ideasOpen, setIdeasOpen, editor, isPolish]);
 
   // Slash-command entity creation events
   useEffect(() => {
@@ -971,73 +963,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     }
   };
 
-  // ----------------------------------------------------------------
-  // Linked Ideas panel (T009 → T011)
-  // ----------------------------------------------------------------
-  interface LinkedIdea {
-    id: string;
-    title: string;
-    body?: string | null;
-    tags?: string[];
-  }
-
   const [ideasOpenInternal, setIdeasOpenInternal] = useState(false);
   const ideasOpen = linkedIdeasOpen ?? ideasOpenInternal;
   const setIdeasOpen = onLinkedIdeasOpenChange ?? setIdeasOpenInternal;
-
-  const [linkedIdeas, setLinkedIdeas] = useState<LinkedIdea[]>([]);
-  const [linkedIdeasLoading, setLinkedIdeasLoading] = useState(false);
-
-  useEffect(() => {
-    if (!ideasOpen) return;
-    let cancelled = false;
-    const load = async () => {
-      setLinkedIdeasLoading(true);
-      try {
-        const q = [title, pageTags.join(' ')].filter(Boolean).join(' ').trim();
-        const ideas = q
-          ? await Api.suggestMyIdeas(q.slice(0, 300), 10)
-          : await Api.getMyIdeas({ limit: 10 });
-        if (!cancelled) setLinkedIdeas(Array.isArray(ideas) ? ideas : []);
-      } catch {
-        if (!cancelled) setLinkedIdeas([]);
-      } finally {
-        if (!cancelled) setLinkedIdeasLoading(false);
-      }
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [ideasOpen, title, pageTags]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleInsertIdea = (idea: LinkedIdea) => {
-    if (!editor) return;
-    editor
-      .chain()
-      .focus()
-      .insertContent({
-        type: 'callout',
-        attrs: { variant: 'info' },
-        content: [
-          {
-            type: 'paragraph',
-            content: [{ type: 'text', text: `💡 ${idea.title}` }],
-          },
-          ...(idea.body
-            ? [
-                {
-                  type: 'paragraph',
-                  content: [{ type: 'text', text: idea.body }],
-                },
-              ]
-            : []),
-        ],
-      })
-      .run();
-    trackFunnelEvent('my_idea_used', { source: 'notebook', ideaId: idea.id });
-    toast.success(isPolish ? 'Wstawiono pomysł' : 'Idea inserted');
-  };
 
   return (
     <div className="flex h-[calc(100vh-220px)] min-h-[520px]">
@@ -1620,105 +1548,17 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           )}
         </div>
 
-        {/* Knowledge Pulse right panel */}
-        {isPulseOpen && activePage && (
-          <KnowledgePulse
+        {/* Unified context panel (Ideas + Initiatives + Tasks + Decisions + Notes) */}
+        {ideasOpen && activePage && (
+          <NotebookContextPanel
+            open={ideasOpen}
+            onClose={() => setIdeasOpen(false)}
+            editor={editor}
+            noteId={activePage.id}
             noteTitle={title}
             noteTags={pageTags}
-            noteId={activePage.id}
-            onInsertReference={(item) => {
-              if (!editor) return;
-              const typeLabel =
-                item.type === 'initiative' ? '🎯' : item.type === 'task' ? '✅' : '⚖️';
-              editor
-                .chain()
-                .focus()
-                .insertContent({
-                  type: 'callout',
-                  attrs: { variant: 'info' },
-                  content: [
-                    {
-                      type: 'paragraph',
-                      content: [
-                        { type: 'text', text: `${typeLabel} ${item.title} [${item.type}]` },
-                      ],
-                    },
-                  ],
-                })
-                .run();
-              toast.success(isPolish ? 'Wstawiono odniesienie' : 'Reference inserted');
-            }}
-            onOpenItem={(item) => {
-              window.dispatchEvent(new CustomEvent('mywork-open-item', {
-                detail: { type: item.type, id: item.id, name: item.title },
-              }));
-            }}
-            onClose={() => setPulseOpen(false)}
+            allNotes={pages}
           />
-        )}
-
-        {/* Linked Ideas right panel (T009 → T011) */}
-        {ideasOpen && activePage && (
-          <div className="w-72 shrink-0 border-l border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950 flex flex-col">
-            <div className="flex items-center justify-between px-3 py-3 border-b border-slate-200 dark:border-navy-800">
-              <div className="flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-300">
-                <Lightbulb size={16} />
-                <span>{t('myWork.notebook.linkedIdeas', 'Linked Ideas')}</span>
-              </div>
-              <button
-                onClick={() => setIdeasOpen(false)}
-                className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
-              >
-                <X size={14} />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-2 space-y-2">
-              {linkedIdeasLoading ? (
-                <div className="p-3 text-xs text-slate-500 dark:text-slate-400 text-center">
-                  {t('common.loading', 'Loading…')}
-                </div>
-              ) : linkedIdeas.length === 0 ? (
-                <div className="p-3 text-xs text-slate-500 dark:text-slate-400 text-center">
-                  {t('myWork.notebook.noLinkedIdeas', 'No related ideas found')}
-                </div>
-              ) : (
-                linkedIdeas.map((idea) => (
-                  <div
-                    key={idea.id}
-                    className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/60 px-3 py-2.5"
-                  >
-                    <div className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
-                      {idea.title}
-                    </div>
-                    {idea.body && (
-                      <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
-                        {idea.body}
-                      </div>
-                    )}
-                    {idea.tags && idea.tags.length > 0 && (
-                      <div className="mt-1.5 flex items-center gap-1 flex-wrap">
-                        {idea.tags.slice(0, 3).map((tag) => (
-                          <span
-                            key={tag}
-                            className="rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 text-[10px]"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <button
-                      onClick={() => handleInsertIdea(idea)}
-                      className="mt-2 w-full text-center rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 px-2 py-1 text-[11px] font-medium transition-colors"
-                    >
-                      {t('myWork.notebook.insertIdea', 'Insert into page')}
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
         )}
 
         {/* AI Action Items right panel */}

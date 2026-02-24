@@ -21,7 +21,6 @@ import {
   Flame,
   Flower2,
   GitBranch,
-  HeartPulse,
   Hourglass,
   Inbox,
   Kanban,
@@ -319,7 +318,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('garden');
   const [decisionsViewMode, setDecisionsViewMode] = useState<DecisionsViewMode>('list');
   const [notebookLinkedIdeasOpen, setNotebookLinkedIdeasOpen] = useState(false);
-  const [notebookPulseOpen, setNotebookPulseOpen] = useState(false);
   const [notebookTopicsOpen, setNotebookTopicsOpen] = useState(false);
   const [notebookChatOpen, setNotebookChatOpen] = useState(false);
   const [notebookCreateReqId, setNotebookCreateReqId] = useState(0);
@@ -1313,16 +1311,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               onLinkedIdeasOpenChange={(v) => {
                 setNotebookLinkedIdeasOpen(v);
                 if (v) {
-                  setNotebookPulseOpen(false);
-                  setNotebookTopicsOpen(false);
-                  setNotebookChatOpen(false);
-                }
-              }}
-              pulseOpen={notebookPulseOpen}
-              onPulseOpenChange={(v) => {
-                setNotebookPulseOpen(v);
-                if (v) {
-                  setNotebookLinkedIdeasOpen(false);
                   setNotebookTopicsOpen(false);
                   setNotebookChatOpen(false);
                 }
@@ -1332,7 +1320,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 setNotebookTopicsOpen(v);
                 if (v) {
                   setNotebookLinkedIdeasOpen(false);
-                  setNotebookPulseOpen(false);
                   setNotebookChatOpen(false);
                 }
               }}
@@ -1341,7 +1328,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 setNotebookChatOpen(v);
                 if (v) {
                   setNotebookLinkedIdeasOpen(false);
-                  setNotebookPulseOpen(false);
                   setNotebookTopicsOpen(false);
                 }
               }}
@@ -1410,7 +1396,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   useEffect(() => {
     if (activeTab !== 'notebook') {
       setNotebookLinkedIdeasOpen(false);
-      setNotebookPulseOpen(false);
       setNotebookTopicsOpen(false);
       setNotebookChatOpen(false);
     }
@@ -1645,7 +1630,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     const next = !notebookLinkedIdeasOpen;
                     setNotebookLinkedIdeasOpen(next);
                     if (next) {
-                      setNotebookPulseOpen(false);
                       setNotebookTopicsOpen(false);
                       setNotebookChatOpen(false);
                     }
@@ -1655,30 +1639,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                       ? 'bg-white dark:bg-navy-800 text-amber-600 dark:text-amber-300 shadow-sm border border-slate-200 dark:border-navy-600'
                       : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                   }`}
-                  title={isPolish ? 'Powiązane pomysły' : 'Linked Ideas'}
+                  title={isPolish ? 'Kontekst notatki' : 'Note context'}
                   aria-pressed={notebookLinkedIdeasOpen}
                 >
                   <Lightbulb size={16} />
-                </button>
-                <button
-                  onClick={() => {
-                    const next = !notebookPulseOpen;
-                    setNotebookPulseOpen(next);
-                    if (next) {
-                      setNotebookLinkedIdeasOpen(false);
-                      setNotebookTopicsOpen(false);
-                      setNotebookChatOpen(false);
-                    }
-                  }}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
-                    notebookPulseOpen
-                      ? 'bg-white dark:bg-navy-800 text-rose-600 dark:text-rose-300 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                  }`}
-                  title={isPolish ? 'Knowledge Pulse' : 'Knowledge Pulse'}
-                  aria-pressed={notebookPulseOpen}
-                >
-                  <HeartPulse size={16} />
                 </button>
                 <button
                   onClick={() => {
@@ -1686,7 +1650,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     setNotebookTopicsOpen(next);
                     if (next) {
                       setNotebookLinkedIdeasOpen(false);
-                      setNotebookPulseOpen(false);
                       setNotebookChatOpen(false);
                     }
                   }}
@@ -1706,7 +1669,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     setNotebookChatOpen(next);
                     if (next) {
                       setNotebookLinkedIdeasOpen(false);
-                      setNotebookPulseOpen(false);
                       setNotebookTopicsOpen(false);
                     }
                   }}
