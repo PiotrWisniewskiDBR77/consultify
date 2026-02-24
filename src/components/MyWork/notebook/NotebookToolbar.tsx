@@ -1,5 +1,9 @@
 import type { Editor } from '@tiptap/react';
 import {
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
   Bold,
   Code,
   Columns3,
@@ -13,8 +17,8 @@ import {
   ListOrdered,
   Minus,
   Redo,
-  Sparkles,
   Strikethrough,
+  Trash2,
   ToggleRight,
   Undo,
 } from 'lucide-react';
@@ -23,7 +27,6 @@ import { useTranslation } from 'react-i18next';
 
 interface NotebookToolbarProps {
   editor: Editor;
-  onAIClick?: () => void;
 }
 
 interface ToolbarBtnProps {
@@ -54,12 +57,29 @@ const Divider: React.FC = () => (
   <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5" />
 );
 
-export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor, onAIClick }) => {
+const DELETABLE_BLOCKS = ['callout', 'details', 'table', 'blockquote', 'horizontalRule'];
+
+function deleteContainingBlock(editor: Editor): boolean {
+  const { state } = editor;
+  const { $from } = state.selection;
+  for (let d = $from.depth; d > 0; d--) {
+    const node = $from.node(d);
+    if (DELETABLE_BLOCKS.includes(node.type.name)) {
+      const pos = $from.before(d);
+      editor.chain().focus().deleteRange({ from: pos, to: pos + node.nodeSize }).run();
+      return true;
+    }
+  }
+  return false;
+}
+
+export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor }) => {
   const { i18n } = useTranslation();
   const pl = i18n.language === 'pl';
 
   return (
-    <div className="flex items-center gap-0.5 px-3 py-1.5 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950 flex-wrap">
+    <div className="flex items-center gap-0.5 px-3 py-1.5 shrink-0 flex-wrap">
+      {/* Historia */}
       <Btn
         icon={Undo}
         onClick={() => editor.chain().focus().undo().run()}
@@ -72,9 +92,9 @@ export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor, onAICl
         disabled={!editor.can().redo()}
         title={pl ? 'Ponów' : 'Redo'}
       />
-
       <Divider />
 
+      {/* Formatowanie inline */}
       <Btn
         icon={Bold}
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -99,9 +119,36 @@ export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor, onAICl
         isActive={editor.isActive('code')}
         title={pl ? 'Kod inline' : 'Inline code'}
       />
-
       <Divider />
 
+      {/* Wyrównanie */}
+      <Btn
+        icon={AlignLeft}
+        onClick={() => editor.chain().focus().setTextAlign('left').run()}
+        isActive={editor.isActive({ textAlign: 'left' })}
+        title={pl ? 'Wyrównaj do lewej' : 'Align left'}
+      />
+      <Btn
+        icon={AlignCenter}
+        onClick={() => editor.chain().focus().setTextAlign('center').run()}
+        isActive={editor.isActive({ textAlign: 'center' })}
+        title={pl ? 'Wyśrodkuj' : 'Align center'}
+      />
+      <Btn
+        icon={AlignRight}
+        onClick={() => editor.chain().focus().setTextAlign('right').run()}
+        isActive={editor.isActive({ textAlign: 'right' })}
+        title={pl ? 'Wyrównaj do prawej' : 'Align right'}
+      />
+      <Btn
+        icon={AlignJustify}
+        onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+        isActive={editor.isActive({ textAlign: 'justify' })}
+        title={pl ? 'Justowanie' : 'Justify'}
+      />
+      <Divider />
+
+      {/* Nagłówki */}
       <Btn
         icon={Heading1}
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
@@ -120,9 +167,9 @@ export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor, onAICl
         isActive={editor.isActive('heading', { level: 3 })}
         title={pl ? 'Nagłówek 3' : 'Heading 3'}
       />
-
       <Divider />
 
+      {/* Listy */}
       <Btn
         icon={List}
         onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -141,9 +188,9 @@ export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor, onAICl
         isActive={editor.isActive('taskList')}
         title={pl ? 'Checklista' : 'Todo list'}
       />
-
       <Divider />
 
+      {/* Bloki */}
       <Btn
         icon={Info}
         onClick={() => (editor.commands as any).setCallout({ variant: 'info' })}
@@ -164,19 +211,13 @@ export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor, onAICl
         onClick={() => editor.chain().focus().setHorizontalRule().run()}
         title={pl ? 'Separator' : 'Divider'}
       />
+      <Btn
+        icon={Trash2}
+        onClick={() => deleteContainingBlock(editor)}
+        title={pl ? 'Usuń blok' : 'Delete block'}
+      />
 
       <div className="flex-1" />
-
-      {onAIClick && (
-        <button
-          type="button"
-          onClick={onAIClick}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 text-white text-xs font-medium transition-all"
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          {pl ? 'AI' : 'AI'}
-        </button>
-      )}
     </div>
   );
 };

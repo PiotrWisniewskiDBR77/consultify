@@ -6,14 +6,16 @@ import {
   Loader2,
   Scale,
   Target,
+  ListPlus,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { PulseItemPickerModal } from './PulseItemPickerModal';
 
-interface PulseItem {
+export interface PulseItem {
   id: string;
   type: 'initiative' | 'task' | 'decision';
   title: string;
@@ -47,6 +49,7 @@ export const KnowledgePulse: React.FC<KnowledgePulseProps> = ({
   const pl = i18n.language === 'pl';
   const [items, setItems] = useState<PulseItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pickerType, setPickerType] = useState<'initiative' | 'task' | 'decision' | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -121,27 +124,60 @@ export const KnowledgePulse: React.FC<KnowledgePulseProps> = ({
             <Loader2 size={16} className="animate-spin text-slate-400" />
           </div>
         ) : items.length === 0 ? (
-          <div className="p-4 text-center text-xs text-slate-500 dark:text-slate-400">
+          <div className="p-4 text-center text-xs text-slate-500 dark:text-slate-400 space-y-3">
             <HeartPulse size={24} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
             <p className="font-medium">{pl ? 'Brak powiązań' : 'No connections found'}</p>
             <p className="mt-1">{pl ? 'Dodaj tagi i treść, aby odkryć powiązania' : 'Add tags and content to discover connections'}</p>
+            <div className="flex flex-wrap justify-center gap-2 pt-2">
+              {(['initiative', 'task', 'decision'] as const).map((t) => {
+                const c = TYPE_CONFIG[t];
+                return (
+                  <button
+                    key={t}
+                    onClick={() => setPickerType(t)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-medium ${c.bg} ${c.color} hover:opacity-80 transition-opacity`}
+                  >
+                    <c.icon size={12} />
+                    {pl ? c.labelPl : c.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         ) : (
           (['initiative', 'task', 'decision'] as const).map((type) => {
             const group = grouped[type];
-            if (group.length === 0) return null;
             const cfg = TYPE_CONFIG[type];
             const Icon = cfg.icon;
 
             return (
               <div key={type}>
-                <div className={`flex items-center gap-1.5 px-1 mb-1.5 text-[11px] font-semibold ${cfg.color}`}>
-                  <Icon size={12} />
-                  <span>{pl ? cfg.labelPl : cfg.label}</span>
-                  <span className={`${cfg.bg} px-1.5 py-0.5 rounded-full text-[10px]`}>{group.length}</span>
+                <div className={`flex items-center justify-between gap-2 px-1 mb-1.5 text-[11px] font-semibold ${cfg.color}`}>
+                  <div className="flex items-center gap-1.5">
+                    <Icon size={12} />
+                    <span>{pl ? cfg.labelPl : cfg.label}</span>
+                    {group.length > 0 && (
+                      <span className={`${cfg.bg} px-1.5 py-0.5 rounded-full text-[10px]`}>{group.length}</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setPickerType(type)}
+                    className="text-[10px] font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center gap-1 transition-colors"
+                    title={pl ? 'Przeglądaj wszystkie i wybierz z listy' : 'Browse all and pick from list'}
+                  >
+                    <ListPlus size={10} />
+                    {pl ? 'Wszystkie' : 'All'}
+                  </button>
                 </div>
                 <div className="space-y-1.5">
-                  {group.map((item) => (
+                  {group.length === 0 ? (
+                    <button
+                      onClick={() => setPickerType(type)}
+                      className="w-full rounded-lg border border-dashed border-slate-300 dark:border-navy-600 px-3 py-2 text-[11px] text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/40 hover:border-slate-400 dark:hover:border-navy-500 transition-colors text-left"
+                    >
+                      {pl ? 'Brak w top 3 — przeglądaj wszystkie' : 'Not in top 3 — browse all'}
+                    </button>
+                  ) : group.map((item) => (
                     <div
                       key={item.id}
                       className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/60 px-3 py-2"
@@ -180,6 +216,14 @@ export const KnowledgePulse: React.FC<KnowledgePulseProps> = ({
           })
         )}
       </div>
+
+      <PulseItemPickerModal
+        open={pickerType !== null}
+        onClose={() => setPickerType(null)}
+        type={pickerType ?? 'initiative'}
+        onInsertReference={onInsertReference}
+        onOpenItem={onOpenItem}
+      />
     </div>
   );
 };

@@ -4,6 +4,7 @@ import {
   Flower2,
   GitBranch,
   Lightbulb,
+  Link2,
   Loader2,
   Plus,
   Rocket,
@@ -61,6 +62,10 @@ export type MyIdea = {
   area?: string | null;
   priority?: number | null;
   branch?: string | null;
+  mapItems?: number | null; // nodes+edges
+  mapNodes?: number | null;
+  mapEdges?: number | null;
+  openMap?: boolean;
 };
 
 export type IdeasViewMode = 'list' | 'cards' | 'garden' | 'mindmap';
@@ -156,6 +161,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   const [tagModalOpen, setTagModalOpen] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [mapMetrics, setMapMetrics] = useState<Record<string, { items: number; nodes: number; edges: number }>>(
+    {}
+  );
   const { dialog: confirmDialog, confirm: showConfirm } = useConfirmDialog();
 
   const fetchIdeas = useCallback(async () => {
@@ -167,6 +175,24 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         stage: mapRawStageToStage(raw.stage),
       }));
       setIdeas(mapped as MyIdea[]);
+
+      // Fetch map counts (nodes+edges) for visible ideas to turn list into a "map catalog".
+      try {
+        const ids = mapped.map((i) => String(i?.id || '')).filter(Boolean);
+        const res = await Api.getMyIdeaMapMetrics(ids);
+        const metrics = res?.metrics && typeof res.metrics === 'object' ? res.metrics : {};
+        const next: Record<string, { items: number; nodes: number; edges: number }> = {};
+        for (const id of ids) {
+          const m = metrics[id];
+          const nodes = Number(m?.nodes || 0);
+          const edges = Number(m?.edges || 0);
+          next[id] = { nodes, edges, items: Number(m?.items || nodes + edges) };
+        }
+        setMapMetrics(next);
+      } catch {
+        // best-effort
+        setMapMetrics({});
+      }
     } catch (err) {
       console.error('Failed to fetch ideas:', err);
       toast.error(t('myWork.errors.fetchFailed', 'Failed to load ideas'));
@@ -174,6 +200,36 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       setLoading(false);
     }
   }, [searchQuery, t]);
+
+  const renderMapBadge = (ideaId: string) => {
+    const m = mapMetrics[String(ideaId)] || null;
+    if (!m) return null;
+    const items = Number(m.items || 0);
+    const label = isPolish ? 'Mapa' : 'Map';
+    return (
+      <span
+        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-slate-500/10 text-slate-500 dark:text-slate-400"
+        title={isPolish ? `Elementy mapy: ${items}` : `Map items: ${items}`}
+      >
+        <Link2 size={9} />
+        {label} {items}
+      </span>
+    );
+  };
+
+  const renderBushBadge = (branch?: string | null) => {
+    const b = String(branch || '').trim();
+    if (!b) return null;
+    return (
+      <span
+        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400"
+        title={isPolish ? 'Bush / gałąź' : 'Bush / branch'}
+      >
+        <GitBranch size={9} />
+        {b}
+      </span>
+    );
+  };
 
   useEffect(() => {
     fetchIdeas();
@@ -1157,6 +1213,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                         {renderSourceBadge(idea.sourceType)}
                         {renderStageBadge(idea.stage || 'spark')}
                         {renderAreaBadge(idea.area)}
+                        {renderBushBadge(idea.branch)}
+                        {renderMapBadge(idea.id)}
                         <span className="text-[11px] text-slate-500 dark:text-slate-400">
                           {idea.createdAt ? new Date(idea.createdAt).toLocaleDateString() : ''}
                         </span>
@@ -1189,6 +1247,17 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                     </div>
                   )}
                   <div className="mt-3 flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onIdeaClick(idea.id, { ...(idea as any), openMap: true } as any);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[11px] font-semibold hover:bg-amber-500/15 transition-colors"
+                      title={isPolish ? 'Otwórz mapę' : 'Open map'}
+                    >
+                      <GitBranch size={12} />
+                      {isPolish ? 'Mapa' : 'Map'}
+                    </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -1320,8 +1389,21 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                       {renderSourceBadge(idea.sourceType)}
                       {renderStageBadge(idea.stage || 'spark')}
                       {renderAreaBadge(idea.area)}
+                      {renderBushBadge(idea.branch)}
+                      {renderMapBadge(idea.id)}
                       {renderPriorityBar(idea.priority)}
                       {renderPotentialDot(idea.potential)}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onIdeaClick(idea.id, { ...(idea as any), openMap: true } as any);
+                        }}
+                        className="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[11px] font-semibold hover:bg-amber-500/15 transition-colors"
+                        title={isPolish ? 'Otwórz mapę' : 'Open map'}
+                      >
+                        <GitBranch size={12} />
+                        {isPolish ? 'Mapa' : 'Map'}
+                      </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

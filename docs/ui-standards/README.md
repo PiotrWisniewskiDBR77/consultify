@@ -57,19 +57,28 @@ docs/ui-standards/
 | Komponent                | Plik                     | Używany w                                    |
 | ------------------------ | ------------------------ | -------------------------------------------- |
 | `ActivityLogCanvas`      | shared-sections.md       | Task, Decision, Initiative, Notification     |
+| `AICoachPanel`           | _(MyWork/Focus)_         | Focus tab — AI priority recommendations      |
+| `AIConnections`          | _(MyWork/shared)_        | Task, Decision, Idea — AI-discovered links   |
+| `AIPlanView`             | _(MyWork/Focus)_         | Focus tab — AI time-blocked schedule          |
 | `AttachmentsLinksCanvas` | shared-sections.md       | Task, Decision, Initiative                   |
 | `Callout`                | building-blocks.md       | Wszędzie (info/warning/critical)             |
 | `ChecklistBlock`         | building-blocks.md       | Task, Notification                           |
 | `CommentsCanvas`         | shared-sections.md       | Task, Decision, Initiative, Notification     |
+| `ConvertToMenu`          | _(MyWork/shared)_        | Universal "Convert to..." dropdown            |
 | `DecisionDetailView`     | decision-panel.md        | MyWork                                       |
 | `EmbeddedView`           | building-blocks.md       | Tasks, Decisions, RAID w artefaktach         |
 | `EmptyStateInline`       | building-blocks.md       | Sekcje z pustym stanem                       |
 | `GovernanceCanvas`       | shared-sections.md       | Task, Decision (RACI, Reminders, Escalation) |
+| `IdeaDetailView`         | _(MyWork)_               | MyWork — Idea detail with promote CTA        |
 | `InlineTable`            | building-blocks.md       | Options, KPIs, tabele lekkie                 |
+| `MorningBriefCard`       | _(MyWork)_               | MyWorkHub — collapsible daily briefing       |
 | `NModeHeader`            | presentation-modes.md    | Wszystkie artefakty N-mode                   |
 | `NModeLeftNav`           | presentation-modes.md    | Wszystkie artefakty N-mode                   |
 | `NModePropertiesStrip`   | artifact-shell.md        | Wszystkie artefakty N-mode                   |
 | `NotificationDetailView` | notification-panel.md    | MyWork                                       |
+| `NudgeStrip`             | _(MyWork/Focus)_         | Focus tab — proactive nudge alerts           |
+| `PostDecisionFollowUp`   | _(MyWork/shared)_        | Decision — follow-up task modal              |
+| `RelatedContext`          | _(MyWork/shared)_        | Task, Decision — cross-entity KnowledgePulse |
 | `RiskCanvas`             | shared-sections.md       | Task, Decision, Initiative                   |
 | `TaskDetailView`         | task-panel.md            | MyWork                                       |
 | `TeamManagementPanel`    | team-management-table.md | Initiative → Team, Assessment → Team         |
@@ -83,7 +92,12 @@ docs/ui-standards/
 @/components/shared/NModeLayout     → layout shell
 @/components/shared/NModeSections   → section canvases (Comments, Activity, Risk, Governance, Attachments)
 @/components/shared/NModeBlocks     → building blocks (Callout, ToggleBlock, EmptyState, Checklist, InlineTable, EmbeddedView)
-@/components/MyWork/shared          → artifact-specific shared (Stakeholders, Dependencies, Escalation)
+@/components/MyWork/shared          → MyWork shared (PostDecisionFollowUp, RelatedContext, AIConnections,
+                                      ConvertToMenu, DelegationModal, askAiHelper, Stakeholders,
+                                      Dependencies, Escalation, AIInsightSection, LinkedItemsSection)
+@/components/MyWork/Focus           → Focus-specific (AICoachPanel, AIPlanView, NudgeStrip, FocusView)
+@/components/MyWork/notebook        → Notebook-specific (SlashMenu, KnowledgePulse, NewPageModal)
+@/components/MyWork/Executive       → Executive-specific (ExecutiveDashboard, KPIGrid, ActionRequiredStrip)
 ```
 
 ---

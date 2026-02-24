@@ -817,16 +817,25 @@ export class LLMService {
             throw firstChunkError;
           }
 
+          // Some providers can successfully initialize a stream but immediately end it
+          // without producing any tokens (e.g. blocked/empty completion). Treat this as
+          // a failure so AIPipeline can try its cross-provider fallback chain.
+          if (firstChunk.done) {
+            const emptyErr: any = new Error(
+              `LLM stream ended immediately without output (${providerId}/${String(modelConfig.id)}).`
+            );
+            emptyErr.code = 'EMPTY_STREAM';
+            throw emptyErr;
+          }
+
           // Build a generator that yields the first chunk we already consumed,
           // then delegates to the rest of the iterator.
           async function* prependedStream(): AsyncGenerator<string> {
-            if (!firstChunk.done && firstChunk.value) {
-              yield firstChunk.value;
-            }
+            if (typeof firstChunk.value === 'string') yield firstChunk.value;
             while (true) {
               const next = await rawIterator.next();
               if (next.done) break;
-              if (next.value) yield next.value;
+              if (typeof next.value === 'string') yield next.value;
             }
           }
 

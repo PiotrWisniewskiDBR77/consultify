@@ -30,6 +30,7 @@ import {
   Lightbulb,
   List,
   Loader2,
+  MessageSquare,
   Plus,
   Scale,
   Search,
@@ -40,7 +41,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useUserCan } from '@/hooks/useUserCan';
@@ -85,9 +86,6 @@ const TasksCalendarView = React.lazy(() =>
 );
 const DecisionsKanbanBoard = React.lazy(() =>
   import('./DecisionsKanbanBoard').then((m) => ({ default: m.DecisionsKanbanBoard }))
-);
-const MorningBriefCard = React.lazy(() =>
-  import('./MorningBriefCard').then((m) => ({ default: m.MorningBriefCard }))
 );
 
 // Types
@@ -290,6 +288,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     clearMyWorkEvent,
     setChatSystemPrompt,
     setChatQuickPrompts,
+    setChatKickoffMessage,
+    isChatCollapsed,
+    toggleChatCollapse,
   } = useAppStore();
   const { isEnabled } = useFeatureFlagsContext();
   const notebookEnabled = isEnabled('myWorkNotebookV2');
@@ -319,6 +320,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [decisionsViewMode, setDecisionsViewMode] = useState<DecisionsViewMode>('list');
   const [notebookLinkedIdeasOpen, setNotebookLinkedIdeasOpen] = useState(false);
   const [notebookPulseOpen, setNotebookPulseOpen] = useState(false);
+  const [notebookTopicsOpen, setNotebookTopicsOpen] = useState(false);
+  const [notebookChatOpen, setNotebookChatOpen] = useState(false);
   const [notebookCreateReqId, setNotebookCreateReqId] = useState(0);
   const [decisionFilter, setDecisionFilter] = useState<DecisionFilter>('my');
   const [decisionPriorityFilter, setDecisionPriorityFilter] =
@@ -519,10 +522,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   }, [myWorkEvent, clearMyWorkEvent]);
 
   // F3: Handle mywork-open-item custom event (dispatched by KnowledgePulse, detail views, etc.)
+  const navigate = useNavigate();
   useEffect(() => {
     const handler = (e: Event) => {
       const { type, id, name } = (e as CustomEvent).detail || {};
       if (!type || !id) return;
+      if (type === 'initiative') {
+        navigate(`/initiatives?open=${encodeURIComponent(id)}&mode=doc`);
+        return;
+      }
       const tabMap: Record<string, ModuleTab> = {
         task: 'tasks',
         decision: 'decisions',
@@ -534,7 +542,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       if (type !== 'notebook') {
         handleOpenDocument({
           id,
-          type,
+          type: type as 'task' | 'idea' | 'decision' | 'notification',
           name: name || type,
           status:
             type === 'notification'
@@ -549,7 +557,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     };
     window.addEventListener('mywork-open-item', handler);
     return () => window.removeEventListener('mywork-open-item', handler);
-  }, [handleOpenDocument]);
+  }, [handleOpenDocument, navigate]);
 
   // URL deep link support:
   // - /my-work?taskId=...
@@ -934,6 +942,34 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     setTabCounts((prev) => ({ ...prev, inbox: counts.total }));
   }, []);
 
+  // Plan with AI — opens chat with morning brief context (replaces Morning Brief "Plan with AI" button)
+  const handlePlanWithAI = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/my-work/morning-brief', {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      });
+      const brief = res.ok ? await res.json() : null;
+      const msg =
+        brief && (brief.overdueTasks?.length || brief.dueSoon?.length || brief.pendingDecisions?.length || brief.newTasks?.length)
+          ? `Help me plan my day. Here's my morning brief:\n` +
+            (brief.overdueTasks?.length ? `- ${brief.overdueTasks.length} overdue tasks\n` : '') +
+            (brief.dueSoon?.length ? `- ${brief.dueSoon.length} tasks due soon\n` : '') +
+            (brief.pendingDecisions?.length
+              ? `- ${brief.pendingDecisions.length} pending decisions\n`
+              : '') +
+            (brief.newTasks?.length ? `- ${brief.newTasks.length} new tasks\n` : '') +
+            `\nSuggest a prioritized plan for today.`
+          : (isPolish ? 'Pomóż mi zaplanować dzień.' : 'Help me plan my day.');
+      setChatKickoffMessage(msg);
+      if (isChatCollapsed) toggleChatCollapse();
+    } catch {
+      const msg = isPolish ? 'Pomóż mi zaplanować dzień.' : 'Help me plan my day.';
+      setChatKickoffMessage(msg);
+      if (isChatCollapsed) toggleChatCollapse();
+    }
+  }, [isPolish, isChatCollapsed, setChatKickoffMessage, toggleChatCollapse]);
+
   // Get action button config based on active tab
   const actionButton = useMemo(() => {
     // Don't show action button when viewing a document
@@ -1119,6 +1155,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           <React.Suspense fallback={lazyFallback}>
             <IdeaDetailView
               ideaId={activeDoc.id}
+              initialOpenMap={Boolean((activeDoc as any)?.data?.openMap)}
               onClose={() => handleCloseDocument(activeDoc.id)}
               onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
             />
@@ -1273,9 +1310,41 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               projectId={null}
               searchQuery={searchQuery}
               linkedIdeasOpen={notebookLinkedIdeasOpen}
-              onLinkedIdeasOpenChange={setNotebookLinkedIdeasOpen}
+              onLinkedIdeasOpenChange={(v) => {
+                setNotebookLinkedIdeasOpen(v);
+                if (v) {
+                  setNotebookPulseOpen(false);
+                  setNotebookTopicsOpen(false);
+                  setNotebookChatOpen(false);
+                }
+              }}
               pulseOpen={notebookPulseOpen}
-              onPulseOpenChange={setNotebookPulseOpen}
+              onPulseOpenChange={(v) => {
+                setNotebookPulseOpen(v);
+                if (v) {
+                  setNotebookLinkedIdeasOpen(false);
+                  setNotebookTopicsOpen(false);
+                  setNotebookChatOpen(false);
+                }
+              }}
+              topicsOpen={notebookTopicsOpen}
+              onTopicsOpenChange={(v) => {
+                setNotebookTopicsOpen(v);
+                if (v) {
+                  setNotebookLinkedIdeasOpen(false);
+                  setNotebookPulseOpen(false);
+                  setNotebookChatOpen(false);
+                }
+              }}
+              chatOpen={notebookChatOpen}
+              onChatOpenChange={(v) => {
+                setNotebookChatOpen(v);
+                if (v) {
+                  setNotebookLinkedIdeasOpen(false);
+                  setNotebookPulseOpen(false);
+                  setNotebookTopicsOpen(false);
+                }
+              }}
               createPageRequestId={notebookCreateReqId}
               onCountsChange={handleNotebookCountsChange}
               refreshTrigger={refreshTrigger}
@@ -1342,6 +1411,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     if (activeTab !== 'notebook') {
       setNotebookLinkedIdeasOpen(false);
       setNotebookPulseOpen(false);
+      setNotebookTopicsOpen(false);
+      setNotebookChatOpen(false);
     }
   }, [activeTab]);
 
@@ -1570,7 +1641,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 aria-label={isPolish ? 'Narzędzia notatnika' : 'Notebook tools'}
               >
                 <button
-                  onClick={() => setNotebookLinkedIdeasOpen((v) => !v)}
+                  onClick={() => {
+                    const next = !notebookLinkedIdeasOpen;
+                    setNotebookLinkedIdeasOpen(next);
+                    if (next) {
+                      setNotebookPulseOpen(false);
+                      setNotebookTopicsOpen(false);
+                      setNotebookChatOpen(false);
+                    }
+                  }}
                   className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
                     notebookLinkedIdeasOpen
                       ? 'bg-white dark:bg-navy-800 text-amber-600 dark:text-amber-300 shadow-sm border border-slate-200 dark:border-navy-600'
@@ -1582,7 +1661,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   <Lightbulb size={16} />
                 </button>
                 <button
-                  onClick={() => setNotebookPulseOpen((v) => !v)}
+                  onClick={() => {
+                    const next = !notebookPulseOpen;
+                    setNotebookPulseOpen(next);
+                    if (next) {
+                      setNotebookLinkedIdeasOpen(false);
+                      setNotebookTopicsOpen(false);
+                      setNotebookChatOpen(false);
+                    }
+                  }}
                   className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
                     notebookPulseOpen
                       ? 'bg-white dark:bg-navy-800 text-rose-600 dark:text-rose-300 shadow-sm border border-slate-200 dark:border-navy-600'
@@ -1592,6 +1679,46 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   aria-pressed={notebookPulseOpen}
                 >
                   <HeartPulse size={16} />
+                </button>
+                <button
+                  onClick={() => {
+                    const next = !notebookTopicsOpen;
+                    setNotebookTopicsOpen(next);
+                    if (next) {
+                      setNotebookLinkedIdeasOpen(false);
+                      setNotebookPulseOpen(false);
+                      setNotebookChatOpen(false);
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    notebookTopicsOpen
+                      ? 'bg-white dark:bg-navy-800 text-purple-600 dark:text-purple-300 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Tematy do analizy (AI)' : 'Topics to analyze (AI)'}
+                  aria-pressed={notebookTopicsOpen}
+                >
+                  <Sparkles size={16} />
+                </button>
+                <button
+                  onClick={() => {
+                    const next = !notebookChatOpen;
+                    setNotebookChatOpen(next);
+                    if (next) {
+                      setNotebookLinkedIdeasOpen(false);
+                      setNotebookPulseOpen(false);
+                      setNotebookTopicsOpen(false);
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    notebookChatOpen
+                      ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-300 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Narzędzia notatnika' : 'Notebook tools'}
+                  aria-pressed={notebookChatOpen}
+                >
+                  <MessageSquare size={16} />
                 </button>
               </div>
             )}
@@ -1681,6 +1808,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 <span>{actionButton.label}</span>
               </button>
             )}
+
+            {/* AI Button — Plan with AI (square, far right) */}
+            <button
+              onClick={handlePlanWithAI}
+              className="flex items-center justify-center w-9 h-9 rounded-lg border border-purple-500/40 bg-purple-500/15 text-purple-600 dark:text-purple-400 hover:bg-purple-500/25 hover:border-purple-500/60 transition-all"
+              title={isPolish ? 'Zaplanuj z AI' : 'Plan with AI'}
+              data-testid="mywork-ai-button"
+            >
+              <Sparkles size={18} />
+            </button>
           </div>
         </div>
 
@@ -1732,11 +1869,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           </div>
         )}
       </div>
-
-      {/* Morning Brief Card */}
-      <React.Suspense fallback={null}>
-        <MorningBriefCard />
-      </React.Suspense>
 
       {/* Dynamic Tabs Row */}
       {renderDynamicTabs()}

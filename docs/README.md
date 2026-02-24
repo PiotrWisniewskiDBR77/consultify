@@ -31,6 +31,7 @@
 - [Infrastructure](architecture/INFRASTRUCTURE.md) - Cloud architecture & scalability
 - [Architecture Map](architecture/ARCHITECTURE_MAP.md) - Map of major subsystems
 - [Architecture Notes](architecture/ARCHITECTURE.md) - Additional architecture notes
+- [**MyWork Architecture**](architecture/MYWORK_ARCHITECTURE.md) - MyWork module: components, API, AI, DB
 - [Partner Payout Integration](architecture/PARTNER_PAYOUT_INTEGRATION.md) - Stripe/partner payouts integration
 
 ---
@@ -45,6 +46,13 @@
   - [Revenue Module](product/modules/revenue/) - Billing & payments
   - [Analytics Module](product/modules/analytics/) - Metrics & reporting
   - [Content Module](product/modules/content/) - Content management
+
+### My Work Module (Personal Hub)
+
+- [**My Work Specification**](MYWORK_MODULE_SPECIFICATION.md) - Canonical spec (8 tabs, 120+ components, 60+ endpoints)
+- [My Work Architecture](architecture/MYWORK_ARCHITECTURE.md) - Component tree, API reference, AI services, DB schema
+- [My Work Dashboard Flow](flows/core/MYWORK_DASHBOARD_FLOW.md) - User flow diagrams & tab architecture
+- [Living Notebook Module](modules/LIVING_NOTEBOOK_MODULE.md) - Notebook product vision
 
 ### AI Module — Technical Specs (SSOT)
 
@@ -199,6 +207,6 @@
 
 ---
 
-**Last Updated**: January 11, 2026  
-**Documentation Version**: Enterprise 1.0  
+**Last Updated**: February 24, 2026  
+**Documentation Version**: Enterprise 1.1  
 **Status**: ✅ VC DD Ready

@@ -1519,9 +1519,49 @@ export const Api = {
                     '[AI Stream] Deep Thinking confirm required but not called. Check frontend flow.'
                   );
                 } else {
-                  // Non-access errors: show inline (so user isn't left with an empty assistant bubble)
+                  // Non-access errors: show an inline friendly message for known codes,
+                  // otherwise fall back to raw backend error (so user isn't left with an empty bubble).
+                  const uiLang = getCachedUserLanguage();
+                  const sid =
+                    typeof (data as any).sessionId === 'string' && (data as any).sessionId.trim().length > 0
+                      ? String((data as any).sessionId).trim()
+                      : null;
+
+                  const friendlyByCode =
+                    dataCode === 'EMPTY_STREAM'
+                      ? uiLang === 'pl'
+                        ? '⚠️ AI nie zwróciło odpowiedzi. Spróbuj ponownie za chwilę. Jeśli problem się powtarza, skontaktuj się z administratorem.'
+                        : '⚠️ AI returned no output. Please try again in a moment. If the problem persists, contact your administrator.'
+                      : dataCode === 'NO_LLM_PROVIDER'
+                        ? uiLang === 'pl'
+                          ? '⚠️ AI nie jest skonfigurowane na backendzie. Skontaktuj się z administratorem.'
+                          : '⚠️ AI is not configured on the backend. Please contact your administrator.'
+                        : dataCode === 'INVALID_API_KEY'
+                          ? uiLang === 'pl'
+                            ? '⚠️ Konfiguracja klucza API do AI jest nieprawidłowa lub wygasła. Skontaktuj się z administratorem.'
+                            : '⚠️ AI API key is invalid or expired. Please contact your administrator.'
+                          : dataCode === 'RATE_LIMIT'
+                            ? uiLang === 'pl'
+                              ? '⚠️ Przekroczono limit zapytań do AI. Spróbuj ponownie za chwilę.'
+                              : '⚠️ AI rate limit exceeded. Please try again in a moment.'
+                            : dataCode === 'LOCAL_LLM_DISABLED' || dataCode === 'LOCAL_LLM_ENDPOINT_NOT_ALLOWED'
+                              ? uiLang === 'pl'
+                                ? '⚠️ Lokalny provider AI jest niedozwolony w tym środowisku.'
+                                : '⚠️ Local AI provider is not allowed in this environment.'
+                              : dataCode === 'STREAM_ERROR' ||
+                                  dataCode === 'AI_STREAM_ERROR' ||
+                                  dataCode === 'AI_PIPELINE_ERROR'
+                                ? uiLang === 'pl'
+                                  ? '⚠️ Wystąpił błąd podczas generowania odpowiedzi. Spróbuj ponownie.'
+                                  : '⚠️ An error occurred while generating the response. Please try again.'
+                                : null;
+
                   hasAnyVisibleOutput = true;
-                  onChunk(data.error);
+                  onChunk(friendlyByCode || String(data.error));
+
+                  if (sid) {
+                    console.info('[AI Stream] sessionId:', sid);
+                  }
                 }
 
                 // Budget freeze (existing behavior)
@@ -2530,6 +2570,16 @@ export const Api = {
       body: JSON.stringify(payload),
     });
     return handleResponse(res, 'Failed to expand idea map');
+  },
+
+  getMyIdeaMapMetrics: async (ideaIds: string[]): Promise<any> => {
+    const ids = (ideaIds || []).map((x) => String(x || '').trim()).filter(Boolean);
+    const qs = new URLSearchParams();
+    if (ids.length) qs.set('ids', ids.join(','));
+    const res = await fetch(`${API_URL}/my-work/my-ideas/metrics/map?${qs.toString()}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch idea map metrics');
   },
 
   // --- My Ideas: Convert/Promote ---
@@ -9110,6 +9160,29 @@ export const Api = {
       body: JSON.stringify({ target, ...extra }),
     });
     return handleResponse(res, 'Failed to convert notebook page');
+  },
+
+  suggestNotebookTopics: async (
+    pageId: string,
+    opts?: { excludedTopics?: string[]; language?: string }
+  ): Promise<{ topics: string[] }> => {
+    const res = await fetch(`${API_URL}/my-work/notebook/pages/${encodeURIComponent(pageId)}/suggest-topics`, {
+      method: 'POST',
+      headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        excludedTopics: opts?.excludedTopics ?? [],
+        language: opts?.language ?? 'en',
+      }),
+    });
+    if (!res.ok) {
+      let msg = 'Failed to suggest topics';
+      try {
+        const body = await res.json();
+        if (typeof body?.error === 'string') msg = body.error;
+      } catch { /* ignore */ }
+      throw new Error(msg);
+    }
+    return res.json();
   },
 
   extractNotebookActions: (id: string): EventSource => {

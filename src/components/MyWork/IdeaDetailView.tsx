@@ -61,6 +61,7 @@ interface IdeaSummary {
 
 interface IdeaDetailViewProps {
   ideaId: string;
+  initialOpenMap?: boolean;
   onClose: () => void;
   onSaved: (idea: MyIdea) => void;
 }
@@ -81,7 +82,12 @@ const POTENTIAL_CONFIG: Record<string, { color: string; label: string; labelPl: 
   low: { color: 'text-slate-400', label: 'Needs refinement', labelPl: 'Wymaga dopracowania' },
 };
 
-export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose, onSaved }) => {
+export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({
+  ideaId,
+  initialOpenMap,
+  onClose,
+  onSaved,
+}) => {
   const { i18n, t } = useTranslation();
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
   const isNew = useMemo(() => ideaId.startsWith('new-idea-'), [ideaId]);
@@ -96,6 +102,7 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
   const [converting, setConverting] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
   const [mapIdeaId, setMapIdeaId] = useState<string | null>(null);
+  const autoOpenedMapRef = useRef(false);
 
   // AI-generated content
   const [aiExpansion, setAiExpansion] = useState('');
@@ -158,6 +165,16 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
     })();
     return () => { cancelled = true; };
   }, [ideaId, isNew, t]);
+
+  useEffect(() => {
+    if (!initialOpenMap) return;
+    if (autoOpenedMapRef.current) return;
+    if (isNew) return;
+    if (loading) return;
+    autoOpenedMapRef.current = true;
+    setMapIdeaId(realId);
+    setMapOpen(true);
+  }, [initialOpenMap, isNew, loading, realId]);
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => contentRef.current?.scrollTo({ top: contentRef.current.scrollHeight, behavior: 'smooth' }), 200);

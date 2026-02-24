@@ -1,4 +1,5 @@
 import Placeholder from '@tiptap/extension-placeholder';
+import TextAlign from '@tiptap/extension-text-align';
 import { Table } from '@tiptap/extension-table';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
@@ -49,7 +50,11 @@ import type {
 } from '@/types/myWork';
 
 import { ActionItemsPanel } from './notebook/ActionItemsPanel';
+import { AIChatInlinePanel, AI_BLOCK_MIME } from './notebook/AIChatInlinePanel';
+import { AICommandPrompt } from './notebook/AICommandPrompt';
+import { AITopicsPanel } from './notebook/AITopicsPanel';
 import { type AICommandType, AIInlineResponse } from './notebook/AIInlineResponse';
+import { InsertMenu } from './notebook/InsertMenu';
 import { ConvertChecklistModal } from './notebook/ConvertChecklistModal';
 import {
   CalloutNode,
@@ -75,6 +80,10 @@ interface NotebookContentProps {
   onLinkedIdeasOpenChange?: (open: boolean) => void;
   pulseOpen?: boolean;
   onPulseOpenChange?: (open: boolean) => void;
+  topicsOpen?: boolean;
+  onTopicsOpenChange?: (open: boolean) => void;
+  chatOpen?: boolean;
+  onChatOpenChange?: (open: boolean) => void;
   createPageRequestId?: number;
   refreshTrigger?: number;
 }
@@ -245,10 +254,12 @@ const EDITOR_STYLES = `
 .nb-callout[data-variant="warning"]  { border-color: #f59e0b; background: linear-gradient(135deg, #fffbeb 0%, #fef9e7 100%); }
 .nb-callout[data-variant="success"]  { border-color: #22c55e; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); }
 .nb-callout[data-variant="critical"] { border-color: #ef4444; background: linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%); }
+.nb-callout[data-variant="purple"]   { border-color: #a855f7; background: linear-gradient(135deg, #faf5ff 0%, #f5f0ff 100%); }
 .dark .nb-callout[data-variant="info"]     { background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(59,130,246,0.04)); }
 .dark .nb-callout[data-variant="warning"]  { background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.04)); }
 .dark .nb-callout[data-variant="success"]  { background: linear-gradient(135deg, rgba(34,197,94,0.08), rgba(34,197,94,0.04)); }
 .dark .nb-callout[data-variant="critical"] { background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(239,68,68,0.04)); }
+.dark .nb-callout[data-variant="purple"]   { background: linear-gradient(135deg, rgba(168,85,247,0.12), rgba(168,85,247,0.06)); }
 
 /* Details / Toggle — refined */
 .nb-details {
@@ -394,6 +405,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   onLinkedIdeasOpenChange,
   pulseOpen,
   onPulseOpenChange,
+  topicsOpen,
+  onTopicsOpenChange,
+  chatOpen,
+  onChatOpenChange,
   createPageRequestId,
   refreshTrigger,
 }) => {
@@ -433,6 +448,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           ? 'Zacznij pisać… Wpisz / aby wstawić blok'
           : 'Start writing… Type / to insert a block',
       }),
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
       CalloutNode,
       DetailsNode,
       DetailsSummaryNode,
@@ -661,6 +677,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [checklistModalOpen, setChecklistModalOpen] = useState(false);
   const [actionItemsOpen, setActionItemsOpen] = useState(false);
+  const [topicsOpenInternal, setTopicsOpenInternal] = useState(false);
+  const topicsOpenResolved = topicsOpen ?? topicsOpenInternal;
+  const setTopicsOpen = onTopicsOpenChange ?? setTopicsOpenInternal;
+  const [chatOpenInternal, setChatOpenInternal] = useState(false);
+  const chatOpenResolved = chatOpen ?? chatOpenInternal;
+  const setChatOpen = onChatOpenChange ?? setChatOpenInternal;
+  const aiCommandPromptInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleNewPage = useCallback(
     async (template?: PageTemplate) => {
@@ -729,6 +752,26 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         e.preventDefault();
         setPulseOpen(!isPulseOpen);
       }
+      if (e.metaKey && e.shiftKey && e.key === 'a') {
+        e.preventDefault();
+        aiCommandPromptInputRef.current?.focus();
+      }
+      if (e.metaKey && e.shiftKey && e.key === 'Backspace') {
+        e.preventDefault();
+        if (editor) {
+          const DELETABLE = ['callout', 'details', 'table', 'blockquote', 'horizontalRule'];
+          const { $from } = editor.state.selection;
+          for (let d = $from.depth; d > 0; d--) {
+            const node = $from.node(d);
+            if (DELETABLE.includes(node.type.name)) {
+              const pos = $from.before(d);
+              editor.chain().focus().deleteRange({ from: pos, to: pos + node.nodeSize }).run();
+              toast.success(isPolish ? 'Usunięto blok' : 'Block deleted');
+              return;
+            }
+          }
+        }
+      }
     };
     const handleNewPage = () => setTemplateModalOpen(true);
     const handleExtractActions = () => setActionItemsOpen(true);
@@ -741,7 +784,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       window.removeEventListener('notebook-new-page', handleNewPage);
       window.removeEventListener('notebook-extract-actions', handleExtractActions);
     };
-  }, [activePage, handleTogglePin, isPulseOpen, setPulseOpen]);
+  }, [activePage, handleTogglePin, isPulseOpen, setPulseOpen, editor, isPolish]);
 
   // Slash-command entity creation events
   useEffect(() => {
@@ -1356,18 +1399,21 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             </div>
           ) : (
             <div className="h-full flex flex-col nb-page-enter" key={activePage.id}>
-              {/* Compact toolbar + meta strip */}
+              {/* Compact toolbar + meta strip (single row) */}
               <div className="border-b border-slate-200/60 dark:border-navy-800/60 bg-white/80 dark:bg-navy-950/80 backdrop-blur-sm">
-                {/* Toolbar */}
-                {editor && (
-                  <NotebookToolbar
-                    editor={editor}
-                    onAIClick={() => setAiCommand(aiCommand ? null : 'ask')}
-                  />
-                )}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Toolbar */}
+                  {editor && <NotebookToolbar editor={editor} />}
+                  {editor && (
+                    <InsertMenu
+                      editor={editor}
+                      onFocusAICommand={() => aiCommandPromptInputRef.current?.focus()}
+                      onOpenAIChat={() => setChatOpen(true)}
+                    />
+                  )}
 
-                {/* Meta strip: maturity + auto-summary + project + actions */}
-                <div className="flex items-center gap-2 px-4 py-1.5 text-[11px]">
+                  {/* Meta strip: maturity + auto-summary + project + actions — moved up into same row */}
+                  <div className="flex items-center gap-2 px-2 py-1 text-[11px] flex-1 min-w-0">
                   {/* Maturity badge */}
                   {(() => {
                     const mat =
@@ -1447,7 +1493,22 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     <Trash2 size={12} />
                   </button>
                 </div>
+                </div>
               </div>
+
+              {/* AI Command Prompt */}
+              {editor && activePage && (
+                <div className="px-4 py-2 border-b border-slate-200/40 dark:border-navy-800/40">
+                  <AICommandPrompt
+                    editor={editor}
+                    noteTitle={title}
+                    noteContent={activePage.contentText || extractText(activePage.contentJson)}
+                    noteTags={pageTags}
+                    inputRef={aiCommandPromptInputRef}
+                    className="max-w-2xl"
+                  />
+                </div>
+              )}
 
               {/* Convert-to CTA */}
               {activePage &&
@@ -1533,8 +1594,25 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   </div>
                 )}
 
-              {/* Editor area */}
-              <div className="flex-1 overflow-y-auto nb-scroll relative" ref={editorContainerRef}>
+              {/* Editor area — drop zone for AI block */}
+              <div
+                className="flex-1 overflow-y-auto nb-scroll relative"
+                ref={editorContainerRef}
+                onDragOver={(e) => {
+                  if (e.dataTransfer.types.includes(AI_BLOCK_MIME)) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'copy';
+                  }
+                }}
+                onDrop={(e) => {
+                  const text = e.dataTransfer.getData(AI_BLOCK_MIME);
+                  if (text) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.dispatchEvent(new CustomEvent('notebook-ai-block-drop', { detail: { text } }));
+                  }
+                }}
+              >
                 <div className="mx-auto max-w-3xl px-6 py-6">
                   {/* Page icon + title — Notion-like */}
                   <div className="mb-4">
@@ -1740,6 +1818,31 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             onClose={() => setActionItemsOpen(false)}
             noteId={activePage.id}
             noteTitle={activePage.title}
+          />
+        )}
+
+        {/* AI Topics to analyze right panel */}
+        {topicsOpenResolved && activePage && editor && (
+          <AITopicsPanel
+            open={topicsOpenResolved}
+            onClose={() => setTopicsOpen(false)}
+            noteId={activePage.id}
+            noteTitle={title}
+            noteTags={pageTags}
+            contentText={activePage.contentText || extractText(activePage.contentJson)}
+            editor={editor}
+          />
+        )}
+
+        {/* AI Chat inline panel */}
+        {chatOpenResolved && activePage && editor && (
+          <AIChatInlinePanel
+            open={chatOpenResolved}
+            onClose={() => setChatOpen(false)}
+            editor={editor}
+            noteTitle={title}
+            noteContent={activePage.contentText || extractText(activePage.contentJson)}
+            noteTags={pageTags}
           />
         )}
       </div>

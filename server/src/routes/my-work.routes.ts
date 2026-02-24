@@ -3022,6 +3022,84 @@ router.get(
 );
 
 /**
+ * GET /api/my-work/my-ideas/metrics/map?ids=comma,separated,ideaIds
+ * Returns nodes/edges/items counts for many ideas (for list/table rendering).
+ *
+ * Notes:
+ * - Keeps list fast by avoiding N calls to /:id/map
+ * - JSON is parsed in JS for cross-DB compatibility.
+ */
+router.get(
+  '/my-ideas/metrics/map',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_idea_maps']))) return;
+
+    const idsRaw = String(req.query.ids || '').trim();
+    const ids = idsRaw
+      ? Array.from(
+          new Set(
+            idsRaw
+              .split(',')
+              .map((x) => String(x || '').trim())
+              .filter(Boolean)
+          )
+        ).slice(0, 250)
+      : [];
+
+    if (!ids.length) return res.json({ metrics: {} });
+
+    const placeholders = queryHelpers.buildInPlaceholders(ids);
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `
+        SELECT
+          idea_id as "ideaId",
+          nodes_json as "nodesJson",
+          edges_json as "edgesJson",
+          updated_at as "updatedAt"
+        FROM my_idea_maps
+        WHERE user_id = ? AND organization_id = ?
+          AND idea_id IN (${placeholders})
+      `,
+        [userId, orgId, ...ids]
+      )) || [];
+
+    const byId = new Map<string, any>();
+    for (const r of rows) {
+      const id = String(r?.ideaId || '').trim();
+      if (id) byId.set(id, r);
+    }
+
+    const metrics: Record<string, any> = {};
+    for (const id of ids) {
+      const row = byId.get(id);
+      let n = 0;
+      let e = 0;
+      if (row) {
+        try {
+          const arr = JSON.parse(String(row.nodesJson || '[]'));
+          n = Array.isArray(arr) ? arr.length : 0;
+        } catch {
+          n = 0;
+        }
+        try {
+          const arr = JSON.parse(String(row.edgesJson || '[]'));
+          e = Array.isArray(arr) ? arr.length : 0;
+        } catch {
+          e = 0;
+        }
+      }
+      metrics[id] = { nodes: n, edges: e, items: n + e, updatedAt: row?.updatedAt || null };
+    }
+
+    res.json({ metrics });
+  })
+);
+
+/**
  * PUT /api/my-work/my-ideas/:id/map
  * Body: { nodes: any[], edges: any[], version?: number }
  */
@@ -4521,6 +4599,105 @@ router.post(
       emit('error', { message: err?.message || 'Extraction failed' });
       res.end();
     }
+  })
+);
+
+/**
+ * POST /api/my-work/notebook/pages/:id/suggest-topics
+ * AI suggests topics worth analyzing for the note (company + tags context).
+ */
+router.post(
+  '/notebook/pages/:id/suggest-topics',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['notebook_pages']))) return;
+
+    const pageId = String(req.params.id || '').trim();
+    const page = await queryHelpers.queryOne<any>(
+      `SELECT id, owner_user_id, organization_id, title, content_text, tags_json
+       FROM notebook_pages WHERE id = ? LIMIT 1`,
+      [pageId]
+    );
+    if (!page) return res.status(404).json({ error: 'Not found' });
+    if (String(page.organization_id || '') !== String(orgId)) return res.status(403).json({ error: 'Forbidden' });
+    if (String(page.owner_user_id || '') !== String(userId)) return res.status(403).json({ error: 'Owner-only' });
+
+    const title = String(page.title || '').trim();
+    const contentText = String(page.content_text || '').trim().slice(0, 2000);
+    const tags = parseTagsArray(page.tags_json);
+    const tagsStr = tags.join(', ');
+
+    const excludedTopics: string[] = Array.isArray(req.body?.excludedTopics) ? req.body.excludedTopics : [];
+    const language = String(req.body?.language || 'en').toLowerCase();
+    const isPl = language.startsWith('pl');
+
+    let topics: string[] = [];
+
+    try {
+      const { llmService } = await import('../services/ai/llmService.js');
+      const modelRouter = (await import('../services/ai/modelRouter.js')).default;
+      const modelCfg = await modelRouter.select({ capability: 'chat', organizationId: orgId, options: { tier: 'STANDARD' } });
+
+      const excludeHint = excludedTopics.length > 0
+        ? (isPl ? `\nNIE sugeruj tych tematów (już odrzucone): ${excludedTopics.join(', ')}` : `\nDo NOT suggest these (already dismissed): ${excludedTopics.join(', ')}`)
+        : '';
+
+      const prompt = isPl
+        ? `Jesteś asystentem strategicznym. Na podstawie notatki użytkownika (tytuł, treść, tagi) zaproponuj 3-5 tematów wartych przeanalizowania w kontekście firmy. Tematy powinny być konkretne, praktyczne i powiązane z przedmiotem notatki.
+
+Notatka:
+Tytuł: ${title}
+Tagi: ${tagsStr}
+Treść (fragment): ${contentText || '(brak)'}
+${excludeHint}
+
+Odpowiedz TYLKO jako JSON array stringów: ["temat 1", "temat 2", ...]
+Bez markdown, bez numeracji, tylko tablica JSON.`
+        : `You are a strategic assistant. Based on the user's note (title, content, tags) suggest 3-5 topics worth analyzing in a business context. Topics should be concrete, practical, and related to the note subject.
+
+Note:
+Title: ${title}
+Tags: ${tagsStr}
+Content (excerpt): ${contentText || '(none)'}
+${excludeHint}
+
+Respond ONLY as a JSON array of strings: ["topic 1", "topic 2", ...]
+No markdown, no numbering, just a JSON array.`;
+
+      const result = await llmService.callText({
+        type: 'text',
+        modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
+        systemPrompt: isPl ? 'Odpowiadasz tylko poprawnym JSON array stringów.' : 'You respond only with a valid JSON array of strings.',
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      try {
+        const raw = String((result as any)?.content || '[]');
+        const jsonMatch = raw.match(/\[[\s\S]*?\]/);
+        topics = JSON.parse(jsonMatch ? jsonMatch[0] : '[]');
+        if (!Array.isArray(topics)) topics = [];
+        topics = topics.filter((t) => typeof t === 'string' && t.trim().length > 0).map((t) => String(t).trim());
+      } catch { topics = []; }
+    } catch (err: any) {
+      logger.error('[NotebookSuggestTopics] Error:', err);
+      // Fallback: derive topics from title + tags when LLM fails
+      const fallback: string[] = [];
+      if (title) {
+        const words = title.split(/\s+/).filter((w) => w.length > 2);
+        if (words.length > 0) {
+          fallback.push(isPl ? `Jak mierzyć ${words[0]}?` : `How to measure ${words[0]}?`);
+          fallback.push(isPl ? `Ryzyka w ${words.slice(0, 2).join(' ')}` : `Risks in ${words.slice(0, 2).join(' ')}`);
+        }
+      }
+      tags.filter((t) => !excludedTopics.includes(t)).slice(0, 3).forEach((t) => {
+        fallback.push(isPl ? `Szczegóły: ${t}` : `Details: ${t}`);
+      });
+      topics = fallback.length > 0 ? fallback : (isPl ? ['Przeanalizuj kontekst', 'Dodaj metryki', 'Benchmark'] : ['Analyze context', 'Add metrics', 'Benchmark']);
+    }
+
+    res.json({ topics });
   })
 );
 

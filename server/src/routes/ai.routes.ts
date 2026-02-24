@@ -2278,9 +2278,12 @@ router.post(
             // Without this, the frontend may see only [DONE] and appear "dead".
             res.write(
               `data: ${JSON.stringify({
-                error:
-                  'AI stream ended without output. Check LLM provider configuration and backend logs.',
+                error: 'AI stream ended without output.',
                 code: 'EMPTY_STREAM',
+                sessionId: streamSessionId,
+                provider: pipelineMeta?.provider || null,
+                model: pipelineMeta?.model || null,
+                traceId: pipelineMeta?.traceId || pipelineMeta?.trace_id || null,
               })}\n\n`
             );
           }
