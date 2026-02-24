@@ -542,6 +542,57 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     return 'bg-blue-500';
   }, []);
 
+  const getCommentPriority = useCallback(
+    (comment: CommentItem): CommentPriority =>
+      ((comment as CommentItem & { priority?: CommentPriority }).priority || 'normal') as CommentPriority,
+    []
+  );
+
+  const getPriorityButtonClass = useCallback((p: CommentPriority, active: boolean) => {
+    if (active && p === 'high') {
+      return 'border-amber-500/55 text-amber-600 dark:text-amber-300 dark:border-amber-500/35 bg-amber-500/10';
+    }
+    if (active && p === 'normal') {
+      return 'border-blue-500/55 text-blue-600 dark:text-blue-300 dark:border-blue-500/35 bg-blue-500/10';
+    }
+    if (active && p === 'low') {
+      return 'border-slate-400/55 text-slate-600 dark:text-slate-300 dark:border-navy-500/35 bg-slate-500/10';
+    }
+    return 'border-slate-300/55 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:border-slate-400/70 hover:text-slate-700 dark:text-slate-300';
+  }, []);
+
+  const getCommentPriorityLabel = useCallback(
+    (p: CommentPriority) =>
+      p === 'high'
+        ? isPolish
+          ? 'Wysoki'
+          : 'High'
+        : p === 'low'
+          ? isPolish
+            ? 'Niski'
+            : 'Low'
+          : isPolish
+            ? 'Normalny'
+            : 'Normal',
+    [isPolish]
+  );
+
+  const getCommentPriorityHint = useCallback(
+    (p: CommentPriority) =>
+      p === 'high'
+        ? isPolish
+          ? 'Wymaga szybkiej reakcji / eskalacji'
+          : 'Requires quick response / escalation'
+        : p === 'low'
+          ? isPolish
+            ? 'Informacyjne / do rozważenia później'
+            : 'Informational / can wait'
+          : isPolish
+            ? 'Standardowy priorytet'
+            : 'Standard priority',
+    [isPolish]
+  );
+
   // Attachments handlers (NMode)
   const handleUploadAttachments = useCallback(
     async (files: FileList) => {
@@ -1184,6 +1235,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               draftPriority={draftPriority}
               onDraftPriorityChange={setDraftPriority}
               getPriorityDotClass={getPriorityDotClass}
+              getCommentPriority={getCommentPriority}
+              getPriorityButtonClass={getPriorityButtonClass}
+              getCommentPriorityLabel={getCommentPriorityLabel}
+              getCommentPriorityHint={getCommentPriorityHint}
             />
           );
           break;

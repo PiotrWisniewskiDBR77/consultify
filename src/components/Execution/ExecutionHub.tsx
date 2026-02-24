@@ -37,7 +37,9 @@ import {
   LayoutGrid,
   Loader2,
   MessageSquare,
+  RefreshCw,
   Scale,
+  Sparkles,
   Target,
   TrendingUp,
   Users,
@@ -47,6 +49,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { Callout, EmbeddedView, EmptyStateInline, InlineTable, ToggleBlock } from '@/components/shared/NModeBlocks';
 import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
 import { Api } from '@/services/api';
 import {
@@ -344,6 +347,110 @@ type PMOHealthSnapshot = {
   updatedAt: string;
 };
 
+type ExecPeriod = 'week' | 'month' | 'quarter' | 'custom';
+
+type ExecutiveInsightsPayload = {
+  paragraph: string;
+  recommendedActions: Array<{
+    title: string;
+    rationale: string;
+    ownerHint?: string;
+    urgency: 'low' | 'medium' | 'high';
+  }>;
+  warnings: string[];
+};
+
+type ExecutiveAggregateSnapshot = {
+  project: { id: string; name: string | null };
+  generatedAt: string;
+  period: ExecPeriod;
+  overview: {
+    progressPercent: number;
+    phaseLabel: string | null;
+    pmoHealth: any | null;
+    priorityAlerts: Array<{
+      type: string;
+      severity: 'low' | 'medium' | 'high' | 'critical';
+      message: string;
+    }>;
+    nextMilestones: Array<{
+      id: string;
+      initiativeId: string;
+      initiativeName: string;
+      name: string;
+      targetDate: string | null;
+      status: string;
+    }>;
+  };
+  workstreams: {
+    items: Array<{
+      id: string;
+      name: string;
+      status: string;
+      ownerId: string | null;
+      ownerName: string | null;
+      initiativeCount: number;
+      progressAvg: number;
+      onTrackCount: number;
+      atRiskCount: number;
+      delayedCount: number;
+    }>;
+    unassignedInitiatives: number;
+  };
+  kpis: {
+    highlights: Array<{
+      id: string;
+      name: string;
+      currentValue: number | null;
+      targetValue: number | null;
+      unit: string | null;
+    }>;
+    dataQuality: 'none' | 'partial' | 'good';
+  };
+  roi: {
+    summary:
+      | {
+          totalProjected: number;
+          totalRealized: number;
+          totalVariance: number;
+          coveragePercent: number;
+          initiativeCount: number;
+        }
+      | null;
+    items: Array<{
+      initiativeId: string;
+      initiativeName: string;
+      projectedBenefit: number;
+      realizedBenefit: number;
+      variance: number;
+      confidence: string | null;
+      hasRealized: boolean;
+    }>;
+  };
+  risks: {
+    heatmap: Record<string, number>;
+    topRisks: Array<{
+      id: string;
+      title: string;
+      probability: string | null;
+      impact: string | null;
+      score: number;
+      ownerId: string | null;
+      dueDate: string | null;
+      mitigationStatus: string | null;
+    }>;
+    signals: {
+      riskSignals: Array<any>;
+      delaySignals: Array<any>;
+      overspendSignals: Array<any>;
+    };
+  };
+  ai: {
+    enabled: boolean;
+    insights: ExecutiveInsightsPayload | null;
+  };
+};
+
 const normalizeTaskStatus = (
   status: ProjectTaskStatus
 ): 'todo' | 'in_progress' | 'review' | 'blocked' | 'done' => {
@@ -406,6 +513,44 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [isLoadingHealth, setIsLoadingHealth] = useState(false);
   const [riskSignals, setRiskSignals] = useState<RiskSignalItem[]>([]);
   const [delaySignals, setDelaySignals] = useState<DelaySignalItem[]>([]);
+
+  // Executive aggregate snapshot (Module 7, sections 7.1–7.6)
+  const [execPeriod, setExecPeriod] = useState<ExecPeriod>('week');
+  const [execIncludeAI, setExecIncludeAI] = useState(true);
+  const [execSnapshot, setExecSnapshot] = useState<ExecutiveAggregateSnapshot | null>(null);
+  const [isLoadingExecSnapshot, setIsLoadingExecSnapshot] = useState(false);
+  const [execSnapshotError, setExecSnapshotError] = useState<string | null>(null);
+  const [workstreamsViewMode, setWorkstreamsViewMode] = useState<'list' | 'table'>('list');
+
+  const formatNumber = useCallback((v: number | null | undefined, opts?: Intl.NumberFormatOptions) => {
+    if (v === null || v === undefined || !Number.isFinite(Number(v))) return '—';
+    try {
+      return new Intl.NumberFormat(undefined, opts).format(Number(v));
+    } catch {
+      return String(v);
+    }
+  }, []);
+
+  const formatMoney = useCallback(
+    (v: number | null | undefined) =>
+      formatNumber(v, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }),
+    [formatNumber]
+  );
+
+  const severityToCalloutVariant = useCallback((s: string) => {
+    const sev = String(s || '').toLowerCase();
+    if (sev === 'critical') return 'critical' as const;
+    if (sev === 'high') return 'warning' as const;
+    if (sev === 'medium') return 'warning' as const;
+    return 'info' as const;
+  }, []);
+
+  const formatHeatmapKey = useCallback((k: string) => {
+    const [p, i] = String(k || '').split(':');
+    const pp = p ? p.toUpperCase() : '—';
+    const ii = i ? i.toUpperCase() : '—';
+    return `${pp} × ${ii}`;
+  }, []);
 
   // Keep view mode consistent per tab (simple, iPhone-like)
   useEffect(() => {
@@ -537,6 +682,94 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     };
     loadHealthSnapshot();
   }, [currentProjectId]);
+
+  const loadExecutiveSnapshot = useCallback(
+    async (opts?: { refresh?: boolean }) => {
+      if (!currentProjectId) return;
+      setIsLoadingExecSnapshot(true);
+      setExecSnapshotError(null);
+      try {
+        const params = new URLSearchParams();
+        params.set('projectId', currentProjectId);
+        params.set('period', execPeriod);
+        params.set('includeAI', execIncludeAI ? 'true' : 'false');
+        if (opts?.refresh) params.set('refresh', 'true');
+        const res = await Api.get(`/executive/aggregate?${params.toString()}`);
+        const data = (res as any)?.data || (res as any);
+        setExecSnapshot(data as ExecutiveAggregateSnapshot);
+      } catch (e: any) {
+        setExecSnapshot(null);
+        setExecSnapshotError(e?.message || t('execution.execSnapshot.loadFailed', 'Failed to load executive snapshot'));
+      } finally {
+        setIsLoadingExecSnapshot(false);
+      }
+    },
+    [currentProjectId, execIncludeAI, execPeriod, t]
+  );
+
+  useEffect(() => {
+    if (!currentProjectId) return;
+    if (activeTab !== 'list') return;
+    loadExecutiveSnapshot();
+  }, [activeTab, currentProjectId, execIncludeAI, execPeriod, loadExecutiveSnapshot]);
+
+  // Keep UI toggle consistent with server-enforced includeAI (RBAC / org policy).
+  useEffect(() => {
+    if (!execSnapshot) return;
+    if (execSnapshot.ai?.enabled === execIncludeAI) return;
+    setExecIncludeAI(Boolean(execSnapshot.ai?.enabled));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [execSnapshot?.ai?.enabled]);
+
+  const execControls = useMemo(() => {
+    if (activeTab !== 'list') return null;
+    return (
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100/60 dark:bg-navy-800/60">
+          {(['week', 'month', 'quarter'] as ExecPeriod[]).map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setExecPeriod(p)}
+              className={`h-7 px-2 rounded-md text-[11px] font-medium transition-colors ${
+                execPeriod === p
+                  ? 'bg-white dark:bg-navy-700 text-slate-700 dark:text-slate-200 shadow-sm'
+                  : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+              }`}
+              title={t('execution.execSnapshot.period', 'Period')}
+            >
+              {p.toUpperCase()}
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setExecIncludeAI((v) => !v)}
+          className={`h-7 px-2 rounded-lg text-[11px] font-medium transition-colors inline-flex items-center gap-1 ${
+            execIncludeAI
+              ? 'text-purple-500 bg-purple-500/10'
+              : 'text-slate-400 dark:text-slate-500 bg-slate-100/50 dark:bg-navy-800/50 hover:bg-slate-100/70 dark:hover:bg-navy-800/70'
+          }`}
+          title={t('execution.execSnapshot.ai.toggle', 'Toggle AI')}
+        >
+          <Sparkles size={12} />
+          {t('execution.execSnapshot.ai.label', 'AI')}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => loadExecutiveSnapshot({ refresh: true })}
+          disabled={isLoadingExecSnapshot}
+          className="h-7 px-2 rounded-lg text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100/50 dark:bg-navy-800/50 hover:bg-slate-100/70 dark:hover:bg-navy-800/70 transition-colors inline-flex items-center gap-1 disabled:opacity-50"
+          title={t('execution.execSnapshot.refresh', 'Refresh')}
+        >
+          <RefreshCw size={12} className={isLoadingExecSnapshot ? 'animate-spin' : ''} />
+          {t('execution.execSnapshot.refresh', 'Refresh')}
+        </button>
+      </div>
+    );
+  }, [activeTab, execIncludeAI, execPeriod, isLoadingExecSnapshot, loadExecutiveSnapshot, t]);
 
   // Calculate stats
   const statusCounts = useMemo(() => {
@@ -1840,72 +2073,152 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   );
 
   const renderAIInsights = () => (
-    <div className="grid gap-4 lg:grid-cols-3">
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
-          {t('execution.ai.priorityRecommendations')}
-        </h3>
-        {aiInsights.priorityRecommendations.length === 0 ? (
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {t('execution.ai.noPriorities')}
-          </p>
+    execSnapshot ? (
+      <div className="space-y-3">
+        {!execIncludeAI || !execSnapshot.ai.enabled ? (
+          <Callout variant="info" title={t('execution.execSnapshot.ai.title', 'AI consultant insights')}>
+            {t(
+              'execution.execSnapshot.ai.disabled',
+              'AI insights are disabled for this view (or your role).'
+            )}
+          </Callout>
+        ) : execSnapshot.ai.insights ? (
+          <>
+            <Callout variant="purple" title={t('execution.execSnapshot.ai.title', 'AI consultant insights')}>
+              {execSnapshot.ai.insights.paragraph}
+            </Callout>
+            {execSnapshot.ai.insights.warnings?.length ? (
+              <Callout variant="warning" title={t('execution.execSnapshot.ai.warnings', 'Warnings')} compact>
+                <ul className="list-disc pl-4 space-y-1">
+                  {execSnapshot.ai.insights.warnings.slice(0, 6).map((w, idx) => (
+                    <li key={`${idx}-${w}`}>{w}</li>
+                  ))}
+                </ul>
+              </Callout>
+            ) : null}
+            <InlineTable
+              caption={t('execution.execSnapshot.ai.recommendedActions', 'Recommended actions')}
+              columns={[
+                {
+                  key: 'urgency',
+                  header: t('execution.execSnapshot.ai.urgency', 'Urgency'),
+                  width: 'w-28',
+                  render: (row: any) => {
+                    const u = String(row.urgency || 'low');
+                    const cls =
+                      u === 'high'
+                        ? 'text-rose-400'
+                        : u === 'medium'
+                          ? 'text-amber-400'
+                          : 'text-slate-400';
+                    return <span className={`text-xs font-medium uppercase tracking-wide ${cls}`}>{u}</span>;
+                  },
+                },
+                {
+                  key: 'title',
+                  header: t('execution.execSnapshot.ai.action', 'Action'),
+                  render: (row: any) => (
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+                        {row.title}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                        {row.rationale}
+                      </div>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'ownerHint',
+                  header: t('execution.execSnapshot.ai.owner', 'Owner'),
+                  width: 'w-40',
+                  render: (row: any) => (
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      {row.ownerHint || '—'}
+                    </span>
+                  ),
+                },
+              ]}
+              data={(execSnapshot.ai.insights.recommendedActions || []).slice(0, 5) as any[]}
+              rowKey={(row: any, idx: number) => `${row.title || 'a'}-${idx}`}
+              emptyMessage={t('execution.execSnapshot.ai.noActions', 'No actions suggested.')}
+              compact
+            />
+          </>
         ) : (
-          <div className="space-y-2">
-            {aiInsights.priorityRecommendations.map((item, idx) => (
-              <div
-                key={`${item.title}-${idx}`}
-                className="text-xs text-slate-700 dark:text-slate-300"
-              >
-                <span className="font-medium text-slate-900 dark:text-white">{item.title}</span>
-                <span className="text-slate-500"> · {item.context}</span>
-              </div>
-            ))}
-          </div>
+          <Callout variant="info" title={t('execution.execSnapshot.ai.title', 'AI consultant insights')}>
+            {t('execution.execSnapshot.ai.noInsights', 'No insights available yet.')}
+          </Callout>
         )}
       </div>
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
-          {t('execution.ai.timelineConflicts')}
-        </h3>
-        {aiInsights.timelineConflicts.length === 0 ? (
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {t('execution.ai.noConflicts')}
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {aiInsights.timelineConflicts.map((item, idx) => (
-              <div
-                key={`${item.title}-${idx}`}
-                className="text-xs text-slate-700 dark:text-slate-300"
-              >
-                <span className="font-medium text-slate-900 dark:text-white">{item.title}</span>
-                <span className="text-slate-500"> · {item.context}</span>
-              </div>
-            ))}
-          </div>
-        )}
+    ) : (
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+            {t('execution.ai.priorityRecommendations')}
+          </h3>
+          {aiInsights.priorityRecommendations.length === 0 ? (
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {t('execution.ai.noPriorities')}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {aiInsights.priorityRecommendations.map((item, idx) => (
+                <div
+                  key={`${item.title}-${idx}`}
+                  className="text-xs text-slate-700 dark:text-slate-300"
+                >
+                  <span className="font-medium text-slate-900 dark:text-white">{item.title}</span>
+                  <span className="text-slate-500"> · {item.context}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+            {t('execution.ai.timelineConflicts')}
+          </h3>
+          {aiInsights.timelineConflicts.length === 0 ? (
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {t('execution.ai.noConflicts')}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {aiInsights.timelineConflicts.map((item, idx) => (
+                <div
+                  key={`${item.title}-${idx}`}
+                  className="text-xs text-slate-700 dark:text-slate-300"
+                >
+                  <span className="font-medium text-slate-900 dark:text-white">{item.title}</span>
+                  <span className="text-slate-500"> · {item.context}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+            {t('execution.ai.riskSuggestions')}
+          </h3>
+          {aiInsights.riskAlerts.length === 0 ? (
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t('execution.ai.noRisks')}</p>
+          ) : (
+            <div className="space-y-2">
+              {aiInsights.riskAlerts.map((item, idx) => (
+                <div
+                  key={`${item.title}-${idx}`}
+                  className="text-xs text-slate-700 dark:text-slate-300"
+                >
+                  <span className="font-medium text-slate-900 dark:text-white">{item.title}</span>
+                  <span className="text-slate-500"> · {item.context}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
-          {t('execution.ai.riskSuggestions')}
-        </h3>
-        {aiInsights.riskAlerts.length === 0 ? (
-          <p className="text-xs text-slate-500 dark:text-slate-400">{t('execution.ai.noRisks')}</p>
-        ) : (
-          <div className="space-y-2">
-            {aiInsights.riskAlerts.map((item, idx) => (
-              <div
-                key={`${item.title}-${idx}`}
-                className="text-xs text-slate-700 dark:text-slate-300"
-              >
-                <span className="font-medium text-slate-900 dark:text-white">{item.title}</span>
-                <span className="text-slate-500"> · {item.context}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+    )
   );
 
   const dashboardBaseInitiatives = useMemo(() => {
@@ -2820,43 +3133,497 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       );
     }
 
+    const snapshot = execSnapshot;
     return (
       <div className="p-4 space-y-6">
-        {renderPortfolioHealth()}
-        {riskSignals.length > 0 && (
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-            <RiskSignalsPanel
-              projectId={currentProjectId || undefined}
-              onInitiativeClick={(id) => {
-                const init = initiatives.find((i) => i.id === id);
-                if (init) handleOpenSidePanel(init);
-              }}
-            />
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              {t('execution.execSnapshot.title', 'Executive snapshot')}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {snapshot?.generatedAt
+                ? t('execution.execSnapshot.generatedAt', 'Generated at') +
+                  `: ${new Date(snapshot.generatedAt).toLocaleString()}`
+                : t('execution.execSnapshot.generatedAt', 'Generated at') + ': —'}
+            </div>
           </div>
+          {execControls}
+        </div>
+
+        {execSnapshotError ? (
+          <Callout variant="critical" title={t('execution.execSnapshot.error', 'Snapshot error')}>
+            {execSnapshotError}
+          </Callout>
+        ) : null}
+
+        {!snapshot ? (
+          <div className="bg-white/40 dark:bg-navy-900/30 rounded-xl border border-slate-200/50 dark:border-navy-700/50 p-8">
+            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              {t('execution.execSnapshot.loading', 'Loading snapshot...')}
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* 7.1 Overview */}
+            <ToggleBlock
+              title={t('execution.execSnapshot.overview.title', 'Overview')}
+              badge={`${snapshot.overview.progressPercent}%`}
+              icon={<LayoutDashboard size={14} />}
+              defaultOpen
+            >
+              <div className="grid gap-3 lg:grid-cols-3">
+                <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
+                  <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    {t('execution.execSnapshot.overview.progress', 'Progress')}
+                  </div>
+                  <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
+                    {snapshot.overview.progressPercent}%
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    {t('execution.execSnapshot.overview.phase', 'Phase')}: {snapshot.overview.phaseLabel || '—'}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
+                  <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    {t('execution.execSnapshot.overview.alerts', 'Priority alerts')}
+                  </div>
+                  <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
+                    {snapshot.overview.priorityAlerts?.length || 0}
+                  </div>
+                  <div className="mt-2 space-y-2">
+                    {(snapshot.overview.priorityAlerts || []).slice(0, 3).map((a, idx) => (
+                      <Callout
+                        key={`${a.type}-${idx}`}
+                        variant={severityToCalloutVariant(a.severity)}
+                        compact
+                        title={a.type}
+                      >
+                        {a.message}
+                      </Callout>
+                    ))}
+                    {(snapshot.overview.priorityAlerts || []).length === 0 ? (
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        {t('execution.execSnapshot.overview.noAlerts', 'No critical alerts.')}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
+                  <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    {t('execution.execSnapshot.overview.nextMilestones', 'Next milestones')}
+                  </div>
+                  <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
+                    {snapshot.overview.nextMilestones?.length || 0}
+                  </div>
+                  <InlineTable
+                    className="mt-3"
+                    compact
+                    columns={[
+                      {
+                        key: 'initiative',
+                        header: t('execution.execSnapshot.overview.initiative', 'Initiative'),
+                        render: (row: any) => (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const init = initiatives.find((i) => i.id === row.initiativeId);
+                              if (init) handleOpenSidePanel(init);
+                              else toast.error(t('execution.toast.initiativeNotFound', 'Related initiative not found'));
+                            }}
+                            className="text-left text-sm font-medium text-slate-700 dark:text-slate-200 hover:underline"
+                          >
+                            {row.initiativeName || '—'}
+                          </button>
+                        ),
+                      },
+                      {
+                        key: 'date',
+                        header: t('execution.execSnapshot.overview.targetDate', 'Target'),
+                        width: 'w-28',
+                        align: 'right',
+                        render: (row: any) => (
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                            {row.targetDate ? new Date(row.targetDate).toLocaleDateString() : '—'}
+                          </span>
+                        ),
+                      },
+                    ]}
+                    data={(snapshot.overview.nextMilestones || []).slice(0, 5) as any[]}
+                    rowKey={(row: any) => row.id}
+                    emptyMessage={t('execution.execSnapshot.overview.noMilestones', 'No upcoming milestones.')}
+                  />
+                </div>
+              </div>
+            </ToggleBlock>
+
+            {/* 7.2 Workstreams */}
+            <ToggleBlock
+              title={t('execution.execSnapshot.workstreams.title', 'Workstreams')}
+              badge={(snapshot.workstreams.items?.length || 0) + (snapshot.workstreams.unassignedInitiatives ? 1 : 0)}
+              icon={<LayoutGrid size={14} />}
+              defaultOpen
+            >
+              <EmbeddedView
+                title={t('execution.execSnapshot.workstreams.title', 'Workstreams')}
+                count={snapshot.workstreams.items?.length || 0}
+                viewModes={['list', 'table']}
+                activeMode={workstreamsViewMode}
+                onModeChange={(m) => setWorkstreamsViewMode(m as any)}
+                onOpenFull={() => navigate('/pmo')}
+                loading={isLoadingExecSnapshot}
+              >
+                {snapshot.workstreams.items?.length ? (
+                  workstreamsViewMode === 'table' ? (
+                    <InlineTable
+                      compact
+                      columns={[
+                        {
+                          key: 'name',
+                          header: t('execution.execSnapshot.workstreams.name', 'Workstream'),
+                          render: (row: any) => (
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
+                                {row.name}
+                              </div>
+                              <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                {t('execution.execSnapshot.workstreams.owner', 'Owner')}: {row.ownerName || '—'}
+                              </div>
+                            </div>
+                          ),
+                        },
+                        {
+                          key: 'progress',
+                          header: t('execution.execSnapshot.workstreams.progress', 'Progress'),
+                          width: 'w-24',
+                          align: 'right',
+                          render: (row: any) => (
+                            <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                              {formatNumber(row.progressAvg)}%
+                            </span>
+                          ),
+                        },
+                        {
+                          key: 'counts',
+                          header: t('execution.execSnapshot.workstreams.initiatives', 'Initiatives'),
+                          width: 'w-28',
+                          align: 'right',
+                          render: (row: any) => (
+                            <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                              {formatNumber(row.initiativeCount)}
+                            </span>
+                          ),
+                        },
+                      ]}
+                      data={snapshot.workstreams.items as any[]}
+                      rowKey={(row: any) => row.id}
+                      emptyMessage={t('execution.execSnapshot.workstreams.empty', 'No workstreams defined.')}
+                    />
+                  ) : (
+                    <div className="space-y-2">
+                      {snapshot.workstreams.items.slice(0, 10).map((ws) => (
+                        <div
+                          key={ws.id}
+                          className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-3"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
+                                {ws.name}
+                              </div>
+                              <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                {t('execution.execSnapshot.workstreams.owner', 'Owner')}: {ws.ownerName || '—'}
+                              </div>
+                            </div>
+                            <div className="text-right text-xs text-slate-500 dark:text-slate-400 tabular-nums shrink-0">
+                              <div>{formatNumber(ws.progressAvg)}%</div>
+                              <div>
+                                {formatNumber(ws.onTrackCount)} on track · {formatNumber(ws.atRiskCount)} at risk
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {snapshot.workstreams.unassignedInitiatives ? (
+                        <Callout variant="warning" compact title={t('execution.execSnapshot.workstreams.unassigned', 'Unassigned')}>
+                          {t('execution.execSnapshot.workstreams.unassignedHint', 'Initiatives without a workstream')}: {' '}
+                          {formatNumber(snapshot.workstreams.unassignedInitiatives)}
+                        </Callout>
+                      ) : null}
+                    </div>
+                  )
+                ) : (
+                  <EmptyStateInline
+                    message={t('execution.execSnapshot.workstreams.empty', 'No workstreams defined.')}
+                    hint={t('execution.execSnapshot.workstreams.emptyHint', 'Create workstreams to improve accountability and reporting.')}
+                    action={{ label: t('execution.execSnapshot.workstreams.openPMO', 'Open PMO'), onClick: () => navigate('/pmo') }}
+                  />
+                )}
+              </EmbeddedView>
+            </ToggleBlock>
+
+            {/* 7.3 KPI */}
+            <ToggleBlock title={t('execution.execSnapshot.kpis.title', 'KPIs')} badge={snapshot.kpis.highlights?.length || 0} icon={<TrendingUp size={14} />}>
+              <InlineTable
+                columns={[
+                  {
+                    key: 'name',
+                    header: t('execution.execSnapshot.kpis.kpi', 'KPI'),
+                    render: (row: any) => (
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{row.name}</div>
+                      </div>
+                    ),
+                  },
+                  {
+                    key: 'current',
+                    header: t('execution.execSnapshot.kpis.current', 'Current'),
+                    width: 'w-28',
+                    align: 'right',
+                    render: (row: any) => (
+                      <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                        {formatNumber(row.currentValue)}{row.unit ? ` ${row.unit}` : ''}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: 'target',
+                    header: t('execution.execSnapshot.kpis.target', 'Target'),
+                    width: 'w-28',
+                    align: 'right',
+                    render: (row: any) => (
+                      <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                        {formatNumber(row.targetValue)}{row.unit ? ` ${row.unit}` : ''}
+                      </span>
+                    ),
+                  },
+                ]}
+                data={(snapshot.kpis.highlights || []).slice(0, 8) as any[]}
+                rowKey={(row: any) => row.id}
+                emptyMessage={t('execution.execSnapshot.kpis.empty', 'No KPIs available.')}
+                caption={`${t('execution.execSnapshot.kpis.dataQuality', 'Data quality')}: ${snapshot.kpis.dataQuality}`}
+              />
+            </ToggleBlock>
+
+            {/* 7.4 ROI */}
+            <ToggleBlock
+              title={t('execution.execSnapshot.roi.title', 'ROI / financial impact')}
+              badge={snapshot.roi.summary ? `${formatMoney(snapshot.roi.summary.totalProjected)}` : '—'}
+              icon={<Target size={14} />}
+            >
+              {snapshot.roi.summary ? (
+                <div className="grid gap-3 lg:grid-cols-4">
+                  <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
+                    <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      {t('execution.execSnapshot.roi.projected', 'Projected')}
+                    </div>
+                    <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
+                      {formatMoney(snapshot.roi.summary.totalProjected)}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
+                    <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      {t('execution.execSnapshot.roi.realized', 'Realized')}
+                    </div>
+                    <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
+                      {formatMoney(snapshot.roi.summary.totalRealized)}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
+                    <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      {t('execution.execSnapshot.roi.variance', 'Variance')}
+                    </div>
+                    <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
+                      {formatMoney(snapshot.roi.summary.totalVariance)}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-white/40 dark:bg-navy-900/30 p-4">
+                    <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      {t('execution.execSnapshot.roi.coverage', 'Coverage')}
+                    </div>
+                    <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
+                      {formatNumber(snapshot.roi.summary.coveragePercent)}%
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <EmptyStateInline
+                  message={t('execution.execSnapshot.roi.empty', 'No ROI data available.')}
+                  hint={t('execution.execSnapshot.roi.emptyHint', 'Connect initiatives to benefit tracking to compute financial impact.')}
+                  action={{ label: t('execution.execSnapshot.roi.openBenefits', 'Open Benefits'), onClick: () => navigate('/benefits') }}
+                />
+              )}
+              <div className="mt-4">
+                <InlineTable
+                  compact
+                  caption={t('execution.execSnapshot.roi.initiatives', 'Top initiatives')}
+                  columns={[
+                    {
+                      key: 'initiative',
+                      header: t('execution.execSnapshot.roi.initiative', 'Initiative'),
+                      render: (row: any) => (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const init = initiatives.find((i) => i.id === row.initiativeId);
+                            if (init) handleOpenSidePanel(init);
+                            else toast.error(t('execution.toast.initiativeNotFound', 'Related initiative not found'));
+                          }}
+                          className="text-left text-sm font-medium text-slate-700 dark:text-slate-200 hover:underline"
+                        >
+                          {row.initiativeName || '—'}
+                        </button>
+                      ),
+                    },
+                    {
+                      key: 'projected',
+                      header: t('execution.execSnapshot.roi.projected', 'Projected'),
+                      width: 'w-32',
+                      align: 'right',
+                      render: (row: any) => (
+                        <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                          {formatMoney(row.projectedBenefit)}
+                        </span>
+                      ),
+                    },
+                    {
+                      key: 'realized',
+                      header: t('execution.execSnapshot.roi.realized', 'Realized'),
+                      width: 'w-32',
+                      align: 'right',
+                      render: (row: any) => (
+                        <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                          {formatMoney(row.realizedBenefit)}
+                        </span>
+                      ),
+                    },
+                  ]}
+                  data={(snapshot.roi.items || []).slice(0, 8) as any[]}
+                  rowKey={(row: any, idx: number) => `${row.initiativeId || idx}`}
+                  emptyMessage={t('execution.execSnapshot.roi.noItems', 'No initiatives mapped to ROI.')}
+                />
+              </div>
+            </ToggleBlock>
+
+            {/* 7.5 Risks */}
+            <ToggleBlock title={t('execution.execSnapshot.risks.title', 'Risks')} badge={snapshot.risks.topRisks?.length || 0} icon={<AlertTriangle size={14} />}>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div>
+                  <InlineTable
+                    caption={t('execution.execSnapshot.risks.heatmap', 'Heatmap (P×I)')}
+                    compact
+                    columns={[
+                      { key: 'cell', header: t('execution.execSnapshot.risks.cell', 'Cell'), render: (row: any) => row.cell },
+                      {
+                        key: 'count',
+                        header: t('execution.execSnapshot.risks.count', 'Count'),
+                        width: 'w-20',
+                        align: 'right',
+                        render: (row: any) => (
+                          <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">{row.count}</span>
+                        ),
+                      },
+                    ]}
+                    data={Object.entries(snapshot.risks.heatmap || {})
+                      .sort((a, b) => (b[1] as number) - (a[1] as number))
+                      .slice(0, 10)
+                      .map(([k, v]) => ({ cell: formatHeatmapKey(k), count: v })) as any[]}
+                    rowKey={(row: any, idx: number) => `${row.cell}-${idx}`}
+                    emptyMessage={t('execution.execSnapshot.risks.noHeatmap', 'No risk heatmap data.')}
+                  />
+                </div>
+                <div>
+                  <InlineTable
+                    caption={t('execution.execSnapshot.risks.top', 'Top risks')}
+                    compact
+                    columns={[
+                      {
+                        key: 'risk',
+                        header: t('execution.execSnapshot.risks.risk', 'Risk'),
+                        render: (row: any) => (
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
+                              {row.title}
+                            </div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                              {t('execution.execSnapshot.risks.score', 'Score')}: {formatNumber(row.score)}
+                            </div>
+                          </div>
+                        ),
+                      },
+                      {
+                        key: 'due',
+                        header: t('execution.execSnapshot.risks.due', 'Due'),
+                        width: 'w-28',
+                        align: 'right',
+                        render: (row: any) => (
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                            {row.dueDate ? new Date(row.dueDate).toLocaleDateString() : '—'}
+                          </span>
+                        ),
+                      },
+                    ]}
+                    data={(snapshot.risks.topRisks || []).slice(0, 8) as any[]}
+                    rowKey={(row: any) => row.id}
+                    emptyMessage={t('execution.execSnapshot.risks.noTop', 'No top risks.')}
+                  />
+                </div>
+              </div>
+              <div className="mt-4 grid gap-3 lg:grid-cols-3">
+                <Callout variant="warning" title={t('execution.execSnapshot.risks.signals', 'Signals')} compact>
+                  {t('execution.execSnapshot.risks.signalCounts', 'Risk/Delay/Overspend signals')}:&nbsp;
+                  <span className="tabular-nums">
+                    {(snapshot.risks.signals?.riskSignals || []).length}/{(snapshot.risks.signals?.delaySignals || []).length}/
+                    {(snapshot.risks.signals?.overspendSignals || []).length}
+                  </span>
+                </Callout>
+                <Callout variant="info" title={t('execution.execSnapshot.risks.openPanels', 'Control panels')} compact>
+                  {t('execution.execSnapshot.risks.panelsHint', 'See detailed signals in the panels below.')}
+                </Callout>
+                <Callout variant="success" title={t('execution.execSnapshot.risks.raids', 'RAID log')} compact>
+                  {t('execution.execSnapshot.risks.raidsHint', 'Top risks are sourced from the project RAID log.')}
+                </Callout>
+              </div>
+            </ToggleBlock>
+
+            {/* Existing control panels (detailed) */}
+            {riskSignals.length > 0 && (
+              <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+                <RiskSignalsPanel
+                  projectId={currentProjectId || undefined}
+                  onInitiativeClick={(id) => {
+                    const init = initiatives.find((i) => i.id === id);
+                    if (init) handleOpenSidePanel(init);
+                  }}
+                />
+              </div>
+            )}
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 overflow-hidden">
+              <DelayDetectionPanel
+                projectId={currentProjectId || undefined}
+                onInitiativeClick={(id) => {
+                  const init = initiatives.find((i) => i.id === id);
+                  if (init) handleOpenSidePanel(init);
+                }}
+              />
+            </div>
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 overflow-hidden">
+              <BudgetControlPanel
+                projectId={currentProjectId || undefined}
+                onInitiativeClick={(id) => {
+                  const init = initiatives.find((i) => i.id === id);
+                  if (init) handleOpenSidePanel(init);
+                }}
+              />
+            </div>
+
+            {/* Weekly pack + action center + AI */}
+            {renderWeeklyPackCard()}
+            {renderActionCenter()}
+            {renderAIInsights()}
+          </>
         )}
-        {/* T041: Delay Detection Panel */}
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 overflow-hidden">
-          <DelayDetectionPanel
-            projectId={currentProjectId || undefined}
-            onInitiativeClick={(id) => {
-              const init = initiatives.find((i) => i.id === id);
-              if (init) handleOpenSidePanel(init);
-            }}
-          />
-        </div>
-        {/* T042: Budget Control Panel */}
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 overflow-hidden">
-          <BudgetControlPanel
-            projectId={currentProjectId || undefined}
-            onInitiativeClick={(id) => {
-              const init = initiatives.find((i) => i.id === id);
-              if (init) handleOpenSidePanel(init);
-            }}
-          />
-        </div>
-        {renderWeeklyPackCard()}
-        {renderActionCenter()}
-        {renderAIInsights()}
       </div>
     );
   };

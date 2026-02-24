@@ -11,15 +11,19 @@ import {
   ArrowRight,
   BookOpen,
   CheckSquare,
+  Clock,
+  FileText,
   Lightbulb,
+  Pen,
   Plus,
   Scale,
-  Search,
   Sparkles,
   Tag,
   Target,
   Trash2,
+  Type,
   X,
+  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -79,11 +83,11 @@ export interface NotebookPage {
   updatedAt?: string;
 }
 
-const MATURITY_CONFIG: Record<NotebookMaturity, { dot: string; label: string; labelPl: string }> = {
-  seed: { dot: 'bg-slate-400', label: 'Seed', labelPl: 'Ziarno' },
-  growing: { dot: 'bg-emerald-500', label: 'Growing', labelPl: 'Rośnie' },
-  mature: { dot: 'bg-blue-500', label: 'Mature', labelPl: 'Dojrzała' },
-  actionable: { dot: 'bg-amber-500', label: 'Actionable', labelPl: 'Do działania' },
+const MATURITY_CONFIG: Record<NotebookMaturity, { dot: string; bg: string; text: string; border: string; label: string; labelPl: string; icon: string }> = {
+  seed: { dot: 'bg-slate-400', bg: 'bg-slate-500/10', text: 'text-slate-500', border: 'border-slate-400/30', label: 'Seed', labelPl: 'Ziarno', icon: '🌱' },
+  growing: { dot: 'bg-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-500/30', label: 'Growing', labelPl: 'Rośnie', icon: '🌿' },
+  mature: { dot: 'bg-blue-500', bg: 'bg-blue-500/10', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-500/30', label: 'Mature', labelPl: 'Dojrzała', icon: '🎯' },
+  actionable: { dot: 'bg-amber-500', bg: 'bg-amber-500/10', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-500/30', label: 'Actionable', labelPl: 'Do działania', icon: '⚡' },
 };
 
 function computeMaturity(page: NotebookPage): NotebookMaturity {
@@ -94,6 +98,23 @@ function computeMaturity(page: NotebookPage): NotebookMaturity {
   if (textLen >= 100 && tagCount >= 1) return 'growing';
   return 'seed';
 }
+
+const relativeTime = (dateStr?: string): string => {
+  if (!dateStr) return '';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d`;
+  return `${Math.floor(days / 7)}w`;
+};
+
+const wordCount = (text: string): number => {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+};
 
 const extractText = (json: any): string => {
   try {
@@ -115,139 +136,215 @@ const extractText = (json: any): string => {
 /* ------------------------------------------------------------------ */
 
 const EDITOR_STYLES = `
-/* Typography */
+/* Typography — premium feel */
 .ProseMirror {
-  line-height: 1.75;
+  line-height: 1.8;
   font-size: 0.9375rem;
+  color: #1e293b;
+  caret-color: #6366f1;
 }
-.ProseMirror h1 { font-size: 1.5rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.5rem; }
-.ProseMirror h2 { font-size: 1.25rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.4rem; }
-.ProseMirror h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.3rem; }
-.ProseMirror > * + * { margin-top: 0.3rem; }
+.dark .ProseMirror { color: #e2e8f0; caret-color: #818cf8; }
+.ProseMirror h1 { font-size: 1.625rem; font-weight: 700; margin-top: 2rem; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+.ProseMirror h2 { font-size: 1.325rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.4rem; letter-spacing: -0.01em; }
+.ProseMirror h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.3rem; }
+.ProseMirror > * + * { margin-top: 0.4rem; }
 .ProseMirror p.is-editor-empty:first-child::before {
   color: #94a3b8;
   content: attr(data-placeholder);
   float: left;
   height: 0;
   pointer-events: none;
+  font-style: italic;
 }
 .dark .ProseMirror p.is-editor-empty:first-child::before { color: #475569; }
 
-/* Block hover handles */
+/* Block hover with subtle left accent */
 .ProseMirror > *:not(table) {
   position: relative;
-  transition: background-color 0.1s;
-  border-radius: 0.25rem;
+  transition: all 0.15s ease;
+  border-radius: 0.375rem;
+  padding-left: 0.25rem;
+  border-left: 2px solid transparent;
 }
 .ProseMirror > *:not(table):hover {
-  background-color: rgba(148,163,184,0.04);
+  background-color: rgba(99,102,241,0.03);
+  border-left-color: rgba(99,102,241,0.15);
+}
+.dark .ProseMirror > *:not(table):hover {
+  background-color: rgba(99,102,241,0.05);
+  border-left-color: rgba(129,140,248,0.2);
 }
 
-/* Task list */
+/* Task list — polished checkboxes */
+.ProseMirror ul[data-type="taskList"] { padding-left: 0; list-style: none; }
 .ProseMirror ul[data-type="taskList"] li {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
+  padding: 0.25rem 0;
 }
 .ProseMirror ul[data-type="taskList"] li label input[type="checkbox"] {
   accent-color: #6366f1;
   margin-top: 0.35rem;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
-/* Callout */
+/* Callout — glassmorphism-inspired */
 .nb-callout {
-  border-left: 4px solid;
+  border-left: 3px solid;
   border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
-  margin: 0.5rem 0;
-  transition: box-shadow 0.15s;
+  padding: 0.875rem 1.125rem;
+  margin: 0.75rem 0;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
 }
-.nb-callout:hover { box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-.nb-callout[data-variant="info"]     { border-color: #3b82f6; background: #eff6ff; }
-.nb-callout[data-variant="warning"]  { border-color: #f59e0b; background: #fffbeb; }
-.nb-callout[data-variant="success"]  { border-color: #22c55e; background: #f0fdf4; }
-.nb-callout[data-variant="critical"] { border-color: #ef4444; background: #fef2f2; }
-.dark .nb-callout[data-variant="info"]     { background: rgba(59,130,246,0.08); }
-.dark .nb-callout[data-variant="warning"]  { background: rgba(245,158,11,0.08); }
-.dark .nb-callout[data-variant="success"]  { background: rgba(34,197,94,0.08); }
-.dark .nb-callout[data-variant="critical"] { background: rgba(239,68,68,0.08); }
+.nb-callout:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+.nb-callout[data-variant="info"]     { border-color: #3b82f6; background: linear-gradient(135deg, #eff6ff 0%, #f0f7ff 100%); }
+.nb-callout[data-variant="warning"]  { border-color: #f59e0b; background: linear-gradient(135deg, #fffbeb 0%, #fef9e7 100%); }
+.nb-callout[data-variant="success"]  { border-color: #22c55e; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); }
+.nb-callout[data-variant="critical"] { border-color: #ef4444; background: linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%); }
+.dark .nb-callout[data-variant="info"]     { background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(59,130,246,0.04)); }
+.dark .nb-callout[data-variant="warning"]  { background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.04)); }
+.dark .nb-callout[data-variant="success"]  { background: linear-gradient(135deg, rgba(34,197,94,0.08), rgba(34,197,94,0.04)); }
+.dark .nb-callout[data-variant="critical"] { background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(239,68,68,0.04)); }
 
-/* Details / Toggle */
+/* Details / Toggle — refined */
 .nb-details {
   border: 1px solid #e2e8f0;
   border-radius: 0.75rem;
-  margin: 0.5rem 0;
+  margin: 0.75rem 0;
   overflow: hidden;
-  transition: box-shadow 0.15s;
+  transition: all 0.2s ease;
 }
-.nb-details:hover { box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.nb-details:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-color: #cbd5e1; }
 .dark .nb-details { border-color: rgba(255,255,255,0.08); }
+.dark .nb-details:hover { border-color: rgba(255,255,255,0.14); }
 .nb-summary {
   cursor: pointer;
   font-weight: 600;
-  padding: 0.5rem 0.75rem;
-  background: #f8fafc;
+  padding: 0.625rem 0.875rem;
+  background: linear-gradient(180deg, #f8fafc, #f1f5f9);
   user-select: text;
-  transition: background-color 0.1s;
+  transition: background 0.15s;
 }
-.nb-summary:hover { background: #f1f5f9; }
-.dark .nb-summary { background: rgba(255,255,255,0.03); }
-.dark .nb-summary:hover { background: rgba(255,255,255,0.06); }
-.nb-details-content { padding: 0.5rem 0.75rem 0.75rem; }
+.nb-summary:hover { background: linear-gradient(180deg, #f1f5f9, #e2e8f0); }
+.dark .nb-summary { background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); }
+.dark .nb-summary:hover { background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.04)); }
+.nb-details-content { padding: 0.625rem 0.875rem 0.875rem; }
 
-/* Table */
+/* Table — refined styling */
 .ProseMirror table {
   border-collapse: collapse;
   width: 100%;
-  margin: 0.5rem 0;
-  border-radius: 0.5rem;
+  margin: 0.75rem 0;
+  border-radius: 0.75rem;
   overflow: hidden;
+  border: 1px solid #e2e8f0;
 }
+.dark .ProseMirror table { border-color: rgba(255,255,255,0.08); }
 .ProseMirror th,
 .ProseMirror td {
   border: 1px solid #e2e8f0;
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 0.875rem;
   text-align: left;
   vertical-align: top;
 }
 .dark .ProseMirror th,
-.dark .ProseMirror td { border-color: rgba(255,255,255,0.1); }
+.dark .ProseMirror td { border-color: rgba(255,255,255,0.08); }
 .ProseMirror th {
   font-weight: 600;
-  background: #f8fafc;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+  color: #64748b;
 }
-.dark .ProseMirror th { background: rgba(255,255,255,0.04); }
+.dark .ProseMirror th { background: rgba(255,255,255,0.04); color: #94a3b8; }
 
-/* Code block */
+/* Code block — polished */
 .ProseMirror pre {
-  background: #1e293b;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
   color: #e2e8f0;
   border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
   font-size: 0.8125rem;
-  line-height: 1.6;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  line-height: 1.7;
   overflow-x: auto;
+  border: 1px solid rgba(255,255,255,0.06);
 }
-.dark .ProseMirror pre { background: rgba(15,23,42,0.8); }
+.ProseMirror code:not(pre code) {
+  background: rgba(99,102,241,0.1);
+  color: #6366f1;
+  padding: 0.15em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+.dark .ProseMirror code:not(pre code) { background: rgba(129,140,248,0.15); color: #a5b4fc; }
 
-/* Horizontal rule */
+/* Horizontal rule — gradient */
 .ProseMirror hr {
   border: none;
-  border-top: 2px solid #e2e8f0;
-  margin: 1.5rem 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #e2e8f0 20%, #e2e8f0 80%, transparent);
+  margin: 2rem 0;
 }
-.dark .ProseMirror hr { border-color: rgba(255,255,255,0.08); }
+.dark .ProseMirror hr { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1) 20%, rgba(255,255,255,0.1) 80%, transparent); }
+
+/* Blockquote */
+.ProseMirror blockquote {
+  border-left: 3px solid #6366f1;
+  padding-left: 1rem;
+  margin: 0.75rem 0;
+  color: #64748b;
+  font-style: italic;
+}
+.dark .ProseMirror blockquote { border-left-color: #818cf8; color: #94a3b8; }
+
+/* Lists */
+.ProseMirror ul, .ProseMirror ol { padding-left: 1.5rem; }
+.ProseMirror li::marker { color: #6366f1; }
+.dark .ProseMirror li::marker { color: #818cf8; }
 
 /* Focus ring on editor */
 .ProseMirror:focus { outline: none; }
 
 /* Page transition animation */
 @keyframes nbFadeIn {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.nb-page-enter { animation: nbFadeIn 0.2s ease-out; }
+.nb-page-enter { animation: nbFadeIn 0.25s ease-out; }
+
+/* Sidebar page card hover */
+@keyframes nbPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+.nb-saving { animation: nbPulse 1.5s ease-in-out infinite; }
+
+/* Notebook scrollbar */
+.nb-scroll::-webkit-scrollbar { width: 4px; }
+.nb-scroll::-webkit-scrollbar-track { background: transparent; }
+.nb-scroll::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.2); border-radius: 4px; }
+.nb-scroll::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.4); }
+
+/* Welcome card hover */
+.nb-welcome-card {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.nb-welcome-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+.dark .nb-welcome-card:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
 `;
 
 export const NotebookContent: React.FC<NotebookContentProps> = ({
@@ -639,77 +736,127 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       <style>{EDITOR_STYLES}</style>
 
       {/* Sidebar */}
-      <div className="w-72 shrink-0 border-r border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950">
-        <div className="flex items-center justify-between px-3 py-3 border-b border-slate-200 dark:border-navy-800">
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
-            <BookOpen size={16} />
-            <span>{t('myWork.notebook.title', 'Notebook')}</span>
-          </div>
-          <button
-            onClick={() => setTemplateModalOpen(true)}
-            className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
-            title={t('myWork.notebook.new', 'New page')}
-            aria-label={t('myWork.notebook.new', 'New page')}
-          >
-            <Plus size={18} />
-          </button>
-        </div>
-
-        <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-800">
-          <div className="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-navy-800 bg-slate-50 dark:bg-navy-900 px-2 py-1.5">
-            <Search size={14} className="text-slate-500 dark:text-slate-400" />
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('myWork.notebook.searchHint', 'Use the main search above')}
+      <div className="w-80 shrink-0 border-r border-slate-200/80 dark:border-navy-800/80 bg-gradient-to-b from-white via-white to-slate-50/50 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/30 flex flex-col">
+        {/* Sidebar header */}
+        <div className="px-4 py-3 border-b border-slate-200/60 dark:border-navy-800/60">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-sm">
+                <BookOpen size={14} className="text-white" />
+              </div>
+              <div>
+                <div className="text-sm font-bold text-slate-900 dark:text-white">
+                  {t('myWork.notebook.title', 'Notebook')}
+                </div>
+                <div className="text-[10px] text-slate-400 dark:text-slate-500">
+                  {filteredPages.length} {isPolish ? 'stron' : 'pages'}
+                </div>
+              </div>
             </div>
+            <button
+              onClick={() => setTemplateModalOpen(true)}
+              className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors"
+              title={t('myWork.notebook.new', 'New page')}
+            >
+              <Plus size={16} />
+            </button>
           </div>
+
+          {/* Maturity distribution mini-bar */}
+          {filteredPages.length > 0 && (
+            <div className="flex items-center gap-0.5 h-1.5 rounded-full overflow-hidden bg-slate-100 dark:bg-navy-800">
+              {(['actionable', 'mature', 'growing', 'seed'] as NotebookMaturity[]).map((m) => {
+                const count = filteredPages.filter((p) => (p.maturity || computeMaturity(p)) === m).length;
+                if (!count) return null;
+                const pct = (count / filteredPages.length) * 100;
+                return (
+                  <div
+                    key={m}
+                    className={`h-full ${MATURITY_CONFIG[m].dot} transition-all duration-300`}
+                    style={{ width: `${pct}%` }}
+                    title={`${MATURITY_CONFIG[m].label}: ${count}`}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        <div className="overflow-y-auto p-2 space-y-1">
+        {/* Page list */}
+        <div className="flex-1 overflow-y-auto nb-scroll p-2 space-y-1">
           {filteredPages.length === 0 ? (
-            <div className="p-3 text-xs text-slate-500 dark:text-slate-400">
-              {t('myWork.notebook.empty', 'No pages yet')}
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-navy-800 dark:to-navy-700 flex items-center justify-center mb-3">
+                <FileText size={20} className="text-slate-400" />
+              </div>
+              <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                {t('myWork.notebook.empty', 'No pages yet')}
+              </div>
+              <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+                {isPolish ? 'Utwórz pierwszą stronę' : 'Create your first page'}
+              </div>
             </div>
           ) : (
             filteredPages.map((p) => {
               const isActive = p.id === activeId;
               const mat = (p.maturity as NotebookMaturity) || computeMaturity(p);
               const matCfg = MATURITY_CONFIG[mat];
+              const timeAgo = relativeTime(p.updatedAt);
               return (
                 <button
                   key={p.id}
                   onClick={() => setActiveId(p.id)}
-                  className={`w-full text-left rounded-lg px-3 py-2 text-sm transition-all duration-150 ${
+                  className={`group w-full text-left rounded-xl px-3 py-2.5 transition-all duration-200 ${
                     isActive
-                      ? 'bg-primary-500/12 text-primary-700 dark:text-primary-300 shadow-sm'
-                      : 'hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-200'
+                      ? 'bg-gradient-to-r from-indigo-500/10 to-violet-500/8 border border-indigo-500/20 dark:border-indigo-400/15 shadow-sm'
+                      : 'hover:bg-slate-50 dark:hover:bg-white/[0.03] border border-transparent'
                   }`}
                 >
-                  <div className="flex items-center gap-2">
-                    {p.icon && <span className="text-base shrink-0">{p.icon}</span>}
-                    <div
-                      className={`w-2 h-2 rounded-full shrink-0 ${matCfg.dot}`}
-                      title={isPolish ? matCfg.labelPl : matCfg.label}
-                    />
-                    <span className="font-medium truncate flex-1">
-                      {p.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
+                  {/* Top row: icon + title + time */}
+                  <div className="flex items-start gap-2">
+                    <span className="text-lg leading-none mt-0.5 shrink-0">
+                      {p.icon || matCfg.icon}
                     </span>
-                  </div>
-                  {p.summary && (
-                    <div className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500 line-clamp-1 pl-4">
-                      {p.summary}
-                    </div>
-                  )}
-                  <div className="mt-0.5 flex items-center gap-1 flex-wrap pl-4">
-                    {p.tags && p.tags.length > 0 && (
-                      p.tags.slice(0, 3).map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded-full bg-primary-500/10 text-primary-600 dark:text-primary-400 px-1.5 py-0.5 text-[9px] font-medium"
-                        >
-                          {tag}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`font-semibold text-[13px] truncate flex-1 ${
+                          isActive ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-800 dark:text-slate-200'
+                        }`}>
+                          {p.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
                         </span>
-                      ))
-                    )}
+                        {timeAgo && (
+                          <span className="text-[9px] text-slate-400 dark:text-slate-500 shrink-0 tabular-nums">
+                            {timeAgo}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Summary */}
+                      {p.summary && (
+                        <div className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500 line-clamp-1 leading-relaxed">
+                          {p.summary}
+                        </div>
+                      )}
+
+                      {/* Bottom row: maturity badge + tags */}
+                      <div className="mt-1.5 flex items-center gap-1 flex-wrap">
+                        <span className={`inline-flex items-center gap-0.5 rounded-md ${matCfg.bg} ${matCfg.text} px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${matCfg.dot}`} />
+                          {isPolish ? matCfg.labelPl : matCfg.label}
+                        </span>
+                        {p.tags && p.tags.slice(0, 2).map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400 px-1.5 py-0.5 text-[9px] font-medium"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {p.tags && p.tags.length > 2 && (
+                          <span className="text-[9px] text-slate-400">+{p.tags.length - 2}</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </button>
               );
@@ -719,128 +866,149 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       </div>
 
       {/* Editor + Ideas panel */}
-      <div className="flex-1 flex bg-slate-50 dark:bg-navy-950">
-        <div className="flex-1 min-w-0">
+      <div className="flex-1 flex bg-gradient-to-br from-slate-50 via-white to-slate-50/50 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/20">
+        <div className="flex-1 min-w-0 flex flex-col">
           {!activePage ? (
-            <div className="flex h-full items-center justify-center">
-              <div className="text-center">
-                <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
-                  {t('myWork.notebook.noSelection', 'Select or create a page')}
+            <div className="flex h-full items-center justify-center p-8">
+              <div className="max-w-lg w-full">
+                {/* Welcome hero */}
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 shadow-lg shadow-indigo-500/20 mb-4">
+                    <Pen size={28} className="text-white" />
+                  </div>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">
+                    {isPolish ? 'Living Notebook' : 'Living Notebook'}
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+                    {isPolish
+                      ? 'Twoje notatki rosną, łączą się i pomagają podejmować decyzje'
+                      : 'Your notes grow, connect, and help you make better decisions'}
+                  </p>
                 </div>
-                <button
-                  onClick={() => setTemplateModalOpen(true)}
-                  className="mt-3 inline-flex items-center gap-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white px-3 py-2 text-sm font-medium"
-                >
-                  <Plus size={16} />
-                  {t('myWork.notebook.new', 'New page')}
-                </button>
+
+                {/* Quick start templates */}
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  {[
+                    { icon: '📝', label: isPolish ? 'Pusta strona' : 'Blank page', desc: isPolish ? 'Zacznij od zera' : 'Start from scratch', id: 'blank' },
+                    { icon: '🧠', label: isPolish ? 'Obserwacja strategiczna' : 'Strategic observation', desc: isPolish ? 'Zapisz insight' : 'Capture an insight', id: 'strategic' },
+                    { icon: '⚠️', label: isPolish ? 'Analiza ryzyka' : 'Risk analysis', desc: isPolish ? 'Oceń zagrożenie' : 'Assess a threat', id: 'risk' },
+                    { icon: '💬', label: isPolish ? 'Notatki ze spotkania' : 'Meeting notes', desc: isPolish ? 'Ustal i zapisz' : 'Capture & align', id: 'meeting' },
+                  ].map((tmpl) => (
+                    <button
+                      key={tmpl.id}
+                      onClick={() => {
+                        setTemplateModalOpen(true);
+                      }}
+                      className="nb-welcome-card flex items-start gap-3 p-3.5 rounded-xl border border-slate-200/80 dark:border-navy-700/60 bg-white dark:bg-navy-900/50 text-left group"
+                    >
+                      <span className="text-2xl mt-0.5">{tmpl.icon}</span>
+                      <div>
+                        <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                          {tmpl.label}
+                        </div>
+                        <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                          {tmpl.desc}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* AI suggestion prompt */}
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/20 border border-indigo-200/50 dark:border-indigo-800/30">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0">
+                    <Sparkles size={14} className="text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+                      {isPolish ? 'AI jest gotowe do pomocy' : 'AI is ready to assist'}
+                    </div>
+                    <div className="text-[11px] text-indigo-500 dark:text-indigo-400 mt-0.5">
+                      {isPolish
+                        ? 'Wpisz / w edytorze aby zapytać, rozwinąć lub zakwestionować pomysł'
+                        : 'Type / in the editor to ask, expand, or challenge your ideas'}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
             <div className="h-full flex flex-col nb-page-enter" key={activePage.id}>
-              {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950">
-                <div className="flex-1 min-w-0">
-                  <input
-                    value={title}
-                    onChange={(e) => {
-                      setTitle(e.target.value);
-                      scheduleSave({ title: e.target.value });
-                    }}
-                    placeholder={isPolish ? 'Tytuł strony…' : 'Page title…'}
-                    className="w-full bg-transparent text-lg font-semibold text-slate-900 dark:text-white outline-none"
+              {/* Compact toolbar + meta strip */}
+              <div className="border-b border-slate-200/60 dark:border-navy-800/60 bg-white/80 dark:bg-navy-950/80 backdrop-blur-sm">
+                {/* Toolbar */}
+                {editor && (
+                  <NotebookToolbar
+                    editor={editor}
+                    onAIClick={() => setAiCommand(aiCommand ? null : 'ask')}
                   />
-                  <div className="mt-1 flex items-center gap-2 flex-wrap">
-                    <input
-                      value={pageProjectId}
-                      onChange={(e) => {
-                        setPageProjectId(e.target.value);
-                        scheduleSave({
-                          projectId: e.target.value || null,
-                          visibility: e.target.value ? 'project' : 'private',
-                        });
-                      }}
-                      placeholder={isPolish ? 'Project ID (opcjonalnie)' : 'Project ID (optional)'}
-                      className="w-48 rounded-md border border-slate-200 dark:border-navy-800 bg-slate-50 dark:bg-navy-900 px-2 py-1 text-xs text-slate-700 dark:text-slate-200 outline-none"
-                    />
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {t('myWork.notebook.autoSaved', 'Auto-saved')}
-                    </span>
-                  </div>
+                )}
 
-                  {/* Tags */}
-                  <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-                    <Tag size={12} className="text-slate-400 shrink-0" />
-                    {pageTags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center gap-1 rounded-full bg-primary-500/10 text-primary-700 dark:text-primary-300 px-2 py-0.5 text-[11px] font-medium"
-                      >
-                        {tag}
-                        <button
-                          onClick={() => handleRemoveTag(tag)}
-                          className="hover:text-primary-900 dark:hover:text-primary-100"
-                          aria-label={`Remove tag ${tag}`}
-                        >
-                          <X size={10} />
-                        </button>
+                {/* Meta strip: maturity + auto-summary + project + actions */}
+                <div className="flex items-center gap-2 px-4 py-1.5 text-[11px]">
+                  {/* Maturity badge */}
+                  {(() => {
+                    const mat = (activePage.maturity as NotebookMaturity) || computeMaturity(activePage);
+                    const cfg = MATURITY_CONFIG[mat];
+                    return (
+                      <span className={`inline-flex items-center gap-1 rounded-md border ${cfg.border} ${cfg.bg} ${cfg.text} px-2 py-0.5 font-semibold uppercase tracking-wide text-[9px]`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                        {isPolish ? cfg.labelPl : cfg.label}
                       </span>
-                    ))}
-                    <input
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={handleTagKeyDown}
-                      onBlur={handleAddTag}
-                      placeholder={isPolish ? 'Dodaj tag…' : 'Add tag…'}
-                      className="min-w-[80px] max-w-[160px] bg-transparent text-[11px] text-slate-600 dark:text-slate-300 outline-none placeholder:text-slate-400"
-                    />
-                  </div>
-                </div>
+                    );
+                  })()}
 
-                <div className="flex items-center gap-2 ml-3 shrink-0">
+                  {/* Auto-summary */}
+                  {activePage?.summary && (
+                    <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 italic truncate flex-1 min-w-0">
+                      <Sparkles size={10} className="shrink-0 text-violet-400" />
+                      <span className="truncate">{activePage.summary}</span>
+                    </div>
+                  )}
+                  {!activePage?.summary && <div className="flex-1" />}
+
+                  {/* Word count */}
+                  <span className="text-slate-400 dark:text-slate-500 tabular-nums shrink-0 flex items-center gap-1">
+                    <Type size={9} />
+                    {wordCount(activePage.contentText || extractText(activePage.contentJson))}
+                  </span>
+
+                  {/* Relative time */}
+                  {activePage.updatedAt && (
+                    <span className="text-slate-400 dark:text-slate-500 tabular-nums shrink-0 flex items-center gap-1">
+                      <Clock size={9} />
+                      {relativeTime(activePage.updatedAt)}
+                    </span>
+                  )}
+
+                  {/* Delete */}
                   <button
                     onClick={handleDeletePage}
-                    className="inline-flex items-center gap-2 rounded-lg bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.10] text-slate-700 dark:text-slate-200 px-3 py-2 text-sm font-medium"
+                    className="p-1 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors shrink-0"
                     title={t('common.delete', 'Delete')}
                   >
-                    <Trash2 size={16} />
-                    {t('common.delete', 'Delete')}
+                    <Trash2 size={12} />
                   </button>
                 </div>
               </div>
 
-              {/* Toolbar */}
-              {editor && (
-                <NotebookToolbar
-                  editor={editor}
-                  onAIClick={() => setAiCommand(aiCommand ? null : 'ask')}
-                />
-              )}
-
-              {/* Auto-summary */}
-              {activePage?.summary && (
-                <div className="px-4 py-1.5 border-b border-slate-100 dark:border-navy-800/50 bg-slate-50/50 dark:bg-navy-950/50">
-                  <div className="mx-auto max-w-4xl flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 italic">
-                    <Sparkles size={10} className="shrink-0 text-violet-400" />
-                    <span className="line-clamp-1">{activePage.summary}</span>
-                  </div>
-                </div>
-              )}
-
               {/* Convert-to CTA */}
               {activePage && (activePage.maturity === 'mature' || activePage.maturity === 'actionable') && (
-                <div className="px-4 py-2 border-b border-amber-200/60 dark:border-amber-800/30 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/10">
+                <div className="px-4 py-2 border-b border-amber-200/40 dark:border-amber-800/20 bg-gradient-to-r from-amber-50/80 to-orange-50/80 dark:from-amber-950/15 dark:to-orange-950/10">
                   <div className="mx-auto max-w-4xl flex items-center gap-3 flex-wrap">
-                    <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
-                      {isPolish ? 'Ta notatka wygląda na gotową do działania' : 'This note looks ready for action'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <Zap size={12} className="text-amber-600 dark:text-amber-400" />
+                      <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+                        {isPolish ? 'Gotowa do działania' : 'Ready for action'}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => {
                           trackFunnelEvent('notebook_convert_triggered', { target: 'initiative', noteId: activePage.id });
                           toast.success(isPolish ? 'Tworzenie inicjatywy z notatki…' : 'Creating initiative from note…');
                         }}
-                        className="flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 text-[10px] font-medium hover:bg-blue-500/20 transition-colors"
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-semibold hover:bg-blue-500/20 transition-all hover:shadow-sm"
                       >
                         <Target size={10} />
                         {isPolish ? 'Inicjatywa' : 'Initiative'}
@@ -851,10 +1019,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                           trackFunnelEvent('notebook_convert_triggered', { target: 'task', noteId: activePage.id });
                           toast.success(isPolish ? 'Tworzenie taska z notatki…' : 'Creating task from note…');
                         }}
-                        className="flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[10px] font-medium hover:bg-emerald-500/20 transition-colors"
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold hover:bg-emerald-500/20 transition-all hover:shadow-sm"
                       >
                         <CheckSquare size={10} />
-                        {isPolish ? 'Task' : 'Task'}
+                        Task
                         <ArrowRight size={8} />
                       </button>
                       <button
@@ -862,7 +1030,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                           trackFunnelEvent('notebook_convert_triggered', { target: 'decision', noteId: activePage.id });
                           toast.success(isPolish ? 'Tworzenie decyzji z notatki…' : 'Creating decision from note…');
                         }}
-                        className="flex items-center gap-1 px-2 py-1 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[10px] font-medium hover:bg-amber-500/20 transition-colors"
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-semibold hover:bg-amber-500/20 transition-all hover:shadow-sm"
                       >
                         <Scale size={10} />
                         {isPolish ? 'Decyzja' : 'Decision'}
@@ -874,11 +1042,60 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               )}
 
               {/* Editor area */}
-              <div className="flex-1 overflow-y-auto relative" ref={editorContainerRef}>
-                <div className="mx-auto max-w-4xl py-4">
-                  <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950">
-                    <EditorContent editor={editor} />
+              <div className="flex-1 overflow-y-auto nb-scroll relative" ref={editorContainerRef}>
+                <div className="mx-auto max-w-3xl px-6 py-6">
+                  {/* Page icon + title — Notion-like */}
+                  <div className="mb-4">
+                    <div className="flex items-start gap-3 mb-1">
+                      <span className="text-3xl mt-1 cursor-default select-none" title={isPolish ? 'Ikona strony' : 'Page icon'}>
+                        {activePage.icon || MATURITY_CONFIG[(activePage.maturity as NotebookMaturity) || 'seed'].icon}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <input
+                          value={title}
+                          onChange={(e) => {
+                            setTitle(e.target.value);
+                            scheduleSave({ title: e.target.value });
+                          }}
+                          placeholder={isPolish ? 'Bez tytułu' : 'Untitled'}
+                          className="w-full bg-transparent text-2xl font-bold text-slate-900 dark:text-white outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                        />
+                        {/* Tags inline */}
+                        <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                          <Tag size={11} className="text-slate-300 dark:text-slate-600 shrink-0" />
+                          {pageTags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="group/tag inline-flex items-center gap-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-2 py-0.5 text-[11px] font-medium hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                            >
+                              {tag}
+                              <button
+                                onClick={() => handleRemoveTag(tag)}
+                                className="opacity-0 group-hover/tag:opacity-100 transition-opacity hover:text-red-500"
+                                aria-label={`Remove tag ${tag}`}
+                              >
+                                <X size={9} />
+                              </button>
+                            </span>
+                          ))}
+                          <input
+                            value={tagInput}
+                            onChange={(e) => setTagInput(e.target.value)}
+                            onKeyDown={handleTagKeyDown}
+                            onBlur={handleAddTag}
+                            placeholder={isPolish ? '+ tag' : '+ tag'}
+                            className="min-w-[50px] max-w-[120px] bg-transparent text-[11px] text-slate-400 dark:text-slate-500 outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Subtle divider */}
+                    <div className="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-navy-700 to-transparent mt-3" />
                   </div>
+
+                  {/* Rich editor */}
+                  <EditorContent editor={editor} />
                 </div>
 
                 {/* AI inline response */}

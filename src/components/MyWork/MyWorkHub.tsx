@@ -1194,9 +1194,19 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     }
   };
 
+  // Reset stale activeDocumentId if its document was removed
+  useEffect(() => {
+    if (activeDocumentId && !openDocuments.find((d) => d.id === activeDocumentId)) {
+      setActiveDocumentId(null);
+    }
+  }, [activeDocumentId, openDocuments]);
+
   // Main render content
   const renderContent = () => {
     if (activeDocumentId) {
+      if (!openDocuments.find((d) => d.id === activeDocumentId)) {
+        return renderListContent();
+      }
       return renderDocumentContent();
     }
     return renderListContent();
@@ -1627,7 +1637,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       {renderDynamicTabs()}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-hidden min-h-0">
         {renderContent()}
       </div>
     </div>

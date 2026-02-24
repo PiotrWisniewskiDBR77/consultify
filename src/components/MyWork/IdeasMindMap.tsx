@@ -120,7 +120,11 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected })
 });
 BranchNodeComponent.displayName = 'BranchNode';
 
-// ─────── Custom Node: Idea (with connectable handles on all 4 sides) ───────
+// ─────── Custom Node: Idea (with connectable handles on all 4 sides, always visible) ───────
+const handleBase = '!w-2.5 !h-2.5 !border-2 transition-all duration-150';
+const handleTarget = `${handleBase} !bg-emerald-300 dark:!bg-emerald-600 !border-emerald-500 hover:!bg-emerald-400 hover:!scale-150`;
+const handleSource = `${handleBase} !bg-amber-300 dark:!bg-amber-600 !border-amber-500 hover:!bg-amber-400 hover:!scale-150`;
+
 const IdeaNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected }) => {
   const colors = BRANCH_COLORS[data.branchKey] || BRANCH_COLORS.uncategorized;
   const isAI = data.sourceType === 'ai_chat' || data.sourceType === 'ai_hint' || data.sourceType === 'ai_suggestion';
@@ -129,12 +133,10 @@ const IdeaNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected }) =
 
   return (
     <div className={`group px-3 py-2 rounded-xl border-2 ${colors.border} bg-white dark:bg-navy-900 ${selected ? `ring-2 ${colors.ring}` : ''} shadow-sm hover:shadow-lg cursor-pointer max-w-[180px]`}>
-      {/* Target handles (for incoming connections) */}
-      <Handle type="target" position={Position.Left} id="target-left" className="!w-2 !h-2 !bg-slate-300 dark:!bg-slate-600 !border-slate-400 group-hover:!bg-emerald-400 group-hover:!border-emerald-500 !opacity-0 group-hover:!opacity-100 transition-opacity" />
-      <Handle type="target" position={Position.Top} id="target-top" className="!w-2 !h-2 !bg-slate-300 dark:!bg-slate-600 !border-slate-400 group-hover:!bg-emerald-400 group-hover:!border-emerald-500 !opacity-0 group-hover:!opacity-100 transition-opacity" />
-      {/* Source handles (for outgoing connections) */}
-      <Handle type="source" position={Position.Right} id="source-right" className="!w-2 !h-2 !bg-slate-300 dark:!bg-slate-600 !border-slate-400 group-hover:!bg-amber-400 group-hover:!border-amber-500 !opacity-0 group-hover:!opacity-100 transition-opacity" />
-      <Handle type="source" position={Position.Bottom} id="source-bottom" className="!w-2 !h-2 !bg-slate-300 dark:!bg-slate-600 !border-slate-400 group-hover:!bg-amber-400 group-hover:!border-amber-500 !opacity-0 group-hover:!opacity-100 transition-opacity" />
+      <Handle type="target" position={Position.Left} id="target-left" className={handleTarget} />
+      <Handle type="target" position={Position.Top} id="target-top" className={handleTarget} />
+      <Handle type="source" position={Position.Right} id="source-right" className={handleSource} />
+      <Handle type="source" position={Position.Bottom} id="source-bottom" className={handleSource} />
       <div className="flex items-start gap-1.5">
         <div className="flex-shrink-0 mt-0.5">
           {isAI ? <Bot size={10} className="text-purple-500" /> : <Lightbulb size={10} className="text-amber-500" />}
@@ -179,7 +181,9 @@ function buildMindMapLayout(ideas: MyIdea[], isPolish: boolean): { nodes: Node[]
     branches[b].push(idea);
   }
 
-  const sortedBranches = Object.entries(branches).sort((a, b) => b[1].length - a[1].length);
+  // Always show all branch keys so users can drag ideas to empty branches
+  const allKeys = Object.keys(BRANCH_LABELS);
+  const sortedBranches: [string, MyIdea[]][] = allKeys.map((k) => [k, branches[k] || []]);
 
   const nodes: Node[] = [];
   const edges: Edge[] = [];
@@ -194,7 +198,7 @@ function buildMindMapLayout(ideas: MyIdea[], isPolish: boolean): { nodes: Node[]
 
   const branchCount = sortedBranches.length;
   const angleStep = (2 * Math.PI) / Math.max(branchCount, 1);
-  const branchRadius = 260;
+  const branchRadius = 320;
 
   sortedBranches.forEach(([branchKey, branchIdeas], bIdx) => {
     const angle = angleStep * bIdx - Math.PI / 2;
@@ -222,47 +226,88 @@ function buildMindMapLayout(ideas: MyIdea[], isPolish: boolean): { nodes: Node[]
       target: branchId,
       sourceHandle: handleIds[bIdx % 4],
       type: 'smoothstep',
-      style: { stroke: colors.edge, strokeWidth: 2.5, opacity: 0.6 },
-      animated: true,
+      style: {
+        stroke: colors.edge,
+        strokeWidth: 2.5,
+        opacity: branchIdeas.length > 0 ? 0.6 : 0.2,
+      },
+      animated: branchIdeas.length > 0,
     });
 
-    const ideaRadius = 150;
-    const ideaAngleSpan = Math.min(Math.PI * 0.8, branchIdeas.length * 0.35);
+    if (branchIdeas.length === 0) return;
+
     const sortedIdeas = [...branchIdeas].sort((a, b) => (b.priority ?? 50) - (a.priority ?? 50));
+    const ideaCount = sortedIdeas.length;
 
-    sortedIdeas.forEach((idea, iIdx) => {
-      const ideaAngle = angle + (iIdx - (sortedIdeas.length - 1) / 2) * (ideaAngleSpan / Math.max(sortedIdeas.length - 1, 1));
-      const ix = bx + Math.cos(ideaAngle) * ideaRadius;
-      const iy = by + Math.sin(ideaAngle) * ideaRadius;
-      const ideaNodeId = `idea-${idea.id}`;
-
-      nodes.push({
-        id: ideaNodeId,
-        type: 'idea',
-        position: { x: ix - 90, y: iy - 15 },
-        data: {
-          label: idea.title,
-          branchKey,
-          sourceType: idea.sourceType,
-          priority: idea.priority,
-          area: idea.area,
-          ideaId: idea.id,
-        },
-        draggable: true,
+    // Adaptive layout: grid for many ideas, radial fan for few
+    if (ideaCount <= 5) {
+      // Radial fan with generous spacing
+      const ideaRadius = 200;
+      const ideaAngleSpan = Math.min(Math.PI * 1.2, ideaCount * 0.5);
+      sortedIdeas.forEach((idea, iIdx) => {
+        const ideaAngle = angle + (iIdx - (ideaCount - 1) / 2) * (ideaAngleSpan / Math.max(ideaCount - 1, 1));
+        const ix = bx + Math.cos(ideaAngle) * ideaRadius;
+        const iy = by + Math.sin(ideaAngle) * ideaRadius;
+        addIdeaNode(idea, branchKey, branchId, ix, iy, colors, iIdx);
       });
+    } else {
+      // Grid layout radiating outward from branch — 3 columns
+      const cols = 3;
+      const colWidth = 200;
+      const rowHeight = 65;
+      const outwardAngle = angle;
+      const baseX = bx + Math.cos(outwardAngle) * 180;
+      const baseY = by + Math.sin(outwardAngle) * 180;
+      // Offset so grid is centered on the outward direction
+      const perpX = -Math.sin(outwardAngle);
+      const perpY = Math.cos(outwardAngle);
+      const radX = Math.cos(outwardAngle);
+      const radY = Math.sin(outwardAngle);
 
-      const targetHandle = iIdx % 2 === 0 ? 'right' : (iIdx % 3 === 0 ? 'top' : 'bottom');
-      edges.push({
-        id: `${branchId}-${ideaNodeId}`,
-        source: branchId,
-        target: ideaNodeId,
-        sourceHandle: targetHandle,
-        targetHandle: 'target-left',
-        type: 'smoothstep',
-        style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.4 },
+      sortedIdeas.forEach((idea, iIdx) => {
+        const col = iIdx % cols;
+        const row = Math.floor(iIdx / cols);
+        const colOffset = (col - (cols - 1) / 2) * colWidth;
+        const rowOffset = row * rowHeight;
+        const ix = baseX + perpX * colOffset + radX * rowOffset;
+        const iy = baseY + perpY * colOffset + radY * rowOffset;
+        addIdeaNode(idea, branchKey, branchId, ix, iy, colors, iIdx);
       });
-    });
+    }
   });
+
+  function addIdeaNode(
+    idea: MyIdea, branchKey: string, branchId: string,
+    ix: number, iy: number,
+    colors: typeof BRANCH_COLORS[string], iIdx: number
+  ) {
+    const ideaNodeId = `idea-${idea.id}`;
+    nodes.push({
+      id: ideaNodeId,
+      type: 'idea',
+      position: { x: ix - 90, y: iy - 15 },
+      data: {
+        label: idea.title,
+        branchKey,
+        sourceType: idea.sourceType,
+        priority: idea.priority,
+        area: idea.area,
+        ideaId: idea.id,
+      },
+      draggable: true,
+    });
+
+    const sourceHandles = ['right', 'top', 'bottom'];
+    edges.push({
+      id: `${branchId}-${ideaNodeId}`,
+      source: branchId,
+      target: ideaNodeId,
+      sourceHandle: sourceHandles[iIdx % 3],
+      targetHandle: 'target-left',
+      type: 'smoothstep',
+      style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.4 },
+    });
+  }
 
   return { nodes, edges };
 }
@@ -284,7 +329,7 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
   const [nodes, setNodes, onNodesChange] = useNodesState(initNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initEdges);
 
-  const [connectMode, setConnectMode] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   const allBranchKeys = useMemo(() => {
     const keys = new Set<string>();
@@ -335,12 +380,11 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
   }, [initNodes, initEdges, setNodes, setEdges, activeBranches]);
 
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
-    if (connectMode) return;
     if (!node.id.startsWith('idea-')) return;
     const ideaId = node.id.replace('idea-', '');
     const idea = ideas.find((i) => i.id === ideaId);
     onIdeaClickRef.current(ideaId, idea);
-  }, [ideas, connectMode]);
+  }, [ideas]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -420,11 +464,68 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
     [nodes, setNodes, setEdges, isPolish]
   );
 
-  const removeUserEdge = useCallback(
+  // Edge click cycles: animated→static→reversed→remove (user edges) or animated→static→reversed (system edges)
+  const onEdgeClick = useCallback(
     (_: React.MouseEvent, edge: Edge) => {
-      if (!edge.data?.userCreated) return;
-      setEdges((prev: Edge[]) => prev.filter((e: Edge) => e.id !== edge.id));
-      toast.success(isPolish ? 'Połączenie usunięte' : 'Connection removed', { duration: 1500 });
+      const isUser = !!edge.data?.userCreated;
+      const currentState = edge.data?.flowState || 'forward'; // forward | stopped | reversed
+
+      setEdges((prev: Edge[]) =>
+        prev.map((e: Edge) => {
+          if (e.id !== edge.id) return e;
+
+          if (currentState === 'forward') {
+            // Stop the animation
+            return {
+              ...e,
+              animated: false,
+              style: { ...e.style, opacity: 0.8, strokeDasharray: '5 5' },
+              data: { ...e.data, flowState: 'stopped' },
+            };
+          }
+          if (currentState === 'stopped') {
+            // Reverse: swap source↔target and animate again
+            return {
+              ...e,
+              source: e.target,
+              target: e.source,
+              sourceHandle: e.targetHandle,
+              targetHandle: e.sourceHandle,
+              animated: true,
+              style: { ...e.style, opacity: 0.7, strokeDasharray: undefined },
+              data: { ...e.data, flowState: 'reversed' },
+            };
+          }
+          if (currentState === 'reversed') {
+            if (isUser) {
+              // Remove user edge on next click
+              return null as any;
+            }
+            // System edges go back to forward
+            return {
+              ...e,
+              source: e.target,
+              target: e.source,
+              sourceHandle: e.targetHandle,
+              targetHandle: e.sourceHandle,
+              animated: true,
+              style: { ...e.style, opacity: 0.6, strokeDasharray: undefined },
+              data: { ...e.data, flowState: 'forward' },
+            };
+          }
+          return e;
+        }).filter(Boolean)
+      );
+
+      const labels = {
+        forward: { en: 'Flow stopped', pl: 'Przepływ zatrzymany' },
+        stopped: { en: 'Flow reversed', pl: 'Przepływ odwrócony' },
+        reversed: isUser
+          ? { en: 'Connection removed', pl: 'Połączenie usunięte' }
+          : { en: 'Flow restored', pl: 'Przepływ przywrócony' },
+      };
+      const msg = labels[currentState as keyof typeof labels];
+      toast.success(isPolish ? msg.pl : msg.en, { duration: 1200, icon: currentState === 'forward' ? '⏸' : currentState === 'stopped' ? '🔄' : '🗑' });
     },
     [setEdges, isPolish]
   );
@@ -462,7 +563,7 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
         onNodeDragStop={onNodeDragStop}
         onNodeClick={onNodeClick}
         onConnect={onConnect}
-        onEdgeClick={removeUserEdge}
+        onEdgeClick={onEdgeClick}
         nodeTypes={nodeTypes}
         connectionMode={ConnectionMode.Loose}
         fitView
@@ -479,7 +580,7 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
       >
         <Background color="#e2e8f0" gap={20} size={1} />
 
-        {/* ── Zoom & connect controls (top-right) ── */}
+        {/* ── Zoom & help controls (top-right) ── */}
         <Panel position="top-right">
           <div className="flex items-center gap-1 px-2 py-1.5 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-navy-700 shadow-lg">
             <button
@@ -506,61 +607,84 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
             </button>
             <div className="w-px h-5 bg-slate-200 dark:bg-navy-600 mx-0.5" />
             <button
-              onClick={() => setConnectMode((v) => !v)}
+              onClick={() => setShowHelp((v) => !v)}
               className={`p-1.5 rounded-lg transition-colors ${
-                connectMode
+                showHelp
                   ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 ring-1 ring-purple-400'
                   : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
               }`}
-              title={isPolish ? 'Tryb łączenia pomysłów' : 'Connect ideas mode'}
+              title={isPolish ? 'Pomoc' : 'Help'}
             >
               <Link2 size={14} />
             </button>
           </div>
         </Panel>
 
-        {/* ── Connect mode hint ── */}
-        {connectMode && (
+        {/* ── Interaction hints ── */}
+        {showHelp && (
           <Panel position="top-center">
-            <div className="px-3 py-1.5 bg-purple-50 dark:bg-purple-900/30 border border-purple-300 dark:border-purple-700 rounded-xl shadow-lg text-xs text-purple-700 dark:text-purple-300 font-medium flex items-center gap-2">
-              <Link2 size={12} />
-              {isPolish
-                ? 'Przeciągnij z uchwytu jednego pomysłu do drugiego aby je połączyć'
-                : 'Drag from one idea handle to another to connect them'}
+            <div className="px-4 py-3 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border border-slate-200 dark:border-navy-700 rounded-xl shadow-lg text-[11px] text-slate-600 dark:text-slate-300 space-y-1.5 max-w-[320px]">
+              <div className="font-bold text-slate-800 dark:text-white text-xs mb-1">
+                {isPolish ? 'Jak korzystać z mapy' : 'How to use the map'}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 flex-shrink-0" />
+                {isPolish
+                  ? 'Przeciągnij z żółtego uchwytu → do zielonego = nowe połączenie'
+                  : 'Drag from amber handle → to green = new connection'}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-400 flex-shrink-0" />
+                {isPolish
+                  ? 'Kliknij linię: zatrzymaj → odwróć → usuń'
+                  : 'Click edge: stop → reverse → remove'}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 flex-shrink-0" />
+                {isPolish
+                  ? 'Przeciągnij pomysł na inną gałąź = zmień kategorię'
+                  : 'Drag idea to another branch = change category'}
+              </div>
             </div>
           </Panel>
         )}
 
         {/* ── Branch filter (top-left) ── */}
         <Panel position="top-left">
-          <div className="flex flex-wrap items-center gap-1.5 px-2.5 py-1.5 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-navy-700 shadow-lg">
+          <div className="flex flex-col gap-1.5 px-3 py-2 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-navy-700 shadow-lg max-w-[220px]">
+            <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">
+              {isPolish ? 'Obszary pomysłów' : 'Idea Areas'}
+            </div>
             {activeBranches.size < Object.keys(BRANCH_LABELS).length && (
               <button
                 onClick={showAll}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold border border-slate-400 bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold border border-slate-300 dark:border-navy-600 bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors w-full justify-center"
               >
-                {isPolish ? 'Wszystkie' : 'All'}
+                {isPolish ? 'Pokaż wszystkie' : 'Show all'}
               </button>
             )}
             {Object.entries(BRANCH_LABELS).map(([key, labels]) => {
-              if (!allBranchKeys.has(key)) return null;
               const colors = BRANCH_COLORS[key];
               const isActive = activeBranches.has(key);
+              const count = ideas.filter((i) => getBranchForIdea(i) === key).length;
               return (
                 <button
                   key={key}
                   onClick={() => toggleBranch(key)}
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-medium border transition-all cursor-pointer ${
+                  className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-lg text-[10px] font-medium border transition-all cursor-pointer w-full ${
                     isActive
                       ? `${colors.border} ${colors.bg} ${colors.text} shadow-sm`
-                      : 'border-slate-200 dark:border-navy-600 bg-slate-50 dark:bg-navy-800/50 text-slate-400 dark:text-slate-500 opacity-50'
+                      : 'border-slate-200 dark:border-navy-600 bg-slate-50/50 dark:bg-navy-800/30 text-slate-400 dark:text-slate-500 opacity-60'
                   }`}
                 >
                   <span
-                    className="w-1.5 h-1.5 rounded-full transition-opacity"
+                    className="w-2 h-2 rounded-full flex-shrink-0"
                     style={{ backgroundColor: isActive ? colors.edge : '#94a3b8' }}
                   />
-                  {isPolish ? labels.pl : labels.en}
+                  <span className="flex-1 text-left">{isPolish ? labels.pl : labels.en}</span>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${count > 0 ? 'bg-white/60 dark:bg-navy-800/60' : 'opacity-30'}`}>
+                    {count}
+                  </span>
                 </button>
               );
             })}

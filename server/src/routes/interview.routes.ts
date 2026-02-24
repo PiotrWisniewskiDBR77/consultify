@@ -31,6 +31,13 @@ router.get('/sessions', InterviewController.getSessions);
 /** GET /interview/sessions/completed - Get completed sessions (for Insights tab) */
 router.get('/sessions/completed', InterviewController.getCompletedSessions);
 
+/** GET /interview/sessions/accepted - Get accepted sessions (manager pipeline) */
+router.get(
+  '/sessions/accepted',
+  requirePermission('INTERVIEW_ASSIGN_VIEW'),
+  InterviewController.getAcceptedSessions
+);
+
 /** GET /interview/sessions/:id - Get single session */
 router.get('/sessions/:id', InterviewController.getSession);
 

@@ -404,6 +404,59 @@ export const InterviewController = {
     res.json(rows.map(buildSessionResponse));
   }),
 
+  /**
+   * Accepted sessions (Manager pipeline)
+   * - Sessions that originate from assignments created by current user
+   * - Only after assignment approval (treated as valid "source" for Insights)
+   *
+   * This supports the Interview workflow:
+   * Assigned (in progress / submitted / sent back) → approve → Sessions (accepted sources) → Insights
+   */
+  getAcceptedSessions: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+
+    const rows = await queryHelpers.queryAll(
+      `SELECT
+         s.id, s.name as name, s.template_id, s.status, s.started_at, s.completed_at, s.owner_id,
+         s.answered_questions, s.total_questions,
+         t.name as template_name, t.category as template_category,
+         COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') as respondent_name
+       FROM interview_sessions s
+       INNER JOIN interview_assignments a
+         ON a.session_id = s.id
+         AND a.organization_id = ?
+         AND a.created_by = ?
+         AND a.status IN ('approved', 'completed')
+       LEFT JOIN projects p ON p.id = s.project_id
+       LEFT JOIN interview_library_templates t ON t.id = s.template_id
+       LEFT JOIN users u ON u.id = s.owner_id
+       WHERE (
+         p.organization_id = ?
+         OR (s.project_id IS NULL AND s.organization_id = ?)
+       )
+       AND s.status = 'completed'
+       ORDER BY s.completed_at DESC`,
+      [user.organizationId, user.id, user.organizationId, user.organizationId]
+    );
+
+    const sessions = (rows || []).map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      templateId: row.template_id,
+      templateName: row.template_name,
+      templateCategory: row.template_category,
+      status: row.status,
+      startedAt: row.started_at,
+      completedAt: row.completed_at,
+      respondentId: row.owner_id,
+      respondentName: String(row.respondent_name || '').trim() || undefined,
+      answeredQuestions: row.answered_questions,
+      totalQuestions: row.total_questions,
+    }));
+
+    res.json(sessions);
+  }),
+
   getSession: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;

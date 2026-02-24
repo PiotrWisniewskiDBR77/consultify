@@ -2587,6 +2587,9 @@ router.get(
       title: row.title,
       contentText: row.contentText,
       tags: parseTagsArray(row.tags),
+      maturity: row.maturity || 'seed',
+      icon: row.icon || null,
+      summary: row.summary || null,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       contentJson: (() => {

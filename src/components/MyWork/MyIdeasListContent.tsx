@@ -179,7 +179,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center h-64">
+      <div className="w-full flex items-center justify-center" style={{ minHeight: 300 }}>
         <Loader2 className="animate-spin text-amber-500" size={32} />
       </div>
     );
@@ -278,9 +278,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   // ──────────── MIND MAP VIEW ────────────
   if (viewMode === 'mindmap') {
     return (
-      <div className="flex-1 h-full overflow-hidden">
+      <div className="w-full h-full overflow-hidden">
         <MindMapErrorBoundary fallback={
-          <div className="flex-1 flex flex-col items-center justify-center h-full p-8 text-center">
+          <div className="w-full flex flex-col items-center justify-center p-8 text-center" style={{ minHeight: 300 }}>
             <GitBranch size={48} className="text-slate-400 mb-4" />
             <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">
               {isPolish ? 'Nie udało się załadować mapy myśli' : 'Failed to load mind map'}
@@ -354,8 +354,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     };
 
     return (
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950">
+        <div className="p-4 space-y-6">
           {/* Tag filter */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
             <button
@@ -525,8 +525,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   // ──────────── CARDS VIEW ────────────
   if (viewMode === 'cards') {
     return (
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950">
+        <div className="p-4 space-y-4">
           {/* Tag filter */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
             <button
@@ -622,8 +622,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   // ──────────── LIST VIEW ────────────
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950">
+      <div className="p-4 space-y-4">
         {/* Tag filter */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           <button

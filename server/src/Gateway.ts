@@ -170,6 +170,7 @@ import reportCommentsRoutes from './routes/report-comments.routes.js';
 import reportImportRoutes from './routes/report-import.routes.js';
 import reportInitiativesRoutes from './routes/report-initiatives.routes.js';
 import reportsRoutes from './routes/reports.routes.js';
+import executiveAggregateRoutes from './routes/executiveAggregate.routes.js';
 import resourceManagementRoutes from './routes/resourceManagement.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import scenariosRoutes from './routes/scenarios.routes.js';
@@ -520,6 +521,7 @@ export class ApiGateway {
       app.use('/api/scheduled-reports', scheduledReportsRoutes);
       app.use('/api/management-reports', managementReportsRoutes);
       app.use('/api/management-reports/analytics', managementReportsAnalyticsRoutes);
+      app.use('/api/executive', executiveAggregateRoutes);
 
       // Analytics routes
       console.log(

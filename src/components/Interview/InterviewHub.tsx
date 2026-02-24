@@ -50,6 +50,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
+import { Callout, ToggleBlock } from '@/components/shared/NModeBlocks';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -135,7 +136,6 @@ interface InterviewTemplate {
 type ModuleTab =
   | 'my-assignments'
   | 'sessions'
-  | 'assessments'
   | 'templates'
   | 'insights'
   | 'managed';
@@ -301,6 +301,8 @@ export const InterviewHub: React.FC = () => {
   const [insightViewStyle, setInsightViewStyle] = useState<CardViewStyle>('d');
   const [insightGroupBy, setInsightGroupBy] = useState<'report' | 'person'>('report');
   const [assignmentStatusFilter, setAssignmentStatusFilter] = useState<string>('all');
+  const [insightsShowExportedOnly, setInsightsShowExportedOnly] = useState<boolean>(false);
+  const [showWorkflowGuide, setShowWorkflowGuide] = useState<boolean>(true);
 
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
   const [insights, setInsights] = useState<InterviewInsight[]>([]);
@@ -341,7 +343,9 @@ export const InterviewHub: React.FC = () => {
       setIsLoading(true);
       try {
         const [sessionsRes, insightsRes, templatesRes] = await Promise.all([
-          Api.get('/interview/sessions'),
+          // Sessions tab is "accepted sources" in the manager workflow.
+          // Non-managers won't see the tab, so empty here is fine.
+          Api.get('/interview/sessions/accepted').catch(() => []),
           Api.get('/interview/insights').catch(() => []),
           Api.get('/interview/templates').catch(() => []),
         ]);
@@ -482,12 +486,8 @@ export const InterviewHub: React.FC = () => {
   const sessionStatusCounts = useMemo(() => {
     return {
       all: sessions.length,
-      in_progress: sessions.filter((s) => s.status === 'in_progress').length,
-      submitted: sessions.filter((s) => s.status === 'submitted' || s.status === 'in_review')
-        .length,
       completed: sessions.filter((s) => s.status === 'completed').length,
       archived: sessions.filter((s) => s.status === 'archived').length,
-      paused: sessions.filter((s) => s.status === 'paused').length,
     };
   }, [sessions]);
 
@@ -497,16 +497,6 @@ export const InterviewHub: React.FC = () => {
         id: 'all',
         label: isPolish ? 'Wszystkie' : 'All',
         count: sessionStatusCounts.all,
-      },
-      {
-        id: 'in_progress',
-        label: isPolish ? 'W trakcie' : 'In Progress',
-        count: sessionStatusCounts.in_progress,
-      },
-      {
-        id: 'submitted',
-        label: isPolish ? 'Do przeglądu' : 'To Review',
-        count: sessionStatusCounts.submitted,
       },
       {
         id: 'completed',
@@ -543,6 +533,11 @@ export const InterviewHub: React.FC = () => {
       result = result.filter((i) => (i.status || 'completed') === insightStatusFilter);
     }
 
+    // Optional: show only insights exported to Assessment (replaces "Assessments" tab)
+    if (insightsShowExportedOnly) {
+      result = result.filter((i) => Boolean(i.exportedToAssessment));
+    }
+
     // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -553,7 +548,7 @@ export const InterviewHub: React.FC = () => {
     }
 
     return result;
-  }, [insights, searchQuery, insightTypeFilter, insightStatusFilter]);
+  }, [insights, searchQuery, insightTypeFilter, insightStatusFilter, insightsShowExportedOnly]);
 
   // Get unique insight types
   const insightTypes = useMemo(() => {
@@ -640,23 +635,7 @@ export const InterviewHub: React.FC = () => {
         count: sessions.length,
       });
 
-      // 3. Assessments - oceny wywiadów (PM/Admin) - between Sessions and Templates
-      baseTabs.push({
-        id: 'assessments' as ModuleTab,
-        label: isPolish ? 'Oceny' : 'Assessments',
-        icon: <Target size={16} />,
-        count: insights.filter((i) => i.exportedToAssessment).length,
-      });
-
-      // 4. Templates - biblioteka szablonów (PM/Admin)
-      baseTabs.push({
-        id: 'templates' as ModuleTab,
-        label: isPolish ? 'Szablony' : 'Templates',
-        icon: <FileText size={16} />,
-        count: templates.length,
-      });
-
-      // 5. Assigned - wywiady które przydzieliłem (PM/Admin)
+      // 3. Assigned - wywiady które przydzieliłem (PM/Admin)
       const assignedCount = managedAssignments.length;
       const overdueCount = overdueAssignments.length;
       baseTabs.push({
@@ -667,7 +646,15 @@ export const InterviewHub: React.FC = () => {
         hasWarning: overdueCount > 0,
       });
 
-      // 6. Insights - wnioski AI (PM/Admin) - rightmost
+      // 4. Templates - biblioteka szablonów (PM/Admin)
+      baseTabs.push({
+        id: 'templates' as ModuleTab,
+        label: isPolish ? 'Szablony' : 'Templates',
+        icon: <FileText size={16} />,
+        count: templates.length,
+      });
+
+      // 5. Insights - wnioski AI (PM/Admin) - rightmost
       baseTabs.push({
         id: 'insights' as ModuleTab,
         label: isPolish ? 'Wnioski' : 'Insights',
@@ -809,7 +796,7 @@ export const InterviewHub: React.FC = () => {
     (sessionId: string) => {
       toast.success(isPolish ? 'Wywiad zakończony!' : 'Interview completed!');
       // Refresh sessions list
-      Api.get('/interview/sessions').then((res) => {
+      Api.get('/interview/sessions/accepted').then((res) => {
         setSessions(Array.isArray(res) ? res : []);
       });
     },
@@ -948,15 +935,17 @@ export const InterviewHub: React.FC = () => {
         await Api.post(`/interview/assignments/${assignment.id}/approve`, {});
         toast.success(isPolish ? 'Wywiad zatwierdzony!' : 'Interview approved!');
 
-        // Refresh all assignments (both my and managed)
-        const [myRes, managedRes, overdueRes] = await Promise.all([
+        // Refresh assignments + accepted sessions (post-approval)
+        const [myRes, managedRes, overdueRes, sessionsRes] = await Promise.all([
           Api.get('/interview/assignments/my').catch(() => []),
           Api.get('/interview/assignments/managed').catch(() => []),
           Api.get('/interview/assignments/overdue').catch(() => []),
+          Api.get('/interview/sessions/accepted').catch(() => []),
         ]);
         setMyAssignments(Array.isArray(myRes) ? myRes : []);
         setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
         setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
+        setSessions(Array.isArray(sessionsRes) ? sessionsRes : []);
       } catch (error: any) {
         console.error('[InterviewHub] Failed to approve assignment:', error);
         safeToastError(
@@ -1279,15 +1268,13 @@ export const InterviewHub: React.FC = () => {
                 <div className="flex flex-col items-center">
                   <MessageSquare className="w-12 h-12 text-slate-600 mb-3" />
                   <p className="text-slate-500 dark:text-slate-400 text-sm">
-                    {isPolish ? 'Brak sesji wywiadów' : 'No interview sessions yet'}
+                    {isPolish ? 'Brak zaakceptowanych sesji' : 'No accepted sessions yet'}
                   </p>
-                  <button
-                    onClick={handleNewSession}
-                    className="mt-4 flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg text-sm font-medium transition-colors"
-                  >
-                    <Sparkles size={16} />
-                    {isPolish ? 'Rozpocznij wywiad' : 'Start Interview'}
-                  </button>
+                  <p className="text-xs text-slate-500 mt-2 max-w-md">
+                    {isPolish
+                      ? 'Sesje pojawiają się tutaj dopiero po zatwierdzeniu wywiadu w zakładce „Przydzielone”.'
+                      : 'Sessions appear here only after an interview is approved in the “Assigned” tab.'}
+                  </p>
                 </div>
               </td>
             </tr>
@@ -1300,15 +1287,6 @@ export const InterviewHub: React.FC = () => {
   // Render grid view for sessions
   const renderSessionsGrid = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {/* New Session Card */}
-      <button
-        onClick={handleNewSession}
-        className="flex flex-col items-center justify-center gap-2 min-h-[180px] rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 text-slate-500 hover:text-primary-400 hover:border-primary-500/50 transition-all"
-      >
-        <Plus size={24} />
-        <span className="text-sm font-medium">{isPolish ? 'Nowa sesja' : 'New Session'}</span>
-      </button>
-
       {filteredSessions.map((session) => {
         const progress =
           session.totalQuestions > 0
@@ -2763,31 +2741,52 @@ export const InterviewHub: React.FC = () => {
     if (activeTab === 'sessions') {
       return (
         <div className="p-4">
-          {viewMode === 'table' ? renderSessionsTable() : renderSessionsGrid()}
-        </div>
-      );
-    }
-
-    if (activeTab === 'assessments') {
-      // Assessments tab shows insights that have been exported to assessment
-      const assessmentInsights = insights.filter((i) => i.exportedToAssessment);
-      return (
-        <div className="p-4">
-          {assessmentInsights.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Target className="w-12 h-12 text-slate-600 mb-3" />
-              <p className="text-slate-500 dark:text-slate-400 text-sm mb-2">
-                {isPolish ? 'Brak ocen' : 'No assessments yet'}
-              </p>
-              <p className="text-xs text-slate-500 max-w-md">
-                {isPolish
-                  ? 'Oceny pojawiają się po wyeksportowaniu wniosków do modułu Assessment. Przejdź do zakładki Wnioski, aby wygenerować i wyeksportować.'
-                  : 'Assessments appear after exporting insights to the Assessment module. Go to the Insights tab to generate and export.'}
-              </p>
+          {canViewManaged && showWorkflowGuide && (
+            <div className="mb-4">
+              <ToggleBlock
+                title={isPolish ? 'Jak działa workflow Interview' : 'How Interview workflow works'}
+                defaultOpen={true}
+                onToggle={(open) => setShowWorkflowGuide(open)}
+                icon={<Sparkles size={16} />}
+              >
+                <Callout
+                  variant="info"
+                  title={isPolish ? 'Pipeline (manager/admin)' : 'Pipeline (manager/admin)'}
+                  compact
+                >
+                  {isPolish ? (
+                    <div className="space-y-1">
+                      <div>
+                        <strong>Assigned</strong> — przydzielone i w toku (czeka na submit/approve).
+                      </div>
+                      <div>
+                        <strong>Sessions</strong> — zaakceptowane źródła (po approve).
+                      </div>
+                      <div>
+                        <strong>Insights</strong> — synteza AI z zaakceptowanych sesji (eksport do
+                        Assessment opcjonalnie).
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <div>
+                        <strong>Assigned</strong> — in progress / submitted / sent back (awaits
+                        approval).
+                      </div>
+                      <div>
+                        <strong>Sessions</strong> — accepted sources (after approval).
+                      </div>
+                      <div>
+                        <strong>Insights</strong> — AI synthesis from accepted sessions (export to
+                        Assessment if needed).
+                      </div>
+                    </div>
+                  )}
+                </Callout>
+              </ToggleBlock>
             </div>
-          ) : (
-            renderInsightsTable()
           )}
+          {viewMode === 'table' ? renderSessionsTable() : renderSessionsGrid()}
         </div>
       );
     }
@@ -3158,7 +3157,7 @@ export const InterviewHub: React.FC = () => {
 
           {/* Right: MINIMAL Action Buttons - kontekstowe per tab */}
           <div className="flex items-center gap-2">
-            {/* Sessions tab: tylko + Nowa sesja */}
+            {/* Sessions tab: accepted sources (filter only) */}
             {activeTab === 'sessions' && !activeDocumentId && (
               <>
                 <div className="relative">
@@ -3179,13 +3178,6 @@ export const InterviewHub: React.FC = () => {
                     className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                   />
                 </div>
-                <button
-                  onClick={handleNewSession}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-primary-500 to-primary-600 text-white border border-primary-400/30 hover:from-primary-400 hover:to-primary-500 shadow-lg shadow-primary-500/25 transition-all duration-200"
-                >
-                  <Plus size={16} />
-                  <span>{isPolish ? 'Nowa sesja' : 'New Session'}</span>
-                </button>
               </>
             )}
 
@@ -3229,18 +3221,32 @@ export const InterviewHub: React.FC = () => {
               </>
             )}
 
-            {/* Insights tab: + Generuj wnioski (zawsze widoczny) */}
+            {/* Insights tab: Exported filter + Generate */}
             {activeTab === 'insights' && !activeDocumentId && (
-              <button
-                onClick={() => {
-                  setSelectedSessionsForInsight([]);
-                  setShowInsightModal(true);
-                }}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/25 transition-all duration-200"
-              >
-                <Plus size={16} />
-                <span>{isPolish ? 'Nowy Insight' : 'New Insight'}</span>
-              </button>
+              <>
+                <button
+                  onClick={() => setInsightsShowExportedOnly((v) => !v)}
+                  className={insightsShowExportedOnly ? BUTTON_ACTIVE : BUTTON_INACTIVE}
+                  title={
+                    isPolish
+                      ? 'Pokaż tylko wyeksportowane do Assessment'
+                      : 'Show exported to Assessment only'
+                  }
+                >
+                  <Target size={16} />
+                  <span>{isPolish ? 'Exported' : 'Exported'}</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedSessionsForInsight([]);
+                    setShowInsightModal(true);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/25 transition-all duration-200"
+                >
+                  <Plus size={16} />
+                  <span>{isPolish ? 'Nowy Insight' : 'New Insight'}</span>
+                </button>
+              </>
             )}
           </div>
         </div>
