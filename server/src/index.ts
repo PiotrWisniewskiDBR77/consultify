@@ -174,6 +174,18 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   });
 });
 
+const skipManagedSchema =
+  process.env.DB_MANAGED_SCHEMA === 'false' ||
+  process.env.DB_MANAGED_SCHEMA === '0' ||
+  process.env.DB_MANAGED_SCHEMA === 'off';
+
+if (skipManagedSchema) {
+  logger.warn('[Server] DB_MANAGED_SCHEMA=off (no auto-DDL/migrations).');
+}
+if (String(process.env.DB_READONLY || '').trim()) {
+  logger.warn('[Server] DB_READONLY is enabled (writes blocked).');
+}
+
 const databaseInitPromise: Promise<void> =
   !isTest || process.env.E2E_MODE === 'true' || process.env.ENABLE_TEST_GATEWAY === 'true'
     ? (async () => {
@@ -184,7 +196,9 @@ const databaseInitPromise: Promise<void> =
 
           // Initialize and verify schema
           const { initializeDatabase } = await import('./database/DatabaseInitializer.js');
-          const initResult = await initializeDatabase();
+          const initResult = skipManagedSchema
+            ? { success: true, message: 'DB_MANAGED_SCHEMA disabled; skipping initializeDatabase()' }
+            : await initializeDatabase();
 
           if (!initResult.success) {
             logger.error(`[Server] Database initialization failed: ${initResult.message}`);

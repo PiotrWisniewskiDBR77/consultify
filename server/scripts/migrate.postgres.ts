@@ -89,14 +89,18 @@ function getAllMigrations(dir: string): Migration[] {
 
 function isSqliteOnlyMigration(m: Migration): boolean {
   const f = m.filename.toLowerCase();
+  // Legacy initdb snapshots were generated from older SQLite-first schemas and can conflict with
+  // the canonical Postgres baseline migrations (e.g. duplicate tables with missing columns).
+  // For Postgres-only deployments we rely on `000_z_core_baseline.sql` + subsequent migrations.
+  if (f.startsWith('000_initdb_')) return true;
   // explicit sqlite-only naming
   if (f.includes('_sqlite')) return true;
   // helper/repair files explicitly targeting sqlite
   if (f.includes('repair_sqlite')) return true;
   // any file that explicitly mentions sqlite but isn't postgres-specific
   if (f.includes('sqlite') && !f.includes('postgres')) return true;
-  // legacy double extension files are often sqlite-first (keep strict; can be reclassified later)
-  if (f.endsWith('.sql.sql')) return false;
+  // legacy double extension files are sqlite-first exports (skip for Postgres-only runner)
+  if (f.endsWith('.sql.sql')) return true;
   return false;
 }
 
@@ -146,9 +150,48 @@ async function recordResult(
 }
 
 async function applySql(pool: Pool, m: Migration) {
-  const sql = fs.readFileSync(m.filepath, 'utf-8');
+  let sql = fs.readFileSync(m.filepath, 'utf-8');
+
+  // ------------------------------
+  // Minimal SQLite → Postgres shims
+  // ------------------------------
+  // Legacy migrations may still contain SQLite idioms (e.g. `INSERT OR IGNORE`, `DATETIME`).
+  // We keep this deterministic and intentionally narrow to avoid rewriting arbitrary SQL.
+
+  // `INSERT OR IGNORE INTO ...;` → `INSERT INTO ... ON CONFLICT DO NOTHING;`
+  sql = sql.replace(
+    /\bINSERT\s+OR\s+IGNORE\s+INTO\b([\s\S]*?);/gi,
+    (_m, rest) => `INSERT INTO${rest}\nON CONFLICT DO NOTHING;`
+  );
+
+  // SQLite-ish column types used in baselines; Postgres is fine with TIMESTAMP/TIMESTAMPTZ.
+  sql = sql.replace(/\bDATETIME\b/gi, 'TIMESTAMPTZ');
+
+  // SQLite-style boolean defaults (0/1) → Postgres boolean literals
+  sql = sql.replace(/\bBOOLEAN\s+DEFAULT\s+0\b/gi, 'BOOLEAN DEFAULT FALSE');
+  sql = sql.replace(/\bBOOLEAN\s+DEFAULT\s+1\b/gi, 'BOOLEAN DEFAULT TRUE');
+  // Sometimes booleans are declared as INTEGER with default 0/1; keep as-is (app treats them as flags).
+
+  // Make legacy column adds idempotent on Postgres
+  sql = sql.replace(
+    /\bALTER\s+TABLE\s+([a-zA-Z0-9_".]+)\s+ADD\s+COLUMN\s+(?!IF\s+NOT\s+EXISTS\b)/gi,
+    'ALTER TABLE $1 ADD COLUMN IF NOT EXISTS '
+  );
+
+  // Make legacy index creation resilient (some indexes reference columns introduced later).
+  // This is safe for local/dev bootstrap; production should keep migrations ordered correctly.
+  if (m.filename.includes('005_ai_explainability')) {
+    sql = sql.replace(
+      /CREATE\s+INDEX\s+IF\s+NOT\s+EXISTS\s+idx_ai_audit_logs_confidence\s+ON\s+ai_audit_logs\s*\(\s*confidence_level\s*\)\s*;/gi,
+      '/* skipped: idx_ai_audit_logs_confidence (requires confidence_level column) */'
+    );
+    sql = sql.replace(
+      /CREATE\s+INDEX\s+IF\s+NOT\s+EXISTS\s+idx_ai_audit_logs_ai_role\s+ON\s+ai_audit_logs\s*\(\s*ai_role\s*\)\s*;/gi,
+      '/* skipped: idx_ai_audit_logs_ai_role (requires ai_role column) */'
+    );
+  }
+
   // Most Postgres migrations are safe to run as a single multi-statement query.
-  // If we later discover specific problematic statements, we can special-case them here.
   await pool.query(sql);
 }
 
@@ -206,7 +249,17 @@ async function main() {
     if (dryRun) {
       // eslint-disable-next-line no-console
       console.log(`Pending migrations: ${pending.length}`);
-      for (const m of pending) console.log(`- ${m.filename}`);
+      for (const m of pending) {
+        try {
+          // eslint-disable-next-line no-console
+          console.log(`- ${m.filename}`);
+        } catch (e: any) {
+          // When piped to tools like `head`, stdout can close early → EPIPE.
+          // Treat that as a normal termination condition.
+          if (String(e?.code || '').toUpperCase() === 'EPIPE') return;
+          throw e;
+        }
+      }
       return;
     }
 

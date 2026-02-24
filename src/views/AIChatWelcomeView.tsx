@@ -15,10 +15,11 @@
 import {
   Calculator,
   CheckCircle2,
-  PanelLeft,
   RefreshCw,
   Search,
   Sparkles,
+  Volume2,
+  VolumeX,
   Wrench,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -53,6 +54,7 @@ import { ChatCitation, ChatMessage, ChatResponseAction } from '../types';
 import { MessageFeedback } from '../types';
 import { exportConversationToPDF } from '../utils/pdfExport';
 import { cleanTextForSpeech } from '../utils/textCleaning';
+import { isRtlLanguage, textDirection } from '../utils/textDirection';
 
 // Time-aware greeting helper
 const getTimeContext = () => {
@@ -139,7 +141,6 @@ export const AIChatWelcomeView: React.FC = () => {
     isLoading: isConversationLoading,
     isSidebarOpen,
     workspaceContext,
-    toggleSidebar,
     createConversation,
     addMessage,
     setActiveConversation,
@@ -180,6 +181,7 @@ export const AIChatWelcomeView: React.FC = () => {
     const base = String(candidate).split('-')[0];
     return (isValidLanguage(base) ? base : 'pl') as SupportedLanguage;
   }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage]);
+  const isRtlChatLanguage = isRtlLanguage(chatLanguage);
 
   // AI stream with persistence callback
   const handleStreamDone = useCallback(
@@ -342,6 +344,7 @@ export const AIChatWelcomeView: React.FC = () => {
   const [editingText, setEditingText] = useState<string>('');
   const [editBusy, setEditBusy] = useState(false);
   const lastSpokenContentRef = useRef<string>('');
+  const autoReadEnabled = Boolean(aiConfig?.textToSpeech);
 
   // Get time-aware context
   const timeContext = useMemo(() => getTimeContext(), []);
@@ -525,6 +528,19 @@ export const AIChatWelcomeView: React.FC = () => {
       }
     },
     [stopSpeaking, continuousVoiceMode, stopContinuousMode]
+  );
+
+  // Always replay from start: stop current audio and read again.
+  const replaySpeech = useCallback(
+    (rawText: string) => {
+      const text = cleanTextForSpeech(rawText || '');
+      if (!text) return;
+      stopSpeaking();
+      window.setTimeout(() => {
+        speak(text).catch((err) => console.warn('[TTS] replay error:', err));
+      }, 60);
+    },
+    [speak, stopSpeaking]
   );
 
   // Handle continuous voice mode toggle
@@ -1430,15 +1446,46 @@ For example: REMEMBER: preferred_language: Polish`;
         {/* Main Chat Area - Full width, sidebar is overlay */}
         <div className="h-full flex flex-col overflow-hidden">
           {/* Header with Sidebar Toggle */}
-          <div className="shrink-0 h-14 border-b border-slate-200 dark:border-navy-700 flex items-center px-4 justify-between bg-white/50 dark:bg-navy-950/50 backdrop-blur-sm z-10">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => toggleSidebar()}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-500 dark:text-slate-400 transition-colors"
-                title={t('aiChat.openSidebar', 'Open Sidebar')}
-              >
-                <PanelLeft size={20} />
-              </button>
+          <div className="shrink-0 h-14 border-b border-slate-200 dark:border-navy-700 flex items-center px-4 justify-end bg-white/50 dark:bg-navy-950/50 backdrop-blur-sm z-10">
+            <div className="flex items-center gap-1">
+              {voiceSupported && (
+                <button
+                  onClick={() => {
+                    // While speaking, this button must behave as immediate mute/off.
+                    if (voiceState.isSpeaking) {
+                      stopSpeaking();
+                    }
+                    const nextState = voiceState.isSpeaking ? false : !autoReadEnabled;
+                    setAIConfig({ textToSpeech: nextState } as any);
+                  }}
+                  data-testid="chat-autoread-button"
+                  className={`p-1.5 rounded-lg transition-colors ${
+                    autoReadEnabled
+                      ? 'text-primary-600 dark:text-primary-400 bg-primary-50/40 dark:bg-primary-900/15'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
+                  }`}
+                  title={
+                    voiceState.isSpeaking
+                      ? t('aiChat.muteNow', 'Mute now')
+                      : autoReadEnabled
+                        ? t('aiChat.autoReadOff', 'Turn off auto-read')
+                        : t('aiChat.autoReadOn', 'Turn on auto-read')
+                  }
+                  aria-label={
+                    voiceState.isSpeaking
+                      ? t('aiChat.muteNow', 'Mute now')
+                      : autoReadEnabled
+                        ? t('aiChat.autoReadOff', 'Turn off auto-read')
+                        : t('aiChat.autoReadOn', 'Turn on auto-read')
+                  }
+                >
+                  {autoReadEnabled ? (
+                    <Volume2 size={18} strokeWidth={1.75} />
+                  ) : (
+                    <VolumeX size={18} strokeWidth={1.75} />
+                  )}
+                </button>
+              )}
             </div>
           </div>
 
@@ -1458,7 +1505,10 @@ For example: REMEMBER: preferred_language: Polish`;
                 }
 
                 return (
-                  <div key={msg.id} className={`mb-6 ${msg.role === 'user' ? 'text-right' : ''}`}>
+                  <div
+                    key={msg.id}
+                    className={`mb-6 ${msg.role === 'user' ? 'flex justify-end' : ''}`}
+                  >
                     {/* Thinking Block - 5-step progress (visible during streaming) */}
                     {isAiMessage && isStreamingThis && thinkingSteps.length > 0 && (
                       <div className="mb-2 max-w-[85%]">
@@ -1496,7 +1546,8 @@ For example: REMEMBER: preferred_language: Polish`;
                         msg.role === 'user'
                           ? 'bg-primary-600 text-white rounded-xl rounded-br-md px-4 py-3'
                           : 'text-navy-900 dark:text-slate-200'
-                      }`}
+                      } ${isRtlChatLanguage ? 'text-right' : 'text-left'}`}
+                      dir={textDirection(chatLanguage)}
                     >
                       <div className="text-[15px] leading-relaxed">
                         {isEditingThis ? (
@@ -1563,7 +1614,7 @@ For example: REMEMBER: preferred_language: Polish`;
                       {/* Voice Mode Indicator */}
                       {isAiMessage && !isStreamingThis && voiceModeEnabled && voiceSupported && (
                         <button
-                          onClick={() => speak(cleanTextForSpeech(displayContent))}
+                          onClick={() => replaySpeech(displayContent)}
                           className="mt-2 text-xs text-slate-400 dark:text-slate-500 hover:text-primary-500 flex items-center gap-1"
                           title="Odtwórz głosowo"
                         >
@@ -1676,7 +1727,7 @@ For example: REMEMBER: preferred_language: Polish`;
                           onRegenerate={handleRegenerate}
                           onSpeak={
                             voiceSupported
-                              ? (content) => speak(cleanTextForSpeech(content))
+                              ? (content) => replaySpeech(content)
                               : undefined
                           }
                           showAlwaysVisible={true}
@@ -1819,15 +1870,46 @@ For example: REMEMBER: preferred_language: Polish`;
       {/* Main Welcome Area - Full width, sidebar is overlay */}
       <div className="h-full flex flex-col overflow-hidden">
         {/* Header with Sidebar Toggle */}
-        <div className="shrink-0 h-14 flex items-center px-4 justify-start absolute top-0 left-0 right-0 z-10">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => toggleSidebar()}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-500 dark:text-slate-400 transition-colors"
-              title={t('aiChat.openSidebar', 'Open Sidebar')}
-            >
-              <PanelLeft size={20} />
-            </button>
+        <div className="shrink-0 h-14 flex items-center px-4 justify-end absolute top-0 left-0 right-0 z-10">
+          <div className="flex items-center gap-1">
+            {voiceSupported && (
+              <button
+                onClick={() => {
+                  // While speaking, this button must behave as immediate mute/off.
+                  if (voiceState.isSpeaking) {
+                    stopSpeaking();
+                  }
+                  const nextState = voiceState.isSpeaking ? false : !autoReadEnabled;
+                  setAIConfig({ textToSpeech: nextState } as any);
+                }}
+                data-testid="chat-autoread-button"
+                className={`p-1.5 rounded-lg transition-colors ${
+                  autoReadEnabled
+                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50/40 dark:bg-primary-900/15'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
+                }`}
+                title={
+                  voiceState.isSpeaking
+                    ? t('aiChat.muteNow', 'Mute now')
+                    : autoReadEnabled
+                      ? t('aiChat.autoReadOff', 'Turn off auto-read')
+                      : t('aiChat.autoReadOn', 'Turn on auto-read')
+                }
+                aria-label={
+                  voiceState.isSpeaking
+                    ? t('aiChat.muteNow', 'Mute now')
+                    : autoReadEnabled
+                      ? t('aiChat.autoReadOff', 'Turn off auto-read')
+                      : t('aiChat.autoReadOn', 'Turn on auto-read')
+                }
+              >
+                {autoReadEnabled ? (
+                  <Volume2 size={18} strokeWidth={1.75} />
+                ) : (
+                  <VolumeX size={18} strokeWidth={1.75} />
+                )}
+              </button>
+            )}
           </div>
         </div>
 

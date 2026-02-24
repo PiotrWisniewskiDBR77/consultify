@@ -409,7 +409,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
           if (contextRes && typeof contextRes === 'object') {
             const ctx = contextRes as Record<string, unknown>;
-            const profile = (ctx.companyProfile as CompanyProfile) || {};
+            const profile: CompanyProfile = {
+              name: (ctx.companyName as string) || undefined,
+              industry: (ctx.industry as string) || undefined,
+              size: (ctx.companySize as string) || undefined,
+              location: (ctx.location as string) || undefined,
+              employees: (ctx.employeeCount as number) || undefined,
+              revenue: (ctx.annualRevenue as string) || undefined,
+            };
             setCompanyProfile(profile);
             setEditedProfile(profile);
           }
@@ -622,7 +629,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     setIsSaving(true);
 
     try {
-      await Api.put('/interview/context', { companyProfile: editedProfile });
+      await Api.put('/interview/context', {
+        companyName: editedProfile.name,
+        industry: editedProfile.industry,
+        companySize: editedProfile.size,
+        location: editedProfile.location,
+        employeeCount: editedProfile.employees,
+        annualRevenue: editedProfile.revenue,
+      });
       setCompanyProfile(editedProfile);
       setIsEditingProfile(false);
       toast.success(isPolish ? 'Profil zapisany' : 'Profile saved');

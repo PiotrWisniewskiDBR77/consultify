@@ -2024,25 +2024,41 @@ export const Api = {
 
   // --- AI GOVERNANCE ---
   aiGetSystemPrompts: async (): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/llm/prompts`, { headers: getHeaders() });
+    // Canonical prompt SSOT: /api/ai-prompts
+    const res = await fetch(`${API_URL}/ai-prompts?limit=500&page=1`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch system prompts');
-    return res.json();
+    const data = await res.json();
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.prompts)) return data.prompts;
+    if (data?.data?.prompts && Array.isArray(data.data.prompts)) return data.data.prompts;
+    return [];
   },
 
   aiUpdateSystemPrompt: async (key: string, data: any): Promise<void> => {
-    const res = await fetch(`${API_URL}/llm/prompts/${key}`, {
+    // Update by key using canonical SSOT (resolve key -> id first).
+    const prompts = await Api.aiGetSystemPrompts();
+    const row =
+      (Array.isArray(prompts)
+        ? prompts.find((p: any) => String(p?.key || p?.name || '').trim() === String(key || '').trim())
+        : null) || null;
+
+    const id = String((row as any)?.id || '').trim();
+    if (!id) throw new Error(`Prompt not found for key: ${key}`);
+
+    const res = await fetch(`${API_URL}/ai-prompts/${encodeURIComponent(id)}`, {
       method: 'PUT',
       headers: getHeaders(),
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        content: data?.content,
+        name: key,
+      }),
     });
     if (!res.ok) throw new Error('Failed to update prompt');
   },
 
   aiSeedSystemPrompts: async (): Promise<void> => {
-    await fetch(`${API_URL}/llm/prompts/reset-defaults`, {
-      method: 'POST',
-      headers: getHeaders(),
-    });
+    // Deprecated: legacy endpoint removed; kept for API compatibility.
+    // Intentionally no-op.
   },
 
   getPublicLLMProviders: async (): Promise<any[]> => {
@@ -6439,17 +6455,19 @@ export const Api = {
   },
   // Permissions - connected to real API
   getAdminPermissions: async (): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/superadmin/permissions`, { headers: getHeaders() });
+    const res = await fetch(`${API_URL}/superadmin/admin/permissions`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch admin permissions');
     return res.json();
   },
   getPermissionsMatrix: async (): Promise<{ matrix: any[]; roles: any[] }> => {
-    const res = await fetch(`${API_URL}/superadmin/permissions/matrix`, { headers: getHeaders() });
+    const res = await fetch(`${API_URL}/superadmin/admin/permissions/matrix`, {
+      headers: getHeaders(),
+    });
     if (!res.ok) throw new Error('Failed to fetch permissions matrix');
     return res.json();
   },
   getPermissionsStats: async (): Promise<{ total: number; assigned: number }> => {
-    const res = await fetch(`${API_URL}/superadmin/permissions/stats`, { headers: getHeaders() });
+    const res = await fetch(`${API_URL}/superadmin/admin/permissions/stats`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch permissions stats');
     return res.json();
   },
@@ -6472,7 +6490,7 @@ export const Api = {
     return res.json();
   },
   updateAdminPermission: async (id: string, data: any): Promise<{ success: boolean }> => {
-    const res = await fetch(`${API_URL}/superadmin/permissions/${id}`, {
+    const res = await fetch(`${API_URL}/superadmin/admin/permissions/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(data),
@@ -6481,7 +6499,7 @@ export const Api = {
     return res.json();
   },
   deleteAdminPermission: async (id: string): Promise<{ success: boolean }> => {
-    const res = await fetch(`${API_URL}/superadmin/permissions/${id}`, {
+    const res = await fetch(`${API_URL}/superadmin/admin/permissions/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
@@ -6580,19 +6598,116 @@ export const Api = {
   linkStrategyToIdea: async (strategyId: string, ideaId: string) => ({ success: true }),
   unlinkStrategyFromDocument: async (strategyId: string, documentId: string) => ({ success: true }),
   unlinkStrategyFromIdea: async (strategyId: string, ideaId: string) => ({ success: true }),
-  updateKnowledgeDocument: async (id: string, data: any) => ({ success: true }),
+  updateKnowledgeDocument: async (id: string, data: any) => {
+    const res = await fetch(`${API_URL}/knowledge/documents/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data || {}),
+    });
+    const out = await res.json();
+    if (!res.ok) throw new Error(out.error || 'Failed to update document');
+    return out;
+  },
   // Approval workflows
-  getApprovalWorkflows: async () => [],
-  getApprovalRequests: async () => [],
-  createApprovalWorkflow: async (data: any) => ({ success: true }),
-  deleteApprovalWorkflow: async (id: string) => ({ success: true }),
-  approveRequest: async (id: string) => ({ success: true }),
-  rejectRequest: async (id: string, reason?: string) => ({ success: true }),
+  getApprovalWorkflows: async (filters?: {
+    resourceType?: string;
+    isActive?: boolean;
+  }): Promise<any[]> => {
+    const params = new URLSearchParams();
+    if (filters?.resourceType) params.set('resourceType', String(filters.resourceType));
+    if (filters?.isActive !== undefined) params.set('isActive', filters.isActive ? 'true' : 'false');
+    const res = await fetch(`${API_URL}/superadmin/admin/approval-workflows?${params}`, {
+      headers: getHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || 'Failed to fetch approval workflows');
+    return data;
+  },
+  getApprovalRequests: async (filters?: {
+    status?: string;
+    workflowId?: string;
+    requesterId?: string;
+  }): Promise<any[]> => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.set('status', String(filters.status));
+    if (filters?.workflowId) params.set('workflowId', String(filters.workflowId));
+    if (filters?.requesterId) params.set('requesterId', String(filters.requesterId));
+    const res = await fetch(`${API_URL}/superadmin/admin/approval-requests?${params}`, {
+      headers: getHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || 'Failed to fetch approval requests');
+    return data;
+  },
+  createApprovalWorkflow: async (data: any) => {
+    const res = await fetch(`${API_URL}/superadmin/admin/approval-workflows`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data || {}),
+    });
+    const out = await res.json();
+    if (!res.ok) throw new Error(out?.error || 'Failed to create approval workflow');
+    return out;
+  },
+  deleteApprovalWorkflow: async (id: string) => {
+    const res = await fetch(`${API_URL}/superadmin/admin/approval-workflows/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((out as any)?.error || 'Failed to delete approval workflow');
+    return out;
+  },
+  approveRequest: async (id: string, notes?: string) => {
+    const res = await fetch(
+      `${API_URL}/superadmin/admin/approval-requests/${encodeURIComponent(id)}/approve`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ notes }),
+      }
+    );
+    const out = await res.json();
+    if (!res.ok) throw new Error(out?.error || 'Failed to approve request');
+    return out;
+  },
+  rejectRequest: async (id: string, reason?: string) => {
+    const res = await fetch(
+      `${API_URL}/superadmin/admin/approval-requests/${encodeURIComponent(id)}/reject`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ reason }),
+      }
+    );
+    const out = await res.json();
+    if (!res.ok) throw new Error(out?.error || 'Failed to reject request');
+    return out;
+  },
   // Permissions
-  toggleRolePermission: async (roleId: string, permission: string, value?: boolean) => ({
-    success: true,
-  }),
-  copyRolePermissions: async (fromRoleId: string, toRoleId: string) => ({ success: true }),
+  toggleRolePermission: async (roleId: string, permission: string, value?: boolean) => {
+    const res = await fetch(
+      `${API_URL}/superadmin/admin/permissions/roles/${encodeURIComponent(roleId)}/permissions/${encodeURIComponent(permission)}`,
+      {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ enabled: value !== undefined ? !!value : true }),
+      }
+    );
+    const out = await res.json();
+    if (!res.ok) throw new Error(out?.error || 'Failed to toggle permission');
+    return out;
+  },
+  copyRolePermissions: async (fromRoleId: string, toRoleId: string) => {
+    const res = await fetch(`${API_URL}/superadmin/admin/permissions/roles/copy`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ sourceRole: fromRoleId, targetRole: toRoleId }),
+    });
+    const out = await res.json();
+    if (!res.ok) throw new Error(out?.error || 'Failed to copy permissions');
+    return out;
+  },
   // Threats
   getThreats: async (filters?: any) => [],
   addThreat: async (data: any) => ({ success: true }),
@@ -6666,12 +6781,18 @@ export const Api = {
   // Analytics Reports - connected to real API
   getAnalyticsReports: async (filters?: any): Promise<any[]> => {
     const params = new URLSearchParams();
-    if (filters?.type) params.set('type', filters.type);
+    // Back-compat: callers sometimes pass a string filterType
+    if (typeof filters === 'string' && filters) params.set('type', filters);
+    else if (filters?.type) params.set('type', filters.type);
     const res = await fetch(`${API_URL}/superadmin/analytics/reports?${params}`, {
       headers: getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to fetch analytics reports');
-    return res.json();
+    const payload = await res.json().catch(() => ({}));
+    // server returns { reports: [...] }
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray((payload as any)?.reports)) return (payload as any).reports;
+    return [];
   },
   getReportExecutions: async (reportId?: string): Promise<any[]> => {
     const url = reportId
@@ -6679,7 +6800,11 @@ export const Api = {
       : `${API_URL}/superadmin/analytics/executions`;
     const res = await fetch(url, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch report executions');
-    return res.json();
+    const payload = await res.json().catch(() => ({}));
+    // server returns { executions: [...] }
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray((payload as any)?.executions)) return (payload as any).executions;
+    return [];
   },
   createAnalyticsReport: async (data: any): Promise<{ success: boolean }> => {
     const res = await fetch(`${API_URL}/superadmin/analytics/reports`, {

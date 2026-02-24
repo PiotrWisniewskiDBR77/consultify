@@ -268,7 +268,9 @@ router.get('/providers/public', asyncHandler(LLMController.listPublicProviders))
  * GET /api/llm/providers/health
  * Get health status of all providers
  */
-router.get('/providers/health', verifyToken, asyncHandler(LLMController.getProvidersHealth));
+// Public: used by the frontend to render "LLM Online/Offline" state on first load.
+// Endpoint should not require auth; sensitive fields (api_key) must never be returned by controller.
+router.get('/providers/health', asyncHandler(LLMController.getProvidersHealth));
 
 /**
  * GET /api/llm/providers/recommended

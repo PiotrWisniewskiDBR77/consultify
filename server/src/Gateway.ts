@@ -329,6 +329,17 @@ export class ApiGateway {
       app.use('/api/ai-memory', aiMemoryRoutes);
       app.use('/api/ai-drafts', aiDraftsRoutes);
       app.use('/api/ai-prompts', aiPromptsRoutes);
+      // Legacy alias (no-breaking rollout): prefer canonical `/api/ai-prompts`.
+      app.use('/api/ai/prompts', (req, res, next) => {
+        try {
+          res.setHeader('X-Deprecated-Endpoint', '/api/ai/prompts');
+          res.setHeader('X-Deprecated-Replacement', '/api/ai-prompts');
+        } catch {
+          // ignore
+        }
+        logger.warn(`[DEPRECATED] ${req.method} ${req.originalUrl} → use /api/ai-prompts`);
+        next();
+      });
       app.use('/api/ai/prompts', aiPromptsRoutes);
       app.use('/api/ai-governance', aiGovernanceRoutes);
       app.use('/api/admin/ai/governance', aiGovernanceRoutes);

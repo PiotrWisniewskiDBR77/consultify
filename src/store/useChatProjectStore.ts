@@ -78,7 +78,7 @@ interface ChatProjectState {
   error: string | null;
 
   // Actions - Fetch
-  fetchProjects: () => Promise<void>;
+  fetchProjects: (options?: { force?: boolean }) => Promise<void>;
   fetchProjectWithConversations: (id: string) => Promise<ChatProjectWithConversations | null>;
 
   // Actions - CRUD
@@ -125,10 +125,11 @@ export const useChatProjectStore = create<ChatProjectState>()(
 
       // ==================== FETCH ====================
 
-      fetchProjects: async () => {
+      fetchProjects: async (options) => {
         const now = Date.now();
-        if (_inflightFetchProjects) return _inflightFetchProjects;
-        if (now - _lastFetchProjectsAt < FETCH_DEDUPE_WINDOW_MS) return;
+        const force = Boolean(options?.force);
+        if (!force && _inflightFetchProjects) return _inflightFetchProjects;
+        if (!force && now - _lastFetchProjectsAt < FETCH_DEDUPE_WINDOW_MS) return;
         _lastFetchProjectsAt = now;
 
         set({ isLoading: true, error: null });
@@ -251,8 +252,8 @@ export const useChatProjectStore = create<ChatProjectState>()(
           });
 
           // Refresh both stores
-          get().fetchProjects();
-          useConversationStore.getState().fetchConversations();
+          get().fetchProjects({ force: true });
+          useConversationStore.getState().fetchConversations({ force: true });
         } catch (err: any) {
           console.error('[ChatProjectStore] Move conversation error:', err);
           set({ error: err.message || 'Failed to move conversation' });

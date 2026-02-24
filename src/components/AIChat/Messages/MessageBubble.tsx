@@ -12,6 +12,7 @@ import { atomOneDark, atomOneLight } from 'react-syntax-highlighter/dist/esm/sty
 import remarkGfm from 'remark-gfm';
 
 import { Artifact, ChatMessage, MessageFeedback } from '../../../types';
+import { isRtlLanguage, textDirection } from '../../../utils/textDirection';
 import { CitationList } from '../CitationList';
 import { MessageActions } from './MessageActions';
 import { ThinkingBlock } from './ThinkingBlock';
@@ -88,8 +89,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   showThinkingSteps = true,
   className = '',
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [showFullContent, setShowFullContent] = useState(false);
+  const isRtlChatLanguage = isRtlLanguage(i18n.language);
 
   const isUser = message.role === 'user';
   const isAI = message.role === 'ai';
@@ -195,7 +197,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             className={`
             text-sm leading-relaxed
             ${isUser ? 'text-white' : 'prose prose-sm dark:prose-invert max-w-none'}
+            ${isRtlChatLanguage ? 'text-right' : 'text-left'}
           `}
+            dir={textDirection(i18n.language)}
           >
             {attachments.length > 0 && (
               <div

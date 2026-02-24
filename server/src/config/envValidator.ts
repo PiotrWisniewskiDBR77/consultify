@@ -28,21 +28,25 @@ const validationRules: EnvValidationRule[] = [
     errorMessage: 'NODE_ENV must be one of: development, production, test, staging',
   },
 
-  // Database
+  // Database - PostgreSQL only
   {
     key: 'DATABASE_URL',
-    required: false, // Can use DB_TYPE + separate config
+    required: false, // Not required when MOCK_DB=true (tests)
     validator: (value) => {
-      if (!value) return true; // Optional if DB_TYPE is set
-      return value.startsWith('postgresql://') || value.startsWith('sqlite:');
+      if (!value) return true;
+      if (value.startsWith('sqlite:') || value.includes('sqlite')) {
+        return false;
+      }
+      return value.startsWith('postgresql://') || value.startsWith('postgres://');
     },
-    errorMessage: 'DATABASE_URL must be a valid PostgreSQL or SQLite connection string',
+    errorMessage:
+      'DATABASE_URL must be a PostgreSQL connection string (postgresql://...). SQLite is not supported.',
   },
   {
     key: 'DB_TYPE',
     required: false,
-    validator: (value) => !value || ['postgres', 'sqlite'].includes(value),
-    errorMessage: 'DB_TYPE must be "postgres" or "sqlite"',
+    validator: (value) => !value || value === 'postgres',
+    errorMessage: 'DB_TYPE must be "postgres" (SQLite removed)',
   },
 
   // Redis (optional but recommended)
@@ -202,12 +206,18 @@ export function validateEnv(): ValidationResult {
     warnings.push('No AI provider API key configured. AI features will not work.');
   }
 
-  // Check database configuration
+  // Check database configuration - PostgreSQL required when not using mock
+  const useMockDb =
+    process.env.NODE_ENV === 'test' &&
+    (process.env.MOCK_DB === 'true' || (process.env.MOCK_DB !== 'false' && !process.env.DATABASE_URL));
   const hasDatabaseUrl = !!process.env.DATABASE_URL;
-  const hasDbType = !!process.env.DB_TYPE;
+  const hasDbHost = !!process.env.DB_HOST;
 
-  if (!hasDatabaseUrl && !hasDbType) {
-    errors.push('Either DATABASE_URL or DB_TYPE must be set');
+  if (!useMockDb && !hasDatabaseUrl && !hasDbHost) {
+    errors.push('DATABASE_URL or DB_HOST required (PostgreSQL only). Use MOCK_DB=true for unit tests.');
+  }
+  if (hasDatabaseUrl && process.env.DATABASE_URL!.toLowerCase().includes('sqlite')) {
+    errors.push('DATABASE_URL must be PostgreSQL (postgresql://...). SQLite is not supported.');
   }
 
   // Security warnings for development

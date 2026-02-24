@@ -2,19 +2,17 @@
  * Database Configuration
  * Enterprise SaaS Architecture - TypeScript Backend
  *
- * Supports both SQLite (development) and PostgreSQL (production)
- * Switch by setting DATABASE_URL environment variable
+ * PostgreSQL only. SQLite has been fully removed.
+ * Configure via DATABASE_URL or DB_* environment variables.
  */
 
 import './loadEnv.js';
 
-import path from 'path';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { z } from 'zod';
 
 import logger from '../utils/Logger.js';
-// import { validateDatabaseConfig } from './ConfigValidator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -22,8 +20,6 @@ const __dirname = dirname(__filename);
 // ==========================================
 // ZOD SCHEMAS
 // ==========================================
-
-const DatabaseTypeSchema = z.enum(['sqlite', 'postgres']);
 
 const SSLConfigSchema = z.union([
   z.boolean(),
@@ -47,28 +43,16 @@ const PostgresConfigSchema = z.object({
 
 const ReadReplicaConfigSchema = PostgresConfigSchema.optional();
 
-const SQLiteConfigSchema = z.object({
-  path: z.string(),
-  options: z
-    .object({
-      verbose: z.boolean().optional(),
-    })
-    .optional(),
-});
-
 const DatabaseConfigSchema = z.object({
-  type: DatabaseTypeSchema,
-  sqlite: SQLiteConfigSchema,
+  type: z.literal('postgres'),
   postgres: PostgresConfigSchema,
   readReplica: ReadReplicaConfigSchema,
   debug: z.boolean().default(false),
   logQueries: z.boolean().default(false),
 });
 
-export type DatabaseType = z.infer<typeof DatabaseTypeSchema>;
 export type DatabaseConfig = z.infer<typeof DatabaseConfigSchema>;
 export type PostgresConfig = z.infer<typeof PostgresConfigSchema>;
-export type SQLiteConfig = z.infer<typeof SQLiteConfigSchema>;
 
 // ==========================================
 // CONFIGURATION
@@ -92,7 +76,7 @@ function getDatabaseUrl(): string | undefined {
 /**
  * Determine database type from environment
  */
-export function getDatabaseType(): DatabaseType {
+export function getDatabaseType(): 'postgres' {
   // Re-read environment variables inside the function for testing support
   const databaseUrl = getDatabaseUrl();
 
@@ -104,44 +88,18 @@ export function getDatabaseType(): DatabaseType {
   // validateDatabaseConfig();
 
   // 1. Strict Mode: If DB_TYPE is explicitly set, we MUST satisfy it or crash.
-  if (process.env.DB_TYPE) {
-    if (process.env.DB_TYPE === 'postgres') {
-      if (!databaseUrl && !process.env.DB_HOST) {
-        logger.error(
-          '\n\x1b[31m%s\x1b[0m',
-          'FATAL ERROR: DB_TYPE is set to "postgres" but no DATABASE_URL or DB_HOST is provided.'
-        );
-        logger.error('Please configure your .env file with the correct database credentials.\n');
-        process.exit(1);
-      }
-      logger.info('[DB Config] Using PostgreSQL (DB_TYPE=postgres)');
-      return 'postgres';
-    }
-    if (process.env.DB_TYPE === 'sqlite') {
-      logger.info('[DB Config] Using SQLite (DB_TYPE=sqlite)');
-      return 'sqlite';
-    }
-  }
-
-  // 2. Legacy/Auto-Detect Mode (Warn if falling back)
-  if (databaseUrl) {
-    if (databaseUrl.startsWith('postgres://') || databaseUrl.startsWith('postgresql://')) {
-      logger.info('[DB Config] Auto-detected PostgreSQL from DATABASE_URL');
-      return 'postgres';
-    }
-    logger.warn(
-      `[DB Config] DATABASE_URL exists but doesn't start with postgres:// or postgresql://: ${databaseUrl.substring(0, 50)}...`
+  if (!databaseUrl && !process.env.DB_HOST) {
+    logger.error(
+      '\n\x1b[31m%s\x1b[0m',
+      'FATAL ERROR: PostgreSQL required. Set DATABASE_URL or DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD.'
     );
+    logger.error('Example: DATABASE_URL=postgresql://user:pass@localhost:5432/consultinity\n');
+    process.exit(1);
   }
 
-  // Warn about implicit fallback
-  logger.warn('\n\x1b[33m%s\x1b[0m', 'WARNING: No DB_TYPE set. Falling back to SQLite default.');
-  logger.warn('To prevent this, set DB_TYPE=sqlite or DB_TYPE=postgres in your .env file.\n');
-  return 'sqlite';
+  logger.info('[DB Config] Using PostgreSQL');
+  return 'postgres';
 }
-
-// Database paths for SQLite
-const sqlitePath = process.env.SQLITE_PATH || path.resolve(__dirname, '../../consultinity.db');
 
 /**
  * Parse PostgreSQL connection URL
@@ -277,19 +235,9 @@ function getReadReplicaConfig(): PostgresConfig | undefined {
 export function loadDatabaseConfig(): DatabaseConfig {
   const isProduction = process.env.NODE_ENV === 'production';
   const databaseType = getDatabaseType();
-  const sqlitePath = process.env.SQLITE_PATH || path.resolve(__dirname, '../../consultinity.db');
-
-  console.log('[DB Config] Loading config. SQLITE_PATH env:', process.env.SQLITE_PATH);
-  console.log('[DB Config] Resolved sqlitePath:', sqlitePath);
 
   const config: DatabaseConfig = {
     type: databaseType,
-    sqlite: {
-      path: sqlitePath,
-      options: {
-        verbose: !isProduction,
-      },
-    },
     postgres: getPostgresConfig(),
     readReplica: getReadReplicaConfig(),
     debug: process.env.DB_DEBUG === 'true',

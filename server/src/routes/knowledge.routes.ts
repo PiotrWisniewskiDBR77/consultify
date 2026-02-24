@@ -806,4 +806,39 @@ router.get(
   })
 );
 
+/**
+ * PUT /api/knowledge/documents/:id
+ * Update knowledge document metadata (SuperAdmin only)
+ */
+router.put(
+  '/documents/:id',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!KnowledgeService?.updateDocumentMetadata) {
+      return res.status(503).json({ error: 'Knowledge service not available' });
+    }
+
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { id } = req.params;
+    const { category, tags } = req.body || {};
+
+    if (category !== undefined && category !== null && typeof category !== 'string') {
+      return res.status(400).json({ error: 'Invalid category' });
+    }
+    if (tags !== undefined && tags !== null && !Array.isArray(tags)) {
+      return res.status(400).json({ error: 'Invalid tags' });
+    }
+
+    const result = await KnowledgeService.updateDocumentMetadata(orgId, id, {
+      category: category ?? null,
+      tags: Array.isArray(tags) ? tags : null,
+    });
+
+    return res.json({ success: true, ...result });
+  })
+);
+
 export default router;

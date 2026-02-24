@@ -5,9 +5,6 @@
  * Prevents cryptic runtime errors by failing fast with clear messages.
  */
 
-import fs from 'fs';
-import path from 'path';
-
 import logger from './Logger.js';
 
 interface CheckResult {
@@ -17,48 +14,23 @@ interface CheckResult {
 }
 
 /**
- * Check if SQLite database file exists and is accessible
+ * Check database configuration (PostgreSQL only)
  */
 function checkDatabaseFile(): CheckResult {
-  const dbPath = process.env.SQLITE_PATH;
-  const dbType = process.env.DB_TYPE || 'sqlite';
+  const databaseUrl = process.env.DATABASE_URL;
+  const hasDbHost = process.env.DB_HOST;
 
-  // Skip check for PostgreSQL
-  if (dbType === 'postgres') {
-    return { passed: true, message: 'Using PostgreSQL (file check skipped)', critical: false };
-  }
-
-  if (!dbPath) {
+  if (!databaseUrl && !hasDbHost) {
     return {
       passed: false,
-      message: 'SQLITE_PATH not set in environment. Database will use default path.',
-      critical: false,
-    };
-  }
-
-  // Resolve path relative to server directory
-  const resolvedPath = path.isAbsolute(dbPath) ? dbPath : path.resolve(process.cwd(), dbPath);
-
-  if (!fs.existsSync(resolvedPath)) {
-    return {
-      passed: false,
-      message: `Database file not found: ${resolvedPath}. A new database will be created.`,
-      critical: false,
-    };
-  }
-
-  const stats = fs.statSync(resolvedPath);
-  if (stats.size === 0) {
-    return {
-      passed: false,
-      message: `Database file is empty (0 bytes): ${resolvedPath}`,
+      message: 'DATABASE_URL or DB_HOST required for PostgreSQL',
       critical: true,
     };
   }
 
   return {
     passed: true,
-    message: `Database file OK: ${resolvedPath} (${(stats.size / 1024 / 1024).toFixed(2)} MB)`,
+    message: 'PostgreSQL configured (DATABASE_URL or DB_* vars)',
     critical: false,
   };
 }

@@ -201,19 +201,11 @@ const setDependencies = (newDeps: Partial<typeof deps>): void => {
 
 const tableExists = async (tableName: string): Promise<boolean> => {
   return new Promise((resolve) => {
-    const dbType =
-      process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
-    if (dbType) {
-      deps.db.get(`SELECT to_regclass(?) as exists`, [tableName], (err: any, row: any) =>
-        resolve(!err && !!row?.exists)
-      );
-    } else {
-      deps.db.get(
-        `SELECT name FROM sqlite_master WHERE type='table' AND name = ?`,
-        [tableName],
-        (err: any, row: any) => resolve(!err && !!row)
-      );
-    }
+    deps.db.get(
+      `SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`,
+      [tableName],
+      (err: any, row: any) => resolve(!err && !!row)
+    );
   });
 };
 
@@ -736,11 +728,8 @@ const impersonateUser = catchAsync(async (req, res, next) => {
  * DATABASE EXPLORER - TABLES
  */
 const getDatabaseTables = catchAsync(async (req, res, next) => {
-  const isPg =
-    process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
-  const query = isPg
-    ? "SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public' AND table_name NOT LIKE 'pg_%' AND table_name NOT LIKE '_%'"
-    : "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'";
+  const query =
+    "SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public' AND table_name NOT LIKE 'pg_%' AND table_name NOT LIKE '_%'";
   deps.db.all(query, [], (err, rows) => {
     if (err) return next(new AppError(err.message, 500));
     res.json(rows.map((r) => r.name));
@@ -754,10 +743,7 @@ const getDatabaseRows = catchAsync(async (req, res, next) => {
   const { tableName } = req.params;
   if (!/^[a-zA-Z0-9_]+$/.test(tableName)) return next(new AppError('Invalid table name', 400));
 
-  const isPg =
-    process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
-  const orderBy = isPg ? 'ORDER BY ctid DESC' : 'ORDER BY rowid DESC';
-  deps.db.all(`SELECT * FROM ${tableName} ${orderBy} LIMIT 100`, [], (err, rows) => {
+  deps.db.all(`SELECT * FROM ${tableName} ORDER BY ctid DESC LIMIT 100`, [], (err, rows) => {
     if (err) return next(new AppError(err.message, 500));
     res.json(rows);
   });
@@ -1647,8 +1633,6 @@ const refreshToken = catchAsync(async (req, res, next) => {
  */
 const getSystemHealth = catchAsync(async (req, res, next) => {
   const startTime = Date.now();
-  const isPg =
-    process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
 
   // Test database connectivity and get basic stats
   const dbCheck = await new Promise((resolve) => {
@@ -1657,7 +1641,7 @@ const getSystemHealth = catchAsync(async (req, res, next) => {
       resolve({
         status: err ? 'error' : 'healthy',
         responseTime,
-        type: isPg ? 'PostgreSQL' : 'SQLite',
+        type: 'PostgreSQL',
       });
     });
   });

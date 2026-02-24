@@ -901,29 +901,53 @@ export class AIPipeline {
         (request.options as any)?.promptKey ||
         (request as any)?.promptKey ||
         (request.capability === 'chat' || request.capability === 'chatStream'
-          ? 'chat.default'
+          ? 'system_chat'
           : `${String(request.capability || 'chat')}.default`);
 
-      const promptKey = String(promptKeyRaw || '').trim();
+      const primaryKey = String(promptKeyRaw || '').trim();
+      const fallbackKey =
+        request.capability === 'chat' || request.capability === 'chatStream' ? 'chat.default' : '';
+
+      const tryAssemble = async (promptKey: string) => {
+        const paMod = await import('./promptAssembler.js');
+        const promptAssembler = (paMod as any).default || (paMod as any).promptAssembler || paMod;
+        if (!promptAssembler?.assemble) return null;
+        return await promptAssembler.assemble({
+          promptKey,
+          organizationId: request.organizationId || undefined,
+          language: langBase || 'en',
+        });
+      };
+
+      const promptKey = primaryKey;
       if (promptKey) {
         const paMod = await import('./promptAssembler.js');
         const promptAssembler = (paMod as any).default || (paMod as any).promptAssembler || paMod;
 
         if (promptAssembler?.assemble) {
-          const assembled = await promptAssembler.assemble({
-            promptKey,
-            organizationId: request.organizationId || undefined,
-            language: langBase || 'en',
-          });
+          let assembled: any = null;
+          try {
+            assembled = await tryAssemble(promptKey);
+          } catch (e: any) {
+            // If primary key doesn't exist, try a secondary default for smooth rollouts.
+            if (fallbackKey && fallbackKey !== promptKey) {
+              assembled = await tryAssemble(fallbackKey);
+              if (assembled?.metadata?.promptKey) {
+                (request as any)._promptKey = assembled.metadata.promptKey;
+              }
+            } else {
+              throw e;
+            }
+          }
 
           if (assembled?.systemPrompt) {
             parts.push(String(assembled.systemPrompt));
             ctx._promptSsotUsed = true;
-            ctx._promptKey = promptKey;
+            ctx._promptKey = assembled?.metadata?.promptKey || promptKey;
             ctx._promptVersion = assembled?.metadata?.promptVersion ?? null;
             ctx._promptMeta = assembled?.metadata || null;
             (request as any)._promptSsotUsed = true;
-            (request as any)._promptKey = promptKey;
+            (request as any)._promptKey = assembled?.metadata?.promptKey || promptKey;
             (request as any)._promptVersion = assembled?.metadata?.promptVersion ?? null;
             (request as any)._promptMeta = assembled?.metadata || null;
           } else {

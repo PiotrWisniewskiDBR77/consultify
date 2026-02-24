@@ -3,20 +3,15 @@
  * Database Factory
  * Enterprise SaaS Architecture - TypeScript Backend
  *
- * Factory pattern for creating database instances (SQLite or PostgreSQL)
- * Full TypeScript ES modules implementation
+ * PostgreSQL only. SQLite has been fully removed.
  */
-
-import { createRequire } from 'module';
 
 import { databaseConfig } from '../config/DatabaseConfig.js';
 import logger from '../utils/Logger.js';
 import type { IDatabase } from './IDatabase.js';
 import PostgresDatabase from './PostgresDatabase.js';
 
-const require = createRequire(import.meta.url);
 const GLOBAL_DB_KEY = '__CONSULTINITY_GLOBAL_DB_INSTANCE__';
-const SQLITE_GLOBAL_KEY = '__CONSULTINITY_SQLITE_INSTANCE__';
 
 // local cache
 let dbInstance: IDatabase | null = null;
@@ -58,41 +53,17 @@ async function ensureSchemaInitialized(db: IDatabase): Promise<void> {
  * Ensures we have a single global instance across all module loads
  */
 function getFromGlobal(): IDatabase | null {
-  return (
-    (process as any)[GLOBAL_DB_KEY] ||
-    (globalThis as any)[GLOBAL_DB_KEY] ||
-    (process as any)[SQLITE_GLOBAL_KEY] ||
-    (globalThis as any)[SQLITE_GLOBAL_KEY] ||
-    null
-  );
+  return (process as any)[GLOBAL_DB_KEY] || (globalThis as any)[GLOBAL_DB_KEY] || null;
 }
 
 function setToGlobal(db: IDatabase) {
   (process as any)[GLOBAL_DB_KEY] = db;
   (globalThis as any)[GLOBAL_DB_KEY] = db;
-  (process as any)[SQLITE_GLOBAL_KEY] = db;
-  (globalThis as any)[SQLITE_GLOBAL_KEY] = db;
   dbInstance = db;
 }
 
 /**
- * Shims the .query method onto a database handle if it doesn't have it
- */
-function shimQuery(db: any) {
-  if (db && typeof db.query !== 'function') {
-    db.query = function (text: string, params: any[]) {
-      return new Promise((resolve, reject) => {
-        db.all(text, params, (err: Error | null, rows: any[]) => {
-          if (err) reject(err);
-          else resolve({ rows: rows || [], rowCount: rows ? rows.length : 0 });
-        });
-      });
-    };
-  }
-}
-
-/**
- * Create database instance based on configuration
+ * Create database instance. PostgreSQL only.
  */
 export async function createDatabase(): Promise<IDatabase> {
   const existing = getFromGlobal();
@@ -108,37 +79,14 @@ export async function createDatabase(): Promise<IDatabase> {
   creatingDbPromise = (async (): Promise<IDatabase> => {
     if (
       process.env.MOCK_DB === 'true' ||
-      (process.env.NODE_ENV === 'test' &&
-        process.env.MOCK_DB !== 'false' &&
-        !process.env.SQLITE_PATH)
+      (process.env.NODE_ENV === 'test' && process.env.MOCK_DB !== 'false' && !process.env.DATABASE_URL)
     ) {
       const mockDb = (global as any).__TEST_DB_MOCK__ || createMockDatabase();
       setToGlobal(mockDb);
       return mockDb;
     }
 
-    if (databaseConfig.type === 'postgres') {
-      const db = PostgresDatabase as unknown as IDatabase;
-      setToGlobal(db);
-      return db;
-    }
-
-    // Default to SQLite (direct sqlite3 connection)
-    const sqlite3Module: any = await import('sqlite3').then((m) => (m as any).default || m);
-    const sqlite3 = sqlite3Module?.verbose ? sqlite3Module.verbose() : sqlite3Module;
-    const sqlitePath = databaseConfig.sqlite?.path || process.env.SQLITE_PATH;
-    if (!sqlitePath) {
-      throw new Error('SQLITE_PATH is not set');
-    }
-
-    const db = (await new Promise((resolve, reject) => {
-      const handle = new sqlite3.Database(sqlitePath, (err: any) => {
-        if (err) reject(err);
-        else resolve(handle);
-      });
-    })) as IDatabase;
-
-    shimQuery(db);
+    const db = PostgresDatabase as unknown as IDatabase;
     setToGlobal(db);
     return db;
   })();
@@ -177,44 +125,19 @@ export function getDatabaseInstance(): IDatabase {
     return dbInstance;
   }
 
-  // If configuration is Postgres, never fall back to SQLite sync open.
-  // This prevents accidental local SQLite usage in production paths.
-  if (databaseConfig.type === 'postgres') {
+  if (!databaseConfig.type || databaseConfig.type === 'postgres') {
     const db = PostgresDatabase as unknown as IDatabase;
     setToGlobal(db);
     return db;
   }
 
-  if (
-    process.env.NODE_ENV === 'test' &&
-    process.env.MOCK_DB !== 'false' &&
-    !process.env.SQLITE_PATH
-  ) {
+  if (process.env.NODE_ENV === 'test' && process.env.MOCK_DB !== 'false' && !process.env.DATABASE_URL) {
     const mockDb = createMockDatabase();
     setToGlobal(mockDb);
     return mockDb;
   }
 
-  // SQLite Sync Fallback (direct sqlite3 connection)
-  try {
-    const sqlite3Module: any = require('sqlite3');
-    const sqlite3 = sqlite3Module?.verbose ? sqlite3Module.verbose() : sqlite3Module;
-    const sqlitePath = (databaseConfig as any).sqlite?.path || process.env.SQLITE_PATH;
-    if (!sqlitePath) {
-      throw new Error('SQLITE_PATH is not set');
-    }
-    const db = new sqlite3.Database(sqlitePath, (err: any) => {
-      if (err) {
-        console.error('[Database] SQLite sync open error:', err);
-      }
-    }) as unknown as IDatabase;
-    shimQuery(db);
-    setToGlobal(db);
-    return db;
-  } catch (e) {
-    console.error('[Database] Sync initialization failed:', e);
-    throw new Error('Database not initialized. Call getDatabaseAsync() first.');
-  }
+  throw new Error('Database not initialized. Call getDatabaseAsync() first.');
 }
 
 /**
@@ -381,8 +304,6 @@ function resetConnectionLocally() {
   dbInstance = null;
   (process as any)[GLOBAL_DB_KEY] = null;
   (globalThis as any)[GLOBAL_DB_KEY] = null;
-  (process as any)[SQLITE_GLOBAL_KEY] = null;
-  (globalThis as any)[SQLITE_GLOBAL_KEY] = null;
 }
 
 /**

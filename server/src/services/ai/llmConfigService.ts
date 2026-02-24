@@ -296,8 +296,8 @@ export class LLMConfigService {
                 model_id TEXT,
                 cost_per_1k REAL DEFAULT 0,
                 markup_multiplier REAL DEFAULT 1.0,
-                is_active INTEGER DEFAULT 1,
-                is_default INTEGER DEFAULT 0,
+                is_active BOOLEAN DEFAULT TRUE,
+                is_default BOOLEAN DEFAULT FALSE,
                 visibility TEXT DEFAULT 'public',
                 priority INTEGER DEFAULT 0,
                 tier TEXT DEFAULT 'STANDARD',
@@ -309,6 +309,27 @@ export class LLMConfigService {
         `;
 
     await this.runAsync(sql);
+
+    // Ensure boolean columns are correctly typed on Postgres-only deployments.
+    // Older SQLite-first schemas used INTEGER 0/1, which conflicts with Postgres boolean normalization.
+    try {
+      await this.runAsync(
+        `ALTER TABLE llm_providers
+         ALTER COLUMN is_active TYPE BOOLEAN
+         USING (CASE WHEN (is_active::text) IN ('1', 't', 'true', 'y', 'yes', 'on') THEN TRUE ELSE FALSE END)`
+      );
+    } catch {
+      /* ignore */
+    }
+    try {
+      await this.runAsync(
+        `ALTER TABLE llm_providers
+         ALTER COLUMN is_default TYPE BOOLEAN
+         USING (CASE WHEN (is_default::text) IN ('1', 't', 'true', 'y', 'yes', 'on') THEN TRUE ELSE FALSE END)`
+      );
+    } catch {
+      /* ignore */
+    }
 
     const orgSettingsSql = `
             CREATE TABLE IF NOT EXISTS organization_llm_settings (
@@ -379,45 +400,18 @@ export class LLMConfigService {
   }
 
   async migrateTable(): Promise<void> {
-    const isSQLite = String(process.env.DB_TYPE || '').toLowerCase() === 'sqlite';
-
-    // SQLite does not support `ADD COLUMN IF NOT EXISTS`. Use PRAGMA table_info to detect columns.
-    const existingColumns = new Set<string>();
-    if (isSQLite) {
-      try {
-        const rows = await this.allAsync<{ name: string }>('PRAGMA table_info(llm_providers)');
-        for (const r of rows || []) existingColumns.add(String((r as any).name || ''));
-      } catch (err: unknown) {
-        aiLogger.warn(
-          'LLMConfigService',
-          `SQLite PRAGMA table_info failed: ${(err as any)?.message}`
-        );
-      }
-    }
-
     const migrations = [
-      { col: 'priority', sql: 'ALTER TABLE llm_providers ADD COLUMN priority INTEGER DEFAULT 0' },
-      {
-        col: 'last_health_check',
-        sql: 'ALTER TABLE llm_providers ADD COLUMN last_health_check TEXT',
-      },
-      {
-        col: 'health_status',
-        sql: "ALTER TABLE llm_providers ADD COLUMN health_status TEXT DEFAULT 'unknown'",
-      },
-      { col: 'updated_at', sql: 'ALTER TABLE llm_providers ADD COLUMN updated_at TEXT' },
-      { col: 'description', sql: 'ALTER TABLE llm_providers ADD COLUMN description TEXT' },
-      { col: 'tier', sql: "ALTER TABLE llm_providers ADD COLUMN tier TEXT DEFAULT 'STANDARD'" },
+      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 0',
+      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS last_health_check TEXT',
+      "ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS health_status TEXT DEFAULT 'unknown'",
+      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS updated_at TEXT',
+      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS description TEXT',
+      "ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS tier TEXT DEFAULT 'STANDARD'",
     ];
 
-    for (const m of migrations) {
-      if (isSQLite && existingColumns.has(m.col)) continue;
+    for (const sql of migrations) {
       try {
-        if (isSQLite) {
-          await this.runAsync(m.sql);
-        } else {
-          await this.runAsync(m.sql.replace('ADD COLUMN', 'ADD COLUMN IF NOT EXISTS'));
-        }
+        await this.runAsync(sql);
       } catch (error: unknown) {
         const err = error as Error;
         if (!err.message.includes('duplicate column') && !err.message.includes('already exists')) {
@@ -426,19 +420,16 @@ export class LLMConfigService {
       }
     }
 
-    // Allow FREE tier in llm_tier_assignments (Railway Postgres has a CHECK constraint without it)
-    if (!isSQLite) {
-      try {
-        await this.runAsync(
-          'ALTER TABLE llm_tier_assignments DROP CONSTRAINT IF EXISTS llm_tier_assignments_tier_check'
-        );
-        await this.runAsync(
-          "ALTER TABLE llm_tier_assignments ADD CONSTRAINT llm_tier_assignments_tier_check CHECK ((tier = ANY (ARRAY['BUDGET'::text, 'STANDARD'::text, 'PREMIUM'::text, 'REASONING'::text, 'FREE'::text])))"
-        );
-      } catch (error: unknown) {
-        const err = error as Error;
-        aiLogger.warn('LLMConfigService', `Tier constraint migration warning: ${err.message}`);
-      }
+    try {
+      await this.runAsync(
+        'ALTER TABLE llm_tier_assignments DROP CONSTRAINT IF EXISTS llm_tier_assignments_tier_check'
+      );
+      await this.runAsync(
+        "ALTER TABLE llm_tier_assignments ADD CONSTRAINT llm_tier_assignments_tier_check CHECK ((tier = ANY (ARRAY['BUDGET'::text, 'STANDARD'::text, 'PREMIUM'::text, 'REASONING'::text, 'FREE'::text])))"
+      );
+    } catch (error: unknown) {
+      const err = error as Error;
+      aiLogger.warn('LLMConfigService', `Tier constraint migration warning: ${err.message}`);
     }
   }
 
@@ -488,10 +479,18 @@ export class LLMConfigService {
       const existingProvider = await this.getProviderFromDb(providerId);
 
       if (existingProvider) {
-        // DB is the canonical source for secrets. ENV can bootstrap only if DB key is missing/placeholder.
+        const isDev = process.env.NODE_ENV !== 'production';
+        const allowEnvSecretOverride =
+          isDev &&
+          (process.env.LLM_SECRETS_FROM_ENV === 'true' ||
+            process.env.LLM_SECRETS_FROM_ENV === '1' ||
+            process.env.LLM_SECRETS_FROM_ENV === 'yes');
+
+        // DB is the canonical source for secrets (prod). In dev, allow env to override to make
+        // local setup frictionless (paste key into `.env.local` and restart).
         const existingKey = String(existingProvider.api_key || '').trim();
         const envKey = String(apiKey || '').trim();
-        if (envKey && (!existingKey || isPlaceholderKey(existingKey))) {
+        if (envKey && (allowEnvSecretOverride || !existingKey || isPlaceholderKey(existingKey))) {
           changes.api_key = envKey;
         }
 
@@ -525,7 +524,7 @@ export class LLMConfigService {
     aiLogger.info('LLMConfigService', 'Seeding tier assignments for active providers...');
 
     const activeProviders = await this.allAsync<{ id: string; provider: string; tier: string }>(
-      'SELECT id, provider, tier FROM llm_providers WHERE is_active = 1'
+      'SELECT id, provider, tier FROM llm_providers WHERE is_active = TRUE'
     );
 
     for (const p of activeProviders || []) {
@@ -667,7 +666,7 @@ export class LLMConfigService {
     }
 
     const rows = await this.allAsync<ProviderRow>(
-      'SELECT * FROM llm_providers WHERE is_active = 1 ORDER BY priority DESC, is_default DESC'
+      'SELECT * FROM llm_providers WHERE is_active = TRUE ORDER BY priority DESC, is_default DESC'
     );
 
     this.providerCache.clear();
@@ -721,11 +720,11 @@ export class LLMConfigService {
 
   async getDefaultProvider(): Promise<ProviderConfig | null> {
     let row = await this.getAsync<ProviderRow>(
-      'SELECT * FROM llm_providers WHERE is_default = 1 AND is_active = 1 LIMIT 1'
+      'SELECT * FROM llm_providers WHERE is_default = TRUE AND is_active = TRUE LIMIT 1'
     );
     if (!row) {
       row = await this.getAsync<ProviderRow>(
-        'SELECT * FROM llm_providers WHERE is_active = 1 ORDER BY priority DESC LIMIT 1'
+        'SELECT * FROM llm_providers WHERE is_active = TRUE ORDER BY priority DESC LIMIT 1'
       );
     }
     return row ? this.enrichProviderConfig(row) : null;

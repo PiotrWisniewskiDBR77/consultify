@@ -1430,47 +1430,6 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
 
     logger.info(`[DatabaseInitializer] Database type: ${dbType}`);
 
-    if (dbType === 'sqlite' && process.env.RESET_DB === 'true') {
-      logger.info('[DatabaseInitializer] RESET_DB=true. Dropping all SQLite tables...');
-
-      // Disable foreign keys during drop to avoid constraint errors
-      await new Promise<void>((resolve, reject) => {
-        db.run('PRAGMA foreign_keys = OFF', (err) => {
-          if (err) reject(err);
-          else resolve();
-        });
-      });
-
-      const tables = await new Promise<any[]>((resolve, reject) => {
-        db.all(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
-          (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows || []);
-          }
-        );
-      });
-
-      for (const table of tables) {
-        await new Promise<void>((resolve, reject) => {
-          db.run(`DROP TABLE IF EXISTS ${table.name}`, (err) => {
-            if (err) reject(err);
-            else resolve();
-          });
-        });
-      }
-
-      // Re-enable foreign keys
-      await new Promise<void>((resolve, reject) => {
-        db.run('PRAGMA foreign_keys = ON', (err) => {
-          if (err) reject(err);
-          else resolve();
-        });
-      });
-
-      logger.info(`[DatabaseInitializer] Dropped ${tables.length} tables.`);
-    }
-
     // For PostgreSQL, initDb() is called automatically when pool is created
     // But we'll verify it completed successfully
     if (dbType === 'postgres') {

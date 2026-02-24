@@ -40,6 +40,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useUserCan } from '@/hooks/useUserCan';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -226,6 +227,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const isPolish = i18n.language === 'pl';
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentUser, myWorkIntent, clearMyWorkIntent } = useAppStore();
+  const { isEnabled } = useFeatureFlagsContext();
+  const notebookEnabled = isEnabled('myWorkNotebookV2');
 
   const lazyFallback = (
     <div className="flex h-[60vh] items-center justify-center">
@@ -309,6 +312,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       // A1.2: Block navigation to executive tab for unauthorized users
       const targetTab = myWorkIntent.tab as ModuleTab;
       if (targetTab === 'executive' && !canViewExecutive) {
+        clearMyWorkIntent();
+        return;
+      }
+      if (targetTab === 'notebook' && !notebookEnabled) {
         clearMyWorkIntent();
         return;
       }
@@ -419,22 +426,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         requiresExecutiveAccess: false,
       },
       {
-        id: 'notebook' as ModuleTab,
-        label: isPolish ? 'Notatnik' : 'Notebook',
-        icon: <FileText size={16} />,
-        count: tabCounts.notebook,
-        color: 'bg-slate-500',
-        requiresExecutiveAccess: false,
-      },
-      {
-        id: 'ideas' as ModuleTab,
-        label: isPolish ? 'Pomysły' : 'Ideas',
-        icon: <Lightbulb size={16} />,
-        count: tabCounts.ideas,
-        color: 'bg-amber-500',
-        requiresExecutiveAccess: false,
-      },
-      {
         id: 'decisions' as ModuleTab,
         label: isPolish ? 'Decyzje' : 'Decisions',
         icon: <Scale size={16} />,
@@ -450,11 +441,31 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         color: 'bg-amber-500',
         requiresExecutiveAccess: false,
       },
+      ...(notebookEnabled
+        ? [
+            {
+              id: 'notebook' as ModuleTab,
+              label: isPolish ? 'Notatnik' : 'Notebook',
+              icon: <FileText size={16} />,
+              count: tabCounts.notebook,
+              color: 'bg-slate-500',
+              requiresExecutiveAccess: false,
+            },
+          ]
+        : []),
+      {
+        id: 'ideas' as ModuleTab,
+        label: isPolish ? 'Pomysły' : 'Ideas',
+        icon: <Lightbulb size={16} />,
+        count: tabCounts.ideas,
+        color: 'bg-amber-500',
+        requiresExecutiveAccess: false,
+      },
     ];
 
     // A1.2: Filter out Executive tab for users without admin/manager role
     return allTabs.filter((tab) => !tab.requiresExecutiveAccess || canViewExecutive);
-  }, [isPolish, tabCounts, canViewExecutive]);
+  }, [isPolish, tabCounts, canViewExecutive, notebookEnabled]);
 
   // Task filters configuration
   const taskFilters = useMemo(

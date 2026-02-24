@@ -49,6 +49,7 @@ import { GlobalSettingsTab } from './Configuration/GlobalSettingsTab';
 import { LLMProvidersTab } from './Configuration/LLMProvidersTab';
 import { ModelTiersTab } from './Configuration/ModelTiersTab';
 import { RoutingRulesTab } from './Configuration/RoutingRulesTab';
+import { AIGovernanceTab } from './Configuration/AIGovernanceTab';
 import { ExperimentsTab } from './Development/ExperimentsTab';
 import { ModelRegistryTab } from './Development/ModelRegistryTab';
 import { PromptBuilderTab } from './Development/PromptBuilderTab';
@@ -96,6 +97,7 @@ const AI_PLATFORM_TABS: MainTab[] = [
       { id: 'llm-providers', label: 'LLM Providers', icon: <Cpu size={16} /> },
       { id: 'model-tiers', label: 'Model Tiers', icon: <Layers size={16} /> },
       { id: 'routing-rules', label: 'Routing Rules', icon: <Route size={16} /> },
+      { id: 'ai-governance', label: 'AI Governance', icon: <Shield size={16} /> },
       { id: 'global-settings', label: 'Global Settings', icon: <Settings size={16} /> },
     ],
   },
@@ -205,6 +207,8 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
         return <ModelTiersTab />;
       case 'configuration/routing-rules':
         return <RoutingRulesTab />;
+      case 'configuration/ai-governance':
+        return <AIGovernanceTab />;
       case 'configuration/global-settings':
         return <GlobalSettingsTab />;
 

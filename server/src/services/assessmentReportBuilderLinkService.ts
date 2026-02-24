@@ -32,13 +32,8 @@ export function mapReportBuilderStatusToAssessmentReportStatus(
   return 'DRAFT';
 }
 
-async function ensureColumn(table: string, name: string, ddl: string) {
-  const cols = (await queryHelpers.queryAll(`PRAGMA table_info(${table})`)) as Array<{
-    name: string;
-  }>;
-  const existing = new Set((cols || []).map((c) => String(c.name)));
-  if (existing.has(name)) return;
-  await queryHelpers.queryRun(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
+async function ensureColumn(table: string, _name: string, ddl: string) {
+  await queryHelpers.queryRun(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${ddl}`);
 }
 
 /**
@@ -48,10 +43,8 @@ async function ensureColumn(table: string, name: string, ddl: string) {
  */
 export async function ensureAssessmentReportsLinkSchema(): Promise<void> {
   try {
-    // If the table doesn't exist yet, don't crash report builder.
-    // The Assessment Reports route has the full `CREATE TABLE IF NOT EXISTS`.
     const row = await queryHelpers.queryOne(
-      `SELECT name FROM sqlite_master WHERE type='table' AND name='assessment_reports'`
+      `SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='assessment_reports'`
     );
     if (!row) return;
   } catch {

@@ -344,13 +344,13 @@ mockDb.close.mockImplementation(function (cb?: any) {
 // Ensure consistent test-mode behavior across backend + frontend tests
 if (typeof process !== 'undefined' && process.env) {
   process.env.NODE_ENV = 'test';
-  process.env.DB_TYPE = process.env.DB_TYPE || 'sqlite';
+  process.env.DB_TYPE = process.env.DB_TYPE || 'postgres';
   process.env.MOCK_REDIS = process.env.MOCK_REDIS || 'true';
   process.env.MOCK_DB = process.env.MOCK_DB || 'true';
-  // Use :memory: only as a fallback for unit tests.
-  // Integration tests should specify their own persistent path via SQLITE_PATH environment variable.
-  if (!process.env.SQLITE_PATH) {
-    process.env.SQLITE_PATH = ':memory:';
+  // PostgreSQL required. Unit tests use MOCK_DB (no real connection).
+  // Integration tests need real DATABASE_URL to consultinity_test.
+  if (!process.env.DATABASE_URL) {
+    process.env.DATABASE_URL = 'postgresql://consultinity:consultinity@localhost:5432/consultinity_test';
   }
   // Stub API keys to prevent real calls if mocking is accidentally bypassed
   process.env.GEMINI_API_KEY = 'test-gemini-key';

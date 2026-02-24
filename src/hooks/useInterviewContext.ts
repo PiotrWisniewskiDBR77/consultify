@@ -15,18 +15,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { Api } from '@/services/api';
 
 export interface OrganizationContext {
+  id?: string;
   organizationId: string;
-  companyProfile: {
-    name?: string;
-    industry?: string;
-    size?: string;
-    location?: string;
-    [key: string]: unknown;
-  };
-  transformationGoals: string[];
-  currentChallenges: string[];
-  strategicPriorities: string[];
-  technologyStack: string[];
+  companyName: string | null;
+  industry: string | null;
+  companySize: string | null;
+  location: string | null;
+  employeeCount: number | null;
+  annualRevenue: string | null;
+  keyMetrics: Array<{ name: string; value: string; category?: string }>;
+  stakeholders: Array<{ name: string; role: string; department?: string }>;
+  openGaps: Array<{ category: string; description: string; priority: string }>;
   completenessPercent: number;
   lastInterviewId?: string;
 }
@@ -146,30 +145,37 @@ export function formatContextForAI(context: OrganizationContext | null): string 
 
   const parts: string[] = [];
 
-  if (context.companyProfile.name) {
-    parts.push(`Company: ${context.companyProfile.name}`);
+  if (context.companyName) {
+    parts.push(`Company: ${context.companyName}`);
   }
-  if (context.companyProfile.industry) {
-    parts.push(`Industry: ${context.companyProfile.industry}`);
+  if (context.industry) {
+    parts.push(`Industry: ${context.industry}`);
   }
-  if (context.companyProfile.size) {
-    parts.push(`Size: ${context.companyProfile.size}`);
+  if (context.companySize) {
+    parts.push(`Size: ${context.companySize}`);
   }
-
-  if (context.transformationGoals.length > 0) {
-    parts.push(`Transformation Goals: ${context.transformationGoals.join(', ')}`);
+  if (context.location) {
+    parts.push(`Location: ${context.location}`);
   }
-
-  if (context.currentChallenges.length > 0) {
-    parts.push(`Current Challenges: ${context.currentChallenges.join(', ')}`);
+  if (context.employeeCount) {
+    parts.push(`Employees: ${context.employeeCount}`);
   }
-
-  if (context.strategicPriorities.length > 0) {
-    parts.push(`Strategic Priorities: ${context.strategicPriorities.join(', ')}`);
+  if (context.annualRevenue) {
+    parts.push(`Annual Revenue: ${context.annualRevenue}`);
   }
 
-  if (context.technologyStack.length > 0) {
-    parts.push(`Technology Stack: ${context.technologyStack.join(', ')}`);
+  if (context.keyMetrics.length > 0) {
+    parts.push(`Key Metrics: ${context.keyMetrics.map((m) => `${m.name}: ${m.value}`).join(', ')}`);
+  }
+
+  if (context.stakeholders.length > 0) {
+    parts.push(
+      `Stakeholders: ${context.stakeholders.map((s) => `${s.name} (${s.role})`).join(', ')}`
+    );
+  }
+
+  if (context.openGaps.length > 0) {
+    parts.push(`Open Gaps: ${context.openGaps.map((g) => g.description).join(', ')}`);
   }
 
   return parts.join('\n');

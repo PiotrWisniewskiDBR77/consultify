@@ -1339,6 +1339,15 @@ router.put(
 router.get('/admin/permissions', SuperAdminController.getAdminPermissions);
 router.get('/admin/permissions/matrix', SuperAdminController.getPermissionsMatrix);
 router.post('/admin/permissions', SuperAdminController.createAdminPermission);
+router.get('/admin/permissions/stats', SuperAdminController.getPermissionsStats);
+router.put('/admin/permissions/:key', SuperAdminController.updateAdminPermission);
+router.delete('/admin/permissions/:key', SuperAdminController.deleteAdminPermission);
+router.put('/admin/permissions/roles/:roleId', SuperAdminController.updateRolePermissions);
+router.put(
+  '/admin/permissions/roles/:roleId/permissions/:permissionKey',
+  SuperAdminController.toggleRolePermission
+);
+router.post('/admin/permissions/roles/copy', SuperAdminController.copyRolePermissions);
 
 // Security Permissions endpoints (aliased from /admin/)
 router.get('/security/permissions', SuperAdminController.getAdminPermissions);
@@ -1368,6 +1377,8 @@ router.get(
 router.get('/admin/approval-workflows', SuperAdminController.getApprovalWorkflows);
 router.post('/admin/approval-workflows', SuperAdminController.createApprovalWorkflow);
 router.get('/admin/approval-requests', SuperAdminController.getApprovalRequests);
+router.post('/admin/approval-requests/:id/approve', SuperAdminController.approveRequest);
+router.post('/admin/approval-requests/:id/reject', SuperAdminController.rejectRequest);
 
 // ==========================================
 // SIGNALS - System Alerts, Client Tickets, Feedback

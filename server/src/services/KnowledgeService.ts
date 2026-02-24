@@ -7,6 +7,7 @@
 
 import { dbAll, dbGet } from '../database/db.js';
 import logger from '../utils/Logger.js';
+import { queryRun } from '../utils/queryHelpers.js';
 
 // Use dbAll/dbGet helpers; fall back to raw if needed
 const all = async (sql: string, params: any[] = []): Promise<any[]> => {
@@ -22,6 +23,14 @@ const get = async (sql: string, params: any[] = []): Promise<any> => {
     return await dbGet(sql, params);
   } catch {
     return null;
+  }
+};
+
+const run = async (sql: string, params: any[] = []): Promise<{ changes: number; lastID?: number }> => {
+  try {
+    return (await queryRun(sql, params)) as { changes: number; lastID?: number };
+  } catch {
+    return { changes: 0 };
   }
 };
 
@@ -162,9 +171,18 @@ export const knowledgeService = {
 
     // Try new schema first
     try {
-      let sql = `
-        SELECT id, title, original_filename as filename, document_type, 
-               description, category, tags, language, word_count, 
+      const sqlWithGovernance = `
+        SELECT id, title, original_filename as filename, document_type,
+               description, category, tags, language, word_count,
+               processing_status, created_at,
+               ai_visibility, sensitivity
+        FROM knowledge_documents
+        WHERE (organization_id = ? OR organization_id IS NULL)
+          AND processing_status IN ('completed', 'processed', 'indexed')
+      `;
+      const sqlBasic = `
+        SELECT id, title, original_filename as filename, document_type,
+               description, category, tags, language, word_count,
                processing_status, created_at
         FROM knowledge_documents
         WHERE (organization_id = ? OR organization_id IS NULL)
@@ -172,6 +190,7 @@ export const knowledgeService = {
       `;
       const params: any[] = [organizationId];
 
+      let sql = sqlWithGovernance;
       if (projectId) {
         sql += ` AND (project_id = ? OR project_id IS NULL)`;
         params.push(projectId);
@@ -179,7 +198,20 @@ export const knowledgeService = {
 
       sql += ` ORDER BY created_at DESC LIMIT 50`;
 
-      const docs = await all(sql, params);
+      let docs: any[] = [];
+      try {
+        docs = await all(sql, params);
+      } catch {
+        // Columns may not exist in some deployments yet — retry without governance fields.
+        let sql2 = sqlBasic;
+        const params2: any[] = [organizationId];
+        if (projectId) {
+          sql2 += ` AND (project_id = ? OR project_id IS NULL)`;
+          params2.push(projectId);
+        }
+        sql2 += ` ORDER BY created_at DESC LIMIT 50`;
+        docs = await all(sql2, params2);
+      }
       if (docs.length > 0) return docs;
     } catch {
       // knowledge_documents table may not exist — try legacy
@@ -190,7 +222,9 @@ export const knowledgeService = {
       let sql = `
         SELECT id, filename, filepath, status as processing_status,
                filename as title, 'document' as document_type,
-               created_at
+               created_at,
+               'allowed' as ai_visibility,
+               'internal' as sensitivity
         FROM knowledge_docs
         WHERE status IN ('completed', 'processed', 'indexed', 'ready')
       `;
@@ -207,6 +241,36 @@ export const knowledgeService = {
     } catch (err: any) {
       logger.warn('[KnowledgeService] Failed to load documents from both schemas:', err?.message);
       return [];
+    }
+  },
+
+  /**
+   * Update knowledge document metadata (SuperAdmin/Admin).
+   * Updates unified schema (knowledge_documents) only.
+   */
+  async updateDocumentMetadata(
+    organizationId: string,
+    docId: string,
+    updates: { category?: string | null; tags?: string[] | null }
+  ): Promise<{ updated: boolean }> {
+    if (!organizationId || !docId) return { updated: false };
+    const category = updates.category ?? null;
+    const tagsJson = Array.isArray(updates.tags) ? JSON.stringify(updates.tags) : null;
+
+    try {
+      const res = await run(
+        `UPDATE knowledge_documents
+         SET category = COALESCE(?, category),
+             tags = COALESCE(?, tags),
+             updated_at = datetime('now')
+         WHERE id = ?
+           AND (organization_id = ? OR organization_id IS NULL)`,
+        [category, tagsJson, docId, organizationId]
+      );
+      return { updated: (res?.changes || 0) > 0 };
+    } catch (err: any) {
+      logger.warn('[KnowledgeService] Failed to update document metadata:', err?.message);
+      return { updated: false };
     }
   },
 };

@@ -52,6 +52,7 @@ export interface MessageRendererProps {
   displayMessages: ChatMessage[];
   isCompact: boolean;
   isDisabled: boolean;
+  isRtlChatLanguage?: boolean;
 
   // Conversation context
   activeConversationId: string | null;
@@ -173,6 +174,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   displayMessages,
   isCompact,
   isDisabled,
+  isRtlChatLanguage = false,
   activeConversationId,
   thinkingSteps,
   streamStartedAt,
@@ -306,7 +308,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         <div className="flex flex-col max-w-[85%]">
           {/* Author name for team messages */}
           {msg.role === 'user' && msg.authorName && (
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 mb-0.5 text-right pr-1 font-medium">
+            <span
+              className={`text-[10px] text-slate-500 dark:text-slate-400 mb-0.5 pr-1 font-medium ${
+                isRtlChatLanguage ? 'text-right' : 'text-left'
+              }`}
+            >
               {msg.authorName}
             </span>
           )}
@@ -315,7 +321,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               msg.role === 'user'
                 ? 'bg-primary-600 text-white rounded-tr-none'
                 : 'bg-slate-50 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 rounded-tl-none'
-            }`}
+            } ${isRtlChatLanguage ? 'text-right' : 'text-left'}`}
+            dir={isRtlChatLanguage ? 'rtl' : 'ltr'}
           >
             {/* AI Message Content */}
             {msg.role === 'ai' ? (
@@ -1184,7 +1191,13 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 {/* Speak */}
                 {msg.role === 'ai' && (
                   <button
-                    onClick={() => (voiceState.isSpeaking ? stopSpeaking() : speak(msg.content))}
+                    onClick={() => {
+                      // Replay behavior: always restart reading from the beginning.
+                      stopSpeaking();
+                      setTimeout(() => {
+                        speak(msg.content);
+                      }, 60);
+                    }}
                     className={`p-1 rounded-md ${voiceState.isSpeaking ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'} hover:bg-slate-100 dark:hover:bg-navy-700`}
                     title={
                       voiceState.isSpeaking

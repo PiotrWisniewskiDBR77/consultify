@@ -132,7 +132,7 @@ class SystemHealthServiceClass {
       database: {
         status: dbStatus.connected ? 'healthy' : 'error',
         responseTime: dbStatus.latencyMs,
-        type: 'SQLite',
+        type: 'PostgreSQL',
       },
       ai: aiServicesStatus,
       system: {

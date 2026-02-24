@@ -407,11 +407,12 @@ export async function transaction(statements: TransactionStatement[]): Promise<T
 }
 
 /**
- * Check if a table exists
+ * Check if a table exists (PostgreSQL)
  */
 export async function tableExists(tableName: string): Promise<boolean> {
-  const result = await get<{ name: string }>(
-    "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+  const result = await get<{ table_name: string }>(
+    `SELECT table_name FROM information_schema.tables 
+     WHERE table_schema = 'public' AND table_type = 'BASE TABLE' AND table_name = $1`,
     [tableName]
   );
   return result !== null;

@@ -150,38 +150,24 @@ async function ensureWs4SqliteSchema(): Promise<void> {
 }
 
 async function listTables(): Promise<string[]> {
-  const isPg =
-    process.env.DB_TYPE === 'postgres' ||
-    (!process.env.DB_TYPE && process.env.DATABASE_URL?.startsWith('postgres'));
-  const rows = isPg
-    ? await DbPromise.all<{ name: string }>(
-        `SELECT table_name as name
-         FROM information_schema.tables
-         WHERE table_schema = 'public' AND table_type = 'BASE TABLE'`,
-        [],
-        { fallback: false }
-      )
-    : await DbPromise.all<{ name: string }>(
-        `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'`,
-        [],
-        { fallback: false }
-      );
+  const rows = await DbPromise.all<{ name: string }>(
+    `SELECT table_name as name
+     FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_type = 'BASE TABLE'`,
+    [],
+    { fallback: false }
+  );
   return rows.map((r) => r.name).filter((t) => typeof t === 'string' && t.length > 0);
 }
 
 async function listColumns(table: string): Promise<string[]> {
-  const isPg =
-    process.env.DB_TYPE === 'postgres' ||
-    (!process.env.DB_TYPE && process.env.DATABASE_URL?.startsWith('postgres'));
-  const rows = isPg
-    ? await DbPromise.all<{ name: string }>(
-        `SELECT column_name as name
-         FROM information_schema.columns
-         WHERE table_schema = 'public' AND table_name = ?`,
-        [table],
-        { fallback: false }
-      )
-    : await DbPromise.all<{ name: string }>(`PRAGMA table_info(${table})`, [], { fallback: false });
+  const rows = await DbPromise.all<{ name: string }>(
+    `SELECT column_name as name
+     FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = $1`,
+    [table],
+    { fallback: false }
+  );
   return rows.map((r) => r.name).filter((c) => typeof c === 'string' && c.length > 0);
 }
 

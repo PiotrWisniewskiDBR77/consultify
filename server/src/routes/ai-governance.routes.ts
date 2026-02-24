@@ -13,6 +13,42 @@ const router = Router();
 
 // === T119: Org Context Policy ===
 
+// === T118: Org AI Policy (internet, audit, levels) ===
+
+router.get(
+  '/policy',
+  verifyToken,
+  requireRole('super_admin', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(400).json({ error: 'Organization required' });
+
+    const { default: AIPolicyEngine } = await import('../services/aiPolicyEngine.js');
+    const [effective, summary] = await Promise.all([
+      AIPolicyEngine.getEffectivePolicy(orgId, null, req.user?.id || null),
+      AIPolicyEngine.getPolicySummary(orgId),
+    ]);
+
+    res.json({ success: true, data: { effective, summary } });
+  })
+);
+
+router.put(
+  '/policy',
+  verifyToken,
+  requireRole('super_admin', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(400).json({ error: 'Organization required' });
+
+    const { default: AIPolicyEngine } = await import('../services/aiPolicyEngine.js');
+    await AIPolicyEngine.updatePolicy(orgId, req.body || {});
+
+    logger.info(`[AIGov] Policy updated for org ${orgId} by ${req.user?.id}`);
+    res.json({ success: true, message: 'Policy updated' });
+  })
+);
+
 router.get(
   '/context-policy',
   verifyToken,

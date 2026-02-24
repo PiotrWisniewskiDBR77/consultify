@@ -7,6 +7,7 @@ import { TourProvider } from '../components/Onboarding/TourProvider';
 import { AutoSaveProvider } from '../context/AutoSaveContext';
 import { AccessPolicyProvider } from '../contexts/AccessPolicyContext';
 import { AIProvider } from '../contexts/AIContext';
+import { FeatureFlagsProvider } from '../contexts/FeatureFlagsContext';
 import { HelpProvider } from '../contexts/HelpContext';
 import { TrialProvider } from '../contexts/TrialContext';
 import { useAppStore } from '../store/useAppStore';
@@ -67,20 +68,22 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
     <ErrorBoundary>
       <ThemeSync />
       <BrowserRouter>
-        <AutoSaveProvider>
-          <TrialProvider>
-            <AccessPolicyProvider>
-              <AIProvider>
-                <HelpProvider>
-                  <TourProvider>
-                    {children}
-                    <Toaster position="bottom-right" />
-                  </TourProvider>
-                </HelpProvider>
-              </AIProvider>
-            </AccessPolicyProvider>
-          </TrialProvider>
-        </AutoSaveProvider>
+        <FeatureFlagsProvider>
+          <AutoSaveProvider>
+            <TrialProvider>
+              <AccessPolicyProvider>
+                <AIProvider>
+                  <HelpProvider>
+                    <TourProvider>
+                      {children}
+                      <Toaster position="bottom-right" />
+                    </TourProvider>
+                  </HelpProvider>
+                </AIProvider>
+              </AccessPolicyProvider>
+            </TrialProvider>
+          </AutoSaveProvider>
+        </FeatureFlagsProvider>
       </BrowserRouter>
     </ErrorBoundary>
   );

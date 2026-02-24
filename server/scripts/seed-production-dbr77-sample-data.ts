@@ -126,6 +126,10 @@ async function fetchUserIdsByEmail(client: PgClient, emails: string[]) {
 async function main() {
   dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
   dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+  // Optional highest-priority env file (used for staging DB from local dev)
+  if (process.env.ENV_FILE) {
+    dotenv.config({ path: path.resolve(process.cwd(), process.env.ENV_FILE), override: true });
+  }
 
   requireProductionConfirmation();
 
@@ -142,14 +146,16 @@ async function main() {
   const namespace = uuidv5(`consultify:${orgId}:production-sample-data:v1`, uuidv5.DNS);
   const ids = makeIds(namespace);
 
+  // Pick active DBR77 accounts so seeded work lands on real users.
   const emails = [
-    'piotr.wisniewski@dbr77.com',
+    'piotr.wisniewski@dbr77.com', // OWNER
     'justyna.laskowska@dbr77.com',
     'tomasz.jankowski@dbr77.com',
     'konrad.milewski@dbr77.com',
     'pawel.mroczkowski@dbr77.com',
-    'bartek.straszak@dbr77.com',
-    'katarzyna.szreniawska@dbr77.com',
+    'wojciech.wesolowski@dbr77.com',
+    'bartosz.solomski@dbr77.com',
+    'katarzyna.szwarocka@dbr77.com',
   ];
 
   const pool = new Pool({
@@ -179,7 +185,8 @@ async function main() {
 
     const piotrId = users.get('piotr.wisniewski@dbr77.com')!.id;
     const justynaId = users.get('justyna.laskowska@dbr77.com')!.id;
-    const bartekId = users.get('bartek.straszak@dbr77.com')!.id;
+    const konradId = users.get('konrad.milewski@dbr77.com')!.id;
+    const wojciechId = users.get('wojciech.wesolowski@dbr77.com')!.id;
 
     // ---------------------------------------------------------------------
     // Projects
@@ -266,7 +273,7 @@ async function main() {
           status: 'APPROVED',
           priority: 'MEDIUM',
           progress: 10,
-          created_by: bartekId,
+          created_by: wojciechId,
           created_at: nowIso,
           updated_at: nowIso,
           source_type: 'manual',
@@ -339,7 +346,7 @@ async function main() {
           status: 'blocked',
           priority: 'critical',
           due_date: overdue,
-          assignee_id: bartekId,
+          assignee_id: konradId,
           created_by: piotrId,
         }),
         mkTask('data-platform-sprint', {
@@ -409,7 +416,7 @@ async function main() {
           title: 'Risk acceptance: vendor dependency',
           description: 'Akceptacja ryzyka opóźnienia integracji z systemem X.',
           type: 'GO_NO_GO',
-          decision_maker_id: bartekId,
+          decision_maker_id: konradId,
           status: 'escalated',
           priority: 'critical',
           deadline: overdue,
@@ -523,7 +530,7 @@ async function main() {
 
       const rows = [
         notif('task_overdue', {
-          user_id: bartekId,
+          user_id: konradId,
           type: 'TASK_OVERDUE',
           title: 'Task overdue: Close open risks for automation',
           body: 'Task is overdue. Please update RAID and provide mitigation plan.',

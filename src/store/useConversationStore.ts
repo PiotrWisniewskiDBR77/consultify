@@ -313,6 +313,8 @@ interface ConversationState {
     archived?: boolean;
     projectId?: string;
     scope?: 'personal' | 'team' | 'all';
+    /** bypass local fetch de-dupe/throttle window */
+    force?: boolean;
   }) => Promise<void>;
   fetchConversation: (id: string) => Promise<void>;
 
@@ -453,8 +455,9 @@ export const useConversationStore = create<ConversationState>()(
 
       fetchConversations: async (options) => {
         const now = Date.now();
-        if (_inflightFetchConversations) return _inflightFetchConversations;
-        if (now - _lastFetchConversationsAt < FETCH_DEDUPE_WINDOW_MS) return;
+        const force = Boolean(options?.force);
+        if (!force && _inflightFetchConversations) return _inflightFetchConversations;
+        if (!force && now - _lastFetchConversationsAt < FETCH_DEDUPE_WINDOW_MS) return;
         _lastFetchConversationsAt = now;
 
         set({ isLoading: true });

@@ -120,7 +120,7 @@ export function performanceMetricsMiddleware(
         req._performanceMetrics.dbQueryTime += duration;
       }
       // Record DB query metric for Prometheus
-      const dbType = process.env.DB_TYPE || 'sqlite';
+      const dbType = process.env.DB_TYPE || 'postgres';
       metricsService.recordDbQuery(_queryType, dbType, duration / 1000); // Convert to seconds
     });
   }

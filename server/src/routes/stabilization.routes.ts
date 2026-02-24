@@ -15,11 +15,11 @@ router.get(
   verifyToken,
   verifySuperAdmin,
   asyncHandler(async (_req: Request, res: Response) => {
-    const dbStatus = (await dbGet('SELECT COUNT(*) as tables FROM sqlite_master WHERE type = ?', [
-      'table',
-    ])) as { tables: number } | null;
+    const dbStatus = (await dbGet(
+      `SELECT COUNT(*)::int as tables FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`
+    )) as { tables: number } | null;
     const errorCount = await dbGet<any>(
-      "SELECT COUNT(*) as count FROM error_logs WHERE created_at > datetime('now', '-1 hour')"
+      "SELECT COUNT(*)::int as count FROM error_logs WHERE created_at > NOW() - INTERVAL '1 hour'"
     );
     res.json({
       status: 'stable',

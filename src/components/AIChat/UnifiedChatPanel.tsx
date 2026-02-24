@@ -22,6 +22,7 @@ import {
   Bot,
   Briefcase,
   History,
+  Lock,
   MessageSquare,
   Plus,
   Sparkles,
@@ -32,6 +33,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { isValidLanguage, normalizeLanguageCode, type SupportedLanguage } from '@/i18n';
 
 import { useAIStream } from '../../hooks/useAIStream';
@@ -54,6 +56,7 @@ import {
 } from '../../types';
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
+import { isRtlLanguage } from '../../utils/textDirection';
 import { ChatSignalsPanel } from './ChatSignalsPanel';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
 import { ContextBadge } from './ContextBadge';
@@ -65,6 +68,96 @@ import { PendingActionsIndicator } from './PendingActionsIndicator';
 // ============================================================================
 // Types
 // ============================================================================
+
+type ChatSaveTarget = 'idea' | 'note';
+
+interface ChatSaveIntent {
+  target: ChatSaveTarget;
+  cleanPrompt: string;
+}
+
+const firstMatchIndex = (input: string, patterns: RegExp[]): number => {
+  const s = String(input || '');
+  let best = -1;
+  for (const p of patterns) {
+    const m = s.match(p);
+    if (!m || typeof m.index !== 'number') continue;
+    if (best === -1 || m.index < best) best = m.index;
+  }
+  return best;
+};
+
+const isLikelyAiFailureText = (text: string): boolean => {
+  const t = String(text || '').trim().toLowerCase();
+  if (!t) return true;
+  return (
+    t.startsWith('⚠️') ||
+    t.includes('stream ended without output') ||
+    t.includes('ai returned an empty response') ||
+    t.includes('ai returned no output') ||
+    t.includes('failed to start ai') ||
+    t.includes('nie udało się uruchomić ai') ||
+    t.includes('nie udalo sie uruchomic ai')
+  );
+};
+
+const extractSlashPayload = (raw: string, commands: string[]): string | null => {
+  const trimmed = String(raw || '').trim();
+  const lower = trimmed.toLowerCase();
+  for (const cmd of commands) {
+    if (!lower.startsWith(cmd)) continue;
+    const payload = trimmed.slice(cmd.length).trim();
+    return payload || '';
+  }
+  return null;
+};
+
+const parseChatSaveIntent = (rawContent: string): ChatSaveIntent | null => {
+  const raw = String(rawContent || '').trim();
+  if (!raw) return null;
+  const lower = raw.toLowerCase();
+
+  const notePayload = extractSlashPayload(raw, ['/note', '/notatka']);
+  if (notePayload !== null) {
+    return {
+      target: 'note',
+      cleanPrompt:
+        notePayload ||
+        'Utworz krotka, uporzadkowana notatke na podstawie naszej rozmowy. Dodaj tytul i tresc.',
+    };
+  }
+
+  const ideaPayload = extractSlashPayload(raw, ['/idea', '/pomysl', '/pomysł']);
+  if (ideaPayload !== null) {
+    return {
+      target: 'idea',
+      cleanPrompt:
+        ideaPayload ||
+        'Utworz konkretny pomysl do wdrozenia na podstawie naszej rozmowy. Dodaj tytul i opis.',
+    };
+  }
+
+  const asksToSave = /(^|\s)zapisz(\s|$)|(^|\s)save(\s|$)/i.test(lower);
+  if (!asksToSave) return null;
+
+  const asksIdea = /pomysł|pomysl|idea|ideas/i.test(lower);
+  const asksNote = /notatk|notebook|note/i.test(lower);
+
+  if (asksIdea && asksNote) {
+    const noteIdx = firstMatchIndex(lower, [/notatk/i, /notebook/i, /\bnote\b/i]);
+    const ideaIdx = firstMatchIndex(lower, [/pomysł/i, /pomysl/i, /\bidea\b/i, /\bideas\b/i]);
+    if (noteIdx >= 0 && ideaIdx >= 0) {
+      return noteIdx <= ideaIdx
+        ? { target: 'note', cleanPrompt: raw }
+        : { target: 'idea', cleanPrompt: raw };
+    }
+  }
+
+  if (asksIdea) return { target: 'idea', cleanPrompt: raw };
+  if (asksNote) return { target: 'note', cleanPrompt: raw };
+
+  return null;
+};
 
 interface UnifiedChatPanelProps {
   /** Display mode: full-screen or split-screen */
@@ -154,6 +247,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   onKickoffConsumed,
 }) => {
   const { t, i18n } = useTranslation();
+  const { isEnabled } = useFeatureFlagsContext();
+  const signalsEnabled = isEnabled('myWorkSignalsV2');
 
   // ========================================================================
   // Store hooks
@@ -167,6 +262,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     setIsBotTyping,
     aiFreezeStatus,
     aiConfig,
+    setAIConfig,
   } = useAppStore();
 
   const {
@@ -206,6 +302,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [editBusy, setEditBusy] = useState(false);
   const [signalsOpen, setSignalsOpen] = useState(false);
   const lastKickoffSentRef = useRef<string | null>(null);
+  const pendingChatSaveIntentRef = useRef<{
+    target: ChatSaveTarget;
+    originalUserMessage: string;
+  } | null>(null);
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
     // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
@@ -359,10 +459,143 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const isSplitMode = mode === 'split' || displayMode === 'split';
   const isCompact = isSplitMode;
   const isDisabled = disabled || aiFreezeStatus.isFrozen;
+  const isPrivateMode = Boolean((aiConfig as any)?.privateMode);
+  const isRtlChatLanguage = isRtlLanguage(chatLanguage);
 
   // ========================================================================
   // AI Stream hook
   // ========================================================================
+
+  const saveMessageAsIdea = useCallback(
+    async (
+      messageId: string,
+      content: string,
+      options?: {
+        navigateToMyWork?: boolean;
+        autoTriggered?: boolean;
+      }
+    ) => {
+      const trimmed = String(content || '').trim();
+      if (!trimmed) return;
+
+      const firstLine =
+        trimmed
+          .split('\n')
+          .map((l) => l.replace(/^#+\s*/, '').trim())
+          .find((l) => !!l) || '';
+      const title = firstLine.slice(0, 120) || (i18n.language === 'pl' ? 'Pomysł' : 'Idea');
+
+      const navigateToMyWork = options?.navigateToMyWork !== false;
+      const autoTriggered = options?.autoTriggered === true;
+
+      try {
+        const created = await Api.createMyIdea({
+          title,
+          body: trimmed,
+          tags: [],
+          sourceType: 'chat',
+          sourceConversationId: activeConversationId,
+          sourceMessageId: messageId,
+        });
+
+        trackFunnelEvent('my_idea_saved', {
+          source: autoTriggered ? 'chat_auto' : 'chat',
+          ideaId: created?.id,
+          messageId,
+        });
+        toast.success(
+          autoTriggered
+            ? t('myWork.ideas.savedFromChatToast', 'Saved from chat to My Ideas')
+            : t('myWork.ideas.savedToast', 'Saved to My Ideas')
+        );
+
+        if (navigateToMyWork) {
+          try {
+            const { setMyWorkIntent, setCurrentView } = useAppStore.getState() as any;
+            setMyWorkIntent?.({
+              tab: 'ideas',
+              open: { type: 'idea', id: created?.id, name: created?.title || title, data: created },
+            });
+            setCurrentView?.(AppView.MY_WORK);
+          } catch {
+            // ignore
+          }
+        }
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Failed to save idea:', err);
+        toast.error(t('myWork.errors.createFailed', 'Failed to create idea'));
+      }
+    },
+    [activeConversationId, i18n.language, t]
+  );
+
+  const saveMessageAsNote = useCallback(
+    async (
+      messageId: string,
+      content: string,
+      options?: {
+        navigateToMyWork?: boolean;
+        autoTriggered?: boolean;
+      }
+    ) => {
+      const trimmed = String(content || '').trim();
+      if (!trimmed) return;
+
+      const firstLine =
+        trimmed
+          .split('\n')
+          .map((l) => l.replace(/^#+\s*/, '').trim())
+          .find((l) => !!l) || '';
+      const title = firstLine.slice(0, 120) || (i18n.language === 'pl' ? 'Notatka' : 'Note');
+
+      const navigateToMyWork = options?.navigateToMyWork !== false;
+      const autoTriggered = options?.autoTriggered === true;
+
+      try {
+        const created = await Api.post('/my-work/notebook/pages', {
+          title,
+          visibility: 'private',
+          tags: [],
+          contentText: trimmed,
+          contentJson: {
+            type: 'doc',
+            content: [
+              {
+                type: 'paragraph',
+                content: [{ type: 'text', text: trimmed }],
+              },
+            ],
+          },
+          source: { type: 'chat', conversationId: activeConversationId, messageId },
+        });
+
+        trackFunnelEvent('notebook_page_saved', {
+          source: autoTriggered ? 'chat_auto' : 'chat',
+          pageId: (created as any)?.id,
+          messageId,
+        });
+        toast.success(
+          autoTriggered
+            ? t('myWork.notebook.savedFromChatToast', 'Saved from chat to Notebook')
+            : t('myWork.notebook.savedToast', 'Saved to Notebook')
+        );
+
+        if (navigateToMyWork) {
+          try {
+            const { setMyWorkIntent, setCurrentView } = useAppStore.getState() as any;
+            setMyWorkIntent?.({ tab: 'notebook' });
+            setCurrentView?.(AppView.MY_WORK);
+          } catch {
+            // ignore
+          }
+        }
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Failed to save note:', err);
+        toast.error(t('myWork.errors.createFailed', 'Failed to create'));
+      }
+    },
+    [activeConversationId, i18n.language, t]
+  );
 
   const {
     startStream,
@@ -408,10 +641,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         language: (a as any).language,
       }));
 
+      let savedAiMessageId: string | null = null;
       // Save AI response to conversation store
       if (activeConversationId) {
         try {
-          await addMessageToConversation({
+          const saved = await addMessageToConversation({
             conversationId: activeConversationId,
             role: 'ai',
             content: safeText,
@@ -437,6 +671,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 : {}),
             },
           });
+          savedAiMessageId = String((saved as any)?.id || '') || null;
         } catch (err) {
           console.error('[UnifiedChatPanel] Failed to save AI message:', err);
         }
@@ -476,6 +711,39 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           speak(remaining).catch((err) => console.warn('[TTS] speak error:', err));
         }
         spokenCharsRef.current = 0;
+      }
+
+      // Chat intent -> auto save AI output to My Work (Idea / Notebook)
+      const pendingSave = pendingChatSaveIntentRef.current;
+      pendingChatSaveIntentRef.current = null;
+      if (pendingSave && !isLikelyAiFailureText(safeText)) {
+        const aiMessageId = savedAiMessageId || `ai-auto-${Date.now()}`;
+        if (pendingSave.target === 'idea') {
+          await saveMessageAsIdea(aiMessageId, safeText, {
+            navigateToMyWork: false,
+            autoTriggered: true,
+          });
+        } else if (pendingSave.target === 'note') {
+          await saveMessageAsNote(aiMessageId, safeText, {
+            navigateToMyWork: false,
+            autoTriggered: true,
+          });
+        }
+      } else if (pendingSave && isLikelyAiFailureText(safeText)) {
+        // Fallback: when AI stream fails/returns empty, still persist user intent content.
+        const fallbackBody = pendingSave.originalUserMessage || '';
+        const aiMessageId = savedAiMessageId || `ai-auto-fallback-${Date.now()}`;
+        if (pendingSave.target === 'idea') {
+          await saveMessageAsIdea(aiMessageId, fallbackBody, {
+            navigateToMyWork: false,
+            autoTriggered: true,
+          });
+        } else if (pendingSave.target === 'note') {
+          await saveMessageAsNote(aiMessageId, fallbackBody, {
+            navigateToMyWork: false,
+            autoTriggered: true,
+          });
+        }
       }
 
       // Agent Audit Layer: run post-DT review on the CLOSED report
@@ -614,6 +882,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       setThinkingSteps([]);
     },
     onStreamError: async (err) => {
+      const pendingSave = pendingChatSaveIntentRef.current;
+      pendingChatSaveIntentRef.current = null;
       if ((err as any)?.code === 'DEEP_THINKING_CONFIRM_REQUIRED') {
         // Flow-control error: do not persist as a chat message.
         setThinkingSteps([]);
@@ -651,6 +921,23 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           content: friendly,
           timestamp: new Date(),
         });
+      }
+
+      // Fallback save on hard stream error.
+      if (pendingSave) {
+        const fallbackBody = pendingSave.originalUserMessage || '';
+        const fallbackMessageId = `ai-error-fallback-${Date.now()}`;
+        if (pendingSave.target === 'idea') {
+          await saveMessageAsIdea(fallbackMessageId, fallbackBody, {
+            navigateToMyWork: false,
+            autoTriggered: true,
+          });
+        } else if (pendingSave.target === 'note') {
+          await saveMessageAsNote(fallbackMessageId, fallbackBody, {
+            navigateToMyWork: false,
+            autoTriggered: true,
+          });
+        }
       }
       setThinkingSteps([]);
     },
@@ -784,6 +1071,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const handleSendMessage = useCallback(
     async (content: string, attachments?: any[]) => {
       if (!content.trim() || isDisabled) return;
+      const saveIntent = parseChatSaveIntent(content);
+      const effectivePrompt = saveIntent?.cleanPrompt || content;
+      pendingChatSaveIntentRef.current = null;
 
       // Demo session enforcement (time + AI interactions quota)
       if (isDemo) {
@@ -1019,7 +1309,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         parts: [{ text: m.content }],
       }));
 
-      const normalized = String(content || '')
+      const normalized = String(effectivePrompt || '')
         .trim()
         .toLowerCase();
       const forceDepthTriggers = [
@@ -1051,8 +1341,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           .reverse()
           .find((m: any) => m?.metadata?.deepThinking?.kind === 'confirm') as any;
 
+        pendingChatSaveIntentRef.current = saveIntent
+          ? { target: saveIntent.target, originalUserMessage: content }
+          : null;
         await startStream(
-          content,
+          effectivePrompt,
           history,
           systemPrompt,
           {
@@ -1077,7 +1370,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         setDtConfirmBusy(true);
         try {
           const confirmRes = await Api.chatConfirm(
-            content,
+            effectivePrompt,
             history,
             systemPrompt,
             context,
@@ -1150,7 +1443,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               content: md,
               messageType: 'text',
               metadata: {
-                deepThinking: { kind: 'confirm', originalMessage: content },
+                deepThinking: { kind: 'confirm', originalMessage: effectivePrompt },
                 deepThinkingConfirm: c,
                 agentAuditSuggested: suggestedAgentsSet,
               } as any,
@@ -1163,7 +1456,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               content: md,
               timestamp: new Date(),
               metadata: {
-                deepThinking: { kind: 'confirm', originalMessage: content },
+                deepThinking: { kind: 'confirm', originalMessage: effectivePrompt },
                 deepThinkingConfirm: c,
                 agentAuditSuggested: suggestedAgentsSet,
               },
@@ -1173,8 +1466,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           setDtPendingConfirm({
             messageId: confirmMessageId,
             conversationId: conversationId || null,
-            originalMessage: content,
-            editedMessage: content,
+            originalMessage: effectivePrompt,
+            editedMessage: effectivePrompt,
             confirm: c,
             context,
             attachments,
@@ -1212,7 +1505,18 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       });
 
       // Start streaming (standard mode)
-      await startStream(content, history, systemPrompt, context, focusMode, roleName, chatLanguage);
+      pendingChatSaveIntentRef.current = saveIntent
+        ? { target: saveIntent.target, originalUserMessage: content }
+        : null;
+      await startStream(
+        effectivePrompt,
+        history,
+        systemPrompt,
+        context,
+        focusMode,
+        roleName,
+        chatLanguage
+      );
 
       // Callback
       onMessageSent?.(content);
@@ -1731,99 +2035,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // T009: Save message output as My Idea (private)
   const handleSaveAsIdea = useCallback(
     async (messageId: string, content: string) => {
-      const trimmed = String(content || '').trim();
-      if (!trimmed) return;
-
-      const firstLine =
-        trimmed
-          .split('\n')
-          .map((l) => l.replace(/^#+\s*/, '').trim())
-          .find((l) => !!l) || '';
-      const title = firstLine.slice(0, 120) || (i18n.language === 'pl' ? 'Pomysł' : 'Idea');
-
-      try {
-        const created = await Api.createMyIdea({
-          title,
-          body: trimmed,
-          tags: [],
-          sourceType: 'chat',
-          sourceConversationId: activeConversationId,
-          sourceMessageId: messageId,
-        });
-
-        trackFunnelEvent('my_idea_saved', { source: 'chat', ideaId: created?.id, messageId });
-        toast.success(t('myWork.ideas.savedToast', 'Saved to My Ideas'));
-
-        // Deep link into My Work → Ideas and open the saved idea
-        try {
-          const { setMyWorkIntent, setCurrentView } = useAppStore.getState() as any;
-          setMyWorkIntent?.({
-            tab: 'ideas',
-            open: { type: 'idea', id: created?.id, name: created?.title || title, data: created },
-          });
-          setCurrentView?.(AppView.MY_WORK);
-        } catch {
-          // ignore
-        }
-      } catch (err) {
-        console.error('[UnifiedChatPanel] Failed to save idea:', err);
-        toast.error(t('myWork.errors.createFailed', 'Failed to create idea'));
-      }
+      await saveMessageAsIdea(messageId, content, { navigateToMyWork: true, autoTriggered: false });
     },
-    [activeConversationId, i18n.language, t]
+    [saveMessageAsIdea]
   );
 
   // T011: Save message output as Notebook page (private)
   const handleSaveAsNote = useCallback(
     async (messageId: string, content: string) => {
-      const trimmed = String(content || '').trim();
-      if (!trimmed) return;
-
-      const firstLine =
-        trimmed
-          .split('\n')
-          .map((l) => l.replace(/^#+\s*/, '').trim())
-          .find((l) => !!l) || '';
-      const title = firstLine.slice(0, 120) || (i18n.language === 'pl' ? 'Notatka' : 'Note');
-
-      try {
-        const created = await Api.post('/my-work/notebook/pages', {
-          title,
-          visibility: 'private',
-          tags: [],
-          contentText: trimmed,
-          contentJson: {
-            type: 'doc',
-            content: [
-              {
-                type: 'paragraph',
-                content: [{ type: 'text', text: trimmed }],
-              },
-            ],
-          },
-          source: { type: 'chat', conversationId: activeConversationId, messageId },
-        });
-
-        trackFunnelEvent('notebook_page_saved', {
-          source: 'chat',
-          pageId: (created as any)?.id,
-          messageId,
-        });
-        toast.success(t('myWork.notebook.savedToast', 'Saved to Notebook'));
-
-        try {
-          const { setMyWorkIntent, setCurrentView } = useAppStore.getState() as any;
-          setMyWorkIntent?.({ tab: 'notebook' });
-          setCurrentView?.(AppView.MY_WORK);
-        } catch {
-          // ignore
-        }
-      } catch (err) {
-        console.error('[UnifiedChatPanel] Failed to save note:', err);
-        toast.error(t('myWork.errors.createFailed', 'Failed to create'));
-      }
+      await saveMessageAsNote(messageId, content, { navigateToMyWork: true, autoTriggered: false });
     },
-    [activeConversationId, i18n.language, t]
+    [saveMessageAsNote]
   );
 
   // Deep Thinking: Enable DT mode from hint banner
@@ -2171,6 +2393,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       exportArtifact={exportArtifact}
       handleAgentAuditAccept={handleAgentAuditAccept}
       onOptionSelect={onOptionSelect}
+      isRtlChatLanguage={isRtlChatLanguage}
     />
   );
 
@@ -2180,7 +2403,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   return (
     <div
-      className={`flex flex-col h-full bg-slate-50 dark:bg-navy-950 ${className}`}
+      className={`flex flex-col h-full bg-slate-50 dark:bg-navy-950 ${
+        isPrivateMode
+          ? 'ring-1 ring-violet-200/70 dark:ring-violet-800/45'
+          : 'ring-1 ring-transparent'
+      } ${className}`}
       style={{ maxHeight: maxHeight || '100%' }}
     >
       {/* Skip links for keyboard users */}
@@ -2246,43 +2473,64 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           </button>
 
           {/* T012: Important signals (chat-active) */}
-          <button
-            onClick={() => setSignalsOpen(true)}
-            data-testid="chat-signals-button"
-            className="p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
-            title={t('aiChat.signals.title', 'Important signals')}
-            aria-label={t('aiChat.signals.title', 'Important signals')}
-          >
-            <Sparkles size={18} strokeWidth={1.75} />
-          </button>
+          {signalsEnabled && (
+            <button
+              onClick={() => setSignalsOpen(true)}
+              data-testid="chat-signals-button"
+              className="p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
+              title={t('aiChat.signals.title', 'Important signals')}
+              aria-label={t('aiChat.signals.title', 'Important signals')}
+            >
+              <Sparkles size={18} strokeWidth={1.75} />
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-0.5">
+          {isPrivateMode && (
+            <div
+              className="mr-1 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:border-violet-800/70 dark:bg-violet-900/25 dark:text-violet-300"
+              title={t(
+                'aiChat.menu.modes.privateMode.desc',
+                'Disable memory injection and personalization for this chat'
+              )}
+              aria-label={t('aiChat.menu.modes.privateMode.label', 'Private mode')}
+            >
+              <Lock size={11} strokeWidth={2} />
+              <span>{t('aiChat.menu.modes.privateMode.label', 'Private mode')}</span>
+            </div>
+          )}
           {ttsSupported && (
             <button
               onClick={() => {
-                if (autoReadEnabled && voiceState.isSpeaking) {
+                // While speaking, this button must always mute/turn OFF.
+                if (voiceState.isSpeaking) {
                   stopSpeaking();
                 }
-                const nextState = !autoReadEnabled;
+                const nextState = voiceState.isSpeaking ? false : !autoReadEnabled;
                 setAutoReadEnabled(nextState);
                 updateVoiceSettings({ autoSpeakResponses: nextState });
+                setAIConfig({ textToSpeech: nextState } as any);
               }}
               data-testid="chat-autoread-button"
               className={`p-1.5 rounded-lg transition-colors ${
                 autoReadEnabled
-                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-900/20'
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/40 dark:bg-primary-900/15'
                   : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
               }`}
               title={
-                autoReadEnabled
-                  ? t('aiChat.autoReadOff', 'Turn off auto-read')
-                  : t('aiChat.autoReadOn', 'Turn on auto-read')
+                voiceState.isSpeaking
+                  ? t('aiChat.muteNow', 'Mute now')
+                  : autoReadEnabled
+                    ? t('aiChat.autoReadOff', 'Turn off auto-read')
+                    : t('aiChat.autoReadOn', 'Turn on auto-read')
               }
               aria-label={
-                autoReadEnabled
-                  ? t('aiChat.autoReadOff', 'Turn off auto-read')
-                  : t('aiChat.autoReadOn', 'Turn on auto-read')
+                voiceState.isSpeaking
+                  ? t('aiChat.muteNow', 'Mute now')
+                  : autoReadEnabled
+                    ? t('aiChat.autoReadOff', 'Turn off auto-read')
+                    : t('aiChat.autoReadOn', 'Turn on auto-read')
               }
             >
               {autoReadEnabled ? (
@@ -2430,11 +2678,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       />
 
       {/* Important signals panel (T012) */}
-      <ChatSignalsPanel
-        open={signalsOpen}
-        onClose={() => setSignalsOpen(false)}
-        projectId={workspaceContext?.projectId || null}
-      />
+      {signalsEnabled && (
+        <ChatSignalsPanel
+          open={signalsOpen}
+          onClose={() => setSignalsOpen(false)}
+          projectId={workspaceContext?.projectId || null}
+        />
+      )}
     </div>
   );
 };
