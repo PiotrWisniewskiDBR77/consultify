@@ -86,6 +86,9 @@ const TasksCalendarView = React.lazy(() =>
 const DecisionsKanbanBoard = React.lazy(() =>
   import('./DecisionsKanbanBoard').then((m) => ({ default: m.DecisionsKanbanBoard }))
 );
+const MorningBriefCard = React.lazy(() =>
+  import('./MorningBriefCard').then((m) => ({ default: m.MorningBriefCard }))
+);
 
 // Types
 type ModuleTab =
@@ -353,6 +356,47 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // Loading state
   const [isLoading, setIsLoading] = useState(false);
 
+  // M1: Chat context enrichment — aggregated workload summary
+  const [contextSummary, setContextSummary] = useState<Record<string, any> | null>(null);
+
+  useEffect(() => {
+    const fetchContext = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/my-work/context-summary', {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (res.ok) setContextSummary(await res.json());
+
+        // L7: Restore previous session context for continuity
+        try {
+          const sessionRes = await fetch('/api/my-work/session-context', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          if (sessionRes.ok) {
+            const { context } = await sessionRes.json();
+            if (context?.lastViewedItems?.length) {
+              // Could append to system prompt: "In your last session, you worked on..."
+            }
+          }
+        } catch {
+          /* ignore */
+        }
+      } catch {
+        /* ignore — partial enrichment is fine */
+      }
+    };
+    fetchContext();
+    const interval = setInterval(fetchContext, 300_000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Document handlers (Dynamic Tabs) - defined early to avoid hoisting issues
   const handleOpenDocument = useCallback((doc: OpenDocument) => {
     setOpenDocuments((prev) => {
@@ -363,12 +407,27 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   }, []);
 
   // Robust: whenever user switches main tab, always show list view (close any open document)
-  // Also update per-tab chat context (Q1/Q3)
+  // Also update per-tab chat context (Q1/Q3) enriched with M1 workload summary
   useEffect(() => {
     setActiveDocumentId(null);
-    setChatSystemPrompt(TAB_SYSTEM_PROMPTS[activeTab] || null);
+    let prompt = TAB_SYSTEM_PROMPTS[activeTab] || '';
+    if (contextSummary) {
+      const ctx: string[] = [];
+      if (contextSummary.totalOpenTasks) ctx.push(`${contextSummary.totalOpenTasks} open tasks`);
+      if (contextSummary.overdueCount) ctx.push(`${contextSummary.overdueCount} overdue`);
+      if (contextSummary.pendingDecisionCount)
+        ctx.push(`${contextSummary.pendingDecisionCount} pending decisions`);
+      if (contextSummary.inboxUnprocessed)
+        ctx.push(`${contextSummary.inboxUnprocessed} unread inbox items`);
+      if (contextSummary.focusTodayCount)
+        ctx.push(`${contextSummary.focusTodayCount} items in today's focus`);
+      if (ctx.length) {
+        prompt += `\n\nUser's current workload: ${ctx.join(', ')}.`;
+      }
+    }
+    setChatSystemPrompt(prompt || null);
     setChatQuickPrompts(TAB_QUICK_PROMPTS[activeTab] || null);
-  }, [activeTab, setChatSystemPrompt, setChatQuickPrompts]);
+  }, [activeTab, contextSummary, setChatSystemPrompt, setChatQuickPrompts]);
 
   // Deep link support: header dropdown → open inside My Work
   useEffect(() => {
@@ -425,6 +484,32 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     window.addEventListener('mywork-review-next-decisions', handler as any);
     return () => window.removeEventListener('mywork-review-next-decisions', handler as any);
   }, []);
+
+  // L7: Save session context for cross-session continuity
+  useEffect(() => {
+    const saveContext = () => {
+      const lastViewedItems = openDocuments.map((d) => ({
+        type: d.type,
+        id: d.id,
+        name: d.name,
+      }));
+      try {
+        const token = localStorage.getItem('token');
+        fetch('/api/my-work/session-context', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ lastViewedItems, activeTab }),
+        }).catch(() => {});
+      } catch {
+        /* ignore */
+      }
+    };
+    const timer = setTimeout(saveContext, 5000);
+    return () => clearTimeout(timer);
+  }, [activeTab, openDocuments]);
 
   // F1: EventBus — refresh tabs when cross-tab events fire
   useEffect(() => {
@@ -1091,9 +1176,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         return (
           <React.Suspense fallback={lazyFallback}>
             <ExecutiveDashboard
-              onNavigate={(section) => {
-                if (section === 'tasks') setActiveTab('tasks');
-                if (section === 'decisions') setActiveTab('decisions');
+              onNavigate={(section, options) => {
+                if (section === 'tasks') {
+                  setActiveTab('tasks');
+                  if (options?.filter) setTaskFilter(options.filter as TaskFilter);
+                }
+                if (section === 'decisions') {
+                  setActiveTab('decisions');
+                  if (options?.filter === 'pending') setDecisionFilter('my');
+                }
                 if (section === 'focus') setActiveTab('focus');
                 if (section === 'inbox') setActiveTab('inbox');
               }}
@@ -1641,6 +1732,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           </div>
         )}
       </div>
+
+      {/* Morning Brief Card */}
+      <React.Suspense fallback={null}>
+        <MorningBriefCard />
+      </React.Suspense>
 
       {/* Dynamic Tabs Row */}
       {renderDynamicTabs()}

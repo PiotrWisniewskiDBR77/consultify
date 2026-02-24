@@ -1075,6 +1075,50 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const handleSendMessage = useCallback(
     async (content: string, attachments?: any[]) => {
       if (!content.trim() || isDisabled) return;
+
+      // M2: Chat commands for MyWork actions
+      const text = content.trim();
+      if (text.startsWith('/task ') || text.startsWith('/decision ')) {
+        const isTask = text.startsWith('/task ');
+        const title = text.replace(/^\/(task|decision)\s+/, '').trim();
+        if (title) {
+          try {
+            const token = localStorage.getItem('token');
+            const resp = await fetch('/api/my-work/chat-actions', {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: isTask ? 'create_task' : 'create_decision',
+                payload: { title },
+              }),
+            });
+            if (resp.ok) {
+              const confirmMsg: ChatMessage = {
+                id: `action-${Date.now()}`,
+                role: 'ai',
+                content: isTask
+                  ? `Task created: "${title}"`
+                  : `Decision created: "${title}"`,
+                timestamp: new Date(),
+              };
+              addChatMessage(confirmMsg);
+              if (activeConversationId) {
+                try {
+                  await addMessageToConversation({
+                    conversationId: activeConversationId,
+                    role: 'ai',
+                    content: confirmMsg.content,
+                    messageType: 'text',
+                  });
+                } catch { /* best-effort persist */ }
+              }
+              onMessageSent?.(content);
+              return;
+            }
+          } catch { /* fall through to normal send */ }
+        }
+      }
+
       const saveIntent = parseChatSaveIntent(content);
       const effectivePrompt = saveIntent?.cleanPrompt || content;
       pendingChatSaveIntentRef.current = null;

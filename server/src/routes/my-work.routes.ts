@@ -2080,6 +2080,88 @@ const snoozePresetToUntil = (preset: string): string => {
   return new Date(now + 24 * 60 * 60 * 1000).toISOString();
 };
 
+/**
+ * M1 — Chat Context Enrichment
+ * Aggregates the user's current MyWork state for AI system prompt enrichment.
+ */
+router.get(
+  '/context-summary',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const summary: Record<string, any> = {};
+
+    try {
+      const taskCols = await getTableColumns('tasks');
+      if (taskCols.has('assignee_id')) {
+        const taskStats = await queryHelpers.queryAll<{ status: string; cnt: number }>(
+          `SELECT status, COUNT(*) as cnt FROM tasks 
+           WHERE assignee_id = ? AND organization_id = ? AND status != 'done'
+           GROUP BY status`,
+          [userId, orgId]
+        );
+        summary.tasksByStatus = {};
+        let totalOpen = 0;
+        for (const row of taskStats || []) {
+          summary.tasksByStatus[row.status] = row.cnt;
+          totalOpen += row.cnt;
+        }
+        summary.totalOpenTasks = totalOpen;
+
+        const overdue = await queryHelpers.queryAll<{ id: string; title: string }>(
+          `SELECT id, title FROM tasks 
+           WHERE assignee_id = ? AND organization_id = ? AND status != 'done' 
+           AND due_date IS NOT NULL AND due_date < datetime('now')
+           ORDER BY due_date ASC LIMIT 3`,
+          [userId, orgId]
+        );
+        summary.overdueTasks = overdue || [];
+        summary.overdueCount = summary.overdueTasks.length;
+      }
+
+      const decCols = await getTableColumns('decisions');
+      if (decCols.has('decision_maker_id')) {
+        const pendingDecs = await queryHelpers.queryAll<{ id: string; title: string; due_date: string }>(
+          `SELECT id, title, due_date FROM decisions 
+           WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? AND status = 'pending'
+           ORDER BY due_date ASC NULLS LAST LIMIT 3`,
+          [userId, userId, orgId]
+        );
+        summary.pendingDecisions = pendingDecs || [];
+        summary.pendingDecisionCount = summary.pendingDecisions.length;
+      }
+
+      if (await requireTables(res, ['my_work_inbox_triage'])) {
+        const notifCols = await getTableColumns('notifications');
+        if (notifCols.size > 0) {
+          const readExpr = notifCols.has('read') ? 'COALESCE(read, 0)' : '0';
+          const unprocessed = await queryHelpers.queryOne<{ cnt: number }>(
+            `SELECT COUNT(*) as cnt FROM notifications 
+             WHERE user_id = ? AND organization_id = ? AND ${readExpr} = 0`,
+            [userId, orgId]
+          );
+          summary.inboxUnprocessed = unprocessed?.cnt || 0;
+        }
+      }
+
+      if (await requireTables(res, ['my_work_focus_state'])) {
+        const todayCount = await queryHelpers.queryOne<{ cnt: number }>(
+          `SELECT COUNT(*) as cnt FROM my_work_focus_state 
+           WHERE user_id = ? AND organization_id = ? AND focus_column = 'today'`,
+          [userId, orgId]
+        );
+        summary.focusTodayCount = todayCount?.cnt || 0;
+      }
+    } catch (err) {
+      console.error('[context-summary]', err);
+    }
+
+    res.json(summary);
+  })
+);
+
 router.get(
   '/signals',
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -2202,7 +2284,7 @@ router.get(
       if (nTs > exTs) byKey.set(aggKey, { ...n, key });
     }
 
-    const signals = Array.from(byKey.values())
+    const signals: any[] = Array.from(byKey.values())
       .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
       .slice(0, limit)
       .map((n) => ({
@@ -2217,6 +2299,62 @@ router.get(
         entityType: n.entityType || null,
         entityId: n.entityId || null,
       }));
+
+    // M6: Predictive signals — velocity-based predictions
+    try {
+      const taskCols = await getTableColumns('tasks');
+      if (taskCols.has('due_date') && taskCols.has('assignee_id')) {
+        const atRisk = await queryHelpers.queryAll<any>(
+          `SELECT id, title, due_date FROM tasks
+           WHERE assignee_id = ? AND organization_id = ?
+           AND status IN ('todo', 'blocked')
+           AND due_date IS NOT NULL AND due_date BETWEEN datetime('now') AND datetime('now', '+3 days')
+           LIMIT 3`,
+          [userId, orgId]
+        );
+        for (const task of atRisk || []) {
+          const key = `predict_overdue_${task.id}`;
+          if (!snoozedSet.has(key) && !dismissedSet.has(key)) {
+            signals.push({
+              key,
+              type: 'prediction',
+              severity: 'warning',
+              title: `At risk: ${task.title}`,
+              message: `Due ${task.due_date} but status is not in progress. Consider starting or rescheduling.`,
+              source: 'ai_prediction',
+              createdAt: new Date().toISOString(),
+            });
+          }
+        }
+
+        const decCols = await getTableColumns('decisions');
+        if (decCols.has('decision_maker_id')) {
+          const staleDecisions = await queryHelpers.queryAll<any>(
+            `SELECT id, title, created_at FROM decisions
+             WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ?
+             AND status = 'pending' AND created_at < datetime('now', '-5 days')
+             LIMIT 3`,
+            [userId, userId, orgId]
+          );
+          for (const dec of staleDecisions || []) {
+            const key = `bottleneck_decision_${dec.id}`;
+            if (!snoozedSet.has(key) && !dismissedSet.has(key)) {
+              signals.push({
+                key,
+                type: 'bottleneck',
+                severity: 'warning',
+                title: `Decision bottleneck: ${dec.title}`,
+                message: `Pending for ${Math.round((Date.now() - new Date(dec.created_at).getTime()) / 86400000)} days. May be blocking dependent work.`,
+                source: 'ai_prediction',
+                createdAt: new Date().toISOString(),
+              });
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[signals:predictions]', err);
+    }
 
     res.json({ signals, mutedTypes });
   })
@@ -2770,6 +2908,353 @@ router.delete(
     );
 
     res.status(204).send();
+  })
+);
+
+// ============================================================================
+// T009 Enhancement — My Ideas Recommendation Map (per-idea working graph)
+// ============================================================================
+
+type IdeaMapPayload = { nodes: any[]; edges: any[]; version?: number };
+
+function buildDefaultIdeaMap(idea: { id: string; title: string }, isPl: boolean): IdeaMapPayload {
+  const centerId = 'root';
+  const branchRadius = 320;
+  const branches = [
+    { key: 'problem', label: isPl ? 'Problem' : 'Problem', angle: -Math.PI / 2 },
+    { key: 'goal', label: isPl ? 'Cel / KPI' : 'Goal / KPI', angle: -Math.PI / 6 },
+    { key: 'options', label: isPl ? 'Opcje' : 'Options', angle: Math.PI / 6 },
+    { key: 'evidence', label: isPl ? 'Dowody' : 'Evidence', angle: Math.PI / 2 },
+    { key: 'risks', label: isPl ? 'Ryzyka' : 'Risks', angle: (5 * Math.PI) / 6 },
+    { key: 'experiments', label: isPl ? 'Eksperymenty' : 'Experiments', angle: (7 * Math.PI) / 6 },
+  ];
+
+  const nodes: any[] = [
+    {
+      id: centerId,
+      type: 'center',
+      position: { x: 0, y: 0 },
+      data: {
+        label: idea.title || (isPl ? 'Mój pomysł' : 'My idea'),
+        ideaId: idea.id,
+      },
+      draggable: false,
+    },
+  ];
+
+  const edges: any[] = [];
+
+  for (const b of branches) {
+    const bx = Math.cos(b.angle) * branchRadius;
+    const by = Math.sin(b.angle) * branchRadius;
+    const branchId = `branch-${b.key}`;
+    nodes.push({
+      id: branchId,
+      type: 'branch',
+      position: { x: bx - 50, y: by - 20 },
+      data: { label: b.label, branchKey: b.key, count: 0 },
+      draggable: false,
+    });
+    edges.push({
+      id: `edge-${centerId}-${branchId}`,
+      source: centerId,
+      target: branchId,
+      type: 'smoothstep',
+      animated: true,
+      style: { stroke: '#94a3b8', strokeWidth: 2.5, opacity: 0.35 },
+      data: { system: true, kind: 'frames' },
+    });
+  }
+
+  return { nodes, edges, version: 1 };
+}
+
+/**
+ * GET /api/my-work/my-ideas/:id/map
+ * Returns per-idea working map (nodes + edges). If missing, returns a default skeleton.
+ */
+router.get(
+  '/my-ideas/:id/map',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_ideas', 'my_idea_maps']))) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId || ideaId === 'all') return res.status(400).json({ error: 'Invalid idea id' });
+
+    const language = String(req.query.language || 'en').toLowerCase();
+    const isPl = language.startsWith('pl');
+
+    const idea = await queryHelpers.queryOne<any>(
+      `SELECT id, title FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!idea) return res.status(404).json({ error: 'Idea not found' });
+
+    const row = await queryHelpers.queryOne<any>(
+      `
+      SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version, updated_at as "updatedAt"
+      FROM my_idea_maps
+      WHERE idea_id = ? AND user_id = ? AND organization_id = ?
+      LIMIT 1
+    `,
+      [ideaId, userId, orgId]
+    );
+
+    if (!row) {
+      const def = buildDefaultIdeaMap({ id: ideaId, title: String(idea?.title || '') }, isPl);
+      return res.json({ map: def, isDefault: true });
+    }
+
+    let nodes: any[] = [];
+    let edges: any[] = [];
+    try { nodes = JSON.parse(String(row.nodesJson || '[]')); } catch { nodes = []; }
+    try { edges = JSON.parse(String(row.edgesJson || '[]')); } catch { edges = []; }
+
+    res.json({
+      map: { nodes, edges, version: Number(row.version || 1) },
+      isDefault: false,
+      updatedAt: row.updatedAt,
+    });
+  })
+);
+
+/**
+ * PUT /api/my-work/my-ideas/:id/map
+ * Body: { nodes: any[], edges: any[], version?: number }
+ */
+router.put(
+  '/my-ideas/:id/map',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_ideas', 'my_idea_maps']))) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId || ideaId === 'all') return res.status(400).json({ error: 'Invalid idea id' });
+
+    const nodes = Array.isArray(req.body?.nodes) ? req.body.nodes : null;
+    const edges = Array.isArray(req.body?.edges) ? req.body.edges : null;
+    if (!nodes || !edges) return res.status(400).json({ error: 'nodes and edges are required arrays' });
+
+    const ideaOk = await queryHelpers.queryOne<any>(
+      `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!ideaOk) return res.status(404).json({ error: 'Idea not found' });
+
+    const existing = await queryHelpers.queryOne<any>(
+      `SELECT id, version FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+
+    const now = new Date().toISOString();
+    const nextVersion = existing ? Number(existing.version || 1) + 1 : 1;
+
+    if (!existing) {
+      const id = uuidv4();
+      await queryHelpers.queryRun(
+        `INSERT INTO my_idea_maps (id, idea_id, user_id, organization_id, nodes_json, edges_json, version, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id, ideaId, userId, orgId, JSON.stringify(nodes), JSON.stringify(edges), nextVersion, now, now]
+      );
+    } else {
+      await queryHelpers.queryRun(
+        `UPDATE my_idea_maps
+         SET nodes_json = ?, edges_json = ?, version = ?, updated_at = ?
+         WHERE idea_id = ? AND user_id = ? AND organization_id = ?`,
+        [JSON.stringify(nodes), JSON.stringify(edges), nextVersion, now, ideaId, userId, orgId]
+      );
+    }
+
+    res.json({ success: true, version: nextVersion });
+  })
+);
+
+/**
+ * POST /api/my-work/my-ideas/:id/map/expand
+ * AI-assisted expansion: returns nodes+edges to be appended client-side.
+ * Body: { anchorNodeId?: string, branchKey?: string, count?: number, language?: string }
+ */
+router.post(
+  '/my-ideas/:id/map/expand',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_ideas', 'my_idea_maps']))) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId || ideaId === 'all') return res.status(400).json({ error: 'Invalid idea id' });
+
+    const countRaw = Number(req.body?.count);
+    const count = Number.isFinite(countRaw) && countRaw > 0 ? Math.min(10, Math.max(1, countRaw)) : 5;
+    const branchKey = String(req.body?.branchKey || 'options').trim() || 'options';
+    const language = String(req.body?.language || 'en').toLowerCase();
+    const isPl = language.startsWith('pl');
+
+    const idea = await queryHelpers.queryOne<any>(
+      `SELECT id, title, body, seed_text as "seedText", ai_expansion as "aiExpansion" FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!idea) return res.status(404).json({ error: 'Idea not found' });
+
+    // Load current map (or default skeleton)
+    const mapRow = await queryHelpers.queryOne<any>(
+      `SELECT nodes_json as "nodesJson", edges_json as "edgesJson" FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    let nodes: any[] = [];
+    let edges: any[] = [];
+    if (mapRow) {
+      try { nodes = JSON.parse(String(mapRow.nodesJson || '[]')); } catch { nodes = []; }
+      try { edges = JSON.parse(String(mapRow.edgesJson || '[]')); } catch { edges = []; }
+    } else {
+      const def = buildDefaultIdeaMap({ id: ideaId, title: String(idea?.title || '') }, isPl);
+      nodes = def.nodes;
+      edges = def.edges;
+    }
+
+    const anchorNodeId = String(req.body?.anchorNodeId || 'root').trim() || 'root';
+    const anchor = nodes.find((n) => String(n?.id) === anchorNodeId) || nodes.find((n) => String(n?.id) === 'root');
+    const branchNode =
+      nodes.find((n) => String(n?.id) === `branch-${branchKey}`) ||
+      nodes.find((n) => String(n?.type) === 'branch' && String(n?.data?.branchKey) === branchKey);
+
+    const existingLabels = nodes
+      .map((n) => String(n?.data?.label || '').trim())
+      .filter(Boolean)
+      .slice(0, 200);
+
+    const seed = String(idea?.seedText || idea?.body || idea?.title || '').trim();
+    const expansion = String(idea?.aiExpansion || '').trim();
+
+    // Ask LLM for new node titles (JSON only)
+    let suggestions: { title: string; nodeType?: string }[] = [];
+    try {
+      const { llmService } = await import('../services/ai/llmService.js');
+      const modelRouter = (await import('../services/ai/modelRouter.js')).default;
+      const modelCfg = await modelRouter.select({
+        capability: 'chat',
+        organizationId: orgId,
+        options: { tier: 'STANDARD' },
+      });
+
+      const nodeTypeHint =
+        branchKey === 'problem'
+          ? 'problem'
+          : branchKey === 'goal'
+            ? 'goal'
+            : branchKey === 'evidence'
+              ? 'evidence'
+              : branchKey === 'risks'
+                ? 'risk'
+                : branchKey === 'experiments'
+                  ? 'experiment'
+                  : 'option';
+
+      const prompt = isPl
+        ? `Użytkownik pracuje na mapie rekomendacji biznesowych dla pomysłu/wyzwania.
+
+Kontekst pomysłu:
+${seed ? `"${seed}"` : '(brak)'}
+
+Rozwinięcie (jeśli jest):
+${expansion ? expansion.slice(0, 1200) : '(brak)'}
+
+Istniejące elementy mapy (unikaj duplikatów): ${existingLabels.slice(0, 80).join(' | ')}
+
+Wygeneruj ${count} nowych propozycji do gałęzi: "${branchKey}".
+Każda propozycja ma być krótka, konkretna, biznesowa.
+
+Zwróć TYLKO poprawny JSON array:
+[{"title":"...","nodeType":"${nodeTypeHint}"}]
+Bez markdown, bez komentarzy.`
+        : `The user is building a business recommendation map for an idea/challenge.
+
+Idea context:
+${seed ? `"${seed}"` : '(none)'}
+
+Expansion (if available):
+${expansion ? expansion.slice(0, 1200) : '(none)'}
+
+Existing map items (avoid duplicates): ${existingLabels.slice(0, 80).join(' | ')}
+
+Generate ${count} new items for branch: "${branchKey}".
+Keep each item short, concrete, business-oriented.
+
+Return ONLY valid JSON array:
+[{"title":"...","nodeType":"${nodeTypeHint}"}]
+No markdown, no extra text.`;
+
+      const r = await llmService.callText({
+        type: 'text',
+        modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
+        systemPrompt: isPl
+          ? 'Jesteś konsultantem biznesowym. Odpowiadasz wyłącznie poprawnym JSON.'
+          : 'You are a business consultant. You respond only with valid JSON.',
+        messages: [{ role: 'user', content: prompt }],
+      });
+      const raw = String((r as any)?.content || '[]');
+      const jsonMatch = raw.match(/\[[\s\S]*\]/);
+      const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : '[]');
+      if (Array.isArray(parsed)) {
+        suggestions = parsed
+          .map((x: any) => ({
+            title: String(x?.title || '').trim(),
+            nodeType: x?.nodeType ? String(x.nodeType).trim() : undefined,
+          }))
+          .filter((x) => x.title);
+      }
+    } catch (err: any) {
+      logger.warn('[IdeaMapExpand] LLM expand failed:', err?.message);
+      suggestions = [];
+    }
+
+    if (!suggestions.length) {
+      return res.json({ added: { nodes: [], edges: [] }, reason: 'no_suggestions' });
+    }
+
+    const basePos = branchNode?.position || anchor?.position || { x: 0, y: 0 };
+    const dx = branchNode ? 220 : 280;
+    const startX = Number(basePos.x || 0) + dx;
+    const startY = Number(basePos.y || 0) - Math.max(0, (suggestions.length - 1) * 35);
+
+    const addedNodes: any[] = [];
+    const addedEdges: any[] = [];
+
+    const connectFrom = branchNode ? String(branchNode.id) : anchor ? String(anchor.id) : 'root';
+
+    for (let i = 0; i < Math.min(suggestions.length, count); i++) {
+      const s = suggestions[i];
+      const nodeId = `rec-${uuidv4()}`;
+      addedNodes.push({
+        id: nodeId,
+        type: 'idea',
+        position: { x: startX, y: startY + i * 70 },
+        data: {
+          label: s.title,
+          branchKey,
+          sourceType: 'ai_suggestion',
+          nodeType: s.nodeType || null,
+          ideaId,
+        },
+      });
+      addedEdges.push({
+        id: `edge-${uuidv4()}`,
+        source: connectFrom,
+        target: nodeId,
+        type: 'smoothstep',
+        animated: true,
+        style: { stroke: '#8b5cf6', strokeWidth: 2, opacity: 0.75 },
+        data: { userCreated: true, kind: 'ai_expansion' },
+      });
+    }
+
+    res.json({ added: { nodes: addedNodes, edges: addedEdges } });
   })
 );
 
@@ -4036,6 +4521,987 @@ router.post(
       emit('error', { message: err?.message || 'Extraction failed' });
       res.end();
     }
+  })
+);
+
+/**
+ * POST /api/my-work/notebook/pages/:id/classify
+ * Heuristic classification — suggests conversion target for mature notes.
+ */
+router.post(
+  '/notebook/pages/:id/classify',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    const pageId = String(req.params.id || '').trim();
+
+    if (!(await requireTables(res, ['notebook_pages']))) return;
+
+    const page = await queryHelpers.queryOne<any>(
+      `SELECT id, title, content_text, maturity
+       FROM notebook_pages
+       WHERE id = ? AND owner_user_id = ? AND organization_id = ? LIMIT 1`,
+      [pageId, userId, orgId]
+    );
+    if (!page) return res.status(404).json({ error: 'Page not found' });
+
+    const text = String(page.content_text || page.title || '').toLowerCase();
+
+    let suggestedType = 'none';
+    let reason = '';
+
+    const decisionKeywords = ['decide', 'decision', 'approve', 'reject', 'choose', 'option', 'alternative', 'decyzja', 'zdecydować', 'opcja'];
+    const taskKeywords = ['todo', 'action', 'implement', 'fix', 'create', 'build', 'do', 'task', 'step', 'zadanie', 'zrobić', 'naprawić'];
+    const ideaKeywords = ['idea', 'concept', 'what if', 'imagine', 'brainstorm', 'explore', 'pomysł', 'koncept'];
+
+    const decisionScore = decisionKeywords.filter(k => text.includes(k)).length;
+    const taskScore = taskKeywords.filter(k => text.includes(k)).length;
+    const ideaScore = ideaKeywords.filter(k => text.includes(k)).length;
+
+    const actionItemCount = (text.match(/[-•]\s*(create|fix|update|send|review|check|build|implement|add|remove)/gi) || []).length;
+    if (actionItemCount >= 2) {
+      suggestedType = 'tasks';
+      reason = `Found ${actionItemCount} action items`;
+    } else if (decisionScore > taskScore && decisionScore > ideaScore && decisionScore >= 2) {
+      suggestedType = 'decision';
+      reason = 'Contains decision-related language';
+    } else if (taskScore > decisionScore && taskScore > ideaScore && taskScore >= 2) {
+      suggestedType = 'task';
+      reason = 'Contains task-oriented language';
+    } else if (ideaScore >= 2) {
+      suggestedType = 'idea';
+      reason = 'Contains exploratory/idea language';
+    }
+
+    res.json({ pageId, suggestedType, reason, maturity: page.maturity });
+  })
+);
+
+// ─── Morning Brief ──────────────────────────────────────────────────────────
+router.get(
+  '/morning-brief',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const brief: Record<string, any> = { generatedAt: new Date().toISOString() };
+
+    try {
+      const taskCols = await getTableColumns('tasks');
+      if (taskCols.has('assignee_id')) {
+        const newTasks = await queryHelpers.queryAll<any>(
+          `SELECT id, title, priority FROM tasks
+           WHERE assignee_id = ? AND organization_id = ?
+           AND created_at > datetime('now', '-1 day') AND status != 'done'
+           ORDER BY priority DESC LIMIT 5`,
+          [userId, orgId]
+        );
+        brief.newTasks = newTasks || [];
+      }
+
+      if (taskCols.has('due_date')) {
+        const overdue = await queryHelpers.queryAll<any>(
+          `SELECT id, title, due_date FROM tasks
+           WHERE assignee_id = ? AND organization_id = ? AND status != 'done'
+           AND due_date IS NOT NULL AND due_date < datetime('now')
+           ORDER BY due_date ASC LIMIT 5`,
+          [userId, orgId]
+        );
+        brief.overdueTasks = overdue || [];
+      }
+
+      if (taskCols.has('due_date')) {
+        const dueSoon = await queryHelpers.queryAll<any>(
+          `SELECT id, title, due_date FROM tasks
+           WHERE assignee_id = ? AND organization_id = ? AND status != 'done'
+           AND due_date IS NOT NULL
+           AND due_date BETWEEN datetime('now') AND datetime('now', '+2 days')
+           ORDER BY due_date ASC LIMIT 5`,
+          [userId, orgId]
+        );
+        brief.dueSoon = dueSoon || [];
+      }
+
+      const decCols = await getTableColumns('decisions');
+      if (decCols.has('decision_maker_id')) {
+        const pending = await queryHelpers.queryAll<any>(
+          `SELECT id, title, due_date FROM decisions
+           WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? AND status = 'pending'
+           ORDER BY due_date ASC NULLS LAST LIMIT 5`,
+          [userId, userId, orgId]
+        );
+        brief.pendingDecisions = pending || [];
+      }
+
+      const priorities: string[] = [];
+      if ((brief.overdueTasks || []).length > 0) priorities.push(`Address ${brief.overdueTasks.length} overdue task(s) first`);
+      if ((brief.pendingDecisions || []).length > 0) priorities.push(`Review ${brief.pendingDecisions.length} pending decision(s)`);
+      if ((brief.dueSoon || []).length > 0) priorities.push(`${brief.dueSoon.length} task(s) due soon — plan time`);
+      brief.recommendation = priorities.join('. ') || 'All clear — focus on deep work today!';
+    } catch (err) {
+      console.error('[morning-brief]', err);
+    }
+
+    res.json(brief);
+  })
+);
+
+// ---------------------------------------------------------------------------
+// M2: Chat -> Action Bridge
+// ---------------------------------------------------------------------------
+
+router.post(
+  '/chat-actions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const action = String(req.body?.action || '').trim();
+    const payload = req.body?.payload || {};
+
+    if (!action) {
+      return res.status(400).json({ error: 'action is required' });
+    }
+
+    try {
+      switch (action) {
+        case 'create_task': {
+          const id = uuidv4();
+          const cols = await getTableColumns('tasks');
+          const insertCols: string[] = ['id'];
+          const insertVals: string[] = ['?'];
+          const insertParams: any[] = [id];
+          const add = (col: string, val: any) => {
+            if (!cols.has(col)) return;
+            insertCols.push(col);
+            insertVals.push('?');
+            insertParams.push(val);
+          };
+          add('organization_id', orgId);
+          add('title', String(payload.title || 'New Task').slice(0, 500));
+          add('description', payload.description || null);
+          add('status', payload.status || 'todo');
+          add('priority', payload.priority || 'medium');
+          add('assignee_id', userId);
+          add('reporter_id', userId);
+          if (payload.dueDate) add('due_date', payload.dueDate);
+          add('tags', JSON.stringify(payload.tags || []));
+          add('task_type', 'personal');
+          await queryHelpers.queryRun(
+            `INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+            insertParams
+          );
+          return res.status(201).json({ success: true, action, id, title: payload.title });
+        }
+        case 'update_task_status': {
+          const { taskId, status } = payload;
+          if (!taskId || !status) return res.status(400).json({ error: 'taskId and status required' });
+          await queryHelpers.queryRun(
+            `UPDATE tasks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND assignee_id = ? AND organization_id = ?`,
+            [status, taskId, userId, orgId]
+          );
+          return res.json({ success: true, action, taskId, status });
+        }
+        case 'create_decision': {
+          const id = uuidv4();
+          const cols = await getTableColumns('decisions');
+          const insertCols: string[] = ['id'];
+          const insertVals: string[] = ['?'];
+          const insertParams: any[] = [id];
+          const add = (col: string, val: any) => {
+            if (!cols.has(col)) return;
+            insertCols.push(col);
+            insertVals.push('?');
+            insertParams.push(val);
+          };
+          add('organization_id', orgId);
+          add('title', String(payload.title || 'New Decision').slice(0, 500));
+          add('description', payload.description || null);
+          add('status', 'pending');
+          add('created_by', userId);
+          add('decision_maker_id', userId);
+          await queryHelpers.queryRun(
+            `INSERT INTO decisions (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+            insertParams
+          );
+          return res.status(201).json({ success: true, action, id, title: payload.title });
+        }
+        default:
+          return res.status(400).json({ error: `Unknown action: ${action}` });
+      }
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || 'Action failed' });
+    }
+  })
+);
+
+// ---------------------------------------------------------------------------
+// M5: AI Decision Briefs
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/decisions/:id/brief',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    const decisionId = String(req.params.id || '').trim();
+    if (!decisionId) return res.status(400).json({ error: 'Missing decision id' });
+
+    const decision = await queryHelpers.queryOne<any>(
+      `SELECT id, title, description, status, priority, category, created_at, due_date
+       FROM decisions WHERE id = ? AND organization_id = ? LIMIT 1`,
+      [decisionId, orgId]
+    );
+    if (!decision) return res.status(404).json({ error: 'Decision not found' });
+
+    const urgency = decision.due_date && new Date(decision.due_date) < new Date(Date.now() + 86400000 * 3) ? 'urgent' : 'normal';
+    const summary = `${decision.title}${decision.description ? '. ' + String(decision.description).slice(0, 200) : ''}`;
+    const recommendation = urgency === 'urgent' ? 'Review soon — approaching deadline' : 'Standard review recommended';
+
+    res.json({
+      decisionId,
+      summary: summary.slice(0, 300),
+      recommendation,
+      urgency,
+      category: decision.category || null,
+      createdAt: decision.created_at,
+      dueDate: decision.due_date,
+    });
+  })
+);
+
+// ────────────────────────────────────────────────────────────────────────────
+// Related Context (KnowledgePulse expansion for Tasks / Decisions)
+// ────────────────────────────────────────────────────────────────────────────
+router.get(
+  '/related-context',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const entityType = String(req.query.entityType || '').trim();
+    const entityId = String(req.query.entityId || '').trim();
+    const title = String(req.query.title || '').trim();
+
+    if (!entityType || !entityId) {
+      return res.status(400).json({ error: 'entityType and entityId are required' });
+    }
+
+    const results: { type: string; id: string; title: string; relevance: string }[] = [];
+
+    try {
+      if (title) {
+        const keywords = title.split(/\s+/).filter(w => w.length > 3).slice(0, 3);
+        for (const keyword of keywords) {
+          const pages = await queryHelpers.queryAll<any>(
+            `SELECT id, title, 'notebook' as type FROM notebook_pages 
+             WHERE user_id = ? AND organization_id = ? AND title LIKE ? 
+             AND id != ? LIMIT 3`,
+            [userId, orgId, `%${keyword}%`, entityId]
+          );
+          for (const p of pages || []) {
+            if (!results.find(r => r.id === p.id)) {
+              results.push({ type: 'notebook', id: p.id, title: p.title, relevance: 'title_match' });
+            }
+          }
+        }
+      }
+
+      const taskCols = await getTableColumns('tasks');
+      if (entityType === 'decision' && taskCols.has('initiative_id')) {
+        const dec = await queryHelpers.queryOne<any>(
+          `SELECT initiative_id FROM decisions WHERE id = ? AND organization_id = ? LIMIT 1`,
+          [entityId, orgId]
+        );
+        if (dec?.initiative_id) {
+          const tasks = await queryHelpers.queryAll<any>(
+            `SELECT id, title, status FROM tasks 
+             WHERE initiative_id = ? AND organization_id = ? AND id != ? 
+             LIMIT 5`,
+            [dec.initiative_id, orgId, entityId]
+          );
+          for (const t of tasks || []) {
+            results.push({ type: 'task', id: t.id, title: t.title, relevance: 'same_initiative' });
+          }
+        }
+      }
+
+      if (entityType === 'task') {
+        const decCols = await getTableColumns('decisions');
+        if (decCols.has('title') && title) {
+          const keywords = title.split(/\s+/).filter(w => w.length > 3).slice(0, 2);
+          for (const keyword of keywords) {
+            const decs = await queryHelpers.queryAll<any>(
+              `SELECT id, title, status FROM decisions 
+               WHERE organization_id = ? AND title LIKE ? AND id != ? 
+               LIMIT 3`,
+              [orgId, `%${keyword}%`, entityId]
+            );
+            for (const d of decs || []) {
+              if (!results.find(r => r.id === d.id)) {
+                results.push({ type: 'decision', id: d.id, title: d.title, relevance: 'title_match' });
+              }
+            }
+          }
+        }
+      }
+
+      const ideaCols = await getTableColumns('my_ideas');
+      if (ideaCols.has('title') && title) {
+        const keyword = title.split(/\s+/).filter(w => w.length > 3)[0];
+        if (keyword) {
+          const ideas = await queryHelpers.queryAll<any>(
+            `SELECT id, title FROM my_ideas 
+             WHERE user_id = ? AND organization_id = ? AND title LIKE ? 
+             LIMIT 3`,
+            [userId, orgId, `%${keyword}%`]
+          );
+          for (const i of ideas || []) {
+            if (!results.find(r => r.id === i.id)) {
+              results.push({ type: 'idea', id: i.id, title: i.title, relevance: 'title_match' });
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[related-context]', err);
+    }
+
+    res.json({ results: results.slice(0, 10) });
+  })
+);
+
+// ============================================================================
+// L1: AI Priority Coach
+// ============================================================================
+
+router.get(
+  '/priority-advice',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    try {
+      const { taskAdvisorService } = await import('../services/ai/taskAdvisorService.js');
+      const result = await taskAdvisorService.analyzePortfolio(userId, orgId);
+      res.json(result);
+    } catch (err: any) {
+      res.json({ recommendations: [], overcommitWarning: null, summary: 'Service unavailable' });
+    }
+  })
+);
+
+// ============================================================================
+// L2: AI Weekly Review
+// ============================================================================
+
+router.post(
+  '/weekly-review/generate',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const review: Record<string, any> = { generatedAt: new Date().toISOString() };
+
+    try {
+      const taskCols = await getTableColumns('tasks');
+      if (taskCols.has('assignee_id')) {
+        const completed = await queryHelpers.queryAll<any>(
+          `SELECT id, title, completed_at FROM tasks 
+           WHERE assignee_id = ? AND organization_id = ? AND status IN ('done', 'completed')
+           AND updated_at > datetime('now', '-7 days')
+           ORDER BY updated_at DESC LIMIT 20`,
+          [userId, orgId]
+        );
+        review.completedTasks = completed || [];
+        review.completedCount = review.completedTasks.length;
+      }
+
+      const decCols = await getTableColumns('decisions');
+      if (decCols.has('decision_maker_id')) {
+        const decided = await queryHelpers.queryAll<any>(
+          `SELECT id, title, status, updated_at FROM decisions 
+           WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? 
+           AND status IN ('approved', 'rejected') AND updated_at > datetime('now', '-7 days')
+           ORDER BY updated_at DESC LIMIT 10`,
+          [userId, userId, orgId]
+        );
+        review.decisionsMade = decided || [];
+        review.decisionsCount = review.decisionsMade.length;
+      }
+
+      if (taskCols.has('due_date')) {
+        const overdue = await queryHelpers.queryAll<any>(
+          `SELECT id, title, due_date FROM tasks 
+           WHERE assignee_id = ? AND organization_id = ? AND status NOT IN ('done', 'completed')
+           AND due_date IS NOT NULL AND due_date < datetime('now')
+           LIMIT 10`,
+          [userId, orgId]
+        );
+        review.overdueItems = overdue || [];
+        review.overdueCount = review.overdueItems.length;
+      }
+
+      const stuck = await queryHelpers.queryAll<any>(
+        `SELECT id, title, updated_at FROM tasks 
+         WHERE assignee_id = ? AND organization_id = ? AND status NOT IN ('done', 'completed')
+         AND updated_at < datetime('now', '-5 days')
+         LIMIT 5`,
+        [userId, orgId]
+      );
+      review.stuckItems = stuck || [];
+
+      const lines: string[] = ['# Weekly Review\n'];
+      lines.push(`## Wins`);
+      lines.push(`- Completed ${review.completedCount || 0} tasks`);
+      lines.push(`- Made ${review.decisionsCount || 0} decisions\n`);
+      lines.push(`## Blockers`);
+      if (review.overdueCount) lines.push(`- ${review.overdueCount} overdue items`);
+      if (review.stuckItems?.length) lines.push(`- ${review.stuckItems.length} tasks stuck (no update 5+ days)`);
+      if (!review.overdueCount && !review.stuckItems?.length) lines.push('- None!\n');
+      lines.push(`\n## Next Week Priorities`);
+      lines.push(`- Review overdue items and reschedule or delegate`);
+      lines.push(`- Address stuck tasks`);
+      lines.push(`- Plan Monday focus items`);
+
+      review.markdownContent = lines.join('\n');
+    } catch (err) {
+      console.error('[weekly-review]', err);
+    }
+
+    res.json(review);
+  })
+);
+
+// ────────────────────────────────────────────────────────────────────────────
+// L3: Work Pattern Analysis
+// ────────────────────────────────────────────────────────────────────────────
+router.get(
+  '/work-patterns',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const patterns: Record<string, any> = {};
+
+    try {
+      const taskCols = await getTableColumns('tasks');
+
+      if (taskCols.has('assignee_id')) {
+        const weeklyVelocity = await queryHelpers.queryAll<any>(
+          `SELECT 
+            strftime('%Y-W%W', updated_at) as week,
+            COUNT(*) as completed
+           FROM tasks 
+           WHERE assignee_id = ? AND organization_id = ? AND status IN ('done', 'completed')
+           AND updated_at > datetime('now', '-28 days')
+           GROUP BY week ORDER BY week`,
+          [userId, orgId]
+        );
+        patterns.weeklyVelocity = weeklyVelocity || [];
+        const velocities = (weeklyVelocity || []).map((w: any) => w.completed);
+        patterns.avgVelocity = velocities.length > 0 ? Math.round(velocities.reduce((a: number, b: number) => a + b, 0) / velocities.length) : 0;
+      }
+
+      if (taskCols.has('created_at')) {
+        const avgTime = await queryHelpers.queryOne<any>(
+          `SELECT AVG(julianday(updated_at) - julianday(created_at)) as avg_days
+           FROM tasks 
+           WHERE assignee_id = ? AND organization_id = ? AND status IN ('done', 'completed')
+           AND updated_at > datetime('now', '-30 days')`,
+          [userId, orgId]
+        );
+        patterns.avgCompletionDays = avgTime?.avg_days ? Math.round(avgTime.avg_days * 10) / 10 : null;
+      }
+
+      const decCols = await getTableColumns('decisions');
+      if (decCols.has('decision_maker_id') && decCols.has('created_at')) {
+        const avgDecision = await queryHelpers.queryOne<any>(
+          `SELECT AVG(julianday(updated_at) - julianday(created_at)) as avg_days
+           FROM decisions 
+           WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? 
+           AND status IN ('approved', 'rejected')
+           AND updated_at > datetime('now', '-30 days')`,
+          [userId, userId, orgId]
+        );
+        patterns.avgDecisionDays = avgDecision?.avg_days ? Math.round(avgDecision.avg_days * 10) / 10 : null;
+      }
+
+      if (taskCols.has('due_date')) {
+        const totalWithDue = await queryHelpers.queryOne<any>(
+          `SELECT COUNT(*) as total FROM tasks 
+           WHERE assignee_id = ? AND organization_id = ? AND due_date IS NOT NULL
+           AND updated_at > datetime('now', '-30 days')`,
+          [userId, orgId]
+        );
+        const overdueCompleted = await queryHelpers.queryOne<any>(
+          `SELECT COUNT(*) as total FROM tasks 
+           WHERE assignee_id = ? AND organization_id = ? AND due_date IS NOT NULL
+           AND status IN ('done', 'completed') AND updated_at > due_date
+           AND updated_at > datetime('now', '-30 days')`,
+          [userId, orgId]
+        );
+        if (totalWithDue?.total > 0) {
+          patterns.overdueRate = Math.round(((overdueCompleted?.total || 0) / totalWithDue.total) * 100);
+        }
+      }
+
+      const openCount = await queryHelpers.queryOne<any>(
+        `SELECT COUNT(*) as total FROM tasks 
+         WHERE assignee_id = ? AND organization_id = ? AND status NOT IN ('done', 'completed')`,
+        [userId, orgId]
+      );
+      patterns.currentOpenTasks = openCount?.total || 0;
+
+      const insights: string[] = [];
+      if (patterns.avgVelocity && patterns.currentOpenTasks > patterns.avgVelocity * 2) {
+        insights.push(`You have ${patterns.currentOpenTasks} open tasks but average ${patterns.avgVelocity}/week. Consider delegating or deferring.`);
+      }
+      if (patterns.overdueRate && patterns.overdueRate > 30) {
+        insights.push(`${patterns.overdueRate}% of your tasks with deadlines are completed late. Try adding buffer time.`);
+      }
+      if (patterns.avgDecisionDays && patterns.avgDecisionDays > 5) {
+        insights.push(`Average decision time is ${patterns.avgDecisionDays} days. Faster decisions could unblock teams.`);
+      }
+      patterns.insights = insights;
+
+    } catch (err) {
+      console.error('[work-patterns]', err);
+    }
+
+    res.json(patterns);
+  })
+);
+
+// ────────────────────────────────────────────────────────────────────────────
+// L4: Intelligent Auto-Triage
+// ────────────────────────────────────────────────────────────────────────────
+router.post(
+  '/inbox/auto-triage',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const notifCols = await getTableColumns('notifications');
+    if (notifCols.size === 0) return res.json({ suggestions: [] });
+
+    const readExpr = notifCols.has('read') ? 'COALESCE(n.read, 0)' : '0';
+    const items = await queryHelpers.queryAll<any>(
+      `SELECT n.id, n.title, n.message, n.type, n.priority, n.created_at
+       FROM notifications n
+       LEFT JOIN my_work_inbox_triage t ON t.item_key = 'notification:' || n.id AND t.user_id = ?
+       WHERE n.user_id = ? AND n.organization_id = ? AND ${readExpr} = 0 AND t.item_key IS NULL
+       ORDER BY n.created_at DESC LIMIT 20`,
+      [userId, userId, orgId]
+    );
+
+    const suggestions: any[] = [];
+
+    for (const item of items || []) {
+      const text = `${item.title || ''} ${item.message || ''}`.toLowerCase();
+      let action = 'accept_today';
+      let confidence = 0.5;
+      let reason = '';
+
+      if (item.priority === 'critical' || item.priority === 'high' || text.includes('urgent') || text.includes('asap')) {
+        action = 'accept_today';
+        confidence = 0.85;
+        reason = 'High priority item — needs attention today';
+      } else if (item.priority === 'low' || text.includes('fyi') || text.includes('for your information') || text.includes('newsletter')) {
+        action = 'archive';
+        confidence = 0.8;
+        reason = 'Low priority / informational';
+      } else if (text.includes('review') || text.includes('feedback') || text.includes('mention')) {
+        action = 'accept_week';
+        confidence = 0.7;
+        reason = 'Review or feedback request — schedule for this week';
+      } else {
+        action = 'accept_today';
+        confidence = 0.5;
+        reason = 'Standard priority — default to today';
+      }
+
+      suggestions.push({
+        itemId: item.id,
+        itemKey: `notification:${item.id}`,
+        title: item.title,
+        suggestedAction: action,
+        confidence,
+        reason,
+        autoApply: confidence >= 0.85,
+      });
+    }
+
+    res.json({ suggestions, totalUntriaged: items?.length || 0 });
+  })
+);
+
+// ============================================================================
+// L5: AI Delegation Advisor
+// ============================================================================
+
+router.get(
+  '/delegation-suggestions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    const taskId = String(req.query.taskId || '').trim();
+
+    const suggestions: any[] = [];
+
+    try {
+      const teamMembers = await queryHelpers.queryAll<any>(
+        `SELECT u.id, u.name, u.email,
+          (SELECT COUNT(*) FROM tasks t WHERE t.assignee_id = u.id AND t.organization_id = ? AND t.status NOT IN ('done', 'completed')) as open_tasks
+         FROM users u
+         WHERE u.organization_id = ? AND u.id != ? AND u.is_active = 1
+         ORDER BY open_tasks ASC
+         LIMIT 10`,
+        [orgId, orgId, userId]
+      );
+
+      let taskContext: any = null;
+      if (taskId) {
+        taskContext = await queryHelpers.queryOne<any>(
+          `SELECT title, description, tags, initiative_id, project_id FROM tasks WHERE id = ? AND organization_id = ?`,
+          [taskId, orgId]
+        );
+      }
+
+      for (const member of teamMembers || []) {
+        let score = 100 - (member.open_tasks || 0) * 10;
+        const reasons: string[] = [];
+
+        if (member.open_tasks < 5) {
+          reasons.push(`Has capacity (${member.open_tasks} open tasks)`);
+          score += 20;
+        } else if (member.open_tasks < 10) {
+          reasons.push(`Moderate load (${member.open_tasks} open tasks)`);
+        } else {
+          reasons.push(`Heavy load (${member.open_tasks} open tasks)`);
+          score -= 20;
+        }
+
+        if (taskContext?.initiative_id) {
+          const sameInit = await queryHelpers.queryOne<any>(
+            `SELECT COUNT(*) as cnt FROM tasks WHERE assignee_id = ? AND initiative_id = ? AND organization_id = ?`,
+            [member.id, taskContext.initiative_id, orgId]
+          );
+          if (sameInit?.cnt > 0) {
+            reasons.push('Works on same initiative');
+            score += 15;
+          }
+        }
+
+        const prevDelegations = await queryHelpers.queryOne<any>(
+          `SELECT COUNT(*) as cnt FROM tasks WHERE assignee_id = ? AND reporter_id = ? AND organization_id = ?`,
+          [member.id, userId, orgId]
+        );
+        if (prevDelegations?.cnt > 2) {
+          reasons.push(`Previously delegated ${prevDelegations.cnt} tasks to`);
+          score += 10;
+        }
+
+        suggestions.push({
+          userId: member.id,
+          name: member.name || member.email || 'Unknown',
+          email: member.email,
+          openTasks: member.open_tasks,
+          score: Math.max(0, Math.min(100, score)),
+          reasons,
+        });
+      }
+
+      suggestions.sort((a, b) => b.score - a.score);
+    } catch (err) {
+      logger.error('[delegation-suggestions]', err);
+    }
+
+    res.json({ suggestions: suggestions.slice(0, 5) });
+  })
+);
+
+// ============================================================================
+// L6: Predictive Focus Planning
+// ============================================================================
+
+router.post(
+  '/focus/ai-plan',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const plan: any = { generatedAt: new Date().toISOString(), blocks: [] };
+
+    try {
+      const tasks = await queryHelpers.queryAll<any>(
+        `SELECT id, title, status, priority, due_date, estimated_hours
+         FROM tasks
+         WHERE assignee_id = ? AND organization_id = ? AND status NOT IN ('done', 'completed')
+         ORDER BY
+           CASE WHEN due_date IS NOT NULL AND due_date < datetime('now') THEN 0 ELSE 1 END,
+           CASE priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
+           due_date ASC NULLS LAST
+         LIMIT 15`,
+        [userId, orgId]
+      );
+
+      const decisions = await queryHelpers.queryAll<any>(
+        `SELECT id, title, priority, due_date
+         FROM decisions
+         WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? AND status = 'pending'
+         ORDER BY due_date ASC NULLS LAST
+         LIMIT 5`,
+        [userId, userId, orgId]
+      );
+
+      const timeSlots = [
+        { start: '09:00', label: 'Deep Work', type: 'deep', hours: 2 },
+        { start: '11:00', label: 'Decisions & Reviews', type: 'review', hours: 1.5 },
+        { start: '13:00', label: 'Collaborative Work', type: 'collab', hours: 2 },
+        { start: '15:00', label: 'Admin & Follow-ups', type: 'admin', hours: 1.5 },
+        { start: '16:30', label: 'Planning & Wrap-up', type: 'plan', hours: 1 },
+      ];
+
+      const urgentTasks = (tasks || []).filter(
+        (t: any) =>
+          ['urgent', 'high'].includes(t.priority) ||
+          (t.due_date && new Date(t.due_date) < new Date(Date.now() + 86400000))
+      );
+      const regularTasks = (tasks || []).filter((t: any) => !urgentTasks.includes(t));
+
+      plan.blocks.push({
+        ...timeSlots[0],
+        items: urgentTasks.slice(0, 3).map((t: any) => ({
+          type: 'task',
+          id: t.id,
+          title: t.title,
+          estimatedHours: t.estimated_hours || 1,
+        })),
+      });
+
+      plan.blocks.push({
+        ...timeSlots[1],
+        items: (decisions || []).slice(0, 4).map((d: any) => ({
+          type: 'decision',
+          id: d.id,
+          title: d.title,
+          estimatedHours: 0.25,
+        })),
+      });
+
+      plan.blocks.push({
+        ...timeSlots[2],
+        items: regularTasks.slice(0, 3).map((t: any) => ({
+          type: 'task',
+          id: t.id,
+          title: t.title,
+          estimatedHours: t.estimated_hours || 1,
+        })),
+      });
+
+      plan.blocks.push({
+        ...timeSlots[3],
+        items: regularTasks.slice(3, 5).map((t: any) => ({
+          type: 'task',
+          id: t.id,
+          title: t.title,
+          estimatedHours: 0.5,
+        })),
+      });
+
+      plan.blocks.push({
+        ...timeSlots[4],
+        items: [{ type: 'meta', title: "Review today's progress and plan tomorrow", estimatedHours: 0.5 }],
+      });
+
+      plan.totalItems = (tasks || []).length + (decisions || []).length;
+      plan.summary = `${urgentTasks.length} urgent items for deep work, ${(decisions || []).length} decisions to review, ${regularTasks.length} regular tasks planned.`;
+    } catch (err) {
+      logger.error('[focus-ai-plan]', err);
+    }
+
+    res.json(plan);
+  })
+);
+
+// ============================================================================
+// L7: Context Carry-over — Session Context for MyWork
+// ============================================================================
+
+router.post(
+  '/session-context',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const { lastViewedItems, activeTab, chatTopics } = req.body || {};
+
+    try {
+      await queryHelpers.queryRun(
+        `CREATE TABLE IF NOT EXISTS my_work_session_context (
+          user_id TEXT NOT NULL,
+          organization_id TEXT NOT NULL,
+          context_data TEXT NOT NULL,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (user_id, organization_id)
+        )`,
+        []
+      );
+
+      const contextData = JSON.stringify({
+        lastViewedItems: (lastViewedItems || []).slice(0, 10),
+        activeTab,
+        chatTopics: (chatTopics || []).slice(0, 5),
+        savedAt: new Date().toISOString(),
+      });
+
+      await queryHelpers.queryRun(
+        `INSERT OR REPLACE INTO my_work_session_context (user_id, organization_id, context_data, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+        [userId, orgId, contextData]
+      );
+
+      res.json({ saved: true });
+    } catch (err) {
+      logger.error('[session-context:save]', err);
+      res.json({ saved: false });
+    }
+  })
+);
+
+router.get(
+  '/session-context',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    try {
+      const row = await queryHelpers.queryOne<any>(
+        `SELECT context_data, updated_at FROM my_work_session_context
+         WHERE user_id = ? AND organization_id = ? LIMIT 1`,
+        [userId, orgId]
+      );
+
+      if (!row) return res.json({ context: null });
+
+      const context = JSON.parse(row.context_data || '{}');
+      context.lastSessionAt = row.updated_at;
+      res.json({ context });
+    } catch (err) {
+      logger.error('[session-context:get]', err);
+      res.json({ context: null });
+    }
+  })
+);
+
+// ============================================================================
+// L8: AI Relationships Graph — Semantic Matching
+// ============================================================================
+
+router.get(
+  '/relationships',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const entityId = String(req.query.entityId || '').trim();
+    const entityType = String(req.query.entityType || '').trim();
+    if (!entityId) return res.status(400).json({ error: 'entityId is required' });
+
+    const relationships: any[] = [];
+
+    try {
+      let sourceTitle = '';
+
+      if (entityType === 'task') {
+        const task = await queryHelpers.queryOne<any>(
+          `SELECT title, tags, initiative_id, project_id FROM tasks WHERE id = ? AND organization_id = ?`,
+          [entityId, orgId]
+        );
+        sourceTitle = task?.title || '';
+
+        if (task?.initiative_id) {
+          const related = await queryHelpers.queryAll<any>(
+            `SELECT id, title, status FROM tasks WHERE initiative_id = ? AND organization_id = ? AND id != ? LIMIT 5`,
+            [task.initiative_id, orgId, entityId]
+          );
+          for (const r of related || []) {
+            relationships.push({ type: 'task', id: r.id, title: r.title, relationship: 'same_initiative', strength: 0.8 });
+          }
+        }
+
+        const titleWords = sourceTitle.split(' ').slice(0, 2).join('%');
+        if (titleWords) {
+          const blockingDecs = await queryHelpers.queryAll<any>(
+            `SELECT id, title FROM decisions WHERE organization_id = ? AND status = 'pending' AND title LIKE ?`,
+            [orgId, `%${titleWords}%`]
+          );
+          for (const d of blockingDecs || []) {
+            relationships.push({ type: 'decision', id: d.id, title: d.title, relationship: 'potentially_blocking', strength: 0.6 });
+          }
+        }
+      } else if (entityType === 'idea') {
+        const idea = await queryHelpers.queryOne<any>(
+          `SELECT title, body FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ?`,
+          [entityId, userId, orgId]
+        );
+        sourceTitle = idea?.title || '';
+
+        const keywords = sourceTitle.split(/\s+/).filter((w: string) => w.length > 3).slice(0, 3);
+        for (const kw of keywords) {
+          const related = await queryHelpers.queryAll<any>(
+            `SELECT id, title FROM my_ideas WHERE user_id = ? AND organization_id = ? AND id != ? AND title LIKE ? LIMIT 3`,
+            [userId, orgId, entityId, `%${kw}%`]
+          );
+          for (const r of related || []) {
+            if (!relationships.find((rel: any) => rel.id === r.id)) {
+              relationships.push({ type: 'idea', id: r.id, title: r.title, relationship: 'keyword_match', strength: 0.5 });
+            }
+          }
+        }
+      } else if (entityType === 'decision') {
+        const dec = await queryHelpers.queryOne<any>(
+          `SELECT title FROM decisions WHERE id = ? AND organization_id = ?`,
+          [entityId, orgId]
+        );
+        sourceTitle = dec?.title || '';
+      }
+
+      if (sourceTitle) {
+        const titleWords = sourceTitle.split(/\s+/).filter((w: string) => w.length > 4).slice(0, 2);
+        for (const word of titleWords) {
+          const pages = await queryHelpers.queryAll<any>(
+            `SELECT id, title FROM notebook_pages WHERE user_id = ? AND organization_id = ? AND (title LIKE ? OR content_text LIKE ?) LIMIT 3`,
+            [userId, orgId, `%${word}%`, `%${word}%`]
+          );
+          for (const p of pages || []) {
+            if (!relationships.find((r: any) => r.id === p.id)) {
+              relationships.push({ type: 'notebook', id: p.id, title: p.title, relationship: 'mentioned_in', strength: 0.4 });
+            }
+          }
+        }
+      }
+
+      relationships.sort((a, b) => b.strength - a.strength);
+    } catch (err) {
+      logger.error('[relationships]', err);
+    }
+
+    res.json({ entityId, entityType, relationships: relationships.slice(0, 15) });
   })
 );
 

@@ -34,7 +34,7 @@ import { PortfolioHealthScore } from './PortfolioHealthScore';
 import { TeamPerformancePreview } from './TeamPerformancePreview';
 
 interface ExecutiveDashboardProps {
-  onNavigate?: (section: string) => void;
+  onNavigate?: (section: string, options?: { filter?: string }) => void;
   onDecisionApprove?: (id: string) => void;
   onDecisionReject?: (id: string) => void;
   refreshTrigger?: number;
@@ -229,6 +229,9 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [initiatives, setInitiatives] = useState<InitiativeProgress[]>([]);
   const [signals, setSignals] = useState<AISignal[]>([]);
+  const [patterns, setPatterns] = useState<any>(null);
+
+  const isPolish = (t('language', 'en') === 'pl') || (typeof navigator !== 'undefined' && navigator.language?.startsWith('pl'));
 
   const greetingText = getGreetingText(t);
   const userName =
@@ -545,6 +548,14 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         }
 
         setLastUpdated(new Date());
+
+        try {
+          const token = localStorage.getItem('token');
+          const pRes = await fetch('/api/my-work/work-patterns', {
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          });
+          if (pRes.ok) setPatterns(await pRes.json());
+        } catch { /* ignore */ }
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
         setLoadError(t('executive.loadError', 'Failed to load dashboard data'));
@@ -665,6 +676,48 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           }
         }}
       />
+
+      {/* L3: Work Patterns */}
+      {patterns && (
+        <div className="mt-4 p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+          <h3 className="text-sm font-semibold mb-3 text-slate-700 dark:text-slate-200">
+            {isPolish ? 'Twoje wzorce pracy' : 'Your Work Patterns'}
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+            {patterns.avgVelocity != null && (
+              <div className="text-center">
+                <div className="text-lg font-bold text-purple-600">{patterns.avgVelocity}</div>
+                <div className="text-[10px] text-slate-500">{isPolish ? 'tasków/tydzień' : 'tasks/week'}</div>
+              </div>
+            )}
+            {patterns.avgCompletionDays != null && (
+              <div className="text-center">
+                <div className="text-lg font-bold text-blue-600">{patterns.avgCompletionDays}d</div>
+                <div className="text-[10px] text-slate-500">{isPolish ? 'śr. czas zadania' : 'avg task time'}</div>
+              </div>
+            )}
+            {patterns.avgDecisionDays != null && (
+              <div className="text-center">
+                <div className="text-lg font-bold text-amber-600">{patterns.avgDecisionDays}d</div>
+                <div className="text-[10px] text-slate-500">{isPolish ? 'śr. czas decyzji' : 'avg decision time'}</div>
+              </div>
+            )}
+            {patterns.overdueRate != null && (
+              <div className="text-center">
+                <div className="text-lg font-bold text-red-600">{patterns.overdueRate}%</div>
+                <div className="text-[10px] text-slate-500">{isPolish ? 'spóźnień' : 'overdue rate'}</div>
+              </div>
+            )}
+          </div>
+          {patterns.insights?.length > 0 && (
+            <div className="space-y-1">
+              {patterns.insights.map((insight: string, i: number) => (
+                <p key={i} className="text-xs text-slate-600 dark:text-slate-400">💡 {insight}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Three-Column: Decisions + Team Performance + AI Signals */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

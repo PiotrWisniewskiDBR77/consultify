@@ -47,7 +47,7 @@ interface KPIData {
 interface KPIGridProps {
   data?: Partial<KPIData>;
   loading?: boolean;
-  onNavigate?: (section: string) => void;
+  onNavigate?: (section: string, options?: { filter?: string }) => void;
 }
 
 // Individual KPI Card
@@ -290,7 +290,7 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
               ]
             : []
         }
-        onClick={() => onNavigate?.('tasks')}
+        onClick={() => onNavigate?.('tasks', { filter: 'overdue' })}
         delay={0}
       />
 
@@ -330,7 +330,7 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
               ]
             : []
         }
-        onClick={() => onNavigate?.('decisions')}
+        onClick={() => onNavigate?.('decisions', { filter: 'pending' })}
         delay={1}
       />
 

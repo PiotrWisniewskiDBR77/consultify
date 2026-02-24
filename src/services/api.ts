@@ -2496,6 +2496,42 @@ export const Api = {
     await handleResponse(res, 'Failed to delete idea edge');
   },
 
+  // --- My Ideas: Recommendation Map (per-idea working graph) ---
+  getMyIdeaMap: async (ideaId: string, opts?: { language?: string }): Promise<any> => {
+    const params = new URLSearchParams();
+    if (opts?.language) params.set('language', opts.language);
+    const qs = params.toString();
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map${qs ? `?${qs}` : ''}`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to fetch idea map');
+  },
+
+  saveMyIdeaMap: async (
+    ideaId: string,
+    payload: { nodes: any[]; edges: any[]; version?: number }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to save idea map');
+  },
+
+  expandMyIdeaMap: async (
+    ideaId: string,
+    payload: { anchorNodeId?: string; branchKey?: string; count?: number; language?: string }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/expand`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to expand idea map');
+  },
+
   // --- My Ideas: Convert/Promote ---
   convertMyIdea: async (
     ideaId: string,

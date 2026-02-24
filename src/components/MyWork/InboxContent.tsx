@@ -49,6 +49,7 @@ import {
   Pin,
   Scale,
   Settings,
+  Sparkles,
   Square,
   Star,
   X,
@@ -667,6 +668,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   // N2: Action Required filter
   const [actionRequiredOnly, setActionRequiredOnly] = useState(false);
 
+  // L4: Auto-triage
+  const [autoTriageSuggestions, setAutoTriageSuggestions] = useState<any[]>([]);
+  const [autoTriageLoading, setAutoTriageLoading] = useState(false);
+
   // ── Fetch ──
   const fetchInbox = useCallback(async () => {
     try {
@@ -839,6 +844,40 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     }
     toast.success(isPolish ? 'Odłożono' : 'Snoozed');
   }, [isPolish, previewItem]);
+
+  // ── L4: Auto-triage ──
+  const handleAutoTriage = async () => {
+    setAutoTriageLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/my-work/inbox/auto-triage', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const suggestions = data.suggestions || [];
+        const autoApplyItems = suggestions.filter((s: any) => s.autoApply);
+        for (const item of autoApplyItems) {
+          try {
+            await fetch(`/api/my-work/inbox/${item.itemId}/triage`, {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: item.suggestedAction, itemKey: item.itemKey }),
+            });
+          } catch { /* continue */ }
+        }
+        if (autoApplyItems.length > 0) {
+          toast.success(isPolish ? `${autoApplyItems.length} elementów automatycznie przetriażowanych` : `${autoApplyItems.length} items auto-triaged`);
+          emitMyWorkEvent({ type: 'item:triaged', entityType: 'inbox', entityId: 'bulk' });
+        }
+        setAutoTriageSuggestions(suggestions.filter((s: any) => !s.autoApply));
+      }
+    } catch {
+      toast.error(isPolish ? 'Auto-triage nieudany' : 'Auto-triage failed');
+    }
+    setAutoTriageLoading(false);
+  };
 
   // ── Bulk triage ──
   const bulkTriage = useCallback(
@@ -1473,6 +1512,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 {isPolish ? 'Sekcje' : 'Sections'}
               </button>
             </div>
+            <button
+              onClick={handleAutoTriage}
+              disabled={autoTriageLoading}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-all"
+            >
+              {autoTriageLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+              {isPolish ? 'AI Triage' : 'AI Auto-Triage'}
+            </button>
             <button
               className="p-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
               title={isPolish ? 'Ustawienia Inbox' : 'Inbox Settings'}

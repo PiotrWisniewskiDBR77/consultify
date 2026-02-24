@@ -72,6 +72,9 @@ import { type RowAction, RowActionsMenu } from '../../shared/RowActionsMenu';
 import { DueDateIndicator } from '../shared/DueDateIndicator';
 import { EmptyState } from '../shared/EmptyState';
 import { getPMOCategory, PMOPriorityBadge } from '../shared/PMOPriorityBadge';
+import { AICoachPanel } from './AICoachPanel';
+import { AIPlanView } from './AIPlanView';
+import { NudgeStrip } from './NudgeStrip';
 
 // ============================================================================
 // TYPES
@@ -907,6 +910,15 @@ const FocusColumnComponent: React.FC<FocusColumnProps> = ({
 // DELEGATE MODAL
 // ============================================================================
 
+interface DelegationSuggestion {
+  userId: string;
+  name: string;
+  email?: string;
+  openTasks: number;
+  score: number;
+  reasons: string[];
+}
+
 interface DelegateModalProps {
   item: FocusItem | null;
   onClose: () => void;
@@ -918,21 +930,37 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
   const [users, setUsers] = useState<{ id: string; name: string; avatarUrl?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [aiSuggestions, setAiSuggestions] = useState<DelegationSuggestion[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
     if (item) {
       setLoading(true);
-      Api.get('/users')
-        .then((res) => {
-          const userList = Array.isArray(res) ? res : res.users || [];
-          setUsers(userList.slice(0, 10));
-        })
-        .catch(console.error)
-        .finally(() => setLoading(false));
+      setAiLoading(true);
+
+      const parsed = item.id.split(':');
+      const taskId = parsed[0] === 'task' ? parsed[1] : '';
+
+      Promise.all([
+        Api.get('/users')
+          .then((res) => {
+            const userList = Array.isArray(res) ? res : res.users || [];
+            setUsers(userList.slice(0, 10));
+          })
+          .catch(console.error),
+        Api.get(`/my-work/delegation-suggestions${taskId ? `?taskId=${taskId}` : ''}`)
+          .then((res: any) => setAiSuggestions(res?.suggestions || []))
+          .catch(() => setAiSuggestions([])),
+      ]).finally(() => {
+        setLoading(false);
+        setAiLoading(false);
+      });
     }
   }, [item]);
 
   if (!item) return null;
+
+  const suggestedIds = new Set(aiSuggestions.map((s) => s.userId));
 
   return (
     <motion.div
@@ -960,31 +988,100 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
               <Loader2 className="animate-spin text-brand" size={24} />
             </div>
           ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {users.map((user) => (
-                <button
-                  key={user.id}
-                  onClick={() => setSelectedUserId(user.id)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                    selectedUserId === user.id
-                      ? 'border-brand bg-brand/5'
-                      : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
-                  }`}
-                >
-                  {user.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full" />
+            <div className="space-y-4 max-h-80 overflow-y-auto">
+              {/* AI Suggestions Section */}
+              {(aiSuggestions.length > 0 || aiLoading) && (
+                <div>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Sparkles size={12} className="text-purple-500" />
+                    <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+                      {t('myWork.focus.delegate.aiSuggestions', 'AI Suggestions')}
+                    </span>
+                  </div>
+                  {aiLoading ? (
+                    <div className="flex items-center gap-2 text-xs text-slate-400 py-2">
+                      <Loader2 size={12} className="animate-spin" />
+                      {t('myWork.focus.delegate.analyzing', 'Analyzing team...')}
+                    </div>
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-purple-600 flex items-center justify-center">
-                      <span className="text-xs font-medium text-white">
-                        {user.name.charAt(0).toUpperCase()}
-                      </span>
+                    <div className="space-y-2">
+                      {aiSuggestions.map((sug) => (
+                        <button
+                          key={sug.userId}
+                          onClick={() => setSelectedUserId(sug.userId)}
+                          className={`w-full flex items-start gap-3 p-3 rounded-lg border transition-all text-left ${
+                            selectedUserId === sug.userId
+                              ? 'border-brand bg-brand/5'
+                              : 'border-purple-200 dark:border-purple-900/30 bg-purple-50/30 dark:bg-purple-950/10 hover:border-purple-300 dark:hover:border-purple-800/40'
+                          }`}
+                        >
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-brand flex items-center justify-center shrink-0">
+                            <span className="text-xs font-medium text-white">
+                              {(sug.name || '?').charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-navy-900 dark:text-white truncate">
+                                {sug.name}
+                              </span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-medium shrink-0">
+                                {sug.score}%
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {sug.reasons.map((r, ri) => (
+                                <span key={ri} className="text-[10px] text-slate-500 dark:text-slate-400">
+                                  {ri > 0 && '·'} {r}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
                     </div>
                   )}
-                  <span className="text-sm font-medium text-navy-900 dark:text-white">
-                    {user.name}
-                  </span>
-                </button>
-              ))}
+                </div>
+              )}
+
+              {/* All Team Members */}
+              {users.filter((u) => !suggestedIds.has(u.id)).length > 0 && (
+                <div>
+                  {aiSuggestions.length > 0 && (
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                      {t('myWork.focus.delegate.allMembers', 'All Team Members')}
+                    </span>
+                  )}
+                  <div className="space-y-2 mt-2">
+                    {users
+                      .filter((u) => !suggestedIds.has(u.id))
+                      .map((user) => (
+                        <button
+                          key={user.id}
+                          onClick={() => setSelectedUserId(user.id)}
+                          className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                            selectedUserId === user.id
+                              ? 'border-brand bg-brand/5'
+                              : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
+                          }`}
+                        >
+                          {user.avatarUrl ? (
+                            <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-purple-600 flex items-center justify-center">
+                              <span className="text-xs font-medium text-white">
+                                {user.name.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                          <span className="text-sm font-medium text-navy-900 dark:text-white">
+                            {user.name}
+                          </span>
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1056,6 +1153,7 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
   const [delegateItem, setDelegateItem] = useState<FocusItem | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [showPlanMyDay, setShowPlanMyDay] = useState(false);
+  const [showAIPlan, setShowAIPlan] = useState(false);
 
   // Filters
   const [filter, setFilter] = useState<FocusFilter>('all');
@@ -1664,17 +1762,53 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
         )}
       </AnimatePresence>
 
-      {/* Toolbar */}
+      {/* Toolbar + AI Plan Button */}
       {items.length > 0 && (
-        <FocusToolbar
-          filter={filter}
-          onFilterChange={setFilter}
-          hideCompleted={hideCompleted}
-          onHideCompletedChange={setHideCompleted}
-          sort={sort}
-          onSortChange={setSort}
-        />
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <FocusToolbar
+              filter={filter}
+              onFilterChange={setFilter}
+              hideCompleted={hideCompleted}
+              onHideCompletedChange={setHideCompleted}
+              sort={sort}
+              onSortChange={setSort}
+            />
+          </div>
+          <button
+            onClick={() => setShowAIPlan((v) => !v)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors shrink-0 ${
+              showAIPlan
+                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400'
+            }`}
+          >
+            <Sparkles size={13} />
+            {t('myWork.focus.aiPlan', 'AI Plan')}
+          </button>
+        </div>
       )}
+
+      {/* AI Priority Coach */}
+      <AICoachPanel />
+
+      {/* Proactive Nudges */}
+      <NudgeStrip />
+
+      {/* AI Day Plan Overlay */}
+      <AnimatePresence>
+        {showAIPlan && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-lg overflow-hidden"
+            style={{ minHeight: 320 }}
+          >
+            <AIPlanView onClose={() => setShowAIPlan(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Kanban Board */}
       {items.length > 0 ? (

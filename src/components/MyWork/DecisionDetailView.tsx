@@ -74,6 +74,7 @@ import { buildArtifactCode } from '@/utils/artifactLinks';
 
 import { Api } from '../../services/api';
 import { buildAskAIMessage } from './shared/askAiHelper';
+import { PostDecisionFollowUp } from './shared/PostDecisionFollowUp';
 import { CloudFilePicker } from '../AIChat/CloudFilePicker';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
@@ -122,6 +123,8 @@ import {
   StakeholdersSection,
   type WarningThresholds,
 } from './shared';
+import { AIConnections } from './shared/AIConnections';
+import { RelatedContext } from './shared/RelatedContext';
 
 // ── Decision accordion section IDs ──────────────────────────────────────────
 const DECISION_SECTION_IDS = [
@@ -662,6 +665,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   } = useCloudIntegrations();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showFollowUp, setShowFollowUp] = useState(false);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -1769,6 +1773,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       toast.success(isPolish ? 'Decyzja zatwierdzona' : 'Decision approved');
       emitMyWorkEvent({ type: 'item:completed', entityType: 'decision', entityId: decisionId! });
       onSaved?.({ title, status: 'approved' });
+      setShowFollowUp(true);
     } catch (error) {
       toast.error(isPolish ? 'Nie udało się zatwierdzić' : 'Failed to approve');
     }
@@ -1790,6 +1795,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       toast.success(isPolish ? 'Decyzja odrzucona' : 'Decision rejected');
       emitMyWorkEvent({ type: 'item:completed', entityType: 'decision', entityId: decisionId! });
       onSaved?.({ title, status: 'rejected' });
+      setShowFollowUp(true);
     } catch (error) {
       toast.error(isPolish ? 'Nie udało się odrzucić' : 'Failed to reject');
     }
@@ -4377,6 +4383,28 @@ Context: ${JSON.stringify(projectContext)}`;
                   },
                 ]}
               />
+              {/* ── Origin Badge ──────────────────────────────────── */}
+              {sourceType && sourceId && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 text-xs">
+                  {sourceType === 'idea' && <Lightbulb size={14} className="text-amber-500" />}
+                  {sourceType === 'notebook' && <FileText size={14} className="text-blue-500" />}
+                  {sourceType === 'task' && <Settings size={14} className="text-slate-500" />}
+                  <span className="text-slate-600 dark:text-slate-300">
+                    {sourceType === 'idea' ? 'Created from Idea' : sourceType === 'notebook' ? 'Created from Note' : `Created from ${sourceType}`}
+                  </span>
+                  <button
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent('mywork-open-item', {
+                        detail: { type: sourceType === 'notebook' ? 'notebook' : sourceType, id: sourceId, name: `Source ${sourceType}` }
+                      }));
+                    }}
+                    className="text-amber-600 dark:text-amber-400 hover:underline font-medium"
+                  >
+                    View source →
+                  </button>
+                </div>
+              )}
+
               {/* ── Inline ActionBar (kept for now, will migrate to NModeActionBar) */}
               <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
                 {/* Action buttons for pending decisions */}
@@ -6504,6 +6532,12 @@ Context: ${JSON.stringify(projectContext)}`;
                         />
                       )}
 
+                      {decisionId && title && (
+                        <RelatedContext entityType="decision" entityId={decisionId} entityTitle={title} />
+                      )}
+
+                      {decisionId && <AIConnections entityType="decision" entityId={decisionId} />}
+
                       {/* ── Section: Activity Log (shared ActivityLogCanvas) */}
                       {activeNotionSection === 'activity-log' && (
                         <ActivityLogCanvas
@@ -7526,6 +7560,17 @@ Context: ${JSON.stringify(projectContext)}`;
                   : 'Delegation saved, but failed to refresh data'
               );
             }
+          }}
+        />
+      )}
+
+      {showFollowUp && decisionId && (
+        <PostDecisionFollowUp
+          decision={{ id: decisionId, title, status, description, category }}
+          onClose={() => setShowFollowUp(false)}
+          onTasksCreated={(count) => {
+            toast.success(isPolish ? `Utworzono ${count} zadań` : `Created ${count} tasks`);
+            setShowFollowUp(false);
           }}
         />
       )}

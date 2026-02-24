@@ -1,6 +1,7 @@
 import type { Editor } from '@tiptap/react';
 import {
   AlertTriangle,
+  CheckSquare,
   ChevronRight,
   Code,
   Columns3,
@@ -8,11 +9,13 @@ import {
   Heading2,
   Heading3,
   Info,
+  Lightbulb,
   List,
   ListChecks,
   ListOrdered,
   MessageCircle,
   Minus,
+  Scale,
   ShieldQuestion,
   Sparkles,
   ToggleRight,
@@ -201,6 +204,49 @@ const COMMANDS: SlashCommand[] = [
     keywords: ['action', 'ai', 'next', 'steps', 'kroki', 'plan'],
     action: () => {},
     aiCommand: 'action',
+  },
+  // -- Create entity commands --
+  {
+    id: 'create-task',
+    label: 'Create Task',
+    labelPl: 'Utwórz zadanie',
+    description: 'Create a task from the current context',
+    descriptionPl: 'Utwórz zadanie z bieżącego kontekstu',
+    icon: <CheckSquare size={ICON_SIZE} className="text-emerald-500" />,
+    keywords: ['task', 'todo', 'zadanie', 'create', 'utworz'],
+    action: (editor) => {
+      const sel = editor.state.selection;
+      const selectedText = editor.state.doc.textBetween(sel.from, sel.to, ' ');
+      window.dispatchEvent(new CustomEvent('notebook-create-task', { detail: { text: selectedText } }));
+    },
+  },
+  {
+    id: 'create-decision',
+    label: 'Create Decision',
+    labelPl: 'Utwórz decyzję',
+    description: 'Create a decision from the current context',
+    descriptionPl: 'Utwórz decyzję z bieżącego kontekstu',
+    icon: <Scale size={ICON_SIZE} className="text-amber-500" />,
+    keywords: ['decision', 'decyzja', 'decide', 'decide'],
+    action: (editor) => {
+      const sel = editor.state.selection;
+      const selectedText = editor.state.doc.textBetween(sel.from, sel.to, ' ');
+      window.dispatchEvent(new CustomEvent('notebook-create-decision', { detail: { text: selectedText } }));
+    },
+  },
+  {
+    id: 'save-as-idea',
+    label: 'Save as Idea',
+    labelPl: 'Zapisz jako pomysł',
+    description: 'Save selected text as a new idea',
+    descriptionPl: 'Zapisz zaznaczony tekst jako nowy pomysł',
+    icon: <Lightbulb size={ICON_SIZE} className="text-yellow-500" />,
+    keywords: ['idea', 'pomysl', 'save', 'zapisz'],
+    action: (editor) => {
+      const sel = editor.state.selection;
+      const selectedText = editor.state.doc.textBetween(sel.from, sel.to, ' ');
+      window.dispatchEvent(new CustomEvent('notebook-create-idea', { detail: { text: selectedText } }));
+    },
   },
 ];
 

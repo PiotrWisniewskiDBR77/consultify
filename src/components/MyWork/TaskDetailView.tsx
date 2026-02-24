@@ -120,6 +120,8 @@ import {
 } from './shared';
 // ── Presentation Mode Switcher ───────────────────────────────────────────────
 import { PresentationModeSwitcher } from './shared/PresentationModeSwitcher';
+import { AIConnections } from './shared/AIConnections';
+import { RelatedContext } from './shared/RelatedContext';
 
 interface TaskDetailViewProps {
   taskId: string | null;
@@ -6248,6 +6250,12 @@ Return ONLY the final comment text.`;
               expanded={expandedSections.has('linkedItems')}
               onToggleExpand={() => toggleSection('linkedItems')}
             />
+
+            {taskId && title && (
+              <RelatedContext entityType="task" entityId={taskId} entityTitle={title} />
+            )}
+
+            {taskId && <AIConnections entityType="task" entityId={taskId} />}
 
             {/* Stakeholders */}
             <StakeholdersSection

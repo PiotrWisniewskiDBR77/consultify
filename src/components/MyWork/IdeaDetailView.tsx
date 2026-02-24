@@ -3,15 +3,19 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  CheckSquare,
   ExternalLink,
   Flower2,
+  GitBranch,
   Globe,
   Loader2,
   MessageSquarePlus,
   Rocket,
+  Scale,
   Sparkles,
   Sprout,
   Star,
+  Target,
   ThumbsUp,
   Trash2,
   TrendingUp,
@@ -27,7 +31,9 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 
+import { AIConnections } from './shared/AIConnections';
 import { buildAskAIMessage } from './shared/askAiHelper';
+import { IdeaRecommendationMap } from './IdeaRecommendationMap';
 import type { MyIdea } from './MyIdeasListContent';
 
 type IdeaStage = 'seed' | 'expanding' | 'researching' | 'proposing' | 'summary' | 'ready' | 'promoted';
@@ -88,6 +94,8 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
   const [developing, setDeveloping] = useState(false);
   const [convertOpen, setConvertOpen] = useState(false);
   const [converting, setConverting] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [mapIdeaId, setMapIdeaId] = useState<string | null>(null);
 
   // AI-generated content
   const [aiExpansion, setAiExpansion] = useState('');
@@ -248,6 +256,13 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
     if (isChatCollapsed) toggleChatCollapse();
   };
 
+  const handleOpenMap = useCallback(async () => {
+    const currentId = await ensureSaved(seedText);
+    if (!currentId) return;
+    setMapIdeaId(currentId);
+    setMapOpen(true);
+  }, [ensureSaved, seedText]);
+
   const handleConvert = useCallback(
     async (target: 'initiative' | 'task_set' | 'decision' | 'team_chat') => {
       const currentId = await ensureSaved(seedText);
@@ -316,6 +331,24 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
 
   return (
     <div className="flex flex-col min-h-full bg-white dark:bg-navy-950">
+      {mapOpen && (
+        <IdeaRecommendationMap
+          ideaId={mapIdeaId || realId}
+          ideaTitle={title || seedText?.split('\n')[0]?.slice(0, 120) || (isPolish ? 'Pomysł' : 'Idea')}
+          onClose={() => setMapOpen(false)}
+          onCenterEdit={() => {
+            setMapOpen(false);
+            setTimeout(() => {
+              try {
+                contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+              } catch {
+                // ignore
+              }
+            }, 50);
+          }}
+        />
+      )}
+
       {/* Convert modal */}
       <AnimatePresence>
         {convertOpen && (
@@ -485,6 +518,14 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
         </div>
         <div className="flex items-center gap-1">
           <button
+            onClick={handleOpenMap}
+            className="px-3 py-2 rounded-xl hover:bg-amber-500/10 text-amber-600 dark:text-amber-400 transition-colors text-[12px] font-semibold flex items-center gap-2"
+            title={isPolish ? 'Otwórz mapę rekomendacji' : 'Open recommendation map'}
+          >
+            <GitBranch size={16} />
+            {isPolish ? 'Mapa' : 'Map'}
+          </button>
+          <button
             onClick={handleOpenChat}
             className="p-2 rounded-xl hover:bg-purple-500/10 text-purple-500 transition-colors"
             title={isPolish ? 'Zapytaj AI o ten pomysł' : 'Ask AI about this idea'}
@@ -524,6 +565,46 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
           {stageLabel && developing && (
             <div className="text-xs text-amber-600 dark:text-amber-400 animate-pulse">{stageLabel}</div>
           )}
+        </div>
+      )}
+
+      {/* Ready for action CTA */}
+      {(stage === 'ready' || stage === 'summary') && !convertOpen && (
+        <div className="px-5 py-2.5 border-b border-amber-200/40 dark:border-amber-800/20 bg-gradient-to-r from-amber-50/80 to-orange-50/80 dark:from-amber-950/15 dark:to-orange-950/10">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Zap size={14} className="text-amber-600 dark:text-amber-400" />
+              <span className="text-[12px] font-semibold text-amber-700 dark:text-amber-300">
+                {isPolish ? 'Pomysł gotowy do działania' : 'Idea ready for action'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => handleConvert('task_set')}
+                disabled={converting}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all"
+              >
+                <CheckSquare size={12} />
+                {isPolish ? 'Utwórz taski' : 'Create Tasks'}
+              </button>
+              <button
+                onClick={() => handleConvert('decision')}
+                disabled={converting}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all"
+              >
+                <Scale size={12} />
+                {isPolish ? 'Decyzja' : 'Decision'}
+              </button>
+              <button
+                onClick={() => handleConvert('initiative')}
+                disabled={converting}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-all"
+              >
+                <Target size={12} />
+                {isPolish ? 'Inicjatywa' : 'Initiative'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -789,6 +870,8 @@ export const IdeaDetailView: React.FC<IdeaDetailViewProps> = ({ ideaId, onClose,
             </div>
           </div>
         )}
+
+        {!isNew && realId && <AIConnections entityType="idea" entityId={realId} />}
       </div>
     </div>
   );

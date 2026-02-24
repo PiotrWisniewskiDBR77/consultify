@@ -277,7 +277,77 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({ open, onClose, onSel
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const handleSelect = useCallback(
-    (tmpl: PageTemplate) => {
+    async (tmpl: PageTemplate) => {
+      if (tmpl.id === 'weekly-review') {
+        try {
+          const token = localStorage.getItem('token');
+          const res = await fetch('/api/my-work/weekly-review/generate', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const completedCount = data.completedCount || 0;
+            const decisionsCount = data.decisionsCount || 0;
+            const overdueCount = data.overdueCount || 0;
+            const stuckCount = data.stuckItems?.length || 0;
+
+            const completedItems = (data.completedTasks || []).slice(0, 5);
+            const overdueItems = (data.overdueItems || []).slice(0, 5);
+            const stuckItems = (data.stuckItems || []).slice(0, 5);
+
+            const winsContent: any[] = [];
+            winsContent.push(p(`Completed ${completedCount} tasks this week.`));
+            for (const t of completedItems) {
+              winsContent.push(todo(`${t.title}`));
+            }
+            winsContent.push(p(`Made ${decisionsCount} decisions.`));
+
+            const blockersContent: any[] = [];
+            if (overdueCount > 0) {
+              blockersContent.push(callout('critical', `${overdueCount} overdue items need attention`));
+              for (const item of overdueItems) {
+                blockersContent.push(todo(`${item.title} (due: ${item.due_date || 'N/A'})`));
+              }
+            }
+            if (stuckCount > 0) {
+              blockersContent.push(callout('warning', `${stuckCount} tasks stuck (no update 5+ days)`));
+              for (const item of stuckItems) {
+                blockersContent.push(todo(`${item.title}`));
+              }
+            }
+            if (blockersContent.length === 0) {
+              blockersContent.push(callout('success', 'No blockers this week!'));
+            }
+
+            const enrichedTemplate: PageTemplate = {
+              ...tmpl,
+              defaultTitle: `Weekly Review — ${format(new Date(), 'yyyy-MM-dd')}`,
+              defaultTitlePl: `Przegląd tygodnia — ${format(new Date(), 'yyyy-MM-dd')}`,
+              contentJson: {
+                type: 'doc',
+                content: [
+                  h2('Wins'),
+                  ...winsContent,
+                  h2('Blockers'),
+                  ...blockersContent,
+                  h2('Lessons Learned'),
+                  p(''),
+                  h2('Next Week Priorities'),
+                  todo('Review overdue items and reschedule or delegate'),
+                  todo('Address stuck tasks'),
+                  todo('Plan Monday focus items'),
+                ],
+              },
+            };
+            onSelectTemplate(enrichedTemplate);
+            onClose();
+            return;
+          }
+        } catch {
+          // Fall through to static template
+        }
+      }
       onSelectTemplate(tmpl);
       onClose();
     },

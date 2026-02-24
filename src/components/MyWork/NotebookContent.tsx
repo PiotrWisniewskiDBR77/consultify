@@ -743,6 +743,126 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     };
   }, [activePage, handleTogglePin, isPulseOpen, setPulseOpen]);
 
+  // Slash-command entity creation events
+  useEffect(() => {
+    const handleCreateTask = async (e: Event) => {
+      const { text } = (e as CustomEvent).detail || {};
+      if (!activePage) return;
+      try {
+        const title = text?.trim() || activePage.title || 'Task from notebook';
+        await Api.createPersonalTask({
+          title,
+          description: `From note: ${activePage.title}`,
+          tags: ['from-notebook'],
+        });
+        emitMyWorkEvent({ type: 'item:created', entityType: 'task', entityId: activePage.id });
+        toast.success(isPolish ? 'Zadanie utworzone' : 'Task created');
+      } catch {
+        toast.error(isPolish ? 'Nie udało się utworzyć zadania' : 'Failed to create task');
+      }
+    };
+
+    const handleCreateDecision = async (e: Event) => {
+      const { text } = (e as CustomEvent).detail || {};
+      if (!activePage) return;
+      try {
+        const title = text?.trim() || activePage.title || 'Decision from notebook';
+        await Api.createDecision({
+          title,
+          description: `From note: ${activePage.title}`,
+          source_type: 'notebook',
+          source_id: activePage.id,
+        });
+        emitMyWorkEvent({ type: 'item:created', entityType: 'decision', entityId: activePage.id });
+        toast.success(isPolish ? 'Decyzja utworzona' : 'Decision created');
+      } catch {
+        toast.error(isPolish ? 'Nie udało się utworzyć decyzji' : 'Failed to create decision');
+      }
+    };
+
+    const handleCreateIdea = async (e: Event) => {
+      const { text } = (e as CustomEvent).detail || {};
+      if (!activePage) return;
+      try {
+        const title = text?.trim() || activePage.title || 'Idea from notebook';
+        await Api.createMyIdea({
+          title,
+          body: text || '',
+          sourceType: 'notebook',
+        });
+        emitMyWorkEvent({ type: 'item:created', entityType: 'idea', entityId: activePage.id });
+        toast.success(isPolish ? 'Pomysł zapisany' : 'Idea saved');
+      } catch {
+        toast.error(isPolish ? 'Nie udało się zapisać pomysłu' : 'Failed to save idea');
+      }
+    };
+
+    window.addEventListener('notebook-create-task', handleCreateTask);
+    window.addEventListener('notebook-create-decision', handleCreateDecision);
+    window.addEventListener('notebook-create-idea', handleCreateIdea);
+    return () => {
+      window.removeEventListener('notebook-create-task', handleCreateTask);
+      window.removeEventListener('notebook-create-decision', handleCreateDecision);
+      window.removeEventListener('notebook-create-idea', handleCreateIdea);
+    };
+  }, [activePage, isPolish, emitMyWorkEvent]);
+
+  // M9: Smart Note Routing — suggest conversion for mature notes
+  useEffect(() => {
+    if (!activePage || (activePage.maturity !== 'mature' && activePage.maturity !== 'actionable')) return;
+    if (activePage.status === 'converted') return;
+
+    const classify = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/my-work/notebook/pages/${activePage.id}/classify`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.suggestedType && data.suggestedType !== 'none') {
+            const typeLabel = data.suggestedType === 'tasks' ? 'action items' : data.suggestedType;
+            toast(
+              (t) => (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">
+                    {isPolish
+                      ? `Ta notatka wygląda jak ${typeLabel}. Konwertować?`
+                      : `This note looks like ${typeLabel}. Convert?`}
+                  </span>
+                  <button
+                    onClick={() => {
+                      toast.dismiss(t.id);
+                      if (data.suggestedType === 'tasks') {
+                        setActionItemsOpen(true);
+                      } else {
+                        window.dispatchEvent(
+                          new CustomEvent(`notebook-create-${data.suggestedType}`, {
+                            detail: { text: activePage.title },
+                          })
+                        );
+                      }
+                    }}
+                    className="px-2 py-0.5 text-xs font-semibold rounded bg-purple-500/20 text-purple-700 hover:bg-purple-500/30"
+                  >
+                    {isPolish ? 'Konwertuj' : 'Convert'}
+                  </button>
+                </div>
+              ),
+              { duration: 8000 }
+            );
+          }
+        }
+      } catch {
+        /* ignore classification errors */
+      }
+    };
+
+    const timer = setTimeout(classify, 2000);
+    return () => clearTimeout(timer);
+  }, [activePage?.id, activePage?.maturity, activePage?.status, isPolish]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleAskAI = () => {
     if (!activePage) return;
     setChatKickoffMessage(buildAskAIMessage({
