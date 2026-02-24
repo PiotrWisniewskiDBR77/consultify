@@ -6,20 +6,15 @@ import {
   AlignRight,
   Bold,
   Code,
-  Columns3,
   Heading1,
   Heading2,
   Heading3,
-  Info,
   Italic,
   List,
   ListChecks,
   ListOrdered,
-  Minus,
   Redo,
   Strikethrough,
-  Trash2,
-  ToggleRight,
   Undo,
 } from 'lucide-react';
 import React from 'react';
@@ -56,22 +51,6 @@ const Btn: React.FC<ToolbarBtnProps> = ({ icon: Icon, onClick, isActive, disable
 const Divider: React.FC = () => (
   <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5" />
 );
-
-const DELETABLE_BLOCKS = ['callout', 'details', 'table', 'blockquote', 'horizontalRule'];
-
-function deleteContainingBlock(editor: Editor): boolean {
-  const { state } = editor;
-  const { $from } = state.selection;
-  for (let d = $from.depth; d > 0; d--) {
-    const node = $from.node(d);
-    if (DELETABLE_BLOCKS.includes(node.type.name)) {
-      const pos = $from.before(d);
-      editor.chain().focus().deleteRange({ from: pos, to: pos + node.nodeSize }).run();
-      return true;
-    }
-  }
-  return false;
-}
 
 export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor }) => {
   const { i18n } = useTranslation();
@@ -187,34 +166,6 @@ export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor }) => {
         onClick={() => editor.chain().focus().toggleTaskList().run()}
         isActive={editor.isActive('taskList')}
         title={pl ? 'Checklista' : 'Todo list'}
-      />
-      <Divider />
-
-      {/* Bloki */}
-      <Btn
-        icon={Info}
-        onClick={() => (editor.commands as any).setCallout({ variant: 'info' })}
-        title={pl ? 'Wyróżnienie' : 'Callout'}
-      />
-      <Btn
-        icon={ToggleRight}
-        onClick={() => (editor.commands as any).setDetails()}
-        title={pl ? 'Sekcja zwijana' : 'Toggle'}
-      />
-      <Btn
-        icon={Columns3}
-        onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-        title={pl ? 'Tabela' : 'Table'}
-      />
-      <Btn
-        icon={Minus}
-        onClick={() => editor.chain().focus().setHorizontalRule().run()}
-        title={pl ? 'Separator' : 'Divider'}
-      />
-      <Btn
-        icon={Trash2}
-        onClick={() => deleteContainingBlock(editor)}
-        title={pl ? 'Usuń blok' : 'Delete block'}
       />
 
       <div className="flex-1" />

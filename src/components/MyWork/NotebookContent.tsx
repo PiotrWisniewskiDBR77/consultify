@@ -54,7 +54,6 @@ import { AIChatInlinePanel, AI_BLOCK_MIME } from './notebook/AIChatInlinePanel';
 import { AICommandPrompt } from './notebook/AICommandPrompt';
 import { AITopicsPanel } from './notebook/AITopicsPanel';
 import { type AICommandType, AIInlineResponse } from './notebook/AIInlineResponse';
-import { InsertMenu } from './notebook/InsertMenu';
 import { ConvertChecklistModal } from './notebook/ConvertChecklistModal';
 import {
   CalloutNode,
@@ -1399,100 +1398,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             </div>
           ) : (
             <div className="h-full flex flex-col nb-page-enter" key={activePage.id}>
-              {/* Compact toolbar + meta strip (single row) */}
+              {/* Compact toolbar (text editing only) */}
               <div className="border-b border-slate-200/60 dark:border-navy-800/60 bg-white/80 dark:bg-navy-950/80 backdrop-blur-sm">
                 <div className="flex items-center gap-2 flex-wrap">
                   {/* Toolbar */}
                   {editor && <NotebookToolbar editor={editor} />}
-                  {editor && (
-                    <InsertMenu
-                      editor={editor}
-                      onFocusAICommand={() => aiCommandPromptInputRef.current?.focus()}
-                      onOpenAIChat={() => setChatOpen(true)}
-                    />
-                  )}
-
-                  {/* Meta strip: maturity + auto-summary + project + actions — moved up into same row */}
-                  <div className="flex items-center gap-2 px-2 py-1 text-[11px] flex-1 min-w-0">
-                  {/* Maturity badge */}
-                  {(() => {
-                    const mat =
-                      (activePage.maturity as NotebookMaturity) || computeMaturity(activePage);
-                    const cfg = MATURITY_CONFIG[mat];
-                    return (
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-md border ${cfg.border} ${cfg.bg} ${cfg.text} px-2 py-0.5 font-semibold uppercase tracking-wide text-[9px]`}
-                      >
-                        <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                        {isPolish ? cfg.labelPl : cfg.label}
-                      </span>
-                    );
-                  })()}
-
-                  {/* Visibility toggle */}
-                  <div className="relative">
-                    <select
-                      value={activePage.visibility === 'project' && activePage.projectId ? `project:${activePage.projectId}` : 'private'}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === 'private') {
-                          scheduleSave({ projectId: null, visibility: 'private' });
-                          setPages((prev) => prev.map((p) => p.id === activePage.id ? { ...p, projectId: null, visibility: 'private' } : p));
-                        }
-                      }}
-                      className="appearance-none pl-5 pr-2 py-0.5 rounded-md bg-transparent border border-slate-200/60 dark:border-white/[0.08] text-[10px] text-slate-600 dark:text-slate-400 font-medium cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
-                    >
-                      <option value="private">{isPolish ? '🔒 Prywatna' : '🔒 Private'}</option>
-                      {activePage.projectId && (
-                        <option value={`project:${activePage.projectId}`}>
-                          {isPolish ? '👥 Projekt' : '👥 Project'}
-                        </option>
-                      )}
-                    </select>
-                    <ChevronDown size={8} className="absolute right-0.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                  </div>
-
-                  {/* Auto-summary */}
-                  {activePage?.summary && (
-                    <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 italic truncate flex-1 min-w-0">
-                      <Sparkles size={10} className="shrink-0 text-violet-400" />
-                      <span className="truncate">{activePage.summary}</span>
-                    </div>
-                  )}
-                  {!activePage?.summary && <div className="flex-1" />}
-
-                  {/* Word count */}
-                  <span className="text-slate-400 dark:text-slate-500 tabular-nums shrink-0 flex items-center gap-1">
-                    <Type size={9} />
-                    {wordCount(activePage.contentText || extractText(activePage.contentJson))}
-                  </span>
-
-                  {/* Relative time */}
-                  {activePage.updatedAt && (
-                    <span className="text-slate-400 dark:text-slate-500 tabular-nums shrink-0 flex items-center gap-1">
-                      <Clock size={9} />
-                      {relativeTime(activePage.updatedAt)}
-                    </span>
-                  )}
-
-                  {/* Ask AI */}
-                  <button
-                    onClick={handleAskAI}
-                    className="p-1 rounded-md text-purple-400 hover:text-purple-500 hover:bg-purple-500/10 transition-colors shrink-0"
-                    title={isPolish ? 'Zapytaj AI o tę notatkę' : 'Ask AI about this note'}
-                  >
-                    <Sparkles size={12} />
-                  </button>
-
-                  {/* Delete */}
-                  <button
-                    onClick={handleDeletePage}
-                    className="p-1 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors shrink-0"
-                    title={t('common.delete', 'Delete')}
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                </div>
                 </div>
               </div>
 
@@ -1843,6 +1753,41 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             noteTitle={title}
             noteContent={activePage.contentText || extractText(activePage.contentJson)}
             noteTags={pageTags}
+            page={{
+              id: activePage.id,
+              maturity:
+                (activePage.maturity as NotebookMaturity) || computeMaturity(activePage),
+              summary: activePage.summary,
+              updatedAt: activePage.updatedAt,
+              visibility: (activePage.visibility as NotebookVisibility) || 'private',
+              projectId: activePage.projectId,
+              wordCount: wordCount(activePage.contentText || extractText(activePage.contentJson)),
+            }}
+            onAskAI={handleAskAI}
+            onDeletePage={handleDeletePage}
+            onSetVisibility={(next) => {
+              if (!activePage) return;
+              if (next === 'private') {
+                scheduleSave({ projectId: null, visibility: 'private' });
+                setPages((prev) =>
+                  prev.map((p) =>
+                    p.id === activePage.id ? { ...p, projectId: null, visibility: 'private' } : p
+                  )
+                );
+                return;
+              }
+              if (activePage.projectId) {
+                scheduleSave({ visibility: 'project' });
+                setPages((prev) =>
+                  prev.map((p) =>
+                    p.id === activePage.id ? { ...p, visibility: 'project' } : p
+                  )
+                );
+              }
+            }}
+            getRelativeTime={(iso) => relativeTime(iso)}
+            onOpenAIChat={() => setChatOpen(true)}
+            onFocusAICommand={() => aiCommandPromptInputRef.current?.focus()}
           />
         )}
       </div>

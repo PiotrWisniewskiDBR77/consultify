@@ -5,8 +5,13 @@
 import type { Editor } from '@tiptap/react';
 import {
   AlertTriangle,
+  ChevronDown,
+  Clock,
   Columns3,
   GripVertical,
+  Heading1,
+  Heading2,
+  Heading3,
   Info,
   List,
   ListChecks,
@@ -19,6 +24,7 @@ import {
   Sparkles,
   ToggleRight,
   Trash2,
+  Type,
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -37,6 +43,21 @@ interface AIChatInlinePanelProps {
   noteTitle: string;
   noteContent: string;
   noteTags: string[];
+  page?: {
+    id: string;
+    maturity: 'seed' | 'growing' | 'mature' | 'actionable';
+    summary?: string | null;
+    updatedAt?: string | null;
+    visibility?: 'private' | 'project' | null;
+    projectId?: string | null;
+    wordCount: number;
+  };
+  onAskAI?: () => void;
+  onDeletePage?: () => void;
+  onSetVisibility?: (next: 'private' | 'project') => void;
+  getRelativeTime?: (iso: string) => string;
+  onFocusAICommand?: () => void;
+  onOpenAIChat?: () => void;
 }
 
 export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
@@ -46,6 +67,13 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
   noteTitle,
   noteContent,
   noteTags,
+  page,
+  onAskAI,
+  onDeletePage,
+  onSetVisibility,
+  getRelativeTime,
+  onFocusAICommand,
+  onOpenAIChat,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
@@ -213,6 +241,9 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
     { icon: ToggleRight, label: 'Toggle', labelPl: 'Toggle', action: () => (editor?.commands as any)?.setDetails() },
     { icon: Columns3, label: 'Table', labelPl: 'Tabela', action: () => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
     { icon: Minus, label: 'Divider', labelPl: 'Separator', action: () => editor?.chain().focus().setHorizontalRule().run() },
+    { icon: Heading1, label: 'H1', labelPl: 'H1', action: () => editor?.chain().focus().toggleHeading({ level: 1 }).run() },
+    { icon: Heading2, label: 'H2', labelPl: 'H2', action: () => editor?.chain().focus().toggleHeading({ level: 2 }).run() },
+    { icon: Heading3, label: 'H3', labelPl: 'H3', action: () => editor?.chain().focus().toggleHeading({ level: 3 }).run() },
     { icon: List, label: 'List', labelPl: 'Lista', action: () => editor?.chain().focus().toggleBulletList().run() },
     { icon: ListOrdered, label: 'Num', labelPl: 'Num.', action: () => editor?.chain().focus().toggleOrderedList().run() },
     { icon: ListChecks, label: 'Check', labelPl: 'Check', action: () => editor?.chain().focus().toggleTaskList().run() },
@@ -256,7 +287,102 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
             </button>
           ))}
         </div>
+
+        {(onFocusAICommand || onOpenAIChat) && (
+          <div className="mt-2 flex items-center gap-1 px-1">
+            {onFocusAICommand && (
+              <button
+                onClick={onFocusAICommand}
+                className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-300 px-2 py-1.5 text-[11px] font-semibold hover:bg-violet-500/20 transition-colors"
+                title={isPl ? 'Polecenie AI' : 'AI command'}
+              >
+                <Sparkles size={12} />
+                {isPl ? 'Polecenie' : 'Command'}
+              </button>
+            )}
+            {onOpenAIChat && (
+              <button
+                onClick={onOpenAIChat}
+                className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-slate-500/10 text-slate-700 dark:text-slate-300 px-2 py-1.5 text-[11px] font-semibold hover:bg-slate-500/20 transition-colors"
+                title={isPl ? 'Czat AI' : 'AI chat'}
+              >
+                {isPl ? 'Czat' : 'Chat'}
+              </button>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Page meta + actions */}
+      {page && (
+        <div className="px-3 py-3 border-b border-slate-200 dark:border-navy-800 space-y-2">
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            {isPl ? 'Strona' : 'Page'}
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center gap-1 rounded-md border border-slate-300/50 dark:border-white/[0.08] bg-slate-500/10 text-slate-600 dark:text-slate-400 px-2 py-0.5 font-semibold uppercase tracking-wide text-[9px]">
+              {page.maturity}
+            </span>
+
+            {onSetVisibility && (
+              <div className="relative">
+                <select
+                  value={page.visibility === 'project' && page.projectId ? 'project' : 'private'}
+                  onChange={(e) => onSetVisibility(e.target.value as 'private' | 'project')}
+                  className="appearance-none pr-6 pl-2 py-0.5 rounded-md bg-transparent border border-slate-200/60 dark:border-white/[0.08] text-[10px] text-slate-600 dark:text-slate-400 font-medium cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+                >
+                  <option value="private">{isPl ? '🔒 Prywatna' : '🔒 Private'}</option>
+                  {page.projectId && <option value="project">{isPl ? '👥 Projekt' : '👥 Project'}</option>}
+                </select>
+                <ChevronDown size={10} className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+            )}
+          </div>
+
+          {page.summary ? (
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 italic line-clamp-2">
+              {page.summary}
+            </div>
+          ) : null}
+
+          <div className="flex items-center gap-3 text-[11px] text-slate-400 dark:text-slate-500">
+            <span className="inline-flex items-center gap-1 tabular-nums">
+              <Type size={12} />
+              {page.wordCount}
+            </span>
+            {page.updatedAt && getRelativeTime ? (
+              <span className="inline-flex items-center gap-1 tabular-nums">
+                <Clock size={12} />
+                {getRelativeTime(page.updatedAt)}
+              </span>
+            ) : null}
+          </div>
+
+          {(onAskAI || onDeletePage) && (
+            <div className="flex items-center gap-2">
+              {onAskAI && (
+                <button
+                  onClick={onAskAI}
+                  className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-300 px-2 py-1.5 text-[11px] font-semibold hover:bg-violet-500/20 transition-colors"
+                >
+                  <Sparkles size={12} />
+                  {isPl ? 'Zapytaj AI' : 'Ask AI'}
+                </button>
+              )}
+              {onDeletePage && (
+                <button
+                  onClick={onDeletePage}
+                  className="inline-flex items-center justify-center rounded-lg bg-red-500/10 text-red-700 dark:text-red-300 px-2 py-1.5 text-[11px] font-semibold hover:bg-red-500/20 transition-colors"
+                  title={isPl ? 'Usuń stronę' : 'Delete page'}
+                >
+                  <Trash2 size={12} />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Draggable AI block */}
       <div className="p-3 flex-1 flex flex-col min-h-0">
