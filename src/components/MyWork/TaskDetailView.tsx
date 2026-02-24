@@ -598,6 +598,9 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         const notes = (await Api.get(`/my-work/notebook/pages?${params.toString()}`)) as any;
         const arr = Array.isArray(notes) ? notes : [];
         setSuggestedNotes(arr);
+        if (arr.length > 0) {
+          trackFunnelEvent('active_notes_suggested', { surface: 'task', count: arr.length });
+        }
       } catch {
         setSuggestedNotes([]);
       } finally {
@@ -2262,6 +2265,7 @@ Return ONLY the final comment text.`;
                                     .filter(Boolean)
                                     .join('\n');
                                   setDescription((prev) => `${prev || ''}${insert}`.trim());
+                                  trackFunnelEvent('active_notes_inserted', { surface: 'task', noteId: note.id });
                                   toast.success(
                                     t('myWork.notebook.insertedToast', 'Inserted into description')
                                   );
@@ -2272,6 +2276,7 @@ Return ONLY the final comment text.`;
                               </button>
                               <button
                                 onClick={() => {
+                                  trackFunnelEvent('active_notes_opened', { surface: 'task', noteId: note.id });
                                   try {
                                     const { setMyWorkIntent } = useAppStore.getState() as any;
                                     setMyWorkIntent?.({ tab: 'notebook' });

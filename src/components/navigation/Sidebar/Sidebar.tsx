@@ -151,7 +151,11 @@ export const Sidebar: React.FC = () => {
       const isLocked =
         item.requiresView &&
         !completedViews.includes(item.requiresView) &&
-        !(currentUser?.role === UserRole.ADMIN || currentUser?.role === 'SUPERADMIN');
+        !(
+          currentUser?.role === UserRole.ADMIN ||
+          currentUser?.role === UserRole.OWNER ||
+          currentUser?.role === 'SUPERADMIN'
+        );
 
       if (isLocked) {
         console.warn('[Sidebar] BLOCKED - Item is locked:', {
@@ -379,9 +383,13 @@ export const Sidebar: React.FC = () => {
           t={t as any}
           showPartnerPortal={currentUser?.role !== 'SUPERADMIN'}
         >
-          {(currentUser?.role === UserRole.ADMIN || currentUser?.role === 'SUPERADMIN') &&
+          {(currentUser?.role === UserRole.ADMIN ||
+            currentUser?.role === UserRole.OWNER ||
+            currentUser?.role === 'SUPERADMIN') &&
             renderNavItem(organizationMenuItem)}
-          {(currentUser?.role === UserRole.ADMIN || currentUser?.role === 'SUPERADMIN') &&
+          {(currentUser?.role === UserRole.ADMIN ||
+            currentUser?.role === UserRole.OWNER ||
+            currentUser?.role === 'SUPERADMIN') &&
             renderNavItem(adminMenuItem)}
           {currentUser?.role === 'SUPERADMIN' && renderNavItem(superAdminMenuItem)}
           {renderNavItem(settingsMenuItem)}

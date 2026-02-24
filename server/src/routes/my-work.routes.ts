@@ -1142,8 +1142,12 @@ router.post(
 
     const triagedAt = new Date().toISOString();
     await queryHelpers.queryRun(
-      `INSERT OR REPLACE INTO my_work_inbox_triage (user_id, item_key, action, params_json, triaged_at)
-       VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO my_work_inbox_triage (user_id, item_key, action, params_json, triaged_at)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT (user_id, item_key) DO UPDATE SET
+         action = excluded.action,
+         params_json = excluded.params_json,
+         triaged_at = excluded.triaged_at`,
       [userId, itemKey, action, params ? JSON.stringify(params) : null, triagedAt]
     );
 
@@ -1152,8 +1156,12 @@ router.post(
     if (action === 'accept_today') {
       // Add to focus "today"
       await queryHelpers.queryRun(
-        `INSERT OR REPLACE INTO my_work_focus_state (user_id, focus_date, item_key, column_name, position, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO my_work_focus_state (user_id, focus_date, item_key, column_name, position, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT (user_id, focus_date, item_key) DO UPDATE SET
+           column_name = excluded.column_name,
+           position = excluded.position,
+           updated_at = excluded.updated_at`,
         [userId, todayIsoDate(), itemKey, 'today', 0, triagedAt]
       );
     }
@@ -1252,8 +1260,12 @@ router.post(
     const triagedAt = new Date().toISOString();
     for (const key of itemKeys) {
       await queryHelpers.queryRun(
-        `INSERT OR REPLACE INTO my_work_inbox_triage (user_id, item_key, action, params_json, triaged_at)
-         VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO my_work_inbox_triage (user_id, item_key, action, params_json, triaged_at)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT (user_id, item_key) DO UPDATE SET
+           action = excluded.action,
+           params_json = excluded.params_json,
+           triaged_at = excluded.triaged_at`,
         [userId, String(key), action, params ? JSON.stringify(params) : null, triagedAt]
       );
     }
@@ -1281,8 +1293,12 @@ router.put(
     }
 
     await queryHelpers.queryRun(
-      `INSERT OR REPLACE INTO my_work_focus_state (user_id, focus_date, item_key, column_name, position, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO my_work_focus_state (user_id, focus_date, item_key, column_name, position, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT (user_id, focus_date, item_key) DO UPDATE SET
+         column_name = excluded.column_name,
+         position = excluded.position,
+         updated_at = excluded.updated_at`,
       [userId, todayIsoDate(), itemId, column, 0, new Date().toISOString()]
     );
 
@@ -1310,8 +1326,12 @@ router.put(
     }
 
     await queryHelpers.queryRun(
-      `INSERT OR REPLACE INTO my_work_focus_state (user_id, focus_date, item_key, column_name, position, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO my_work_focus_state (user_id, focus_date, item_key, column_name, position, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT (user_id, focus_date, item_key) DO UPDATE SET
+         column_name = excluded.column_name,
+         position = excluded.position,
+         updated_at = excluded.updated_at`,
       [userId, todayIsoDate(), itemId, column, position, new Date().toISOString()]
     );
 
@@ -1387,7 +1407,7 @@ router.delete(
 
 /**
  * GET /api/my-work/stats?period=week
- * Minimal aggregates for ExecutiveDashboard
+ * Aggregates for ExecutiveDashboard — real trend + previous period comparison
  */
 router.get(
   '/stats',
@@ -1399,8 +1419,10 @@ router.get(
     const period = String(req.query.period || 'week');
     const days = period === 'month' ? 30 : 7;
     const sinceIso = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+    const prevSinceIso = new Date(Date.now() - days * 2 * 24 * 60 * 60 * 1000).toISOString();
     const today = todayIsoDate();
 
+    // --- Current period ---
     const totals = await queryHelpers.queryOne<{ total: number }>(
       `SELECT COUNT(*) as total FROM tasks WHERE organization_id = ? AND assignee_id = ? AND created_at >= ?`,
       [orgId, userId, sinceIso]
@@ -1417,8 +1439,6 @@ router.get(
          AND lower(coalesce(status,'')) NOT IN ('done','completed','validated')`,
       [orgId, userId, today]
     );
-    // Note: PostgreSQL doesn't support datetime() function - columns are already timestamps
-    // Compare timestamps directly without function calls
     const onTime = await queryHelpers.queryOne<{ onTime: number; totalDone: number }>(
       `SELECT
          SUM(CASE WHEN due_date IS NOT NULL AND completed_at IS NOT NULL AND completed_at <= due_date THEN 1 ELSE 0 END) as onTime,
@@ -1428,6 +1448,41 @@ router.get(
       [orgId, userId, sinceIso]
     );
 
+    // --- Previous period (for trend calculation) ---
+    const prevTotals = await queryHelpers.queryOne<{ total: number }>(
+      `SELECT COUNT(*) as total FROM tasks WHERE organization_id = ? AND assignee_id = ? AND created_at >= ? AND created_at < ?`,
+      [orgId, userId, prevSinceIso, sinceIso]
+    );
+    const prevCompleted = await queryHelpers.queryOne<{ completed: number }>(
+      `SELECT COUNT(*) as completed FROM tasks
+       WHERE organization_id = ? AND assignee_id = ? AND completed_at IS NOT NULL AND completed_at >= ? AND completed_at < ?`,
+      [orgId, userId, prevSinceIso, sinceIso]
+    );
+    const prevOnTime = await queryHelpers.queryOne<{ onTime: number; totalDone: number }>(
+      `SELECT
+         SUM(CASE WHEN due_date IS NOT NULL AND completed_at IS NOT NULL AND completed_at <= due_date THEN 1 ELSE 0 END) as onTime,
+         SUM(CASE WHEN completed_at IS NOT NULL THEN 1 ELSE 0 END) as totalDone
+       FROM tasks
+       WHERE organization_id = ? AND assignee_id = ? AND completed_at IS NOT NULL AND completed_at >= ? AND completed_at < ?`,
+      [orgId, userId, prevSinceIso, sinceIso]
+    );
+
+    // --- Escalations count ---
+    const escalations = await queryHelpers.queryOne<{ cnt: number }>(
+      `SELECT COUNT(*) as cnt FROM decisions
+       WHERE organization_id = ? AND lower(coalesce(status,'')) = 'escalated'`,
+      [orgId]
+    );
+
+    // --- Blocked tasks count ---
+    const blocked = await queryHelpers.queryOne<{ cnt: number }>(
+      `SELECT COUNT(*) as cnt FROM tasks
+       WHERE organization_id = ? AND assignee_id = ?
+         AND (lower(coalesce(status,'')) = 'blocked' OR blocked_reason IS NOT NULL OR blocked_by_decision_id IS NOT NULL)
+         AND lower(coalesce(status,'')) NOT IN ('done','completed','validated')`,
+      [orgId, userId]
+    );
+
     const total = Number((totals as any)?.total || 0);
     const completedCount = Number((completed as any)?.completed || 0);
     const overdueCount = Number((overdue as any)?.overdue || 0);
@@ -1435,12 +1490,34 @@ router.get(
     const onTimeRate =
       totalDone > 0 ? Math.round((Number((onTime as any)?.onTime || 0) / totalDone) * 100) : 0;
 
+    const prevTotal = Number((prevTotals as any)?.total || 0);
+    const prevCompletedCount = Number((prevCompleted as any)?.completed || 0);
+    const prevTotalDone = Number((prevOnTime as any)?.totalDone || 0);
+    const prevOnTimeRate =
+      prevTotalDone > 0
+        ? Math.round((Number((prevOnTime as any)?.onTime || 0) / prevTotalDone) * 100)
+        : 0;
+
+    const currentScore = total > 0 ? (completedCount / total) * 100 : 0;
+    const prevScore = prevTotal > 0 ? (prevCompletedCount / prevTotal) * 100 : 0;
+    const trend: 'up' | 'down' | 'stable' =
+      currentScore > prevScore + 5 ? 'up' : currentScore < prevScore - 5 ? 'down' : 'stable';
+
     res.json({
       total,
       completed: completedCount,
       onTimeRate,
-      trend: 'stable',
-      byStatus: { overdue: overdueCount },
+      trend,
+      byStatus: {
+        overdue: overdueCount,
+        blocked: Number((blocked as any)?.cnt || 0),
+        escalated: Number((escalations as any)?.cnt || 0),
+      },
+      previous: {
+        total: prevTotal,
+        completed: prevCompletedCount,
+        onTimeRate: prevOnTimeRate,
+      },
     });
   })
 );
@@ -1787,6 +1864,13 @@ router.get(
           source_type as "sourceType",
           source_conversation_id as "sourceConversationId",
           source_message_id as "sourceMessageId",
+          stage,
+          potential,
+          complexity,
+          area,
+          priority,
+          branch,
+          promoted_to as "promotedTo",
           created_at as "createdAt",
           updated_at as "updatedAt"
         FROM my_ideas
@@ -1928,6 +2012,19 @@ router.get(
         source_type as "sourceType",
         source_conversation_id as "sourceConversationId",
         source_message_id as "sourceMessageId",
+        stage,
+        seed_text as "seedText",
+        ai_expansion as "aiExpansion",
+        research_data as "researchData",
+        creative_proposals as "creativeProposals",
+        summary_data as "summaryData",
+        potential,
+        complexity,
+        area,
+        priority,
+        branch,
+        promoted_to as "promotedTo",
+        promoted_entity_id as "promotedEntityId",
         created_at as "createdAt",
         updated_at as "updatedAt"
       FROM my_ideas
@@ -1975,6 +2072,10 @@ router.put(
     if (typeof req.body?.title === 'string') set('title', String(req.body.title).trim());
     if (typeof req.body?.body === 'string') set('body', req.body.body);
     if (req.body?.tags !== undefined) set('tags', JSON.stringify(parseTagsArray(req.body.tags)));
+    if (typeof req.body?.branch === 'string') set('branch', req.body.branch);
+    if (typeof req.body?.area === 'string') set('area', req.body.area);
+    if (typeof req.body?.priority === 'number') set('priority', Math.max(0, Math.min(100, req.body.priority)));
+    if (typeof req.body?.stage === 'string') set('stage', req.body.stage);
 
     if (setParts.length === 0) {
       const row = await queryHelpers.queryOne<any>(
@@ -2043,6 +2144,188 @@ router.delete(
       [id, userId, orgId]
     );
     res.status(204).send();
+  })
+);
+
+// ============================================================================
+// T009 Enhancement — AI Idea Incubator (develop endpoint)
+// ============================================================================
+
+router.post(
+  '/my-ideas/:id/develop',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_ideas']))) return;
+
+    const { id } = req.params;
+    const existing = await queryHelpers.queryOne<any>(
+      `SELECT * FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [id, userId, orgId]
+    );
+    if (!existing) return res.status(404).json({ error: 'Idea not found' });
+
+    const seedText = String(req.body.seedText || existing.body || existing.title || '').trim();
+    if (!seedText) return res.status(400).json({ error: 'Seed text is required' });
+    const language = String(req.body.language || 'en').toLowerCase();
+    const isPl = language.startsWith('pl');
+
+    // SSE setup
+    if (req.socket) {
+      req.socket.setTimeout(120_000);
+      req.socket.setNoDelay(true);
+    }
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
+
+    const emit = (type: string, data: any) => {
+      try { res.write(`data: ${JSON.stringify({ type, ...data })}\n\n`); } catch {}
+    };
+
+    emit('stage', { stage: 'expanding', label: isPl ? 'Rozwijam Twój pomysł...' : 'Expanding your idea...' });
+
+    try {
+      const { llmService } = await import('../services/ai/llmService.js');
+      const modelRouter = (await import('../services/ai/modelRouter.js')).default;
+      const modelCfg = await modelRouter.select({ capability: 'chat', organizationId: orgId, options: { tier: 'STANDARD' } });
+
+      // STAGE 1: AI Expansion
+      const expansionPrompt = isPl
+        ? `Jesteś kreatywnym konsultantem strategicznym. Użytkownik ma pomysł:\n\n"${seedText}"\n\nRozwiń ten pomysł w 3-4 akapitach. Opisz:\n1. Na czym dokładnie polega ten pomysł\n2. Jaką wartość przyniesie\n3. Jak mógłby wyglądać w praktyce\n4. Co czyni go wyjątkowym\n\nBądź entuzjastyczny ale rzeczowy. Pisz po polsku.`
+        : `You are a creative strategic consultant. The user has an idea:\n\n"${seedText}"\n\nExpand this idea in 3-4 paragraphs. Describe:\n1. What exactly this idea entails\n2. What value it would bring\n3. How it could look in practice\n4. What makes it unique\n\nBe enthusiastic but grounded.`;
+
+      const expansionResult = await llmService.callText({
+        modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
+        systemPrompt: isPl ? 'Jesteś kreatywnym partnerem do rozwoju pomysłów.' : 'You are a creative idea development partner.',
+        messages: [{ role: 'user', content: expansionPrompt }],
+      });
+      const aiExpansion = String((expansionResult as any)?.content || '');
+      emit('expansion', { content: aiExpansion });
+
+      // Save expansion to DB
+      await queryHelpers.queryRun(
+        `UPDATE my_ideas SET seed_text = ?, ai_expansion = ?, stage = 'expanding', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?`,
+        [seedText, aiExpansion, id, userId]
+      );
+
+      // STAGE 2: Web Research
+      emit('stage', { stage: 'researching', label: isPl ? 'Szukam informacji w sieci...' : 'Researching the web...' });
+
+      let researchResults: any[] = [];
+      try {
+        const tavilyKey = process.env.TAVILY_API_KEY;
+        if (tavilyKey) {
+          const { TavilyWebSearchService } = await import('../services/ai/tavilyWebSearchService.js');
+          const tavily = new (TavilyWebSearchService as any)(tavilyKey);
+
+          const searchQuery = aiExpansion.split('\n').slice(0, 2).join(' ').slice(0, 200);
+          const searchRes = await tavily.search(searchQuery, { maxResults: 5, searchDepth: 'advanced' });
+          researchResults = (searchRes?.results || []).map((r: any) => ({
+            title: String(r?.title || '').slice(0, 200),
+            url: String(r?.url || ''),
+            snippet: String(r?.content || '').slice(0, 400),
+          }));
+          emit('research', { results: researchResults, answer: searchRes?.answer || null });
+        }
+      } catch (err: any) {
+        logger.warn('[IdeaDevelop] Web search failed:', err?.message);
+        emit('research', { results: [], answer: null, error: 'Web search unavailable' });
+      }
+
+      // Save research
+      await queryHelpers.queryRun(
+        `UPDATE my_ideas SET research_data = ?, stage = 'researching', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+        [JSON.stringify(researchResults), id]
+      );
+
+      // STAGE 3: Creative Proposals
+      emit('stage', { stage: 'proposing', label: isPl ? 'Generuję kreatywne propozycje...' : 'Generating creative proposals...' });
+
+      const researchContext = researchResults.map(r => `- ${r.title}: ${r.snippet}`).join('\n');
+      const proposalsPrompt = isPl
+        ? `Na podstawie pomysłu użytkownika i badań, zaproponuj 4 kreatywne warianty/rozszerzenia.\n\nPomysł: "${seedText}"\n\nRozwinięcie:\n${aiExpansion}\n\nBadania:\n${researchContext}\n\nDla każdego wariantu podaj:\n- Tytuł (krótki, chwytliwy)\n- Opis (2-3 zdania)\n- Dlaczego warto (1 zdanie)\n\nOdpowiedz jako JSON array: [{"title":"...","description":"...","whyItMatters":"..."}]\nTylko JSON, bez markdown.`
+        : `Based on the user's idea and research, propose 4 creative variants/extensions.\n\nIdea: "${seedText}"\n\nExpansion:\n${aiExpansion}\n\nResearch:\n${researchContext}\n\nFor each variant provide:\n- Title (short, catchy)\n- Description (2-3 sentences)\n- Why it matters (1 sentence)\n\nRespond as JSON array: [{"title":"...","description":"...","whyItMatters":"..."}]\nOnly JSON, no markdown.`;
+
+      const proposalsResult = await llmService.callText({
+        modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
+        systemPrompt: isPl ? 'Jesteś kreatywnym generatorem pomysłów. Odpowiadasz tylko poprawnym JSON.' : 'You are a creative idea generator. You respond only with valid JSON.',
+        messages: [{ role: 'user', content: proposalsPrompt }],
+      });
+
+      let proposals: any[] = [];
+      try {
+        const raw = String((proposalsResult as any)?.content || '[]');
+        const jsonMatch = raw.match(/\[[\s\S]*\]/);
+        proposals = JSON.parse(jsonMatch ? jsonMatch[0] : '[]');
+      } catch { proposals = []; }
+
+      emit('proposals', { proposals });
+
+      await queryHelpers.queryRun(
+        `UPDATE my_ideas SET creative_proposals = ?, stage = 'proposing', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+        [JSON.stringify(proposals), id]
+      );
+
+      // STAGE 4: Summary
+      emit('stage', { stage: 'summary', label: isPl ? 'Tworzę podsumowanie...' : 'Creating summary...' });
+
+      const summaryPrompt = isPl
+        ? `Podsumuj ten pomysł jako kreatywny konsultant.\n\nPomysł: "${seedText}"\nRozwinięcie: ${aiExpansion.slice(0, 500)}\nPropozycje: ${proposals.map(p => p.title).join(', ')}\n\nOdpowiedz jako JSON:\n{"verdict":"...(1-2 zdania entuzjastycznej oceny)","potential":"high|medium|low","complexity":"low|medium|high","timeToValue":"...(np. 2-4 tygodnie)","nextSteps":["krok1","krok2","krok3"]}\nTylko JSON.`
+        : `Summarize this idea as a creative consultant.\n\nIdea: "${seedText}"\nExpansion: ${aiExpansion.slice(0, 500)}\nProposals: ${proposals.map(p => p.title).join(', ')}\n\nRespond as JSON:\n{"verdict":"...(1-2 sentence enthusiastic assessment)","potential":"high|medium|low","complexity":"low|medium|high","timeToValue":"...(e.g. 2-4 weeks)","nextSteps":["step1","step2","step3"]}\nOnly JSON.`;
+
+      const summaryResult = await llmService.callText({
+        modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
+        systemPrompt: isPl ? 'Jesteś pozytywnym konsultantem strategicznym. Odpowiadasz JSON.' : 'You are a positive strategic consultant. You respond with JSON.',
+        messages: [{ role: 'user', content: summaryPrompt }],
+      });
+
+      let summary: any = {};
+      try {
+        const raw = String((summaryResult as any)?.content || '{}');
+        const jsonMatch = raw.match(/\{[\s\S]*\}/);
+        summary = JSON.parse(jsonMatch ? jsonMatch[0] : '{}');
+      } catch { summary = { verdict: '', potential: 'medium', complexity: 'medium', timeToValue: '?', nextSteps: [] }; }
+
+      emit('summary', { summary });
+
+      // Auto-priority: calculate from AI assessment
+      let autoPriority = 50;
+      const pot = summary.potential || 'medium';
+      const cmplx = summary.complexity || 'medium';
+      if (pot === 'high') autoPriority += 25;
+      else if (pot === 'low') autoPriority -= 15;
+      if (cmplx === 'low') autoPriority += 10;
+      else if (cmplx === 'high') autoPriority -= 5;
+      if (proposals.length >= 3) autoPriority += 5;
+      if (researchResults.length >= 3) autoPriority += 5;
+      autoPriority = Math.max(10, Math.min(100, autoPriority));
+
+      // Auto-detect area from content
+      let autoArea: string | null = null;
+      const allText = `${seedText} ${aiExpansion}`.toLowerCase();
+      if (/strateg|vision|roadmap|competitive/.test(allText)) autoArea = 'strategy';
+      else if (/product|feature|ux|user experience|interface/.test(allText)) autoArea = 'product';
+      else if (/process|workflow|operations|efficiency|automat/.test(allText)) autoArea = 'process';
+      else if (/culture|team|hr|hiring|talent|wellbeing/.test(allText)) autoArea = 'culture';
+      else if (/tech|architecture|infra|devops|security|code/.test(allText)) autoArea = 'tech';
+      else if (/growth|market|sales|revenue|customer|acqui/.test(allText)) autoArea = 'growth';
+
+      await queryHelpers.queryRun(
+        `UPDATE my_ideas SET summary_data = ?, potential = ?, complexity = ?, stage = 'summary', priority = ?, area = COALESCE(area, ?), updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+        [JSON.stringify(summary), pot, cmplx, autoPriority, autoArea, id]
+      );
+
+      emit('done', { stage: 'done', priority: autoPriority, area: autoArea });
+      res.end();
+    } catch (err: any) {
+      logger.error('[IdeaDevelop] Error:', err);
+      emit('error', { message: err?.message || 'Development failed' });
+      res.end();
+    }
   })
 );
 
@@ -2145,6 +2428,9 @@ router.get(
           np.content_json as contentJson,
           np.content_text as contentText,
           np.tags_json as tags,
+          np.maturity,
+          np.icon,
+          np.summary,
           np.created_at as createdAt,
           np.updated_at as updatedAt
         FROM notebook_pages np
@@ -2213,12 +2499,14 @@ router.post(
     const tags = JSON.stringify(parseTagsArray(req.body?.tags));
     const contentJson = safeJsonString(req.body?.contentJson, JSON.stringify({ type: 'doc', content: [] }));
     const contentText = typeof req.body?.contentText === 'string' ? req.body.contentText : null;
+    const icon = typeof req.body?.icon === 'string' ? req.body.icon : null;
+    const maturity = typeof req.body?.maturity === 'string' ? req.body.maturity : 'seed';
 
     await queryHelpers.queryRun(
       `INSERT INTO notebook_pages
-        (id, owner_user_id, organization_id, project_id, visibility, title, content_json, content_text, tags_json, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, userId, orgId, projectId, visibility, title, contentJson, contentText, tags, now, now]
+        (id, owner_user_id, organization_id, project_id, visibility, title, content_json, content_text, tags_json, icon, maturity, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, userId, orgId, projectId, visibility, title, contentJson, contentText, tags, icon, maturity, now, now]
     );
 
     const row = await queryHelpers.queryOne<any>(
@@ -2232,6 +2520,9 @@ router.post(
         content_json as contentJson,
         content_text as contentText,
         tags_json as tags,
+        maturity,
+        icon,
+        summary,
         created_at as createdAt,
         updated_at as updatedAt
        FROM notebook_pages
@@ -2276,6 +2567,9 @@ router.get(
         content_json as contentJson,
         content_text as contentText,
         tags_json as tags,
+        maturity,
+        icon,
+        summary,
         created_at as createdAt,
         updated_at as updatedAt
        FROM notebook_pages
@@ -2342,6 +2636,9 @@ router.put(
     if (req.body?.contentJson !== undefined)
       set('content_json', safeJsonString(req.body.contentJson, JSON.stringify({ type: 'doc', content: [] })));
     if (typeof req.body?.contentText === 'string') set('content_text', req.body.contentText);
+    if (typeof req.body?.maturity === 'string') set('maturity', req.body.maturity);
+    if (typeof req.body?.icon === 'string') set('icon', req.body.icon);
+    if (typeof req.body?.summary === 'string') set('summary', req.body.summary);
 
     if (req.body?.projectId !== undefined) {
       const nextProjectId = req.body.projectId ? String(req.body.projectId) : null;
@@ -2362,6 +2659,9 @@ router.put(
           content_json as contentJson,
           content_text as contentText,
           tags_json as tags,
+          maturity,
+          icon,
+          summary,
           created_at as createdAt,
           updated_at as updatedAt
          FROM notebook_pages WHERE id = ? LIMIT 1`,
@@ -2395,6 +2695,9 @@ router.put(
         content_json as contentJson,
         content_text as contentText,
         tags_json as tags,
+        maturity,
+        icon,
+        summary,
         created_at as createdAt,
         updated_at as updatedAt
        FROM notebook_pages WHERE id = ? LIMIT 1`,

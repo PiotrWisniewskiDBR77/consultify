@@ -30,6 +30,81 @@ const safeJsonParse = <T = unknown>(value: string | null | undefined, fallback: 
   }
 };
 
+const FRAMEWORK_TOTAL_AXES: Record<string, number> = {
+  DRD: 7,
+  SIRI: 8,
+  ADMA: 12,
+  CMMI: 5,
+  LEAN: 6,
+};
+
+function computeProgressFields(row: any) {
+  const type = (row.type || row.assessment_type || 'DRD').toUpperCase();
+  const status = (row.status || '').toUpperCase();
+  const completionPercent = Number(row.completion_percent || row.completionPercent || 0);
+  const frameworkData = safeJsonParse<{ progress?: number; overallScore?: number }>(
+    row.frameworkData,
+    {}
+  );
+  const answers = safeJsonParse<Record<string, any>>(row.answers_json || row.answersJson, {});
+  const scoreSummary = safeJsonParse<Record<string, any>>(
+    row.score_summary || row.scoreSummary,
+    {}
+  );
+
+  const totalAxes = FRAMEWORK_TOTAL_AXES[type] || 7;
+  let completedAxes = 0;
+
+  if (type === 'DRD' && answers.drd?.areas) {
+    const axisHasData = new Set<number>();
+    for (const [areaId, areaData] of Object.entries(answers.drd.areas)) {
+      const data = areaData as any;
+      if (data && (data.achievedLevel > 0 || data.targetLevel > 0)) {
+        const axisNum = parseInt(areaId, 10);
+        if (!isNaN(axisNum)) {
+          axisHasData.add(axisNum);
+        } else {
+          const match = areaId.match(/^(\d+)/);
+          if (match) axisHasData.add(parseInt(match[1], 10));
+        }
+      }
+    }
+    completedAxes = axisHasData.size;
+  } else if (type === 'SIRI' && answers.siri?.dimensions) {
+    completedAxes = Object.values(answers.siri.dimensions).filter(
+      (d: any) => d && (d.current > 0 || d.target > 0)
+    ).length;
+  } else if (type === 'ADMA' && answers.adma?.dimensions) {
+    completedAxes = Object.values(answers.adma.dimensions).filter(
+      (d: any) => d && (d.current > 0 || d.target > 0)
+    ).length;
+  } else if (scoreSummary?.byAxis) {
+    completedAxes = Object.keys(scoreSummary.byAxis).length;
+  } else if (scoreSummary?.byDimension) {
+    completedAxes = Object.keys(scoreSummary.byDimension).length;
+  }
+
+  let progress = 0;
+  if (completionPercent > 0) {
+    progress = completionPercent;
+  } else if (frameworkData.progress) {
+    progress = Number(frameworkData.progress);
+  } else if (totalAxes > 0 && completedAxes > 0) {
+    progress = Math.round((completedAxes / totalAxes) * 100);
+  }
+
+  if (status === 'APPROVED' && progress < 100) {
+    progress = 100;
+    completedAxes = totalAxes;
+  }
+
+  const overallScore = Number(
+    scoreSummary?.overall?.actual || frameworkData.overallScore || 0
+  );
+
+  return { progress, completedAxes, totalAxes, overallScore };
+}
+
 // Middleware (keep consistent with other modules like Interview/Initiatives)
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
@@ -46,8 +121,6 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
 
     logger.info(`[AssessmentHub] Fetching assessments for org: ${organizationId}`);
 
-    // Get assessments from database
-    // Uses framework_type and framework_data from seeded data
     const assessments = await new Promise<any[]>((resolve, reject) => {
       db.all(
         `SELECT 
@@ -57,8 +130,8 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
                     status,
                     created_at as createdAt,
                     updated_at as updatedAt,
-                    COALESCE(framework_type, 'DRD') as type,
-                    CASE COALESCE(framework_type, 'DRD')
+                    COALESCE(framework_type, assessment_type, 'DRD') as type,
+                    CASE COALESCE(framework_type, assessment_type, 'DRD')
                       WHEN 'DRD' THEN 'Digital Readiness Diagnosis'
                       WHEN 'SIRI' THEN 'Smart Industry Readiness Index'
                       WHEN 'ADMA' THEN 'Advanced Digital Maturity Assessment'
@@ -66,7 +139,10 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
                       WHEN 'LEAN' THEN 'Lean 4.0 Assessment'
                       ELSE 'Assessment'
                     END as projectName,
-                    framework_data as frameworkData
+                    framework_data as frameworkData,
+                    completion_percent,
+                    answers_json,
+                    score_summary
                 FROM assessments 
                 WHERE organization_id = ?
                 ORDER BY updated_at DESC`,
@@ -79,11 +155,14 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
     });
 
     const normalized = (assessments || []).map((a: any) => {
-      const data = safeJsonParse<{ progress?: number; overallScore?: number }>(a.frameworkData, {});
+      const computed = computeProgressFields(a);
       return {
         ...a,
-        progress: Number(data.progress || 0),
-        overallScore: Number(data.overallScore || 0),
+        ...computed,
+        answers_json: undefined,
+        score_summary: undefined,
+        frameworkData: undefined,
+        completion_percent: undefined,
       };
     });
 
@@ -115,8 +194,8 @@ router.get('/', async (req: AuthRequest, res: Response) => {
                     COALESCE(w.status, a.status) as status,
                     a.created_at as createdAt,
                     a.updated_at as updatedAt,
-                    COALESCE(a.framework_type, 'DRD') as type,
-                    CASE COALESCE(a.framework_type, 'DRD')
+                    COALESCE(a.framework_type, a.assessment_type, 'DRD') as type,
+                    CASE COALESCE(a.framework_type, a.assessment_type, 'DRD')
                       WHEN 'DRD' THEN 'Digital Readiness Diagnosis'
                       WHEN 'SIRI' THEN 'Smart Industry Readiness Index'
                       WHEN 'ADMA' THEN 'Advanced Digital Maturity Assessment'
@@ -124,7 +203,10 @@ router.get('/', async (req: AuthRequest, res: Response) => {
                       WHEN 'LEAN' THEN 'Lean 4.0 Assessment'
                       ELSE 'Assessment'
                     END as projectName,
-                    a.framework_data as frameworkData
+                    a.framework_data as frameworkData,
+                    a.completion_percent,
+                    a.answers_json,
+                    a.score_summary
                 FROM assessments a
                 LEFT JOIN assessment_workflows w ON w.assessment_id = a.id
                 WHERE a.organization_id = ?`;
@@ -148,11 +230,14 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     });
 
     const normalized = (assessments || []).map((a: any) => {
-      const data = safeJsonParse<{ progress?: number; overallScore?: number }>(a.frameworkData, {});
+      const computed = computeProgressFields(a);
       return {
         ...a,
-        progress: Number(data.progress || 0),
-        overallScore: Number(data.overallScore || 0),
+        ...computed,
+        answers_json: undefined,
+        score_summary: undefined,
+        frameworkData: undefined,
+        completion_percent: undefined,
       };
     });
 
@@ -182,8 +267,8 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
                     status,
                     created_at as createdAt,
                     updated_at as updatedAt,
-                    COALESCE(framework_type, 'DRD') as type,
-                    CASE COALESCE(framework_type, 'DRD')
+                    COALESCE(framework_type, assessment_type, 'DRD') as type,
+                    CASE COALESCE(framework_type, assessment_type, 'DRD')
                       WHEN 'DRD' THEN 'Digital Readiness Diagnosis'
                       WHEN 'SIRI' THEN 'Smart Industry Readiness Index'
                       WHEN 'ADMA' THEN 'Advanced Digital Maturity Assessment'
@@ -191,7 +276,10 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
                       WHEN 'LEAN' THEN 'Lean 4.0 Assessment'
                       ELSE 'Assessment'
                     END as projectName,
-                    framework_data as frameworkData
+                    framework_data as frameworkData,
+                    completion_percent,
+                    answers_json,
+                    score_summary
                 FROM assessments 
                 WHERE id = ? AND organization_id = ?`,
         [id, organizationId],
@@ -206,15 +294,15 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Assessment not found' });
     }
 
-    const data = safeJsonParse<{ progress?: number; overallScore?: number }>(
-      assessment.frameworkData,
-      {}
-    );
+    const computed = computeProgressFields(assessment);
     res.json({
       assessment: {
         ...assessment,
-        progress: Number(data.progress || 0),
-        overallScore: Number(data.overallScore || 0),
+        ...computed,
+        answers_json: undefined,
+        score_summary: undefined,
+        frameworkData: undefined,
+        completion_percent: undefined,
       },
     });
   } catch (err: any) {

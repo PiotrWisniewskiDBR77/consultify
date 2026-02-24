@@ -12,9 +12,10 @@
 2. [Tasks - Zarządzanie zadaniami](#tasks---zarządzanie-zadaniami)
 3. [Decisions - Zarządzanie decyzjami](#decisions---zarządzanie-decyzjami)
 4. [Notifications - System powiadomień](#notifications---system-powiadomień)
-5. [Wspólne standardy UI/UX](#wspólne-standardy-uiux)
-6. [Integracja z AI Chat](#integracja-z-ai-chat)
-7. [Offline Support](#offline-support)
+5. [Notebook - Living Knowledge Engine](#notebook---living-knowledge-engine)
+6. [Wspólne standardy UI/UX](#wspólne-standardy-uiux)
+7. [Integracja z AI Chat](#integracja-z-ai-chat)
+8. [Offline Support](#offline-support)
 
 ---
 
@@ -55,6 +56,18 @@ Wszystkie widoki szczegółowe (Task/Decision/Notification) stosują identyczny 
 - **Header** - fioletowy gradient, 2 przyciski (Save/Mark Read + Chat)
 - **Lewa kolumna (2/3)** - treść merytoryczna, rozwijane sekcje
 - **Prawa kolumna (1/3)** - Control Panel, metadane, akcje
+
+---
+
+## Notebook - Living Knowledge Engine
+
+Notebook w My Work to **warstwa wiedzy**, a nie “miejsce na luźne notatki”. Jego celem jest przechwytywanie i rozwijanie ważnych wątków strategicznych i operacyjnych, które **jeszcze nie mają wdrażalnego aspektu**, ale będą wpływać na przyszłe decyzje i działania.
+
+- **Dlaczego**: najcenniejsza wiedza powstaje „przed wdrożeniem” — jako hipotezy, obserwacje, sygnały, ryzyka, wnioski z analiz i rozmów.
+- **Outcome**: użytkownik ma poczucie, że notatki **żyją** — system podpowiada je w odpowiednim kontekście pracy i pomaga łączyć je z treściami w Consultify.
+- **Zasada produktu**: system ma być proaktywny, ale nie agresywny — podpowiada i wzbogaca, nie nadpisuje treści użytkownika.
+
+Dokument produktu (cel i sens modułu): `docs/modules/LIVING_NOTEBOOK_MODULE.md`
 
 ---
 

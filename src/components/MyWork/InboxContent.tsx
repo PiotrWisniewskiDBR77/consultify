@@ -570,6 +570,11 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             <div className="text-sm text-slate-600 dark:text-slate-400">
               {isPolish ? 'Tylko rzeczy wymagające akcji.' : 'Only items requiring action.'}
             </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {isPolish
+                ? 'Zakładki „Nowe dziś / w tym tygodniu” liczą elementy wg czasu otrzymania. „Focus → Today” to Twoja lista na dziś (terminy + rzeczy, które oznaczysz „Biorę dziś”).'
+                : '“New today / this week” counts items by received time. “Focus → Today” is your curated list for today (due items + anything you mark as “Accept today”).'}
+            </div>
           </div>
         </div>
 
@@ -596,12 +601,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             const label =
               section === 'today'
                 ? isPolish
-                  ? 'Dziś'
-                  : 'Today'
+                  ? 'Nowe dziś'
+                  : 'New today'
                 : section === 'this_week'
                   ? isPolish
-                    ? 'Ten tydzień'
-                    : 'This Week'
+                    ? 'Nowe w tym tygodniu'
+                    : 'New this week'
                   : isPolish
                     ? 'Wszystkie'
                     : 'All';
@@ -865,6 +870,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   const sc = statusConfig(item.triaged);
                   const isSelected = selectedIds.has(item.id);
                   const overdue = isDueDateOverdue(item.dueDate, item.triaged);
+                  const isNotification = String(item._key || '').startsWith('notification:');
 
                   const rowActions: RowAction[] = [
                     {
@@ -874,18 +880,29 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                       onClick: () => open(item),
                       variant: 'primary',
                     },
-                    {
-                      id: 'accept',
-                      label: isPolish ? 'Biorę dziś' : 'Accept today',
-                      icon: Check,
-                      onClick: () => triage(item, 'accept_today'),
-                    },
-                    {
-                      id: 'acknowledge',
-                      label: isPolish ? 'Potwierdzam' : 'Acknowledge',
-                      icon: CheckCheck,
-                      onClick: () => triage(item, 'accept_today'),
-                    },
+                    ...(isNotification
+                      ? [
+                          {
+                            id: 'acknowledge',
+                            label: isPolish ? 'Potwierdzam' : 'Acknowledge',
+                            icon: CheckCheck,
+                            onClick: () => triage(item, 'archive'),
+                          },
+                        ]
+                      : [
+                          {
+                            id: 'accept',
+                            label: isPolish ? 'Biorę dziś' : 'Accept today',
+                            icon: Check,
+                            onClick: () => triage(item, 'accept_today'),
+                          },
+                          {
+                            id: 'acknowledge',
+                            label: isPolish ? 'Potwierdzam' : 'Acknowledge',
+                            icon: CheckCheck,
+                            onClick: () => triage(item, 'accept_today'),
+                          },
+                        ]),
                     {
                       id: 'archive',
                       label: isPolish ? 'Archiwizuj' : 'Archive',

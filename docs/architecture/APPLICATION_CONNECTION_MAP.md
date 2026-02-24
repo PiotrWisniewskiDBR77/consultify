@@ -245,7 +245,7 @@ graph TB
 | `/kpi-okr`                   | `KpiOkrView`                  | —                                        | `metrics.routes.ts`                             | Protected  |
 | `/benefits`                  | `BenefitsHub`                 | —                                        | `analytics.routes.ts`                           | Protected  |
 | `/settings/*`                | `SettingsView`                | `useAppStore`                            | `settings.routes.ts`, `user/*.routes.ts`        | Protected  |
-| `/admin/*`                   | `AdminView`                   | `useAppStore`                            | `admin-data.routes.ts`, `adminAlerts.routes.ts` | ADMIN      |
+| `/admin/*`                   | `AdminView`                   | `useAppStore`                            | `admin-data.routes.ts`, `adminAlerts.routes.ts` | ADMIN, OWNER (OWNER = ADMIN + billing) |
 | `/superadmin/*`              | `SuperAdminView`              | `useAppStore`                            | `superadmin.routes.ts`                          | SUPERADMIN |
 | `/partner/*`                 | `PartnerPortalViewNew`        | —                                        | `partners.routes.ts`                            | Protected  |
 | `/discovery-tools`           | `DiscoveryToolsHub`           | `useToolStore`                           | `tools.routes.ts`                               | Protected  |

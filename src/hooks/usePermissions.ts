@@ -73,9 +73,12 @@ export const usePermissions = (): Permissions => {
       (currentUser as any)?.organizationId || (currentUser as any)?.organization_id || null;
 
     // Role checks
+    // OWNER has at least ADMIN permissions + billing/ownership/deletion (per UserRole docs)
     const isUser = !!currentUser;
-    const isManager = userRole === UserRole.ADMIN || userRole === 'SUPERADMIN';
-    const isAdmin = userRole === UserRole.ADMIN || userRole === 'SUPERADMIN';
+    const isManager =
+      userRole === UserRole.ADMIN || userRole === UserRole.OWNER || userRole === 'SUPERADMIN';
+    const isAdmin =
+      userRole === UserRole.ADMIN || userRole === UserRole.OWNER || userRole === 'SUPERADMIN';
     const isSuperAdmin = userRole === 'SUPERADMIN';
 
     return {

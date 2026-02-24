@@ -609,8 +609,8 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
     try {
       setLoading(true);
       const [tasksRes, decisionsRes, focusStateRes] = await Promise.all([
-        Api.get('/my-work/tasks').catch(() => ({ tasks: [] })),
-        Api.get('/my-work/decisions').catch(() => ({ decisions: [] })),
+        Api.get('/my-work/tasks?limit=200').catch(() => ({ tasks: [] })),
+        Api.get('/my-work/decisions?limit=120').catch(() => ({ decisions: [] })),
         Api.get('/my-work/focus/state').catch(() => ({ items: [] })),
       ]);
 
@@ -638,7 +638,7 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
       const endOfWeek = new Date(todayStart);
       endOfWeek.setDate(todayStart.getDate() + 7);
 
-      const taskItems: FocusItem[] = tasks.slice(0, 20).map((task: any, idx: number) => {
+      const taskItemsAll: FocusItem[] = tasks.map((task: any, idx: number) => {
         // Determine column based on due date
         const key = `task:${task.id}`;
         const persisted = focusStateMap.get(key);
@@ -674,9 +674,7 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
       });
 
       // Map decisions to FocusItems (A3.1: use same date boundaries as tasks)
-      const decisionItems: FocusItem[] = decisions
-        .slice(0, 10)
-        .map((decision: any, idx: number) => {
+      const decisionItemsAll: FocusItem[] = decisions.map((decision: any, idx: number) => {
           const key = `decision:${decision.id}`;
           const persisted = focusStateMap.get(key);
           let column: FocusColumn = persisted?.column || 'thisWeek';
@@ -707,7 +705,22 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
           };
         });
 
-      setItems([...taskItems, ...decisionItems]);
+      // Avoid "missing Today" because we sliced too early.
+      // Cap per column after classification so due-today/overdue items always make it in.
+      const byCol: Record<FocusColumn, FocusItem[]> = { today: [], thisWeek: [], later: [] };
+      for (const it of [...taskItemsAll, ...decisionItemsAll]) {
+        byCol[it.column].push(it);
+      }
+      for (const col of ['today', 'thisWeek', 'later'] as FocusColumn[]) {
+        byCol[col].sort((a, b) => a.position - b.position);
+      }
+
+      const MAX_PER_COLUMN = 40;
+      setItems([
+        ...byCol.today.slice(0, MAX_PER_COLUMN),
+        ...byCol.thisWeek.slice(0, MAX_PER_COLUMN),
+        ...byCol.later.slice(0, MAX_PER_COLUMN),
+      ]);
     } catch (error) {
       console.error('Failed to load focus data:', error);
       toast.error(t('myWork.focus.loadError', 'Failed to load focus items'));

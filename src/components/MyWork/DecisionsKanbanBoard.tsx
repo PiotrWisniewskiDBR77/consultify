@@ -90,7 +90,8 @@ interface Decision {
   reminderCount?: number;
 }
 
-type DecisionFilter = 'my' | 'awaiting';
+type DecisionFilter = 'all' | 'my' | 'awaiting';
+type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
 interface DecisionCounts {
   total: number;
@@ -100,6 +101,7 @@ interface DecisionCounts {
 
 interface DecisionsKanbanBoardProps {
   viewMode: DecisionFilter;
+  priorityFilter?: DecisionPriorityFilter;
   searchQuery: string;
   onDecisionClick?: (id: string, decisionData?: Decision) => void;
   onCreateDecision?: () => void;
@@ -575,6 +577,7 @@ const findContainer = (containers: ContainerItems, id: UniqueIdentifier): string
 
 export const DecisionsKanbanBoard: React.FC<DecisionsKanbanBoardProps> = ({
   viewMode,
+  priorityFilter = 'all',
   searchQuery,
   onDecisionClick,
   onCreateDecision,
@@ -645,8 +648,15 @@ export const DecisionsKanbanBoard: React.FC<DecisionsKanbanBoardProps> = ({
       result = result.filter((d) => d.decisionOwnerId !== currentUser?.id);
     }
 
+    // Filter by priority
+    if (priorityFilter !== 'all') {
+      result = result.filter(
+        (d) => String(d.priority || 'MEDIUM').toUpperCase() === String(priorityFilter).toUpperCase()
+      );
+    }
+
     return result;
-  }, [decisions, searchQuery, viewMode, currentUser?.id]);
+  }, [decisions, searchQuery, viewMode, priorityFilter, currentUser?.id]);
 
   // Rebuild containerItems when filtered decisions change (but NOT during an active drag)
   useEffect(() => {

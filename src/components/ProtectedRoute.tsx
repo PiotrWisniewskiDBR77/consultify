@@ -13,11 +13,13 @@ interface ProtectedRouteProps {
 
 /**
  * Role hierarchy - higher roles include permissions of lower roles
- * SUPERADMIN > ADMIN > USER
+ * SUPERADMIN > ADMIN, OWNER > USER
+ * OWNER has at least ADMIN permissions (billing, ownership, deletion per UserRole docs)
  */
 const roleHierarchy: Record<string, number> = {
   USER: 1,
   ADMIN: 2,
+  OWNER: 2, // Same level as ADMIN for route access; has billing/ownership/deletion
   SUPERADMIN: 3,
 };
 

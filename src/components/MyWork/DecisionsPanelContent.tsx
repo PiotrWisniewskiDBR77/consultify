@@ -46,7 +46,8 @@ import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
-type ViewMode = 'my' | 'awaiting';
+type ViewMode = 'all' | 'my' | 'awaiting';
+type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
 interface Decision {
   id: string;
@@ -90,6 +91,7 @@ interface DecisionCounts {
 
 interface DecisionsPanelContentProps {
   viewMode: ViewMode;
+  priorityFilter?: DecisionPriorityFilter;
   searchQuery: string;
   onDecisionClick?: (id: string, decisionData?: Decision) => void;
   onCountsChange: (counts: DecisionCounts) => void;
@@ -913,6 +915,7 @@ const AwaitingDecisionTableRow: React.FC<{
 
 export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   viewMode,
+  priorityFilter = 'all',
   searchQuery,
   onDecisionClick,
   onCountsChange,
@@ -972,6 +975,13 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
       result = result.filter((d) => d.decisionOwnerId !== currentUser?.id);
     }
 
+    // Filter by priority (topbar filter)
+    if (priorityFilter !== 'all') {
+      result = result.filter(
+        (d) => String(d.priority || 'MEDIUM').toUpperCase() === String(priorityFilter).toUpperCase()
+      );
+    }
+
     // Sort by priority and due date
     const priorityOrder: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
     result.sort((a, b) => {
@@ -993,7 +1003,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
     });
 
     return result;
-  }, [decisions, searchQuery, viewMode, currentUser?.id]);
+  }, [decisions, searchQuery, viewMode, priorityFilter, currentUser?.id]);
 
   // Calculate counts
   useEffect(() => {
@@ -1240,7 +1250,11 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
       <div className="flex flex-col items-center justify-center h-full text-center p-8">
         <CheckCircle2 size={48} className="text-emerald-500 mb-4" />
         <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">
-          {viewMode === 'my' ? 'No decisions awaiting your action' : 'No delegated decisions'}
+          {viewMode === 'my'
+            ? 'No decisions awaiting your action'
+            : viewMode === 'awaiting'
+              ? 'No delegated decisions'
+              : 'No decisions'}
         </h3>
         <p className="text-sm text-slate-500">All caught up!</p>
       </div>

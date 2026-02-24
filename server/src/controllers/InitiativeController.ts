@@ -280,10 +280,12 @@ export class InitiativeController {
       let sql = `
             SELECT i.*, 
                 ob.first_name as ob_first_name, ob.last_name as ob_last_name, ob.avatar_url as ob_avatar,
-                oe.first_name as oe_first_name, oe.last_name as oe_last_name, oe.avatar_url as oe_avatar
+                oe.first_name as oe_first_name, oe.last_name as oe_last_name, oe.avatar_url as oe_avatar,
+                COALESCE(sa.framework_type, sa.assessment_type) as source_framework
             FROM initiatives i
             LEFT JOIN users ob ON i.owner_business_id = ob.id
             LEFT JOIN users oe ON i.owner_execution_id = oe.id
+            LEFT JOIN assessments sa ON sa.id = COALESCE(i.source_assessment_id, i.source_id)
             WHERE i.organization_id = ?
         `;
       if (projectId) {
@@ -344,11 +346,19 @@ export class InitiativeController {
         summary: getMultilingualText(i.summary as string, lang),
         hypothesis: i.hypothesis,
         status: i.status,
+        priority: i.priority || 'medium',
+        impact: i.impact || 'medium',
+        effort: i.effort,
+        category: i.category,
+        reportName: i.report_name || null,
+        report_name: i.report_name || null,
         initiativeTemplateId: (i as any).initiative_template_id ?? null,
         progress: i.progress || 0,
         currentStage: i.current_stage,
-        sourceType: i.source_type,
+        sourceType: i.source_framework || i.source_type,
         sourceId: i.source_id,
+        sourceAssessmentId: i.source_assessment_id,
+        sourceFramework: i.source_framework,
         businessValue: i.business_value,
         costCapex: i.cost_capex,
         costOpex: i.cost_opex,
@@ -356,10 +366,14 @@ export class InitiativeController {
         valueDriver: i.value_driver,
         confidenceLevel: i.confidence_level,
         valueTiming: i.value_timing,
+        estimatedBudget: i.estimated_budget,
+        estimatedTimeline: i.estimated_timeline,
         plannedStartDate: i.planned_start_date,
         plannedEndDate: i.planned_end_date,
         actualStartDate: i.actual_start_date,
         actualEndDate: i.actual_end_date,
+        createdAt: i.created_at,
+        updatedAt: i.updated_at,
         problemStatement: i.problem_statement,
         deliverables: safeJsonParse(i.deliverables as string, []),
         successCriteria: safeJsonParse(i.success_criteria as string, []),

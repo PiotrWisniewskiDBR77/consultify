@@ -565,7 +565,11 @@ export const Sidebar: React.FC = () => {
     const isLocked =
       item.requiresView &&
       !completedViews.includes(item.requiresView) &&
-      !(currentUser?.role === UserRole.ADMIN || currentUser?.role === 'SUPERADMIN');
+      !(
+        currentUser?.role === UserRole.ADMIN ||
+        currentUser?.role === UserRole.OWNER ||
+        currentUser?.role === 'SUPERADMIN'
+      );
 
     // Get human-readable name for required view
     const getViewName = (view: AppView): string => {
@@ -830,8 +834,14 @@ export const Sidebar: React.FC = () => {
           <div className="space-y-1">
             <div className="my-1 border-t border-slate-200 dark:border-navy-700" />
 
-            {currentUser?.role === UserRole.ADMIN && renderMenuItem(organizationMenuItem)}
-            {currentUser?.role === UserRole.ADMIN && renderMenuItem(adminMenuItem)}
+            {(currentUser?.role === UserRole.ADMIN ||
+              currentUser?.role === UserRole.OWNER ||
+              currentUser?.role === 'SUPERADMIN') &&
+              renderMenuItem(organizationMenuItem)}
+            {(currentUser?.role === UserRole.ADMIN ||
+              currentUser?.role === UserRole.OWNER ||
+              currentUser?.role === 'SUPERADMIN') &&
+              renderMenuItem(adminMenuItem)}
             {renderMenuItem(settingsMenuItem)}
 
             <button

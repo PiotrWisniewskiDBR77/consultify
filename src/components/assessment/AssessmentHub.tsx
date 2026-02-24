@@ -218,10 +218,8 @@ const mapInitiativeApiStatus = (status: string): InitiativeStatusType => {
   return statusMap[s] || 'DRAFT';
 };
 
-// In Assessment module we treat initiatives as "source artifacts" (phase 1 only)
 const isAssessmentModuleInitiative = (row: any): boolean => {
-  const s = String(row?.status || '').toUpperCase();
-  return s === 'DRAFT' || s === 'PENDING_REVIEW';
+  return !!(row?.id && (row?.source_type || row?.sourceType || row?.source_id || row?.sourceId));
 };
 
 // Map API type to AssessmentFramework

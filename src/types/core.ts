@@ -300,9 +300,10 @@ export enum AuthStep {
  * For project-level roles (PM, Team Lead, etc.), see ProjectRole enum below.
  *
  * Account Types:
- * - OWNER: Organization owner with billing, ownership transfer, deletion rights
- * - ADMIN: Administrator - full access except billing
- * - USER: Standard user - works in assigned projects only
+ * - OWNER: Special administrator — all ADMIN functions PLUS billing, ownership transfer, deletion.
+ *          Must have Admin Panel, users, projects, settings, AI config, etc. (same as ADMIN).
+ * - ADMIN: Administrator - full access except billing (users, projects, settings, Admin Panel).
+ * - USER: Standard user - works in assigned projects only.
  *
  * Note: CONSULTANT is deprecated as a separate account type.
  *       Consultants should have USER account type + CONSULTANT project role.
@@ -312,7 +313,7 @@ export enum UserRole {
   SUPERADMIN = 'SUPERADMIN', // DBR77 Platform Owner - manages all tenants
 
   // Organization Level (Account Types)
-  OWNER = 'OWNER', // Organization Owner - billing, ownership, deletion
+  OWNER = 'OWNER', // Special admin: ADMIN + billing, ownership transfer, deletion
   ADMIN = 'ADMIN', // Organization Admin - users, projects, settings
   USER = 'USER', // Standard User - project access only
 

@@ -143,6 +143,9 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
           const notes = (await Api.get(`/my-work/notebook/pages?${params.toString()}`)) as any;
           const arr = Array.isArray(notes) ? notes : [];
           setSuggestedNotes(arr);
+          if (arr.length > 0) {
+            trackFunnelEvent('active_notes_suggested', { surface: 'initiative', count: arr.length });
+          }
         } catch {
           setSuggestedNotes([]);
         } finally {
@@ -725,6 +728,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                   .filter(Boolean)
                                   .join('\n');
                                 setInitiative({ ...initiative, applicantOneLiner: insert });
+                                trackFunnelEvent('active_notes_inserted', { surface: 'initiative', noteId: note.id });
                                 toast.success(t('myWork.notebook.insertedToast', 'Inserted'));
                               }}
                             >

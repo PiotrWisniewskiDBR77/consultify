@@ -33,11 +33,13 @@ VIEWER → Read-only access
 ### 2. Organization Roles (Org Level)
 
 ```
-OWNER (4) → Full organization control, destructive operations
-ADMIN (3) → Organization administration
+OWNER (4) → Special administrator: all ADMIN functions + billing, ownership transfer, deletion
+ADMIN (3) → Organization administration (users, projects, settings, Admin Panel)
 MEMBER (2) → Standard member access
 CONSULTANT (1) → Scoped external access
 ```
+
+**Note:** OWNER is a special administrator — must have all normal ADMIN functions (Admin Panel, users, projects, settings) plus billing, ownership transfer, and org deletion.
 
 ### 3. Permission Categories
 

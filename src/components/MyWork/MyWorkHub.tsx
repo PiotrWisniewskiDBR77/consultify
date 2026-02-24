@@ -10,7 +10,6 @@
  * @see docs/wdrozenia/UI_UX_GOLDEN_STANDARD.md
  */
 
-import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
   Bell,
@@ -20,12 +19,15 @@ import {
   ChevronDown,
   FileText,
   Flame,
+  GitBranch,
+  HeartPulse,
   Hourglass,
   Inbox,
   Kanban,
   LayoutGrid,
   LayoutList,
   Lightbulb,
+  Flower2,
   List,
   Loader2,
   Plus,
@@ -99,9 +101,11 @@ type ModuleTab =
   | 'notifications';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type TasksViewMode = 'table' | 'kanban' | 'calendar';
+type IdeasViewMode = 'list' | 'cards' | 'garden' | 'mindmap';
 type DecisionsViewMode = 'list' | 'kanban';
 type NotificationsViewMode = 'list' | 'kanban';
-type DecisionFilter = 'my' | 'awaiting';
+type DecisionFilter = 'all' | 'my' | 'awaiting';
+type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 type NotificationFilter = 'all' | 'unread' | 'today' | 'week';
 type ItemStatus =
   | 'todo'
@@ -243,17 +247,25 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { isAdmin, isManager, isSuperAdmin } = useUserCan();
   const canViewExecutive = isAdmin || isManager || isSuperAdmin;
 
-  // Tab state
-  const [activeTab, setActiveTab] = useState<ModuleTab>('tasks');
+  // Tab state — managers land on Executive, regular users on Focus
+  const [activeTab, setActiveTab] = useState<ModuleTab>(
+    canViewExecutive ? 'executive' : 'focus'
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
 
   // Filter states
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
   const [tasksViewMode, setTasksViewMode] = useState<TasksViewMode>('table');
+  const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('garden');
   const [decisionsViewMode, setDecisionsViewMode] = useState<DecisionsViewMode>('list');
   const [notificationsViewMode, setNotificationsViewMode] = useState<NotificationsViewMode>('list');
+  const [notebookLinkedIdeasOpen, setNotebookLinkedIdeasOpen] = useState(false);
+  const [notebookPulseOpen, setNotebookPulseOpen] = useState(false);
+  const [notebookCreateReqId, setNotebookCreateReqId] = useState(0);
   const [decisionFilter, setDecisionFilter] = useState<DecisionFilter>('my');
+  const [decisionPriorityFilter, setDecisionPriorityFilter] =
+    useState<DecisionPriorityFilter>('all');
   const [notificationFilter, setNotificationFilter] = useState<NotificationFilter>('all');
 
   // Counts
@@ -512,6 +524,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const decisionFilters = useMemo(
     () => [
       {
+        id: 'all' as DecisionFilter,
+        label: isPolish ? 'Wszystkie' : 'All',
+        icon: <LayoutGrid size={12} />,
+        color: 'bg-slate-400',
+        count: tabCounts.decisions,
+      },
+      {
         id: 'my' as DecisionFilter,
         label: isPolish ? 'Moje decyzje' : 'My Decisions',
         icon: <User size={12} />,
@@ -526,7 +545,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         count: decisionFilterCounts.awaiting,
       },
     ],
-    [isPolish, decisionFilterCounts]
+    [isPolish, decisionFilterCounts, tabCounts.decisions]
   );
 
   // Notification filters configuration
@@ -753,9 +772,22 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     []
   );
 
+  const handleIdeaCountsChange = useCallback(
+    (counts: { total: number }) => {
+      setTabCounts((prev) => ({ ...prev, ideas: counts.total }));
+    },
+    []
+  );
+
+  const handleNotebookCountsChange = useCallback(
+    (counts: { total: number }) => {
+      setTabCounts((prev) => ({ ...prev, notebook: counts.total }));
+    },
+    []
+  );
+
   const handleInboxCountsChange = useCallback((counts: { total: number; critical: number }) => {
     setTabCounts((prev) => ({ ...prev, inbox: counts.total }));
-    // We keep the "critical" number inside Inbox itself; tab only shows total
   }, []);
 
   // Get action button config based on active tab
@@ -809,6 +841,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           color: 'from-amber-500 to-amber-600',
           variant: 'primary' as const,
         };
+      case 'notebook':
+        return {
+          label: isPolish ? 'Nowa notatka' : 'New note',
+          icon: <Plus size={16} />,
+          onClick: () => setNotebookCreateReqId((v) => v + 1),
+          color: 'from-slate-600 to-slate-700',
+          variant: 'primary' as const,
+        };
       default:
         return null;
     }
@@ -818,6 +858,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     handleCreateTask,
     handleCreateIdea,
     handleCreateDecision,
+    setNotebookCreateReqId,
     activeDocumentId,
   ]);
 
@@ -1039,15 +1080,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           <React.Suspense fallback={lazyFallback}>
             <FocusView
               onItemClick={(item: FocusItem) => {
-                // FocusView uses ids like task-<id> / decision-<id>
+                // FocusView uses ids like task:<id> / decision:<id>
                 if (item.type === 'task') {
-                  const id = String(item.id).replace(/^task-/, '');
+                  const id = String(item.id).replace(/^task[:_-]/, '');
                   handleTaskClick(id);
                 } else if (item.type === 'decision') {
-                  const id = String(item.id).replace(/^decision-/, '');
+                  const id = String(item.id).replace(/^decision[:_-]/, '');
                   handleDecisionClick(id);
                 }
               }}
+              onNavigateToInbox={() => setActiveTab('inbox')}
             />
           </React.Suspense>
         );
@@ -1084,10 +1126,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       case 'ideas':
         return (
           <MyIdeasListContent
+            viewMode={ideasViewMode}
             searchQuery={searchQuery}
             onIdeaClick={handleIdeaClick}
             onCreateIdea={handleCreateIdea}
-            onCountsChange={(counts) => setTabCounts((prev) => ({ ...prev, ideas: counts.total }))}
+            onCountsChange={handleIdeaCountsChange}
           />
         );
       case 'notebook':
@@ -1096,9 +1139,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             <NotebookContent
               projectId={null}
               searchQuery={searchQuery}
-              onCountsChange={(counts) =>
-                setTabCounts((prev) => ({ ...prev, notebook: counts.total }))
-              }
+              linkedIdeasOpen={notebookLinkedIdeasOpen}
+              onLinkedIdeasOpenChange={setNotebookLinkedIdeasOpen}
+              pulseOpen={notebookPulseOpen}
+              onPulseOpenChange={setNotebookPulseOpen}
+              createPageRequestId={notebookCreateReqId}
+              onCountsChange={handleNotebookCountsChange}
             />
           </React.Suspense>
         );
@@ -1107,6 +1153,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           <React.Suspense fallback={lazyFallback}>
             <DecisionsKanbanBoard
               viewMode={decisionFilter}
+              priorityFilter={decisionPriorityFilter}
               searchQuery={searchQuery}
               onDecisionClick={handleDecisionClick}
               onCreateDecision={handleCreateDecision}
@@ -1116,6 +1163,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         ) : (
           <DecisionsPanelContent
             viewMode={decisionFilter}
+            priorityFilter={decisionPriorityFilter}
             searchQuery={searchQuery}
             onDecisionClick={handleDecisionClick}
             onCountsChange={handleDecisionCountsChange}
@@ -1154,8 +1202,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     return renderListContent();
   };
 
+  // Notebook tools should not leak across tabs
+  useEffect(() => {
+    if (activeTab !== 'notebook') {
+      setNotebookLinkedIdeasOpen(false);
+      setNotebookPulseOpen(false);
+    }
+  }, [activeTab]);
+
   return (
-    <div className="flex flex-col min-h-full bg-white dark:bg-navy-950">
+    <div className="flex flex-col h-full bg-white dark:bg-navy-950">
       {/* Navigation Bar (Golden Standard - same as InterviewHub) */}
       <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
         {/* Main Navigation Row */}
@@ -1296,6 +1352,68 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               </div>
             )}
 
+            {/* Ideas View Mode Toggle (list / cards / garden) — only on Ideas tab */}
+            {activeTab === 'ideas' && !activeDocumentId && (
+              <div
+                className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
+                role="radiogroup"
+                aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
+              >
+                <button
+                  onClick={() => setIdeasViewMode('list')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    ideasViewMode === 'list'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Widok listy' : 'List view'}
+                  role="radio"
+                  aria-checked={ideasViewMode === 'list'}
+                >
+                  <LayoutList size={16} />
+                </button>
+                <button
+                  onClick={() => setIdeasViewMode('cards')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    ideasViewMode === 'cards'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Widok kart' : 'Card view'}
+                  role="radio"
+                  aria-checked={ideasViewMode === 'cards'}
+                >
+                  <LayoutGrid size={16} />
+                </button>
+                <button
+                  onClick={() => setIdeasViewMode('garden')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    ideasViewMode === 'garden'
+                      ? 'bg-white dark:bg-navy-800 text-amber-600 dark:text-amber-400 shadow-sm border border-amber-300 dark:border-amber-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400'
+                  }`}
+                  title={isPolish ? 'Ogród pomysłów' : 'Idea Garden'}
+                  role="radio"
+                  aria-checked={ideasViewMode === 'garden'}
+                >
+                  <Flower2 size={16} />
+                </button>
+                <button
+                  onClick={() => setIdeasViewMode('mindmap')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    ideasViewMode === 'mindmap'
+                      ? 'bg-white dark:bg-navy-800 text-emerald-600 dark:text-emerald-400 shadow-sm border border-emerald-300 dark:border-emerald-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400'
+                  }`}
+                  title={isPolish ? 'Mapa myśli' : 'Mind Map'}
+                  role="radio"
+                  aria-checked={ideasViewMode === 'mindmap'}
+                >
+                  <GitBranch size={16} />
+                </button>
+              </div>
+            )}
+
             {/* Notifications View Mode Toggle (list / kanban) — only on Notifications tab */}
             {activeTab === 'notifications' && !activeDocumentId && (
               <div
@@ -1332,6 +1450,40 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               </div>
             )}
 
+            {/* Notebook tools — only on Notebook tab */}
+            {activeTab === 'notebook' && !activeDocumentId && (
+              <div
+                className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
+                role="group"
+                aria-label={isPolish ? 'Narzędzia notatnika' : 'Notebook tools'}
+              >
+                <button
+                  onClick={() => setNotebookLinkedIdeasOpen((v) => !v)}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    notebookLinkedIdeasOpen
+                      ? 'bg-white dark:bg-navy-800 text-amber-600 dark:text-amber-300 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Powiązane pomysły' : 'Linked Ideas'}
+                  aria-pressed={notebookLinkedIdeasOpen}
+                >
+                  <Lightbulb size={16} />
+                </button>
+                <button
+                  onClick={() => setNotebookPulseOpen((v) => !v)}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    notebookPulseOpen
+                      ? 'bg-white dark:bg-navy-800 text-rose-600 dark:text-rose-300 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Knowledge Pulse' : 'Knowledge Pulse'}
+                  aria-pressed={notebookPulseOpen}
+                >
+                  <HeartPulse size={16} />
+                </button>
+              </div>
+            )}
+
             {/* Context-sensitive Filter Dropdown (only show when viewing list) */}
             {currentFilters.length > 0 && (
               <div className="relative">
@@ -1355,6 +1507,50 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                       {filter.count !== undefined && filter.count > 0 ? ` (${filter.count})` : ''}
                     </option>
                   ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none"
+                />
+              </div>
+            )}
+
+            {/* Decisions: Priority filter */}
+            {activeTab === 'decisions' && !activeDocumentId && (
+              <div className="relative">
+                <select
+                  value={decisionPriorityFilter}
+                  onChange={(e) =>
+                    setDecisionPriorityFilter(e.target.value as DecisionPriorityFilter)
+                  }
+                  className="
+                    appearance-none h-9 pl-3 pr-9 rounded-lg text-sm font-medium
+                    bg-white dark:bg-navy-800
+                    border border-slate-200 dark:border-navy-600
+                    text-slate-700 dark:text-slate-200
+                    hover:bg-slate-50/70 dark:hover:bg-navy-800/80
+                    focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
+                    transition-colors duration-150
+                    cursor-pointer min-w-[170px]
+                  "
+                  aria-label={isPolish ? 'Priorytet' : 'Priority'}
+                  title={isPolish ? 'Filtr priorytetu' : 'Priority filter'}
+                >
+                  <option value="all">
+                    {isPolish ? 'Priorytet: wszystkie' : 'Priority: all'}
+                  </option>
+                  <option value="CRITICAL">
+                    {isPolish ? 'Priorytet: krytyczne' : 'Priority: critical'}
+                  </option>
+                  <option value="HIGH">
+                    {isPolish ? 'Priorytet: wysoki' : 'Priority: high'}
+                  </option>
+                  <option value="MEDIUM">
+                    {isPolish ? 'Priorytet: średni' : 'Priority: medium'}
+                  </option>
+                  <option value="LOW">
+                    {isPolish ? 'Priorytet: niski' : 'Priority: low'}
+                  </option>
                 </select>
                 <ChevronDown
                   size={16}
@@ -1431,18 +1627,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       {renderDynamicTabs()}
 
       {/* Main Content Area */}
-      <div className="flex-1">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeDocumentId || activeTab}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 10 }}
-            transition={{ duration: 0.15 }}
-          >
-            {renderContent()}
-          </motion.div>
-        </AnimatePresence>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {renderContent()}
       </div>
     </div>
   );
