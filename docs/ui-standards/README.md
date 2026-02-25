@@ -69,7 +69,8 @@ docs/ui-standards/
 | `EmbeddedView`           | building-blocks.md       | Tasks, Decisions, RAID w artefaktach         |
 | `EmptyStateInline`       | building-blocks.md       | Sekcje z pustym stanem                       |
 | `GovernanceCanvas`       | shared-sections.md       | Task, Decision (RACI, Reminders, Escalation) |
-| `IdeaDetailView`         | _(MyWork)_               | MyWork — Idea detail with promote CTA        |
+| `IdeaMapWorkspace`       | _(MyWork)_               | MyWork — Idea workspace with map + tools     |
+| `IdeaWorkspaceTools`     | _(MyWork)_               | Idea Workspace — standard tools sidebar      |
 | `InlineTable`            | building-blocks.md       | Options, KPIs, tabele lekkie                 |
 | `MorningBriefCard`       | _(MyWork)_               | MyWorkHub — collapsible daily briefing       |
 | `NModeHeader`            | presentation-modes.md    | Wszystkie artefakty N-mode                   |
@@ -86,12 +87,48 @@ docs/ui-standards/
 
 ---
 
+## Standard "Workspace"
+
+**Workspace** to wzorzec UI dla widoku roboczego artefaktu (idea map, notebook, przyszłe typy).
+
+Każdy Workspace składa się z:
+- **Główny content** — mapa/edytor/diagram zajmujący maks. przestrzeń
+- **Tools panel** — sidebar (w-80) z narzędziami specyficznymi dla workspace + współdzielonymi sekcjami
+
+### Współdzielone sekcje (standard)
+
+Zaimplementowane w `@/components/shared/WorkspaceTools`:
+
+| Komponent              | Opis                                                 |
+| ---------------------- | ---------------------------------------------------- |
+| `ToolsPanelShell`      | Container z headerem, gradient, close button, scroll |
+| `SectionLabel`         | Nagłówek sekcji (9px, uppercase, tracking)           |
+| `AIQuickActions`       | Przyciski Command + AI Chat                          |
+| `TransformTextSection` | Tłumacz, zmień styl, skróć/rozwiń, popraw AI         |
+| `ShareSection`         | Wyślij mailem                                        |
+
+### Sekcje per workspace
+
+| Workspace  | Sekcje specyficzne                                              |
+| ---------- | --------------------------------------------------------------- |
+| Notebook   | Insert Block, Create from Note, Page metadata, Compose strip    |
+| Idea Map   | Challenge, AI Map expand, Metadata, Convert (init/task/decision)|
+
+### Implementacja
+
+- **Notebook:** `AIChatInlinePanel` (`@/components/MyWork/notebook/`)
+- **Idea Map:** `IdeaWorkspaceTools` (`@/components/MyWork/`)
+- **Nowy workspace:** importuj `ToolsPanelShell` + shared sections, dodaj własne sekcje
+
+---
+
 ## Hierarchia importów (preferowana)
 
 ```
 @/components/shared/NModeLayout     → layout shell
 @/components/shared/NModeSections   → section canvases (Comments, Activity, Risk, Governance, Attachments)
 @/components/shared/NModeBlocks     → building blocks (Callout, ToggleBlock, EmptyState, Checklist, InlineTable, EmbeddedView)
+@/components/shared/WorkspaceTools  → Workspace tools (ToolsPanelShell, AIQuickActions, TransformTextSection, ShareSection)
 @/components/MyWork/shared          → MyWork shared (PostDecisionFollowUp, RelatedContext, AIConnections,
                                       ConvertToMenu, DelegationModal, askAiHelper, Stakeholders,
                                       Dependencies, Escalation, AIInsightSection, LinkedItemsSection)

@@ -59,8 +59,8 @@ import { MyTasksListContent } from './MyTasksListContent';
 const TaskDetailView = React.lazy(() =>
   import('./TaskDetailView').then((m) => ({ default: m.TaskDetailView }))
 );
-const IdeaDetailView = React.lazy(() =>
-  import('./IdeaDetailView').then((m) => ({ default: m.IdeaDetailView }))
+const IdeaMapWorkspace = React.lazy(() =>
+  import('./IdeaMapWorkspace').then((m) => ({ default: m.IdeaMapWorkspace }))
 );
 const DecisionDetailView = React.lazy(() =>
   import('./DecisionDetailView').then((m) => ({ default: m.DecisionDetailView }))
@@ -96,9 +96,9 @@ type ModuleTab =
   | 'notebook'
   | 'ideas'
   | 'decisions';
-type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent' | 'new';
+type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type TasksViewMode = 'table' | 'kanban' | 'calendar';
-type IdeasViewMode = 'list' | 'cards' | 'garden' | 'mindmap';
+type IdeasViewMode = 'select' | 'overview' | 'blank' | 'mindmap' | 'garden';
 type DecisionsViewMode = 'list' | 'kanban';
 type DecisionFilter = 'all' | 'my' | 'awaiting';
 type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
@@ -315,7 +315,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // Filter states
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
   const [tasksViewMode, setTasksViewMode] = useState<TasksViewMode>('table');
-  const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('garden');
+  const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('mindmap');
+  const [ideasMenuOpen, setIdeasMenuOpen] = useState(false);
   const [decisionsViewMode, setDecisionsViewMode] = useState<DecisionsViewMode>('list');
   const [notebookLinkedIdeasOpen, setNotebookLinkedIdeasOpen] = useState(false);
   const [notebookTopicsOpen, setNotebookTopicsOpen] = useState(false);
@@ -1151,7 +1152,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       case 'idea':
         return (
           <React.Suspense fallback={lazyFallback}>
-            <IdeaDetailView
+            <IdeaMapWorkspace
               ideaId={activeDoc.id}
               initialOpenMap={Boolean((activeDoc as any)?.data?.openMap)}
               onClose={() => handleCloseDocument(activeDoc.id)}
@@ -1556,65 +1557,47 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               </div>
             )}
 
-            {/* Ideas View Mode Toggle (list / cards / garden) — only on Ideas tab */}
+            {/* Ideas: collapsible view mode menu — only on Ideas tab */}
             {activeTab === 'ideas' && !activeDocumentId && (
-              <div
-                className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
-                role="radiogroup"
-                aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
-              >
+              <div className="relative">
                 <button
-                  onClick={() => setIdeasViewMode('list')}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
-                    ideasViewMode === 'list'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                  }`}
-                  title={isPolish ? 'Widok listy' : 'List view'}
-                  role="radio"
-                  aria-checked={ideasViewMode === 'list'}
+                  onClick={() => setIdeasMenuOpen((v) => !v)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                 >
-                  <LayoutList size={16} />
+                  {ideasViewMode === 'mindmap' && <><GitBranch size={14} />{isPolish ? 'Mind Map' : 'Mind Map'}</>}
+                  {ideasViewMode === 'select' && <><LayoutList size={14} />{isPolish ? 'Lista' : 'List'}</>}
+                  {ideasViewMode === 'overview' && <><LayoutGrid size={14} />{isPolish ? 'Karty' : 'Cards'}</>}
+                  {ideasViewMode === 'garden' && <><Flower2 size={14} />{isPolish ? 'Ogród' : 'Garden'}</>}
+                  {ideasViewMode === 'blank' && <><GitBranch size={14} />{isPolish ? 'Czysta mapa' : 'Blank'}</>}
+                  <ChevronDown size={12} className={`transition-transform ${ideasMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
-                <button
-                  onClick={() => setIdeasViewMode('cards')}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
-                    ideasViewMode === 'cards'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                  }`}
-                  title={isPolish ? 'Widok kart' : 'Card view'}
-                  role="radio"
-                  aria-checked={ideasViewMode === 'cards'}
-                >
-                  <LayoutGrid size={16} />
-                </button>
-                <button
-                  onClick={() => setIdeasViewMode('garden')}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
-                    ideasViewMode === 'garden'
-                      ? 'bg-white dark:bg-navy-800 text-amber-600 dark:text-amber-400 shadow-sm border border-amber-300 dark:border-amber-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400'
-                  }`}
-                  title={isPolish ? 'Ogród pomysłów' : 'Idea Garden'}
-                  role="radio"
-                  aria-checked={ideasViewMode === 'garden'}
-                >
-                  <Flower2 size={16} />
-                </button>
-                <button
-                  onClick={() => setIdeasViewMode('mindmap')}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
-                    ideasViewMode === 'mindmap'
-                      ? 'bg-white dark:bg-navy-800 text-emerald-600 dark:text-emerald-400 shadow-sm border border-emerald-300 dark:border-emerald-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400'
-                  }`}
-                  title={isPolish ? 'Mapa myśli' : 'Mind Map'}
-                  role="radio"
-                  aria-checked={ideasViewMode === 'mindmap'}
-                >
-                  <GitBranch size={16} />
-                </button>
+                {ideasMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-30" onClick={() => setIdeasMenuOpen(false)} />
+                    <div className="absolute top-full mt-1 left-0 z-40 w-44 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
+                      {([
+                        { id: 'mindmap' as IdeasViewMode, icon: GitBranch, label: 'Mind Map', labelPl: 'Mind Map' },
+                        { id: 'select' as IdeasViewMode, icon: LayoutList, label: 'List', labelPl: 'Lista' },
+                        { id: 'overview' as IdeasViewMode, icon: LayoutGrid, label: 'Cards', labelPl: 'Karty' },
+                        { id: 'garden' as IdeasViewMode, icon: Flower2, label: 'Garden', labelPl: 'Ogród' },
+                        { id: 'blank' as IdeasViewMode, icon: GitBranch, label: 'Blank Map', labelPl: 'Czysta mapa' },
+                      ]).map(({ id, icon: Icon, label, labelPl }) => (
+                        <button
+                          key={id}
+                          onClick={() => { setIdeasViewMode(id); setIdeasMenuOpen(false); }}
+                          className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${
+                            ideasViewMode === id
+                              ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10 font-semibold'
+                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800'
+                          }`}
+                        >
+                          <Icon size={14} />
+                          {isPolish ? labelPl : label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             )}
 

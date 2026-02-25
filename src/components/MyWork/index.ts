@@ -12,7 +12,8 @@ export { MyWorkHub } from './MyWorkHub';
 
 // Content components (used by MyWorkHub)
 export { DecisionsPanelContent } from './DecisionsPanelContent';
-export { IdeaDetailView } from './IdeaDetailView';
+export { IdeaMapWorkspace } from './IdeaMapWorkspace';
+export { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
 export { MyIdeasListContent } from './MyIdeasListContent';
 export { MyTasksListContent } from './MyTasksListContent';
 export { NotificationsContent } from './NotificationsContent';
