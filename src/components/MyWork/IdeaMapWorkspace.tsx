@@ -1,21 +1,18 @@
 /**
- * IdeaMapWorkspace — N-mode workspace for editing an idea with
- * recommendation map on the left and a standard Workspace tools panel
- * on the right.
+ * IdeaMapWorkspace — fullscreen workspace for editing an idea.
+ * Recommendation map fills all available space, tools panel is a
+ * collapsible sidebar on the right (controlled by parent via props).
  *
- * This is the canonical "Workspace" pattern. The tools panel reuses the
- * same shared sections (AI, Transform, Share) as the Notebook workspace.
+ * This is the canonical "Workspace" pattern. No NModeShell wrapper —
+ * the workspace occupies the entire content area below the dynamic tabs.
  */
-import { GitBranch, MessageSquare, PanelRightClose, PanelRightOpen, Sparkles } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import type { NModeAction, NModePropertyField, NModeSection } from '@/components/shared/NModeLayout';
-import { NModeShell } from '@/components/shared/NModeLayout';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
-import { buildArtifactCode } from '@/utils/artifactLinks';
 
 import { IdeaRecommendationMap } from './IdeaRecommendationMap';
 import { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
@@ -27,6 +24,8 @@ type IdeaMapWorkspaceProps = {
   initialOpenMap?: boolean;
   onClose: () => void;
   onSaved: (idea: MyIdea) => void;
+  toolsOpen?: boolean;
+  onToolsOpenChange?: (open: boolean) => void;
 };
 
 function safeTitleFromSeed(seedText: string, isPolish: boolean): string {
@@ -39,6 +38,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   initialOpenMap,
   onClose,
   onSaved,
+  toolsOpen: toolsOpenProp,
+  onToolsOpenChange,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
@@ -58,9 +59,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const [dirty, setDirty] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
 
-  const [activeSection, setActiveSection] = useState<'workspace'>('workspace');
   const [mapOpen, setMapOpen] = useState(Boolean(initialOpenMap));
-  const [toolsPanelOpen, setToolsPanelOpen] = useState(true);
+
+  const toolsPanelOpen = toolsOpenProp ?? false;
+  const setToolsPanelOpen = useCallback(
+    (v: boolean | ((prev: boolean) => boolean)) => {
+      const next = typeof v === 'function' ? v(toolsPanelOpen) : v;
+      onToolsOpenChange?.(next);
+    },
+    [onToolsOpenChange, toolsPanelOpen]
+  );
 
   const isDraft = useMemo(() => isNewInitial && realId === ideaId, [ideaId, isNewInitial, realId]);
   const isAccepted = useMemo(() => {
@@ -202,202 +210,56 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     return isPolish ? `Zapisano ${sec}s temu` : `Saved ${sec}s ago`;
   }, [isPolish, lastSavedAt, saving]);
 
-  const header = useMemo(
-    () => ({
-      title: title || (isPolish ? 'Wyzwanie' : 'Challenge'),
-      onTitleChange: (v: string) => { setTitle(v); setDirty(true); },
-      titleReadOnly: false,
-      titlePlaceholder: { en: 'Name your challenge…', pl: 'Nazwij wyzwanie…' },
-      artifactId: isDraft ? undefined : realId,
-      artifactType: 'idea' as const,
-      onSave: handleSave,
-      saving,
-      isDirty: dirty,
-      onChat: openChat,
-      onClose,
-      draftSavedLabel,
-      statusDotColor: 'bg-emerald-400',
-    }),
-    [dirty, draftSavedLabel, handleSave, isDraft, isPolish, onClose, openChat, realId, saving, title]
-  );
-
-  const properties = useMemo<NModePropertyField[]>(
-    () => [
-      {
-        id: 'branch',
-        label: { en: 'Branch', pl: 'Gałąź' },
-        type: 'text',
-        value: branch,
-        onChange: (v) => { setBranch(v); setDirty(true); },
-        placeholder: { en: 'e.g. Finance', pl: 'np. Finanse' },
-      },
-      {
-        id: 'area',
-        label: { en: 'Area', pl: 'Obszar' },
-        type: 'text',
-        value: area,
-        onChange: (v) => { setArea(v); setDirty(true); },
-        placeholder: { en: 'e.g. Ops', pl: 'np. Operacje' },
-      },
-      {
-        id: 'priority',
-        label: { en: 'Priority', pl: 'Priorytet' },
-        type: 'select',
-        value: String(Math.round(priority / 25) * 25),
-        onChange: (v) => {
-          const n = Number(v);
-          setPriority(Number.isFinite(n) ? n : 50);
-          setDirty(true);
-        },
-        options: [
-          { value: '25', label: { en: 'Low', pl: 'Niski' } },
-          { value: '50', label: { en: 'Medium', pl: 'Średni' } },
-          { value: '75', label: { en: 'High', pl: 'Wysoki' } },
-          { value: '100', label: { en: 'Critical', pl: 'Krytyczny' } },
-        ],
-      },
-      {
-        id: 'tools',
-        label: { en: 'Tools', pl: 'Narzędzia' },
-        type: 'custom',
-        value: '',
-        onChange: () => {},
-        render: () => (
-          <button
-            onClick={() => setToolsPanelOpen((v) => !v)}
-            className="w-full h-8 px-2.5 rounded-lg text-xs font-semibold bg-white dark:bg-navy-800 border border-slate-300/60 dark:border-navy-600/40 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors inline-flex items-center justify-center gap-1.5"
-          >
-            {toolsPanelOpen
-              ? <><PanelRightClose size={12} />{isPolish ? 'Ukryj' : 'Hide'}</>
-              : <><PanelRightOpen size={12} />{isPolish ? 'Pokaż' : 'Show'}</>}
-          </button>
-        ),
-      },
-    ],
-    [area, branch, isPolish, priority, toolsPanelOpen]
-  );
-
-  const actions = useMemo<NModeAction[]>(
-    () => [
-      {
-        id: 'ai',
-        label: { en: 'AI propose', pl: 'AI: propozycje' },
-        icon: Sparkles,
-        variant: 'ai',
-        onClick: () => {
-          if (!isAccepted) {
-            toast(isPolish ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.');
-            return;
-          }
-          toast(isPolish ? 'Wybierz gałąź na mapie, potem kliknij AI.' : 'Pick a branch on the map, then click AI.');
-        },
-      },
-      {
-        id: 'chat',
-        label: { en: 'Chat', pl: 'Czat' },
-        icon: MessageSquare,
-        variant: 'neutral',
-        onClick: openChat,
-      },
-      {
-        id: 'tools',
-        label: { en: 'Tools', pl: 'Narzędzia' },
-        icon: toolsPanelOpen ? PanelRightClose : PanelRightOpen,
-        variant: 'neutral',
-        onClick: () => setToolsPanelOpen((v) => !v),
-      },
-    ],
-    [isAccepted, isPolish, openChat, toolsPanelOpen]
-  );
-
-  const sections = useMemo<NModeSection[]>(
-    () => [
-      {
-        id: 'workspace',
-        icon: GitBranch,
-        label: { en: 'Workspace', pl: 'Workspace' },
-        component: (
-          <div className="h-[72vh] min-h-[560px] flex">
-            {/* Map fills available space */}
-            <div className="flex-1 min-w-0 h-full">
-              <IdeaRecommendationMap
-                ideaId={realId}
-                ideaTitle={title || safeTitleFromSeed(seedText, isPolish)}
-                onClose={() => setMapOpen(false)}
-                onCenterEdit={() => setToolsPanelOpen(true)}
-                variant={mapOpen ? 'overlay' : 'embedded'}
-                showClose={mapOpen}
-                className={mapOpen ? '' : 'rounded-none'}
-                locked={!isAccepted}
-              />
-            </div>
-
-            {/* Tools panel — standard Workspace sidebar */}
-            <IdeaWorkspaceTools
-              open={toolsPanelOpen}
-              onClose={() => setToolsPanelOpen(false)}
-              ideaId={realId}
-              title={title}
-              seedText={seedText}
-              stage={stage}
-              branch={branch}
-              area={area}
-              priority={priority}
-              isDraft={isDraft}
-              isAccepted={isAccepted}
-              saving={saving}
-              draftSavedLabel={draftSavedLabel}
-              onTitleChange={(v) => { setTitle(v); setDirty(true); }}
-              onSeedTextChange={(v) => { setSeedText(v); setDirty(true); }}
-              onBranchChange={(v) => { setBranch(v); setDirty(true); }}
-              onAreaChange={(v) => { setArea(v); setDirty(true); }}
-              onPriorityChange={(v) => { setPriority(v); setDirty(true); }}
-              onSave={handleSave}
-              onAcceptChallenge={handleAcceptChallenge}
-              onConvert={handleConvert}
-              onOpenChat={openChat}
-            />
-          </div>
-        ),
-      },
-    ],
-    [
-      area,
-      branch,
-      draftSavedLabel,
-      handleAcceptChallenge,
-      handleConvert,
-      handleSave,
-      isAccepted,
-      isDraft,
-      isPolish,
-      mapOpen,
-      openChat,
-      priority,
-      realId,
-      saving,
-      seedText,
-      stage,
-      title,
-      toolsPanelOpen,
-    ]
-  );
+  if (loading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-white dark:bg-navy-950">
+        <Loader2 className="animate-spin text-amber-500" size={32} />
+      </div>
+    );
+  }
 
   return (
-    <NModeShell
-      header={header}
-      properties={properties}
-      sections={sections}
-      actions={actions}
-      actionsVisible={true}
-      activeSection={activeSection}
-      onSectionChange={(id) => setActiveSection(id as any)}
-      presentationMode={'n'}
-      onPresentationModeChange={() => {}}
-      showModeSwitcher={false}
-      buildArtifactCode={(type, id) => buildArtifactCode(type as any, id)}
-      loading={loading}
-    />
+    <div className="w-full h-full flex overflow-hidden bg-white dark:bg-navy-950">
+      {/* Map fills all available space */}
+      <div className="flex-1 min-w-0 h-full">
+        <IdeaRecommendationMap
+          ideaId={realId}
+          ideaTitle={title || safeTitleFromSeed(seedText, isPolish)}
+          onClose={() => setMapOpen(false)}
+          onCenterEdit={() => setToolsPanelOpen(true)}
+          variant={mapOpen ? 'overlay' : 'embedded'}
+          showClose={mapOpen}
+          className={mapOpen ? '' : 'rounded-none'}
+          locked={!isAccepted}
+        />
+      </div>
+
+      {/* Tools panel sidebar */}
+      <IdeaWorkspaceTools
+        open={toolsPanelOpen}
+        onClose={() => setToolsPanelOpen(false)}
+        ideaId={realId}
+        title={title}
+        seedText={seedText}
+        stage={stage}
+        branch={branch}
+        area={area}
+        priority={priority}
+        isDraft={isDraft}
+        isAccepted={isAccepted}
+        saving={saving}
+        draftSavedLabel={draftSavedLabel}
+        onTitleChange={(v) => { setTitle(v); setDirty(true); }}
+        onSeedTextChange={(v) => { setSeedText(v); setDirty(true); }}
+        onBranchChange={(v) => { setBranch(v); setDirty(true); }}
+        onAreaChange={(v) => { setArea(v); setDirty(true); }}
+        onPriorityChange={(v) => { setPriority(v); setDirty(true); }}
+        onSave={handleSave}
+        onAcceptChallenge={handleAcceptChallenge}
+        onConvert={handleConvert}
+        onOpenChat={openChat}
+      />
+    </div>
   );
 };
 

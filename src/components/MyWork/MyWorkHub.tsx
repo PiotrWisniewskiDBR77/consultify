@@ -317,6 +317,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [tasksViewMode, setTasksViewMode] = useState<TasksViewMode>('table');
   const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('mindmap');
   const [ideasMenuOpen, setIdeasMenuOpen] = useState(false);
+  const [ideaToolsOpen, setIdeaToolsOpen] = useState(false);
   const [decisionsViewMode, setDecisionsViewMode] = useState<DecisionsViewMode>('list');
   const [notebookLinkedIdeasOpen, setNotebookLinkedIdeasOpen] = useState(false);
   const [notebookTopicsOpen, setNotebookTopicsOpen] = useState(false);
@@ -1157,6 +1158,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               initialOpenMap={Boolean((activeDoc as any)?.data?.openMap)}
               onClose={() => handleCloseDocument(activeDoc.id)}
               onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
+              toolsOpen={ideaToolsOpen}
+              onToolsOpenChange={setIdeaToolsOpen}
             />
           </React.Suspense>
         );
@@ -1553,6 +1556,28 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   aria-checked={decisionsViewMode === 'kanban'}
                 >
                   <Kanban size={16} />
+                </button>
+              </div>
+            )}
+
+            {/* Ideas workspace tools toggle — when an idea document is open */}
+            {activeTab === 'ideas' && activeDocumentId && (
+              <div
+                className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
+                role="group"
+                aria-label={isPolish ? 'Narzędzia workspace' : 'Workspace tools'}
+              >
+                <button
+                  onClick={() => setIdeaToolsOpen((v) => !v)}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    ideaToolsOpen
+                      ? 'bg-white dark:bg-navy-800 text-amber-600 dark:text-amber-300 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Narzędzia workspace' : 'Workspace tools'}
+                  aria-pressed={ideaToolsOpen}
+                >
+                  <Sparkles size={16} />
                 </button>
               </div>
             )}
