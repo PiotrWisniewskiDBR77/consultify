@@ -1190,6 +1190,13 @@ Minimalny, spójny moduł do prowadzenia realizacji inicjatyw (bez rozbudowanego
 - `initiative_kpis` (per initiative) + `kpi_time_series` + `initiative_kpi_mappings` (attribution) jako fundament.
 - Agregacja: Results list = union (KPIs per initiative + global KPIs jeśli wprowadzimy).
 
+**AI behavior (opcjonalnie):**
+- AI może proponować KPI dla inicjatywy (z kontekstu initiative/tool), ale zapis jest zawsze manual/akceptowany.
+
+**Definition of Done (DoD):**
+- Jest jedna kanoniczna tabela KPI (Results) + możliwość wejścia w szczegół KPI (history).
+- KPI z inicjatyw automatycznie pojawiają się w Results i mają mapping do inicjatywy.
+
 **Acceptance / test plan:**
 - KPI z inicjatywy jest widoczny w Results (agregacja)
 - global KPI może być zmapowany do inicjatywy
@@ -1201,6 +1208,7 @@ Minimalny, spójny moduł do prowadzenia realizacji inicjatyw (bez rozbudowanego
 - `results_kpi_created` (source=initiative|global)
 - `results_kpi_value_recorded` (kpiId, period)
 - `results_kpi_mapping_updated`
+**Rollout plan:** R0: tabela + manual time series + mapping; R1: lepsze trendy/segmentacja + eksport do report/deck.
 
 #### V3-H02 — [Results] ROI plan vs realized (tracking po wdrożeniu)
 - Status spec: review
@@ -1225,6 +1233,14 @@ Minimalny, spójny moduł do prowadzenia realizacji inicjatyw (bez rozbudowanego
 
 **AI behavior:** —
 
+**Użytkownicy i scenariusze:**
+- Owner inicjatywy wpisuje realized wartości cyklicznie i widzi odchylenie vs plan.
+- PMO filtruje inicjatywy “below plan” i otwiera drill‑down.
+
+**Definition of Done (DoD):**
+- ROI ma assumptions (plan) + realized (actual) + widoczne odchylenie per okres.
+- Da się pokazać 1 inicjatywę end‑to‑end bez arkuszy.
+
 **Acceptance / test plan:**
 - Dla 1 inicjatywy: wpis plan + 2 wpisy realized → UI pokazuje różnicę i trend.
 - Dane są widoczne po refresh i w API.
@@ -1237,13 +1253,20 @@ Minimalny, spójny moduł do prowadzenia realizacji inicjatyw (bez rozbudowanego
 #### V3-H03 — [Results] Operational analysis + ROI analysis jako 2 surfaces
 - Status spec: draft
 - Priorytet: P1
-**Cel:** dwa widoki analityczne: operacyjny (KPI) + ROI (finanse).  
-**DoD:** filtry, drill-down do inicjatyw, eksport do report/deck (później).
+**Business challenge (problem):**  
+Jeśli KPI i ROI nie są rozdzielone, user nie rozumie czy patrzy na performance operacyjny czy realizację wartości finansowej.
+
+**Cel (outcome):**  
+Dwa jasne surfaces: `Operational` (KPI) i `ROI` (plan vs realized), oba z filtrami i drill‑down do inicjatyw.
 - Target: R1
 
 **Zakres (IN/OUT):**
 - IN: dashboardy i widoki trendów + segmentacja (project/owner/category)
 - OUT: zaawansowane modelowanie predykcyjne (v4+)
+
+**Użytkownicy i scenariusze:**
+- PMO wchodzi w Operational i segmentuje KPI po owner/project.
+- Manager/CFO wchodzi w ROI i sprawdza inicjatywy z największym odchyleniem.
 
 **UX / UI notes:**
 - Dwa “surfaces” w Results: `Operational` i `ROI`.
@@ -1255,6 +1278,10 @@ Minimalny, spójny moduł do prowadzenia realizacji inicjatyw (bez rozbudowanego
 
 **AI behavior (opcjonalnie):**
 - AI może proponować “insights” (np. anomalie), ale nie zmienia danych.
+
+**Definition of Done (DoD):**
+- Operational: trendy KPI + filtry + drill‑down.
+- ROI: plan vs realized + lista inicjatyw z odchyleniami + drill‑down.
 
 **Acceptance / test plan:**
 - Zmiana filtrów zawęża KPI/ROI listy i grafy.
@@ -1296,6 +1323,14 @@ Minimalny, spójny moduł do prowadzenia realizacji inicjatyw (bez rozbudowanego
 **AI behavior (opcjonalnie):**
 - Generator może proponować narrację (executive summary) na bazie wyników, ale dane liczbowe są zawsze “zaciągnięte” z modelu.
 
+**Użytkownicy i scenariusze:**
+- Konsultant kończy Financial Analysis i generuje report dla klienta (template).
+- Manager generuje deck “executive” (no template) i wysyła do steering.
+
+**Definition of Done (DoD):**
+- Export tworzy draft output (report/deck) z poprawnym `source_type/source_id` i linkiem “Open source”.
+- Output zapisuje metadane (kto/kiedy, template yes/no).
+
 **Acceptance / test plan:**
 - Klik “Exportuj → Report (template)” tworzy draft report i ustawia źródło na financial analysis.
 - Klik “Exportuj → Presentation (no template)” tworzy draft deck i ustawia źródło na financial analysis.
@@ -1334,6 +1369,14 @@ Minimalny, spójny moduł do prowadzenia realizacji inicjatyw (bez rozbudowanego
 - Nie zmieniamy backendów w R0 — porządkujemy entry points, routing i copy.
 
 **AI behavior:** brak wymagania (AI jest w generatorach, nie w hubie).
+
+**Użytkownicy i scenariusze:**
+- User klika “Reports” i trafia do *jednego* kanonicznego entry pointu (Builder) z jasnym opisem.
+- PMO klika “Management reports” (secondary) i rozumie, że to inne zastosowanie.
+
+**Definition of Done (DoD):**
+- UI ma jednoznaczne nazwy i entry points; user nie myli “management report” z deliverable.
+- Breadcrumbs wszędzie pokazują `Reports > Builder` lub `Reports > Management`.
 
 **Acceptance / test plan:**
 - Z poziomu menu user trafia do właściwego entry pointu (builder vs management) i UI to komunikuje.
@@ -1375,6 +1418,14 @@ Minimalny, spójny moduł do prowadzenia realizacji inicjatyw (bez rozbudowanego
 **AI behavior (opcjonalnie):**
 - AI może proponować tytuł i opis decka przy tworzeniu.
 
+**Użytkownicy i scenariusze:**
+- Konsultant generuje deck z ToolSession i wraca do niego po tygodniu (biblioteka).
+- Manager re-exportuje deck do PPTX i widzi historię eksportów.
+
+**Definition of Done (DoD):**
+- Biblioteka decków istnieje w 2 view modes (table+cards), ma filtry i open w dynamic menu.
+- Deck ma traceability i akcję “Open source”.
+
 **Acceptance / test plan:**
 - Po wygenerowaniu deck pojawia się w bibliotece.
 - Rename działa i jest odzwierciedlony w listach Tools outputs (jeśli linkowane).
@@ -1391,8 +1442,19 @@ Minimalny, spójny moduł do prowadzenia realizacji inicjatyw (bez rozbudowanego
 #### V3-J03 — [Generators] Upload chaos jako 3 ścieżka report/deck (MVP)
 - Status spec: draft
 - Priorytet: P2
-**Cel:** trzeci tryb: wrzuć dokumenty → wygeneruj report/deck.  
-**DoD:** upload + extraction + generator w spójnym wizardzie; minimal quality gates.
+**Business challenge (problem):**  
+Klient często ma już dokumenty, a konsultant potrzebuje szybko zbudować draft deliverable na bazie uploadu — bez robienia wszystkiego od zera w narzędziach.
+
+**Cel (outcome):**  
+Trzeci tryb: wrzuć dokumenty → wygeneruj draft report/deck z traceability do upload bundle.
+
+**Użytkownicy i scenariusze:**
+- Konsultant wrzuca 1 PDF i generuje draft report do review.
+- Konsultant wrzuca PDF+PPTX i generuje draft deck “exec”.
+
+**Definition of Done (DoD):**
+- Wizard: Upload → Context → Generate działa dla report i deck.
+- Output ma widoczne źródła (upload bundle) i oznaczenie “draft requires review”.
 - Target: R2
 
 **Zakres (IN/OUT):**
@@ -1447,6 +1509,15 @@ Minimalny, spójny moduł do prowadzenia realizacji inicjatyw (bez rozbudowanego
 - OUT:
   - pełna automatyczna edycja bez akceptacji usera
 
+**Użytkownicy i scenariusze:**
+- Owner inicjatywy widzi “missing items” i uzupełnia je ręcznie.
+- Owner klika “AI propose fill” dla 1 brakującego pola i akceptuje/odrzuca.
+- Manager (locked) widzi braki, ale nie może edytować — prosi ownera.
+
+**Definition of Done (DoD):**
+- Dla danego artefaktu i statusu system pokazuje: required items + missing list + completeness score.
+- Gate readiness blokuje krytyczne przejścia statusu, jeśli braki są krytyczne.
+
 **UX / UI notes:**
 - NModeCanvas pokazuje “completeness pill” + klik otwiera listę braków.
 - Missing list linkuje do konkretnego pola/sekcji i scrolluje do miejsca.
@@ -1480,8 +1551,29 @@ Minimalny, spójny moduł do prowadzenia realizacji inicjatyw (bez rozbudowanego
 #### V3-L01 — [V4] MCP IRIS + MCP Marketplace w menu jako “Coming soon”
 - Status spec: draft
 - Priorytet: P2
-**DoD:** 2 pozycje w menu + spójny ekran “Coming soon” (bez obietnic v3).
 - Target: R2
+
+**Business challenge (problem):**  
+Chcemy komunikować roadmapę V4 bez ryzyka obietnic w V3 i bez rozpraszania użytkownika w go‑live.
+
+**Cel (outcome):**  
+Użytkownik widzi w menu “MCP IRIS” i “MCP Marketplace” jako jasne placeholdery V4 (“Coming soon”), bez wpływu na flow V3.
+
+**Użytkownicy i scenariusze:**
+- User widzi nowe pozycje, klika z ciekawości i dostaje krótki, spójny ekran informacji.
+- Admin pyta “kiedy” — ekran nie zawiera dat ani obietnic.
+
+**Zakres (IN/OUT):**
+- IN:
+  - 2 pozycje menu + badge “Coming soon”
+  - ekran placeholder z opisem (3 bullet points) i bez CTA
+- OUT:
+  - jakakolwiek funkcjonalność MCP w V3
+
+**AI behavior:** —
+
+**Definition of Done (DoD):**
+- 2 pozycje w menu + spójny ekran “Coming soon” (bez obietnic v3).
 
 **UX / UI notes:**
 - Menu item ma badge “Coming soon”.
