@@ -37,6 +37,7 @@ import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { isValidLanguage, normalizeLanguageCode, type SupportedLanguage } from '@/i18n';
 
 import { useAIStream } from '../../hooks/useAIStream';
+import { useChatActions } from '../../hooks/useChatActions';
 import { useDemoSession } from '../../hooks/useDemoSession';
 // import { useOrgMemory } from '../../hooks/useOrgMemory'; // removed — panel disabled
 import { useUniversalVoice } from '../../hooks/useUniversalVoice';
@@ -57,6 +58,7 @@ import {
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
+import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSuggestions';
 import { ChatSignalsPanel } from './ChatSignalsPanel';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
 import { ContextBadge } from './ContextBadge';
@@ -88,7 +90,9 @@ const firstMatchIndex = (input: string, patterns: RegExp[]): number => {
 };
 
 const isLikelyAiFailureText = (text: string): boolean => {
-  const t = String(text || '').trim().toLowerCase();
+  const t = String(text || '')
+    .trim()
+    .toLowerCase();
   if (!t) return true;
   return (
     t.startsWith('⚠️') ||
@@ -292,6 +296,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const { addArtifact, togglePanel: toggleArtifactsPanel, exportArtifact } = useArtifactsStore();
 
   const pendingActionsCount = useAIActionsStore((s) => s.pendingCount);
+  const { handleAction: handleChatAction } = useChatActions();
 
   // ========================================================================
   // Local state (must be declared before hooks that depend on them)
@@ -1049,6 +1054,51 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   ]);
 
   // ========================================================================
+  // V3-B01: Contextual smart suggestions (shown below input after first exchange)
+  // ========================================================================
+
+  const chatSuggestions: ChatSuggestion[] = useMemo(() => {
+    if (displayMessages.length < 2 || isStreaming) return [];
+    const items: ChatSuggestion[] = [];
+
+    if (workspaceContext?.type === 'initiative') {
+      items.push({
+        id: 'open-initiative',
+        label: t('chat.suggestions.openInitiative', 'Open initiative'),
+        type: 'initiative',
+        action: {
+          type: 'NAVIGATE',
+          targetModule: 'initiatives',
+          entityId: workspaceContext.entityId ?? undefined,
+        },
+      });
+    }
+
+    items.push({
+      id: 'open-tools',
+      label: t('chat.suggestions.openTools', 'Open Tools hub'),
+      type: 'tool',
+      action: { type: 'NAVIGATE', targetModule: 'tools' },
+    });
+
+    items.push({
+      id: 'go-results',
+      label: t('chat.suggestions.goResults', 'View Results'),
+      type: 'results',
+      action: { type: 'NAVIGATE', targetModule: 'results' },
+    });
+
+    return items;
+  }, [displayMessages.length, isStreaming, workspaceContext, t]);
+
+  const handleSuggestionClick = useCallback(
+    async (suggestion: ChatSuggestion) => {
+      await handleChatAction(suggestion.action);
+    },
+    [handleChatAction]
+  );
+
+  // ========================================================================
   // Ensure messages are loaded when activeConversationId changes (e.g. after
   // navigating between screens or browser refresh with localStorage rehydration)
   // ========================================================================
@@ -1096,9 +1146,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               const confirmMsg: ChatMessage = {
                 id: `action-${Date.now()}`,
                 role: 'ai',
-                content: isTask
-                  ? `Task created: "${title}"`
-                  : `Decision created: "${title}"`,
+                content: isTask ? `Task created: "${title}"` : `Decision created: "${title}"`,
                 timestamp: new Date(),
               };
               addChatMessage(confirmMsg);
@@ -1110,12 +1158,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     content: confirmMsg.content,
                     messageType: 'text',
                   });
-                } catch { /* best-effort persist */ }
+                } catch {
+                  /* best-effort persist */
+                }
               }
               onMessageSent?.(content);
               return;
             }
-          } catch { /* fall through to normal send */ }
+          } catch {
+            /* fall through to normal send */
+          }
         }
       }
 
@@ -2729,6 +2781,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           startVoiceListening={startListening}
           stopVoiceListening={stopListening}
         />
+        {chatSuggestions.length > 0 && (
+          <ChatSmartSuggestions
+            suggestions={chatSuggestions}
+            onSuggestionClick={handleSuggestionClick}
+            className="pt-2"
+          />
+        )}
       </div>
 
       {/* Sliding History Panel */}

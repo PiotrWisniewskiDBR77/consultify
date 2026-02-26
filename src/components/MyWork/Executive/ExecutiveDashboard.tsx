@@ -168,10 +168,15 @@ const SignalCard: React.FC<{ signal: AISignal; onClick?: () => void }> = ({ sign
       className="px-4 py-3 rounded-lg hover:bg-slate-50/60 dark:hover:bg-white/[0.03] cursor-pointer transition-colors duration-150"
     >
       <div className="flex items-start gap-2.5">
-        <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
-          signal.severity?.toUpperCase() === 'CRITICAL' ? 'bg-rose-500' :
-          signal.severity?.toUpperCase() === 'WARNING' ? 'bg-amber-500' : 'bg-slate-400 dark:bg-slate-500'
-        }`} />
+        <span
+          className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
+            signal.severity?.toUpperCase() === 'CRITICAL'
+              ? 'bg-rose-500'
+              : signal.severity?.toUpperCase() === 'WARNING'
+                ? 'bg-amber-500'
+                : 'bg-slate-400 dark:bg-slate-500'
+          }`}
+        />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-slate-800 dark:text-slate-100 line-clamp-1">
             {signal.title}
@@ -213,7 +218,13 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   type TrendDir = 'up' | 'down' | 'stable';
   type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
   const [kpiData, setKpiData] = useState<{
-    tasks: { completed: number; total: number; overdueCount: number; onTimeRate: number; trend: TrendDir };
+    tasks: {
+      completed: number;
+      total: number;
+      overdueCount: number;
+      onTimeRate: number;
+      trend: TrendDir;
+    };
     decisions: { pending: number; avgWaitDays: number; critical: number; trend: TrendDir };
     team: { avgCapacity: number; overloaded: number; available: number; trend: TrendDir };
     risk: { level: RiskLevel; blockers: number; escalations: number; trend: TrendDir };
@@ -231,7 +242,9 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   const [signals, setSignals] = useState<AISignal[]>([]);
   const [patterns, setPatterns] = useState<any>(null);
 
-  const isPolish = (t('language', 'en') === 'pl') || (typeof navigator !== 'undefined' && navigator.language?.startsWith('pl'));
+  const isPolish =
+    t('language', 'en') === 'pl' ||
+    (typeof navigator !== 'undefined' && navigator.language?.startsWith('pl'));
 
   const greetingText = getGreetingText(t);
   const userName =
@@ -309,10 +322,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                   : 0,
               risk: stats.byStatus?.blocked
                 ? Math.round(
-                    Math.max(
-                      0,
-                      100 - (stats.byStatus.blocked / Math.max(1, stats.total)) * 100
-                    )
+                    Math.max(0, 100 - (stats.byStatus.blocked / Math.max(1, stats.total)) * 100)
                   )
                 : completionRate > 0
                   ? Math.round(completionRate * 0.9)
@@ -345,9 +355,9 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               title: d.title,
               type: d.decisionType || 'GENERAL',
               priority: (d.priority || 'medium').toLowerCase(),
-              daysWaiting: d.daysWaiting ?? Math.floor(
-                (Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-              ),
+              daysWaiting:
+                d.daysWaiting ??
+                Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
               requestedBy: d.requestedByName,
               projectName: d.projectName,
             }))
@@ -361,9 +371,11 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             pendingDecisions.length > 0
               ? Math.round(
                   (pendingDecisions.reduce((sum: number, d: any) => {
-                    const days = d.daysWaiting ?? Math.floor(
-                      (Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-                    );
+                    const days =
+                      d.daysWaiting ??
+                      Math.floor(
+                        (Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+                      );
                     return sum + days;
                   }, 0) /
                     pendingDecisions.length) *
@@ -392,8 +404,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               id: d.id,
               type: 'decision',
               title: d.title,
-              urgency:
-                (d.priority || '').toUpperCase() === 'CRITICAL' ? 'critical' : 'high',
+              urgency: (d.priority || '').toUpperCase() === 'CRITICAL' ? 'critical' : 'high',
               projectName: d.projectName,
               owner: d.requestedByName,
               daysOverdue: Math.max(0, (d.daysWaiting || 0) - 7),
@@ -430,12 +441,8 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             teamRes.value.reduce((sum: number, m: any) => sum + (m.capacity || 0), 0) /
               teamRes.value.length
           );
-          const overloadedCount = teamRes.value.filter(
-            (m: any) => (m.capacity || 0) > 100
-          ).length;
-          const availableCount = teamRes.value.filter(
-            (m: any) => (m.capacity || 0) < 50
-          ).length;
+          const overloadedCount = teamRes.value.filter((m: any) => (m.capacity || 0) > 100).length;
+          const availableCount = teamRes.value.filter((m: any) => (m.capacity || 0) < 50).length;
 
           setKpiData((prev) => ({
             ...prev,
@@ -456,9 +463,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           });
 
           const escalationsCount =
-            statsRes.status === 'fulfilled'
-              ? (statsRes.value as any)?.byStatus?.escalated || 0
-              : 0;
+            statsRes.status === 'fulfilled' ? (statsRes.value as any)?.byStatus?.escalated || 0 : 0;
 
           const riskLevel: RiskLevel =
             overdueTasks.length > 5 || escalationsCount > 3
@@ -473,8 +478,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               level: riskLevel,
               blockers: overdueTasks.length,
               escalations: escalationsCount,
-              trend:
-                overdueTasks.length > 5 ? 'down' : overdueTasks.length === 0 ? 'up' : 'stable',
+              trend: overdueTasks.length > 5 ? 'down' : overdueTasks.length === 0 ? 'up' : 'stable',
             },
           }));
 
@@ -504,9 +508,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           const raw = initiativesRes.value || [];
           const active = raw.filter(
             (i: any) =>
-              !['COMPLETED', 'CANCELLED', 'ARCHIVED'].includes(
-                (i.status || '').toUpperCase()
-              )
+              !['COMPLETED', 'CANCELLED', 'ARCHIVED'].includes((i.status || '').toUpperCase())
           );
 
           const progressItems: InitiativeProgress[] = active.slice(0, 6).map((i: any) => {
@@ -519,8 +521,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               priority: i.priority || 'MEDIUM',
               tasksDone,
               tasksTotal,
-              completionPct:
-                tasksTotal > 0 ? Math.round((tasksDone / tasksTotal) * 100) : 0,
+              completionPct: tasksTotal > 0 ? Math.round((tasksDone / tasksTotal) * 100) : 0,
               overdueCount: Number(i.overdueCount || 0),
             };
           });
@@ -555,7 +556,9 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           });
           if (pRes.ok) setPatterns(await pRes.json());
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
         setLoadError(t('executive.loadError', 'Failed to load dashboard data'));
@@ -619,7 +622,8 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       >
         <div>
           <h1 className="text-2xl font-bold text-navy-900 dark:text-white">
-            {greetingText}{userName ? `, ${userName}` : ''}
+            {greetingText}
+            {userName ? `, ${userName}` : ''}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
             <Calendar size={14} />
@@ -687,32 +691,42 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             {patterns.avgVelocity != null && (
               <div className="text-center">
                 <div className="text-lg font-bold text-purple-600">{patterns.avgVelocity}</div>
-                <div className="text-[10px] text-slate-500">{isPolish ? 'tasków/tydzień' : 'tasks/week'}</div>
+                <div className="text-[10px] text-slate-500">
+                  {isPolish ? 'tasków/tydzień' : 'tasks/week'}
+                </div>
               </div>
             )}
             {patterns.avgCompletionDays != null && (
               <div className="text-center">
                 <div className="text-lg font-bold text-blue-600">{patterns.avgCompletionDays}d</div>
-                <div className="text-[10px] text-slate-500">{isPolish ? 'śr. czas zadania' : 'avg task time'}</div>
+                <div className="text-[10px] text-slate-500">
+                  {isPolish ? 'śr. czas zadania' : 'avg task time'}
+                </div>
               </div>
             )}
             {patterns.avgDecisionDays != null && (
               <div className="text-center">
                 <div className="text-lg font-bold text-amber-600">{patterns.avgDecisionDays}d</div>
-                <div className="text-[10px] text-slate-500">{isPolish ? 'śr. czas decyzji' : 'avg decision time'}</div>
+                <div className="text-[10px] text-slate-500">
+                  {isPolish ? 'śr. czas decyzji' : 'avg decision time'}
+                </div>
               </div>
             )}
             {patterns.overdueRate != null && (
               <div className="text-center">
                 <div className="text-lg font-bold text-red-600">{patterns.overdueRate}%</div>
-                <div className="text-[10px] text-slate-500">{isPolish ? 'spóźnień' : 'overdue rate'}</div>
+                <div className="text-[10px] text-slate-500">
+                  {isPolish ? 'spóźnień' : 'overdue rate'}
+                </div>
               </div>
             )}
           </div>
           {patterns.insights?.length > 0 && (
             <div className="space-y-1">
               {patterns.insights.map((insight: string, i: number) => (
-                <p key={i} className="text-xs text-slate-600 dark:text-slate-400">💡 {insight}</p>
+                <p key={i} className="text-xs text-slate-600 dark:text-slate-400">
+                  💡 {insight}
+                </p>
               ))}
             </div>
           )}
@@ -812,8 +826,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                   {t('executive.initiatives.title', 'Initiative Progress')}
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {initiatives.length}{' '}
-                  {t('executive.initiatives.active', 'active initiatives')}
+                  {initiatives.length} {t('executive.initiatives.active', 'active initiatives')}
                 </p>
               </div>
             </div>

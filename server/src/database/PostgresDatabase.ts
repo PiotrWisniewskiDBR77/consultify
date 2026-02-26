@@ -18,19 +18,27 @@ let initDbPromise: Promise<void> | null = null;
 const SLOW_QUERY_THRESHOLD_MS = 1000;
 
 function isDbReadOnlyEnabled(): boolean {
-  const v = String(process.env.DB_READONLY || '').trim().toLowerCase();
+  const v = String(process.env.DB_READONLY || '')
+    .trim()
+    .toLowerCase();
   if (!v) return false;
   return v === '1' || v === 'true' || v === 'yes' || v === 'on';
 }
 
 function looksLikeWriteQuery(sql: string): boolean {
-  const s = String(sql || '').trim().toLowerCase();
+  const s = String(sql || '')
+    .trim()
+    .toLowerCase();
   // Strip leading SQL comments (common in migrations / multi-statement scripts)
   const cleaned = s.replace(/^(?:\s*--.*\n|\s*\/\*[\s\S]*?\*\/\s*)+/g, '').trim();
 
   // Hard block any obvious mutating keywords anywhere.
   // We keep it conservative; false positives are acceptable in staging read-only.
-  if (/\b(insert|update|delete|upsert|merge|truncate|create|alter|drop|grant|revoke|comment|vacuum|analyze|reindex)\b/.test(cleaned))
+  if (
+    /\b(insert|update|delete|upsert|merge|truncate|create|alter|drop|grant|revoke|comment|vacuum|analyze|reindex)\b/.test(
+      cleaned
+    )
+  )
     return true;
 
   // Non-mutating common statements
@@ -241,7 +249,7 @@ function adaptQuery(sql: string): string {
     );
     adapted = adapted.replace(
       /FROM\s+sqlite_master\s+WHERE\s+type\s*=\s*['"]table['"]/gi,
-      'FROM information_schema.tables WHERE table_schema=\'public\' AND table_type=\'BASE TABLE\''
+      "FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'"
     );
   }
 
@@ -757,11 +765,14 @@ async function testConnection(retries = 3, delay = 2000): Promise<boolean> {
     try {
       logger.info(`[Postgres] Testing connection (attempt ${i + 1}/${retries})...`);
       const result = await getPool().query('SELECT NOW() as current_time');
-      const versionResult = await getPool().query<{ version: string }>('SELECT version() as version');
+      const versionResult = await getPool().query<{ version: string }>(
+        'SELECT version() as version'
+      );
       const version = String(versionResult?.rows?.[0]?.version || '').toUpperCase();
       if (!version.includes('POSTGRESQL')) {
         logger.error(
-          '[Postgres] CRITICAL: Connected database is NOT PostgreSQL. version()=' + version.substring(0, 80)
+          '[Postgres] CRITICAL: Connected database is NOT PostgreSQL. version()=' +
+            version.substring(0, 80)
         );
         logger.error('[Postgres] This application requires PostgreSQL. Check DATABASE_URL.');
         process.exit(1);
@@ -1804,6 +1815,41 @@ export async function initDb(): Promise<void> {
     await query(`CREATE INDEX IF NOT EXISTS idx_ini_schedule_baselines_initiative
         ON initiative_schedule_baselines(initiative_id)`);
 
+    // Decisions registry (required by initiative gates and MyWork integrations).
+    await query(`CREATE TABLE IF NOT EXISTS decisions (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            project_id TEXT,
+            initiative_id TEXT,
+            task_id TEXT,
+            title TEXT NOT NULL,
+            type TEXT DEFAULT 'APPROVAL',
+            decision_maker_id TEXT,
+            created_by TEXT,
+            status TEXT DEFAULT 'pending',
+            options TEXT DEFAULT '[]',
+            criteria TEXT,
+            deadline TIMESTAMP,
+            escalation_deadline TIMESTAMP,
+            selected_option TEXT,
+            decision_rationale TEXT,
+            decided_at TIMESTAMP,
+            source_type TEXT,
+            source_id TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL,
+            FOREIGN KEY(initiative_id) REFERENCES initiatives(id) ON DELETE SET NULL,
+            FOREIGN KEY(task_id) REFERENCES tasks(id) ON DELETE SET NULL,
+            FOREIGN KEY(decision_maker_id) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_decisions_org ON decisions(organization_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_decisions_project ON decisions(project_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_decisions_initiative ON decisions(initiative_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_decisions_status ON decisions(status)`);
+
     await query(`CREATE TABLE IF NOT EXISTS initiative_milestones (
             id TEXT PRIMARY KEY,
             initiative_id TEXT NOT NULL,
@@ -1823,10 +1869,18 @@ export async function initDb(): Promise<void> {
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
             FOREIGN KEY(gate_decision_id) REFERENCES decisions(id) ON DELETE SET NULL
         )`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_milestones_initiative ON initiative_milestones(initiative_id)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_milestones_org ON initiative_milestones(organization_id)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_milestones_target_date ON initiative_milestones(target_date)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_milestones_status ON initiative_milestones(status)`);
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_milestones_initiative ON initiative_milestones(initiative_id)`
+    );
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_milestones_org ON initiative_milestones(organization_id)`
+    );
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_milestones_target_date ON initiative_milestones(target_date)`
+    );
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_milestones_status ON initiative_milestones(status)`
+    );
 
     await query(`CREATE TABLE IF NOT EXISTS initiative_dependencies (
             id TEXT PRIMARY KEY,
@@ -1842,10 +1896,18 @@ export async function initDb(): Promise<void> {
             FOREIGN KEY(from_initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE,
             FOREIGN KEY(to_initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE
         )`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_initiative_dependencies_org ON initiative_dependencies(organization_id)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_initiative_dependencies_project ON initiative_dependencies(project_id)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_initiative_dependencies_from ON initiative_dependencies(from_initiative_id)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_initiative_dependencies_to ON initiative_dependencies(to_initiative_id)`);
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_initiative_dependencies_org ON initiative_dependencies(organization_id)`
+    );
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_initiative_dependencies_project ON initiative_dependencies(project_id)`
+    );
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_initiative_dependencies_from ON initiative_dependencies(from_initiative_id)`
+    );
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_initiative_dependencies_to ON initiative_dependencies(to_initiative_id)`
+    );
 
     // Task Dependencies
     await query(`CREATE TABLE IF NOT EXISTS task_dependencies(

@@ -74,4 +74,3 @@ export const FeatureFlagsDevToolsToggleButton: React.FC = () => {
 };
 
 export default FeatureFlagsDevToolsToggleButton;
-

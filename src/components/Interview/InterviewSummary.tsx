@@ -6,7 +6,16 @@
  * Uses the canonical 5 categories: Strategy, Operations, Digital, People, Finance.
  */
 
-import { CheckCircle, DollarSign, Download, ExternalLink, Monitor, Settings, Target, Users } from 'lucide-react';
+import {
+  CheckCircle,
+  DollarSign,
+  Download,
+  ExternalLink,
+  Monitor,
+  Settings,
+  Target,
+  Users,
+} from 'lucide-react';
 import React from 'react';
 
 import { InterviewInsight, OrganizationContext } from '@/hooks/useInterviewContext';
@@ -189,8 +198,7 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
                     .slice(0, 2)
                     .map((m) => `${m.name}: ${m.value}`)
                     .join(', ')}
-                  {context.keyMetrics.length > 2 &&
-                    ` +${context.keyMetrics.length - 2} more`}
+                  {context.keyMetrics.length > 2 && ` +${context.keyMetrics.length - 2} more`}
                 </span>
               </div>
             )}
@@ -202,8 +210,7 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
                     .slice(0, 2)
                     .map((s) => `${s.name} (${s.role})`)
                     .join(', ')}
-                  {context.stakeholders.length > 2 &&
-                    ` +${context.stakeholders.length - 2} more`}
+                  {context.stakeholders.length > 2 && ` +${context.stakeholders.length - 2} more`}
                 </span>
               </div>
             )}

@@ -298,9 +298,13 @@ export const AIContextBuilder = {
     try {
       const govMod = (await import('./ai/contextGovernance.js')) as any;
       const getOrgContextPolicy = govMod.getOrgContextPolicy || govMod.default?.getOrgContextPolicy;
-      const filterContextByPolicy = govMod.filterContextByPolicy || govMod.default?.filterContextByPolicy;
+      const filterContextByPolicy =
+        govMod.filterContextByPolicy || govMod.default?.filterContextByPolicy;
 
-      if (typeof getOrgContextPolicy === 'function' && typeof filterContextByPolicy === 'function') {
+      if (
+        typeof getOrgContextPolicy === 'function' &&
+        typeof filterContextByPolicy === 'function'
+      ) {
         const policy = await getOrgContextPolicy(organizationId);
         filteredContext = filterContextByPolicy(filteredContext as any, policy) as any;
 
@@ -746,7 +750,11 @@ export const AIContextBuilder = {
         dgMod.filterDocumentsByVisibility || dgMod.default?.filterDocumentsByVisibility;
       if (typeof filterDocumentsByVisibility === 'function' && Array.isArray(documents)) {
         const docIds = documents.map((d: any) => String(d?.id || '')).filter(Boolean);
-        const access = await filterDocumentsByVisibility(docIds, projectId || undefined, conversationId || undefined);
+        const access = await filterDocumentsByVisibility(
+          docIds,
+          projectId || undefined,
+          conversationId || undefined
+        );
         docGov = {
           allowedDocIds: access.allowed || [],
           blockedDocIds: access.blocked || [],

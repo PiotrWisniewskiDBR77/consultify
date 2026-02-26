@@ -20,7 +20,13 @@ import { useTranslation } from 'react-i18next';
 // ── Priority Picker ──
 
 const PRIORITY_OPTIONS = [
-  { value: 'critical', label: 'Critical', labelPl: 'Krytyczny', dot: 'bg-red-500', icon: AlertTriangle },
+  {
+    value: 'critical',
+    label: 'Critical',
+    labelPl: 'Krytyczny',
+    dot: 'bg-red-500',
+    icon: AlertTriangle,
+  },
   { value: 'high', label: 'High', labelPl: 'Wysoki', dot: 'bg-amber-500', icon: ArrowUp },
   { value: 'medium', label: 'Medium', labelPl: 'Średni', dot: 'bg-blue-500', icon: Minus },
   { value: 'low', label: 'Low', labelPl: 'Niski', dot: 'bg-slate-400', icon: ArrowDown },
@@ -144,7 +150,11 @@ const formatISODate = (d: Date): string => {
 };
 
 const formatShortDate = (d: Date, isPolish: boolean): string =>
-  d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
 
 interface BulkDatePickerProps {
   isOpen: boolean;

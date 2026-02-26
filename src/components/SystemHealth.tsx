@@ -97,7 +97,11 @@ export const SystemHealth = () => {
       >
         <div
           className={`w-2 h-2 rounded-full ${
-            status === 'online' ? 'bg-green-500' : status === 'degraded' ? 'bg-amber-500' : 'bg-red-500'
+            status === 'online'
+              ? 'bg-green-500'
+              : status === 'degraded'
+                ? 'bg-amber-500'
+                : 'bg-red-500'
           }`}
         />
         <span className="text-xs font-medium text-navy-900 dark:text-white">

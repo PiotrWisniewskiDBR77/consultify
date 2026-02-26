@@ -377,8 +377,7 @@ router.get(
     const periodStart =
       firstQueryValue(req.query.periodStart) ||
       new Date(Date.now() - 180 * 86400000).toISOString().slice(0, 10);
-    const periodEnd =
-      firstQueryValue(req.query.periodEnd) || new Date().toISOString().slice(0, 10);
+    const periodEnd = firstQueryValue(req.query.periodEnd) || new Date().toISOString().slice(0, 10);
     const result = await computeAttribution(kpiId, orgId, periodStart, periodEnd);
     res.json({ success: true, data: result });
   })

@@ -361,7 +361,7 @@ export const INVOCATION_PROFILES: Record<string, InvocationProfile> = {
     description: 'Fully customizable report with all features',
     descriptionPl: 'W pełni konfigurowalny raport ze wszystkimi funkcjami',
 
-    sourceTypes: ['ASSESSMENT', 'TOOL', 'INITIATIVE', 'INTERVIEW'],
+    sourceTypes: ['ASSESSMENT', 'TOOL', 'INITIATIVE', 'INTERVIEW', 'UPLOAD_BUNDLE'],
 
     allowedBlockTypes: null, // All allowed
     disallowedBlockTypes: [],
@@ -413,7 +413,7 @@ export const INVOCATION_PROFILES: Record<string, InvocationProfile> = {
     description: 'Standard report with basic sections',
     descriptionPl: 'Standardowy raport z podstawowymi sekcjami',
 
-    sourceTypes: ['ASSESSMENT', 'TOOL', 'INITIATIVE', 'INTERVIEW'],
+    sourceTypes: ['ASSESSMENT', 'TOOL', 'INITIATIVE', 'INTERVIEW', 'UPLOAD_BUNDLE'],
 
     allowedBlockTypes: null,
     disallowedBlockTypes: [],

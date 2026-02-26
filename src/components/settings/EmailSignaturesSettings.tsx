@@ -18,8 +18,8 @@ import { Check, Copy, Edit2, FileSignature, Plus, Star, Trash2 } from 'lucide-re
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { cn } from '../../lib/utils';
 import { useDemoSession } from '../../hooks/useDemoSession';
+import { cn } from '../../lib/utils';
 import { User } from '../../types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import {

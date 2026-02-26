@@ -5,10 +5,19 @@
 
 import { z } from 'zod';
 
+const MyWorkDerivedSourceSchema = z.object({
+  type: z.enum(['idea', 'notebook', 'task', 'decision']),
+  id: z.string().min(1),
+  title: z.string(),
+});
+
 export const CreateToolSessionSchema = z.object({
   toolType: z.string().min(1),
   name: z.string().min(1),
   projectId: z.string().optional().nullable(),
+  // V3-C03: MYWORK materialization — optional for toolType=MYWORK
+  derivedFrom: z.array(MyWorkDerivedSourceSchema).optional(),
+  snapshotJson: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const UpdateToolSessionSchema = z.object({

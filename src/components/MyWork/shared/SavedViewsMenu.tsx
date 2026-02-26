@@ -6,8 +6,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bookmark, Check, ChevronDown, Plus, Trash2, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
@@ -42,10 +42,7 @@ interface SavedViewsMenuProps {
   onApplyPreset: (preset: TaskViewPreset) => void;
 }
 
-export const SavedViewsMenu: React.FC<SavedViewsMenuProps> = ({
-  currentState,
-  onApplyPreset,
-}) => {
+export const SavedViewsMenu: React.FC<SavedViewsMenuProps> = ({ currentState, onApplyPreset }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [presets, setPresets] = useState<TaskViewPreset[]>(loadPresets);
@@ -123,7 +120,10 @@ export const SavedViewsMenu: React.FC<SavedViewsMenuProps> = ({
       >
         <Bookmark size={12} />
         {t('myWork.savedViews.label', 'Views')}
-        <ChevronDown size={10} className={isOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
+        <ChevronDown
+          size={10}
+          className={isOpen ? 'rotate-180 transition-transform' : 'transition-transform'}
+        />
       </button>
 
       <AnimatePresence>

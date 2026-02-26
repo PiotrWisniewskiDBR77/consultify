@@ -27,9 +27,7 @@ const isSafeIdentifier = (ident: string): boolean => SAFE_IDENT_RE.test(ident);
 const getSqliteColumns = async (table: string): Promise<string[]> => {
   if (!isSafeIdentifier(table)) return [];
   const rows = await dbAll<{ name?: string }>(`PRAGMA table_info(${table})`, []);
-  return (rows || [])
-    .map((r) => String(r?.name || '').trim())
-    .filter(Boolean);
+  return (rows || []).map((r) => String(r?.name || '').trim()).filter(Boolean);
 };
 
 const detectOrgColumn = (cols: string[]): string | null => {
@@ -159,7 +157,8 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const orgId = req.user?.organizationId;
-      if (!orgId) return res.status(400).json({ success: false, error: 'Organization ID required' });
+      if (!orgId)
+        return res.status(400).json({ success: false, error: 'Organization ID required' });
 
       const users = await safeCountRows('users', orgId);
       const projects = await safeCountRows('projects', orgId);
@@ -218,7 +217,8 @@ router.post(
     const { category } = req.params;
     try {
       const orgId = req.user?.organizationId;
-      if (!orgId) return res.status(400).json({ success: false, error: 'Organization ID required' });
+      if (!orgId)
+        return res.status(400).json({ success: false, error: 'Organization ID required' });
 
       const nowIso = new Date().toISOString();
       const filename = `org-${orgId}-${category}-${nowIso.slice(0, 10)}.json`;
@@ -270,7 +270,9 @@ router.post(
       }
       if (category === 'decisions') {
         const primary =
-          (await getSqliteColumns('action_decisions')).length > 0 ? 'action_decisions' : 'decisions';
+          (await getSqliteColumns('action_decisions')).length > 0
+            ? 'action_decisions'
+            : 'decisions';
         const { rows, scoped, selectedColumns } = await safeSelectRows(primary, orgId, {
           orderBy: 'updated_at',
         });
@@ -333,7 +335,9 @@ router.post(
         });
       }
 
-      return res.status(400).json({ success: false, error: `Unknown export category: ${category}` });
+      return res
+        .status(400)
+        .json({ success: false, error: `Unknown export category: ${category}` });
     } catch (err) {
       logger.error('[organization-data] export category error', err);
       return res.status(500).json({ success: false, error: 'Export failed' });
@@ -350,7 +354,8 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const orgId = req.user?.organizationId;
-      if (!orgId) return res.status(400).json({ success: false, error: 'Organization ID required' });
+      if (!orgId)
+        return res.status(400).json({ success: false, error: 'Organization ID required' });
 
       const nowIso = new Date().toISOString();
       const filename = `org-${orgId}-full-export-${nowIso.slice(0, 10)}.json`;
@@ -364,7 +369,9 @@ router.post(
           tasks: (await safeSelectRows('tasks', orgId, { orderBy: 'updated_at' })).rows,
           decisions: (
             await safeSelectRows(
-              (await getSqliteColumns('action_decisions')).length > 0 ? 'action_decisions' : 'decisions',
+              (await getSqliteColumns('action_decisions')).length > 0
+                ? 'action_decisions'
+                : 'decisions',
               orgId,
               { orderBy: 'updated_at' }
             )
@@ -372,7 +379,8 @@ router.post(
           documents: (await safeSelectRows('documents', orgId, { orderBy: 'updated_at' })).rows,
           attachments: (await safeSelectRows('attachments', orgId, { orderBy: 'updated_at' })).rows,
           audit_log: (await safeSelectRows('audit_log', orgId, { orderBy: 'created_at' })).rows,
-          activity_log: (await safeSelectRows('activity_log', orgId, { orderBy: 'created_at' })).rows,
+          activity_log: (await safeSelectRows('activity_log', orgId, { orderBy: 'created_at' }))
+            .rows,
         },
       };
 
@@ -434,7 +442,8 @@ router.put(
     } = req.body || {};
 
     const normalizedAuditLogRetention = (() => {
-      if (typeof auditLogRetention === 'string' && auditLogRetention.trim()) return auditLogRetention.trim();
+      if (typeof auditLogRetention === 'string' && auditLogRetention.trim())
+        return auditLogRetention.trim();
       const days = Number(auditLogRetentionDays);
       if (Number.isFinite(days)) return days <= 0 ? 'forever' : String(Math.round(days));
       return 'forever';

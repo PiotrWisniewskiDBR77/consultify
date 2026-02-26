@@ -81,7 +81,10 @@ export const ColumnConfigMenu: React.FC<ColumnConfigMenuProps> = ({
                     key={col.id}
                     disabled={col.alwaysVisible}
                     onClick={() => {
-                      trackFunnelEvent('column_config_toggled', { column: col.id, hidden: !hiddenSet.has(col.id) });
+                      trackFunnelEvent('column_config_toggled', {
+                        column: col.id,
+                        hidden: !hiddenSet.has(col.id),
+                      });
                       onToggleColumn(col.id);
                     }}
                     className={`

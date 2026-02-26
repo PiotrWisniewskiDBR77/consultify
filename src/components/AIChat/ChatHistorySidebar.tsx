@@ -45,7 +45,7 @@ import {
   groupConversations,
   useConversationStore,
 } from '../../store/useConversationStore';
-import { ConversationItem, CONVERSATION_DND_TYPE } from './ConversationItem';
+import { CONVERSATION_DND_TYPE, ConversationItem } from './ConversationItem';
 import { ConversationList } from './ConversationList';
 import { ConversationSearch } from './ConversationSearch';
 
@@ -109,16 +109,13 @@ const FolderSection: React.FC<FolderSectionProps> = ({
   const [showAll, setShowAll] = useState(false);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
 
-  const handleFolderDragOver = useCallback(
-    (e: React.DragEvent, folderId: string) => {
-      if (e.dataTransfer.types.includes(CONVERSATION_DND_TYPE)) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        setDropTargetId(folderId);
-      }
-    },
-    []
-  );
+  const handleFolderDragOver = useCallback((e: React.DragEvent, folderId: string) => {
+    if (e.dataTransfer.types.includes(CONVERSATION_DND_TYPE)) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      setDropTargetId(folderId);
+    }
+  }, []);
 
   const handleFolderDragLeave = useCallback((e: React.DragEvent) => {
     const related = e.relatedTarget as Node | null;

@@ -74,7 +74,7 @@ class TaskAdvisorServiceImpl {
       }
 
       for (const task of tasks || []) {
-        if (task.due_date && !recommendations.find(r => r.taskId === task.id)) {
+        if (task.due_date && !recommendations.find((r) => r.taskId === task.id)) {
           const daysUntil = Math.round((new Date(task.due_date).getTime() - Date.now()) / 86400000);
           if (daysUntil >= 0 && daysUntil <= 1) {
             recommendations.push({
@@ -89,7 +89,10 @@ class TaskAdvisorServiceImpl {
       }
 
       for (const task of tasks || []) {
-        if (!recommendations.find(r => r.taskId === task.id) && ['urgent', 'high'].includes(task.priority)) {
+        if (
+          !recommendations.find((r) => r.taskId === task.id) &&
+          ['urgent', 'high'].includes(task.priority)
+        ) {
           recommendations.push({
             taskId: task.id,
             title: task.title,
@@ -105,14 +108,19 @@ class TaskAdvisorServiceImpl {
         overcommitWarning = `You have ${totalOpen} open tasks. Historical average is ~8. Consider delegating or deferring ${totalOpen - 8} tasks.`;
       }
 
-      const summary = recommendations.length > 0
-        ? `Start with "${recommendations[0].title}" — ${recommendations[0].reason}${recommendations.length > 1 ? ` Then "${recommendations[1].title}".` : ''}`
-        : 'Your portfolio looks manageable. Focus on deep work.';
+      const summary =
+        recommendations.length > 0
+          ? `Start with "${recommendations[0].title}" — ${recommendations[0].reason}${recommendations.length > 1 ? ` Then "${recommendations[1].title}".` : ''}`
+          : 'Your portfolio looks manageable. Focus on deep work.';
 
       return { recommendations: recommendations.slice(0, 10), overcommitWarning, summary };
     } catch (err) {
       logger.debug(`[TaskAdvisor] ${(err as Error).message}`);
-      return { recommendations: [], overcommitWarning: null, summary: 'Unable to analyze portfolio.' };
+      return {
+        recommendations: [],
+        overcommitWarning: null,
+        summary: 'Unable to analyze portfolio.',
+      };
     }
   }
 }

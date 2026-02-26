@@ -69,7 +69,9 @@ export const ComplianceTab: React.FC = () => {
       const report = healthPayload?.data || null;
       const healthChecks: Array<{ name: string; status: 'ok' | 'warn' | 'error'; detail: string }> =
         Array.isArray(report?.healthChecks) ? report.healthChecks : [];
-      const duplicates: Array<{ path: string; count: number }> = Array.isArray(report?.duplicateMounts)
+      const duplicates: Array<{ path: string; count: number }> = Array.isArray(
+        report?.duplicateMounts
+      )
         ? report.duplicateMounts
         : [];
 
@@ -115,9 +117,7 @@ export const ComplianceTab: React.FC = () => {
       const providersArray: any[] = Array.isArray(providersPayload) ? providersPayload : [];
       const providerNames = Array.from(
         new Set(
-          providersArray
-            .map((p) => String(p?.name || p?.provider || '').trim())
-            .filter((v) => !!v)
+          providersArray.map((p) => String(p?.name || p?.provider || '').trim()).filter((v) => !!v)
         )
       );
 

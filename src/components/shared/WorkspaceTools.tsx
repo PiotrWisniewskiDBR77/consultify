@@ -78,7 +78,9 @@ export const ToolsPanelShell: React.FC<ToolsPanelShellProps> = ({
   children,
   className,
 }) => (
-  <div className={`w-80 shrink-0 border-l border-white/[0.06] bg-gradient-to-b from-white via-white to-slate-50/30 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/20 flex flex-col backdrop-blur-sm ${className || ''}`}>
+  <div
+    className={`w-80 shrink-0 border-l border-white/[0.06] bg-gradient-to-b from-white via-white to-slate-50/30 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/20 flex flex-col backdrop-blur-sm ${className || ''}`}
+  >
     <div className="relative px-4 py-3 border-b border-slate-200/40 dark:border-white/[0.04] shrink-0">
       <div className="absolute inset-0 bg-gradient-to-r from-slate-500/[0.03] via-slate-400/[0.01] to-transparent pointer-events-none" />
       <div className="relative flex items-center justify-between">
@@ -108,9 +110,7 @@ export const ToolsPanelShell: React.FC<ToolsPanelShellProps> = ({
         </div>
       </div>
     </div>
-    <div className="flex-1 overflow-y-auto nb-scroll">
-      {children}
-    </div>
+    <div className="flex-1 overflow-y-auto nb-scroll">{children}</div>
   </div>
 );
 
@@ -155,7 +155,17 @@ export const AIQuickActions: React.FC<AIQuickActionsProps> = ({
             className="flex-1 group rounded-xl py-2.5 px-3 bg-slate-50/60 dark:bg-white/[0.03] border border-slate-200/30 dark:border-white/[0.05] hover:bg-slate-100/80 dark:hover:bg-white/[0.06] hover:border-slate-300/40 dark:hover:border-white/[0.08] transition-all duration-200 hover:shadow-sm"
           >
             <div className="flex flex-col items-center gap-1">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500 dark:text-slate-400">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-slate-500 dark:text-slate-400"
+              >
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
               <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
@@ -191,8 +201,16 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
   );
 
   const entityLabel = isPl
-    ? (context.entityType === 'notebook' ? 'notatkę' : context.entityType === 'idea' ? 'opis wyzwania' : 'treść')
-    : (context.entityType === 'notebook' ? 'note' : context.entityType === 'idea' ? 'challenge description' : 'content');
+    ? context.entityType === 'notebook'
+      ? 'notatkę'
+      : context.entityType === 'idea'
+        ? 'opis wyzwania'
+        : 'treść'
+    : context.entityType === 'notebook'
+      ? 'note'
+      : context.entityType === 'idea'
+        ? 'challenge description'
+        : 'content';
 
   const handleTranslate = () => {
     const targetLang = isPl ? 'English' : 'Polish';
@@ -289,14 +307,20 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
                 {isPl ? 'Formalny, swobodny, zwięzły…' : 'Formal, casual, concise…'}
               </div>
             </div>
-            <ChevronDown size={12} className={`text-slate-400 transition-transform ${styleMenuOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown
+              size={12}
+              className={`text-slate-400 transition-transform ${styleMenuOpen ? 'rotate-180' : ''}`}
+            />
           </button>
           {styleMenuOpen && (
             <div className="mt-1 ml-9 grid grid-cols-2 gap-1">
               {styleOptions.map((s) => (
                 <button
                   key={s.id}
-                  onClick={() => { handleChangeStyle(s.id); setStyleMenuOpen(false); }}
+                  onClick={() => {
+                    handleChangeStyle(s.id);
+                    setStyleMenuOpen(false);
+                  }}
                   className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-slate-50/80 dark:bg-white/[0.04] border border-slate-200/30 dark:border-white/[0.06] hover:bg-violet-500/10 hover:border-violet-500/15 text-[10px] font-medium text-slate-600 dark:text-slate-400 hover:text-violet-700 dark:hover:text-violet-300 transition-all"
                 >
                   <span>{s.icon}</span>

@@ -114,7 +114,11 @@ class ProactiveNudgesServiceImpl {
     return active.slice(offset, offset + limit);
   }
 
-  async trackActivity(userId: string, orgId: string, activity: { type: string; entityId: string; action: string }) {
+  async trackActivity(
+    userId: string,
+    orgId: string,
+    activity: { type: string; entityId: string; action: string }
+  ) {
     try {
       await dbRun(
         `CREATE TABLE IF NOT EXISTS ai_nudge_activity (
@@ -133,10 +137,16 @@ class ProactiveNudgesServiceImpl {
         [userId, orgId, activity.type, activity.entityId, activity.action]
       );
       return { tracked: true };
-    } catch { return { tracked: false }; }
+    } catch {
+      return { tracked: false };
+    }
   }
 
-  async checkAndGenerateNudges(userId: string, orgId: string, context?: { focusItems?: number; inboxCount?: number }) {
+  async checkAndGenerateNudges(
+    userId: string,
+    orgId: string,
+    context?: { focusItems?: number; inboxCount?: number }
+  ) {
     const nudges = await this.generateNudges(userId, orgId);
     if (context?.inboxCount && context.inboxCount > 20) {
       nudges.push({
@@ -171,7 +181,9 @@ class ProactiveNudgesServiceImpl {
         [nudgeId, userId, action]
       );
       return { acted: true };
-    } catch { return { acted: false }; }
+    } catch {
+      return { acted: false };
+    }
   }
 
   async suppressNudgeType(userId: string, nudgeType: string, durationHours = 168) {
@@ -191,7 +203,9 @@ class ProactiveNudgesServiceImpl {
         [userId, nudgeType, until]
       );
       return { suppressed: true, until };
-    } catch { return { suppressed: false }; }
+    } catch {
+      return { suppressed: false };
+    }
   }
 }
 

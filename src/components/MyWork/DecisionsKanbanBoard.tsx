@@ -681,7 +681,9 @@ export const DecisionsKanbanBoard: React.FC<DecisionsKanbanBoardProps> = ({
     const userId = currentUser?.id;
     const isOpen = (d: Decision) =>
       ['PENDING', 'ESCALATED'].includes(String(d.status || '').toUpperCase());
-    const myCount = decisions.filter((d) => userId && d.decisionOwnerId === userId && isOpen(d)).length;
+    const myCount = decisions.filter(
+      (d) => userId && d.decisionOwnerId === userId && isOpen(d)
+    ).length;
     const awaitingCount = decisions.filter(
       (d) => userId && d.requestedById === userId && d.decisionOwnerId !== userId && isOpen(d)
     ).length;

@@ -97,7 +97,9 @@ export const PostDecisionFollowUp: React.FC<PostDecisionFollowUpProps> = ({
       onTasksCreated?.(createdCount);
       onClose();
     } catch (err: any) {
-      toast.error(err?.message || (isPl ? 'Nie udało się utworzyć zadań' : 'Failed to create tasks'));
+      toast.error(
+        err?.message || (isPl ? 'Nie udało się utworzyć zadań' : 'Failed to create tasks')
+      );
     } finally {
       setCreating(false);
     }

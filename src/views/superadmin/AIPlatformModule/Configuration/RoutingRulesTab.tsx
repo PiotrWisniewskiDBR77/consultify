@@ -75,11 +75,7 @@ export const RoutingRulesTab: React.FC = () => {
       const assignments: Record<string, any[]> = assignmentsPayload?.assignments || {};
 
       const providerModelIds = Array.from(
-        new Set(
-          providers
-            .map((p) => String(p?.model_id || '').trim())
-            .filter((v) => !!v)
-        )
+        new Set(providers.map((p) => String(p?.model_id || '').trim()).filter((v) => !!v))
       );
       setProviderModelOptions(providerModelIds);
 

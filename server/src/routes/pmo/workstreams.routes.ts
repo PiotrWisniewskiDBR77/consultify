@@ -64,7 +64,9 @@ async function ensureWorkstreamsSchema(): Promise<void> {
     await dbRun(`CREATE INDEX IF NOT EXISTS idx_workstreams_project ON workstreams(project_id)`);
     await dbRun(`CREATE INDEX IF NOT EXISTS idx_workstreams_owner ON workstreams(owner_id)`);
     await dbRun(`CREATE INDEX IF NOT EXISTS idx_workstreams_status ON workstreams(status)`);
-    await dbRun(`CREATE INDEX IF NOT EXISTS idx_initiatives_workstream ON initiatives(workstream_id)`);
+    await dbRun(
+      `CREATE INDEX IF NOT EXISTS idx_initiatives_workstream ON initiatives(workstream_id)`
+    );
   } catch (e: any) {
     // If schema can't be created (e.g. read-only DB), routes can still respond with graceful errors.
     logger.warn('[WorkstreamsRoutes] ensureWorkstreamsSchema failed:', e?.message || e);
@@ -172,7 +174,16 @@ router.post(
       INSERT INTO workstreams (id, project_id, name, description, owner_id, status, color, sort_order, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, 'ACTIVE', ?, 0, ?, ?)
     `,
-      [id, projectId, String(name), description || null, ownerId || null, color || '#3B82F6', now, now]
+      [
+        id,
+        projectId,
+        String(name),
+        description || null,
+        ownerId || null,
+        color || '#3B82F6',
+        now,
+        now,
+      ]
     );
 
     logger.info(`[WorkstreamsRoutes] Created workstream ${id} (project=${projectId}) by ${userId}`);
@@ -351,7 +362,9 @@ router.get(
               initiatives.length
           )
         : 0;
-    const completed = initiatives.filter((i: any) => ['DONE', 'COMPLETED'].includes(String(i.status))).length;
+    const completed = initiatives.filter((i: any) =>
+      ['DONE', 'COMPLETED'].includes(String(i.status))
+    ).length;
 
     return res.json({
       workstream: {

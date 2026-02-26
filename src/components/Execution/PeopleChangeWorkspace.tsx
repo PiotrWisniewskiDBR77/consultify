@@ -149,7 +149,8 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
     if (demoMode) {
       const demoCaps: Capability[] = Array.from({ length: 10 }).map((_, idx) => ({
         id: `demo-cap-${idx + 1}`,
-        name: idx % 2 === 0 ? `Lean facilitation L${(idx % 5) + 1}` : `Data literacy L${(idx % 5) + 1}`,
+        name:
+          idx % 2 === 0 ? `Lean facilitation L${(idx % 5) + 1}` : `Data literacy L${(idx % 5) + 1}`,
         domain: idx % 3 === 0 ? 'Operations' : idx % 3 === 1 ? 'Digital' : 'Change',
         description: 'Demo capability used to populate the People & Change workspace.',
         tags: idx % 2 === 0 ? ['lean', 'kaizen', 'standard-work'] : ['data', 'kpi', 'analytics'],
@@ -276,7 +277,9 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
         isActive: idx % 4 !== 0,
         nextDueAt: new Date(Date.now() + (idx - 2) * 86400000).toISOString(),
       }));
-      const demoOverdue = demoPlans.filter((p) => p.nextDueAt && new Date(p.nextDueAt).getTime() < Date.now());
+      const demoOverdue = demoPlans.filter(
+        (p) => p.nextDueAt && new Date(p.nextDueAt).getTime() < Date.now()
+      );
       const demoLog: SendLogEntry[] = Array.from({ length: 10 }).map((_, idx) => ({
         id: `demo-send-${idx + 1}`,
         channel: idx % 2 === 0 ? 'email' : 'slack',

@@ -1,6 +1,18 @@
 import 'reactflow/dist/style.css';
 
-import { Bot, Flower2, GitBranch, Lightbulb, Link2, Loader2, Minus, Plus, RotateCcw, Sparkles, X } from 'lucide-react';
+import {
+  Bot,
+  Flower2,
+  GitBranch,
+  Lightbulb,
+  Link2,
+  Loader2,
+  Minus,
+  Plus,
+  RotateCcw,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -33,7 +45,11 @@ type AIMapProposal = {
   rationale?: string | null;
 };
 
-function buildLocalDefaultIdeaMap(ideaId: string, ideaTitle: string, isPl: boolean): { nodes: Node[]; edges: Edge[] } {
+function buildLocalDefaultIdeaMap(
+  ideaId: string,
+  ideaTitle: string,
+  isPl: boolean
+): { nodes: Node[]; edges: Edge[] } {
   const centerId = 'root';
   const branchRadius = 320;
   const branches = [
@@ -85,7 +101,10 @@ function buildLocalDefaultIdeaMap(ideaId: string, ideaTitle: string, isPl: boole
   return { nodes, edges };
 }
 
-const BRANCH_COLORS: Record<string, { bg: string; border: string; text: string; ring: string; edge: string }> = {
+const BRANCH_COLORS: Record<
+  string,
+  { bg: string; border: string; text: string; ring: string; edge: string }
+> = {
   problem: {
     bg: 'bg-rose-100 dark:bg-rose-900/25',
     border: 'border-rose-400/70',
@@ -171,8 +190,15 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected })
       <Handle type="target" position={Position.Left} className="!opacity-0 !w-1 !h-1" />
       <Handle type="source" position={Position.Right} id="right" className="!opacity-0 !w-1 !h-1" />
       <Handle type="source" position={Position.Top} id="top" className="!opacity-0 !w-1 !h-1" />
-      <Handle type="source" position={Position.Bottom} id="bottom" className="!opacity-0 !w-1 !h-1" />
-      <div className={`text-xs font-semibold ${colors.text} flex items-center gap-1 justify-center`}>
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="bottom"
+        className="!opacity-0 !w-1 !h-1"
+      />
+      <div
+        className={`text-xs font-semibold ${colors.text} flex items-center gap-1 justify-center`}
+      >
         <GitBranch size={12} />
         {data.label}
       </div>
@@ -205,11 +231,20 @@ const IdeaNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected }) =
       <Handle type="target" position={Position.Left} id="target-left" className={handleTarget} />
       <Handle type="target" position={Position.Top} id="target-top" className={handleTarget} />
       <Handle type="source" position={Position.Right} id="source-right" className={handleSource} />
-      <Handle type="source" position={Position.Bottom} id="source-bottom" className={handleSource} />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="source-bottom"
+        className={handleSource}
+      />
 
       <div className="flex items-start gap-1.5">
         <div className="flex-shrink-0 mt-0.5">
-          {isAI ? <Bot size={10} className="text-purple-500" /> : <Lightbulb size={10} className="text-amber-500" />}
+          {isAI ? (
+            <Bot size={10} className="text-purple-500" />
+          ) : (
+            <Lightbulb size={10} className="text-amber-500" />
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <div className={`text-[11px] font-semibold ${colors.text} line-clamp-2 leading-tight`}>
@@ -224,7 +259,10 @@ const IdeaNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected }) =
       </div>
       <div className="mt-1.5 flex items-center gap-1">
         <div className="w-8 h-0.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-          <div className={`h-full rounded-full ${priorityColor}`} style={{ width: `${Math.max(10, p)}%` }} />
+          <div
+            className={`h-full rounded-full ${priorityColor}`}
+            style={{ width: `${Math.max(10, p)}%` }}
+          />
         </div>
       </div>
     </div>
@@ -315,15 +353,27 @@ function MindMapInner({
     } catch (err: any) {
       const msg = String(err?.message || '');
       const isNoRoute =
-        msg.toLowerCase().includes('route get') && msg.toLowerCase().includes('/my-work/my-ideas') && msg.toLowerCase().includes('/map');
-      const isMissingTable = msg.toLowerCase().includes('database table missing') && msg.toLowerCase().includes('my_idea_maps');
+        msg.toLowerCase().includes('route get') &&
+        msg.toLowerCase().includes('/my-work/my-ideas') &&
+        msg.toLowerCase().includes('/map');
+      const isMissingTable =
+        msg.toLowerCase().includes('database table missing') &&
+        msg.toLowerCase().includes('my_idea_maps');
 
       if (isNoRoute) {
         setPersistence('no_route');
-        toast((isPolish ? 'Backend wymaga restartu (route mapy jeszcze nie działa).' : 'Backend needs restart (map route not active).') as any);
+        toast(
+          (isPolish
+            ? 'Backend wymaga restartu (route mapy jeszcze nie działa).'
+            : 'Backend needs restart (map route not active).') as any
+        );
       } else if (isMissingTable) {
         setPersistence('missing_table');
-        toast((isPolish ? 'Brakuje tabeli mapy — uruchom migracje DB.' : 'Map table missing — run DB migrations.') as any);
+        toast(
+          (isPolish
+            ? 'Brakuje tabeli mapy — uruchom migracje DB.'
+            : 'Map table missing — run DB migrations.') as any
+        );
       } else {
         setPersistence('offline');
         toast.error(msg || (isPolish ? 'Nie udało się wczytać mapy' : 'Failed to load map'));
@@ -381,7 +431,9 @@ function MindMapInner({
           await Api.saveMyIdeaMap(ideaId, { nodes: nextNodes, edges: nextEdges });
           setLastSavedAt(Date.now());
         } catch (err: any) {
-          toast.error(err?.message || (isPolish ? 'Nie udało się zapisać mapy' : 'Failed to save map'));
+          toast.error(
+            err?.message || (isPolish ? 'Nie udało się zapisać mapy' : 'Failed to save map')
+          );
         } finally {
           setSaving(false);
         }
@@ -548,7 +600,10 @@ function MindMapInner({
       );
       closeAIModal();
     } catch (err: any) {
-      toast.error(err?.message || (isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals'));
+      toast.error(
+        err?.message ||
+          (isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals')
+      );
     } finally {
       setSaving(false);
     }
@@ -573,12 +628,17 @@ function MindMapInner({
       return;
     }
     if (persistence !== 'online') {
-      toast((isPolish ? 'AI wymaga działającego backendu (restart/migracje).' : 'AI requires backend (restart/migrations).') as any);
+      toast(
+        (isPolish
+          ? 'AI wymaga działającego backendu (restart/migracje).'
+          : 'AI requires backend (restart/migrations).') as any
+      );
       return;
     }
     setSaving(true);
     try {
-      const anchor = nodes.find((n: any) => n?.selected) || nodes.find((n: any) => String(n?.id) === 'root');
+      const anchor =
+        nodes.find((n: any) => n?.selected) || nodes.find((n: any) => String(n?.id) === 'root');
       const res = await Api.expandMyIdeaMap(ideaId, {
         anchorNodeId: String(anchor?.id || 'root'),
         branchKey: selectedBranchKey,
@@ -623,7 +683,17 @@ function MindMapInner({
     } finally {
       setSaving(false);
     }
-  }, [i18n.language, ideaId, isPolish, locked, nodes, persistence, selectedBranchKey, setEdges, setNodes]);
+  }, [
+    i18n.language,
+    ideaId,
+    isPolish,
+    locked,
+    nodes,
+    persistence,
+    selectedBranchKey,
+    setEdges,
+    setNodes,
+  ]);
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -701,10 +771,9 @@ function MindMapInner({
                     <button
                       onClick={() =>
                         setSelectedAddIdx(
-                          Object.fromEntries(aiProposal.add.nodes.map((_, idx) => [idx, true])) as Record<
-                            number,
-                            boolean
-                          >
+                          Object.fromEntries(
+                            aiProposal.add.nodes.map((_, idx) => [idx, true])
+                          ) as Record<number, boolean>
                         )
                       }
                       className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
@@ -775,10 +844,17 @@ function MindMapInner({
               </div>
 
               {/* Plan */}
-              <Callout variant="purple" title={isPolish ? 'Plan' : 'Plan'} compact className="rounded-xl">
+              <Callout
+                variant="purple"
+                title={isPolish ? 'Plan' : 'Plan'}
+                compact
+                className="rounded-xl"
+              >
                 <ul className="list-disc pl-4 space-y-1">
                   <li>
-                    {isPolish ? `Dodaj zaznaczone węzły: ${selectedAddCount}.` : `Add selected nodes: ${selectedAddCount}.`}
+                    {isPolish
+                      ? `Dodaj zaznaczone węzły: ${selectedAddCount}.`
+                      : `Add selected nodes: ${selectedAddCount}.`}
                   </li>
                 </ul>
               </Callout>
@@ -896,9 +972,7 @@ function MindMapInner({
           <Panel position="bottom-left">
             <div className="px-3 py-2 rounded-2xl bg-white/80 dark:bg-navy-900/75 backdrop-blur-sm border border-slate-200/60 dark:border-white/[0.06] shadow-2xl text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-2">
               <Link2 size={14} className="text-slate-400" />
-              <span className="font-semibold">
-                {isPolish ? 'Aktywna gałąź' : 'Active branch'}:
-              </span>
+              <span className="font-semibold">{isPolish ? 'Aktywna gałąź' : 'Active branch'}:</span>
               <span className="text-slate-500 dark:text-slate-400">{selectedBranchKey}</span>
               <span className="text-slate-400">·</span>
               <span>
@@ -925,4 +999,3 @@ export const IdeaRecommendationMap: React.FC<IdeaRecommendationMapProps> = (prop
 );
 
 export default IdeaRecommendationMap;
-

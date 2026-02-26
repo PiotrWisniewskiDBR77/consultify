@@ -31,7 +31,15 @@ export interface ChatSlice {
       organizationData: boolean; // Dane organizacji - zespoły, role, procesy
     };
     // Response Style (Styl odpowiedzi - domain-specific presets)
-    responseStyle: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal' | 'professional' | 'friendly';
+    responseStyle:
+      | 'normal'
+      | 'executive'
+      | 'analyst'
+      | 'coach'
+      | 'concise'
+      | 'formal'
+      | 'professional'
+      | 'friendly';
     // Text-to-Speech (Czytanie odpowiedzi na głos)
     textToSpeech: boolean; // Włącz/wyłącz czytanie odpowiedzi
     ttsVoice: string | null; // Wybrany głos (voice URI)

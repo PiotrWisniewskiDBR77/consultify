@@ -44,14 +44,17 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
 
     try {
       const token = tokenService.getToken();
-      const res = await fetch(`${API_URL}/my-work/notebook/pages/${encodeURIComponent(noteId)}/extract-actions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ language: isPl ? 'pl' : 'en' }),
-      });
+      const res = await fetch(
+        `${API_URL}/my-work/notebook/pages/${encodeURIComponent(noteId)}/extract-actions`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ language: isPl ? 'pl' : 'en' }),
+        }
+      );
 
       if (!res.ok) throw new Error('Failed to extract actions');
 
@@ -80,7 +83,9 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
               toast.error(data.message || 'Error');
               setLoading(false);
             }
-          } catch { /* ignore parse errors */ }
+          } catch {
+            /* ignore parse errors */
+          }
         }
       }
     } catch (err: any) {
@@ -94,25 +99,28 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
     if (open && noteId) extractActions();
   }, [open, noteId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleCreateTask = useCallback(async (item: ActionItem, idx: number) => {
-    setCreatingIdx(idx);
-    try {
-      await Api.createPersonalTask({
-        title: item.title,
-        description: `${isPl ? 'Z notatki' : 'From note'}: ${noteTitle}`,
-        status: 'todo',
-        priority: item.priority || 'medium',
-        tags: ['from-notebook', 'ai-extracted'],
-      });
-      setCreatedIds((prev) => new Set(prev).add(idx));
-      trackFunnelEvent('notebook_action_item_created', { noteId, idx });
-      toast.success(isPl ? 'Task utworzony' : 'Task created');
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed');
-    } finally {
-      setCreatingIdx(null);
-    }
-  }, [noteId, noteTitle, isPl]);
+  const handleCreateTask = useCallback(
+    async (item: ActionItem, idx: number) => {
+      setCreatingIdx(idx);
+      try {
+        await Api.createPersonalTask({
+          title: item.title,
+          description: `${isPl ? 'Z notatki' : 'From note'}: ${noteTitle}`,
+          status: 'todo',
+          priority: item.priority || 'medium',
+          tags: ['from-notebook', 'ai-extracted'],
+        });
+        setCreatedIds((prev) => new Set(prev).add(idx));
+        trackFunnelEvent('notebook_action_item_created', { noteId, idx });
+        toast.success(isPl ? 'Task utworzony' : 'Task created');
+      } catch (err: any) {
+        toast.error(err?.message || 'Failed');
+      } finally {
+        setCreatingIdx(null);
+      }
+    },
+    [noteId, noteTitle, isPl]
+  );
 
   const handleCreateAll = useCallback(async () => {
     const remaining = items.filter((_, i) => !createdIds.has(i));
@@ -159,7 +167,10 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
             {isPl ? 'Akcje AI' : 'AI Actions'}
           </span>
         </div>
-        <button onClick={onClose} className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+        <button
+          onClick={onClose}
+          className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+        >
           <X size={14} />
         </button>
       </div>
@@ -191,15 +202,21 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
               >
                 <div className="flex items-start gap-2">
                   <div className="flex-1 min-w-0">
-                    <p className={`text-xs font-medium ${createdIds.has(idx) ? 'text-emerald-600 dark:text-emerald-400 line-through' : 'text-slate-800 dark:text-white'}`}>
+                    <p
+                      className={`text-xs font-medium ${createdIds.has(idx) ? 'text-emerald-600 dark:text-emerald-400 line-through' : 'text-slate-800 dark:text-white'}`}
+                    >
                       {item.title}
                     </p>
                     <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                      <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-semibold ${priorityColors[item.priority] || priorityColors.medium}`}>
+                      <span
+                        className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-semibold ${priorityColors[item.priority] || priorityColors.medium}`}
+                      >
                         {item.priority}
                       </span>
                       {item.suggestedDue && (
-                        <span className="text-[9px] text-slate-400 dark:text-slate-500">{item.suggestedDue}</span>
+                        <span className="text-[9px] text-slate-400 dark:text-slate-500">
+                          {item.suggestedDue}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -210,7 +227,11 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
                       className="shrink-0 p-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
                       title={isPl ? 'Utwórz task' : 'Create task'}
                     >
-                      {creatingIdx === idx ? <Loader2 size={12} className="animate-spin" /> : <CheckSquare size={12} />}
+                      {creatingIdx === idx ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <CheckSquare size={12} />
+                      )}
                     </button>
                   )}
                 </div>
@@ -229,7 +250,9 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
             className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 disabled:opacity-50 transition-all"
           >
             {creatingIdx === -1 && <Loader2 size={12} className="animate-spin" />}
-            {isPl ? `Utwórz wszystkie (${items.length - createdIds.size})` : `Create all (${items.length - createdIds.size})`}
+            {isPl
+              ? `Utwórz wszystkie (${items.length - createdIds.size})`
+              : `Create all (${items.length - createdIds.size})`}
           </button>
         </div>
       )}

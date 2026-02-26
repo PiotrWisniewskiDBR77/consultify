@@ -44,7 +44,7 @@ export function ReportTemplatePickerModal(props: {
   onClose: () => void;
   onSelect: (template: ReportTemplate) => void | Promise<void>;
   onNewTemplate?: () => void | Promise<void>;
-  sourceType?: 'ASSESSMENT' | 'INTERVIEW' | 'TOOL' | 'INITIATIVE';
+  sourceType?: 'ASSESSMENT' | 'INTERVIEW' | 'TOOL' | 'INITIATIVE' | 'UPLOAD_BUNDLE';
   framework?: string | null; // e.g. DRD / SIRI / ADMA (case-insensitive)
   lockFramework?: boolean;
 }) {
@@ -73,7 +73,7 @@ export function ReportTemplatePickerModal(props: {
     ''
   );
   const [newTemplateSourceType, setNewTemplateSourceType] = useState<
-    'ASSESSMENT' | 'INTERVIEW' | 'TOOL' | 'INITIATIVE'
+    'ASSESSMENT' | 'INTERVIEW' | 'TOOL' | 'INITIATIVE' | 'UPLOAD_BUNDLE'
   >('ASSESSMENT');
   const [newTemplateFramework, setNewTemplateFramework] = useState<
     'DRD' | 'SIRI' | 'ADMA' | 'NONE'
@@ -664,7 +664,12 @@ export function ReportTemplatePickerModal(props: {
                     value={newTemplateSourceType}
                     onChange={(e) =>
                       setNewTemplateSourceType(
-                        e.target.value as 'ASSESSMENT' | 'INTERVIEW' | 'TOOL' | 'INITIATIVE'
+                        e.target.value as
+                          | 'ASSESSMENT'
+                          | 'INTERVIEW'
+                          | 'TOOL'
+                          | 'INITIATIVE'
+                          | 'UPLOAD_BUNDLE'
                       )
                     }
                     className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"

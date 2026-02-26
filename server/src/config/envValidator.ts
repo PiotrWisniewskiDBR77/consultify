@@ -209,12 +209,15 @@ export function validateEnv(): ValidationResult {
   // Check database configuration - PostgreSQL required when not using mock
   const useMockDb =
     process.env.NODE_ENV === 'test' &&
-    (process.env.MOCK_DB === 'true' || (process.env.MOCK_DB !== 'false' && !process.env.DATABASE_URL));
+    (process.env.MOCK_DB === 'true' ||
+      (process.env.MOCK_DB !== 'false' && !process.env.DATABASE_URL));
   const hasDatabaseUrl = !!process.env.DATABASE_URL;
   const hasDbHost = !!process.env.DB_HOST;
 
   if (!useMockDb && !hasDatabaseUrl && !hasDbHost) {
-    errors.push('DATABASE_URL or DB_HOST required (PostgreSQL only). Use MOCK_DB=true for unit tests.');
+    errors.push(
+      'DATABASE_URL or DB_HOST required (PostgreSQL only). Use MOCK_DB=true for unit tests.'
+    );
   }
   if (hasDatabaseUrl && process.env.DATABASE_URL!.toLowerCase().includes('sqlite')) {
     errors.push('DATABASE_URL must be PostgreSQL (postgresql://...). SQLite is not supported.');

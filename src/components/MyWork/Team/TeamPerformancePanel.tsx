@@ -107,70 +107,73 @@ export const TeamPerformancePanel: React.FC<TeamPerformancePanelProps> = ({
   });
 
   // Fetch team data
-  const fetchTeamData = useCallback(async (isRefresh = false) => {
-    try {
-      if (isRefresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+  const fetchTeamData = useCallback(
+    async (isRefresh = false) => {
+      try {
+        if (isRefresh) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
 
-      // Parallel API calls
-      const [workloadRes, statsRes] = await Promise.allSettled([
-        Api.get('/my-work/team-workload'),
-        Api.get('/my-work/stats?period=week'),
-      ]);
+        // Parallel API calls
+        const [workloadRes, statsRes] = await Promise.allSettled([
+          Api.get('/my-work/team-workload'),
+          Api.get('/my-work/stats?period=week'),
+        ]);
 
-      // Process workload
-      if (workloadRes.status === 'fulfilled' && Array.isArray(workloadRes.value)) {
-        const team = workloadRes.value;
-        const avgCapacity = Math.round(
-          team.reduce((sum: number, m: any) => sum + (m.capacity || 80), 0) / team.length
-        );
+        // Process workload
+        if (workloadRes.status === 'fulfilled' && Array.isArray(workloadRes.value)) {
+          const team = workloadRes.value;
+          const avgCapacity = Math.round(
+            team.reduce((sum: number, m: any) => sum + (m.capacity || 80), 0) / team.length
+          );
 
-        setMetrics((prev) => ({
-          ...prev,
-          teamSize: team.length,
-          avgCapacity,
-        }));
-      }
+          setMetrics((prev) => ({
+            ...prev,
+            teamSize: team.length,
+            avgCapacity,
+          }));
+        }
 
-      // Process stats
-      if (statsRes.status === 'fulfilled' && statsRes.value) {
-        const stats = statsRes.value;
-        setMetrics((prev) => ({
-          ...prev,
-          currentVelocity:
-            stats.velocityHistory?.[stats.velocityHistory.length - 1] || prev.currentVelocity,
-          onTimeRate: stats.onTimeRate || prev.onTimeRate,
-        }));
+        // Process stats
+        if (statsRes.status === 'fulfilled' && statsRes.value) {
+          const stats = statsRes.value;
+          setMetrics((prev) => ({
+            ...prev,
+            currentVelocity:
+              stats.velocityHistory?.[stats.velocityHistory.length - 1] || prev.currentVelocity,
+            onTimeRate: stats.onTimeRate || prev.onTimeRate,
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to fetch team data:', error);
+        if (isDemo) {
+          setMetrics({
+            teamSize: 5,
+            avgCapacity: 82,
+            currentVelocity: 15,
+            targetVelocity: 15,
+            bottlenecks: 3,
+            onTimeRate: 78,
+          });
+        } else {
+          toast.error(t('team.errors.loadFailed', 'Failed to load team analytics'));
+          setMetrics((prev) => ({
+            ...prev,
+            teamSize: prev.teamSize || 0,
+            avgCapacity: prev.avgCapacity || 0,
+            bottlenecks: prev.bottlenecks || 0,
+            onTimeRate: prev.onTimeRate || 0,
+          }));
+        }
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-    } catch (error) {
-      console.error('Failed to fetch team data:', error);
-      if (isDemo) {
-        setMetrics({
-          teamSize: 5,
-          avgCapacity: 82,
-          currentVelocity: 15,
-          targetVelocity: 15,
-          bottlenecks: 3,
-          onTimeRate: 78,
-        });
-      } else {
-        toast.error(t('team.errors.loadFailed', 'Failed to load team analytics'));
-        setMetrics((prev) => ({
-          ...prev,
-          teamSize: prev.teamSize || 0,
-          avgCapacity: prev.avgCapacity || 0,
-          bottlenecks: prev.bottlenecks || 0,
-          onTimeRate: prev.onTimeRate || 0,
-        }));
-      }
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [isDemo, t]);
+    },
+    [isDemo, t]
+  );
 
   useEffect(() => {
     fetchTeamData();

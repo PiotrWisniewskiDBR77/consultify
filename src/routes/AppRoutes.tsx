@@ -1,7 +1,16 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import React, { Suspense } from 'react';
-import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import {
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+  useParams,
+} from 'react-router-dom';
 
 import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -12,6 +21,7 @@ import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { MainLayout } from '@/layouts/MainLayout';
 import { Api } from '@/services/api';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
 import { AuthView } from '@/views/AuthView';
@@ -140,6 +150,24 @@ const KpiOkrView = React.lazy(() =>
 );
 const BenefitsRealizationView = React.lazy(() =>
   import('@/views/BenefitsRealizationView').then((m) => ({ default: m.BenefitsRealizationView }))
+);
+const V4ComingSoonView = React.lazy(() =>
+  import('@/views/V4ComingSoonView').then((m) => ({ default: m.V4ComingSoonView }))
+);
+const PresentationsHub = React.lazy(() =>
+  import('@/components/Presentations/PresentationsHub').then((m) => ({
+    default: m.PresentationsHub,
+  }))
+);
+const ReportsEntryRouter = React.lazy(() =>
+  import('@/components/Reports/ReportsEntryRouter').then((m) => ({
+    default: m.ReportsEntryRouter,
+  }))
+);
+const ReportsHub = React.lazy(() =>
+  import('@/components/Reports/Management/ReportsHub').then((m) => ({
+    default: m.ReportsHub,
+  }))
 );
 
 // Settings
@@ -334,7 +362,37 @@ const AuditsShowcasePage = React.lazy(() =>
   import('@/views/AuditsShowcasePage').then((m) => ({ default: m.AuditsShowcasePage }))
 );
 
+const RedirectWithTracking: React.FC<{ from: string; to: string; reason: string }> = ({
+  from,
+  to,
+  reason,
+}) => {
+  React.useEffect(() => {
+    trackFunnelEvent('route_redirected', { from, to, reason });
+  }, [from, to, reason]);
+  return <Navigate to={to} replace />;
+};
+
+const ReportsBuilderLegacyRedirect: React.FC = () => {
+  const params = useParams<{ reportId?: string }>();
+  const reportId = String(params.reportId || '').trim();
+  const to = reportId
+    ? `${ROUTES.REPORTS.BUILDER}/${encodeURIComponent(reportId)}`
+    : ROUTES.REPORTS.BUILDER;
+
+  React.useEffect(() => {
+    trackFunnelEvent('route_redirected', {
+      from: reportId ? `/reports-builder/${reportId}` : '/reports-builder/:reportId',
+      to,
+      reason: 'legacy_reports_builder_alias',
+    });
+  }, [reportId, to]);
+
+  return <Navigate to={to} replace />;
+};
+
 export const AppRoutes: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const {
@@ -778,7 +836,16 @@ export const AppRoutes: React.FC = () => {
         />
 
         {/* Dashboard - DEPRECATED: Redirect to Chat */}
-        <Route path="/dashboard" element={<Navigate to={ROUTES.AI_CHAT} replace />} />
+        <Route
+          path="/dashboard"
+          element={
+            <RedirectWithTracking
+              from="/dashboard"
+              to={ROUTES.AI_CHAT}
+              reason="dashboard_deprecated"
+            />
+          }
+        />
 
         {/* Interview Module - New Hub (ModuleHub pattern) */}
         <Route
@@ -807,7 +874,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.DISCOVERY_TOOLS.ROOT}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Discovery Tools']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || ['Tools']} noPadding>
               <RouteErrorBoundary>
                 <DiscoveryToolsHub />
               </RouteErrorBoundary>
@@ -818,10 +885,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.DISCOVERY_TOOLS.STRATEGIC}
           element={
-            <MainLayout
-              breadcrumbs={breadcrumbs || ['Discovery Tools', 'Strategic Analysis']}
-              noPadding
-            >
+            <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Strategic Analysis']} noPadding>
               <RouteErrorBoundary>
                 <StrategicToolsView />
               </RouteErrorBoundary>
@@ -833,7 +897,7 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS}
           element={
             <MainLayout
-              breadcrumbs={breadcrumbs || ['Discovery Tools', 'Strategic Analysis', 'Megatrends']}
+              breadcrumbs={breadcrumbs || ['Tools', 'Strategic Analysis', 'Megatrends']}
               noPadding
             >
               <RouteErrorBoundary>
@@ -851,12 +915,9 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.DISCOVERY_TOOLS.OPERATIONAL}
           element={
-            <MainLayout
-              breadcrumbs={breadcrumbs || ['Discovery Tools', 'Operational Tools']}
-              noPadding
-            >
+            <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Operational']} noPadding>
               <RouteErrorBoundary>
-                <DiscoveryToolsHub initialTab="list" />
+                <DiscoveryToolsHub initialTab="sessions" />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -864,12 +925,9 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.DISCOVERY_TOOLS.DIGITAL}
           element={
-            <MainLayout
-              breadcrumbs={breadcrumbs || ['Discovery Tools', 'Digital Transformation']}
-              noPadding
-            >
+            <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Digital']} noPadding>
               <RouteErrorBoundary>
-                <DiscoveryToolsHub initialTab="list" />
+                <DiscoveryToolsHub initialTab="sessions" />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -877,12 +935,9 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.DISCOVERY_TOOLS.PROCESS_AUTOMATION}
           element={
-            <MainLayout
-              breadcrumbs={breadcrumbs || ['Discovery Tools', 'Process Automation']}
-              noPadding
-            >
+            <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Process Automation']} noPadding>
               <RouteErrorBoundary>
-                <DiscoveryToolsHub initialTab="list" />
+                <DiscoveryToolsHub initialTab="sessions" />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -931,13 +986,35 @@ export const AppRoutes: React.FC = () => {
 
         {/* Licensed Tools alias - redirect to /assessment (T025) */}
         <Route path="/licensed-tools/*" element={<LicensedToolsRedirect />} />
+        {/* Legacy Reports aliases */}
+        <Route
+          path="/reports-builder"
+          element={
+            <RedirectWithTracking
+              from="/reports-builder"
+              to={ROUTES.REPORTS.BUILDER}
+              reason="legacy_reports_builder_alias"
+            />
+          }
+        />
+        <Route path="/reports-builder/:reportId" element={<ReportsBuilderLegacyRedirect />} />
+        <Route
+          path="/management-reports"
+          element={
+            <RedirectWithTracking
+              from="/management-reports"
+              to={ROUTES.REPORTS.MANAGEMENT}
+              reason="legacy_management_reports_alias"
+            />
+          }
+        />
 
         {/* Assessment Module - New Hub */}
         <Route
           path={`${ROUTES.ASSESSMENT.ROOT}/*`}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || ['Licensed Tools']} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Licensed']} noPadding>
                 <RouteErrorBoundary>
                   <Routes>
                     {/* Assessment Session Editor (Workflow v2) */}
@@ -1053,14 +1130,32 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
-        {/* Legacy /reports redirects to Report Builder */}
-        <Route path="/reports" element={<Navigate to="/reports/builder" replace />} />
-        {/* Report Builder Module (ROUTES.REPORTS now points to /reports/builder) */}
-        <Route path="/assessment-reports/:reportId" element={<LegacyAssessmentReportRedirect />} />
+        {/* Reports entry — smart selector (V3-A04 / V3-J01) */}
         <Route
-          path="/reports/builder"
+          path={ROUTES.REPORTS.ROOT}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Reports', 'Builder']}>
+            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.reports', 'Reports')]}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <ReportsEntryRouter />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        <Route path="/assessment-reports/:reportId" element={<LegacyAssessmentReportRedirect />} />
+        {/* Report Builder — deliverable reports */}
+        <Route
+          path={ROUTES.REPORTS.BUILDER}
+          element={
+            <MainLayout
+              breadcrumbs={
+                breadcrumbs || [
+                  t('sidebar.reports', 'Reports'),
+                  t('sidebar.reportsBuilder', 'Report Builder'),
+                ]
+              }
+            >
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
                   <ReportBuilderView />
@@ -1070,13 +1165,40 @@ export const AppRoutes: React.FC = () => {
           }
         />
         <Route
-          path="/reports/builder/:reportId"
+          path={`${ROUTES.REPORTS.BUILDER}/:reportId`}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Reports', 'Builder', 'Edit']}>
+            <MainLayout
+              breadcrumbs={
+                breadcrumbs || [
+                  t('sidebar.reports', 'Reports'),
+                  t('sidebar.reportsBuilder', 'Report Builder'),
+                  t('common.edit', 'Edit'),
+                ]
+              }
+            >
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
                   <ReportBuilderView />
                 </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        {/* Management Reports — PMO */}
+        <Route
+          path={ROUTES.REPORTS.MANAGEMENT}
+          element={
+            <MainLayout
+              breadcrumbs={
+                breadcrumbs || [
+                  t('sidebar.reports', 'Reports'),
+                  t('sidebar.reportsManagement', 'Management Reports'),
+                ]
+              }
+              noPadding
+            >
+              <RouteErrorBoundary>
+                <ReportsHub />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1084,11 +1206,22 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.KPI_OKR}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['KPI & OKR']}>
+            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>
               <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <KpiOkrView />
-                </AnimationWrapper>
+                <KpiOkrView />
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        <Route
+          path={ROUTES.PRESENTATIONS}
+          element={
+            <MainLayout
+              breadcrumbs={breadcrumbs || [t('sidebar.presentations', 'Presentations')]}
+              noPadding
+            >
+              <RouteErrorBoundary>
+                <PresentationsHub />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1096,9 +1229,33 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.BENEFITS}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Benefits']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>
               <RouteErrorBoundary>
                 <BenefitsHub />
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        <Route
+          path={ROUTES.MCP_IRIS}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['MCP IRIS']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <V4ComingSoonView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        <Route
+          path={ROUTES.MCP_MARKETPLACE}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['MCP Marketplace']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <V4ComingSoonView />
+                </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
           }

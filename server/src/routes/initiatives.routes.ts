@@ -168,6 +168,13 @@ router.post('/', async (req: AuthRequest, res: Response) => {
       estimatedBudget,
       estimatedTimeline,
     } = req.body;
+    const normalizedSourceType = String(sourceType || 'manual')
+      .trim()
+      .toLowerCase();
+    const normalizedSourceId = sourceId != null ? String(sourceId).trim() : '';
+    if (normalizedSourceType !== 'manual' && !normalizedSourceId) {
+      return res.status(400).json({ error: 'sourceId is required when sourceType is not manual' });
+    }
 
     await dbRun(
       `INSERT INTO initiatives (
@@ -188,8 +195,8 @@ router.post('/', async (req: AuthRequest, res: Response) => {
         impact,
         effort,
         category || null,
-        sourceType,
-        sourceId || null,
+        normalizedSourceType,
+        normalizedSourceId || null,
         reportId || null,
         reportName || null,
         estimatedBudget || null,
@@ -218,11 +225,26 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id || 'system';
     const now = new Date().toISOString();
 
-    const existing = await dbGet(
-      'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
-      [req.params.id, organizationId]
-    );
+    const existing = await dbGet<{
+      id: string;
+      source_type?: string | null;
+      source_id?: string | null;
+    }>('SELECT id, source_type, source_id FROM initiatives WHERE id = ? AND organization_id = ?', [
+      req.params.id,
+      organizationId,
+    ]);
     if (!existing) return res.status(404).json({ error: 'Initiative not found' });
+
+    const sourceTypeCandidate =
+      req.body.sourceType ?? req.body.source_type ?? existing.source_type ?? 'manual';
+    const sourceIdCandidate = req.body.sourceId ?? req.body.source_id ?? existing.source_id ?? null;
+    const normalizedSourceType = String(sourceTypeCandidate || 'manual')
+      .trim()
+      .toLowerCase();
+    const normalizedSourceId = sourceIdCandidate != null ? String(sourceIdCandidate).trim() : '';
+    if (normalizedSourceType !== 'manual' && !normalizedSourceId) {
+      return res.status(400).json({ error: 'sourceId is required when sourceType is not manual' });
+    }
 
     const fields: string[] = [];
     const params: any[] = [];

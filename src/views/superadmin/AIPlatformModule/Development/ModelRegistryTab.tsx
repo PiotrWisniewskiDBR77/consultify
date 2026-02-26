@@ -32,6 +32,8 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
+
 interface Model {
   id: string;
   name: string;
@@ -80,21 +82,26 @@ export const ModelRegistryTab: React.FC = () => {
       const usagePayload = await usageRes.json().catch(() => ({}));
 
       const providers: any[] = Array.isArray(providersPayload) ? providersPayload : [];
-      const healthProviders: any[] = Array.isArray(healthPayload?.providers) ? healthPayload.providers : [];
-      const usageByProvider: Array<{ provider?: string; calls?: number }> = Array.isArray(usagePayload?.byProvider)
+      const healthProviders: any[] = Array.isArray(healthPayload?.providers)
+        ? healthPayload.providers
+        : [];
+      const usageByProvider: Array<{ provider?: string; calls?: number }> = Array.isArray(
+        usagePayload?.byProvider
+      )
         ? usagePayload.byProvider
         : [];
 
       const callsByProvider = new Map(
         usageByProvider
-          .map((r) => ({ key: String(r?.provider || '').toLowerCase(), calls: Number(r?.calls || 0) }))
+          .map((r) => ({
+            key: String(r?.provider || '').toLowerCase(),
+            calls: Number(r?.calls || 0),
+          }))
           .filter((r) => !!r.key)
           .map((r) => [r.key, r.calls] as const)
       );
 
-      const healthById = new Map(
-        healthProviders.map((p) => [String(p?.id || ''), p] as const)
-      );
+      const healthById = new Map(healthProviders.map((p) => [String(p?.id || ''), p] as const));
 
       const normalizeTier = (tier: any): Model['tier'] => {
         const t = String(tier || 'standard').toLowerCase();
@@ -140,6 +147,10 @@ export const ModelRegistryTab: React.FC = () => {
       });
 
       setModels(nextModels);
+      trackFunnelEvent('model_registry_viewed', {
+        source: 'superadmin_ai_platform',
+        count: nextModels.length,
+      });
     } catch (err) {
       toast.error('Failed to load models');
     } finally {

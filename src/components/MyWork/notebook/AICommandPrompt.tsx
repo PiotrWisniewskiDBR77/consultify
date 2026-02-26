@@ -140,11 +140,7 @@ export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
         className="p-1.5 rounded-md bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
         title={isPl ? 'Wykonaj polecenie' : 'Execute command'}
       >
-        {isGenerating ? (
-          <Loader2 size={14} className="animate-spin" />
-        ) : (
-          <Send size={14} />
-        )}
+        {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
       </button>
     </div>
   );

@@ -8,16 +8,7 @@
  * - `aiConfig.coThinkerMode` (backend system prompt injection)
  * - `aiConfig.marketResearch` (Market Researcher persona)
  */
-import {
-  BarChart3,
-  Check,
-  FileText,
-  Lightbulb,
-  Search,
-  ShieldCheck,
-  Users,
-  X,
-} from 'lucide-react';
+import { BarChart3, Check, FileText, Lightbulb, Search, ShieldCheck, Users, X } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -36,7 +27,12 @@ const PERSONAS: Array<{
   icon: React.ElementType;
   labelKey: string;
   fallbackLabel: string;
-  mapToCoThinkerMode?: 'multi_consultant' | 'idea_maker' | 'competitive_analyst' | 'risk_challenger' | 'executive_editor';
+  mapToCoThinkerMode?:
+    | 'multi_consultant'
+    | 'idea_maker'
+    | 'competitive_analyst'
+    | 'risk_challenger'
+    | 'executive_editor';
 }> = [
   {
     id: 'consultant',
@@ -114,7 +110,8 @@ export const CoThinkerActivePill: React.FC<{ className?: string }> = ({ classNam
           {t('chat.coThinker.title', 'Co-Thinker')}
         </span>
         <span className="text-xs text-slate-700 dark:text-slate-200 truncate">
-          {t('chat.coThinker.active', 'Active')}: <span className="font-medium">{personaLabel(t, active)}</span>
+          {t('chat.coThinker.active', 'Active')}:{' '}
+          <span className="font-medium">{personaLabel(t, active)}</span>
         </span>
       </div>
       <button

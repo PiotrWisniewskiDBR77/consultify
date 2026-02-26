@@ -17,9 +17,11 @@ interface AdvisorResult {
 }
 
 const URGENCY_COLORS = {
-  critical: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800',
+  critical:
+    'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800',
   high: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
-  medium: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+  medium:
+    'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
   low: 'bg-slate-100 dark:bg-slate-900/30 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700',
 };
 
@@ -38,11 +40,15 @@ export const AICoachPanel: React.FC = () => {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       });
       if (res.ok) setResult(await res.json());
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setLoading(false);
   };
 
-  useEffect(() => { fetchAdvice(); }, []);
+  useEffect(() => {
+    fetchAdvice();
+  }, []);
 
   if (!result && !loading) return null;
 
@@ -56,21 +62,37 @@ export const AICoachPanel: React.FC = () => {
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={fetchAdvice} disabled={loading} className="p-1 rounded hover:bg-purple-500/10">
+          <button
+            onClick={fetchAdvice}
+            disabled={loading}
+            className="p-1 rounded hover:bg-purple-500/10"
+          >
             <RefreshCw size={12} className={`text-purple-500 ${loading ? 'animate-spin' : ''}`} />
           </button>
-          <button onClick={() => setExpanded(!expanded)} className="p-1 rounded hover:bg-purple-500/10">
-            {expanded ? <ChevronUp size={14} className="text-purple-500" /> : <ChevronDown size={14} className="text-purple-500" />}
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="p-1 rounded hover:bg-purple-500/10"
+          >
+            {expanded ? (
+              <ChevronUp size={14} className="text-purple-500" />
+            ) : (
+              <ChevronDown size={14} className="text-purple-500" />
+            )}
           </button>
         </div>
       </div>
       {expanded && (
         <div className="px-4 pb-3 space-y-2">
           {loading ? (
-            <div className="flex items-center gap-2 text-xs text-purple-500"><Loader2 size={12} className="animate-spin" /> {isPolish ? 'Analizuję...' : 'Analyzing...'}</div>
+            <div className="flex items-center gap-2 text-xs text-purple-500">
+              <Loader2 size={12} className="animate-spin" />{' '}
+              {isPolish ? 'Analizuję...' : 'Analyzing...'}
+            </div>
           ) : result ? (
             <>
-              <p className="text-xs font-medium text-purple-700 dark:text-purple-300">{result.summary}</p>
+              <p className="text-xs font-medium text-purple-700 dark:text-purple-300">
+                {result.summary}
+              </p>
               {result.overcommitWarning && (
                 <div className="px-2.5 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200/50 dark:border-red-800/30 text-xs text-red-700 dark:text-red-300">
                   {result.overcommitWarning}
@@ -78,7 +100,10 @@ export const AICoachPanel: React.FC = () => {
               )}
               <div className="space-y-1">
                 {result.recommendations.slice(0, 5).map((rec) => (
-                  <div key={rec.taskId} className={`flex items-start gap-2 px-2.5 py-1.5 rounded-lg border text-xs ${URGENCY_COLORS[rec.urgency]}`}>
+                  <div
+                    key={rec.taskId}
+                    className={`flex items-start gap-2 px-2.5 py-1.5 rounded-lg border text-xs ${URGENCY_COLORS[rec.urgency]}`}
+                  >
                     <span className="font-bold shrink-0">#{rec.rank}</span>
                     <div className="min-w-0">
                       <span className="font-medium">{rec.title}</span>

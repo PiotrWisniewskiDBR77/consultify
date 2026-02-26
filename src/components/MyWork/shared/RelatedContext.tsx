@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, CheckSquare, FileText, Lightbulb, Scale } from 'lucide-react';
+import { CheckSquare, ChevronDown, ChevronRight, FileText, Lightbulb, Scale } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

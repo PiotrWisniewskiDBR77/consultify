@@ -56,9 +56,7 @@ export const AIPlanView: React.FC<AIPlanViewProps> = ({ onClose }) => {
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-2">
           <Sparkles size={16} className="text-purple-500" />
-          <span className="text-sm font-semibold">
-            {isPolish ? 'Plan dnia AI' : 'AI Day Plan'}
-          </span>
+          <span className="text-sm font-semibold">{isPolish ? 'Plan dnia AI' : 'AI Day Plan'}</span>
         </div>
         <button
           onClick={onClose}

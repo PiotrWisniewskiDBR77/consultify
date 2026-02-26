@@ -53,9 +53,7 @@ const Btn: React.FC<ToolbarBtnProps> = ({ icon: Icon, onClick, isActive, disable
   </button>
 );
 
-const Divider: React.FC = () => (
-  <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5" />
-);
+const Divider: React.FC = () => <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5" />;
 
 export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor }) => {
   const { i18n } = useTranslation();

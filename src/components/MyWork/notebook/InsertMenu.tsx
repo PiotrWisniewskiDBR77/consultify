@@ -32,7 +32,11 @@ function deleteContainingBlock(editor: Editor): boolean {
     const node = $from.node(d);
     if (DELETABLE_BLOCKS.includes(node.type.name)) {
       const pos = $from.before(d);
-      editor.chain().focus().deleteRange({ from: pos, to: pos + node.nodeSize }).run();
+      editor
+        .chain()
+        .focus()
+        .deleteRange({ from: pos, to: pos + node.nodeSize })
+        .run();
       return true;
     }
   }
@@ -125,7 +129,12 @@ export const InsertMenu: React.FC<InsertMenuProps> = ({
               {btn(
                 'Table',
                 'Tabela',
-                () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+                () =>
+                  editor
+                    .chain()
+                    .focus()
+                    .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+                    .run(),
                 <Columns3 size={14} className="text-slate-500" />
               )}
               {btn(

@@ -595,7 +595,15 @@ router.post(
         projectData?: boolean;
         organizationData?: boolean;
       };
-      responseStyle?: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal' | 'professional' | 'friendly';
+      responseStyle?:
+        | 'normal'
+        | 'executive'
+        | 'analyst'
+        | 'coach'
+        | 'concise'
+        | 'formal'
+        | 'professional'
+        | 'friendly';
     };
 
     const {
@@ -847,7 +855,15 @@ router.post(
         projectData?: boolean;
         organizationData?: boolean;
       };
-      responseStyle?: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal' | 'professional' | 'friendly';
+      responseStyle?:
+        | 'normal'
+        | 'executive'
+        | 'analyst'
+        | 'coach'
+        | 'concise'
+        | 'formal'
+        | 'professional'
+        | 'friendly';
     };
 
     const {
@@ -1000,9 +1016,7 @@ router.post(
           type: 'thought',
           step: 'starting',
           status: 'in_progress',
-          label: language?.startsWith('pl')
-            ? 'Rozpoczynam…'
-            : 'Starting…',
+          label: language?.startsWith('pl') ? 'Rozpoczynam…' : 'Starting…',
         })}\n\n`
       );
     } catch {
@@ -1603,7 +1617,10 @@ router.post(
           const getEffectiveWebSearchPolicy =
             webGov.getEffectiveWebSearchPolicy || webGov.default?.getEffectiveWebSearchPolicy;
           if (orgIdForWeb && typeof getEffectiveWebSearchPolicy === 'function') {
-            webPolicy = await getEffectiveWebSearchPolicy(String(orgIdForWeb), projectId || undefined);
+            webPolicy = await getEffectiveWebSearchPolicy(
+              String(orgIdForWeb),
+              projectId || undefined
+            );
           }
         } catch {
           webPolicy = null;
@@ -1638,7 +1655,9 @@ router.post(
           try {
             const { TavilyWebSearchService } =
               await import('../services/ai/tavilyWebSearchService.js');
-            const svc = new (TavilyWebSearchService as any)((process.env.TAVILY_API_KEY || '').trim());
+            const svc = new (TavilyWebSearchService as any)(
+              (process.env.TAVILY_API_KEY || '').trim()
+            );
             const sanitizeQuery = webGov?.sanitizeQuery || webGov?.default?.sanitizeQuery;
             const filterResults = webGov?.filterResults || webGov?.default?.filterResults;
             const getCached = webGov?.getCached || webGov?.default?.getCached;
@@ -1669,11 +1688,13 @@ router.post(
                 const resp =
                   cached ||
                   (await svc.search(cleanQuery, {
-                  maxResults: searchIntent.maxResults ?? 5,
-                  includeNews: true,
-                  searchDepth: searchIntent.searchDepth ?? 'basic',
-                }));
-                const resultsRaw = Array.isArray((resp as any)?.results) ? (resp as any).results : [];
+                    maxResults: searchIntent.maxResults ?? 5,
+                    includeNews: true,
+                    searchDepth: searchIntent.searchDepth ?? 'basic',
+                  }));
+                const resultsRaw = Array.isArray((resp as any)?.results)
+                  ? (resp as any).results
+                  : [];
                 const results =
                   typeof filterResults === 'function'
                     ? filterResults(resultsRaw, webPolicy)
@@ -1682,7 +1703,12 @@ router.post(
                 if ((resp as any)?.answer) allAnswers.push((resp as any).answer);
                 if (!cached && orgIdForWeb && typeof setCache === 'function') {
                   try {
-                    setCache(String(orgIdForWeb), cleanQuery, { ...(resp as any), query: cleanQuery, results }, language);
+                    setCache(
+                      String(orgIdForWeb),
+                      cleanQuery,
+                      { ...(resp as any), query: cleanQuery, results },
+                      language
+                    );
                   } catch {
                     // ignore
                   }

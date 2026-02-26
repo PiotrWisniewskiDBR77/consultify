@@ -13,7 +13,7 @@ import { Api } from '../../services/api';
 // TYPES
 // ==========================================
 
-export type ReportSourceType = 'ASSESSMENT' | 'INTERVIEW' | 'TOOL' | 'INITIATIVE';
+export type ReportSourceType = 'ASSESSMENT' | 'INTERVIEW' | 'TOOL' | 'INITIATIVE' | 'UPLOAD_BUNDLE';
 export type ReportStatus =
   | 'DRAFT'
   | 'CONFIGURING'

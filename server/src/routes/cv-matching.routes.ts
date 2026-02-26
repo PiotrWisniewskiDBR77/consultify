@@ -162,7 +162,10 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    const results = await cvService.matchCandidatesToRequirements(orgId, String(req.params.initiativeId));
+    const results = await cvService.matchCandidatesToRequirements(
+      orgId,
+      String(req.params.initiativeId)
+    );
     res.json(results);
   })
 );

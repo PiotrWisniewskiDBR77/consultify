@@ -50,12 +50,30 @@ function writeRecent(items: RecentAttachment[]) {
 
 const GoogleDriveIcon = () => (
   <svg width="16" height="16" viewBox="0 0 87.3 78" aria-hidden="true">
-    <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5l5.4 9.35z" fill="#0066DA" />
-    <path d="M43.65 25.15L29.9 1.35c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.2c-.8 1.4-1.2 2.95-1.2 4.5h27.5l16.15-27.55z" fill="#00AC47" />
-    <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75L84.7 60.2c.8-1.4 1.2-2.95 1.2-4.5H58.4l6.5 11.25 8.65 9.85z" fill="#EA4335" />
-    <path d="M43.65 25.15L57.4 1.35c-1.35-.8-2.9-1.2-4.5-1.2H34.15c-1.6 0-3.15.45-4.5 1.2l13.75 23.8h.25z" fill="#00832D" />
-    <path d="M58.4 52.7H27.5l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h49.2c1.6 0 3.15-.45 4.5-1.2L58.4 52.7z" fill="#2684FC" />
-    <path d="M73.4 26.5L60.65 4.65c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25.15 58.4 52.7H85.9c0-1.55-.4-3.1-1.2-4.5L73.4 26.5z" fill="#FFBA00" />
+    <path
+      d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5l5.4 9.35z"
+      fill="#0066DA"
+    />
+    <path
+      d="M43.65 25.15L29.9 1.35c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.2c-.8 1.4-1.2 2.95-1.2 4.5h27.5l16.15-27.55z"
+      fill="#00AC47"
+    />
+    <path
+      d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75L84.7 60.2c.8-1.4 1.2-2.95 1.2-4.5H58.4l6.5 11.25 8.65 9.85z"
+      fill="#EA4335"
+    />
+    <path
+      d="M43.65 25.15L57.4 1.35c-1.35-.8-2.9-1.2-4.5-1.2H34.15c-1.6 0-3.15.45-4.5 1.2l13.75 23.8h.25z"
+      fill="#00832D"
+    />
+    <path
+      d="M58.4 52.7H27.5l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h49.2c1.6 0 3.15-.45 4.5-1.2L58.4 52.7z"
+      fill="#2684FC"
+    />
+    <path
+      d="M73.4 26.5L60.65 4.65c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25.15 58.4 52.7H85.9c0-1.55-.4-3.1-1.2-4.5L73.4 26.5z"
+      fill="#FFBA00"
+    />
   </svg>
 );
 
@@ -309,10 +327,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
               className="w-full flex items-center gap-3 px-3.5 py-2 text-[13px] text-slate-500 dark:text-slate-400 hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors rounded-lg mx-0"
             >
               <span className="flex-1 text-left">{t('aiChat.menu.recent', 'Recent')}</span>
-              <ChevronRight
-                size={13}
-                className="shrink-0 text-slate-400 dark:text-slate-500"
-              />
+              <ChevronRight size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
             </button>
 
             {/* Flyout submenu */}

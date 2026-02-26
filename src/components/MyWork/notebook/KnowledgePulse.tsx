@@ -3,16 +3,17 @@ import {
   CheckSquare,
   ExternalLink,
   HeartPulse,
+  ListPlus,
   Loader2,
   Scale,
   Target,
-  ListPlus,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+
 import { PulseItemPickerModal } from './PulseItemPickerModal';
 
 export interface PulseItem {
@@ -32,9 +33,27 @@ interface KnowledgePulseProps {
 }
 
 const TYPE_CONFIG = {
-  initiative: { icon: Target, label: 'Initiatives', labelPl: 'Inicjatywy', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10' },
-  task: { icon: CheckSquare, label: 'Tasks', labelPl: 'Zadania', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
-  decision: { icon: Scale, label: 'Decisions', labelPl: 'Decyzje', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-500/10' },
+  initiative: {
+    icon: Target,
+    label: 'Initiatives',
+    labelPl: 'Inicjatywy',
+    color: 'text-blue-600 dark:text-blue-400',
+    bg: 'bg-blue-500/10',
+  },
+  task: {
+    icon: CheckSquare,
+    label: 'Tasks',
+    labelPl: 'Zadania',
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bg: 'bg-emerald-500/10',
+  },
+  decision: {
+    icon: Scale,
+    label: 'Decisions',
+    labelPl: 'Decyzje',
+    color: 'text-amber-600 dark:text-amber-400',
+    bg: 'bg-amber-500/10',
+  },
 } as const;
 
 export const KnowledgePulse: React.FC<KnowledgePulseProps> = ({
@@ -71,16 +90,38 @@ export const KnowledgePulse: React.FC<KnowledgePulseProps> = ({
         ]);
 
         if (initiatives.status === 'fulfilled') {
-          const list = Array.isArray(initiatives.value) ? initiatives.value : (initiatives.value as any)?.initiatives || [];
-          list.slice(0, 3).forEach((i: any) => results.push({ id: i.id, type: 'initiative', title: i.title || i.name, status: i.status }));
+          const list = Array.isArray(initiatives.value)
+            ? initiatives.value
+            : (initiatives.value as any)?.initiatives || [];
+          list.slice(0, 3).forEach((i: any) =>
+            results.push({
+              id: i.id,
+              type: 'initiative',
+              title: i.title || i.name,
+              status: i.status,
+            })
+          );
         }
         if (tasks.status === 'fulfilled') {
           const list = Array.isArray(tasks.value) ? tasks.value : (tasks.value as any)?.tasks || [];
-          list.slice(0, 3).forEach((t: any) => results.push({ id: t.id, type: 'task', title: t.title || t.name, status: t.status }));
+          list
+            .slice(0, 3)
+            .forEach((t: any) =>
+              results.push({ id: t.id, type: 'task', title: t.title || t.name, status: t.status })
+            );
         }
         if (decisions.status === 'fulfilled') {
-          const list = Array.isArray(decisions.value) ? decisions.value : (decisions.value as any)?.decisions || [];
-          list.slice(0, 3).forEach((d: any) => results.push({ id: d.id, type: 'decision', title: d.title || d.name, status: d.status }));
+          const list = Array.isArray(decisions.value)
+            ? decisions.value
+            : (decisions.value as any)?.decisions || [];
+          list.slice(0, 3).forEach((d: any) =>
+            results.push({
+              id: d.id,
+              type: 'decision',
+              title: d.title || d.name,
+              status: d.status,
+            })
+          );
         }
       } catch {
         // silently fail
@@ -94,8 +135,10 @@ export const KnowledgePulse: React.FC<KnowledgePulseProps> = ({
     };
 
     load();
-    return () => { cancelled = true; };
-  }, [noteTitle, noteTags, noteId]); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true;
+    };
+  }, [noteTitle, noteTags, noteId]);
 
   const grouped = {
     initiative: items.filter((i) => i.type === 'initiative'),
@@ -127,7 +170,11 @@ export const KnowledgePulse: React.FC<KnowledgePulseProps> = ({
           <div className="p-4 text-center text-xs text-slate-500 dark:text-slate-400 space-y-3">
             <HeartPulse size={24} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
             <p className="font-medium">{pl ? 'Brak powiązań' : 'No connections found'}</p>
-            <p className="mt-1">{pl ? 'Dodaj tagi i treść, aby odkryć powiązania' : 'Add tags and content to discover connections'}</p>
+            <p className="mt-1">
+              {pl
+                ? 'Dodaj tagi i treść, aby odkryć powiązania'
+                : 'Add tags and content to discover connections'}
+            </p>
             <div className="flex flex-wrap justify-center gap-2 pt-2">
               {(['initiative', 'task', 'decision'] as const).map((t) => {
                 const c = TYPE_CONFIG[t];
@@ -152,18 +199,26 @@ export const KnowledgePulse: React.FC<KnowledgePulseProps> = ({
 
             return (
               <div key={type}>
-                <div className={`flex items-center justify-between gap-2 px-1 mb-1.5 text-[11px] font-semibold ${cfg.color}`}>
+                <div
+                  className={`flex items-center justify-between gap-2 px-1 mb-1.5 text-[11px] font-semibold ${cfg.color}`}
+                >
                   <div className="flex items-center gap-1.5">
                     <Icon size={12} />
                     <span>{pl ? cfg.labelPl : cfg.label}</span>
                     {group.length > 0 && (
-                      <span className={`${cfg.bg} px-1.5 py-0.5 rounded-full text-[10px]`}>{group.length}</span>
+                      <span className={`${cfg.bg} px-1.5 py-0.5 rounded-full text-[10px]`}>
+                        {group.length}
+                      </span>
                     )}
                   </div>
                   <button
                     onClick={() => setPickerType(type)}
                     className="text-[10px] font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center gap-1 transition-colors"
-                    title={pl ? 'Przeglądaj wszystkie i wybierz z listy' : 'Browse all and pick from list'}
+                    title={
+                      pl
+                        ? 'Przeglądaj wszystkie i wybierz z listy'
+                        : 'Browse all and pick from list'
+                    }
                   >
                     <ListPlus size={10} />
                     {pl ? 'Wszystkie' : 'All'}
@@ -177,39 +232,41 @@ export const KnowledgePulse: React.FC<KnowledgePulseProps> = ({
                     >
                       {pl ? 'Brak w top 3 — przeglądaj wszystkie' : 'Not in top 3 — browse all'}
                     </button>
-                  ) : group.map((item) => (
-                    <div
-                      key={item.id}
-                      className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/60 px-3 py-2"
-                    >
-                      <div className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
-                        {item.title}
-                      </div>
-                      {item.status && (
-                        <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400 capitalize">
-                          {item.status}
+                  ) : (
+                    group.map((item) => (
+                      <div
+                        key={item.id}
+                        className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/60 px-3 py-2"
+                      >
+                        <div className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                          {item.title}
                         </div>
-                      )}
-                      <div className="mt-1.5 flex items-center gap-1">
-                        <button
-                          onClick={() => onInsertReference(item)}
-                          className={`flex-1 flex items-center justify-center gap-1 rounded-md ${cfg.bg} ${cfg.color} px-2 py-1 text-[10px] font-medium hover:opacity-80 transition-opacity`}
-                        >
-                          <ArrowRight size={10} />
-                          {pl ? 'Wstaw' : 'Insert'}
-                        </button>
-                        {onOpenItem && (
-                          <button
-                            onClick={() => onOpenItem(item)}
-                            className="flex items-center justify-center gap-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-2 py-1 text-[10px] font-medium hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
-                          >
-                            <ExternalLink size={10} />
-                            {pl ? 'Otwórz' : 'Open'}
-                          </button>
+                        {item.status && (
+                          <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400 capitalize">
+                            {item.status}
+                          </div>
                         )}
+                        <div className="mt-1.5 flex items-center gap-1">
+                          <button
+                            onClick={() => onInsertReference(item)}
+                            className={`flex-1 flex items-center justify-center gap-1 rounded-md ${cfg.bg} ${cfg.color} px-2 py-1 text-[10px] font-medium hover:opacity-80 transition-opacity`}
+                          >
+                            <ArrowRight size={10} />
+                            {pl ? 'Wstaw' : 'Insert'}
+                          </button>
+                          {onOpenItem && (
+                            <button
+                              onClick={() => onOpenItem(item)}
+                              className="flex items-center justify-center gap-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-2 py-1 text-[10px] font-medium hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
+                            >
+                              <ExternalLink size={10} />
+                              {pl ? 'Otwórz' : 'Open'}
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             );

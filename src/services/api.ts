@@ -1523,7 +1523,8 @@ export const Api = {
                   // otherwise fall back to raw backend error (so user isn't left with an empty bubble).
                   const uiLang = getCachedUserLanguage();
                   const sid =
-                    typeof (data as any).sessionId === 'string' && (data as any).sessionId.trim().length > 0
+                    typeof (data as any).sessionId === 'string' &&
+                    (data as any).sessionId.trim().length > 0
                       ? String((data as any).sessionId).trim()
                       : null;
 
@@ -1544,7 +1545,8 @@ export const Api = {
                             ? uiLang === 'pl'
                               ? '⚠️ Przekroczono limit zapytań do AI. Spróbuj ponownie za chwilę.'
                               : '⚠️ AI rate limit exceeded. Please try again in a moment.'
-                            : dataCode === 'LOCAL_LLM_DISABLED' || dataCode === 'LOCAL_LLM_ENDPOINT_NOT_ALLOWED'
+                            : dataCode === 'LOCAL_LLM_DISABLED' ||
+                                dataCode === 'LOCAL_LLM_ENDPOINT_NOT_ALLOWED'
                               ? uiLang === 'pl'
                                 ? '⚠️ Lokalny provider AI jest niedozwolony w tym środowisku.'
                                 : '⚠️ Local AI provider is not allowed in this environment.'
@@ -2079,7 +2081,9 @@ export const Api = {
     const prompts = await Api.aiGetSystemPrompts();
     const row =
       (Array.isArray(prompts)
-        ? prompts.find((p: any) => String(p?.key || p?.name || '').trim() === String(key || '').trim())
+        ? prompts.find(
+            (p: any) => String(p?.key || p?.name || '').trim() === String(key || '').trim()
+          )
         : null) || null;
 
     const id = String((row as any)?.id || '').trim();
@@ -2570,11 +2574,14 @@ export const Api = {
       proposeOnly?: boolean;
     }
   ): Promise<any> => {
-    const res = await fetch(`${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/expand`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(payload),
-    });
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/expand`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
     return handleResponse(res, 'Failed to expand idea map');
   },
 
@@ -2595,7 +2602,7 @@ export const Api = {
       target: 'initiative' | 'task_set' | 'decision' | 'team_chat';
       options?: Record<string, unknown>;
     }
-  ): Promise<any> => {
+  ): Promise<{ sourceSessionId?: string; [key: string]: any }> => {
     const res = await fetch(`${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/convert`, {
       method: 'POST',
       headers: getHeaders(),
@@ -3078,7 +3085,9 @@ export const Api = {
     return { prefs: data?.prefs || {}, updatedAt: data?.updatedAt ?? null };
   },
 
-  saveDecisionPrefs: async (prefs: any): Promise<{ success: boolean; prefs: any; updatedAt: string }> => {
+  saveDecisionPrefs: async (
+    prefs: any
+  ): Promise<{ success: boolean; prefs: any; updatedAt: string }> => {
     const res = await fetch(`${API_URL}/my-work/decisions/preferences`, {
       method: 'PUT',
       headers: getHeaders(),
@@ -3184,6 +3193,14 @@ export const Api = {
     toolType: string;
     name: string;
     projectId?: string | null;
+    /** V3-C03: For toolType=MYWORK — derived sources (idea/notebook/task/decision) */
+    derivedFrom?: Array<{
+      type: 'idea' | 'notebook' | 'task' | 'decision';
+      id: string;
+      title: string;
+    }>;
+    /** V3-C03: For toolType=MYWORK — snapshot of source context */
+    snapshotJson?: Record<string, unknown>;
   }): Promise<{ id: string; status: string }> => {
     const res = await fetch(`${API_URL}/tools`, {
       method: 'POST',
@@ -3317,6 +3334,8 @@ export const Api = {
       completionPercent?: number;
       confidenceAvg?: number;
       contextSnapshot?: Record<string, unknown>;
+      wizard_state?: Record<string, unknown>;
+      status?: string;
     }
   ): Promise<any> => {
     const res = await fetch(`${API_URL}/tools/${toolId}`, {
@@ -6686,7 +6705,9 @@ export const Api = {
     return res.json();
   },
   getPermissionsStats: async (): Promise<{ total: number; assigned: number }> => {
-    const res = await fetch(`${API_URL}/superadmin/admin/permissions/stats`, { headers: getHeaders() });
+    const res = await fetch(`${API_URL}/superadmin/admin/permissions/stats`, {
+      headers: getHeaders(),
+    });
     if (!res.ok) throw new Error('Failed to fetch permissions stats');
     return res.json();
   },
@@ -6834,7 +6855,8 @@ export const Api = {
   }): Promise<any[]> => {
     const params = new URLSearchParams();
     if (filters?.resourceType) params.set('resourceType', String(filters.resourceType));
-    if (filters?.isActive !== undefined) params.set('isActive', filters.isActive ? 'true' : 'false');
+    if (filters?.isActive !== undefined)
+      params.set('isActive', filters.isActive ? 'true' : 'false');
     const res = await fetch(`${API_URL}/superadmin/admin/approval-workflows?${params}`, {
       headers: getHeaders(),
     });
@@ -6869,10 +6891,13 @@ export const Api = {
     return out;
   },
   deleteApprovalWorkflow: async (id: string) => {
-    const res = await fetch(`${API_URL}/superadmin/admin/approval-workflows/${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-    });
+    const res = await fetch(
+      `${API_URL}/superadmin/admin/approval-workflows/${encodeURIComponent(id)}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders(),
+      }
+    );
     const out = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error((out as any)?.error || 'Failed to delete approval workflow');
     return out;
@@ -9157,9 +9182,9 @@ export const Api = {
 
   convertNotebookPage: async (
     id: string,
-    target: 'task' | 'decision' | 'initiative',
+    target: 'task' | 'decision' | 'initiative' | 'report' | 'presentation',
     extra?: { title?: string; description?: string }
-  ): Promise<{ id: string; type: string; title: string }> => {
+  ): Promise<{ id: string; type: string; title: string; sourceSessionId?: string }> => {
     const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}/convert`, {
       method: 'POST',
       headers: getHeaders(),
@@ -9172,20 +9197,25 @@ export const Api = {
     pageId: string,
     opts?: { excludedTopics?: string[]; language?: string }
   ): Promise<{ topics: string[] }> => {
-    const res = await fetch(`${API_URL}/my-work/notebook/pages/${encodeURIComponent(pageId)}/suggest-topics`, {
-      method: 'POST',
-      headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        excludedTopics: opts?.excludedTopics ?? [],
-        language: opts?.language ?? 'en',
-      }),
-    });
+    const res = await fetch(
+      `${API_URL}/my-work/notebook/pages/${encodeURIComponent(pageId)}/suggest-topics`,
+      {
+        method: 'POST',
+        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          excludedTopics: opts?.excludedTopics ?? [],
+          language: opts?.language ?? 'en',
+        }),
+      }
+    );
     if (!res.ok) {
       let msg = 'Failed to suggest topics';
       try {
         const body = await res.json();
         if (typeof body?.error === 'string') msg = body.error;
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       throw new Error(msg);
     }
     return res.json();

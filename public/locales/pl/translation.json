@@ -49,7 +49,76 @@
     "openMenu": "Otwórz menu",
     "closeMenu": "Zamknij menu",
     "themeLabel": "Motyw",
-    "languageLabel": "Język"
+    "languageLabel": "Język",
+    "preview": "Podgląd",
+    "openFull": "Otwórz pełny"
+  },
+  "dynamicTabBar": {
+    "unsaved": "Niezapisane zmiany",
+    "unsavedTitle": "Niezapisane zmiany",
+    "unsavedDesc": "Ten dokument ma niezapisane zmiany. Zamknąć mimo to?",
+    "closeAnyway": "Zamknij",
+    "closeTab": "Zamknij kartę",
+    "closeAll": "Zamknij wszystkie",
+    "closeAllTitle": "Zamknąć wszystkie karty?",
+    "closeAllDesc": "{{count}} karta(y) ma niezapisane zmiany. Zamknąć mimo to?"
+  },
+  "preview": {
+    "open": "Otwórz",
+    "openSession": "Otwórz sesję",
+    "openDetail": "Otwórz szczegóły",
+    "resumeWizard": "Wznów kreator",
+    "export": "Eksportuj",
+    "editStatus": "Edytuj status",
+    "addEvidence": "Dodaj dowód",
+    "status": "Status",
+    "created": "Utworzono",
+    "lastModified": "Ostatnia zmiana",
+    "currentStep": "Aktualny krok",
+    "step": "Krok",
+    "progress": "Postęp",
+    "owner": "Właściciel",
+    "priority": "Priorytet",
+    "startDate": "Data rozpoczęcia",
+    "targetDate": "Data docelowa",
+    "toolSessions": "Sesje narzędzi",
+    "currentScore": "Aktualny wynik",
+    "targetScore": "Wynik docelowy",
+    "gap": "Luka",
+    "evidenceCount": "Dowody",
+    "recommendationsCount": "Rekomendacje"
+  },
+  "presentations": {
+    "tabs": {
+      "allDecks": "Wszystkie prezentacje",
+      "recent": "Ostatnie"
+    },
+    "columns": {
+      "title": "Tytuł",
+      "sourceType": "Źródło",
+      "owner": "Właściciel",
+      "date": "Data"
+    },
+    "sourceType": {
+      "tool": "Narzędzie",
+      "assessment": "Ocena",
+      "finance": "Finanse",
+      "upload": "Przesłane",
+      "unknown": "Nieznane"
+    },
+    "actions": {
+      "rename": "Zmień nazwę",
+      "export": "Eksportuj",
+      "openSource": "Otwórz źródło"
+    },
+    "loading": "Ładowanie prezentacji...",
+    "empty": "Brak prezentacji.",
+    "minimalPreview": "Podgląd — pełny edytor wkrótce",
+    "previewPlaceholder": "Podgląd prezentacji zostanie tutaj wyświetlony.",
+    "exportSuccess": "Eksport rozpoczęty",
+    "renameSuccess": "Zmieniono nazwę",
+    "renamePlaceholder": "Tytuł prezentacji",
+    "comingSoon": "Wkrótce"
   },
   "sidebar": {
     "dashboard": "Panel",
@@ -72,8 +141,12 @@
     "initiatives": "Inicjatywy",
     "execution": "Realizacja",
     "benefits": "Korzyści",
+    "results": "Rezultaty",
     "economics": "Ekonomia",
     "reports": "Raporty",
+    "reportsBuilder": "Kreator raportów",
+    "reportsManagement": "Raporty zarządcze",
+    "presentations": "Prezentacje",
     "partnerPortal": "Portal Partnerski"
   },
   "widgets": {
@@ -167,6 +240,24 @@
         "moveToday": "Dziś",
         "moveWeek": "Tydzień",
         "open": "Otwórz"
+      },
+      "focusCockpit": {
+        "lanes": {
+          "myList": "Moja lista (zbieranie)",
+          "today": "Dziś",
+          "thisWeek": "Ten tydzień"
+        },
+        "addTask": "Zadanie",
+        "toggleTask": "Przełącz zadanie",
+        "preview": "Podgląd",
+        "dueToday": "Dziś",
+        "dueTomorrow": "Jutro",
+        "priority": {
+          "low": "Niski",
+          "medium": "Średni",
+          "high": "Wysoki",
+          "critical": "Krytyczny"
+        }
       }
     },
     "calendar": "Kalendarz",
@@ -181,7 +272,16 @@
       "emptyTitle": "Brak decyzji",
       "emptySubtitle": "Utwórz pierwszą decyzję, aby zacząć",
       "createCta": "Utwórz decyzję",
-      "relatedNotes": "Powiązane notatki"
+      "relatedNotes": "Powiązane notatki",
+      "fetchFailed": "Nie udało się załadować decyzji",
+      "timeline": {
+        "zoomDay": "Dzień",
+        "zoomWeek": "Tydzień",
+        "zoomMonth": "Miesiąc",
+        "zoomQuarter": "Kwartał",
+        "priorityFilter": "Priorytet",
+        "empty": "Brak decyzji w zakresie"
+      }
     },
     "errors": {
       "fetchFailed": "Nie udało się załadować",
@@ -267,7 +367,18 @@
       "suggestionsEmpty": "Zapisuj pomysły z czatu, aby zbudować prywatną bibliotekę.",
       "idea": "Pomysł",
       "insert": "Wstaw",
-      "open": "Otwórz"
+      "open": "Otwórz",
+      "canvasTools": {
+        "ariaLabel": "Narzędzie canvas",
+        "mindmap": "Mapa myśli",
+        "mindmapTooltip": "Mapa myśli — hierarchiczne węzły i połączenia",
+        "processFlow": "Przepływ procesu",
+        "processFlowTooltip": "Przepływ procesu — kroki i zależności",
+        "table": "Tabela",
+        "tableTooltip": "Widok tabeli — strukturalna lista pomysłów",
+        "whiteboard": "Tablica",
+        "whiteboardTooltip": "Tablica — swobodny canvas"
+      }
     },
     "notebook": {
       "title": "Notebook",
@@ -403,6 +514,45 @@
       "draft": "Szkic",
       "reviewed": "Przejrzany",
       "approved": "Zatwierdzony"
+    },
+    "sufficiency": {
+      "title": "Wystarczalność",
+      "proceed": "Przejdź do insightów",
+      "sendBack": "Odeślij",
+      "sendBackConfirm": "Odeślij",
+      "criteria": "Kryteria",
+      "status": {
+        "red": "Niewystarczające",
+        "amber": "Częściowe",
+        "green": "Gotowe"
+      },
+      "sendBackDialog": {
+        "title": "Odeślij wywiad",
+        "description": "Wywiad nie spełnia progu wystarczalności. Dodaj notatkę, aby wyjaśnić, czego brakuje, aby rozmówca mógł uzupełnić odpowiedzi.",
+        "missingItems": "Brakujące elementy",
+        "noteLabel": "Notatka dla rozmówcy",
+        "notePlaceholder": "Opisz, jakie dodatkowe informacje lub wyjaśnienia są potrzebne..."
+      }
+    },
+    "runtimeMode": {
+      "label": "Tryb",
+      "chooseTitle": "Wybierz tryb wywiadu",
+      "recommended": "Rekomendowane",
+      "switch": "Zmień tryb",
+      "pros": "Zalety",
+      "cons": "Wady",
+      "singleQuestion": {
+        "title": "Tryb pojedynczego pytania",
+        "description": "AI prezentuje jedno skupione pytanie na raz. Prowadzony, głębszy wywiad.",
+        "pros": "Głębsze odpowiedzi, prowadzony flow, lepszy dla złożonych tematów",
+        "cons": "Wolniejszy, wymaga obecności interviewer'a"
+      },
+      "taskList": {
+        "title": "Tryb listy zadań",
+        "description": "AI prezentuje checklistę pytań. Rozmówca wypełnia we własnym tempie.",
+        "pros": "Szybszy, self-service, przyjazny dla async",
+        "cons": "Płytsze odpowiedzi, mniej prowadzenia"
+      }
     }
   },
   "assessment": {
@@ -522,6 +672,87 @@
       "allGatesPassed": "Wszystkie bramki przejdzone!",
       "requiredApprovalsForStatus": "Wymagane zatwierdzenia dla statusu",
       "notRequested": "Nie zgłoszono"
+    },
+    "tabs": {
+      "portfolio": "Portfolio",
+      "analysis": "Analiza"
+    },
+    "analysis": {
+      "resources": {
+        "title": "Zasoby",
+        "resource": "Zasób",
+        "role": "Rola",
+        "initiatives": "Inicjatywy",
+        "utilization": "Wykorzystanie",
+        "status": "Status",
+        "ok": "OK",
+        "overallocated": "Przeciążony",
+        "underutilized": "Niewykorzystany",
+        "overallocatedCount": "{{count}} przeciążonych zasobów",
+        "noData": "Brak danych alokacji zasobów."
+      },
+      "feasibility": {
+        "title": "Wykonalność",
+        "initiative": "Inicjatywa",
+        "budget": "Budżet",
+        "skills": "Kompetencje",
+        "time": "Czas",
+        "risk": "Ryzyko",
+        "score": "Wynik",
+        "highRiskCount": "{{count}} inicjatyw wysokiego ryzyka",
+        "noData": "Brak danych wykonalności."
+      },
+      "logic": {
+        "title": "Logika",
+        "dependencies": "Zależności",
+        "criticalDependencyIssues": "{{count}} krytycznych problemów zależności",
+        "noData": "Brak danych zależności."
+      },
+      "timeline": {
+        "title": "Harmonogram",
+        "initiativeTimelines": "Harmonogramy inicjatyw",
+        "issuesCount": "{{count}} problemów harmonogramu (opóźnienia lub brak dat)",
+        "onSchedule": "Na czas",
+        "delayed": "Opóźniona",
+        "atRisk": "Zagrożona",
+        "noDates": "Brak dat",
+        "noData": "Brak danych harmonogramu."
+      },
+      "completeness": {
+        "title": "Kompletność",
+        "initiative": "Inicjatywa",
+        "level": "Poziom",
+        "status": "Status",
+        "completeness": "Kompletność",
+        "missingCritical": "Brak krytycznych",
+        "missingTotal": "Brak łącznie",
+        "actions": "Akcje",
+        "notGateReady": "{{count}} inicjatyw niegotowych do bramki",
+        "noData": "Brak danych kompletności."
+      },
+      "issues": "Problemy",
+      "openInitiative": "Otwórz inicjatywę"
+    },
+    "templates": {
+      "quick_win": {
+        "label": "Szybka wygrana",
+        "description": "Drobne usprawnienia realizowane w <1 miesiąc. Minimalna governance."
+      },
+      "standard": {
+        "label": "Standardowa",
+        "description": "Typowe inicjatywy konsultingowe z pełnym planowaniem."
+      },
+      "strategic": {
+        "label": "Strategiczna",
+        "description": "Priorytety strategiczne z governance i budżetem."
+      },
+      "transformation": {
+        "label": "Transformacja",
+        "description": "Duże transformacje organizacyjne z pełną governance."
+      },
+      "recommended": "Rekomendowane",
+      "sections": "{{count}} sekcji",
+      "ariaLabel": "Wybierz poziom inicjatywy"
     }
   },
   "execution": {
@@ -992,6 +1223,16 @@
     }
   },
   "reports": {
+    "entry": {
+      "title": "Raporty",
+      "subtitle": "Wybierz, jak chcesz pracować z raportami",
+      "builderTitle": "Kreator raportów",
+      "builderDesc": "Twórz raporty dostarczalne dla klientów",
+      "managementTitle": "Raporty zarządcze",
+      "managementDesc": "Wewnętrzne raportowanie PMO",
+      "openBuilder": "Otwórz Kreator raportów",
+      "openManagement": "Otwórz Raporty zarządcze"
+    },
     "automation": {
       "title": "Automatyzacja raportów",
       "subtitle": "Automatyczne cykliczne i wyzwalane zdarzeniami generowanie raportów",
@@ -1126,6 +1367,11 @@
       "watch": "Obejrzyj",
       "skip": "Pomiń",
       "dontShow": "Nie pokazuj ponownie"
+    },
+    "microVideoPrompt": {
+      "header": "Szybki samouczek",
+      "moreToExplore": "Więcej do odkrycia",
+      "videoPlaceholder": "Zastępnik wideo"
     }
   },
   "settings": {
@@ -2355,6 +2601,56 @@
     "history": "Historia rozmów",
     "autoReadOn": "Włącz czytanie na głos",
     "autoReadOff": "Wyłącz czytanie na głos",
+    "navigate": {
+      "success": "Przekierowuję…",
+      "fallback": "Otworzono widok zapasowy",
+      "retry": "Spróbuj ponownie"
+    },
+    "action": {
+      "unsupported": "Akcja nieobsługiwana"
+    },
+    "actions": {
+      "navigate": {
+        "label": "Przejdź do",
+        "description": "Przejdź do modułu lub encji"
+      },
+      "createTask": {
+        "label": "Utwórz zadanie",
+        "description": "Utwórz nowe zadanie"
+      },
+      "createDecision": {
+        "label": "Utwórz decyzję",
+        "description": "Utwórz nową decyzję"
+      },
+      "createInitiative": {
+        "label": "Utwórz inicjatywę",
+        "description": "Utwórz nową inicjatywę"
+      },
+      "generateReport": {
+        "label": "Generuj raport",
+        "description": "Otwórz kreator raportów"
+      },
+      "generatePresentation": {
+        "label": "Generuj prezentację",
+        "description": "Otwórz kreator prezentacji"
+      },
+      "startTool": {
+        "label": "Uruchom narzędzie",
+        "description": "Otwórz kreator narzędzia Discovery"
+      },
+      "openPreview": {
+        "label": "Podgląd",
+        "description": "Otwórz podgląd encji"
+      },
+      "assignInterview": {
+        "label": "Przydziel wywiad",
+        "description": "Przydziel wywiad członkom zespołu"
+      },
+      "recordKpi": {
+        "label": "Zapisz KPI",
+        "description": "Zapisz wartość KPI w szeregu czasowym"
+      }
+    },
     "coThinker": {
       "title": "Co-Thinker",
       "active": "Aktywny",
@@ -3159,6 +3455,27 @@
       "achievements": "Osiągnięcia"
     }
   },
+  "nmodeCompleteness": {
+    "pillComplete": "Kompletne",
+    "pillMissing": "{{count}} brakuje",
+    "missing": "brakuje",
+    "missingTitle": "Brakujące pola",
+    "missingSubtitle": "{{count}} wymaganych pól nie uzupełniono",
+    "noMissing": "Wszystkie wymagane pola są uzupełnione.",
+    "critical": "Krytyczne",
+    "gateBlockedHint": "Elementy krytyczne blokują zmiany statusu. Uzupełnij je, aby kontynuować.",
+    "aiFill": "AI Uzupełnij",
+    "aiFillAll": "AI Uzupełnij wszystko",
+    "aiFillTitle": "Propozycja AI",
+    "aiFillBulkTitle": "Propozycje AI",
+    "accept": "Akceptuj",
+    "acceptAll": "Akceptuj wszystkie",
+    "reject": "Odrzuć",
+    "edit": "Edytuj",
+    "cancelEdit": "Anuluj",
+    "close": "Zamknij",
+    "source": "Źródło"
+  },
   "partners": {
     "outreach": {
       "title": "Outreach partnerski",
@@ -3359,6 +3676,27 @@
     }
   },
   "finance": {
+    "export": {
+      "title": "Eksport analizy finansowej",
+      "report": "Raport",
+      "reportDesc": "Utwórz raport dostarczalny z tej analizy",
+      "presentation": "Prezentacja",
+      "presentationDesc": "Utwórz deck prezentacyjny z tej analizy",
+      "useTemplate": "Użyj szablonu",
+      "selectTemplate": "Wybierz szablon",
+      "loadingTemplates": "Ładowanie...",
+      "noTemplates": "Brak dostępnych szablonów",
+      "analysisSummary": "Podsumowanie analizy",
+      "name": "Nazwa",
+      "type": "Typ",
+      "date": "Data",
+      "createDraft": "Utwórz szkic",
+      "creating": "Tworzenie...",
+      "button": "Eksportuj",
+      "toastSuccess": "Szkic utworzony pomyślnie",
+      "openOutput": "Otwórz wynik",
+      "openSource": "Otwórz źródło"
+    },
     "model": {
       "title": "Modele finansowe",
       "createModel": "Utwórz model finansowy",
@@ -3988,6 +4326,26 @@
       "gatingNotice": "Dostępne tylko w środowisku testowym z odpowiednimi poświadczeniami."
     }
   },
+  "modelRegistry": {
+    "catalog": {
+      "title": "Katalog modeli",
+      "description": "Wszystkie zarejestrowane modele TEXT_LLM, IMAGE_MODEL i BUSINESS_MODEL",
+      "addModel": "Dodaj model",
+      "searchPlaceholder": "Szukaj po nazwie, ID modelu, dostawcy..."
+    },
+    "assignments": {
+      "title": "Przypisania {{kind}}",
+      "description": "Przypisz modele do celów z priorytetami i fallbackami"
+    },
+    "audit": {
+      "title": "Dziennik zmian modeli",
+      "description": "Oś czasu wszystkich zmian konfiguracji rejestru modeli"
+    },
+    "pricing": {
+      "title": "Cennik modeli",
+      "description": "Przeglądaj i zarządzaj cenami modeli z wersjonowanymi snapshoty"
+    }
+  },
   "aiPrompts": {
     "title": "Zarządzanie promptami AI",
     "registry": "Rejestr promptów",
@@ -4441,6 +4799,183 @@
       "filterOverdueDesc": "Filtruj zaległe zadania",
       "schedule": "Otwórz kalendarz",
       "scheduleDesc": "Pokaż zaplanowane elementy"
+    }
+  },
+  "results": {
+    "moduleName": "Rezultaty",
+    "tabs": {
+      "allKpis": "Wszystkie KPI",
+      "byInitiative": "Wg inicjatywy",
+      "global": "Globalne",
+      "roiTracking": "Śledzenie ROI",
+      "operational": "Operacyjna",
+      "roiAnalysis": "Analiza ROI"
+    },
+    "addKpi": "+ Dodaj KPI",
+    "emptyState": "Brak KPI",
+    "columns": {
+      "name": "Nazwa",
+      "initiative": "Inicjatywa",
+      "baseline": "Baseline",
+      "target": "Cel",
+      "current": "Obecna",
+      "status": "Status",
+      "trend": "Trend",
+      "frequency": "Częstotliwość",
+      "owner": "Właściciel",
+      "lastUpdated": "Aktualizacja"
+    },
+    "actions": {
+      "openDetail": "Otwórz szczegóły",
+      "recordValue": "Zapisz wartość",
+      "mapInitiative": "Przypisz do inicjatywy"
+    },
+    "direction": {
+      "increase": "Wzrost",
+      "decrease": "Spadek",
+      "maintain": "Utrzymanie"
+    },
+    "createModal": {
+      "title": "Nowy KPI",
+      "name": "Nazwa",
+      "namePlaceholder": "np. Wzrost przychodów %",
+      "description": "Opis",
+      "descriptionPlaceholder": "Co mierzy ten KPI?",
+      "unit": "Jednostka",
+      "frequency": "Częstotliwość",
+      "direction": "Kierunek",
+      "initiative": "Inicjatywa (opcjonalnie)",
+      "globalKpi": "— Globalny KPI (bez inicjatywy) —",
+      "create": "Utwórz KPI"
+    },
+    "drawer": {
+      "baseline": "Baseline",
+      "gap": "Różnica",
+      "chartTitle": "Wartość w czasie",
+      "noMeasurements": "Brak pomiarów",
+      "recordTitle": "Zapisz nową wartość",
+      "valuePlaceholder": "Wartość",
+      "notesPlaceholder": "Notatki (opcjonalnie)",
+      "record": "Zapisz",
+      "history": "Historia",
+      "historyDate": "Data",
+      "historyValue": "Wartość",
+      "historyNotes": "Notatki",
+      "historyBy": "Autor"
+    },
+    "operational": {
+      "totalTracked": "Łącznie śledzonych KPI",
+      "onTargetPct": "% na celu",
+      "belowTarget": "Poniżej celu",
+      "avgScore": "Średni wynik",
+      "filters": "Filtry",
+      "sortBy": "Sortuj według",
+      "sort": {
+        "worst": "Najsłabsze",
+        "best": "Najlepsze",
+        "recent": "Najnowsze"
+      },
+      "trends": "Trendy KPI",
+      "onTarget": "Na celu",
+      "below": "Poniżej",
+      "noData": "Brak danych"
+    },
+    "roiAnalysis": {
+      "totalPlanned": "Łączna wartość planowana",
+      "totalRealized": "Łączna wartość zrealizowana",
+      "portfolioVariance": "Odchylenie portfela",
+      "anomalyTitle": "Sugestie AI",
+      "anomalyBelow": "{{count}} inicjatyw znacznie poniżej planu",
+      "contributionsChart": "Wkład inicjatyw w ROI",
+      "plannedRoi": "Planowane ROI",
+      "realizedRoi": "Zrealizowane ROI"
+    },
+    "roi": {
+      "totalPlanned": "Łączne planowane ROI",
+      "totalRealized": "Łączne zrealizowane ROI",
+      "overallVariance": "Ogólna odchylenie",
+      "emptyState": "Brak inicjatyw z danymi ROI",
+      "periodYtd": "YTD",
+      "statusOnTrack": "Na planie",
+      "statusBelow": "Poniżej planu",
+      "statusAbove": "Powyżej planu",
+      "columns": {
+        "initiative": "Inicjatywa",
+        "plannedRoi": "Planowane ROI",
+        "realizedRoi": "Zrealizowane ROI",
+        "variance": "Odchylenie",
+        "status": "Status",
+        "period": "Okres",
+        "owner": "Właściciel"
+      },
+      "actions": {
+        "openDetail": "Otwórz szczegóły",
+        "recordActual": "Zapisz wartość rzeczywistą",
+        "viewHistory": "Zobacz historię"
+      },
+      "chartTitle": "Plan vs zrealizowane wg okresu",
+      "noRealizedData": "Brak danych zrealizowanych",
+      "assumptionsTitle": "Założenia ROI",
+      "assumptionDescription": "Opis",
+      "assumptionAmount": "Kwota",
+      "assumptionPeriod": "Okres",
+      "assumptionConfidence": "Pewność",
+      "assumptionSource": "Źródło",
+      "rowRevenueDelta": "Zmiana przychodów",
+      "rowCostDelta": "Zmiana kosztów",
+      "rowCapex": "CAPEX",
+      "rowOpex": "OPEX (rocznie)",
+      "periodMonth": "Miesiąc",
+      "periodQuarter": "Kwartał",
+      "periodYear": "Rok",
+      "confidenceHigh": "Wysoka",
+      "confidenceMedium": "Średnia",
+      "confidenceLow": "Niska",
+      "sourceManual": "Ręcznie",
+      "sourceToolSession": "Sesja narzędzia",
+      "total": "Suma",
+      "recordActual": "Zapisz wartość rzeczywistą",
+      "period": "Okres",
+      "amount": "Kwota",
+      "notesPlaceholder": "Notatki (opcjonalnie)",
+      "submit": "Zapisz",
+      "history": "Historia",
+      "historyPeriod": "Okres",
+      "historyPlanned": "Planowane",
+      "historyRealized": "Zrealizowane",
+      "historyVariance": "Odchylenie",
+      "historyNotes": "Notatki",
+      "historyBy": "Autor",
+      "historyDate": "Data",
+      "noHistory": "Brak historii"
+    }
+  },
+  "traceability": {
+    "source": "Źródło",
+    "noSource": "Brak źródła",
+    "openSource": "Otwórz źródło",
+    "sourceType": {
+      "tool_session": "Sesja narzędzia",
+      "mywork": "MyWork",
+      "assessment": "Assessment",
+      "financial_analysis": "Analiza finansowa",
+      "interview": "Wywiad",
+      "manual": "Ręcznie"
+    },
+    "convertTo": {
+      "title": "Konwertuj na output",
+      "description": "Zostanie utworzona sesja MyWork jako źródło dla Twojego {{target}}.",
+      "sourceItems": "Elementy źródłowe",
+      "targetType": "Typ docelowy",
+      "confirm": "Potwierdź i utwórz",
+      "cancel": "Anuluj",
+      "initiative": "Inicjatywa",
+      "report": "Raport",
+      "presentation": "Prezentacja",
+      "createsSession": "Najpierw tworzy sesję MyWork",
+      "createdFrom": "Utworzono {{type}} z {{source}}",
+      "openOutput": "Otwórz output",
+      "openSourceSession": "Otwórz sesję źródłową"
     }
   }
 }

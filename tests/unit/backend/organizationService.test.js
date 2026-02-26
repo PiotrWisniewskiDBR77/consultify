@@ -83,6 +83,9 @@ describe('OrganizationService', () => {
       expect(dbOrg).toBeDefined();
       expect(dbOrg.name).toBe('DB Test Org');
       expect(dbOrg.billing_status).toBe('TRIAL');
+      expect(String(dbOrg.organization_type || 'TRIAL')).toBe('TRIAL');
+      expect(dbOrg.trial_started_at).toBeTruthy();
+      expect(dbOrg.trial_expires_at).toBeTruthy();
     });
 
     it('should add creator as OWNER member', async () => {

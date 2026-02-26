@@ -33,11 +33,7 @@ export const CalloutNode = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    return [
-      'div',
-      mergeAttributes({ 'data-callout': '', class: 'nb-callout' }, HTMLAttributes),
-      0,
-    ];
+    return ['div', mergeAttributes({ 'data-callout': '', class: 'nb-callout' }, HTMLAttributes), 0];
   },
 
   addCommands() {

@@ -35,6 +35,10 @@ export { EvidencePanel } from './EvidencePanel';
 export { NotesPanel } from './NotesPanel';
 export { QuestionsList } from './QuestionsList';
 
+// V3-D01/D02 support components
+export { RuntimeModeSelector } from './RuntimeModeSelector';
+export { SufficiencyIndicator } from './SufficiencyIndicator';
+
 // Legacy components (for backward compatibility)
 export { InterviewContextBanner } from './InterviewContextBanner';
 export { InterviewSummary } from './InterviewSummary';
@@ -51,3 +55,5 @@ export type {
 export type { EvidencePanelProps, EvidenceType, InterviewEvidence } from './EvidencePanel';
 export type { InterviewNote, NotesPanelProps } from './NotesPanel';
 export type { InterviewQuestion, QuestionsListProps, QuestionStatus } from './QuestionsList';
+export type { RuntimeMode, RuntimeModeSelectorProps } from './RuntimeModeSelector';
+export type { SufficiencyCriterion, SufficiencyIndicatorProps } from './SufficiencyIndicator';

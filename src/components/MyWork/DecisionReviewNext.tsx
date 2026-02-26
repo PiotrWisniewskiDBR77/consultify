@@ -6,8 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 
 import { DecisionPreviewPanel } from './DecisionPreviewPanel';
-import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 
 type ReviewMode = 'my' | 'requests_pending';
 
@@ -17,7 +17,11 @@ export interface DecisionReviewNextProps {
   onExit: () => void;
 }
 
-export const DecisionReviewNext: React.FC<DecisionReviewNextProps> = ({ mode, onOpenFullDetail, onExit }) => {
+export const DecisionReviewNext: React.FC<DecisionReviewNextProps> = ({
+  mode,
+  onOpenFullDetail,
+  onExit,
+}) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
@@ -29,25 +33,28 @@ export const DecisionReviewNext: React.FC<DecisionReviewNextProps> = ({ mode, on
   const selected = items[selectedIdx] || null;
   const selectedId = selected?.id ? String(selected.id) : null;
 
-  const fetchPage = useCallback(async (nextCursor?: number | null) => {
-    try {
-      setLoading(true);
-      const data = await Api.getMyWorkDecisionQueue({
-        mode: mode === 'requests_pending' ? 'requests_pending' : 'my',
-        limit: 50,
-        cursor: nextCursor ?? null,
-      });
-      setItems(Array.isArray(data?.items) ? data.items : []);
-      setCursor(data?.nextCursor ?? null);
-      setSelectedIdx(0);
-    } catch (e) {
-      toast.error(isPolish ? 'Nie udało się załadować kolejki' : 'Failed to load queue');
-      setItems([]);
-      setCursor(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [mode, isPolish]);
+  const fetchPage = useCallback(
+    async (nextCursor?: number | null) => {
+      try {
+        setLoading(true);
+        const data = await Api.getMyWorkDecisionQueue({
+          mode: mode === 'requests_pending' ? 'requests_pending' : 'my',
+          limit: 50,
+          cursor: nextCursor ?? null,
+        });
+        setItems(Array.isArray(data?.items) ? data.items : []);
+        setCursor(data?.nextCursor ?? null);
+        setSelectedIdx(0);
+      } catch (e) {
+        toast.error(isPolish ? 'Nie udało się załadować kolejki' : 'Failed to load queue');
+        setItems([]);
+        setCursor(null);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [mode, isPolish]
+  );
 
   useEffect(() => {
     fetchPage(null);
@@ -141,7 +148,8 @@ export const DecisionReviewNext: React.FC<DecisionReviewNextProps> = ({ mode, on
   }, [actApprove, actReject, actSnoozeTomorrow]);
 
   const title = useMemo(() => {
-    if (mode === 'requests_pending') return isPolish ? 'Review next: moje prośby' : 'Review next: my requests';
+    if (mode === 'requests_pending')
+      return isPolish ? 'Review next: moje prośby' : 'Review next: my requests';
     return isPolish ? 'Review next: moje do decyzji' : 'Review next: my decisions';
   }, [mode, isPolish]);
 
@@ -156,7 +164,9 @@ export const DecisionReviewNext: React.FC<DecisionReviewNextProps> = ({ mode, on
             <div>
               <div className="text-sm font-semibold text-slate-900 dark:text-white">{title}</div>
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'J/K nawigacja, A zatwierdź, R odrzuć, S odłóż, ? pomoc' : 'J/K navigate, A approve, R reject, S snooze, ? help'}
+                {isPolish
+                  ? 'J/K nawigacja, A zatwierdź, R odrzuć, S odłóż, ? pomoc'
+                  : 'J/K navigate, A approve, R reject, S snooze, ? help'}
               </div>
             </div>
           </div>
@@ -215,11 +225,13 @@ export const DecisionReviewNext: React.FC<DecisionReviewNextProps> = ({ mode, on
           </div>
         )}
 
-        <KeyboardShortcutsHelp isOpen={shortcuts.showHelp} onClose={() => shortcuts.setShowHelp(false)} />
+        <KeyboardShortcutsHelp
+          isOpen={shortcuts.showHelp}
+          onClose={() => shortcuts.setShowHelp(false)}
+        />
       </div>
     </div>
   );
 };
 
 export default DecisionReviewNext;
-

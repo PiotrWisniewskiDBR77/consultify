@@ -7,6 +7,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import logger from '../utils/Logger.js';
+import { DEMO_TRIAL_EVENT_TYPES, recordDemoTrialEvent } from './demoTrialTelemetryService.js';
 import { appCache } from './redis/CacheService.js';
 
 // ==========================================
@@ -194,6 +195,17 @@ export const AIOrchestrator = {
 
     // Check daily AI limit
     if (accessContext.dailyAIUsage.remaining <= 0 && !accessContext.isPaid) {
+      if (accessContext.isDemo) {
+        void recordDemoTrialEvent({
+          eventType: DEMO_TRIAL_EVENT_TYPES.DEMO_AI_LIMIT_REACHED,
+          organizationId,
+          userId,
+          source: 'ai_orchestrator',
+          metadata: {
+            limit: accessContext.dailyAIUsage.limit,
+          },
+        });
+      }
       return {
         blocked: true,
         errorCode: 'AI_LIMIT_REACHED',
@@ -759,6 +771,17 @@ USER MESSAGE: ${userMessage}`;
     }
 
     if (accessContext.dailyAIUsage.remaining <= 0 && !accessContext.isPaid) {
+      if (accessContext.isDemo) {
+        void recordDemoTrialEvent({
+          eventType: DEMO_TRIAL_EVENT_TYPES.DEMO_AI_LIMIT_REACHED,
+          organizationId,
+          userId,
+          source: 'ai_orchestrator',
+          metadata: {
+            limit: accessContext.dailyAIUsage.limit,
+          },
+        });
+      }
       return {
         blocked: true,
         errorCode: 'AI_LIMIT_REACHED',

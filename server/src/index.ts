@@ -197,7 +197,10 @@ const databaseInitPromise: Promise<void> =
           // Initialize and verify schema
           const { initializeDatabase } = await import('./database/DatabaseInitializer.js');
           const initResult = skipManagedSchema
-            ? { success: true, message: 'DB_MANAGED_SCHEMA disabled; skipping initializeDatabase()' }
+            ? {
+                success: true,
+                message: 'DB_MANAGED_SCHEMA disabled; skipping initializeDatabase()',
+              }
             : await initializeDatabase();
 
           if (!initResult.success) {

@@ -10,6 +10,7 @@ import {
   FileQuestion,
   Lightbulb,
   Loader2,
+  PackageOpen,
   Search,
   Wrench,
 } from 'lucide-react';
@@ -78,6 +79,15 @@ const SOURCE_TYPES: Array<{
     description: 'Create report for initiative progress',
     descriptionPl: 'Utwórz raport postępu inicjatywy',
     icon: Lightbulb,
+    available: true,
+  },
+  {
+    type: 'UPLOAD_BUNDLE',
+    label: 'Upload Bundle',
+    labelPl: 'Paczka Uploadów',
+    description: 'Create draft report from uploaded documents',
+    descriptionPl: 'Utwórz draft raportu z wrzuconych dokumentów',
+    icon: PackageOpen,
     available: true,
   },
 ];

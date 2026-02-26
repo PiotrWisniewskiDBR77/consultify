@@ -12,6 +12,13 @@ export { MyWorkHub } from './MyWorkHub';
 
 // Content components (used by MyWorkHub)
 export { DecisionsPanelContent } from './DecisionsPanelContent';
+export {
+  type CanvasToolType,
+  IdeaCanvasToolSelector,
+  type IdeaEdge,
+  type IdeaNode,
+  type IdeaWorkspaceGraph,
+} from './IdeaCanvasToolSelector';
 export { IdeaMapWorkspace } from './IdeaMapWorkspace';
 export { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
 export { MyIdeasListContent } from './MyIdeasListContent';
@@ -66,6 +73,14 @@ export { TaskDetailModal } from './TaskDetailModal';
 // ============================================================================
 // SHARED COMPONENTS
 // ============================================================================
+export { ConvertToConfirmation } from './ConvertToConfirmation';
+export {
+  type ConvertTargetType,
+  ConvertToDialog,
+  type ConvertToDialogProps,
+} from './ConvertToDialog';
+export { ConvertToMenu } from './ConvertToMenu';
+export { ConvertToOutputMenu, type ConvertToOutputMenuProps } from './ConvertToOutputMenu';
 export { DueDateIndicator, DueDateText } from './shared/DueDateIndicator';
 export { EmptyState, EmptyStateInline } from './shared/EmptyState';
 export {
@@ -83,6 +98,8 @@ export { DecisionsPanel } from './DecisionsPanel';
 export { FocusBoard } from './Focus/FocusBoard';
 export type { FocusColumn, FocusItem, FocusItemType } from './Focus/FocusView';
 export { FocusView } from './Focus/FocusView';
+export type { FocusCockpitProps, FocusLane, FocusTask } from './FocusCockpit';
+export { FocusCockpit } from './FocusCockpit';
 export { InboxTriage } from './Inbox/InboxTriage';
 export { NotificationSettings } from './NotificationSettings';
 export { PersonalExecutionBar } from './PersonalExecutionBar';

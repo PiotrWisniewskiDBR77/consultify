@@ -1,3 +1,4 @@
+import { format, getISOWeek } from 'date-fns';
 import {
   BarChart,
   Brain,
@@ -9,7 +10,6 @@ import {
   ShieldAlert,
   X,
 } from 'lucide-react';
-import { format, getISOWeek } from 'date-fns';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -243,7 +243,8 @@ function getNotebookTemplates(): PageTemplate[] {
       label: 'Weekly Review',
       labelPl: 'Przegląd tygodnia',
       description: 'Reflect on wins, blockers, lessons and next week priorities',
-      descriptionPl: 'Refleksja nad sukcesami, blokerami, wnioskami i priorytetami na przyszły tydzień',
+      descriptionPl:
+        'Refleksja nad sukcesami, blokerami, wnioskami i priorytetami na przyszły tydzień',
       gradient: 'from-indigo-500 to-blue-600',
       defaultTitle: `Weekly Review — Week ${weekNum}`,
       defaultTitlePl: `Przegląd tygodnia — Tydzień ${weekNum}`,
@@ -305,13 +306,17 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({ open, onClose, onSel
 
             const blockersContent: any[] = [];
             if (overdueCount > 0) {
-              blockersContent.push(callout('critical', `${overdueCount} overdue items need attention`));
+              blockersContent.push(
+                callout('critical', `${overdueCount} overdue items need attention`)
+              );
               for (const item of overdueItems) {
                 blockersContent.push(todo(`${item.title} (due: ${item.due_date || 'N/A'})`));
               }
             }
             if (stuckCount > 0) {
-              blockersContent.push(callout('warning', `${stuckCount} tasks stuck (no update 5+ days)`));
+              blockersContent.push(
+                callout('warning', `${stuckCount} tasks stuck (no update 5+ days)`)
+              );
               for (const item of stuckItems) {
                 blockersContent.push(todo(`${item.title}`));
               }
@@ -351,7 +356,7 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({ open, onClose, onSel
       onSelectTemplate(tmpl);
       onClose();
     },
-    [onSelectTemplate, onClose],
+    [onSelectTemplate, onClose]
   );
 
   useEffect(() => {

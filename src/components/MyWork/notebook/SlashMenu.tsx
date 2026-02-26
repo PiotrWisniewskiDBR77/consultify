@@ -165,7 +165,7 @@ const COMMANDS: SlashCommand[] = [
     id: 'ai-ask',
     label: 'AI: Ask',
     labelPl: 'AI: Zapytaj',
-    description: 'Ask AI about your note\'s context',
+    description: "Ask AI about your note's context",
     descriptionPl: 'Zapytaj AI o kontekst notatki',
     icon: <MessageCircle size={ICON_SIZE} className="text-violet-500" />,
     keywords: ['ask', 'ai', 'question', 'pytanie', 'zapytaj'],
@@ -217,7 +217,9 @@ const COMMANDS: SlashCommand[] = [
     action: (editor) => {
       const sel = editor.state.selection;
       const selectedText = editor.state.doc.textBetween(sel.from, sel.to, ' ');
-      window.dispatchEvent(new CustomEvent('notebook-create-task', { detail: { text: selectedText } }));
+      window.dispatchEvent(
+        new CustomEvent('notebook-create-task', { detail: { text: selectedText } })
+      );
     },
   },
   {
@@ -231,7 +233,9 @@ const COMMANDS: SlashCommand[] = [
     action: (editor) => {
       const sel = editor.state.selection;
       const selectedText = editor.state.doc.textBetween(sel.from, sel.to, ' ');
-      window.dispatchEvent(new CustomEvent('notebook-create-decision', { detail: { text: selectedText } }));
+      window.dispatchEvent(
+        new CustomEvent('notebook-create-decision', { detail: { text: selectedText } })
+      );
     },
   },
   {
@@ -245,7 +249,9 @@ const COMMANDS: SlashCommand[] = [
     action: (editor) => {
       const sel = editor.state.selection;
       const selectedText = editor.state.doc.textBetween(sel.from, sel.to, ' ');
-      window.dispatchEvent(new CustomEvent('notebook-create-idea', { detail: { text: selectedText } }));
+      window.dispatchEvent(
+        new CustomEvent('notebook-create-idea', { detail: { text: selectedText } })
+      );
     },
   },
 ];
@@ -297,7 +303,13 @@ interface SlashMenuProps {
   onAICommand?: (command: AICommandType) => void;
 }
 
-export const SlashMenu: React.FC<SlashMenuProps> = ({ editor, state, onClose, containerRef, onAICommand }) => {
+export const SlashMenu: React.FC<SlashMenuProps> = ({
+  editor,
+  state,
+  onClose,
+  containerRef,
+  onAICommand,
+}) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [selectedIdx, setSelectedIdx] = useState(0);
@@ -322,11 +334,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({ editor, state, onClose, co
     (cmd: SlashCommand) => {
       const { from } = editor.state.selection;
       const deleteFrom = state.triggerPos;
-      editor
-        .chain()
-        .focus()
-        .deleteRange({ from: deleteFrom, to: from })
-        .run();
+      editor.chain().focus().deleteRange({ from: deleteFrom, to: from }).run();
 
       if (cmd.aiCommand && onAICommand) {
         onAICommand(cmd.aiCommand);
@@ -335,7 +343,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({ editor, state, onClose, co
       }
       onClose();
     },
-    [editor, state.triggerPos, onClose, onAICommand],
+    [editor, state.triggerPos, onClose, onAICommand]
   );
 
   useEffect(() => {
@@ -408,8 +416,13 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({ editor, state, onClose, co
               </div>
             </div>
             {cmd.aiCommand ? (
-              <span className="ml-auto shrink-0 text-[10px] font-medium text-violet-500 dark:text-violet-400 bg-violet-500/10 px-1.5 py-0.5 rounded">AI</span>
-            ) : cmd.id === 'h1' || cmd.id === 'todo' || cmd.id === 'callout' || cmd.id === 'toggle' ? (
+              <span className="ml-auto shrink-0 text-[10px] font-medium text-violet-500 dark:text-violet-400 bg-violet-500/10 px-1.5 py-0.5 rounded">
+                AI
+              </span>
+            ) : cmd.id === 'h1' ||
+              cmd.id === 'todo' ||
+              cmd.id === 'callout' ||
+              cmd.id === 'toggle' ? (
               <ChevronRight size={12} className="ml-auto shrink-0 text-slate-400" />
             ) : null}
           </button>

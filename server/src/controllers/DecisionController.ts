@@ -8,10 +8,12 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import NotificationService from '../services/notificationService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
+import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type {
   CreateDecisionRequest,
@@ -20,7 +22,6 @@ import type {
   RemindDecisionRequest,
   UpdateDecisionRequest,
 } from '../validators/decision.validators.js';
-import NotificationService from '../services/notificationService.js';
 
 // ==========================================
 // TYPES
@@ -1162,7 +1163,9 @@ export class DecisionController {
       }
 
       const message =
-        typeof (req.body as any)?.message === 'string' ? String((req.body as any).message).trim() : '';
+        typeof (req.body as any)?.message === 'string'
+          ? String((req.body as any).message).trim()
+          : '';
 
       const decision = await queryHelpers.queryOne<{
         id: string;
@@ -1214,19 +1217,22 @@ export class DecisionController {
         if (lastIso) {
           const diffMs = Date.now() - new Date(lastIso).getTime();
           if (Number.isFinite(diffMs) && diffMs < 24 * 60 * 60 * 1000) {
-            res.status(429).json({ error: 'Reminder already sent recently', lastRemindedAt: lastIso });
+            res
+              .status(429)
+              .json({ error: 'Reminder already sent recently', lastRemindedAt: lastIso });
             return;
           }
         }
       } catch (e) {
         // If history table/schema is missing in some envs, don't fail remind entirely.
-        logger.warn('[Decision.remindDecision] Rate-limit check failed (continuing):', (e as any)?.message || e);
+        logger.warn(
+          '[Decision.remindDecision] Rate-limit check failed (continuing):',
+          (e as any)?.message || e
+        );
       }
 
       const title = String(decision.title || 'Decision');
-      const body =
-        message ||
-        `Reminder: please review and decide on "${title}".`;
+      const body = message || `Reminder: please review and decide on "${title}".`;
 
       await NotificationService.send({
         userId: ownerId,
@@ -1257,7 +1263,10 @@ export class DecisionController {
           ]
         );
       } catch (e) {
-        logger.warn('[Decision.remindDecision] decision_history insert failed (continuing):', (e as any)?.message || e);
+        logger.warn(
+          '[Decision.remindDecision] decision_history insert failed (continuing):',
+          (e as any)?.message || e
+        );
       }
 
       res.json({ success: true, id, remindedTo: ownerId, remindedAt: new Date().toISOString() });

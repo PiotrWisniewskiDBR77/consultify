@@ -54,11 +54,17 @@ import {
   NModeShell,
 } from '@/components/shared/NModeLayout';
 import { Api } from '@/services/api';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { buildArtifactCode } from '@/utils/artifactLinks';
 
-import { AttachmentsSection, LinkedItemsSection, type Attachment, type LinkedItem } from '../MyWork/shared';
+import {
+  type Attachment,
+  AttachmentsSection,
+  type LinkedItem,
+  LinkedItemsSection,
+} from '../MyWork/shared';
 import { AttachmentsLinksCanvas } from '../shared/NModeSections';
 import {
   CATEGORY_CONFIG,
@@ -70,6 +76,7 @@ import { CompanyProfile, KeyMetric, OpenGap, Stakeholder } from './CompanyFactsP
 import { EvidencePanel, InterviewEvidence } from './EvidencePanel';
 import { InterviewNote, NotesPanel } from './NotesPanel';
 import { InterviewQuestion, QuestionsList } from './QuestionsList';
+import { RuntimeMode, RuntimeModeSelector } from './RuntimeModeSelector';
 
 // ==========================================
 // TYPES
@@ -172,6 +179,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   // Domyślnie nie wybieramy żadnej kategorii - użytkownik sam zdecyduje
   const [activeCategory, setActiveCategory] = useState<InterviewCategory | undefined>(undefined);
+  const [runtimeMode, setRuntimeMode] = useState<RuntimeMode>('task_list');
   const questionsTopRef = useRef<HTMLDivElement | null>(null);
 
   // N-mode: active section in the left nav
@@ -339,9 +347,53 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     [session, isPolish]
   );
 
+  const handleRuntimeModeSelect = useCallback(
+    (nextMode: RuntimeMode) => {
+      const previous = runtimeMode;
+      setRuntimeMode(nextMode);
+
+      trackFunnelEvent('interview_runtime_mode_selected', {
+        mode: nextMode,
+        templateId: session?.id || null,
+      });
+
+      if (previous !== nextMode) {
+        trackFunnelEvent('interview_runtime_mode_changed', {
+          mode: nextMode,
+          previousMode: previous,
+          templateId: session?.id || null,
+        });
+      }
+    },
+    [runtimeMode, session?.id]
+  );
+
   // ==========================================
   // EFFECTS
   // ==========================================
+
+  useEffect(() => {
+    const runtimeKey = `interview_runtime_mode:${session?.id || initialSessionId || 'new'}`;
+    try {
+      const saved = window.localStorage.getItem(runtimeKey);
+      if (saved === 'single_question' || saved === 'task_list') {
+        setRuntimeMode(saved);
+      } else {
+        setRuntimeMode('task_list');
+      }
+    } catch {
+      setRuntimeMode('task_list');
+    }
+  }, [initialSessionId, session?.id]);
+
+  useEffect(() => {
+    const runtimeKey = `interview_runtime_mode:${session?.id || initialSessionId || 'new'}`;
+    try {
+      window.localStorage.setItem(runtimeKey, runtimeMode);
+    } catch {
+      // ignore persistence errors
+    }
+  }, [initialSessionId, runtimeMode, session?.id]);
 
   // Load session data
   useEffect(() => {
@@ -940,6 +992,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         <QuestionsList
           questions={questions}
           category={category}
+          runtimeMode={runtimeMode}
           onUpdateQuestion={handleUpdateQuestion}
           onAddQuestion={handleAddQuestion}
           readOnly={isLocked}
@@ -1172,6 +1225,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           <QuestionsList
             questions={questions}
             category={activeCategory}
+            runtimeMode={runtimeMode}
             onUpdateQuestion={handleUpdateQuestion}
             onAddQuestion={handleAddQuestion}
             readOnly={isLocked}
@@ -1803,6 +1857,15 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           <div className="lg:col-span-6 space-y-5 order-2">
             <div ref={questionsTopRef} />
 
+            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden p-4">
+              <RuntimeModeSelector
+                currentMode={runtimeMode}
+                recommendedMode="task_list"
+                onModeSelect={handleRuntimeModeSelect}
+                locked={isLocked}
+              />
+            </div>
+
             {activeCategory && activeCategoryConfig ? (
               <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
@@ -1836,6 +1899,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   <QuestionsList
                     questions={questions}
                     category={activeCategory}
+                    runtimeMode={runtimeMode}
                     onUpdateQuestion={handleUpdateQuestion}
                     onAddQuestion={handleAddQuestion}
                     readOnly={isLocked}

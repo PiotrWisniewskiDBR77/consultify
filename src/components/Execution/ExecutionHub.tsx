@@ -944,6 +944,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (viewMode !== 'table') setViewMode('table');
   }, [activeTab, viewMode]);
 
+  useEffect(() => {
+    trackFunnelEvent('execution_hub_opened', {
+      tab: activeTab,
+      viewMode,
+      projectId: currentProjectId || null,
+    });
+    // Fire once per hub open (not on every tab/view interaction).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Fetch initiatives in execution phase
   useEffect(() => {
     if (demoMode) {
@@ -2481,6 +2491,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Handle inline status change from table/grid
   const handleInlineStatusChange = useCallback(
     async (initiativeId: string, newStatus: string) => {
+      const previous = initiatives.find((i) => i.id === initiativeId);
       try {
         // Backend exposes a dedicated status transition endpoint (with validation + governance rules).
         await Api.patch(`/initiatives/${initiativeId}/status`, { status: newStatus });
@@ -2489,6 +2500,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             i.id === initiativeId ? { ...i, status: newStatus as InitiativeStatus } : i
           )
         );
+        trackFunnelEvent('execution_status_updated', {
+          initiativeId,
+          from: previous?.status || null,
+          to: newStatus,
+          tab: activeTab,
+          viewMode,
+        });
         toast.success(t('execution.toast.statusUpdated', 'Status updated'));
       } catch (e: any) {
         toast.error(
@@ -2496,7 +2514,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         );
       }
     },
-    [t]
+    [activeTab, initiatives, t, viewMode]
+  );
+
+  const handleViewModeChange = useCallback(
+    (nextViewMode: ViewMode) => {
+      setViewMode(nextViewMode);
+      if (nextViewMode === 'timeline') {
+        trackFunnelEvent('execution_timeline_viewed', {
+          tab: activeTab,
+          projectId: currentProjectId || null,
+        });
+      }
+    },
+    [activeTab, currentProjectId]
   );
 
   const handleInitiativeUpdate = useCallback((updated: FullInitiative) => {
@@ -4421,7 +4452,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         activeTab={activeTab}
         onTabChange={setActiveTab}
         viewMode={viewMode}
-        onViewModeChange={setViewMode}
+        onViewModeChange={handleViewModeChange}
         onSearch={setSearchQuery}
         openDocuments={openDocuments}
         activeDocumentId={activeDocumentId}

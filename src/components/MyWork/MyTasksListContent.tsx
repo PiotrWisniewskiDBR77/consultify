@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
   Archive,
+  ArrowUpDown,
   Calendar,
   CheckCircle2,
   CheckSquare,
@@ -22,7 +23,6 @@ import {
   Trash2,
   User,
   Zap,
-  ArrowUpDown,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -46,7 +46,7 @@ import { Task } from '@/types';
 
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { BulkDatePicker, BulkPriorityPicker } from './shared/BulkEditPopovers';
-import { ColumnConfigMenu, type ColumnConfig } from './shared/ColumnConfigMenu';
+import { type ColumnConfig, ColumnConfigMenu } from './shared/ColumnConfigMenu';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { SavedViewsMenu, type TaskViewPreset } from './shared/SavedViewsMenu';
@@ -420,7 +420,9 @@ const TaskTableRow: React.FC<{
   focusState,
 }) => {
   const { t } = useTranslation();
-  const [inlineDropdown, setInlineDropdown] = React.useState<'status' | 'priority' | 'date' | null>(null);
+  const [inlineDropdown, setInlineDropdown] = React.useState<'status' | 'priority' | 'date' | null>(
+    null
+  );
 
   const isCompleted = ['done', 'completed', 'validated'].includes(task.status?.toLowerCase() || '');
   const overdue = isOverdue(task.dueDate, task.status);
@@ -489,7 +491,11 @@ const TaskTableRow: React.FC<{
             </span>
             {focusState?.[task.id] && (
               <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
-                {focusState[task.id] === 'today' ? '📌 Today' : focusState[task.id] === 'thisWeek' ? 'This Week' : 'Later'}
+                {focusState[task.id] === 'today'
+                  ? '📌 Today'
+                  : focusState[task.id] === 'thisWeek'
+                    ? 'This Week'
+                    : 'Later'}
               </span>
             )}
           </div>
@@ -519,7 +525,11 @@ const TaskTableRow: React.FC<{
             {(task as any).triageAction && (
               <span
                 className="px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400"
-                title={(task as any).triaged_at ? `Triaged ${new Date((task as any).triaged_at).toLocaleDateString()}` : 'Triaged'}
+                title={
+                  (task as any).triaged_at
+                    ? `Triaged ${new Date((task as any).triaged_at).toLocaleDateString()}`
+                    : 'Triaged'
+                }
               >
                 ✓ Triaged
               </span>
@@ -551,7 +561,9 @@ const TaskTableRow: React.FC<{
             setInlineDropdown(inlineDropdown === 'priority' ? null : 'priority');
           }}
         >
-          <span className={`text-xs font-medium cursor-pointer hover:underline decoration-dotted ${priorityConfig.color}`}>
+          <span
+            className={`text-xs font-medium cursor-pointer hover:underline decoration-dotted ${priorityConfig.color}`}
+          >
             {priorityConfig.label}
           </span>
           <AnimatePresence>
@@ -601,7 +613,9 @@ const TaskTableRow: React.FC<{
                 <input
                   type="date"
                   autoFocus
-                  defaultValue={task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''}
+                  defaultValue={
+                    task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''
+                  }
                   onClick={(e) => e.stopPropagation()}
                   onChange={(e) => {
                     if (onInlineEdit && e.target.value) {
@@ -646,91 +660,91 @@ const TaskTableRow: React.FC<{
 
       {/* Actions — "..." menu */}
       {!hiddenCols?.has('actions') && (
-      <td
-        className="px-3 py-2.5 text-right"
-        style={{ width: columnWidths.actions }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <RowActionsMenu
-          size="sm"
-          actions={
-            [
-              {
-                id: 'view',
-                label: t('common.view', 'View'),
-                icon: Eye,
-                onClick: () => onClick(task.id, task),
-                variant: 'primary',
-              },
-              {
-                id: 'edit',
-                label: t('common.edit', 'Edit'),
-                icon: Edit,
-                onClick: () => onClick(task.id, task),
-              },
-              {
-                id: 'complete',
-                label: isCompleted
-                  ? t('myWork.personalTasks.reopen', 'Reopen')
-                  : t('myWork.personalTasks.complete', 'Complete'),
-                icon: CheckCircle2,
-                onClick: () => onToggleComplete(task.id, !isCompleted),
-              },
-              {
-                id: 'status_todo',
-                label: t('myWork.personalTasks.status.todo', 'To do'),
-                icon: CheckSquare,
-                onClick: () => onSetStatus(task.id, 'todo'),
-                divider: true,
-              },
-              {
-                id: 'status_in_progress',
-                label: t('myWork.personalTasks.status.inProgress', 'In progress'),
-                icon: Clock,
-                onClick: () => onSetStatus(task.id, 'in_progress'),
-              },
-              {
-                id: 'status_blocked',
-                label: t('myWork.personalTasks.status.blocked', 'Blocked'),
-                icon: AlertCircle,
-                onClick: () => onSetStatus(task.id, 'blocked'),
-              },
-              ...(isNew && onTriageAccept
-                ? [
-                    {
-                      id: 'triage_accept',
-                      label: t('myWork.triage.acceptToday', 'Accept (Today)'),
-                      icon: Zap,
-                      onClick: () => onTriageAccept(task.id),
-                      variant: 'primary' as const,
-                      divider: true,
-                    },
-                    {
-                      id: 'triage_snooze',
-                      label: t('myWork.triage.snooze', 'Snooze 2 days'),
-                      icon: Pause,
-                      onClick: () => onTriageSnooze?.(task.id),
-                    },
-                    {
-                      id: 'triage_archive',
-                      label: t('myWork.triage.archive', 'Archive'),
-                      icon: Archive,
-                      onClick: () => onTriageArchive?.(task.id),
-                    },
-                  ]
-                : []),
-              {
-                id: 'delete',
-                label: t('common.delete', 'Delete'),
-                icon: Trash2,
-                onClick: () => onDelete(task.id),
-                variant: 'danger',
-                divider: true,
-              },
-            ] satisfies RowAction[]
-          }
-        />
-      </td>
+        <td
+          className="px-3 py-2.5 text-right"
+          style={{ width: columnWidths.actions }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <RowActionsMenu
+            size="sm"
+            actions={
+              [
+                {
+                  id: 'view',
+                  label: t('common.view', 'View'),
+                  icon: Eye,
+                  onClick: () => onClick(task.id, task),
+                  variant: 'primary',
+                },
+                {
+                  id: 'edit',
+                  label: t('common.edit', 'Edit'),
+                  icon: Edit,
+                  onClick: () => onClick(task.id, task),
+                },
+                {
+                  id: 'complete',
+                  label: isCompleted
+                    ? t('myWork.personalTasks.reopen', 'Reopen')
+                    : t('myWork.personalTasks.complete', 'Complete'),
+                  icon: CheckCircle2,
+                  onClick: () => onToggleComplete(task.id, !isCompleted),
+                },
+                {
+                  id: 'status_todo',
+                  label: t('myWork.personalTasks.status.todo', 'To do'),
+                  icon: CheckSquare,
+                  onClick: () => onSetStatus(task.id, 'todo'),
+                  divider: true,
+                },
+                {
+                  id: 'status_in_progress',
+                  label: t('myWork.personalTasks.status.inProgress', 'In progress'),
+                  icon: Clock,
+                  onClick: () => onSetStatus(task.id, 'in_progress'),
+                },
+                {
+                  id: 'status_blocked',
+                  label: t('myWork.personalTasks.status.blocked', 'Blocked'),
+                  icon: AlertCircle,
+                  onClick: () => onSetStatus(task.id, 'blocked'),
+                },
+                ...(isNew && onTriageAccept
+                  ? [
+                      {
+                        id: 'triage_accept',
+                        label: t('myWork.triage.acceptToday', 'Accept (Today)'),
+                        icon: Zap,
+                        onClick: () => onTriageAccept(task.id),
+                        variant: 'primary' as const,
+                        divider: true,
+                      },
+                      {
+                        id: 'triage_snooze',
+                        label: t('myWork.triage.snooze', 'Snooze 2 days'),
+                        icon: Pause,
+                        onClick: () => onTriageSnooze?.(task.id),
+                      },
+                      {
+                        id: 'triage_archive',
+                        label: t('myWork.triage.archive', 'Archive'),
+                        icon: Archive,
+                        onClick: () => onTriageArchive?.(task.id),
+                      },
+                    ]
+                  : []),
+                {
+                  id: 'delete',
+                  label: t('common.delete', 'Delete'),
+                  icon: Trash2,
+                  onClick: () => onDelete(task.id),
+                  variant: 'danger',
+                  divider: true,
+                },
+              ] satisfies RowAction[]
+            }
+          />
+        </td>
       )}
     </motion.tr>
   );
@@ -782,7 +796,9 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
   const toggleColumn = useCallback((columnId: string) => {
     setHiddenColumns((prev) => {
-      const next = prev.includes(columnId) ? prev.filter((c) => c !== columnId) : [...prev, columnId];
+      const next = prev.includes(columnId)
+        ? prev.filter((c) => c !== columnId)
+        : [...prev, columnId];
       localStorage.setItem('consultinity-hidden-columns', JSON.stringify(next));
       return next;
     });
@@ -995,9 +1011,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     const prevValue = (prevTask as any)[field];
     if (prevValue === value) return;
 
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? ({ ...t, [field]: value } as Task) : t))
-    );
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? ({ ...t, [field]: value } as Task) : t)));
 
     try {
       await Api.updatePersonalTask(taskId, { [field]: value });
@@ -1201,20 +1215,15 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     const ids = Array.from(selectedIds);
     try {
       setTasks((prev) =>
-        prev.map((t) =>
-          selectedIds.has(t.id) ? ({ ...t, priority: newPriority } as Task) : t
-        )
+        prev.map((t) => (selectedIds.has(t.id) ? ({ ...t, priority: newPriority } as Task) : t))
       );
       setSelectedIds(new Set());
       await Promise.all(ids.map((id) => Api.updatePersonalTask(id, { priority: newPriority })));
       trackFunnelEvent('bulk_edit_applied', { field: 'priority', value: newPriority, count });
-      toast.success(
-        `Priority → ${newPriority} (${count})`,
-        {
-          duration: 5000,
-          icon: '🎯',
-        }
-      );
+      toast.success(`Priority → ${newPriority} (${count})`, {
+        duration: 5000,
+        icon: '🎯',
+      });
     } catch {
       setTasks(prevTasks);
       toast.error(t('myWork.errors.updateFailed', 'Failed to update priority'));
@@ -1229,9 +1238,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     try {
       setTasks((prev) =>
         prev.map((t) =>
-          selectedIds.has(t.id)
-            ? ({ ...t, dueDate: isRemove ? null : newDate } as Task)
-            : t
+          selectedIds.has(t.id) ? ({ ...t, dueDate: isRemove ? null : newDate } as Task) : t
         )
       );
       setSelectedIds(new Set());
@@ -1239,10 +1246,10 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
         ids.map((id) => Api.updatePersonalTask(id, { dueDate: isRemove ? null : newDate }))
       );
       trackFunnelEvent('personal_task_due_date_set', { source: 'bulk', count });
-      toast.success(
-        isRemove ? `Due date removed (${count})` : `Due date → ${newDate} (${count})`,
-        { duration: 5000, icon: '📅' }
-      );
+      toast.success(isRemove ? `Due date removed (${count})` : `Due date → ${newDate} (${count})`, {
+        duration: 5000,
+        icon: '📅',
+      });
     } catch {
       setTasks(prevTasks);
       toast.error(t('myWork.errors.updateFailed', 'Failed to update due date'));

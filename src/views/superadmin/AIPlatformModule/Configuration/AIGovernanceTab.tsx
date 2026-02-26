@@ -97,7 +97,6 @@ export const AIGovernanceTab: React.FC = () => {
   useEffect(() => {
     loadAll();
     loadHealth();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateContextCategory = (key: ContextCategory, value: boolean) => {
@@ -235,7 +234,9 @@ export const AIGovernanceTab: React.FC = () => {
                 <select
                   value={contextPolicy.piiRedaction}
                   onChange={(e) => {
-                    setContextPolicy((prev) => (prev ? { ...prev, piiRedaction: e.target.value as any } : prev));
+                    setContextPolicy((prev) =>
+                      prev ? { ...prev, piiRedaction: e.target.value as any } : prev
+                    );
                     setHasChanges(true);
                   }}
                   className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
@@ -252,7 +253,9 @@ export const AIGovernanceTab: React.FC = () => {
                 <select
                   value={contextPolicy.retention}
                   onChange={(e) => {
-                    setContextPolicy((prev) => (prev ? { ...prev, retention: e.target.value as any } : prev));
+                    setContextPolicy((prev) =>
+                      prev ? { ...prev, retention: e.target.value as any } : prev
+                    );
                     setHasChanges(true);
                   }}
                   className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
@@ -283,7 +286,9 @@ export const AIGovernanceTab: React.FC = () => {
                   type="checkbox"
                   checked={!!policySummary.internetEnabled}
                   onChange={(e) => {
-                    setPolicySummary((prev) => (prev ? { ...prev, internetEnabled: e.target.checked } : prev));
+                    setPolicySummary((prev) =>
+                      prev ? { ...prev, internetEnabled: e.target.checked } : prev
+                    );
                     setHasChanges(true);
                   }}
                   className="w-4 h-4"
@@ -295,7 +300,9 @@ export const AIGovernanceTab: React.FC = () => {
                   type="checkbox"
                   checked={!!policySummary.auditRequired}
                   onChange={(e) => {
-                    setPolicySummary((prev) => (prev ? { ...prev, auditRequired: e.target.checked } : prev));
+                    setPolicySummary((prev) =>
+                      prev ? { ...prev, auditRequired: e.target.checked } : prev
+                    );
                     setHasChanges(true);
                   }}
                   className="w-4 h-4"
@@ -309,7 +316,9 @@ export const AIGovernanceTab: React.FC = () => {
               </div>
             </div>
 
-            <p className="text-sm text-slate-500 dark:text-slate-400">{policySummary.description}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {policySummary.description}
+            </p>
           </>
         )}
       </div>
@@ -325,7 +334,11 @@ export const AIGovernanceTab: React.FC = () => {
             disabled={refreshingHealth}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors flex items-center gap-2 disabled:opacity-50"
           >
-            {refreshingHealth ? <RefreshCw size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+            {refreshingHealth ? (
+              <RefreshCw size={16} className="animate-spin" />
+            ) : (
+              <RefreshCw size={16} />
+            )}
             Refresh
           </button>
         </div>
@@ -387,7 +400,9 @@ export const AIGovernanceTab: React.FC = () => {
                       {c.status}
                     </div>
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{c.detail}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {c.detail}
+                  </div>
                 </div>
               ))}
             </div>
@@ -399,4 +414,3 @@ export const AIGovernanceTab: React.FC = () => {
 };
 
 export default AIGovernanceTab;
-

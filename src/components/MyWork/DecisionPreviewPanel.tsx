@@ -1,4 +1,14 @@
-import { AlarmClockOff, Bell, Calendar, Check, Clock, ExternalLink, Loader2, UserPlus, X } from 'lucide-react';
+import {
+  AlarmClockOff,
+  Bell,
+  Calendar,
+  Check,
+  Clock,
+  ExternalLink,
+  Loader2,
+  UserPlus,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -43,9 +53,9 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
   const [loading, setLoading] = useState(false);
   const [decision, setDecision] = useState<any | null>(null);
   const [delegationOpen, setDelegationOpen] = useState(false);
-  const [availableUsers, setAvailableUsers] = useState<Array<{ id: string; name: string; email?: string; avatar?: string }>>(
-    []
-  );
+  const [availableUsers, setAvailableUsers] = useState<
+    Array<{ id: string; name: string; email?: string; avatar?: string }>
+  >([]);
 
   const canAct = useMemo(() => {
     if (!decisionId) return false;
@@ -73,7 +83,12 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
       const users = await Api.getUsers();
       const mapped = (Array.isArray(users) ? users : []).map((u: any) => ({
         id: String(u.id),
-        name: String(u.name || `${u.first_name || u.firstName || ''} ${u.last_name || u.lastName || ''}`.trim() || u.email || u.id),
+        name: String(
+          u.name ||
+            `${u.first_name || u.firstName || ''} ${u.last_name || u.lastName || ''}`.trim() ||
+            u.email ||
+            u.id
+        ),
         email: u.email ? String(u.email) : undefined,
         avatar: u.avatar_url || u.avatarUrl || undefined,
       }));
@@ -92,7 +107,15 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
     if (!decisionId) return;
     try {
       await Api.decideDecision(decisionId, next, defaultRationaleFor(next));
-      toast.success(next === 'approved' ? (isPolish ? 'Zatwierdzono' : 'Approved') : isPolish ? 'Odrzucono' : 'Rejected');
+      toast.success(
+        next === 'approved'
+          ? isPolish
+            ? 'Zatwierdzono'
+            : 'Approved'
+          : isPolish
+            ? 'Odrzucono'
+            : 'Rejected'
+      );
       onDidMutate?.();
       await fetchDetails();
     } catch (e) {
@@ -119,7 +142,15 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
       toast.success(isPolish ? 'Wysłano przypomnienie' : 'Reminder sent');
     } catch (e: any) {
       const msg = String(e?.message || '');
-      toast.error(msg.includes('recent') ? (isPolish ? 'Przypomnienie było niedawno wysłane' : 'Reminder recently sent') : isPolish ? 'Nie udało się wysłać przypomnienia' : 'Failed to send reminder');
+      toast.error(
+        msg.includes('recent')
+          ? isPolish
+            ? 'Przypomnienie było niedawno wysłane'
+            : 'Reminder recently sent'
+          : isPolish
+            ? 'Nie udało się wysłać przypomnienia'
+            : 'Failed to send reminder'
+      );
     }
   };
 
@@ -344,7 +375,14 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
           decisionId={decisionId}
           decisionTitle={String(decision?.title || '')}
           availableUsers={availableUsers}
-          currentDeciderId={String(decision?.deciderId || decision?.decider_id || decision?.decisionOwnerId || decision?.decisionOwnerId || decision?.decision_maker_id || '')}
+          currentDeciderId={String(
+            decision?.deciderId ||
+              decision?.decider_id ||
+              decision?.decisionOwnerId ||
+              decision?.decisionOwnerId ||
+              decision?.decision_maker_id ||
+              ''
+          )}
           onDelegated={() => {
             onDidMutate?.();
             fetchDetails();
@@ -356,4 +394,3 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
 };
 
 export default DecisionPreviewPanel;
-

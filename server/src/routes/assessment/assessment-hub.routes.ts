@@ -98,9 +98,7 @@ function computeProgressFields(row: any) {
     completedAxes = totalAxes;
   }
 
-  const overallScore = Number(
-    scoreSummary?.overall?.actual || frameworkData.overallScore || 0
-  );
+  const overallScore = Number(scoreSummary?.overall?.actual || frameworkData.overallScore || 0);
 
   return { progress, completedAxes, totalAxes, overallScore };
 }

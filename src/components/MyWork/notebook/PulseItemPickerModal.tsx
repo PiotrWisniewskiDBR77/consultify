@@ -14,8 +14,8 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '@/services/api';
 import { Modal } from '@/components/ui/primitives/Modal';
+import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 export interface PulseItem {
@@ -95,9 +95,7 @@ async function fetchItems(
         })
       );
     } else {
-      const url = q
-        ? `/decisions?limit=${limit}`
-        : `/decisions?limit=${limit}`;
+      const url = q ? `/decisions?limit=${limit}` : `/decisions?limit=${limit}`;
       const res = await Api.get(url);
       const list = Array.isArray(res) ? res : (res as any)?.decisions || [];
       let filtered = list;
@@ -179,19 +177,12 @@ export const PulseItemPickerModal: React.FC<PulseItemPickerModalProps> = ({
     >
       <div className="flex flex-col gap-4 min-h-0">
         <div className="relative">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-          />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={
-              pl
-                ? 'Szukaj po tytule...'
-                : 'Search by title...'
-            }
+            placeholder={pl ? 'Szukaj po tytule...' : 'Search by title...'}
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 text-sm"
           />
         </div>

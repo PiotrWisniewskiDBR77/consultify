@@ -41,6 +41,7 @@ import {
   FileText,
   HelpCircle,
   Inbox,
+  Layers,
   List,
   Loader2,
   MessageSquare,
@@ -63,8 +64,8 @@ import {
   type ColumnWidths,
   type TableFilters,
 } from '@/components/ui/ResizableTable';
-import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable';
+import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -92,7 +93,18 @@ type InboxSection =
   | 'other';
 
 type SlaLevel = 'none' | 'L1' | 'L2' | 'L3';
-type TriageAction = 'accept_today' | 'accept_week' | 'accept_later' | 'schedule' | 'delegate' | 'archive' | 'dismiss' | 'done' | 'save' | 'snooze' | 'reject';
+type TriageAction =
+  | 'accept_today'
+  | 'accept_week'
+  | 'accept_later'
+  | 'schedule'
+  | 'delegate'
+  | 'archive'
+  | 'dismiss'
+  | 'done'
+  | 'save'
+  | 'snooze'
+  | 'reject';
 type InboxItemKey = `task:${string}` | `decision:${string}` | `notification:${string}`;
 type InboxViewMode = 'flat' | 'sections';
 type InboxStatusTab = 'open' | 'done' | 'saved' | 'all';
@@ -238,20 +250,77 @@ const typeLabel: Record<InboxItemType, string> = {
 };
 
 // ── Section config for smart grouping ──
-const SMART_SECTIONS: { id: InboxSection; labelEn: string; labelPl: string; icon: React.ElementType; color: string }[] = [
-  { id: 'decisions_required', labelEn: 'Requires Your Decision', labelPl: 'Wymaga Twojej decyzji', icon: Scale, color: 'text-purple-500' },
-  { id: 'approvals_gates', labelEn: 'Approvals & Gates', labelPl: 'Akceptacje i bramki', icon: CheckCheck, color: 'text-blue-500' },
-  { id: 'blocked_escalations', labelEn: 'Blocked — Needs Unblocking', labelPl: 'Zablokowane — do odblokowania', icon: AlertTriangle, color: 'text-red-500' },
-  { id: 'overdue_sla_breach', labelEn: 'Overdue / SLA Breach', labelPl: 'Po terminie / SLA', icon: Clock, color: 'text-red-600' },
-  { id: 'assigned_tasks', labelEn: 'New Assignments', labelPl: 'Nowe zadania', icon: CheckSquare, color: 'text-blue-400' },
-  { id: 'ai_insights', labelEn: 'AI Insights & Signals', labelPl: 'AI Insights i sygnały', icon: AlertCircle, color: 'text-cyan-500' },
-  { id: 'fyi_system', labelEn: 'System Notifications', labelPl: 'Powiadomienia systemowe', icon: Bell, color: 'text-slate-500' },
-  { id: 'fyi_mentions', labelEn: 'Mentions & FYI', labelPl: 'Wzmianki i FYI', icon: MessageSquare, color: 'text-amber-500' },
+const SMART_SECTIONS: {
+  id: InboxSection;
+  labelEn: string;
+  labelPl: string;
+  icon: React.ElementType;
+  color: string;
+}[] = [
+  {
+    id: 'decisions_required',
+    labelEn: 'Requires Your Decision',
+    labelPl: 'Wymaga Twojej decyzji',
+    icon: Scale,
+    color: 'text-purple-500',
+  },
+  {
+    id: 'approvals_gates',
+    labelEn: 'Approvals & Gates',
+    labelPl: 'Akceptacje i bramki',
+    icon: CheckCheck,
+    color: 'text-blue-500',
+  },
+  {
+    id: 'blocked_escalations',
+    labelEn: 'Blocked — Needs Unblocking',
+    labelPl: 'Zablokowane — do odblokowania',
+    icon: AlertTriangle,
+    color: 'text-red-500',
+  },
+  {
+    id: 'overdue_sla_breach',
+    labelEn: 'Overdue / SLA Breach',
+    labelPl: 'Po terminie / SLA',
+    icon: Clock,
+    color: 'text-red-600',
+  },
+  {
+    id: 'assigned_tasks',
+    labelEn: 'New Assignments',
+    labelPl: 'Nowe zadania',
+    icon: CheckSquare,
+    color: 'text-blue-400',
+  },
+  {
+    id: 'ai_insights',
+    labelEn: 'AI Insights & Signals',
+    labelPl: 'AI Insights i sygnały',
+    icon: AlertCircle,
+    color: 'text-cyan-500',
+  },
+  {
+    id: 'fyi_system',
+    labelEn: 'System Notifications',
+    labelPl: 'Powiadomienia systemowe',
+    icon: Bell,
+    color: 'text-slate-500',
+  },
+  {
+    id: 'fyi_mentions',
+    labelEn: 'Mentions & FYI',
+    labelPl: 'Wzmianki i FYI',
+    icon: MessageSquare,
+    color: 'text-amber-500',
+  },
   { id: 'other', labelEn: 'Other', labelPl: 'Inne', icon: Inbox, color: 'text-slate-400' },
 ];
 
 // ── Relative time formatting ──
-const formatRelativeTime = (iso: string, isPolish: boolean): { text: string; agingLevel: 'fresh' | 'warm' | 'hot' | 'critical' } => {
+const formatRelativeTime = (
+  iso: string,
+  isPolish: boolean
+): { text: string; agingLevel: 'fresh' | 'warm' | 'hot' | 'critical' } => {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return { text: iso, agingLevel: 'fresh' };
 
@@ -266,7 +335,8 @@ const formatRelativeTime = (iso: string, isPolish: boolean): { text: string; agi
   else if (diffMins < 60) text = isPolish ? `${diffMins} min temu` : `${diffMins}m ago`;
   else if (diffHours < 24) text = isPolish ? `${diffHours} godz. temu` : `${diffHours}h ago`;
   else if (diffDays < 7) text = isPolish ? `${diffDays} d temu` : `${diffDays}d ago`;
-  else text = d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { month: 'short', day: 'numeric' });
+  else
+    text = d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { month: 'short', day: 'numeric' });
 
   let agingLevel: 'fresh' | 'warm' | 'hot' | 'critical';
   if (diffHours < 4) agingLevel = 'fresh';
@@ -291,7 +361,12 @@ const slaPill = (sla: InboxItem['sla']): { label: string; className: string; tit
   const days = Math.floor(abs / 86400000);
   const hours = Math.floor((abs % 86400000) / 3600000);
   const timeStr = days > 0 ? `${days}d` : `${Math.max(1, hours)}h`;
-  const label = sla.level === 'none' ? 'OK' : sla.isBreached ? `${sla.level} +${timeStr}` : `${sla.level} ${timeStr}`;
+  const label =
+    sla.level === 'none'
+      ? 'OK'
+      : sla.isBreached
+        ? `${sla.level} +${timeStr}`
+        : `${sla.level} ${timeStr}`;
   const className =
     sla.level === 'none'
       ? 'bg-slate-100 text-slate-700 dark:bg-navy-800 dark:text-slate-200'
@@ -357,16 +432,99 @@ const INBOX_SOURCE_FILTER_OPTIONS = [
 
 // ── Column definitions ──
 const INBOX_COLUMNS: ColumnDef[] = [
-  { id: 'select', label: '', width: 40, minWidth: 40, maxWidth: 40, resizable: false, filterable: false },
+  {
+    id: 'select',
+    label: '',
+    width: 40,
+    minWidth: 40,
+    maxWidth: 40,
+    resizable: false,
+    filterable: false,
+  },
   { id: 'title', label: 'Title', width: 999, minWidth: 300, resizable: false, filterable: false },
-  { id: 'status', label: 'Status', width: 100, minWidth: 80, maxWidth: 140, resizable: true, filterable: true, filterType: 'multiselect', filterOptions: INBOX_STATUS_FILTER_OPTIONS },
-  { id: 'urgency', label: 'Urgency', width: 110, minWidth: 80, maxWidth: 150, resizable: true, filterable: true, filterType: 'multiselect', filterOptions: INBOX_URGENCY_FILTER_OPTIONS },
-  { id: 'type', label: 'Type', width: 120, minWidth: 90, maxWidth: 160, resizable: true, filterable: true, filterType: 'multiselect', filterOptions: INBOX_TYPE_FILTER_OPTIONS },
-  { id: 'section', label: 'Section', width: 150, minWidth: 110, maxWidth: 220, resizable: true, filterable: true, filterType: 'multiselect', filterOptions: INBOX_SECTION_FILTER_OPTIONS },
-  { id: 'source', label: 'Source', width: 90, minWidth: 70, maxWidth: 130, resizable: true, filterable: true, filterType: 'multiselect', filterOptions: INBOX_SOURCE_FILTER_OPTIONS },
-  { id: 'received', label: 'Received', width: 120, minWidth: 90, maxWidth: 160, resizable: true, filterable: false },
-  { id: 'sla', label: 'SLA', width: 100, minWidth: 70, maxWidth: 140, resizable: true, filterable: false },
-  { id: 'actions', label: '', width: 140, minWidth: 100, maxWidth: 180, resizable: false, filterable: false, align: 'right' },
+  {
+    id: 'status',
+    label: 'Status',
+    width: 100,
+    minWidth: 80,
+    maxWidth: 140,
+    resizable: true,
+    filterable: true,
+    filterType: 'multiselect',
+    filterOptions: INBOX_STATUS_FILTER_OPTIONS,
+  },
+  {
+    id: 'urgency',
+    label: 'Urgency',
+    width: 110,
+    minWidth: 80,
+    maxWidth: 150,
+    resizable: true,
+    filterable: true,
+    filterType: 'multiselect',
+    filterOptions: INBOX_URGENCY_FILTER_OPTIONS,
+  },
+  {
+    id: 'type',
+    label: 'Type',
+    width: 120,
+    minWidth: 90,
+    maxWidth: 160,
+    resizable: true,
+    filterable: true,
+    filterType: 'multiselect',
+    filterOptions: INBOX_TYPE_FILTER_OPTIONS,
+  },
+  {
+    id: 'section',
+    label: 'Section',
+    width: 150,
+    minWidth: 110,
+    maxWidth: 220,
+    resizable: true,
+    filterable: true,
+    filterType: 'multiselect',
+    filterOptions: INBOX_SECTION_FILTER_OPTIONS,
+  },
+  {
+    id: 'source',
+    label: 'Source',
+    width: 90,
+    minWidth: 70,
+    maxWidth: 130,
+    resizable: true,
+    filterable: true,
+    filterType: 'multiselect',
+    filterOptions: INBOX_SOURCE_FILTER_OPTIONS,
+  },
+  {
+    id: 'received',
+    label: 'Received',
+    width: 120,
+    minWidth: 90,
+    maxWidth: 160,
+    resizable: true,
+    filterable: false,
+  },
+  {
+    id: 'sla',
+    label: 'SLA',
+    width: 100,
+    minWidth: 70,
+    maxWidth: 140,
+    resizable: true,
+    filterable: false,
+  },
+  {
+    id: 'actions',
+    label: '',
+    width: 140,
+    minWidth: 100,
+    maxWidth: 180,
+    resizable: false,
+    filterable: false,
+    align: 'right',
+  },
 ];
 
 const getDefaultColumnWidths = (): ColumnWidths =>
@@ -509,7 +667,9 @@ const PreviewPane: React.FC<{
 
         {/* Meta badges */}
         <div className="flex flex-wrap items-center gap-2">
-          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${u.pill}`}>
+          <span
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${u.pill}`}
+          >
             <UIcon size={12} />
             {u.label}
           </span>
@@ -517,9 +677,7 @@ const PreviewPane: React.FC<{
             <TIcon size={12} />
             {typeLabel[item.type] || item.type.replace(/_/g, ' ')}
           </span>
-          <span className={`text-xs font-medium ${AGING_STYLES[agingLevel]}`}>
-            {receivedText}
-          </span>
+          <span className={`text-xs font-medium ${AGING_STYLES[agingLevel]}`}>{receivedText}</span>
         </div>
 
         {/* Section */}
@@ -535,7 +693,9 @@ const PreviewPane: React.FC<{
           <div className="flex items-start gap-2 px-3 py-2 bg-sky-50 dark:bg-sky-500/10 rounded-lg border border-sky-200/50 dark:border-sky-500/15">
             <HelpCircle size={13} className="text-sky-500 mt-0.5 shrink-0" />
             <div className="text-xs text-sky-700 dark:text-sky-300">
-              <span className="font-medium">{isPolish ? 'Dlaczego to widzę:' : 'Why am I seeing this:'}</span>{' '}
+              <span className="font-medium">
+                {isPolish ? 'Dlaczego to widzę:' : 'Why am I seeing this:'}
+              </span>{' '}
               {item.reason}
             </div>
           </div>
@@ -545,7 +705,9 @@ const PreviewPane: React.FC<{
         {item.sla && sla.label !== '-' && (
           <div className="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-navy-800/40 rounded-lg">
             <span className="text-xs text-slate-500 dark:text-slate-400">SLA</span>
-            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${sla.className}`}>
+            <span
+              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${sla.className}`}
+            >
               {sla.label}
             </span>
           </div>
@@ -558,7 +720,11 @@ const PreviewPane: React.FC<{
               {isPolish ? 'Termin' : 'Due date'}
             </span>
             <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
-              {new Date(item.dueDate).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              {new Date(item.dueDate).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
             </span>
           </div>
         )}
@@ -679,7 +845,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   const fetchInbox = useCallback(async () => {
     try {
       setLoading(true);
-      const status = statusTab === 'all' ? 'all' : statusTab === 'done' ? 'done' : statusTab === 'saved' ? 'saved' : 'open';
+      const status =
+        statusTab === 'all'
+          ? 'all'
+          : statusTab === 'done'
+            ? 'done'
+            : statusTab === 'saved'
+              ? 'saved'
+              : 'open';
       const res = (await Api.get(`/my-work/inbox?limit=200&status=${status}`)) as InboxResponse;
       setData(res);
       onCountsChange({ total: res?.summary?.total || 0, critical: res?.summary?.critical || 0 });
@@ -729,11 +902,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     if (statusFilter?.length) {
       result = result.filter((item) => statusFilter.includes(item.itemStatus || 'open'));
     }
-    if (urgencyFilter?.length) result = result.filter((item) => urgencyFilter.includes(item.urgency));
+    if (urgencyFilter?.length)
+      result = result.filter((item) => urgencyFilter.includes(item.urgency));
     if (typeFilter?.length) result = result.filter((item) => typeFilter.includes(item.type));
-    if (sectionFilter?.length) result = result.filter((item) => sectionFilter.includes(item.section));
+    if (sectionFilter?.length)
+      result = result.filter((item) => sectionFilter.includes(item.section));
     const sourceFilter = tableFilters.source as string[] | undefined;
-    if (sourceFilter?.length) result = result.filter((item) => sourceFilter.includes(item.source?.type || 'system'));
+    if (sourceFilter?.length)
+      result = result.filter((item) => sourceFilter.includes(item.source?.type || 'system'));
     // N2: Action required filter
     if (actionRequiredOnly) result = result.filter((item) => item.isActionable);
     return result;
@@ -794,7 +970,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           reject: isPolish ? 'Odrzucono' : 'Rejected',
         };
         toast.success(labels[action] || 'Done');
-        emitMyWorkEvent({ type: 'item:triaged', entityType: 'inbox', entityId: String(item.id), meta: { action } });
+        emitMyWorkEvent({
+          type: 'item:triaged',
+          entityType: 'inbox',
+          entityId: String(item.id),
+          meta: { action },
+        });
       } catch (e) {
         console.error('Failed to triage inbox item', e);
         toast.error(isPolish ? 'Nie udało się wykonać akcji' : 'Failed to triage item');
@@ -823,30 +1004,33 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   );
 
   // N9: Snooze — persist to backend (source of truth)
-  const handleSnooze = useCallback(async (item: InboxItem, preset: SnoozePreset) => {
-    setSnoozedKeys((prev) => new Set([...prev, item._key]));
-    setSnoozeOpenForId(null);
-    try {
-      await Api.post(`/my-work/inbox/${encodeURIComponent(item.id)}/triage`, {
-        action: 'archive',
-        itemKey: item._key,
-        params: { snooze: preset },
-      });
-      setData((prev) => {
-        if (!prev) return prev;
-        return { ...prev, items: prev.items.filter((x) => x._key !== item._key) };
-      });
-      if (previewItem?._key === item._key) setPreviewItem(null);
-    } catch (_e) {
-      // rollback optimistic
-      setSnoozedKeys((prev) => {
-        const next = new Set(prev);
-        next.delete(item._key);
-        return next;
-      });
-    }
-    toast.success(isPolish ? 'Odłożono' : 'Snoozed');
-  }, [isPolish, previewItem]);
+  const handleSnooze = useCallback(
+    async (item: InboxItem, preset: SnoozePreset) => {
+      setSnoozedKeys((prev) => new Set([...prev, item._key]));
+      setSnoozeOpenForId(null);
+      try {
+        await Api.post(`/my-work/inbox/${encodeURIComponent(item.id)}/triage`, {
+          action: 'archive',
+          itemKey: item._key,
+          params: { snooze: preset },
+        });
+        setData((prev) => {
+          if (!prev) return prev;
+          return { ...prev, items: prev.items.filter((x) => x._key !== item._key) };
+        });
+        if (previewItem?._key === item._key) setPreviewItem(null);
+      } catch (_e) {
+        // rollback optimistic
+        setSnoozedKeys((prev) => {
+          const next = new Set(prev);
+          next.delete(item._key);
+          return next;
+        });
+      }
+      toast.success(isPolish ? 'Odłożono' : 'Snoozed');
+    },
+    [isPolish, previewItem]
+  );
 
   // ── L4: Auto-triage ──
   const handleAutoTriage = async () => {
@@ -868,10 +1052,16 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
               body: JSON.stringify({ action: item.suggestedAction, itemKey: item.itemKey }),
             });
-          } catch { /* continue */ }
+          } catch {
+            /* continue */
+          }
         }
         if (autoApplyItems.length > 0) {
-          toast.success(isPolish ? `${autoApplyItems.length} elementów automatycznie przetriażowanych` : `${autoApplyItems.length} items auto-triaged`);
+          toast.success(
+            isPolish
+              ? `${autoApplyItems.length} elementów automatycznie przetriażowanych`
+              : `${autoApplyItems.length} items auto-triaged`
+          );
           emitMyWorkEvent({ type: 'item:triaged', entityType: 'inbox', entityId: 'bulk' });
         }
         setAutoTriageSuggestions(suggestions.filter((s: any) => !s.autoApply));
@@ -897,7 +1087,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         });
         setSelectedIds(new Set());
         toast.success(
-          isPolish ? `${selectedItems.length} elementów przetworzonych` : `${selectedItems.length} items processed`
+          isPolish
+            ? `${selectedItems.length} elementów przetworzonych`
+            : `${selectedItems.length} items processed`
         );
       } catch (e) {
         console.error('Bulk triage failed', e);
@@ -984,7 +1176,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+        return;
 
       const flatItems = filteredItems;
       if (flatItems.length === 0) return;
@@ -1009,34 +1202,44 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           break;
         case ' ':
           e.preventDefault();
-          if (focusedIndex >= 0 && focusedIndex < flatItems.length) handleSelectItem(flatItems[focusedIndex].id);
+          if (focusedIndex >= 0 && focusedIndex < flatItems.length)
+            handleSelectItem(flatItems[focusedIndex].id);
           break;
         case 't':
         case 'T':
-          if (focusedIndex >= 0 && focusedIndex < flatItems.length) triage(flatItems[focusedIndex], 'accept_today');
+          if (focusedIndex >= 0 && focusedIndex < flatItems.length)
+            triage(flatItems[focusedIndex], 'accept_today');
           break;
         case 'w':
         case 'W':
-          if (focusedIndex >= 0 && focusedIndex < flatItems.length) triage(flatItems[focusedIndex], 'accept_week');
+          if (focusedIndex >= 0 && focusedIndex < flatItems.length)
+            triage(flatItems[focusedIndex], 'accept_week');
           break;
         case 'e':
         case 'E':
-          if (focusedIndex >= 0 && focusedIndex < flatItems.length) triage(flatItems[focusedIndex], 'done');
+          if (focusedIndex >= 0 && focusedIndex < flatItems.length)
+            triage(flatItems[focusedIndex], 'done');
           break;
         case 'b':
         case 'B':
-          if (focusedIndex >= 0 && focusedIndex < flatItems.length) triage(flatItems[focusedIndex], 'save');
+          if (focusedIndex >= 0 && focusedIndex < flatItems.length)
+            triage(flatItems[focusedIndex], 'save');
           break;
         case 'a':
         case 'A':
-          if (focusedIndex >= 0 && focusedIndex < flatItems.length) triage(flatItems[focusedIndex], 'dismiss');
+          if (focusedIndex >= 0 && focusedIndex < flatItems.length)
+            triage(flatItems[focusedIndex], 'dismiss');
           break;
         case 'x':
         case 'X':
-          if (focusedIndex >= 0 && focusedIndex < flatItems.length) triage(flatItems[focusedIndex], 'reject');
+          if (focusedIndex >= 0 && focusedIndex < flatItems.length)
+            triage(flatItems[focusedIndex], 'reject');
           break;
         case 'Escape':
-          if (previewItem) { setPreviewItem(null); e.preventDefault(); }
+          if (previewItem) {
+            setPreviewItem(null);
+            e.preventDefault();
+          }
           break;
         case '?':
           toast(
@@ -1085,9 +1288,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         {/* Checkbox */}
         <td className="w-10 px-2 py-2">
           <button
-            onClick={(e) => { e.stopPropagation(); handleSelectItem(item.id); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSelectItem(item.id);
+            }}
             className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
-              isSelected ? 'bg-primary-500 border-primary-500 text-white' : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
+              isSelected
+                ? 'bg-primary-500 border-primary-500 text-white'
+                : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
             }`}
           >
             {isSelected && <CheckSquare size={12} />}
@@ -1097,7 +1305,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         {/* Title */}
         <td className="px-3 py-2 w-full">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-slate-900 dark:text-white truncate block" title={item.title}>
+            <span
+              className="text-sm font-medium text-slate-900 dark:text-white truncate block"
+              title={item.title}
+            >
               {item.title}
             </span>
             {item.suggestedAction && (
@@ -1105,25 +1316,32 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-purple-50 dark:bg-purple-500/10 text-[10px] font-medium text-purple-600 dark:text-purple-300 cursor-help"
                 title={item.suggestedReason || (isPolish ? 'Sugestia AI' : 'AI suggestion')}
               >
-                AI: {item.suggestedAction === 'accept_today' ? '✓' : item.suggestedAction === 'archive' ? '📦' : item.suggestedAction === 'schedule' ? '📅' : '→'}
+                AI:{' '}
+                {item.suggestedAction === 'accept_today'
+                  ? '✓'
+                  : item.suggestedAction === 'archive'
+                    ? '📦'
+                    : item.suggestedAction === 'schedule'
+                      ? '📅'
+                      : '→'}
               </span>
             )}
             {showDupeCount && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (groupKey) setExpandedGroups((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(groupKey)) next.delete(groupKey);
-                    else next.add(groupKey);
-                    return next;
-                  });
+                  if (groupKey)
+                    setExpandedGroups((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(groupKey)) next.delete(groupKey);
+                      else next.add(groupKey);
+                      return next;
+                    });
                 }}
                 className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
                 title={isPolish ? `${groupCount} podobnych` : `${groupCount} similar`}
               >
-                <Layers size={10} />
-                x{groupCount}
+                <Layers size={10} />x{groupCount}
                 {isGroupExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
               </button>
             )}
@@ -1147,15 +1365,37 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           {(() => {
             const st = item.itemStatus || (item.triaged ? 'done' : 'open');
             const cfg: Record<string, { color: string; dot: string; label: string }> = {
-              open: { color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300', dot: 'bg-amber-500', label: isPolish ? 'Otwarte' : 'Open' },
-              done: { color: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300', dot: 'bg-green-500', label: isPolish ? 'Gotowe' : 'Done' },
-              saved: { color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300', dot: 'bg-blue-500', label: isPolish ? 'Zapisane' : 'Saved' },
-              snoozed: { color: 'bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300', dot: 'bg-purple-500', label: isPolish ? 'Odłożone' : 'Snoozed' },
-              dismissed: { color: 'bg-slate-100 text-slate-600 dark:bg-slate-500/15 dark:text-slate-300', dot: 'bg-slate-400', label: isPolish ? 'Odłożone' : 'Dismissed' },
+              open: {
+                color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+                dot: 'bg-amber-500',
+                label: isPolish ? 'Otwarte' : 'Open',
+              },
+              done: {
+                color: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300',
+                dot: 'bg-green-500',
+                label: isPolish ? 'Gotowe' : 'Done',
+              },
+              saved: {
+                color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
+                dot: 'bg-blue-500',
+                label: isPolish ? 'Zapisane' : 'Saved',
+              },
+              snoozed: {
+                color: 'bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300',
+                dot: 'bg-purple-500',
+                label: isPolish ? 'Odłożone' : 'Snoozed',
+              },
+              dismissed: {
+                color: 'bg-slate-100 text-slate-600 dark:bg-slate-500/15 dark:text-slate-300',
+                dot: 'bg-slate-400',
+                label: isPolish ? 'Odłożone' : 'Dismissed',
+              },
             };
             const c = cfg[st] || cfg.open;
             return (
-              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap leading-none ${c.color}`}>
+              <span
+                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap leading-none ${c.color}`}
+              >
                 <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
                 {c.label}
                 {item.isActionable && <Zap size={10} className="text-amber-500" />}
@@ -1166,7 +1406,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Urgency */}
         <td className="px-3 py-2" style={{ width: columnWidths.urgency }}>
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${u.pill}`}>
+          <span
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${u.pill}`}
+          >
             <UIcon size={11} />
             {u.label}
           </span>
@@ -1183,7 +1425,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         {/* Section */}
         <td className="px-3 py-2" style={{ width: columnWidths.section }}>
           <span className="text-xs text-slate-600 dark:text-slate-400">
-            {SMART_SECTIONS.find((s) => s.id === item.section)?.[isPolish ? 'labelPl' : 'labelEn'] || item.section}
+            {SMART_SECTIONS.find((s) => s.id === item.section)?.[
+              isPolish ? 'labelPl' : 'labelEn'
+            ] || item.section}
           </span>
         </td>
 
@@ -1194,7 +1438,11 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             const cfg: Record<string, { icon: typeof Bell; color: string; label: string }> = {
               system: { icon: Bell, color: 'text-slate-500', label: 'System' },
               ai: { icon: Star, color: 'text-purple-500', label: 'AI' },
-              user: { icon: MessageSquare, color: 'text-blue-500', label: item.source?.userName || 'User' },
+              user: {
+                icon: MessageSquare,
+                color: 'text-blue-500',
+                label: item.source?.userName || 'User',
+              },
             };
             const c = cfg[src] || cfg.system;
             const SrcIcon = c.icon;
@@ -1219,14 +1467,21 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           {sla.label === '-' ? (
             <span className={sla.className}>{sla.label}</span>
           ) : (
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${sla.className}`} title={sla.title}>
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${sla.className}`}
+              title={sla.title}
+            >
               {sla.label}
             </span>
           )}
         </td>
 
         {/* Inline Actions */}
-        <td className="px-2 py-2 text-right" style={{ width: columnWidths.actions }} onClick={(e) => e.stopPropagation()}>
+        <td
+          className="px-2 py-2 text-right"
+          style={{ width: columnWidths.actions }}
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="flex items-center justify-end gap-0.5">
             {/* Always visible: Open */}
             <button
@@ -1323,7 +1578,13 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-400'
             }`}
           >
-            {allSelected ? <CheckSquare size={14} /> : someSelected ? <Minus size={14} /> : <Square size={14} />}
+            {allSelected ? (
+              <CheckSquare size={14} />
+            ) : someSelected ? (
+              <Minus size={14} />
+            ) : (
+              <Square size={14} />
+            )}
           </button>
         </th>
 
@@ -1335,9 +1596,15 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         {['status', 'urgency', 'type', 'section'].map((colId) => {
           const col = INBOX_COLUMNS.find((c) => c.id === colId)!;
           return (
-            <th key={colId} className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths[colId] }}>
+            <th
+              key={colId}
+              className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+              style={{ width: columnWidths[colId] }}
+            >
               <div className="flex items-center gap-1">
-                <span className={(tableFilters[colId] as string[])?.length ? 'text-primary-500' : ''}>
+                <span
+                  className={(tableFilters[colId] as string[])?.length ? 'text-primary-500' : ''}
+                >
                   {col.label}
                 </span>
                 <FilterDropdown
@@ -1349,7 +1616,13 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   onClose={() => setOpenFilterId(null)}
                 />
               </div>
-              <ColumnResizer columnId={colId} currentWidth={columnWidths[colId]} minWidth={col.minWidth!} maxWidth={col.maxWidth!} onResize={handleColumnResize} />
+              <ColumnResizer
+                columnId={colId}
+                currentWidth={columnWidths[colId]}
+                minWidth={col.minWidth!}
+                maxWidth={col.maxWidth!}
+                onResize={handleColumnResize}
+              />
             </th>
           );
         })}
@@ -1358,14 +1631,27 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         {['received', 'sla'].map((colId) => {
           const col = INBOX_COLUMNS.find((c) => c.id === colId)!;
           return (
-            <th key={colId} className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths[colId] }}>
+            <th
+              key={colId}
+              className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+              style={{ width: columnWidths[colId] }}
+            >
               <span>{col.label}</span>
-              <ColumnResizer columnId={colId} currentWidth={columnWidths[colId]} minWidth={col.minWidth!} maxWidth={col.maxWidth!} onResize={handleColumnResize} />
+              <ColumnResizer
+                columnId={colId}
+                currentWidth={columnWidths[colId]}
+                minWidth={col.minWidth!}
+                maxWidth={col.maxWidth!}
+                onResize={handleColumnResize}
+              />
             </th>
           );
         })}
 
-        <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: columnWidths.actions }}>
+        <th
+          className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
+          style={{ width: columnWidths.actions }}
+        >
           {isPolish ? 'Akcje' : 'Actions'}
         </th>
       </tr>
@@ -1395,12 +1681,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   <td colSpan={10} className="px-3 py-2 border-l-[3px] border-l-transparent">
                     <div className="flex items-center justify-between">
                       <button
-                        onClick={() => setCollapsedSections((prev) => {
-                          const next = new Set(prev);
-                          if (next.has(section.id)) next.delete(section.id);
-                          else next.add(section.id);
-                          return next;
-                        })}
+                        onClick={() =>
+                          setCollapsedSections((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(section.id)) next.delete(section.id);
+                            else next.add(section.id);
+                            return next;
+                          })
+                        }
                         className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-colors"
                       >
                         {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
@@ -1465,18 +1753,40 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   // Render
   // ═══════════════════════════════════════════════════════════════════════════
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950" ref={tableRef}>
+    <div
+      className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950"
+      ref={tableRef}
+    >
       {/* Header */}
       <div className="px-4 pt-3 pb-0">
-
         {/* N1: Status tabs */}
         <div className="flex items-center gap-1 border-b border-slate-200 dark:border-navy-700">
-          {([
-            { id: 'open' as InboxStatusTab, icon: Inbox, label: isPolish ? 'Otwarte' : 'Open', count: data?.summary?.counts?.open },
-            { id: 'done' as InboxStatusTab, icon: CheckCircle2, label: isPolish ? 'Gotowe' : 'Done', count: data?.summary?.counts?.done },
-            { id: 'saved' as InboxStatusTab, icon: BookmarkCheck, label: isPolish ? 'Zapisane' : 'Saved', count: data?.summary?.counts?.saved },
-            { id: 'all' as InboxStatusTab, icon: List, label: isPolish ? 'Wszystkie' : 'All', count: undefined },
-          ]).map((tab) => {
+          {[
+            {
+              id: 'open' as InboxStatusTab,
+              icon: Inbox,
+              label: isPolish ? 'Otwarte' : 'Open',
+              count: data?.summary?.counts?.open,
+            },
+            {
+              id: 'done' as InboxStatusTab,
+              icon: CheckCircle2,
+              label: isPolish ? 'Gotowe' : 'Done',
+              count: data?.summary?.counts?.done,
+            },
+            {
+              id: 'saved' as InboxStatusTab,
+              icon: BookmarkCheck,
+              label: isPolish ? 'Zapisane' : 'Saved',
+              count: data?.summary?.counts?.saved,
+            },
+            {
+              id: 'all' as InboxStatusTab,
+              icon: List,
+              label: isPolish ? 'Wszystkie' : 'All',
+              count: undefined,
+            },
+          ].map((tab) => {
             const TabIcon = tab.icon;
             return (
               <button
@@ -1490,7 +1800,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               >
                 <TabIcon size={14} />
                 {tab.label}
-                {tab.count != null && <span className="text-xs opacity-60 ml-0.5">({tab.count})</span>}
+                {tab.count != null && (
+                  <span className="text-xs opacity-60 ml-0.5">({tab.count})</span>
+                )}
               </button>
             );
           })}
@@ -1516,10 +1828,13 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   ? 'bg-amber-500 text-white border-amber-500 dark:bg-amber-600'
                   : 'bg-amber-50 dark:bg-amber-500/10 border-amber-200/70 dark:border-amber-500/25 text-amber-700 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-500/20'
               }`}
-              title={isPolish ? 'Pokaż tylko wymagające akcji' : 'Show only items needing my action'}
+              title={
+                isPolish ? 'Pokaż tylko wymagające akcji' : 'Show only items needing my action'
+              }
             >
               <Zap size={14} />
-              {isPolish ? 'Wymaga akcji' : 'Action required'}: <b>{data?.summary?.actionRequired ?? 0}</b>
+              {isPolish ? 'Wymaga akcji' : 'Action required'}:{' '}
+              <b>{data?.summary?.actionRequired ?? 0}</b>
             </button>
           )}
           <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-sm text-slate-600 dark:text-slate-300">
@@ -1533,9 +1848,17 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           {(['today', 'this_week', 'all'] as const).map((section) => {
             const count = sectionCounts[section];
             const label =
-              section === 'today' ? (isPolish ? 'Nowe dziś' : 'New today')
-                : section === 'this_week' ? (isPolish ? 'Nowe w tym tygodniu' : 'New this week')
-                  : (isPolish ? 'Wszystkie' : 'All');
+              section === 'today'
+                ? isPolish
+                  ? 'Nowe dziś'
+                  : 'New today'
+                : section === 'this_week'
+                  ? isPolish
+                    ? 'Nowe w tym tygodniu'
+                    : 'New this week'
+                  : isPolish
+                    ? 'Wszystkie'
+                    : 'All';
             return (
               <button
                 key={section}
@@ -1561,27 +1884,48 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
                 {selectedIds.size} {isPolish ? 'zaznaczonych' : 'selected'}
               </span>
-              <button onClick={() => handleSelectAll(true)} className="text-xs text-primary-600 dark:text-primary-400 hover:underline">
+              <button
+                onClick={() => handleSelectAll(true)}
+                className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
+              >
                 {isPolish ? 'Zaznacz wszystkie' : 'Select all'}
               </button>
-              <button onClick={() => setSelectedIds(new Set())} className="text-xs text-slate-500 hover:underline">
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="text-xs text-slate-500 hover:underline"
+              >
                 {isPolish ? 'Odznacz' : 'Clear'}
               </button>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={() => bulkTriage('accept_today')} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/25 transition-colors">
+              <button
+                onClick={() => bulkTriage('accept_today')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/25 transition-colors"
+              >
                 <Zap size={13} /> {isPolish ? 'Focus: Dziś' : 'Focus: Today'}
               </button>
-              <button onClick={() => bulkTriage('accept_week')} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-500/25 transition-colors">
+              <button
+                onClick={() => bulkTriage('accept_week')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-500/25 transition-colors"
+              >
                 <CalendarClock size={13} /> {isPolish ? 'Ten tydz.' : 'This week'}
               </button>
-              <button onClick={() => bulkTriage('done')} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-500/25 transition-colors">
+              <button
+                onClick={() => bulkTriage('done')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-500/25 transition-colors"
+              >
                 <CheckCircle2 size={13} /> {isPolish ? 'Gotowe' : 'Done'}
               </button>
-              <button onClick={() => bulkTriage('save')} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors">
+              <button
+                onClick={() => bulkTriage('save')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors"
+              >
                 <Bookmark size={13} /> {isPolish ? 'Zapisz' : 'Save'}
               </button>
-              <button onClick={() => bulkTriage('dismiss')} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 dark:bg-navy-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors">
+              <button
+                onClick={() => bulkTriage('dismiss')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 dark:bg-navy-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+              >
                 <Archive size={13} /> {isPolish ? 'Odłóż' : 'Dismiss'}
               </button>
             </div>
@@ -1592,7 +1936,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       {/* Main content + Preview pane */}
       <div className="flex-1 flex min-h-0">
         {/* Table content */}
-        <div className={`flex-1 overflow-y-auto p-4 pt-3 ${previewItem ? 'max-w-[65%]' : ''} transition-all duration-200`}>
+        <div
+          className={`flex-1 overflow-y-auto p-4 pt-3 ${previewItem ? 'max-w-[65%]' : ''} transition-all duration-200`}
+        >
           {loading ? (
             <div className="flex items-center justify-center py-12 text-slate-600 dark:text-slate-300">
               <Loader2 className="animate-spin mr-2" size={18} />
@@ -1603,23 +1949,39 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               {statusTab === 'done' ? (
                 <>
                   <CheckCircle2 size={40} className="mx-auto mb-4 text-green-400" />
-                  <p className="text-base font-semibold mb-1">{isPolish ? 'Brak zakończonych elementów' : 'No completed items'}</p>
-                  <p className="text-sm text-slate-500">{isPolish ? 'Oznaczaj elementy jako gotowe (E), żeby tu trafiały.' : 'Mark items as Done (E) and they\'ll appear here.'}</p>
+                  <p className="text-base font-semibold mb-1">
+                    {isPolish ? 'Brak zakończonych elementów' : 'No completed items'}
+                  </p>
+                  <p className="text-sm text-slate-500">
+                    {isPolish
+                      ? 'Oznaczaj elementy jako gotowe (E), żeby tu trafiały.'
+                      : "Mark items as Done (E) and they'll appear here."}
+                  </p>
                 </>
               ) : statusTab === 'saved' ? (
                 <>
                   <BookmarkCheck size={40} className="mx-auto mb-4 text-amber-400" />
-                  <p className="text-base font-semibold mb-1">{isPolish ? 'Brak zapisanych elementów' : 'No saved items'}</p>
-                  <p className="text-sm text-slate-500">{isPolish ? 'Użyj Zapisz (B) aby odłożyć elementy na później.' : 'Use Save (B) to bookmark items for later.'}</p>
+                  <p className="text-base font-semibold mb-1">
+                    {isPolish ? 'Brak zapisanych elementów' : 'No saved items'}
+                  </p>
+                  <p className="text-sm text-slate-500">
+                    {isPolish
+                      ? 'Użyj Zapisz (B) aby odłożyć elementy na później.'
+                      : 'Use Save (B) to bookmark items for later.'}
+                  </p>
                 </>
               ) : (
                 <>
                   <Inbox size={40} className="mx-auto mb-4 text-slate-400" />
                   <p className="text-base font-semibold mb-1">
-                    {isPolish ? 'Inbox jest pusty — zero zaległości!' : 'Inbox is empty — zero backlog!'}
+                    {isPolish
+                      ? 'Inbox jest pusty — zero zaległości!'
+                      : 'Inbox is empty — zero backlog!'}
                   </p>
                   <p className="text-sm text-slate-500">
-                    {isPolish ? 'Wszystko przetworzone. Świetna robota!' : 'Everything processed. Great job!'}
+                    {isPolish
+                      ? 'Wszystko przetworzone. Świetna robota!'
+                      : 'Everything processed. Great job!'}
                   </p>
                 </>
               )}
@@ -1639,8 +2001,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               isPolish={isPolish}
               onClose={() => setPreviewItem(null)}
               onOpen={() => open(previewItem)}
-              onTriage={(action) => { triage(previewItem, action); setPreviewItem(null); }}
-              onSnooze={(preset) => { handleSnooze(previewItem, preset); setPreviewItem(null); }}
+              onTriage={(action) => {
+                triage(previewItem, action);
+                setPreviewItem(null);
+              }}
+              onSnooze={(preset) => {
+                handleSnooze(previewItem, preset);
+                setPreviewItem(null);
+              }}
               onSaveAsNote={handleSaveAsNote}
             />
           </div>

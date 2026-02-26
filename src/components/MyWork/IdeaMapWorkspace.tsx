@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 
 import { IdeaRecommendationMap } from './IdeaRecommendationMap';
@@ -29,7 +30,10 @@ type IdeaMapWorkspaceProps = {
 };
 
 function safeTitleFromSeed(seedText: string, isPolish: boolean): string {
-  const firstLine = String(seedText || '').trim().split('\n')[0]?.trim();
+  const firstLine = String(seedText || '')
+    .trim()
+    .split('\n')[0]
+    ?.trim();
   return firstLine ? firstLine.slice(0, 120) : isPolish ? 'Nowe wyzwanie' : 'New challenge';
 }
 
@@ -103,7 +107,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           const nodes = Array.isArray(map.nodes) ? map.nodes : [];
           const edges = Array.isArray(map.edges) ? map.edges : [];
           await Api.saveMyIdeaMap(nextId, { nodes, edges });
-        } catch { /* best-effort */ }
+        } catch {
+          /* best-effort */
+        }
       } else {
         const idea = (await Api.getMyIdea(ideaId)) as any;
         setRealId(String(idea?.id || ideaId));
@@ -123,7 +129,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     }
   }, [i18n.language, ideaId, isNewInitial, isPolish, onSaved]);
 
-  useEffect(() => { hydrate(); }, [hydrate]);
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
 
   const openChat = useCallback(() => {
     setChatKickoffMessage(
@@ -192,7 +200,24 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       if (isDraft) return;
       setSaving(true);
       try {
-        await Api.convertMyIdea(realId, { target, options: { language: i18n.language } });
+        trackFunnelEvent('mywork_convert_clicked', { from: 'idea', to: target });
+        const result = await Api.convertMyIdea(realId, {
+          target,
+          options: { language: i18n.language },
+        });
+        trackFunnelEvent('mywork_convert_completed', {
+          from: 'idea',
+          toType: target,
+          has_source: Boolean(result?.sourceSessionId),
+        });
+        if (result?.sourceSessionId) {
+          trackFunnelEvent('mywork_session_materialized', {
+            source: 'idea_convert',
+            sourceEntityId: realId,
+            target,
+            sessionId: result.sourceSessionId,
+          });
+        }
         toast.success(isPolish ? 'Gotowe' : 'Done');
       } catch (err: any) {
         toast.error(err?.message || (isPolish ? 'Nie udało się' : 'Failed'));
@@ -249,11 +274,26 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         isAccepted={isAccepted}
         saving={saving}
         draftSavedLabel={draftSavedLabel}
-        onTitleChange={(v) => { setTitle(v); setDirty(true); }}
-        onSeedTextChange={(v) => { setSeedText(v); setDirty(true); }}
-        onBranchChange={(v) => { setBranch(v); setDirty(true); }}
-        onAreaChange={(v) => { setArea(v); setDirty(true); }}
-        onPriorityChange={(v) => { setPriority(v); setDirty(true); }}
+        onTitleChange={(v) => {
+          setTitle(v);
+          setDirty(true);
+        }}
+        onSeedTextChange={(v) => {
+          setSeedText(v);
+          setDirty(true);
+        }}
+        onBranchChange={(v) => {
+          setBranch(v);
+          setDirty(true);
+        }}
+        onAreaChange={(v) => {
+          setArea(v);
+          setDirty(true);
+        }}
+        onPriorityChange={(v) => {
+          setPriority(v);
+          setDirty(true);
+        }}
         onSave={handleSave}
         onAcceptChallenge={handleAcceptChallenge}
         onConvert={handleConvert}

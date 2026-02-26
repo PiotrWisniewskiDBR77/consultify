@@ -62,7 +62,16 @@ export const ChatConfirmRequestSchema = z.object({
     })
     .optional(),
   responseStyle: z
-    .enum(['normal', 'executive', 'analyst', 'coach', 'concise', 'formal', 'professional', 'friendly'])
+    .enum([
+      'normal',
+      'executive',
+      'analyst',
+      'coach',
+      'concise',
+      'formal',
+      'professional',
+      'friendly',
+    ])
     .optional(),
   language: z
     .string()
@@ -129,7 +138,16 @@ export const ChatStreamRequestSchema = z.object({
     })
     .optional(),
   responseStyle: z
-    .enum(['normal', 'executive', 'analyst', 'coach', 'concise', 'formal', 'professional', 'friendly'])
+    .enum([
+      'normal',
+      'executive',
+      'analyst',
+      'coach',
+      'concise',
+      'formal',
+      'professional',
+      'friendly',
+    ])
     .optional(),
   language: z
     .string()

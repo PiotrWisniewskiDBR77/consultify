@@ -34,6 +34,7 @@ import {
   Palette, // Studio
   PanelLeftClose,
   Pin,
+  Presentation,
   Rocket,
   Scale, // Challenges
   Settings,
@@ -54,6 +55,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useDeviceType } from '../../hooks/useDeviceType';
 import { APP_VIEW_TO_ROUTE } from '../../routes/routeConfig';
+import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { useAppStore } from '../../store/useAppStore';
 import { useConversationStore } from '../../store/useConversationStore';
 import { AppView, UserRole } from '../../types';
@@ -315,18 +317,18 @@ export const Sidebar: React.FC = () => {
       icon: <Brain size={20} />,
       viewId: AppView.DISCOVERY_CONSULTANT,
     },
-    // 3. Discovery Tools - 31 narzędzi (wybór kategorii wewnątrz modułu)
+    // 3. Tools - unified tool hub (V3: Library → Sessions → Outputs → Initiatives)
     {
       id: 'DISCOVERY_TOOLS',
-      label: t('sidebar.discoveryTools', 'Discovery Tools'),
+      label: t('sidebar.discoveryTools', 'Tools'),
       icon: <Wrench size={20} />,
       viewId: AppView.DISCOVERY_TOOLS,
       badge: 'new',
     },
-    // 4. Licensed Tools (Assessment module) - DRD/SIRI/ADMA/Lean
+    // 4. Assessment (Licensed Tools) - DRD/SIRI/ADMA/Lean
     {
       id: 'MODULE_ASSESSMENT',
-      label: t('licensedTools.moduleName', 'Licensed Tools'),
+      label: t('sidebar.assessment', 'Assessment'),
       icon: <CheckCircle2 size={20} />,
       viewId: AppView.ASSESSMENT_OVERVIEW,
     },
@@ -344,26 +346,47 @@ export const Sidebar: React.FC = () => {
       icon: <Rocket size={20} />,
       viewId: AppView.FULL_STEP5_EXECUTION,
     },
-    // 7. Benefits - śledzenie efektów zrealizowanych inicjatyw
+    // 7. Results - śledzenie efektów zrealizowanych inicjatyw (KPI/OKR)
     {
       id: 'MODULE_BENEFITS',
-      label: t('sidebar.benefits', 'Benefits'),
+      label: t('sidebar.results', 'Results'),
       icon: <TrendingUp size={20} />,
       viewId: AppView.BENEFITS_REALIZATION,
     },
-    // 8. Economics - analiza ekonomiczna
+    // 8. Reports - Builder (deliverable) + Management (PMO)
+    {
+      id: 'MODULE_REPORTS',
+      label: t('sidebar.reports', 'Reports'),
+      icon: <BookOpen size={20} />,
+      viewId: AppView.REPORTS_ENTRY,
+      subItems: [
+        {
+          id: 'REPORTS_BUILDER',
+          label: t('sidebar.reportsBuilder', 'Report Builder'),
+          viewId: AppView.FULL_STEP6_REPORTS,
+          icon: <FileText size={16} />,
+        },
+        {
+          id: 'REPORTS_MANAGEMENT',
+          label: t('sidebar.reportsManagement', 'Management Reports'),
+          viewId: AppView.REPORTS_MANAGEMENT,
+          icon: <FileOutput size={16} />,
+        },
+      ],
+    },
+    // 9. Presentations - biblioteka decków
+    {
+      id: 'MODULE_PRESENTATIONS',
+      label: t('sidebar.presentations', 'Presentations'),
+      icon: <Presentation size={20} />,
+      viewId: AppView.PRESENTATIONS,
+    },
+    // 10. Economics - analiza ekonomiczna
     {
       id: 'MODULE_ECONOMICS',
       label: t('sidebar.economics', 'Economics'),
       icon: <Calculator size={20} />,
       viewId: AppView.ECONOMICS,
-    },
-    // 9. Reports - raporty
-    {
-      id: 'MODULE_REPORTS',
-      label: t('sidebar.reports', 'Reports'),
-      icon: <BookOpen size={20} />,
-      viewId: AppView.FULL_STEP6_REPORTS,
     },
     // Phase G: Ecosystem Affiliate Dashboard (conditional)
     ...(currentUser?.journeyState === 'ECOSYSTEM_NODE'
@@ -645,6 +668,7 @@ export const Sidebar: React.FC = () => {
               console.log('[Sidebar] Navigating:', item.viewId, '→', route);
 
               if (route) {
+                trackFunnelEvent('sidebar_navigation_clicked', { target: route });
                 navigate(route);
               }
 
@@ -871,6 +895,7 @@ export const Sidebar: React.FC = () => {
             const route = APP_VIEW_TO_ROUTE[viewId];
             console.log('[Sidebar FloatingMenu] Navigating:', viewId, '→', route);
             if (route) {
+              trackFunnelEvent('sidebar_navigation_clicked', { target: route });
               navigate(route);
             }
             // Then update state

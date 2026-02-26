@@ -243,7 +243,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
       {
         id: 'action-review-next-decision',
         title: t('command.action.reviewNextDecision', 'Review next decision'),
-        subtitle: t('command.action.reviewNextDecisionDesc', 'Queue mode with shortcuts (J/K, A/R/S, ?)'),
+        subtitle: t(
+          'command.action.reviewNextDecisionDesc',
+          'Queue mode with shortcuts (J/K, A/R/S, ?)'
+        ),
         icon: <FileQuestion size={18} className="text-violet-500" />,
         category: 'action',
         keywords: ['review', 'queue', 'decisions', 'inbox'],

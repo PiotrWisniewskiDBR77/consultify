@@ -27,8 +27,8 @@ export {
 } from './BulkActionBar';
 export { ColumnResizer } from './ColumnResizer';
 export { FilterDropdown } from './FilterDropdown';
-export { TableHeader } from './TableHeader';
 export { PreviewPaneShell } from './PreviewPaneShell';
+export { TableHeader } from './TableHeader';
 
 export const ResizableTable: React.FC<ResizableTableProps> = ({
   columns,

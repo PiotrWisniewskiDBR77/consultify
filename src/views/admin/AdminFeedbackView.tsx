@@ -185,7 +185,8 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
             userEmail: 'tomasz.kaczmarek@enterprise.com',
             userName: 'Tomasz Kaczmarek',
             type: 'bug',
-            message: 'Export do PDF nie działa dla raportów powyżej 100 stron. System zawiesza się.',
+            message:
+              'Export do PDF nie działa dla raportów powyżej 100 stron. System zawiesza się.',
             status: 'resolved',
             priority: 'critical',
             createdAt: new Date(Date.now() - 604800000).toISOString(),

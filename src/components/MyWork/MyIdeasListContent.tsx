@@ -6,12 +6,12 @@ import {
   Lightbulb,
   Link2,
   Loader2,
+  MessageSquarePlus,
   Plus,
   Rocket,
   Sparkles,
-  Star,
-  MessageSquarePlus,
   Sprout,
+  Star,
   Tag,
   Trash2,
   TreePine,
@@ -22,10 +22,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { BulkActionBar, type BulkAction } from '@/components/ui/ResizableTable';
+import { type BulkAction, BulkActionBar } from '@/components/ui/ResizableTable';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
+import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
@@ -37,7 +38,9 @@ class MindMapErrorBoundary extends React.Component<
   { hasError: boolean }
 > {
   state = { hasError: false };
-  static getDerivedStateFromError() { return { hasError: true }; }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
   render() {
     if (this.state.hasError) return this.props.fallback;
     return this.props.children;
@@ -89,14 +92,17 @@ interface MyIdeasListContentProps {
   refreshTrigger?: number;
 }
 
-const STAGE_CONFIG: Record<IdeaStage, {
-  icon: React.ElementType;
-  color: string;
-  bgColor: string;
-  borderColor: string;
-  badgeBg: string;
-  badgeText: string;
-}> = {
+const STAGE_CONFIG: Record<
+  IdeaStage,
+  {
+    icon: React.ElementType;
+    color: string;
+    bgColor: string;
+    borderColor: string;
+    badgeBg: string;
+    badgeText: string;
+  }
+> = {
   spark: {
     icon: Lightbulb,
     color: 'text-amber-500',
@@ -143,7 +149,8 @@ function mapRawStageToStage(raw?: string | null): IdeaStage {
   if (!raw) return 'spark';
   const s = raw.toLowerCase();
   if (s === 'done' || s === 'summary' || s === 'shaping') return 'shaping';
-  if (s === 'expanding' || s === 'researching' || s === 'proposing' || s === 'incubating') return 'incubating';
+  if (s === 'expanding' || s === 'researching' || s === 'proposing' || s === 'incubating')
+    return 'incubating';
   if (s === 'ready') return 'ready';
   if (s === 'promoted') return 'promoted';
   if (s === 'seed' || s === 'spark') return 'spark';
@@ -173,9 +180,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   const [tagInput, setTagInput] = useState('');
   const [bulkBusy, setBulkBusy] = useState(false);
   const [creatingBlankMap, setCreatingBlankMap] = useState(false);
-  const [mapMetrics, setMapMetrics] = useState<Record<string, { items: number; nodes: number; edges: number }>>(
-    {}
-  );
+  const [mapMetrics, setMapMetrics] = useState<
+    Record<string, { items: number; nodes: number; edges: number }>
+  >({});
   const { dialog: confirmDialog, confirm: showConfirm } = useConfirmDialog();
 
   const effectiveViewMode = useMemo<IdeasViewMode>(() => {
@@ -292,7 +299,12 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     }
     if (activeArea !== 'all') {
       const k = activeArea.toLowerCase();
-      out = out.filter((i) => String(i.area || '').trim().toLowerCase() === k);
+      out = out.filter(
+        (i) =>
+          String(i.area || '')
+            .trim()
+            .toLowerCase() === k
+      );
     }
     return out;
   }, [ideas, inboxIdeas, inboxOnly, activeArea, activeTag]);
@@ -379,18 +391,14 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       await Promise.all(
         ids.map(async (id) => {
           const idea = ideas.find((i) => i.id === id);
-          const nextTags = Array.from(
-            new Set([...(idea?.tags || []).map((x) => String(x)), tag])
-          );
+          const nextTags = Array.from(new Set([...(idea?.tags || []).map((x) => String(x)), tag]));
           await Api.updateMyIdea(id, { tags: nextTags });
         })
       );
       trackFunnelEvent('idea_triaged', { action: 'tag', count: ids.length, tag });
       trackFunnelEvent('idea_bulk_tag_added', { count: ids.length, tag });
       toast.success(
-        isPolish
-          ? `Dodano tag do ${ids.length} pomysłów`
-          : `Added tag to ${ids.length} ideas`
+        isPolish ? `Dodano tag do ${ids.length} pomysłów` : `Added tag to ${ids.length} ideas`
       );
       setTagModalOpen(false);
       setTagInput('');
@@ -560,11 +568,28 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       if (!convertIdea?.id) return;
       try {
         setConverting(true);
-        await Api.convertMyIdea(convertIdea.id, {
+        trackFunnelEvent('mywork_convert_clicked', { from: 'idea', to: target });
+        const result = await Api.convertMyIdea(convertIdea.id, {
           target,
           options: { language: i18n.language },
         });
-        trackFunnelEvent(`idea_converted_${target}`, { ideaId: convertIdea.id, surface: 'ideas-list' });
+        trackFunnelEvent(`idea_converted_${target}`, {
+          ideaId: convertIdea.id,
+          surface: 'ideas-list',
+        });
+        trackFunnelEvent('mywork_convert_completed', {
+          from: 'idea',
+          toType: target,
+          has_source: Boolean(result?.sourceSessionId),
+        });
+        if (result?.sourceSessionId) {
+          trackFunnelEvent('mywork_session_materialized', {
+            source: 'idea_convert',
+            sourceEntityId: convertIdea.id,
+            target,
+            sessionId: result.sourceSessionId,
+          });
+        }
         toast.success(isPolish ? 'Gotowe' : 'Done');
         setConvertIdea(null);
         await fetchIdeas();
@@ -586,9 +611,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   }
 
   const convertModal = (
-    <MindMapErrorBoundary
-      fallback={null}
-    >
+    <MindMapErrorBoundary fallback={null}>
       {convertIdea && (
         <div
           className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
@@ -615,9 +638,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             </div>
 
             <div className="px-5 py-4 space-y-3">
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                {convertIdea.title}
-              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">{convertIdea.title}</div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <button
@@ -795,7 +816,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       promoted: { en: 'Promoted', pl: 'Promowany' },
     };
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${cfg.badgeBg} ${cfg.badgeText}`}>
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${cfg.badgeBg} ${cfg.badgeText}`}
+      >
         <Icon size={10} />
         {isPolish ? labels[stage].pl : labels[stage].en}
       </span>
@@ -809,11 +832,17 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       medium: 'bg-amber-400',
       low: 'bg-slate-400',
     };
-    return <span className={`w-2 h-2 rounded-full ${colors[potential] || 'bg-slate-300'}`} title={potential} />;
+    return (
+      <span
+        className={`w-2 h-2 rounded-full ${colors[potential] || 'bg-slate-300'}`}
+        title={potential}
+      />
+    );
   };
 
   const renderSourceBadge = (sourceType?: string | null) => {
-    const isAI = sourceType === 'ai_chat' || sourceType === 'ai_hint' || sourceType === 'ai_suggestion';
+    const isAI =
+      sourceType === 'ai_chat' || sourceType === 'ai_hint' || sourceType === 'ai_suggestion';
     return (
       <span
         className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium ${
@@ -840,28 +869,59 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       };
     }
     if (a.includes('fin') || a.includes('budget') || a.includes('roi')) {
-      return { bg: 'bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-400/20' };
+      return {
+        bg: 'bg-emerald-500/10',
+        text: 'text-emerald-600 dark:text-emerald-400',
+        border: 'border-emerald-400/20',
+      };
     }
     if (a.includes('tech') || a.includes('it') || a.includes('ai') || a.includes('data')) {
-      return { bg: 'bg-sky-500/10', text: 'text-sky-600 dark:text-sky-400', border: 'border-sky-400/20' };
+      return {
+        bg: 'bg-sky-500/10',
+        text: 'text-sky-600 dark:text-sky-400',
+        border: 'border-sky-400/20',
+      };
     }
     if (a.includes('culture') || a.includes('people') || a.includes('hr') || a.includes('org')) {
-      return { bg: 'bg-violet-500/10', text: 'text-violet-600 dark:text-violet-400', border: 'border-violet-400/20' };
+      return {
+        bg: 'bg-violet-500/10',
+        text: 'text-violet-600 dark:text-violet-400',
+        border: 'border-violet-400/20',
+      };
     }
-    if (a.includes('ops') || a.includes('operation') || a.includes('supply') || a.includes('process')) {
-      return { bg: 'bg-amber-500/10', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-400/20' };
+    if (
+      a.includes('ops') ||
+      a.includes('operation') ||
+      a.includes('supply') ||
+      a.includes('process')
+    ) {
+      return {
+        bg: 'bg-amber-500/10',
+        text: 'text-amber-600 dark:text-amber-400',
+        border: 'border-amber-400/20',
+      };
     }
     if (a.includes('sales') || a.includes('market') || a.includes('customer')) {
-      return { bg: 'bg-rose-500/10', text: 'text-rose-600 dark:text-rose-400', border: 'border-rose-400/20' };
+      return {
+        bg: 'bg-rose-500/10',
+        text: 'text-rose-600 dark:text-rose-400',
+        border: 'border-rose-400/20',
+      };
     }
-    return { bg: 'bg-slate-500/10', text: 'text-slate-600 dark:text-slate-400', border: 'border-slate-400/20' };
+    return {
+      bg: 'bg-slate-500/10',
+      text: 'text-slate-600 dark:text-slate-400',
+      border: 'border-slate-400/20',
+    };
   };
 
   const renderAreaBadge = (area?: string | null) => {
     if (!area) return null;
     const st = areaBadgeStyle(area);
     return (
-      <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium border ${st.bg} ${st.text} ${st.border}`}>
+      <span
+        className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium border ${st.bg} ${st.text} ${st.border}`}
+      >
         <GitBranch size={9} />
         {area}
       </span>
@@ -873,7 +933,10 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     const w = Math.max(10, Math.min(100, p));
     const color = p >= 75 ? 'bg-emerald-400' : p >= 50 ? 'bg-amber-400' : 'bg-slate-400';
     return (
-      <div className="w-12 h-1 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden" title={`${isPolish ? 'Priorytet' : 'Priority'}: ${p}/100`}>
+      <div
+        className="w-12 h-1 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden"
+        title={`${isPolish ? 'Priorytet' : 'Priority'}: ${p}/100`}
+      >
         <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${w}%` }} />
       </div>
     );
@@ -909,7 +972,11 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                 disabled={creatingBlankMap}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/20 hover:shadow-amber-500/35 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {creatingBlankMap ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                {creatingBlankMap ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Plus size={16} />
+                )}
                 {isPolish ? 'Otwórz czystą mapę' : 'Open blank map'}
               </button>
             </div>
@@ -925,22 +992,31 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       <div className="w-full h-full overflow-hidden">
         {convertModal}
         {tagModal}
-        <MindMapErrorBoundary fallback={
-          <div className="w-full flex flex-col items-center justify-center p-8 text-center" style={{ minHeight: 300 }}>
-            <GitBranch size={48} className="text-slate-400 mb-4" />
-            <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {isPolish ? 'Nie udało się załadować mapy myśli' : 'Failed to load mind map'}
-            </h3>
-            <p className="text-sm text-slate-500 mb-4">
-              {isPolish ? 'Spróbuj odświeżyć stronę (Cmd+Shift+R)' : 'Try refreshing the page (Cmd+Shift+R)'}
-            </p>
-          </div>
-        }>
-          <React.Suspense fallback={
-            <div className="flex-1 flex items-center justify-center h-64">
-              <Loader2 className="animate-spin text-amber-500" size={32} />
+        <MindMapErrorBoundary
+          fallback={
+            <div
+              className="w-full flex flex-col items-center justify-center p-8 text-center"
+              style={{ minHeight: 300 }}
+            >
+              <GitBranch size={48} className="text-slate-400 mb-4" />
+              <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">
+                {isPolish ? 'Nie udało się załadować mapy myśli' : 'Failed to load mind map'}
+              </h3>
+              <p className="text-sm text-slate-500 mb-4">
+                {isPolish
+                  ? 'Spróbuj odświeżyć stronę (Cmd+Shift+R)'
+                  : 'Try refreshing the page (Cmd+Shift+R)'}
+              </p>
             </div>
-          }>
+          }
+        >
+          <React.Suspense
+            fallback={
+              <div className="flex-1 flex items-center justify-center h-64">
+                <Loader2 className="animate-spin text-amber-500" size={32} />
+              </div>
+            }
+          >
             <IdeasMindMap
               ideas={filteredIdeas}
               onIdeaClick={onIdeaClick}
@@ -955,18 +1031,25 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   // ──────────── GARDEN VIEW ────────────
   if (effectiveViewMode === 'garden') {
-    if (sortedIdeas.length === 0) return <div className="p-4 overflow-y-auto h-full">{renderEmpty()}</div>;
+    if (sortedIdeas.length === 0)
+      return <div className="p-4 overflow-y-auto h-full">{renderEmpty()}</div>;
 
     const allSections: { stage: IdeaStage; ideas: MyIdea[] }[] = [
       { stage: 'spark' as IdeaStage, ideas: sortedIdeas.filter((i) => i.stage === 'spark') },
-      { stage: 'incubating' as IdeaStage, ideas: sortedIdeas.filter((i) => i.stage === 'incubating') },
+      {
+        stage: 'incubating' as IdeaStage,
+        ideas: sortedIdeas.filter((i) => i.stage === 'incubating'),
+      },
       { stage: 'shaping' as IdeaStage, ideas: sortedIdeas.filter((i) => i.stage === 'shaping') },
       { stage: 'ready' as IdeaStage, ideas: sortedIdeas.filter((i) => i.stage === 'ready') },
       { stage: 'promoted' as IdeaStage, ideas: sortedIdeas.filter((i) => i.stage === 'promoted') },
     ];
     const gardenSections = allSections.filter((s) => s.ideas.length > 0);
 
-    const sectionLabels: Record<IdeaStage, { en: string; pl: string; desc_en: string; desc_pl: string }> = {
+    const sectionLabels: Record<
+      IdeaStage,
+      { en: string; pl: string; desc_en: string; desc_pl: string }
+    > = {
       spark: {
         en: 'New Sparks',
         pl: 'Nowe iskry',
@@ -1104,12 +1187,16 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             </div>
             <div>
               <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-                {inboxOnly ? (isPolish ? 'Idea Inbox' : 'Idea Inbox') : isPolish ? 'Ogród Pomysłów' : 'Idea Garden'}
+                {inboxOnly
+                  ? isPolish
+                    ? 'Idea Inbox'
+                    : 'Idea Inbox'
+                  : isPolish
+                    ? 'Ogród Pomysłów'
+                    : 'Idea Garden'}
               </h2>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                {isPolish
-                  ? `${sortedIdeas.length} pomysłów`
-                  : `${sortedIdeas.length} ideas`}
+                {isPolish ? `${sortedIdeas.length} pomysłów` : `${sortedIdeas.length} ideas`}
               </p>
             </div>
             <div className="ml-auto">
@@ -1141,7 +1228,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                       <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                         {isPolish ? labels.pl : labels.en}
                       </span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${cfg.badgeBg} ${cfg.badgeText}`}>
+                      <span
+                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${cfg.badgeBg} ${cfg.badgeText}`}
+                      >
                         {sectionIdeas.length}
                       </span>
                     </div>
@@ -1186,7 +1275,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                         />
                       </div>
                       <div className="flex items-start gap-2.5 mb-2">
-                        <div className={`flex-shrink-0 p-1.5 rounded-lg ${cfg.bgColor} group-hover:scale-110 transition-transform`}>
+                        <div
+                          className={`flex-shrink-0 p-1.5 rounded-lg ${cfg.bgColor} group-hover:scale-110 transition-transform`}
+                        >
                           <Icon size={14} className={cfg.color} />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -1237,6 +1328,14 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                           <Sparkles size={12} />
                           {isPolish ? 'Konwertuj' : 'Convert'}
                         </button>
+                        <ConvertToOutputMenu
+                          sourceType="idea"
+                          sourceId={idea.id}
+                          sourceTitle={idea.title || ''}
+                          onConvertComplete={() => fetchIdeas()}
+                          variant="dropdown"
+                          className="shrink-0"
+                        />
                       </div>
                     </div>
                   ))}
@@ -1473,6 +1572,14 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                       <Sparkles size={12} />
                       {isPolish ? 'Konwertuj' : 'Convert'}
                     </button>
+                    <ConvertToOutputMenu
+                      sourceType="idea"
+                      sourceId={idea.id}
+                      sourceTitle={idea.title || ''}
+                      onConvertComplete={() => fetchIdeas()}
+                      variant="dropdown"
+                      className="shrink-0"
+                    />
                   </div>
                 </div>
               ))}
@@ -1653,6 +1760,16 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                         <Sparkles size={12} />
                         {isPolish ? 'Konwertuj' : 'Convert'}
                       </button>
+                      <div onClick={(e) => e.stopPropagation()} className="ml-1">
+                        <ConvertToOutputMenu
+                          sourceType="idea"
+                          sourceId={idea.id}
+                          sourceTitle={idea.title || ''}
+                          onConvertComplete={() => fetchIdeas()}
+                          variant="dropdown"
+                          className="shrink-0"
+                        />
+                      </div>
                     </div>
                     {idea.body ? (
                       <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">

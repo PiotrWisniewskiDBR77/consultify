@@ -24,6 +24,8 @@ interface GridViewProps {
   onNewItem?: () => void;
   newItemLabel?: string;
   emptyMessage?: string;
+  /** Optional extra action buttons rendered per card (e.g. Export, Open Source) */
+  extraCardActions?: (item: GridItem) => React.ReactNode;
 }
 
 // Status config — supports all status families (assessment, report, initiative)
@@ -174,6 +176,7 @@ export const GridView: React.FC<GridViewProps> = ({
   onNewItem,
   newItemLabel = 'New Item',
   emptyMessage = 'No items found',
+  extraCardActions,
 }) => {
   const [menuItemId, setMenuItemId] = useState<string | null>(null);
 
@@ -312,9 +315,12 @@ export const GridView: React.FC<GridViewProps> = ({
 
             {/* Footer */}
             <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-navy-700/50">
-              <div className={`flex items-center gap-1.5 ${statusConfig.text}`}>
-                <span className={`w-2 h-2 rounded-full ${statusConfig.dot}`} />
-                <span className="text-xs font-medium">{statusConfig.label}</span>
+              <div className="flex items-center gap-2">
+                <div className={`flex items-center gap-1.5 ${statusConfig.text}`}>
+                  <span className={`w-2 h-2 rounded-full ${statusConfig.dot}`} />
+                  <span className="text-xs font-medium">{statusConfig.label}</span>
+                </div>
+                {extraCardActions?.(item)}
               </div>
               <span className="text-xs text-slate-500 dark:text-slate-400">
                 {formatRelativeTime(item.updatedAt)}

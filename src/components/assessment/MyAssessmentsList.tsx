@@ -427,9 +427,10 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
           <div className="divide-y divide-slate-200 dark:divide-white/10">
             {filteredAssessments.map((assessment) => {
               const statusConfig = STATUS_CONFIG[assessment.status];
-              const progress = assessment.totalAxes > 0
-                ? Math.round((assessment.completedAxes / assessment.totalAxes) * 100)
-                : (assessment as any).progress || 0;
+              const progress =
+                assessment.totalAxes > 0
+                  ? Math.round((assessment.completedAxes / assessment.totalAxes) * 100)
+                  : (assessment as any).progress || 0;
 
               return (
                 <div

@@ -60,7 +60,7 @@ export interface TemplatePickerModalProps {
    * The modal now supports creating templates directly using the main Report Editor (template mode).
    */
   onCreateClean?: () => void;
-  sourceType: 'ASSESSMENT' | 'INTERVIEW' | 'TOOL' | 'INITIATIVE';
+  sourceType: 'ASSESSMENT' | 'INTERVIEW' | 'TOOL' | 'INITIATIVE' | 'UPLOAD_BUNDLE';
   framework?: string;
 }
 

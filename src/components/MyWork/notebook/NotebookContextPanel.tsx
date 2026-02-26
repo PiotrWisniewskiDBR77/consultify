@@ -19,7 +19,8 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import type { NotebookPage } from '@/types/myWork';
-import { PulseItemPickerModal, type PulseItem } from './PulseItemPickerModal';
+
+import { type PulseItem, PulseItemPickerModal } from './PulseItemPickerModal';
 
 type SectionKey = 'idea' | 'initiative' | 'task' | 'decision' | 'note';
 
@@ -137,7 +138,13 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
 
   const searchTerms = useMemo(() => buildSearchTerms(noteTitle, noteTags), [noteTitle, noteTags]);
   const searchTermTokens = useMemo(
-    () => searchTerms.toLowerCase().split(/\s+/).map((s) => s.trim()).filter(Boolean).slice(0, 8),
+    () =>
+      searchTerms
+        .toLowerCase()
+        .split(/\s+/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .slice(0, 8),
     [searchTerms]
   );
 
@@ -186,7 +193,8 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
 
           const tasksRaw =
             tasksRes.status === 'fulfilled'
-              ? (Array.isArray(tasksRes.value) ? tasksRes.value : (tasksRes.value as any)?.tasks) || []
+              ? (Array.isArray(tasksRes.value) ? tasksRes.value : (tasksRes.value as any)?.tasks) ||
+                []
               : [];
           setTasks(
             (tasksRaw || []).slice(0, 12).map((t: any) => ({
@@ -238,7 +246,8 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
 
   if (!open) return null;
 
-  const take = (key: SectionKey, arr: any[]) => (expanded[key] ? arr.slice(0, 12) : arr.slice(0, 4));
+  const take = (key: SectionKey, arr: any[]) =>
+    expanded[key] ? arr.slice(0, 12) : arr.slice(0, 4);
 
   const insertCallout = (title: string, body?: string) => {
     if (!editor) return;
@@ -250,9 +259,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
         attrs: { variant: 'info' },
         content: [
           { type: 'paragraph', content: [{ type: 'text', text: title }] },
-          ...(body
-            ? [{ type: 'paragraph', content: [{ type: 'text', text: body }] }]
-            : []),
+          ...(body ? [{ type: 'paragraph', content: [{ type: 'text', text: body }] }] : []),
         ],
       })
       .run();
@@ -275,7 +282,11 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
     toast.success(pl ? 'Wstawiono odniesienie do notatki' : 'Note reference inserted');
   };
 
-  const openItem = (type: 'idea' | 'initiative' | 'task' | 'decision' | 'notebook', id: string, name: string) => {
+  const openItem = (
+    type: 'idea' | 'initiative' | 'task' | 'decision' | 'notebook',
+    id: string,
+    name: string
+  ) => {
     window.dispatchEvent(
       new CustomEvent('mywork-open-item', {
         detail: { type, id, name },
@@ -306,7 +317,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                 className="text-[10px] font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
                 title={pl ? 'Więcej/mniej' : 'More/Less'}
               >
-                {expanded[k] ? (pl ? 'Mniej' : 'Less') : (pl ? 'Więcej' : 'More')}
+                {expanded[k] ? (pl ? 'Mniej' : 'Less') : pl ? 'Więcej' : 'More'}
               </button>
             )}
             {onMore && (
@@ -459,11 +470,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
               )}
             </Section>
 
-            <Section
-              k="decision"
-              count={decisions.length}
-              onMore={() => setPickerType('decision')}
-            >
+            <Section k="decision" count={decisions.length} onMore={() => setPickerType('decision')}>
               {take('decision', decisions).length === 0 ? (
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
                   {pl ? 'Brak sugestii' : 'No suggestions'}
@@ -512,4 +519,3 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
     </div>
   );
 };
-

@@ -40,7 +40,17 @@ type InboxItemType =
   | 'billing_alert'
   | 'project_update';
 
-type TriageAction = 'accept_today' | 'accept_week' | 'accept_later' | 'schedule' | 'delegate' | 'archive' | 'dismiss' | 'done' | 'save' | 'reject';
+type TriageAction =
+  | 'accept_today'
+  | 'accept_week'
+  | 'accept_later'
+  | 'schedule'
+  | 'delegate'
+  | 'archive'
+  | 'dismiss'
+  | 'done'
+  | 'save'
+  | 'reject';
 
 type InboxUrgency = 'critical' | 'high' | 'normal' | 'low';
 
@@ -192,8 +202,22 @@ const mapNotificationToInboxType = (type?: string | null): InboxItemType => {
   if (t.includes('ESCALATION')) return 'escalation';
   if (t.includes('REVIEW') || t.includes('APPROVAL')) return 'review_request';
   if (t.includes('DECISION')) return 'decision_request';
-  if (t.includes('AI') || t.includes('RECOMMENDATION') || t.includes('INSIGHT') || t.includes('RISK')) return 'ai_suggestion';
-  if (t.includes('BILLING') || t.includes('PAYMENT') || t.includes('SUBSCRIPTION') || t.includes('USAGE') || t.includes('INVOICE') || t.includes('LIMIT')) return 'billing_alert';
+  if (
+    t.includes('AI') ||
+    t.includes('RECOMMENDATION') ||
+    t.includes('INSIGHT') ||
+    t.includes('RISK')
+  )
+    return 'ai_suggestion';
+  if (
+    t.includes('BILLING') ||
+    t.includes('PAYMENT') ||
+    t.includes('SUBSCRIPTION') ||
+    t.includes('USAGE') ||
+    t.includes('INVOICE') ||
+    t.includes('LIMIT')
+  )
+    return 'billing_alert';
   if (t.includes('SYSTEM') || t.includes('SECURITY')) return 'system_alert';
   if (t.includes('PROJECT') || t.includes('INITIATIVE')) return 'project_update';
   return 'new_assignment';
@@ -215,7 +239,10 @@ const suggestTriageAction = (item: InboxItem): { action?: TriageAction; reason?:
   }
 
   // Critical/high urgency decisions → suggest accept_today
-  if (item.type === 'decision_request' && (item.urgency === 'critical' || item.urgency === 'high')) {
+  if (
+    item.type === 'decision_request' &&
+    (item.urgency === 'critical' || item.urgency === 'high')
+  ) {
     return { action: 'accept_today', reason: 'High-priority decision awaiting you' };
   }
 
@@ -248,6 +275,69 @@ const requireTables = async (res: Response, tables: string[]): Promise<boolean> 
     }
   }
   return true;
+};
+
+const createMyWorkToolSession = async (params: {
+  userId: string;
+  orgId: string;
+  sourceType: 'idea' | 'notebook';
+  sourceId: string;
+  title: string;
+  summary?: string;
+}): Promise<string> => {
+  const { userId, orgId, sourceType, sourceId, title, summary } = params;
+  const cols = await getTableColumns('tool_sessions');
+  if (!cols || cols.size === 0) {
+    throw new Error(
+      'Database table missing: tool_sessions. Run migrations (npm run db:migrate:*).'
+    );
+  }
+
+  const toolSessionId = uuidv4();
+  const now = new Date().toISOString();
+  const insertCols: string[] = ['id'];
+  const insertVals: string[] = ['?'];
+  const insertParams: any[] = [toolSessionId];
+  const add = (col: string, val: any) => {
+    if (!cols.has(col)) return;
+    insertCols.push(col);
+    insertVals.push('?');
+    insertParams.push(val);
+  };
+
+  const safeTitle = String(title || 'MyWork Session')
+    .trim()
+    .slice(0, 255);
+  const normalizedSummary = String(summary || '')
+    .trim()
+    .slice(0, 4000);
+  const myWorkPayload = {
+    origin: 'MYWORK',
+    source: { type: sourceType, id: sourceId },
+    summary: normalizedSummary || null,
+  };
+
+  add('organization_id', orgId);
+  add('project_id', null);
+  add('tool_type', 'MYWORK');
+  add('name', `MyWork ${sourceType}: ${safeTitle}`.slice(0, 255));
+  add('status', 'APPROVED');
+  add('completion_percent', 100);
+  add('confidence_avg', 1);
+  add('answers_json', JSON.stringify(myWorkPayload));
+  add('context_snapshot', JSON.stringify({ myWork: true, ...myWorkPayload }));
+  add('approved_at', now);
+  add('created_by', userId);
+  add('updated_by', userId);
+  add('created_at', now);
+  add('updated_at', now);
+
+  await queryHelpers.queryRun(
+    `INSERT INTO tool_sessions (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+    insertParams
+  );
+
+  return toolSessionId;
 };
 
 /**
@@ -322,8 +412,8 @@ router.get(
     const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 500) : 200;
 
     const taskCols = await getTableColumns('tasks');
-    const sourceTypeSelect = taskCols.has('source_type') ? 't.source_type' : "NULL as source_type";
-    const sourceIdSelect = taskCols.has('source_id') ? 't.source_id' : "NULL as source_id";
+    const sourceTypeSelect = taskCols.has('source_type') ? 't.source_type' : 'NULL as source_type';
+    const sourceIdSelect = taskCols.has('source_id') ? 't.source_id' : 'NULL as source_id';
 
     const params: any[] = [orgId, userId];
     let whereExtra = '';
@@ -713,8 +803,10 @@ router.get(
     const decisionCols = await getTableColumns('decisions');
     const prioritySelect = decisionCols.has('priority') ? 'd.priority' : `'MEDIUM' as priority`;
     const impactSelect = decisionCols.has('impact') ? 'd.impact' : `'MEDIUM' as impact`;
-    const dSourceTypeSelect = decisionCols.has('source_type') ? 'd.source_type' : "NULL as source_type";
-    const dSourceIdSelect = decisionCols.has('source_id') ? 'd.source_id' : "NULL as source_id";
+    const dSourceTypeSelect = decisionCols.has('source_type')
+      ? 'd.source_type'
+      : 'NULL as source_type';
+    const dSourceIdSelect = decisionCols.has('source_id') ? 'd.source_id' : 'NULL as source_id';
 
     const rows =
       (await queryHelpers.queryAll<any>(
@@ -775,7 +867,9 @@ router.get(
     const { userId, orgId } = identity;
     if (!(await requireTables(res, ['my_work_decision_snoozes', 'decisions']))) return;
 
-    const modeRaw = String(req.query.mode || 'my').trim().toLowerCase();
+    const modeRaw = String(req.query.mode || 'my')
+      .trim()
+      .toLowerCase();
     const mode =
       modeRaw === 'requests_pending' || modeRaw === 'requests' || modeRaw === 'pending_requests'
         ? 'requests_pending'
@@ -807,7 +901,9 @@ router.get(
 
     const prioritySelect = hasPriority ? 'd.priority' : `'MEDIUM' as priority`;
     const impactSelect = hasImpact ? 'd.impact' : `'MEDIUM' as impact`;
-    const escalationSelect = hasEscalationLevelCol ? 'd.escalation_level' : `'none' as escalation_level`;
+    const escalationSelect = hasEscalationLevelCol
+      ? 'd.escalation_level'
+      : `'none' as escalation_level`;
 
     const where: string[] = [
       `d.organization_id = ?`,
@@ -1028,7 +1124,9 @@ router.put(
 
     const prefsObj =
       req.body && typeof req.body === 'object' && !Array.isArray(req.body)
-        ? (req.body.prefs && typeof req.body.prefs === 'object' ? req.body.prefs : req.body)
+        ? req.body.prefs && typeof req.body.prefs === 'object'
+          ? req.body.prefs
+          : req.body
         : null;
     if (!prefsObj) return res.status(400).json({ error: 'prefs object is required' });
 
@@ -1251,7 +1349,8 @@ router.get(
         const type = String(n.type || '');
         const entityType = n.entityType ? String(n.entityType) : '';
         const entityId = n.entityId ? String(n.entityId) : '';
-        const key = entityType && entityId ? `${type}:${entityType}:${entityId}` : `id:${String(n.id)}`;
+        const key =
+          entityType && entityId ? `${type}:${entityType}:${entityId}` : `id:${String(n.id)}`;
         const existing = byKey.get(key);
         if (!existing) {
           byKey.set(key, n);
@@ -1297,6 +1396,9 @@ router.get(
         triagedAt: triaged?.triagedAt,
         triageAction: triaged?.action,
         triageParams: triaged?.params,
+        itemStatus: 'open',
+        reason: '',
+        isActionable: false,
         _key: key,
       });
     }
@@ -1337,6 +1439,9 @@ router.get(
         triagedAt: triaged?.triagedAt,
         triageAction: triaged?.action,
         triageParams: triaged?.params,
+        itemStatus: 'open',
+        reason: '',
+        isActionable: false,
         _key: key,
       });
     }
@@ -1372,6 +1477,9 @@ router.get(
         triagedAt: triaged?.triagedAt,
         triageAction: triaged?.action,
         triageParams: triaged?.params,
+        itemStatus: 'open',
+        reason: '',
+        isActionable: false,
         _key: key,
       });
     }
@@ -1399,6 +1507,9 @@ router.get(
         triagedAt: triaged?.triagedAt,
         triageAction: triaged?.action,
         triageParams: triaged?.params,
+        itemStatus: 'open',
+        reason: '',
+        isActionable: false,
         _key: key,
       });
     }
@@ -1421,8 +1532,10 @@ router.get(
                   : 'fyi_system';
       const receivedAt = n.createdAt || nowIso;
       const sourceType: 'user' | 'system' | 'ai' =
-        inboxType === 'ai_suggestion' ? 'ai'
-          : inboxType === 'mention' || inboxType === 'review_request' ? 'user'
+        inboxType === 'ai_suggestion'
+          ? 'ai'
+          : inboxType === 'mention' || inboxType === 'review_request'
+            ? 'user'
             : 'system';
       items.push({
         id: `inbox-${uuidv4()}`,
@@ -1438,16 +1551,26 @@ router.get(
         triagedAt: triaged?.triagedAt,
         triageAction: triaged?.action,
         triageParams: triaged?.params,
+        itemStatus: 'open',
+        reason: '',
+        isActionable: false,
         _key: key,
       });
     }
 
     // ── Enrich items with status, reason, isActionable (N1, N2, N7) ──
     const ACTIONABLE_SECTIONS = new Set<InboxSection>([
-      'decisions_required', 'approvals_gates', 'blocked_escalations', 'overdue_sla_breach', 'assigned_tasks',
+      'decisions_required',
+      'approvals_gates',
+      'blocked_escalations',
+      'overdue_sla_breach',
+      'assigned_tasks',
     ]);
     const ACTIONABLE_TYPES = new Set<InboxItemType>([
-      'decision_request', 'review_request', 'escalation', 'new_assignment',
+      'decision_request',
+      'review_request',
+      'escalation',
+      'new_assignment',
     ]);
 
     const reasonForSection = (section: InboxSection, type: InboxItemType): string => {
@@ -1470,7 +1593,8 @@ router.get(
         const act = item.triageAction;
         if (act === 'done') item.itemStatus = 'done';
         else if (act === 'save') item.itemStatus = 'saved';
-        else if (act === 'dismiss' || act === 'archive' || act === 'reject') item.itemStatus = 'dismissed';
+        else if (act === 'dismiss' || act === 'archive' || act === 'reject')
+          item.itemStatus = 'dismissed';
         else item.itemStatus = 'open';
       } else {
         item.itemStatus = 'open';
@@ -1542,8 +1666,16 @@ router.get(
     };
 
     smartSort(openItems);
-    doneItems.sort((a, b) => new Date(b.triagedAt || b.receivedAt).getTime() - new Date(a.triagedAt || a.receivedAt).getTime());
-    savedItems.sort((a, b) => new Date(b.triagedAt || b.receivedAt).getTime() - new Date(a.triagedAt || a.receivedAt).getTime());
+    doneItems.sort(
+      (a, b) =>
+        new Date(b.triagedAt || b.receivedAt).getTime() -
+        new Date(a.triagedAt || a.receivedAt).getTime()
+    );
+    savedItems.sort(
+      (a, b) =>
+        new Date(b.triagedAt || b.receivedAt).getTime() -
+        new Date(a.triagedAt || a.receivedAt).getTime()
+    );
 
     // Query filter: ?status=open|done|saved|dismissed|all (default: open)
     const statusFilter = (req.query.status as string) || 'open';
@@ -1577,8 +1709,16 @@ router.post(
     ) as InboxItemKey;
 
     const VALID_TRIAGE_ACTIONS: TriageAction[] = [
-      'accept_today', 'accept_week', 'accept_later', 'schedule', 'delegate',
-      'archive', 'dismiss', 'done', 'save', 'reject',
+      'accept_today',
+      'accept_week',
+      'accept_later',
+      'schedule',
+      'delegate',
+      'archive',
+      'dismiss',
+      'done',
+      'save',
+      'reject',
     ];
     if (!action || !VALID_TRIAGE_ACTIONS.includes(action)) {
       return res.status(400).json({ error: 'Invalid action' });
@@ -1729,8 +1869,16 @@ router.post(
     const itemKeys = (req.body?.itemKeys || req.body?.item_keys || []) as string[];
 
     const VALID_BULK: TriageAction[] = [
-      'accept_today', 'accept_week', 'accept_later', 'schedule', 'delegate',
-      'archive', 'dismiss', 'done', 'save', 'reject',
+      'accept_today',
+      'accept_week',
+      'accept_later',
+      'schedule',
+      'delegate',
+      'archive',
+      'dismiss',
+      'done',
+      'save',
+      'reject',
     ];
     if (!action || !VALID_BULK.includes(action)) {
       return res.status(400).json({ error: 'Invalid action' });
@@ -2062,7 +2210,9 @@ router.get(
  */
 const isAiSignalNotification = (nType?: string | null) => {
   const t = String(nType || '').toUpperCase();
-  return t.includes('AI') || t.includes('RECOMMENDATION') || t.includes('INSIGHT') || t.includes('RISK');
+  return (
+    t.includes('AI') || t.includes('RECOMMENDATION') || t.includes('INSIGHT') || t.includes('RISK')
+  );
 };
 
 const snoozePresetToUntil = (preset: string): string => {
@@ -2076,7 +2226,8 @@ const snoozePresetToUntil = (preset: string): string => {
     d.setHours(9, 0, 0, 0);
     return d.toISOString();
   }
-  if (p === 'week' || p === 'next_week') return new Date(now + 7 * 24 * 60 * 60 * 1000).toISOString();
+  if (p === 'week' || p === 'next_week')
+    return new Date(now + 7 * 24 * 60 * 60 * 1000).toISOString();
   return new Date(now + 24 * 60 * 60 * 1000).toISOString();
 };
 
@@ -2123,7 +2274,11 @@ router.get(
 
       const decCols = await getTableColumns('decisions');
       if (decCols.has('decision_maker_id')) {
-        const pendingDecs = await queryHelpers.queryAll<{ id: string; title: string; due_date: string }>(
+        const pendingDecs = await queryHelpers.queryAll<{
+          id: string;
+          title: string;
+          due_date: string;
+        }>(
           `SELECT id, title, due_date FROM decisions 
            WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? AND status = 'pending'
            ORDER BY due_date ASC NULLS LAST LIMIT 3`,
@@ -2232,9 +2387,7 @@ router.get(
       : notifCols.has('projectName')
         ? 'projectName as projectName'
         : 'NULL as projectName';
-    const notifSeveritySelect = notifCols.has('severity')
-      ? 'severity'
-      : `'INFO' as severity`;
+    const notifSeveritySelect = notifCols.has('severity') ? 'severity' : `'INFO' as severity`;
 
     const rows =
       (await queryHelpers.queryAll<any>(
@@ -2368,7 +2521,9 @@ router.post(
     const { userId, orgId } = identity;
     if (!(await requireTables(res, ['my_work_signal_prefs']))) return;
 
-    const type = String(req.body?.type || '').trim().toUpperCase();
+    const type = String(req.body?.type || '')
+      .trim()
+      .toUpperCase();
     if (!type) return res.status(400).json({ error: 'type is required' });
 
     const existing = await queryHelpers.queryOne<any>(
@@ -2694,7 +2849,8 @@ router.put(
     if (req.body?.tags !== undefined) set('tags', JSON.stringify(parseTagsArray(req.body.tags)));
     if (typeof req.body?.branch === 'string') set('branch', req.body.branch);
     if (typeof req.body?.area === 'string') set('area', req.body.area);
-    if (typeof req.body?.priority === 'number') set('priority', Math.max(0, Math.min(100, req.body.priority)));
+    if (typeof req.body?.priority === 'number')
+      set('priority', Math.max(0, Math.min(100, req.body.priority)));
     if (typeof req.body?.stage === 'string') set('stage', req.body.stage);
 
     if (setParts.length === 0) {
@@ -3010,8 +3166,16 @@ router.get(
 
     let nodes: any[] = [];
     let edges: any[] = [];
-    try { nodes = JSON.parse(String(row.nodesJson || '[]')); } catch { nodes = []; }
-    try { edges = JSON.parse(String(row.edgesJson || '[]')); } catch { edges = []; }
+    try {
+      nodes = JSON.parse(String(row.nodesJson || '[]'));
+    } catch {
+      nodes = [];
+    }
+    try {
+      edges = JSON.parse(String(row.edgesJson || '[]'));
+    } catch {
+      edges = [];
+    }
 
     res.json({
       map: { nodes, edges, version: Number(row.version || 1) },
@@ -3116,7 +3280,8 @@ router.put(
 
     const nodes = Array.isArray(req.body?.nodes) ? req.body.nodes : null;
     const edges = Array.isArray(req.body?.edges) ? req.body.edges : null;
-    if (!nodes || !edges) return res.status(400).json({ error: 'nodes and edges are required arrays' });
+    if (!nodes || !edges)
+      return res.status(400).json({ error: 'nodes and edges are required arrays' });
 
     const ideaOk = await queryHelpers.queryOne<any>(
       `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
@@ -3137,7 +3302,17 @@ router.put(
       await queryHelpers.queryRun(
         `INSERT INTO my_idea_maps (id, idea_id, user_id, organization_id, nodes_json, edges_json, version, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, ideaId, userId, orgId, JSON.stringify(nodes), JSON.stringify(edges), nextVersion, now, now]
+        [
+          id,
+          ideaId,
+          userId,
+          orgId,
+          JSON.stringify(nodes),
+          JSON.stringify(edges),
+          nextVersion,
+          now,
+          now,
+        ]
       );
     } else {
       await queryHelpers.queryRun(
@@ -3169,7 +3344,8 @@ router.post(
     if (!ideaId || ideaId === 'all') return res.status(400).json({ error: 'Invalid idea id' });
 
     const countRaw = Number(req.body?.count);
-    const count = Number.isFinite(countRaw) && countRaw > 0 ? Math.min(10, Math.max(1, countRaw)) : 5;
+    const count =
+      Number.isFinite(countRaw) && countRaw > 0 ? Math.min(10, Math.max(1, countRaw)) : 5;
     const branchKey = String(req.body?.branchKey || 'options').trim() || 'options';
     const language = String(req.body?.language || 'en').toLowerCase();
     const isPl = language.startsWith('pl');
@@ -3188,8 +3364,16 @@ router.post(
     let nodes: any[] = [];
     let edges: any[] = [];
     if (mapRow) {
-      try { nodes = JSON.parse(String(mapRow.nodesJson || '[]')); } catch { nodes = []; }
-      try { edges = JSON.parse(String(mapRow.edgesJson || '[]')); } catch { edges = []; }
+      try {
+        nodes = JSON.parse(String(mapRow.nodesJson || '[]'));
+      } catch {
+        nodes = [];
+      }
+      try {
+        edges = JSON.parse(String(mapRow.edgesJson || '[]'));
+      } catch {
+        edges = [];
+      }
     } else {
       const def = buildDefaultIdeaMap({ id: ideaId, title: String(idea?.title || '') }, isPl);
       nodes = def.nodes;
@@ -3197,7 +3381,9 @@ router.post(
     }
 
     const anchorNodeId = String(req.body?.anchorNodeId || 'root').trim() || 'root';
-    const anchor = nodes.find((n) => String(n?.id) === anchorNodeId) || nodes.find((n) => String(n?.id) === 'root');
+    const anchor =
+      nodes.find((n) => String(n?.id) === anchorNodeId) ||
+      nodes.find((n) => String(n?.id) === 'root');
     const branchNode =
       nodes.find((n) => String(n?.id) === `branch-${branchKey}`) ||
       nodes.find((n) => String(n?.type) === 'branch' && String(n?.data?.branchKey) === branchKey);
@@ -3428,8 +3614,16 @@ router.post(
 
     // ----- Convert: Initiative -----
     if (target === 'initiative') {
-      if (!(await requireTables(res, ['initiatives']))) return;
+      if (!(await requireTables(res, ['initiatives', 'tool_sessions']))) return;
       const cols = await getTableColumns('initiatives');
+      const toolSessionId = await createMyWorkToolSession({
+        userId,
+        orgId,
+        sourceType: 'idea',
+        sourceId: ideaId,
+        title: safeTitle,
+        summary: safeExpansion || safeBody,
+      });
 
       const initiativeId = uuidv4();
       const insertCols: string[] = ['id'];
@@ -3451,6 +3645,8 @@ router.post(
       add('owner_execution_id', userId);
       add('owner_business_id', userId);
       add('sponsor_id', userId);
+      add('source_type', 'tool');
+      add('source_id', toolSessionId);
 
       await queryHelpers.queryRun(
         `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
@@ -3463,6 +3659,7 @@ router.post(
         promotedTo: 'initiative',
         promotedEntityId: initiativeId,
         created: { initiativeId },
+        sourceSessionId: toolSessionId,
       });
     }
 
@@ -3584,7 +3781,8 @@ router.post(
       if (!(await requireTables(res, ['chat_projects', 'conversations', 'conversation_messages'])))
         return;
 
-      const chatProjectIdOpt = typeof options?.chatProjectId === 'string' ? options.chatProjectId : null;
+      const chatProjectIdOpt =
+        typeof options?.chatProjectId === 'string' ? options.chatProjectId : null;
       let chatProjectId: string | null = chatProjectIdOpt;
 
       if (!chatProjectId) {
@@ -3761,15 +3959,24 @@ router.post(
     res.flushHeaders();
 
     const emit = (type: string, data: any) => {
-      try { res.write(`data: ${JSON.stringify({ type, ...data })}\n\n`); } catch {}
+      try {
+        res.write(`data: ${JSON.stringify({ type, ...data })}\n\n`);
+      } catch {}
     };
 
-    emit('stage', { stage: 'expanding', label: isPl ? 'Rozwijam Twój pomysł...' : 'Expanding your idea...' });
+    emit('stage', {
+      stage: 'expanding',
+      label: isPl ? 'Rozwijam Twój pomysł...' : 'Expanding your idea...',
+    });
 
     try {
       const { llmService } = await import('../services/ai/llmService.js');
       const modelRouter = (await import('../services/ai/modelRouter.js')).default;
-      const modelCfg = await modelRouter.select({ capability: 'chat', organizationId: orgId, options: { tier: 'STANDARD' } });
+      const modelCfg = await modelRouter.select({
+        capability: 'chat',
+        organizationId: orgId,
+        options: { tier: 'STANDARD' },
+      });
 
       // STAGE 1: AI Expansion
       const expansionPrompt = isPl
@@ -3779,7 +3986,9 @@ router.post(
       const expansionResult = await llmService.callText({
         type: 'text',
         modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
-        systemPrompt: isPl ? 'Jesteś kreatywnym partnerem do rozwoju pomysłów.' : 'You are a creative idea development partner.',
+        systemPrompt: isPl
+          ? 'Jesteś kreatywnym partnerem do rozwoju pomysłów.'
+          : 'You are a creative idea development partner.',
         messages: [{ role: 'user', content: expansionPrompt }],
       });
       const aiExpansion = String((expansionResult as any)?.content || '');
@@ -3792,17 +4001,24 @@ router.post(
       );
 
       // STAGE 2: Web Research
-      emit('stage', { stage: 'researching', label: isPl ? 'Szukam informacji w sieci...' : 'Researching the web...' });
+      emit('stage', {
+        stage: 'researching',
+        label: isPl ? 'Szukam informacji w sieci...' : 'Researching the web...',
+      });
 
       let researchResults: any[] = [];
       try {
         const tavilyKey = process.env.TAVILY_API_KEY;
         if (tavilyKey) {
-          const { TavilyWebSearchService } = await import('../services/ai/tavilyWebSearchService.js');
+          const { TavilyWebSearchService } =
+            await import('../services/ai/tavilyWebSearchService.js');
           const tavily = new (TavilyWebSearchService as any)(tavilyKey);
 
           const searchQuery = aiExpansion.split('\n').slice(0, 2).join(' ').slice(0, 200);
-          const searchRes = await tavily.search(searchQuery, { maxResults: 5, searchDepth: 'advanced' });
+          const searchRes = await tavily.search(searchQuery, {
+            maxResults: 5,
+            searchDepth: 'advanced',
+          });
           researchResults = (searchRes?.results || []).map((r: any) => ({
             title: String(r?.title || '').slice(0, 200),
             url: String(r?.url || ''),
@@ -3822,9 +4038,12 @@ router.post(
       );
 
       // STAGE 3: Creative Proposals
-      emit('stage', { stage: 'proposing', label: isPl ? 'Generuję kreatywne propozycje...' : 'Generating creative proposals...' });
+      emit('stage', {
+        stage: 'proposing',
+        label: isPl ? 'Generuję kreatywne propozycje...' : 'Generating creative proposals...',
+      });
 
-      const researchContext = researchResults.map(r => `- ${r.title}: ${r.snippet}`).join('\n');
+      const researchContext = researchResults.map((r) => `- ${r.title}: ${r.snippet}`).join('\n');
       const proposalsPrompt = isPl
         ? `Na podstawie pomysłu użytkownika i badań, zaproponuj 4 kreatywne warianty/rozszerzenia.\n\nPomysł: "${seedText}"\n\nRozwinięcie:\n${aiExpansion}\n\nBadania:\n${researchContext}\n\nDla każdego wariantu podaj:\n- Tytuł (krótki, chwytliwy)\n- Opis (2-3 zdania)\n- Dlaczego warto (1 zdanie)\n\nOdpowiedz jako JSON array: [{"title":"...","description":"...","whyItMatters":"..."}]\nTylko JSON, bez markdown.`
         : `Based on the user's idea and research, propose 4 creative variants/extensions.\n\nIdea: "${seedText}"\n\nExpansion:\n${aiExpansion}\n\nResearch:\n${researchContext}\n\nFor each variant provide:\n- Title (short, catchy)\n- Description (2-3 sentences)\n- Why it matters (1 sentence)\n\nRespond as JSON array: [{"title":"...","description":"...","whyItMatters":"..."}]\nOnly JSON, no markdown.`;
@@ -3832,7 +4051,9 @@ router.post(
       const proposalsResult = await llmService.callText({
         type: 'text',
         modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
-        systemPrompt: isPl ? 'Jesteś kreatywnym generatorem pomysłów. Odpowiadasz tylko poprawnym JSON.' : 'You are a creative idea generator. You respond only with valid JSON.',
+        systemPrompt: isPl
+          ? 'Jesteś kreatywnym generatorem pomysłów. Odpowiadasz tylko poprawnym JSON.'
+          : 'You are a creative idea generator. You respond only with valid JSON.',
         messages: [{ role: 'user', content: proposalsPrompt }],
       });
 
@@ -3841,7 +4062,9 @@ router.post(
         const raw = String((proposalsResult as any)?.content || '[]');
         const jsonMatch = raw.match(/\[[\s\S]*\]/);
         proposals = JSON.parse(jsonMatch ? jsonMatch[0] : '[]');
-      } catch { proposals = []; }
+      } catch {
+        proposals = [];
+      }
 
       emit('proposals', { proposals });
 
@@ -3851,16 +4074,21 @@ router.post(
       );
 
       // STAGE 4: Summary
-      emit('stage', { stage: 'summary', label: isPl ? 'Tworzę podsumowanie...' : 'Creating summary...' });
+      emit('stage', {
+        stage: 'summary',
+        label: isPl ? 'Tworzę podsumowanie...' : 'Creating summary...',
+      });
 
       const summaryPrompt = isPl
-        ? `Podsumuj ten pomysł jako kreatywny konsultant.\n\nPomysł: "${seedText}"\nRozwinięcie: ${aiExpansion.slice(0, 500)}\nPropozycje: ${proposals.map(p => p.title).join(', ')}\n\nOdpowiedz jako JSON:\n{"verdict":"...(1-2 zdania entuzjastycznej oceny)","potential":"high|medium|low","complexity":"low|medium|high","timeToValue":"...(np. 2-4 tygodnie)","nextSteps":["krok1","krok2","krok3"]}\nTylko JSON.`
-        : `Summarize this idea as a creative consultant.\n\nIdea: "${seedText}"\nExpansion: ${aiExpansion.slice(0, 500)}\nProposals: ${proposals.map(p => p.title).join(', ')}\n\nRespond as JSON:\n{"verdict":"...(1-2 sentence enthusiastic assessment)","potential":"high|medium|low","complexity":"low|medium|high","timeToValue":"...(e.g. 2-4 weeks)","nextSteps":["step1","step2","step3"]}\nOnly JSON.`;
+        ? `Podsumuj ten pomysł jako kreatywny konsultant.\n\nPomysł: "${seedText}"\nRozwinięcie: ${aiExpansion.slice(0, 500)}\nPropozycje: ${proposals.map((p) => p.title).join(', ')}\n\nOdpowiedz jako JSON:\n{"verdict":"...(1-2 zdania entuzjastycznej oceny)","potential":"high|medium|low","complexity":"low|medium|high","timeToValue":"...(np. 2-4 tygodnie)","nextSteps":["krok1","krok2","krok3"]}\nTylko JSON.`
+        : `Summarize this idea as a creative consultant.\n\nIdea: "${seedText}"\nExpansion: ${aiExpansion.slice(0, 500)}\nProposals: ${proposals.map((p) => p.title).join(', ')}\n\nRespond as JSON:\n{"verdict":"...(1-2 sentence enthusiastic assessment)","potential":"high|medium|low","complexity":"low|medium|high","timeToValue":"...(e.g. 2-4 weeks)","nextSteps":["step1","step2","step3"]}\nOnly JSON.`;
 
       const summaryResult = await llmService.callText({
         type: 'text',
         modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
-        systemPrompt: isPl ? 'Jesteś pozytywnym konsultantem strategicznym. Odpowiadasz JSON.' : 'You are a positive strategic consultant. You respond with JSON.',
+        systemPrompt: isPl
+          ? 'Jesteś pozytywnym konsultantem strategicznym. Odpowiadasz JSON.'
+          : 'You are a positive strategic consultant. You respond with JSON.',
         messages: [{ role: 'user', content: summaryPrompt }],
       });
 
@@ -3869,7 +4097,15 @@ router.post(
         const raw = String((summaryResult as any)?.content || '{}');
         const jsonMatch = raw.match(/\{[\s\S]*\}/);
         summary = JSON.parse(jsonMatch ? jsonMatch[0] : '{}');
-      } catch { summary = { verdict: '', potential: 'medium', complexity: 'medium', timeToValue: '?', nextSteps: [] }; }
+      } catch {
+        summary = {
+          verdict: '',
+          potential: 'medium',
+          complexity: 'medium',
+          timeToValue: '?',
+          nextSteps: [],
+        };
+      }
 
       emit('summary', { summary });
 
@@ -3937,7 +4173,12 @@ const safeJsonString = (v: unknown, fallback: string) => {
 const canAccessNotebookRow = async (
   userId: string,
   orgId: string,
-  row: { owner_user_id?: string; organization_id?: string; visibility?: string; project_id?: string }
+  row: {
+    owner_user_id?: string;
+    organization_id?: string;
+    visibility?: string;
+    project_id?: string;
+  }
 ): Promise<boolean> => {
   if (!row) return false;
   if (String(row.organization_id || '') !== String(orgId)) return false;
@@ -4050,7 +4291,11 @@ router.get(
 
     const parseConvertedTo = (raw: string | null) => {
       if (!raw) return null;
-      try { return JSON.parse(raw); } catch { return null; }
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
     };
 
     res.json(
@@ -4087,11 +4332,13 @@ router.post(
     if (!title) return res.status(400).json({ error: 'title is required' });
 
     const projectId = req.body?.projectId ? String(req.body.projectId) : null;
-    const visibility = (req.body?.visibility
-      ? String(req.body.visibility).toLowerCase()
-      : projectId
-        ? 'project'
-        : 'private') as NotebookVisibility;
+    const visibility = (
+      req.body?.visibility
+        ? String(req.body.visibility).toLowerCase()
+        : projectId
+          ? 'project'
+          : 'private'
+    ) as NotebookVisibility;
 
     if (visibility === 'project' && !projectId) {
       return res.status(400).json({ error: 'projectId is required for visibility=project' });
@@ -4109,17 +4356,38 @@ router.post(
     const id = uuidv4();
     const now = new Date().toISOString();
     const tags = JSON.stringify(parseTagsArray(req.body?.tags));
-    const contentJson = safeJsonString(req.body?.contentJson, JSON.stringify({ type: 'doc', content: [] }));
+    const contentJson = safeJsonString(
+      req.body?.contentJson,
+      JSON.stringify({ type: 'doc', content: [] })
+    );
     const contentText = typeof req.body?.contentText === 'string' ? req.body.contentText : null;
     const icon = typeof req.body?.icon === 'string' ? req.body.icon : null;
     const maturity = typeof req.body?.maturity === 'string' ? req.body.maturity : 'seed';
-    const status = typeof req.body?.status === 'string' && ['inbox', 'active'].includes(req.body.status) ? req.body.status : 'active';
+    const status =
+      typeof req.body?.status === 'string' && ['inbox', 'active'].includes(req.body.status)
+        ? req.body.status
+        : 'active';
 
     await queryHelpers.queryRun(
       `INSERT INTO notebook_pages
         (id, owner_user_id, organization_id, project_id, visibility, title, content_json, content_text, tags_json, icon, maturity, status, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, userId, orgId, projectId, visibility, title, contentJson, contentText, tags, icon, maturity, status, now, now]
+      [
+        id,
+        userId,
+        orgId,
+        projectId,
+        visibility,
+        title,
+        contentJson,
+        contentText,
+        tags,
+        icon,
+        maturity,
+        status,
+        now,
+        now,
+      ]
     );
 
     const row = await queryHelpers.queryOne<any>(
@@ -4148,7 +4416,11 @@ router.post(
 
     const parseConvertedTo = (raw: string | null) => {
       if (!raw) return null;
-      try { return JSON.parse(raw); } catch { return null; }
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
     };
 
     res.status(201).json({
@@ -4205,11 +4477,16 @@ router.get(
       [id]
     );
     if (!row) return res.status(404).json({ error: 'Not found' });
-    if (!(await canAccessNotebookRow(userId, orgId, row))) return res.status(403).json({ error: 'Forbidden' });
+    if (!(await canAccessNotebookRow(userId, orgId, row)))
+      return res.status(403).json({ error: 'Forbidden' });
 
     const parseConvertedTo = (raw: string | null) => {
       if (!raw) return null;
-      try { return JSON.parse(raw); } catch { return null; }
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
     };
 
     res.json({
@@ -4258,7 +4535,8 @@ router.put(
       [id]
     );
     if (!existing) return res.status(404).json({ error: 'Not found' });
-    if (String(existing.organization_id || '') !== String(orgId)) return res.status(403).json({ error: 'Forbidden' });
+    if (String(existing.organization_id || '') !== String(orgId))
+      return res.status(403).json({ error: 'Forbidden' });
     if (String(existing.owner_user_id || '') !== String(userId))
       return res.status(403).json({ error: 'Owner-only' });
 
@@ -4270,14 +4548,21 @@ router.put(
     };
 
     if (typeof req.body?.title === 'string') set('title', String(req.body.title).trim());
-    if (req.body?.tags !== undefined) set('tags_json', JSON.stringify(parseTagsArray(req.body.tags)));
+    if (req.body?.tags !== undefined)
+      set('tags_json', JSON.stringify(parseTagsArray(req.body.tags)));
     if (req.body?.contentJson !== undefined)
-      set('content_json', safeJsonString(req.body.contentJson, JSON.stringify({ type: 'doc', content: [] })));
+      set(
+        'content_json',
+        safeJsonString(req.body.contentJson, JSON.stringify({ type: 'doc', content: [] }))
+      );
     if (typeof req.body?.contentText === 'string') set('content_text', req.body.contentText);
     if (typeof req.body?.maturity === 'string') set('maturity', req.body.maturity);
     if (typeof req.body?.icon === 'string') set('icon', req.body.icon);
     if (typeof req.body?.summary === 'string') set('summary', req.body.summary);
-    if (typeof req.body?.status === 'string' && ['inbox', 'active', 'converted', 'archived'].includes(req.body.status))
+    if (
+      typeof req.body?.status === 'string' &&
+      ['inbox', 'active', 'converted', 'archived'].includes(req.body.status)
+    )
       set('status', req.body.status);
 
     if (req.body?.projectId !== undefined) {
@@ -4309,7 +4594,14 @@ router.put(
       FROM notebook_pages WHERE id = ? LIMIT 1`;
 
     const formatNotebookRow = (r: any) => {
-      const parseCT = (raw: string | null) => { if (!raw) return null; try { return JSON.parse(raw); } catch { return null; } };
+      const parseCT = (raw: string | null) => {
+        if (!raw) return null;
+        try {
+          return JSON.parse(raw);
+        } catch {
+          return null;
+        }
+      };
       return {
         ...r,
         tags: parseTagsArray(r?.tags),
@@ -4317,7 +4609,11 @@ router.put(
         convertedTo: parseCT(r?.convertedToJson),
         convertedToJson: undefined,
         contentJson: (() => {
-          try { return r?.contentJson ? JSON.parse(r.contentJson) : { type: 'doc', content: [] }; } catch { return { type: 'doc', content: [] }; }
+          try {
+            return r?.contentJson ? JSON.parse(r.contentJson) : { type: 'doc', content: [] };
+          } catch {
+            return { type: 'doc', content: [] };
+          }
         })(),
       };
     };
@@ -4329,7 +4625,10 @@ router.put(
 
     setParts.push(`updated_at = CURRENT_TIMESTAMP`);
     params.push(id);
-    await queryHelpers.queryRun(`UPDATE notebook_pages SET ${setParts.join(', ')} WHERE id = ?`, params);
+    await queryHelpers.queryRun(
+      `UPDATE notebook_pages SET ${setParts.join(', ')} WHERE id = ?`,
+      params
+    );
 
     const row = await queryHelpers.queryOne<any>(selectNotebookFull, [id]);
     res.json(formatNotebookRow(row));
@@ -4354,7 +4653,8 @@ router.delete(
       [id]
     );
     if (!existing) return res.status(404).json({ error: 'Not found' });
-    if (String(existing.organization_id || '') !== String(orgId)) return res.status(403).json({ error: 'Forbidden' });
+    if (String(existing.organization_id || '') !== String(orgId))
+      return res.status(403).json({ error: 'Forbidden' });
     if (String(existing.owner_user_id || '') !== String(userId))
       return res.status(403).json({ error: 'Owner-only' });
 
@@ -4381,8 +4681,10 @@ router.put(
       [id]
     );
     if (!existing) return res.status(404).json({ error: 'Not found' });
-    if (String(existing.organization_id || '') !== String(orgId)) return res.status(403).json({ error: 'Forbidden' });
-    if (String(existing.owner_user_id || '') !== String(userId)) return res.status(403).json({ error: 'Owner-only' });
+    if (String(existing.organization_id || '') !== String(orgId))
+      return res.status(403).json({ error: 'Forbidden' });
+    if (String(existing.owner_user_id || '') !== String(userId))
+      return res.status(403).json({ error: 'Owner-only' });
 
     const newPinned = existing.pinned ? 0 : 1;
     await queryHelpers.queryRun(
@@ -4407,9 +4709,13 @@ router.put(
     if (!(await requireTables(res, ['notebook_pages']))) return;
 
     const id = String(req.params.id || '').trim();
-    const status = String(req.body?.status || '').trim().toLowerCase();
+    const status = String(req.body?.status || '')
+      .trim()
+      .toLowerCase();
     if (!['inbox', 'active', 'converted', 'archived'].includes(status)) {
-      return res.status(400).json({ error: 'Invalid status. Must be inbox|active|converted|archived' });
+      return res
+        .status(400)
+        .json({ error: 'Invalid status. Must be inbox|active|converted|archived' });
     }
 
     const existing = await queryHelpers.queryOne<any>(
@@ -4417,8 +4723,10 @@ router.put(
       [id]
     );
     if (!existing) return res.status(404).json({ error: 'Not found' });
-    if (String(existing.organization_id || '') !== String(orgId)) return res.status(403).json({ error: 'Forbidden' });
-    if (String(existing.owner_user_id || '') !== String(userId)) return res.status(403).json({ error: 'Owner-only' });
+    if (String(existing.organization_id || '') !== String(orgId))
+      return res.status(403).json({ error: 'Forbidden' });
+    if (String(existing.owner_user_id || '') !== String(userId))
+      return res.status(403).json({ error: 'Owner-only' });
 
     await queryHelpers.queryRun(
       `UPDATE notebook_pages SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
@@ -4431,7 +4739,7 @@ router.put(
 
 /**
  * POST /api/my-work/notebook/pages/:id/convert
- * Convert a notebook page to a task, decision, or initiative.
+ * Convert a notebook page to a task, decision, initiative, report, or presentation.
  */
 router.post(
   '/notebook/pages/:id/convert',
@@ -4442,9 +4750,13 @@ router.post(
     if (!(await requireTables(res, ['notebook_pages']))) return;
 
     const pageId = String(req.params.id || '').trim();
-    const target = String(req.body?.target || '').trim().toLowerCase();
-    if (!['task', 'decision', 'initiative'].includes(target)) {
-      return res.status(400).json({ error: 'target must be task|decision|initiative' });
+    const target = String(req.body?.target || '')
+      .trim()
+      .toLowerCase();
+    if (!['task', 'decision', 'initiative', 'report', 'presentation'].includes(target)) {
+      return res
+        .status(400)
+        .json({ error: 'target must be task|decision|initiative|report|presentation' });
     }
 
     const page = await queryHelpers.queryOne<any>(
@@ -4453,15 +4765,22 @@ router.post(
       [pageId]
     );
     if (!page) return res.status(404).json({ error: 'Not found' });
-    if (String(page.organization_id || '') !== String(orgId)) return res.status(403).json({ error: 'Forbidden' });
-    if (String(page.owner_user_id || '') !== String(userId)) return res.status(403).json({ error: 'Owner-only' });
+    if (String(page.organization_id || '') !== String(orgId))
+      return res.status(403).json({ error: 'Forbidden' });
+    if (String(page.owner_user_id || '') !== String(userId))
+      return res.status(403).json({ error: 'Owner-only' });
 
     const overrideTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
     const overrideDesc = typeof req.body?.description === 'string' ? req.body.description : '';
     const entityTitle = overrideTitle || page.title || 'Untitled';
     const entityDesc = overrideDesc || (page.content_text || '').slice(0, 2000);
     const newId = uuidv4();
-    let createdEntity: { id: string; type: string; title: string } | null = null;
+    let createdEntity: {
+      id: string;
+      type: string;
+      title: string;
+      sourceSessionId?: string;
+    } | null = null;
 
     if (target === 'task') {
       const cols = await getTableColumns('tasks');
@@ -4517,15 +4836,130 @@ router.post(
         );
       }
       createdEntity = { id: newId, type: 'decision', title: entityTitle };
+    } else if (target === 'initiative') {
+      if (!(await requireTables(res, ['initiatives', 'tool_sessions']))) return;
+      const cols = await getTableColumns('initiatives');
+      const toolSessionId = await createMyWorkToolSession({
+        userId,
+        orgId,
+        sourceType: 'notebook',
+        sourceId: pageId,
+        title: entityTitle,
+        summary: entityDesc,
+      });
+
+      const insertCols: string[] = ['id'];
+      const insertVals: string[] = ['?'];
+      const insertParams: any[] = [newId];
+      const add = (col: string, val: any) => {
+        if (!cols.has(col)) return;
+        insertCols.push(col);
+        insertVals.push('?');
+        insertParams.push(val);
+      };
+
+      add('organization_id', orgId);
+      add('name', entityTitle.slice(0, 255));
+      add('title', entityTitle.slice(0, 255));
+      add('summary', entityDesc.slice(0, 5000));
+      add('description', entityDesc.slice(0, 5000));
+      add('status', 'DRAFT');
+      add('owner_execution_id', userId);
+      add('owner_business_id', userId);
+      add('sponsor_id', userId);
+      add('source_type', 'tool');
+      add('source_id', toolSessionId);
+
+      await queryHelpers.queryRun(
+        `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+        insertParams
+      );
+      createdEntity = {
+        id: newId,
+        type: 'initiative',
+        title: entityTitle,
+        sourceSessionId: toolSessionId,
+      };
+    } else if (target === 'report') {
+      if (!(await requireTables(res, ['tool_sessions']))) return;
+      const toolSessionId = await createMyWorkToolSession({
+        userId,
+        orgId,
+        sourceType: 'notebook',
+        sourceId: pageId,
+        title: entityTitle,
+        summary: entityDesc,
+      });
+
+      const reportBuilderService = await import('../services/reportBuilderService.js');
+      const created = await reportBuilderService.createReport({
+        organizationId: orgId,
+        sourceType: 'TOOL',
+        sourceId: toolSessionId,
+        title: entityTitle.slice(0, 255),
+        description: entityDesc.slice(0, 2000),
+        createdBy: userId,
+      });
+      createdEntity = {
+        id: String(created.report.id),
+        type: 'report',
+        title: String(created.report.title || entityTitle),
+        sourceSessionId: toolSessionId,
+      };
     } else {
-      createdEntity = { id: newId, type: 'initiative', title: entityTitle };
+      if (!(await requireTables(res, ['tool_sessions']))) return;
+      const toolSessionId = await createMyWorkToolSession({
+        userId,
+        orgId,
+        sourceType: 'notebook',
+        sourceId: pageId,
+        title: entityTitle,
+        summary: entityDesc,
+      });
+
+      const presentationGeneratorService =
+        await import('../services/presentationGeneratorService.js');
+      const outline = await presentationGeneratorService.generateOutline(
+        {
+          title: entityTitle.slice(0, 255),
+          audience: 'internal',
+          goal: 'inform',
+          language: 'en',
+          theme: 'corporate',
+          confidentiality: 'internal',
+          sourceArtifacts: [
+            {
+              type: 'tool_session',
+              id: toolSessionId,
+              label: `MyWork session: ${entityTitle.slice(0, 120)}`,
+              data: {
+                sourceType: 'notebook',
+                sourceId: pageId,
+              },
+            },
+          ],
+        },
+        orgId
+      );
+      createdEntity = {
+        id: String(outline.deckId),
+        type: 'presentation',
+        title: entityTitle,
+        sourceSessionId: toolSessionId,
+      };
     }
 
     // Update notebook page: track conversion + set status
     let existingConverted: any[] = [];
-    try { existingConverted = JSON.parse(page.converted_to_json || '[]'); } catch { existingConverted = []; }
+    try {
+      existingConverted = JSON.parse(page.converted_to_json || '[]');
+    } catch {
+      existingConverted = [];
+    }
     if (!Array.isArray(existingConverted)) existingConverted = [];
-    existingConverted.push({ type: target, id: newId });
+    if (createdEntity?.id) {
+      existingConverted.push({ type: target, id: createdEntity.id });
+    }
 
     await queryHelpers.queryRun(
       `UPDATE notebook_pages SET status = 'converted', converted_to_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
@@ -4555,8 +4989,10 @@ router.post(
       [pageId]
     );
     if (!page) return res.status(404).json({ error: 'Not found' });
-    if (String(page.organization_id || '') !== String(orgId)) return res.status(403).json({ error: 'Forbidden' });
-    if (String(page.owner_user_id || '') !== String(userId)) return res.status(403).json({ error: 'Owner-only' });
+    if (String(page.organization_id || '') !== String(orgId))
+      return res.status(403).json({ error: 'Forbidden' });
+    if (String(page.owner_user_id || '') !== String(userId))
+      return res.status(403).json({ error: 'Owner-only' });
 
     const noteContent = String(page.content_text || page.title || '').trim();
     if (!noteContent) return res.status(400).json({ error: 'Note has no content to analyze' });
@@ -4575,15 +5011,24 @@ router.post(
     res.flushHeaders();
 
     const emit = (type: string, data: any) => {
-      try { res.write(`data: ${JSON.stringify({ type, ...data })}\n\n`); } catch {}
+      try {
+        res.write(`data: ${JSON.stringify({ type, ...data })}\n\n`);
+      } catch {}
     };
 
-    emit('stage', { stage: 'extracting', label: isPl ? 'Analizuję notatkę...' : 'Analyzing note...' });
+    emit('stage', {
+      stage: 'extracting',
+      label: isPl ? 'Analizuję notatkę...' : 'Analyzing note...',
+    });
 
     try {
       const { llmService } = await import('../services/ai/llmService.js');
       const modelRouter = (await import('../services/ai/modelRouter.js')).default;
-      const modelCfg = await modelRouter.select({ capability: 'chat', organizationId: orgId, options: { tier: 'STANDARD' } });
+      const modelCfg = await modelRouter.select({
+        capability: 'chat',
+        organizationId: orgId,
+        options: { tier: 'STANDARD' },
+      });
 
       const prompt = isPl
         ? `Przeanalizuj poniższą notatkę i wyodrębnij konkretne akcje (action items) do wykonania.\n\nNotatka: "${noteContent.slice(0, 3000)}"\n\nDla każdej akcji podaj:\n- title: krótki tytuł\n- suggestedOwner: sugerowany właściciel (lub null)\n- suggestedDue: sugerowany termin jako opis (np. "do końca tygodnia") lub null\n- priority: high|medium|low\n\nOdpowiedz JSON array: [{"title":"...","suggestedOwner":null,"suggestedDue":null,"priority":"medium"}]\nTylko JSON, bez markdown.`
@@ -4592,7 +5037,9 @@ router.post(
       const result = await llmService.callText({
         type: 'text',
         modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
-        systemPrompt: isPl ? 'Jesteś asystentem do analizy notatek. Odpowiadasz tylko JSON.' : 'You are a note analysis assistant. You respond only with valid JSON.',
+        systemPrompt: isPl
+          ? 'Jesteś asystentem do analizy notatek. Odpowiadasz tylko JSON.'
+          : 'You are a note analysis assistant. You respond only with valid JSON.',
         messages: [{ role: 'user', content: prompt }],
       });
 
@@ -4601,7 +5048,9 @@ router.post(
         const raw = String((result as any)?.content || '[]');
         const jsonMatch = raw.match(/\[[\s\S]*\]/);
         items = JSON.parse(jsonMatch ? jsonMatch[0] : '[]');
-      } catch { items = []; }
+      } catch {
+        items = [];
+      }
 
       emit('actions', { items });
       emit('done', { count: items.length });
@@ -4633,15 +5082,21 @@ router.post(
       [pageId]
     );
     if (!page) return res.status(404).json({ error: 'Not found' });
-    if (String(page.organization_id || '') !== String(orgId)) return res.status(403).json({ error: 'Forbidden' });
-    if (String(page.owner_user_id || '') !== String(userId)) return res.status(403).json({ error: 'Owner-only' });
+    if (String(page.organization_id || '') !== String(orgId))
+      return res.status(403).json({ error: 'Forbidden' });
+    if (String(page.owner_user_id || '') !== String(userId))
+      return res.status(403).json({ error: 'Owner-only' });
 
     const title = String(page.title || '').trim();
-    const contentText = String(page.content_text || '').trim().slice(0, 2000);
+    const contentText = String(page.content_text || '')
+      .trim()
+      .slice(0, 2000);
     const tags = parseTagsArray(page.tags_json);
     const tagsStr = tags.join(', ');
 
-    const excludedTopics: string[] = Array.isArray(req.body?.excludedTopics) ? req.body.excludedTopics : [];
+    const excludedTopics: string[] = Array.isArray(req.body?.excludedTopics)
+      ? req.body.excludedTopics
+      : [];
     const language = String(req.body?.language || 'en').toLowerCase();
     const isPl = language.startsWith('pl');
 
@@ -4650,11 +5105,18 @@ router.post(
     try {
       const { llmService } = await import('../services/ai/llmService.js');
       const modelRouter = (await import('../services/ai/modelRouter.js')).default;
-      const modelCfg = await modelRouter.select({ capability: 'chat', organizationId: orgId, options: { tier: 'STANDARD' } });
+      const modelCfg = await modelRouter.select({
+        capability: 'chat',
+        organizationId: orgId,
+        options: { tier: 'STANDARD' },
+      });
 
-      const excludeHint = excludedTopics.length > 0
-        ? (isPl ? `\nNIE sugeruj tych tematów (już odrzucone): ${excludedTopics.join(', ')}` : `\nDo NOT suggest these (already dismissed): ${excludedTopics.join(', ')}`)
-        : '';
+      const excludeHint =
+        excludedTopics.length > 0
+          ? isPl
+            ? `\nNIE sugeruj tych tematów (już odrzucone): ${excludedTopics.join(', ')}`
+            : `\nDo NOT suggest these (already dismissed): ${excludedTopics.join(', ')}`
+          : '';
 
       const prompt = isPl
         ? `Jesteś asystentem strategicznym. Na podstawie notatki użytkownika (tytuł, treść, tagi) zaproponuj 3-5 tematów wartych przeanalizowania w kontekście firmy. Tematy powinny być konkretne, praktyczne i powiązane z przedmiotem notatki.
@@ -4681,7 +5143,9 @@ No markdown, no numbering, just a JSON array.`;
       const result = await llmService.callText({
         type: 'text',
         modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
-        systemPrompt: isPl ? 'Odpowiadasz tylko poprawnym JSON array stringów.' : 'You respond only with a valid JSON array of strings.',
+        systemPrompt: isPl
+          ? 'Odpowiadasz tylko poprawnym JSON array stringów.'
+          : 'You respond only with a valid JSON array of strings.',
         messages: [{ role: 'user', content: prompt }],
       });
 
@@ -4690,8 +5154,12 @@ No markdown, no numbering, just a JSON array.`;
         const jsonMatch = raw.match(/\[[\s\S]*?\]/);
         topics = JSON.parse(jsonMatch ? jsonMatch[0] : '[]');
         if (!Array.isArray(topics)) topics = [];
-        topics = topics.filter((t) => typeof t === 'string' && t.trim().length > 0).map((t) => String(t).trim());
-      } catch { topics = []; }
+        topics = topics
+          .filter((t) => typeof t === 'string' && t.trim().length > 0)
+          .map((t) => String(t).trim());
+      } catch {
+        topics = [];
+      }
     } catch (err: any) {
       logger.error('[NotebookSuggestTopics] Error:', err);
       // Fallback: derive topics from title + tags when LLM fails
@@ -4700,13 +5168,25 @@ No markdown, no numbering, just a JSON array.`;
         const words = title.split(/\s+/).filter((w) => w.length > 2);
         if (words.length > 0) {
           fallback.push(isPl ? `Jak mierzyć ${words[0]}?` : `How to measure ${words[0]}?`);
-          fallback.push(isPl ? `Ryzyka w ${words.slice(0, 2).join(' ')}` : `Risks in ${words.slice(0, 2).join(' ')}`);
+          fallback.push(
+            isPl
+              ? `Ryzyka w ${words.slice(0, 2).join(' ')}`
+              : `Risks in ${words.slice(0, 2).join(' ')}`
+          );
         }
       }
-      tags.filter((t) => !excludedTopics.includes(t)).slice(0, 3).forEach((t) => {
-        fallback.push(isPl ? `Szczegóły: ${t}` : `Details: ${t}`);
-      });
-      topics = fallback.length > 0 ? fallback : (isPl ? ['Przeanalizuj kontekst', 'Dodaj metryki', 'Benchmark'] : ['Analyze context', 'Add metrics', 'Benchmark']);
+      tags
+        .filter((t) => !excludedTopics.includes(t))
+        .slice(0, 3)
+        .forEach((t) => {
+          fallback.push(isPl ? `Szczegóły: ${t}` : `Details: ${t}`);
+        });
+      topics =
+        fallback.length > 0
+          ? fallback
+          : isPl
+            ? ['Przeanalizuj kontekst', 'Dodaj metryki', 'Benchmark']
+            : ['Analyze context', 'Add metrics', 'Benchmark'];
     }
 
     res.json({ topics });
@@ -4740,15 +5220,50 @@ router.post(
     let suggestedType = 'none';
     let reason = '';
 
-    const decisionKeywords = ['decide', 'decision', 'approve', 'reject', 'choose', 'option', 'alternative', 'decyzja', 'zdecydować', 'opcja'];
-    const taskKeywords = ['todo', 'action', 'implement', 'fix', 'create', 'build', 'do', 'task', 'step', 'zadanie', 'zrobić', 'naprawić'];
-    const ideaKeywords = ['idea', 'concept', 'what if', 'imagine', 'brainstorm', 'explore', 'pomysł', 'koncept'];
+    const decisionKeywords = [
+      'decide',
+      'decision',
+      'approve',
+      'reject',
+      'choose',
+      'option',
+      'alternative',
+      'decyzja',
+      'zdecydować',
+      'opcja',
+    ];
+    const taskKeywords = [
+      'todo',
+      'action',
+      'implement',
+      'fix',
+      'create',
+      'build',
+      'do',
+      'task',
+      'step',
+      'zadanie',
+      'zrobić',
+      'naprawić',
+    ];
+    const ideaKeywords = [
+      'idea',
+      'concept',
+      'what if',
+      'imagine',
+      'brainstorm',
+      'explore',
+      'pomysł',
+      'koncept',
+    ];
 
-    const decisionScore = decisionKeywords.filter(k => text.includes(k)).length;
-    const taskScore = taskKeywords.filter(k => text.includes(k)).length;
-    const ideaScore = ideaKeywords.filter(k => text.includes(k)).length;
+    const decisionScore = decisionKeywords.filter((k) => text.includes(k)).length;
+    const taskScore = taskKeywords.filter((k) => text.includes(k)).length;
+    const ideaScore = ideaKeywords.filter((k) => text.includes(k)).length;
 
-    const actionItemCount = (text.match(/[-•]\s*(create|fix|update|send|review|check|build|implement|add|remove)/gi) || []).length;
+    const actionItemCount = (
+      text.match(/[-•]\s*(create|fix|update|send|review|check|build|implement|add|remove)/gi) || []
+    ).length;
     if (actionItemCount >= 2) {
       suggestedType = 'tasks';
       reason = `Found ${actionItemCount} action items`;
@@ -4825,9 +5340,12 @@ router.get(
       }
 
       const priorities: string[] = [];
-      if ((brief.overdueTasks || []).length > 0) priorities.push(`Address ${brief.overdueTasks.length} overdue task(s) first`);
-      if ((brief.pendingDecisions || []).length > 0) priorities.push(`Review ${brief.pendingDecisions.length} pending decision(s)`);
-      if ((brief.dueSoon || []).length > 0) priorities.push(`${brief.dueSoon.length} task(s) due soon — plan time`);
+      if ((brief.overdueTasks || []).length > 0)
+        priorities.push(`Address ${brief.overdueTasks.length} overdue task(s) first`);
+      if ((brief.pendingDecisions || []).length > 0)
+        priorities.push(`Review ${brief.pendingDecisions.length} pending decision(s)`);
+      if ((brief.dueSoon || []).length > 0)
+        priorities.push(`${brief.dueSoon.length} task(s) due soon — plan time`);
       brief.recommendation = priorities.join('. ') || 'All clear — focus on deep work today!';
     } catch (err) {
       console.error('[morning-brief]', err);
@@ -4887,7 +5405,8 @@ router.post(
         }
         case 'update_task_status': {
           const { taskId, status } = payload;
-          if (!taskId || !status) return res.status(400).json({ error: 'taskId and status required' });
+          if (!taskId || !status)
+            return res.status(400).json({ error: 'taskId and status required' });
           await queryHelpers.queryRun(
             `UPDATE tasks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND assignee_id = ? AND organization_id = ?`,
             [status, taskId, userId, orgId]
@@ -4947,9 +5466,13 @@ router.get(
     );
     if (!decision) return res.status(404).json({ error: 'Decision not found' });
 
-    const urgency = decision.due_date && new Date(decision.due_date) < new Date(Date.now() + 86400000 * 3) ? 'urgent' : 'normal';
+    const urgency =
+      decision.due_date && new Date(decision.due_date) < new Date(Date.now() + 86400000 * 3)
+        ? 'urgent'
+        : 'normal';
     const summary = `${decision.title}${decision.description ? '. ' + String(decision.description).slice(0, 200) : ''}`;
-    const recommendation = urgency === 'urgent' ? 'Review soon — approaching deadline' : 'Standard review recommended';
+    const recommendation =
+      urgency === 'urgent' ? 'Review soon — approaching deadline' : 'Standard review recommended';
 
     res.json({
       decisionId,
@@ -4985,7 +5508,10 @@ router.get(
 
     try {
       if (title) {
-        const keywords = title.split(/\s+/).filter(w => w.length > 3).slice(0, 3);
+        const keywords = title
+          .split(/\s+/)
+          .filter((w) => w.length > 3)
+          .slice(0, 3);
         for (const keyword of keywords) {
           const pages = await queryHelpers.queryAll<any>(
             `SELECT id, title, 'notebook' as type FROM notebook_pages 
@@ -4994,8 +5520,13 @@ router.get(
             [userId, orgId, `%${keyword}%`, entityId]
           );
           for (const p of pages || []) {
-            if (!results.find(r => r.id === p.id)) {
-              results.push({ type: 'notebook', id: p.id, title: p.title, relevance: 'title_match' });
+            if (!results.find((r) => r.id === p.id)) {
+              results.push({
+                type: 'notebook',
+                id: p.id,
+                title: p.title,
+                relevance: 'title_match',
+              });
             }
           }
         }
@@ -5023,7 +5554,10 @@ router.get(
       if (entityType === 'task') {
         const decCols = await getTableColumns('decisions');
         if (decCols.has('title') && title) {
-          const keywords = title.split(/\s+/).filter(w => w.length > 3).slice(0, 2);
+          const keywords = title
+            .split(/\s+/)
+            .filter((w) => w.length > 3)
+            .slice(0, 2);
           for (const keyword of keywords) {
             const decs = await queryHelpers.queryAll<any>(
               `SELECT id, title, status FROM decisions 
@@ -5032,8 +5566,13 @@ router.get(
               [orgId, `%${keyword}%`, entityId]
             );
             for (const d of decs || []) {
-              if (!results.find(r => r.id === d.id)) {
-                results.push({ type: 'decision', id: d.id, title: d.title, relevance: 'title_match' });
+              if (!results.find((r) => r.id === d.id)) {
+                results.push({
+                  type: 'decision',
+                  id: d.id,
+                  title: d.title,
+                  relevance: 'title_match',
+                });
               }
             }
           }
@@ -5042,7 +5581,7 @@ router.get(
 
       const ideaCols = await getTableColumns('my_ideas');
       if (ideaCols.has('title') && title) {
-        const keyword = title.split(/\s+/).filter(w => w.length > 3)[0];
+        const keyword = title.split(/\s+/).filter((w) => w.length > 3)[0];
         if (keyword) {
           const ideas = await queryHelpers.queryAll<any>(
             `SELECT id, title FROM my_ideas 
@@ -5051,7 +5590,7 @@ router.get(
             [userId, orgId, `%${keyword}%`]
           );
           for (const i of ideas || []) {
-            if (!results.find(r => r.id === i.id)) {
+            if (!results.find((r) => r.id === i.id)) {
               results.push({ type: 'idea', id: i.id, title: i.title, relevance: 'title_match' });
             }
           }
@@ -5153,7 +5692,8 @@ router.post(
       lines.push(`- Made ${review.decisionsCount || 0} decisions\n`);
       lines.push(`## Blockers`);
       if (review.overdueCount) lines.push(`- ${review.overdueCount} overdue items`);
-      if (review.stuckItems?.length) lines.push(`- ${review.stuckItems.length} tasks stuck (no update 5+ days)`);
+      if (review.stuckItems?.length)
+        lines.push(`- ${review.stuckItems.length} tasks stuck (no update 5+ days)`);
       if (!review.overdueCount && !review.stuckItems?.length) lines.push('- None!\n');
       lines.push(`\n## Next Week Priorities`);
       lines.push(`- Review overdue items and reschedule or delegate`);
@@ -5197,7 +5737,10 @@ router.get(
         );
         patterns.weeklyVelocity = weeklyVelocity || [];
         const velocities = (weeklyVelocity || []).map((w: any) => w.completed);
-        patterns.avgVelocity = velocities.length > 0 ? Math.round(velocities.reduce((a: number, b: number) => a + b, 0) / velocities.length) : 0;
+        patterns.avgVelocity =
+          velocities.length > 0
+            ? Math.round(velocities.reduce((a: number, b: number) => a + b, 0) / velocities.length)
+            : 0;
       }
 
       if (taskCols.has('created_at')) {
@@ -5208,7 +5751,9 @@ router.get(
            AND updated_at > datetime('now', '-30 days')`,
           [userId, orgId]
         );
-        patterns.avgCompletionDays = avgTime?.avg_days ? Math.round(avgTime.avg_days * 10) / 10 : null;
+        patterns.avgCompletionDays = avgTime?.avg_days
+          ? Math.round(avgTime.avg_days * 10) / 10
+          : null;
       }
 
       const decCols = await getTableColumns('decisions');
@@ -5221,7 +5766,9 @@ router.get(
            AND updated_at > datetime('now', '-30 days')`,
           [userId, userId, orgId]
         );
-        patterns.avgDecisionDays = avgDecision?.avg_days ? Math.round(avgDecision.avg_days * 10) / 10 : null;
+        patterns.avgDecisionDays = avgDecision?.avg_days
+          ? Math.round(avgDecision.avg_days * 10) / 10
+          : null;
       }
 
       if (taskCols.has('due_date')) {
@@ -5239,7 +5786,9 @@ router.get(
           [userId, orgId]
         );
         if (totalWithDue?.total > 0) {
-          patterns.overdueRate = Math.round(((overdueCompleted?.total || 0) / totalWithDue.total) * 100);
+          patterns.overdueRate = Math.round(
+            ((overdueCompleted?.total || 0) / totalWithDue.total) * 100
+          );
         }
       }
 
@@ -5252,16 +5801,21 @@ router.get(
 
       const insights: string[] = [];
       if (patterns.avgVelocity && patterns.currentOpenTasks > patterns.avgVelocity * 2) {
-        insights.push(`You have ${patterns.currentOpenTasks} open tasks but average ${patterns.avgVelocity}/week. Consider delegating or deferring.`);
+        insights.push(
+          `You have ${patterns.currentOpenTasks} open tasks but average ${patterns.avgVelocity}/week. Consider delegating or deferring.`
+        );
       }
       if (patterns.overdueRate && patterns.overdueRate > 30) {
-        insights.push(`${patterns.overdueRate}% of your tasks with deadlines are completed late. Try adding buffer time.`);
+        insights.push(
+          `${patterns.overdueRate}% of your tasks with deadlines are completed late. Try adding buffer time.`
+        );
       }
       if (patterns.avgDecisionDays && patterns.avgDecisionDays > 5) {
-        insights.push(`Average decision time is ${patterns.avgDecisionDays} days. Faster decisions could unblock teams.`);
+        insights.push(
+          `Average decision time is ${patterns.avgDecisionDays} days. Faster decisions could unblock teams.`
+        );
       }
       patterns.insights = insights;
-
     } catch (err) {
       console.error('[work-patterns]', err);
     }
@@ -5301,11 +5855,21 @@ router.post(
       let confidence = 0.5;
       let reason = '';
 
-      if (item.priority === 'critical' || item.priority === 'high' || text.includes('urgent') || text.includes('asap')) {
+      if (
+        item.priority === 'critical' ||
+        item.priority === 'high' ||
+        text.includes('urgent') ||
+        text.includes('asap')
+      ) {
         action = 'accept_today';
         confidence = 0.85;
         reason = 'High priority item — needs attention today';
-      } else if (item.priority === 'low' || text.includes('fyi') || text.includes('for your information') || text.includes('newsletter')) {
+      } else if (
+        item.priority === 'low' ||
+        text.includes('fyi') ||
+        text.includes('for your information') ||
+        text.includes('newsletter')
+      ) {
         action = 'archive';
         confidence = 0.8;
         reason = 'Low priority / informational';
@@ -5512,7 +6076,9 @@ router.post(
 
       plan.blocks.push({
         ...timeSlots[4],
-        items: [{ type: 'meta', title: "Review today's progress and plan tomorrow", estimatedHours: 0.5 }],
+        items: [
+          { type: 'meta', title: "Review today's progress and plan tomorrow", estimatedHours: 0.5 },
+        ],
       });
 
       plan.totalItems = (tasks || []).length + (decisions || []).length;
@@ -5629,7 +6195,13 @@ router.get(
             [task.initiative_id, orgId, entityId]
           );
           for (const r of related || []) {
-            relationships.push({ type: 'task', id: r.id, title: r.title, relationship: 'same_initiative', strength: 0.8 });
+            relationships.push({
+              type: 'task',
+              id: r.id,
+              title: r.title,
+              relationship: 'same_initiative',
+              strength: 0.8,
+            });
           }
         }
 
@@ -5640,7 +6212,13 @@ router.get(
             [orgId, `%${titleWords}%`]
           );
           for (const d of blockingDecs || []) {
-            relationships.push({ type: 'decision', id: d.id, title: d.title, relationship: 'potentially_blocking', strength: 0.6 });
+            relationships.push({
+              type: 'decision',
+              id: d.id,
+              title: d.title,
+              relationship: 'potentially_blocking',
+              strength: 0.6,
+            });
           }
         }
       } else if (entityType === 'idea') {
@@ -5650,7 +6228,10 @@ router.get(
         );
         sourceTitle = idea?.title || '';
 
-        const keywords = sourceTitle.split(/\s+/).filter((w: string) => w.length > 3).slice(0, 3);
+        const keywords = sourceTitle
+          .split(/\s+/)
+          .filter((w: string) => w.length > 3)
+          .slice(0, 3);
         for (const kw of keywords) {
           const related = await queryHelpers.queryAll<any>(
             `SELECT id, title FROM my_ideas WHERE user_id = ? AND organization_id = ? AND id != ? AND title LIKE ? LIMIT 3`,
@@ -5658,7 +6239,13 @@ router.get(
           );
           for (const r of related || []) {
             if (!relationships.find((rel: any) => rel.id === r.id)) {
-              relationships.push({ type: 'idea', id: r.id, title: r.title, relationship: 'keyword_match', strength: 0.5 });
+              relationships.push({
+                type: 'idea',
+                id: r.id,
+                title: r.title,
+                relationship: 'keyword_match',
+                strength: 0.5,
+              });
             }
           }
         }
@@ -5671,7 +6258,10 @@ router.get(
       }
 
       if (sourceTitle) {
-        const titleWords = sourceTitle.split(/\s+/).filter((w: string) => w.length > 4).slice(0, 2);
+        const titleWords = sourceTitle
+          .split(/\s+/)
+          .filter((w: string) => w.length > 4)
+          .slice(0, 2);
         for (const word of titleWords) {
           const pages = await queryHelpers.queryAll<any>(
             `SELECT id, title FROM notebook_pages WHERE user_id = ? AND organization_id = ? AND (title LIKE ? OR content_text LIKE ?) LIMIT 3`,
@@ -5679,7 +6269,13 @@ router.get(
           );
           for (const p of pages || []) {
             if (!relationships.find((r: any) => r.id === p.id)) {
-              relationships.push({ type: 'notebook', id: p.id, title: p.title, relationship: 'mentioned_in', strength: 0.4 });
+              relationships.push({
+                type: 'notebook',
+                id: p.id,
+                title: p.title,
+                relationship: 'mentioned_in',
+                strength: 0.4,
+              });
             }
           }
         }

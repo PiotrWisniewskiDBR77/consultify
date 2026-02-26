@@ -12,6 +12,18 @@
  * - InitiativeFullView
  */
 
+// V3-F01 — Initiative level templates
+export type { InitiativeLevel, InitiativeLevelTemplate } from './templates';
+export {
+  getInitiativeLevelTemplate,
+  INITIATIVE_LEVEL_TEMPLATES,
+  InitiativeLevelPill,
+  InitiativeLevelSelector,
+} from './templates';
+
+// V3-F02 — Portfolio Analysis
+export { PortfolioAnalysisView } from './Analysis';
+
 // Canonical exports
 export { InitiativeDocumentView } from './InitiativeDocumentView';
 export { InitiativeDrawer } from './InitiativeDrawer';

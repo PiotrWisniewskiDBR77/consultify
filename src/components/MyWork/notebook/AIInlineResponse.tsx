@@ -20,7 +20,7 @@ interface AIInlineResponseProps {
 
 const SYSTEM_PROMPTS: Record<AICommandType, { en: string; pl: string }> = {
   ask: {
-    en: 'You are a helpful assistant embedded in a notebook. Answer the user\'s question using the context of the note provided. Be concise and actionable. Respond in the same language as the note.',
+    en: "You are a helpful assistant embedded in a notebook. Answer the user's question using the context of the note provided. Be concise and actionable. Respond in the same language as the note.",
     pl: 'Jesteś asystentem wbudowanym w notatnik. Odpowiedz na pytanie użytkownika, korzystając z kontekstu notatki. Bądź zwięzły i praktyczny. Odpowiadaj w tym samym języku co notatka.',
   },
   expand: {
@@ -105,7 +105,7 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
         pl ? 'pl' : 'en',
         undefined,
         { responseStyle: 'concise', selectedTier: 'STANDARD' },
-        controller.signal,
+        controller.signal
       );
     } catch (err: any) {
       if (err?.name !== 'AbortError') {

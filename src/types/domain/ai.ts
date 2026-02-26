@@ -206,6 +206,16 @@ export interface ChatResponseAction {
   icon?: string;
   payload: {
     view?: AppView | string;
+    targetModule?: string;
+    module?: string;
+    entityType?: string;
+    entityId?: string;
+    surface?: string;
+    params?: Record<string, unknown>;
+    sourceType?: string;
+    sourceId?: string;
+    sourceName?: string;
+    templateId?: string;
     apiCall?: string;
     data?: Record<string, unknown>;
     copyText?: string;

@@ -777,11 +777,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               isCloudImplemented={isCloudImplemented}
               disabled={isInputDisabled}
             />
-            <ToolsMenu
-              onToolSelect={handleToolSelect}
-              disabled={isInputDisabled}
-              icon={Pen}
-            />
+            <ToolsMenu onToolSelect={handleToolSelect} disabled={isInputDisabled} icon={Pen} />
             <CoThinkerMenu disabled={isInputDisabled} />
           </div>
 

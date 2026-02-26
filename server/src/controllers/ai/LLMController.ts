@@ -1173,7 +1173,9 @@ export class LLMController {
       const windowStartTs = new Date(fromIso).getTime();
       const windowEndTs = new Date(toIso).getTime();
       const totalMs =
-        Number.isFinite(windowStartTs) && Number.isFinite(windowEndTs) && windowEndTs > windowStartTs
+        Number.isFinite(windowStartTs) &&
+        Number.isFinite(windowEndTs) &&
+        windowEndTs > windowStartTs
           ? windowEndTs - windowStartTs
           : 0;
       let downMs = 0;
@@ -1184,7 +1186,8 @@ export class LLMController {
           downMs += e - s;
         }
       }
-      const uptimePct = totalMs > 0 ? Math.max(0, Math.min(100, ((totalMs - downMs) / totalMs) * 100)) : 0;
+      const uptimePct =
+        totalMs > 0 ? Math.max(0, Math.min(100, ((totalMs - downMs) / totalMs) * 100)) : 0;
 
       return res.json({
         success: true,

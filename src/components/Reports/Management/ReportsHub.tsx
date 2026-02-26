@@ -32,6 +32,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 
 import { useOpenChatWithContext } from '../../../hooks/useOpenChatWithContext';
 import { Api } from '../../../services/api';
@@ -50,6 +51,7 @@ import {
   TableColumn,
   ViewMode,
 } from '../../shared/ModuleHub';
+import { useModuleOpenDocuments } from '../../shared/ModuleHub/useModuleOpenDocuments';
 import { PortfolioHealthReport } from './PortfolioHealthReport';
 import { RaidReport } from './RaidReport';
 import { ReportGeneratorDrawer } from './ReportGeneratorDrawer';
@@ -157,6 +159,7 @@ interface ReportsHubProps {
 export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) => {
   // B9.1: Chat about report
   const openChatWithContext = useOpenChatWithContext();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
 
   // State
@@ -164,8 +167,8 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
-  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
-  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+  const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId, hydrated } =
+    useModuleOpenDocuments('reports');
 
   // Data state
   const [reports, setReports] = useState<ReportHistoryItem[]>([]);
@@ -599,6 +602,22 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
     [handleViewReport]
   );
 
+  const openReportById = useCallback(
+    async (id: string) => {
+      const existing = openDocuments.find((d) => d.id === id);
+      if (existing) {
+        setActiveDocumentId(existing.id);
+        const report = reports.find((r) => r.id === existing.id);
+        if (report) {
+          await handleViewReport(report.id);
+        }
+        return;
+      }
+      await handleViewReport(id);
+    },
+    [openDocuments, reports, setActiveDocumentId, handleViewReport]
+  );
+
   const handleCloseDocument = useCallback(
     (id: string) => {
       setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
@@ -614,6 +633,17 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
     setActiveDocumentId(null);
     setCurrentReport(null);
   }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const docId = String(searchParams.get('docId') || '').trim();
+    if (!docId) return;
+    void openReportById(docId).finally(() => {
+      const next = new URLSearchParams(searchParams);
+      next.delete('docId');
+      setSearchParams(next, { replace: true });
+    });
+  }, [hydrated, openReportById, searchParams, setSearchParams]);
 
   const handleRemoveFilter = useCallback((id: string) => {
     setActiveFilters((prev) => prev.filter((f) => f.id !== id));

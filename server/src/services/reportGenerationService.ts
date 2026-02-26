@@ -1384,7 +1384,8 @@ export async function generateReport(
   // Step 1: Derive source type and framework from reportType
   //   Expected formats: "ASSESSMENT_DRD", "ASSESSMENT_SIRI", "ASSESSMENT", etc.
   // ---------------------------------------------------------------
-  let sourceType: 'ASSESSMENT' | 'INTERVIEW' | 'TOOL' | 'INITIATIVE' = 'ASSESSMENT';
+  let sourceType: 'ASSESSMENT' | 'INTERVIEW' | 'TOOL' | 'INITIATIVE' | 'UPLOAD_BUNDLE' =
+    'ASSESSMENT';
   if (reportType.startsWith('ASSESSMENT')) {
     sourceType = 'ASSESSMENT';
   } else if (reportType.startsWith('INTERVIEW')) {

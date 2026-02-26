@@ -90,7 +90,9 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   const { i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
   const { setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } = useAppStore();
-  const [activeTab, setActiveTab] = useState<'challenge' | 'ai' | 'metadata' | 'convert'>('challenge');
+  const [activeTab, setActiveTab] = useState<'challenge' | 'ai' | 'metadata' | 'convert'>(
+    'challenge'
+  );
 
   const wsContext: WorkspaceContext = useMemo(
     () => ({
@@ -136,11 +138,56 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
     { id: 'convert' as const, label: isPl ? 'Konwersja' : 'Convert' },
   ];
 
-  const convertActions: { id: ConvertTarget; icon: React.ComponentType<any>; labelPl: string; labelEn: string; descPl: string; descEn: string; gradient: string; textColor: string }[] = [
-    { id: 'initiative', icon: Rocket, labelPl: 'Inicjatywa', labelEn: 'Initiative', descPl: 'Utwórz w PMO', descEn: 'Create in PMO', gradient: 'from-amber-500/15 to-orange-500/10', textColor: 'text-amber-600 dark:text-amber-400' },
-    { id: 'task_set', icon: CheckSquare, labelPl: 'Taski', labelEn: 'Tasks', descPl: 'Z next steps', descEn: 'From next steps', gradient: 'from-emerald-500/15 to-green-500/10', textColor: 'text-emerald-600 dark:text-emerald-400' },
-    { id: 'decision', icon: Star, labelPl: 'Decyzja', labelEn: 'Decision', descPl: 'Artefakt decyzyjny', descEn: 'Decision artifact', gradient: 'from-blue-500/15 to-cyan-500/10', textColor: 'text-blue-600 dark:text-blue-400' },
-    { id: 'team_chat', icon: MessageSquarePlus, labelPl: 'Team Chat', labelEn: 'Team Chat', descPl: 'Wątek do omówienia', descEn: 'Discussion thread', gradient: 'from-violet-500/15 to-purple-500/10', textColor: 'text-violet-600 dark:text-violet-400' },
+  const convertActions: {
+    id: ConvertTarget;
+    icon: React.ComponentType<any>;
+    labelPl: string;
+    labelEn: string;
+    descPl: string;
+    descEn: string;
+    gradient: string;
+    textColor: string;
+  }[] = [
+    {
+      id: 'initiative',
+      icon: Rocket,
+      labelPl: 'Inicjatywa',
+      labelEn: 'Initiative',
+      descPl: 'Utwórz w PMO',
+      descEn: 'Create in PMO',
+      gradient: 'from-amber-500/15 to-orange-500/10',
+      textColor: 'text-amber-600 dark:text-amber-400',
+    },
+    {
+      id: 'task_set',
+      icon: CheckSquare,
+      labelPl: 'Taski',
+      labelEn: 'Tasks',
+      descPl: 'Z next steps',
+      descEn: 'From next steps',
+      gradient: 'from-emerald-500/15 to-green-500/10',
+      textColor: 'text-emerald-600 dark:text-emerald-400',
+    },
+    {
+      id: 'decision',
+      icon: Star,
+      labelPl: 'Decyzja',
+      labelEn: 'Decision',
+      descPl: 'Artefakt decyzyjny',
+      descEn: 'Decision artifact',
+      gradient: 'from-blue-500/15 to-cyan-500/10',
+      textColor: 'text-blue-600 dark:text-blue-400',
+    },
+    {
+      id: 'team_chat',
+      icon: MessageSquarePlus,
+      labelPl: 'Team Chat',
+      labelEn: 'Team Chat',
+      descPl: 'Wątek do omówienia',
+      descEn: 'Discussion thread',
+      gradient: 'from-violet-500/15 to-purple-500/10',
+      textColor: 'text-violet-600 dark:text-violet-400',
+    },
   ];
 
   const priorityOptions = [
@@ -227,7 +274,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               title={isAccepted ? (isPl ? 'Zaakceptowane' : 'Accepted') : undefined}
             >
               <CheckCircle2 size={11} />
-              {isAccepted ? (isPl ? 'Zaakceptowane' : 'Accepted') : (isPl ? 'Akceptuj' : 'Accept')}
+              {isAccepted ? (isPl ? 'Zaakceptowane' : 'Accepted') : isPl ? 'Akceptuj' : 'Accept'}
             </button>
           </div>
         </div>
@@ -244,7 +291,9 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           </div>
           {!isAccepted && (
             <div className="text-[11px] text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-400/20 rounded-xl p-2.5 mb-3">
-              {isPl ? 'Zaakceptuj wyzwanie, aby odblokować AI.' : 'Accept the challenge to unlock AI.'}
+              {isPl
+                ? 'Zaakceptuj wyzwanie, aby odblokować AI.'
+                : 'Accept the challenge to unlock AI.'}
             </div>
           )}
           <button
@@ -274,7 +323,9 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           <SectionLabel>{isPl ? 'Metadane' : 'Metadata'}</SectionLabel>
           <div className="space-y-3">
             <div className="space-y-1">
-              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400/80">{isPl ? 'Gałąź' : 'Branch'}</div>
+              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400/80">
+                {isPl ? 'Gałąź' : 'Branch'}
+              </div>
               <input
                 value={branch}
                 onChange={(e) => onBranchChange(e.target.value)}
@@ -283,7 +334,9 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               />
             </div>
             <div className="space-y-1">
-              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400/80">{isPl ? 'Obszar' : 'Area'}</div>
+              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400/80">
+                {isPl ? 'Obszar' : 'Area'}
+              </div>
               <input
                 value={area}
                 onChange={(e) => onAreaChange(e.target.value)}
@@ -292,7 +345,9 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               />
             </div>
             <div className="space-y-1">
-              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400/80">{isPl ? 'Priorytet' : 'Priority'}</div>
+              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400/80">
+                {isPl ? 'Priorytet' : 'Priority'}
+              </div>
               <div className="relative">
                 <select
                   value={String(Math.round(priority / 25) * 25)}
@@ -300,10 +355,15 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                   className="appearance-none w-full h-8 px-2.5 pr-7 rounded-lg text-[11px] bg-white/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/[0.06] text-slate-800 dark:text-slate-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all"
                 >
                   {priorityOptions.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
                   ))}
                 </select>
-                <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown
+                  size={10}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                />
               </div>
             </div>
             <button
@@ -323,24 +383,34 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
         <div className="px-3 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
           <SectionLabel>{isPl ? 'Konwersja' : 'Convert'}</SectionLabel>
           <div className="grid grid-cols-1 gap-1.5">
-            {convertActions.map(({ id, icon: Icon, labelPl, labelEn, descPl, descEn, gradient, textColor }) => (
-              <button
-                key={id}
-                onClick={() => onConvert(id)}
-                disabled={isDraft}
-                className="group relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl overflow-hidden transition-all duration-200 hover:shadow-md disabled:opacity-40"
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${gradient} group-hover:opacity-150 transition-opacity`} />
-                <div className="absolute inset-0 border border-current/[0.06] group-hover:border-current/[0.12] rounded-xl transition-colors" />
-                <div className={`relative w-7 h-7 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center ${textColor} shrink-0`}>
-                  <Icon size={14} />
-                </div>
-                <div className="relative flex-1 min-w-0 text-left">
-                  <div className={`text-[11px] font-bold ${textColor}`}>{isPl ? labelPl : labelEn}</div>
-                  <div className="text-[9px] text-slate-400 dark:text-slate-500">{isPl ? descPl : descEn}</div>
-                </div>
-              </button>
-            ))}
+            {convertActions.map(
+              ({ id, icon: Icon, labelPl, labelEn, descPl, descEn, gradient, textColor }) => (
+                <button
+                  key={id}
+                  onClick={() => onConvert(id)}
+                  disabled={isDraft}
+                  className="group relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl overflow-hidden transition-all duration-200 hover:shadow-md disabled:opacity-40"
+                >
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${gradient} group-hover:opacity-150 transition-opacity`}
+                  />
+                  <div className="absolute inset-0 border border-current/[0.06] group-hover:border-current/[0.12] rounded-xl transition-colors" />
+                  <div
+                    className={`relative w-7 h-7 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center ${textColor} shrink-0`}
+                  >
+                    <Icon size={14} />
+                  </div>
+                  <div className="relative flex-1 min-w-0 text-left">
+                    <div className={`text-[11px] font-bold ${textColor}`}>
+                      {isPl ? labelPl : labelEn}
+                    </div>
+                    <div className="text-[9px] text-slate-400 dark:text-slate-500">
+                      {isPl ? descPl : descEn}
+                    </div>
+                  </div>
+                </button>
+              )
+            )}
           </div>
         </div>
       )}

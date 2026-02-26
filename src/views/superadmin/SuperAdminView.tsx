@@ -28,7 +28,6 @@ import { FeedbackToggleButton } from '../../components/Feedback/FeedbackToggleBu
 // Floating Widgets
 import { HelpSidePanel } from '../../components/Help/HelpSidePanel';
 import { HelpToggleButton } from '../../components/Help/HelpToggleButton';
-import { FeatureFlagsDevToolsToggleButton } from '../../components/settings/FeatureFlagsDevToolsToggleButton';
 import {
   appViewToSection,
   sectionToAppView,
@@ -36,6 +35,7 @@ import {
   SuperAdminSidebar,
 } from '../../components/layout/SuperAdminSidebar';
 import { UserProfileMenu } from '../../components/layout/UserProfileMenu';
+import { FeatureFlagsDevToolsToggleButton } from '../../components/settings/FeatureFlagsDevToolsToggleButton';
 import { SuperAdminSignalCenter } from '../../components/SuperAdmin/SuperAdminSignalCenter';
 import { SuperAdminStatusIndicators } from '../../components/SuperAdmin/SuperAdminStatusIndicators';
 import { useAppStore } from '../../store/useAppStore';

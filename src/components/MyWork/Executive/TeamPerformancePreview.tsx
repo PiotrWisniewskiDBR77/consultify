@@ -202,7 +202,9 @@ export const TeamPerformancePreview: React.FC<TeamPerformancePreviewProps> = ({
             <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">
               {t('executive.team.overloaded', 'Overloaded')}
             </p>
-            <p className={`text-base font-semibold tabular-nums ${overloadedCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-800 dark:text-slate-100'}`}>
+            <p
+              className={`text-base font-semibold tabular-nums ${overloadedCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-800 dark:text-slate-100'}`}
+            >
               {overloadedCount}
             </p>
           </div>
@@ -210,7 +212,9 @@ export const TeamPerformancePreview: React.FC<TeamPerformancePreviewProps> = ({
             <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">
               {t('executive.team.available', 'Available')}
             </p>
-            <p className={`text-base font-semibold tabular-nums ${availableCount > 0 ? 'text-emerald-500' : 'text-slate-800 dark:text-slate-100'}`}>
+            <p
+              className={`text-base font-semibold tabular-nums ${availableCount > 0 ? 'text-emerald-500' : 'text-slate-800 dark:text-slate-100'}`}
+            >
               {availableCount}
             </p>
           </div>

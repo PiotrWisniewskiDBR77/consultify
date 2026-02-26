@@ -31,8 +31,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '../ui/primitives/Button';
 import { useAppStore } from '../../store/useAppStore';
+import { Button } from '../ui/primitives/Button';
 
 interface ToolsMenuProps {
   onToolSelect: (tool: string) => void;
@@ -48,7 +48,15 @@ interface ToolMode {
   enabled?: boolean;
 }
 
-type ResponseStyle = 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal' | 'professional' | 'friendly';
+type ResponseStyle =
+  | 'normal'
+  | 'executive'
+  | 'analyst'
+  | 'coach'
+  | 'concise'
+  | 'formal'
+  | 'professional'
+  | 'friendly';
 
 interface StyleOption {
   id: ResponseStyle;
@@ -58,14 +66,54 @@ interface StyleOption {
 }
 
 const RESPONSE_STYLES: StyleOption[] = [
-  { id: 'normal', labelKey: 'aiChat.menu.styles.normal', descKey: 'aiChat.menu.styles.normalDesc', presetKey: 'aiChat.menu.stylePresets.normal' },
-  { id: 'concise', labelKey: 'aiChat.menu.styles.concise', descKey: 'aiChat.menu.styles.conciseDesc', presetKey: 'aiChat.menu.stylePresets.concise' },
-  { id: 'executive', labelKey: 'aiChat.menu.styles.executive', descKey: 'aiChat.menu.styles.executiveDesc', presetKey: 'aiChat.menu.stylePresets.executive' },
-  { id: 'analyst', labelKey: 'aiChat.menu.styles.analyst', descKey: 'aiChat.menu.styles.analystDesc', presetKey: 'aiChat.menu.stylePresets.analyst' },
-  { id: 'formal', labelKey: 'aiChat.menu.styles.formal', descKey: 'aiChat.menu.styles.formalDesc', presetKey: 'aiChat.menu.stylePresets.formal' },
-  { id: 'coach', labelKey: 'aiChat.menu.styles.coach', descKey: 'aiChat.menu.styles.coachDesc', presetKey: 'aiChat.menu.stylePresets.coach' },
-  { id: 'professional', labelKey: 'aiChat.menu.styles.professional', descKey: 'aiChat.menu.styles.professionalDesc', presetKey: 'aiChat.menu.stylePresets.professional' },
-  { id: 'friendly', labelKey: 'aiChat.menu.styles.friendly', descKey: 'aiChat.menu.styles.friendlyDesc', presetKey: 'aiChat.menu.stylePresets.friendly' },
+  {
+    id: 'normal',
+    labelKey: 'aiChat.menu.styles.normal',
+    descKey: 'aiChat.menu.styles.normalDesc',
+    presetKey: 'aiChat.menu.stylePresets.normal',
+  },
+  {
+    id: 'concise',
+    labelKey: 'aiChat.menu.styles.concise',
+    descKey: 'aiChat.menu.styles.conciseDesc',
+    presetKey: 'aiChat.menu.stylePresets.concise',
+  },
+  {
+    id: 'executive',
+    labelKey: 'aiChat.menu.styles.executive',
+    descKey: 'aiChat.menu.styles.executiveDesc',
+    presetKey: 'aiChat.menu.stylePresets.executive',
+  },
+  {
+    id: 'analyst',
+    labelKey: 'aiChat.menu.styles.analyst',
+    descKey: 'aiChat.menu.styles.analystDesc',
+    presetKey: 'aiChat.menu.stylePresets.analyst',
+  },
+  {
+    id: 'formal',
+    labelKey: 'aiChat.menu.styles.formal',
+    descKey: 'aiChat.menu.styles.formalDesc',
+    presetKey: 'aiChat.menu.stylePresets.formal',
+  },
+  {
+    id: 'coach',
+    labelKey: 'aiChat.menu.styles.coach',
+    descKey: 'aiChat.menu.styles.coachDesc',
+    presetKey: 'aiChat.menu.stylePresets.coach',
+  },
+  {
+    id: 'professional',
+    labelKey: 'aiChat.menu.styles.professional',
+    descKey: 'aiChat.menu.styles.professionalDesc',
+    presetKey: 'aiChat.menu.stylePresets.professional',
+  },
+  {
+    id: 'friendly',
+    labelKey: 'aiChat.menu.styles.friendly',
+    descKey: 'aiChat.menu.styles.friendlyDesc',
+    presetKey: 'aiChat.menu.stylePresets.friendly',
+  },
 ];
 
 export const ToolsMenu: React.FC<ToolsMenuProps> = ({
@@ -154,16 +202,46 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     privateMode,
   } = aiConfig as any;
 
-  const activeModeCount = [deepResearch, showReasoning, textToSpeech, privateMode]
-    .filter(Boolean)
-    .length;
+  const activeModeCount = [deepResearch, showReasoning, textToSpeech, privateMode].filter(
+    Boolean
+  ).length;
 
   const AI_MODES: ToolMode[] = [
-    { id: 'deepResearch', icon: Search, labelKey: 'aiChat.menu.modes.deepResearch.label', descKey: 'aiChat.menu.modes.deepResearch.desc', enabled: deepResearch },
-    { id: 'showReasoning', icon: Sparkles, labelKey: 'aiChat.menu.modes.showReasoning.label', descKey: 'aiChat.menu.modes.showReasoning.desc', enabled: showReasoning },
-    { id: 'multiAgent', icon: Users, labelKey: 'aiChat.menu.modes.multiAgent.label', descKey: 'aiChat.menu.modes.multiAgent.desc', enabled: aiConfig.multiAgent ?? false },
-    { id: 'privateMode', icon: Lock, labelKey: 'aiChat.menu.modes.privateMode.label', descKey: 'aiChat.menu.modes.privateMode.desc', enabled: privateMode },
-    { id: 'textToSpeech', icon: Volume2, labelKey: 'aiChat.menu.modes.textToSpeech.label', descKey: 'aiChat.menu.modes.textToSpeech.desc', enabled: textToSpeech },
+    {
+      id: 'deepResearch',
+      icon: Search,
+      labelKey: 'aiChat.menu.modes.deepResearch.label',
+      descKey: 'aiChat.menu.modes.deepResearch.desc',
+      enabled: deepResearch,
+    },
+    {
+      id: 'showReasoning',
+      icon: Sparkles,
+      labelKey: 'aiChat.menu.modes.showReasoning.label',
+      descKey: 'aiChat.menu.modes.showReasoning.desc',
+      enabled: showReasoning,
+    },
+    {
+      id: 'multiAgent',
+      icon: Users,
+      labelKey: 'aiChat.menu.modes.multiAgent.label',
+      descKey: 'aiChat.menu.modes.multiAgent.desc',
+      enabled: aiConfig.multiAgent ?? false,
+    },
+    {
+      id: 'privateMode',
+      icon: Lock,
+      labelKey: 'aiChat.menu.modes.privateMode.label',
+      descKey: 'aiChat.menu.modes.privateMode.desc',
+      enabled: privateMode,
+    },
+    {
+      id: 'textToSpeech',
+      icon: Volume2,
+      labelKey: 'aiChat.menu.modes.textToSpeech.label',
+      descKey: 'aiChat.menu.modes.textToSpeech.desc',
+      enabled: textToSpeech,
+    },
   ];
 
   useEffect(() => {
@@ -199,9 +277,10 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
         data-testid="chat-tools-button"
         className={`
           relative p-2 rounded-lg transition-colors
-          ${activeModeCount > 0
-            ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/30'
-            : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+          ${
+            activeModeCount > 0
+              ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/30'
+              : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
           }
           ${disabled ? 'cursor-not-allowed opacity-50' : ''}
         `}
@@ -254,8 +333,13 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                   ${isEnabled ? 'bg-primary-50/60 dark:bg-primary-900/10' : 'hover:bg-slate-50/80 dark:hover:bg-white/[0.04]'}
                 `}
               >
-                <Icon size={16} className={`shrink-0 ${isEnabled ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'}`} />
-                <span className={`flex-1 text-[13px] ${isEnabled ? 'text-primary-700 dark:text-primary-300 font-medium' : 'text-slate-700 dark:text-slate-200'}`}>
+                <Icon
+                  size={16}
+                  className={`shrink-0 ${isEnabled ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'}`}
+                />
+                <span
+                  className={`flex-1 text-[13px] ${isEnabled ? 'text-primary-700 dark:text-primary-300 font-medium' : 'text-slate-700 dark:text-slate-200'}`}
+                >
                   {t(mode.labelKey)}
                 </span>
                 {isEnabled && <Check size={16} className="shrink-0 text-primary-500" />}
@@ -268,7 +352,10 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
 
           {/* Response style — opens Grok-style modal */}
           <button
-            onClick={() => { setIsStyleModalOpen(true); setIsOpen(false); }}
+            onClick={() => {
+              setIsStyleModalOpen(true);
+              setIsOpen(false);
+            }}
             className="w-full flex items-center gap-3 px-3.5 py-2 text-left hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors"
           >
             <Pen size={16} className="shrink-0 text-slate-400 dark:text-slate-500" />
@@ -290,7 +377,8 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
               onToolSelect('addToProject');
               setIsOpen(false);
               toast(t('aiChat.conversation.addToProject', 'Add to project'), {
-                icon: '📁', duration: 2000,
+                icon: '📁',
+                duration: 2000,
                 style: { borderRadius: '10px', background: '#334155', color: '#fff' },
               });
             }}
@@ -329,7 +417,8 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           />
 
           {/* Panel */}
-          <div className="relative w-full max-w-[540px] max-h-[85vh] overflow-y-auto
+          <div
+            className="relative w-full max-w-[540px] max-h-[85vh] overflow-y-auto
             bg-white dark:bg-[#1a1d2e]
             border border-slate-200/40 dark:border-white/[0.08]
             rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.2)] dark:shadow-[0_24px_64px_rgba(0,0,0,0.6)]
@@ -353,7 +442,8 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
               <div className="grid grid-cols-2 gap-2.5 mb-6">
                 {RESPONSE_STYLES.map((style, idx) => {
                   const isSelected = (responseStyle || 'normal') === style.id;
-                  const isLastOdd = RESPONSE_STYLES.length % 2 === 1 && idx === RESPONSE_STYLES.length - 1;
+                  const isLastOdd =
+                    RESPONSE_STYLES.length % 2 === 1 && idx === RESPONSE_STYLES.length - 1;
                   return (
                     <button
                       key={style.id}
@@ -362,19 +452,24 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                         const preset = t(style.presetKey, '');
                         if (preset) setCustomInstructions(preset);
                         const styleLabel = t(style.labelKey);
-                        toast.success(t('aiChat.menu.toast.responseStyle', { style: styleLabel }), { duration: 2000 });
+                        toast.success(t('aiChat.menu.toast.responseStyle', { style: styleLabel }), {
+                          duration: 2000,
+                        });
                         onToolSelect(`style:${style.id}`);
                       }}
                       className={`
                         relative text-left p-3.5 rounded-xl border transition-all duration-150
                         ${isLastOdd ? 'col-span-1' : ''}
-                        ${isSelected
-                          ? 'border-primary-400 dark:border-primary-500 bg-primary-50/50 dark:bg-primary-900/15 ring-1 ring-primary-400/30'
-                          : 'border-slate-200/60 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] hover:border-slate-300 dark:hover:border-white/[0.15] hover:bg-slate-50/50 dark:hover:bg-white/[0.04]'
+                        ${
+                          isSelected
+                            ? 'border-primary-400 dark:border-primary-500 bg-primary-50/50 dark:bg-primary-900/15 ring-1 ring-primary-400/30'
+                            : 'border-slate-200/60 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] hover:border-slate-300 dark:hover:border-white/[0.15] hover:bg-slate-50/50 dark:hover:bg-white/[0.04]'
                         }
                       `}
                     >
-                      <div className={`text-[13px] font-medium mb-1 pr-6 ${isSelected ? 'text-primary-700 dark:text-primary-300' : 'text-slate-800 dark:text-slate-200'}`}>
+                      <div
+                        className={`text-[13px] font-medium mb-1 pr-6 ${isSelected ? 'text-primary-700 dark:text-primary-300' : 'text-slate-800 dark:text-slate-200'}`}
+                      >
                         {t(style.labelKey)}
                       </div>
                       <div className="text-[11px] leading-snug text-slate-400 dark:text-slate-500 pr-4">
@@ -490,13 +585,18 @@ const TTSSettings: React.FC<{
               {t('aiChat.menu.ttsSpeed', 'Speed')} ({ttsRate}x)
             </label>
             <input
-              type="range" min="0.5" max="2" step="0.1"
+              type="range"
+              min="0.5"
+              max="2"
+              step="0.1"
               value={ttsRate ?? 1}
               onChange={(e) => setAIConfig({ ttsRate: parseFloat(e.target.value) })}
               className="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary-500"
             />
             <div className="flex justify-between text-[10px] text-slate-400 mt-0.5">
-              <span>0.5x</span><span>1x</span><span>2x</span>
+              <span>0.5x</span>
+              <span>1x</span>
+              <span>2x</span>
             </div>
           </div>
 
@@ -508,7 +608,10 @@ const TTSSettings: React.FC<{
               value={ttsVoice || ''}
               onChange={(e) => {
                 setAIConfig({ ttsVoice: e.target.value || null });
-                toast.success(t('aiChat.menu.ttsVoiceChanged', 'Voice changed'), { duration: 1500, icon: '🔊' });
+                toast.success(t('aiChat.menu.ttsVoiceChanged', 'Voice changed'), {
+                  duration: 1500,
+                  icon: '🔊',
+                });
               }}
               className="w-full px-2 py-1.5 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/[0.08] rounded-lg text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-primary-500 focus:outline-none"
             >
@@ -529,9 +632,24 @@ const TTSSettings: React.FC<{
             </label>
             <div className="grid grid-cols-2 gap-1">
               {[
-                { id: 'formal', label: t('aiChat.menu.voiceFormal', 'Formal'), rate: 0.9, pitch: 0.9 },
-                { id: 'normal', label: t('aiChat.menu.voiceNormal', 'Normal'), rate: 1.0, pitch: 1.0 },
-                { id: 'cheerful', label: t('aiChat.menu.voiceCheerful', 'Cheerful'), rate: 1.1, pitch: 1.15 },
+                {
+                  id: 'formal',
+                  label: t('aiChat.menu.voiceFormal', 'Formal'),
+                  rate: 0.9,
+                  pitch: 0.9,
+                },
+                {
+                  id: 'normal',
+                  label: t('aiChat.menu.voiceNormal', 'Normal'),
+                  rate: 1.0,
+                  pitch: 1.0,
+                },
+                {
+                  id: 'cheerful',
+                  label: t('aiChat.menu.voiceCheerful', 'Cheerful'),
+                  rate: 1.1,
+                  pitch: 1.15,
+                },
                 { id: 'calm', label: t('aiChat.menu.voiceCalm', 'Calm'), rate: 0.85, pitch: 0.95 },
               ].map((style) => {
                 const isActive = (ttsRate ?? 1) === style.rate;
@@ -565,10 +683,16 @@ const TTSSettings: React.FC<{
                 utterance.rate = ttsRate ?? 1;
                 if (ttsVoice) {
                   const voice = availableVoices.find((v) => v.voiceURI === ttsVoice);
-                  if (voice) { utterance.voice = voice; utterance.lang = voice.lang; }
+                  if (voice) {
+                    utterance.voice = voice;
+                    utterance.lang = voice.lang;
+                  }
                 } else {
                   const polishVoice = availableVoices.find((v) => v.lang.startsWith('pl'));
-                  if (polishVoice) { utterance.voice = polishVoice; utterance.lang = 'pl-PL'; }
+                  if (polishVoice) {
+                    utterance.voice = polishVoice;
+                    utterance.lang = 'pl-PL';
+                  }
                 }
                 window.speechSynthesis.speak(utterance);
               }

@@ -108,11 +108,7 @@ const getDb = (): Database => {
 /**
  * Promise wrapper for db.all() - returns array of rows
  */
-export function all<T = any>(
-  sql: string,
-  params?: unknown[],
-  options?: QueryOptions
-): Promise<T[]>;
+export function all<T = any>(sql: string, params?: unknown[], options?: QueryOptions): Promise<T[]>;
 export function all<T = any>(
   db: Database,
   sql: string,

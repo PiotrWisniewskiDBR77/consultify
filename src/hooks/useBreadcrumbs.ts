@@ -31,7 +31,7 @@ const ADMIN_SECTION_TITLES: Record<string, string> = {
  * Structure follows the main sidebar navigation:
  * - AI Chat
  * - Interview
- * - Discovery Tools
+ * - Tools (V3: unified hub — Library / Sessions / Outputs / Initiatives)
  * - Assessment
  * - Initiatives
  * - Execution
@@ -157,9 +157,19 @@ export const useBreadcrumbs = (): string[] | null => {
     return null;
   }
   // =====================================================
-  // REPORTS MODULE
+  // REPORTS MODULE (V3-A04 / V3-J01)
   // =====================================================
-  else if (currentView === AppView.FULL_STEP6_REPORTS) {
+  else if (
+    currentView === AppView.FULL_STEP6_REPORTS ||
+    currentView === AppView.REPORTS_ENTRY ||
+    currentView === AppView.REPORTS_MANAGEMENT
+  ) {
+    return null;
+  }
+  // =====================================================
+  // PRESENTATIONS MODULE
+  // =====================================================
+  else if (currentView === AppView.PRESENTATIONS) {
     return null;
   }
   // =====================================================

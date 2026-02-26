@@ -525,9 +525,14 @@ class ScheduledReportService {
           const rgMod = await import('./reportGenerationService.js');
           const generateFullReport = (rgMod as any).generateFullReport as any;
           if (typeof generateFullReport === 'function') {
-            await generateFullReport(reportId, scheduleData.organizationId, scheduleData.createdBy, {
-              regenerateAll: false,
-            });
+            await generateFullReport(
+              reportId,
+              scheduleData.organizationId,
+              scheduleData.createdBy,
+              {
+                regenerateAll: false,
+              }
+            );
           }
         }
       }

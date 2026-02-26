@@ -40,6 +40,16 @@ const parseJson = <T>(value: string | null | undefined, fallback: T): T => {
   }
 };
 
+type InterviewMissingItem = {
+  key: string;
+  label: string;
+  questionId?: string;
+  sectionId?: string;
+};
+
+const parseMissingItems = (value: string | null | undefined): InterviewMissingItem[] =>
+  parseJson<InterviewMissingItem[]>(value, []);
+
 const requireUser = (req: AuthenticatedRequest) => {
   const user = req.user;
   if (!user) throw new Error('Unauthorized');
@@ -718,6 +728,7 @@ export const InterviewController = {
         submittedAt: r.submitted_at || null,
         sentBackAt: r.sent_back_at || null,
         sentBackReason: r.sent_back_reason || null,
+        missingItems: parseMissingItems(r.missing_items_json),
         processRef: r.process_ref || null,
         template: {
           id: r.template_id,
@@ -1147,7 +1158,51 @@ export const InterviewController = {
   sendBackAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const admin = requireUser(req);
     const { id } = req.params;
-    const { reason } = req.body || {};
+    const { reason, missingItems } = req.body || {};
+
+    const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
+    if (!normalizedReason) {
+      res.status(400).json({ error: 'Send-back reason is required' });
+      return;
+    }
+
+    const normalizedMissingItems: InterviewMissingItem[] = Array.isArray(missingItems)
+      ? (missingItems
+          .map((item: any, idx: number) => {
+            if (typeof item === 'string') {
+              const label = item.trim();
+              if (!label) return null;
+              return { key: `missing_${idx + 1}`, label };
+            }
+            if (!item || typeof item !== 'object') return null;
+            const label = typeof item.label === 'string' ? item.label.trim() : '';
+            if (!label) return null;
+            const key =
+              typeof item.key === 'string' && item.key.trim()
+                ? item.key.trim()
+                : `missing_${idx + 1}`;
+            return {
+              key,
+              label,
+              questionId:
+                typeof item.questionId === 'string' && item.questionId.trim()
+                  ? item.questionId.trim()
+                  : undefined,
+              sectionId:
+                typeof item.sectionId === 'string' && item.sectionId.trim()
+                  ? item.sectionId.trim()
+                  : undefined,
+            };
+          })
+          .filter(Boolean) as InterviewMissingItem[])
+      : [];
+
+    if (normalizedMissingItems.length === 0) {
+      normalizedMissingItems.push({
+        key: 'quality_gaps',
+        label: 'Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.',
+      });
+    }
 
     const assignment = await queryHelpers.queryOne(
       `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ?`,
@@ -1193,12 +1248,27 @@ export const InterviewController = {
     // It requires a reason and sends the session back to editable state.
 
     const now = new Date().toISOString();
-    await queryHelpers.queryRun(
-      `UPDATE interview_assignments
-       SET status = 'sent_back', sent_back_at = ?, sent_back_reason = ?, updated_at = ?
-       WHERE id = ?`,
-      [now, reason || 'Please complete the interview', now, id]
-    );
+    const missingItemsJson = JSON.stringify(normalizedMissingItems);
+    try {
+      await queryHelpers.queryRun(
+        `UPDATE interview_assignments
+         SET status = 'sent_back', sent_back_at = ?, sent_back_reason = ?, missing_items_json = ?, updated_at = ?
+         WHERE id = ?`,
+        [now, normalizedReason, missingItemsJson, now, id]
+      );
+    } catch (error) {
+      // Back-compat for environments without missing_items_json column.
+      await queryHelpers.queryRun(
+        `UPDATE interview_assignments
+         SET status = 'sent_back', sent_back_at = ?, sent_back_reason = ?, updated_at = ?
+         WHERE id = ?`,
+        [now, normalizedReason, now, id]
+      );
+      logger.warn(
+        '[InterviewController] sendBackAssignment: missing_items_json column unavailable, using reason-only fallback'
+      );
+      logger.debug('[InterviewController] sendBackAssignment fallback details', error);
+    }
 
     await queryHelpers.queryRun(
       `UPDATE interview_sessions SET status = 'active', updated_at = ?, last_activity_at = ? WHERE id = ?`,
@@ -1227,7 +1297,7 @@ export const InterviewController = {
           organizationId: admin.organizationId,
           type: 'interview_sent_back',
           title: 'Interview sent back for revision',
-          body: reason || 'Please complete the interview',
+          body: `${normalizedReason} (${normalizedMissingItems.length} missing item(s))`,
           entityType: 'interview_assignment',
           entityId: id,
           actionUrl: `/discovery?assignmentId=${id}`,
@@ -1239,7 +1309,10 @@ export const InterviewController = {
       logger.warn('[InterviewController] Failed to send interview_sent_back notification', e);
     }
 
-    res.json(updated);
+    res.json({
+      ...updated,
+      missingItems: parseMissingItems((updated as any)?.missing_items_json),
+    });
   }),
 
   approveAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -1409,6 +1482,7 @@ export const InterviewController = {
         submittedAt: r.submitted_at || null,
         sentBackAt: r.sent_back_at || null,
         sentBackReason: r.sent_back_reason || null,
+        missingItems: parseMissingItems(r.missing_items_json),
         isTeamAssignment: r.is_team_assignment === 1,
         reminderCount: r.reminder_count || 0,
         escalationCount: r.escalation_count || 0,
@@ -1608,6 +1682,7 @@ export const InterviewController = {
       submittedAt: r.submitted_at || null,
       sentBackAt: r.sent_back_at || null,
       sentBackReason: r.sent_back_reason || null,
+      missingItems: parseMissingItems(r.missing_items_json),
       notes: r.notes || null,
       isTeamAssignment: r.is_team_assignment === 1,
       reminderSentAt: r.reminder_sent_at || null,

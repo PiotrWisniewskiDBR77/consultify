@@ -189,13 +189,7 @@ export interface ResponseAction {
 
 // ==================== GROUPING HELPERS ====================
 
-type ConversationGroup =
-  | 'pinned'
-  | 'today'
-  | 'thisWeek'
-  | 'thisMonth'
-  | 'older'
-  | 'archived';
+type ConversationGroup = 'pinned' | 'today' | 'thisWeek' | 'thisMonth' | 'older' | 'archived';
 
 function getConversationGroup(conv: Conversation): ConversationGroup {
   if (conv.archived) return 'archived';
@@ -867,8 +861,14 @@ export const useConversationStore = create<ConversationState>()(
               } else {
                 fallback = `New chat (${new Date().toISOString().slice(0, 10)})`;
               }
-              const titleLower = String(activeConv?.title || '').trim().toLowerCase();
-              const isStillDefault = !activeConv?.title || titleLower === '' || titleLower === 'new conversation' || titleLower === 'nowa rozmowa';
+              const titleLower = String(activeConv?.title || '')
+                .trim()
+                .toLowerCase();
+              const isStillDefault =
+                !activeConv?.title ||
+                titleLower === '' ||
+                titleLower === 'new conversation' ||
+                titleLower === 'nowa rozmowa';
               if (isStillDefault) {
                 set((state) => {
                   const next = state.conversations.map((c) =>

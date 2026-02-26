@@ -45,7 +45,9 @@ export const TaskDropdown = () => {
       const pending = sorted.filter((t) => t.status !== 'done');
       const overdue = pending.filter((t) => t.dueDate && new Date(t.dueDate) < new Date());
       const todayStr = new Date().toDateString();
-      const today = pending.filter((t) => t.dueDate && new Date(t.dueDate).toDateString() === todayStr);
+      const today = pending.filter(
+        (t) => t.dueDate && new Date(t.dueDate).toDateString() === todayStr
+      );
 
       setTasks(sorted.slice(0, 10)); // Show top 10 relevant
       setStats({

@@ -85,6 +85,11 @@ const TYPE_BORDER_COLORS: Record<string, string> = {
   SPE: 'border-l-purple-500',
   // Discovery Tools - Automation
   PAI: 'border-l-amber-500',
+  // V3-J02 — Presentations Hub (source types)
+  tool: 'border-l-emerald-500',
+  assessment: 'border-l-purple-500',
+  finance: 'border-l-blue-500',
+  upload: 'border-l-slate-500',
 };
 
 // Shared tab styles

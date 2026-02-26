@@ -359,9 +359,9 @@ async function executeWebSearch(args: any, ctx: ToolExecutionContext): Promise<s
     const results =
       cached ||
       (await tavily.search(cleanQuery, {
-      maxResults: Math.min(args.max_results || 5, policy.maxCitations || 8),
-      searchDepth: 'basic',
-    }));
+        maxResults: Math.min(args.max_results || 5, policy.maxCitations || 8),
+        searchDepth: 'basic',
+      }));
     const rawResults = Array.isArray((results as any)?.results) ? (results as any).results : [];
     const filtered =
       typeof filterResults === 'function' ? filterResults(rawResults, policy) : rawResults;

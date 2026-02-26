@@ -236,11 +236,16 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
         </div>
         <div className="flex items-center gap-2">
           <div className="hidden sm:flex items-center rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 overflow-hidden">
-            {([
-              { id: 'all' as const, label: t('myWork.calendar.source.all', 'All') },
-              { id: 'project' as const, label: t('myWork.calendar.source.project', 'Project') },
-              { id: 'personal' as const, label: t('myWork.calendar.source.personal', 'Personal') },
-            ] as const).map((opt) => (
+            {(
+              [
+                { id: 'all' as const, label: t('myWork.calendar.source.all', 'All') },
+                { id: 'project' as const, label: t('myWork.calendar.source.project', 'Project') },
+                {
+                  id: 'personal' as const,
+                  label: t('myWork.calendar.source.personal', 'Personal'),
+                },
+              ] as const
+            ).map((opt) => (
               <button
                 key={opt.id}
                 className={`px-2 py-1 text-xs transition-colors ${

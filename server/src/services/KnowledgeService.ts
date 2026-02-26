@@ -26,7 +26,10 @@ const get = async (sql: string, params: any[] = []): Promise<any> => {
   }
 };
 
-const run = async (sql: string, params: any[] = []): Promise<{ changes: number; lastID?: number }> => {
+const run = async (
+  sql: string,
+  params: any[] = []
+): Promise<{ changes: number; lastID?: number }> => {
   try {
     return (await queryRun(sql, params)) as { changes: number; lastID?: number };
   } catch {

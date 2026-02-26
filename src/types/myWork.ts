@@ -618,7 +618,12 @@ export interface NotebookPage {
   summary: string | null;
   status: NotebookPageStatus;
   pinned: boolean;
-  convertedTo: { type: 'task' | 'decision' | 'initiative'; id: string }[] | null;
+  convertedTo:
+    | {
+        type: 'task' | 'decision' | 'initiative' | 'report' | 'presentation';
+        id: string;
+      }[]
+    | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -20,10 +20,12 @@ import {
   FileText,
   Flame,
   Flower2,
+  GanttChart,
   GitBranch,
   Hourglass,
   Inbox,
   Kanban,
+  Layers,
   LayoutGrid,
   LayoutList,
   Lightbulb,
@@ -41,13 +43,15 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import {
+  type WorkspacePanelKey,
+  WorkspacePanelStrip,
+} from '@/components/shared/WorkspacePanelStrip';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useUserCan } from '@/hooks/useUserCan';
 import { useAppStore } from '@/store/useAppStore';
-import { WorkspacePanelStrip, type WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
 
 import { DecisionsPanelContent } from './DecisionsPanelContent';
-import { DecisionReviewNext } from './DecisionReviewNext';
 import type { FocusItem } from './Focus/FocusView';
 import { InboxContent } from './InboxContent';
 import type { MyIdea } from './MyIdeasListContent';
@@ -86,20 +90,16 @@ const TasksCalendarView = React.lazy(() =>
 const DecisionsKanbanBoard = React.lazy(() =>
   import('./DecisionsKanbanBoard').then((m) => ({ default: m.DecisionsKanbanBoard }))
 );
+const DecisionsTimelineContainer = React.lazy(() =>
+  import('./DecisionsTimelineView').then((m) => ({ default: m.DecisionsTimelineContainer }))
+);
 
 // Types
-type ModuleTab =
-  | 'executive'
-  | 'inbox'
-  | 'focus'
-  | 'tasks'
-  | 'notebook'
-  | 'ideas'
-  | 'decisions';
+type ModuleTab = 'executive' | 'inbox' | 'focus' | 'tasks' | 'notebook' | 'ideas' | 'decisions';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type TasksViewMode = 'table' | 'kanban' | 'calendar';
 type IdeasViewMode = 'select' | 'overview' | 'blank' | 'mindmap' | 'garden';
-type DecisionsViewMode = 'list' | 'kanban';
+type DecisionsViewMode = 'table' | 'kanban' | 'timeline';
 type InboxViewMode = 'flat' | 'sections';
 type DecisionFilter = 'all' | 'my' | 'awaiting';
 type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
@@ -152,11 +152,7 @@ const TAB_QUICK_PROMPTS: Record<ModuleTab, string[]> = {
     'Analyze the most urgent decision',
     'What decisions are blocking progress?',
   ],
-  notebook: [
-    'Summarize this note',
-    'Extract action items',
-    'What perspectives am I missing?',
-  ],
+  notebook: ['Summarize this note', 'Extract action items', 'What perspectives am I missing?'],
   ideas: [
     'Evaluate my top idea',
     'Which ideas are ready to promote?',
@@ -319,7 +315,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('mindmap');
   const [ideasMenuOpen, setIdeasMenuOpen] = useState(false);
   const [ideaToolsOpen, setIdeaToolsOpen] = useState(false);
-  const [decisionsViewMode, setDecisionsViewMode] = useState<DecisionsViewMode>('list');
+  const [decisionsViewMode, setDecisionsViewMode] = useState<DecisionsViewMode>('table');
   const [inboxViewMode, setInboxViewMode] = useState<InboxViewMode>('flat');
   const [notebookLinkedIdeasOpen, setNotebookLinkedIdeasOpen] = useState(false);
   const [notebookTopicsOpen, setNotebookTopicsOpen] = useState(false);
@@ -335,7 +331,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [decisionFilter, setDecisionFilter] = useState<DecisionFilter>('my');
   const [decisionPriorityFilter, setDecisionPriorityFilter] =
     useState<DecisionPriorityFilter>('all');
-  const [reviewNextOpen, setReviewNextOpen] = useState(false);
   // Counts
   const [tabCounts, setTabCounts] = useState<TabCounts>({
     executive: 0,
@@ -485,17 +480,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     }
     clearMyWorkIntent();
   }, [myWorkIntent, clearMyWorkIntent, handleOpenDocument]);
-
-  // Command palette integration: allow triggering "Review next" from anywhere.
-  useEffect(() => {
-    const handler = () => {
-      setActiveTab('decisions');
-      setActiveDocumentId(null);
-      setReviewNextOpen(true);
-    };
-    window.addEventListener('mywork-review-next-decisions', handler as any);
-    return () => window.removeEventListener('mywork-review-next-decisions', handler as any);
-  }, []);
 
   // L7: Save session context for cross-session continuity
   useEffect(() => {
@@ -960,7 +944,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       });
       const brief = res.ok ? await res.json() : null;
       const msg =
-        brief && (brief.overdueTasks?.length || brief.dueSoon?.length || brief.pendingDecisions?.length || brief.newTasks?.length)
+        brief &&
+        (brief.overdueTasks?.length ||
+          brief.dueSoon?.length ||
+          brief.pendingDecisions?.length ||
+          brief.newTasks?.length)
           ? `Help me plan my day. Here's my morning brief:\n` +
             (brief.overdueTasks?.length ? `- ${brief.overdueTasks.length} overdue tasks\n` : '') +
             (brief.dueSoon?.length ? `- ${brief.dueSoon.length} tasks due soon\n` : '') +
@@ -969,7 +957,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               : '') +
             (brief.newTasks?.length ? `- ${brief.newTasks.length} new tasks\n` : '') +
             `\nSuggest a prioritized plan for today.`
-          : (isPolish ? 'Pomóż mi zaplanować dzień.' : 'Help me plan my day.');
+          : isPolish
+            ? 'Pomóż mi zaplanować dzień.'
+            : 'Help me plan my day.';
       setChatKickoffMessage(msg);
       if (isChatCollapsed) toggleChatCollapse();
     } catch {
@@ -1353,28 +1343,35 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           </React.Suspense>
         );
       case 'decisions':
-        if (reviewNextOpen) {
+        if (decisionsViewMode === 'timeline') {
           return (
-            <DecisionReviewNext
-              mode={decisionFilter === 'awaiting' ? 'requests_pending' : 'my'}
-              onExit={() => setReviewNextOpen(false)}
-              onOpenFullDetail={(id, data) => handleDecisionClick(id, data)}
-            />
+            <React.Suspense fallback={lazyFallback}>
+              <DecisionsTimelineContainer
+                viewMode={decisionFilter}
+                searchQuery={searchQuery}
+                onDecisionClick={handleDecisionClick}
+                onCountsChange={handleDecisionCountsChange}
+                refreshTrigger={refreshTrigger}
+              />
+            </React.Suspense>
           );
         }
-        return decisionsViewMode === 'kanban' ? (
-          <React.Suspense fallback={lazyFallback}>
-            <DecisionsKanbanBoard
-              viewMode={decisionFilter}
-              priorityFilter={decisionPriorityFilter}
-              searchQuery={searchQuery}
-              onDecisionClick={handleDecisionClick}
-              onCreateDecision={handleCreateDecision}
-              onCountsChange={handleDecisionCountsChange}
-              refreshTrigger={refreshTrigger}
-            />
-          </React.Suspense>
-        ) : (
+        if (decisionsViewMode === 'kanban') {
+          return (
+            <React.Suspense fallback={lazyFallback}>
+              <DecisionsKanbanBoard
+                viewMode={decisionFilter}
+                priorityFilter={decisionPriorityFilter}
+                searchQuery={searchQuery}
+                onDecisionClick={handleDecisionClick}
+                onCreateDecision={handleCreateDecision}
+                onCountsChange={handleDecisionCountsChange}
+                refreshTrigger={refreshTrigger}
+              />
+            </React.Suspense>
+          );
+        }
+        return (
           <DecisionsPanelContent
             viewMode={decisionFilter}
             priorityFilter={decisionPriorityFilter}
@@ -1522,7 +1519,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               </div>
             )}
 
-            {/* Decisions View Mode Toggle (list / kanban) — only on Decisions tab */}
+            {/* Decisions View Mode Toggle (table / kanban / timeline) — V3-C05: no queue view */}
             {activeTab === 'decisions' && !activeDocumentId && (
               <div
                 className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
@@ -1530,28 +1527,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
               >
                 <button
-                  onClick={() => setReviewNextOpen((v) => !v)}
+                  onClick={() => setDecisionsViewMode('table')}
                   className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
-                    reviewNextOpen
+                    decisionsViewMode === 'table'
                       ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
                       : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                   }`}
-                  title={isPolish ? 'Review next' : 'Review next'}
+                  title={isPolish ? 'Widok tabeli' : 'Table view'}
                   role="radio"
-                  aria-checked={reviewNextOpen}
-                >
-                  <Sparkles size={16} />
-                </button>
-                <button
-                  onClick={() => setDecisionsViewMode('list')}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
-                    decisionsViewMode === 'list'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                  }`}
-                  title={isPolish ? 'Widok listy' : 'List view'}
-                  role="radio"
-                  aria-checked={decisionsViewMode === 'list'}
+                  aria-checked={decisionsViewMode === 'table'}
                 >
                   <LayoutList size={16} />
                 </button>
@@ -1567,6 +1551,19 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   aria-checked={decisionsViewMode === 'kanban'}
                 >
                   <Kanban size={16} />
+                </button>
+                <button
+                  onClick={() => setDecisionsViewMode('timeline')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    decisionsViewMode === 'timeline'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Widok osi czasu' : 'Timeline view'}
+                  role="radio"
+                  aria-checked={decisionsViewMode === 'timeline'}
+                >
+                  <GanttChart size={16} />
                 </button>
               </div>
             )}
@@ -1636,27 +1633,83 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   onClick={() => setIdeasMenuOpen((v) => !v)}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                 >
-                  {ideasViewMode === 'mindmap' && <><GitBranch size={14} />{isPolish ? 'Mind Map' : 'Mind Map'}</>}
-                  {ideasViewMode === 'select' && <><LayoutList size={14} />{isPolish ? 'Lista' : 'List'}</>}
-                  {ideasViewMode === 'overview' && <><LayoutGrid size={14} />{isPolish ? 'Karty' : 'Cards'}</>}
-                  {ideasViewMode === 'garden' && <><Flower2 size={14} />{isPolish ? 'Ogród' : 'Garden'}</>}
-                  {ideasViewMode === 'blank' && <><GitBranch size={14} />{isPolish ? 'Czysta mapa' : 'Blank'}</>}
-                  <ChevronDown size={12} className={`transition-transform ${ideasMenuOpen ? 'rotate-180' : ''}`} />
+                  {ideasViewMode === 'mindmap' && (
+                    <>
+                      <GitBranch size={14} />
+                      {isPolish ? 'Mind Map' : 'Mind Map'}
+                    </>
+                  )}
+                  {ideasViewMode === 'select' && (
+                    <>
+                      <LayoutList size={14} />
+                      {isPolish ? 'Lista' : 'List'}
+                    </>
+                  )}
+                  {ideasViewMode === 'overview' && (
+                    <>
+                      <LayoutGrid size={14} />
+                      {isPolish ? 'Karty' : 'Cards'}
+                    </>
+                  )}
+                  {ideasViewMode === 'garden' && (
+                    <>
+                      <Flower2 size={14} />
+                      {isPolish ? 'Ogród' : 'Garden'}
+                    </>
+                  )}
+                  {ideasViewMode === 'blank' && (
+                    <>
+                      <GitBranch size={14} />
+                      {isPolish ? 'Czysta mapa' : 'Blank'}
+                    </>
+                  )}
+                  <ChevronDown
+                    size={12}
+                    className={`transition-transform ${ideasMenuOpen ? 'rotate-180' : ''}`}
+                  />
                 </button>
                 {ideasMenuOpen && (
                   <>
                     <div className="fixed inset-0 z-30" onClick={() => setIdeasMenuOpen(false)} />
                     <div className="absolute top-full mt-1 left-0 z-40 w-44 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
-                      {([
-                        { id: 'mindmap' as IdeasViewMode, icon: GitBranch, label: 'Mind Map', labelPl: 'Mind Map' },
-                        { id: 'select' as IdeasViewMode, icon: LayoutList, label: 'List', labelPl: 'Lista' },
-                        { id: 'overview' as IdeasViewMode, icon: LayoutGrid, label: 'Cards', labelPl: 'Karty' },
-                        { id: 'garden' as IdeasViewMode, icon: Flower2, label: 'Garden', labelPl: 'Ogród' },
-                        { id: 'blank' as IdeasViewMode, icon: GitBranch, label: 'Blank Map', labelPl: 'Czysta mapa' },
-                      ]).map(({ id, icon: Icon, label, labelPl }) => (
+                      {[
+                        {
+                          id: 'mindmap' as IdeasViewMode,
+                          icon: GitBranch,
+                          label: 'Mind Map',
+                          labelPl: 'Mind Map',
+                        },
+                        {
+                          id: 'select' as IdeasViewMode,
+                          icon: LayoutList,
+                          label: 'List',
+                          labelPl: 'Lista',
+                        },
+                        {
+                          id: 'overview' as IdeasViewMode,
+                          icon: LayoutGrid,
+                          label: 'Cards',
+                          labelPl: 'Karty',
+                        },
+                        {
+                          id: 'garden' as IdeasViewMode,
+                          icon: Flower2,
+                          label: 'Garden',
+                          labelPl: 'Ogród',
+                        },
+                        {
+                          id: 'blank' as IdeasViewMode,
+                          icon: GitBranch,
+                          label: 'Blank Map',
+                          labelPl: 'Czysta mapa',
+                        },
+                      ].map(({ id, icon: Icon, label, labelPl }) => (
                         <button
                           key={id}
-                          onClick={() => { setIdeasViewMode(id); setIdeasMenuOpen(false); }}
+                          onClick={() => {
+                            setIdeasViewMode(id);
+                            setIdeasMenuOpen(false);
+                          }}
                           className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${
                             ideasViewMode === id
                               ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10 font-semibold'

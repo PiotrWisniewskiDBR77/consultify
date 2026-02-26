@@ -78,8 +78,12 @@ const DecisionItem: React.FC<{
               {decision.type.replace(/_/g, ' ')}
             </span>
             <span className="flex items-center gap-1">
-              <span className={`w-1.5 h-1.5 rounded-full ${priorityDot[decision.priority] || priorityDot.medium}`} />
-              <span className={`text-[10px] font-semibold ${priorityText[decision.priority] || priorityText.medium}`}>
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${priorityDot[decision.priority] || priorityDot.medium}`}
+              />
+              <span
+                className={`text-[10px] font-semibold ${priorityText[decision.priority] || priorityText.medium}`}
+              >
                 {decision.priority === 'critical' || decision.priority === 'high'
                   ? decision.priority.charAt(0).toUpperCase() + decision.priority.slice(1)
                   : ''}
@@ -123,7 +127,10 @@ const DecisionItem: React.FC<{
           <button
             onClick={(e) => {
               e.stopPropagation();
-              if (!decision?.id) { toast.error('Missing decision ID'); return; }
+              if (!decision?.id) {
+                toast.error('Missing decision ID');
+                return;
+              }
               onApprove?.(decision.id);
             }}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors duration-150"
@@ -134,7 +141,10 @@ const DecisionItem: React.FC<{
           <button
             onClick={(e) => {
               e.stopPropagation();
-              if (!decision?.id) { toast.error('Missing decision ID'); return; }
+              if (!decision?.id) {
+                toast.error('Missing decision ID');
+                return;
+              }
               onReject?.(decision.id);
             }}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200/60 dark:hover:bg-white/[0.06] transition-colors duration-150"
@@ -145,7 +155,10 @@ const DecisionItem: React.FC<{
           <button
             onClick={(e) => {
               e.stopPropagation();
-              if (!decision?.id) { toast.error('Missing decision ID'); return; }
+              if (!decision?.id) {
+                toast.error('Missing decision ID');
+                return;
+              }
               onDelegate?.(decision.id);
             }}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200/60 dark:hover:bg-white/[0.06] transition-colors duration-150"

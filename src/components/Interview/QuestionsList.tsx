@@ -62,6 +62,7 @@ export interface InterviewQuestion {
 export interface QuestionsListProps {
   questions: InterviewQuestion[];
   category: InterviewCategory | undefined;
+  runtimeMode?: 'single_question' | 'task_list';
   onUpdateQuestion: (questionId: string, updates: Partial<InterviewQuestion>) => Promise<void>;
   onAddQuestion: (category: InterviewCategory, questionText: string) => Promise<void>;
   isLoading?: boolean;
@@ -140,6 +141,7 @@ const TAG_OPTIONS = [
 export const QuestionsList: React.FC<QuestionsListProps> = ({
   questions,
   category,
+  runtimeMode = 'task_list',
   onUpdateQuestion,
   onAddQuestion,
   isLoading = false,
@@ -177,6 +179,17 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [applyLoading, setApplyLoading] = useState(false);
+
+  const singleQuestion =
+    (expandedId ? categoryQuestions.find((q) => q.id === expandedId) : undefined) ||
+    nextMissing ||
+    categoryQuestions[0];
+  const visibleQuestions =
+    runtimeMode === 'single_question'
+      ? singleQuestion
+        ? [singleQuestion]
+        : []
+      : categoryQuestions;
 
   // Start editing answer
   const handleStartEdit = useCallback((question: InterviewQuestion) => {
@@ -591,7 +604,7 @@ Rules:
       )}
 
       {/* Questions List */}
-      {categoryQuestions.map((question) => {
+      {visibleQuestions.map((question) => {
         const statusConfig = STATUS_CONFIG[question.status];
         const StatusIcon = statusConfig.icon;
         const isExpanded = expandedId === question.id;

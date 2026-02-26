@@ -605,7 +605,10 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
         const sourceIdeaId = connection.source.replace('idea-', '');
         const targetIdeaId = connection.target.replace('idea-', '');
         try {
-          const res = (await Api.addMyIdeaEdge(sourceIdeaId, { targetIdeaId, kind: 'relates_to' })) as any;
+          const res = (await Api.addMyIdeaEdge(sourceIdeaId, {
+            targetIdeaId,
+            kind: 'relates_to',
+          })) as any;
           const persistedId = String(res?.edge?.id || '').trim();
           if (persistedId) {
             setEdges((prev: Edge[]) =>
@@ -624,7 +627,11 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
                   : e
               )
             );
-            trackFunnelEvent('idea_edge_created', { sourceIdeaId, targetIdeaId, kind: 'relates_to' });
+            trackFunnelEvent('idea_edge_created', {
+              sourceIdeaId,
+              targetIdeaId,
+              kind: 'relates_to',
+            });
           }
           toast.success(isPolish ? 'Pomysły połączone!' : 'Ideas connected!', {
             duration: 1500,
@@ -720,7 +727,9 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
               });
             })
             .catch(() => {
-              toast.error(isPolish ? 'Nie udało się usunąć połączenia' : 'Failed to delete connection');
+              toast.error(
+                isPolish ? 'Nie udało się usunąć połączenia' : 'Failed to delete connection'
+              );
               // best-effort restore
               setEdges((prev: Edge[]) => [edge, ...prev]);
             });

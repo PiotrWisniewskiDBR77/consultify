@@ -47,7 +47,14 @@ import { useAppStore } from '@/store/useAppStore';
 
 const AI_BLOCK_MIME = 'application/x-notebook-ai-block';
 
-type ConvertTarget = 'initiative' | 'task' | 'decision' | 'idea' | 'assessment' | 'report' | 'presentation';
+type ConvertTarget =
+  | 'initiative'
+  | 'task'
+  | 'decision'
+  | 'idea'
+  | 'assessment'
+  | 'report'
+  | 'presentation';
 
 interface AIChatInlinePanelProps {
   open: boolean;
@@ -75,10 +82,26 @@ interface AIChatInlinePanelProps {
 }
 
 const MATURITY_STYLE: Record<string, { gradient: string; text: string; glow: string }> = {
-  seed: { gradient: 'from-slate-400/20 to-slate-500/10', text: 'text-slate-500', glow: 'shadow-slate-400/10' },
-  growing: { gradient: 'from-emerald-400/20 to-emerald-500/10', text: 'text-emerald-500', glow: 'shadow-emerald-400/10' },
-  mature: { gradient: 'from-blue-400/20 to-blue-500/10', text: 'text-blue-500', glow: 'shadow-blue-400/10' },
-  actionable: { gradient: 'from-amber-400/20 to-amber-500/10', text: 'text-amber-500', glow: 'shadow-amber-400/10' },
+  seed: {
+    gradient: 'from-slate-400/20 to-slate-500/10',
+    text: 'text-slate-500',
+    glow: 'shadow-slate-400/10',
+  },
+  growing: {
+    gradient: 'from-emerald-400/20 to-emerald-500/10',
+    text: 'text-emerald-500',
+    glow: 'shadow-emerald-400/10',
+  },
+  mature: {
+    gradient: 'from-blue-400/20 to-blue-500/10',
+    text: 'text-blue-500',
+    glow: 'shadow-blue-400/10',
+  },
+  actionable: {
+    gradient: 'from-amber-400/20 to-amber-500/10',
+    text: 'text-amber-500',
+    glow: 'shadow-amber-400/10',
+  },
 };
 
 export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
@@ -116,7 +139,8 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
   /* ---- Voice input ---- */
   useEffect(() => {
     const SpeechRecognitionAPI =
-      typeof window !== 'undefined' && ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+      typeof window !== 'undefined' &&
+      ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
     if (!SpeechRecognitionAPI) return;
     const rec = new SpeechRecognitionAPI();
     rec.continuous = true;
@@ -132,14 +156,27 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
     rec.onerror = () => setIsRecording(false);
     rec.onend = () => setIsRecording(false);
     recognitionRef.current = rec;
-    return () => { try { rec.abort(); } catch {} };
+    return () => {
+      try {
+        rec.abort();
+      } catch {}
+    };
   }, [isPl]);
 
   const toggleMic = useCallback(() => {
     const rec = recognitionRef.current;
-    if (!rec) { toast.error(isPl ? 'Mikrofon nie jest obsługiwany' : 'Microphone not supported'); return; }
-    if (isRecording) { rec.stop(); setIsRecording(false); }
-    else { rec.start(); setIsRecording(true); toast.success(isPl ? 'Nagrywanie…' : 'Recording…'); }
+    if (!rec) {
+      toast.error(isPl ? 'Mikrofon nie jest obsługiwany' : 'Microphone not supported');
+      return;
+    }
+    if (isRecording) {
+      rec.stop();
+      setIsRecording(false);
+    } else {
+      rec.start();
+      setIsRecording(true);
+      toast.success(isPl ? 'Nagrywanie…' : 'Recording…');
+    }
   }, [isRecording, isPl]);
 
   /* ---- Block helpers (notebook-specific) ---- */
@@ -152,7 +189,11 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
       const node = $from.node(d);
       if (DELETABLE_BLOCKS.includes(node.type.name)) {
         const pos = $from.before(d);
-        editor.chain().focus().deleteRange({ from: pos, to: pos + node.nodeSize }).run();
+        editor
+          .chain()
+          .focus()
+          .deleteRange({ from: pos, to: pos + node.nodeSize })
+          .run();
         toast.success(isPl ? 'Usunięto blok' : 'Block deleted');
         return true;
       }
@@ -161,105 +202,221 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
     return false;
   }, [editor, isPl]);
 
-  const insertElement = useCallback((action: () => void) => {
-    if (!editor) return;
-    editor.chain().focus();
-    action();
-  }, [editor]);
+  const insertElement = useCallback(
+    (action: () => void) => {
+      if (!editor) return;
+      editor.chain().focus();
+      action();
+    },
+    [editor]
+  );
 
   /* ---- AI compose + drag ---- */
-  const runAIAndInsert = useCallback(async (rawText: string) => {
-    if (!editor || !rawText.trim()) return;
-    setIsGenerating(true);
-    try {
-      const systemPrompt = isPl
-        ? 'Przekształć surowy tekst w elegancki tekst gotowy do notatki. Zachowaj sens, popraw styl. Odpowiedz TYLKO tekstem.'
-        : 'Transform raw text into elegant text ready for a note. Keep meaning, improve style. Respond ONLY with text.';
-      const userMessage = `Context: Note "${noteTitle}". Tags: ${noteTags.join(', ') || 'none'}\n\nInput: ${rawText}`;
-      let result = '';
-      await Api.chatWithAIStream(userMessage, [], (chunk) => { result += chunk; }, () => {}, systemPrompt, undefined, undefined, isPl ? 'pl' : 'en', undefined, { responseStyle: 'concise', selectedTier: 'STANDARD' }, undefined);
-      const text = result.trim();
-      if (!text) return;
-      const aiLabel = isPl ? 'Komentarz AI' : 'AI comment';
-      editor.chain().focus().insertContent({
-        type: 'callout', attrs: { variant: 'purple' },
-        content: [
-          { type: 'paragraph', content: [{ type: 'text', text: `✨ ${aiLabel}` }] },
-          ...text.split(/\n\n+/).filter(Boolean).map((p) => ({ type: 'paragraph', content: [{ type: 'text', text: p.trim() }] })),
-        ],
-      }).run();
-      trackFunnelEvent('notebook_ai_block_dropped', {});
-      toast.success(isPl ? 'Wstawiono do notatki' : 'Inserted into note');
-      setInput('');
-    } catch (err: any) { toast.error(err?.message || (isPl ? 'Błąd AI' : 'AI error')); }
-    finally { setIsGenerating(false); }
-  }, [editor, noteTitle, noteTags, isPl]);
+  const runAIAndInsert = useCallback(
+    async (rawText: string) => {
+      if (!editor || !rawText.trim()) return;
+      setIsGenerating(true);
+      try {
+        const systemPrompt = isPl
+          ? 'Przekształć surowy tekst w elegancki tekst gotowy do notatki. Zachowaj sens, popraw styl. Odpowiedz TYLKO tekstem.'
+          : 'Transform raw text into elegant text ready for a note. Keep meaning, improve style. Respond ONLY with text.';
+        const userMessage = `Context: Note "${noteTitle}". Tags: ${noteTags.join(', ') || 'none'}\n\nInput: ${rawText}`;
+        let result = '';
+        await Api.chatWithAIStream(
+          userMessage,
+          [],
+          (chunk) => {
+            result += chunk;
+          },
+          () => {},
+          systemPrompt,
+          undefined,
+          undefined,
+          isPl ? 'pl' : 'en',
+          undefined,
+          { responseStyle: 'concise', selectedTier: 'STANDARD' },
+          undefined
+        );
+        const text = result.trim();
+        if (!text) return;
+        const aiLabel = isPl ? 'Komentarz AI' : 'AI comment';
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: 'callout',
+            attrs: { variant: 'purple' },
+            content: [
+              { type: 'paragraph', content: [{ type: 'text', text: `✨ ${aiLabel}` }] },
+              ...text
+                .split(/\n\n+/)
+                .filter(Boolean)
+                .map((p) => ({ type: 'paragraph', content: [{ type: 'text', text: p.trim() }] })),
+            ],
+          })
+          .run();
+        trackFunnelEvent('notebook_ai_block_dropped', {});
+        toast.success(isPl ? 'Wstawiono do notatki' : 'Inserted into note');
+        setInput('');
+      } catch (err: any) {
+        toast.error(err?.message || (isPl ? 'Błąd AI' : 'AI error'));
+      } finally {
+        setIsGenerating(false);
+      }
+    },
+    [editor, noteTitle, noteTags, isPl]
+  );
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e: CustomEvent<{ text: string }>) => { runAIAndInsert(e.detail.text); };
+    const handler = (e: CustomEvent<{ text: string }>) => {
+      runAIAndInsert(e.detail.text);
+    };
     window.addEventListener('notebook-ai-block-drop', handler as EventListener);
     return () => window.removeEventListener('notebook-ai-block-drop', handler as EventListener);
   }, [open, runAIAndInsert]);
 
-  const handleDragStart = useCallback((e: React.DragEvent) => {
-    const text = input.trim();
-    if (!text) { e.preventDefault(); return; }
-    e.dataTransfer.setData(AI_BLOCK_MIME, text);
-    e.dataTransfer.setData('text/plain', text);
-    e.dataTransfer.effectAllowed = 'copy';
-  }, [input]);
+  const handleDragStart = useCallback(
+    (e: React.DragEvent) => {
+      const text = input.trim();
+      if (!text) {
+        e.preventDefault();
+        return;
+      }
+      e.dataTransfer.setData(AI_BLOCK_MIME, text);
+      e.dataTransfer.setData('text/plain', text);
+      e.dataTransfer.effectAllowed = 'copy';
+    },
+    [input]
+  );
 
   /* ---- Convert actions (notebook-specific) ---- */
-  const sendToChatWithPrompt = useCallback((prompt: string) => {
-    setChatKickoffMessage(prompt);
-    if (isChatCollapsed) toggleChatCollapse();
-  }, [setChatKickoffMessage, isChatCollapsed, toggleChatCollapse]);
+  const sendToChatWithPrompt = useCallback(
+    (prompt: string) => {
+      setChatKickoffMessage(prompt);
+      if (isChatCollapsed) toggleChatCollapse();
+    },
+    [setChatKickoffMessage, isChatCollapsed, toggleChatCollapse]
+  );
 
   const handleConvertAction = (target: ConvertTarget) => {
     const excerpt = (noteContent || '').trim().slice(0, 2000);
     if (target === 'assessment') {
-      sendToChatWithPrompt(isPl
-        ? `Wygeneruj 8-12 pytań do oceny na podstawie:\n\nTytuł: "${noteTitle}"\nTagi: ${noteTags.join(', ') || 'brak'}\n\nTreść:\n${excerpt}`
-        : `Generate 8-12 assessment questions based on:\n\nTitle: "${noteTitle}"\nTags: ${noteTags.join(', ') || 'none'}\n\nContent:\n${excerpt}`);
-      toast.success(isPl ? 'Generowanie pytań…' : 'Generating questions…'); return;
+      sendToChatWithPrompt(
+        isPl
+          ? `Wygeneruj 8-12 pytań do oceny na podstawie:\n\nTytuł: "${noteTitle}"\nTagi: ${noteTags.join(', ') || 'brak'}\n\nTreść:\n${excerpt}`
+          : `Generate 8-12 assessment questions based on:\n\nTitle: "${noteTitle}"\nTags: ${noteTags.join(', ') || 'none'}\n\nContent:\n${excerpt}`
+      );
+      toast.success(isPl ? 'Generowanie pytań…' : 'Generating questions…');
+      return;
     }
-    if (target === 'report') {
-      sendToChatWithPrompt(isPl
-        ? `Przygotuj profesjonalny raport na podstawie:\n\nTytuł: "${noteTitle}"\n\nTreść:\n${excerpt}`
-        : `Prepare a professional report based on:\n\nTitle: "${noteTitle}"\n\nContent:\n${excerpt}`);
-      toast.success(isPl ? 'Tworzenie raportu…' : 'Creating report…'); return;
-    }
-    if (target === 'presentation') {
-      sendToChatWithPrompt(isPl
-        ? `Przygotuj zarys prezentacji (10-15 slajdów) na podstawie:\n\nTytuł: "${noteTitle}"\n\nTreść:\n${excerpt}`
-        : `Prepare a presentation outline (10-15 slides) based on:\n\nTitle: "${noteTitle}"\n\nContent:\n${excerpt}`);
-      toast.success(isPl ? 'Tworzenie prezentacji…' : 'Creating presentation…'); return;
-    }
+    // V3-C02: report/presentation conversions should use backend convert endpoint
+    // so source traceability is guaranteed via MyWork ToolSession materialization.
     onConvert?.(target);
   };
 
   if (!open) return null;
 
   const insertButtons = [
-    { icon: Info, label: 'Callout', labelPl: 'Wyróżnienie', action: () => (editor?.commands as any)?.setCallout({ variant: 'info' }), iconColor: 'text-blue-500 dark:text-blue-400' },
-    { icon: AlertTriangle, label: 'Warning', labelPl: 'Ostrzeżenie', action: () => (editor?.commands as any)?.setCallout({ variant: 'warning' }), iconColor: 'text-amber-500 dark:text-amber-400' },
-    { icon: ToggleRight, label: 'Toggle', labelPl: 'Rozwijane', action: () => (editor?.commands as any)?.setDetails(), iconColor: 'text-slate-500 dark:text-slate-400' },
-    { icon: Columns3, label: 'Table', labelPl: 'Tabela', action: () => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(), iconColor: 'text-indigo-500 dark:text-indigo-400' },
-    { icon: Minus, label: 'Divider', labelPl: 'Separator', action: () => editor?.chain().focus().setHorizontalRule().run(), iconColor: 'text-slate-400 dark:text-slate-500' },
+    {
+      icon: Info,
+      label: 'Callout',
+      labelPl: 'Wyróżnienie',
+      action: () => (editor?.commands as any)?.setCallout({ variant: 'info' }),
+      iconColor: 'text-blue-500 dark:text-blue-400',
+    },
+    {
+      icon: AlertTriangle,
+      label: 'Warning',
+      labelPl: 'Ostrzeżenie',
+      action: () => (editor?.commands as any)?.setCallout({ variant: 'warning' }),
+      iconColor: 'text-amber-500 dark:text-amber-400',
+    },
+    {
+      icon: ToggleRight,
+      label: 'Toggle',
+      labelPl: 'Rozwijane',
+      action: () => (editor?.commands as any)?.setDetails(),
+      iconColor: 'text-slate-500 dark:text-slate-400',
+    },
+    {
+      icon: Columns3,
+      label: 'Table',
+      labelPl: 'Tabela',
+      action: () =>
+        editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+      iconColor: 'text-indigo-500 dark:text-indigo-400',
+    },
+    {
+      icon: Minus,
+      label: 'Divider',
+      labelPl: 'Separator',
+      action: () => editor?.chain().focus().setHorizontalRule().run(),
+      iconColor: 'text-slate-400 dark:text-slate-500',
+    },
   ];
 
-  const convertActions: { id: ConvertTarget; icon: React.ComponentType<any>; labelPl: string; labelEn: string; iconColor: string }[] = [
-    { id: 'initiative', icon: Target, labelPl: 'Inicjatywa', labelEn: 'Initiative', iconColor: 'text-blue-500 dark:text-blue-400' },
-    { id: 'task', icon: CheckSquare, labelPl: 'Task', labelEn: 'Task', iconColor: 'text-emerald-500 dark:text-emerald-400' },
-    { id: 'decision', icon: Scale, labelPl: 'Decyzja', labelEn: 'Decision', iconColor: 'text-amber-500 dark:text-amber-400' },
-    { id: 'idea', icon: Lightbulb, labelPl: 'Idea', labelEn: 'Idea', iconColor: 'text-violet-500 dark:text-violet-400' },
-    { id: 'assessment', icon: ListChecks, labelPl: 'Assessment', labelEn: 'Assessment', iconColor: 'text-rose-500 dark:text-rose-400' },
-    { id: 'report', icon: FileBarChart, labelPl: 'Raport', labelEn: 'Report', iconColor: 'text-indigo-500 dark:text-indigo-400' },
-    { id: 'presentation', icon: Presentation, labelPl: 'Prezentacja', labelEn: 'Presentation', iconColor: 'text-fuchsia-500 dark:text-fuchsia-400' },
+  const convertActions: {
+    id: ConvertTarget;
+    icon: React.ComponentType<any>;
+    labelPl: string;
+    labelEn: string;
+    iconColor: string;
+  }[] = [
+    {
+      id: 'initiative',
+      icon: Target,
+      labelPl: 'Inicjatywa',
+      labelEn: 'Initiative',
+      iconColor: 'text-blue-500 dark:text-blue-400',
+    },
+    {
+      id: 'task',
+      icon: CheckSquare,
+      labelPl: 'Task',
+      labelEn: 'Task',
+      iconColor: 'text-emerald-500 dark:text-emerald-400',
+    },
+    {
+      id: 'decision',
+      icon: Scale,
+      labelPl: 'Decyzja',
+      labelEn: 'Decision',
+      iconColor: 'text-amber-500 dark:text-amber-400',
+    },
+    {
+      id: 'idea',
+      icon: Lightbulb,
+      labelPl: 'Idea',
+      labelEn: 'Idea',
+      iconColor: 'text-violet-500 dark:text-violet-400',
+    },
+    {
+      id: 'assessment',
+      icon: ListChecks,
+      labelPl: 'Assessment',
+      labelEn: 'Assessment',
+      iconColor: 'text-rose-500 dark:text-rose-400',
+    },
+    {
+      id: 'report',
+      icon: FileBarChart,
+      labelPl: 'Raport',
+      labelEn: 'Report',
+      iconColor: 'text-indigo-500 dark:text-indigo-400',
+    },
+    {
+      id: 'presentation',
+      icon: Presentation,
+      labelPl: 'Prezentacja',
+      labelEn: 'Presentation',
+      iconColor: 'text-fuchsia-500 dark:text-fuchsia-400',
+    },
   ];
 
-  const matStyle = page ? (MATURITY_STYLE[page.maturity] || MATURITY_STYLE.seed) : MATURITY_STYLE.seed;
+  const matStyle = page
+    ? MATURITY_STYLE[page.maturity] || MATURITY_STYLE.seed
+    : MATURITY_STYLE.seed;
 
   return (
     <ToolsPanelShell
@@ -302,6 +459,11 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
       {/* ─── Create from note (notebook-specific) ─── */}
       <div className="px-3 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
         <SectionLabel>{isPl ? 'Utwórz z notatki' : 'Create from note'}</SectionLabel>
+        <div className="mb-2 text-[10px] text-slate-500 dark:text-slate-400">
+          {isPl
+            ? 'Convert to… utworzy najpierw MyWork session.'
+            : 'Convert to… will create a MyWork session first.'}
+        </div>
         <div className="grid grid-cols-2 gap-1.5">
           {convertActions.map(({ id, icon: Icon, labelPl, labelEn, iconColor }) => (
             <button
@@ -310,7 +472,9 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
               disabled={!page}
               className="group flex items-center gap-2 px-2.5 py-2 rounded-xl bg-slate-50/40 dark:bg-white/[0.02] border border-slate-200/25 dark:border-white/[0.04] hover:bg-slate-100/60 dark:hover:bg-white/[0.05] hover:border-slate-300/30 dark:hover:border-white/[0.08] transition-all duration-200 hover:shadow-sm disabled:opacity-40"
             >
-              <div className={`w-6 h-6 rounded-lg bg-slate-100/80 dark:bg-white/[0.06] flex items-center justify-center ${iconColor} shrink-0`}>
+              <div
+                className={`w-6 h-6 rounded-lg bg-slate-100/80 dark:bg-white/[0.06] flex items-center justify-center ${iconColor} shrink-0`}
+              >
                 <Icon size={13} />
               </div>
               <div className="flex-1 min-w-0 text-left">
@@ -335,7 +499,9 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
           <SectionLabel>{isPl ? 'Strona' : 'Page'}</SectionLabel>
           <div className="space-y-2.5">
             <div className="flex items-center gap-2">
-              <span className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r ${matStyle.gradient} ${matStyle.text} px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide shadow-sm ${matStyle.glow}`}>
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r ${matStyle.gradient} ${matStyle.text} px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide shadow-sm ${matStyle.glow}`}
+              >
                 <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
                 {page.maturity}
               </span>
@@ -347,14 +513,21 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
                     className="appearance-none pr-5 pl-2.5 py-1 rounded-lg bg-slate-50/80 dark:bg-white/[0.04] border border-slate-200/40 dark:border-white/[0.06] text-[10px] text-slate-500 dark:text-slate-400 font-medium cursor-pointer hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-all"
                   >
                     <option value="private">{isPl ? '🔒 Prywatna' : '🔒 Private'}</option>
-                    {page.projectId && <option value="project">{isPl ? '👥 Projekt' : '👥 Project'}</option>}
+                    {page.projectId && (
+                      <option value="project">{isPl ? '👥 Projekt' : '👥 Project'}</option>
+                    )}
                   </select>
-                  <ChevronDown size={9} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <ChevronDown
+                    size={9}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                  />
                 </div>
               )}
             </div>
             {page.summary && (
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 italic leading-relaxed line-clamp-2 pl-0.5">{page.summary}</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 italic leading-relaxed line-clamp-2 pl-0.5">
+                {page.summary}
+              </div>
             )}
             <div className="flex items-center gap-3">
               <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500 tabular-nums font-medium">
@@ -371,13 +544,20 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
             {(onAskAI || onDeletePage) && (
               <div className="flex items-center gap-2 pt-0.5">
                 {onAskAI && (
-                  <button onClick={onAskAI} className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[10px] font-bold bg-slate-50/80 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.07] border border-slate-200/30 dark:border-white/[0.06] hover:border-slate-300/40 dark:hover:border-white/[0.1] transition-all">
+                  <button
+                    onClick={onAskAI}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[10px] font-bold bg-slate-50/80 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.07] border border-slate-200/30 dark:border-white/[0.06] hover:border-slate-300/40 dark:hover:border-white/[0.1] transition-all"
+                  >
                     <Sparkles size={11} className="text-violet-500 dark:text-violet-400" />
                     {isPl ? 'Zapytaj AI' : 'Ask AI'}
                   </button>
                 )}
                 {onDeletePage && (
-                  <button onClick={onDeletePage} className="inline-flex items-center justify-center rounded-lg px-2.5 py-1.5 text-[10px] font-medium bg-red-500/[0.06] text-red-400/70 hover:bg-red-500/[0.12] hover:text-red-500 border border-red-500/[0.06] hover:border-red-500/10 transition-all" title={isPl ? 'Usuń stronę' : 'Delete page'}>
+                  <button
+                    onClick={onDeletePage}
+                    className="inline-flex items-center justify-center rounded-lg px-2.5 py-1.5 text-[10px] font-medium bg-red-500/[0.06] text-red-400/70 hover:bg-red-500/[0.12] hover:text-red-500 border border-red-500/[0.06] hover:border-red-500/10 transition-all"
+                    title={isPl ? 'Usuń stronę' : 'Delete page'}
+                  >
                     <Trash2 size={11} />
                   </button>
                 )}
@@ -399,12 +579,17 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
               : 'border-slate-200/40 dark:border-white/[0.06] bg-slate-50/40 dark:bg-white/[0.02]'
           }`}
         >
-          {input.trim() && <div className="absolute -inset-px rounded-2xl bg-gradient-to-r from-slate-400/[0.06] via-transparent to-slate-400/[0.06] pointer-events-none" />}
+          {input.trim() && (
+            <div className="absolute -inset-px rounded-2xl bg-gradient-to-r from-slate-400/[0.06] via-transparent to-slate-400/[0.06] pointer-events-none" />
+          )}
           <div className="relative p-3">
             <div className="flex items-start gap-2">
               {input.trim() && (
-                  <div className="mt-2.5 shrink-0 flex flex-col items-center gap-0.5">
-                  <GripVertical size={14} className="text-slate-400/60 group-hover:text-slate-500 transition-colors" />
+                <div className="mt-2.5 shrink-0 flex flex-col items-center gap-0.5">
+                  <GripVertical
+                    size={14}
+                    className="text-slate-400/60 group-hover:text-slate-500 transition-colors"
+                  />
                   <div className="w-0.5 h-4 rounded-full bg-gradient-to-b from-slate-400/40 to-transparent" />
                 </div>
               )}
@@ -422,14 +607,27 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
                     className={`relative p-2 rounded-xl transition-all duration-200 ${isRecording ? 'bg-red-500/15 text-red-500 shadow-sm shadow-red-500/10' : 'bg-slate-100/80 dark:bg-white/[0.06] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/[0.08]'}`}
                     title={isPl ? 'Mikrofon' : 'Microphone'}
                   >
-                    {isRecording && <span className="absolute inset-0 rounded-xl animate-ping bg-red-500/10" />}
-                    <span className="relative">{isRecording ? <MicOff size={16} /> : <Mic size={16} />}</span>
+                    {isRecording && (
+                      <span className="absolute inset-0 rounded-xl animate-ping bg-red-500/10" />
+                    )}
+                    <span className="relative">
+                      {isRecording ? <MicOff size={16} /> : <Mic size={16} />}
+                    </span>
                   </button>
                   {input.trim() && (
                     <span className="flex items-center gap-1.5 text-[10px] font-medium">
-                      {isGenerating
-                        ? <><Loader2 size={10} className="animate-spin text-slate-500" /><span className="text-slate-500">{isPl ? 'Generowanie…' : 'Generating…'}</span></>
-                        : <span className="text-slate-400/70 dark:text-slate-500/70">{isPl ? '← Przeciągnij' : '← Drag'}</span>}
+                      {isGenerating ? (
+                        <>
+                          <Loader2 size={10} className="animate-spin text-slate-500" />
+                          <span className="text-slate-500">
+                            {isPl ? 'Generowanie…' : 'Generating…'}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-slate-400/70 dark:text-slate-500/70">
+                          {isPl ? '← Przeciągnij' : '← Drag'}
+                        </span>
+                      )}
                     </span>
                   )}
                   <button

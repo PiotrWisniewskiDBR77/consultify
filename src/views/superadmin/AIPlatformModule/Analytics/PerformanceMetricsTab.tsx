@@ -68,8 +68,12 @@ export const PerformanceMetricsTab: React.FC = () => {
       const period = periodMap[dateRange];
 
       const [metricsRes, trendsRes, providersRes, llmHealthRes] = await Promise.all([
-        fetch(`/api/ai-operations/performance/metrics?period=${encodeURIComponent(period)}`, { headers }),
-        fetch(`/api/ai-operations/performance/trends?period=${encodeURIComponent(period)}`, { headers }),
+        fetch(`/api/ai-operations/performance/metrics?period=${encodeURIComponent(period)}`, {
+          headers,
+        }),
+        fetch(`/api/ai-operations/performance/trends?period=${encodeURIComponent(period)}`, {
+          headers,
+        }),
         fetch('/api/ai-operations/mission-control/providers', { headers }),
         fetch('/api/llm/health/detailed', { headers }),
       ]);
@@ -80,8 +84,12 @@ export const PerformanceMetricsTab: React.FC = () => {
       const llmHealthPayload = await llmHealthRes.json().catch(() => ({}));
 
       const cur = metricsPayload?.data || {};
-      const trends: Array<{ timestamp?: string; avgLatency?: number; requests?: number; successRate?: string }> =
-        Array.isArray(trendsPayload?.data) ? trendsPayload.data : [];
+      const trends: Array<{
+        timestamp?: string;
+        avgLatency?: number;
+        requests?: number;
+        successRate?: string;
+      }> = Array.isArray(trendsPayload?.data) ? trendsPayload.data : [];
 
       const historyLatency = trends.map((t) => Number(t?.avgLatency || 0)).slice(-12);
       const historyRequests = trends.map((t) => Number(t?.requests || 0)).slice(-12);
@@ -94,9 +102,16 @@ export const PerformanceMetricsTab: React.FC = () => {
       const errorRate = Math.max(0, 100 - successRate);
       const avgTokens = Number(cur?.avgTokens || 0);
 
-      const prevLatency = historyLatency.length >= 2 ? historyLatency[historyLatency.length - 2] : avgLatency;
-      const prevReq = historyRequests.length >= 2 ? historyRequests[historyRequests.length - 2] : Number(cur?.totalRequests || 0);
-      const prevErr = historySuccessRate.length >= 2 ? 100 - historySuccessRate[historySuccessRate.length - 2] : errorRate;
+      const prevLatency =
+        historyLatency.length >= 2 ? historyLatency[historyLatency.length - 2] : avgLatency;
+      const prevReq =
+        historyRequests.length >= 2
+          ? historyRequests[historyRequests.length - 2]
+          : Number(cur?.totalRequests || 0);
+      const prevErr =
+        historySuccessRate.length >= 2
+          ? 100 - historySuccessRate[historySuccessRate.length - 2]
+          : errorRate;
 
       const pctChange = (current: number, prev: number) => {
         if (!Number.isFinite(prev) || prev === 0) return 0;
@@ -164,7 +179,9 @@ export const PerformanceMetricsTab: React.FC = () => {
 
       // We can estimate provider-level error rate from detailed LLM health (healthy/unhealthy),
       // and use avg_latency_ms from mission-control/providers.
-      const healthProviders: any[] = Array.isArray(llmHealthPayload?.providers) ? llmHealthPayload.providers : [];
+      const healthProviders: any[] = Array.isArray(llmHealthPayload?.providers)
+        ? llmHealthPayload.providers
+        : [];
       const healthByName = new Map(
         healthProviders.map((p) => [String(p?.name || '').toLowerCase(), p] as const)
       );
@@ -183,8 +200,12 @@ export const PerformanceMetricsTab: React.FC = () => {
       });
       setProviderMetrics(nextProviderMetrics);
 
-      const nextAlerts: Array<{ severity?: string; title?: string; description?: string; provider?: string }> =
-        Array.isArray(llmHealthPayload?.alerts) ? llmHealthPayload.alerts : [];
+      const nextAlerts: Array<{
+        severity?: string;
+        title?: string;
+        description?: string;
+        provider?: string;
+      }> = Array.isArray(llmHealthPayload?.alerts) ? llmHealthPayload.alerts : [];
       setAlerts(nextAlerts);
     } catch (err) {
       toast.error('Failed to load performance metrics');

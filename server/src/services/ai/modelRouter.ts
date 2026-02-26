@@ -7,6 +7,7 @@ import { appCache } from '../redis/CacheService.js';
 import type { LLMConfigService } from './llmConfigService.js';
 import { aiLogger } from './logger.js';
 import { modelMeetsRequirements, type ModelRequirements } from './modelCapabilities.js';
+import { modelRegistryService } from './modelRegistryService.js';
 
 export const TIER_HIERARCHY = ['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING'] as const;
 export type Tier = (typeof TIER_HIERARCHY)[number] | 'VISION';
@@ -69,6 +70,26 @@ export const TIER_FALLBACKS: Record<string, string> = {
   VISION: 'openai/gpt-4o',
 };
 
+const MULTI_PROVIDER_ENABLED =
+  process.env.LLM_MULTI_PROVIDER === '1' ||
+  process.env.LLM_MULTI_PROVIDER === 'true' ||
+  process.env.LLM_MULTI_PROVIDER === 'yes';
+
+const PURPOSE_ROUTING_ENABLED =
+  process.env.LLM_PURPOSE_ROUTING === '1' ||
+  process.env.LLM_PURPOSE_ROUTING === 'true' ||
+  process.env.LLM_PURPOSE_ROUTING === 'yes';
+
+const ORG_POLICY_ENABLED =
+  process.env.LLM_ORG_POLICY === '1' ||
+  process.env.LLM_ORG_POLICY === 'true' ||
+  process.env.LLM_ORG_POLICY === 'yes';
+
+const MODEL_REGISTRY_ENABLED =
+  process.env.LLM_MODEL_REGISTRY === '1' ||
+  process.env.LLM_MODEL_REGISTRY === 'true' ||
+  process.env.LLM_MODEL_REGISTRY === 'yes';
+
 type ProviderRow = {
   id: string;
   name?: string;
@@ -80,6 +101,11 @@ type ProviderRow = {
   priority?: number | null;
   health_status?: string | null;
   is_active?: number | null;
+  kind?: string | null;
+  provider_type?: string | null;
+  origin_vendor?: string | null;
+  execution_regions?: any;
+  allowed_data_classes?: any;
 };
 
 type TierAssignmentRow = {
@@ -114,10 +140,20 @@ type ProviderConfig = {
 
 type SelectParams = {
   capability?: string;
+  /**
+   * v3: prefer purpose over capability (capability kept for backwards compatibility).
+   * For now, purpose is treated as an alias of capability in routing logs and overrides.
+   */
+  purpose?: string;
   tier?: string;
   organizationId?: string;
   options?: { tier?: string };
   requirements?: ModelRequirements;
+  /**
+   * Optional data classification hint used by org policy (enterprise).
+   * If omitted, policy enforcement should treat as lowest sensitivity.
+   */
+  dataClass?: 'no_pii' | 'pii' | 'confidential';
 };
 
 let _llmConfigService: LLMConfigService | null = null;
@@ -160,7 +196,8 @@ export class ModelRouter {
   }
 
   async select(params: SelectParams): Promise<ProviderConfig> {
-    const { capability, organizationId, options = {}, requirements } = params;
+    const capability = params.purpose || params.capability;
+    const { organizationId, options = {}, requirements } = params;
     const tier = (options.tier ||
       params.tier ||
       CAPABILITY_TIERS[capability || ''] ||
@@ -171,9 +208,17 @@ export class ModelRouter {
       `Selecting model for tier: ${tier}, org: ${organizationId || 'global'}`
     );
 
+    const orgPolicy =
+      ORG_POLICY_ENABLED && organizationId ? await this.getOrgPolicy(organizationId) : null;
+
     const override = await this.getOrgOverride(organizationId, capability);
     if (override) {
-      if (modelMeetsRequirements(override.model_id, requirements)) {
+      if (
+        modelMeetsRequirements(
+          this.normalizeModelIdForCapabilities(override.model_id),
+          requirements
+        )
+      ) {
         aiLogger.info('ModelRouter', `Using org override for ${capability}: ${override.model_id}`);
         return this.getProviderConfig(override.model_id, (override.tier || tier) as Tier);
       }
@@ -183,18 +228,87 @@ export class ModelRouter {
       );
     }
 
-    const availableModelsRaw = await this.getModelsForTier(tier, organizationId);
-    const availableModelsFilteredByProvider = availableModelsRaw.filter(
-      (m) => String(m.provider || '').toLowerCase() === 'openrouter'
-    );
-    const availableModels = requirements
-      ? availableModelsFilteredByProvider.filter((m) =>
-          modelMeetsRequirements(String((m as any).model_id || m.id || ''), requirements)
-        )
-      : availableModelsFilteredByProvider;
+    // v3 enterprise: purpose assignments (higher priority than tier routing)
+    if (PURPOSE_ROUTING_ENABLED && capability) {
+      // V3-A06: Try model registry first (health gating, fallback chain)
+      if (MODEL_REGISTRY_ENABLED && organizationId) {
+        try {
+          const config = await this.resolveByPurpose(capability, organizationId, {
+            ...options,
+            requirements,
+            dataClass: params.dataClass,
+          });
+          aiLogger.info(
+            'ModelRouter',
+            `Selected via model registry: ${config.id} (${config.provider})`
+          );
+          return config;
+        } catch (e: any) {
+          aiLogger.warn('ModelRouter', `Model registry routing failed: ${e?.message || String(e)}`);
+        }
+      }
 
-    if (availableModels.length > 0) {
-      const selectedModel = await this.selectWithRoundRobin(tier, organizationId, availableModels);
+      try {
+        const assigned = await this.getModelsForPurpose(capability, organizationId);
+        const filtered = assigned
+          .filter((m) => this.isProviderUsable(m))
+          .filter((m) =>
+            requirements
+              ? modelMeetsRequirements(
+                  this.normalizeModelIdForCapabilities(String((m as any).model_id || m.id || '')),
+                  requirements
+                )
+              : true
+          )
+          .filter((m) =>
+            ORG_POLICY_ENABLED ? this.isAllowedByOrgPolicyInternal(m, params, orgPolicy) : true
+          );
+
+        if (filtered.length > 0) {
+          const pick = filtered[0];
+          aiLogger.info(
+            'ModelRouter',
+            `Selected via purpose assignment: ${pick.model_id} (${pick.provider})`
+          );
+          return {
+            id: pick.model_id || pick.id,
+            tier,
+            provider: pick.provider,
+            apiKey: pick.api_key || null,
+            endpoint: pick.endpoint || null,
+            source: 'purpose_assignment',
+            raw: pick,
+          };
+        }
+      } catch (e: any) {
+        aiLogger.warn('ModelRouter', `Purpose routing failed: ${e?.message || String(e)}`);
+      }
+    }
+
+    const availableModelsRaw = await this.getModelsForTier(tier, organizationId);
+    const candidates = MULTI_PROVIDER_ENABLED
+      ? availableModelsRaw.filter((m) => this.isProviderUsable(m))
+      : availableModelsRaw.filter((m) => String(m.provider || '').toLowerCase() === 'openrouter');
+
+    const availableModels = requirements
+      ? candidates.filter((m) =>
+          modelMeetsRequirements(
+            this.normalizeModelIdForCapabilities(String((m as any).model_id || m.id || '')),
+            requirements
+          )
+        )
+      : candidates;
+
+    const availableModelsAfterPolicy = ORG_POLICY_ENABLED
+      ? availableModels.filter((m) => this.isAllowedByOrgPolicyInternal(m, params, orgPolicy))
+      : availableModels;
+
+    if (availableModelsAfterPolicy.length > 0) {
+      const selectedModel = await this.selectWithRoundRobin(
+        tier,
+        organizationId,
+        availableModelsAfterPolicy
+      );
       if (selectedModel) {
         aiLogger.info(
           'ModelRouter',
@@ -281,6 +395,97 @@ export class ModelRouter {
     return this.getProviderConfig(staticPick, tier);
   }
 
+  /**
+   * V3-A06: Resolve model by purpose using the model registry.
+   * Uses health gating, org policy, fallback chain. Throws on no candidate (no silent degradation).
+   */
+  async resolveByPurpose(
+    purpose: string,
+    organizationId: string,
+    options?: {
+      tier?: string;
+      requirements?: ModelRequirements;
+      dataClass?: 'no_pii' | 'pii' | 'confidential';
+      preferLocal?: boolean;
+    }
+  ): Promise<ProviderConfig> {
+    const req = {
+      organizationId,
+      purpose,
+      requirements: options?.requirements
+        ? {
+            vision: options.requirements.vision,
+            tools: options.requirements.tools,
+            streaming: options.requirements.streaming,
+            jsonMode: (options.requirements as any).jsonMode,
+            contextWindow: (options.requirements as any).contextWindow,
+          }
+        : undefined,
+      options: {
+        preferLocal: options?.preferLocal,
+        dataClass: options?.dataClass,
+      },
+    };
+
+    const result = await modelRegistryService.resolveModel(req);
+    const baseConfig = await this.getProviderConfig(
+      result.modelId,
+      (options?.tier || 'STANDARD') as Tier
+    );
+    return {
+      ...baseConfig,
+      id: result.modelId,
+      source: result.isFallback ? 'model_registry_fallback' : 'model_registry',
+      raw: baseConfig.raw
+        ? ({ ...baseConfig.raw, modelRegistryId: result.modelRegistryId } as ProviderRow)
+        : null,
+    };
+  }
+
+  async getModelsForPurpose(purpose: string, organizationId?: string): Promise<ProviderRow[]> {
+    const p = String(purpose || '').trim();
+    if (!p) return [];
+
+    // Prefer org assignments, then global (NULL org) assignments
+    const query = organizationId
+      ? `
+        SELECT lp.*, apa.priority as purpose_priority
+        FROM ai_purpose_assignments apa
+        INNER JOIN llm_providers lp ON lp.id = apa.provider_id
+        LEFT JOIN organization_provider_settings ops ON lp.id = ops.provider_id AND ops.organization_id = ?
+        WHERE apa.purpose = ?
+          AND (apa.organization_id = ? OR apa.organization_id IS NULL)
+          AND apa.is_active = TRUE
+          AND lp.is_active = 1
+          AND (ops.is_enabled IS NULL OR ops.is_enabled = 1)
+          AND (lp.health_status IS NULL OR lp.health_status != 'unhealthy')
+        ORDER BY
+          CASE WHEN apa.organization_id = ? THEN 0 ELSE 1 END,
+          apa.priority,
+          lp.cost_per_1k,
+          lp.priority
+      `
+      : `
+        SELECT lp.*, apa.priority as purpose_priority
+        FROM ai_purpose_assignments apa
+        INNER JOIN llm_providers lp ON lp.id = apa.provider_id
+        WHERE apa.purpose = ?
+          AND apa.organization_id IS NULL
+          AND apa.is_active = TRUE
+          AND lp.is_active = 1
+          AND (lp.health_status IS NULL OR lp.health_status != 'unhealthy')
+        ORDER BY apa.priority, lp.cost_per_1k, lp.priority
+      `;
+
+    const params = organizationId ? [organizationId, p, organizationId, organizationId] : [p];
+
+    try {
+      return await DbPromise.all<ProviderRow>(query, params, { fallback: true });
+    } catch {
+      return [];
+    }
+  }
+
   async getModelsForTier(tier: Tier, organizationId?: string): Promise<ProviderRow[]> {
     let query: string;
     let params: unknown[];
@@ -294,8 +499,6 @@ export class ModelRouter {
                 WHERE mta.tier = ?
                   AND mta.is_active = true
                   AND p.is_active = 1
-                  AND p.api_key IS NOT NULL
-                  AND p.api_key != ''
                   AND (ops.is_enabled IS NULL OR ops.is_enabled = 1)
                   AND (p.health_status IS NULL OR p.health_status != 'unhealthy')
                 ORDER BY COALESCE(ops.custom_priority, mta.priority), p.cost_per_1k, p.priority
@@ -309,8 +512,6 @@ export class ModelRouter {
                 WHERE mta.tier = ?
                   AND mta.is_active = true
                   AND p.is_active = 1
-                  AND p.api_key IS NOT NULL
-                  AND p.api_key != ''
                   AND (p.health_status IS NULL OR p.health_status != 'unhealthy')
                 ORDER BY mta.priority, p.cost_per_1k, p.priority
             `;
@@ -615,7 +816,8 @@ export class ModelRouter {
       return raw;
     };
 
-    const requestedModelId = providerName === 'openrouter' ? normalizeOpenRouterModelId(modelId) : modelId;
+    const requestedModelId =
+      providerName === 'openrouter' ? normalizeOpenRouterModelId(modelId) : modelId;
 
     let provider = await DbPromise.get<ProviderRow>(
       `SELECT * FROM llm_providers 
@@ -656,7 +858,7 @@ export class ModelRouter {
       id:
         providerName === 'openrouter'
           ? normalizeOpenRouterModelId(String(provider?.model_id || requestedModelId))
-          : (provider?.model_id || requestedModelId),
+          : provider?.model_id || requestedModelId,
       tier,
       provider: providerName,
       apiKey: provider?.api_key || null,
@@ -739,6 +941,174 @@ export class ModelRouter {
     }
 
     return 'openrouter';
+  }
+
+  private normalizeModelIdForCapabilities(modelId: string): string {
+    const raw = String(modelId || '').trim();
+    if (!raw) return raw;
+    // OpenRouter often uses namespaced ids like "openai/gpt-4o".
+    if (raw.includes('/') && !raw.includes('://')) {
+      return raw.split('/').slice(-1)[0] || raw;
+    }
+    return raw;
+  }
+
+  private isProviderUsable(row: ProviderRow): boolean {
+    const provider = String(row.provider || '').toLowerCase();
+    const apiKey = String(row.api_key || '').trim();
+
+    // If a DB key exists, it's usable.
+    if (apiKey) return true;
+
+    // Some providers can be configured via env vars (llmService prefers env keys).
+    if (provider === 'openrouter') return !!process.env.OPENROUTER_API_KEY?.trim();
+    if (provider === 'openai') return !!process.env.OPENAI_API_KEY?.trim();
+    if (provider === 'anthropic') return !!process.env.ANTHROPIC_API_KEY?.trim();
+    if (provider === 'google' || provider === 'gemini') {
+      return !!(
+        process.env.GEMINI_API_KEY ||
+        process.env.GOOGLE_AI_API_KEY ||
+        (process.env as any).GOOGLE_API_KEY
+      )?.trim();
+    }
+
+    // Local providers usually don't require an API key.
+    if (provider === 'ollama') return true;
+
+    // Otherwise: require DB key.
+    return false;
+  }
+
+  private isAllowedByOrgPolicyInternal(
+    row: ProviderRow,
+    params: SelectParams,
+    policy: any | null
+  ): boolean {
+    const dataClass = params.dataClass || 'no_pii';
+    if (!ORG_POLICY_ENABLED) return true;
+
+    const pt = String(row.provider_type || '').toLowerCase() || 'unknown';
+    const origin = String(row.origin_vendor || '').toLowerCase() || 'unknown';
+    const regions = this.normalizeRegions(row.execution_regions);
+
+    if (policy && typeof policy === 'object') {
+      const denyProviderTypes = this.normalizeStringSet(
+        policy.deny_provider_types || policy.denyProviderTypes
+      );
+      if (denyProviderTypes.size > 0 && denyProviderTypes.has(pt)) return false;
+
+      const allowProviderTypes = this.normalizeStringSet(
+        policy.allow_provider_types || policy.allowProviderTypes
+      );
+      if (allowProviderTypes.size > 0 && !allowProviderTypes.has(pt)) return false;
+
+      const denyOrigins = this.normalizeStringSet(policy.deny_origin_vendors || policy.denyOrigins);
+      if (denyOrigins.size > 0 && denyOrigins.has(origin)) return false;
+
+      const allowOrigins = this.normalizeStringSet(
+        policy.allow_origin_vendors || policy.allowOrigins
+      );
+      if (allowOrigins.size > 0 && !allowOrigins.has(origin)) return false;
+
+      const denyRegions = this.normalizeStringSet(policy.deny_regions || policy.denyRegions);
+      if (denyRegions.size > 0 && regions.some((r) => denyRegions.has(r))) return false;
+
+      const allowRegions = this.normalizeStringSet(policy.allow_regions || policy.allowRegions);
+      if (allowRegions.size > 0 && !regions.some((r) => allowRegions.has(r))) return false;
+
+      const requireLocalFor = this.normalizeStringSet(
+        policy.require_local_for_data_classes || policy.requireLocalForDataClasses
+      );
+      if (requireLocalFor.size > 0 && requireLocalFor.has(dataClass)) {
+        if (pt !== 'local' && pt !== 'customer_managed') return false;
+      }
+    } else {
+      // No explicit policy stored: still enforce "confidential -> local" if the caller asked for it.
+      if (dataClass === 'confidential') {
+        if (pt !== 'local' && pt !== 'customer_managed') return false;
+      }
+    }
+    return true;
+  }
+
+  private normalizeRegions(value: any): string[] {
+    try {
+      if (!value) return ['UNKNOWN'];
+      if (Array.isArray(value)) {
+        return value.map((x) => String(x).trim().toUpperCase()).filter(Boolean);
+      }
+      const s = String(value || '').trim();
+      if (!s) return ['UNKNOWN'];
+      if (s.startsWith('[')) {
+        const arr = JSON.parse(s);
+        if (Array.isArray(arr)) {
+          return arr.map((x) => String(x).trim().toUpperCase()).filter(Boolean);
+        }
+      }
+      // Comma separated
+      return s
+        .split(',')
+        .map((x) => x.trim().toUpperCase())
+        .filter(Boolean);
+    } catch {
+      return ['UNKNOWN'];
+    }
+  }
+
+  private normalizeStringSet(value: any): Set<string> {
+    const out = new Set<string>();
+    if (!value) return out;
+    if (Array.isArray(value)) {
+      for (const v of value) {
+        const s = String(v || '')
+          .trim()
+          .toLowerCase();
+        if (s) out.add(s);
+      }
+      return out;
+    }
+    const s = String(value || '').trim();
+    if (!s) return out;
+    for (const item of s.split(',')) {
+      const v = String(item || '')
+        .trim()
+        .toLowerCase();
+      if (v) out.add(v);
+    }
+    return out;
+  }
+
+  private async getOrgPolicy(organizationId: string): Promise<any | null> {
+    const orgId = String(organizationId || '').trim();
+    if (!orgId) return null;
+    const CACHE_KEY = `router:org_policy:${orgId}`;
+    try {
+      const cached = await appCache.get<any>(CACHE_KEY);
+      if (cached) return cached;
+    } catch {
+      /* ignore */
+    }
+
+    try {
+      const row = await DbPromise.get<{ policy?: any }>(
+        `SELECT policy FROM organization_ai_policy WHERE organization_id = ?`,
+        [orgId],
+        { fallback: true }
+      );
+      const raw = (row as any)?.policy ?? null;
+      let parsed = raw;
+      if (typeof raw === 'string') {
+        try {
+          parsed = JSON.parse(raw);
+        } catch {
+          parsed = null;
+        }
+      }
+      await appCache.set(CACHE_KEY, parsed || null, 300);
+      return parsed || null;
+    } catch {
+      return null;
+    }
   }
 
   getEnvKeyForProvider(provider: string): string {

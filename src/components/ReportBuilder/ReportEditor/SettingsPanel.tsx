@@ -111,6 +111,18 @@ const MODULE_TOOLS: Record<
       description: 'Digital transformation initiative',
     },
   ],
+  UPLOAD_BUNDLE: [
+    {
+      value: 'UPLOAD_DRAFT',
+      label: 'Upload Draft',
+      description: 'Draft report generated from uploaded documents',
+    },
+    {
+      value: 'UPLOAD_SUMMARY',
+      label: 'Upload Summary',
+      description: 'Executive summary from uploaded bundle',
+    },
+  ],
 };
 
 type SettingsSection = 'intent' | 'styling' | 'export' | 'review' | 'versions';

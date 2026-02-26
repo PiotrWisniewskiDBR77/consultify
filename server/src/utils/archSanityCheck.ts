@@ -92,7 +92,8 @@ export async function runAIHealthChecks(): Promise<SanityReport['healthChecks']>
   if (String(process.env.NODE_ENV || '').toLowerCase() === 'production') {
     checks.push({
       name: 'env:ENABLE_STUB_ROUTES',
-      status: String(process.env.ENABLE_STUB_ROUTES || '').toLowerCase() === 'true' ? 'error' : 'ok',
+      status:
+        String(process.env.ENABLE_STUB_ROUTES || '').toLowerCase() === 'true' ? 'error' : 'ok',
       detail:
         String(process.env.ENABLE_STUB_ROUTES || '').toLowerCase() === 'true'
           ? 'Stub routes enabled in production'

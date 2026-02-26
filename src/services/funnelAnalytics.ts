@@ -9,6 +9,8 @@ export type FunnelEventName =
   | 'interview_ai_parse_applied'
   | 'interview_question_marked_answered'
   | 'interview_question_needs_follow_up'
+  | 'interview_runtime_mode_selected'
+  | 'interview_runtime_mode_changed'
   | 'survey_started'
   | 'survey_resumed'
   | 'survey_completed'
@@ -88,6 +90,8 @@ export type FunnelEventName =
   | 'notebook_ai_command_used'
   | 'notebook_pulse_viewed'
   | 'notebook_convert_triggered'
+  | 'mywork_convert_clicked'
+  | 'mywork_convert_completed'
   // Notebook — extra UI actions used in My Work notebook
   | 'notebook_action_item_created'
   | 'notebook_action_items_bulk_created'
@@ -112,6 +116,9 @@ export type FunnelEventName =
   | 'signal_type_muted'
   | 'signal_dismissed'
   | 'tools_hub_opened'
+  | 'tools_wizard_step_completed'
+  | 'tools_wizard_finalized'
+  | 'tools_wizard_output_created'
   | 'known_tools_opened'
   | 'known_tool_viewed'
   | 'tool_filtered'
@@ -121,6 +128,10 @@ export type FunnelEventName =
   | 'help_video_watched'
   | 'help_video_skipped'
   | 'help_video_dont_show'
+  // V3-A08 Video Enablement — MicroVideoPrompt
+  | 'help_video_prompt_shown'
+  | 'help_video_view_started'
+  | 'help_video_view_completed'
   | 'ai_authoring_used'
   | 'ai_authoring_applied'
   | 'ai_authoring_undone'
@@ -141,6 +152,8 @@ export type FunnelEventName =
   | 'pdf_import_extracted'
   | 'pdf_import_mapping_confirmed'
   | 'execution_timeline_viewed'
+  | 'execution_hub_opened'
+  | 'execution_status_updated'
   | 'execution_timeline_initiative_updated'
   | 'execution_timeline_filtered'
   | 'execution_risk_signal_viewed'
@@ -163,6 +176,8 @@ export type FunnelEventName =
   | 'roi_assumptions_updated'
   | 'roi_realized_value_updated'
   | 'roi_variance_viewed'
+  // V3-H03 — Results Operational + ROI Analysis
+  | 'results_analysis_opened'
   | 'kpi_created'
   | 'kpi_value_updated'
   | 'kpi_mapping_updated'
@@ -220,6 +235,8 @@ export type FunnelEventName =
   | 'portfolio_scenario_applied'
   | 'finance_analysis_generated'
   | 'finance_analysis_approved'
+  | 'finance_export_clicked'
+  | 'finance_export_created'
   | 'finance_insight_converted_to_initiative'
   | 'budget_created'
   | 'budget_scenario_updated'
@@ -271,6 +288,9 @@ export type FunnelEventName =
   | 'competency_deleted'
   | 'initiative_requirement_added'
   | 'initiative_requirement_removed'
+  // V3-F02 — Initiatives Portfolio Analysis
+  | 'initiatives_analysis_opened'
+  | 'initiatives_analysis_issue_opened'
   // T066 — Skills Gap Analysis
   | 'skills_gap_viewed'
   | 'skills_gap_action_created'
@@ -300,6 +320,10 @@ export type FunnelEventName =
   | 'sidebar_flyout_opened'
   // T104/T105 — Chat UI Polish
   | 'chat_business_button_clicked'
+  | 'chat_action_rendered'
+  | 'chat_action_clicked'
+  | 'chat_action_failed'
+  | 'chat_suggestion_clicked'
   | 'ai_actions_view_opened'
   // T108 — SuperAdmin Control & System Testing
   | 'superadmin_action_executed'
@@ -369,7 +393,37 @@ export type FunnelEventName =
   | 'saved_view_created'
   | 'column_config_toggled'
   | 'task_deleted'
-  | 'task_bulk_deleted';
+  | 'task_bulk_deleted'
+  // V3-J02 — Presentations Hub
+  | 'presentations_hub_opened'
+  | 'presentation_opened'
+  | 'presentation_exported'
+  // V3-A02 — Dynamic tabs
+  | 'dynamic_tab_opened'
+  | 'dynamic_tab_closed'
+  | 'dynamic_tab_overflow_opened'
+  // V3-F01 — Initiative Level Templates
+  | 'initiative_level_changed'
+  | 'initiative_section_completed'
+  | 'initiative_completeness_viewed'
+  // V3-A04 / V3-J01 — Reports entry & sidebar
+  | 'sidebar_navigation_clicked'
+  | 'reports_entry_opened'
+  | 'route_redirected'
+  // V3-A06 — Model Registry
+  | 'model_registry_viewed'
+  | 'model_assignment_changed'
+  | 'model_fallback_used'
+  | 'model_audit_log_entry'
+  // V3-A01 — Traceability
+  | 'artifact_created'
+  | 'artifact_convert_clicked'
+  | 'artifact_source_opened'
+  | 'mywork_session_materialized'
+  // V3-A06 — Model Registry
+  | 'model_registry_viewed'
+  | 'model_assignment_changed'
+  | 'model_audit_log_viewed';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

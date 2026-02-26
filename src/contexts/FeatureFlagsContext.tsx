@@ -126,7 +126,8 @@ const DevToolsPanel: React.FC<DevToolsPanelProps> = ({ featureFlags, onClose }) 
             <span className="font-medium text-white text-sm">Feature Flags</span>
           </div>
           <p className="text-xs text-slate-400 dark:text-slate-500 leading-snug">
-            Toggle experimental features locally. Changes persist in localStorage. Only tested flags are shown.
+            Toggle experimental features locally. Changes persist in localStorage. Only tested flags
+            are shown.
           </p>
         </div>
         <div className="flex items-center gap-1 ml-2 flex-shrink-0">

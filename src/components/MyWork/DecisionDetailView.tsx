@@ -73,8 +73,6 @@ import { AppView } from '@/types';
 import { buildArtifactCode } from '@/utils/artifactLinks';
 
 import { Api } from '../../services/api';
-import { buildAskAIMessage } from './shared/askAiHelper';
-import { PostDecisionFollowUp } from './shared/PostDecisionFollowUp';
 import { CloudFilePicker } from '../AIChat/CloudFilePicker';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
@@ -124,6 +122,8 @@ import {
   type WarningThresholds,
 } from './shared';
 import { AIConnections } from './shared/AIConnections';
+import { buildAskAIMessage } from './shared/askAiHelper';
+import { PostDecisionFollowUp } from './shared/PostDecisionFollowUp';
 import { RelatedContext } from './shared/RelatedContext';
 
 // ── Decision accordion section IDs ──────────────────────────────────────────
@@ -652,7 +652,13 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const { isDemo } = useDemoSession();
-  const { isChatCollapsed, toggleChatCollapse, setChatKickoffMessage, currentProjectId, emitMyWorkEvent } = useAppStore();
+  const {
+    isChatCollapsed,
+    toggleChatCollapse,
+    setChatKickoffMessage,
+    currentProjectId,
+    emitMyWorkEvent,
+  } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
   const {
     connectedProviderIds,
@@ -1517,8 +1523,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 
       // Reminders & escalation — demo fallback
       const apiReminders = decision.reminders || [];
-      const loadedReminders = (apiReminders.length > 0 ? apiReminders : isDemo ? DEMO_REMINDERS : [])
-        .map((rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule));
+      const loadedReminders = (
+        apiReminders.length > 0 ? apiReminders : isDemo ? DEMO_REMINDERS : []
+      ).map((rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule));
       setReminders(loadedReminders);
       const loadedEscalation = decision.escalation || (isDemo ? DEMO_ESCALATION : null);
       setEscalation(loadedEscalation);
@@ -1721,14 +1728,16 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   };
 
   const handleOpenChat = async () => {
-    setChatKickoffMessage(buildAskAIMessage({
-      type: 'decision',
-      title,
-      status,
-      priority,
-      dueDate: dueDate || undefined,
-      description: description || undefined,
-    }));
+    setChatKickoffMessage(
+      buildAskAIMessage({
+        type: 'decision',
+        title,
+        status,
+        priority,
+        dueDate: dueDate || undefined,
+        description: description || undefined,
+      })
+    );
 
     // Persist local draft so user never loses input
     persistDraft('chat');
@@ -4390,13 +4399,23 @@ Context: ${JSON.stringify(projectContext)}`;
                   {sourceType === 'notebook' && <FileText size={14} className="text-blue-500" />}
                   {sourceType === 'task' && <Settings size={14} className="text-slate-500" />}
                   <span className="text-slate-600 dark:text-slate-300">
-                    {sourceType === 'idea' ? 'Created from Idea' : sourceType === 'notebook' ? 'Created from Note' : `Created from ${sourceType}`}
+                    {sourceType === 'idea'
+                      ? 'Created from Idea'
+                      : sourceType === 'notebook'
+                        ? 'Created from Note'
+                        : `Created from ${sourceType}`}
                   </span>
                   <button
                     onClick={() => {
-                      window.dispatchEvent(new CustomEvent('mywork-open-item', {
-                        detail: { type: sourceType === 'notebook' ? 'notebook' : sourceType, id: sourceId, name: `Source ${sourceType}` }
-                      }));
+                      window.dispatchEvent(
+                        new CustomEvent('mywork-open-item', {
+                          detail: {
+                            type: sourceType === 'notebook' ? 'notebook' : sourceType,
+                            id: sourceId,
+                            name: `Source ${sourceType}`,
+                          },
+                        })
+                      );
                     }}
                     className="text-amber-600 dark:text-amber-400 hover:underline font-medium"
                   >
@@ -6533,7 +6552,11 @@ Context: ${JSON.stringify(projectContext)}`;
                       )}
 
                       {decisionId && title && (
-                        <RelatedContext entityType="decision" entityId={decisionId} entityTitle={title} />
+                        <RelatedContext
+                          entityType="decision"
+                          entityId={decisionId}
+                          entityTitle={title}
+                        />
                       )}
 
                       {decisionId && <AIConnections entityType="decision" entityId={decisionId} />}

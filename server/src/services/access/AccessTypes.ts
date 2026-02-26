@@ -40,7 +40,7 @@ export const DEFAULT_PAID_LIMITS = {
   ai_roles_enabled_json: '["ADVISOR","EXECUTOR","RESEARCHER"]',
 } as const;
 
-export const TRIAL_DURATION_DAYS = 14;
+export const TRIAL_DURATION_DAYS = 7;
 
 export const TRIAL_WARNING_DAYS = {
   WARNING: 7,

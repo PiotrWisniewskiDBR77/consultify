@@ -158,7 +158,10 @@ export class DatabaseMetrics extends EventEmitter {
    */
   async getDatabaseMetrics(db: any): Promise<DatabaseMetricsStats> {
     try {
-      const sizeResult = await db.query('SELECT pg_database_size(current_database()) as size_bytes', []);
+      const sizeResult = await db.query(
+        'SELECT pg_database_size(current_database()) as size_bytes',
+        []
+      );
       const sizeBytes = Number(sizeResult.rows[0]?.size_bytes) || 0;
 
       const tableResult = await db.query(

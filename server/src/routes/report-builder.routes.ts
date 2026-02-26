@@ -585,6 +585,120 @@ router.get('/sources/tool/:sourceId', async (req: Request, res: Response, next: 
   }
 });
 
+/**
+ * GET /api/report-builder/sources/upload_bundle
+ * List uploaded document bundles available for draft report generation
+ */
+router.get('/sources/upload_bundle', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { organizationId } = getAuthContext(req);
+    const { getDatabase } = await import('../database/index.js');
+    const db = getDatabase();
+
+    const imports = await new Promise<any[]>((resolve, reject) => {
+      db.all(
+        `SELECT id, source_file_name, source_format, detected_framework, detection_confidence,
+                status, created_at, updated_at, processed_at, coverage_percent
+         FROM imported_reports
+         WHERE organization_id = ?
+           AND status IN ('ready_for_review', 'assessment_created', 'initiatives_created', 'completed')
+         ORDER BY COALESCE(processed_at, updated_at, created_at) DESC
+         LIMIT 100`,
+        [organizationId],
+        (err: Error | null, rows: any[]) => {
+          if (err) reject(err);
+          else resolve(rows || []);
+        }
+      );
+    });
+
+    const sources = imports.map((item) => ({
+      id: item.id,
+      sourceType: 'UPLOAD_BUNDLE',
+      name: item.source_file_name || 'Uploaded bundle',
+      status: item.status || 'ready_for_review',
+      framework: item.detected_framework || 'UPLOAD',
+      sourceFormat: item.source_format || 'unknown',
+      detectionConfidence: Number(item.detection_confidence || 0),
+      coveragePercent: Number(item.coverage_percent || 0),
+      processedAt: item.processed_at || null,
+      createdAt: item.created_at || null,
+      updatedAt: item.updated_at || null,
+    }));
+
+    res.json({ sources });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error listing upload bundle sources:', err);
+    next(err);
+  }
+});
+
+/**
+ * GET /api/report-builder/sources/upload_bundle/:sourceId
+ * Get uploaded bundle source data for report generation
+ */
+router.get(
+  '/sources/upload_bundle/:sourceId',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const sourceId = paramStr(req.params.sourceId);
+      const { organizationId } = getAuthContext(req);
+      const { getDatabase } = await import('../database/index.js');
+      const db = getDatabase();
+
+      const row = await new Promise<any>((resolve, reject) => {
+        db.get(
+          `SELECT id, source_file_name, source_file_size, source_format, detected_framework,
+                  detection_confidence, extracted_data_json, document_metadata_json, canonical_markdown,
+                  auto_summary, coverage_percent, status, created_at, updated_at, processed_at
+           FROM imported_reports
+           WHERE id = ? AND organization_id = ?`,
+          [sourceId, organizationId],
+          (err: Error | null, item: any) => {
+            if (err) reject(err);
+            else resolve(item || null);
+          }
+        );
+      });
+
+      if (!row) {
+        return res.status(404).json({ error: 'Upload bundle not found' });
+      }
+
+      const safeJsonParse = (value: string | null | undefined, fallback: any) => {
+        if (!value) return fallback;
+        try {
+          return JSON.parse(value);
+        } catch {
+          return fallback;
+        }
+      };
+
+      res.json({
+        id: row.id,
+        sourceType: 'UPLOAD_BUNDLE',
+        name: row.source_file_name || 'Uploaded bundle',
+        status: row.status || 'ready_for_review',
+        framework: row.detected_framework || 'UPLOAD',
+        sourceFormat: row.source_format || 'unknown',
+        sourceFileSize: Number(row.source_file_size || 0),
+        detectionConfidence: Number(row.detection_confidence || 0),
+        coveragePercent: Number(row.coverage_percent || 0),
+        summary: row.auto_summary || null,
+        canonicalMarkdown: row.canonical_markdown || null,
+        metadata: safeJsonParse(row.document_metadata_json, {}),
+        extractedData: safeJsonParse(row.extracted_data_json, null),
+        processedAt: row.processed_at || null,
+        createdAt: row.created_at || null,
+        updatedAt: row.updated_at || null,
+      });
+    } catch (err) {
+      logger.error('[ReportBuilder] Error getting upload bundle source:', err);
+      next(err);
+    }
+  }
+);
+
 // ==========================================
 // TEMPLATE MARKETPLACE ENDPOINTS
 // ==========================================
@@ -1005,7 +1119,7 @@ router.delete(
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { userId, organizationId } = getAuthContext(req);
-    const { sourceType, sourceId, title, description, templateId, config } = req.body;
+    const { sourceType, sourceId, sourceName, title, description, templateId, config } = req.body;
 
     if (!sourceType || !sourceId || !title) {
       return res.status(400).json({ error: 'sourceType, sourceId, and title are required' });
@@ -1015,6 +1129,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       organizationId,
       sourceType: sourceType.toUpperCase(),
       sourceId,
+      sourceName,
       title,
       description,
       config:

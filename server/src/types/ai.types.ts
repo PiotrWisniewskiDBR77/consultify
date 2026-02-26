@@ -141,6 +141,15 @@ export interface ScreenContext {
 
 export interface AIPipelineRequest {
   capability: CapabilityName;
+  /**
+   * v3 enterprise: stable routing key decoupled from capability implementation.
+   * If omitted, defaults to `capability`.
+   */
+  purpose?: string;
+  /**
+   * v3 enterprise: optional data classification hint used by org AI policy.
+   */
+  dataClass?: 'no_pii' | 'pii' | 'confidential';
   prompt: string;
   userId: string;
   organizationId?: string;

@@ -1,0 +1,268 @@
+/**
+ * Chat Action Handler (V3-B02)
+ * Unified handler that dispatches all chat action types.
+ */
+
+import type { NavigateFunction } from 'react-router-dom';
+
+import { Api } from '@/services/api';
+import {
+  executeChatNavigate,
+  type NavigateAction,
+  type TargetModule,
+} from '@/services/chatNavigator';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import type { ActionContext, ChatActionPayload } from '@/types/domain/chatActions';
+
+import { validateActionPayload } from './chatActionRegistry';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export interface ActionResult {
+  success: boolean;
+  error?: string;
+  data?: unknown;
+}
+
+export interface ActionHandlerDeps {
+  navigate: NavigateFunction;
+  context: ActionContext;
+  /** Open Report Builder wizard (e.g. navigate with new=1) */
+  onOpenReportBuilder?: (params?: {
+    sourceType?: string;
+    sourceId?: string;
+    templateId?: string;
+  }) => void;
+  /** Open Presentation wizard */
+  onOpenPresentationWizard?: (params?: {
+    sourceType?: string;
+    sourceId?: string;
+    templateId?: string;
+  }) => void;
+  /** Open Tool Wizard with tool type and context */
+  onOpenToolWizard?: (toolType: string, context?: Record<string, unknown>) => void;
+  /** Open preview pane for entity */
+  onOpenPreview?: (entityType: string, entityId: string) => void;
+  /** Open KPI time-series drawer */
+  onOpenKpiDrawer?: (kpiId: string, initiativeId?: string) => void;
+}
+
+const TARGET_MODULES: TargetModule[] = [
+  'tools',
+  'initiatives',
+  'reports',
+  'presentations',
+  'results',
+  'assessment',
+  'interview',
+  'mywork',
+];
+
+function normalizeTargetModule(value: unknown): TargetModule {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
+  return (TARGET_MODULES as string[]).includes(normalized)
+    ? (normalized as TargetModule)
+    : 'mywork';
+}
+
+// ---------------------------------------------------------------------------
+// Handler
+// ---------------------------------------------------------------------------
+
+export async function handleChatAction(
+  action: ChatActionPayload,
+  deps: ActionHandlerDeps
+): Promise<ActionResult> {
+  const validation = validateActionPayload(action);
+  if (!validation.valid) {
+    const msg = validation.errors.join('; ');
+    trackFunnelEvent('chat_action_failed', { type: action.type, reason: msg });
+    return { success: false, error: msg };
+  }
+
+  const params = action.params ?? {};
+
+  try {
+    switch (action.type) {
+      case 'NAVIGATE': {
+        const navAction: NavigateAction = {
+          type: 'NAVIGATE',
+          targetModule: normalizeTargetModule(params.targetModule),
+          entityType: params.entityType as string | undefined,
+          entityId: params.entityId as string | undefined,
+          surface: params.surface as
+            | 'list'
+            | 'detail'
+            | 'wizard'
+            | 'builder'
+            | 'dashboard'
+            | undefined,
+          params: params.params as Record<string, string> | undefined,
+        };
+        const result = executeChatNavigate(navAction, deps.navigate);
+        return {
+          success: result.success,
+          error: result.error,
+        };
+      }
+
+      case 'CREATE_TASK': {
+        const title = String(params.title || '').trim();
+        if (!title) {
+          return { success: false, error: 'Task title is required' };
+        }
+        await Api.post('/tasks', {
+          title,
+          description: String(params.description || ''),
+          priority: String(params.priority || 'medium'),
+          status: 'todo',
+          dueDate: params.dueDate || null,
+          initiativeId: params.initiativeId || deps.context.initiativeId || null,
+        });
+        return { success: true };
+      }
+
+      case 'CREATE_DECISION': {
+        const title = String(params.title || '').trim();
+        if (!title) {
+          return { success: false, error: 'Decision title is required' };
+        }
+        await Api.post('/decisions', {
+          title,
+          description: String(params.description || ''),
+          priority: String(params.priority || 'medium'),
+          status: 'pending',
+          dueDate: params.dueDate || null,
+          initiativeId: params.initiativeId || deps.context.initiativeId || null,
+        });
+        return { success: true };
+      }
+
+      case 'CREATE_INITIATIVE': {
+        const title = String(params.title || '').trim();
+        if (!title) {
+          return { success: false, error: 'Initiative title is required' };
+        }
+        await Api.post('/initiatives', {
+          title,
+          description: String(params.description || ''),
+          templateId: params.templateId || undefined,
+          projectId: deps.context.projectId,
+        });
+        return { success: true };
+      }
+
+      case 'GENERATE_REPORT': {
+        if (deps.onOpenReportBuilder) {
+          deps.onOpenReportBuilder({
+            sourceType: params.sourceType as string | undefined,
+            sourceId: params.sourceId as string | undefined,
+            templateId: params.templateId as string | undefined,
+          });
+        } else {
+          deps.navigate(
+            `/reports/builder?new=1${params.sourceType ? `&sourceType=${params.sourceType}` : ''}${params.sourceId ? `&sourceId=${params.sourceId}` : ''}${params.templateId ? `&templateId=${params.templateId}` : ''}`
+          );
+        }
+        return { success: true };
+      }
+
+      case 'GENERATE_PRESENTATION': {
+        if (deps.onOpenPresentationWizard) {
+          deps.onOpenPresentationWizard({
+            sourceType: params.sourceType as string | undefined,
+            sourceId: params.sourceId as string | undefined,
+            templateId: params.templateId as string | undefined,
+          });
+        } else {
+          deps.navigate(
+            `/presentations?new=1${params.sourceType ? `&sourceType=${params.sourceType}` : ''}${params.sourceId ? `&sourceId=${params.sourceId}` : ''}`
+          );
+        }
+        return { success: true };
+      }
+
+      case 'START_TOOL': {
+        const toolType = String(params.toolType || '').trim();
+        if (!toolType) {
+          return { success: false, error: 'Tool type is required' };
+        }
+        if (deps.onOpenToolWizard) {
+          deps.onOpenToolWizard(toolType, params.context as Record<string, unknown> | undefined);
+        } else {
+          deps.navigate(`/discovery-tools?tool=${encodeURIComponent(toolType)}`);
+        }
+        return { success: true };
+      }
+
+      case 'OPEN_PREVIEW': {
+        const entityType = String(params.entityType || '').trim();
+        const entityId = String(params.entityId || '').trim();
+        if (!entityType || !entityId) {
+          return { success: false, error: 'Entity type and ID are required' };
+        }
+        if (deps.onOpenPreview) {
+          deps.onOpenPreview(entityType, entityId);
+        } else {
+          // Fallback: navigate to entity based on type
+          if (entityType === 'initiative') {
+            deps.navigate(`/initiatives?open=${encodeURIComponent(entityId)}&mode=doc`);
+          } else if (entityType === 'task') {
+            deps.navigate(`/my-work?openTask=${encodeURIComponent(entityId)}`);
+          } else if (entityType === 'decision') {
+            deps.navigate(`/my-work?openDecision=${encodeURIComponent(entityId)}`);
+          } else {
+            deps.navigate(`/my-work`);
+          }
+        }
+        return { success: true };
+      }
+
+      case 'ASSIGN_INTERVIEW': {
+        const templateId = String(params.templateId || '').trim();
+        const assigneeUserIds = Array.isArray(params.assigneeUserIds)
+          ? (params.assigneeUserIds as string[])
+          : params.assigneeUserIds
+            ? [String(params.assigneeUserIds)]
+            : [];
+        if (!templateId || assigneeUserIds.length === 0) {
+          return { success: false, error: 'Template ID and at least one assignee are required' };
+        }
+        await Api.post('/interview/assignments', {
+          templateId,
+          assigneeUserIds,
+          teamLeadId: assigneeUserIds[0],
+          dueAt: params.dueAt ? new Date(params.dueAt as string).toISOString() : undefined,
+          projectId: params.projectId || deps.context.projectId,
+        });
+        return { success: true };
+      }
+
+      case 'RECORD_KPI': {
+        const kpiId = String(params.kpiId || '').trim();
+        if (!kpiId) {
+          return { success: false, error: 'KPI ID is required' };
+        }
+        if (deps.onOpenKpiDrawer) {
+          deps.onOpenKpiDrawer(kpiId, params.initiativeId as string | undefined);
+        } else {
+          deps.navigate(`/kpi-okr?kpi=${encodeURIComponent(kpiId)}`);
+        }
+        return { success: true };
+      }
+
+      default: {
+        const exhaustive: never = action.type;
+        return { success: false, error: `Unhandled action type: ${exhaustive}` };
+      }
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    trackFunnelEvent('chat_action_failed', { type: action.type, reason: msg });
+    return { success: false, error: msg };
+  }
+}

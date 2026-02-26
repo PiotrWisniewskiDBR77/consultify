@@ -79,7 +79,9 @@ export async function createDatabase(): Promise<IDatabase> {
   creatingDbPromise = (async (): Promise<IDatabase> => {
     if (
       process.env.MOCK_DB === 'true' ||
-      (process.env.NODE_ENV === 'test' && process.env.MOCK_DB !== 'false' && !process.env.DATABASE_URL)
+      (process.env.NODE_ENV === 'test' &&
+        process.env.MOCK_DB !== 'false' &&
+        !process.env.DATABASE_URL)
     ) {
       const mockDb = (global as any).__TEST_DB_MOCK__ || createMockDatabase();
       setToGlobal(mockDb);
@@ -131,7 +133,11 @@ export function getDatabaseInstance(): IDatabase {
     return db;
   }
 
-  if (process.env.NODE_ENV === 'test' && process.env.MOCK_DB !== 'false' && !process.env.DATABASE_URL) {
+  if (
+    process.env.NODE_ENV === 'test' &&
+    process.env.MOCK_DB !== 'false' &&
+    !process.env.DATABASE_URL
+  ) {
     const mockDb = createMockDatabase();
     setToGlobal(mockDb);
     return mockDb;

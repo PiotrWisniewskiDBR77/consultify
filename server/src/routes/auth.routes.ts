@@ -41,7 +41,12 @@ import { v4 as uuidv4 } from 'uuid';
 
 import config from '../config/Config.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { ORG_TYPES, TRIAL_DURATION_DAYS } from '../services/access/AccessTypes.js';
 import ActivityService from '../services/ActivityService.js';
+import {
+  DEMO_TRIAL_EVENT_TYPES,
+  recordDemoTrialEvent,
+} from '../services/demoTrialTelemetryService.js';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
 
@@ -256,7 +261,13 @@ router.get(
 
       // Permanent role fix for selected internal accounts.
       // Ensure DB is updated so future tokens stay consistent.
-      if (FORCED_SUPERADMIN_EMAILS.has(String(user.email || '').trim().toLowerCase())) {
+      if (
+        FORCED_SUPERADMIN_EMAILS.has(
+          String(user.email || '')
+            .trim()
+            .toLowerCase()
+        )
+      ) {
         if (user.role !== 'SUPERADMIN') {
           try {
             await dbRun(`UPDATE users SET role = ? WHERE id = ?`, ['SUPERADMIN', user.id]);
@@ -578,6 +589,16 @@ router.post(
         entityName: matchedEmail,
         metadata: { ip: req.ip },
       });
+      await recordDemoTrialEvent({
+        eventType: DEMO_TRIAL_EVENT_TYPES.DEMO_STARTED,
+        organizationId: user.organization_id,
+        userId: user.id,
+        source: 'demo_login',
+        language: String(req.get('Accept-Language') || '')
+          .split(',')[0]
+          ?.split('-')[0]
+          ?.toLowerCase(),
+      });
 
       const safeUser = {
         id: user.id,
@@ -743,11 +764,33 @@ router.post(
 
     const proceedWithRegistration = async (finalStatus: string, finalPlan: string) => {
       try {
-        // Create organization
-        const orgResult = await dbRun(
-          `INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`,
-          [orgId, companyName || 'My Company', finalPlan, finalStatus]
+        // Create organization (trial-aware, with backward-compatible fallback)
+        const trialStartedAt = new Date().toISOString();
+        const trialExpiresAt = new Date(
+          Date.now() + TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000
+        ).toISOString();
+
+        let orgResult = await dbRun(
+          `INSERT INTO organizations (
+             id, name, plan, status, organization_type, trial_started_at, trial_expires_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            orgId,
+            companyName || 'My Company',
+            finalPlan,
+            finalStatus,
+            ORG_TYPES.TRIAL,
+            trialStartedAt,
+            trialExpiresAt,
+          ]
         );
+
+        if (!orgResult.success) {
+          orgResult = await dbRun(
+            `INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`,
+            [orgId, companyName || 'My Company', finalPlan, finalStatus]
+          );
+        }
 
         if (!orgResult.success) {
           if (process.env.NODE_ENV !== 'production')
@@ -768,6 +811,21 @@ router.post(
           return res.status(500).json({ error: 'Failed to create user' });
           return;
         }
+
+        await recordDemoTrialEvent({
+          eventType: DEMO_TRIAL_EVENT_TYPES.TRIAL_STARTED,
+          organizationId: orgId,
+          userId,
+          source: isDemo ? 'demo' : 'landing',
+          language: String(req.get('Accept-Language') || '')
+            .split(',')[0]
+            ?.split('-')[0]
+            ?.toLowerCase(),
+          metadata: {
+            trialDurationDays: TRIAL_DURATION_DAYS,
+            trialExpiresAt,
+          },
+        });
 
         try {
           await AttributionService.recordAttribution({

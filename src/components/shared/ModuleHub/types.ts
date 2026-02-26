@@ -9,13 +9,29 @@
 export type ModuleTab =
   | 'library'
   | 'list'
+  | 'sessions'
+  | 'outputs'
   | 'reports'
   | 'initiatives'
   | 'tasks'
   | 'team'
   | 'raid'
   | 'decisions'
-  | 'assignments';
+  | 'assignments'
+  // V3-J02 — Presentations Hub
+  | 'all_decks'
+  | 'recent'
+  // V3-H01 — Results Hub
+  | 'all_kpis'
+  | 'by_initiative'
+  | 'global'
+  // V3-H02 — ROI Tracking
+  | 'roi_tracking'
+  // V3-H03 — Results Operational + ROI Analysis
+  | 'operational'
+  | 'roi_analysis'
+  // V3-F02 — Initiatives Portfolio Analysis
+  | 'analysis';
 
 export type ViewMode = 'table' | 'grid' | 'kanban' | 'timeline' | 'calendar' | 'matrix';
 
@@ -40,8 +56,8 @@ export type ItemStatus =
 
 export interface OpenDocument {
   id: string;
-  type: 'assessment' | 'tool' | 'report' | 'initiative' | 'task' | 'decision';
-  subType: string; // DRD, SWOT, VSM, etc.
+  type: 'assessment' | 'tool' | 'report' | 'initiative' | 'task' | 'decision' | 'presentation';
+  subType: string; // DRD, SWOT, VSM, deck source type, etc.
   name: string;
   status: ItemStatus;
   hasUnsavedChanges?: boolean;
@@ -111,7 +127,7 @@ export interface AssessmentItem {
 }
 
 // Discovery Tools specific types
-export type ToolCategory = 'strategic' | 'operational' | 'digital' | 'automation';
+export type ToolCategory = 'strategic' | 'operational' | 'digital' | 'automation' | 'licensed';
 
 export type ToolType =
   // Strategic (1-10)

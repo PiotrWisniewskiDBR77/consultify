@@ -1,10 +1,14 @@
 import { ArrowRight, CheckSquare, FileText, Lightbulb, Scale, Target } from 'lucide-react';
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
+import type { MyWorkDerivedSource, MyWorkSession } from '@/types/domain/traceability';
+
+import { ConvertToDialog } from '../ConvertToDialog';
 
 interface ConvertToMenuProps {
   sourceType: 'task' | 'decision' | 'idea' | 'notebook';
@@ -13,6 +17,15 @@ interface ConvertToMenuProps {
   availableTargets?: ('task' | 'decision' | 'initiative' | 'idea' | 'notebook')[];
   onConverted?: (target: string, createdId: string) => void;
   className?: string;
+}
+
+function toDerivedSource(
+  sourceType: 'task' | 'decision' | 'idea' | 'notebook',
+  sourceId: string,
+  sourceTitle: string
+): MyWorkDerivedSource {
+  const type = sourceType === 'notebook' ? 'notebook' : sourceType;
+  return { type, id: sourceId, title: sourceTitle };
 }
 
 const TARGET_CONFIG = {
@@ -67,7 +80,15 @@ export const ConvertToMenu: React.FC<ConvertToMenuProps> = ({
       (t) => t !== sourceType
     );
 
+  const [convertDialogOpen, setConvertDialogOpen] = useState(false);
+
   const handleConvert = async (target: string) => {
+    // V3-C03: Initiative/report/presentation require ConvertToDialog (MyWork session materialization)
+    if (target === 'initiative') {
+      setConvertDialogOpen(true);
+      return;
+    }
+
     setConverting(target);
     try {
       let createdId = '';
@@ -114,25 +135,69 @@ export const ConvertToMenu: React.FC<ConvertToMenuProps> = ({
     }
   };
 
+  const handleConvertDialogConfirm = async (session: MyWorkSession, targetType: string) => {
+    setConverting('initiative');
+    try {
+      const created = await Api.createInitiative({
+        name: sourceTitle,
+        description: `Converted from ${sourceType}: ${sourceTitle}`,
+        source_type: 'tool',
+        source_id: session.id,
+      });
+      const createdId = created?.id ?? '';
+      trackFunnelEvent('artifact_created', {
+        type: 'initiative',
+        source_type: 'tool',
+        has_source: true,
+      });
+      emitMyWorkEvent({
+        type: 'item:converted',
+        entityType: sourceType as any,
+        entityId: sourceId,
+        meta: { target: 'initiative' },
+      });
+      toast.success(isPolish ? 'Utworzono inicjatywę' : 'Initiative created');
+      onConverted?.('initiative', createdId);
+    } catch (err: any) {
+      toast.error(
+        err?.message ||
+          (isPolish ? 'Nie udało się utworzyć inicjatywy' : 'Failed to create initiative')
+      );
+    } finally {
+      setConverting(null);
+    }
+  };
+
+  const sources: MyWorkDerivedSource[] = [toDerivedSource(sourceType, sourceId, sourceTitle)];
+
   return (
-    <div className={`flex items-center gap-1.5 ${className}`}>
-      {targets.map((target) => {
-        const config = TARGET_CONFIG[target as keyof typeof TARGET_CONFIG];
-        if (!config) return null;
-        const Icon = config.icon;
-        return (
-          <button
-            key={target}
-            onClick={() => handleConvert(target)}
-            disabled={converting !== null}
-            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all ${config.color} ${converting === target ? 'opacity-60' : ''}`}
-          >
-            <Icon size={10} />
-            {isPolish ? config.labelPl : config.label}
-            <ArrowRight size={8} />
-          </button>
-        );
-      })}
-    </div>
+    <>
+      <ConvertToDialog
+        open={convertDialogOpen}
+        onClose={() => setConvertDialogOpen(false)}
+        sources={sources}
+        targetType="initiative"
+        onConvert={handleConvertDialogConfirm}
+      />
+      <div className={`flex items-center gap-1.5 ${className}`}>
+        {targets.map((target) => {
+          const config = TARGET_CONFIG[target as keyof typeof TARGET_CONFIG];
+          if (!config) return null;
+          const Icon = config.icon;
+          return (
+            <button
+              key={target}
+              onClick={() => handleConvert(target)}
+              disabled={converting !== null}
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all ${config.color} ${converting === target ? 'opacity-60' : ''}`}
+            >
+              <Icon size={10} />
+              {isPolish ? config.labelPl : config.label}
+              <ArrowRight size={8} />
+            </button>
+          );
+        })}
+      </div>
+    </>
   );
 };

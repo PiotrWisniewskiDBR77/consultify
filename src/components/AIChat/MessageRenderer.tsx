@@ -604,7 +604,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                       while ((match = ideaHintRegex.exec(msg.content)) !== null) {
                         hints.push({ title: match[1].trim(), description: match[2].trim() });
                       }
-                      const cleanContent = msg.content.replace(/💡\s*IDEA_HINT:\s*.+?\|.+/g, '').trim();
+                      const cleanContent = msg.content
+                        .replace(/💡\s*IDEA_HINT:\s*.+?\|.+/g, '')
+                        .trim();
 
                       return (
                         <>
@@ -653,11 +655,21 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                     <div className="text-[10px] uppercase tracking-wide text-amber-600/70 dark:text-amber-500/60 font-semibold mb-0.5">
                                       {t('myWork.ideas.gardenSpark', 'Idea Garden Spark')}
                                     </div>
-                                    <div className="text-xs font-semibold text-amber-700 dark:text-amber-400">{hint.title}</div>
-                                    <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">{hint.description}</div>
+                                    <div className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                                      {hint.title}
+                                    </div>
+                                    <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                                      {hint.description}
+                                    </div>
                                   </div>
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); handleSaveAsIdea(msg.id, `${hint.title}\n\n${hint.description}`); }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleSaveAsIdea(
+                                        msg.id,
+                                        `${hint.title}\n\n${hint.description}`
+                                      );
+                                    }}
                                     className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-gradient-to-r from-amber-500/15 to-emerald-500/10 text-amber-700 dark:text-amber-400 hover:from-amber-500/25 hover:to-emerald-500/15 border border-amber-400/30 transition-colors"
                                     title={t('myWork.ideas.plantInGarden', 'Plant in Idea Garden')}
                                   >

@@ -138,6 +138,11 @@ describe('Demo routes (no hardcoded demo data, honest availability)', () => {
         stats: expect.any(Object),
       })
     );
+
+    const telemetry = await db.get<{ c: number }>(
+      `SELECT COUNT(*) as c FROM conversion_events WHERE event_type = 'DEMO'`
+    );
+    expect((telemetry?.c || 0)).toBeGreaterThan(0);
   });
 
   it('GET /api/demo/status reflects persisted demo preference', async () => {
@@ -151,6 +156,11 @@ describe('Demo routes (no hardcoded demo data, honest availability)', () => {
     const res = await request(mount()).post(`${basePath}/toggle`).send({ enabled: false });
     expect(res.status).toBe(200);
     expect(res.body).toEqual(expect.objectContaining({ success: true, isDemoMode: false }));
+
+    const telemetry = await db.get<{ c: number }>(
+      `SELECT COUNT(*) as c FROM conversion_events WHERE event_type = 'demo_mode_disabled'`
+    );
+    expect((telemetry?.c || 0)).toBeGreaterThan(0);
   });
 
   it('GET /api/demo/tours returns 503 when DEMO_TOURS_JSON missing', async () => {
@@ -176,4 +186,3 @@ describe('Demo routes (no hardcoded demo data, honest availability)', () => {
     expect(res.body).toEqual(expect.objectContaining({ success: false }));
   });
 });
-

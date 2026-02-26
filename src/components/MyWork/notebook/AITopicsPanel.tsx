@@ -150,7 +150,9 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
   const handleSendToChat = useCallback(
     (topic: string) => {
       const tags = noteTags.filter(Boolean).slice(0, 12).join(', ');
-      const excerpt = String(contentText || '').trim().slice(0, 700);
+      const excerpt = String(contentText || '')
+        .trim()
+        .slice(0, 700);
       const msg = isPl
         ? [
             `Pracuję nad notatką: "${noteTitle || 'Bez tytułu'}".`,
@@ -238,8 +240,12 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
             <Sparkles size={24} className="text-slate-300 dark:text-slate-600" />
             <span className="text-xs text-slate-500 dark:text-slate-400">
               {error
-                ? (isPl ? 'Nie udało się pobrać. Kliknij odśwież w nagłówku.' : 'Failed to fetch. Click refresh in header.')
-                : (isPl ? 'Brak sugestii. Dodaj treść lub tagi.' : 'No suggestions. Add content or tags.')}
+                ? isPl
+                  ? 'Nie udało się pobrać. Kliknij odśwież w nagłówku.'
+                  : 'Failed to fetch. Click refresh in header.'
+                : isPl
+                  ? 'Brak sugestii. Dodaj treść lub tagi.'
+                  : 'No suggestions. Add content or tags.'}
             </span>
             <button
               onClick={() => fetchTopics()}

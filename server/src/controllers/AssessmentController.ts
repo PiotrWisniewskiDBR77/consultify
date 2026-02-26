@@ -311,9 +311,7 @@ const ensureAssessmentSchema = async (): Promise<void> => {
       _columnName: string,
       columnDefSql: string
     ): Promise<void> => {
-      await queryHelpers.queryRun(
-        `ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${columnDefSql}`
-      );
+      await queryHelpers.queryRun(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${columnDefSql}`);
     };
 
     // Assessments table

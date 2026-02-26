@@ -55,7 +55,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Callout } from '@/components/shared/NModeBlocks';
-import { buildAskAIMessage } from './shared/askAiHelper';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Api } from '@/services/api';
@@ -118,9 +117,10 @@ import {
   type TaskDependency,
   type WarningThresholds,
 } from './shared';
+import { AIConnections } from './shared/AIConnections';
+import { buildAskAIMessage } from './shared/askAiHelper';
 // ── Presentation Mode Switcher ───────────────────────────────────────────────
 import { PresentationModeSwitcher } from './shared/PresentationModeSwitcher';
-import { AIConnections } from './shared/AIConnections';
 import { RelatedContext } from './shared/RelatedContext';
 
 interface TaskDetailViewProps {
@@ -203,7 +203,8 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 }) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const { isChatCollapsed, toggleChatCollapse, setChatKickoffMessage, emitMyWorkEvent } = useAppStore();
+  const { isChatCollapsed, toggleChatCollapse, setChatKickoffMessage, emitMyWorkEvent } =
+    useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -882,14 +883,16 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   };
 
   const handleOpenChat = async () => {
-    setChatKickoffMessage(buildAskAIMessage({
-      type: 'task',
-      title,
-      status,
-      priority,
-      dueDate: dueDate || undefined,
-      description: description || undefined,
-    }));
+    setChatKickoffMessage(
+      buildAskAIMessage({
+        type: 'task',
+        title,
+        status,
+        priority,
+        dueDate: dueDate || undefined,
+        description: description || undefined,
+      })
+    );
 
     // Persist local draft so user never loses input (even offline)
     const draftKey = `consultinity-task-draft:${taskId || 'new'}`;
@@ -2310,7 +2313,10 @@ Return ONLY the final comment text.`;
                                     .filter(Boolean)
                                     .join('\n');
                                   setDescription((prev) => `${prev || ''}${insert}`.trim());
-                                  trackFunnelEvent('active_notes_inserted', { surface: 'task', noteId: note.id });
+                                  trackFunnelEvent('active_notes_inserted', {
+                                    surface: 'task',
+                                    noteId: note.id,
+                                  });
                                   toast.success(
                                     t('myWork.notebook.insertedToast', 'Inserted into description')
                                   );
@@ -2321,7 +2327,10 @@ Return ONLY the final comment text.`;
                               </button>
                               <button
                                 onClick={() => {
-                                  trackFunnelEvent('active_notes_opened', { surface: 'task', noteId: note.id });
+                                  trackFunnelEvent('active_notes_opened', {
+                                    surface: 'task',
+                                    noteId: note.id,
+                                  });
                                   try {
                                     const { setMyWorkIntent } = useAppStore.getState() as any;
                                     setMyWorkIntent?.({ tab: 'notebook' });
@@ -3665,13 +3674,23 @@ Return ONLY the final comment text.`;
                   {sourceType === 'notebook' && <FileText size={14} className="text-blue-500" />}
                   {sourceType === 'decision' && <Scale size={14} className="text-purple-500" />}
                   <span className="text-slate-600 dark:text-slate-300">
-                    {sourceType === 'idea' ? 'Created from Idea' : sourceType === 'notebook' ? 'Created from Note' : `Created from ${sourceType}`}
+                    {sourceType === 'idea'
+                      ? 'Created from Idea'
+                      : sourceType === 'notebook'
+                        ? 'Created from Note'
+                        : `Created from ${sourceType}`}
                   </span>
                   <button
                     onClick={() => {
-                      window.dispatchEvent(new CustomEvent('mywork-open-item', {
-                        detail: { type: sourceType === 'notebook' ? 'notebook' : sourceType, id: sourceId, name: `Source ${sourceType}` }
-                      }));
+                      window.dispatchEvent(
+                        new CustomEvent('mywork-open-item', {
+                          detail: {
+                            type: sourceType === 'notebook' ? 'notebook' : sourceType,
+                            id: sourceId,
+                            name: `Source ${sourceType}`,
+                          },
+                        })
+                      );
                     }}
                     className="text-amber-600 dark:text-amber-400 hover:underline font-medium"
                   >

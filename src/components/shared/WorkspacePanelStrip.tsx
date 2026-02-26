@@ -59,7 +59,11 @@ export const WorkspacePanelStrip: React.FC<WorkspacePanelStripProps> = ({
   };
 
   return (
-    <div className={`inline-flex items-center ${styles} ${className || ''}`} role="group" aria-label={isPl ? 'Pasek narzędzi workspace' : 'Workspace tool strip'}>
+    <div
+      className={`inline-flex items-center ${styles} ${className || ''}`}
+      role="group"
+      aria-label={isPl ? 'Pasek narzędzi workspace' : 'Workspace tool strip'}
+    >
       <Btn
         id="tools"
         icon={SlidersHorizontal}
@@ -86,4 +90,3 @@ export const WorkspacePanelStrip: React.FC<WorkspacePanelStripProps> = ({
 };
 
 export default WorkspacePanelStrip;
-

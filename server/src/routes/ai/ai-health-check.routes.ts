@@ -105,7 +105,16 @@ async function checkToolsMenu(): Promise<SubsystemHealth> {
     details: {
       aiModes: ['deepResearch', 'webSearch', 'showReasoning', 'privateMode', 'textToSpeech'],
       knowledgeSources: ['pmoDocuments', 'projectData', 'organizationData'],
-      responseStyles: ['normal', 'executive', 'analyst', 'coach', 'concise', 'formal', 'professional', 'friendly'],
+      responseStyles: [
+        'normal',
+        'executive',
+        'analyst',
+        'coach',
+        'concise',
+        'formal',
+        'professional',
+        'friendly',
+      ],
     },
     lastChecked: new Date().toISOString(),
   };

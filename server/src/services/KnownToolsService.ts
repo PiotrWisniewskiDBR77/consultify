@@ -98,7 +98,8 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     displayName: 'Dynamic SWOT',
     libraryCategory: 'strategic',
     descriptionEn: 'AI-powered SWOT that ends with actionable takeaways and initiative concepts.',
-    descriptionPl: 'SWOT wspierany przez AI, kończący się konkretnymi wnioskami i koncepcjami inicjatyw.',
+    descriptionPl:
+      'SWOT wspierany przez AI, kończący się konkretnymi wnioskami i koncepcjami inicjatyw.',
     whatYouGetEn: ['Key takeaways', 'Risks & unknowns', 'Draft initiatives'],
     whatYouGetPl: ['Najważniejsze wnioski', 'Ryzyka i niewiadome', 'Draft inicjatyw'],
     tags: ['strategy', 'swot', 'diagnosis'],
@@ -123,7 +124,8 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     toolType: 'growth-paths',
     displayName: 'Growth Paths (Ansoff)',
     libraryCategory: 'strategic',
-    descriptionEn: 'Ansoff matrix to explore growth options and select viable paths with risk framing.',
+    descriptionEn:
+      'Ansoff matrix to explore growth options and select viable paths with risk framing.',
     descriptionPl: 'Macierz Ansoffa do wyboru ścieżek wzrostu wraz z oceną ryzyk.',
     whatYouGetEn: ['Option map', 'Risk framing', 'Draft initiatives'],
     whatYouGetPl: ['Mapa opcji', 'Ocena ryzyk', 'Draft inicjatyw'],
@@ -136,7 +138,8 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     toolType: 'value-chain',
     displayName: 'Value Chain Analysis',
     libraryCategory: 'strategic',
-    descriptionEn: 'Map activities and identify cost/value drivers to target improvements and initiatives.',
+    descriptionEn:
+      'Map activities and identify cost/value drivers to target improvements and initiatives.',
     descriptionPl: 'Mapa łańcucha wartości i identyfikacja dźwigni kosztu/wartości pod inicjatywy.',
     whatYouGetEn: ['Activity map', 'Hotspots', 'Draft initiatives'],
     whatYouGetPl: ['Mapa aktywności', 'Hotspoty', 'Draft inicjatyw'],
@@ -150,7 +153,8 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     displayName: 'Portfolio Prioritization',
     libraryCategory: 'strategic',
     descriptionEn: 'Prioritize initiatives and bets using impact/effort and constraints.',
-    descriptionPl: 'Priorytetyzacja inicjatyw i zakładów (impact/effort) z uwzględnieniem ograniczeń.',
+    descriptionPl:
+      'Priorytetyzacja inicjatyw i zakładów (impact/effort) z uwzględnieniem ograniczeń.',
     whatYouGetEn: ['Priority matrix', 'Top picks', 'Draft initiatives'],
     whatYouGetPl: ['Macierz priorytetów', 'Top wybory', 'Draft inicjatyw'],
     tags: ['strategy', 'prioritization', 'portfolio'],
@@ -175,7 +179,8 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     toolType: 'capability-mapper',
     displayName: 'Capability Mapper',
     libraryCategory: 'strategic',
-    descriptionEn: 'Map capabilities, maturity, and gaps to build a focused transformation roadmap.',
+    descriptionEn:
+      'Map capabilities, maturity, and gaps to build a focused transformation roadmap.',
     descriptionPl: 'Mapa kompetencji i luk do zbudowania ukierunkowanego roadmapu transformacji.',
     whatYouGetEn: ['Capability map', 'Gap analysis', 'Draft initiatives'],
     whatYouGetPl: ['Mapa kompetencji', 'Analiza luk', 'Draft inicjatyw'],
@@ -188,7 +193,8 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     toolType: 'sop-builder',
     displayName: 'SOP Builder',
     libraryCategory: 'operational',
-    descriptionEn: 'Create clear standard operating procedures that improve repeatability and quality.',
+    descriptionEn:
+      'Create clear standard operating procedures that improve repeatability and quality.',
     descriptionPl: 'Tworzenie SOP (standardów pracy) zwiększających powtarzalność i jakość.',
     whatYouGetEn: ['SOP draft', 'Checklist', 'Training-ready steps'],
     whatYouGetPl: ['Draft SOP', 'Checklist', 'Kroki do szkolenia'],
@@ -215,7 +221,8 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     displayName: 'VSM Builder',
     libraryCategory: 'operational',
     descriptionEn: 'Value Stream Mapping to visualize flow, waste, and improvement priorities.',
-    descriptionPl: 'Mapowanie strumienia wartości (VSM) do wizualizacji przepływu, marnotrawstw i priorytetów usprawnień.',
+    descriptionPl:
+      'Mapowanie strumienia wartości (VSM) do wizualizacji przepływu, marnotrawstw i priorytetów usprawnień.',
     whatYouGetEn: ['Current-state map', 'Waste hotspots', 'Future-state actions'],
     whatYouGetPl: ['Mapa stanu obecnego', 'Hotspoty marnotrawstw', 'Akcje stanu przyszłego'],
     tags: ['operations', 'lean', 'vsm'],
@@ -229,7 +236,8 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     displayName: 'Constraint Control (TOC)',
     libraryCategory: 'operational',
     descriptionEn: 'Identify and manage the system constraint to improve throughput and delivery.',
-    descriptionPl: 'Identyfikuj i zarządzaj wąskim gardłem (TOC), aby poprawić przepustowość i terminowość.',
+    descriptionPl:
+      'Identyfikuj i zarządzaj wąskim gardłem (TOC), aby poprawić przepustowość i terminowość.',
     whatYouGetEn: ['Constraint hypothesis', 'Buffer policy', 'Action list'],
     whatYouGetPl: ['Hipoteza constraintu', 'Polityka buforów', 'Lista działań'],
     tags: ['operations', 'toc', 'throughput'],
@@ -320,7 +328,8 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     toolType: 'ai-discovery',
     displayName: 'AI Discovery',
     libraryCategory: 'digital',
-    descriptionEn: 'Identify AI use-cases, prerequisites, and risk controls to move from idea to pilot.',
+    descriptionEn:
+      'Identify AI use-cases, prerequisites, and risk controls to move from idea to pilot.',
     descriptionPl: 'Zidentyfikuj use-case’y AI, prerekwizyty i kontrolę ryzyk — od idei do pilota.',
     whatYouGetEn: ['Use-case shortlist', 'Prerequisites', 'Pilot plan'],
     whatYouGetPl: ['Shortlista use-case', 'Prerekwizyty', 'Plan pilota'],
@@ -333,8 +342,10 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     toolType: 'process-automation',
     displayName: 'Process Automation (Speed Tool)',
     libraryCategory: 'automation',
-    descriptionEn: 'Canonical method to identify, map, measure, redesign and justify process automation.',
-    descriptionPl: 'Kanoniczna metoda identyfikacji, mapowania, pomiaru, redesignu i uzasadnienia automatyzacji procesu.',
+    descriptionEn:
+      'Canonical method to identify, map, measure, redesign and justify process automation.',
+    descriptionPl:
+      'Kanoniczna metoda identyfikacji, mapowania, pomiaru, redesignu i uzasadnienia automatyzacji procesu.',
     whatYouGetEn: ['Process map', 'Baseline vs target', 'Economics & payback', 'Initiative set'],
     whatYouGetPl: ['Mapa procesu', 'Baseline vs target', 'Ekonomia i payback', 'Zestaw inicjatyw'],
     tags: ['automation', 'process', 'roi'],
@@ -371,7 +382,10 @@ class KnownToolsService {
       if (total > 0) return;
 
       for (const tool of SQLITE_KNOWN_TOOLS_SEED) {
-        const descriptionTranslations = JSON.stringify({ en: tool.descriptionEn, pl: tool.descriptionPl });
+        const descriptionTranslations = JSON.stringify({
+          en: tool.descriptionEn,
+          pl: tool.descriptionPl,
+        });
         const libraryContentTranslations = JSON.stringify({
           en: { whatYouGet: tool.whatYouGetEn },
           pl: { whatYouGet: tool.whatYouGetPl },
@@ -442,7 +456,10 @@ class KnownToolsService {
 
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
-    const countRow = await q.get<{ total: unknown }>(`SELECT COUNT(*) as total FROM tools ${whereSql}`, args);
+    const countRow = await q.get<{ total: unknown }>(
+      `SELECT COUNT(*) as total FROM tools ${whereSql}`,
+      args
+    );
     const total = Number((countRow as any)?.total || 0);
 
     const rows = await q.all<ToolRow>(

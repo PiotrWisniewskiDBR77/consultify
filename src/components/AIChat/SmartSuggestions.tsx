@@ -282,9 +282,10 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
 
       setMinimalVisibleIdx((prev) => {
         const visibleCount = Math.min(4, minimalPool.length);
-        const base = Array.isArray(prev) && prev.length === visibleCount
-          ? [...prev]
-          : Array.from({ length: visibleCount }, (_, i) => i);
+        const base =
+          Array.isArray(prev) && prev.length === visibleCount
+            ? [...prev]
+            : Array.from({ length: visibleCount }, (_, i) => i);
 
         let candidate = minimalNextIdxRef.current % minimalPool.length;
         let guard = 0;
@@ -365,7 +366,9 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
     const minimalSuggestions = idx.map((i) => pool[i]).filter(Boolean);
 
     return (
-      <div className={`w-full max-w-5xl mx-auto flex items-center justify-center gap-2 ${className}`}>
+      <div
+        className={`w-full max-w-5xl mx-auto flex items-center justify-center gap-2 ${className}`}
+      >
         {minimalSuggestions.map((item, i) => (
           <button
             key={item.id}

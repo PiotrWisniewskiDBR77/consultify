@@ -115,6 +115,7 @@ import mediaIngestionRoutes from './routes/media-ingestion.routes.js';
 import megatrendRoutes from './routes/megatrend.routes.js';
 import metricsRoutes from './routes/metrics.routes.js';
 import mfaRoutes from './routes/mfa.routes.js';
+import modelRegistryRoutes from './routes/modelRegistry.routes.js';
 import multiFrameworkAssessmentRoutes from './routes/multi-framework-assessment.routes.js';
 import multiFrameworkWorkflowRoutes from './routes/multi-framework-workflow.routes.js';
 import myWorkRoutes from './routes/my-work.routes.js';
@@ -316,6 +317,7 @@ export class ApiGateway {
       app.use('/api/admin-alerts', adminAlertsRoutes);
       app.use('/api/admin/backups', adminBackupRoutes);
       app.use('/api/admin/ai-quality', adminAIQualityRoutes);
+      app.use('/api/admin/model-registry', modelRegistryRoutes);
 
       // AI-related legacy/duplicate routes (cleaned up)
       app.use('/api/conversations', conversationsRoutes);

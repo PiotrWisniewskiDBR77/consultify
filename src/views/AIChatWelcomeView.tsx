@@ -1725,11 +1725,7 @@ For example: REMEMBER: preferred_language: Polish`;
                           onFeedback={handleFeedback}
                           onReport={handleReport}
                           onRegenerate={handleRegenerate}
-                          onSpeak={
-                            voiceSupported
-                              ? (content) => replaySpeech(content)
-                              : undefined
-                          }
+                          onSpeak={voiceSupported ? (content) => replaySpeech(content) : undefined}
                           showAlwaysVisible={true}
                         />
                       </div>
@@ -2055,7 +2051,10 @@ For example: REMEMBER: preferred_language: Polish`;
               {
                 icon: CheckCircle2,
                 label: t('aiChat.homeCards.digital.label', 'Transformacja cyfrowa'),
-                desc: t('aiChat.homeCards.digital.desc', 'Run licensed diagnostics and assessments'),
+                desc: t(
+                  'aiChat.homeCards.digital.desc',
+                  'Run licensed diagnostics and assessments'
+                ),
                 color: 'text-blue-500',
                 bg: 'bg-blue-50 dark:bg-blue-900/20',
                 onClick: () => {

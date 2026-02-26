@@ -105,7 +105,9 @@ export function getDatabaseType(): 'postgres' {
           'FATAL ERROR: DATABASE_URL points to localhost, but this run is staging/prod-like.'
         );
         logger.error('Refusing to start to prevent accidental local DB usage.');
-        logger.error('Fix: set DATABASE_URL to staging/remote Postgres or unset ENV_FILE=*.staging*.\n');
+        logger.error(
+          'Fix: set DATABASE_URL to staging/remote Postgres or unset ENV_FILE=*.staging*.\n'
+        );
         process.exit(1);
       }
     } catch {

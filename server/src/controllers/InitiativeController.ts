@@ -1234,9 +1234,14 @@ export class InitiativeController {
           }
         } catch (e: any) {
           const msg = String(e?.message || e || '').toLowerCase();
-          if (msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')) {
+          if (
+            msg.includes('no such table') ||
+            msg.includes('does not exist') ||
+            msg.includes('relation')
+          ) {
             res.status(400).json({
-              error: 'Milestones schema is required to schedule (missing initiative_milestones). Run migrations.',
+              error:
+                'Milestones schema is required to schedule (missing initiative_milestones). Run migrations.',
               rule: 'SCHEDULE_SCHEMA_MISSING',
               table: 'initiative_milestones',
             });
@@ -1318,7 +1323,11 @@ export class InitiativeController {
           );
         } catch (e: any) {
           const msg = String(e?.message || e || '').toLowerCase();
-          if (msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')) {
+          if (
+            msg.includes('no such table') ||
+            msg.includes('does not exist') ||
+            msg.includes('relation')
+          ) {
             res.status(400).json({
               error:
                 'Schedule baseline schema is required to schedule (missing initiative_schedule_baselines). Run migrations.',
@@ -3722,7 +3731,10 @@ export class InitiativeController {
           snapshot,
         },
         variance: {
-          startDays: toDayDiff((baseline as any).plannedStartDate, (current as any)?.plannedStartDate),
+          startDays: toDayDiff(
+            (baseline as any).plannedStartDate,
+            (current as any)?.plannedStartDate
+          ),
           endDays: toDayDiff((baseline as any).plannedEndDate, (current as any)?.plannedEndDate),
         },
       });
@@ -5349,7 +5361,9 @@ export class InitiativeController {
         } catch (e: any) {
           const msg = String(e?.message || e || '').toLowerCase();
           const missing =
-            msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation');
+            msg.includes('no such table') ||
+            msg.includes('does not exist') ||
+            msg.includes('relation');
           addCheck(
             'schedule_milestones',
             missing ? 'Milestones schema available' : 'Milestones defined',

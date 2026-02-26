@@ -39,7 +39,9 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
               {kicker}
             </div>
           ) : null}
-          <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">{title}</div>
+          <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+            {title}
+          </div>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {actions}
@@ -68,4 +70,3 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
 };
 
 export default PreviewPaneShell;
-

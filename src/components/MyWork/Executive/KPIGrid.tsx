@@ -115,11 +115,7 @@ const KPICard: React.FC<{
         <span className="text-2xl font-semibold text-slate-800 dark:text-slate-100 tabular-nums">
           {value}
         </span>
-        {subValue && (
-          <span className="text-xs text-slate-500 dark:text-slate-400">
-            {subValue}
-          </span>
-        )}
+        {subValue && <span className="text-xs text-slate-500 dark:text-slate-400">{subValue}</span>}
       </div>
 
       {/* Details */}
@@ -130,7 +126,9 @@ const KPICard: React.FC<{
               <span className="text-slate-500 dark:text-slate-400">{detail.label}</span>
               <span
                 className={`font-semibold tabular-nums ${
-                  detail.highlight ? 'text-amber-600 dark:text-amber-400' : 'text-slate-700 dark:text-slate-200'
+                  detail.highlight
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : 'text-slate-700 dark:text-slate-200'
                 }`}
               >
                 {detail.value}
@@ -374,17 +372,32 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
       {/* Risk Level KPI – A1.1: data source: derived from overdue tasks */}
       <KPICard
         title={t('executive.kpi.riskLevel', 'Risk Level')}
-        icon={<AlertTriangle size={16} className={
-          !hasRiskData ? 'text-slate-400' :
-          kpiData.risk.level === 'critical' ? 'text-rose-500' :
-          kpiData.risk.level === 'high' ? 'text-amber-500' :
-          kpiData.risk.level === 'medium' ? 'text-amber-500' : 'text-emerald-500'
-        } />}
+        icon={
+          <AlertTriangle
+            size={16}
+            className={
+              !hasRiskData
+                ? 'text-slate-400'
+                : kpiData.risk.level === 'critical'
+                  ? 'text-rose-500'
+                  : kpiData.risk.level === 'high'
+                    ? 'text-amber-500'
+                    : kpiData.risk.level === 'medium'
+                      ? 'text-amber-500'
+                      : 'text-emerald-500'
+            }
+          />
+        }
         iconBg={
-          !hasRiskData ? 'bg-slate-500/10' :
-          kpiData.risk.level === 'critical' ? 'bg-rose-500/10' :
-          kpiData.risk.level === 'high' ? 'bg-amber-500/10' :
-          kpiData.risk.level === 'medium' ? 'bg-amber-500/10' : 'bg-emerald-500/10'
+          !hasRiskData
+            ? 'bg-slate-500/10'
+            : kpiData.risk.level === 'critical'
+              ? 'bg-rose-500/10'
+              : kpiData.risk.level === 'high'
+                ? 'bg-amber-500/10'
+                : kpiData.risk.level === 'medium'
+                  ? 'bg-amber-500/10'
+                  : 'bg-emerald-500/10'
         }
         value={hasRiskData ? kpiData.risk.level.toUpperCase() : '—'}
         subValue={

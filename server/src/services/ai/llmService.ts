@@ -987,8 +987,9 @@ export class LLMService {
         if (!apiKey) throw new Error('No OpenRouter API key configured (set OPENROUTER_API_KEY).');
 
         const base =
-          normalizeBaseUrl(typeof modelConfig.endpoint === 'string' ? modelConfig.endpoint : undefined) ||
-          'https://openrouter.ai/api/v1';
+          normalizeBaseUrl(
+            typeof modelConfig.endpoint === 'string' ? modelConfig.endpoint : undefined
+          ) || 'https://openrouter.ai/api/v1';
         const baseUrl = String(base).replace(/\/+$/, '');
 
         const normalizeModelId = (id: string): string => {

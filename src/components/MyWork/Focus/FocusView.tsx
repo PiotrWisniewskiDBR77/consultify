@@ -49,8 +49,8 @@ import {
   EyeOff,
   Filter,
   GripVertical,
-  Loader2,
   ListChecks,
+  Loader2,
   Sparkles,
   Sun,
   Target,
@@ -412,18 +412,14 @@ const PlanMyDayPanel: React.FC<{
                     {item.type === 'decision' ? 'Decision' : 'Task'}
                   </span>
                   {item.priority && ['urgent', 'critical', 'high'].includes(item.priority) && (
-                    <span className="text-[10px] font-medium text-red-500">
-                      {item.priority}
-                    </span>
+                    <span className="text-[10px] font-medium text-red-500">{item.priority}</span>
                   )}
                 </div>
                 <p className="text-sm font-medium text-navy-900 dark:text-white truncate mt-0.5">
                   {item.title}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
-                  {item.dueDate && (
-                    <DueDateIndicator dueDate={item.dueDate} size="sm" />
-                  )}
+                  {item.dueDate && <DueDateIndicator dueDate={item.dueDate} size="sm" />}
                   {item.initiativeName && (
                     <span className="text-[10px] text-slate-400 truncate">
                       {item.initiativeName}
@@ -1031,7 +1027,10 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                             </div>
                             <div className="flex flex-wrap gap-1 mt-1">
                               {sug.reasons.map((r, ri) => (
-                                <span key={ri} className="text-[10px] text-slate-500 dark:text-slate-400">
+                                <span
+                                  key={ri}
+                                  className="text-[10px] text-slate-500 dark:text-slate-400"
+                                >
                                   {ri > 0 && '·'} {r}
                                 </span>
                               ))}
@@ -1066,7 +1065,11 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                           }`}
                         >
                           {user.avatarUrl ? (
-                            <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full" />
+                            <img
+                              src={user.avatarUrl}
+                              alt={user.name}
+                              className="w-8 h-8 rounded-full"
+                            />
                           ) : (
                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-purple-600 flex items-center justify-center">
                               <span className="text-xs font-medium text-white">
@@ -1145,7 +1148,11 @@ const KeyboardShortcutsBar: React.FC = () => {
 // MAIN FOCUS VIEW COMPONENT
 // ============================================================================
 
-export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToInbox, refreshTrigger }) => {
+export const FocusView: React.FC<FocusViewProps> = ({
+  onItemClick,
+  onNavigateToInbox,
+  refreshTrigger,
+}) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<FocusItem[]>([]);
@@ -1280,7 +1287,8 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
         let column: FocusColumn = persisted?.column || 'thisWeek';
 
         // Force overdue items to Today (even if user moved them away)
-        const forceOverdue = decision.isOverdue || (decision.dueDate && new Date(decision.dueDate) < tomorrowStart);
+        const forceOverdue =
+          decision.isOverdue || (decision.dueDate && new Date(decision.dueDate) < tomorrowStart);
         if (forceOverdue) {
           column = 'today';
         } else if (!persisted) {
@@ -1344,7 +1352,9 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
         // If one type had fewer items, fill from the other
         if (candidates.length < needed) {
           const taken = new Set(candidates.map((c) => c.id));
-          const remainder = pool.filter((i) => !taken.has(i.id)).slice(0, needed - candidates.length);
+          const remainder = pool
+            .filter((i) => !taken.has(i.id))
+            .slice(0, needed - candidates.length);
           candidates.push(...remainder);
         }
 
@@ -1424,12 +1434,8 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
 
     return {
       today: todayItems,
-      thisWeek: filtered
-        .filter((i) => i.column === 'thisWeek' && !todayIds.has(i.id))
-        .sort(sortFn),
-      later: filtered
-        .filter((i) => i.column === 'later' && !todayIds.has(i.id))
-        .sort(sortFn),
+      thisWeek: filtered.filter((i) => i.column === 'thisWeek' && !todayIds.has(i.id)).sort(sortFn),
+      later: filtered.filter((i) => i.column === 'later' && !todayIds.has(i.id)).sort(sortFn),
     };
   }, [items, filter, hideCompleted, sort]);
 

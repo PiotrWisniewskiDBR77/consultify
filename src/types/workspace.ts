@@ -117,6 +117,8 @@ export function getDefaultWorkspaceType(view: AppView): WorkspaceType {
     [AppView.FULL_STEP3_ROADMAP]: 'roadmap',
     [AppView.PORTFOLIO_ROADMAP]: 'roadmap',
     [AppView.FULL_STEP6_REPORTS]: 'report',
+    [AppView.REPORTS_ENTRY]: 'report',
+    [AppView.REPORTS_MANAGEMENT]: 'report',
     [AppView.DASHBOARD]: 'dashboard',
     [AppView.USER_DASHBOARD]: 'dashboard',
   };

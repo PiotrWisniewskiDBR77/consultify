@@ -82,9 +82,7 @@ export interface UISlice {
     meta?: Record<string, unknown>;
     timestamp: number;
   } | null;
-  emitMyWorkEvent: (
-    event: Omit<NonNullable<UISlice['myWorkEvent']>, 'timestamp'>
-  ) => void;
+  emitMyWorkEvent: (event: Omit<NonNullable<UISlice['myWorkEvent']>, 'timestamp'>) => void;
   clearMyWorkEvent: () => void;
 
   // Per-tab chat system prompt
@@ -138,8 +136,7 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
   setMyWorkIntent: (intent) => set({ myWorkIntent: intent }),
   clearMyWorkIntent: () => set({ myWorkIntent: null }),
 
-  emitMyWorkEvent: (event) =>
-    set({ myWorkEvent: { ...event, timestamp: Date.now() } }),
+  emitMyWorkEvent: (event) => set({ myWorkEvent: { ...event, timestamp: Date.now() } }),
   clearMyWorkEvent: () => set({ myWorkEvent: null }),
 
   setChatSystemPrompt: (prompt) => set({ chatSystemPrompt: prompt }),

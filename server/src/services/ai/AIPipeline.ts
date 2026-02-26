@@ -530,7 +530,9 @@ export class AIPipeline {
         // ignore
       }
 
-      const memoryReadAllowed = Boolean(memoryEnabled && !isPrivateMode && retentionMode !== 'none');
+      const memoryReadAllowed = Boolean(
+        memoryEnabled && !isPrivateMode && retentionMode !== 'none'
+      );
       (request as any)._privateMode = isPrivateMode;
       (request as any)._retentionMode = retentionMode;
 
@@ -1719,6 +1721,8 @@ export class AIPipeline {
     const routingCapability = request.capability === 'chatStream' ? 'chat' : request.capability;
     const routed = await modelRouter.select({
       capability: routingCapability,
+      purpose: request.purpose || routingCapability,
+      dataClass: (request as any).dataClass,
       organizationId: request.organizationId,
       options: { tier: selectedTier },
       tier: selectedTier,
@@ -1920,31 +1924,120 @@ export class AIPipeline {
       promptSsotUsed: (request as any)?._promptSsotUsed ?? false,
     };
 
-    logger.info(`[AI Pipeline] ${request.capability} completed in ${latency}ms (trace: ${traceId})`, meta);
+    logger.info(
+      `[AI Pipeline] ${request.capability} completed in ${latency}ms (trace: ${traceId})`,
+      meta
+    );
 
     // Best-effort DB-backed usage log (208_ai_usage_logs.sql).
     // Never fail the request if logging is unavailable.
     try {
-      const { run: dbRun } = await import('../../utils/DbPromise.js');
+      const { run: dbRun, get: dbGet } = await import('../../utils/DbPromise.js');
       const { v4: uuidv4 } = await import('uuid');
 
       const usage = _response?.usage || ({} as any);
       const promptTokens = Number(usage?.promptTokens || 0);
       const completionTokens = Number(usage?.completionTokens || 0);
-      const tokensUsed = Number(usage?.totalTokens || usage?.tokensUsed || promptTokens + completionTokens || 0);
+      const tokensUsed = Number(
+        usage?.totalTokens || usage?.tokensUsed || promptTokens + completionTokens || 0
+      );
 
       const usedProvider =
-        (request as any)?._modelConfigForLog?.provider ||
-        (request as any)?._provider ||
-        'unknown';
+        (request as any)?._modelConfigForLog?.provider || (request as any)?._provider || 'unknown';
       const usedModel =
-        (request as any)?._modelConfigForLog?.model ||
-        (request as any)?._model ||
-        null;
+        (request as any)?._modelConfigForLog?.model || (request as any)?._model || null;
+
+      // Best-effort pricing snapshot binding for consistent cost analytics.
+      // - Match on (provider, model_id)
+      // - Respect effective_to if present
+      // - Store selected snapshot id in ai_usage_logs.price_snapshot_id
+      // - Put computed estimated cost into metadata (no dedicated DB column yet)
+      let priceSnapshotId: string | null = null;
+      let estimatedCost: { amount: number; currency: string } | null = null;
+      try {
+        const providerKey = String(usedProvider || '').trim();
+        const modelKey = usedModel ? String(usedModel).trim() : '';
+        if (providerKey && modelKey) {
+          const snap = await dbGet(
+            `SELECT id, currency, units
+             FROM ai_price_snapshots
+             WHERE provider = ? AND model_id = ?
+               AND (effective_to IS NULL OR effective_to > CURRENT_TIMESTAMP)
+             ORDER BY effective_from DESC, created_at DESC
+             LIMIT 1`,
+            [providerKey, modelKey],
+            { fallback: true } as any
+          );
+          if (snap?.id) {
+            priceSnapshotId = String(snap.id);
+            const currency = String(snap.currency || 'USD');
+            const unitsRaw = (snap as any)?.units;
+            let units: any = unitsRaw;
+            if (typeof unitsRaw === 'string') {
+              try {
+                units = JSON.parse(unitsRaw);
+              } catch {
+                units = {};
+              }
+            }
+
+            const inTok = Number.isFinite(promptTokens) ? promptTokens : 0;
+            const outTok = Number.isFinite(completionTokens) ? completionTokens : 0;
+
+            const inputPer1M = Number((units as any)?.input_per_1m_tokens);
+            const outputPer1M = Number((units as any)?.output_per_1m_tokens);
+            const inputPer1K = Number((units as any)?.input_per_1k_tokens);
+            const outputPer1K = Number((units as any)?.output_per_1k_tokens);
+            const costPer1K = Number((units as any)?.cost_per_1k);
+
+            const has1M = Number.isFinite(inputPer1M) || Number.isFinite(outputPer1M);
+            const has1K = Number.isFinite(inputPer1K) || Number.isFinite(outputPer1K);
+            const hasLegacy = Number.isFinite(costPer1K);
+
+            const safeInput1M = Number.isFinite(inputPer1M) ? inputPer1M : 0;
+            const safeOutput1M = Number.isFinite(outputPer1M) ? outputPer1M : 0;
+            const safeInput1K = Number.isFinite(inputPer1K) ? inputPer1K : 0;
+            const safeOutput1K = Number.isFinite(outputPer1K) ? outputPer1K : 0;
+            const safeLegacy1K = Number.isFinite(costPer1K) ? costPer1K : 0;
+
+            let amount = 0;
+            if (has1M) {
+              amount = (inTok / 1_000_000) * safeInput1M + (outTok / 1_000_000) * safeOutput1M;
+            } else if (has1K) {
+              amount = (inTok / 1_000) * safeInput1K + (outTok / 1_000) * safeOutput1K;
+            } else if (hasLegacy) {
+              amount = ((inTok + outTok) / 1_000) * safeLegacy1K;
+            }
+            if (Number.isFinite(amount) && amount > 0) {
+              estimatedCost = { amount, currency };
+            }
+          }
+        }
+      } catch {
+        // ignore pricing binding
+      }
 
       await dbRun(
-        `INSERT INTO ai_usage_logs (id, user_id, organization_id, provider, model, action, prompt_tokens, completion_tokens, tokens_used, latency_ms, status, error_message, metadata, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'success', NULL, ?, CURRENT_TIMESTAMP)`,
+        `INSERT INTO ai_usage_logs (
+            id,
+            user_id,
+            organization_id,
+            provider,
+            model,
+            action,
+            purpose,
+            kind,
+            price_snapshot_id,
+            prompt_tokens,
+            completion_tokens,
+            tokens_used,
+            latency_ms,
+            status,
+            error_message,
+            metadata,
+            created_at
+         )
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'success', NULL, ?, CURRENT_TIMESTAMP)`,
         [
           uuidv4(),
           request.userId || null,
@@ -1952,6 +2045,9 @@ export class AIPipeline {
           String(usedProvider || 'unknown'),
           usedModel ? String(usedModel) : null,
           String(request.capability || 'unknown'),
+          String((request as any).purpose || request.capability || 'unknown'),
+          null,
+          priceSnapshotId,
           Number.isFinite(promptTokens) ? promptTokens : 0,
           Number.isFinite(completionTokens) ? completionTokens : 0,
           Number.isFinite(tokensUsed) ? tokensUsed : 0,
@@ -1961,6 +2057,12 @@ export class AIPipeline {
             promptKey: (request.options as any)?.promptKey || (request as any)?._promptKey || null,
             promptVersion: (request as any)?._promptVersion || null,
             promptSsotUsed: (request as any)?._promptSsotUsed || false,
+            ...(priceSnapshotId ? { price_snapshot_id: priceSnapshotId } : {}),
+            ...(estimatedCost
+              ? {
+                  estimated_cost: estimatedCost,
+                }
+              : {}),
           }),
         ]
       );

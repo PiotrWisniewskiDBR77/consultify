@@ -42,11 +42,11 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { useDemoSession } from '@/hooks/useDemoSession';
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { INSIGHT_DETECTION_PROMPT, INTERVIEW_SYSTEM_PROMPT } from '@/services/ai/intelligence';
 import { Api } from '@/services/api';
 
-import { useDemoSession } from '@/hooks/useDemoSession';
 import {
   CATEGORY_CONFIG,
   CategoryIcon,

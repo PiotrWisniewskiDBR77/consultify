@@ -16,6 +16,8 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { ORG_TYPES, TRIAL_DURATION_DAYS } from './access/AccessTypes.js';
+import { DEMO_TRIAL_EVENT_TYPES, recordDemoTrialEvent } from './demoTrialTelemetryService.js';
 
 // ==========================================
 // TYPES
@@ -163,6 +165,9 @@ export async function createOrganization(
   } = params;
   const orgId = uuidv4();
   const now = new Date().toISOString();
+  const trialExpiresAt = new Date(
+    Date.now() + TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000
+  ).toISOString();
   const attributionJson =
     attribution || attributionData
       ? JSON.stringify({
@@ -177,10 +182,23 @@ export async function createOrganization(
     {
       sql: `INSERT INTO organizations (
                 id, name, status, billing_status, token_balance, created_by_user_id, created_at, is_active,
-                ai_assertiveness_level, ai_autonomy_level, attribution_data, industry, domain, vat_number
+                ai_assertiveness_level, ai_autonomy_level, attribution_data, industry, domain, vat_number,
+                organization_type, trial_started_at, trial_expires_at
             )
-             VALUES (?, ?, 'active', 'TRIAL', 0, ?, ?, 1, 'MEDIUM', 'SUGGEST_ONLY', ?, ?, ?, ?)`,
-      params: [orgId, name, userId, now, attributionJson, industry, domain, vatNumber],
+             VALUES (?, ?, 'active', 'TRIAL', 0, ?, ?, 1, 'MEDIUM', 'SUGGEST_ONLY', ?, ?, ?, ?, ?, ?, ?)`,
+      params: [
+        orgId,
+        name,
+        userId,
+        now,
+        attributionJson,
+        industry,
+        domain,
+        vatNumber,
+        ORG_TYPES.TRIAL,
+        now,
+        trialExpiresAt,
+      ],
     },
     {
       sql: `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
@@ -192,6 +210,17 @@ export async function createOrganization(
   if (!result.success) {
     throw new Error(result.error || 'Failed to create organization');
   }
+
+  await recordDemoTrialEvent({
+    eventType: DEMO_TRIAL_EVENT_TYPES.TRIAL_STARTED,
+    organizationId: orgId,
+    userId,
+    source: attribution?.type || 'self_serve',
+    metadata: {
+      trialExpiresAt,
+      trialDurationDays: TRIAL_DURATION_DAYS,
+    },
+  });
 
   return { id: orgId, name, role: 'OWNER' };
 }

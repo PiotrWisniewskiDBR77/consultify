@@ -1,12 +1,4 @@
-import {
-  CheckSquare,
-  ClipboardCheck,
-  Map,
-  MessageSquare,
-  Rocket,
-  Scale,
-  Star,
-} from 'lucide-react';
+import { CheckSquare, ClipboardCheck, Map, MessageSquare, Rocket, Scale, Star } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
