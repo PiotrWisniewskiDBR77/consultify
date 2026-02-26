@@ -1151,6 +1151,132 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     );
   };
 
+  const renderCommandRow = () => {
+    // V3-A03 MUST: single command row under topbar
+    // 1) Search row (when enabled)
+    if (showSearch && !activeDocumentId) {
+      return (
+        <div className="px-4 pb-3">
+          <div className="relative">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              placeholder={
+                activeTab === 'tasks'
+                  ? isPolish
+                    ? 'Szukaj zadań...'
+                    : 'Search tasks...'
+                  : activeTab === 'ideas'
+                    ? isPolish
+                      ? 'Szukaj pomysłów...'
+                      : 'Search ideas...'
+                    : activeTab === 'decisions'
+                      ? isPolish
+                        ? 'Szukaj decyzji...'
+                        : 'Search decisions...'
+                      : activeTab === 'notebook'
+                        ? isPolish
+                          ? 'Szukaj notatek...'
+                          : 'Search notes...'
+                        : isPolish
+                          ? 'Szukaj w Inbox...'
+                          : 'Search inbox...'
+              }
+              autoFocus
+              className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder:text-slate-500 dark:text-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={handleCloseSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // 2) Dynamic tabs row (when documents open)
+    if (openDocuments.length > 0) {
+      return renderDynamicTabs();
+    }
+
+    // 3) Context counters row (list view default)
+    if (activeDocumentId) return null;
+    const chips: Array<{ key: string; label: string; count: number; onClick: () => void }> = [
+      {
+        key: 'tasks-overdue',
+        label: isPolish ? 'Zaległe' : 'Overdue',
+        count: taskFilterCounts.overdue,
+        onClick: () => {
+          setActiveTab('tasks');
+          setTaskFilter('overdue');
+          setActiveDocumentId(null);
+        },
+      },
+      {
+        key: 'tasks-urgent',
+        label: isPolish ? 'Pilne' : 'Urgent',
+        count: taskFilterCounts.urgent,
+        onClick: () => {
+          setActiveTab('tasks');
+          setTaskFilter('urgent');
+          setActiveDocumentId(null);
+        },
+      },
+      {
+        key: 'decisions-pending',
+        label: isPolish ? 'Decyzje (pending)' : 'Decisions (pending)',
+        count: decisionFilterCounts.my + decisionFilterCounts.awaiting,
+        onClick: () => {
+          setActiveTab('decisions');
+          setDecisionFilter('my');
+          setActiveDocumentId(null);
+        },
+      },
+      {
+        key: 'inbox',
+        label: isPolish ? 'Inbox' : 'Inbox',
+        count: tabCounts.inbox,
+        onClick: () => {
+          setActiveTab('inbox');
+          setActiveDocumentId(null);
+        },
+      },
+    ];
+
+    const visible = chips.filter((c) => c.count > 0).slice(0, 4);
+    return (
+      <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
+        {visible.length > 0 ? (
+          visible.map((c) => (
+            <button
+              key={c.key}
+              onClick={c.onClick}
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+            >
+              <span>{c.label}</span>
+              <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-200">
+                {c.count}
+              </span>
+            </button>
+          ))
+        ) : (
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Brak alertów' : 'No alerts'}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Render document content (full view)
   const renderDocumentContent = () => {
     const activeDoc = openDocuments.find((d) => d.id === activeDocumentId);
@@ -1854,58 +1980,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             </button>
           </div>
         </div>
-
-        {/* Search Bar (expandable) */}
-        {showSearch && !activeDocumentId && (
-          <div className="px-4 pb-3">
-            <div className="relative">
-              <Search
-                size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                placeholder={
-                  activeTab === 'tasks'
-                    ? isPolish
-                      ? 'Szukaj zadań...'
-                      : 'Search tasks...'
-                    : activeTab === 'ideas'
-                      ? isPolish
-                        ? 'Szukaj pomysłów...'
-                        : 'Search ideas...'
-                      : activeTab === 'decisions'
-                        ? isPolish
-                          ? 'Szukaj decyzji...'
-                          : 'Search decisions...'
-                        : activeTab === 'notebook'
-                          ? isPolish
-                            ? 'Szukaj notatek...'
-                            : 'Search notes...'
-                          : isPolish
-                            ? 'Szukaj w Inbox...'
-                            : 'Search inbox...'
-                }
-                autoFocus
-                className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder:text-slate-500 dark:text-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
-              />
-              {searchQuery && (
-                <button
-                  onClick={handleCloseSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                >
-                  <X size={16} />
-                </button>
-              )}
-            </div>
-          </div>
-        )}
       </div>
-
-      {/* Dynamic Tabs Row */}
-      {renderDynamicTabs()}
+      {/* Command Row (search | dynamic tabs | counters) */}
+      {renderCommandRow()}
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto min-h-0">{renderContent()}</div>
