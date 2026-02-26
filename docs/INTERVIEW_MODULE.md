@@ -263,6 +263,57 @@ Insights:
   - export opens target artifact
   - errors must be readable (no `[object Object]`)
 
+#### 9.1 UI compliance (V3) — InterviewHub tables (MUST)
+
+InterviewHub jest “hubem tabelarycznym” (Inbox/Sessions/Assigned/Templates/Insights). Wszystkie te listy muszą być zgodne z:
+
+- `docs/ui-standards/03-modules/module-hub-standard.md` (topbar order + 1 command row)
+- `docs/ui-standards/03-modules/app-table-standard.md` (header filters + resizable + kebab actions + brak duplikacji kontrolek)
+- `docs/ui-standards/03-modules/table-preview-pane-standard.md` (preview jako opcjonalny panel po prawej, nie osobny widok)
+
+**Kanon (powtarzalne problemy do usunięcia):**
+
+- brak filtrów w headerach kolumn (MUST dodać, jeśli kolumna ma służyć do filtrowania)
+- brak resizerów kolumn (MUST)
+- brak Actions column z kebab (⋮) (MUST)
+- ad-hoc “help strip/bannery” między topbarem a tabelą (MUST NOT; zamiast tego Command Row counters)
+- chaos w kolejności przycisków topbara (MUST trzymać kolejność z ModuleHub Standard)
+
+##### Inbox (Assignments to me) — MUST
+
+- tabela zgodna z App Table Standard (filtry/resizery/actions)
+- status + deadline + progress jako osobne kolumny (filtrowalne gdzie ma sens)
+- akcje wiersza wyłącznie w kebab (⋮) + max 1–2 quick icons (opcjonalnie)
+
+##### Sessions — MUST
+
+- **MUST NOT:** dodatkowa linia “workflow help” między topbarem a tabelą
+  - jeśli trzeba edukacji: video help / help center (nie w hubie)
+- prawy topbar: **AI context → +New (np. +Przydziel) → View modes → Filters**
+- badge przy tabie (np. “Przydzielone (8)”) to tylko liczba — bez dodatkowych ikon “zdarzeń”
+
+##### Assigned — MUST
+
+- “3 zaległe przydziały” nie jako osobny, nowy komponent/boks
+  - zamiast tego: **Context counters row** (chip “Spóźnione (3)”) + klik ustawia filtr
+- w wierszu: żadnych losowych ikonek typu dzwonek jako “akcja”
+  - akcje w kebab (⋮)
+  - stan “gotowe do zatwierdzenia” jako sygnał w kolumnie status / badge (call to action może być w quick actions, ale spójnie)
+
+##### Templates — MUST / SHOULD
+
+- App Table Standard: filtry w headerze, resizery, kebab actions
+- **MUST:** żadnych “dwóch linii” z duplikacją (np. nazwa + pod nią slug/kategoria) — jeśli potrzebne, to osobna kolumna
+- **SHOULD:** alternatywny view mode “Cards” jest dozwolony (template library), ale tylko jeśli nadal jest spójny z ModuleHub (te same filtry/topbar/akcje)
+
+##### Insights — MUST
+
+- **MUST:** usuwać “Przydziel” z tego widoku (tu już wnioskujemy, nie przydzielamy)
+- filtry “wg raportu / wg osoby” nie jako dwa osobne kontrolki; wszystko w **Filters…** (jedno miejsce)
+- podziały “Sesja 1/2/…/Ogólne” nie jako osobne sekcje tabeli:
+  - zamiast tego: kolumna `Źródło / Sesja` + filtr (albo group-by jako view option R1+)
+- **SHOULD:** dodać preview pane dla wniosku (podgląd + Open full), bo Insight ma N-mode i mamy payload do preview
+
 ### 10) Definition of Done (module readiness)
 
 Functional acceptance checklist:

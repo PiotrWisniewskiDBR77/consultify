@@ -42,6 +42,18 @@ My Work is the user's personal operational hub. It unifies all work items — ta
 - **AI-first** — Each tab has a dedicated AI persona (system prompt). The chat panel knows the user's current workload and can create artifacts directly.
 - **Proactive, not reactive** — Morning briefings, nudge strips, predictive signals, and smart note routing surface insights before the user asks.
 
+### Access & roles (v3 MVP)
+
+Na start v3 przyjmujemy prostą zasadę:
+
+- **MUST:** wszystkie zakładki MyWork są widoczne dla wszystkich użytkowników (Executive/Inbox/Focus/Tasks/Decisions/Notebook/Pomysły).
+- Różnice w roli wpływają na:
+  - domyślny landing (np. Manager może startować w Executive),
+  - zakres danych i dozwolone akcje (read-only vs edit),
+  - “callouts” i quick actions (np. Approve/Send-back).
+
+SSOT roli w flow: `docs/product/OPERATING_MODEL_V3.md` (sekcja 3).
+
 ### Architecture Overview
 
 ```
@@ -50,9 +62,9 @@ My Work
 ├── Inbox — Triage incoming items, AI auto-triage, bulk actions
 ├── Focus — Today/This Week/Later kanban, AI Coach, Plan My Day, Nudge Strip
 ├── Tasks — List/Kanban/Calendar views, focus badges, triage badges, origin badges
-├── Decisions — List/Kanban views, review-next flow, AI decision briefs
+├── Decisions — List/Kanban/Timeline views + optional review-next flow, AI decision briefs
 ├── Notebook — TipTap editor, slash commands, KnowledgePulse, smart routing
-└── Ideas — Garden/List/Cards/MindMap views, promote flow, AI evaluation
+└── Ideas — List/Cards/Garden + canvas tools (MindMap/ProcessFlow/Table/Whiteboard), promote flow, AI evaluation
 ```
 
 ### Layout (Golden Standard)
@@ -360,6 +372,31 @@ Dokument produktu (cel i sens modułu): `docs/modules/LIVING_NOTEBOOK_MODULE.md`
 │ Escalated │
 └───────────┘
 ```
+
+### Collection surfaces (V3)
+
+Decyzje mają te same kanoniczne zasady kolekcji co Zadania:
+
+- **Table (list)**: kolumny + filtry w headerze + preview pane uruchamiane kliknięciem (nie “na stałe”)
+- **Kanban**: praca przez statusy (Pending/Escalated/Approved/Rejected/Deferred) + drag&drop tam, gdzie uprawnienia pozwalają
+- **Timeline (Gantt)**: kiedy decyzje mają być podjęte (zoom: day/week/month/quarter) + multiselect priorytetów
+
+**MUST:** “review-next / kolejka” nie jest osobnym view mode w topbarze. Jeśli zostaje w produkcie, to jako osobny, jawny flow (np. przycisk “Review next”), ale nie zastępuje Table/Kanban/Timeline.
+
+### Preview actions parity (MUST)
+
+W preview pane dla decyzji muszą być dostępne te same akcje co w pełnym widoku decyzji:
+
+- Approve / Reject / Delegate / Request info (zgodnie ze stanem i uprawnieniami)
+- “Open full” w headerze zawsze dostępne
+
+### AI w kontekście decyzji (MUST)
+
+Przycisk “AI w kontekście” w module Decisions zawsze wspiera podejmowanie decyzji:
+
+- persona: decision advisor
+- quick prompts: “Summarize pending decisions”, “Risk analysis”, “What info is missing?”
+  (SSOT: per-tab system prompts w MyWork + `UI_UX_CANON_V3.md`)
 
 ---
 
@@ -726,32 +763,82 @@ Wszystkie widoki zapisują draft do localStorage:
 
 ---
 
-## Focus — Personal Kanban + AI Coach
+## Focus — Lightweight execution cockpit (V3)
 
-### Component
+> **Cel:** Focus ma być “lekki” i błyskawiczny: w 10–30 sekund user widzi co ma zrobić i może to odhaczyć / przeplanować / przerzucić.
+> Focus nie jest “dashboardem AI” ani “tablicą na kiedyś”.
 
-`src/components/MyWork/Focus/FocusView.tsx`
+### Kanon v3 (MUST)
 
-### Columns
+- **Zero środkowego “AI Coach feed”** w treści ekranu (to robi clutter i zabiera wysokość).
+- **Trzymamy się nawigacji V3**: chrome modułu + content area. Kontekstowe narzędzia/AI są w panelach (nie w środku).
+- **Focus = plan krótki**: default pokazujemy *teraz* (`Today` + `This Week`) + osobiste *capture* (`My list`).
+- **“Later” nie jest częścią focusu (domyślnie)** — jeśli istnieje, to jako opcjonalny ukryty lane (R1+), nie jako 3. obowiązkowa kolumna.
 
-| Column | Purpose |
-|---|---|
-| Today | Items planned for today |
-| This Week | Items for the current week |
-| Later | Backlog / deferred items |
+### Surfaces (layout)
 
-### AI Features in Focus
+Minimalny układ (zalecany):
 
-| Feature | Component | Trigger |
+| Lane | Rola | Uwagi |
 |---|---|---|
-| **Nudge Strip** | `Focus/NudgeStrip.tsx` | Auto-loaded, shows top 2-3 nudges |
-| **AI Priority Coach** | `Focus/AICoachPanel.tsx` | Toggle button, fetches `GET /priority-advice` |
-| **AI Plan My Day** | `Focus/AIPlanView.tsx` | Toggle button, fetches `POST /focus/ai-plan` |
-| **Delegation Advisor** | `shared/DelegationModal.tsx` | Enhanced with AI suggestions from `GET /delegation-suggestions` |
+| **My list (capture)** | szybkie dopisywanie “mam to zrobić” | prywatne, krótkie wpisy; można przerzucić do Today/Week |
+| **Today** | plan na dziś | szybkie odhaczanie + przerzucanie |
+| **This Week** | plan na tydzień | szybkie odhaczanie + przerzucanie |
 
-### Focus ↔ Tasks Sync
+Opcjonalnie (R1+): **Later** jako collapsed lane (domyślnie ukryty).
 
-Tasks in the list view display which Focus column they belong to via focus badges (Today / This Week / Later).
+### Karty w lane’ach (MUST)
+
+Każdy item w Focus to **mała karta**, która musi pokazać minimum:
+
+- **Type**: task / decision / inbox item (ikonka + ewentualnie mały dot statusu)
+- **Title**: 1–2 linie, truncate
+- **Context hint** (opcjonalnie): np. `#initiative` / `source` / mini‑badge “triaged”
+- **Quick actions**: “Done” (checkbox) + “Move” (drag) + opcjonalnie `…` (row actions)
+
+**Zasada:** Focus nie pokazuje pełnych opisów, komentarzy, AI tekstów. To jest **lista działań**, nie czytnik dokumentów.
+
+### Interakcje (MUST)
+
+- **Drag & drop** między lane’ami:
+  - My list → Today / This Week
+  - Today ↔ This Week (przeplanowanie)
+- **Quick add**:
+  - przycisk `+ Task` w nagłówku lane (My list i Today)
+  - dodaje szybki task bez wchodzenia w pełny detail view
+- **Open preview / Open full**:
+  - single click (lub klawisze) ustawia selection i pokazuje **preview pane** po prawej (jeśli włączone)
+  - Enter / double click → otwiera pełny detail (dynamic tabs / N‑mode)
+
+### Panele boczne (MUST)
+
+Focus ma dwa panele “opcjonalne”, które **nie mogą dusić** szerokości lane’ów:
+
+1) **Preview pane (po prawej)** — zgodny z `table-preview-pane-standard.md` (header/body/footer, rounded card).  
+   **MUST:** selection → preview bez nawigacji, `Open full` w headerze.
+
+2) **Workspace 3‑tools strip (po prawej)** — zgodny z `workspace-3-tools-strip.md`:
+   - Tools: quick tools dla Focus (np. “Convert to…”, “Assign”, “Snooze”)
+   - Context/Links: powiązania/backlinks dla zaznaczonego itemu
+   - AI Suggestions: 2–3 sugestie “co rozważyć” (send-to-chat), ale **nie feed** w środku ekranu
+
+### AI w Focus (V3 — minimal)
+
+AI w Focus jest **wspierające**, nie dominujące:
+
+- “AI plan” i “priority advice” mogą istnieć jako akcje/panele, ale:
+  - **MUST:** nie zajmują stałego miejsca w centrum ekranu
+  - **SHOULD:** są dostępne przez panel/strip + “send to chat”
+
+### Focus ↔ Tasks Sync (MUST)
+
+Taski w list view pokazują “Focus lane” badge (Today / This Week / (Later jeśli istnieje)).
+
+### Code anchors (as-is)
+
+- `src/components/MyWork/Focus/FocusView.tsx`
+- `src/components/MyWork/Focus/FocusBoard.tsx`
+- (historyczne elementy AI w Focus): `Focus/AICoachPanel.tsx`, `Focus/AIPlanView.tsx` — w v3 nie są “central feedem”
 
 ---
 
@@ -761,12 +848,88 @@ Tasks in the list view display which Focus column they belong to via focus badge
 
 `src/components/MyWork/IdeaDetailView.tsx`
 
-### Views
+### Nazwa w UI (PL)
+
+W UI ten moduł trzymamy jako **Pomysły**.
+
+### Views (kolekcja)
 
 - **List** — sortable table
 - **Cards** — maturity-based card grid
 - **Garden** — visual maturity journey
-- **MindMap** — graph with AI-suggested connections (`IdeasMindMap.tsx`)
+
+### Canvas tool selector (prawy górny róg) — KANON v3
+
+W prawym górnym rogu jest przełącznik (np. label “Mind Map”), który **nie jest view-mode kolekcji**, tylko wyborem narzędzia pracy na canvasie (“workspace tool”).
+
+**MUST:** selector steruje tym, jakie narzędzie ładuje się na ekranie i jak aktywnie współpracuje z userem.
+
+Dostępne narzędzia canvasa (R1+ roadmap, Mind Map as-is):
+
+- **Mind Map** — graph z połączeniami i AI-suggested connections (`IdeasMindMap.tsx`)
+- **Process Flow** — schemat blokowy procesu (kroki, decyzje, działania)
+- **Table** — tabela robocza (np. do porządkowania hipotez/argumentów)
+- **Whiteboard** — freeform canvas (rysowanie, sticky notes, szkice)
+
+Zasady:
+
+- **MUST:** wybór narzędzia jest zapamiętywany per user/per workspace (persisted preference).
+- **MUST:** zmiana narzędzia nie może “gubić treści” — narzędzia korzystają ze wspólnego rdzenia danych (poniżej), a różnią się tylko reprezentacją.
+- **SHOULD:** AI w kontekście dopasowuje się do wybranego narzędzia (np. “narysuj przepływ”, “ułóż tabelę”, “połącz wątki”).
+
+### Data contract (V3) — wspólny rdzeń danych dla narzędzi canvasa (MUST)
+
+Żeby spełnić zasadę “nie gubimy treści” przy przełączaniu MindMap/Flow/Table/Whiteboard, definiujemy **jeden rdzeń danych** dla workspace’u Pomysłu, a narzędzia są tylko różnymi “rendererami”.
+
+#### 1) Core model: `IdeaWorkspaceGraph` (MUST)
+
+Rdzeń składa się z:
+
+- **Nodes** (węzły): “co istnieje na mapie”
+- **Edges** (połączenia): “jak to jest powiązane”
+- **Annotations** (opcjonalnie): notatki/komentarze przypięte do obszaru lub elementu
+
+Minimalny kontrakt `Node` (konceptualnie):
+
+- `id`
+- `kind`: `topic | step | decision | note | artifact_ref`
+- `title`
+- `description?`
+- `tags?` / `category?` (dla kolorystyki/sygnałów)
+- `artifactRef?`: `{ type, id }` (jeśli node linkuje do artefaktu platformy)
+- `extensions`: namespaced payload narzędzi (np. `processFlow.*`, `whiteboard.*`) — **MUST** (żeby nie tracić danych specyficznych dla narzędzia)
+
+Minimalny kontrakt `Edge`:
+
+- `id`
+- `fromNodeId`, `toNodeId`
+- `relationType?` (np. `causes`, `depends_on`, `supports`, `blocks`)
+- `label?`
+- `extensions` (np. styl linii/strzałek)
+
+#### 2) View state per narzędzie (MUST)
+
+Każde narzędzie może mieć własny “stan widoku” (layout), ale on **nie jest** źródłem treści.
+Przykładowo:
+
+- Mind Map: pozycje `(x,y)`, group layout, collapsed state
+- Process Flow: shape (start/action/decision/end), order/lanes, markers (np. “time”)
+- Table: konfiguracja kolumn + sort/group (view config)
+- Whiteboard: pozycje elementów + “freeform shapes” jako węzły `kind=note`
+
+**MUST:** view state jest zapisywany per user/per workspace, ale core data jest wspólne.
+
+#### 3) Konwersje i brak utraty danych (MUST)
+
+- Przełączenie narzędzia **nie wykonuje migracji treści** — tylko zmienia renderer i ewentualnie zapisuje/odczytuje view state.
+- Jeśli narzędzie wprowadza dane, których inne narzędzie nie potrafi pokazać, musi je zachować w `extensions` (namespaced) bez utraty.
+
+### Visual language (as-is, MUST keep)
+
+To, co jest na ekranie dzisiaj (kolory, poziomy, linie/połączenia, delikatna animacja “życia” grafu) jest traktowane jako **wartość premium** modułu.
+
+- **MUST:** utrzymać subtelną, “żyjącą” sieć połączeń bez chaosu (quiet luxury, nie arcade).
+- **SHOULD:** kolor jest sygnałem (kategoria/obszar), a nie “malowaniem całej karty”.
 
 ### Promote CTA Strip
 
@@ -801,6 +964,26 @@ When an idea reaches the ready/summary stage, a prominent action bar appears:
 | Portfolio Health Score | Composite score visualization |
 | Team Performance | Team capacity and status |
 | Work Patterns | Velocity, completion time, overdue rate, AI insights |
+
+### Readability (V3) — problem i kanoniczne poprawki
+
+Executive ma dużo rozdrobnionych danych. Jeśli zrobimy zbyt “air‑y” layout (dużo pustej przestrzeni) przy jednocześnie małej typografii i słabych granicach sekcji, dashboard robi się nieczytelny.
+
+**MUST (Executive readability):**
+
+- Typografia w tile’ach dashboardu nie może być “mikro”:
+  - etykiety/treść UI: min `text-sm` (13–14px)
+  - KPI/value: skala headline (`text-xl`–`text-2xl`)
+- Tile’e muszą mieć jednoznaczny “framing” bez ciężkich ramek:
+  - warstwy tła (Layer 1 → Layer 2) + spójny rytm spacing
+  - nagłówki sekcji (mapa ekranu) zamiast losowych dividerów
+- Dashboard tile’e mają gęstszy padding niż typowy content: 12–16px (nie 24–32px).
+- Light mode musi mieć czytelną separację (base Layer 1 = `bg-slate-50`, karty = `bg-white`) — patrz `visual-language.md` (sekcja 3.3 + 6.1).
+
+**SHOULD (skanowanie i kontrola):**
+
+- **MUST:** dodać przełącznik **Density (Compact / Comfortable)** w menu “View” (bez dodatkowych pasków na ekranie).
+- Utrzymywać stały grid i gutters 12–16px; unikać “wysp” danych bez kontekstu sekcji.
 
 ---
 

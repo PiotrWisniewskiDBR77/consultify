@@ -25,6 +25,8 @@ Pozwala na szybki przegląd i podstawowe akcje bez otwierania full detail view.
   - docelowo **20–33%** szerokości content area
   - baseline w px: **~420px** (jak obecnie)
   - `min-width`: 340px (żeby tekst się nie łamał jak w “card spam”)
+  - **MUST (responsywność):** preview używa `clamp()` albo podobnego mechanizmu, żeby przy dodatkowych panelach (np. otwarty czat / lewy rail) **nie ścisnąć tabeli** do “mikro‑kolumn”.  
+    Reguła: preview może się zwężać szybciej niż tabela; tabela ma zachować czytelność.
 
 ### 3.2 Warstwy tła + rounding (MUST)
 
@@ -37,6 +39,14 @@ Kanon:
   - `rounded-xl` (docelowo migracja do `rounded-hig-md`)
   - border zgodny z table card: `border-slate-200 dark:border-navy-700`
   - `bg-white/70 dark:bg-navy-900/70` + opcjonalny `backdrop-blur`
+
+**MUST (spójność rounded):**
+
+- Jeśli tabela/surface ma zaokrąglony kontener (np. `rounded-xl`), to preview pane **musi** wyglądać jak część tego samego “composite container”:
+  - preview zewnętrzny kontener ma te same corner rules co tabela (brak “ostrego klocka” przy okrągłej tabeli),
+  - wewnętrzna karta preview ma rounding zgodny z tokenami HIG (`rounded-hig-md`), bez przypadkowych różnic.
+  
+Cel: żadnych sytuacji “tabela rounded, preview prostokąt” (rozjeżdża premium feel).
 
 ## 4) Anatomia preview (MUST)
 
@@ -61,6 +71,24 @@ Preview ma zawsze 3 warstwy:
 - **J/K**: nawigacja po wierszach aktualizuje preview.
 - **Close (X)**: zamyka preview i przywraca tabeli pełną szerokość.
 - Bulk actions nie blokują preview (preview pokazuje ostatnio aktywny element).
+
+### 5.1 Preview domyślnie “off” (MUST)
+
+- Preview pane **nie jest** domyślnie “zawsze otwarty”.
+- Stan kanoniczny dla listy: **preview jest zamknięty**, dopóki user nie:
+  - kliknie element (selection) albo
+  - włączy preview jawnie (R1+ jako opcja “pin preview”)
+
+Cel: użytkownik ma kontrolę — preview nie zabiera przestrzeni, jeśli nie jest potrzebny.
+
+### 5.2 Parity akcji: preview = full view (MUST)
+
+Jeśli encja ma “decyzyjne” akcje w pełnym widoku (np. Decision: Approve/Reject/Delegate/Request info),
+to preview pane MUSI oferować te same akcje w footerze (quick actions), w tej samej semantyce.
+
+- **MUST:** te same akcje i te same nazwy (zero “twórczości” per widok)
+- **MUST:** te same guardrails/uprawnienia (jeśli user nie może — toast jak w kanonie)
+- **SHOULD:** “Open full” w headerze jest zawsze dostępne i jednoznaczne
 
 ## 6) Kontrakt implementacyjny (MUST)
 

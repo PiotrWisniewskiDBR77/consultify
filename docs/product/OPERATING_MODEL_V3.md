@@ -40,9 +40,15 @@ W Operating Model v3 rozróżniamy **dwa poziomy**:
 
 ### 3.1 MyWork — pierwszy ekran zależny od roli
 
-- **Manager/Owner:** startuje w **Executive** (kontrola, przegląd, zarządzanie)
-- **Pozostali użytkownicy:** startują w **Focus** (wykonanie, “dzień pracy”)
-- Pozostałe zakładki (Tasks/Decisions/Notebook/Ideas/Inbox itd.) są analogiczne dla wszystkich (różnią się zakresem danych).
+Kanon v3 rozróżnia **domyślny landing** od **widoczności**:
+
+- **Domyślny landing (SHOULD):**
+  - **Manager/Owner:** startuje w **Executive** (kontrola, przegląd, zarządzanie)
+  - **Pozostali użytkownicy:** startują w **Focus** (wykonanie, “dzień pracy”)
+- **Widoczność (MVP v3, MUST):** na start **wszyscy mają dostęp do wszystkich zakładek** (Executive/Inbox/Focus/Tasks/Decisions/Notebook/Pomysły).
+  - Różnice wynikają głównie z zakresu danych i uprawnień do akcji (read-only vs edit), nie z ukrywania tabów.
+
+> To podejście pozwala wdrożyć v3 bez tarcia permission-heavy; w kolejnych iteracjach możemy “zamykać” Executive dla ról bez odpowiedzialności.
 
 ### 3.2 Interview — praca “konsultant → respondent”
 
@@ -50,15 +56,17 @@ Zakładki (kanon):
 
 - `Inbox`
 - `Sessions`
-- `Templates`
-- `Assessment`
-- `Assignments` (rename z “Assigned”)
 - `Insights`
+- `Templates`
+- `Assignments` (aka “Assigned” w as-is)
 
 Widoczność:
 
-- **Manager/Owner:** widzi wszystko (Templates, Sessions, pełny obraz).
-- **Respondent/User:** nie widzi Templates ani Sessions; widzi Inbox/Assignments i odpowiada.
+- **Manager/Owner:** widzi wszystko (Templates, Sessions, Assignments, Insights).
+- **Respondent/User:** widzi Inbox/Assignments i odpowiada; (opcjonalnie) widzi własne Sessions tylko w trybie podglądu.
+
+> Uwaga: “Assessment” nie jest zakładką Interview — to jest część Tools (licensed methodologies).  
+> Interview “kończy się” na Insight i eksporcie do Tools/Assessment runtime.
 
 ## 4) Tools (v3) — biblioteka + sesje + output packages
 
@@ -100,6 +108,8 @@ Nowe obszary:
 
 - **Reporting**: postępy, zużyte zasoby, zagrożenia (ryzyka realizacji)
 - **Management**: propozycje zmian terminów, workarounds, plan obejścia ryzyk, “co robimy gdy jest czerwono”.
+
+SSOT (szczegół): `docs/product/EXECUTION_V3.md`
 
 ## 7) Realization / Benefits (v3)
 

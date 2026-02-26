@@ -43,6 +43,10 @@ To jest fundament do prezentowania:
 - board jest wartością (nie bajerem): drag & drop, szybkie akcje, sygnały
 - wszystkie kontrolki w topbarze mają kanon `h-9`
 
+**MUST:** jeśli board ma drag&drop, to stosujemy globalny kontrakt uprawnień i feedbacku z:
+
+- `docs/ui-standards/03-modules/view-modes-standard.md` → sekcja **5.3 Drag & drop + uprawnienia**
+
 ### 2.3 Preview pane (opcjonalny, ale preferowany)
 
 Jeśli user przegląda wiele elementów:

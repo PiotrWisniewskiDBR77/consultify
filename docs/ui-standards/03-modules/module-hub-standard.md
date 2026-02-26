@@ -91,6 +91,20 @@ W module hub (w tym samym rzędzie), zawsze trzymamy kolejność:
   - Karty można zamykać (×)
   - Max ~6 widocznych, reszta w overflow menu (+N)
 
+### 3.1 Jeden stały “Command Row” (MUST)
+
+Pod Module Topbar zawsze istnieje **jeden stały rząd**, który pełni 1 z 3 ról (zawsze w tej samej wysokości i stylu):
+
+1) **Dynamic tabs row** — gdy są otwarte dokumenty (tabs).  
+2) **Search row** — gdy user włączy lupę (expandable search bar).  
+3) **Context counters row** — gdy jesteśmy w list view i chcemy pokazać najważniejsze liczniki “na twarz” (np. Krytyczne, Overdue, Wymaga akcji).
+
+**Reguły:**
+
+- **MUST:** na ekranie nie mogą istnieć 2–3 dodatkowe rzędy filtrów/toolbarów między topbarem a tabelą.
+- **MUST:** klik w “counter chip” ustawia filtr (i pokazuje stan aktywny).
+- **SHOULD:** jeśli otwarty jest czat lub inny panel, ten rząd nie rozpycha layoutu — content area ma priorytet.
+
 ---
 
 ## 4. Tabela Danych

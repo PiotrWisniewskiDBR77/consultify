@@ -78,10 +78,26 @@ V3 ma być “ultimate MVP” gotowe na pierwszego klienta: spójne UI/UX, kompl
 - `blocked`
 - `done`
 
+**Status QA (per task):**
+- `not_tested` → brak smoke (nie wolno oznaczać “implemented” bez smoke)
+- `smoke_passed` → podstawowy scenariusz przeszedł (manual, 5–15 min)
+- `qa_passed` → szerszy smoke + regresja modułu (R0/R1 gate, jeśli dotyczy)
+
 **Target release (per task):**
 - `R0` — Go‑live MVP (must)
 - `R1` — Full v3 hardening
 - `R2` — Polish + content completeness
+
+### 2.1.1 Wymagane pola w “task ledger” (MUST)
+
+Każdy task w tym programie musi mieć (w opisie specyfikacji):
+
+- **SSOT** (linki do dokumentów źródła prawdy)
+- **DoD** + **Acceptance / test plan**
+- **Owner** (jedna osoba odpowiedzialna)
+- **PR/commit link** (po wdrożeniu) w `Progress log`
+
+Reguła: “done” bez smoke = nie istnieje (QA status min `smoke_passed`).
 
 ### 2.2 Program-level gates (merge / go‑live)
 
@@ -96,20 +112,20 @@ V3 ma być “ultimate MVP” gotowe na pierwszego klienta: spójne UI/UX, kompl
 
 > Wypełniamy ręcznie. Docelowo można to zautomatyzować w v4 (integracja z issue trackerem).
 
-| Workstream | R0 scope | Spec (locked/total) | Impl (done/total) | Blockers | Owner |
+| Workstream | R0 scope | Spec (locked/total) | Impl (done/total) | QA (qa_passed/total) | Blockers | Owner |
 | --- | --- | --- | --- | --- | --- |
-| WS-A Platform | ✅ | 0/4 | 0/4 | — | Piotr |
-| WS-B Chat | ✅ | 0/2 | 0/2 | — | Piotr |
-| WS-C MyWork | ✅ | 0/3 | 0/3 | — | Piotr |
-| WS-D Interview | ◻︎ | 0/2 | 0/2 | — | Piotr |
-| WS-E Tools | ✅ | 0/2 | 0/2 | — | Piotr |
-| WS-F Initiatives | ✅ | 0/2 | 0/2 | — | Piotr |
-| WS-G Execution | ◻︎ | 0/1 | 0/1 | — | Piotr |
-| WS-H Results | ✅ | 0/3 | 0/3 | — | Piotr |
-| WS-I Finance export | ◻︎ | 0/1 | 0/1 | — | Piotr |
-| WS-J Reports+Presentations | ✅ | 0/3 | 0/3 | — | Piotr |
-| WS-K N‑mode management | ◻︎ | 0/1 | 0/1 | — | Piotr |
-| WS-L V4 placeholders | ◻︎ | 0/1 | 0/1 | — | Piotr |
+| WS-A Platform | ✅ | 0/8 | 0/8 | 0/8 | — | Piotr |
+| WS-B Chat | ✅ | 0/2 | 0/2 | 0/2 | — | Piotr |
+| WS-C MyWork | ✅ | 0/6 | 0/6 | 0/6 | — | Piotr |
+| WS-D Interview | ◻︎ | 0/3 | 0/3 | 0/3 | — | Piotr |
+| WS-E Tools | ✅ | 0/7 | 0/7 | 0/7 | — | Piotr |
+| WS-F Initiatives | ✅ | 0/2 | 0/2 | 0/2 | — | Piotr |
+| WS-G Execution | ◻︎ | 0/1 | 0/1 | 0/1 | — | Piotr |
+| WS-H Results | ✅ | 0/3 | 0/3 | 0/3 | — | Piotr |
+| WS-I Finance export | ◻︎ | 0/1 | 0/1 | 0/1 | — | Piotr |
+| WS-J Reports+Presentations | ✅ | 0/3 | 0/3 | 0/3 | — | Piotr |
+| WS-K N‑mode management | ◻︎ | 0/1 | 0/1 | 0/1 | — | Piotr |
+| WS-L V4 placeholders | ◻︎ | 0/1 | 0/1 | 0/1 | — | Piotr |
 
 ### 2.4 Weekly review (rytuał)
 
@@ -253,33 +269,46 @@ Cel: dopracowanie opisów narzędzi (known-tools), szablonów, micro‑video, he
 > **To jest Twoja tabela “jak w V2”** — w jednym miejscu widać wszystkie taski, priorytet, status spec i status realizacji.
 > Task specs poniżej zawierają pełne opisy (problem/cel/scope/DoD/AC/ryzyka/rollout).
 
-| ID | Title | Priority | Target | Spec | Impl | Depends on |
-| --- | --- | --- | --- | --- | --- | --- |
-| V3-A01 | Traceability enforcement (MyWork → ToolSession → outputs) | P0 | R0 | review | todo | V3-C03 |
-| V3-A02 | Dynamic menu everywhere (hub → openDocuments → detail) | P0 | R0 | review | todo | — |
-| V3-A03 | UI standards compliance sweep (ModuleHub + tables + preview + D/N/C) | P1 | R1 | draft | todo | V3-A02 |
-| V3-A04 | Route + menu coherence (Tools/Reports/Presentations naming + entry points) | P0 | R0 | draft | todo | V3-J01 |
-| V3-B01 | Chat router pracy (mechaniczne transfery) | P0 | R0 | review | todo | V3-A02 |
-| V3-B02 | Ujednolicenie action model (brak martwych typów) | P1 | R1 | draft | todo | V3-B01 |
-| V3-C01 | MyWork Inbox: preview pane contract (Outlook-style) | P1 | R1 | draft | todo | — |
-| V3-C02 | MyWork conversions: Convert to… zawsze traceable | P0 | R0 | review | todo | V3-A01 |
-| V3-C03 | MyWork ToolSession materialization (type=MYWORK) | P0 | R0 | draft | todo | V3-A01 |
-| V3-D01 | Interview: sufficiency contract + send-back clarity | P1 | R1 | draft | todo | — |
-| V3-D02 | Interview: runtime mode decision (one question vs task-list) | P1 | R1 | draft | todo | — |
-| V3-E01 | Tools: jeden mental model (Library→Sessions→Outputs→Initiatives) | P0 | R0 | review | todo | — |
-| V3-E02 | Tools hub outputs: Reports+Presentations+Initiatives as artifacts | P1 | R1 | draft | todo | V3-E01 |
-| V3-F01 | Initiatives: template-driven N-mode per InitiativeLevel | P0 | R0 | review | todo | V3-K01 |
-| V3-F02 | Initiatives: Portfolio Analysis (Resources/Feasibility/Logic/Timeline/Completeness) | P1 | R1 | draft | todo | V3-F01 |
-| V3-G01 | Execution: minimal surfaces + spójne statusy | P2 | R2 | draft | todo | V3-F01 |
-| V3-H01 | Results: KPI table core (agregacja+add+tracking) | P0 | R0 | review | todo | — |
-| V3-H02 | Results: ROI plan vs realized (tracking po wdrożeniu) | P0 | R0 | review | todo | V3-H01 |
-| V3-H03 | Results: Operational analysis + ROI analysis views | P1 | R1 | draft | todo | V3-H01 |
-| V3-I01 | Finance: Exportuj → Report/Presentation (traceable) | P1 | R1 | draft | todo | V3-J01 |
-| V3-J01 | Reports: ujednolicenie report surfaces (user rozumie co jest czym) | P0 | R0 | review | todo | V3-A04 |
-| V3-J02 | Presentations: biblioteka decków (hub table+cards) | P1 | R1 | draft | todo | V3-A02 |
-| V3-J03 | Generators: upload chaos jako 3 ścieżka report/deck | P2 | R2 | draft | todo | V3-J01 |
-| V3-K01 | N-mode: required sections/pola + completeness + AI assist | P1 | R1 | draft | todo | — |
-| V3-L01 | V4: MCP IRIS + Marketplace w menu (Coming soon) | P2 | R2 | draft | todo | — |
+| ID | Title | Priority | Target | Spec | Impl | QA | Owner | Depends on |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| V3-A01 | Traceability enforcement (MyWork → ToolSession → outputs) | P0 | R0 | review | todo | not_tested | Piotr | V3-C03 |
+| V3-A02 | Dynamic menu everywhere (hub → openDocuments → detail) | P0 | R0 | review | todo | not_tested | Piotr | — |
+| V3-A03 | UI standards compliance sweep (ModuleHub + tables + preview + D/N/C) | P1 | R1 | draft | todo | not_tested | Piotr | V3-A02 |
+| V3-A04 | Route + menu coherence (Tools/Reports/Presentations naming + entry points) | P0 | R0 | draft | todo | not_tested | Piotr | V3-J01 |
+| V3-A05 | Demo → Trial funnel (dataset + limits + telemetry) | P0 | R0 | draft | todo | not_tested | Piotr | V3-A03 |
+| V3-A06 | SuperAdmin: Model Registry (kind/purpose/fallbacks) | P1 | R1 | draft | todo | not_tested | Piotr | V3-A05 |
+| V3-A07 | Preview pane contract rollout (key hubs) | P1 | R1 | draft | todo | not_tested | Piotr | V3-A03 |
+| V3-A08 | Video enablement system (micro‑prompts + rekomendacje) | P1 | R0/R1 | draft | todo | not_tested | Piotr | V3-A03 |
+| V3-B01 | Chat router pracy (mechaniczne transfery) | P0 | R0 | review | todo | not_tested | Piotr | V3-A02 |
+| V3-B02 | Ujednolicenie action model (brak martwych typów) | P1 | R1 | draft | todo | not_tested | Piotr | V3-B01 |
+| V3-C01 | MyWork Inbox: preview pane contract (Outlook-style) | P1 | R1 | draft | todo | not_tested | Piotr | — |
+| V3-C02 | MyWork conversions: Convert to… zawsze traceable | P0 | R0 | review | todo | not_tested | Piotr | V3-A01 |
+| V3-C03 | MyWork ToolSession materialization (type=MYWORK) | P0 | R0 | draft | todo | not_tested | Piotr | V3-A01 |
+| V3-C04 | MyWork Focus redesign (lightweight execution cockpit) | P1 | R1 | draft | todo | not_tested | Piotr | V3-A03 |
+| V3-C05 | MyWork Decisions: timeline + remove queue view + preview parity actions | P1 | R1 | draft | todo | not_tested | Piotr | V3-A03 |
+| V3-C06 | MyWork Ideas: canvas tools selector + shared core model (no data loss) | P1 | R1 | draft | todo | not_tested | Piotr | V3-A03 |
+| V3-D01 | Interview: sufficiency contract + send-back clarity | P1 | R1 | draft | todo | not_tested | Piotr | — |
+| V3-D02 | Interview: runtime mode decision (one question vs task-list) | P1 | R1 | draft | todo | not_tested | Piotr | — |
+| V3-D03 | InterviewHub: App Table Standard compliance (all tabs) + preview for Insights | P1 | R1 | draft | todo | not_tested | Piotr | V3-A03 |
+| V3-E01 | Tools: jeden mental model (Library→Sessions→Outputs→Initiatives) | P0 | R0 | review | todo | not_tested | Piotr | — |
+| V3-E02 | Tools hub outputs: Reports+Presentations+Initiatives as artifacts | P1 | R1 | draft | todo | not_tested | Piotr | V3-E01 |
+| V3-E03 | Tools: Tool Wizard Standard (non-licensed tools runtime) | P0 | R0 | draft | todo | not_tested | Piotr | V3-E01 |
+| V3-E04 | Tools: One task per consulting tool (spec+assets+help) | P1 | R2 | draft | todo | not_tested | Piotr | V3-E03 |
+| V3-E05 | Tools: Process Automation tool (hybrid workspace+table wizard) | P1 | R1 | draft | todo | not_tested | Piotr | V3-E03 |
+| V3-E06 | Tools: Licensed methodologies parity (SIRI/ADMA) | P1 | R1 | draft | todo | not_tested | Piotr | V3-E01 |
+| V3-E07 | Tools Quality: Known Tools content completeness audit + fill plan | P1 | R2 | draft | todo | not_tested | Piotr | V3-E04 |
+| V3-F01 | Initiatives: template-driven N-mode per InitiativeLevel | P0 | R0 | review | todo | not_tested | Piotr | V3-K01 |
+| V3-F02 | Initiatives: Portfolio Analysis (Resources/Feasibility/Logic/Timeline/Completeness) | P1 | R1 | draft | todo | not_tested | Piotr | V3-F01 |
+| V3-G01 | Execution: minimal surfaces + spójne statusy | P2 | R2 | draft | todo | not_tested | Piotr | V3-F01 |
+| V3-H01 | Results: KPI table core (agregacja+add+tracking) | P0 | R0 | review | todo | not_tested | Piotr | — |
+| V3-H02 | Results: ROI plan vs realized (tracking po wdrożeniu) | P0 | R0 | review | todo | not_tested | Piotr | V3-H01 |
+| V3-H03 | Results: Operational analysis + ROI analysis views | P1 | R1 | draft | todo | not_tested | Piotr | V3-H01 |
+| V3-I01 | Finance: Exportuj → Report/Presentation (traceable) | P1 | R1 | draft | todo | not_tested | Piotr | V3-J01 |
+| V3-J01 | Reports: ujednolicenie report surfaces (user rozumie co jest czym) | P0 | R0 | review | todo | not_tested | Piotr | V3-A04 |
+| V3-J02 | Presentations: biblioteka decków (hub table+cards) | P1 | R1 | draft | todo | not_tested | Piotr | V3-A02 |
+| V3-J03 | Generators: upload chaos jako 3 ścieżka report/deck | P2 | R2 | draft | todo | not_tested | Piotr | V3-J01 |
+| V3-K01 | N-mode: required sections/pola + completeness + AI assist | P1 | R1 | draft | todo | not_tested | Piotr | — |
+| V3-L01 | V4: MCP IRIS + Marketplace w menu (Coming soon) | P2 | R2 | draft | todo | not_tested | Piotr | — |
 
 ---
 
@@ -422,6 +451,9 @@ Spójne standardy UI/UX w krytycznych hubach i detail views — użytkownik nie 
   - table standard + preview pane standard
   - D/N/C w artefaktach objętych standardem
   - i18n + locked dla artefaktów
+  - globalny “pill/rounded” system przycisków (w tym main module tabs)
+  - Card Standard v3 (wymiana “dziwnych” Cards view, m.in. Inbox)
+  - Executive dashboards: Density toggle (Compact/Comfortable) jako MUST
 - OUT:
   - “beauty refactor” wszystkich ekranów legacy jednocześnie (robimy modułami)
 
@@ -436,11 +468,39 @@ Spójne standardy UI/UX w krytycznych hubach i detail views — użytkownik nie 
 - topbar bez duplikacji breadcrumbs/tytułów, kontrolki `h-9`, spójne CTA i view toggle
 - tabelaryczne moduły spełniają `App Table Standard`
 - preview pane używa `PreviewPaneShell` i ma anatomię (header/body/footer)
+- AI context button jest **ikona-only** i “wpada w oczy” (mocniejszy kontrast/akcent), bez konkurowania z Primary CTA
+- view-modes mają stałą kolejność ikon (table→kanban→timeline→calendar→matrix→grid)
 - detail views: spójny header + tryby D/N/C tam gdzie to kanon
 
 **Acceptance / test plan:**
 - manual smoke: Tools/Initiatives/Reports/Results (table + grid) w dark/light mode
 - preview pane: wybór wiersza ≠ nawigacja do detail; Enter/double-click = open full
+
+### Compliance sweep checklist (R1) — mapa ekranów → standard → task
+
+> To jest lista kontrolna do “UI standards sweep”. Każdy wpis kończy się: “OK / Not OK” i jeśli Not OK — linkujemy do taska naprawczego lub tworzymy sub‑task w `V3-A03`.
+
+| Surface (module > tab) | Must-have (SSOT) | Najczęstsze naruszenia z feedbacku | Naprawiamy w |
+| --- | --- | --- | --- |
+| **My Work > Inbox (table)** | App Table + Preview Pane + 1 Command Row | dodatkowe rzędy nad tabelą, brak preview contract/keyboard | `V3-C01` + `V3-A03` |
+| **My Work > Inbox (cards)** | Card Standard v3 | “dziwny” cards view, brak kebaba, brak spójnych sygnałów | `V3-A03` (Card Standard rollout) |
+| **My Work > Tasks (table/kanban/timeline)** | View-modes order + App Table + Timeline MUST + Preview contract | duplikacja mini-toolbarów, złe resizery, brak multi-select priorytetów | `V3-A03` (+ standardy już w SSOT) |
+| **My Work > Decisions (table/kanban/timeline)** | View-modes order + Timeline + Preview parity akcji | “queue view”, brak timeline, preview zawsze otwarty, brak parity (Approve/Reject/Delegate/Request info) | `V3-C05` + `V3-A03` |
+| **My Work > Executive** | Dashboard density + framing + Density toggle MUST | mikro-typografia + duże puste przestrzenie + słabe granice sekcji | `V3-A03` (Executive hardening) |
+| **My Work > Pomysły (canvas tool selector)** | Selector narzędzia canvasa + shared core model (no data loss) | narzędzia jako osobne światy, ryzyko utraty treści przy przełączeniu | `V3-C06` |
+| **Interviews > Inbox/Sessions/Assigned/Templates/Insights** | App Table Standard + Module Topbar order + 1 Command Row + kebab (⋮) | brak filtrów/resizerów/kebaba, ad-hoc help stripy, chaos w topbar | `V3-D03` |
+| **Tools hub (Library/Sessions/Outputs)** | ModuleHub + App Table + Cards standard + Dynamic tabs | niespójne taby/entry points, karty/tabele różne między kategoriami | `V3-E01` + `V3-A03` |
+| **Initiatives hub (table/kanban/timeline)** | ModuleHub + App Table + Timeline + Preview | niespójne view-modes i filtry, brak preview lub “border-l widget” | `V3-A03` (+ zależne od `V3-F01`) |
+| **Results hub (KPI/Reports/ROI)** | ModuleHub + App Table + Preview Pane | duplikacje kontrolek, brak jednego command row | `V3-H01` + `V3-A03` |
+| **Reports hub / Presentations hub** | ModuleHub + App Table + Cards standard + Dynamic tabs | “dwa światy” generator vs biblioteka, niespójny cards view | `V3-J01` + `V3-J02` + `V3-A03` |
+
+**Globalne MUST-y do odhaczenia w ramach sweep:**
+
+- Main module tabs w hubach są **pill (rounded-full)** i używają 3‑poziomowego systemu buttonów (SSOT: `visual-language.md` 8.3).
+- “AI w kontekście” w Module Topbar jest **ikona-only** i jest widoczny, ale nie konkuruje z Primary CTA (SSOT: `UI_UX_CANON_V3.md`).
+- View-modes mają stałą kolejność ikon: `table → kanban → timeline → calendar → matrix → grid`.
+- Kebab (⋮) jest jedynym wejściem do menu akcji w tabelach i kartach (Actions column / card actions).
+- Zero ad-hoc pasków/boksów między topbarem a tabelą — tylko 1 Command Row (Dynamic tabs / Search / Context counters).
 
 **Dependencies:** V3-A02  
 **Risks / go-live risk:** jeśli odkładamy — “perceived quality” siada i klient widzi “V2 + doczepki”.  
@@ -496,6 +556,37 @@ Jedna, zrozumiała nawigacja i nazewnictwo: user wie gdzie robi report/deck i gd
 - `sidebar_navigation_clicked` (target)
 - `route_redirected` (from, to)
 **Rollout plan:** szybkie rename/redirects + copy w UI, bez dużych refactorów.
+
+#### V3-A08 — [Platform] Video enablement system (micro‑prompts + rekomendacje + kanon UI)
+- Status spec: draft
+- Priorytet: P1
+- Target: R0/R1
+- SSOT: `VIDEO_ENABLEMENT_V3.md`, `docs/videos/README.md`, `docs/ui-standards/00-foundation/visual-language.md`, `docs/ui-standards/00-foundation/color-system.md`
+
+**Business challenge (problem):**  
+Bez krótkiej edukacji (i “co dalej”) user nie łapie wartości platformy, a overlaye/filmy łatwo zmienić w spam.
+
+**Cel (outcome):**  
+Kontekstowe micro‑wideo w modułach + polecanie kolejnych filmów (edukacja + promo) w spójnym, “tech sexy” UI, z kontrolą częstotliwości i telemetrią.
+
+**Zakres (IN/OUT):**
+- IN:
+  - micro‑video modal (Layer‑3) pokazuje 1 film kontekstowy + 2–4 rekomendacje (playable)
+  - stan per user+module: watched / skipped / don’t show again
+  - eventy analityczne dla promptu i oglądania
+- OUT:
+  - personalizacja rekomendacji (R1+)
+  - wideo jako kroki playbooków onboardingowych (R1+)
+
+**Definition of Done (DoD) — R0:**
+- modal micro‑video jest spójny z DBR77 visual language i nie ma “D‑mode vibe”
+- pokazuje rekomendacje w tym samym oknie (bez wychodzenia)
+- zapis dismissals działa per user+module
+- eventy: `help_video_prompt_shown`, `help_video_view_started`, `help_video_view_completed`, `help_video_skipped`, `help_video_dont_show`
+
+**Dependencies:** V3-A03 (UI sweep), V3-A05 (Demo/Trial value moments)  
+**Risks / go-live risk:** P1 — bez tego spada time‑to‑value i demo conversion.  
+**Rollout plan:** R0: micro‑prompt + rekomendacje; R1: personalizacja + playbooks video.
 
 ---
 
@@ -776,6 +867,95 @@ MyWork ToolSession jako legalny kanał wyjścia dla outputów z MyWork.
 **Dependencies:** V3-A01  
 **Risks:** P0 — to jest fundament traceability dla MyWork.
 
+#### V3-C04 — [MyWork] Focus redesign (lightweight execution cockpit)
+- Status spec: draft
+- Priorytet: P1
+- Target: R1 (UX hardening)
+- SSOT: `docs/MYWORK_MODULE_SPECIFICATION.md` (sekcja Focus), `workspace-3-tools-strip.md`, `table-preview-pane-standard.md`, `module-hub-standard.md`
+
+**Business challenge (problem):**  
+Obecny Focus jest przeładowany (środkowy feed AI/coach, dużo sekcji/ramek), przez co nie spełnia roli “szybkiego odhaczania” i zabiera przestrzeń roboczą.
+
+**Cel (outcome):**  
+Focus staje się lekkim cockpit’em: w 10–30 sekund user widzi plan (My list + Today + This Week) i może: dodać task, przerzucić, odhaczyć, otworzyć preview/full detail.
+
+**Zakres (IN/OUT):**
+- IN:
+  - usunięcie centralnego “AI Coach feed” z content area
+  - lane’y: `My list (capture)` + `Today` + `This Week` (Later opcjonalne, R1+)
+  - quick-add `+ Task` w nagłówku lane (My list i Today)
+  - drag&drop między lane’ami (Today ↔ Week, My list → Today/Week)
+  - preview pane + prawy 3‑tools strip jako opcjonalne panele (nie duszą lane’ów)
+- OUT:
+  - “later backlog” jako główny element focus (to nie jest focus)
+
+**Definition of Done (DoD):**
+- Focus jest wizualnie i informacyjnie “lekki” (bez środkowego feedu)
+- da się dodać task w 1 klik (quick-add) i przerzucić między lane’ami
+- preview/full detail działa zgodnie ze standardami (Outlook style + dynamic tabs)
+
+**Dependencies:** V3-C01 (preview pane pattern), V3-A03 (UI standards sweep)  
+**Risks:** P1 UX — bez tego MyWork traci “sprzedażową” czytelność i premium feel.  
+**Rollout plan:** R1: redesign Focus + minimal quick-add + drag/drop; potem dopracowanie AI suggestions w panelu.
+
+#### V3-C05 — [MyWork] Decisions: timeline + remove queue view + preview parity actions
+- Status spec: draft
+- Priorytet: P1
+- Target: R1
+- SSOT: `docs/ui-standards/03-modules/view-modes-standard.md`, `docs/ui-standards/03-modules/table-preview-pane-standard.md`, `docs/MYWORK_MODULE_SPECIFICATION.md`
+
+**Business challenge (problem):**  
+Decyzje i zadania mają zbliżony model pracy (priorytety, terminy, statusy), a dziś decyzje mają “twórczość” (queue/review-next jako pseudo-widok) i niespójny preview.
+
+**Cel (outcome):**  
+Decyzje działają jak “pierwsza klasa” kolekcji v3: Table/Kanban/Timeline + preview jak Outlook + quick actions spójne z full view.
+
+**Zakres (IN/OUT):**
+- IN:
+  - view-modes dla Decisions: `table` + `kanban` + `timeline` (bez “queue view” jako view-mode)
+  - Timeline: zoom day/week/month/quarter + multiselect priorytetów
+  - Preview pane dla decyzji:
+    - default OFF (otwiera się po kliknięciu w wiersz)
+    - **parity akcji**: Approve/Reject/Delegate/Request info jak w full view
+- OUT:
+  - rozbudowany “review-next” jako osobny moduł (jeśli zostaje, to osobny flow, R2+)
+
+**Definition of Done (DoD):**
+- brak “queue view” w przełączniku view-modes
+- timeline działa dla decyzji i ma minimalny kontrakt jak Tasks timeline (zoom, filtry multi, preview)
+- preview dla decyzji ma te same quick actions co full view (i te same uprawnienia)
+
+**Dependencies:** V3-A03 (UI standards sweep)  
+**Risks:** P1 UX — bez tego Decisions odstają i psują spójność v3.
+
+#### V3-C06 — [MyWork] Ideas: canvas tools selector + shared core model (no data loss)
+- Status spec: draft
+- Priorytet: P1
+- Target: R1
+- SSOT: `docs/MYWORK_MODULE_SPECIFICATION.md` (Ideas: canvas tools + `IdeaWorkspaceGraph`), `docs/ui-standards/UI_UX_CANON_V3.md`
+
+**Business challenge (problem):**  
+Pomysły mają stać się “żywym workspace’em” (mind map dziś wygląda świetnie), ale bez wspólnego rdzenia danych przełącznik narzędzi będzie gubił treści i rozmnoży dług.
+
+**Cel (outcome):**  
+Jedno źródło treści (`IdeaWorkspaceGraph`) + różne renderery (MindMap/Flow/Table/Whiteboard) + brak utraty danych przy przełączaniu.
+
+**Zakres (IN/OUT):**
+- IN:
+  - selector narzędzia canvasa w prawym górnym rogu (MindMap/Process Flow/Table/Whiteboard)
+  - wspólny core model: nodes/edges + `extensions` namespaced dla danych narzędziowych
+  - per-tool view state (layout) per user/per workspace
+- OUT:
+  - pełny “whiteboard suite” jak Miro (v4+), jeśli to miałoby wyjść poza scope
+
+**Definition of Done (DoD):**
+- przełączanie narzędzi nie gubi treści (core data zachowane)
+- dane specyficzne narzędzia trafiają do `extensions` (namespaced) i nie są tracone
+- preferencja narzędzia zapisywana per user/per workspace
+
+**Dependencies:** V3-A03 (UI standards sweep)  
+**Risks:** P1 — bez rdzenia danych “workspace tools” stanie się 4 niespójnymi światami.
+
 ---
 
 ### WS-D — Interview v3
@@ -882,6 +1062,35 @@ Jedna decyzja produktowa, jeden kanon runtime. Jeśli są 2 tryby — jeden jest
 - `interview_runtime_mode_selected` (mode, templateId)
 - `interview_runtime_mode_changed` (mode, templateId)
 **Rollout plan:** decyzja + update SSOT w R1; dopiero potem ewentualna implementacja przełącznika.
+
+#### V3-D03 — [Interview] InterviewHub: App Table Standard compliance + Insights preview
+- Status spec: draft
+- Priorytet: P1
+- Target: R1
+- SSOT: `docs/INTERVIEW_MODULE.md` (UI compliance v3), `docs/ui-standards/03-modules/app-table-standard.md`, `docs/ui-standards/03-modules/module-hub-standard.md`, `docs/ui-standards/03-modules/table-preview-pane-standard.md`
+
+**Business challenge (problem):**  
+InterviewHub dziś łamie kanon tabel/hubów (brak filtrów, resizerów, kebaba, ad-hoc paski “help”), co obniża perceived quality i utrudnia pracę (szczególnie Assigned/Insights).
+
+**Cel (outcome):**  
+Inbox/Sessions/Assigned/Templates/Insights w InterviewHub są spójne z App Table Standard i Command Row, a Insights mają preview pane jak inne kolekcje.
+
+**Zakres (IN/OUT):**
+- IN:
+  - filtry w headerach kolumn (tam gdzie są potrzebne), resizable columns, Actions kebab (⋮)
+  - usunięcie ad-hoc “help stripów” i bannerów między topbarem a tabelą (zastąpić Command Row counters)
+  - porządek prawych kontrolek topbara: AI context → +New → view-modes → filters
+  - Insights: preview pane (selection→preview, Enter→open full)
+- OUT:
+  - redesign całego Interview workspace (session answering) — osobne taski
+
+**Definition of Done (DoD):**
+- wszystkie 5 tabów InterviewHub spełniają App Table Standard
+- brak dodatkowych rzędów między topbarem a tabelą
+- Insights mają preview pane zgodny ze standardem (shell + anatomia + interakcje)
+
+**Dependencies:** V3-A03  
+**Risks:** P1 UX — bez tego Interview odstaje od v3.
 
 ---
 
@@ -1121,7 +1330,7 @@ Minimalny, spójny moduł do prowadzenia realizacji inicjatyw (bez rozbudowanego
 - Owner: aktualizuje status i kluczowe ryzyka/blokery.
 
 - Target: R2
-- SSOT: `OPERATING_MODEL_V3.md`
+- SSOT: `OPERATING_MODEL_V3.md`, `docs/product/EXECUTION_V3.md`
 
 **Zakres (IN/OUT):**
 - IN: minimalna kolekcja “Execution initiatives” + tasks/decisions + raportowanie stanu

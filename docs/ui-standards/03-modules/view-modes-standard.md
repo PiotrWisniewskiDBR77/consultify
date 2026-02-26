@@ -27,6 +27,19 @@ Zgodnie z kodem:
 
 > W module, który nie ma sensownej implementacji danego trybu, tryb jest ukryty przez `availableViewModes`.
 
+### 2.1 Kanoniczna kolejność ikon (MUST)
+
+Żeby user uczył się aplikacji, przełącznik trybów ma stałą kolejność (pokazujemy tylko te tryby, które są dostępne, ale **kolejność jest zawsze ta sama**):
+
+1. `table` (list) — domyślny i pierwszy
+2. `kanban`
+3. `timeline`
+4. `calendar`
+5. `matrix`
+6. `grid` (cards)
+
+Reguła: nie wprowadzamy “custom view types” (np. kolejki/review-next) jako elementów view modes. Jeśli istnieją, to są osobnym flow / osobną surface’ą, a nie 4. ikoną obok table/kanban/timeline.
+
 ## 3) Table — kanon (Golden Standard)
 
 Źródło prawdy: `docs/ui-standards/03-modules/app-table-standard.md`.
@@ -67,6 +80,30 @@ Reguły:
 - hover zmienia **tło** (nie kolor tekstu) i może dodać subtelny cień (floating)
 - status i progress zawsze w tym samym miejscu w karcie (stabilna anatomia)
 
+### 4.3 Card Standard v3 (MUST) — “jeden standard kart w całej aplikacji”
+
+W v3 wprowadzamy **jeden** standard kart (Grid/Cards) dla wszystkich modułów.
+To zastępuje “dziwne” karty (np. Inbox Cards) i eliminuje lokalną “twórczość”.
+
+**MUST (anatomia compact):**
+
+- **Header (1 rząd)**:
+  - po lewej: typ/ikonka artefaktu (identity)
+  - po prawej: status badge/dot (bez kolorowych teł na całą kartę)
+- **Title**: 1–2 linie, bez drugiej “duplikującej” linijki
+- **Signals (max 1–2)**: np. priority + due, albo progress + updated
+- **Actions**:
+  - **MUST:** kebab (⋮) jako główne menu akcji (spójne z tabelami)
+  - **SHOULD:** 1 szybka akcja (np. Open) tylko jeśli to realnie przyspiesza pracę
+
+**MUST (spójność z hubem):**
+
+- Cards view nie dodaje własnych toolbarów/mini‑pasków (Columns/Views/Start…) — obowiązuje Module Topbar + Filters…
+- Cards view respektuje te same filtry/sortowanie co Table
+- Klik w kartę nie powinien “gubić” użytkownika: preview/open zachowuje się spójnie z modułem (jeśli w module jest preview pane, selection może sterować preview)
+
+SSOT: `docs/ui-standards/03-modules/app-table-standard.md` (kebab/actions i zakaz duplikacji kontrolek) + `docs/ui-standards/03-modules/table-preview-pane-standard.md` (preview contract)
+
 ## 5) Kanban — kanon (tablica)
 
 ### 5.1 Kiedy używać
@@ -83,6 +120,44 @@ Reguły:
   - rollback/feedback na błędy zapisu
 
 > UI/UX szczegółowy kanban jest rozwijany per moduł, ale musi trzymać wspólną typografię i semantykę sygnałów.
+
+### 5.3 Drag & drop + uprawnienia (MUST) — “czy mogę przesunąć?”
+
+Kanban wraca w wielu miejscach (Tasks, Focus, Initiatives lifecycle). Musimy mieć jeden, czytelny kontrakt:
+
+#### A) Gdy **można** przenosić (editable)
+
+- karta ma subtelny, ale czytelny “editable affordance”
+- **SHOULD:** delikatniejsza/jasna ramka (lub jaśniejszy surface) jako sygnał “można przesuwać”
+- drag start ma działać przewidywalnie (bez “złapania przypadkowo” przy scroll)
+
+#### B) Gdy **nie można** przenosić (read-only / brak uprawnień / gate)
+
+- karta wygląda “locked” bez psucia czytelności:
+  - **MUST:** ciemniejsza / bardziej neutralna ramka (lub brak editable affordance)
+  - **MUST NOT:** nie robimy agresywnych ikon “lock” na każdej karcie (clutter)
+
+#### C) Próba przesunięcia bez uprawnień (MUST)
+
+- **MUST:** natychmiastowy feedback w UI (toast/snackbar) typu:
+  - PL: `Nie masz uprawnień do zmiany statusu tego elementu.`
+  - EN: `You don’t have permission to move this item.`
+- **SHOULD:** jeśli panel czatu “AI w kontekście” jest otwarty, można dodać 1-liniową notkę w czacie
+  (ale toast jest obowiązkowy — czat jest opcjonalny).
+
+### 5.4 Ruchy w obrębie kolumny (MUST/SHOULD)
+
+- **MUST (Tasks/Focus):** user może zmieniać kolejność w obrębie kolumny (priorytetyzacja pracy).
+- **SHOULD (Inicjatywy):** jeśli lifecycle jest “governance-driven”, reorder i move mogą być ograniczone — wtedy wracamy do reguł 5.3B/5.3C.
+
+### 5.5 Minimalna karta kanban (MUST)
+
+Żeby kanban był “sprzedawalny” i szybki:
+
+- **mała, czytelna karta** (compact)
+- pokazuje minimum: `type` + `title` + 1–2 sygnały (np. priority/status/due)
+- akcje rozszerzone zawsze w menu (Actions)
+- kolor używany jako sygnał (badge/dot), nie jako “kolorowy klocek” całej karty
 
 ## 6) Timeline (Gantt) — kanon (timeline/gantt)
 
@@ -104,6 +179,38 @@ Pokazać zależności czasowe (start/end), obciążenie i konflikt w czasie.
   - tooltip pokazuje: status, owner, start/end, progress
 
 > W v3 dopuszczamy “timeline minimal” (bez zależności między elementami). Zależności i krytyczna ścieżka to v4+.
+
+### 6.3 Zoom / agregacja (MUST)
+
+Timeline musi wspierać zmianę skali czasu (zoom), minimum:
+
+- **day**
+- **week**
+- **month**
+- **quarter**
+
+To jest kanoniczny “gigant”: user ma w jednym spojrzeniu zobaczyć *kiedy* ma dowieźć zadania/inicjatywy.
+
+**Reguła:** wybór zoom jest częścią **Module Topbar** (view modes / filters), a nie osobnym, dodatkowym paskiem w samym widoku.
+
+### 6.4 Filtry w timeline (MUST)
+
+- **MUST:** filtry priorytetu muszą być **multiselect** (np. medium + critical).
+- **MUST:** filtry nie mogą być dublowane w kilku miejscach UI — trzymamy je w `Filters…` + (opcjonalnie) “counter chips” w Command Row.
+
+### 6.5 Lewa kolumna “Task list” (MUST)
+
+Timeline jest czytelny tylko wtedy, gdy ma “nawigację po wierszach”:
+
+- po lewej: **lista elementów** (np. zadania) z tytułem + minimalnymi sygnałami (type/priority/status/due)
+- po prawej: oś czasu + bary
+
+Nie budujemy timeline bez lewej listy (bo user nie wie “co to jest”).
+
+### 6.6 Preview (MUST/SHOULD)
+
+- **MUST:** selection w timeline (klik w wiersz lub bar) nie otwiera od razu full detail; otwiera kontekst (preview / selection).
+- **SHOULD:** jeśli moduł używa preview pane, timeline wspiera ten sam wzorzec “Open full” + quick actions (spójny z `table-preview-pane-standard.md`).
 
 ## 7) Calendar — kanon
 
