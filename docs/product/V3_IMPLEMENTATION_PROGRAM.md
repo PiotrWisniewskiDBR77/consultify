@@ -14,12 +14,28 @@ Last update: 2026-02-25
 - V3 Requirements index: `docs/product/REQUIREMENTS_V3_SSOT.md`
 - Operating model: `docs/product/OPERATING_MODEL_V3.md`
 - Tools catalog: `docs/product/TOOLS_CATALOG_V3.md`
+- Consulting Tools (module SSOT): `docs/product/CONSULTING_TOOLS_V3.md`
+- Consulting Tools (tool-by-tool specs): `docs/product/CONSULTING_TOOLS_TOOL_SPECS_V3.md`
+- Known Tools content audit (v3): `docs/product/KNOWN_TOOLS_CONTENT_COMPLETENESS_AUDIT_V3.md`
 - Source traceability: `docs/product/SOURCE_TRACEABILITY_SPEC.md`
 - Reports & Presentations (hub UX): `docs/product/PRESENTATIONS_AND_REPORTS_V3.md`
 - Report Generator: `docs/product/REPORT_GENERATOR_V3.md`
 - Presentation Generator: `docs/product/PRESENTATION_GENERATOR_V3.md`
 - Interview Form Engine: `docs/product/INTERVIEW_FORM_ENGINE_V3.md`
 - Financial Analysis: `docs/product/FINANCIAL_ANALYSIS_V3.md`
+- Finance export (wizard + traceability): `docs/product/FINANCE_EXPORT_V3.md`
+- Results (KPI/ROI): `docs/product/RESULTS_V3.md`
+- ROI tracking contract: `docs/product/ROI_TRACKING_CONTRACT_V3.md`
+- Execution module: `docs/product/EXECUTION_V3.md`
+- Demo → Trial funnel: `docs/product/DEMO_TRIAL_V3.md`
+- Model registry: `docs/product/MODEL_REGISTRY_V3.md`
+- AI model purposes & requirements: `docs/product/modules/ai/AI_MODEL_PURPOSES_AND_REQUIREMENTS_V3.md`
+- AI provider APIs (keys checklist): `docs/product/modules/ai/AI_API_KEYS_CHECKLIST_V3.md`
+- AI provider & residency policy: `docs/product/modules/ai/AI_PROVIDER_RESIDENCY_POLICY_V3.md`
+- AI pricing & cost controls: `docs/product/modules/ai/AI_PRICING_COST_CONTROLS_V3.md`
+- AI market update standard: `docs/product/modules/ai/AI_MARKET_UPDATE_STANDARD_V3.md`
+- AI agent orchestration: `docs/product/modules/ai/AI_AGENT_ORCHESTRATION_V3.md`
+- Video enablement: `docs/product/VIDEO_ENABLEMENT_V3.md`
 
 UI/UX (canonical):
 - Index: `docs/ui-standards/README.md`
@@ -112,20 +128,20 @@ Reguła: “done” bez smoke = nie istnieje (QA status min `smoke_passed`).
 
 > Wypełniamy ręcznie. Docelowo można to zautomatyzować w v4 (integracja z issue trackerem).
 
-| Workstream | R0 scope | Spec (locked/total) | Impl (done/total) | QA (qa_passed/total) | Blockers | Owner |
-| --- | --- | --- | --- | --- | --- |
-| WS-A Platform | ✅ | 0/8 | 0/8 | 0/8 | — | Piotr |
-| WS-B Chat | ✅ | 0/2 | 0/2 | 0/2 | — | Piotr |
-| WS-C MyWork | ✅ | 0/6 | 0/6 | 0/6 | — | Piotr |
-| WS-D Interview | ◻︎ | 0/3 | 0/3 | 0/3 | — | Piotr |
-| WS-E Tools | ✅ | 0/7 | 0/7 | 0/7 | — | Piotr |
-| WS-F Initiatives | ✅ | 0/2 | 0/2 | 0/2 | — | Piotr |
-| WS-G Execution | ◻︎ | 0/1 | 0/1 | 0/1 | — | Piotr |
-| WS-H Results | ✅ | 0/3 | 0/3 | 0/3 | — | Piotr |
-| WS-I Finance export | ◻︎ | 0/1 | 0/1 | 0/1 | — | Piotr |
-| WS-J Reports+Presentations | ✅ | 0/3 | 0/3 | 0/3 | — | Piotr |
-| WS-K N‑mode management | ◻︎ | 0/1 | 0/1 | 0/1 | — | Piotr |
-| WS-L V4 placeholders | ◻︎ | 0/1 | 0/1 | 0/1 | — | Piotr |
+| Workstream | R0 scope | Spec (locked/total) | Impl (done/total) | QA (smoke/total) | Blockers | Owner |
+| --- | --- | --- | --- | --- | --- | --- |
+| WS-A Platform | ✅ | 0/8 | **8/8** | **8/8** (A05 done, rest smoke_passed) | — | Piotr |
+| WS-B Chat | ✅ | 0/2 | **2/2** | **2/2** smoke_passed | — | Piotr |
+| WS-C MyWork | ✅ | 0/6 | **6/6** | **6/6** smoke_passed | — | Piotr |
+| WS-D Interview | ◻︎ | 0/3 | **3/3** | **3/3** (D01,D02 done, D03 smoke) | — | Piotr |
+| WS-E Tools | ✅ | 0/7 | **7/7** | **7/7** (E04,E06,E07 done, rest smoke) | — | Piotr |
+| WS-F Initiatives | ✅ | 0/2 | **2/2** | **2/2** smoke_passed | — | Piotr |
+| WS-G Execution | ◻︎ | 0/1 | **1/1** | **1/1** done | — | Piotr |
+| WS-H Results | ✅ | 0/3 | **3/3** | **3/3** smoke_passed | — | Piotr |
+| WS-I Finance export | ◻︎ | 0/1 | **1/1** | **1/1** smoke_passed | — | Piotr |
+| WS-J Reports+Presentations | ✅ | 0/3 | **3/3** | **3/3** (J03 done, rest smoke) | — | Piotr |
+| WS-K N‑mode management | ◻︎ | 0/1 | **1/1** | **1/1** smoke_passed | — | Piotr |
+| WS-L V4 placeholders | ◻︎ | 0/1 | **1/1** | **1/1** done | — | Piotr |
 
 ### 2.4 Weekly review (rytuał)
 
@@ -136,7 +152,7 @@ Reguła: “done” bez smoke = nie istnieje (QA status min `smoke_passed`).
 
 ---
 
-### 2.5 Current blockers (aktualny rejestr)
+### 2.7 Current blockers (aktualny rejestr)
 
 > Wypełniamy na bieżąco. “Blocker” = rzecz, która blokuje zamknięcie R0 (go‑live).
 
@@ -144,12 +160,19 @@ Reguła: “done” bez smoke = nie istnieje (QA status min `smoke_passed`).
 | --- | --- | --- | --- | --- | --- |
 | — | — | — | — | — | — |
 
-### 2.6 Progress log (dziennik realizacji)
+### 2.8 Progress log (dziennik realizacji)
 
 > Krótki log “co dowieźliśmy” + link do PR/commit lub notatki. 1 wpis dziennie.
 
 | Date | Done | Notes / link |
 | --- | --- | --- |
+| 2026-02-26 | V3-A01, V3-A02, V3-A04, V3-B01, V3-B02, V3-C02, V3-C03, V3-A06 | Agent A (BE): routing/menu coherence + MyWork traceability + chat action model + Model Registry BE. Scope smoke B/C/D passed locally. |
+| 2026-02-26 | V3-A06 (hardening) | Agent A (BE): final hardening for audit/fallback evidence. Added compatibility audit endpoint (`GET /api/llm/audit-log`), audit writes for legacy config mutations in `llm.routes.ts`, fallback usage audit entries in `modelRegistryService.resolveModel`, and UI typing/filter support for `fallback_used`. `npm run type-check` + `npx tsx server/scripts/smoke-a06-model-registry.ts` passed. |
+| 2026-02-26 | V3-B02 (QA smoke) | Agent A (BE): contract smoke for unified chat action model passed (`npx tsx server/scripts/smoke-b02-chat-actions.ts`). Verified central registry + payload validation + capability checks + unified handler + NAVIGATE normalization + action UI analytics/error state. |
+| 2026-02-26 | V3-E01, V3-E03, V3-A03, V3-C01, V3-A08, V3-J02, V3-E02, V3-C04, V3-C05, V3-C06, V3-D03, V3-E05, V3-A07, V3-D01-ui, V3-D02-ui | Agent 2 (FE/UX): Tools unified model + wizard shell, UI compliance sweep, preview pane rollout (3 hubs), MyWork (Focus/Decisions/Ideas), InterviewHub compliance, Process Automation, MicroVideoPrompt, PresentationsHub. |
+| 2026-02-26 | V3-H01, V3-H02, V3-H03, V3-A02, V3-K01, V3-B01, V3-B02, V3-F01, V3-A01, V3-C03, V3-A04, V3-J01, V3-C02, V3-F02, V3-I01, V3-A06 | Agent 2 (FE/UX): Results full module (KPI+ROI+analysis), Dynamic menu system, NMode completeness, Chat router+actions, Initiative templates+portfolio analysis, Traceability+MyWork materialization, Route coherence+Reports unification, Finance export, Model Registry FE. `tsc --noEmit` clean (0 errors). **ALL 38 IMPL TASKS DONE.** |
+| 2026-02-26 | V3-A05, V3-D01, V3-D02, V3-E04, V3-E06, V3-E07, V3-G01, V3-J03, V3-L01 | Agent 3 (BE/contract): demo dataset contract + demo/trial telemetry, Interview D01/D02 gates + runtime telemetry, Upload Bundle + Execution telemetry, tools content/methodology audit contract, MCP coming-soon routing. Smoke pack passed: `smoke:demo:script-a`, `smoke:interview:d01d02`, `smoke:j03g01`, `smoke:e04e06e07l01`, `smoke:agent3`. |
+| 2026-02-26 | V3-A05 (QA hardening) | Agent 3 (BE/contract): added regression unit test for `setUserDemoPreference` update-first/insert-fallback path (Postgres-safe) in `tests/unit/backend/middleware/demoGuard.preferences.test.ts`; `npx vitest run tests/unit/backend/middleware/demoGuard.preferences.test.ts` passed. |
 | — | — | — |
 
 ---
@@ -160,10 +183,10 @@ Reguła: “done” bez smoke = nie istnieje (QA status min `smoke_passed`).
 > Jeśli coś nowego wchodzi do R0 — musi mieć usunięty inny element (R0 budget).
 
 **R0 tasks (must):**
-- V3-A01, V3-A02, V3-A04
+- V3-A01, V3-A02, V3-A04, V3-A05
 - V3-B01
 - V3-C02, V3-C03
-- V3-E01
+- V3-E01, V3-E03
 - V3-F01
 - V3-H01, V3-H02
 - V3-J01
@@ -174,6 +197,94 @@ Reguła: “done” bez smoke = nie istnieje (QA status min `smoke_passed`).
 - Tools/Assessments generują inicjatywy z prawidłowym źródłem
 - Results pokazuje KPI/ROI tracking jako “dowozimy po wdrożeniu”
 - Reports: 1 kanoniczny generator + share/export działa w praktyce
+
+### 2.5.1 R0 Demo Script (10–15 min) — kanoniczny scenariusz smoke
+
+> Ten skrypt to “prawda operacyjna” R0. Po każdym większym PR robimy go w 5–15 min.  
+> Jeśli coś nie przechodzi — **task wraca na `blocked`** (albo powstaje nowy task naprawczy).
+
+**A) Wejście / dostęp**
+- Start w aplikacji (niezalogowany) → wejście do systemu (login).
+- (Opcjonalnie) `Demo` → wybór języka → start demo (Atelier ToolToys) — jeśli R0 obejmuje V3-A05.
+
+**B) Chat jako router**
+- W czacie: “Chcę zrobić diagnozę / wybrać narzędzie” → przejście do `Tools` (Library) z kontekstem.
+- W czacie: “Chcę wygenerować raport” → start `Reports > Builder` (wizard) z kontekstem.
+
+**C) Tools → ToolSession → Outputs (traceability)**
+- Tools (Library) → uruchom 1 narzędzie (sesja) → przejście przez wizard → `Finalize` → `Create Initiative` (lub draft initiatives).
+- W inicjatywie: widoczny `source_type + source_id` + działa `Open source`.
+
+**D) MyWork → Convert to… (traceability)**
+- MyWork → utwórz Idea/Notebook → `Convert to Initiative` (lub Report/Deck).
+- System materializuje `ToolSession(type=MYWORK)` i podpina output (widać “Open source”).
+
+**E) Initiatives (template-driven)**
+- Otwórz inicjatywę z narzędzia → widać template/sekcje zgodne z `InitiativeLevel` + minimalny “completeness” feedback.
+
+**F) Results (KPI + ROI tracking)**
+- Results → KPI list → otwórz KPI → dodaj manualny wpis time-series.
+- ROI → porównanie plan vs realized (w minimalnym zakresie).
+
+**G) Report/Deck generator (min. 1 ścieżka)**
+- Reports > Builder → utwórz report z kontekstu (tool session / initiative) → zapisz.
+- “Open source” działa i wraca do snapshotu/źródła.
+
+**H) UX sanity (kanon v3)**
+- ModuleHub: 1 Command Row, brak ad-hoc pasków.
+- App Table: filtry w headerach, resizer subtelny, kebab (⋮) jako Actions.
+- Preview pane (tam gdzie wdrożone): default OFF, selection→preview, Enter→open full, parity akcji.
+
+### 2.5.2 Suggested execution order (R0) — żeby nie blokować się wzajemnie
+
+> Ta kolejność minimalizuje “rework”. Jeśli zmieniasz scope R0, aktualizuj też tę sekcję.
+
+1) **Platform foundations**: `V3-A02` (dynamic menu), `V3-A01` (traceability guards)  
+2) **Chat routing**: `V3-B01` (NAVIGATE contract)  
+3) **MyWork bridge**: `V3-C03` (MYWORK ToolSession), `V3-C02` (Convert to…)  
+4) **Tools mental model**: `V3-E01`  
+5) **Tool Wizard Standard**: `V3-E03` (shell + 1 referencyjne narzędzie)  
+6) **Initiatives templates**: `V3-F01` (min gates/completeness)  
+7) **Results tracking**: `V3-H01` + `V3-H02`  
+8) **Reports (1 kanoniczny generator)**: `V3-J01`  
+9) **Route/menu coherence**: `V3-A04` (w praktyce równolegle, ale blokuje “polish go‑live”)  
+10) **Demo/Trial** (jeśli w R0): `V3-A05`
+
+### 2.5.3 R0 Demo Dataset Contract (Atelier ToolToys) — żeby demo nigdy nie było “puste”
+
+> Minimalny zestaw danych dla R0 demo/trial, żeby wszystkie ścieżki miały “o co zahaczyć”.
+
+- **Org / project**: 1 organizacja demo + 1 aktywny projekt.
+- **Tools**: min. 3 przykładowe ToolSessions (strategic/operations/digital), każda z 1 outputem.
+- **Initiatives**: min. 8 inicjatyw (mix levels) z przypiętym `source_type/source_id`.
+- **Results**: min. 6 KPI (w tym 2 przypięte do inicjatyw) + min. 1 ROI card z plan vs realized.
+- **Reports/Decks**: min. 2 artefakty (1 report, 1 deck) z `Open source`.
+- **i18n**: dataset dostępny w 6 językach (min. nazwy/tytuły + opisy preview).
+
+### 2.5.4 Execution plan (R0) — praca 3 agentami (bez konfliktów)
+
+> Cel: maksymalna równoległość bez rozjechania się po plikach/kontraktach.  
+> Zasada: każdy agent pracuje na **tej samej gałęzi**, ale na **oddzielnych taskach** i robi małe PR-y (albo małe commit-y) zgodnie z `2.4 PR checklist`.
+
+**Agent BE (Cursor, GPT-5.3) — foundations + traceability (R0 core):**
+- Taski: `V3-A02`, `V3-A01`, `V3-B01`, `V3-C03`, `V3-C02`, `V3-F01`, `V3-H01`, `V3-H02`, `V3-J01`
+- Własność: kontrakty API/DB/guards, `source_type/source_id`, `ToolSession(MYWORK)`, routing `NAVIGATE`, minimalne serwisy Results/ROI i generator raportu.
+- “Definition of done”: przechodzi Demo Script B/C/D/F/G (w części BE).
+
+**Agent FE/UX (Cursor, Opus 4.6) — wizard UI + compliance v3 (R0-facing):**
+- Taski: `V3-E03`, oraz FE część `V3-A04` (copy/entry points/breadcrumbs) jeśli to głównie UI
+- Własność: ModuleHub/AppTable/CommandRow/buttons, wizard shell (kroki, pętla missing→add→re-process), dynamic tabs behavior, minimalne UI pod Results/Reports w ścieżce demo.
+- “Definition of done”: Demo Script C/G/H przechodzi na UI (bez “orphan views”).
+
+**Agent Seed/Demo (Codex, GPT-5.3) — dataset + demo/trial:**
+- Task: `V3-A05`
+- Własność: seed danych Atelier ToolToys + i18n dataset + limity DEMO/TRIAL + telemetria + SuperAdmin view (minimal).
+- “Definition of done”: Demo Script A + contract dataset (2.5.3) spełniony.
+
+**Reguły koordynacji (MUST):**
+- `A01/A02` są “foundation”: jeśli BE zmienia traceability/dynamic tabs contract — FE dostosowuje UI, nie dubluje logiki.
+- `E03` (wizard) zależy od mental model Tools (`E01`) i traceability (`A01`) — FE buduje shell, BE dostarcza kontrakty zapisu/odczytu sesji.
+- Każdy agent po swojej porcji robi smoke wg `2.5.1` i wpisuje do `2.8 Progress log` (data + PR link).
 
 ---
 
@@ -228,6 +339,47 @@ Reguła: “done” bez smoke = nie istnieje (QA status min `smoke_passed`).
 
 ---
 
+### 2.4 PR checklist v3 (MUST) — “quality gates” przed merge
+
+> Krótka lista, która ma powstrzymać regresje v3. Jeśli nie spełnione — PR nie wchodzi.
+
+- **SSOT link**: PR opisuje, które taski (`V3-…`) i które SSOTy realizuje.
+- **Traceability**: jeśli PR tworzy outputy (initiative/report/deck) → `source_type + source_id` są egzekwowane.
+- **Dynamic tabs**: wejścia z hubów otwierają detail/wizard w dynamic menu; brak orphan views.
+- **UI standards** (jeśli dotyczy UI):
+  - 1 Command Row (bez dodatkowych pasków)
+  - App Table: filtry w headerach, resizer subtelny, kebab (⋮) w Actions
+  - Preview pane: default OFF, selection→preview, Enter→open full, parity akcji
+  - view-modes kolejność ikon: table→kanban→timeline→calendar→matrix→grid
+  - przyciski wg 3‑poziomowego kanonu (pill/rounded)
+- **i18n**: nowe etykiety mają PL+EN.
+- **locked/read-only**: jeśli edycja artefaktów → respektuje `locked` (UI + API).
+- **Telemetry (minimal)**: nowe krytyczne flow ma eventy zgodne ze specem taska.
+- **Smoke**: autor PR przechodzi `2.5.1 R0 Demo Script` w zakresie dotkniętych ścieżek.
+
+### 2.5 Verification Matrix (R0/R1) — kontrola pokrycia flow
+
+> To jest “tablica prawdy” QA. Każdy wiersz to flow, które musi działać.
+
+| Flow | R0/R1 | Task(s) | Test (manual) | Owner | Status |
+| --- | --- | --- | --- | --- | --- |
+| Chat → Tools (open + context) | R0 | `V3-B01`, `V3-A02` | Demo Script B | Piotr | smoke_passed (structural) |
+| Tools → Wizard → Create Initiative (traceable) | R0 | `V3-E03`, `V3-A01`, `V3-F01` | Demo Script C | Piotr | smoke_passed (structural) |
+| MyWork → Convert to Initiative (MYWORK ToolSession) | R0 | `V3-C03`, `V3-C02`, `V3-A01` | Demo Script D | Piotr | smoke_passed (structural) |
+| Results → KPI tracking (manual TS) | R0 | `V3-H01` | Demo Script F | Piotr | smoke_passed (structural) |
+| Results → ROI plan vs realized | R0 | `V3-H02` | Demo Script F | Piotr | smoke_passed (structural) |
+| Reports → Builder → Save + Open source | R0 | `V3-J01`, `V3-A01` | Demo Script G | Piotr | smoke_passed (structural) |
+| Demo → Trial funnel | R0 | `V3-A05` | Demo Script A | Piotr | done |
+
+### 2.6 “Naming / enums freeze” (MUST) — żeby nie rozwalić integracji w trakcie kodowania
+
+> Od startu implementacji R0 nie zmieniamy semantyki identyfikatorów bez taska migracyjnego.
+
+- **Tool slugs (`toolType`)**: kanon w `CONSULTING_TOOLS_TOOL_SPECS_V3.md` (bez aliasów w danych sesji).
+- **AI routing**: wybór modelu wyłącznie przez `purpose` (SSOT: `AI_MODEL_PURPOSES_AND_REQUIREMENTS_V3.md`).
+- **Statusy artefaktów**: wszędzie te same enumy (Initiative/ROI/KPI/ToolSession) — jeśli zmieniamy, robimy migrację + back-compat.
+- **Traceability fields**: `source_type`, `source_id` są obowiązkowe na outputach; nie zmieniamy nazw.
+
 ## 4) Workstreams / Epics (mapa programu)
 
 W3: Program jest podzielony na workstreamy (epiki). Każdy ma taski z identyfikatorami `V3-<letter><number>`.
@@ -271,44 +423,44 @@ Cel: dopracowanie opisów narzędzi (known-tools), szablonów, micro‑video, he
 
 | ID | Title | Priority | Target | Spec | Impl | QA | Owner | Depends on |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| V3-A01 | Traceability enforcement (MyWork → ToolSession → outputs) | P0 | R0 | review | todo | not_tested | Piotr | V3-C03 |
-| V3-A02 | Dynamic menu everywhere (hub → openDocuments → detail) | P0 | R0 | review | todo | not_tested | Piotr | — |
-| V3-A03 | UI standards compliance sweep (ModuleHub + tables + preview + D/N/C) | P1 | R1 | draft | todo | not_tested | Piotr | V3-A02 |
-| V3-A04 | Route + menu coherence (Tools/Reports/Presentations naming + entry points) | P0 | R0 | draft | todo | not_tested | Piotr | V3-J01 |
-| V3-A05 | Demo → Trial funnel (dataset + limits + telemetry) | P0 | R0 | draft | todo | not_tested | Piotr | V3-A03 |
-| V3-A06 | SuperAdmin: Model Registry (kind/purpose/fallbacks) | P1 | R1 | draft | todo | not_tested | Piotr | V3-A05 |
-| V3-A07 | Preview pane contract rollout (key hubs) | P1 | R1 | draft | todo | not_tested | Piotr | V3-A03 |
-| V3-A08 | Video enablement system (micro‑prompts + rekomendacje) | P1 | R0/R1 | draft | todo | not_tested | Piotr | V3-A03 |
-| V3-B01 | Chat router pracy (mechaniczne transfery) | P0 | R0 | review | todo | not_tested | Piotr | V3-A02 |
-| V3-B02 | Ujednolicenie action model (brak martwych typów) | P1 | R1 | draft | todo | not_tested | Piotr | V3-B01 |
-| V3-C01 | MyWork Inbox: preview pane contract (Outlook-style) | P1 | R1 | draft | todo | not_tested | Piotr | — |
-| V3-C02 | MyWork conversions: Convert to… zawsze traceable | P0 | R0 | review | todo | not_tested | Piotr | V3-A01 |
-| V3-C03 | MyWork ToolSession materialization (type=MYWORK) | P0 | R0 | draft | todo | not_tested | Piotr | V3-A01 |
-| V3-C04 | MyWork Focus redesign (lightweight execution cockpit) | P1 | R1 | draft | todo | not_tested | Piotr | V3-A03 |
-| V3-C05 | MyWork Decisions: timeline + remove queue view + preview parity actions | P1 | R1 | draft | todo | not_tested | Piotr | V3-A03 |
-| V3-C06 | MyWork Ideas: canvas tools selector + shared core model (no data loss) | P1 | R1 | draft | todo | not_tested | Piotr | V3-A03 |
-| V3-D01 | Interview: sufficiency contract + send-back clarity | P1 | R1 | draft | todo | not_tested | Piotr | — |
-| V3-D02 | Interview: runtime mode decision (one question vs task-list) | P1 | R1 | draft | todo | not_tested | Piotr | — |
-| V3-D03 | InterviewHub: App Table Standard compliance (all tabs) + preview for Insights | P1 | R1 | draft | todo | not_tested | Piotr | V3-A03 |
-| V3-E01 | Tools: jeden mental model (Library→Sessions→Outputs→Initiatives) | P0 | R0 | review | todo | not_tested | Piotr | — |
-| V3-E02 | Tools hub outputs: Reports+Presentations+Initiatives as artifacts | P1 | R1 | draft | todo | not_tested | Piotr | V3-E01 |
-| V3-E03 | Tools: Tool Wizard Standard (non-licensed tools runtime) | P0 | R0 | draft | todo | not_tested | Piotr | V3-E01 |
-| V3-E04 | Tools: One task per consulting tool (spec+assets+help) | P1 | R2 | draft | todo | not_tested | Piotr | V3-E03 |
-| V3-E05 | Tools: Process Automation tool (hybrid workspace+table wizard) | P1 | R1 | draft | todo | not_tested | Piotr | V3-E03 |
-| V3-E06 | Tools: Licensed methodologies parity (SIRI/ADMA) | P1 | R1 | draft | todo | not_tested | Piotr | V3-E01 |
-| V3-E07 | Tools Quality: Known Tools content completeness audit + fill plan | P1 | R2 | draft | todo | not_tested | Piotr | V3-E04 |
-| V3-F01 | Initiatives: template-driven N-mode per InitiativeLevel | P0 | R0 | review | todo | not_tested | Piotr | V3-K01 |
-| V3-F02 | Initiatives: Portfolio Analysis (Resources/Feasibility/Logic/Timeline/Completeness) | P1 | R1 | draft | todo | not_tested | Piotr | V3-F01 |
-| V3-G01 | Execution: minimal surfaces + spójne statusy | P2 | R2 | draft | todo | not_tested | Piotr | V3-F01 |
-| V3-H01 | Results: KPI table core (agregacja+add+tracking) | P0 | R0 | review | todo | not_tested | Piotr | — |
-| V3-H02 | Results: ROI plan vs realized (tracking po wdrożeniu) | P0 | R0 | review | todo | not_tested | Piotr | V3-H01 |
-| V3-H03 | Results: Operational analysis + ROI analysis views | P1 | R1 | draft | todo | not_tested | Piotr | V3-H01 |
-| V3-I01 | Finance: Exportuj → Report/Presentation (traceable) | P1 | R1 | draft | todo | not_tested | Piotr | V3-J01 |
-| V3-J01 | Reports: ujednolicenie report surfaces (user rozumie co jest czym) | P0 | R0 | review | todo | not_tested | Piotr | V3-A04 |
-| V3-J02 | Presentations: biblioteka decków (hub table+cards) | P1 | R1 | draft | todo | not_tested | Piotr | V3-A02 |
-| V3-J03 | Generators: upload chaos jako 3 ścieżka report/deck | P2 | R2 | draft | todo | not_tested | Piotr | V3-J01 |
-| V3-K01 | N-mode: required sections/pola + completeness + AI assist | P1 | R1 | draft | todo | not_tested | Piotr | — |
-| V3-L01 | V4: MCP IRIS + Marketplace w menu (Coming soon) | P2 | R2 | draft | todo | not_tested | Piotr | — |
+| V3-A01 | Traceability enforcement (MyWork → ToolSession → outputs) | P0 | R0 | review | done | smoke_passed | Piotr | V3-C03 |
+| V3-A02 | Dynamic menu everywhere (hub → openDocuments → detail) | P0 | R0 | review | done | smoke_passed | Piotr | — |
+| V3-A03 | UI standards compliance sweep (ModuleHub + tables + preview + D/N/C) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-A02 |
+| V3-A04 | Route + menu coherence (Tools/Reports/Presentations naming + entry points) | P0 | R0 | draft | done | smoke_passed | Piotr | V3-J01 |
+| V3-A05 | Demo → Trial funnel (dataset + limits + telemetry) | P0 | R0 | draft | done | done | Piotr | V3-A03 |
+| V3-A06 | SuperAdmin: Model Registry (kind/purpose/fallbacks) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-A05 |
+| V3-A07 | Preview pane contract rollout (key hubs) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-A03 |
+| V3-A08 | Video enablement system (micro‑prompts + rekomendacje) | P1 | R0/R1 | draft | done | smoke_passed | Piotr | V3-A03 |
+| V3-B01 | Chat router pracy (mechaniczne transfery) | P0 | R0 | review | done | smoke_passed | Piotr | V3-A02 |
+| V3-B02 | Ujednolicenie action model (brak martwych typów) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-B01 |
+| V3-C01 | MyWork Inbox: preview pane contract (Outlook-style) | P1 | R1 | draft | done | smoke_passed | Piotr | — |
+| V3-C02 | MyWork conversions: Convert to… zawsze traceable | P0 | R0 | review | done | smoke_passed | Piotr | V3-A01 |
+| V3-C03 | MyWork ToolSession materialization (type=MYWORK) | P0 | R0 | draft | done | smoke_passed | Piotr | V3-A01 |
+| V3-C04 | MyWork Focus redesign (lightweight execution cockpit) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-A03 |
+| V3-C05 | MyWork Decisions: timeline + remove queue view + preview parity actions | P1 | R1 | draft | done | smoke_passed | Piotr | V3-A03 |
+| V3-C06 | MyWork Ideas: canvas tools selector + shared core model (no data loss) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-A03 |
+| V3-D01 | Interview: sufficiency contract + send-back clarity | P1 | R1 | draft | done | done | Piotr | — |
+| V3-D02 | Interview: runtime mode decision (one question vs task-list) | P1 | R1 | draft | done | done | Piotr | — |
+| V3-D03 | InterviewHub: App Table Standard compliance (all tabs) + preview for Insights | P1 | R1 | draft | done | smoke_passed | Piotr | V3-A03 |
+| V3-E01 | Tools: jeden mental model (Library→Sessions→Outputs→Initiatives) | P0 | R0 | review | done | smoke_passed | Piotr | — |
+| V3-E02 | Tools hub outputs: Reports+Presentations+Initiatives as artifacts | P1 | R1 | draft | done | smoke_passed | Piotr | V3-E01 |
+| V3-E03 | Tools: Tool Wizard Standard (non-licensed tools runtime) | P0 | R0 | draft | done | smoke_passed | Piotr | V3-E01 |
+| V3-E04 | Tools: One task per consulting tool (spec+assets+help) | P1 | R2 | draft | done | done | Piotr | V3-E03 |
+| V3-E05 | Tools: Process Automation tool (hybrid workspace+table wizard) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-E03 |
+| V3-E06 | Tools: Licensed methodologies parity (SIRI/ADMA) | P1 | R1 | draft | done | done | Piotr | V3-E01 |
+| V3-E07 | Tools Quality: Known Tools content completeness audit + fill plan | P1 | R2 | draft | done | done | Piotr | V3-E04 |
+| V3-F01 | Initiatives: template-driven N-mode per InitiativeLevel | P0 | R0 | review | done | smoke_passed | Piotr | V3-K01 |
+| V3-F02 | Initiatives: Portfolio Analysis (Resources/Feasibility/Logic/Timeline/Completeness) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-F01 |
+| V3-G01 | Execution: minimal surfaces + spójne statusy | P2 | R2 | draft | done | done | Piotr | V3-F01 |
+| V3-H01 | Results: KPI table core (agregacja+add+tracking) | P0 | R0 | review | done | smoke_passed | Piotr | — |
+| V3-H02 | Results: ROI plan vs realized (tracking po wdrożeniu) | P0 | R0 | review | done | smoke_passed | Piotr | V3-H01 |
+| V3-H03 | Results: Operational analysis + ROI analysis views | P1 | R1 | draft | done | smoke_passed | Piotr | V3-H01 |
+| V3-I01 | Finance: Exportuj → Report/Presentation (traceable) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-J01 |
+| V3-J01 | Reports: ujednolicenie report surfaces (user rozumie co jest czym) | P0 | R0 | review | done | smoke_passed | Piotr | V3-A04 |
+| V3-J02 | Presentations: biblioteka decków (hub table+cards) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-A02 |
+| V3-J03 | Generators: upload chaos jako 3 ścieżka report/deck | P2 | R2 | draft | done | done | Piotr | V3-J01 |
+| V3-K01 | N-mode: required sections/pola + completeness + AI assist | P1 | R1 | draft | done | smoke_passed | Piotr | — |
+| V3-L01 | V4: MCP IRIS + Marketplace w menu (Coming soon) | P2 | R2 | draft | done | done | Piotr | — |
 
 ---
 
@@ -556,6 +708,217 @@ Jedna, zrozumiała nawigacja i nazewnictwo: user wie gdzie robi report/deck i gd
 - `sidebar_navigation_clicked` (target)
 - `route_redirected` (from, to)
 **Rollout plan:** szybkie rename/redirects + copy w UI, bez dużych refactorów.
+
+#### V3-A05 — [Platform] Demo → Trial funnel (dataset + limits + telemetry)
+- Status spec: draft
+- Priorytet: P0
+- Target: R0
+- Moduł: Platform (access, onboarding, SuperAdmin)
+- SSOT: `docs/product/DEMO_TRIAL_V3.md`, `docs/flows/ai/AI_USAGE_LIMITS_FLOW.md`, `server/src/services/access/AccessTypes.ts`
+
+**Business challenge (problem):**  
+Demo bez spójnego datasetu i limitów jest "pustą skorupą"; trial bez jasnej konwersji i telemetrii nie pozwala mierzyć skuteczności. Brak danych o startach demo/trial i conversion rate blokuje decyzje produktowe.
+
+**Cel (outcome, nie feature):**  
+Szczelny funnel Demo → Trial: pełne dane demonstracyjne (Atelier ToolToys), egzekwowane limity (AI + write), prowadzona konwersja oraz telemetria widoczna w SuperAdmin.
+
+**Użytkownicy i scenariusze:**
+- User z landingu klika "Demo" → logowanie (jeśli brak) → wybór języka → start demo z pełnym datasetem.
+- User w DEMO widzi banner "Tryb demo • Firma: Atelier ToolToys • [Start trial]" i licznik AI (np. "AI: 3/10 dziś").
+- User przekracza limit AI w demo → komunikat "Przejdź na trial, aby korzystać z AI" + degraded mode (demo działa dalej bez czata).
+- User klika "Start trial" → tworzy organizację → dostaje 7 dni + onboarding.
+- SuperAdmin widzi listę uruchomień demo/trial (kto/kiedy/język/source) oraz conversion rate.
+
+**Zakres (IN/OUT):**
+- IN:
+  - modal demo: login gate + wybór języka (6 języków) + "Start demo"
+  - dataset Atelier ToolToys: 1–3 projekty, 8–15 inicjatyw, tasks/decisions, Results (KPI+ROI), Reports+Presentations z traceability
+  - warstwa tłumaczeń datasetu (core dataset + `*_translations` lub seed per locale)
+  - limity DEMO: `DEFAULT_DEMO_LIMITS` (AccessTypes) + egzekwowanie AI (quotaService)
+  - Trial: 7 dni (config `TRIAL_DURATION_DAYS` + UI copy), ostrzeżenia T‑7/T‑3, lockdown po wygaśnięciu
+  - konwersja: strategiczne CTA "Start trial" w demo (banery, czat)
+  - telemetria: `demo_started`, `demo_mode_enabled/disabled`, `demo_ai_limit_reached`, `trial_started`, `trial_expiry_warning_shown`, `trial_converted_to_paid`
+  - SuperAdmin: widok demo/trial starts + conversion stats
+- OUT:
+  - personalizacja rekomendacji demo (v4+)
+  - pełny onboarding playbook z wideo (V3-A08)
+
+**UX / UI notes:**
+- Banner DEMO: "Tryb demo • Firma: Atelier ToolToys • [Start trial]" — subtelny, nie nachalny.
+- Copy "demo" nie może kłamać (as‑is "No signup required" vs wymóg tokena — dopasować).
+- Trial banner: ile dni zostało + CTA "Upgrade"; soft warning przed odcięciem akcji.
+- i18n PL+EN dla wszystkich komunikatów demo/trial.
+
+**Data / integrations:**
+- `AccessTypes.ts`: `DEFAULT_DEMO_LIMITS`, `TRIAL_DURATION_DAYS` (7), `TRIAL_WARNING_DAYS`
+- `trialService.ts`, `demo.routes.ts`, `demoGuard.middleware.js`
+- `quotaService` / `rateLimiter` dla egzekwowania limitów AI
+- seed dataset + translations per locale
+
+**AI behavior (jeśli dotyczy):**  
+- AI w demo ma limit interakcji; po przekroczeniu: komunikat CTA do trial + degraded mode (bez czata). Zachęca, nie blokuje zwiedzania.
+
+**Definition of Done (DoD):**
+- Modal demo: login + wybór języka + start → przełączenie na DEMO org z pełnym datasetem.
+- Dataset Atelier ToolToys dostępny w 6 językach (UI + content locale).
+- Limity DEMO egzekwowane (AI, write); po przekroczeniu AI — degraded mode + CTA.
+- Trial = 7 dni; ostrzeżenia T‑7/T‑3; lockdown + CTA po wygaśnięciu.
+- Wszystkie eventy telemetryczne wysyłane; SuperAdmin pokazuje listę starts + conversion.
+
+**Acceptance / test plan:**
+- Smoke: Landing → Demo → wybór PL → start → widzę banner "Tryb demo" i dataset Atelier ToolToys.
+- Smoke: 10 wywołań AI w demo → limit reached → komunikat + degraded mode; dalej mogę przeglądać aplikację.
+- Smoke: Start trial → nowa org → 7 dni w UI; po T‑7 widzę warning.
+- Smoke: SuperAdmin → lista demo/trial starts z datą, użytkownikiem, językiem, source.
+- CLI smoke (backend): `npm run -s db:seed:demo:contract` + `npm run -s smoke:demo:script-a`.
+
+**Dependencies:** V3-A03 (UI spójność bannerów)  
+**Risks / go-live risk:** P0 — bez szczelnego funnelu demo/trial nie ma mierzalnej konwersji.  
+**Analytics (events/metrics):**
+- `demo_started` (language, scenarioId?)
+- `demo_mode_enabled` / `demo_mode_disabled`
+- `demo_ai_limit_reached`
+- `trial_started` (source=demo|landing|invite)
+- `trial_expiry_warning_shown` (daysLeft)
+- `trial_converted_to_paid`
+**Rollout plan:** R0: modal + dataset + limity + telemetria; R1: dopracowanie CTA i A/B copy.
+
+#### V3-A06 — [Platform] SuperAdmin: Model Registry (kind/purpose/fallbacks)
+- Status spec: draft
+- Priorytet: P1
+- Target: R1
+- Moduł: Platform (SuperAdmin, AI infrastructure)
+- SSOT: `docs/product/MODEL_REGISTRY_V3.md`, `docs/flows/ai/AI_USAGE_LIMITS_FLOW.md`, `server/src/services/ai/modelRouter.ts`, `server/src/routes/llm.routes.ts`
+
+**Business challenge (problem):**  
+Modele są rozproszone: LLM (text) przez tiers/capabilities, obraz osobno, brak jednej warstwy "co mamy, do czego służy, jakie fallbacki". SuperAdmin nie ma spójnego widoku katalogu i assignments.
+
+**Cel (outcome, nie feature):**  
+Jeden kanoniczny Model Registry: katalog modeli z `kind` (TEXT_LLM / IMAGE_MODEL / BUSINESS_MODEL), assignments purpose→model, fallback chain, health gating — wszystko widoczne i edytowalne w SuperAdmin.
+
+**Użytkownicy i scenariusze:**
+- SuperAdmin przegląda katalog Providers/Models: name, provider, model_id, kind, is_active, health_status, cost_per_1k (bez sekretów w UI).
+- SuperAdmin konfiguruje assignments: TEXT_LLM tiers (BUDGET/STANDARD/PREMIUM/REASONING), IMAGE_MODEL purposes (cover/report/presentation), BUSINESS_MODEL purposes (LeanLM → Lean suggestions).
+- Feature calls wybierają model przez `purpose`, nie "na sztywno"; fallback chain działa przy unhealthy.
+- Każda zmiana konfiguracji jest logowana (audyt).
+
+**Zakres (IN/OUT):**
+- IN:
+  - katalog modeli: `kind` (TEXT_LLM | IMAGE_MODEL | BUSINESS_MODEL), `purpose` assignments, `requirements` (context window, tool use, vision)
+  - SuperAdmin: widok Providers/Models (name, provider, model_id, kind, is_active, health_status, cost_per_1k) — secrets nigdy w UI
+  - SuperAdmin: edycja assignments dla TEXT_LLM (tiers), IMAGE_MODEL (purposes), BUSINESS_MODEL (purposes)
+  - routing: feature calls → model przez purpose + fallback chain + health gating
+  - audyt: logowanie zmian konfiguracji (kto/kiedy/co)
+  - brak konfiguracji = jawny błąd + bezpieczny fallback (nie cicha degradacja)
+- OUT:
+  - org-level overrides (R2+; jeśli wchodzą — muszą być audytowalne)
+  - pełna personalizacja rekomendacji modeli (v4+)
+
+**UX / UI notes:**
+- SuperAdmin ma sekcję "Model Registry" z podsekcjami: Catalog, TEXT_LLM Assignments, IMAGE_MODEL Assignments, BUSINESS_MODEL Assignments.
+- Tabela katalogu: kolumny zgodne z App Table Standard (resizable, filtry, kebab).
+- i18n PL+EN dla etykiet (nazwy purposes mogą być techniczne, ale UI ma tłumaczenia).
+
+**Data / integrations:**
+- `modelRouter.ts`: rozszerzenie o `kind`, `purpose` assignments, fallback chain
+- `llm.routes.ts`, `imageService.ts` — integracja z registry
+- Nowe lub rozszerzone tabele: `model_registry`, `model_assignments`, `model_audit_log`
+- `quotaService` / billing: koszty per purpose (do limitów)
+
+**AI behavior (jeśli dotyczy):**  
+- AI gateway wybiera model przez purpose z registry; przy braku/healthy fallback — jawny błąd, nie "cicha" degradacja.
+
+**Definition of Done (DoD):**
+- Katalog modeli w SuperAdmin z polami: name, provider, model_id, kind, is_active, health_status, cost_per_1k.
+- Assignments edytowalne dla TEXT_LLM, IMAGE_MODEL, BUSINESS_MODEL.
+- Feature calls używają purpose → model z registry; fallback chain działa.
+- Każda zmiana konfiguracji jest logowana; brak konfiguracji = jawny błąd.
+
+**Acceptance / test plan:**
+- Smoke: SuperAdmin → Model Registry → widzę katalog bez API keys.
+- Smoke: Zmiana assignment (np. chat_simple → inny model) → zapis → następne wywołanie używa nowego modelu.
+- Smoke: Model unhealthy → routing przełącza na fallback; w logach widać fallback event.
+- Smoke: Usunięcie ostatniego modelu z purpose → jawny błąd w UI, nie cicha degradacja.
+
+**Dependencies:** V3-A05 (telemetria AI w demo/trial), V3-A03 (SuperAdmin UI spójność)  
+**Risks / go-live risk:** P1 — bez tego trudno skalować i audytować modele; nie blokuje R0.  
+**Analytics (events/metrics):**
+- `model_registry_viewed`
+- `model_assignment_changed` (kind, purpose)
+- `model_fallback_used` (purpose, reason)
+- `model_audit_log_entry` (internal)
+**Rollout plan:** R1: katalog + assignments + routing; R2: org overrides + koszty per purpose.
+
+#### V3-A07 — [Platform] Preview pane contract rollout (key hubs)
+- Status spec: draft
+- Priorytet: P1
+- Target: R1
+- Moduł: Platform + MyWork, Initiatives, Results, Interview
+- SSOT: `docs/ui-standards/03-modules/table-preview-pane-standard.md`, `docs/ui-standards/03-modules/app-table-standard.md`, `docs/ui-standards/03-modules/module-hub-standard.md`, `docs/ui-standards/UI_UX_CANON_V3.md`
+
+**Business challenge (problem):**  
+Preview pane jest "border-l widgetem" lub brakuje go w kluczowych hubach; brak spójnego kontraktu (Outlook style) powoduje niespójne zachowanie i utratę perceived quality.
+
+**Cel (outcome, nie feature):**  
+Wszystkie kluczowe huby z tabelami używają jednego kontraktu preview pane: `PreviewPaneShell`, anatomia (header/body/footer), selection→preview / Enter→full, parity akcji, i18n, locked state.
+
+**Użytkownicy i scenariusze:**
+- User w MyWork Inbox: single click → preview, Enter/double-click → full detail; J/K nawigacja, Esc zamyka.
+- User w Initiatives: wybór wiersza → preview z key fields + quick actions (np. Open full); te same akcje co w full view.
+- User w Results (KPI): preview pokazuje podsumowanie KPI + link do inicjatywy.
+- User w Interview Insights: preview dla insight item; parity akcji jeśli dotyczy.
+- Artefakt locked: preview pokazuje stan read-only, akcje edycyjne disabled.
+
+**Zakres (IN/OUT):**
+- IN:
+  - huby objęte rollout: MyWork Inbox (V3-C01), MyWork Decisions (V3-C05), Initiatives hub, Results hub, Interview Insights (V3-D03)
+  - wspólny shell: `PreviewPaneShell` (kicker, title, actions, onClose, children, footer)
+  - anatomia: header (sticky) + body (scroll) + footer (sticky) z quick actions
+  - interakcje: single click = selection + preview; Enter/double-click = open full; J/K nawigacja; Close (X)
+  - preview domyślnie OFF (otwiera się po selection)
+  - parity akcji: te same quick actions w preview i full view (Approve/Reject/Delegate/Request info itd.)
+  - layout: 20–33% szerokości, min 340px, Layer 1/2 tła, rounded card zgodny z tabelą
+  - i18n PL+EN (kicker "Preview"/"Podgląd", etykiety akcji)
+  - locked state: preview respektuje `locked` — akcje edycyjne disabled, copy "Poproś ownera" jeśli brak uprawnień
+- OUT:
+  - pełna migracja wszystkich legacy "cowboy panels" (np. InitiativeCompactPanel) — robimy stopniowo w taskach modułowych
+  - "pin preview" jako opcja (R2+)
+
+**UX / UI notes:**
+- Źródło prawdy: `table-preview-pane-standard.md` (layout, anatomia, interakcje).
+- Preview nie może być "gołym border-l" — card z Layer 2, `rounded-xl`/`rounded-hig-md`, spójne z tabelą.
+- Parity akcji: MUST — te same nazwy i semantyka w preview i full view.
+- Responsywność: preview może się zwężać szybciej niż tabela; `clamp()` dla szerokości.
+
+**Data / integrations:**
+- Preview payload: minimalny kontrakt per encja (id, type, title, key fields, quick actions metadata).
+- API: endpoint lub rozszerzenie list do zwracania "preview payload" bez pełnego dokumentu (opcjonalnie, dla performance).
+
+**AI behavior (jeśli dotyczy):**  
+- AI może proponować "suggested actions" w preview (propose→accept), ale nie wykonuje bez kliknięcia.
+
+**Definition of Done (DoD):**
+- Wszystkie 5 hubów (Inbox, Decisions, Initiatives, Results, Interview Insights) używają `PreviewPaneShell`.
+- Single click = preview, Enter/double-click = full; J/K, Esc działają.
+- Parity akcji: preview ma te same quick actions co full view (gdzie dotyczy).
+- i18n PL+EN; locked state respektowany.
+- Brak "border-l widget" — preview wygląda jak część composite container (rounded, warstwy).
+
+**Acceptance / test plan:**
+- Smoke: MyWork Inbox — klik wiersz → preview otwarty; Enter → full detail w dynamic tabs.
+- Smoke: Decisions — preview ma Approve/Reject/Delegate/Request info w footerze; akcje działają.
+- Smoke: Initiatives — preview z key fields + Open full; zwężenie okna nie łamie layoutu.
+- Smoke: Results — preview KPI z linkiem do inicjatywy.
+- Smoke: Interview Insights — preview zgodny ze standardem.
+- Smoke: Artefakt locked → preview pokazuje disabled akcje edycyjne.
+
+**Dependencies:** V3-A03 (UI standards sweep, App Table + ModuleHub)  
+**Risks / go-live risk:** P1 — bez spójnego preview pane "Outlook style" tracimy triage efficiency i premium feel.  
+**Analytics (events/metrics):**
+- `preview_pane_used` (module, entityType)
+- `preview_pane_action_clicked` (module, actionType)
+- `preview_pane_opened_full` (module)
+**Rollout plan:** R1: rollout po 1 hubie (Inbox → Decisions → Initiatives → Results → Insights); każdy z smoke testem.
 
 #### V3-A08 — [Platform] Video enablement system (micro‑prompts + rekomendacje + kanon UI)
 - Status spec: draft
@@ -1205,6 +1568,308 @@ Tools hub pokazuje outputy jako *artefakty* (Report, Deck, Initiative) powiązan
 - `tools_output_exported` (format)
 **Rollout plan:** najpierw listy + open; potem filtry i metadane.
 
+#### V3-E03 — [Tools] Tool Wizard Standard (non-licensed tools runtime)
+- Status spec: draft
+- Priorytet: P0
+- Target: R0
+- Moduł: Tools (Consulting Tools)
+- SSOT: `CONSULTING_TOOLS_V3.md`, `TOOLS_CATALOG_V3.md`, `SOURCE_TRACEABILITY_SPEC.md`, `docs/ui-standards/03-modules/module-hub-standard.md`, `docs/ui-standards/02-components/workspace-3-tools-strip.md`, `docs/ui-standards/03-modules/app-table-standard.md`, `docs/ui-standards/03-modules/table-preview-pane-standard.md`
+
+**Business challenge (problem):**  
+Bez wspólnego szkieletu wizarda każdy consulting tool buduje własny flow — brak powtarzalności, spójności i możliwości skalowania. User gubi się między narzędziami, a traceability outputów jest niespójna.
+
+**Cel (outcome, nie feature):**  
+Jeden reużywalny **Tool Wizard Standard** dla wszystkich non-licensed consulting tools: wspólny szkielet kroków, zbieranie inputów, iteracyjne dopracowanie, użycie workspace/tabeli, tworzenie outputów (initiative/report/deck) z traceability, AI w trybie propose→accept, help content i assety (60s avatar script) śledzone per tool.
+
+**Użytkownicy i scenariusze:**
+- Konsultant startuje narzędzie z Library → wizard prowadzi przez: Define → Inputs & Assumptions → Work surface → Review → Finalize → Outputs.
+- User wypełnia brakujące pola (missing items checklist) i iteruje — wizard nie jest jednorazowym formularzem.
+- User finalizuje sesję i tworzy initiative/report/deck — każdy output ma `source_type/source_id` i akcję “Open source”.
+- AI proponuje uzupełnienia i sugestie — user akceptuje lub odrzuca (propose→accept).
+
+**Zakres (IN/OUT):**
+- IN:
+  - wspólny szkielet wizarda: Define (intent, scope, audience) → Inputs & Assumptions (client data + consultant assumptions, attachments/links) → Work (table/workspace/hybrid) → Review (summaries + missing items + suggested improvements) → Finalize (freeze, eligibility) → Outputs (Create initiative/report/presentation)
+  - pętla iteracyjna: missing → add → re-process (deterministyczna checklista, nie “opinie AI”)
+  - work surface types: Table (App Table standard) / Workspace (3-tools strip: Tools / Context / AI Suggestions) / Hybrid
+  - output creation z traceability (`source_type`, `source_id`, `source_version`) i “Open source”
+  - AI: propose→accept wszędzie; brak nadpisywania pracy usera
+  - help content i 60s avatar script jako assety śledzone per tool (referencja do KNOWN_TOOLS_CONTENT_COMPLETENESS_AUDIT)
+- OUT:
+  - licensed assessments (SIRI/ADMA) — osobny runtime (V3-E06)
+  - pełna implementacja 31 narzędzi — to V3-E04
+
+**UX / UI notes:**
+- Wizard korzysta z module hub standard (dynamic tabs, topbar).
+- Work surface: table zgodna z app-table-standard; workspace z workspace-3-tools-strip.
+- Preview pane (gdy dotyczy): table-preview-pane-standard.
+- Assumptions są first-class: widoczne, audytowalne, w snapshot przy finalizacji.
+
+**Data / integrations:**
+- ToolSession: `tool_type`, `status` (DRAFT/FINALIZED), `input_snapshot`, `output_snapshot`, `locked`.
+- Outputs: `source_type=tool`, `source_id=<toolSessionId>`.
+- Per-tool config: `surface_type`, `inputs_schema`, `outputs_capabilities` (z TOOLS_CATALOG / CONSULTING_TOOLS_TOOL_SPECS).
+
+**AI behavior:**
+- Zawsze propose→accept; nigdy auto-nadpisanie.
+- AI może proponować: missing inputs, assumptions, summaries, draft outputów — user zatwierdza.
+- Sugestie muszą być explainable i actionable (grounded w danych sesji).
+
+**Definition of Done (DoD):**
+- Wspólny wizard shell działa dla min. 1 narzędzia referencyjnego (np. dynamic-swot lub process-automation).
+- Kroki Define → Inputs → Work → Review → Finalize → Outputs są egzekwowane.
+- Pętla missing→add→re-process działa (checklist + re-process).
+- Output (initiative/report/deck) ma traceability i “Open source”.
+- AI propose→accept jest egzekwowany w UI.
+
+**Acceptance / test plan:**
+- Start narzędzia z Library → wizard otwiera się w dynamic tab.
+- Wypełnienie inputów → brakujące pola → uzupełnienie → re-process → brakujące znikają.
+- Finalize → Create initiative → inicjatywa ma source_type/source_id.
+- AI proponuje uzupełnienie → user accept/reject → zapis odzwierciedla wybór.
+
+**Dependencies:** V3-E01  
+**Risks / go-live risk:** P0 — bez tego consulting tools nie skalują i nie mają spójnego UX.  
+**Analytics (events/metrics):**
+- `tools_wizard_step_completed` (toolType, step)
+- `tools_wizard_finalized` (toolType)
+- `tools_wizard_output_created` (toolType, outputType)
+**Rollout plan:** R0: wizard shell + 1 narzędzie referencyjne; R1: rozszerzenie na kolejne tools.
+
+#### V3-E04 — [Tools] One task per consulting tool (spec+assets+help)
+- Status spec: draft
+- Priorytet: P1
+- Target: R2
+- Moduł: Tools (Consulting Tools)
+- SSOT: `CONSULTING_TOOLS_TOOL_SPECS_V3.md`, `TOOLS_CATALOG_V3.md`, `KNOWN_TOOLS_CONTENT_COMPLETENESS_AUDIT_V3.md`, `CONSULTING_TOOLS_V3.md`, `SOURCE_TRACEABILITY_SPEC.md`, `docs/ui-standards/**`
+
+**Business challenge (problem):**  
+31 consulting tools bez spójnych speców, assetów i help content = chaos implementacyjny i słaba jakość sprzedażowa. Każde narzędzie wymaga: pełnej specyfikacji, preview graphic, 60s micro-video script, KB article — inaczej Library i sesje są niekompletne.
+
+**Cel (outcome, nie feature):**  
+Jeden task per consulting tool: kompletna spec (Library preview + wizard steps + work surface + outputs), assety (preview graphic + 60s avatar script), help content (KB “How to use” PL+EN). Wszystkie tools z CONSULTING_TOOLS_TOOL_SPECS_V3 mają odpowiadający task z DoD i acceptance.
+
+**Użytkownicy i scenariusze:**
+- Konsultant w Library widzi pełny preview: whenToUse, inputs, steps, outputs, graphic, micro-video, KB link.
+- User startuje sesję — wizard ma spójne kroki (Define → Inputs → Work → Review → Finalize → Outputs) dopasowane do spec toola.
+- User szuka pomocy — KB article “How to use” jest dostępny i kompletny (PL+EN).
+
+**Zakres (IN/OUT):**
+- IN:
+  - 31 consulting tools (Strategy 1–10, Operations 11–20, Digital 21–30, Process Automation 31) z CONSULTING_TOOLS_TOOL_SPECS_V3
+  - per tool: spec (Library content: whenToUse/inputs/steps/outputs/commonMistakes/example/nextSteps), wizard config (kroki + work surface type), preview graphic (graphics assumptions), 60s micro-video script, KB article (tools-${toolType}-how-to)
+  - i18n PL+EN dla Library i KB
+  - slug governance: canonical toolType (np. ai-discovery, legacy-analyzer) — bez legacy aliasów w sesjach
+- OUT:
+  - licensed methodologies (DRD/SIRI/ADMA) — V3-E06
+  - asset production pipeline (nagranie video, thumbnail) — może być równoległy tor
+
+**UX / UI notes:**
+- Library preview: table-preview-pane-standard (description + graphic + micro-video + KB).
+- Wizard: wspólny szkielet z V3-E03, per-tool config nadpisuje kroki i work surface.
+- Assesments (SIRI/ADMA) są większe, ale nadal integrują się z modułem Tools (Library → Sessions → Outputs → Initiatives).
+
+**Data / integrations:**
+- Known Tools registry: `library_content_translations` (whenToUse, inputs, steps, outputs, commonMistakes, example, nextSteps).
+- KB: slug `tools-${toolType}-how-to`, translations EN+PL.
+- Assets: preview_image_url, micro_video_url (lub script do produkcji).
+
+**AI behavior:** —
+
+**Definition of Done (DoD):**
+- Każdy z 31 tools ma: pełną spec w CONSULTING_TOOLS_TOOL_SPECS_V3 (lub uzupełnioną), Library content w registry, KB article, graphics assumptions, 60s video script.
+- Minimum R0/R1: top tools (P0 z audytu) są kompletne; R2: reszta.
+- Task jest “done” gdy spec + assets + help są zatwierdzone i wpięte.
+
+**Acceptance / test plan:**
+- Dla wybranego toola: Library pokazuje pełny preview, KB otwiera się, wizard ma poprawne kroki.
+- Brak toola z pustym whenToUse lub brakującą KB (dla scope R2).
+
+**Dependencies:** V3-E03 (wizard standard)  
+**Risks / go-live risk:** P1 — bez tego tools są “szkieletem” bez treści; R2 scope.  
+**Analytics (events/metrics):**
+- `tools_library_tool_previewed` (toolType, has_graphic, has_video, has_kb)
+**Rollout plan:** R1: P0 tools (top strategic + process-automation); R2: pełny zestaw 31.
+
+#### V3-E05 — [Tools] Process Automation tool (hybrid workspace+table wizard)
+- Status spec: draft
+- Priorytet: P1
+- Target: R1
+- Moduł: Tools (Consulting Tools)
+- SSOT: `CONSULTING_TOOLS_V3.md` (sekcja 9), `CONSULTING_TOOLS_TOOL_SPECS_V3.md` (Tool #31), `TOOLS_CATALOG_V3.md`, `SOURCE_TRACEABILITY_SPEC.md`, `docs/ui-standards/02-components/workspace-3-tools-strip.md`, `docs/ui-standards/03-modules/app-table-standard.md`, `FINANCE_EXPORT_V3.md` (outputs), `PRESENTATIONS_AND_REPORTS_V3.md`, `REPORT_GENERATOR_V3.md`, `PRESENTATION_GENERATOR_V3.md`
+
+**Business challenge (problem):**  
+Process Automation to narzędzie referencyjne dla hybrid tools (workspace + table + economics). Bez niego nie mamy “proof of concept” dla pełnego flow: mapowanie procesu → optymalizacja lean → automatyzacja → ROI — i generowanie initiative/report/deck z traceability.
+
+**Cel (outcome, nie feature):**  
+Pełna implementacja Process Automation tool: hybrid workspace (flowchart) + tabela kroków + economics (payback/ROI) + outputy (initiative batch, optional report/deck) z traceability. Narzędzie jest kanonicznym przykładem dla V3-E03 (Tool Wizard Standard) i V3-E04 (one task per tool).
+
+**Użytkownicy i scenariusze:**
+- Konsultant mapuje proces klienta w workspace (flowchart: trigger/decision/action) i synchronizuje z tabelą kroków (1 wiersz = 1 krok).
+- User mierzy as-is time, proponuje lean optimizations, przypisuje technologie automatyzacji (z reuse), liczy savings i payback/ROI.
+- User finalizuje sesję i tworzy initiative package (“process improvement initiatives”) + opcjonalny report/deck “Process Automation Summary” — wszystkie z source_type/source_id.
+
+**Zakres (IN/OUT):**
+- IN:
+  - wizard steps (kanoniczne z CONSULTING_TOOLS_V3): Capture process (chat-assisted) → draw flowchart w Workspace → Map flowchart → steps table → Classify steps (trigger/decision/action) → Measure as-is → Lean optimize → Automation options (reuse tech) → Savings → Economics (CAPEX/OPEX, payback/ROI)
+  - work surface: hybrid — workspace (flowchart) + table (ProcessStep[], 1 row per step) + economics summary
+  - data model: ProcessStep (step_id, order_index, name, step_type, as_is_time, to_be_time, lean_ideas, automation_technology_ids, time_saved, capex/opex), AutomationTechnology[], economics summary
+  - outputs: initiative batch + optional report/deck (traceable)
+- OUT:
+  - zaawansowana optymalizacja matematyczna procesów (v4+)
+  - pełna integracja z Financial Analysis module (R0 minimal)
+
+**UX / UI notes:**
+- Workspace: flowchart z shapes (start/end, decision diamond, action rectangle); 3-tools strip (Tools / Context / AI Suggestions).
+- Table: App Table standard, kolumny zgodne z ProcessStep.
+- Economics: sekcja podsumowania (totals, savings, payback, ROI).
+- Output creation: jak w FINANCE_EXPORT_V3 / PRESENTATIONS_AND_REPORTS — traceability + “Open source”.
+
+**Data / integrations:**
+- ToolSession.tool_type = `process-automation`.
+- ProcessStep[], AutomationTechnology[] w output_snapshot.
+- Outputs: source_type=tool, source_id=toolSessionId.
+
+**AI behavior:**
+- AI może proponować: lean ideas, automation tech per step, economics assumptions — propose→accept.
+- Chat-assisted capture: AI pomaga w pierwszym szkicu flowchartu.
+
+**Definition of Done (DoD):**
+- Wizard Process Automation działa end-to-end: flowchart → table → classify → measure → optimize → automation → savings → economics.
+- Output (initiative batch + report/deck) ma traceability.
+- Narzędzie jest używane jako reference implementation dla V3-E03.
+
+**Acceptance / test plan:**
+- Prosty proces (5 kroków) → flowchart + table zsynchronizowane.
+- Lean + automation → savings i ROI są liczone.
+- Finalize → Create initiatives → inicjatywy mają source.
+
+**Dependencies:** V3-E03  
+**Risks / go-live risk:** P1 — kluczowe dla “hybrid tools” credibility, nie blokuje R0.  
+**Analytics (events/metrics):**
+- `tools_process_automation_started`
+- `tools_process_automation_step_completed` (step)
+- `tools_process_automation_finalized`
+**Rollout plan:** R1: pełna implementacja + reference dla innych hybrid tools.
+
+#### V3-E06 — [Tools] Licensed methodologies parity (SIRI/ADMA)
+- Status spec: draft
+- Priorytet: P1
+- Target: R1
+- Moduł: Tools (Consulting Tools / Licensed)
+- SSOT: `CONSULTING_TOOLS_V3.md`, `TOOLS_CATALOG_V3.md`, `SOURCE_TRACEABILITY_SPEC.md`, `PRESENTATIONS_AND_REPORTS_V3.md`, `REPORT_GENERATOR_V3.md`, `PRESENTATION_GENERATOR_V3.md`, `docs/ui-standards/03-modules/module-hub-standard.md`
+
+**Business challenge (problem):**  
+DRD jest benchmarkiem dla licensed assessments; SIRI i ADMA mają rozjazdy w: zestawach pytań, scoringu, wizualizacji wyników, outputach (report/deck). Bez parytetu klient widzi “różne produkty” zamiast spójnej oferty metodologicznej.
+
+**Cel (outcome, nie feature):**  
+SIRI i ADMA osiągają parytet z DRD: wyrównane zestawy pytań (question sets), wizualizacja scoringu (scoring visualization parity), outputy report/presentation z traceability, artefakt Methodology Pack (knowledge + runtime config) jako kanoniczny model. Assessments są większe niż consulting tools, ale integrują się z modułem Tools (Library → Sessions → Outputs → Initiatives).
+
+**Użytkownicy i scenariusze:**
+- Konsultant wybiera SIRI lub ADMA w Library (Licensed) → startuje sesję assessment → wypełnia pytania (questionnaire runtime).
+- User widzi scoring i wizualizację wyników w tym samym standardzie co DRD (dimensions, levels, evidence).
+- User finalizuje AssessmentReport → tworzy report/deck — output ma source_type=assessment, source_id=assessmentReportId.
+- User otwiera “Open methodology” — Methodology Pack (knowledge assets, scoring rules, evidence guidance) jest dostępny.
+
+**Zakres (IN/OUT):**
+- IN:
+  - wyrównanie question sets: SIRI i ADMA mają zestawy pytań zdefiniowane w Methodology Pack (dimensions, questions, scoring scales, aggregation rules) — spójne z modelem DRD
+  - scoring visualization parity: ten sam standard wizualizacji (heatmap, dimension scores, level indicators) co DRD
+  - report/presentation outputs: AssessmentReport jako source; traceability (`source_type`, `source_id`); generatory report/deck korzystają z assessment data
+  - Methodology Pack artefakt: framework_code (SIRI/ADMA), knowledge assets (overview, how to score, evidence rules), question/scoring model, runtime UI config, output mapping rules
+  - integracja z Tools hub: Licensed jako kategoria; Sessions i Outputs pokazują assessment runs obok tool sessions
+- OUT:
+  - nowe licensed packs (v4+)
+  - pełna personalizacja pytań per klient (v4+)
+
+**UX / UI notes:**
+- Library: Licensed category; preview z Methodology Pack (description, when to use, KB links).
+- Assessment runtime: questionnaire + scoring + summary — spójny z DRD.
+- Output creation: jak Report Generator / Presentation Generator — z kontekstem assessment.
+
+**Data / integrations:**
+- MethodologyPack: framework_code, knowledge_assets_refs, scoring_model, runtime_ui_config, output_mapping_rules.
+- AssessmentReport: canonical source dla outputów; status FINAL.
+- Outputs: source_type=assessment, source_id=assessmentReportId.
+
+**AI behavior:**
+- AI może proponować interpretacje i sugestie (propose→accept), nie zmienia scoringu bez zgody.
+
+**Definition of Done (DoD):**
+- SIRI i ADMA mają question sets zdefiniowane w Methodology Pack (parity z DRD).
+- Scoring visualization jest spójna (ten sam standard UI).
+- Report/deck z assessment ma traceability i “Open source”.
+- Methodology Pack dla SIRI i ADMA istnieje (knowledge + runtime).
+
+**Acceptance / test plan:**
+- SIRI session → wypełnienie → scoring → wizualizacja jak DRD.
+- ADMA session → analogicznie.
+- Finalize → Generate report → report ma source_type=assessment, source_id.
+- “Open methodology” otwiera Methodology Pack.
+
+**Dependencies:** V3-E01  
+**Risks / go-live risk:** P1 — bez parytetu licensed oferta jest niespójna.  
+**Analytics (events/metrics):**
+- `tools_licensed_session_started` (framework=SIRI|ADMA)
+- `tools_licensed_report_generated` (framework)
+**Rollout plan:** R1: SIRI + ADMA parity; DRD pozostaje benchmarkiem.
+
+#### V3-E07 — [Tools] Known Tools content completeness audit + fill plan
+- Status spec: draft
+- Priorytet: P1
+- Target: R2
+- Moduł: Tools (Consulting Tools)
+- SSOT: `KNOWN_TOOLS_CONTENT_COMPLETENESS_AUDIT_V3.md`, `CONSULTING_TOOLS_TOOL_SPECS_V3.md`, `CONSULTING_TOOLS_V3.md`, `TOOLS_CATALOG_V3.md`
+
+**Business challenge (problem):**  
+Nie wiadomo, które narzędzia są “sprzedażowo kompletne” (whenToUse, inputs, steps, outputs, KB, graphic, video script), a które mają braki. Bez audytu i planu uzupełnień Library i sesje są niekompletne, a demo traci wiarygodność.
+
+**Cel (outcome, nie feature):**  
+Mieć jedno źródło prawdy: tabela audytu tool → braki (whenToUse, inputs, steps, outputs, KB, graphics, video script) → priorytet → owner → ETA. Plan uzupełnień z kolejnością, właścicielami i szacunkiem czasowym. Licensed assessments (DRD/SIRI/ADMA) są poza zakresem (własny tor Methodology Packs).
+
+**Użytkownicy i scenariusze:**
+- PO/SME przegląda tabelę audytu i wie: które tools są P0 (demo-critical), które P1/P2, kto jest ownerem, kiedy ETA.
+- AI/Writer ma listę braków per tool i może draftować content (whenToUse, KB, video script).
+- Design/Video wie, które tools potrzebują preview graphic i 60s avatar — i w jakiej kolejności.
+
+**Zakres (IN/OUT):**
+- IN:
+  - tabela audytu: toolType → braki (L=Library whenToUse/inputs/steps/outputs, KB=article+translations, GFX=preview graphic, VID=60s avatar script+url)
+  - priorytety: P0 (demo-critical), P1 (credibility), P2 (reszta)
+  - owners: PO/SME (Piotr), AI/Writer, Design/Video
+  - ETA per tool (czas wytworzenia i zatwierdzenia contentu/assetów, nie implementacji kodu)
+  - plan uzupełnień: kolejność (P0 → P1 → P2), zasada “content first” (spec + graphics assumptions + video script przed implementacją UI)
+- OUT:
+  - licensed assessments — osobny audyt (Methodology Packs)
+  - asset production pipeline (HeyGen, thumbnail) — może być równoległy tor
+
+**UX / UI notes:**
+- Audyt jest dokumentem SSOT (KNOWN_TOOLS_CONTENT_COMPLETENESS_AUDIT_V3) — nie rozproszone notatki.
+- Tabela ma kolumny: toolType, Category, Braki (L/KB/GFX/VID), Priorytet, Owner, ETA.
+
+**Data / integrations:**
+- Źródło: Known Tools registry (library_content_translations), KB (tools-${toolType}-how-to), assets (preview_image_url, video_url).
+- Braki = brak lub NULL w odpowiednich polach.
+
+**AI behavior:** —
+
+**Definition of Done (DoD):**
+- Tabela audytu w KNOWN_TOOLS_CONTENT_COMPLETENESS_AUDIT_V3 jest kompletna dla 31 consulting tools.
+- Każdy tool ma: Braki (L/KB/GFX/VID), Priorytet, Owner, ETA.
+- Plan uzupełnień ma kolejność (P0→P1→P2) i zasadę “content first”.
+- Minimum: 6 tools bez wpisu w Known Tools (ambition-decomposer, focus-tradeoff, narrative-engine, smed-planner, dms-builder, inventory-autopilot) mają wpis w planie z ETA.
+
+**Acceptance / test plan:**
+- Przegląd tabeli: brak toola bez wpisu.
+- Dla P0 tools: braki są jasne, owner i ETA ustawione.
+- Plan uzupełnień jest wykonalny (kolejność i zasoby spójne).
+
+**Dependencies:** V3-E04 (one task per tool — audyt informuje taski)  
+**Risks / go-live risk:** P1 — bez audytu content jest chaotyczny; R2 scope.  
+**Analytics (events/metrics):**
+- `tools_audit_reviewed` (optional)
+**Rollout plan:** R1: audyt + plan P0/P1; R2: wykonanie planu (fill) + P2.
+
 ---
 
 ### WS-F — Initiatives v3
@@ -1826,4 +2491,3 @@ V3 jest “done” na poziomie programu, gdy:
 - Initiatives mają template-driven sekcje i minimum governance,
 - Results pokazuje KPI/ROI tracking jako dowód “dowozimy po wdrożeniu”,
 - UI/UX jest spójne z `docs/ui-standards/` w krytycznych hubach.
-
