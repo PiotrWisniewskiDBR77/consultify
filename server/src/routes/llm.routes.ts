@@ -9,6 +9,7 @@ import { Router } from 'express';
 
 import { LLMController } from '../controllers/ai/LLMController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import circuitBreaker from '../services/ai/circuitBreaker.js';
 import llmConfigService from '../services/ai/llmConfigService.js';
 import { llmService } from '../services/ai/llmService.js';
@@ -448,19 +449,25 @@ router.get('/incidents', verifyToken, asyncHandler(LLMController.getIncidents));
  * POST /api/llm/providers
  * Create a new provider
  */
-router.post('/providers', verifyToken, asyncHandler(LLMController.createProvider));
+router.post('/providers', verifySuperAdmin, asyncHandler(LLMController.createProvider));
 
 /**
  * PUT /api/llm/providers/:id
  * Update a provider
  */
-router.put('/providers/:id', verifyToken, asyncHandler(LLMController.updateProvider));
+router.put('/providers/:id', verifySuperAdmin, asyncHandler(LLMController.updateProvider));
+
+/**
+ * POST /api/llm/providers/:id/clone-model
+ * Clone an existing provider row and override model_id/name (server-side, no secret leak).
+ */
+router.post('/providers/:id/clone-model', verifySuperAdmin, asyncHandler(LLMController.cloneProviderModel));
 
 /**
  * DELETE /api/llm/providers/:id
  * Delete a provider
  */
-router.delete('/providers/:id', verifyToken, asyncHandler(LLMController.deleteProvider));
+router.delete('/providers/:id', verifySuperAdmin, asyncHandler(LLMController.deleteProvider));
 
 // ==================== TESTING ====================
 
@@ -468,13 +475,13 @@ router.delete('/providers/:id', verifyToken, asyncHandler(LLMController.deletePr
  * POST /api/llm/test
  * Test a provider connection
  */
-router.post('/test', verifyToken, asyncHandler(LLMController.testProvider));
+router.post('/test', verifySuperAdmin, asyncHandler(LLMController.testProvider));
 
 /**
  * POST /api/llm/test-ollama
  * Test Ollama connection
  */
-router.post('/test-ollama', verifyToken, asyncHandler(LLMController.testOllama));
+router.post('/test-ollama', verifySuperAdmin, asyncHandler(LLMController.testOllama));
 
 /**
  * GET /api/llm/ollama-models
@@ -571,7 +578,7 @@ router.get('/diagnose', asyncHandler(LLMController.diagnose));
  * PUT /api/llm/providers/:id/tier
  * Update provider tier
  */
-router.put('/providers/:id/tier', verifyToken, asyncHandler(LLMController.updateProviderTier));
+router.put('/providers/:id/tier', verifySuperAdmin, asyncHandler(LLMController.updateProviderTier));
 
 // ==================== TIER ASSIGNMENTS ====================
 

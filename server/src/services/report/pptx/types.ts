@@ -49,11 +49,69 @@ export interface UnifiedSlide {
   intent: SlideIntent;
   key_message: string;
   content: SlideContent;
+  /**
+   * Optional visuals for this slide (Gamma-like).
+   * When present and the renderer supports it, visuals are embedded via `addImage`.
+   */
+  visuals?: SlideVisualSpec[];
 }
 
 export interface UnifiedReportJSON {
   meta: UnifiedReportMeta;
   slides: UnifiedSlide[];
+}
+
+// ============================================================
+// VISUALS (image generation / embedding)
+// ============================================================
+
+export type SlideVisualSlot =
+  | 'cover_bg'
+  | 'hero'
+  | 'side_illustration'
+  | 'icon_strip'
+  | 'diagram'
+  | 'background_texture';
+
+export interface SlideVisualAssetRef {
+  /**
+   * Local filesystem path (preferred for PPTX generation on the server).
+   * Example: exports/presentations/assets/<deckId>/cover.png
+   */
+  path?: string;
+  /** Data URI: data:image/png;base64,... (fallback) */
+  dataUri?: string;
+  /** Remote URL (must be downloaded before PPTX render) */
+  url?: string;
+
+  provider?: string;
+  model_id?: string;
+}
+
+export interface SlideVisualSpec {
+  slot: SlideVisualSlot;
+  /** SSOT v3: image_* purpose */
+  purpose: 'image_cover' | 'image_diagram' | 'image_slide_asset';
+  /** Human-readable label for audit/debug */
+  label?: string;
+
+  // Generation hints (optional; may be ignored by some providers)
+  prompt?: string;
+  negativePrompt?: string;
+  styleHint?: string;
+  palette?: {
+    primary?: string;
+    secondary?: string;
+    accent?: string;
+    background?: string;
+  };
+
+  // Output constraints
+  aspect?: '16:9' | '4:3' | '1:1' | '3:2' | '9:16';
+  widthPx?: number;
+  heightPx?: number;
+
+  asset?: SlideVisualAssetRef;
 }
 
 // ============================================================

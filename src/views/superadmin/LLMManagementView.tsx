@@ -11,6 +11,7 @@ import {
   Activity,
   BarChart3,
   Check,
+  Copy,
   Cpu,
   Database,
   DollarSign,
@@ -50,6 +51,7 @@ export const LLMManagementView: React.FC = () => {
   const [providers, setProviders] = useState<LLMProviderConfig[]>([]);
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [editingProviderId, setEditingProviderId] = useState<string | null>(null);
+  const [cloningFromProviderId, setCloningFromProviderId] = useState<string | null>(null);
   const [showInactive, setShowInactive] = useState(false);
   const [providerForm, setProviderForm] = useState<Partial<LLMProviderConfig>>({
     name: '',
@@ -154,7 +156,17 @@ export const LLMManagementView: React.FC = () => {
   const handleProviderSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (editingProviderId) {
+      if (cloningFromProviderId) {
+        await (Api as any).cloneLLMProviderModel(cloningFromProviderId, {
+          name: providerForm.name,
+          model_id: providerForm.model_id,
+          tier: providerForm.tier,
+          visibility: providerForm.visibility,
+          is_active: !!providerForm.is_active,
+          priority: providerForm.priority,
+        });
+        toast.success('Model cloned');
+      } else if (editingProviderId) {
         if (providerForm.tier) {
           await Api.updateProviderTier(editingProviderId, providerForm.tier);
         }
@@ -166,6 +178,7 @@ export const LLMManagementView: React.FC = () => {
       }
       setShowProviderModal(false);
       setEditingProviderId(null);
+      setCloningFromProviderId(null);
       resetProviderForm();
       loadInitialData();
     } catch (err) {
@@ -197,8 +210,22 @@ export const LLMManagementView: React.FC = () => {
     });
   };
 
+  const handleCloneModel = (p: LLMProviderConfig) => {
+    setEditingProviderId(null);
+    setCloningFromProviderId(p.id);
+    setProviderForm({
+      ...p,
+      name: `${p.name} — new model`,
+      model_id: '',
+      // secret is reused server-side; never shown in UI
+      api_key: '',
+    });
+    setShowProviderModal(true);
+  };
+
   const handleEditProvider = (p: LLMProviderConfig) => {
     setEditingProviderId(p.id);
+    setCloningFromProviderId(null);
     setProviderForm(p);
     setShowProviderModal(true);
   };
@@ -349,6 +376,9 @@ export const LLMManagementView: React.FC = () => {
                         Model ID
                       </th>
                       <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Kind
+                      </th>
+                      <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         Tier
                       </th>
                       <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -356,6 +386,9 @@ export const LLMManagementView: React.FC = () => {
                       </th>
                       <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         Status
+                      </th>
+                      <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Config
                       </th>
                       <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">
                         Actions
@@ -365,14 +398,14 @@ export const LLMManagementView: React.FC = () => {
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={7} className="p-8 text-center">
+                        <td colSpan={9} className="p-8 text-center">
                           <Loader2 className="w-5 h-5 animate-spin mx-auto text-slate-500 dark:text-slate-400" />
                         </td>
                       </tr>
                     ) : providers.filter((p) => showInactive || p.is_active).length === 0 ? (
                       <tr>
                         <td
-                          colSpan={7}
+                          colSpan={9}
                           className="p-8 text-center text-slate-500 dark:text-slate-400 text-sm"
                         >
                           No providers configured
@@ -394,6 +427,9 @@ export const LLMManagementView: React.FC = () => {
                             </td>
                             <td className="px-4 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">
                               {p.model_id}
+                            </td>
+                            <td className="px-4 py-3 text-xs text-slate-400 dark:text-slate-500">
+                              {String((p as any).kind || 'TEXT_LLM')}
                             </td>
                             <td className="px-4 py-3">
                               <select
@@ -427,6 +463,12 @@ export const LLMManagementView: React.FC = () => {
                               />
                             </td>
                             <td className="px-4 py-3">
+                              <StatusBadge
+                                variant={(p as any).is_configured ? 'success' : 'warning'}
+                                label={(p as any).is_configured ? 'Configured' : 'Missing key'}
+                              />
+                            </td>
+                            <td className="px-4 py-3">
                               <div className="flex items-center justify-end gap-1">
                                 <IconButton
                                   icon={Wifi}
@@ -435,6 +477,12 @@ export const LLMManagementView: React.FC = () => {
                                   size="sm"
                                   loading={testingConnection}
                                   disabled={testingConnection}
+                                />
+                                <IconButton
+                                  icon={Copy}
+                                  onClick={() => handleCloneModel(p)}
+                                  label="Clone Model"
+                                  size="sm"
                                 />
                                 <IconButton
                                   icon={Edit}
@@ -715,7 +763,11 @@ export const LLMManagementView: React.FC = () => {
           <div className="bg-slate-900 border border-white/[0.06] rounded-xl p-6 w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold text-slate-100">
-                {editingProviderId ? 'Edit Provider' : 'Add Provider'}
+                {cloningFromProviderId
+                  ? 'Clone Model'
+                  : editingProviderId
+                    ? 'Edit Provider'
+                    : 'Add Provider'}
               </h2>
               <IconButton icon={X} onClick={() => setShowProviderModal(false)} label="Close" />
             </div>
@@ -747,14 +799,86 @@ export const LLMManagementView: React.FC = () => {
                       <option value="openrouter">OpenRouter (Unified Gateway)</option>
                       <option value="openai">OpenAI (GPT-4)</option>
                       <option value="anthropic">Anthropic (Claude)</option>
-                      <option value="google">Google Gemini</option>
+                      <option value="google">Gemini (Google)</option>
+                      <option value="gemini">Gemini (alias)</option>
                     </optgroup>
                     <optgroup label="Open Source / Fast">
                       <option value="mistral">Mistral AI</option>
                       <option value="groq">Groq (Ultra Fast)</option>
                       <option value="together">Together AI</option>
+                      <option value="deepseek">DeepSeek</option>
+                      <option value="zai">z.ai (Zhipu)</option>
+                      <option value="z_ai">z.ai (alias)</option>
+                      <option value="qwen">Qwen (OpenAI-compatible)</option>
+                    </optgroup>
+                    <optgroup label="Images">
+                      <option value="replicate">Replicate (Images)</option>
                     </optgroup>
                   </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                    Kind
+                  </label>
+                  <select
+                    value={(providerForm as any).kind || 'TEXT_LLM'}
+                    onChange={(e) => setProviderForm({ ...providerForm, kind: e.target.value as any })}
+                    className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
+                  >
+                    <option value="TEXT_LLM">TEXT_LLM</option>
+                    <option value="IMAGE_MODEL">IMAGE_MODEL</option>
+                    <option value="BUSINESS_MODEL">BUSINESS_MODEL</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                    Provider Type (infra)
+                  </label>
+                  <select
+                    value={(providerForm as any).provider_type || 'direct'}
+                    onChange={(e) =>
+                      setProviderForm({ ...providerForm, provider_type: e.target.value as any })
+                    }
+                    className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
+                  >
+                    <option value="direct">direct</option>
+                    <option value="aggregator">aggregator</option>
+                    <option value="hosted">hosted</option>
+                    <option value="local">local</option>
+                    <option value="customer_managed">customer_managed</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                    Origin vendor
+                  </label>
+                  <input
+                    value={(providerForm as any).origin_vendor || ''}
+                    onChange={(e) =>
+                      setProviderForm({ ...providerForm, origin_vendor: e.target.value as any })
+                    }
+                    className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
+                    placeholder="openai / anthropic / google / deepseek / zhipu / replicate / openrouter"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                    Execution regions
+                  </label>
+                  <input
+                    value={(providerForm as any).execution_regions || ''}
+                    onChange={(e) =>
+                      setProviderForm({ ...providerForm, execution_regions: e.target.value as any })
+                    }
+                    className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
+                    placeholder='e.g. ["EU","US"] or EU,US'
+                  />
                 </div>
               </div>
 
@@ -768,7 +892,13 @@ export const LLMManagementView: React.FC = () => {
                   onChange={(e) => setProviderForm({ ...providerForm, api_key: e.target.value })}
                   className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                   placeholder="sk-..."
+                  disabled={!!cloningFromProviderId}
                 />
+                {cloningFromProviderId ? (
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    API key is reused from the source provider (server-side).
+                  </div>
+                ) : null}
               </div>
 
               <div className="grid grid-cols-2 gap-4">

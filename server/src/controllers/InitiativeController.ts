@@ -523,6 +523,8 @@ export class InitiativeController {
         scopeIn,
         scopeOut,
         keyRisks,
+        sourceType,
+        sourceId,
       } = req.body;
 
       if (!title) {
@@ -530,7 +532,13 @@ export class InitiativeController {
         return;
       }
 
-      // TODO: Check access policy when AccessPolicyService is migrated
+      // V3-A01: Traceability guard — non-manual sources require sourceId
+      const normalizedSourceType = String(sourceType || 'manual').trim().toLowerCase();
+      const normalizedSourceId = sourceId != null ? String(sourceId).trim() : '';
+      if (normalizedSourceType !== 'manual' && !normalizedSourceId) {
+        res.status(400).json({ error: 'sourceId is required when sourceType is not manual' });
+        return;
+      }
 
       const id = uuidv4();
       const now = new Date().toISOString();
@@ -543,8 +551,9 @@ export class InitiativeController {
                 planned_start_date, planned_end_date,
                 owner_business_id, owner_execution_id,
                 problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
+                source_type, source_id,
                 created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
       try {
@@ -575,6 +584,8 @@ export class InitiativeController {
           JSON.stringify(scopeIn || []),
           JSON.stringify(scopeOut || []),
           JSON.stringify(keyRisks || []),
+          normalizedSourceType,
+          normalizedSourceId || null,
           now,
           now,
         ]);
@@ -586,8 +597,9 @@ export class InitiativeController {
                   start_date, end_date,
                   owner_business_id, owner_execution_id,
                   problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
+                  source_type, source_id,
                   created_at, updated_at
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `;
         await queryHelpers.queryRun(legacySql, [
           id,
@@ -613,6 +625,8 @@ export class InitiativeController {
           JSON.stringify(scopeIn || []),
           JSON.stringify(scopeOut || []),
           JSON.stringify(keyRisks || []),
+          normalizedSourceType,
+          normalizedSourceId || null,
           now,
           now,
         ]);

@@ -33,6 +33,7 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -146,8 +147,13 @@ export const PresentationsHub: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
-  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
-  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+  // V3-A02: Persistent dynamic tabs via sessionStorage
+  const {
+    openDocuments,
+    setOpenDocuments,
+    activeDocumentId,
+    setActiveDocumentId,
+  } = useModuleOpenDocuments('presentations');
   const [renameModalDeck, setRenameModalDeck] = useState<PresentationDeck | null>(null);
   const [renameValue, setRenameValue] = useState('');
 

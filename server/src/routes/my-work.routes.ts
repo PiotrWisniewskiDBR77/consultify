@@ -3624,6 +3624,10 @@ router.post(
         title: safeTitle,
         summary: safeExpansion || safeBody,
       });
+      // V3-A01: Traceability guard — abort if MYWORK ToolSession materialization failed
+      if (!toolSessionId) {
+        return res.status(500).json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
+      }
 
       const initiativeId = uuidv4();
       const insertCols: string[] = ['id'];
@@ -4847,6 +4851,10 @@ router.post(
         title: entityTitle,
         summary: entityDesc,
       });
+      // V3-A01: Traceability guard
+      if (!toolSessionId) {
+        return res.status(500).json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
+      }
 
       const insertCols: string[] = ['id'];
       const insertVals: string[] = ['?'];
@@ -4890,6 +4898,10 @@ router.post(
         title: entityTitle,
         summary: entityDesc,
       });
+      // V3-A01: Traceability guard
+      if (!toolSessionId) {
+        return res.status(500).json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
+      }
 
       const reportBuilderService = await import('../services/reportBuilderService.js');
       const created = await reportBuilderService.createReport({
@@ -4916,6 +4928,10 @@ router.post(
         title: entityTitle,
         summary: entityDesc,
       });
+      // V3-A01: Traceability guard
+      if (!toolSessionId) {
+        return res.status(500).json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
+      }
 
       const presentationGeneratorService =
         await import('../services/presentationGeneratorService.js');
@@ -4927,6 +4943,8 @@ router.post(
           language: 'en',
           theme: 'corporate',
           confidentiality: 'internal',
+          sourceType: 'tool',
+          sourceId: toolSessionId,
           sourceArtifacts: [
             {
               type: 'tool_session',

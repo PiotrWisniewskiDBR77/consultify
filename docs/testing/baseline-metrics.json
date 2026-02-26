@@ -1,0 +1,96 @@
+{
+  "generatedAt": "2026-02-26T21:08:36.291Z",
+  "testLayers": [
+    {
+      "name": "L1 Unit",
+      "testFiles": 217,
+      "patterns": [
+        "tests/unit/"
+      ]
+    },
+    {
+      "name": "L2 Component",
+      "testFiles": 103,
+      "patterns": [
+        "tests/components/"
+      ]
+    },
+    {
+      "name": "L3 Integration",
+      "testFiles": 297,
+      "patterns": [
+        "tests/integration/"
+      ]
+    },
+    {
+      "name": "L4 E2E (all)",
+      "testFiles": 124,
+      "patterns": [
+        "tests/e2e/"
+      ]
+    },
+    {
+      "name": "L4 E2E Smoke",
+      "testFiles": 20,
+      "patterns": [
+        "tests/e2e/smoke/"
+      ]
+    },
+    {
+      "name": "L5 Security",
+      "testFiles": 10,
+      "patterns": [
+        "tests/security/"
+      ]
+    },
+    {
+      "name": "L5 Performance",
+      "testFiles": 3,
+      "patterns": [
+        "tests/performance/"
+      ]
+    }
+  ],
+  "totalTestFiles": 754,
+  "skipAllowlistEntries": 1,
+  "skipAllowlistDetails": [
+    {
+      "pattern": "^tests/unit/backend/assessmentReportService\\.test$",
+      "expiresOn": "2026-03-31"
+    }
+  ],
+  "securityIntegrityChecks": 29,
+  "coverageThresholds": {
+    "global": 85,
+    "criticalPaths": 95
+  },
+  "ciJobs": {
+    "prBlocking": [
+      "lint-typecheck",
+      "test-quality-check",
+      "skip-scan-gate",
+      "levels-coverage-gates",
+      "unit-tests (4 shards)",
+      "component-tests",
+      "integration-tests",
+      "security-integrity",
+      "e2e-tests (Tier-0)",
+      "critical-path-coverage"
+    ],
+    "nightlyOnly": [
+      "security-tests",
+      "l4-smoke (remote)",
+      "e2e-runtime-smoke",
+      "performance-tests",
+      "coverage report"
+    ]
+  },
+  "qualityGates": [
+    "lint + typecheck",
+    "quality-check (anti-placeholder)",
+    "skip-scan (zero .only(), managed .skip())",
+    "security-integrity (29 checks)",
+    "L1-L3 coverage gates (95% per-file)",
+    "critical-path-coverage (95% middleware)"
+  ]
+}

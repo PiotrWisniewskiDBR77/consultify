@@ -376,6 +376,36 @@ describe('AuthMiddleware', () => {
       );
     });
 
+    it('uses raw role value when role is unknown and normalizes permission role', async () => {
+      mockReq.headers!['authorization'] = 'Bearer custom-role';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'custom-1', role: 'custom_role' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockReq.user?.role).toBe('custom_role');
+      mockReq.can?.('cap');
+      expect(mockPermissionService.can).toHaveBeenCalledWith(
+        expect.objectContaining({ role: 'CUSTOM_ROLE' }),
+        'cap',
+        expect.any(Object)
+      );
+    });
+
+    it('defaults role to team_member when role is missing', async () => {
+      mockReq.headers!['authorization'] = 'Bearer no-role';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'user-no-role' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockReq.user?.role).toBe('team_member');
+    });
+
     it('should skip revocation DB check when decoded token has no jti', async () => {
       mockReq.headers!['authorization'] = 'Bearer no-jti-token';
       mockJwt.verify.mockImplementation((_token, _secret, callback) => {
@@ -387,6 +417,19 @@ describe('AuthMiddleware', () => {
 
       expect(mockDbGet).not.toHaveBeenCalled();
       expect(mockReq.user?.id).toBe('user-no-jti');
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('attaches user when jti present but no revoke-all marker exists', async () => {
+      mockReq.headers!['authorization'] = 'Bearer ok-jti';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'user-123', jti: 'jti-ok', iat: 100 });
+      });
+      mockDbGet.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockReq.user?.id).toBe('user-123');
       expect(mockNext).toHaveBeenCalled();
     });
 
@@ -446,6 +489,48 @@ describe('AuthMiddleware', () => {
       expect(mockNext).toHaveBeenCalled();
     });
 
+    it('forces SUPERADMIN role for configured emails', async () => {
+      const origForce = process.env.FORCE_SUPERADMIN_EMAILS;
+      process.env.FORCE_SUPERADMIN_EMAILS = 'vip@example.com';
+
+      try {
+        vi.resetModules();
+        const mod = await import(
+          '../../../../server/src/middleware/auth.middleware.ts?force_superadmin=1'
+        );
+        mod.setDependencies({
+          jwt: mockJwt as any,
+          config: mockConfig,
+          PermissionService: mockPermissionService,
+          dbGet: mockDbGet,
+        });
+
+        const req: any = {
+          headers: { authorization: 'Bearer vip-token' },
+          body: {},
+          query: {},
+          cookies: {},
+          path: '/test',
+        };
+        const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+        const next = vi.fn();
+
+        mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+          callback(null, { id: 'user-1', email: 'VIP@EXAMPLE.COM', role: 'ADMIN' });
+        });
+        mockDbGet.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+
+        await mod.verifyToken(req, res, next);
+
+        expect(req.userRole).toBe('SUPERADMIN');
+        expect(req.user?.isSuperAdmin).toBe(true);
+        expect(next).toHaveBeenCalled();
+      } finally {
+        if (origForce === undefined) delete process.env.FORCE_SUPERADMIN_EMAILS;
+        else process.env.FORCE_SUPERADMIN_EMAILS = origForce;
+      }
+    });
+
     it('E2E_MODE: accepts decoded token with e2e claim without signature verification', async () => {
       const origE2E = process.env.E2E_MODE;
       try {
@@ -503,6 +588,29 @@ describe('AuthMiddleware', () => {
         if (origE2E === undefined) delete process.env.E2E_MODE;
         else process.env.E2E_MODE = origE2E;
         vi.doUnmock('../../../../server/src/utils/DbPromise.js');
+      }
+    });
+
+    it('E2E_MODE: falls through to verification when decoded token lacks e2e claim', async () => {
+      const origE2E = process.env.E2E_MODE;
+      try {
+        process.env.E2E_MODE = 'true';
+        mockReq.headers!['authorization'] = 'Bearer no-e2e-claim';
+
+        mockJwt.decode.mockReturnValue({ id: 'not-e2e' });
+        mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+          callback(null, { id: 'verified-user' });
+        });
+        mockDbGet.mockResolvedValue(null);
+
+        await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+        expect(mockJwt.decode).toHaveBeenCalled();
+        expect(mockJwt.verify).toHaveBeenCalled();
+        expect(mockReq.user?.id).toBe('verified-user');
+      } finally {
+        if (origE2E === undefined) delete process.env.E2E_MODE;
+        else process.env.E2E_MODE = origE2E;
       }
     });
 
@@ -718,6 +826,51 @@ describe('AuthMiddleware', () => {
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({ error: 'Permission denied' })
       );
+    });
+  });
+
+  describe('getDeps', () => {
+    it('uses module export when jsonwebtoken lacks default', async () => {
+      vi.resetModules();
+      vi.doMock('jsonwebtoken', () => ({ verify: vi.fn(), decode: vi.fn() }));
+      vi.doMock('../../../../server/src/config/Config.js', () => ({ config: { JWT_SECRET: 'x' } }));
+      vi.doMock('../../../../server/src/services/permissionService.js', () => ({
+        default: { can: vi.fn() },
+      }));
+
+      const mod = await import(
+        '../../../../server/src/middleware/auth.middleware.ts?get_deps_no_default=1'
+      );
+      const deps = await mod.__private__.getDeps();
+
+      expect(deps.jwt.verify).toBeTypeOf('function');
+      expect(deps.config.JWT_SECRET).toBe('x');
+      expect(deps.PermissionService.can).toBeTypeOf('function');
+
+      vi.doUnmock('jsonwebtoken');
+      vi.doUnmock('../../../../server/src/config/Config.js');
+      vi.doUnmock('../../../../server/src/services/permissionService.js');
+    });
+
+    it('uses default export when config module exposes default', async () => {
+      vi.resetModules();
+      vi.doMock('jsonwebtoken', () => ({ default: { verify: vi.fn(), decode: vi.fn() } }));
+      vi.doMock('../../../../server/src/config/Config.js', () => ({
+        default: { JWT_SECRET: 'y' },
+      }));
+      vi.doMock('../../../../server/src/services/permissionService.js', () => ({ can: vi.fn() }));
+
+      const mod = await import(
+        '../../../../server/src/middleware/auth.middleware.ts?get_deps_default_config=1'
+      );
+      const deps = await mod.__private__.getDeps();
+
+      expect(deps.config.JWT_SECRET).toBe('y');
+      expect(deps.PermissionService.can).toBeTypeOf('function');
+
+      vi.doUnmock('jsonwebtoken');
+      vi.doUnmock('../../../../server/src/config/Config.js');
+      vi.doUnmock('../../../../server/src/services/permissionService.js');
     });
   });
 });

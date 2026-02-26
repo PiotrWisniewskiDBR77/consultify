@@ -971,6 +971,11 @@ export class ModelRouter {
         (process.env as any).GOOGLE_API_KEY
       )?.trim();
     }
+    if (provider === 'deepseek') return !!process.env.DEEPSEEK_API_KEY?.trim();
+    if (provider === 'zai' || provider === 'z_ai') return !!process.env.ZAI_API_KEY?.trim();
+    if (provider === 'replicate') {
+      return !!(process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY)?.trim();
+    }
 
     // Local providers usually don't require an API key.
     if (provider === 'ollama') return true;
@@ -1114,6 +1119,14 @@ export class ModelRouter {
   getEnvKeyForProvider(provider: string): string {
     const envKeys: Record<string, string> = {
       openrouter: 'OPENROUTER_API_KEY',
+      openai: 'OPENAI_API_KEY',
+      anthropic: 'ANTHROPIC_API_KEY',
+      google: 'GEMINI_API_KEY',
+      gemini: 'GEMINI_API_KEY',
+      deepseek: 'DEEPSEEK_API_KEY',
+      z_ai: 'ZAI_API_KEY',
+      zai: 'ZAI_API_KEY',
+      replicate: 'REPLICATE_API_TOKEN',
     };
     return envKeys[provider] || `${provider.toUpperCase()}_API_KEY`;
   }
@@ -1122,6 +1135,14 @@ export class ModelRouter {
     const endpoints: Record<string, string> = {
       // Base URL (not the /chat/completions path) — matches our llmService OpenRouter client usage.
       openrouter: 'https://openrouter.ai/api/v1',
+      openai: 'https://api.openai.com/v1',
+      anthropic: 'https://api.anthropic.com',
+      google: 'https://generativelanguage.googleapis.com/v1beta',
+      gemini: 'https://generativelanguage.googleapis.com/v1beta',
+      deepseek: 'https://api.deepseek.com',
+      z_ai: 'https://api.z.ai/api/paas/v4',
+      zai: 'https://api.z.ai/api/paas/v4',
+      replicate: 'https://api.replicate.com/v1',
     };
     return endpoints[provider] || null;
   }

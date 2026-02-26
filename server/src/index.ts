@@ -417,6 +417,20 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
       logger.warn('[Server] AI Health Monitor not available:', error.message);
     }
   })();
+
+  // Init AI Provider Sentinel (continuous provider diagnostics) - non-blocking
+  (async () => {
+    try {
+      if (process.env.DISABLE_AI_PROVIDER_SENTINEL === 'true') return;
+      const { default: providerSentinel } = await import('./services/ai/providerSentinel.js');
+      const intervalMs = Number(process.env.AI_PROVIDER_SENTINEL_INTERVAL_MS || 120_000);
+      providerSentinel.start(Number.isFinite(intervalMs) ? intervalMs : 120_000);
+      logger.info('[Server] AI Provider Sentinel started');
+    } catch (err: any) {
+      const error = err as Error;
+      logger.warn('[Server] AI Provider Sentinel not available:', error.message);
+    }
+  })();
 }
 
 // ============================================================

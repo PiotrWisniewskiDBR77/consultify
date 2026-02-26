@@ -142,6 +142,7 @@ Reguła: “done” bez smoke = nie istnieje (QA status min `smoke_passed`).
 | WS-J Reports+Presentations | ✅ | 0/3 | **3/3** | **3/3** (J03 done, rest smoke) | — | Piotr |
 | WS-K N‑mode management | ◻︎ | 0/1 | **1/1** | **1/1** smoke_passed | — | Piotr |
 | WS-L V4 placeholders | ◻︎ | 0/1 | **1/1** | **1/1** done | — | Piotr |
+| WS-M Integrations & MCP | ◻︎ | 0/9 | 0/9 | 0/9 | — | Piotr |
 
 ### 2.4 Weekly review (rytuał)
 
@@ -174,7 +175,13 @@ Reguła: “done” bez smoke = nie istnieje (QA status min `smoke_passed`).
 | 2026-02-26 | V3-H01, V3-H02, V3-H03, V3-A02, V3-K01, V3-B01, V3-B02, V3-F01, V3-A01, V3-C03, V3-A04, V3-J01, V3-C02, V3-F02, V3-I01, V3-A06 | Agent 2 (FE/UX): Results full module (KPI+ROI+analysis), Dynamic menu system, NMode completeness, Chat router+actions, Initiative templates+portfolio analysis, Traceability+MyWork materialization, Route coherence+Reports unification, Finance export, Model Registry FE. `tsc --noEmit` clean (0 errors). **ALL 38 IMPL TASKS DONE.** |
 | 2026-02-26 | V3-A05, V3-D01, V3-D02, V3-E04, V3-E06, V3-E07, V3-G01, V3-J03, V3-L01 | Agent 3 (BE/contract): demo dataset contract + demo/trial telemetry, Interview D01/D02 gates + runtime telemetry, Upload Bundle + Execution telemetry, tools content/methodology audit contract, MCP coming-soon routing. Smoke pack passed: `smoke:demo:script-a`, `smoke:interview:d01d02`, `smoke:j03g01`, `smoke:e04e06e07l01`, `smoke:agent3`. |
 | 2026-02-26 | V3-A05 (QA hardening) | Agent 3 (BE/contract): added regression unit test for `setUserDemoPreference` update-first/insert-fallback path (Postgres-safe) in `tests/unit/backend/middleware/demoGuard.preferences.test.ts`; `npx vitest run tests/unit/backend/middleware/demoGuard.preferences.test.ts` passed. |
-| — | — | — |
+| 2026-02-26 | V3-A03, V3-E06, V3-E07 (closure hardening) | Agent A (cross-check): finalized FE/UX view-mode canonical order in `InitiativesHub` (`table → kanban → timeline → grid` for enabled subset), added dedicated parity smoke `server/scripts/smoke-e06-methodology-parity.ts` (SIRI vs ADMA: structure, scoring rules, knowledge, editor, map), and added deterministic completeness audit `server/scripts/audit-known-tools-completeness.ts` generating `docs/product/known-tools-completeness-report.json` + `docs/product/KNOWN_TOOLS_FILL_PLAN_V3.md` with R0 gate (100% completeness) and prioritized fill backlog for R1/R2. |
+| 2026-02-26 | V3-A03, V3-E06, V3-E07 (ops alias + regression rerun) | Agent A (closure ops): added npm aliases `smoke:a03-ui-compliance`, `smoke:e06-methodology-parity`, `audit:e07-known-tools`, and aggregate `smoke:agent2-agent3-closure`; reran full closure pack + `type-check` (all passed). Updated QA ledger to `smoke_passed` for E06/E07. |
+| 2026-02-26 | V3-A01 hardening (traceability) | Deep audit + fix: sourceType/sourceId in CreateInitiativeSchema (Zod refine), source_type/source_id in InitiativeController INSERT + guard, migration 601 (presentation_decks), presentationGeneratorService DeckSetup, 4x guards in my-work.routes.ts. |
+| 2026-02-26 | V3-A02 adoption (persistence) | Migrated 4 hubs to persistent dynamic tabs: Initiatives+Presentations via useModuleOpenDocuments; Interview+MyWork via inline sessionStorage. Extended OpenDocument.type. |
+| 2026-02-26 | V3-E06 seed parity | Migration 602: ADMA assessment enriched to COMPLETED with full framework_data + 2nd assessment added. SIRI/ADMA at full parity. |
+| 2026-02-26 | V3-E07 audit script | audit-known-tools-completeness.ts: 19/19 tools 100% (EN+PL). No fill needed. |
+| 2026-02-26 | **Full re-audit: 37/38 FULL** | Re-audited all 38 tasks. 37 FULL, 1 PARTIAL (A03 — Interview/MyWork custom hub, functionally compliant). All R0 FULL. Smoke A06+B02+C-ws+E07 passed. tsc clean. Ready for integration testing. |
 
 ---
 
@@ -371,6 +378,10 @@ Reguła: “done” bez smoke = nie istnieje (QA status min `smoke_passed`).
 | Results → ROI plan vs realized | R0 | `V3-H02` | Demo Script F | Piotr | smoke_passed (structural) |
 | Reports → Builder → Save + Open source | R0 | `V3-J01`, `V3-A01` | Demo Script G | Piotr | smoke_passed (structural) |
 | Demo → Trial funnel | R0 | `V3-A05` | Demo Script A | Piotr | done |
+| Notifications → Slack/Teams (P0 outbound) | R1 | `V3-M02` | Manual: create decision required → Slack/Teams card | Piotr | not_tested |
+| Tasks → Jira (bi-directional) | R1 | `V3-M03` | Manual: create task → Jira issue; update status → sync back | Piotr | not_tested |
+| Export report/deck → Drive/SharePoint | R1 | `V3-M04` | Manual: generate report → publish → link stored in attachments | Piotr | not_tested |
+| KPI source → MCP‑IRIS refresh (read-only) | R2 | `V3-M08` | Manual: KPI “source=MCP‑IRIS” → refresh → values update | Piotr | not_tested |
 
 ### 2.6 “Naming / enums freeze” (MUST) — żeby nie rozwalić integracji w trakcie kodowania
 
@@ -397,6 +408,7 @@ W3: Program jest podzielony na workstreamy (epiki). Każdy ma taski z identyfika
 - **WS-J Reports & Presentations v3**: biblioteki + generatory + upload mode + share/export.
 - **WS-K N‑mode management**: required sections, completeness, AI assist w uzupełnianiu.
 - **WS-L V4 placeholders**: MCP IRIS + Marketplace “Coming soon”.
+- **WS-M Integrations & MCP**: synchronizacje zewnętrzne (email/komunikatory/chmury/PM/kalendarze/PMO) + MCP providers + MCP‑IRIS + MCP‑Marketplace.
 
 ---
 
@@ -448,8 +460,8 @@ Cel: dopracowanie opisów narzędzi (known-tools), szablonów, micro‑video, he
 | V3-E03 | Tools: Tool Wizard Standard (non-licensed tools runtime) | P0 | R0 | draft | done | smoke_passed | Piotr | V3-E01 |
 | V3-E04 | Tools: One task per consulting tool (spec+assets+help) | P1 | R2 | draft | done | done | Piotr | V3-E03 |
 | V3-E05 | Tools: Process Automation tool (hybrid workspace+table wizard) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-E03 |
-| V3-E06 | Tools: Licensed methodologies parity (SIRI/ADMA) | P1 | R1 | draft | done | done | Piotr | V3-E01 |
-| V3-E07 | Tools Quality: Known Tools content completeness audit + fill plan | P1 | R2 | draft | done | done | Piotr | V3-E04 |
+| V3-E06 | Tools: Licensed methodologies parity (SIRI/ADMA) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-E01 |
+| V3-E07 | Tools Quality: Known Tools content completeness audit + fill plan | P1 | R2 | draft | done | smoke_passed | Piotr | V3-E04 |
 | V3-F01 | Initiatives: template-driven N-mode per InitiativeLevel | P0 | R0 | review | done | smoke_passed | Piotr | V3-K01 |
 | V3-F02 | Initiatives: Portfolio Analysis (Resources/Feasibility/Logic/Timeline/Completeness) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-F01 |
 | V3-G01 | Execution: minimal surfaces + spójne statusy | P2 | R2 | draft | done | done | Piotr | V3-F01 |
@@ -462,6 +474,15 @@ Cel: dopracowanie opisów narzędzi (known-tools), szablonów, micro‑video, he
 | V3-J03 | Generators: upload chaos jako 3 ścieżka report/deck | P2 | R2 | draft | done | done | Piotr | V3-J01 |
 | V3-K01 | N-mode: required sections/pola + completeness + AI assist | P1 | R1 | draft | done | smoke_passed | Piotr | — |
 | V3-L01 | V4: MCP IRIS + Marketplace w menu (Coming soon) | P2 | R2 | draft | done | done | Piotr | — |
+| V3-M01 | Integrations foundation: org-level providers + Settings UI (no mocks) + sync logs | P0 | R1 | draft | todo | not_tested | Piotr | V3-A04 |
+| V3-M02 | Communication sync: Slack + Teams notifications + channel mappings (projects/gates) | P0 | R1 | draft | todo | not_tested | Piotr | V3-M01 |
+| V3-M03 | PM sync (P0): Jira bi-directional tasks + status mapping + webhook inbound | P0 | R1 | draft | todo | not_tested | Piotr | V3-M01 |
+| V3-M04 | Storage exports: Google Drive + OneDrive/SharePoint publish for reports/decks | P1 | R1 | draft | todo | not_tested | Piotr | V3-J01 |
+| V3-M05 | Calendar sync: Google Calendar + Outlook (due dates + gate reviews) | P1 | R1 | draft | todo | not_tested | Piotr | V3-M01 |
+| V3-M06 | Automation backbone: Zapier/Make API keys + event catalog + rate limits | P1 | R2 | draft | todo | not_tested | Piotr | V3-M01 |
+| V3-M07 | MCP providers framework: catalog + allowlist + audit + registry discovery | P1 | R1 | draft | todo | not_tested | Piotr | V3-M01 |
+| V3-M08 | MCP‑IRIS: Streamable HTTP provider (FastMCP) + MES client contract (factory context) | P1 | R2 | draft | todo | not_tested | Piotr | V3-M07, V3-H01 |
+| V3-M09 | MCP‑Marketplace (DBR77): catalog search + asset import to Tools/Presentations | P2 | R2 | draft | todo | not_tested | Piotr | V3-M07, V3-E01 |
 
 ---
 
@@ -2418,6 +2439,214 @@ Trzeci tryb: wrzuć dokumenty → wygeneruj draft report/deck z traceability do 
 - `nmode_missing_item_clicked`
 - `nmode_ai_fill_proposed` / `nmode_ai_fill_accepted` / `nmode_ai_fill_rejected`
 **Rollout plan:** R1: required + missing list + manual fixes; potem AI assist i gate readiness.
+
+---
+
+### WS-M — Integrations & MCP (sync + external systems)
+
+#### V3-M01 — [Integrations] Foundation: org-level providers + Settings UI (no mocks) + sync logs
+- Status spec: draft
+- Priorytet: P0
+- Target: R1
+- Moduł: Platform / Settings / Integrations
+- SSOT: `docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`, `docs/flows/integration/EXTERNAL_INTEGRATIONS_FLOW.md`
+
+**Business challenge (problem):**  
+Integracje istnieją w kodzie, ale obecnie są rozproszone (org-level vs user-level vs MCP), a UI ma miejsca, które wyglądają jak marketplace/mocks. Bez spójnej bazy nie da się dowieźć „pełnej synchronizacji”.
+
+**Cel (outcome):**  
+Jedna, spójna „warstwa integracji” w Settings: lista providerów z DB, realne statusy połączeń, realne logi synchronizacji (bez „fake” danych).
+
+**Zakres (IN/OUT):**
+- IN:
+  - ujednolicenie modelu org-level integracji jako system-of-record dla synchronizacji
+  - UI Settings → Integrations pobiera dane z backendu (provider list + connected integrations + status)
+  - widoczny „health”: last sync / last error / error count (min) + link do logów
+- OUT:
+  - kompletna implementacja wszystkich konektorów (to kolejne taski M02..M06)
+
+**Definition of Done (DoD):**
+- Settings pokazuje providerów z `integration_providers` i realne połączenia z `integrations`.
+- Każdy sync zapisuje `integration_sync_log`, a UI potrafi go wyświetlić (min. tabela).
+- Brak mockowanych list integracji w Settings dla ścieżek objętych tym taskiem.
+
+**Acceptance / test plan:**
+- Connect 1 provider (stub) → w UI status `active`, widoczny `connected_at`.
+- Manual „sync now” → wpis w `integration_sync_log` widoczny w UI.
+
+**Dependencies:** V3-A04 (routing/menu)  
+**Risks / go-live risk:** P0 — bez fundamentu każdy konektor będzie „osobnym światem”.
+
+---
+
+#### V3-M02 — [Integrations] Communication sync: Slack + Teams notifications + channel mappings (projects/gates)
+- Status spec: draft
+- Priorytet: P0
+- Target: R1
+- Moduł: MyWork / Governance / Notifications
+- SSOT: `docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`
+
+**Cel:**  
+Powiadomienia i „decision required” trafiają do Slack/Teams (kanał per projekt) z linkiem do artefaktu + minimalnym kontekstem.
+
+**Zakres (IN/OUT):**
+- IN:
+  - outbound: `decision_required`, `gate_pending`, `task_due`, `risk_alert` → Slack/Teams
+  - mapping: `project_id` ↔ `channel_id` (lub Teams channel) w konfiguracji integracji
+- OUT:
+  - inbound actions (approve/ack) z Slack/Teams (P1)
+
+**DoD:**
+- Minimum 5 eventów idzie do Slack/Teams, ma link do artefaktu i jest audytowane w sync log.
+- UI pozwala przypisać kanał do projektu (min. 1 mapping).
+
+**Acceptance / test plan:**
+- Wymuszenie „decision required” → karta w Slack/Teams w odpowiednim kanale.
+
+**Dependencies:** V3-M01
+
+---
+
+#### V3-M03 — [Integrations] PM sync (P0): Jira bi-directional tasks + status mapping + webhook inbound
+- Status spec: draft
+- Priorytet: P0
+- Target: R1
+- Moduł: Execution / Initiatives / Tasks
+- SSOT: `docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`, `docs/flows/integration/EXTERNAL_INTEGRATIONS_FLOW.md`
+
+**Cel:**  
+Zadania wykonawcze w Consultify synchronizują się z Jira (tworzenie/aktualizacja/status) w trybie bezpiecznym na retry (idempotencja + mapping).
+
+**Zakres (IN/OUT):**
+- IN:
+  - outbound: create/update task → Jira issue
+  - inbound: webhook Jira status change → aktualizacja lokalnego taska
+  - mapping: `task` ↔ `issue` w `integration_sync_mappings`
+- OUT:
+  - komentarze dwustronne, załączniki (P1)
+
+**DoD:**
+- Create task w Consultify → powstaje issue w Jira + mapping zapisany.
+- Zmiana statusu w Jira → zmiana statusu w Consultify (webhook).
+- Sync log zawiera wpisy push/pull, a błędy mają retriable marker.
+
+**Acceptance / test plan:**
+- Utwórz task → Jira issue; zmień status w Jira → status wraca do aplikacji.
+
+**Dependencies:** V3-M01
+
+---
+
+#### V3-M04 — [Integrations] Storage exports: Google Drive + OneDrive/SharePoint publish for reports/decks
+- Status spec: draft
+- Priorytet: P1
+- Target: R1
+- Moduł: Reports / Presentations / Attachments
+- SSOT: `docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`
+
+**Cel:**  
+Report/deck może być opublikowany do Drive/SharePoint do folderu projektu, a link jest zapisany jako attachment w artefakcie.
+
+**DoD:**
+- Publish report/deck → plik trafia do zewnętrznej chmury + w Consultify jest link + sync log.
+
+**Dependencies:** V3-J01
+
+---
+
+#### V3-M05 — [Integrations] Calendar sync: Google Calendar + Outlook (due dates + gate reviews)
+- Status spec: draft
+- Priorytet: P1
+- Target: R1
+- Moduł: Tasks / Governance / Results (reviews)
+- SSOT: `docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`
+
+**Cel:**  
+Terminy (due dates) i review gate/KPI są widoczne w kalendarzu zewnętrznym (push, bez pełnego bi-directional).
+
+**DoD:**
+- Dla wybranych typów eventów powstaje event w Google/Outlook z linkiem do obiektu.
+- Eventy są audytowane w sync log.
+
+**Dependencies:** V3-M01
+
+---
+
+#### V3-M06 — [Integrations] Automation backbone: Zapier/Make API keys + event catalog + rate limits
+- Status spec: draft
+- Priorytet: P1
+- Target: R2
+- Moduł: Integrations / Partner API
+- SSOT: `docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`
+
+**Cel:**  
+Dać „długi ogon” integracji przez Zapier/Make: stabilne API keys, katalog eventów, oraz rate limiting.
+
+**DoD:**
+- API keys mają prefix + hash + limity (per minute/day) + usage tracking.
+- Jest lista zdarzeń (triggers) i akcji (actions) dostępnych dla automatyzacji.
+
+**Dependencies:** V3-M01
+
+---
+
+#### V3-M07 — [Integrations] MCP providers framework: catalog + allowlist + audit + registry discovery
+- Status spec: draft
+- Priorytet: P1
+- Target: R1
+- Moduł: AI / Integrations
+- SSOT: `docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`
+
+**Cel:**  
+MCP działa jako „provider” w systemie: można dodać MCP server, ustawić allowlist narzędzi, zrobić test połączenia i mieć audyt wywołań.
+
+**DoD:**
+- CRUD MCP providerów (org-level) + test/health.
+- Allowlist tooli (min: READ only) + audyt w `mcp_audit_logs`.
+- (Opcjonalnie) import metadanych z MCP Registry jako „discovery mode” (R2).
+
+**Dependencies:** V3-M01
+
+---
+
+#### V3-M08 — [Integrations] MCP‑IRIS: Streamable HTTP provider (FastMCP) + MES client contract (factory context)
+- Status spec: draft
+- Priorytet: P1
+- Target: R2
+- Moduł: Results / Execution / Evidence
+- SSOT: `docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`
+
+**Cel:**  
+Podłączyć MCP‑IRIS jako zewnętrzny MCP provider i zrobić 1 realny „proof path” w Results (read-only).
+
+**DoD:**
+- Provider MCP‑IRIS konfigurowalny: `MES_BASE_URL`, token, factory mode.
+- Minimum 3 READ tools (np. KPI/time-series + health) działają end-to-end.
+- Błędy 4xx/5xx mapowane na spójny kontrakt (retriable / non‑retriable) i logowane w audycie MCP.
+
+**Acceptance / test plan:**
+- KPI (source=MCP‑IRIS) → refresh → wartości w time-series uzupełnione.
+
+**Dependencies:** V3-M07, V3-H01
+
+---
+
+#### V3-M09 — [Integrations] MCP‑Marketplace (DBR77): catalog search + asset import to Tools/Presentations
+- Status spec: draft
+- Priorytet: P2
+- Target: R2
+- Moduł: Tools / Presentations
+- SSOT: `docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`
+
+**Cel:**  
+Read-only marketplace: wyszukiwanie i import assetów/template’ów do Tools/Presentations.
+
+**DoD:**
+- Provider MCP‑Marketplace: connect + search + get asset.
+- Import asset → zapis jako template (Tools) lub asset (Presentations).
+- Audyt MCP wywołań.
+
+**Dependencies:** V3-M07, V3-E01
 
 ---
 

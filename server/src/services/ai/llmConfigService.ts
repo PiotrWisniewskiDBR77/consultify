@@ -23,6 +23,11 @@ type ProviderDefinition = {
   tier: string;
   requiresJWT?: boolean;
   isLocal?: boolean;
+  kind?: 'TEXT_LLM' | 'IMAGE_MODEL' | 'BUSINESS_MODEL';
+  provider_type?: 'direct' | 'aggregator' | 'hosted' | 'local' | 'customer_managed';
+  origin_vendor?: string;
+  execution_regions?: string[];
+  allowed_data_classes?: Array<'no_pii' | 'pii' | 'confidential'>;
 };
 
 type ProviderRow = {
@@ -69,7 +74,12 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     supportsStreaming: true,
     supportsVision: true,
     supportsTools: true,
-    tier: 'BUDGET',
+    tier: 'PREMIUM',
+    kind: 'TEXT_LLM',
+    provider_type: 'direct',
+    origin_vendor: 'openai',
+    execution_regions: ['US', 'EU'],
+    allowed_data_classes: ['no_pii', 'pii'],
   },
   google: {
     id: 'google',
@@ -83,6 +93,11 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     supportsVision: true,
     supportsTools: true,
     tier: 'BUDGET',
+    kind: 'TEXT_LLM',
+    provider_type: 'direct',
+    origin_vendor: 'google',
+    execution_regions: ['US', 'EU'],
+    allowed_data_classes: ['no_pii', 'pii'],
   },
   deepseek: {
     id: 'deepseek',
@@ -95,6 +110,11 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     supportsVision: false,
     supportsTools: true,
     tier: 'BUDGET',
+    kind: 'TEXT_LLM',
+    provider_type: 'direct',
+    origin_vendor: 'deepseek',
+    execution_regions: ['US', 'SG', 'EU'],
+    allowed_data_classes: ['no_pii', 'pii'],
   },
   anthropic: {
     id: 'anthropic',
@@ -107,6 +127,11 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     supportsVision: true,
     supportsTools: true,
     tier: 'PREMIUM',
+    kind: 'TEXT_LLM',
+    provider_type: 'direct',
+    origin_vendor: 'anthropic',
+    execution_regions: ['US', 'EU'],
+    allowed_data_classes: ['no_pii', 'pii'],
   },
   nvidia: {
     id: 'nvidia',
@@ -157,6 +182,11 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     supportsTools: true,
     tier: 'STANDARD',
     requiresJWT: true,
+    kind: 'TEXT_LLM',
+    provider_type: 'direct',
+    origin_vendor: 'zhipu',
+    execution_regions: ['CN', 'US'],
+    allowed_data_classes: ['no_pii', 'pii'],
   },
   openrouter: {
     id: 'openrouter',
@@ -171,6 +201,31 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     supportsVision: true,
     supportsTools: true,
     tier: 'STANDARD',
+    kind: 'TEXT_LLM',
+    provider_type: 'aggregator',
+    origin_vendor: 'openrouter',
+    execution_regions: ['US', 'EU'],
+    allowed_data_classes: ['no_pii', 'pii'],
+  },
+  replicate: {
+    id: 'replicate',
+    name: 'Replicate (Images)',
+    envKey: 'REPLICATE_API_TOKEN',
+    envKeyAliases: ['REPLICATE_API_KEY'],
+    // Base URL for predictions API
+    defaultEndpoint: 'https://api.replicate.com/v1',
+    // Default is informational; actual image model used via ai_purpose_assignments.model_id
+    defaultModel: 'black-forest-labs/flux-schnell',
+    costPer1k: 0,
+    supportsStreaming: false,
+    supportsVision: false,
+    supportsTools: false,
+    tier: 'PREMIUM',
+    kind: 'IMAGE_MODEL',
+    provider_type: 'hosted',
+    origin_vendor: 'replicate',
+    execution_regions: ['US', 'EU'],
+    allowed_data_classes: ['no_pii', 'pii'],
   },
 };
 
@@ -219,7 +274,7 @@ function getEnvSyncAllowlist(): Set<string> {
     process.env.LLM_MULTI_PROVIDER === 'true' ||
     process.env.LLM_MULTI_PROVIDER === 'yes';
   if (multi) {
-    return new Set(['openrouter', 'openai', 'anthropic', 'google', 'ollama']);
+    return new Set(['openrouter', 'openai', 'anthropic', 'google', 'deepseek', 'zai', 'replicate', 'ollama']);
   }
 
   return new Set(['openrouter']);
@@ -521,6 +576,13 @@ export class LLMConfigService {
         cost_per_1k: definition.costPer1k,
         priority: TIER_PRIORITY[definition.tier] || 1,
         tier: definition.tier,
+        ...(definition.kind ? { kind: definition.kind } : {}),
+        ...(definition.provider_type ? { provider_type: definition.provider_type } : {}),
+        ...(definition.origin_vendor ? { origin_vendor: definition.origin_vendor } : {}),
+        ...(definition.execution_regions ? { execution_regions: JSON.stringify(definition.execution_regions) } : {}),
+        ...(definition.allowed_data_classes
+          ? { allowed_data_classes: JSON.stringify(definition.allowed_data_classes) }
+          : {}),
       };
 
       const existingProvider = await this.getProviderFromDb(providerId);

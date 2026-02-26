@@ -46,6 +46,7 @@ import {
   StatusDropdown,
   ViewMode,
 } from '../shared/ModuleHub';
+import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { PortfolioAnalysisView } from './Analysis';
 // Compact side panel (replaces old 50% drawer)
 import { InitiativeCompactPanel } from './InitiativeCompactPanel';
@@ -130,8 +131,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
-  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
-  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+  // V3-A02: Persistent dynamic tabs via sessionStorage
+  const {
+    openDocuments,
+    setOpenDocuments,
+    activeDocumentId,
+    setActiveDocumentId,
+  } = useModuleOpenDocuments('initiatives');
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
   /** Active/All scope toggle — used for Kanban columns and data filtering */
   const [scope, setScope] = useState<KanbanScope>('active');
@@ -287,7 +293,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // Available view modes — hide when Analysis tab is active
   const availableViewModes: ViewMode[] =
-    activeTab === 'analysis' ? [] : ['table', 'grid', 'kanban', 'timeline'];
+    activeTab === 'analysis' ? [] : ['table', 'kanban', 'timeline', 'grid'];
 
   // V3-F02: Portfolio Analysis tab + main portfolio tab
   const tabs = useMemo(

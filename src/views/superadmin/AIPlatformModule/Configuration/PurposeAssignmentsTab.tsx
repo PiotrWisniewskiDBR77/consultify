@@ -60,6 +60,10 @@ export const PurposeAssignmentsTab: React.FC = () => {
   const [selectedPurpose, setSelectedPurpose] = useState<string>('');
   const [orgIdFilter, setOrgIdFilter] = useState<string>('');
   const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
+  const [providerKindFilter, setProviderKindFilter] = useState<'AUTO' | 'ALL' | 'TEXT_LLM' | 'IMAGE_MODEL'>(
+    'AUTO'
+  );
+  const [showMismatchedProviders, setShowMismatchedProviders] = useState(false);
 
   // Create/Upsert purpose form
   const [newPurpose, setNewPurpose] = useState<Partial<PurposeRow>>({
@@ -143,6 +147,99 @@ export const PurposeAssignmentsTab: React.FC = () => {
     () => purposes.find((p) => String(p.purpose) === String(selectedPurpose)),
     [purposes, selectedPurpose]
   );
+
+  const effectiveProviderKind = useMemo(() => {
+    const k = String(activePurpose?.kind || '').toUpperCase();
+    if (providerKindFilter === 'ALL') return 'ALL';
+    if (providerKindFilter === 'TEXT_LLM' || providerKindFilter === 'IMAGE_MODEL') return providerKindFilter;
+    if (providerKindFilter === 'AUTO') {
+      if (k === 'IMAGE_MODEL') return 'IMAGE_MODEL';
+      return 'TEXT_LLM';
+    }
+    return 'ALL';
+  }, [activePurpose?.kind, providerKindFilter]);
+
+  const filteredProviders = useMemo(() => {
+    const k = effectiveProviderKind;
+    if (k === 'ALL') return providers;
+    return providers.filter((p) => {
+      const pk = String(p.kind || 'TEXT_LLM').toUpperCase();
+      if (showMismatchedProviders) return true;
+      return pk === k;
+    });
+  }, [providers, effectiveProviderKind, showMismatchedProviders]);
+
+  const applyStarterPreset = async (preset: 'text' | 'image') => {
+    const purpose = String(selectedPurpose || '').trim();
+    if (!purpose) {
+      toast.error('Select purpose first');
+      return;
+    }
+    const scopeOrg = orgIdFilter.trim() || null;
+
+    const wantedProviders =
+      preset === 'image'
+        ? ['replicate', 'openai']
+        : ['openai', 'anthropic', 'google', 'gemini', 'openrouter', 'deepseek', 'zai', 'z_ai'];
+
+    const candidates = providers
+      .filter((p) => wantedProviders.includes(String(p.provider || '').toLowerCase()))
+      // prefer matching kind
+      .filter((p) => {
+        const pk = String(p.kind || 'TEXT_LLM').toUpperCase();
+        return preset === 'image' ? pk === 'IMAGE_MODEL' || pk === 'TEXT_LLM' : pk === 'TEXT_LLM';
+      });
+
+    if (candidates.length === 0) {
+      toast.error('No matching providers configured for this preset');
+      return;
+    }
+
+    const priorityOrder =
+      preset === 'image'
+        ? ['replicate', 'openai']
+        : ['openai', 'anthropic', 'google', 'openrouter', 'deepseek', 'zai'];
+
+    setSaving(true);
+    try {
+      for (const providerKey of priorityOrder) {
+        const match =
+          candidates.find((p) => String(p.provider || '').toLowerCase() === providerKey) ||
+          candidates.find((p) =>
+            providerKey === 'google'
+              ? ['google', 'gemini'].includes(String(p.provider || '').toLowerCase())
+              : providerKey === 'zai'
+                ? ['zai', 'z_ai'].includes(String(p.provider || '').toLowerCase())
+                : false
+          ) ||
+          null;
+        if (!match) continue;
+
+        // Priority: higher is better in backend ordering
+        const priority = 100 - priorityOrder.indexOf(providerKey) * 10;
+        const res = await fetch(`/api/llm/purposes/${encodeURIComponent(purpose)}/assignments`, {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({
+            providerId: match.id,
+            priority,
+            organizationId: scopeOrg,
+            modelId: null,
+            is_active: true,
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json?.error || 'Preset apply failed');
+      }
+
+      toast.success('Starter preset applied');
+      await loadAssignments();
+    } catch (e: any) {
+      toast.error(e?.message || 'Preset apply failed');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleUpsertPurpose = async () => {
     const purpose = String(newPurpose.purpose || '').trim();
@@ -315,15 +412,36 @@ export const PurposeAssignmentsTab: React.FC = () => {
             Add assignment
           </div>
           <div className="grid grid-cols-1 gap-2">
+            <div className="flex items-center justify-between gap-3">
+              <select
+                value={providerKindFilter}
+                onChange={(e) => setProviderKindFilter(e.target.value as any)}
+                className="flex-1 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none text-sm"
+              >
+                <option value="AUTO">Providers: auto (by purpose kind)</option>
+                <option value="TEXT_LLM">Providers: TEXT_LLM</option>
+                <option value="IMAGE_MODEL">Providers: IMAGE_MODEL</option>
+                <option value="ALL">Providers: all</option>
+              </select>
+              <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={showMismatchedProviders}
+                  onChange={(e) => setShowMismatchedProviders(e.target.checked)}
+                />
+                show all
+              </label>
+            </div>
+
             <select
               value={assignmentForm.providerId}
               onChange={(e) => setAssignmentForm((p) => ({ ...p, providerId: e.target.value }))}
               className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
             >
               <option value="">Select provider…</option>
-              {providers.map((p) => (
+              {filteredProviders.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name || p.provider} ({p.provider} • {p.model_id})
+                  {p.name || p.provider} ({String(p.kind || 'TEXT_LLM')} • {p.provider} • {p.model_id})
                 </option>
               ))}
             </select>
@@ -350,6 +468,31 @@ export const PurposeAssignmentsTab: React.FC = () => {
               <Plus size={16} />
               Add
             </button>
+
+            <div className="pt-2 border-t border-slate-200 dark:border-navy-700">
+              <div className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                Starter presets
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => applyStarterPreset('text')}
+                  disabled={saving}
+                  className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                >
+                  TEXT chain
+                </button>
+                <button
+                  onClick={() => applyStarterPreset('image')}
+                  disabled={saving}
+                  className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                >
+                  IMAGE chain
+                </button>
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                Applies assignments for current purpose (global unless Org override is set).
+              </div>
+            </div>
           </div>
         </div>
       </div>

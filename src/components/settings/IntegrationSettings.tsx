@@ -8,6 +8,7 @@ import {
   EyeOff,
   Info,
   Plus,
+  Puzzle,
   RefreshCw,
   Send,
   Trash2,
@@ -47,34 +48,32 @@ interface EventCategory {
   events: { type: string; description: string }[];
 }
 
-// Provider Config
-const INTEGRATION_PROVIDERS = [
-  { id: 'slack', name: 'Slack', icon: Slack, description: 'Connect channel for updates' }, // Lucide has Slack
-  { id: 'teams', name: 'Microsoft Teams', icon: MessageCircle, description: 'Webhook integration' }, // Fallback icon
-  {
-    id: 'whatsapp',
-    name: 'WhatsApp',
-    icon: MessageCircle,
-    description: 'Business API notifications',
-  },
-  { id: 'trello', name: 'Trello', icon: Trello, description: 'Sync boards and cards' }, // Lucide has Trello
-  { id: 'jira', name: 'Jira', icon: Database, description: 'Issue tracking sync' },
-  { id: 'clickup', name: 'ClickUp', icon: CheckSquare, description: 'Task management sync' },
-  { id: 'asana', name: 'Asana', icon: CheckSquare, description: 'Task and project tracking' },
-  {
-    id: 'monday',
-    name: 'Monday.com',
-    icon: Calendar,
-    description: 'Work OS and project management',
-  },
-  { id: 'notion', name: 'Notion', icon: FileText, description: 'All-in-one workspace' },
-  {
-    id: 'basecamp',
-    name: 'Basecamp',
-    icon: MessageSquare,
-    description: 'Project management and communication',
-  },
-];
+interface IntegrationProvider {
+  id: string;
+  name: string;
+  displayName: string;
+  category: string;
+  description?: string | null;
+  authType?: 'oauth2' | 'api_key' | 'webhook' | string;
+  isActive: boolean;
+  isBeta: boolean;
+  isEnterpriseOnly: boolean;
+}
+
+const PROVIDER_ICON: Record<string, any> = {
+  slack: Slack,
+  microsoft_teams: MessageCircle,
+  jira: Database,
+  asana: CheckSquare,
+  monday: Calendar,
+  google_drive: FileText,
+  google_calendar: Calendar,
+  onedrive: FileText,
+  outlook: Calendar,
+  zapier: RefreshCw,
+  make: RefreshCw,
+  trello: Trello,
+};
 
 interface IntegrationSettingsProps {
   currentUser: User;
@@ -82,18 +81,34 @@ interface IntegrationSettingsProps {
 
 interface Integration {
   id: string;
+  name?: string;
   provider: string;
   config: any;
-  status: 'active' | 'error' | 'disabled';
+  status: 'active' | 'paused' | 'error' | 'disconnected' | 'connected' | 'disabled' | string;
+  created_at?: string | null;
+  last_synced_at?: string | null;
+  last_error?: string | null;
+  error_count?: number | null;
 }
 
 export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ currentUser }) => {
+  const [providers, setProviders] = useState<IntegrationProvider[]>([]);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+  const [editingIntegrationId, setEditingIntegrationId] = useState<string | null>(null);
   const [configInput, setConfigInput] = useState('');
   const [connecting, setConnecting] = useState(false);
+  const [syncingIntegrationId, setSyncingIntegrationId] = useState<string | null>(null);
+
+  const [logsModal, setLogsModal] = useState<{
+    open: boolean;
+    integrationId: string | null;
+    providerLabel?: string;
+    loading: boolean;
+    logs: any[];
+  }>({ open: false, integrationId: null, loading: false, logs: [] });
 
   // Webhooks state
   const [activeTab, setActiveTab] = useState<'integrations' | 'webhooks'>('integrations');
@@ -154,11 +169,23 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
     }
   };
 
+  const fetchProviders = useCallback(async () => {
+    try {
+      const data = await (Api as any).getIntegrationProviders?.();
+      const list = Array.isArray(data) ? data : data?.providers || [];
+      setProviders(list || []);
+    } catch (err) {
+      console.error('Failed to load integration providers:', err);
+      setProviders([]);
+    }
+  }, []);
+
   useEffect(() => {
     fetchIntegrations();
+    fetchProviders();
     fetchWebhooks();
     fetchAvailableEvents();
-  }, [currentUser.organizationId, fetchWebhooks, fetchAvailableEvents]);
+  }, [currentUser.organizationId, fetchWebhooks, fetchAvailableEvents, fetchProviders]);
 
   // Show message if user has no organization
   if (!currentUser.organizationId) {
@@ -194,7 +221,21 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
 
   const handleConnect = (providerId: string) => {
     setSelectedProvider(providerId);
+    setEditingIntegrationId(null);
     setConfigInput('');
+    setIsModalOpen(true);
+  };
+
+  const handleEditConfig = (integration: Integration) => {
+    setSelectedProvider(integration.provider);
+    setEditingIntegrationId(integration.id);
+    try {
+      const raw = integration.config;
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      setConfigInput(JSON.stringify(parsed || {}, null, 2));
+    } catch {
+      setConfigInput(typeof integration.config === 'string' ? integration.config : JSON.stringify(integration.config));
+    }
     setIsModalOpen(true);
   };
 
@@ -205,15 +246,32 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
     }
     setConnecting(true);
     try {
-      // Use connectIntegration API method
-      await Api.connectIntegration(selectedProvider);
+      const config = (() => {
+        const raw = String(configInput || '').trim();
+        if (!raw) return {};
+        try {
+          return JSON.parse(raw);
+        } catch {
+          // Treat non-JSON as a webhook URL for quick setup
+          return { webhookUrl: raw };
+        }
+      })();
 
-      toast.success(
-        `${INTEGRATION_PROVIDERS.find((p) => p.id === selectedProvider)?.name} connected successfully!`
-      );
+      if (editingIntegrationId) {
+        await (Api as any).updateIntegrationSettings?.(editingIntegrationId, config);
+        toast.success('Integration settings updated!');
+      } else {
+        // Use connectIntegration API method (provider slug/name)
+        await Api.connectIntegration(selectedProvider, config);
+        toast.success(
+          `${providers.find((p) => p.name === selectedProvider)?.displayName || selectedProvider} connected successfully!`
+        );
+      }
+
       await fetchIntegrations();
       setIsModalOpen(false);
       setConfigInput('');
+      setEditingIntegrationId(null);
     } catch (err: any) {
       console.error('Failed to connect integration:', err);
       toast.error(err.message || 'Failed to connect integration');
@@ -232,8 +290,8 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
         return;
       }
 
-      // Use disconnectIntegration API method with provider name
-      await Api.disconnectIntegration(integration.provider);
+      // Use disconnectIntegration API method with integration id
+      await Api.disconnectIntegration(integration.id);
       toast.success('Integration disconnected');
       fetchIntegrations();
     } catch (err: any) {
@@ -309,6 +367,31 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
     toast.success('Copied to clipboard');
   };
 
+  const handleSyncNow = async (integrationId: string) => {
+    setSyncingIntegrationId(integrationId);
+    try {
+      await (Api as any).syncIntegration?.(integrationId);
+      toast.success('Sync initiated');
+      await fetchIntegrations();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to sync integration');
+    } finally {
+      setSyncingIntegrationId(null);
+    }
+  };
+
+  const handleOpenLogs = async (integrationId: string, providerLabel?: string) => {
+    setLogsModal({ open: true, integrationId, providerLabel, loading: true, logs: [] });
+    try {
+      const data = await (Api as any).getIntegrationLogs?.(integrationId);
+      const logs = Array.isArray(data) ? data : data?.logs || [];
+      setLogsModal({ open: true, integrationId, providerLabel, loading: false, logs });
+    } catch (err: any) {
+      setLogsModal({ open: true, integrationId, providerLabel, loading: false, logs: [] });
+      toast.error(err?.message || 'Failed to load sync logs');
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 relative">
       <InfoButton cardId="settings-integrations" position="top-right" />
@@ -344,15 +427,17 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
       </div>
       {activeTab === 'integrations' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {INTEGRATION_PROVIDERS.map((p) => {
-            const connected = integrations.find((i) => i.provider === p.id);
-            const Icon = p.icon;
+          {(providers || [])
+            .filter((p) => p.isActive !== false)
+            .map((p) => {
+              const connected = integrations.find((i) => i.provider === p.name || i.provider === p.id);
+              const Icon = PROVIDER_ICON[p.name] || PROVIDER_ICON[p.id] || Puzzle;
 
-            return (
-              <div
-                key={p.id}
-                className="bg-white dark:bg-navy-800 p-6 rounded-xl border border-slate-200 dark:border-navy-700 flex flex-col justify-between hover:shadow-lg transition-shadow"
-              >
+              return (
+                <div
+                  key={p.id}
+                  className="bg-white dark:bg-navy-800 p-6 rounded-xl border border-slate-200 dark:border-navy-700 flex flex-col justify-between hover:shadow-lg transition-shadow"
+                >
                 <div>
                   <div className="flex items-center gap-3 mb-4">
                     <div
@@ -361,30 +446,84 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                       <Icon size={24} />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-slate-900 dark:text-white">{p.name}</h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{p.description}</p>
+                      <h3 className="font-semibold text-slate-900 dark:text-white">{p.displayName}</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{p.description || p.category}</p>
                     </div>
                   </div>
                   {connected && (
-                    <div className="mb-4 text-xs bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 px-2 py-1 rounded inline-flex items-center gap-1">
-                      <CheckCircle size={12} /> Connected
+                    <div className="mb-4 space-y-2">
+                      <div className="text-xs bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 px-2 py-1 rounded inline-flex items-center gap-1">
+                        <CheckCircle size={12} /> Connected
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        <div>
+                          Status:{' '}
+                          <span className="font-medium text-slate-700 dark:text-slate-200">
+                            {connected.status || 'active'}
+                          </span>
+                        </div>
+                        <div>
+                          Last sync:{' '}
+                          <span className="font-medium text-slate-700 dark:text-slate-200">
+                            {connected.last_synced_at ? new Date(connected.last_synced_at).toLocaleString() : '—'}
+                          </span>
+                        </div>
+                        {connected.last_error ? (
+                          <div className="text-red-600 dark:text-red-400 mt-1">
+                            Last error: {String(connected.last_error).slice(0, 120)}
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   )}
                 </div>
 
-                <button
-                  onClick={() => (connected ? handleDelete(connected.id) : handleConnect(p.id))}
-                  className={`w-full py-2 rounded-lg text-sm font-medium transition-colors ${
-                    connected
-                      ? 'bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-red-900/20 dark:hover:text-red-400'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  }`}
-                >
-                  {connected ? 'Disconnect' : 'Connect'}
-                </button>
+                {connected ? (
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => handleSyncNow(connected.id)}
+                      disabled={syncingIntegrationId === connected.id}
+                      className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10 flex items-center justify-center gap-2 disabled:opacity-60"
+                    >
+                      {syncingIntegrationId === connected.id ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <RefreshCw size={16} />
+                      )}
+                      Sync now
+                    </button>
+                    <button
+                      onClick={() => handleOpenLogs(connected.id, p.displayName)}
+                      className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800 flex items-center justify-center gap-2"
+                    >
+                      <Eye size={16} />
+                      View logs
+                    </button>
+                    <button
+                      onClick={() => handleEditConfig(connected)}
+                      className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 dark:bg-navy-800 dark:text-slate-200 dark:hover:bg-navy-700 dark:border-navy-700 flex items-center justify-center gap-2"
+                    >
+                      <Settings size={16} />
+                      Edit config
+                    </button>
+                    <button
+                      onClick={() => handleDelete(connected.id)}
+                      className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                    >
+                      Disconnect
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleConnect(p.name)}
+                    className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    Connect
+                  </button>
+                )}
               </div>
-            );
-          })}
+              );
+            })}
         </div>
       )}{' '}
       {/* Connection Modal */}
@@ -392,12 +531,13 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white dark:bg-navy-800 rounded-xl max-w-md w-full p-6 shadow-2xl">
             <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">
-              Connect {INTEGRATION_PROVIDERS.find((p) => p.id === selectedProvider)?.name}
+              {editingIntegrationId ? 'Edit' : 'Connect'}{' '}
+              {providers.find((p) => p.name === selectedProvider)?.displayName || selectedProvider}
             </h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Webhook URL / API Token
+                  Webhook URL / API Token / JSON config
                 </label>
                 <input
                   type="text"
@@ -420,10 +560,100 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium flex items-center gap-2"
                 >
                   {connecting && <Loader2 size={16} className="animate-spin" />}
-                  {connecting ? 'Connecting...' : 'Save Integration'}
+                  {connecting
+                    ? editingIntegrationId
+                      ? 'Saving...'
+                      : 'Connecting...'
+                    : editingIntegrationId
+                      ? 'Save settings'
+                      : 'Save integration'}
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logs Modal */}
+      {logsModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white dark:bg-navy-800 rounded-xl max-w-2xl w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                Sync logs{logsModal.providerLabel ? ` — ${logsModal.providerLabel}` : ''}
+              </h3>
+              <button
+                onClick={() => setLogsModal({ open: false, integrationId: null, loading: false, logs: [] })}
+                className="px-3 py-1 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
+              >
+                Close
+              </button>
+            </div>
+
+            {logsModal.loading ? (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 size={24} className="animate-spin text-blue-600" />
+              </div>
+            ) : logsModal.logs.length === 0 ? (
+              <div className="text-sm text-slate-500 dark:text-slate-400 py-10 text-center">
+                No sync logs yet.
+              </div>
+            ) : (
+              <div className="overflow-auto border border-slate-200 dark:border-navy-700 rounded-xl">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 dark:bg-navy-900">
+                    <tr>
+                      <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
+                        Started
+                      </th>
+                      <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
+                        Status
+                      </th>
+                      <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
+                        Type
+                      </th>
+                      <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
+                        Processed
+                      </th>
+                      <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
+                        Duration
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {logsModal.logs.map((l: any) => (
+                      <tr key={l.id} className="border-t border-slate-200 dark:border-navy-700">
+                        <td className="p-3 text-slate-800 dark:text-slate-100">
+                          {l.startedAt ? new Date(l.startedAt).toLocaleString() : '—'}
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2 py-0.5 rounded text-xs font-medium ${
+                              l.status === 'success'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                                : l.status === 'failed'
+                                  ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                                  : 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300'
+                            }`}
+                          >
+                            {l.status || 'unknown'}
+                          </span>
+                        </td>
+                        <td className="p-3 text-slate-700 dark:text-slate-200">
+                          {l.syncType || '—'}
+                        </td>
+                        <td className="p-3 text-slate-700 dark:text-slate-200">
+                          {typeof l.itemsProcessed === 'number' ? l.itemsProcessed : '—'}
+                        </td>
+                        <td className="p-3 text-slate-700 dark:text-slate-200">
+                          {typeof l.durationMs === 'number' ? `${l.durationMs}ms` : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}

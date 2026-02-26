@@ -1,0 +1,194 @@
+[
+  {
+    "module": "Auth & Security",
+    "riskLevel": "critical",
+    "testFiles": {
+      "unit": 21,
+      "component": 3,
+      "integration": 8,
+      "e2e": 3,
+      "security": 10,
+      "total": 45
+    },
+    "coverageGate": true,
+    "hasNegativeTests": true,
+    "score": 100,
+    "grade": "A"
+  },
+  {
+    "module": "Billing & Payments",
+    "riskLevel": "critical",
+    "testFiles": {
+      "unit": 1,
+      "component": 1,
+      "integration": 2,
+      "e2e": 1,
+      "security": 1,
+      "total": 6
+    },
+    "coverageGate": true,
+    "hasNegativeTests": true,
+    "score": 90,
+    "grade": "A"
+  },
+  {
+    "module": "AI Services",
+    "riskLevel": "high",
+    "testFiles": {
+      "unit": 0,
+      "component": 11,
+      "integration": 15,
+      "e2e": 1,
+      "security": 0,
+      "total": 27
+    },
+    "coverageGate": false,
+    "hasNegativeTests": true,
+    "score": 65,
+    "grade": "B"
+  },
+  {
+    "module": "Initiatives & Portfolio",
+    "riskLevel": "high",
+    "testFiles": {
+      "unit": 1,
+      "component": 0,
+      "integration": 5,
+      "e2e": 2,
+      "security": 0,
+      "total": 8
+    },
+    "coverageGate": false,
+    "hasNegativeTests": true,
+    "score": 60,
+    "grade": "C"
+  },
+  {
+    "module": "Presentations & Reports",
+    "riskLevel": "high",
+    "testFiles": {
+      "unit": 1,
+      "component": 2,
+      "integration": 1,
+      "e2e": 1,
+      "security": 0,
+      "total": 5
+    },
+    "coverageGate": false,
+    "hasNegativeTests": false,
+    "score": 70,
+    "grade": "B"
+  },
+  {
+    "module": "Interview & Discovery",
+    "riskLevel": "medium",
+    "testFiles": {
+      "unit": 0,
+      "component": 4,
+      "integration": 1,
+      "e2e": 0,
+      "security": 0,
+      "total": 5
+    },
+    "coverageGate": false,
+    "hasNegativeTests": true,
+    "score": 40,
+    "grade": "D"
+  },
+  {
+    "module": "MyWork",
+    "riskLevel": "medium",
+    "testFiles": {
+      "unit": 0,
+      "component": 1,
+      "integration": 1,
+      "e2e": 1,
+      "security": 0,
+      "total": 3
+    },
+    "coverageGate": false,
+    "hasNegativeTests": false,
+    "score": 50,
+    "grade": "C"
+  },
+  {
+    "module": "Assessment",
+    "riskLevel": "medium",
+    "testFiles": {
+      "unit": 1,
+      "component": 0,
+      "integration": 2,
+      "e2e": 0,
+      "security": 0,
+      "total": 3
+    },
+    "coverageGate": false,
+    "hasNegativeTests": true,
+    "score": 45,
+    "grade": "D"
+  },
+  {
+    "module": "Execution & Benefits",
+    "riskLevel": "medium",
+    "testFiles": {
+      "unit": 1,
+      "component": 3,
+      "integration": 0,
+      "e2e": 1,
+      "security": 0,
+      "total": 5
+    },
+    "coverageGate": false,
+    "hasNegativeTests": true,
+    "score": 55,
+    "grade": "C"
+  },
+  {
+    "module": "Admin & Governance",
+    "riskLevel": "high",
+    "testFiles": {
+      "unit": 0,
+      "component": 36,
+      "integration": 4,
+      "e2e": 12,
+      "security": 0,
+      "total": 52
+    },
+    "coverageGate": false,
+    "hasNegativeTests": true,
+    "score": 65,
+    "grade": "B"
+  },
+  {
+    "module": "PMO & Projects",
+    "riskLevel": "medium",
+    "testFiles": {
+      "unit": 1,
+      "component": 11,
+      "integration": 1,
+      "e2e": 1,
+      "security": 0,
+      "total": 14
+    },
+    "coverageGate": false,
+    "hasNegativeTests": true,
+    "score": 80,
+    "grade": "A"
+  },
+  {
+    "module": "Navigation & Layout",
+    "riskLevel": "medium",
+    "testFiles": {
+      "unit": 0,
+      "component": 7,
+      "integration": 0,
+      "e2e": 1,
+      "security": 0,
+      "total": 8
+    },
+    "coverageGate": false,
+    "hasNegativeTests": true,
+    "score": 35,
+    "grade": "D"
+  }
+]

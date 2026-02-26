@@ -6,6 +6,7 @@ import { BodyText } from '../atomics/BodyText.js';
 import { Footnote } from '../atomics/Footnote.js';
 import { HeaderBar } from '../atomics/HeaderBar.js';
 import { Icon, ICONS } from '../atomics/Icon.js';
+import { Image } from '../atomics/Image.js';
 import { PageNumber } from '../atomics/PageNumber.js';
 import { SlideTitle } from '../atomics/SlideTitle.js';
 import type {
@@ -23,6 +24,26 @@ export function KeyMessagesLayout(
 ): LayoutResult {
   const c = slide.content as KeyMessagesContent;
   const elements = [];
+
+  // Optional subtle background visual (render first)
+  const visual = (slide.visuals || []).find(
+    (v) => v && (v.slot === 'background_texture' || v.slot === 'side_illustration' || v.purpose === 'image_slide_asset')
+  );
+  const asset = visual?.asset;
+  if (asset?.path || asset?.dataUri) {
+    elements.push(
+      Image(
+        {
+          position: { x: 0, y: 0, w: tokens.grid.slideW, h: tokens.grid.slideH },
+          path: asset.path,
+          data: asset.dataUri,
+          fit: 'cover',
+          transparency: 26,
+        },
+        tokens
+      )
+    );
+  }
 
   elements.push(HeaderBar({}, tokens));
   elements.push(

@@ -346,9 +346,28 @@ export const InterviewHub: React.FC = () => {
     {}
   );
 
-  // Dynamic documents state
-  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
-  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+  // V3-A02: Dynamic documents state with sessionStorage persistence
+  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>(() => {
+    try {
+      const raw = window.sessionStorage.getItem('moduleHub.openDocuments.interview');
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed?.openDocuments) ? parsed.openDocuments : [];
+    } catch { return []; }
+  });
+  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(() => {
+    try {
+      const raw = window.sessionStorage.getItem('moduleHub.openDocuments.interview');
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return typeof parsed?.activeDocumentId === 'string' ? parsed.activeDocumentId : null;
+    } catch { return null; }
+  });
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem('moduleHub.openDocuments.interview', JSON.stringify({ openDocuments, activeDocumentId }));
+    } catch { /* ignore */ }
+  }, [openDocuments, activeDocumentId]);
 
   // Load data
   useEffect(() => {

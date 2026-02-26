@@ -2064,6 +2064,18 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to delete provider');
   },
 
+  cloneLLMProviderModel: async (
+    sourceProviderId: string,
+    data: { name?: string; model_id: string; tier?: string; visibility?: string; is_active?: boolean; priority?: number }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/llm/providers/${encodeURIComponent(sourceProviderId)}/clone-model`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to clone provider model');
+  },
+
   // --- AI GOVERNANCE ---
   aiGetSystemPrompts: async (): Promise<any[]> => {
     // Canonical prompt SSOT: /api/ai-prompts
@@ -8717,16 +8729,66 @@ export const Api = {
   },
 
   // Integration Settings
-  getIntegrations: async (_filter?: string) => {
-    return { integrations: [] as any[] };
+  getIntegrations: async (_orgId?: string) => {
+    const res = await fetchWithRetry(`${API_URL}/integrations`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch integrations');
   },
 
-  connectIntegration: async (integrationId: string, config?: any) => {
-    return { success: true, integrationId, config };
+  getIntegrationProviders: async () => {
+    const res = await fetchWithRetry(`${API_URL}/integrations/providers`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch integration providers');
+  },
+
+  connectIntegration: async (providerId: string, config?: any) => {
+    const res = await fetchWithRetry(`${API_URL}/integrations/connect/${providerId}`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ config: config || {} }),
+    });
+    return handleResponse(res, 'Failed to connect integration');
   },
 
   disconnectIntegration: async (integrationId: string) => {
-    return { success: true, integrationId };
+    const res = await fetchWithRetry(`${API_URL}/integrations/${integrationId}/disconnect`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({}),
+    });
+    return handleResponse(res, 'Failed to disconnect integration');
+  },
+
+  syncIntegration: async (integrationId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/integrations/${integrationId}/sync`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({}),
+    });
+    return handleResponse(res, 'Failed to sync integration');
+  },
+
+  getIntegrationLogs: async (integrationId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/integrations/${integrationId}/logs`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch integration logs');
+  },
+
+  toggleIntegration: async (integrationId: string, enabled: boolean) => {
+    const res = await fetchWithRetry(`${API_URL}/integrations/${integrationId}/toggle`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ enabled }),
+    });
+    return handleResponse(res, 'Failed to toggle integration');
+  },
+
+  updateIntegrationSettings: async (integrationId: string, settings: any) => {
+    const res = await fetchWithRetry(`${API_URL}/integrations/${integrationId}/settings`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ settings: settings || {} }),
+    });
+    return handleResponse(res, 'Failed to update integration settings');
   },
 
   // Keyboard Shortcuts

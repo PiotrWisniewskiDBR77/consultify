@@ -1,4 +1,4 @@
-name: Nightly E2E (Full Playwright Suite)
+name: Nightly E2E (Full Playwright Suite — Tier-1)
 
 on:
   schedule:
@@ -11,33 +11,131 @@ env:
 
 jobs:
   e2e-full:
-    name: 🌙 E2E Full (Playwright)
+    name: 🌙 E2E Tier-1 Full Regression
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+
       - name: Install dependencies
         run: npm ci
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
-      - name: Run full E2E suite
-        run: npm run test:e2e:full
+
+      - name: Build application
+        run: npm run build
+
+      - name: Run full E2E suite (Tier-1)
+        run: npx playwright test --config playwright.smoke.config.ts --reporter=junit --output=e2e-results.xml
         env:
           NODE_ENV: test
           E2E_MODE: true
           E2E_USE_WEB_SERVER: 'true'
           E2E_API_URL: http://127.0.0.1:3001
           E2E_BASE_URL: http://127.0.0.1:3000
+          TEST_SUPPORT_KEY: local-test-support-key-change-me
+
       - name: Upload Playwright artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-e2e-full
+          name: playwright-e2e-tier1-${{ github.run_number }}
           path: |
             e2e-results.xml
             test-results/
           retention-days: 30
+
+      - name: Generate Tier-1 SLO dashboard
+        if: always()
+        run: |
+          echo "# 🌙 Nightly E2E — Tier-1 Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Run**: #${{ github.run_number }} | **Date**: $(date -u +%Y-%m-%d)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f e2e-results.xml ]; then
+            TESTS=$(grep -oP 'tests="\K[0-9]+' e2e-results.xml 2>/dev/null | head -1 || echo "0")
+            FAILURES=$(grep -oP 'failures="\K[0-9]+' e2e-results.xml 2>/dev/null | head -1 || echo "0")
+            ERRORS=$(grep -oP 'errors="\K[0-9]+' e2e-results.xml 2>/dev/null | head -1 || echo "0")
+            SKIPPED=$(grep -oP 'skipped="\K[0-9]+' e2e-results.xml 2>/dev/null | head -1 || echo "0")
+            TIME=$(grep -oP 'time="\K[0-9.]+' e2e-results.xml 2>/dev/null | head -1 || echo "0")
+
+            PASSED=$((TESTS - FAILURES - ERRORS - SKIPPED))
+            if [ "$TESTS" -gt 0 ]; then
+              PASS_RATE=$(echo "scale=1; $PASSED * 100 / $TESTS" | bc)
+            else
+              PASS_RATE="0"
+            fi
+
+            echo "## Results" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Metric | Value | SLO |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|-----|" >> $GITHUB_STEP_SUMMARY
+            echo "| Total tests | ${TESTS} | — |" >> $GITHUB_STEP_SUMMARY
+            echo "| Passed | ${PASSED} | — |" >> $GITHUB_STEP_SUMMARY
+            echo "| Failed | ${FAILURES} | — |" >> $GITHUB_STEP_SUMMARY
+            echo "| Errors | ${ERRORS} | — |" >> $GITHUB_STEP_SUMMARY
+            echo "| Skipped | ${SKIPPED} | — |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Pass rate** | **${PASS_RATE}%** | **≥ 95%** |" >> $GITHUB_STEP_SUMMARY
+            echo "| Duration | ${TIME}s | — |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            if (( $(echo "$PASS_RATE < 95" | bc -l) )); then
+              echo "⚠️ **SLO BREACH**: Pass rate ${PASS_RATE}% is below 95% target." >> $GITHUB_STEP_SUMMARY
+              echo "Action: Investigate failed tests and create fix PRs within 24h." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ **SLO MET**: Pass rate ${PASS_RATE}% meets the ≥ 95% target." >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⚠️ No JUnit report found (e2e-results.xml missing)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "**Tier definitions**: Tier-0 = PR gate (5 files, deterministic) · Tier-1 = nightly full regression (18 files, SLO ≥ 95%)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload nightly report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-e2e-report-${{ github.run_number }}
+          path: e2e-results.xml
+          retention-days: 90
+
+      - name: Append 30-run trend
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const workflow_id = 'e2e-nightly.yml';
+            const { data } = await github.rest.actions.listWorkflowRuns({
+              owner,
+              repo,
+              workflow_id,
+              per_page: 30,
+            });
+            const completed = (data.workflow_runs || []).filter(r => r.status === 'completed');
+            const total = completed.length;
+            const passed = completed.filter(r => r.conclusion === 'success').length;
+            const failed = completed.filter(r => r.conclusion === 'failure').length;
+            const passRate = total > 0 ? ((passed / total) * 100).toFixed(1) : 'n/a';
+
+            const lines = [
+              '## 📈 Tier-1 Trend (last 30 runs)',
+              '',
+              `- completed runs: ${total}`,
+              `- passed: ${passed}`,
+              `- failed: ${failed}`,
+              `- pass rate: ${passRate}%`,
+              '',
+            ];
+            core.summary.addRaw(lines.join('\n')).write();

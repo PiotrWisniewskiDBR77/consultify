@@ -62,6 +62,27 @@
 - **Market update**:
   - Vertex ma mechanizmy listowania publisher models (Model Garden) — synchronizacja wymaga GCP auth i regionu.
 
+### 2.4 DeepSeek (TEXT)
+
+- **Co pozyskać**: `DEEPSEEK_API_KEY`
+- **Endpoint (base URL)**: `https://api.deepseek.com`
+- **Po co**:
+  - szybkie i tanie modele do zadań “budget/standard”
+  - fallback chain, gdy vendor premium ma awarie
+- **Uwagi**:
+  - w naszym kodzie DeepSeek jest traktowany jako **OpenAI-compatible** provider (chat/completions)
+  - klucze: env lub SuperAdmin (DB) — env ma priorytet dla `deepseek`
+
+### 2.5 z.ai (Zhipu) (TEXT)
+
+- **Co pozyskać**: `ZAI_API_KEY`
+- **Endpoint (base URL)**: `https://api.z.ai/api/paas/v4`
+- **Po co**:
+  - alternatywny vendor do tekstu/vision (w zależności od modeli i regionów)
+  - enterprise routing po `origin_vendor`/`execution_regions`
+- **Uwagi**:
+  - w kodzie traktowany jako **OpenAI-compatible** provider (chat/completions)
+
 ---
 
 ## 3) Zestaw “Image specialists” (opcjonalne, zależnie od roadmapy obrazów)

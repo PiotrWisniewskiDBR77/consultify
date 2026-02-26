@@ -21,6 +21,8 @@ export type { HeaderBarProps } from './HeaderBar.js';
 export { HeaderBar } from './HeaderBar.js';
 export type { HighlightProps } from './Highlight.js';
 export { Highlight } from './Highlight.js';
+export type { ImageProps } from './Image.js';
+export { Image } from './Image.js';
 export type { IconProps } from './Icon.js';
 export { Icon, ICONS } from './Icon.js';
 export type { KpiLabelProps } from './KpiLabel.js';

@@ -250,6 +250,8 @@ function getProviderSync(modelConfig: ModelConfig) {
     (process.env as any).GOOGLE_API_KEY ||
     (process.env as any).GOOGLE_API_KEY
   )?.trim();
+  const envDeepSeek = process.env.DEEPSEEK_API_KEY?.trim();
+  const envZai = process.env.ZAI_API_KEY?.trim();
 
   switch (providerName.toLowerCase()) {
     case 'openai':
@@ -279,13 +281,26 @@ function getProviderSync(modelConfig: ModelConfig) {
       });
     }
     case 'deepseek':
+      return createOpenAI({
+        apiKey: envDeepSeek || effectiveApiKey,
+        baseURL: normalizedBaseUrl || 'https://api.deepseek.com',
+      });
     case 'z_ai':
     case 'zai':
+      // z.ai (Zhipu) is OpenAI-compatible, but uses a different base URL than DeepSeek.
+      return createOpenAI({
+        apiKey: envZai || effectiveApiKey,
+        baseURL: normalizedBaseUrl || 'https://api.z.ai/api/paas/v4',
+      });
     case 'qwen':
+      return createOpenAI({
+        apiKey: effectiveApiKey,
+        baseURL: normalizedBaseUrl || 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
+      });
     case 'mistral':
       return createOpenAI({
         apiKey: effectiveApiKey,
-        baseURL: normalizedBaseUrl || 'https://api.deepseek.com',
+        baseURL: normalizedBaseUrl || 'https://api.mistral.ai/v1',
       });
     case 'nvidia':
       return createOpenAI({

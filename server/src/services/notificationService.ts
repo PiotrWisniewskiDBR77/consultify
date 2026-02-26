@@ -1235,10 +1235,11 @@ class NotificationService {
     const db = await this.getDb();
 
     const severity = this.computeSeverity(input.type, input.data || input.metadata, input.severity);
-    const slackWebhookUrl = await this.getSlackWebhookUrlForOrg(input.organizationId);
+    const slackWebhookUrl = await this.getSlackWebhookUrlForOrg(input.organizationId, input.projectId);
     const slackService = slackWebhookUrl
       ? new SlackServiceClass({ webhookUrl: slackWebhookUrl })
       : null;
+    const teamsWebhookUrl = await this.getTeamsWebhookUrlForOrg(input.organizationId, input.projectId);
 
     if (this.shouldAutoSlack(input.type)) {
       if (slackService) {
@@ -1280,7 +1281,11 @@ class NotificationService {
             await this.sendSlackNotification(slackService, input, severity);
             break;
           case 'teams':
-            // Would send Teams message here
+            if (!teamsWebhookUrl) {
+              status = 'skipped';
+              break;
+            }
+            await this.sendTeamsNotification(teamsWebhookUrl, input, severity);
             break;
         }
 
@@ -1331,7 +1336,10 @@ class NotificationService {
     );
   }
 
-  private async getSlackWebhookUrlForOrg(organizationId: string): Promise<string | null> {
+  private async getSlackWebhookUrlForOrg(
+    organizationId: string,
+    projectId?: string
+  ): Promise<string | null> {
     const decodeHtmlEntities = (value: string): string =>
       value
         .replace(/&amp;/g, '&')
@@ -1343,7 +1351,26 @@ class NotificationService {
         .replace(/&#x2F;/g, '/')
         .replace(/&#x3D;/g, '=');
 
-    // 1) Org-level integration config (preferred)
+    const pickMappedWebhook = (cfg: any): string | null => {
+      if (!projectId) return null;
+      const list =
+        cfg?.channelMappings ||
+        cfg?.channel_mappings ||
+        cfg?.projectMappings ||
+        cfg?.project_mappings ||
+        [];
+      if (!Array.isArray(list)) return null;
+      const match = list.find((m: any) => String(m?.projectId || m?.project_id || '') === String(projectId));
+      const raw =
+        match?.webhookUrl ||
+        match?.webhook_url ||
+        match?.incomingWebhookUrl ||
+        match?.incoming_webhook_url ||
+        null;
+      return typeof raw === 'string' && raw.trim() ? decodeHtmlEntities(raw).trim() : null;
+    };
+
+    // 1) Org-level integration config (legacy schema)
     try {
       const db = await this.getDb();
       const row = await db.get<{ config?: string }>(
@@ -1356,6 +1383,8 @@ class NotificationService {
       if (row?.config) {
         try {
           const cfg = JSON.parse(String(row.config || '{}'));
+          const mapped = pickMappedWebhook(cfg);
+          if (mapped) return mapped;
           const candidates = [
             cfg.webhookUrl,
             cfg.webhook_url,
@@ -1407,6 +1436,8 @@ class NotificationService {
         if (!raw) return [];
         try {
           const cfg = JSON.parse(String(raw || '{}'));
+          const mapped = pickMappedWebhook(cfg);
+          if (mapped) return [mapped];
           return [
             cfg.webhookUrl,
             cfg.webhook_url,
@@ -1474,6 +1505,140 @@ class NotificationService {
     return null;
   }
 
+  private async getTeamsWebhookUrlForOrg(
+    organizationId: string,
+    projectId?: string
+  ): Promise<string | null> {
+    const decodeHtmlEntities = (value: string): string =>
+      value
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#x27;/g, "'")
+        .replace(/&#96;/g, '`')
+        .replace(/&#x2F;/g, '/')
+        .replace(/&#x3D;/g, '=');
+
+    const pickMappedWebhook = (cfg: any): string | null => {
+      if (!projectId) return null;
+      const list =
+        cfg?.channelMappings ||
+        cfg?.channel_mappings ||
+        cfg?.projectMappings ||
+        cfg?.project_mappings ||
+        [];
+      if (!Array.isArray(list)) return null;
+      const match = list.find((m: any) => String(m?.projectId || m?.project_id || '') === String(projectId));
+      const raw =
+        match?.webhookUrl ||
+        match?.webhook_url ||
+        match?.incomingWebhookUrl ||
+        match?.incoming_webhook_url ||
+        null;
+      return typeof raw === 'string' && raw.trim() ? decodeHtmlEntities(raw).trim() : null;
+    };
+
+    // 1) New integrations system schema (preferred): integrations(provider_id/settings/status) + integration_providers(name='microsoft_teams')
+    try {
+      const db = await this.getDb();
+      const row = await db.get<{
+        settings?: string | null;
+        notification_settings?: string | null;
+        provider_id?: string | null;
+        status?: string | null;
+        provider_name?: string | null;
+      }>(
+        `
+        SELECT
+          i.settings,
+          i.notification_settings,
+          i.provider_id,
+          i.status,
+          p.name as provider_name
+        FROM integrations i
+        LEFT JOIN integration_providers p ON p.id = i.provider_id
+        WHERE i.organization_id = ?
+          AND (p.name = 'microsoft_teams' OR p.name = 'teams' OR i.provider_id IN ('int-teams', 'teams', 'microsoft_teams'))
+          AND (i.status IS NULL OR i.status IN ('active', 'connected'))
+        ORDER BY COALESCE(i.connected_at, i.updated_at, i.last_sync_at) DESC
+        LIMIT 1
+      `,
+        [organizationId]
+      );
+
+      const parseCandidates = (raw?: string | null): string[] => {
+        if (!raw) return [];
+        try {
+          const cfg = JSON.parse(String(raw || '{}'));
+          const mapped = pickMappedWebhook(cfg);
+          if (mapped) return [mapped];
+          return [
+            cfg.webhookUrl,
+            cfg.webhook_url,
+            cfg.incomingWebhookUrl,
+            cfg.incoming_webhook_url,
+            cfg?.webhook?.url,
+            cfg?.incoming_webhook?.url,
+            cfg?.incoming_webhook,
+            cfg?.webhook,
+          ]
+            .map((x) => (typeof x === 'string' ? decodeHtmlEntities(x).trim() : ''))
+            .filter(Boolean);
+        } catch {
+          return [];
+        }
+      };
+
+      const candidates = [
+        ...parseCandidates(row?.settings || null),
+        ...parseCandidates(row?.notification_settings || null),
+      ];
+      if (candidates.length > 0) return candidates[0];
+    } catch {
+      // ignore
+    }
+
+    // 2) Legacy schema fallback: integrations(provider/config/status)
+    try {
+      const db = await this.getDb();
+      const row = await db.get<{ config?: string }>(
+        `SELECT config FROM integrations
+         WHERE organization_id = ? AND (provider = 'teams' OR provider = 'microsoft_teams') AND status IN ('connected', 'active')
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [organizationId]
+      );
+      if (row?.config) {
+        try {
+          const cfg = JSON.parse(String(row.config || '{}'));
+          const mapped = pickMappedWebhook(cfg);
+          if (mapped) return mapped;
+          const candidates = [
+            cfg.webhookUrl,
+            cfg.webhook_url,
+            cfg.incomingWebhookUrl,
+            cfg.incoming_webhook_url,
+            cfg?.webhook?.url,
+            cfg?.incoming_webhook?.url,
+          ]
+            .map((x) => (typeof x === 'string' ? decodeHtmlEntities(x).trim() : ''))
+            .filter(Boolean);
+          if (candidates.length > 0) return candidates[0];
+        } catch {
+          // ignore
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    // 3) Env fallback
+    const envUrl = process.env.TEAMS_WEBHOOK_URL;
+    if (envUrl && String(envUrl).trim()) return String(envUrl).trim();
+    return null;
+  }
+
   private async sendSlackNotification(
     slackService: SlackServiceClass,
     input: SendNotificationInput,
@@ -1513,6 +1678,31 @@ class NotificationService {
       input.body || input.message || input.title,
       severity
     );
+  }
+
+  private async sendTeamsNotification(
+    webhookUrl: string,
+    input: SendNotificationInput,
+    severity: 'INFO' | 'WARNING' | 'CRITICAL'
+  ): Promise<void> {
+    try {
+      const prefix = severity === 'CRITICAL' ? '[CRITICAL]' : severity === 'WARNING' ? '[WARN]' : '[INFO]';
+      const title = `${prefix} ${input.type}: ${input.title}`.trim();
+      const body = input.body || input.message || '';
+      const actionUrl = input.actionUrl;
+
+      // Microsoft Teams Incoming Webhook accepts a simple "text" payload.
+      // (We can upgrade to Adaptive Cards later without breaking this contract.)
+      const text = actionUrl ? `${title}\n\n${body}\n\n${actionUrl}` : `${title}\n\n${body}`;
+      await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+    } catch (err) {
+      logger.warn('[NotificationService] Teams dispatch failed:', err);
+      throw err;
+    }
   }
 }
 

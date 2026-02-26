@@ -8,6 +8,7 @@
 > **Powiązane SSOT:**
 > - `docs/product/OPERATING_MODEL_V3.md` — Reports & Presentations jako gałąź flow
 > - `docs/product/PRESENTATIONS_AND_REPORTS_V3.md` — ogólne zasady Reports + Presentations (library + generator)
+> - `docs/product/PRESENTATION_GENERATOR_VISUALS_IMPLEMENTATION_PLAN_V3.md` — plan wdrożenia “Gamma-like visuals” (LLM+IMAGE_MODEL+PPTX)
 > - `docs/product/LINK_GRAPH_V3.md` — embedded references, backlinks
 > - `docs/product/SOURCE_TRACEABILITY_SPEC.md` — traceability outputów
 > - `docs/ui-standards/UI_UX_CANON_V3.md` — kanoniczne UI/UX

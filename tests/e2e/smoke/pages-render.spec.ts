@@ -35,7 +35,7 @@ async function expectRouteMounted(page: Page) {
   await expect(page.getByText(/Coś poszło nie tak/i)).toHaveCount(0);
 }
 
-test.describe('L4 Smoke — routes render', () => {
+test.describe('L4 Smoke — routes render [@module:routing]', () => {
   test.setTimeout(90000);
 
   test('renders Reports builder', async ({ page }) => {

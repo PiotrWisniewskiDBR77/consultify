@@ -352,9 +352,28 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     my: 0,
     awaiting: 0,
   });
-  // Dynamic documents state
-  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
-  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+  // V3-A02: Dynamic documents state with sessionStorage persistence
+  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>(() => {
+    try {
+      const raw = window.sessionStorage.getItem('moduleHub.openDocuments.mywork');
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed?.openDocuments) ? parsed.openDocuments : [];
+    } catch { return []; }
+  });
+  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(() => {
+    try {
+      const raw = window.sessionStorage.getItem('moduleHub.openDocuments.mywork');
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return typeof parsed?.activeDocumentId === 'string' ? parsed.activeDocumentId : null;
+    } catch { return null; }
+  });
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem('moduleHub.openDocuments.mywork', JSON.stringify({ openDocuments, activeDocumentId }));
+    } catch { /* ignore */ }
+  }, [openDocuments, activeDocumentId]);
 
   // EventBus refresh counter — incremented when cross-tab events fire.
   // Child tab components include this in their fetch dependency arrays.

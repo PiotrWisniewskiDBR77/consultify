@@ -4,6 +4,7 @@
  */
 import { BodyText } from '../atomics/BodyText.js';
 import { ConfidentialityBanner } from '../atomics/ConfidentialityBanner.js';
+import { Image } from '../atomics/Image.js';
 import type {
   CoverContent,
   DesignTokens,
@@ -19,6 +20,26 @@ export function CoverLayout(
 ): LayoutResult {
   const c = slide.content as CoverContent;
   const elements = [];
+
+  // Optional Gamma-like hero/background visual (render first, so text sits on top)
+  const visual = (slide.visuals || []).find(
+    (v) => v && (v.slot === 'cover_bg' || v.slot === 'hero' || v.purpose === 'image_cover')
+  );
+  const asset = visual?.asset;
+  if (asset?.path || asset?.dataUri) {
+    elements.push(
+      Image(
+        {
+          position: { x: 0, y: 0, w: tokens.grid.slideW, h: tokens.grid.slideH },
+          path: asset.path,
+          data: asset.dataUri,
+          fit: 'cover',
+          transparency: 10, // keep cover text readable
+        },
+        tokens
+      )
+    );
+  }
 
   // Title
   elements.push(

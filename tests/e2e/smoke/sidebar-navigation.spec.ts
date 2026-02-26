@@ -33,7 +33,7 @@ async function expectNoRouteError(page: Page) {
   await expect(page.getByText(/Coś poszło nie tak/i)).toHaveCount(0);
 }
 
-test.describe('L4 Smoke — sidebar navigation', () => {
+test.describe('L4 Smoke — sidebar navigation [@module:navigation]', () => {
   test.setTimeout(90000);
 
   test.beforeEach(async ({ page }) => {
