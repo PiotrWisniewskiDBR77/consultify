@@ -9,7 +9,8 @@ export type ArtifactType =
   | 'insight'
   | 'project'
   | 'risk'
-  | 'external';
+  | 'external'
+  | 'idea';
 
 export type ParsedArtifactRef = {
   type: ArtifactType;
@@ -28,6 +29,7 @@ const ARTIFACT_PREFIX: Record<ArtifactType, string> = {
   project: 'PRJ',
   risk: 'RSK',
   external: 'EXT',
+  idea: 'IDE',
 };
 
 function normalizeId(rawId: string): string {
@@ -57,6 +59,8 @@ function getBasePath(type: ArtifactType, id: string): string {
     case 'insight':
       return '/interview';
     case 'risk':
+      return '/my-work';
+    case 'idea':
       return '/my-work';
     case 'external':
     default:

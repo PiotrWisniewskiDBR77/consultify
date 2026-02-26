@@ -20,10 +20,10 @@ export const TaskDropdown = () => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [stats, setStats] = useState({ total: 0, pending: 0, overdue: 0 });
+  const [stats, setStats] = useState({ total: 0, pending: 0, overdue: 0, today: 0 });
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { setCurrentView } = useAppStore();
+  const { setCurrentView, setMyWorkIntent } = useAppStore();
 
   const fetchTasks = async () => {
     try {
@@ -44,12 +44,15 @@ export const TaskDropdown = () => {
 
       const pending = sorted.filter((t) => t.status !== 'done');
       const overdue = pending.filter((t) => t.dueDate && new Date(t.dueDate) < new Date());
+      const todayStr = new Date().toDateString();
+      const today = pending.filter((t) => t.dueDate && new Date(t.dueDate).toDateString() === todayStr);
 
       setTasks(sorted.slice(0, 10)); // Show top 10 relevant
       setStats({
         total: allTasks.length,
         pending: pending.length,
         overdue: overdue.length,
+        today: today.length,
       });
     } catch (error) {
       console.error('Failed to fetch tasks', error);
@@ -88,6 +91,7 @@ export const TaskDropdown = () => {
 
   const handleNavigateToTasks = () => {
     setIsOpen(false);
+    setMyWorkIntent({ tab: 'tasks' });
     setCurrentView(AppView.MY_WORK);
   };
 
@@ -129,15 +133,15 @@ export const TaskDropdown = () => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 outline-none focus:ring-2 focus:ring-purple-500/20"
-        title="Tasks"
+        title={t('taskDropdown.titleButton', "Today's tasks")}
       >
         <CheckSquare size={20} />
-        {stats.pending > 0 && (
+        {stats.today > 0 && (
           <span
             className={`absolute top-0.5 right-0.5 min-w-[16px] h-4 text-slate-900 dark:text-white text-[10px] font-bold flex items-center justify-center rounded-full px-1 border-2 border-white dark:border-navy-950 shadow-sm
                         ${stats.overdue > 0 ? 'bg-red-500' : 'bg-blue-500'}`}
           >
-            {stats.pending > 99 ? '99+' : stats.pending}
+            {stats.today > 99 ? '99+' : stats.today}
           </span>
         )}
       </button>

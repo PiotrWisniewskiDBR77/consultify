@@ -365,7 +365,7 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
     const minimalSuggestions = idx.map((i) => pool[i]).filter(Boolean);
 
     return (
-      <div className={`w-full max-w-3xl mx-auto flex items-center justify-center gap-2 ${className}`}>
+      <div className={`w-full max-w-5xl mx-auto flex items-center justify-center gap-2 ${className}`}>
         {minimalSuggestions.map((item, i) => (
           <button
             key={item.id}

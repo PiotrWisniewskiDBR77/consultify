@@ -1491,7 +1491,7 @@ For example: REMEMBER: preferred_language: Polish`;
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto">
-            <div className="max-w-3xl mx-auto px-4 py-8">
+            <div className="max-w-5xl mx-auto px-4 py-8">
               {activeChatMessages.map((msg, index) => {
                 const isLastMessage = index === activeChatMessages.length - 1;
                 const isAiMessage = msg.role === 'ai';
@@ -1745,7 +1745,7 @@ For example: REMEMBER: preferred_language: Polish`;
           {/* Pending Actions Banner */}
           {pendingActions.length > 0 && (
             <div className="shrink-0 p-3 bg-yellow-50 dark:bg-yellow-900/20 border-t border-yellow-200 dark:border-yellow-800">
-              <div className="max-w-3xl mx-auto">
+              <div className="max-w-5xl mx-auto">
                 {pendingActions.map((pa) => {
                   const message =
                     typeof pa.payload?.message === 'string'
@@ -1779,7 +1779,7 @@ For example: REMEMBER: preferred_language: Polish`;
           {/* Continuous Voice Mode Indicator */}
           {continuousVoiceMode && (
             <div className="shrink-0 p-2 bg-primary-50 dark:bg-primary-900/20 border-t border-primary-200 dark:border-primary-800">
-              <div className="max-w-3xl mx-auto flex items-center justify-center gap-3 text-sm">
+              <div className="max-w-5xl mx-auto flex items-center justify-center gap-3 text-sm">
                 <span
                   className={`w-3 h-3 rounded-full ${voiceState.isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-400'}`}
                 />
@@ -1807,7 +1807,7 @@ For example: REMEMBER: preferred_language: Polish`;
 
           {/* Input at bottom */}
           <div className="shrink-0 p-4 border-t border-slate-200 dark:border-navy-700">
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-5xl mx-auto">
               {!!lastError && !isStreaming && (
                 <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
                   <div className="text-xs text-amber-800 dark:text-amber-200">
@@ -1931,7 +1931,7 @@ For example: REMEMBER: preferred_language: Polish`;
           </div>
 
           {/* Chat Input */}
-          <div className="w-full max-w-3xl">
+          <div className="w-full max-w-5xl">
             {!!lastError && !isStreaming && (
               <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
                 <div className="text-xs text-amber-800 dark:text-amber-200">
@@ -1967,7 +1967,7 @@ For example: REMEMBER: preferred_language: Polish`;
           </div>
 
           {/* Minimal Suggestions */}
-          <div className="w-full max-w-3xl mt-5">
+          <div className="w-full max-w-5xl mt-5">
             <SmartSuggestions
               projectId={selectedProject?.id}
               onSuggestionClick={handleSuggestionClick}

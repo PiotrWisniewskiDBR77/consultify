@@ -1,4 +1,4 @@
-import { ChevronRight, Menu, MessageSquare, Sparkles, X } from 'lucide-react';
+import { ChevronRight, Menu, MessageSquare, X } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -45,7 +45,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const isSidebarCollapsed = useAppStore((s) => s.isSidebarCollapsed);
   const setIsSidebarOpen = useAppStore((s) => s.setIsSidebarOpen);
   const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
-  const toggleChatCollapse = useAppStore((s) => s.toggleChatCollapse);
   const chatKickoffMessage = useAppStore((s) => s.chatKickoffMessage);
   const clearChatKickoffMessage = useAppStore((s) => s.clearChatKickoffMessage);
   const currentUser = useAppStore((s) => s.currentUser);
@@ -201,8 +200,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                 <span className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors">
                   {breadcrumbs?.[0] || ''}
                 </span>
-                <ChevronRight size={14} className="mx-2 rtl:rotate-180" />
-                <span className="text-navy-900 dark:text-white">{breadcrumbs?.[1] || ''}</span>
+                {breadcrumbs?.[1] ? (
+                  <>
+                    <ChevronRight size={14} className="mx-2 rtl:rotate-180" />
+                    <span className="text-navy-900 dark:text-white">{breadcrumbs[1]}</span>
+                  </>
+                ) : null}
               </div>
             </div>
 
@@ -210,21 +213,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               <SystemHealth />
               <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
               <LLMSelector />
-              <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
-
-              <button
-                onClick={() => toggleChatCollapse()}
-                className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg font-medium text-xs transition-all
-                                    ${
-                                      isChatCollapsed
-                                        ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-500/30'
-                                        : 'text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
-                                    }`}
-                title={isChatCollapsed ? 'Show AI Chat' : 'Hide AI Chat'}
-              >
-                <Sparkles size={16} />
-                <span>AI</span>
-              </button>
               <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
 
               <TaskDropdown />

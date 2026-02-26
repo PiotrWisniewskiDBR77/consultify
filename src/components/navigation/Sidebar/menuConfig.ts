@@ -64,7 +64,6 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       label: t('sidebar.discoveryTools', 'Tools'),
       icon: React.createElement(Wrench, { size: 20 }),
       viewId: AppView.DISCOVERY_TOOLS,
-      badge: 'new',
     },
     // 4. Licensed Tools (Assessment module) - DRD/SIRI/ADMA/Lean
     {

@@ -23,6 +23,7 @@ interface TasksCalendarViewProps {
   onTaskClick: (taskId: string, taskData?: Task) => void;
   onCreateTask: () => void;
   onCountsChange: (counts: TaskCounts) => void;
+  refreshTrigger?: number;
 }
 
 const startOfWeekMonday = (d: Date) => {
@@ -67,6 +68,7 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
   searchQuery,
   onTaskClick,
   onCountsChange,
+  refreshTrigger,
 }) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.language || 'en';
@@ -98,7 +100,7 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
 
   useEffect(() => {
     fetchTasks();
-  }, [fetchTasks]);
+  }, [fetchTasks, refreshTrigger]);
 
   const filteredTasks = useMemo(() => {
     let list = tasks;

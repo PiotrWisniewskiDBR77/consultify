@@ -13,7 +13,6 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {
   Archive,
-  ArrowRight,
   BookOpen,
   CheckSquare,
   ChevronDown,
@@ -26,15 +25,12 @@ import {
   Pin,
   Play,
   Plus,
-  Scale,
   Sparkles,
   Tag,
-  Target,
   Trash2,
   Type,
   Users,
   X,
-  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -402,6 +398,29 @@ const EDITOR_STYLES = `
 }
 .nb-saving { animation: nbPulse 1.5s ease-in-out infinite; }
 
+/* Selection — persistent glow while user works with tools panel */
+@keyframes nbSelectionPulse {
+  0%, 100% { background-color: rgba(99,102,241,0.08); border-left-color: rgba(99,102,241,0.35); }
+  50% { background-color: rgba(99,102,241,0.05); border-left-color: rgba(99,102,241,0.25); }
+}
+.ProseMirror .nb-active-block {
+  background-color: rgba(99,102,241,0.08) !important;
+  border-left-color: rgba(99,102,241,0.35) !important;
+  animation: nbSelectionPulse 3s ease-in-out infinite;
+  box-shadow: inset 0 0 0 1px rgba(99,102,241,0.06);
+  border-radius: 0.375rem;
+}
+.dark .ProseMirror .nb-active-block {
+  background-color: rgba(129,140,248,0.1) !important;
+  border-left-color: rgba(129,140,248,0.4) !important;
+}
+.ProseMirror ::selection {
+  background: rgba(99,102,241,0.18);
+}
+.dark .ProseMirror ::selection {
+  background: rgba(129,140,248,0.22);
+}
+
 /* Notebook scrollbar */
 .nb-scroll::-webkit-scrollbar { width: 4px; }
 .nb-scroll::-webkit-scrollbar-track { background: transparent; }
@@ -454,6 +473,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [slashState, setSlashState] = useState<SlashMenuState>(INITIAL_SLASH_STATE);
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
+  // Active block highlight (7s persistence)
+  const activeBlockTimer = useRef<number | null>(null);
+  const lastActiveBlockEl = useRef<Element | null>(null);
+
   // AI inline response
   const [aiCommand, setAiCommand] = useState<AICommandType | null>(null);
 
@@ -497,6 +520,32 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         setSlashState(trigger);
       } else if (slashState.open) {
         setSlashState(INITIAL_SLASH_STATE);
+      }
+
+      // Active block highlight — keep block visually marked for 7s
+      const { $from, empty } = ed.state.selection;
+      if (!empty || $from.depth > 0) {
+        const domNode = ed.view.domAtPos($from.before(1));
+        const blockEl = domNode.node instanceof Element
+          ? domNode.node
+          : (domNode.node as Node).parentElement;
+        const topBlock = blockEl?.closest('.ProseMirror > *');
+        if (topBlock && topBlock !== lastActiveBlockEl.current) {
+          lastActiveBlockEl.current?.classList.remove('nb-active-block');
+          topBlock.classList.add('nb-active-block');
+          lastActiveBlockEl.current = topBlock;
+          if (activeBlockTimer.current) window.clearTimeout(activeBlockTimer.current);
+          activeBlockTimer.current = window.setTimeout(() => {
+            topBlock.classList.remove('nb-active-block');
+            if (lastActiveBlockEl.current === topBlock) lastActiveBlockEl.current = null;
+          }, 7000);
+        } else if (topBlock && topBlock === lastActiveBlockEl.current) {
+          if (activeBlockTimer.current) window.clearTimeout(activeBlockTimer.current);
+          activeBlockTimer.current = window.setTimeout(() => {
+            topBlock.classList.remove('nb-active-block');
+            if (lastActiveBlockEl.current === topBlock) lastActiveBlockEl.current = null;
+          }, 7000);
+        }
       }
     },
   });
@@ -1402,9 +1451,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 </div>
               </div>
 
-              {/* AI Command Prompt */}
+              {/* AI Command Prompt — hidden; accessible via Tools panel Command button */}
               {editor && activePage && (
-                <div className="px-4 py-2 border-b border-slate-200/40 dark:border-navy-800/40">
+                <div className="sr-only" aria-hidden="true">
                   <AICommandPrompt
                     editor={editor}
                     noteTitle={title}
@@ -1415,90 +1464,6 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   />
                 </div>
               )}
-
-              {/* Convert-to CTA */}
-              {activePage &&
-                (activePage.maturity === 'mature' || activePage.maturity === 'actionable') && (
-                  <div className="px-4 py-2 border-b border-amber-200/40 dark:border-amber-800/20 bg-gradient-to-r from-amber-50/80 to-orange-50/80 dark:from-amber-950/15 dark:to-orange-950/10">
-                    <div className="mx-auto max-w-4xl flex items-center gap-3 flex-wrap">
-                      <div className="flex items-center gap-2">
-                        <Zap size={12} className="text-amber-600 dark:text-amber-400" />
-                        <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-300">
-                          {isPolish ? 'Gotowa do działania' : 'Ready for action'}
-                        </span>
-                      </div>
-                      {activePage.convertedTo && activePage.convertedTo.length > 0 ? (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                            {isPolish ? 'Skonwertowano →' : 'Converted →'}
-                          </span>
-                          {activePage.convertedTo.map((ct) => (
-                            <span key={ct.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-medium">
-                              {ct.type === 'task' ? <CheckSquare size={9} /> : ct.type === 'decision' ? <Scale size={9} /> : <Target size={9} />}
-                              {ct.type}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1.5">
-                          {(['initiative', 'task', 'decision'] as const).map((target) => (
-                            <button
-                              key={target}
-                              onClick={async () => {
-                                trackFunnelEvent('notebook_convert_triggered', { target, noteId: activePage.id });
-                                try {
-                                  const result = await Api.convertNotebookPage(activePage.id, target);
-                                  toast.success(
-                                    isPolish
-                                      ? `Utworzono ${target === 'task' ? 'task' : target === 'decision' ? 'decyzję' : 'inicjatywę'}: ${result.title}`
-                                      : `Created ${target}: ${result.title}`
-                                  );
-                                  emitMyWorkEvent({ type: 'item:converted', entityType: 'notebook', entityId: activePage.id, meta: { target } });
-                                  setPages((prev) =>
-                                    prev.map((p) =>
-                                      p.id === activePage.id
-                                        ? { ...p, status: 'converted' as const, convertedTo: [...(p.convertedTo || []), { type: target, id: result.id }] }
-                                        : p
-                                    )
-                                  );
-                                } catch (err: any) {
-                                  toast.error(err?.message || 'Conversion failed');
-                                }
-                              }}
-                              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all hover:shadow-sm ${
-                                target === 'initiative'
-                                  ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20'
-                                  : target === 'task'
-                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
-                                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20'
-                              }`}
-                            >
-                              {target === 'initiative' ? <Target size={10} /> : target === 'task' ? <CheckSquare size={10} /> : <Scale size={10} />}
-                              {target === 'initiative' ? (isPolish ? 'Inicjatywa' : 'Initiative') : target === 'task' ? 'Task' : (isPolish ? 'Decyzja' : 'Decision')}
-                              <ArrowRight size={8} />
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                      <div className="flex items-center gap-1.5 ml-auto">
-                        <button
-                          onClick={() => setChecklistModalOpen(true)}
-                          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-500/10 text-slate-600 dark:text-slate-400 text-[10px] font-medium hover:bg-slate-500/20 transition-all"
-                        >
-                          <CheckSquare size={9} />
-                          {isPolish ? 'Checklist → Taski' : 'Checklist → Tasks'}
-                        </button>
-                        <button
-                          onClick={() => setActionItemsOpen(true)}
-                          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-all"
-                        >
-                          <Sparkles size={9} />
-                          {isPolish ? 'AI ekstrakcja' : 'AI Extract'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
               {/* Editor area — drop zone for AI block */}
               <div
@@ -1519,7 +1484,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   }
                 }}
               >
-                <div className="mx-auto max-w-3xl px-6 py-6">
+                <div className="mx-auto max-w-5xl px-6 py-6">
                   {/* Page icon + title — Notion-like */}
                   <div className="mb-4">
                     <div className="flex items-start gap-3 mb-1">

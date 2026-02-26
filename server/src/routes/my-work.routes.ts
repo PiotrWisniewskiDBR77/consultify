@@ -3332,6 +3332,18 @@ No markdown, no extra text.`;
       });
     }
 
+    const proposeOnly = String(req.body?.proposeOnly ?? 'false') === 'true';
+    if (proposeOnly) {
+      return res.json({
+        proposal: {
+          add: { nodes: addedNodes, edges: addedEdges },
+          remove: { nodeIds: [], edgeIds: [] },
+          reorder: null,
+          rationale: null,
+        },
+      });
+    }
+
     res.json({ added: { nodes: addedNodes, edges: addedEdges } });
   })
 );

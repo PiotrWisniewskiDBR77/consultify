@@ -197,7 +197,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      const maxPx = variant === 'compact' ? 140 : 200;
+      const maxPx = variant === 'compact' ? 220 : 280;
       textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, maxPx) + 'px';
     }
   }, [value, variant]);
@@ -754,7 +754,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           onBlur={() => setIsFocused(false)}
           placeholder={placeholderText}
           disabled={isInputDisabled}
-          rows={variant === 'compact' ? 2 : 1}
+          rows={variant === 'compact' ? 3 : 2}
           data-testid="chat-input"
           className={`
                         w-full bg-transparent text-navy-900 dark:text-white

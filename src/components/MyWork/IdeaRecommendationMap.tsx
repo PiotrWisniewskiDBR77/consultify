@@ -21,9 +21,17 @@ import ReactFlow, {
   useReactFlow,
 } from 'reactflow';
 
+import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 
 type PersistenceStatus = 'online' | 'no_route' | 'missing_table' | 'offline';
+
+type AIMapProposal = {
+  add: { nodes: Node[]; edges: Edge[] };
+  remove: { nodeIds: string[]; edgeIds: string[] };
+  reorder?: { note?: string; order?: string[] } | null;
+  rationale?: string | null;
+};
 
 function buildLocalDefaultIdeaMap(ideaId: string, ideaTitle: string, isPl: boolean): { nodes: Node[]; edges: Edge[] } {
   const centerId = 'root';
@@ -235,9 +243,26 @@ type IdeaRecommendationMapProps = {
   ideaTitle: string;
   onClose: () => void;
   onCenterEdit?: () => void;
+  /** Default: 'overlay' (full-screen). Use 'embedded' inside a workspace split. */
+  variant?: 'overlay' | 'embedded';
+  /** Whether to show the close button in the top bar (default true). */
+  showClose?: boolean;
+  /** Extra classes applied to the container in embedded mode. */
+  className?: string;
+  /** When locked, map is read-only (challenge not accepted yet). */
+  locked?: boolean;
 };
 
-function MindMapInner({ ideaId, ideaTitle, onClose, onCenterEdit }: IdeaRecommendationMapProps) {
+function MindMapInner({
+  ideaId,
+  ideaTitle,
+  onClose,
+  onCenterEdit,
+  variant = 'overlay',
+  showClose = true,
+  className,
+  locked = false,
+}: IdeaRecommendationMapProps) {
   const { i18n } = useTranslation();
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
   const { zoomIn, zoomOut, fitView } = useReactFlow();
@@ -326,10 +351,29 @@ function MindMapInner({ ideaId, ideaTitle, onClose, onCenterEdit }: IdeaRecommen
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ideaId]);
 
+  // Keep center label consistent with current title (map stores a snapshot)
+  useEffect(() => {
+    const label = ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea');
+    setNodes((prev: Node[]) =>
+      (prev || []).map((n: any) => {
+        if (String(n?.id) !== 'root') return n;
+        return {
+          ...n,
+          data: {
+            ...(n.data || {}),
+            label,
+            hint: isPolish ? 'Kliknij, aby edytować' : 'Click to edit',
+          },
+        };
+      })
+    );
+  }, [ideaTitle, isPolish, setNodes]);
+
   const scheduleSave = useCallback(
     (nextNodes: Node[], nextEdges: Edge[]) => {
       if (isHydratingRef.current) return;
       if (persistence !== 'online') return;
+      if (locked) return;
       if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
       saveTimerRef.current = window.setTimeout(async () => {
         setSaving(true);
@@ -343,7 +387,7 @@ function MindMapInner({ ideaId, ideaTitle, onClose, onCenterEdit }: IdeaRecommen
         }
       }, 700);
     },
-    [ideaId, isPolish, persistence]
+    [ideaId, isPolish, locked, persistence]
   );
 
   // Persist on changes (debounced)
@@ -353,6 +397,7 @@ function MindMapInner({ ideaId, ideaTitle, onClose, onCenterEdit }: IdeaRecommen
 
   const onConnect = useCallback(
     (connection: Connection) => {
+      if (locked) return;
       if (!connection.source || !connection.target) return;
       if (connection.source === connection.target) return;
       const id = `edge-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -369,11 +414,12 @@ function MindMapInner({ ideaId, ideaTitle, onClose, onCenterEdit }: IdeaRecommen
       };
       setEdges((prev: Edge[]) => addEdge(newEdge, prev));
     },
-    [setEdges]
+    [locked, setEdges]
   );
 
   const onEdgeClick = useCallback(
     (_: React.MouseEvent, edge: Edge) => {
+      if (locked) return;
       const isUser = !!edge.data?.userCreated;
       const currentState = edge.data?.flowState || 'forward'; // forward | stopped | reversed
 
@@ -424,7 +470,7 @@ function MindMapInner({ ideaId, ideaTitle, onClose, onCenterEdit }: IdeaRecommen
           .filter(Boolean)
       );
     },
-    [isPolish, setEdges]
+    [isPolish, locked, setEdges]
   );
 
   const selectedBranchKey = useMemo(() => {
@@ -435,7 +481,97 @@ function MindMapInner({ ideaId, ideaTitle, onClose, onCenterEdit }: IdeaRecommen
     return 'options';
   }, [nodes]);
 
+  // AI suggestions modal state (propose → accept/reject)
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [aiProposal, setAiProposal] = useState<AIMapProposal | null>(null);
+  const [selectedAddIdx, setSelectedAddIdx] = useState<Record<number, boolean>>({});
+  const [applySuggestedOrder, setApplySuggestedOrder] = useState(false);
+
+  const closeAIModal = useCallback(() => {
+    setShowAIModal(false);
+    setAiProposal(null);
+    setSelectedAddIdx({});
+    setApplySuggestedOrder(false);
+  }, []);
+
+  const selectedAddCount = useMemo(() => {
+    if (!aiProposal) return 0;
+    const list = aiProposal.add?.nodes || [];
+    return list.reduce((sum, _n, idx) => sum + (selectedAddIdx[idx] ? 1 : 0), 0);
+  }, [aiProposal, selectedAddIdx]);
+
+  const applyAIProposal = useCallback(async () => {
+    if (!aiProposal) return;
+    if (locked) {
+      toast((isPolish ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.') as any);
+      return;
+    }
+    const toAddNodes = (aiProposal.add?.nodes || []).filter((_n, idx) => selectedAddIdx[idx]);
+    const toAddEdges = aiProposal.add?.edges || [];
+    const hasOrder = !!aiProposal.reorder?.order?.length;
+
+    if (toAddNodes.length === 0 && !(applySuggestedOrder && hasOrder)) {
+      toast((isPolish ? 'Brak wybranych zmian' : 'No selected changes') as any);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // Append selected nodes/edges (dedupe by id)
+      const nextNodes = (() => {
+        const byId = new Map<string, Node>();
+        for (const n of nodes as any) byId.set(String((n as any)?.id), n as any);
+        for (const n of toAddNodes as any) byId.set(String((n as any)?.id), n as any);
+        return Array.from(byId.values());
+      })();
+      const nextEdges = (() => {
+        const byId = new Map<string, Edge>();
+        for (const e of edges as any) byId.set(String((e as any)?.id), e as any);
+        for (const e of toAddEdges as any) byId.set(String((e as any)?.id), e as any);
+        return Array.from(byId.values());
+      })();
+
+      setNodes(nextNodes as any);
+      setEdges(nextEdges as any);
+
+      // Persist immediately (modal apply should be explicit)
+      if (persistence === 'online') {
+        await Api.saveMyIdeaMap(ideaId, { nodes: nextNodes as any, edges: nextEdges as any });
+        setLastSavedAt(Date.now());
+      }
+
+      toast.success(
+        isPolish
+          ? `Zastosowano propozycje AI (${toAddNodes.length} dodano)`
+          : `Applied AI proposals (${toAddNodes.length} added)`,
+        { duration: 1200 }
+      );
+      closeAIModal();
+    } catch (err: any) {
+      toast.error(err?.message || (isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals'));
+    } finally {
+      setSaving(false);
+    }
+  }, [
+    aiProposal,
+    applySuggestedOrder,
+    closeAIModal,
+    edges,
+    ideaId,
+    isPolish,
+    locked,
+    nodes,
+    persistence,
+    selectedAddIdx,
+    setEdges,
+    setNodes,
+  ]);
+
   const handleAIExpand = useCallback(async () => {
+    if (locked) {
+      toast((isPolish ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.') as any);
+      return;
+    }
     if (persistence !== 'online') {
       toast((isPolish ? 'AI wymaga działającego backendu (restart/migracje).' : 'AI requires backend (restart/migrations).') as any);
       return;
@@ -448,22 +584,46 @@ function MindMapInner({ ideaId, ideaTitle, onClose, onCenterEdit }: IdeaRecommen
         branchKey: selectedBranchKey,
         count: 5,
         language: i18n.language,
+        proposeOnly: true,
       });
-      const addedNodes = Array.isArray(res?.added?.nodes) ? res.added.nodes : [];
-      const addedEdges = Array.isArray(res?.added?.edges) ? res.added.edges : [];
-      if (!addedNodes.length) {
+      const proposedNodes = (() => {
+        // New shape: proposal.add.nodes
+        if (Array.isArray(res?.proposal?.add?.nodes)) return res.proposal.add.nodes;
+        // Back-compat: proposal.add is nodes[]
+        if (Array.isArray(res?.proposal?.add)) return res.proposal.add;
+        return [];
+      })();
+      const proposedEdges = (() => {
+        if (Array.isArray(res?.proposal?.add?.edges)) return res.proposal.add.edges;
+        // Back-compat: proposal.edges (older draft)
+        if (Array.isArray(res?.proposal?.edges)) return res.proposal.edges;
+        return [];
+      })();
+      if (!proposedNodes.length) {
         toast((isPolish ? 'Brak nowych propozycji' : 'No new suggestions') as any);
         return;
       }
-      setNodes((prev: Node[]) => [...(prev || []), ...addedNodes]);
-      setEdges((prev: Edge[]) => [...(prev || []), ...addedEdges]);
-      toast.success(isPolish ? 'Dodano propozycje AI' : 'AI suggestions added', { duration: 1200 });
+
+      setAiProposal({
+        add: { nodes: proposedNodes, edges: proposedEdges },
+        remove: { nodeIds: [], edgeIds: [] },
+        reorder: null,
+        rationale: null,
+      });
+      setSelectedAddIdx(
+        Object.fromEntries(proposedNodes.map((_: any, idx: number) => [idx, true])) as Record<
+          number,
+          boolean
+        >
+      );
+      setApplySuggestedOrder(false);
+      setShowAIModal(true);
     } catch (err: any) {
       toast.error(err?.message || (isPolish ? 'AI nie zadziałało' : 'AI failed'));
     } finally {
       setSaving(false);
     }
-  }, [i18n.language, ideaId, isPolish, nodes, persistence, selectedBranchKey, setEdges, setNodes]);
+  }, [i18n.language, ideaId, isPolish, locked, nodes, persistence, selectedBranchKey, setEdges, setNodes]);
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -484,18 +644,176 @@ function MindMapInner({ ideaId, ideaTitle, onClose, onCenterEdit }: IdeaRecommen
     return isPolish ? `Zapisano ${sec}s temu` : `Saved ${sec}s ago`;
   }, [isPolish, lastSavedAt, persistence, saving]);
 
+  const containerClassName =
+    variant === 'overlay'
+      ? 'fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950'
+      : `relative w-full h-full bg-slate-50 dark:bg-navy-950 ${className || ''}`;
+
   return (
-    <div className="fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950">
+    <div className={containerClassName}>
+      {/* AI suggestions modal */}
+      {showAIModal && aiProposal && (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
+          <div className="w-full max-w-3xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
+            <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'Proponowane zmiany mapy (AI)' : 'Proposed map changes (AI)'}
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  {isPolish
+                    ? 'Zaznacz elementy do dodania, a następnie kliknij „Zastosuj”.'
+                    : 'Select items to add, then click “Apply”.'}
+                </p>
+              </div>
+              <button
+                onClick={closeAIModal}
+                className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                title={isPolish ? 'Zamknij' : 'Close'}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="px-5 py-4 max-h-[65vh] overflow-y-auto space-y-5">
+              {/* To remove (not used yet) */}
+              <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Do wywalenia' : 'To remove'} (0)
+                  </span>
+                </div>
+                <EmptyStateInline
+                  icon={GitBranch}
+                  dashed={false}
+                  className="p-5"
+                  message={isPolish ? 'Brak sugestii usunięć.' : 'No removal suggestions.'}
+                />
+              </div>
+
+              {/* To add */}
+              <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Do dodania' : 'To add'} ({aiProposal.add.nodes.length})
+                  </span>
+                  {aiProposal.add.nodes.length > 0 && (
+                    <button
+                      onClick={() =>
+                        setSelectedAddIdx(
+                          Object.fromEntries(aiProposal.add.nodes.map((_, idx) => [idx, true])) as Record<
+                            number,
+                            boolean
+                          >
+                        )
+                      }
+                      className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    >
+                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                    </button>
+                  )}
+                </div>
+                {aiProposal.add.nodes.length === 0 ? (
+                  <EmptyStateInline
+                    icon={Plus}
+                    dashed={false}
+                    className="p-5"
+                    message={isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'}
+                  />
+                ) : (
+                  <div className="space-y-1.5">
+                    {aiProposal.add.nodes.map((n, idx) => (
+                      <label
+                        key={String((n as any)?.id || idx)}
+                        className="flex items-start gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/30 hover:bg-white/80 dark:hover:bg-navy-900/40 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!!selectedAddIdx[idx]}
+                          onChange={(e) =>
+                            setSelectedAddIdx((prev) => ({ ...prev, [idx]: e.target.checked }))
+                          }
+                          className="mt-1"
+                        />
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-slate-800 dark:text-white">
+                            {String((n as any)?.data?.label || (n as any)?.id || 'Node')}
+                          </div>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            {isPolish ? 'Gałąź' : 'Branch'}:{' '}
+                            {String((n as any)?.data?.branchKey || selectedBranchKey)}
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Suggested order (not used yet) */}
+              <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Proponowana kolejność' : 'Suggested order'} (0)
+                  </span>
+                  <label className="inline-flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 select-none">
+                    <input
+                      type="checkbox"
+                      checked={applySuggestedOrder}
+                      onChange={(e) => setApplySuggestedOrder(e.target.checked)}
+                      disabled
+                    />
+                    {isPolish ? 'Zastosuj kolejność' : 'Apply order'}
+                  </label>
+                </div>
+                <EmptyStateInline
+                  icon={Sparkles}
+                  dashed={false}
+                  className="p-5"
+                  message={isPolish ? 'Brak sugestii kolejności.' : 'No ordering suggestion.'}
+                />
+              </div>
+
+              {/* Plan */}
+              <Callout variant="purple" title={isPolish ? 'Plan' : 'Plan'} compact className="rounded-xl">
+                <ul className="list-disc pl-4 space-y-1">
+                  <li>
+                    {isPolish ? `Dodaj zaznaczone węzły: ${selectedAddCount}.` : `Add selected nodes: ${selectedAddCount}.`}
+                  </li>
+                </ul>
+              </Callout>
+            </div>
+
+            <div className="px-5 py-4 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center justify-end gap-2">
+              <button
+                onClick={closeAIModal}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              >
+                {isPolish ? 'Anuluj' : 'Cancel'}
+              </button>
+              <button
+                onClick={() => void applyAIProposal()}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors"
+              >
+                {isPolish ? 'Zastosuj' : 'Apply'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top bar (floating) */}
       <div className="absolute top-3 left-3 right-3 z-[90] flex items-center justify-between">
         <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/85 dark:bg-navy-900/80 backdrop-blur-sm border border-slate-200/60 dark:border-white/[0.06] shadow-2xl">
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-            title={isPolish ? 'Zamknij mapę' : 'Close map'}
-          >
-            <X size={16} />
-          </button>
+          {showClose && (
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+              title={isPolish ? 'Zamknij mapę' : 'Close map'}
+            >
+              <X size={16} />
+            </button>
+          )}
           <div className="w-px h-5 bg-slate-200 dark:bg-white/[0.06]" />
           <div className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate max-w-[520px]">
             {isPolish ? 'Mapa rekomendacji' : 'Recommendation map'} — {ideaTitle}
@@ -531,7 +849,7 @@ function MindMapInner({ ideaId, ideaTitle, onClose, onCenterEdit }: IdeaRecommen
             onClick={handleAIExpand}
             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/15 transition-colors"
             title={isPolish ? 'AI: rozbuduj wybraną gałąź' : 'AI: expand selected branch'}
-            disabled={saving || persistence !== 'online'}
+            disabled={locked || saving || persistence !== 'online'}
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
             AI
@@ -558,6 +876,7 @@ function MindMapInner({ ideaId, ideaTitle, onClose, onCenterEdit }: IdeaRecommen
           onConnect={onConnect}
           onEdgeClick={onEdgeClick}
           nodeTypes={nodeTypes}
+          nodesConnectable={!locked}
           connectionMode={ConnectionMode.Loose}
           fitView
           fitViewOptions={{ padding: 0.3 }}
@@ -582,7 +901,15 @@ function MindMapInner({ ideaId, ideaTitle, onClose, onCenterEdit }: IdeaRecommen
               </span>
               <span className="text-slate-500 dark:text-slate-400">{selectedBranchKey}</span>
               <span className="text-slate-400">·</span>
-              <span>{isPolish ? 'AI dopina propozycje do tej gałęzi' : 'AI adds to this branch'}</span>
+              <span>
+                {locked
+                  ? isPolish
+                    ? 'Zaakceptuj wyzwanie, aby odblokować edycję'
+                    : 'Accept the challenge to unlock editing'
+                  : isPolish
+                    ? 'AI dopina propozycje do tej gałęzi'
+                    : 'AI adds to this branch'}
+              </span>
             </div>
           </Panel>
         </ReactFlow>

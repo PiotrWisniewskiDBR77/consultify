@@ -2562,7 +2562,13 @@ export const Api = {
 
   expandMyIdeaMap: async (
     ideaId: string,
-    payload: { anchorNodeId?: string; branchKey?: string; count?: number; language?: string }
+    payload: {
+      anchorNodeId?: string;
+      branchKey?: string;
+      count?: number;
+      language?: string;
+      proposeOnly?: boolean;
+    }
   ): Promise<any> => {
     const res = await fetch(`${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/expand`, {
       method: 'POST',

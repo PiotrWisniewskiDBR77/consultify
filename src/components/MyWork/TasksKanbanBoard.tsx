@@ -70,6 +70,7 @@ interface TasksKanbanBoardProps {
   onTaskClick: (taskId: string, taskData?: Task) => void;
   onCreateTask: () => void;
   onCountsChange: (counts: TaskCounts) => void;
+  refreshTrigger?: number;
 }
 
 /* ─── Status columns config ─── */
@@ -517,6 +518,7 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
   onTaskClick,
   onCreateTask,
   onCountsChange,
+  refreshTrigger,
 }) => {
   const { t } = useTranslation();
 
@@ -560,7 +562,7 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
 
   useEffect(() => {
     fetchTasks();
-  }, [fetchTasks]);
+  }, [fetchTasks, refreshTrigger]);
 
   /* ─── Filtering ─── */
 

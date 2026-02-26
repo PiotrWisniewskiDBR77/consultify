@@ -31,7 +31,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   const btnBase = [
     'w-full flex items-center gap-2.5 py-[7px] rounded-lg',
     'text-[13px] font-medium transition-colors duration-150',
-    'text-slate-500 dark:text-slate-400',
+    'text-slate-600 dark:text-slate-300',
     showFull ? 'px-2.5' : 'px-0 justify-center',
   ].join(' ');
 
@@ -47,7 +47,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
             type="button"
             onClick={() => onNavigate(AppView.PARTNER_LANDING)}
             whileTap={{ scale: 0.98 }}
-            className={`${btnBase} hover:bg-white/[0.05] hover:text-slate-300`}
+            className={`${btnBase} hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-slate-300`}
             title={t('sidebar.partnerPortal', 'Partner Portal')}
           >
             <Users size={18} strokeWidth={1.75} className="shrink-0" />

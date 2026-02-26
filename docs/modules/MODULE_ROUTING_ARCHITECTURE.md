@@ -68,6 +68,32 @@ Chat → Interview → Tools → Assessment → Initiatives → Implementation �
 
 Other modules can exist as **supporting / cross-cutting** UI areas.
 
+---
+
+## MVP v3 note (conceptual consolidation)
+
+> This section documents **product model v3** without changing the current **as-is routing**.
+> It exists to keep canonical docs aligned with the v3 operating model while code can remain mid-transition.
+
+### Tools vs Assessment (as-is vs v3)
+
+- **As-is (routing + sidebar):**
+  - `Discovery Tools` is a dedicated sidebar module (`AppView.DISCOVERY_TOOLS`)
+  - `Assessment` is a dedicated sidebar module (`AppView.ASSESSMENT_OVERVIEW`)
+- **v3 (operating model):**
+  - Both are treated as one user-facing **Tools** area with:
+    - `Library` (all tools: consulting + licensed)
+    - `Sessions`
+    - `Reports`
+    - `Presentations`
+    - `Initiatives`
+
+SSOT documents for v3:
+
+- `docs/product/OPERATING_MODEL_V3.md`
+- `docs/product/TOOLS_CATALOG_V3.md`
+- `docs/ui-standards/03-modules/view-modes-standard.md`
+
 ### 1. AI Chat
 | Właściwość | Wartość |
 |------------|---------|

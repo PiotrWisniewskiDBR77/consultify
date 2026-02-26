@@ -132,7 +132,7 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
   const label = pl ? COMMAND_LABELS[commandType].pl : COMMAND_LABELS[commandType].en;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 pb-3">
+    <div className="mx-auto max-w-5xl px-6 pb-3">
       <div className="rounded-xl border border-violet-200 dark:border-violet-800/40 bg-gradient-to-br from-violet-50 to-blue-50 dark:from-violet-950/30 dark:to-blue-950/20 overflow-hidden shadow-sm">
         <div className="flex items-center justify-between px-4 py-2 border-b border-violet-200/60 dark:border-violet-800/30">
           <div className="flex items-center gap-2 text-xs font-medium text-violet-700 dark:text-violet-300">

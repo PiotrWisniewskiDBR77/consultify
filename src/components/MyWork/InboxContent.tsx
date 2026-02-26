@@ -41,14 +41,12 @@ import {
   FileText,
   HelpCircle,
   Inbox,
-  Layers,
   List,
   Loader2,
   MessageSquare,
   Minus,
   Pin,
   Scale,
-  Settings,
   Sparkles,
   Square,
   Star,
@@ -66,6 +64,7 @@ import {
   type TableFilters,
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
+import { PreviewPaneShell } from '@/components/ui/ResizableTable';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -153,6 +152,10 @@ interface InboxContentProps {
   onOpenNotification?: (notificationId: string) => void;
   onCountsChange: (counts: { total: number; critical: number }) => void;
   refreshTrigger?: number;
+  /** Controlled view mode (rendered by MyWork topbar in v3) */
+  viewMode?: InboxViewMode;
+  /** Controlled view mode change handler */
+  onViewModeChange?: (mode: InboxViewMode) => void;
 }
 
 // ── Deduplication: group items by _key ──
@@ -391,31 +394,107 @@ const PreviewPane: React.FC<{
   const isNotification = String(item._key || '').startsWith('notification:');
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/50">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-          {isPolish ? 'Podgląd' : 'Preview'}
-        </h3>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={onOpen}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
-          >
-            <Eye size={13} />
-            {isPolish ? 'Otwórz' : 'Open full'}
-          </button>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      </div>
+    <PreviewPaneShell
+      kicker={isPolish ? 'Podgląd' : 'Preview'}
+      title={item.title || (isPolish ? 'Inbox item' : 'Inbox item')}
+      onClose={onClose}
+      actions={
+        <button
+          onClick={onOpen}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+        >
+          <Eye size={13} />
+          {isPolish ? 'Otwórz' : 'Open'}
+        </button>
+      }
+      footer={
+        <div className="space-y-3">
+          {/* N11: Route to Focus */}
+          <div>
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+              {isPolish ? 'Dodaj do Focus:' : 'Add to Focus:'}
+            </span>
+            <div className="flex gap-1.5">
+              <button
+                onClick={() => onTriage('accept_today')}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/25 transition-colors"
+              >
+                <Zap size={13} />
+                {isPolish ? 'Dziś' : 'Today'}
+              </button>
+              <button
+                onClick={() => onTriage('accept_week')}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-500/25 transition-colors"
+              >
+                <CalendarClock size={13} />
+                {isPolish ? 'Ten tydz.' : 'This week'}
+              </button>
+              <button
+                onClick={() => onTriage('accept_later')}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+              >
+                <Calendar size={13} />
+                {isPolish ? 'Później' : 'Later'}
+              </button>
+            </div>
+          </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* N1/N8/N10: Status actions */}
+          <div className={`grid ${onSaveAsNote ? 'grid-cols-4' : 'grid-cols-3'} gap-1.5`}>
+            <button
+              onClick={() => onTriage('done')}
+              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors"
+            >
+              <CheckCircle2 size={13} />
+              {isPolish ? 'Gotowe' : 'Done'}
+            </button>
+            <button
+              onClick={() => onTriage('save')}
+              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors"
+            >
+              <Bookmark size={13} />
+              {isPolish ? 'Zapisz' : 'Save'}
+            </button>
+            {onSaveAsNote ? (
+              <button
+                onClick={() => onSaveAsNote(item)}
+                className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium bg-slate-50 text-slate-700 dark:bg-navy-800 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+              >
+                <FileText size={13} />
+                {isPolish ? 'Notatka' : 'Note'}
+              </button>
+            ) : null}
+            <button
+              onClick={() => onTriage('dismiss')}
+              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+            >
+              <Archive size={13} />
+              {isPolish ? 'Odłóż' : 'Dismiss'}
+            </button>
+          </div>
+
+          {/* Snooze row */}
+          <div>
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">
+              {isPolish ? 'Odłóż na:' : 'Snooze for:'}
+            </span>
+            <div className="flex flex-wrap gap-1">
+              {SNOOZE_PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => onSnooze(p.id)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors"
+                >
+                  <Clock size={11} />
+                  {isPolish ? p.labelPl : p.labelEn}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <div className="space-y-4">
         {/* Title */}
         <div>
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white leading-snug">
@@ -525,93 +604,7 @@ const PreviewPane: React.FC<{
           </div>
         )}
       </div>
-
-      {/* Action buttons */}
-      <div className="border-t border-slate-200 dark:border-navy-700 p-4 space-y-3">
-        {/* N11: Route to Focus */}
-        <div>
-          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
-            {isPolish ? 'Dodaj do Focus:' : 'Add to Focus:'}
-          </span>
-          <div className="flex gap-1.5">
-            <button
-              onClick={() => onTriage('accept_today')}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/25 transition-colors"
-            >
-              <Zap size={13} />
-              {isPolish ? 'Dziś' : 'Today'}
-            </button>
-            <button
-              onClick={() => onTriage('accept_week')}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-500/25 transition-colors"
-            >
-              <CalendarClock size={13} />
-              {isPolish ? 'Ten tydz.' : 'This week'}
-            </button>
-            <button
-              onClick={() => onTriage('accept_later')}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
-            >
-              <Calendar size={13} />
-              {isPolish ? 'Później' : 'Later'}
-            </button>
-          </div>
-        </div>
-
-        {/* N1/N8/N10: Status actions */}
-        <div className="grid grid-cols-4 gap-1.5">
-          <button
-            onClick={() => onTriage('done')}
-            className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors"
-          >
-            <CheckCircle2 size={13} />
-            {isPolish ? 'Gotowe' : 'Done'}
-          </button>
-          <button
-            onClick={() => onTriage('save')}
-            className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors"
-          >
-            <Bookmark size={13} />
-            {isPolish ? 'Zapisz' : 'Save'}
-          </button>
-          {onSaveAsNote && (
-            <button
-              onClick={() => onSaveAsNote(item)}
-              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium bg-slate-50 text-slate-700 dark:bg-navy-800 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-            >
-              <FileText size={13} />
-              {isPolish ? 'Zapisz jako notatkę' : 'Save as note'}
-            </button>
-          )}
-          <button
-            onClick={() => onTriage('dismiss')}
-            className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
-          >
-            <Archive size={13} />
-            {isPolish ? 'Odłóż' : 'Dismiss'}
-          </button>
-        </div>
-
-        {/* Snooze row */}
-        <div>
-          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">
-            {isPolish ? 'Odłóż na:' : 'Snooze for:'}
-          </span>
-          <div className="flex flex-wrap gap-1">
-            {SNOOZE_PRESETS.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => onSnooze(p.id)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors"
-              >
-                <Clock size={11} />
-                {isPolish ? p.labelPl : p.labelEn}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
+    </PreviewPaneShell>
   );
 };
 
@@ -625,6 +618,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   onOpenNotification,
   onCountsChange,
   refreshTrigger,
+  viewMode: controlledViewMode,
+  onViewModeChange,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
@@ -632,7 +627,15 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
   const [data, setData] = useState<InboxResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<InboxViewMode>('flat');
+  const [uncontrolledViewMode, setUncontrolledViewMode] = useState<InboxViewMode>('flat');
+  const viewMode = controlledViewMode ?? uncontrolledViewMode;
+  const setViewMode = useCallback(
+    (next: InboxViewMode) => {
+      onViewModeChange?.(next);
+      if (!controlledViewMode) setUncontrolledViewMode(next);
+    },
+    [controlledViewMode, onViewModeChange]
+  );
   const [inboxSection, setInboxSection] = useState<'today' | 'this_week' | 'all'>('all');
 
   // Selection
@@ -1464,73 +1467,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950" ref={tableRef}>
       {/* Header */}
-      <div className="px-4 pt-4 pb-0">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="text-lg font-semibold text-slate-900 dark:text-white">
-              {isPolish ? 'Inbox (Action Queue)' : 'Inbox (Action Queue)'}
-            </div>
-            <div className="text-sm text-slate-600 dark:text-slate-400">
-              {isPolish
-                ? 'Zadania, decyzje, powiadomienia — wszystko wymagające Twojej akcji.'
-                : 'Tasks, decisions, notifications — everything requiring your action.'}
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {isPolish ? 'Skróty: J/K nawigacja · T dziś · W tydzień · E gotowe · B zapisz · A odłóż · ? pomoc' : 'Shortcuts: J/K nav · T today · W week · E done · B save · A dismiss · ? help'}
-            </div>
-          </div>
-
-          {/* View mode toggle + Settings */}
-          <div className="flex items-center gap-2">
-            <div
-              className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
-              role="radiogroup"
-              aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
-            >
-              <button
-                onClick={() => setViewMode('flat')}
-                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all duration-150 ${
-                  viewMode === 'flat'
-                    ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                }`}
-                title={isPolish ? 'Płaska lista' : 'Flat list'}
-              >
-                <List size={14} />
-                {isPolish ? 'Lista' : 'List'}
-              </button>
-              <button
-                onClick={() => setViewMode('sections')}
-                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all duration-150 ${
-                  viewMode === 'sections'
-                    ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                }`}
-                title={isPolish ? 'Grupowanie tematyczne' : 'Smart sections'}
-              >
-                <Layers size={14} />
-                {isPolish ? 'Sekcje' : 'Sections'}
-              </button>
-            </div>
-            <button
-              onClick={handleAutoTriage}
-              disabled={autoTriageLoading}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-all"
-            >
-              {autoTriageLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-              {isPolish ? 'AI Triage' : 'AI Auto-Triage'}
-            </button>
-            <button
-              className="p-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-              title={isPolish ? 'Ustawienia Inbox' : 'Inbox Settings'}
-            >
-              <Settings size={16} />
-            </button>
-          </div>
-        </div>
+      <div className="px-4 pt-3 pb-0">
 
         {/* N1: Status tabs */}
-        <div className="mt-3 flex items-center gap-1 border-b border-slate-200 dark:border-navy-700">
+        <div className="flex items-center gap-1 border-b border-slate-200 dark:border-navy-700">
           {([
             { id: 'open' as InboxStatusTab, icon: Inbox, label: isPolish ? 'Otwarte' : 'Open', count: data?.summary?.counts?.open },
             { id: 'done' as InboxStatusTab, icon: CheckCircle2, label: isPolish ? 'Gotowe' : 'Done', count: data?.summary?.counts?.done },
@@ -1557,7 +1497,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         </div>
 
         {/* Summary pills + N2: Action Required toggle */}
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="mt-2 flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 text-sm text-slate-700 dark:text-slate-200">
             <Inbox size={14} />
             {isPolish ? 'W kolejce' : 'In queue'}: <b>{data?.summary?.total ?? 0}</b>
@@ -1589,7 +1529,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         </div>
 
         {/* Time section tabs */}
-        <div className="mt-3 flex items-center gap-1 border-b border-slate-200 dark:border-navy-700">
+        <div className="mt-2 flex items-center gap-1 border-b border-slate-200 dark:border-navy-700">
           {(['today', 'this_week', 'all'] as const).map((section) => {
             const count = sectionCounts[section];
             const label =
@@ -1652,7 +1592,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       {/* Main content + Preview pane */}
       <div className="flex-1 flex min-h-0">
         {/* Table content */}
-        <div className={`flex-1 overflow-y-auto p-4 pt-0 ${previewItem ? 'max-w-[65%]' : ''} transition-all duration-200`}>
+        <div className={`flex-1 overflow-y-auto p-4 pt-3 ${previewItem ? 'max-w-[65%]' : ''} transition-all duration-200`}>
           {loading ? (
             <div className="flex items-center justify-center py-12 text-slate-600 dark:text-slate-300">
               <Loader2 className="animate-spin mr-2" size={18} />
@@ -1685,7 +1625,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               )}
             </div>
           ) : (
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden mt-4">
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
               {viewMode === 'sections' ? renderSectionsView() : renderFlatView()}
             </div>
           )}

@@ -33,10 +33,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   const confirmRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      const timer = setTimeout(() => confirmRef.current?.focus(), 100);
-      return () => clearTimeout(timer);
-    }
+    if (!isOpen) return;
+    const timer = setTimeout(() => confirmRef.current?.focus(), 100);
+    return () => clearTimeout(timer);
   }, [isOpen]);
 
   const handleKeyDown = useCallback(

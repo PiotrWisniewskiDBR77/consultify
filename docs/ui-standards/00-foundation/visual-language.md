@@ -77,8 +77,8 @@ Interfejs MUSI mieć **minimum 3 warstwy głębi** poprzez odcienie tła. Różn
 | Warstwa                | Rola                        | Dark mode        | Light mode                   |
 | ---------------------- | --------------------------- | ---------------- | ---------------------------- |
 | **Layer 0** (deepest)  | Sidebar, system chrome      | `bg-navy-950`    | `bg-slate-100`               |
-| **Layer 1** (base)     | Główna content area         | `bg-navy-900`    | `bg-white`                   |
-| **Layer 2** (elevated) | Karty, panele, sekcje       | `bg-navy-800/50` | `bg-slate-50`                |
+| **Layer 1** (base)     | Główna content area         | `bg-navy-900`    | `bg-slate-50`                |
+| **Layer 2** (elevated) | Karty, panele, sekcje       | `bg-navy-800/50` | `bg-white`                   |
 | **Layer 3** (floating) | Modale, dropdowny, tooltipy | `bg-navy-800`    | `bg-white` + `shadow-hig-xl` |
 
 **MUST:**
@@ -87,6 +87,17 @@ Interfejs MUSI mieć **minimum 3 warstwy głębi** poprzez odcienie tła. Różn
 - Nigdy `#ffffff` jako tekst w dark mode — najjaśniejszy tekst = `text-slate-100` (`#f1f5f9`)
 - Sidebar jest **ciemniejszy** od content area (Layer 0 vs Layer 1)
 - Sidebar NIE MA `border-right` — separacja odbywa się wyłącznie przez zmianę tła
+
+### 3.3 Light mode readability (v3 refinement)
+
+W light mode “za białe” surfaces powodują spadek czytelności (mało separacji i “szary tekst na białym”).
+
+**KANON v3:**
+
+- Base content area (Layer 1) = `bg-slate-50` (nie `bg-white`)
+- Elevated surfaces (Layer 2) = `bg-white` (karty/panele), separacja bez ciężkich ramek
+- Primary text w light mode preferuje `text-slate-900` / `text-navy-900` (czytelność)
+- Badge/chips: zakaz zestawienia “jasne tło + jasny tekst tego samego koloru” (przenieś sygnał na dot/ikonę/border albo przyciemnij tekst)
 
 ### 3.2 Standardowe powierzchnie (MUST)
 
@@ -155,6 +166,19 @@ Zaokrąglenia są **kontekstowe**, nie jednolite:
 | Input fields                 | `rounded-lg`   | 8px   |
 
 **Wzorzec:** ChatGPT = najbardziej zaokrąglony (pill shapes), ClickUp/Notion = bardziej geometryczne. Consultify celuje w złoty środek.
+
+#### v3: “bardziej okrągłe” + system globalnej zmiany (MUST)
+
+Żeby móc eksperymentować i zmieniać rounding **systemowo** (bez ręcznego szukania `rounded-*` po kodzie),
+w v3 preferujemy użycie tokenów HIG:
+
+- `rounded-hig-xs|sm|md|lg|xl|2xl|3xl|full` (SSOT: `tailwind.config.js` → `theme.extend.borderRadius`)
+
+**Reguła migracji:**
+
+- Nowy kod powinien używać `rounded-hig-*` zamiast gołych `rounded-lg/xl/2xl`.
+- Zmiana “bardziej okrągłe / mniej okrągłe” odbywa się przez korektę tokenów w `tailwind.config.js`,
+  a nie przez ad-hoc styling w komponentach.
 
 ---
 

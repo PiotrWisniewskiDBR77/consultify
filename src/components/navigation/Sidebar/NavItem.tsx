@@ -100,10 +100,10 @@ export const NavItem: React.FC<NavItemProps> = ({
           showFull ? 'px-2.5 gap-2.5' : 'px-0 justify-center',
           isLocked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer',
           isHighlighted
-            ? 'bg-white/[0.08] text-slate-100 dark:text-slate-100 font-medium'
+            ? 'bg-primary-50 dark:bg-white/[0.08] text-primary-700 dark:text-slate-100 font-medium'
             : isParentActive
-              ? 'text-slate-200 dark:text-slate-200 bg-white/[0.04]'
-              : 'text-slate-500 dark:text-slate-400 hover:bg-white/[0.05] hover:text-slate-300 dark:hover:text-slate-300',
+              ? 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/[0.04]'
+              : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-slate-100',
         ].join(' ')}
         title={getTooltip()}
         aria-current={isHighlighted ? 'page' : undefined}
@@ -114,10 +114,10 @@ export const NavItem: React.FC<NavItemProps> = ({
             className={[
               'shrink-0 transition-colors',
               isHighlighted
-                ? 'text-primary-400'
+                ? 'text-primary-500 dark:text-primary-400'
                 : isParentActive
-                  ? 'text-slate-400'
-                  : 'text-slate-500 dark:text-slate-500 group-hover:text-slate-400',
+                  ? 'text-slate-500 dark:text-slate-400'
+                  : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300',
             ].join(' ')}
           >
             {React.cloneElement(

@@ -4,19 +4,36 @@
 
 `Discovery Tools` replaces the previous Tools menu and sits above the Assessment module. It exposes four primary categories—Strategic Analysis, Operational Excellence, Digital Transformation, and Process Automation by AI—and links each category directly into the AI chat workspace so users can work conversationally with every methodology. The module's goal is to turn AI-guided analysis into initiative-ready outputs that flow downstream into the Initiatives module.
 
+> **MVP v3 note:** In v3 operating model, Discovery Tools become a subset of the unified **Tools** area:
+> `Tools/Library → Sessions → Reports → Presentations → Initiatives`.
+> SSOT: `docs/product/OPERATING_MODEL_V3.md` and `docs/product/TOOLS_CATALOG_V3.md`.
+
 ### Navigation
 
 - **Sidebar placement**: the Discovery Tools button renders above Assessments. Hovering reveals the four categories. Strategic, Operational, and Digital categories expose flat lists of ten tools each; Process Automation opens immediately into its dedicated wizard.
-- **Menu behavior**: each tool entry includes an icon, short description, and rollout animation. Selection updates the main panel via navigation routes such as `/tools/discovery/strategic/[tool-id]`.
-- **Entry point**: the Structured Pain Explorer serves as the default experience for new users.
+- **As-is routes (code)**:
+  - hub: `/discovery-tools` → `src/views/discovery-tools/DiscoveryToolsView.tsx`
+  - categories: `/discovery-tools/strategic|operational|digital|process-automation`
+  - tool selection happens inside the category views (query param / deep link patterns may apply).
 
 ### Architecture
 
-Organization:
+As-is (code):
 
-- `DiscoveryToolsLayout` integrates `ToolNavigator`, the `ChatPanel`, and the `InsightCanvas`. `DiscoveryToolsRouter` selects the requested tool.
-- Shared stores (`useDiscoveryStore`, `useToolStore`) keep conversation history, extracted entities, stage progress, and initiative drafts.
-- The AI interaction layer reuses `useAIStream`, augmented with tool-specific system prompts that enforce the methodology described in each section below.
+- Views (routing layer):
+  - `src/views/discovery-tools/DiscoveryToolsView.tsx` (landing, 4 categories)
+  - `src/views/discovery-tools/StrategicToolsView.tsx`
+  - `src/views/discovery-tools/OperationalToolsView.tsx`
+  - `src/views/discovery-tools/DigitalToolsView.tsx`
+  - `src/views/discovery-tools/ProcessAutomationView.tsx`
+- Canonical tool document view (2-column):
+  - `src/components/DiscoveryTools/ToolDocumentView.tsx`
+- Step rendering + tool-specific steps:
+  - `src/components/DiscoveryTools/ToolCanvas.tsx`
+- Session orchestration + AI integration:
+  - `src/components/DiscoveryTools/ToolWorkspace.tsx`
+  - store: `src/store/useToolStore` (ToolSession, step defs)
+  - AI hook: `src/hooks/discovery/useToolAI`
 
 ### Integration Points
 
@@ -26,9 +43,10 @@ Organization:
 
 ### Shared Components
 
-- `ToolChatWorkspace`: left column chat + right column canvas or visualization.
-- `InitiativeComposer`: contextual form used by every tool before pushing into the initiative workflow.
-- `ToolHelpSidebar`: houses help content (purpose, tips, FAQ, related tools).
+As-is exports (`src/components/DiscoveryTools/index.ts`):
+
+- `ToolWorkspace`, `ToolDocumentView`, `ToolCanvas`, `ToolHeader`, `ToolActionBar`, `ToolReviewPanel`
+- Visualizations: `PorterRadar`, `SWOTMatrix`
 
 ### Data Flow (mermaid)
 
@@ -44,6 +62,9 @@ flowchart TB
     ToolStore --> AssessmentModule
     ToolStore --> ProjectModule
 ```
+
+> Note: The diagram is conceptual. In current implementation, Tool sessions are orchestrated via `ToolWorkspace` + `useToolStore` + `useToolAI`,
+> and rendered as a canonical 2-column document (`ToolDocumentView`) or step canvas (`ToolCanvas`) depending on tool/category.
 
 ## Template (reused per tool)
 

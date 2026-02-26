@@ -242,21 +242,21 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
   if (!open) return null;
 
   const insertButtons = [
-    { icon: Info, label: 'Callout', labelPl: 'Wyróżnienie', action: () => (editor?.commands as any)?.setCallout({ variant: 'info' }), color: 'from-blue-500/20 to-blue-600/10 text-blue-600 dark:text-blue-400' },
-    { icon: AlertTriangle, label: 'Warning', labelPl: 'Ostrzeżenie', action: () => (editor?.commands as any)?.setCallout({ variant: 'warning' }), color: 'from-amber-500/20 to-amber-600/10 text-amber-600 dark:text-amber-400' },
-    { icon: ToggleRight, label: 'Toggle', labelPl: 'Rozwijane', action: () => (editor?.commands as any)?.setDetails(), color: 'from-slate-500/15 to-slate-600/8 text-slate-600 dark:text-slate-400' },
-    { icon: Columns3, label: 'Table', labelPl: 'Tabela', action: () => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(), color: 'from-indigo-500/15 to-indigo-600/8 text-indigo-600 dark:text-indigo-400' },
-    { icon: Minus, label: 'Divider', labelPl: 'Separator', action: () => editor?.chain().focus().setHorizontalRule().run(), color: 'from-slate-500/15 to-slate-600/8 text-slate-600 dark:text-slate-400' },
+    { icon: Info, label: 'Callout', labelPl: 'Wyróżnienie', action: () => (editor?.commands as any)?.setCallout({ variant: 'info' }), iconColor: 'text-blue-500 dark:text-blue-400' },
+    { icon: AlertTriangle, label: 'Warning', labelPl: 'Ostrzeżenie', action: () => (editor?.commands as any)?.setCallout({ variant: 'warning' }), iconColor: 'text-amber-500 dark:text-amber-400' },
+    { icon: ToggleRight, label: 'Toggle', labelPl: 'Rozwijane', action: () => (editor?.commands as any)?.setDetails(), iconColor: 'text-slate-500 dark:text-slate-400' },
+    { icon: Columns3, label: 'Table', labelPl: 'Tabela', action: () => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(), iconColor: 'text-indigo-500 dark:text-indigo-400' },
+    { icon: Minus, label: 'Divider', labelPl: 'Separator', action: () => editor?.chain().focus().setHorizontalRule().run(), iconColor: 'text-slate-400 dark:text-slate-500' },
   ];
 
-  const convertActions: { id: ConvertTarget; icon: React.ComponentType<any>; labelPl: string; labelEn: string; gradient: string; textColor: string }[] = [
-    { id: 'initiative', icon: Target, labelPl: 'Inicjatywa', labelEn: 'Initiative', gradient: 'from-blue-500/15 to-cyan-500/10', textColor: 'text-blue-600 dark:text-blue-400' },
-    { id: 'task', icon: CheckSquare, labelPl: 'Task', labelEn: 'Task', gradient: 'from-emerald-500/15 to-green-500/10', textColor: 'text-emerald-600 dark:text-emerald-400' },
-    { id: 'decision', icon: Scale, labelPl: 'Decyzja', labelEn: 'Decision', gradient: 'from-amber-500/15 to-yellow-500/10', textColor: 'text-amber-600 dark:text-amber-400' },
-    { id: 'idea', icon: Lightbulb, labelPl: 'Idea', labelEn: 'Idea', gradient: 'from-violet-500/15 to-purple-500/10', textColor: 'text-violet-600 dark:text-violet-400' },
-    { id: 'assessment', icon: ListChecks, labelPl: 'Assessment', labelEn: 'Assessment', gradient: 'from-rose-500/15 to-pink-500/10', textColor: 'text-rose-600 dark:text-rose-400' },
-    { id: 'report', icon: FileBarChart, labelPl: 'Raport', labelEn: 'Report', gradient: 'from-indigo-500/15 to-blue-500/10', textColor: 'text-indigo-600 dark:text-indigo-400' },
-    { id: 'presentation', icon: Presentation, labelPl: 'Prezentacja', labelEn: 'Presentation', gradient: 'from-fuchsia-500/15 to-pink-500/10', textColor: 'text-fuchsia-600 dark:text-fuchsia-400' },
+  const convertActions: { id: ConvertTarget; icon: React.ComponentType<any>; labelPl: string; labelEn: string; iconColor: string }[] = [
+    { id: 'initiative', icon: Target, labelPl: 'Inicjatywa', labelEn: 'Initiative', iconColor: 'text-blue-500 dark:text-blue-400' },
+    { id: 'task', icon: CheckSquare, labelPl: 'Task', labelEn: 'Task', iconColor: 'text-emerald-500 dark:text-emerald-400' },
+    { id: 'decision', icon: Scale, labelPl: 'Decyzja', labelEn: 'Decision', iconColor: 'text-amber-500 dark:text-amber-400' },
+    { id: 'idea', icon: Lightbulb, labelPl: 'Idea', labelEn: 'Idea', iconColor: 'text-violet-500 dark:text-violet-400' },
+    { id: 'assessment', icon: ListChecks, labelPl: 'Assessment', labelEn: 'Assessment', iconColor: 'text-rose-500 dark:text-rose-400' },
+    { id: 'report', icon: FileBarChart, labelPl: 'Raport', labelEn: 'Report', iconColor: 'text-indigo-500 dark:text-indigo-400' },
+    { id: 'presentation', icon: Presentation, labelPl: 'Prezentacja', labelEn: 'Presentation', iconColor: 'text-fuchsia-500 dark:text-fuchsia-400' },
   ];
 
   const matStyle = page ? (MATURITY_STYLE[page.maturity] || MATURITY_STYLE.seed) : MATURITY_STYLE.seed;
@@ -271,16 +271,16 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
       <div className="px-3 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
         <SectionLabel>{isPl ? 'Wstaw blok' : 'Insert block'}</SectionLabel>
         <div className="grid grid-cols-5 gap-1.5">
-          {insertButtons.map(({ icon: Icon, label, labelPl, action, color }) => (
+          {insertButtons.map(({ icon: Icon, label, labelPl, action, iconColor }) => (
             <button
               key={label}
               onClick={() => insertElement(action)}
               disabled={!editor}
-              className={`group relative flex flex-col items-center gap-1 py-2 px-1 rounded-xl bg-gradient-to-b ${color} border border-transparent hover:border-current/10 hover:shadow-sm disabled:opacity-40 transition-all duration-200`}
+              className="group relative flex flex-col items-center gap-1 py-2 px-1 rounded-xl bg-slate-50/60 dark:bg-white/[0.03] border border-slate-200/30 dark:border-white/[0.05] hover:bg-slate-100/80 dark:hover:bg-white/[0.06] hover:border-slate-300/40 dark:hover:border-white/[0.08] hover:shadow-sm disabled:opacity-40 transition-all duration-200"
               title={isPl ? labelPl : label}
             >
-              <Icon size={16} />
-              <span className="text-[8px] font-semibold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity">
+              <Icon size={16} className={iconColor} />
+              <span className="text-[8px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 opacity-70 group-hover:opacity-100 transition-opacity">
                 {isPl ? labelPl : label}
               </span>
             </button>
@@ -303,20 +303,18 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
       <div className="px-3 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
         <SectionLabel>{isPl ? 'Utwórz z notatki' : 'Create from note'}</SectionLabel>
         <div className="grid grid-cols-2 gap-1.5">
-          {convertActions.map(({ id, icon: Icon, labelPl, labelEn, gradient, textColor }) => (
+          {convertActions.map(({ id, icon: Icon, labelPl, labelEn, iconColor }) => (
             <button
               key={id}
               onClick={() => handleConvertAction(id)}
               disabled={!page}
-              className="group relative flex items-center gap-2 px-2.5 py-2 rounded-xl overflow-hidden transition-all duration-200 hover:shadow-md disabled:opacity-40"
+              className="group flex items-center gap-2 px-2.5 py-2 rounded-xl bg-slate-50/40 dark:bg-white/[0.02] border border-slate-200/25 dark:border-white/[0.04] hover:bg-slate-100/60 dark:hover:bg-white/[0.05] hover:border-slate-300/30 dark:hover:border-white/[0.08] transition-all duration-200 hover:shadow-sm disabled:opacity-40"
             >
-              <div className={`absolute inset-0 bg-gradient-to-br ${gradient} group-hover:opacity-150 transition-opacity`} />
-              <div className="absolute inset-0 border border-current/[0.06] group-hover:border-current/[0.12] rounded-xl transition-colors" />
-              <div className={`relative w-6 h-6 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center ${textColor}`}>
+              <div className={`w-6 h-6 rounded-lg bg-slate-100/80 dark:bg-white/[0.06] flex items-center justify-center ${iconColor} shrink-0`}>
                 <Icon size={13} />
               </div>
-              <div className="relative flex-1 min-w-0 text-left">
-                <div className={`text-[10px] font-bold ${textColor} truncate`}>
+              <div className="flex-1 min-w-0 text-left">
+                <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200 truncate">
                   {isPl ? labelPl : labelEn}
                 </div>
               </div>
@@ -373,8 +371,8 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
             {(onAskAI || onDeletePage) && (
               <div className="flex items-center gap-2 pt-0.5">
                 {onAskAI && (
-                  <button onClick={onAskAI} className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[10px] font-bold bg-gradient-to-r from-violet-500/12 to-indigo-500/8 text-violet-700 dark:text-violet-300 hover:from-violet-500/20 hover:to-indigo-500/15 border border-violet-500/10 hover:border-violet-500/20 transition-all">
-                    <Sparkles size={11} />
+                  <button onClick={onAskAI} className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[10px] font-bold bg-slate-50/80 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.07] border border-slate-200/30 dark:border-white/[0.06] hover:border-slate-300/40 dark:hover:border-white/[0.1] transition-all">
+                    <Sparkles size={11} className="text-violet-500 dark:text-violet-400" />
                     {isPl ? 'Zapytaj AI' : 'Ask AI'}
                   </button>
                 )}
@@ -397,17 +395,17 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
           onDragStart={handleDragStart}
           className={`group relative rounded-2xl border transition-all duration-300 ${
             input.trim()
-              ? 'border-violet-400/30 dark:border-violet-500/20 bg-gradient-to-br from-violet-50/60 via-white to-indigo-50/40 dark:from-violet-950/30 dark:via-navy-950 dark:to-indigo-950/20 shadow-lg shadow-violet-500/[0.06] cursor-grab active:cursor-grabbing'
+              ? 'border-slate-300/40 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.04] shadow-sm cursor-grab active:cursor-grabbing'
               : 'border-slate-200/40 dark:border-white/[0.06] bg-slate-50/40 dark:bg-white/[0.02]'
           }`}
         >
-          {input.trim() && <div className="absolute -inset-px rounded-2xl bg-gradient-to-r from-violet-500/10 via-transparent to-indigo-500/10 pointer-events-none" />}
+          {input.trim() && <div className="absolute -inset-px rounded-2xl bg-gradient-to-r from-slate-400/[0.06] via-transparent to-slate-400/[0.06] pointer-events-none" />}
           <div className="relative p-3">
             <div className="flex items-start gap-2">
               {input.trim() && (
-                <div className="mt-2.5 shrink-0 flex flex-col items-center gap-0.5">
-                  <GripVertical size={14} className="text-violet-400/60 group-hover:text-violet-500 transition-colors" />
-                  <div className="w-0.5 h-4 rounded-full bg-gradient-to-b from-violet-400/40 to-transparent" />
+                  <div className="mt-2.5 shrink-0 flex flex-col items-center gap-0.5">
+                  <GripVertical size={14} className="text-slate-400/60 group-hover:text-slate-500 transition-colors" />
+                  <div className="w-0.5 h-4 rounded-full bg-gradient-to-b from-slate-400/40 to-transparent" />
                 </div>
               )}
               <div className="flex-1 min-w-0">
@@ -421,7 +419,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
                   <button
                     onClick={toggleMic}
-                    className={`relative p-2 rounded-xl transition-all duration-200 ${isRecording ? 'bg-red-500/15 text-red-500 shadow-sm shadow-red-500/10' : 'bg-slate-100/80 dark:bg-white/[0.06] text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-500/10'}`}
+                    className={`relative p-2 rounded-xl transition-all duration-200 ${isRecording ? 'bg-red-500/15 text-red-500 shadow-sm shadow-red-500/10' : 'bg-slate-100/80 dark:bg-white/[0.06] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/[0.08]'}`}
                     title={isPl ? 'Mikrofon' : 'Microphone'}
                   >
                     {isRecording && <span className="absolute inset-0 rounded-xl animate-ping bg-red-500/10" />}
@@ -430,14 +428,14 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
                   {input.trim() && (
                     <span className="flex items-center gap-1.5 text-[10px] font-medium">
                       {isGenerating
-                        ? <><Loader2 size={10} className="animate-spin text-violet-500" /><span className="text-violet-500">{isPl ? 'Generowanie…' : 'Generating…'}</span></>
+                        ? <><Loader2 size={10} className="animate-spin text-slate-500" /><span className="text-slate-500">{isPl ? 'Generowanie…' : 'Generating…'}</span></>
                         : <span className="text-slate-400/70 dark:text-slate-500/70">{isPl ? '← Przeciągnij' : '← Drag'}</span>}
                     </span>
                   )}
                   <button
                     onClick={() => input.trim() && runAIAndInsert(input.trim())}
                     disabled={!input.trim() || isGenerating}
-                    className="relative p-2 rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/15 text-violet-600 dark:text-violet-400 hover:from-violet-500/30 hover:to-indigo-500/25 hover:shadow-sm disabled:opacity-30 transition-all duration-200"
+                    className="relative p-2 rounded-xl bg-slate-100/80 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/[0.08] hover:shadow-sm disabled:opacity-30 transition-all duration-200"
                     title={isPl ? 'AI: oczyść i wstaw' : 'AI: polish & insert'}
                   >
                     <Send size={16} />

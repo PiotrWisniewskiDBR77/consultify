@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { PreviewPaneShell } from '@/components/ui/ResizableTable';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -136,113 +137,50 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
 
   if (!decisionId) {
     return (
-      <aside className="w-[420px] flex-shrink-0 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 h-full">
-        <div className="h-full flex items-center justify-center p-6 text-center">
-          <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Wybierz decyzję z listy, aby zobaczyć podgląd.' : 'Select a decision to preview.'}
+      <aside className="w-[420px] flex-shrink-0 bg-slate-50 dark:bg-navy-950 h-full p-3">
+        <PreviewPaneShell
+          kicker={isPolish ? 'Podgląd' : 'Preview'}
+          title={isPolish ? 'Decyzja' : 'Decision'}
+          onClose={onClose}
+        >
+          <div className="h-full flex items-center justify-center p-6 text-center">
+            <div className="text-sm text-slate-500 dark:text-slate-400">
+              {isPolish
+                ? 'Wybierz decyzję z listy, aby zobaczyć podgląd.'
+                : 'Select a decision to preview.'}
+            </div>
           </div>
-        </div>
+        </PreviewPaneShell>
       </aside>
     );
   }
 
   return (
-    <aside className="w-[420px] flex-shrink-0 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 h-full overflow-y-auto">
-      <div className="sticky top-0 z-10 bg-white/90 dark:bg-navy-950/90 backdrop-blur border-b border-slate-200 dark:border-navy-700 px-4 py-3 flex items-center justify-between">
-        <div className="min-w-0">
-          <div className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            {mode === 'requests_pending'
-              ? isPolish
-                ? 'Moja prośba'
-                : 'My request'
-              : isPolish
-                ? 'Podgląd'
-                : 'Preview'}
-          </div>
-          <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-            {decision?.title || (isPolish ? 'Decyzja' : 'Decision')}
-          </div>
-        </div>
-        <button
-          onClick={onClose}
-          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400"
-          aria-label={isPolish ? 'Zamknij' : 'Close'}
-        >
-          <X size={16} />
-        </button>
-      </div>
-
-      <div className="p-4 space-y-4">
-        {loading ? (
-          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>{isPolish ? 'Ładowanie…' : 'Loading…'}</span>
-          </div>
-        ) : (
-          <>
-            {decision?.description ? (
-              <div className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
-                {decision.description}
-              </div>
-            ) : (
-              <div className="text-sm text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Brak opisu.' : 'No description.'}
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg border border-slate-200 dark:border-navy-700 p-3">
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Owner' : 'Owner'}
-                </div>
-                <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                  {decision?.ownerName || decision?.decisionOwnerId || '-'}
-                </div>
-              </div>
-              <div className="rounded-lg border border-slate-200 dark:border-navy-700 p-3">
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Requester' : 'Requester'}
-                </div>
-                <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                  {decision?.requestedByName || decision?.requestedById || currentUser?.id || '-'}
-                </div>
-              </div>
-              <div className="rounded-lg border border-slate-200 dark:border-navy-700 p-3">
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Due' : 'Due'}
-                </div>
-                <div className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
-                  <Calendar size={14} className="text-slate-500 dark:text-slate-400" />
-                  <span className="truncate">{formatShortDate(decision?.dueDate) || '-'}</span>
-                </div>
-              </div>
-              <div className="rounded-lg border border-slate-200 dark:border-navy-700 p-3">
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Waiting' : 'Waiting'}
-                </div>
-                <div className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
-                  <Clock size={14} className="text-slate-500 dark:text-slate-400" />
-                  <span className="truncate">
-                    {typeof decision?.daysWaiting === 'number'
-                      ? `${decision.daysWaiting}d`
-                      : decision?.createdAt
-                        ? `${Math.max(0, Math.floor((Date.now() - new Date(decision.createdAt).getTime()) / (1000 * 60 * 60 * 24)))}d`
-                        : '-'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => onOpenFullDetail(decisionId, decision)}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-900 text-slate-700 dark:text-slate-200"
-              >
-                <ExternalLink size={16} />
-                {isPolish ? 'Otwórz pełny widok' : 'Open full detail'}
-              </button>
-            </div>
-
+    <aside className="w-[420px] flex-shrink-0 bg-slate-50 dark:bg-navy-950 h-full p-3 overflow-hidden">
+      <PreviewPaneShell
+        kicker={
+          mode === 'requests_pending'
+            ? isPolish
+              ? 'Moja prośba'
+              : 'My request'
+            : isPolish
+              ? 'Podgląd'
+              : 'Preview'
+        }
+        title={decision?.title || (isPolish ? 'Decyzja' : 'Decision')}
+        onClose={onClose}
+        actions={
+          <button
+            onClick={() => onOpenFullDetail(decisionId, decision)}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+            title={isPolish ? 'Otwórz pełny widok' : 'Open full detail'}
+          >
+            <ExternalLink size={13} />
+            {isPolish ? 'Otwórz' : 'Open'}
+          </button>
+        }
+        footer={
+          <div className="space-y-2">
             {canAct && (
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -265,15 +203,13 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={handleRemind}
-                className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-900 text-slate-700 dark:text-slate-200"
+                className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 dark:border-navy-700 hover:bg-slate-50/70 dark:hover:bg-navy-800/40 text-slate-700 dark:text-slate-200"
               >
                 <Bell size={16} />
                 {isPolish ? 'Przypomnij' : 'Remind'}
               </button>
               <div className="relative group">
-                <button
-                  className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-900 text-slate-700 dark:text-slate-200"
-                >
+                <button className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 dark:border-navy-700 hover:bg-slate-50/70 dark:hover:bg-navy-800/40 text-slate-700 dark:text-slate-200">
                   <AlarmClockOff size={16} />
                   {isPolish ? 'Odłóż' : 'Snooze'}
                 </button>
@@ -310,7 +246,7 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={handleDefer}
-                  className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-900 text-slate-700 dark:text-slate-200"
+                  className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 dark:border-navy-700 hover:bg-slate-50/70 dark:hover:bg-navy-800/40 text-slate-700 dark:text-slate-200"
                 >
                   <Clock size={16} />
                   {isPolish ? 'Odrocz' : 'Defer'}
@@ -320,16 +256,86 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
                     await fetchUsers();
                     setDelegationOpen(true);
                   }}
-                  className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-900 text-slate-700 dark:text-slate-200"
+                  className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 dark:border-navy-700 hover:bg-slate-50/70 dark:hover:bg-navy-800/40 text-slate-700 dark:text-slate-200"
                 >
                   <UserPlus size={16} />
                   {isPolish ? 'Deleguj' : 'Delegate'}
                 </button>
               </div>
             )}
-          </>
-        )}
-      </div>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          {loading ? (
+            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>{isPolish ? 'Ładowanie…' : 'Loading…'}</span>
+            </div>
+          ) : (
+            <>
+              {decision?.description ? (
+                <div className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+                  {decision.description}
+                </div>
+              ) : (
+                <div className="text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Brak opisu.' : 'No description.'}
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border border-slate-200/70 dark:border-navy-700/70 p-3 bg-white/50 dark:bg-navy-900/30">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Owner' : 'Owner'}
+                  </div>
+                  <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                    {decision?.ownerName || decision?.decisionOwnerId || '-'}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-slate-200/70 dark:border-navy-700/70 p-3 bg-white/50 dark:bg-navy-900/30">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Requester' : 'Requester'}
+                  </div>
+                  <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                    {decision?.requestedByName || decision?.requestedById || currentUser?.id || '-'}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-slate-200/70 dark:border-navy-700/70 p-3 bg-white/50 dark:bg-navy-900/30">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Due' : 'Due'}
+                  </div>
+                  <div className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                    <Calendar size={14} className="text-slate-500 dark:text-slate-400" />
+                    <span className="truncate">{formatShortDate(decision?.dueDate) || '-'}</span>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-slate-200/70 dark:border-navy-700/70 p-3 bg-white/50 dark:bg-navy-900/30">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Waiting' : 'Waiting'}
+                  </div>
+                  <div className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                    <Clock size={14} className="text-slate-500 dark:text-slate-400" />
+                    <span className="truncate">
+                      {typeof decision?.daysWaiting === 'number'
+                        ? `${decision.daysWaiting}d`
+                        : decision?.createdAt
+                          ? `${Math.max(
+                              0,
+                              Math.floor(
+                                (Date.now() - new Date(decision.createdAt).getTime()) /
+                                  (1000 * 60 * 60 * 24)
+                              )
+                            )}d`
+                          : '-'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </PreviewPaneShell>
 
       {decisionId && decision && (
         <DelegationModal

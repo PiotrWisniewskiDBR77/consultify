@@ -29,7 +29,6 @@ import {
   Lightbulb,
   List,
   Loader2,
-  MessageSquare,
   Plus,
   Scale,
   Search,
@@ -45,6 +44,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useUserCan } from '@/hooks/useUserCan';
 import { useAppStore } from '@/store/useAppStore';
+import { WorkspacePanelStrip, type WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
 
 import { DecisionsPanelContent } from './DecisionsPanelContent';
 import { DecisionReviewNext } from './DecisionReviewNext';
@@ -100,6 +100,7 @@ type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type TasksViewMode = 'table' | 'kanban' | 'calendar';
 type IdeasViewMode = 'select' | 'overview' | 'blank' | 'mindmap' | 'garden';
 type DecisionsViewMode = 'list' | 'kanban';
+type InboxViewMode = 'flat' | 'sections';
 type DecisionFilter = 'all' | 'my' | 'awaiting';
 type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
@@ -319,9 +320,17 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [ideasMenuOpen, setIdeasMenuOpen] = useState(false);
   const [ideaToolsOpen, setIdeaToolsOpen] = useState(false);
   const [decisionsViewMode, setDecisionsViewMode] = useState<DecisionsViewMode>('list');
+  const [inboxViewMode, setInboxViewMode] = useState<InboxViewMode>('flat');
   const [notebookLinkedIdeasOpen, setNotebookLinkedIdeasOpen] = useState(false);
   const [notebookTopicsOpen, setNotebookTopicsOpen] = useState(false);
   const [notebookChatOpen, setNotebookChatOpen] = useState(false);
+  const notebookActivePanel: WorkspacePanelKey = notebookChatOpen
+    ? 'tools'
+    : notebookLinkedIdeasOpen
+      ? 'context'
+      : notebookTopicsOpen
+        ? 'ai_suggestions'
+        : null;
   const [notebookCreateReqId, setNotebookCreateReqId] = useState(0);
   const [decisionFilter, setDecisionFilter] = useState<DecisionFilter>('my');
   const [decisionPriorityFilter, setDecisionPriorityFilter] =
@@ -1240,6 +1249,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             onOpenNotification={(id) => handleNotificationClick(id)}
             onCountsChange={handleInboxCountsChange}
             refreshTrigger={refreshTrigger}
+            viewMode={inboxViewMode}
+            onViewModeChange={setInboxViewMode}
           />
         );
       case 'focus':
@@ -1560,6 +1571,42 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               </div>
             )}
 
+            {/* Inbox View Mode Toggle (list / sections) — only on Inbox tab */}
+            {activeTab === 'inbox' && !activeDocumentId && (
+              <div
+                className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
+                role="radiogroup"
+                aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
+              >
+                <button
+                  onClick={() => setInboxViewMode('flat')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    inboxViewMode === 'flat'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Płaska lista' : 'Flat list'}
+                  role="radio"
+                  aria-checked={inboxViewMode === 'flat'}
+                >
+                  <LayoutList size={16} />
+                </button>
+                <button
+                  onClick={() => setInboxViewMode('sections')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    inboxViewMode === 'sections'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Grupowanie tematyczne' : 'Smart sections'}
+                  role="radio"
+                  aria-checked={inboxViewMode === 'sections'}
+                >
+                  <Layers size={16} />
+                </button>
+              </div>
+            )}
+
             {/* Ideas workspace tools toggle — when an idea document is open */}
             {activeTab === 'ideas' && activeDocumentId && (
               <div
@@ -1626,71 +1673,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               </div>
             )}
 
-            {/* Notebook tools — only on Notebook tab */}
+            {/* Workspace 3-tools strip — Notebook only */}
             {activeTab === 'notebook' && !activeDocumentId && (
-              <div
-                className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
-                role="group"
-                aria-label={isPolish ? 'Narzędzia notatnika' : 'Notebook tools'}
-              >
-                <button
-                  onClick={() => {
-                    const next = !notebookLinkedIdeasOpen;
-                    setNotebookLinkedIdeasOpen(next);
-                    if (next) {
-                      setNotebookTopicsOpen(false);
-                      setNotebookChatOpen(false);
-                    }
-                  }}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
-                    notebookLinkedIdeasOpen
-                      ? 'bg-white dark:bg-navy-800 text-amber-600 dark:text-amber-300 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                  }`}
-                  title={isPolish ? 'Kontekst notatki' : 'Note context'}
-                  aria-pressed={notebookLinkedIdeasOpen}
-                >
-                  <Lightbulb size={16} />
-                </button>
-                <button
-                  onClick={() => {
-                    const next = !notebookTopicsOpen;
-                    setNotebookTopicsOpen(next);
-                    if (next) {
-                      setNotebookLinkedIdeasOpen(false);
-                      setNotebookChatOpen(false);
-                    }
-                  }}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
-                    notebookTopicsOpen
-                      ? 'bg-white dark:bg-navy-800 text-purple-600 dark:text-purple-300 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                  }`}
-                  title={isPolish ? 'Tematy do analizy (AI)' : 'Topics to analyze (AI)'}
-                  aria-pressed={notebookTopicsOpen}
-                >
-                  <Sparkles size={16} />
-                </button>
-                <button
-                  onClick={() => {
-                    const next = !notebookChatOpen;
-                    setNotebookChatOpen(next);
-                    if (next) {
-                      setNotebookLinkedIdeasOpen(false);
-                      setNotebookTopicsOpen(false);
-                    }
-                  }}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
-                    notebookChatOpen
-                      ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-300 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                  }`}
-                  title={isPolish ? 'Narzędzia notatnika' : 'Notebook tools'}
-                  aria-pressed={notebookChatOpen}
-                >
-                  <MessageSquare size={16} />
-                </button>
-              </div>
+              <WorkspacePanelStrip
+                value={notebookActivePanel}
+                onChange={(next) => {
+                  setNotebookChatOpen(next === 'tools');
+                  setNotebookLinkedIdeasOpen(next === 'context');
+                  setNotebookTopicsOpen(next === 'ai_suggestions');
+                }}
+              />
             )}
 
             {/* Context-sensitive Filter Dropdown (only show when viewing list) */}

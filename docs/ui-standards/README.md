@@ -35,13 +35,17 @@ docs/ui-standards/
 
 | Obszar                   | Dokument                                                                         | Zakres                                                                 |
 | ------------------------ | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **Kanon v3 (SSOT)**      | [UI_UX_CANON_V3.md](UI_UX_CANON_V3.md)                                           | Konsolidacja decyzji v3 (topbary, light mode, preview, AI, inbox)      |
 | **Kolory**               | [00-foundation/color-system.md](00-foundation/color-system.md)                   | Paleta DBR77, semantyka, WCAG                                          |
 | **Język wizualny**       | [00-foundation/visual-language.md](00-foundation/visual-language.md)             | Tła, ramki, typografia, motion                                         |
+| **Tożsamość artefaktów** | [00-foundation/artifact-identity-map.md](00-foundation/artifact-identity-map.md) | Kanon: 1 artefakt = 1 ikona + 1 akcent kolorystyczny (v3)              |
 | **Shell artefaktu**      | [01-shell-layout/artifact-shell.md](01-shell-layout/artifact-shell.md)           | 4-warstwowy shell, tokeny rozmiaru                                     |
 | **Tryby D/N/C**          | [01-shell-layout/presentation-modes.md](01-shell-layout/presentation-modes.md)   | Architektura 3 trybów, N blocks kit                                    |
+| **App Topbar (v3)**      | [01-shell-layout/app-topbar-standard-v3.md](01-shell-layout/app-topbar-standard-v3.md) | Globalny topbar: Data/Model/Inbox/Tasks/User + zasady AI (v3)      |
 | **Współdzielone sekcje** | [02-components/shared-sections.md](02-components/shared-sections.md)             | CommentsCanvas, ActivityLog, Risk, Governance                          |
 | **Building blocks**      | [02-components/building-blocks.md](02-components/building-blocks.md)             | Callout, ToggleBlock, EmptyState, Checklist, InlineTable, EmbeddedView |
 | **AI suggestions modal** | [02-components/ai-suggestions-modal.md](02-components/ai-suggestions-modal.md)   | Standard modala do przeglądu i zastosowania sugestii AI                |
+| **Workspace 3-tools strip** | [02-components/workspace-3-tools-strip.md](02-components/workspace-3-tools-strip.md) | Kanon: Tools / Context / AI Suggestions (prawy panel)              |
 | **Team table**           | [02-components/team-management-table.md](02-components/team-management-table.md) | Standard tabeli zespołu (N‑mode)                                       |
 | **Task Panel**           | [02-components/task-panel.md](02-components/task-panel.md)                       | TaskDetailView — layout, sekcje                                        |
 | **Decision Panel**       | [02-components/decision-panel.md](02-components/decision-panel.md)               | DecisionDetailView — layout, sekcje                                    |
@@ -49,6 +53,8 @@ docs/ui-standards/
 | **Initiative sections**  | [02-components/initiative-sections.md](02-components/initiative-sections.md)     | Karty inicjatywy (KPI, Decisions, Gates, RAID…)                        |
 | **Moduł hub**            | [03-modules/module-hub-standard.md](03-modules/module-hub-standard.md)           | Struktura ekranu modułu                                                |
 | **Tabele**               | [03-modules/app-table-standard.md](03-modules/app-table-standard.md)             | Standard tabel aplikacyjnych                                           |
+| **Table + Preview**      | [03-modules/table-preview-pane-standard.md](03-modules/table-preview-pane-standard.md) | Kanon “tabela + preview pane” (Outlook style)                       |
+| **Interactive boards (v3)** | [03-modules/interactive-board-standard.md](03-modules/interactive-board-standard.md) | Kanon tablic KPI/finanse: definicja kolumn + view modes             |
 
 ---
 
@@ -84,6 +90,7 @@ docs/ui-standards/
 | `TaskDetailView`         | task-panel.md            | MyWork                                       |
 | `TeamManagementPanel`    | team-management-table.md | Initiative → Team, Assessment → Team         |
 | `ToggleBlock`            | building-blocks.md       | Sekcje rozwijane                             |
+| `WorkspacePanelStrip`    | workspace-3-tools-strip.md | Workspace → 3 przyciski: Tools/Context/AI |
 
 ---
 

@@ -9,6 +9,8 @@ import {
   Plus,
   Rocket,
   Sparkles,
+  Star,
+  MessageSquarePlus,
   Sprout,
   Tag,
   Trash2,
@@ -68,7 +70,15 @@ export type MyIdea = {
   openMap?: boolean;
 };
 
-export type IdeasViewMode = 'list' | 'cards' | 'garden' | 'mindmap';
+export type IdeasViewMode =
+  | 'select'
+  | 'overview'
+  | 'blank'
+  // legacy modes (kept for compatibility / future re-enable)
+  | 'list'
+  | 'cards'
+  | 'garden'
+  | 'mindmap';
 
 interface MyIdeasListContentProps {
   viewMode?: IdeasViewMode;
@@ -141,7 +151,7 @@ function mapRawStageToStage(raw?: string | null): IdeaStage {
 }
 
 export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
-  viewMode = 'garden',
+  viewMode = 'select',
   searchQuery,
   onIdeaClick,
   onCreateIdea,
@@ -153,6 +163,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   const [ideas, setIdeas] = useState<MyIdea[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTag, setActiveTag] = useState<string>('all');
+  const [activeArea, setActiveArea] = useState<string>('all');
   const [inboxOnly, setInboxOnly] = useState(false);
   const [convertIdea, setConvertIdea] = useState<MyIdea | null>(null);
   const [converting, setConverting] = useState(false);
@@ -161,10 +172,17 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   const [tagModalOpen, setTagModalOpen] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [creatingBlankMap, setCreatingBlankMap] = useState(false);
   const [mapMetrics, setMapMetrics] = useState<Record<string, { items: number; nodes: number; edges: number }>>(
     {}
   );
   const { dialog: confirmDialog, confirm: showConfirm } = useConfirmDialog();
+
+  const effectiveViewMode = useMemo<IdeasViewMode>(() => {
+    if (viewMode === 'select') return 'list';
+    if (viewMode === 'overview') return 'cards';
+    return viewMode;
+  }, [viewMode]);
 
   const fetchIdeas = useCallback(async () => {
     try {
@@ -245,6 +263,15 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     return Array.from(s).sort((a, b) => a.localeCompare(b));
   }, [ideas]);
 
+  const areas = useMemo(() => {
+    const s = new Set<string>();
+    ideas.forEach((i) => {
+      const a = String(i.area || '').trim();
+      if (a) s.add(a);
+    });
+    return Array.from(s).sort((a, b) => a.localeCompare(b));
+  }, [ideas]);
+
   const inboxIdeas = useMemo(() => {
     return (ideas || []).filter((i) => {
       const src = String(i.sourceType || '').toLowerCase();
@@ -257,11 +284,18 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   const filteredIdeas = useMemo(() => {
     const base = inboxOnly ? inboxIdeas : ideas;
-    if (activeTag === 'all') return base;
-    return base.filter((i) =>
-      (i.tags || []).map((x) => String(x).toLowerCase()).includes(activeTag)
-    );
-  }, [ideas, inboxIdeas, inboxOnly, activeTag]);
+    let out = base;
+    if (activeTag !== 'all') {
+      out = out.filter((i) =>
+        (i.tags || []).map((x) => String(x).toLowerCase()).includes(activeTag)
+      );
+    }
+    if (activeArea !== 'all') {
+      const k = activeArea.toLowerCase();
+      out = out.filter((i) => String(i.area || '').trim().toLowerCase() === k);
+    }
+    return out;
+  }, [ideas, inboxIdeas, inboxOnly, activeArea, activeTag]);
 
   const sortedIdeas = useMemo(() => {
     const list = [...(filteredIdeas || [])];
@@ -433,7 +467,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     onNavigateUp: () => setFocusedIndex((i) => Math.max(0, i - 1)),
     onNavigateFirst: () => setFocusedIndex(sortedIdeas.length ? 0 : -1),
     onNavigateLast: () => setFocusedIndex(sortedIdeas.length ? sortedIdeas.length - 1 : -1),
-    onNew: onCreateIdea,
+    onNew: () => handleCreateForMode(),
     onOpen: openFocusedIdea,
     onToggleSelection: () => {
       if (!focusedIdea) return;
@@ -460,6 +494,42 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     },
   });
 
+  const createBlankMap = useCallback(async () => {
+    if (creatingBlankMap) return;
+    setCreatingBlankMap(true);
+    try {
+      const created = await Api.createMyIdea({
+        title: isPolish ? 'Nowe wyzwanie' : 'New challenge',
+        body: '',
+        tags: [],
+        sourceType: 'manual',
+      });
+      const nextId = String(created?.id || '');
+      if (!nextId) throw new Error(isPolish ? 'Nie udało się utworzyć' : 'Failed to create');
+
+      // Ensure map row exists immediately (draft survives refresh).
+      try {
+        const res = await Api.getMyIdeaMap(nextId, { language: i18n.language });
+        const map = res?.map || {};
+        const nodes = Array.isArray(map.nodes) ? map.nodes : [];
+        const edges = Array.isArray(map.edges) ? map.edges : [];
+        await Api.saveMyIdeaMap(nextId, { nodes, edges });
+      } catch {
+        // best-effort
+      }
+
+      onIdeaClick(nextId, { ...(created as any), openMap: true } as any);
+    } catch (err: any) {
+      toast.error(err?.message || (isPolish ? 'Nie udało się' : 'Failed'));
+    } finally {
+      setCreatingBlankMap(false);
+    }
+  }, [creatingBlankMap, i18n.language, isPolish, onIdeaClick]);
+
+  const handleCreateForMode = useMemo(() => {
+    return effectiveViewMode === 'blank' ? createBlankMap : onCreateIdea;
+  }, [createBlankMap, effectiveViewMode, onCreateIdea]);
+
   // Ideas-specific single-key shortcuts: c=create, e=open, p=convert
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -470,7 +540,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
       if (e.key === 'c' && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
-        onCreateIdea();
+        handleCreateForMode();
       }
       if (e.key === 'e' && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
@@ -483,7 +553,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [onCreateIdea, openConvertForSelection, openFocusedIdea]);
+  }, [handleCreateForMode, openConvertForSelection, openFocusedIdea]);
 
   const handleConvert = useCallback(
     async (target: 'initiative' | 'task_set' | 'decision' | 'team_chat') => {
@@ -705,7 +775,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           : 'Plant your first idea — AI will help it grow, research context, and propose creative variants.'}
       </p>
       <button
-        onClick={onCreateIdea}
+        onClick={handleCreateForMode}
         className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all"
       >
         <Plus size={16} />
@@ -759,10 +829,39 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     );
   };
 
+  const areaBadgeStyle = (area?: string | null) => {
+    const raw = String(area || '').trim();
+    const a = raw.toLowerCase();
+    if (!raw) {
+      return {
+        bg: 'bg-slate-500/10',
+        text: 'text-slate-500 dark:text-slate-400',
+        border: 'border-slate-400/20',
+      };
+    }
+    if (a.includes('fin') || a.includes('budget') || a.includes('roi')) {
+      return { bg: 'bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-400/20' };
+    }
+    if (a.includes('tech') || a.includes('it') || a.includes('ai') || a.includes('data')) {
+      return { bg: 'bg-sky-500/10', text: 'text-sky-600 dark:text-sky-400', border: 'border-sky-400/20' };
+    }
+    if (a.includes('culture') || a.includes('people') || a.includes('hr') || a.includes('org')) {
+      return { bg: 'bg-violet-500/10', text: 'text-violet-600 dark:text-violet-400', border: 'border-violet-400/20' };
+    }
+    if (a.includes('ops') || a.includes('operation') || a.includes('supply') || a.includes('process')) {
+      return { bg: 'bg-amber-500/10', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-400/20' };
+    }
+    if (a.includes('sales') || a.includes('market') || a.includes('customer')) {
+      return { bg: 'bg-rose-500/10', text: 'text-rose-600 dark:text-rose-400', border: 'border-rose-400/20' };
+    }
+    return { bg: 'bg-slate-500/10', text: 'text-slate-600 dark:text-slate-400', border: 'border-slate-400/20' };
+  };
+
   const renderAreaBadge = (area?: string | null) => {
     if (!area) return null;
+    const st = areaBadgeStyle(area);
     return (
-      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-400/20">
+      <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium border ${st.bg} ${st.text} ${st.border}`}>
         <GitBranch size={9} />
         {area}
       </span>
@@ -780,8 +879,48 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     );
   };
 
+  // ──────────── BLANK MAP VIEW ────────────
+  if (effectiveViewMode === 'blank') {
+    return (
+      <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950">
+        {convertModal}
+        {tagModal}
+        {confirmDialog}
+        <div className="p-6">
+          <div className="max-w-xl mx-auto rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-amber-500/10 dark:bg-amber-500/20">
+                <GitBranch size={20} className="text-amber-600 dark:text-amber-400" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {isPolish ? 'Czysta mapa rekomendacji' : 'Blank recommendation map'}
+                </div>
+                <div className="text-xs text-slate-600 dark:text-slate-400">
+                  {isPolish
+                    ? 'Otwórz nową mapę i zacznij od opisu wyzwania.'
+                    : 'Open a new map and start by describing the challenge.'}
+                </div>
+              </div>
+            </div>
+            <div className="mt-5">
+              <button
+                onClick={createBlankMap}
+                disabled={creatingBlankMap}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/20 hover:shadow-amber-500/35 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {creatingBlankMap ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                {isPolish ? 'Otwórz czystą mapę' : 'Open blank map'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ──────────── MIND MAP VIEW ────────────
-  if (viewMode === 'mindmap') {
+  if (effectiveViewMode === 'mindmap') {
     return (
       <div className="w-full h-full overflow-hidden">
         {convertModal}
@@ -815,7 +954,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   }
 
   // ──────────── GARDEN VIEW ────────────
-  if (viewMode === 'garden') {
+  if (effectiveViewMode === 'garden') {
     if (sortedIdeas.length === 0) return <div className="p-4 overflow-y-auto h-full">{renderEmpty()}</div>;
 
     const allSections: { stage: IdeaStage; ideas: MyIdea[] }[] = [
@@ -923,6 +1062,39 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                 </span>
               </button>
             ))}
+            {areas.length > 0 && (
+              <>
+                <span className="mx-1 text-slate-300 dark:text-navy-600">|</span>
+                <button
+                  onClick={() => setActiveArea('all')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                    activeArea === 'all'
+                      ? 'bg-sky-500/10 border-sky-400/30 text-sky-600 dark:text-sky-400'
+                      : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                  }`}
+                  title={isPolish ? 'Wszystkie obszary' : 'All areas'}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    <GitBranch size={12} />
+                    {isPolish ? 'Obszar: wszystkie' : 'Area: all'}
+                  </span>
+                </button>
+                {areas.map((a) => (
+                  <button
+                    key={`area-${a}`}
+                    onClick={() => setActiveArea(a)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                      activeArea.toLowerCase() === a.toLowerCase()
+                        ? 'bg-sky-500/10 border-sky-400/30 text-sky-600 dark:text-sky-400'
+                        : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                    }`}
+                    title={a}
+                  >
+                    {a}
+                  </button>
+                ))}
+              </>
+            )}
           </div>
 
           {/* Garden Header */}
@@ -942,7 +1114,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             </div>
             <div className="ml-auto">
               <button
-                onClick={onCreateIdea}
+                onClick={handleCreateForMode}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/20 hover:shadow-amber-500/35 transition-all"
               >
                 <Plus size={14} />
@@ -1072,7 +1244,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                   {/* "Plant" card in spark section */}
                   {stage === 'spark' && (
                     <button
-                      onClick={onCreateIdea}
+                      onClick={handleCreateForMode}
                       className="text-left p-4 rounded-2xl border-2 border-dashed border-amber-300/50 dark:border-amber-500/20 bg-amber-50/30 dark:bg-amber-900/5 hover:border-amber-400/70 dark:hover:border-amber-500/40 hover:bg-amber-50/60 dark:hover:bg-amber-900/10 transition-all duration-200 flex flex-col items-center justify-center min-h-[100px] gap-2"
                     >
                       <div className="p-2 rounded-xl bg-amber-500/10">
@@ -1100,7 +1272,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   }
 
   // ──────────── CARDS VIEW ────────────
-  if (viewMode === 'cards') {
+  if (effectiveViewMode === 'cards') {
     return (
       <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950">
         {convertModal}
@@ -1163,6 +1335,39 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                 </span>
               </button>
             ))}
+            {areas.length > 0 && (
+              <>
+                <span className="mx-1 text-slate-300 dark:text-navy-600">|</span>
+                <button
+                  onClick={() => setActiveArea('all')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                    activeArea === 'all'
+                      ? 'bg-sky-500/10 border-sky-400/30 text-sky-600 dark:text-sky-400'
+                      : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                  }`}
+                  title={isPolish ? 'Wszystkie obszary' : 'All areas'}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    <GitBranch size={12} />
+                    {isPolish ? 'Obszar: wszystkie' : 'Area: all'}
+                  </span>
+                </button>
+                {areas.map((a) => (
+                  <button
+                    key={`area-${a}`}
+                    onClick={() => setActiveArea(a)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                      activeArea.toLowerCase() === a.toLowerCase()
+                        ? 'bg-sky-500/10 border-sky-400/30 text-sky-600 dark:text-sky-400'
+                        : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                    }`}
+                    title={a}
+                  >
+                    {a}
+                  </button>
+                ))}
+              </>
+            )}
           </div>
 
           {sortedIdeas.length === 0 ? (
@@ -1342,6 +1547,39 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
               </span>
             </button>
           ))}
+          {areas.length > 0 && (
+            <>
+              <span className="mx-1 text-slate-300 dark:text-navy-600">|</span>
+              <button
+                onClick={() => setActiveArea('all')}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  activeArea === 'all'
+                    ? 'bg-sky-500/10 border-sky-400/30 text-sky-600 dark:text-sky-400'
+                    : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                }`}
+                title={isPolish ? 'Wszystkie obszary' : 'All areas'}
+              >
+                <span className="inline-flex items-center gap-1">
+                  <GitBranch size={12} />
+                  {isPolish ? 'Obszar: wszystkie' : 'Area: all'}
+                </span>
+              </button>
+              {areas.map((a) => (
+                <button
+                  key={`area-${a}`}
+                  onClick={() => setActiveArea(a)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                    activeArea.toLowerCase() === a.toLowerCase()
+                      ? 'bg-sky-500/10 border-sky-400/30 text-sky-600 dark:text-sky-400'
+                      : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                  }`}
+                  title={a}
+                >
+                  {a}
+                </button>
+              ))}
+            </>
+          )}
         </div>
 
         {sortedIdeas.length === 0 ? (

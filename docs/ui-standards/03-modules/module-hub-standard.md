@@ -6,9 +6,9 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│  Dashboard > Module Name                    [System] [LLM] [AI] [User]          │
+│  Module > Surface/Tool                      [System] [LLM] [AI] [User]          │
 ├─────────────────────────────────────────────────────────────────────────────────┤
-│  🔍 │ [Tab 1] [Tab 2] [Tab 3]      │ ≡ ⊞ │ [+Category1] [+Category2] [+Cat3]   │
+│  🔍 │ [Tab 1] [Tab 2] [Tab 3]      │ [AI] [+New] ≡ ⊞ │ [Filters…]              │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │  [≡ List] [Doc 1 ●] [Doc 2 ●] [Doc 3 ●]                    (dynamic tabs)       │
 ├─────────────────────────────────────────────────────────────────────────────────┤
@@ -24,7 +24,11 @@
 ## 1. Nagłówek (Breadcrumbs)
 
 - **Lokalizacja:** Lewy górny róg
-- **Zawartość:** Ścieżka dostępu (np. `Dashboard > Discovery Tools`)
+- **Zawartość (KANON v3):** `Module > Surface/Tool`  
+  Przykłady:
+  - `My Work > Ideas`
+  - `Tools > Strategic Analysis`
+  - `Reports > Builder`
 - **❌ NIE MA:** Dużego napisu z nazwą modułu - informacja już jest w breadcrumbs
 
 ---
@@ -52,8 +56,17 @@
 
 | Element              | Opis                                                           |
 | -------------------- | -------------------------------------------------------------- |
+| **AI context**       | Kanoniczny przycisk “AI w kontekście” — otwiera lewy panel czatu dla bieżącego kontekstu |
+| **Primary CTA**      | “+ New …” (kontekstowy)                                        |
 | **View Toggle**      | Przełącznik formatu: ≡ Table, ⊞ Grid, Kanban, Matrix, Timeline |
-| **Category Buttons** | Przyciski dodawania nowych elementów (kontekstowe dla modułu)  |
+| **Filters**          | Filtry kontekstowe (np. All/Read/Unread)                       |
+
+### Kolejność elementów topbara (KANON v3)
+
+W module hub (w tym samym rzędzie), zawsze trzymamy kolejność:
+
+- **Lewa strona**: Search toggle → Main tabs (od lewej do prawej, zgodnie z Operating Model v3)
+- **Prawa strona (wyrównane do prawej)**: **AI context** → **Primary CTA (+New)** → **View modes** → **Filters**
 
 **Przykłady category buttons:**
 

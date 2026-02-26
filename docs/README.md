@@ -54,6 +54,21 @@
 - [My Work Dashboard Flow](flows/core/MYWORK_DASHBOARD_FLOW.md) - User flow diagrams & tab architecture
 - [Living Notebook Module](modules/LIVING_NOTEBOOK_MODULE.md) - Notebook product vision
 
+### MVP v3 — Operating Model (SSOT)
+
+- [Operating Model v3](product/OPERATING_MODEL_V3.md) - Kanoniczny model pracy klienta: moduły, role visibility, output packages
+- [Tools Catalog v3](product/TOOLS_CATALOG_V3.md) - Katalog narzędzi v3: surfaces UI, artefakty, konwersje, biblioteki
+- [Requirements v3 (SSOT)](product/REQUIREMENTS_V3_SSOT.md) - Jedna checklista wymagań produktu + UI/UX (punkt wyjścia do backlogu)
+- [Interview Form Engine v3 (SSOT)](product/INTERVIEW_FORM_ENGINE_V3.md) - Templates + runtime + assignments + approval + attachments (premium “one question per screen”)
+- [Notebook v3 (SSOT)](product/NOTEBOOK_V3.md) - Notebook jako kontekst systemu: embedded refs, used-in, create-from-note, AI/research/voice
+- [Link Graph v3 (SSOT)](product/LINK_GRAPH_V3.md) - Kontrakt embedded references + platform-wide backlinks (“Used in”)
+- [Workspace v3 (SSOT)](product/TOOLS_CATALOG_V3.md) - Definicja Workspace jako multi-mode visual engine (sekcja 3.2 “WORKSPACE v3 — SSOT”)
+- [Financial Analysis v3](product/FINANCIAL_ANALYSIS_V3.md) - 5 zakładek + artefakty + integracje (model/analysis/forecast/valuation/capex)
+- [Reports & Presentations v3](product/PRESENTATIONS_AND_REPORTS_V3.md) - Biblioteki + generatory (Gamma-like UX), traceability, export
+- [**Report Generator v3 (SSOT)**](product/REPORT_GENERATOR_V3.md) - Kanoniczne raporty R1–R4, wizard/builder, AI narrative, quality gate, eksport (PDF/DOCX/PPTX)
+- [**Presentation Generator v3 (SSOT)**](product/PRESENTATION_GENERATOR_V3.md) - Kompletny flow: Wizard, Deck Builder, AI Agent, ContextPack, templates, media library, learning, animations, eksport (PDF/PPTX/PNG)
+- [Meeting tool v3](product/MEETING_TOOL_V3.md) - Narzędzie “Meeting” jako event + agenda + decyzje + follow-ups (planned)
+
 ### AI Module — Technical Specs (SSOT)
 
 - [Deep Thinking Module](modules/ai/DEEP_THINKING_MODULE.md)
@@ -79,6 +94,7 @@
 - [UI/UX Standards](ui-standards/README.md) - Kanoniczne źródło wszystkich standardów UI/UX
 - [Module Hub Standard](ui-standards/03-modules/module-hub-standard.md) - Global layout patterns
 - [App Table Standard](ui-standards/03-modules/app-table-standard.md) - Decisions/Report Templates table pattern
+- [View Modes Standard](ui-standards/03-modules/view-modes-standard.md) - Table/Cards/Kanban/Timeline/Calendar (układ zestawień)
 
 ---
 

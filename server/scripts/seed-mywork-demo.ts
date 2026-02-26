@@ -100,6 +100,114 @@ function pick<T>(arr: T[], i: number): T {
   return arr[i % arr.length];
 }
 
+function seedKey(orgId: string, userId: string): string {
+  return crypto.createHash('sha1').update(`${orgId}:${userId}`).digest('hex').slice(0, 8);
+}
+
+function buildSeedIdeaMap(opts: {
+  ideaId: string;
+  title: string;
+  language: 'pl' | 'en';
+  branches: Array<{
+    key: string;
+    label: string;
+    items: Array<{ label: string; nodeType?: string; priority?: number; sourceType?: string }>;
+  }>;
+}) {
+  const centerId = 'root';
+  const branchRadius = 320;
+  const isPl = opts.language === 'pl';
+
+  const nodes: any[] = [
+    {
+      id: centerId,
+      type: 'center',
+      position: { x: 0, y: 0 },
+      data: {
+        label: opts.title || (isPl ? 'Wyzwanie' : 'Challenge'),
+        hint: isPl ? 'Kliknij, aby edytować' : 'Click to edit',
+        ideaId: opts.ideaId,
+      },
+      draggable: false,
+    },
+  ];
+
+  const edges: any[] = [];
+
+  const baseAngles = [
+    -Math.PI / 2,
+    -Math.PI / 6,
+    Math.PI / 6,
+    Math.PI / 2,
+    (5 * Math.PI) / 6,
+    (7 * Math.PI) / 6,
+  ];
+
+  for (let i = 0; i < opts.branches.length; i++) {
+    const b = opts.branches[i];
+    const angle = baseAngles[i % baseAngles.length];
+    const bx = Math.cos(angle) * branchRadius;
+    const by = Math.sin(angle) * branchRadius;
+    const branchId = `branch-${b.key}`;
+
+    nodes.push({
+      id: branchId,
+      type: 'branch',
+      position: { x: bx - 50, y: by - 20 },
+      data: { label: b.label, branchKey: b.key, count: b.items.length },
+      draggable: false,
+    });
+
+    edges.push({
+      id: `edge-${centerId}-${branchId}`,
+      source: centerId,
+      target: branchId,
+      type: 'smoothstep',
+      animated: true,
+      style: { stroke: '#94a3b8', strokeWidth: 2.5, opacity: 0.35 },
+      data: { system: true, kind: 'frames' },
+    });
+
+    const itemDx = Math.cos(angle) * 140;
+    const itemDy = Math.sin(angle) * 140;
+    const orthoDx = -Math.sin(angle) * 80;
+    const orthoDy = Math.cos(angle) * 80;
+
+    for (let j = 0; j < b.items.length; j++) {
+      const it = b.items[j];
+      const nid = `n-${crypto.randomUUID()}`;
+      nodes.push({
+        id: nid,
+        type: 'idea',
+        position: {
+          x: bx + itemDx + orthoDx * ((j % 2 === 0 ? 1 : -1) * (0.6 + 0.22 * j)),
+          y: by + itemDy + orthoDy * ((j % 3) - 1) * 0.55,
+        },
+        data: {
+          label: it.label,
+          branchKey: b.key,
+          nodeType: it.nodeType || null,
+          priority: typeof it.priority === 'number' ? it.priority : 55,
+          sourceType: it.sourceType || 'seed',
+          ideaId: opts.ideaId,
+        },
+      });
+
+      edges.push({
+        id: `edge-${crypto.randomUUID()}`,
+        source: branchId,
+        target: nid,
+        type: 'smoothstep',
+        animated: true,
+        style: { stroke: '#8b5cf6', strokeWidth: 2, opacity: 0.75 },
+        data: { userCreated: true, kind: 'seed' },
+      });
+    }
+  }
+
+  return { nodes, edges, version: 1 };
+}
+
 function envBool(name: string, def = false): boolean {
   const raw = process.env[name];
   if (raw == null) return def;
@@ -247,6 +355,9 @@ async function main() {
     } catch {}
     try {
       await db.run(`DELETE FROM my_ideas WHERE user_id = $1 AND organization_id = $2`, [userId, orgId]);
+    } catch {}
+    try {
+      await db.run(`DELETE FROM my_idea_maps WHERE user_id = $1 AND organization_id = $2`, [userId, orgId]);
     } catch {}
     try {
       await db.run(`DELETE FROM notebook_pages WHERE owner_user_id = $1 AND organization_id = $2`, [
@@ -680,6 +791,270 @@ async function main() {
     }
   } catch {
     logger.warn('[seed-mywork-demo] Ideas seed skipped (missing table?)');
+  }
+
+  // -------------------------
+  // Seed 3 example idea maps (My Ideas → recommendation maps)
+  // -------------------------
+  const seedIdeaMaps = envBool('SEED_IDEA_MAPS', true);
+  if (seedIdeaMaps) {
+    try {
+      const k = seedKey(orgId, userId);
+      const examples: Array<{
+        slug: string;
+        titlePl: string;
+        bodyPl: string;
+        branch: string;
+        area: string;
+        priority: number;
+        map: ReturnType<typeof buildSeedIdeaMap>;
+      }> = [
+        {
+          slug: 'erp',
+          titlePl: 'Wdrożenie ERP (end-to-end)',
+          bodyPl:
+            'Wyzwanie: wdrożyć ERP end-to-end (finanse + logistyka + produkcja) minimalizując ryzyko i zapewniając adopcję.\n' +
+            '\n' +
+            'Cel: przejście na jeden system źródłowy danych, skrócenie cyklu zamknięcia miesiąca, poprawa jakości danych.\n' +
+            'Zakres: procesy core + integracje krytyczne.\n',
+          branch: 'operations',
+          area: 'Finance/Operations',
+          priority: 85,
+          map: buildSeedIdeaMap({
+            ideaId: `seed_idea_map_${k}_erp`,
+            title: 'Wdrożenie ERP (end-to-end)',
+            language: 'pl',
+            branches: [
+              {
+                key: 'problem',
+                label: 'Problem',
+                items: [
+                  { label: 'Rozproszone źródła danych i niespójne raportowanie', nodeType: 'pain_point', priority: 70 },
+                  { label: 'Długi cykl zamknięcia miesiąca', nodeType: 'metric', priority: 65 },
+                ],
+              },
+              {
+                key: 'goal',
+                label: 'Cel / KPI',
+                items: [
+                  { label: 'Zamknięcie miesiąca: -40%', nodeType: 'kpi', priority: 75 },
+                  { label: 'Jakość danych: mniej korekt i ręcznych obejść', nodeType: 'kpi', priority: 70 },
+                ],
+              },
+              {
+                key: 'options',
+                label: 'Opcje',
+                items: [
+                  { label: 'Greenfield vs rollout modułami (phased)', nodeType: 'option', priority: 60 },
+                  { label: 'Integracje: API-first + ESB', nodeType: 'option', priority: 55 },
+                  { label: 'Data governance: master data + ownership', nodeType: 'option', priority: 65 },
+                ],
+              },
+              {
+                key: 'evidence',
+                label: 'Dowody',
+                items: [
+                  { label: 'Mapa procesów + KPI baseline', nodeType: 'evidence', priority: 55 },
+                  { label: 'Audyt danych (quality + lineage)', nodeType: 'evidence', priority: 55 },
+                ],
+              },
+              {
+                key: 'risks',
+                label: 'Ryzyka',
+                items: [
+                  { label: 'Adopcja: opór użytkowników i shadow IT', nodeType: 'risk', priority: 75 },
+                  { label: 'Migracja danych: braki i duplikaty', nodeType: 'risk', priority: 70 },
+                ],
+              },
+              {
+                key: 'experiments',
+                label: 'Eksperymenty',
+                items: [
+                  { label: 'Pilot: 1 proces + 1 zespół (4 tygodnie)', nodeType: 'experiment', priority: 60 },
+                  { label: 'Dry-run migracji na próbce danych', nodeType: 'experiment', priority: 55 },
+                ],
+              },
+            ],
+          }),
+        },
+        {
+          slug: 'backoffice',
+          titlePl: 'Automatyzacja back-office',
+          bodyPl:
+            'Wyzwanie: zautomatyzować powtarzalne procesy back-office (invoice, approvals, HR), aby odciążyć zespół.\n' +
+            'Cel: zmniejszyć czas obsługi i liczbę błędów, skrócić lead time.\n',
+          branch: 'governance',
+          area: 'Operations',
+          priority: 70,
+          map: buildSeedIdeaMap({
+            ideaId: `seed_idea_map_${k}_backoffice`,
+            title: 'Automatyzacja back-office',
+            language: 'pl',
+            branches: [
+              {
+                key: 'problem',
+                label: 'Problem',
+                items: [
+                  { label: 'Dużo ręcznej pracy w approval flow', nodeType: 'pain_point', priority: 65 },
+                  { label: 'Błędy i duplikaty w fakturach', nodeType: 'pain_point', priority: 65 },
+                ],
+              },
+              {
+                key: 'goal',
+                label: 'Cel / KPI',
+                items: [
+                  { label: 'Lead time: -30%', nodeType: 'kpi', priority: 70 },
+                  { label: 'Błędy: -50%', nodeType: 'kpi', priority: 65 },
+                ],
+              },
+              {
+                key: 'options',
+                label: 'Opcje',
+                items: [
+                  { label: 'RPA na wąskich gardłach + monitoring', nodeType: 'option', priority: 55 },
+                  { label: 'Workflow engine + role-based approvals', nodeType: 'option', priority: 60 },
+                ],
+              },
+              {
+                key: 'evidence',
+                label: 'Dowody',
+                items: [{ label: 'Process mining na top 3 procesach', nodeType: 'evidence', priority: 55 }],
+              },
+              {
+                key: 'risks',
+                label: 'Ryzyka',
+                items: [{ label: 'Automatyzacja złego procesu (waste)', nodeType: 'risk', priority: 60 }],
+              },
+              {
+                key: 'experiments',
+                label: 'Eksperymenty',
+                items: [{ label: 'POC: invoice intake + OCR + triage', nodeType: 'experiment', priority: 60 }],
+              },
+            ],
+          }),
+        },
+        {
+          slug: 'ai-quality',
+          titlePl: 'AI monitoring jakości',
+          bodyPl:
+            'Wyzwanie: monitorować jakość (produkcja/usługi) w czasie zbliżonym do rzeczywistego i szybciej reagować na odchylenia.\n' +
+            'Cel: wykrywanie anomalii, redukcja reklamacji, lepsza przyczyna źródłowa.\n',
+          branch: 'execution',
+          area: 'Technology',
+          priority: 75,
+          map: buildSeedIdeaMap({
+            ideaId: `seed_idea_map_${k}_ai_quality`,
+            title: 'AI monitoring jakości',
+            language: 'pl',
+            branches: [
+              {
+                key: 'problem',
+                label: 'Problem',
+                items: [
+                  { label: 'Późne wykrywanie defektów', nodeType: 'pain_point', priority: 70 },
+                  { label: 'Brak wspólnej definicji jakości', nodeType: 'pain_point', priority: 60 },
+                ],
+              },
+              {
+                key: 'goal',
+                label: 'Cel / KPI',
+                items: [
+                  { label: 'Reklamacje: -20%', nodeType: 'kpi', priority: 70 },
+                  { label: 'MTTR: -30%', nodeType: 'kpi', priority: 65 },
+                ],
+              },
+              {
+                key: 'options',
+                label: 'Opcje',
+                items: [
+                  { label: 'Anomaly detection na sygnałach procesowych', nodeType: 'option', priority: 60 },
+                  { label: 'Computer vision na stanowisku kontroli', nodeType: 'option', priority: 60 },
+                ],
+              },
+              {
+                key: 'evidence',
+                label: 'Dowody',
+                items: [{ label: 'Baseline danych i definicje metryk jakości', nodeType: 'evidence', priority: 55 }],
+              },
+              {
+                key: 'risks',
+                label: 'Ryzyka',
+                items: [{ label: 'Drift modelu + false positives', nodeType: 'risk', priority: 65 }],
+              },
+              {
+                key: 'experiments',
+                label: 'Eksperymenty',
+                items: [{ label: 'Pilot: 1 linia / 1 usługa, 2 tygodnie', nodeType: 'experiment', priority: 60 }],
+              },
+            ],
+          }),
+        },
+      ];
+
+      for (const ex of examples) {
+        const ideaId = ex.map.nodes?.[0]?.data?.ideaId || `seed_idea_map_${k}_${ex.slug}`;
+        // Upsert idea
+        await db.run(
+          `INSERT INTO my_ideas(
+            id, user_id, organization_id, title, body, tags, source_type,
+            stage, area, priority, branch,
+            created_at, updated_at
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+          ON CONFLICT (id) DO UPDATE SET
+            title = excluded.title,
+            body = excluded.body,
+            tags = excluded.tags,
+            stage = excluded.stage,
+            area = excluded.area,
+            priority = excluded.priority,
+            branch = excluded.branch,
+            updated_at = excluded.updated_at`,
+          [
+            ideaId,
+            userId,
+            orgId,
+            ex.titlePl,
+            ex.bodyPl,
+            JSON.stringify(['dbr77', 'my-work', 'idea-map', ex.slug]),
+            'seed',
+            'spark',
+            ex.area,
+            ex.priority,
+            ex.branch,
+            isoPlusDays(-5),
+            createdAt,
+          ]
+        );
+
+        // Upsert map (unique: idea_id + user_id + organization_id)
+        const mapId = `seed_idea_maprow_${k}_${ex.slug}`;
+        await db.run(
+          `INSERT INTO my_idea_maps(
+            id, idea_id, user_id, organization_id, nodes_json, edges_json, version, created_at, updated_at
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+          ON CONFLICT (user_id, idea_id) DO UPDATE SET
+            nodes_json = excluded.nodes_json,
+            edges_json = excluded.edges_json,
+            version = excluded.version,
+            updated_at = excluded.updated_at`,
+          [
+            mapId,
+            ideaId,
+            userId,
+            orgId,
+            JSON.stringify(ex.map.nodes),
+            JSON.stringify(ex.map.edges),
+            1,
+            createdAt,
+            createdAt,
+          ]
+        );
+      }
+
+      logger.info('[seed-mywork-demo] Seeded example idea maps', { count: examples.length });
+    } catch {
+      logger.warn('[seed-mywork-demo] Idea maps seed skipped (missing table?)');
+    }
   }
 
   // -------------------------

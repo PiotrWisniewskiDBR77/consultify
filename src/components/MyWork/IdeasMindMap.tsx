@@ -411,7 +411,7 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
   const ideaIdSet = useMemo(() => new Set(ideas.map((i) => String(i.id))), [ideas]);
 
   const toggleBranch = useCallback((key: string) => {
-    setActiveBranches((prev) => {
+    setActiveBranches((prev: Set<string>) => {
       const next = new Set(prev);
       if (next.has(key)) {
         if (next.size === 1) return prev;
@@ -460,7 +460,7 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
     const { nodes: nextNodes } = applyBranchVisibility(initNodes, []);
     setNodes(nextNodes);
 
-    setEdges((prev) => {
+    setEdges((prev: Edge[]) => {
       const userEdges = (prev || []).filter((e: Edge) => Boolean(e.data?.userCreated));
       const validUserEdges = userEdges.filter((e: Edge) => {
         const s = String(e.source || '');
@@ -512,7 +512,7 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
 
         if (cancelled) return;
 
-        setEdges((prev) => {
+        setEdges((prev: Edge[]) => {
           const prevUser = (prev || []).filter((e: Edge) => Boolean(e.data?.userCreated));
           const prevTemp = prevUser.filter((e: Edge) => !e.data?.persistedId);
           const prevPersistedById = new Map<string, Edge>();
@@ -551,7 +551,7 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
     // Re-apply visibility (do not reset user edges)
     const next = applyBranchVisibility(nodes as any, edges as any);
     setNodes(next.nodes);
-    setEdges((prev) => applyBranchVisibility(next.nodes, prev as any).edges);
+    setEdges((prev: Edge[]) => applyBranchVisibility(next.nodes, prev as any).edges);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeBranches]);
 
@@ -608,7 +608,7 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
           const res = (await Api.addMyIdeaEdge(sourceIdeaId, { targetIdeaId, kind: 'relates_to' })) as any;
           const persistedId = String(res?.edge?.id || '').trim();
           if (persistedId) {
-            setEdges((prev) =>
+            setEdges((prev: Edge[]) =>
               (prev || []).map((e: Edge) =>
                 e.id === tempId
                   ? {
@@ -632,7 +632,7 @@ function MindMapInner({ ideas, onIdeaClick, onCreateIdea, isPolish }: IdeasMindM
           });
         } catch {
           // rollback optimistic edge
-          setEdges((prev) => (prev || []).filter((e: Edge) => e.id !== tempId));
+          setEdges((prev: Edge[]) => (prev || []).filter((e: Edge) => e.id !== tempId));
           toast.error(isPolish ? 'Nie udało się zapisać połączenia' : 'Failed to save connection');
         }
       } else {

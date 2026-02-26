@@ -39,23 +39,27 @@ const ADMIN_SECTION_TITLES: Record<string, string> = {
  * - Economics
  * - Reports
  */
-export const useBreadcrumbs = () => {
+export const useBreadcrumbs = (): string[] | null => {
   const { t } = useTranslation();
   const { currentView } = useAppStore();
   const location = useLocation();
 
-  // Default values
-  let section = t('sidebar.dashboard', 'Dashboard');
+  // Important: prefer route-provided breadcrumbs whenever possible.
+  // This hook should only override when it can compute something BETTER than the static route fallback
+  // (e.g. Admin sub-sections based on `?tab=`).
+  if (!currentView) return null;
+
+  let section = '';
   let sub = '';
 
-  const viewParts = currentView.split('_');
+  const viewParts = String(currentView).split('_');
 
   // =====================================================
   // AI CHAT
   // =====================================================
   if (currentView === AppView.AI_CHAT) {
-    section = 'AI';
-    sub = t('sidebar.aiChat', 'Chat');
+    // Let AppRoutes provide canonical crumbs for Chat routes.
+    return null;
   }
   // =====================================================
   // INTERVIEW / DISCOVERY CONSULTANT
@@ -64,22 +68,20 @@ export const useBreadcrumbs = () => {
     currentView === AppView.DISCOVERY_CONSULTANT ||
     currentView === AppView.PROJECT_INTELLIGENCE
   ) {
-    section = t('sidebar.dashboard', 'Dashboard');
-    sub = t('sidebar.interview', 'Interview');
+    return null;
   }
   // =====================================================
   // DISCOVERY TOOLS
   // =====================================================
   else if (currentView === AppView.DISCOVERY_TOOLS) {
-    section = t('sidebar.dashboard', 'Dashboard');
-    sub = t('sidebar.discoveryTools', 'Tools');
+    return null;
   }
   // =====================================================
   // MY WORK
   // =====================================================
   else if (currentView === AppView.MY_WORK) {
-    section = t('sidebar.dashboard', 'Dashboard');
-    sub = t('myWork.title', 'My Work');
+    // Route-level crumb is the source of truth; deep-link sub-crumbs can be layered later.
+    return null;
   }
   // =====================================================
   // DASHBOARD VIEWS
@@ -90,58 +92,37 @@ export const useBreadcrumbs = () => {
     currentView === AppView.DASHBOARD_OVERVIEW ||
     currentView === AppView.DASHBOARD_SNAPSHOT
   ) {
-    section = t('myWork.title', 'My Work');
-    sub = '';
+    return null;
   }
   // =====================================================
   // ASSESSMENT MODULE
   // =====================================================
   else if (currentView === AppView.ASSESSMENT_DRD) {
-    section = t('licensedTools.moduleName', 'Licensed Tools');
-    sub = t('assessment.drd', 'DRD');
+    return null;
   } else if (currentView === AppView.ASSESSMENT_SIRI) {
-    section = t('licensedTools.moduleName', 'Licensed Tools');
-    sub = t('assessment.siri', 'SIRI');
+    return null;
   } else if (currentView === AppView.ASSESSMENT_ADMA) {
-    section = t('licensedTools.moduleName', 'Licensed Tools');
-    sub = t('assessment.adma', 'ADMA');
+    return null;
   } else if (currentView === AppView.ASSESSMENT_CMMI) {
-    section = t('licensedTools.moduleName', 'Licensed Tools');
-    sub = t('assessment.cmmi', 'CMMI');
+    return null;
   } else if (
     currentView === AppView.ASSESSMENT_LEAN ||
     currentView === AppView.ASSESSMENT_LEAN_EXTERNAL
   ) {
-    section = t('licensedTools.moduleName', 'Licensed Tools');
-    sub = t('assessment.lean', 'Lean 4.0');
+    return null;
   } else if (
     currentView === AppView.ASSESSMENT_SUMMARY ||
     currentView === AppView.ASSESSMENT_OVERVIEW
   ) {
-    section = t('licensedTools.moduleName', 'Licensed Tools');
-    sub = t('assessment.overview', 'Overview');
+    return null;
   } else if (currentView === AppView.ASSESSMENT_AUDITS) {
-    section = t('licensedTools.moduleName', 'Licensed Tools');
-    sub = t('sidebar.myAssessments', 'My Assessments');
+    return null;
   }
   // =====================================================
   // CONTEXT BUILDER (Organization)
   // =====================================================
   else if (currentView.startsWith('CONTEXT_BUILDER')) {
-    section = t('sidebar.organization', 'Organization');
-    if (currentView === AppView.CONTEXT_BUILDER_PROFILE) {
-      sub = t('settings.sidebar.profile', 'Profile');
-    } else if (currentView === AppView.CONTEXT_BUILDER_GOALS) {
-      sub = t('common.goals', 'Goals');
-    } else if (currentView === AppView.CONTEXT_BUILDER_CHALLENGES) {
-      sub = t('common.challenges', 'Challenges');
-    } else if (currentView === AppView.CONTEXT_BUILDER_MEGATRENDS) {
-      sub = t('common.megatrends', 'Megatrends');
-    } else if (currentView === AppView.CONTEXT_BUILDER_STRATEGY) {
-      sub = t('common.strategy', 'Strategy');
-    } else {
-      sub = t('settings.sidebar.profile', 'Profile');
-    }
+    return null;
   }
   // =====================================================
   // INITIATIVES MODULE
@@ -151,12 +132,7 @@ export const useBreadcrumbs = () => {
     currentView === AppView.PORTFOLIO_ROADMAP ||
     currentView === AppView.FULL_STEP3_ROADMAP
   ) {
-    section = t('sidebar.initiatives', 'Initiatives');
-    if (currentView === AppView.PORTFOLIO_ROADMAP || currentView === AppView.FULL_STEP3_ROADMAP) {
-      sub = t('initiatives.roadmap', 'Roadmap');
-    } else {
-      sub = '';
-    }
+    return null;
   }
   // =====================================================
   // EXECUTION MODULE
@@ -166,53 +142,37 @@ export const useBreadcrumbs = () => {
     currentView === AppView.IMPLEMENTATION ||
     currentView === AppView.FULL_ROLLOUT
   ) {
-    section = t('sidebar.execution', 'Execution');
-    if (currentView === AppView.IMPLEMENTATION) {
-      sub = t('execution.dashboard', 'Dashboard');
-    } else if (currentView === AppView.FULL_ROLLOUT) {
-      sub = t('common.rollout', 'Rollout');
-    } else {
-      sub = '';
-    }
+    return null;
   }
   // =====================================================
   // BENEFITS MODULE
   // =====================================================
   else if (currentView === AppView.BENEFITS_REALIZATION) {
-    section = t('sidebar.benefits', 'Benefits');
-    sub = '';
+    return null;
   }
   // =====================================================
   // ECONOMICS MODULE
   // =====================================================
   else if (currentView === AppView.ECONOMICS || currentView === AppView.FULL_STEP4_ROI) {
-    section = t('sidebar.economics', 'Economics');
-    if (currentView === AppView.FULL_STEP4_ROI) {
-      sub = 'ROI';
-    } else {
-      sub = '';
-    }
+    return null;
   }
   // =====================================================
   // REPORTS MODULE
   // =====================================================
   else if (currentView === AppView.FULL_STEP6_REPORTS) {
-    section = t('sidebar.reports', 'Reports');
-    sub = '';
+    return null;
   }
   // =====================================================
   // KPI & OKR
   // =====================================================
   else if (currentView === AppView.KPI_OKR_DASHBOARD) {
-    section = t('benefits.title', 'Benefits');
-    sub = t('benefits.kpis', 'KPI');
+    return null;
   }
   // =====================================================
   // STUDIO
   // =====================================================
   else if (currentView === AppView.STUDIO) {
-    section = t('sidebar.tools', 'Tools');
-    sub = 'Studio';
+    return null;
   }
   // =====================================================
   // ADMIN VIEWS
@@ -282,26 +242,25 @@ export const useBreadcrumbs = () => {
   // PARTNER PORTAL
   // =====================================================
   else if (viewParts.includes('PARTNER')) {
-    section = t('sidebar.partnerPortal', 'Partner Portal');
-    sub = '';
+    return null;
   }
   // =====================================================
   // CONSULTANT VIEWS
   // =====================================================
   else if (currentView === AppView.CONSULTANT_PANEL) {
-    section = t('common.consultant', 'Consultant');
-    sub = t('sidebar.dashboard', 'Dashboard');
+    return null;
   } else if (currentView === AppView.CONSULTANT_INVITES) {
-    section = t('common.consultant', 'Consultant');
-    sub = t('common.invites', 'Invites');
+    return null;
   }
   // =====================================================
   // AFFILIATE DASHBOARD
   // =====================================================
   else if (currentView === AppView.AFFILIATE_DASHBOARD) {
-    section = t('sidebar.dashboard', 'Dashboard');
-    sub = t('common.affiliate', 'Affiliate');
+    return null;
   }
 
+  // If we couldn't compute a meaningful override, fall back to route-provided crumbs.
+  if (!section) return null;
+  if (!sub) return [section];
   return [section, sub];
 };

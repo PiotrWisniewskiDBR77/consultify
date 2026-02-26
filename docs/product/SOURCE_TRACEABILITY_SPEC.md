@@ -24,6 +24,17 @@ Initiatives can be created **ONLY** from:
 
 No other sources exist.
 
+#### 1.1.1 MyWork / Notebook as a “seed” (v3 clarification)
+MyWork artefacts (Idea/Notebook/Personal Workspace) can be a **starting point** for work, but they are **not** canonical “sources of initiatives”.
+
+If a user creates an Initiative from MyWork, the system MUST:
+
+- create a `ToolSession` of type `MYWORK` (a lightweight “session”),
+- attach the MyWork artefact(s) as inputs/context (via links and snapshots where applicable),
+- use that `ToolSession(MYWORK)` as the canonical source in `SourceLink`.
+
+This keeps the “only two sources” rule intact while allowing MyWork-first workflows.
+
 ### 1.2 Cardinality rules
 - One Initiative can have **1..N Source Links**
 - One source (ToolSession or AssessmentReport) can generate **0..N Initiatives**
