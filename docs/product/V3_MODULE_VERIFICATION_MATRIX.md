@@ -95,7 +95,7 @@ Checklist:
 
 - **SSOT**: `docs/product/INTERVIEW_FORM_ENGINE_V3.md`
 - **As‑is code**: _(fill)_
-- **UX standards**: “one question per screen” rules, i18n, attachments if present
+- **UX standards**: runtime mode truth (`task-list` default, optional one-question mode), i18n, attachments if present
 - **Cross‑cutting**:
   - Insights = context only (not initiative sources)
 - **Status**: ⬜
@@ -222,4 +222,3 @@ Checklist:
 | Risk | Module | Symptom | Impact | Mitigation | Owner |
 |---|---|---|---|---|---|
 | RISK-001 |  |  |  |  |  |
-

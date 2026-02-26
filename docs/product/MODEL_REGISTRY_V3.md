@@ -14,6 +14,12 @@
 - SuperAdmin model tier assignments (as‑is UI): `src/components/SuperAdmin/ModelTierAssignments.tsx`
 - AI usage limits & billing: `docs/flows/ai/AI_USAGE_LIMITS_FLOW.md`
 - Image generation service (as‑is): `server/src/services/ai/imageService.ts`
+- AI purposes & requirements (v3 SSOT): `docs/product/modules/ai/AI_MODEL_PURPOSES_AND_REQUIREMENTS_V3.md`
+- AI provider/residency policy (v3 SSOT): `docs/product/modules/ai/AI_PROVIDER_RESIDENCY_POLICY_V3.md`
+- AI pricing & cost controls (v3 SSOT): `docs/product/modules/ai/AI_PRICING_COST_CONTROLS_V3.md`
+- AI agent orchestration (v3 SSOT): `docs/product/modules/ai/AI_AGENT_ORCHESTRATION_V3.md`
+- AI market update standard (v3 SSOT): `docs/product/modules/ai/AI_MARKET_UPDATE_STANDARD_V3.md`
+- AI API keys checklist (v3 SSOT): `docs/product/modules/ai/AI_API_KEYS_CHECKLIST_V3.md`
 
 ---
 

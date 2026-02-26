@@ -16,6 +16,14 @@ v3 ma być “ultimate MVP” gotowe do pracy z pierwszym klientem: spójne UI/U
 
 - **System axis / artefakty**: `docs/product/SYSTEM_ARCHITECTURE_BRIEF.md`
 - **Operating model v3**: `docs/product/OPERATING_MODEL_V3.md`
+- **AI model registry & governance (v3)**:
+  - `docs/product/MODEL_REGISTRY_V3.md`
+  - `docs/product/modules/ai/AI_MODEL_PURPOSES_AND_REQUIREMENTS_V3.md`
+  - `docs/product/modules/ai/AI_PROVIDER_RESIDENCY_POLICY_V3.md`
+  - `docs/product/modules/ai/AI_PRICING_COST_CONTROLS_V3.md`
+  - `docs/product/modules/ai/AI_AGENT_ORCHESTRATION_V3.md`
+  - `docs/product/modules/ai/AI_MARKET_UPDATE_STANDARD_V3.md`
+  - `docs/product/modules/ai/AI_API_KEYS_CHECKLIST_V3.md`
 - **Tools catalog v3**: `docs/product/TOOLS_CATALOG_V3.md`
 - **Interview Form Engine v3**: `docs/product/INTERVIEW_FORM_ENGINE_V3.md`
 - **Notebook v3**: `docs/product/NOTEBOOK_V3.md`

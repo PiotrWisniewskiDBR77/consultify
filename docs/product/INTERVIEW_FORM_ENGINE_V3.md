@@ -76,7 +76,7 @@ Reprezentuje definicję formularza.
 - `default_flag` (bool)
 - `industry_tag?` (opcjonalnie)
 - `estimated_time_minutes?`
-- `runtime_mode_default`: `one_question_per_screen | one_section_per_screen` (domyślnie: one_question_per_screen)
+- `runtime_mode_default`: `task_list | one_question_per_screen` (domyślnie: `task_list`)
 
 ### 3.2 `TemplateSection`
 
@@ -165,6 +165,7 @@ Instancja przypisana do respondenta.
 - `due_date?`
 - `started_at?`, `submitted_at?`, `approved_at?`
 - `sent_back_reason?`
+- `missing_items_json?` (lista braków do poprawy po `send-back`)
 - `progress` (np. `answered_count`, `total_count`, `percent`, `current_section_id?`)
 
 ### 5.2 `FormAnswer`
@@ -230,10 +231,11 @@ Reguły blokad edycji (MUST):
 
 Ten rozdział opisuje **kontrakty UX** (co ma działać), a nie implementację design systemu.
 
-### 7.1 Default mode: “one question per screen”
+### 7.1 Default mode: `task-list` (SSOT alignment)
 
-- Domyślny runner: **jedno pytanie na ekranie**.
-- Alternatywa (opcjonalna): **sekcja jako strona** (dla krótkich audytów).
+- Domyślny runner: **task-list** (lista pytań z postępem i statusami).
+- Alternatywa (opcjonalna): **one question per screen** dla formularzy wymagających silnego focus flow.
+- Decyzja v3: runtime mode jest jawny i przechowywany jako konfiguracja runtime, bez “zgadywania” po stronie UI.
 
 ### 7.2 Stała anatomia ekranu (runner)
 
@@ -363,4 +365,3 @@ W v3 “Interview Form Engine” jest kompletnym systemem:
 ---
 
 **Last updated:** 2026-02-25
-
