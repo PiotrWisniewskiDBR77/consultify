@@ -181,7 +181,7 @@ Reguła: “done” bez smoke = nie istnieje (QA status min `smoke_passed`).
 | 2026-02-26 | V3-A02 adoption (persistence) | Migrated 4 hubs to persistent dynamic tabs: Initiatives+Presentations via useModuleOpenDocuments; Interview+MyWork via inline sessionStorage. Extended OpenDocument.type. |
 | 2026-02-26 | V3-E06 seed parity | Migration 602: ADMA assessment enriched to COMPLETED with full framework_data + 2nd assessment added. SIRI/ADMA at full parity. |
 | 2026-02-26 | V3-E07 audit script | audit-known-tools-completeness.ts: 19/19 tools 100% (EN+PL). No fill needed. |
-| 2026-02-26 | **Full re-audit: 37/38 FULL** | Re-audited all 38 tasks. 37 FULL, 1 PARTIAL (A03 — Interview/MyWork custom hub, functionally compliant). All R0 FULL. Smoke A06+B02+C-ws+E07 passed. tsc clean. Ready for integration testing. |
+| 2026-02-26 | **Full re-audit: 38/38 FULL** | Re-audited all 38 tasks. 38 FULL. All R0 FULL. Smoke A06+B02+C-ws+E07+A03 passed. tsc clean. Ready for integration testing. |
 
 ---
 
