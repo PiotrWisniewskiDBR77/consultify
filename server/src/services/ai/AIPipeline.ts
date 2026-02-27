@@ -2028,7 +2028,9 @@ export class AIPipeline {
               /* ignore */
             }
             try {
-              const env = Number(process.env.AI_MARKUP_MULTIPLIER || process.env.AI_PRICE_MARKUP_MULTIPLIER);
+              const env = Number(
+                process.env.AI_MARKUP_MULTIPLIER || process.env.AI_PRICE_MARKUP_MULTIPLIER
+              );
               if (Number.isFinite(env) && env > 0) markup = env;
             } catch {
               /* ignore */
@@ -2084,7 +2086,9 @@ export class AIPipeline {
           String((request as any).purpose || request.capability || 'unknown'),
           'TEXT_LLM',
           priceSnapshotId,
-          typeof estimatedCostUsd === 'number' && Number.isFinite(estimatedCostUsd) ? estimatedCostUsd : null,
+          typeof estimatedCostUsd === 'number' && Number.isFinite(estimatedCostUsd)
+            ? estimatedCostUsd
+            : null,
           Number.isFinite(promptTokens) ? promptTokens : 0,
           Number.isFinite(completionTokens) ? completionTokens : 0,
           Number.isFinite(tokensUsed) ? tokensUsed : 0,

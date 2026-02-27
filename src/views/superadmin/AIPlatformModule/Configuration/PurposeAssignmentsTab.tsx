@@ -60,9 +60,9 @@ export const PurposeAssignmentsTab: React.FC = () => {
   const [selectedPurpose, setSelectedPurpose] = useState<string>('');
   const [orgIdFilter, setOrgIdFilter] = useState<string>('');
   const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
-  const [providerKindFilter, setProviderKindFilter] = useState<'AUTO' | 'ALL' | 'TEXT_LLM' | 'IMAGE_MODEL'>(
-    'AUTO'
-  );
+  const [providerKindFilter, setProviderKindFilter] = useState<
+    'AUTO' | 'ALL' | 'TEXT_LLM' | 'IMAGE_MODEL'
+  >('AUTO');
   const [showMismatchedProviders, setShowMismatchedProviders] = useState(false);
 
   // Create/Upsert purpose form
@@ -151,7 +151,8 @@ export const PurposeAssignmentsTab: React.FC = () => {
   const effectiveProviderKind = useMemo(() => {
     const k = String(activePurpose?.kind || '').toUpperCase();
     if (providerKindFilter === 'ALL') return 'ALL';
-    if (providerKindFilter === 'TEXT_LLM' || providerKindFilter === 'IMAGE_MODEL') return providerKindFilter;
+    if (providerKindFilter === 'TEXT_LLM' || providerKindFilter === 'IMAGE_MODEL')
+      return providerKindFilter;
     if (providerKindFilter === 'AUTO') {
       if (k === 'IMAGE_MODEL') return 'IMAGE_MODEL';
       return 'TEXT_LLM';
@@ -441,7 +442,8 @@ export const PurposeAssignmentsTab: React.FC = () => {
               <option value="">Select provider…</option>
               {filteredProviders.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name || p.provider} ({String(p.kind || 'TEXT_LLM')} • {p.provider} • {p.model_id})
+                  {p.name || p.provider} ({String(p.kind || 'TEXT_LLM')} • {p.provider} •{' '}
+                  {p.model_id})
                 </option>
               ))}
             </select>

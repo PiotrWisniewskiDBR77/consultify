@@ -113,4 +113,3 @@ export async function createIssueFromTask(input: {
     browseUrl: `${config.baseUrl}/browse/${key}`,
   };
 }
-

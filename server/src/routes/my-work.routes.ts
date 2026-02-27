@@ -3626,7 +3626,9 @@ router.post(
       });
       // V3-A01: Traceability guard — abort if MYWORK ToolSession materialization failed
       if (!toolSessionId) {
-        return res.status(500).json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
+        return res
+          .status(500)
+          .json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
       }
 
       const initiativeId = uuidv4();
@@ -4853,7 +4855,9 @@ router.post(
       });
       // V3-A01: Traceability guard
       if (!toolSessionId) {
-        return res.status(500).json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
+        return res
+          .status(500)
+          .json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
       }
 
       const insertCols: string[] = ['id'];
@@ -4900,7 +4904,9 @@ router.post(
       });
       // V3-A01: Traceability guard
       if (!toolSessionId) {
-        return res.status(500).json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
+        return res
+          .status(500)
+          .json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
       }
 
       const reportBuilderService = await import('../services/reportBuilderService.js');
@@ -4930,7 +4936,9 @@ router.post(
       });
       // V3-A01: Traceability guard
       if (!toolSessionId) {
-        return res.status(500).json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
+        return res
+          .status(500)
+          .json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
       }
 
       const presentationGeneratorService =

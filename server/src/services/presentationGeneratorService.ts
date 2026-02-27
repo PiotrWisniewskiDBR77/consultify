@@ -9,6 +9,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { materializePlannedVisual } from './ai/deckVisualsService.js';
+import { planDeckVisuals } from './presentationVisualDirectorService.js';
 import { PptxPipelineService } from './report/pptx/PptxPipelineService.js';
 import type {
   SlideIntent,
@@ -16,8 +18,6 @@ import type {
   UnifiedReportMeta,
   UnifiedSlide,
 } from './report/pptx/types.js';
-import { materializePlannedVisual } from './ai/deckVisualsService.js';
-import { planDeckVisuals } from './presentationVisualDirectorService.js';
 
 // ============================================================
 // TYPES
@@ -510,7 +510,8 @@ export async function generateOutline(
   }
 
   const deckId = uuidv4().replace(/-/g, '');
-  const resolvedSourceType = setup.sourceType || (setup.sourceArtifacts?.[0]?.type === 'tool_session' ? 'tool' : 'manual');
+  const resolvedSourceType =
+    setup.sourceType || (setup.sourceArtifacts?.[0]?.type === 'tool_session' ? 'tool' : 'manual');
   const resolvedSourceId = setup.sourceId || setup.sourceArtifacts?.[0]?.id || null;
   await dbRun(
     `INSERT INTO presentation_decks (id, organization_id, title, template_id, deck_type, audience, goal, language, confidentiality, theme, brand_kit_id, source_artifacts, outline_json, status, generated_by, source_type, source_id)
@@ -588,13 +589,7 @@ export async function generateDeck(
       const density: 'low' | 'medium' | 'high' =
         setup.visuals?.imageDensity || (visualPriority === 'quality' ? 'medium' : 'low');
       const maxImages =
-        visualPriority === 'cost'
-          ? 1
-          : density === 'high'
-            ? 6
-            : density === 'medium'
-              ? 3
-              : 1;
+        visualPriority === 'cost' ? 1 : density === 'high' ? 6 : density === 'medium' ? 3 : 1;
 
       // 1) Plan visuals (deterministic v1)
       const plannedSlides = planDeckVisuals({

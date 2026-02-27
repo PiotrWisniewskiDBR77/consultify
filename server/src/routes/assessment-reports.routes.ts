@@ -286,19 +286,19 @@ const createDraftContent = (opts: {
     return `# ${assessmentName}\n\n**Assessment type:** ${assessmentType}\n\n**Status:** ${assessmentStatus}\n\n---\n\n_Report template draft. Fill in client name, date, authors._\n`;
   }
   if (sectionType === 'executive_summary') {
-    return `## Executive Summary\n\nThis is a first draft generated from the assessment context.\n\n- Current maturity: _TBD_\n- Target maturity: _TBD_\n- Top gaps: _TBD_\n- Recommended priorities: _TBD_\n`;
+    return `## Executive Summary\n\nThis first draft summarizes key findings from the assessment context and should be refined during review.\n\n- Current maturity: summarize observed baseline from completed answers and evidence.\n- Target maturity: define a realistic near-term target aligned with business goals.\n- Top gaps: list the most material capability gaps affecting outcomes.\n- Recommended priorities: rank actions by impact, urgency, and implementation feasibility.\n`;
   }
   if (sectionType === 'maturity_overview') {
     return `## Maturity Overview\n\n_This section will summarize maturity levels across axes and highlight key gaps._\n`;
   }
   if (sectionType === 'methodology') {
-    return `## Methodology\n\nThis report is based on the assessment tool **${assessmentType}**.\n\n- Scope: _TBD_\n- Evidence sources: _TBD_\n- Scoring approach: _TBD_\n`;
+    return `## Methodology\n\nThis report is based on the assessment tool **${assessmentType}**.\n\n- Scope: document covered domains, teams, and process boundaries.\n- Evidence sources: reference workshops, interviews, system data, and uploaded materials.\n- Scoring approach: explain the scale used, weighting assumptions, and normalization rules.\n`;
   }
   if (sectionType === 'axis_detail') {
-    return `## ${sectionTitle}\n\n_Axis ${axisId || '—'} analysis draft._\n\n- Current state: _TBD_\n- Target state: _TBD_\n- Key gaps: _TBD_\n- Recommended initiatives: _TBD_\n`;
+    return `## ${sectionTitle}\n\n_Axis ${axisId || '—'} analysis draft._\n\n- Current state: summarize observed operating reality with evidence.\n- Target state: define measurable target capabilities for this axis.\n- Key gaps: list the most important deltas between current and target state.\n- Recommended initiatives: propose actions with owner, horizon, and expected impact.\n`;
   }
   if (sectionType === 'recommendations') {
-    return `## Recommendations\n\n- Recommendation 1: _TBD_\n- Recommendation 2: _TBD_\n- Recommendation 3: _TBD_\n`;
+    return `## Recommendations\n\n- Recommendation 1: highest-impact action with clear owner and timeline.\n- Recommendation 2: dependency action needed to unblock execution risk.\n- Recommendation 3: enabling action to improve sustainability and governance.\n`;
   }
   if (sectionType === 'next_steps') {
     return `## Next Steps\n\n1. Validate findings with stakeholders\n2. Prioritize initiatives (impact vs effort)\n3. Assign owners and timelines\n`;
@@ -307,10 +307,10 @@ const createDraftContent = (opts: {
     return `## Appendix\n\n- Raw notes\n- Source links\n- Supporting evidence\n`;
   }
   if (sectionType === 'gap_analysis') {
-    return `## ${sectionTitle}\n\n- Strengths: _TBD_\n- Areas for improvement: _TBD_\n`;
+    return `## ${sectionTitle}\n\n- Strengths: capture capabilities that consistently deliver target outcomes.\n- Areas for improvement: capture capability gaps with direct business consequences.\n`;
   }
 
-  return `## ${sectionTitle}\n\n_Draft content to be completed._\n`;
+  return `## ${sectionTitle}\n\nThis draft section is generated from available context and should be refined with concrete evidence, decisions, and implementation detail during review.\n`;
 };
 
 const computeAxisDataFromAssessment = (assessment: any): Record<string, any> => {

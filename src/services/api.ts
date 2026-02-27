@@ -2080,13 +2080,23 @@ export const Api = {
 
   cloneLLMProviderModel: async (
     sourceProviderId: string,
-    data: { name?: string; model_id: string; tier?: string; visibility?: string; is_active?: boolean; priority?: number }
+    data: {
+      name?: string;
+      model_id: string;
+      tier?: string;
+      visibility?: string;
+      is_active?: boolean;
+      priority?: number;
+    }
   ): Promise<any> => {
-    const res = await fetch(`${API_URL}/llm/providers/${encodeURIComponent(sourceProviderId)}/clone-model`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    });
+    const res = await fetch(
+      `${API_URL}/llm/providers/${encodeURIComponent(sourceProviderId)}/clone-model`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
     return handleResponse(res, 'Failed to clone provider model');
   },
 
@@ -8749,7 +8759,9 @@ export const Api = {
   },
 
   getIntegrationProviders: async () => {
-    const res = await fetchWithRetry(`${API_URL}/integrations/providers`, { headers: getHeaders() });
+    const res = await fetchWithRetry(`${API_URL}/integrations/providers`, {
+      headers: getHeaders(),
+    });
     return handleResponse(res, 'Failed to fetch integration providers');
   },
 
@@ -8811,7 +8823,12 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch MCP providers');
   },
 
-  createMcpProvider: async (input: { name: string; type?: string; status?: string; config?: any }) => {
+  createMcpProvider: async (input: {
+    name: string;
+    type?: string;
+    status?: string;
+    config?: any;
+  }) => {
     const res = await fetchWithRetry(`${API_URL}/mcp/providers`, {
       method: 'POST',
       headers: getHeaders(),
@@ -8820,7 +8837,10 @@ export const Api = {
     return handleResponse(res, 'Failed to create MCP provider');
   },
 
-  updateMcpProvider: async (providerId: string, input: { name?: string; status?: string; config?: any }) => {
+  updateMcpProvider: async (
+    providerId: string,
+    input: { name?: string; status?: string; config?: any }
+  ) => {
     const res = await fetchWithRetry(`${API_URL}/mcp/providers/${providerId}`, {
       method: 'PUT',
       headers: getHeaders(),
@@ -8873,9 +8893,12 @@ export const Api = {
   },
 
   getMcpAudit: async (limit = 50) => {
-    const res = await fetchWithRetry(`${API_URL}/mcp/audit?limit=${encodeURIComponent(String(limit))}`, {
-      headers: getHeaders(),
-    });
+    const res = await fetchWithRetry(
+      `${API_URL}/mcp/audit?limit=${encodeURIComponent(String(limit))}`,
+      {
+        headers: getHeaders(),
+      }
+    );
     return handleResponse(res, 'Failed to fetch MCP audit');
   },
 

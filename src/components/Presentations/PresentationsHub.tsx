@@ -148,12 +148,8 @@ export const PresentationsHub: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   // V3-A02: Persistent dynamic tabs via sessionStorage
-  const {
-    openDocuments,
-    setOpenDocuments,
-    activeDocumentId,
-    setActiveDocumentId,
-  } = useModuleOpenDocuments('presentations');
+  const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
+    useModuleOpenDocuments('presentations');
   const [renameModalDeck, setRenameModalDeck] = useState<PresentationDeck | null>(null);
   const [renameValue, setRenameValue] = useState('');
 

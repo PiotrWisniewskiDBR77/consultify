@@ -533,7 +533,9 @@ export class InitiativeController {
       }
 
       // V3-A01: Traceability guard — non-manual sources require sourceId
-      const normalizedSourceType = String(sourceType || 'manual').trim().toLowerCase();
+      const normalizedSourceType = String(sourceType || 'manual')
+        .trim()
+        .toLowerCase();
       const normalizedSourceId = sourceId != null ? String(sourceId).trim() : '';
       if (normalizedSourceType !== 'manual' && !normalizedSourceId) {
         res.status(400).json({ error: 'sourceId is required when sourceType is not manual' });

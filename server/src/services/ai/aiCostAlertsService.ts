@@ -1,5 +1,5 @@
-import logger from '../../utils/Logger.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 
 type Threshold = 80 | 90 | 100;
 
@@ -65,7 +65,11 @@ async function getOrgMonthToDateCostUsd(orgId: string): Promise<number> {
   }
 }
 
-async function alreadySent(orgId: string, threshold: Threshold, periodStart: string): Promise<boolean> {
+async function alreadySent(
+  orgId: string,
+  threshold: Threshold,
+  periodStart: string
+): Promise<boolean> {
   try {
     const row = await dbGet(
       `SELECT id FROM ai_cost_alerts_sent WHERE organization_id = ? AND threshold = ? AND period_start = ? LIMIT 1`,
@@ -83,7 +87,13 @@ async function markSent(orgId: string, threshold: Threshold, periodStart: string
     await dbRun(
       `INSERT INTO ai_cost_alerts_sent (id, organization_id, threshold, period_start, sent_at)
        VALUES (?, ?, ?, ?, ?)`,
-      [`cost-alert-${orgId}-${threshold}-${Date.now()}`, orgId, threshold, periodStart, new Date().toISOString()],
+      [
+        `cost-alert-${orgId}-${threshold}-${Date.now()}`,
+        orgId,
+        threshold,
+        periodStart,
+        new Date().toISOString(),
+      ],
       { fallback: true } as any
     );
   } catch {
@@ -143,7 +153,9 @@ async function sendEmailToOrgAdmins(params: {
 export async function runAiCostBudgetAlerts(): Promise<{ processed: number; sent: number }> {
   await ensureTables();
 
-  const orgIds = await dbAll<{ id: string }>(`SELECT id FROM organizations`, [], { fallback: true } as any);
+  const orgIds = await dbAll<{ id: string }>(`SELECT id FROM organizations`, [], {
+    fallback: true,
+  } as any);
   const periodStart = monthStartIso();
 
   let processed = 0;
@@ -160,8 +172,7 @@ export async function runAiCostBudgetAlerts(): Promise<{ processed: number; sent
     const usedUsd = await getOrgMonthToDateCostUsd(orgId);
     const pct = capUsd > 0 ? (usedUsd / capUsd) * 100 : 0;
 
-    const threshold: Threshold | null =
-      pct >= 100 ? 100 : pct >= 90 ? 90 : pct >= 80 ? 80 : null;
+    const threshold: Threshold | null = pct >= 100 ? 100 : pct >= 90 ? 90 : pct >= 80 ? 80 : null;
     if (!threshold) continue;
 
     const wasSent = await alreadySent(orgId, threshold, periodStart);
@@ -176,4 +187,3 @@ export async function runAiCostBudgetAlerts(): Promise<{ processed: number; sent
 }
 
 export default { runAiCostBudgetAlerts };
-

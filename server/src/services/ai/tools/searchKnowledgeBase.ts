@@ -6,8 +6,8 @@
  * it restricts retrieval to Tool Knowledge Packs indexed from `knowledge/tool-kb/**`.
  */
 
-import logger from '../../../utils/Logger.js';
 import { all as dbAll } from '../../../utils/DbPromise.js';
+import logger from '../../../utils/Logger.js';
 
 type SearchParams = {
   query: string;

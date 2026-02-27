@@ -2,9 +2,9 @@
  * Webhook Subscriptions Routes
  * API endpoints for managing outgoing webhook subscriptions
  */
+import crypto from 'crypto';
 import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import crypto from 'crypto';
 
 import { verifyAdmin } from '../../middleware/admin.middleware.js';
 import { isAuthenticated, verifyToken } from '../../middleware/auth.middleware.js';
@@ -42,8 +42,16 @@ router.get(
     res.json({
       version: 1,
       events: [
-        { id: 'tasks.created', description: 'Task created', payloadShape: { taskId: 'string', projectId: 'string?' } },
-        { id: 'tasks.updated', description: 'Task updated', payloadShape: { taskId: 'string', changes: 'object' } },
+        {
+          id: 'tasks.created',
+          description: 'Task created',
+          payloadShape: { taskId: 'string', projectId: 'string?' },
+        },
+        {
+          id: 'tasks.updated',
+          description: 'Task updated',
+          payloadShape: { taskId: 'string', changes: 'object' },
+        },
         {
           id: 'initiatives.updated',
           description: 'Initiative updated',
@@ -54,7 +62,11 @@ router.get(
           description: 'Notification dispatched',
           payloadShape: { notificationId: 'string', channels: 'string[]' },
         },
-        { id: 'webhook.test', description: 'Test delivery event', payloadShape: { at: 'isoDate', subscriptionId: 'string' } },
+        {
+          id: 'webhook.test',
+          description: 'Test delivery event',
+          payloadShape: { at: 'isoDate', subscriptionId: 'string' },
+        },
       ],
     });
   })
@@ -67,8 +79,16 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     const cols = await getColumns('webhook_subscriptions');
-    const eventsCol = cols.has('events_json') ? 'events_json' : cols.has('events') ? 'events' : 'events_json';
-    const secretCol = cols.has('secret') ? 'secret' : cols.has('secret_hash') ? 'secret_hash' : null;
+    const eventsCol = cols.has('events_json')
+      ? 'events_json'
+      : cols.has('events')
+        ? 'events'
+        : 'events_json';
+    const secretCol = cols.has('secret')
+      ? 'secret'
+      : cols.has('secret_hash')
+        ? 'secret_hash'
+        : null;
     const subs = await dbAll(
       `
       SELECT id, name, url, ${eventsCol} as events, is_active,
@@ -112,13 +132,29 @@ router.post(
     if (!name || !url) return res.status(400).json({ error: 'Name and URL are required' });
 
     const cols = await getColumns('webhook_subscriptions');
-    const eventsCol = cols.has('events_json') ? 'events_json' : cols.has('events') ? 'events' : 'events_json';
-    const secretCol = cols.has('secret') ? 'secret' : cols.has('secret_hash') ? 'secret_hash' : null;
+    const eventsCol = cols.has('events_json')
+      ? 'events_json'
+      : cols.has('events')
+        ? 'events'
+        : 'events_json';
+    const secretCol = cols.has('secret')
+      ? 'secret'
+      : cols.has('secret_hash')
+        ? 'secret_hash'
+        : null;
 
     const id = uuidv4();
     const normalizedEvents = Array.isArray(events) && events.length ? events : ['*'];
 
-    const columns: string[] = ['id', 'organization_id', 'name', 'url', eventsCol, 'is_active', 'failure_count'];
+    const columns: string[] = [
+      'id',
+      'organization_id',
+      'name',
+      'url',
+      eventsCol,
+      'is_active',
+      'failure_count',
+    ];
     const placeholders: string[] = ['?', '?', '?', '?', '?', '1', '0'];
     const params: any[] = [id, orgId, name, url, JSON.stringify(normalizedEvents)];
     if (secretCol) {
@@ -259,8 +295,16 @@ router.post(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
     const cols = await getColumns('webhook_subscriptions');
-    const eventsCol = cols.has('events_json') ? 'events_json' : cols.has('events') ? 'events' : 'events_json';
-    const secretCol = cols.has('secret') ? 'secret' : cols.has('secret_hash') ? 'secret_hash' : null;
+    const eventsCol = cols.has('events_json')
+      ? 'events_json'
+      : cols.has('events')
+        ? 'events'
+        : 'events_json';
+    const secretCol = cols.has('secret')
+      ? 'secret'
+      : cols.has('secret_hash')
+        ? 'secret_hash'
+        : null;
 
     const sub = await dbGet<any>(
       `SELECT id, name, url, ${eventsCol} as events, is_active ${secretCol ? `, ${secretCol} as secret` : ''}
@@ -331,14 +375,7 @@ router.post(
         await dbRun(
           `INSERT INTO webhook_deliveries (id, webhook_id, url, payload, status, response_code, attempted_at, created_at)
            VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-          [
-            deliveryId,
-            id,
-            String(sub.url),
-            payload,
-            ok ? 'success' : 'failed',
-            statusCode,
-          ]
+          [deliveryId, id, String(sub.url), payload, ok ? 'success' : 'failed', statusCode]
         ).catch(() => null);
       }
     }

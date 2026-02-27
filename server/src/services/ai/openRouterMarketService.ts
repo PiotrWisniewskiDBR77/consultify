@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
-import logger from '../../utils/Logger.js';
 import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 
 export type OpenRouterMarketSyncResult = {
   success: boolean;
@@ -62,8 +62,16 @@ export async function syncOpenRouterMarket(): Promise<OpenRouterMarketSyncResult
         { fallback: false } as any
       );
       const prevData = safeJsonParse<any>((prev as any)?.payload);
-      const prevList = Array.isArray(prevData?.data) ? prevData.data : Array.isArray(prevData?.models) ? prevData.models : [];
-      const nextList = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload?.models) ? payload.models : [];
+      const prevList = Array.isArray(prevData?.data)
+        ? prevData.data
+        : Array.isArray(prevData?.models)
+          ? prevData.models
+          : [];
+      const nextList = Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.models)
+          ? payload.models
+          : [];
 
       const toMap = (list: any[]) => {
         const m = new Map<string, any>();
@@ -153,4 +161,3 @@ export async function syncOpenRouterMarket(): Promise<OpenRouterMarketSyncResult
     return { success: false, error: String(e?.message || e) };
   }
 }
-

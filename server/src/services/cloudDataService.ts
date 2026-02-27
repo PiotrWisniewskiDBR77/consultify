@@ -190,9 +190,21 @@ export async function uploadCloudFile(input: {
     let result: CloudUploadResult;
 
     if (source.provider === 'google_drive') {
-      result = await uploadGoogleDriveFile(source, input.fileName, input.mimeType, input.content, input.folderId);
+      result = await uploadGoogleDriveFile(
+        source,
+        input.fileName,
+        input.mimeType,
+        input.content,
+        input.folderId
+      );
     } else if (source.provider === 'onedrive' || source.provider === 'sharepoint') {
-      result = await uploadOneDriveFile(source, input.fileName, input.mimeType, input.content, input.folderId);
+      result = await uploadOneDriveFile(
+        source,
+        input.fileName,
+        input.mimeType,
+        input.content,
+        input.folderId
+      );
     } else {
       throw new Error(`Upload not supported for provider ${source.provider}`);
     }
@@ -206,7 +218,12 @@ export async function uploadCloudFile(input: {
       itemsFailed: 0,
       errorMessage: null,
       durationMs: Math.max(0, Date.now() - startedAt),
-      metadata: { provider: source.provider, fileName: input.fileName, fileId: result.fileId, url: result.url },
+      metadata: {
+        provider: source.provider,
+        fileName: input.fileName,
+        fileId: result.fileId,
+        url: result.url,
+      },
     });
 
     // Best-effort: write an integration_sync_log entry if org-level integration exists.
@@ -218,7 +235,12 @@ export async function uploadCloudFile(input: {
       itemsCreated: 1,
       itemsFailed: 0,
       errorDetails: null,
-      metadata: { cloudSourceId: input.sourceId, fileName: input.fileName, fileId: result.fileId, url: result.url },
+      metadata: {
+        cloudSourceId: input.sourceId,
+        fileName: input.fileName,
+        fileId: result.fileId,
+        url: result.url,
+      },
     });
 
     return result;
@@ -358,12 +380,18 @@ async function tryLogIntegrationSync(input: {
   const db = await getDb();
 
   // Table existence / columns (best-effort, supports both SQLite and Postgres via adapter).
-  const logCols = (await db.all<{ name: string }>('PRAGMA table_info(integration_sync_log)', []).catch(() => [])) as any[];
+  const logCols = (await db
+    .all<{ name: string }>('PRAGMA table_info(integration_sync_log)', [])
+    .catch(() => [])) as any[];
   if (!logCols?.length) return;
   const hasNewCols = logCols.some((c) => String((c as any).name) === 'items_processed');
 
-  const intCols = (await db.all<{ name: string }>('PRAGMA table_info(integrations)', []).catch(() => [])) as any[];
-  const provCols = (await db.all<{ name: string }>('PRAGMA table_info(integration_providers)', []).catch(() => [])) as any[];
+  const intCols = (await db
+    .all<{ name: string }>('PRAGMA table_info(integrations)', [])
+    .catch(() => [])) as any[];
+  const provCols = (await db
+    .all<{ name: string }>('PRAGMA table_info(integration_providers)', [])
+    .catch(() => [])) as any[];
   if (!intCols?.length || !provCols?.length) return;
 
   const hasProviderId = intCols.some((c) => String((c as any).name) === 'provider_id');
@@ -380,7 +408,12 @@ async function tryLogIntegrationSync(input: {
     ORDER BY COALESCE(i.connected_at, i.updated_at, i.last_sync_at) DESC
     LIMIT 1
   `,
-    [input.organizationId, String(input.providerName || '').trim().toLowerCase()]
+    [
+      input.organizationId,
+      String(input.providerName || '')
+        .trim()
+        .toLowerCase(),
+    ]
   )) as any;
 
   const integrationId = integration?.id ? String(integration.id) : '';
@@ -389,7 +422,9 @@ async function tryLogIntegrationSync(input: {
   const nowIso = new Date().toISOString();
   const id = `log-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const errorDetails =
-    input.errorDetails && input.errorDetails.length ? JSON.stringify(input.errorDetails.slice(0, 50)) : null;
+    input.errorDetails && input.errorDetails.length
+      ? JSON.stringify(input.errorDetails.slice(0, 50))
+      : null;
 
   if (hasNewCols) {
     await db.run(
@@ -442,7 +477,9 @@ async function tryLogIntegrationSync(input: {
   }
 
   // Non-blocking trace metadata (if table exists in this schema).
-  const metaCols = (await db.all<{ name: string }>('PRAGMA table_info(integration_sync_mappings)', []).catch(() => [])) as any[];
+  const metaCols = (await db
+    .all<{ name: string }>('PRAGMA table_info(integration_sync_mappings)', [])
+    .catch(() => [])) as any[];
   if (!metaCols?.length) return;
   const hasMetadata = metaCols.some((c) => String((c as any).name) === 'metadata');
   if (!hasMetadata) return;
@@ -462,29 +499,33 @@ async function tryLogCloudSync(input: {
   metadata: Record<string, unknown>;
 }): Promise<void> {
   const db = await getDb();
-  const cols = (await db.all<{ name: string }>('PRAGMA table_info(cloud_sync_log)', []).catch(() => [])) as any[];
+  const cols = (await db
+    .all<{ name: string }>('PRAGMA table_info(cloud_sync_log)', [])
+    .catch(() => [])) as any[];
   if (!cols?.length) return;
 
   const id = `csl-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  await db.run(
-    `INSERT INTO cloud_sync_log (
+  await db
+    .run(
+      `INSERT INTO cloud_sync_log (
       id, cloud_source_id, organization_id, direction, status,
       items_processed, items_created, items_failed, error_message,
       metadata_json, duration_ms, created_at
     ) VALUES (?, ?, ?, 'push', ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-    [
-      id,
-      input.cloudSourceId,
-      input.organizationId,
-      input.status,
-      input.itemsProcessed,
-      input.itemsCreated,
-      input.itemsFailed,
-      input.errorMessage,
-      JSON.stringify(input.metadata || {}),
-      input.durationMs,
-    ]
-  ).catch(() => null);
+      [
+        id,
+        input.cloudSourceId,
+        input.organizationId,
+        input.status,
+        input.itemsProcessed,
+        input.itemsCreated,
+        input.itemsFailed,
+        input.errorMessage,
+        JSON.stringify(input.metadata || {}),
+        input.durationMs,
+      ]
+    )
+    .catch(() => null);
 }
 
 export async function startImportJob(data: {

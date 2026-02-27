@@ -274,7 +274,16 @@ function getEnvSyncAllowlist(): Set<string> {
     process.env.LLM_MULTI_PROVIDER === 'true' ||
     process.env.LLM_MULTI_PROVIDER === 'yes';
   if (multi) {
-    return new Set(['openrouter', 'openai', 'anthropic', 'google', 'deepseek', 'zai', 'replicate', 'ollama']);
+    return new Set([
+      'openrouter',
+      'openai',
+      'anthropic',
+      'google',
+      'deepseek',
+      'zai',
+      'replicate',
+      'ollama',
+    ]);
   }
 
   return new Set(['openrouter']);
@@ -579,7 +588,9 @@ export class LLMConfigService {
         ...(definition.kind ? { kind: definition.kind } : {}),
         ...(definition.provider_type ? { provider_type: definition.provider_type } : {}),
         ...(definition.origin_vendor ? { origin_vendor: definition.origin_vendor } : {}),
-        ...(definition.execution_regions ? { execution_regions: JSON.stringify(definition.execution_regions) } : {}),
+        ...(definition.execution_regions
+          ? { execution_regions: JSON.stringify(definition.execution_regions) }
+          : {}),
         ...(definition.allowed_data_classes
           ? { allowed_data_classes: JSON.stringify(definition.allowed_data_classes) }
           : {}),

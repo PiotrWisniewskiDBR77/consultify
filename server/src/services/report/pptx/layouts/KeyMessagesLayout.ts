@@ -27,7 +27,11 @@ export function KeyMessagesLayout(
 
   // Optional subtle background visual (render first)
   const visual = (slide.visuals || []).find(
-    (v) => v && (v.slot === 'background_texture' || v.slot === 'side_illustration' || v.purpose === 'image_slide_asset')
+    (v) =>
+      v &&
+      (v.slot === 'background_texture' ||
+        v.slot === 'side_illustration' ||
+        v.purpose === 'image_slide_asset')
   );
   const asset = visual?.asset;
   if (asset?.path || asset?.dataUri) {

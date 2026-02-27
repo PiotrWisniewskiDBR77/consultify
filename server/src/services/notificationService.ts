@@ -223,7 +223,9 @@ class NotificationService {
       const typePref = key ? prefs.typeSettings[key] : null;
       if (typePref) {
         if (!typePref.enabled) {
-          logger.debug(`[NotificationService] Type ${input.type} disabled for user ${input.userId}`);
+          logger.debug(
+            `[NotificationService] Type ${input.type} disabled for user ${input.userId}`
+          );
           return id;
         }
         channels = typePref.channels;
@@ -1207,7 +1209,9 @@ class NotificationService {
     const row = await db.get<{
       default_channels: string;
       icon: string;
-    }>(`SELECT default_channels, icon FROM notification_types WHERE lower(name) = lower(?)`, [type]);
+    }>(`SELECT default_channels, icon FROM notification_types WHERE lower(name) = lower(?)`, [
+      type,
+    ]);
 
     if (!row) return null;
 
@@ -1248,11 +1252,17 @@ class NotificationService {
     const db = await this.getDb();
 
     const severity = this.computeSeverity(input.type, input.data || input.metadata, input.severity);
-    const slackWebhookUrl = await this.getSlackWebhookUrlForOrg(input.organizationId, input.projectId);
+    const slackWebhookUrl = await this.getSlackWebhookUrlForOrg(
+      input.organizationId,
+      input.projectId
+    );
     const slackService = slackWebhookUrl
       ? new SlackServiceClass({ webhookUrl: slackWebhookUrl })
       : null;
-    const teamsWebhookUrl = await this.getTeamsWebhookUrlForOrg(input.organizationId, input.projectId);
+    const teamsWebhookUrl = await this.getTeamsWebhookUrlForOrg(
+      input.organizationId,
+      input.projectId
+    );
 
     if (this.shouldAutoSlack(input.type)) {
       if (slackService) {
@@ -1373,7 +1383,9 @@ class NotificationService {
         cfg?.project_mappings ||
         [];
       if (!Array.isArray(list)) return null;
-      const match = list.find((m: any) => String(m?.projectId || m?.project_id || '') === String(projectId));
+      const match = list.find(
+        (m: any) => String(m?.projectId || m?.project_id || '') === String(projectId)
+      );
       const raw =
         match?.webhookUrl ||
         match?.webhook_url ||
@@ -1542,7 +1554,9 @@ class NotificationService {
         cfg?.project_mappings ||
         [];
       if (!Array.isArray(list)) return null;
-      const match = list.find((m: any) => String(m?.projectId || m?.project_id || '') === String(projectId));
+      const match = list.find(
+        (m: any) => String(m?.projectId || m?.project_id || '') === String(projectId)
+      );
       const raw =
         match?.webhookUrl ||
         match?.webhook_url ||
@@ -1699,7 +1713,8 @@ class NotificationService {
     severity: 'INFO' | 'WARNING' | 'CRITICAL'
   ): Promise<void> {
     try {
-      const prefix = severity === 'CRITICAL' ? '[CRITICAL]' : severity === 'WARNING' ? '[WARN]' : '[INFO]';
+      const prefix =
+        severity === 'CRITICAL' ? '[CRITICAL]' : severity === 'WARNING' ? '[WARN]' : '[INFO]';
       const title = `${prefix} ${input.type}: ${input.title}`.trim();
       const body = input.body || input.message || '';
       const actionUrl = input.actionUrl;

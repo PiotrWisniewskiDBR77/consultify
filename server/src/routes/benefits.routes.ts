@@ -95,9 +95,13 @@ router.post(
     if (!kpiId) return res.status(400).json({ success: false, error: 'kpiId is required' });
 
     // Ensure MCP providers table exists
-    const mcpCols = await dbAll<{ name: string }>('PRAGMA table_info(mcp_providers)', []).catch(() => []);
+    const mcpCols = await dbAll<{ name: string }>('PRAGMA table_info(mcp_providers)', []).catch(
+      () => []
+    );
     if (!mcpCols?.length) {
-      return res.status(501).json({ success: false, error: 'MCP providers registry not available' });
+      return res
+        .status(501)
+        .json({ success: false, error: 'MCP providers registry not available' });
     }
 
     const provider = providerId
@@ -120,7 +124,11 @@ router.post(
 
     const cfgObj = (() => {
       try {
-        return provider.config ? (typeof provider.config === 'string' ? JSON.parse(provider.config) : provider.config) : {};
+        return provider.config
+          ? typeof provider.config === 'string'
+            ? JSON.parse(provider.config)
+            : provider.config
+          : {};
       } catch {
         return {};
       }
@@ -128,7 +136,9 @@ router.post(
 
     const cfg = parseStreamableHttpConfig(provider.config);
     if (!cfg) {
-      return res.status(400).json({ success: false, error: 'Invalid IRIS provider config (baseUrl required)' });
+      return res
+        .status(400)
+        .json({ success: false, error: 'Invalid IRIS provider config (baseUrl required)' });
     }
 
     const toolName = 'iris.kpi.timeseries.get';
@@ -201,7 +211,9 @@ router.post(
       }
 
       // Update current_value to the newest point if initiative_kpis table exists.
-      const ikCols = await dbAll<{ name: string }>('PRAGMA table_info(initiative_kpis)', []).catch(() => []);
+      const ikCols = await dbAll<{ name: string }>('PRAGMA table_info(initiative_kpis)', []).catch(
+        () => []
+      );
       if (ikCols?.length) {
         const last = points[points.length - 1];
         await dbRun(
@@ -220,7 +232,13 @@ router.post(
     } catch (e: any) {
       const msg = String(e?.message || 'iris_refresh_failed');
       const retriable = /HTTP\s*5\d\d/i.test(msg) || /timeout/i.test(msg) || /ECONN/i.test(msg);
-      logger.warn('[Benefits] IRIS KPI refresh failed', { orgId, kpiId, providerId: provider?.id, error: msg, retriable });
+      logger.warn('[Benefits] IRIS KPI refresh failed', {
+        orgId,
+        kpiId,
+        providerId: provider?.id,
+        error: msg,
+        retriable,
+      });
       return res.status(502).json({ success: false, error: msg, retriable });
     }
   })
@@ -241,13 +259,21 @@ router.get(
       [orgId]
     ).catch(() => null);
 
-    if (!provider?.id) return res.status(404).json({ success: false, error: 'IRIS MCP provider not configured' });
+    if (!provider?.id)
+      return res.status(404).json({ success: false, error: 'IRIS MCP provider not configured' });
     const cfg = parseStreamableHttpConfig(provider.config);
-    if (!cfg) return res.status(400).json({ success: false, error: 'Invalid IRIS provider config (baseUrl required)' });
+    if (!cfg)
+      return res
+        .status(400)
+        .json({ success: false, error: 'Invalid IRIS provider config (baseUrl required)' });
 
     const cfgObj = (() => {
       try {
-        return provider.config ? (typeof provider.config === 'string' ? JSON.parse(provider.config) : provider.config) : {};
+        return provider.config
+          ? typeof provider.config === 'string'
+            ? JSON.parse(provider.config)
+            : provider.config
+          : {};
       } catch {
         return {};
       }
@@ -290,13 +316,21 @@ router.post(
       [orgId]
     ).catch(() => null);
 
-    if (!provider?.id) return res.status(404).json({ success: false, error: 'IRIS MCP provider not configured' });
+    if (!provider?.id)
+      return res.status(404).json({ success: false, error: 'IRIS MCP provider not configured' });
     const cfg = parseStreamableHttpConfig(provider.config);
-    if (!cfg) return res.status(400).json({ success: false, error: 'Invalid IRIS provider config (baseUrl required)' });
+    if (!cfg)
+      return res
+        .status(400)
+        .json({ success: false, error: 'Invalid IRIS provider config (baseUrl required)' });
 
     const cfgObj = (() => {
       try {
-        return provider.config ? (typeof provider.config === 'string' ? JSON.parse(provider.config) : provider.config) : {};
+        return provider.config
+          ? typeof provider.config === 'string'
+            ? JSON.parse(provider.config)
+            : provider.config
+          : {};
       } catch {
         return {};
       }

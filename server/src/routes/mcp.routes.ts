@@ -6,9 +6,6 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
-import logger from '../utils/Logger.js';
 import {
   callRemoteTool,
   listRemoteTools,
@@ -16,6 +13,9 @@ import {
   makeMarketplaceHeaders,
   parseStreamableHttpConfig,
 } from '../services/mcp/mcpProviderClient.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 interface AuthRequest extends Request {
@@ -133,7 +133,10 @@ router.put(
     updates.push("updated_at = datetime('now')");
     params.push(id, orgId);
 
-    await dbRun(`UPDATE mcp_providers SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`, params);
+    await dbRun(
+      `UPDATE mcp_providers SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`,
+      params
+    );
     return res.json({ success: true });
   })
 );
@@ -173,7 +176,9 @@ router.put(
     const orgId = req.user?.organizationId;
     const id = String(req.params.id || '').trim();
     const mode = String(req.body?.mode || 'allow').trim();
-    const tools = Array.isArray(req.body?.tools) ? req.body.tools.map((t: any) => String(t)) : ['*'];
+    const tools = Array.isArray(req.body?.tools)
+      ? req.body.tools.map((t: any) => String(t))
+      : ['*'];
 
     await dbRun(
       `INSERT INTO mcp_provider_allowlist (id, organization_id, provider_id, mode, tools_json, created_at, updated_at)
@@ -202,7 +207,12 @@ router.post(
     if (!cfg) return res.status(400).json({ error: 'Invalid provider config (baseUrl required)' });
 
     try {
-      const tools = await listRemoteTools({ providerId: id, orgId, userId: req.user?.id, config: cfg });
+      const tools = await listRemoteTools({
+        providerId: id,
+        orgId,
+        userId: req.user?.id,
+        config: cfg,
+      });
       await dbRun(
         `UPDATE mcp_providers SET last_test_at = datetime('now'), last_error = NULL, updated_at = datetime('now') WHERE id = ? AND organization_id = ?`,
         [id, orgId]
@@ -237,7 +247,11 @@ router.get(
     );
     if (cached?.tools_json) {
       try {
-        return res.json({ tools: JSON.parse(cached.tools_json), fetchedAt: cached.fetched_at, cached: true });
+        return res.json({
+          tools: JSON.parse(cached.tools_json),
+          fetchedAt: cached.fetched_at,
+          cached: true,
+        });
       } catch {}
     }
     return res.status(404).json({ error: 'No cached tools. Run /test first.' });
@@ -253,10 +267,11 @@ router.post(
     const userId = req.user?.id;
     const id = String(req.params.id || '').trim();
     const toolName = String(req.body?.toolName || '').trim();
-    const args = (req.body?.args && typeof req.body.args === 'object' && !Array.isArray(req.body.args) ? req.body.args : {}) as Record<
-      string,
-      unknown
-    >;
+    const args = (
+      req.body?.args && typeof req.body.args === 'object' && !Array.isArray(req.body.args)
+        ? req.body.args
+        : {}
+    ) as Record<string, unknown>;
 
     if (!toolName) return res.status(400).json({ error: 'toolName is required' });
 
@@ -272,21 +287,30 @@ router.post(
     );
     const tools = (() => {
       try {
-        return Array.isArray(JSON.parse(allow?.tools_json || '["*"]')) ? JSON.parse(allow?.tools_json || '["*"]') : ['*'];
+        return Array.isArray(JSON.parse(allow?.tools_json || '["*"]'))
+          ? JSON.parse(allow?.tools_json || '["*"]')
+          : ['*'];
       } catch {
         return ['*'];
       }
     })() as string[];
     const mode = String(allow?.mode || 'allow');
-    const isAllowed = tools.includes('*') ? mode === 'allow' : mode === 'allow' ? tools.includes(toolName) : !tools.includes(toolName);
-    if (!isAllowed) return res.status(403).json({ error: 'Tool not allowed by provider allowlist' });
+    const isAllowed = tools.includes('*')
+      ? mode === 'allow'
+      : mode === 'allow'
+        ? tools.includes(toolName)
+        : !tools.includes(toolName);
+    if (!isAllowed)
+      return res.status(403).json({ error: 'Tool not allowed by provider allowlist' });
 
     const cfgObj = parseJsonObject(provider.config);
     const cfg = parseStreamableHttpConfig(provider.config);
     if (!cfg) return res.status(400).json({ error: 'Invalid provider config' });
 
     const extraHeaders =
-      String(provider.name || provider.id).toLowerCase().includes('iris') || toolName.startsWith('iris.')
+      String(provider.name || provider.id)
+        .toLowerCase()
+        .includes('iris') || toolName.startsWith('iris.')
         ? makeIrisHeaders(cfgObj, (req.body?.context?.factoryId as string | undefined) || null)
         : toolName.startsWith('marketplace.')
           ? makeMarketplaceHeaders(cfgObj)
@@ -304,7 +328,11 @@ router.post(
       });
       return res.json({ success: true, result });
     } catch (e: any) {
-      logger.warn('[MCP] provider tool call failed', { providerId: id, toolName, error: e?.message || e });
+      logger.warn('[MCP] provider tool call failed', {
+        providerId: id,
+        toolName,
+        error: e?.message || e,
+      });
       return res.status(502).json({ success: false, error: e?.message || 'mcp_call_failed' });
     }
   })
@@ -341,11 +369,36 @@ router.get(
     res.json({
       providers: [
         { id: 'iris', name: 'IRIS (Plant Ops)', type: 'streamable_http', defaultMcpPath: '/mcp' },
-        { id: 'marketplace', name: 'DBR77 Marketplace', type: 'streamable_http', defaultMcpPath: '/mcp' },
-        { id: 'github', name: 'GitHub', type: 'mcp', note: 'Use GitHub MCP or REST via webhook automation' },
-        { id: 'slack', name: 'Slack', type: 'mcp', note: 'Use Slack MCP or webhook-based messaging' },
-        { id: 'msgraph', name: 'Microsoft Graph', type: 'mcp', note: 'Outlook/Teams/SharePoint via Graph' },
-        { id: 'notion', name: 'Notion', type: 'mcp', note: 'Already supported via Report Builder export' },
+        {
+          id: 'marketplace',
+          name: 'DBR77 Marketplace',
+          type: 'streamable_http',
+          defaultMcpPath: '/mcp',
+        },
+        {
+          id: 'github',
+          name: 'GitHub',
+          type: 'mcp',
+          note: 'Use GitHub MCP or REST via webhook automation',
+        },
+        {
+          id: 'slack',
+          name: 'Slack',
+          type: 'mcp',
+          note: 'Use Slack MCP or webhook-based messaging',
+        },
+        {
+          id: 'msgraph',
+          name: 'Microsoft Graph',
+          type: 'mcp',
+          note: 'Outlook/Teams/SharePoint via Graph',
+        },
+        {
+          id: 'notion',
+          name: 'Notion',
+          type: 'mcp',
+          note: 'Already supported via Report Builder export',
+        },
       ],
     });
   })
@@ -451,7 +504,8 @@ router.post(
 
     // Ensure imports table exists
     const cols = await tryGetColumns('marketplace_imports');
-    if (!cols.size) return res.status(501).json({ error: 'marketplace_imports table not available' });
+    if (!cols.size)
+      return res.status(501).json({ error: 'marketplace_imports table not available' });
 
     let createdTargetId: string | null = null;
     if (targetType === 'presentation_template') {

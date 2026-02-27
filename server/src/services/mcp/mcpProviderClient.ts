@@ -1,5 +1,5 @@
-import logger from '../../utils/Logger.js';
 import { run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 
 export type StreamableHttpProviderConfig = {
   baseUrl: string;
@@ -56,7 +56,9 @@ export function parseStreamableHttpConfig(raw: unknown): StreamableHttpProviderC
   if (!baseUrl) return null;
   const mcpPath = String((cfg as any).mcpPath || (cfg as any).mcp_path || '/mcp').trim();
   const headers =
-    (cfg as any).headers && typeof (cfg as any).headers === 'object' ? ((cfg as any).headers as any) : undefined;
+    (cfg as any).headers && typeof (cfg as any).headers === 'object'
+      ? ((cfg as any).headers as any)
+      : undefined;
   return { baseUrl, mcpPath, headers };
 }
 
@@ -175,9 +177,14 @@ export async function callRemoteTool(input: {
   });
 }
 
-export function makeIrisHeaders(cfg: Record<string, unknown>, factoryId?: string | null): Record<string, string> {
+export function makeIrisHeaders(
+  cfg: Record<string, unknown>,
+  factoryId?: string | null
+): Record<string, string> {
   const token = String((cfg as any).mes_api_token || (cfg as any).MES_API_TOKEN || '').trim();
-  const defaultFactory = String((cfg as any).factory_id || (cfg as any).MES_FACTORY_ID || '').trim();
+  const defaultFactory = String(
+    (cfg as any).factory_id || (cfg as any).MES_FACTORY_ID || ''
+  ).trim();
   const fid = String(factoryId || defaultFactory || '').trim();
 
   const headers: Record<string, string> = {};
@@ -200,4 +207,3 @@ export default {
   makeIrisHeaders,
   makeMarketplaceHeaders,
 };
-

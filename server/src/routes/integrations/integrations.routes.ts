@@ -7,12 +7,12 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { verifyAdmin } from '../../middleware/admin.middleware.js';
 import { isAuthenticated, verifyToken } from '../../middleware/auth.middleware.js';
+import { createIssueFromTask, parseJiraConfig } from '../../services/integrations/jiraOrgClient.js';
+import { SlackServiceClass } from '../../services/slackService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
-import { SlackServiceClass } from '../../services/slackService.js';
-import { createIssueFromTask, parseJiraConfig } from '../../services/integrations/jiraOrgClient.js';
 
 const router = Router();
 
@@ -105,7 +105,10 @@ async function connectIntegrationRow(input: {
     if (!providerId) return { success: false, error: `Unknown provider: ${provider}` };
 
     const inferredAuthType =
-      config && ((config as any).webhookUrl || (config as any).webhook_url || (config as any).incomingWebhookUrl)
+      config &&
+      ((config as any).webhookUrl ||
+        (config as any).webhook_url ||
+        (config as any).incomingWebhookUrl)
         ? 'webhook'
         : providerRow?.auth_type || 'oauth2';
 
@@ -117,7 +120,10 @@ async function connectIntegrationRow(input: {
       [id, orgId, providerId, inferredAuthType, JSON.stringify(config || {}), userId || 'system']
     );
     if (!(runResult as any)?.success) {
-      return { success: false, error: (runResult as any)?.error || 'Failed to connect integration' };
+      return {
+        success: false,
+        error: (runResult as any)?.error || 'Failed to connect integration',
+      };
     }
     return { success: true, id };
   }
@@ -132,7 +138,10 @@ async function connectIntegrationRow(input: {
       [id, orgId, name || provider, provider, type || 'standard', JSON.stringify(config || {})]
     );
     if (!(runResult as any)?.success) {
-      return { success: false, error: (runResult as any)?.error || 'Failed to connect integration' };
+      return {
+        success: false,
+        error: (runResult as any)?.error || 'Failed to connect integration',
+      };
     }
     return { success: true, id };
   }
@@ -184,7 +193,9 @@ router.get(
         ? 'ORDER BY display_name ASC'
         : 'ORDER BY name ASC';
 
-    const rows = await dbAll<IntegrationProviderRow[]>(`SELECT ${select} FROM integration_providers ${orderBy}`);
+    const rows = await dbAll<IntegrationProviderRow[]>(
+      `SELECT ${select} FROM integration_providers ${orderBy}`
+    );
 
     const providers = (rows || []).map((r) => ({
       id: r.id,
@@ -214,7 +225,9 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    const provider = String(req.params.provider || '').trim().toLowerCase();
+    const provider = String(req.params.provider || '')
+      .trim()
+      .toLowerCase();
     if (!provider) return res.status(400).json({ error: 'Provider is required' });
 
     const cols = await tryGetColumns('integrations');
@@ -244,11 +257,16 @@ router.post(
       const cfg = parseJsonObject(row?.settings || null);
       const webhookUrl = extractWebhookUrl(cfg);
       if (!row?.id) return res.status(404).json({ error: 'Integration not connected' });
-      if (!webhookUrl) return res.status(400).json({ error: 'Missing webhookUrl in integration settings' });
+      if (!webhookUrl)
+        return res.status(400).json({ error: 'Missing webhookUrl in integration settings' });
 
       if (provider === 'slack') {
         const slack = new SlackServiceClass({ webhookUrl });
-        await slack.sendSystemAlert('Integrations test', 'Slack webhook test from Consultify', 'INFO');
+        await slack.sendSystemAlert(
+          'Integrations test',
+          'Slack webhook test from Consultify',
+          'INFO'
+        );
         return res.json({ success: true });
       }
 
@@ -425,7 +443,8 @@ router.post(
       type,
       config,
     });
-    if (!result.success) return res.status(400).json({ error: result.error || 'Failed to connect' });
+    if (!result.success)
+      return res.status(400).json({ error: result.error || 'Failed to connect' });
     logger.info(`[Integrations] Connected ${provider} for org ${orgId}`);
     return res.status(201).json({ success: true, id: result.id });
   })
@@ -451,7 +470,8 @@ router.post(
       type,
       config: (config || {}) as Record<string, unknown>,
     });
-    if (!result.success) return res.status(400).json({ error: result.error || 'Failed to connect' });
+    if (!result.success)
+      return res.status(400).json({ error: result.error || 'Failed to connect' });
     return res.status(201).json({ success: true, id: result.id });
   })
 );
@@ -476,7 +496,8 @@ router.post(
       type,
       config: (config || {}) as Record<string, unknown>,
     });
-    if (!result.success) return res.status(400).json({ error: result.error || 'Failed to connect' });
+    if (!result.success)
+      return res.status(400).json({ error: result.error || 'Failed to connect' });
     return res.status(201).json({ success: true, id: result.id });
   })
 );
@@ -543,12 +564,10 @@ router.put(
     const now = new Date().toISOString();
 
     if (cols.has('status')) {
-      await dbRun(`UPDATE integrations SET status = ?, updated_at = ? WHERE id = ? AND organization_id = ?`, [
-        enabled ? 'active' : 'paused',
-        now,
-        id,
-        orgId,
-      ]);
+      await dbRun(
+        `UPDATE integrations SET status = ?, updated_at = ? WHERE id = ? AND organization_id = ?`,
+        [enabled ? 'active' : 'paused', now, id, orgId]
+      );
       return res.json({ success: true });
     }
 
@@ -575,7 +594,10 @@ router.put(
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const settings = (req.body?.settings || req.body?.config || req.body || {}) as Record<string, unknown>;
+    const settings = (req.body?.settings || req.body?.config || req.body || {}) as Record<
+      string,
+      unknown
+    >;
     const cols = await tryGetColumns('integrations');
     const now = new Date().toISOString();
 
@@ -632,13 +654,15 @@ router.get(
             itemsUpdated: r.items_updated ?? 0,
             itemsFailed: r.items_failed ?? 0,
             errorSummary: r.error_summary ?? null,
-            errorDetails: r.error_details ? (() => {
-              try {
-                return JSON.parse(r.error_details);
-              } catch {
-                return r.error_details;
-              }
-            })() : null,
+            errorDetails: r.error_details
+              ? (() => {
+                  try {
+                    return JSON.parse(r.error_details);
+                  } catch {
+                    return r.error_details;
+                  }
+                })()
+              : null,
             startedAt: r.started_at,
             completedAt: r.completed_at,
             durationMs: r.duration_ms ?? 0,
@@ -650,13 +674,15 @@ router.get(
             direction: r.direction,
             itemsProcessed: r.items_synced ?? 0,
             itemsFailed: r.items_failed ?? 0,
-            errorDetails: r.error_details ? (() => {
-              try {
-                return JSON.parse(r.error_details);
-              } catch {
-                return r.error_details;
-              }
-            })() : null,
+            errorDetails: r.error_details
+              ? (() => {
+                  try {
+                    return JSON.parse(r.error_details);
+                  } catch {
+                    return r.error_details;
+                  }
+                })()
+              : null,
             startedAt: r.started_at,
             completedAt: r.completed_at,
             durationMs: r.duration_ms ?? 0,
@@ -710,7 +736,7 @@ router.post(
     let status: 'success' | 'partial' | 'failed' = 'success';
     let itemsProcessed = 0;
     let itemsCreated = 0;
-    let itemsUpdated = 0;
+    const itemsUpdated = 0;
     let itemsFailed = 0;
     const errors: string[] = [];
 
@@ -838,18 +864,15 @@ router.post(
 
     // Update last_sync_at when supported.
     if (intCols.has('last_sync_at')) {
-      await dbRun(`UPDATE integrations SET last_sync_at = ?, updated_at = ? WHERE id = ? AND organization_id = ?`, [
-        startedIso,
-        startedIso,
-        id,
-        orgId,
-      ]);
+      await dbRun(
+        `UPDATE integrations SET last_sync_at = ?, updated_at = ? WHERE id = ? AND organization_id = ?`,
+        [startedIso, startedIso, id, orgId]
+      );
     } else if (intCols.has('last_synced_at')) {
-      await dbRun(`UPDATE integrations SET last_synced_at = ? WHERE id = ? AND organization_id = ?`, [
-        startedIso,
-        id,
-        orgId,
-      ]);
+      await dbRun(
+        `UPDATE integrations SET last_synced_at = ? WHERE id = ? AND organization_id = ?`,
+        [startedIso, id, orgId]
+      );
     }
 
     logger.info(`[Integrations] Sync requested for integration ${id} (logged)`, {

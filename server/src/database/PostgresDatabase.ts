@@ -1094,7 +1094,10 @@ export async function initDb(): Promise<void> {
     };
     // Required for pack-scoped retrieval and provenance
     await ensureKnowledgeChunkColumn('metadata', 'metadata TEXT');
-    await ensureKnowledgeChunkColumn('created_at', 'created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+    await ensureKnowledgeChunkColumn(
+      'created_at',
+      'created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP'
+    );
 
     // LLM Providers
     await query(`CREATE TABLE IF NOT EXISTS llm_providers(

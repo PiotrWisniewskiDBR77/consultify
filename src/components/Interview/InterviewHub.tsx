@@ -353,7 +353,9 @@ export const InterviewHub: React.FC = () => {
       if (!raw) return [];
       const parsed = JSON.parse(raw);
       return Array.isArray(parsed?.openDocuments) ? parsed.openDocuments : [];
-    } catch { return []; }
+    } catch {
+      return [];
+    }
   });
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(() => {
     try {
@@ -361,12 +363,19 @@ export const InterviewHub: React.FC = () => {
       if (!raw) return null;
       const parsed = JSON.parse(raw);
       return typeof parsed?.activeDocumentId === 'string' ? parsed.activeDocumentId : null;
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   });
   useEffect(() => {
     try {
-      window.sessionStorage.setItem('moduleHub.openDocuments.interview', JSON.stringify({ openDocuments, activeDocumentId }));
-    } catch { /* ignore */ }
+      window.sessionStorage.setItem(
+        'moduleHub.openDocuments.interview',
+        JSON.stringify({ openDocuments, activeDocumentId })
+      );
+    } catch {
+      /* ignore */
+    }
   }, [openDocuments, activeDocumentId]);
 
   // Load data

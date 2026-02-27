@@ -132,12 +132,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   // V3-A02: Persistent dynamic tabs via sessionStorage
-  const {
-    openDocuments,
-    setOpenDocuments,
-    activeDocumentId,
-    setActiveDocumentId,
-  } = useModuleOpenDocuments('initiatives');
+  const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
+    useModuleOpenDocuments('initiatives');
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
   /** Active/All scope toggle — used for Kanban columns and data filtering */
   const [scope, setScope] = useState<KanbanScope>('active');

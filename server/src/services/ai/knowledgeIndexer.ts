@@ -437,7 +437,9 @@ export class KnowledgeIndexer {
       await db.query('DELETE FROM knowledge_docs WHERE id = $1', [docId]);
       return;
     }
-    await DbPromise.run('DELETE FROM knowledge_chunks WHERE doc_id = ?', [docId], { fallback: false });
+    await DbPromise.run('DELETE FROM knowledge_chunks WHERE doc_id = ?', [docId], {
+      fallback: false,
+    });
     await DbPromise.run('DELETE FROM knowledge_docs WHERE id = ?', [docId], { fallback: false });
   }
 
@@ -468,10 +470,7 @@ export class KnowledgeIndexer {
 
     const filesAbs = this.walkDirForMdFiles(toolKbAbs);
     for (const abs of filesAbs) {
-      const relativeFilePath = path
-        .relative(this.projectRoot, abs)
-        .replace(/\\/g, '/')
-        .trim();
+      const relativeFilePath = path.relative(this.projectRoot, abs).replace(/\\/g, '/').trim();
 
       try {
         const existing = await this.getDocByPath(relativeFilePath);

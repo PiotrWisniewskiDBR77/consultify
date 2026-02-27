@@ -108,7 +108,9 @@ function isAllowedByPolicy(row: ProviderRow, policy: any | null, dataClass: stri
   const regions = normalizeRegions(row.execution_regions);
 
   if (policy && typeof policy === 'object') {
-    const denyProviderTypes = normalizeStringSet(policy.deny_provider_types || policy.denyProviderTypes);
+    const denyProviderTypes = normalizeStringSet(
+      policy.deny_provider_types || policy.denyProviderTypes
+    );
     if (denyProviderTypes.size > 0 && denyProviderTypes.has(pt)) return false;
 
     const allowProviderTypes = normalizeStringSet(
@@ -147,7 +149,9 @@ function isAllowedByPolicy(row: ProviderRow, policy: any | null, dataClass: stri
 function resolveApiKey(provider: string, apiKeyFromDb?: string | null): string | null {
   const fromDb = String(apiKeyFromDb || '').trim();
   if (fromDb) return fromDb;
-  const p = String(provider || '').trim().toLowerCase();
+  const p = String(provider || '')
+    .trim()
+    .toLowerCase();
   if (p === 'openai') return String(process.env.OPENAI_API_KEY || '').trim() || null;
   return null;
 }
@@ -157,7 +161,12 @@ async function selectProviderForPurpose(params: {
   purpose: 'image_cover' | 'image_diagram' | 'image_slide_asset';
   priority: VisualPriority;
   dataClass: 'no_pii' | 'pii' | 'confidential';
-}): Promise<{ provider: ProviderRow; assignment: PurposeAssignmentRow; apiKey: string; modelId: string } | null> {
+}): Promise<{
+  provider: ProviderRow;
+  assignment: PurposeAssignmentRow;
+  apiKey: string;
+  modelId: string;
+} | null> {
   const { organizationId, purpose, priority, dataClass } = params;
   try {
     const orgPolicy = await getOrgPolicy(organizationId);
@@ -194,7 +203,12 @@ async function selectProviderForPurpose(params: {
       const modelId = String(a.model_id || provider.model_id || '').trim();
       if (!modelId) continue;
 
-      return { provider: provider as ProviderRow, assignment: a as PurposeAssignmentRow, apiKey, modelId };
+      return {
+        provider: provider as ProviderRow,
+        assignment: a as PurposeAssignmentRow,
+        apiKey,
+        modelId,
+      };
     }
   } catch (err: any) {
     logger.warn(`[DeckVisuals] Provider selection failed for ${params.purpose}: ${err.message}`);
@@ -355,7 +369,9 @@ async function generateImageVisual(params: {
     dataClass,
   });
   if (!selection) {
-    return { warning: `No configured image provider for purpose=${params.purpose} (or missing API key).` };
+    return {
+      warning: `No configured image provider for purpose=${params.purpose} (or missing API key).`,
+    };
   }
 
   try {
@@ -373,11 +389,9 @@ async function generateImageVisual(params: {
       });
     } else if (providerName === 'replicate') {
       const token =
-        selection.apiKey ||
-        process.env.REPLICATE_API_TOKEN ||
-        process.env.REPLICATE_API_KEY ||
-        '';
-      if (!token.trim()) return { warning: 'No Replicate API token configured (REPLICATE_API_TOKEN).' };
+        selection.apiKey || process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY || '';
+      if (!token.trim())
+        return { warning: 'No Replicate API token configured (REPLICATE_API_TOKEN).' };
       buf = await generateWithReplicate({
         apiToken: token,
         endpoint: selection.provider.endpoint,
@@ -390,7 +404,13 @@ async function generateImageVisual(params: {
 
     const fs = await import('fs');
     const path = await import('path');
-    const assetsDir = path.default.join(process.cwd(), 'exports', 'presentations', 'assets', params.deckId);
+    const assetsDir = path.default.join(
+      process.cwd(),
+      'exports',
+      'presentations',
+      'assets',
+      params.deckId
+    );
     if (!fs.default.existsSync(assetsDir)) fs.default.mkdirSync(assetsDir, { recursive: true });
     const filename = `${params.filenamePrefix}_${uuidv4().slice(0, 8)}.png`;
     const outPath = path.default.join(assetsDir, filename);
@@ -413,8 +433,12 @@ async function generateImageVisual(params: {
 
     return { visual };
   } catch (err: any) {
-    logger.warn(`[DeckVisuals] Image generation failed (${params.purpose}/${params.slot}): ${err.message}`);
-    return { warning: `Image generation failed (${params.purpose}/${params.slot}): ${err.message}` };
+    logger.warn(
+      `[DeckVisuals] Image generation failed (${params.purpose}/${params.slot}): ${err.message}`
+    );
+    return {
+      warning: `Image generation failed (${params.purpose}/${params.slot}): ${err.message}`,
+    };
   }
 }
 
@@ -590,4 +614,3 @@ export async function materializePlannedVisual(params: {
     },
   };
 }
-

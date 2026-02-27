@@ -130,7 +130,10 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
   const isAdmin =
     String((currentUser as any)?.role || '')
       .toLowerCase()
-      .includes('admin') || String((currentUser as any)?.role || '').toLowerCase().includes('super');
+      .includes('admin') ||
+    String((currentUser as any)?.role || '')
+      .toLowerCase()
+      .includes('super');
 
   const [mcpProviders, setMcpProviders] = useState<any[]>([]);
   const [mcpLoading, setMcpLoading] = useState(false);
@@ -156,7 +159,14 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
     mode: 'allow' | 'deny';
     toolsText: string;
     saving: boolean;
-  }>({ open: false, providerId: null, loading: false, mode: 'allow', toolsText: '["*"]', saving: false });
+  }>({
+    open: false,
+    providerId: null,
+    loading: false,
+    mode: 'allow',
+    toolsText: '["*"]',
+    saving: false,
+  });
 
   const fetchMcpProviders = useCallback(async () => {
     setMcpLoading(true);
@@ -220,10 +230,12 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
         list.push(entry);
         byCategory.set(category, list);
       }
-      const categories: EventCategory[] = Array.from(byCategory.entries()).map(([category, evs]) => ({
-        category,
-        events: evs.sort((a, b) => a.type.localeCompare(b.type)),
-      }));
+      const categories: EventCategory[] = Array.from(byCategory.entries()).map(
+        ([category, evs]) => ({
+          category,
+          events: evs.sort((a, b) => a.type.localeCompare(b.type)),
+        })
+      );
       setAvailableEvents(categories.sort((a, b) => a.category.localeCompare(b.category)));
     } catch (error) {
       console.error('Failed to fetch events:', error);
@@ -322,7 +334,11 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
       const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
       setConfigInput(JSON.stringify(parsed || {}, null, 2));
     } catch {
-      setConfigInput(typeof integration.config === 'string' ? integration.config : JSON.stringify(integration.config));
+      setConfigInput(
+        typeof integration.config === 'string'
+          ? integration.config
+          : JSON.stringify(integration.config)
+      );
     }
     setIsModalOpen(true);
   };
@@ -496,7 +512,11 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
     const cfg = typeof p?.config === 'string' ? p.config : JSON.stringify(p?.config || {});
     let pretty = cfg;
     try {
-      pretty = JSON.stringify(typeof p?.config === 'string' ? JSON.parse(p.config) : p.config || {}, null, 2);
+      pretty = JSON.stringify(
+        typeof p?.config === 'string' ? JSON.parse(p.config) : p.config || {},
+        null,
+        2
+      );
     } catch {}
     setMcpModal({
       open: true,
@@ -574,7 +594,13 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
     setMcpToolsModal({ open: true, providerId, name, loading: true, tools: null });
     try {
       const data = await (Api as any).getMcpProviderTools?.(providerId);
-      setMcpToolsModal({ open: true, providerId, name, loading: false, tools: data?.tools || data });
+      setMcpToolsModal({
+        open: true,
+        providerId,
+        name,
+        loading: false,
+        tools: data?.tools || data,
+      });
     } catch (e: any) {
       setMcpToolsModal({ open: true, providerId, name, loading: false, tools: null });
       toast.error(e?.message || 'Failed to load tools cache');
@@ -706,7 +732,9 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
           {(providers || [])
             .filter((p) => p.isActive !== false)
             .map((p) => {
-              const connected = integrations.find((i) => i.provider === p.name || i.provider === p.id);
+              const connected = integrations.find(
+                (i) => i.provider === p.name || i.provider === p.id
+              );
               const Icon = PROVIDER_ICON[p.name] || PROVIDER_ICON[p.id] || Puzzle;
 
               return (
@@ -714,90 +742,96 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                   key={p.id}
                   className="bg-white dark:bg-navy-800 p-6 rounded-xl border border-slate-200 dark:border-navy-700 flex flex-col justify-between hover:shadow-lg transition-shadow"
                 >
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div
-                      className={`p-2 rounded-lg ${connected ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : 'bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-slate-300'}`}
-                    >
-                      <Icon size={24} />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-900 dark:text-white">{p.displayName}</h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{p.description || p.category}</p>
-                    </div>
-                  </div>
-                  {connected && (
-                    <div className="mb-4 space-y-2">
-                      <div className="text-xs bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 px-2 py-1 rounded inline-flex items-center gap-1">
-                        <CheckCircle size={12} /> Connected
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div
+                        className={`p-2 rounded-lg ${connected ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : 'bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-slate-300'}`}
+                      >
+                        <Icon size={24} />
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        <div>
-                          Status:{' '}
-                          <span className="font-medium text-slate-700 dark:text-slate-200">
-                            {connected.status || 'active'}
-                          </span>
+                      <div>
+                        <h3 className="font-semibold text-slate-900 dark:text-white">
+                          {p.displayName}
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {p.description || p.category}
+                        </p>
+                      </div>
+                    </div>
+                    {connected && (
+                      <div className="mb-4 space-y-2">
+                        <div className="text-xs bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 px-2 py-1 rounded inline-flex items-center gap-1">
+                          <CheckCircle size={12} /> Connected
                         </div>
-                        <div>
-                          Last sync:{' '}
-                          <span className="font-medium text-slate-700 dark:text-slate-200">
-                            {connected.last_synced_at ? new Date(connected.last_synced_at).toLocaleString() : '—'}
-                          </span>
-                        </div>
-                        {connected.last_error ? (
-                          <div className="text-red-600 dark:text-red-400 mt-1">
-                            Last error: {String(connected.last_error).slice(0, 120)}
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          <div>
+                            Status:{' '}
+                            <span className="font-medium text-slate-700 dark:text-slate-200">
+                              {connected.status || 'active'}
+                            </span>
                           </div>
-                        ) : null}
+                          <div>
+                            Last sync:{' '}
+                            <span className="font-medium text-slate-700 dark:text-slate-200">
+                              {connected.last_synced_at
+                                ? new Date(connected.last_synced_at).toLocaleString()
+                                : '—'}
+                            </span>
+                          </div>
+                          {connected.last_error ? (
+                            <div className="text-red-600 dark:text-red-400 mt-1">
+                              Last error: {String(connected.last_error).slice(0, 120)}
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
+                    )}
+                  </div>
+
+                  {connected ? (
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => handleSyncNow(connected.id)}
+                        disabled={syncingIntegrationId === connected.id}
+                        className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10 flex items-center justify-center gap-2 disabled:opacity-60"
+                      >
+                        {syncingIntegrationId === connected.id ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <RefreshCw size={16} />
+                        )}
+                        Sync now
+                      </button>
+                      <button
+                        onClick={() => handleOpenLogs(connected.id, p.displayName)}
+                        className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800 flex items-center justify-center gap-2"
+                      >
+                        <Eye size={16} />
+                        View logs
+                      </button>
+                      <button
+                        onClick={() => handleEditConfig(connected)}
+                        className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 dark:bg-navy-800 dark:text-slate-200 dark:hover:bg-navy-700 dark:border-navy-700 flex items-center justify-center gap-2"
+                      >
+                        <Settings size={16} />
+                        Edit config
+                      </button>
+                      <button
+                        onClick={() => handleDelete(connected.id)}
+                        className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                      >
+                        Disconnect
+                      </button>
                     </div>
+                  ) : (
+                    <button
+                      onClick={() => handleConnect(p.name)}
+                      className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700"
+                    >
+                      Connect
+                    </button>
                   )}
                 </div>
-
-                {connected ? (
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => handleSyncNow(connected.id)}
-                      disabled={syncingIntegrationId === connected.id}
-                      className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10 flex items-center justify-center gap-2 disabled:opacity-60"
-                    >
-                      {syncingIntegrationId === connected.id ? (
-                        <Loader2 size={16} className="animate-spin" />
-                      ) : (
-                        <RefreshCw size={16} />
-                      )}
-                      Sync now
-                    </button>
-                    <button
-                      onClick={() => handleOpenLogs(connected.id, p.displayName)}
-                      className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800 flex items-center justify-center gap-2"
-                    >
-                      <Eye size={16} />
-                      View logs
-                    </button>
-                    <button
-                      onClick={() => handleEditConfig(connected)}
-                      className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 dark:bg-navy-800 dark:text-slate-200 dark:hover:bg-navy-700 dark:border-navy-700 flex items-center justify-center gap-2"
-                    >
-                      <Settings size={16} />
-                      Edit config
-                    </button>
-                    <button
-                      onClick={() => handleDelete(connected.id)}
-                      className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                    >
-                      Disconnect
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => handleConnect(p.name)}
-                    className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700"
-                  >
-                    Connect
-                  </button>
-                )}
-              </div>
               );
             })}
         </div>
@@ -848,7 +882,6 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
           </div>
         </div>
       )}
-
       {/* Logs Modal */}
       {logsModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
@@ -858,7 +891,9 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                 Sync logs{logsModal.providerLabel ? ` — ${logsModal.providerLabel}` : ''}
               </h3>
               <button
-                onClick={() => setLogsModal({ open: false, integrationId: null, loading: false, logs: [] })}
+                onClick={() =>
+                  setLogsModal({ open: false, integrationId: null, loading: false, logs: [] })
+                }
                 className="px-3 py-1 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
               >
                 Close
@@ -1162,7 +1197,6 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
           </div>
         </div>
       )}
-
       {/* MCP Tab */}
       {activeTab === 'mcp' && (
         <div className="space-y-6">
@@ -1325,7 +1359,9 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
               <div className="bg-white dark:bg-navy-800 rounded-xl max-w-xl w-full p-6 shadow-2xl">
                 <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">
-                  {mcpModal.providerId ? t('settings.mcp.edit', 'Edit MCP provider') : t('settings.mcp.add', 'Add MCP provider')}
+                  {mcpModal.providerId
+                    ? t('settings.mcp.edit', 'Edit MCP provider')
+                    : t('settings.mcp.add', 'Add MCP provider')}
                 </h3>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1367,7 +1403,15 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                   </div>
                   <div className="flex gap-3 justify-end pt-2">
                     <button
-                      onClick={() => setMcpModal({ open: false, providerId: null, name: '', status: 'active', configInput: '' })}
+                      onClick={() =>
+                        setMcpModal({
+                          open: false,
+                          providerId: null,
+                          name: '',
+                          status: 'active',
+                          configInput: '',
+                        })
+                      }
                       className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg font-medium"
                     >
                       {t('common.cancel', 'Cancel')}
@@ -1394,7 +1438,14 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                     {mcpToolsModal.name ? ` — ${mcpToolsModal.name}` : ''}
                   </h3>
                   <button
-                    onClick={() => setMcpToolsModal({ open: false, providerId: null, loading: false, tools: null })}
+                    onClick={() =>
+                      setMcpToolsModal({
+                        open: false,
+                        providerId: null,
+                        loading: false,
+                        tools: null,
+                      })
+                    }
                     className="px-3 py-1 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
                   >
                     {t('common.close', 'Close')}
@@ -1423,7 +1474,12 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                   </h3>
                   <button
                     onClick={() =>
-                      setAllowlistModal((s) => ({ ...s, open: false, providerId: null, loading: false }))
+                      setAllowlistModal((s) => ({
+                        ...s,
+                        open: false,
+                        providerId: null,
+                        loading: false,
+                      }))
                     }
                     className="px-3 py-1 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
                   >
@@ -1444,7 +1500,10 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                       <select
                         value={allowlistModal.mode}
                         onChange={(e) =>
-                          setAllowlistModal((s) => ({ ...s, mode: e.target.value === 'deny' ? 'deny' : 'allow' }))
+                          setAllowlistModal((s) => ({
+                            ...s,
+                            mode: e.target.value === 'deny' ? 'deny' : 'allow',
+                          }))
                         }
                         className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
@@ -1458,18 +1517,28 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                       </label>
                       <textarea
                         value={allowlistModal.toolsText}
-                        onChange={(e) => setAllowlistModal((s) => ({ ...s, toolsText: e.target.value }))}
+                        onChange={(e) =>
+                          setAllowlistModal((s) => ({ ...s, toolsText: e.target.value }))
+                        }
                         className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[140px] font-mono text-xs"
                         placeholder='["*"]'
                       />
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                        {t('settings.mcp.allowlistHint', 'Use ["*"] to allow/deny everything, or list specific tool names.')}
+                        {t(
+                          'settings.mcp.allowlistHint',
+                          'Use ["*"] to allow/deny everything, or list specific tool names.'
+                        )}
                       </p>
                     </div>
                     <div className="flex justify-end gap-3 pt-2">
                       <button
                         onClick={() =>
-                          setAllowlistModal((s) => ({ ...s, open: false, providerId: null, loading: false }))
+                          setAllowlistModal((s) => ({
+                            ...s,
+                            open: false,
+                            providerId: null,
+                            loading: false,
+                          }))
                         }
                         className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg font-medium"
                       >
@@ -1480,7 +1549,9 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         disabled={allowlistModal.saving}
                         className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium disabled:opacity-50"
                       >
-                        {allowlistModal.saving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
+                        {allowlistModal.saving
+                          ? t('common.saving', 'Saving...')
+                          : t('common.save', 'Save')}
                       </button>
                     </div>
                   </div>

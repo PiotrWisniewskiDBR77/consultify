@@ -13,8 +13,8 @@ import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import circuitBreaker from '../services/ai/circuitBreaker.js';
 import llmConfigService from '../services/ai/llmConfigService.js';
 import { llmService } from '../services/ai/llmService.js';
-import { applyRecommendedModelPreset } from '../services/ai/recommendedModelPresetService.js';
 import { syncOpenRouterMarket } from '../services/ai/openRouterMarketService.js';
+import { applyRecommendedModelPreset } from '../services/ai/recommendedModelPresetService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
@@ -138,7 +138,9 @@ async function ensureEnterpriseSchema(): Promise<void> {
         { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS estimated_cost_usd REAL` },
         { sql: `CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_action ON ai_usage_logs(action)` },
         { sql: `CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_purpose ON ai_usage_logs(purpose)` },
-        { sql: `CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_error_class ON ai_usage_logs(error_class)` },
+        {
+          sql: `CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_error_class ON ai_usage_logs(error_class)`,
+        },
       ];
 
       for (const s of stmts) {
@@ -442,14 +444,21 @@ router.post(
     if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
 
     // Prefer permission capability check (most precise); fallback to role check if `can` is missing.
-    const canEdit = typeof req?.can === 'function' ? Boolean(req.can('edit_organization_settings')) : false;
+    const canEdit =
+      typeof req?.can === 'function' ? Boolean(req.can('edit_organization_settings')) : false;
     const role = String(req?.user?.role || req?.userRole || '').toLowerCase();
-    const roleOk = role === 'admin' || role === 'administrator' || role === 'owner' || role === 'super_admin' || role === 'superadmin';
+    const roleOk =
+      role === 'admin' ||
+      role === 'administrator' ||
+      role === 'owner' ||
+      role === 'super_admin' ||
+      role === 'superadmin';
     if (!canEdit && !roleOk) return res.status(403).json({ error: 'Permission denied' });
 
     const providerId = String((req.body as any)?.providerId || '').trim();
     const enabledRaw = (req.body as any)?.enabled;
-    const enabled = enabledRaw === true || enabledRaw === 1 || String(enabledRaw).toLowerCase() === 'true';
+    const enabled =
+      enabledRaw === true || enabledRaw === 1 || String(enabledRaw).toLowerCase() === 'true';
     if (!providerId) return res.status(400).json({ error: 'providerId is required' });
 
     // Persist to organization_provider_settings (best-effort; schema may not exist in some envs yet).
@@ -500,7 +509,11 @@ router.put('/providers/:id', verifySuperAdmin, asyncHandler(LLMController.update
  * POST /api/llm/providers/:id/clone-model
  * Clone an existing provider row and override model_id/name (server-side, no secret leak).
  */
-router.post('/providers/:id/clone-model', verifySuperAdmin, asyncHandler(LLMController.cloneProviderModel));
+router.post(
+  '/providers/:id/clone-model',
+  verifySuperAdmin,
+  asyncHandler(LLMController.cloneProviderModel)
+);
 
 /**
  * DELETE /api/llm/providers/:id
@@ -1152,7 +1165,9 @@ function parseOpenRouterPricingToUnits(pricing: any): Record<string, number> {
   // OpenRouter commonly returns pricing fields as strings.
   // We normalize into v3 snapshot units: input/output per 1M tokens.
   const p = pricing || {};
-  const prompt = Number(p.prompt ?? p.input ?? p.prompt_token ?? p.input_token ?? p.input_per_token);
+  const prompt = Number(
+    p.prompt ?? p.input ?? p.prompt_token ?? p.input_token ?? p.input_per_token
+  );
   const completion = Number(
     p.completion ?? p.output ?? p.completion_token ?? p.output_token ?? p.output_per_token
   );
@@ -1197,7 +1212,9 @@ router.post(
     } as any);
     if (!row) return res.status(404).json({ success: false, error: 'Inbox item not found' });
 
-    const currentStatus = String((row as any).status || '').trim().toLowerCase();
+    const currentStatus = String((row as any).status || '')
+      .trim()
+      .toLowerCase();
     if (currentStatus === 'applied') {
       return res.json({ success: true, item: row, actions: [], note: 'Already applied' });
     }
@@ -1211,7 +1228,15 @@ router.post(
     const changeType = String((row as any).change_type || '').trim();
     const modelId = String((row as any).model_id || '').trim();
     const diffRaw = (row as any).diff ? String((row as any).diff) : null;
-    const diff = diffRaw ? (() => { try { return JSON.parse(diffRaw); } catch { return null; } })() : null;
+    const diff = diffRaw
+      ? (() => {
+          try {
+            return JSON.parse(diffRaw);
+          } catch {
+            return null;
+          }
+        })()
+      : null;
 
     const actions: any[] = [];
 
@@ -1243,16 +1268,16 @@ router.post(
       await dbRun(
         `INSERT INTO ai_price_snapshots (id, provider, model_id, currency, source, effective_from, effective_to, units, notes, created_at)
          VALUES (?, 'openrouter', ?, 'USD', 'api_sync', ?, NULL, ?, ?, CURRENT_TIMESTAMP)`,
-        [
-          snapId,
-          modelId,
-          nowIso,
-          JSON.stringify(units),
-          `Applied from market inbox ${id}`,
-        ],
+        [snapId, modelId, nowIso, JSON.stringify(units), `Applied from market inbox ${id}`],
         { fallback: false } as any
       );
-      actions.push({ kind: 'price_snapshot_created', id: snapId, provider: 'openrouter', modelId, units });
+      actions.push({
+        kind: 'price_snapshot_created',
+        id: snapId,
+        provider: 'openrouter',
+        modelId,
+        units,
+      });
     } else if (changeType === 'MODEL_ADDED') {
       if (!modelId) return res.status(400).json({ success: false, error: 'model_id missing' });
       const after = diff?.after ?? null;
@@ -1274,14 +1299,21 @@ router.post(
           [
             providerId,
             `OpenRouter — ${modelId}`,
-            ctx ? `Auto-added from market inbox. context_length=${ctx}` : `Auto-added from market inbox.`,
+            ctx
+              ? `Auto-added from market inbox. context_length=${ctx}`
+              : `Auto-added from market inbox.`,
             modelId,
             JSON.stringify(['UNKNOWN']),
             JSON.stringify(['no_pii', 'pii']),
           ],
           { fallback: true } as any
         );
-        actions.push({ kind: 'provider_suggestion_created', id: providerId, provider: 'openrouter', modelId });
+        actions.push({
+          kind: 'provider_suggestion_created',
+          id: providerId,
+          provider: 'openrouter',
+          modelId,
+        });
       } else {
         actions.push({ kind: 'provider_suggestion_exists', provider: 'openrouter', modelId });
       }
@@ -1302,15 +1334,26 @@ router.post(
           ],
           { fallback: false } as any
         );
-        actions.push({ kind: 'price_snapshot_created', id: snapId, provider: 'openrouter', modelId, units });
+        actions.push({
+          kind: 'price_snapshot_created',
+          id: snapId,
+          provider: 'openrouter',
+          modelId,
+          units,
+        });
       }
     } else if (changeType === 'MODEL_REMOVED') {
       // Conservative: do not delete providers automatically; just mark inbox as applied.
       actions.push({ kind: 'noop', reason: 'MODEL_REMOVED not auto-applied' });
     } else if (changeType === 'CTX_CHANGED') {
-      actions.push({ kind: 'noop', reason: 'CTX_CHANGED not auto-applied (no registry field yet)' });
+      actions.push({
+        kind: 'noop',
+        reason: 'CTX_CHANGED not auto-applied (no registry field yet)',
+      });
     } else {
-      return res.status(400).json({ success: false, error: `Unsupported change_type: ${changeType}` });
+      return res
+        .status(400)
+        .json({ success: false, error: `Unsupported change_type: ${changeType}` });
     }
 
     await dbRun(

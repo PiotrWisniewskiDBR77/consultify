@@ -54,4 +54,3 @@ export function Image(props: ImageProps, _tokens: DesignTokens): RenderedElement
     },
   };
 }
-

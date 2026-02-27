@@ -359,7 +359,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       if (!raw) return [];
       const parsed = JSON.parse(raw);
       return Array.isArray(parsed?.openDocuments) ? parsed.openDocuments : [];
-    } catch { return []; }
+    } catch {
+      return [];
+    }
   });
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(() => {
     try {
@@ -367,12 +369,19 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       if (!raw) return null;
       const parsed = JSON.parse(raw);
       return typeof parsed?.activeDocumentId === 'string' ? parsed.activeDocumentId : null;
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   });
   useEffect(() => {
     try {
-      window.sessionStorage.setItem('moduleHub.openDocuments.mywork', JSON.stringify({ openDocuments, activeDocumentId }));
-    } catch { /* ignore */ }
+      window.sessionStorage.setItem(
+        'moduleHub.openDocuments.mywork',
+        JSON.stringify({ openDocuments, activeDocumentId })
+      );
+    } catch {
+      /* ignore */
+    }
   }, [openDocuments, activeDocumentId]);
 
   // EventBus refresh counter — incremented when cross-tab events fire.

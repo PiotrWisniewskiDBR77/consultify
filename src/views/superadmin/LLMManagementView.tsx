@@ -855,7 +855,9 @@ export const LLMManagementView: React.FC = () => {
                   </label>
                   <select
                     value={(providerForm as any).kind || 'TEXT_LLM'}
-                    onChange={(e) => setProviderForm({ ...providerForm, kind: e.target.value as any })}
+                    onChange={(e) =>
+                      setProviderForm({ ...providerForm, kind: e.target.value as any })
+                    }
                     className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                   >
                     <option value="TEXT_LLM">TEXT_LLM</option>

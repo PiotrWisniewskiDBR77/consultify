@@ -540,7 +540,9 @@ export const PresentationWizard: React.FC<{ onClose?: () => void }> = ({ onClose
                 </button>
               </div>
 
-              <div className={`mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 ${!visualsEnabled ? 'opacity-60 pointer-events-none' : ''}`}>
+              <div
+                className={`mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 ${!visualsEnabled ? 'opacity-60 pointer-events-none' : ''}`}
+              >
                 <div>
                   <p className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-2">
                     {t('presentations.setup.visuals.priority', 'Priority')}

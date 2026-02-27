@@ -6,8 +6,8 @@
  * - GDELT doc search
  * - Evidence persistence with citation fields
  */
-import { type Request, type Response, Router } from 'express';
 import crypto from 'crypto';
+import { type Request, type Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
@@ -28,7 +28,9 @@ function sha256(input: string): string {
 }
 
 async function ensureTable(): Promise<boolean> {
-  const cols = await dbAll<{ name: string }>('PRAGMA table_info(research_evidence)', []).catch(() => []);
+  const cols = await dbAll<{ name: string }>('PRAGMA table_info(research_evidence)', []).catch(
+    () => []
+  );
   return (cols || []).length > 0;
 }
 
@@ -40,7 +42,8 @@ function padCik(cik: string): string {
 router.get(
   '/evidence',
   asyncHandler(async (req: Request, res: Response) => {
-    if (!(await ensureTable())) return res.status(501).json({ error: 'Research evidence store not available' });
+    if (!(await ensureTable()))
+      return res.status(501).json({ error: 'Research evidence store not available' });
     const orgId = getOrgId(req);
     const source = req.query.source ? String(req.query.source).trim().toLowerCase() : null;
     const limit = Math.min(200, Math.max(1, Number(req.query.limit || 50)));
@@ -66,13 +69,14 @@ router.get(
 router.get(
   '/evidence/:id',
   asyncHandler(async (req: Request, res: Response) => {
-    if (!(await ensureTable())) return res.status(501).json({ error: 'Research evidence store not available' });
+    if (!(await ensureTable()))
+      return res.status(501).json({ error: 'Research evidence store not available' });
     const orgId = getOrgId(req);
     const id = String(req.params.id || '').trim();
-    const row = await dbGet<any>(`SELECT * FROM research_evidence WHERE id = ? AND organization_id = ?`, [
-      id,
-      orgId,
-    ]);
+    const row = await dbGet<any>(
+      `SELECT * FROM research_evidence WHERE id = ? AND organization_id = ?`,
+      [id, orgId]
+    );
     if (!row) return res.status(404).json({ error: 'Not found' });
     return res.json({
       ...row,
@@ -93,7 +97,8 @@ router.get(
 router.post(
   '/edgar/submissions',
   asyncHandler(async (req: Request, res: Response) => {
-    if (!(await ensureTable())) return res.status(501).json({ error: 'Research evidence store not available' });
+    if (!(await ensureTable()))
+      return res.status(501).json({ error: 'Research evidence store not available' });
     const orgId = getOrgId(req);
     const cikRaw = String((req.body as any)?.cik || '').trim();
     if (!cikRaw) return res.status(400).json({ error: 'cik is required' });
@@ -107,11 +112,19 @@ router.post(
       'Consultify Research Connector (contact: admin@dbr77.com)';
 
     const started = Date.now();
-    const r = await fetch(url, { headers: { 'User-Agent': userAgent, Accept: 'application/json' } });
+    const r = await fetch(url, {
+      headers: { 'User-Agent': userAgent, Accept: 'application/json' },
+    });
     const text = await r.text();
     if (!r.ok) {
-      logger.warn('[Research] EDGAR fetch failed', { cik, status: r.status, body: text.slice(0, 500) });
-      return res.status(502).json({ error: `EDGAR HTTP ${r.status}`, details: text.slice(0, 2000) });
+      logger.warn('[Research] EDGAR fetch failed', {
+        cik,
+        status: r.status,
+        body: text.slice(0, 500),
+      });
+      return res
+        .status(502)
+        .json({ error: `EDGAR HTTP ${r.status}`, details: text.slice(0, 2000) });
     }
 
     const retrievedAt = new Date().toISOString();
@@ -157,7 +170,8 @@ router.post(
 router.post(
   '/gdelt/search',
   asyncHandler(async (req: Request, res: Response) => {
-    if (!(await ensureTable())) return res.status(501).json({ error: 'Research evidence store not available' });
+    if (!(await ensureTable()))
+      return res.status(501).json({ error: 'Research evidence store not available' });
     const orgId = getOrgId(req);
     const q = String((req.body as any)?.query || (req.body as any)?.q || '').trim();
     if (!q) return res.status(400).json({ error: 'query is required' });
@@ -171,15 +185,21 @@ router.post(
     const r = await fetch(url, { headers: { Accept: 'application/json' } });
     const text = await r.text();
     if (!r.ok) {
-      logger.warn('[Research] GDELT fetch failed', { q, status: r.status, body: text.slice(0, 500) });
-      return res.status(502).json({ error: `GDELT HTTP ${r.status}`, details: text.slice(0, 2000) });
+      logger.warn('[Research] GDELT fetch failed', {
+        q,
+        status: r.status,
+        body: text.slice(0, 500),
+      });
+      return res
+        .status(502)
+        .json({ error: `GDELT HTTP ${r.status}`, details: text.slice(0, 2000) });
     }
 
     const retrievedAt = new Date().toISOString();
     const hash = sha256(text);
     const id = `re-${uuidv4()}`;
 
-    let title = `GDELT doc search: ${q}`;
+    const title = `GDELT doc search: ${q}`;
     let summary = `Top ${max} results from GDELT doc API (metadata).`;
     try {
       const parsed = JSON.parse(text);
@@ -228,7 +248,8 @@ router.post(
 router.post(
   '/openalex/search',
   asyncHandler(async (req: Request, res: Response) => {
-    if (!(await ensureTable())) return res.status(501).json({ error: 'Research evidence store not available' });
+    if (!(await ensureTable()))
+      return res.status(501).json({ error: 'Research evidence store not available' });
     const orgId = getOrgId(req);
     const q = String((req.body as any)?.query || (req.body as any)?.q || '').trim();
     if (!q) return res.status(400).json({ error: 'query is required' });
@@ -239,7 +260,9 @@ router.post(
     const r = await fetch(url, { headers: { Accept: 'application/json' } });
     const text = await r.text();
     if (!r.ok) {
-      return res.status(502).json({ error: `OpenAlex HTTP ${r.status}`, details: text.slice(0, 2000) });
+      return res
+        .status(502)
+        .json({ error: `OpenAlex HTTP ${r.status}`, details: text.slice(0, 2000) });
     }
 
     const retrievedAt = new Date().toISOString();
@@ -282,7 +305,8 @@ router.post(
 router.post(
   '/crossref/search',
   asyncHandler(async (req: Request, res: Response) => {
-    if (!(await ensureTable())) return res.status(501).json({ error: 'Research evidence store not available' });
+    if (!(await ensureTable()))
+      return res.status(501).json({ error: 'Research evidence store not available' });
     const orgId = getOrgId(req);
     const q = String((req.body as any)?.query || (req.body as any)?.q || '').trim();
     if (!q) return res.status(400).json({ error: 'query is required' });
@@ -293,7 +317,9 @@ router.post(
     const r = await fetch(url, { headers: { Accept: 'application/json' } });
     const text = await r.text();
     if (!r.ok) {
-      return res.status(502).json({ error: `Crossref HTTP ${r.status}`, details: text.slice(0, 2000) });
+      return res
+        .status(502)
+        .json({ error: `Crossref HTTP ${r.status}`, details: text.slice(0, 2000) });
     }
 
     const retrievedAt = new Date().toISOString();
@@ -339,7 +365,8 @@ router.post(
 router.post(
   '/competitive/wappalyzer/snapshot',
   asyncHandler(async (req: Request, res: Response) => {
-    if (!(await ensureTable())) return res.status(501).json({ error: 'Research evidence store not available' });
+    if (!(await ensureTable()))
+      return res.status(501).json({ error: 'Research evidence store not available' });
     const orgId = getOrgId(req);
     const domain = String((req.body as any)?.domain || '').trim();
     const apiKey = String((req.body as any)?.apiKey || '').trim();
@@ -352,8 +379,14 @@ router.post(
     const r = await fetch(url, { headers: { Accept: 'application/json', 'x-api-key': apiKey } });
     const text = await r.text();
     if (!r.ok) {
-      logger.warn('[Research] Wappalyzer fetch failed', { domain, status: r.status, body: text.slice(0, 500) });
-      return res.status(502).json({ error: `Wappalyzer HTTP ${r.status}`, details: text.slice(0, 2000) });
+      logger.warn('[Research] Wappalyzer fetch failed', {
+        domain,
+        status: r.status,
+        body: text.slice(0, 500),
+      });
+      return res
+        .status(502)
+        .json({ error: `Wappalyzer HTTP ${r.status}`, details: text.slice(0, 2000) });
     }
 
     const retrievedAt = new Date().toISOString();
@@ -394,4 +427,3 @@ router.post(
 );
 
 export default router;
-

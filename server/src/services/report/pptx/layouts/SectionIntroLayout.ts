@@ -2,8 +2,8 @@
  * Layout: Section Intro
  * Section transition / divider slide.
  */
-import { PageNumber } from '../atomics/PageNumber.js';
 import { Image } from '../atomics/Image.js';
+import { PageNumber } from '../atomics/PageNumber.js';
 import { SectionIntroBlock } from '../composites/SectionIntroBlock.js';
 import type {
   DesignTokens,
@@ -23,7 +23,9 @@ export function SectionIntroLayout(
 
   // Optional subtle background texture/visual (render first)
   const visual = (slide.visuals || []).find(
-    (v) => v && (v.slot === 'background_texture' || v.slot === 'hero' || v.purpose === 'image_slide_asset')
+    (v) =>
+      v &&
+      (v.slot === 'background_texture' || v.slot === 'hero' || v.purpose === 'image_slide_asset')
   );
   const asset = visual?.asset;
   if (asset?.path || asset?.dataUri) {

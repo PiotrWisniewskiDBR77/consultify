@@ -46,15 +46,20 @@ router.post(
     const issueId = String(issue?.id || '').trim();
     const issueKey = String(issue?.key || '').trim();
     const statusName =
-      String(issue?.fields?.status?.name || issue?.fields?.status?.statusCategory?.name || '').trim() ||
-      null;
+      String(
+        issue?.fields?.status?.name || issue?.fields?.status?.statusCategory?.name || ''
+      ).trim() || null;
 
     // Store raw webhook event for audit/debugging (best-effort)
     try {
       await dbRun(
         `INSERT INTO webhook_events (id, provider, event_type, payload, processed, created_at)
          VALUES (?, 'jira', ?, ?, 0, datetime('now'))`,
-        [`jira-${Date.now().toString()}`, String((payload as any).webhookEvent || 'jira'), JSON.stringify(payload)]
+        [
+          `jira-${Date.now().toString()}`,
+          String((payload as any).webhookEvent || 'jira'),
+          JSON.stringify(payload),
+        ]
       );
     } catch {
       // ignore if table doesn't exist
@@ -78,7 +83,7 @@ router.post(
          AND external_type = 'issue'
          AND (external_id = ? OR metadata LIKE ?)
        LIMIT 1`,
-      [integrationId, issueId || '—', issueKey ? `%\"key\":\"${issueKey}\"%` : '%']
+      [integrationId, issueId || '—', issueKey ? `%"key":"${issueKey}"%` : '%']
     );
 
     const localTaskId = mapping?.[0]?.local_id;

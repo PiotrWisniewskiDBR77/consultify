@@ -101,7 +101,10 @@ export function planSlideVisuals(params: {
   }
 
   // SECTION INTRO + KEY MESSAGES => subtle texture background in quality mode
-  if (priority === 'quality' && (slide.intent === 'section_intro' || slide.intent === 'key_messages')) {
+  if (
+    priority === 'quality' &&
+    (slide.intent === 'section_intro' || slide.intent === 'key_messages')
+  ) {
     visuals.push({
       slot: 'background_texture',
       purpose: purposeForIntent(slide.intent),
@@ -185,4 +188,3 @@ export function planDeckVisuals(params: {
     };
   });
 }
-

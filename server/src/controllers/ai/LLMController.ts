@@ -15,7 +15,10 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.
 
 export class LLMController {
   private static lastHealthEventWriteAt = new Map<string, number>();
-  private static resolveEnvConfigured(provider: string): { isConfigured: boolean; envKey?: string } {
+  private static resolveEnvConfigured(provider: string): {
+    isConfigured: boolean;
+    envKey?: string;
+  } {
     const p = String(provider || '').toLowerCase();
     if (!p) return { isConfigured: false };
 
@@ -49,7 +52,9 @@ export class LLMController {
       return { isConfigured: !!v, envKey: 'ZAI_API_KEY' };
     }
     if (p === 'replicate') {
-      const v = String(process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY || '').trim();
+      const v = String(
+        process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY || ''
+      ).trim();
       return { isConfigured: !!v, envKey: 'REPLICATE_API_TOKEN' };
     }
 
@@ -92,7 +97,8 @@ export class LLMController {
           ''
       ).trim();
 
-      let settingsMap: Map<string, { enabled: boolean; customPriority: number | null }> | null = null;
+      let settingsMap: Map<string, { enabled: boolean; customPriority: number | null }> | null =
+        null;
       if (orgId) {
         try {
           const rows = await dbAll(
@@ -105,7 +111,9 @@ export class LLMController {
               {
                 enabled: r.is_enabled === true || r.is_enabled === 1,
                 customPriority:
-                  typeof r.custom_priority === 'number' ? r.custom_priority : r.custom_priority ?? null,
+                  typeof r.custom_priority === 'number'
+                    ? r.custom_priority
+                    : (r.custom_priority ?? null),
               },
             ])
           );
@@ -337,7 +345,9 @@ export class LLMController {
           kind,
           provider_type,
           origin_vendor,
-          typeof execution_regions === 'string' ? execution_regions : JSON.stringify(execution_regions || []),
+          typeof execution_regions === 'string'
+            ? execution_regions
+            : JSON.stringify(execution_regions || []),
           typeof allowed_data_classes === 'string'
             ? allowed_data_classes
             : JSON.stringify(allowed_data_classes || []),
@@ -579,11 +589,22 @@ export class LLMController {
         return 'unknown';
       }
 
-      async function replicateAuthCheck(provider: any): Promise<{ ok: boolean; httpStatus: number | null; detail?: string }> {
-        const token = String(provider.api_key || '').trim() ||
+      async function replicateAuthCheck(
+        provider: any
+      ): Promise<{ ok: boolean; httpStatus: number | null; detail?: string }> {
+        const token =
+          String(provider.api_key || '').trim() ||
           String(process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY || '').trim();
-        if (!token) return { ok: false, httpStatus: null, detail: 'MISSING_KEY: Missing token (REPLICATE_API_TOKEN)' };
-        const base = String(provider.endpoint || 'https://api.replicate.com/v1').replace(/\/+$/, '');
+        if (!token)
+          return {
+            ok: false,
+            httpStatus: null,
+            detail: 'MISSING_KEY: Missing token (REPLICATE_API_TOKEN)',
+          };
+        const base = String(provider.endpoint || 'https://api.replicate.com/v1').replace(
+          /\/+$/,
+          ''
+        );
         const startedAt = Date.now();
         const resp = await fetch(`${base}/models?limit=1`, {
           method: 'GET',
@@ -593,7 +614,11 @@ export class LLMController {
         const latencyMs = Date.now() - startedAt;
         if (resp.ok) return { ok: true, httpStatus: resp.status, detail: `OK (${latencyMs}ms)` };
         const text = await resp.text().catch(() => '');
-        return { ok: false, httpStatus: resp.status, detail: `HTTP ${resp.status} (${latencyMs}ms): ${text.slice(0, 160)}` };
+        return {
+          ok: false,
+          httpStatus: resp.status,
+          detail: `HTTP ${resp.status} (${latencyMs}ms): ${text.slice(0, 160)}`,
+        };
       }
 
       const providerHealthResults = await Promise.all(
@@ -830,7 +855,10 @@ export class LLMController {
             ok = false;
             errMsg = 'MISSING_KEY: Missing token (REPLICATE_API_TOKEN)';
           } else {
-            const base = String(provider.endpoint || 'https://api.replicate.com/v1').replace(/\/+$/, '');
+            const base = String(provider.endpoint || 'https://api.replicate.com/v1').replace(
+              /\/+$/,
+              ''
+            );
             const resp = await fetch(`${base}/models?limit=1`, {
               method: 'GET',
               headers: { Authorization: `Token ${token}`, 'Content-Type': 'application/json' },
@@ -1595,7 +1623,10 @@ export class LLMController {
    */
   static async getCosts(req: Request, res: Response) {
     try {
-      const providers = (await dbAll('SELECT provider, cost_per_1k FROM llm_providers', [])) as any[];
+      const providers = (await dbAll(
+        'SELECT provider, cost_per_1k FROM llm_providers',
+        []
+      )) as any[];
 
       // Prefer v3: estimated_cost_usd if present (written by AIPipeline when price snapshot is bound).
       // Fallback to legacy token-based estimate using llm_providers.cost_per_1k.

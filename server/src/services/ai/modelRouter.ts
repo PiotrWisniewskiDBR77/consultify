@@ -225,7 +225,9 @@ export class ModelRouter {
     // -------------------------------------------------------------------------
     if (
       organizationId &&
-      String(process.env.AI_COST_SOFT_CAP_ENABLED || '').trim().toLowerCase() !== 'false'
+      String(process.env.AI_COST_SOFT_CAP_ENABLED || '')
+        .trim()
+        .toLowerCase() !== 'false'
     ) {
       try {
         const capRow = await DbPromise.get<{ monthly_budget_usd?: number | null }>(

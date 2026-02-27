@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
-import logger from '../../utils/Logger.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 
 type PurposeKind = 'TEXT_LLM' | 'IMAGE_MODEL' | 'BUSINESS_MODEL';
 type Tier = 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING' | 'FREE';
@@ -77,8 +77,18 @@ const DEFAULT_PURPOSES: Array<{
   { purpose: 'deep_research_export_polish', kind: 'TEXT_LLM', default_tier: 'BUDGET' },
   { purpose: 'deep_research_quality_gate', kind: 'TEXT_LLM', default_tier: 'STANDARD' },
   // Vision
-  { purpose: 'vision_extract', kind: 'TEXT_LLM', default_tier: 'STANDARD', requirements: { vision: true } },
-  { purpose: 'vision_compare', kind: 'TEXT_LLM', default_tier: 'REASONING', requirements: { vision: true } },
+  {
+    purpose: 'vision_extract',
+    kind: 'TEXT_LLM',
+    default_tier: 'STANDARD',
+    requirements: { vision: true },
+  },
+  {
+    purpose: 'vision_compare',
+    kind: 'TEXT_LLM',
+    default_tier: 'REASONING',
+    requirements: { vision: true },
+  },
   // Images
   { purpose: 'image_cover', kind: 'IMAGE_MODEL' },
   { purpose: 'image_diagram', kind: 'IMAGE_MODEL' },
@@ -123,7 +133,9 @@ function getApiKey(provider: ProviderKey): string | null {
 
 function normalizeModelId(id: string): string {
   // Gemini list returns "models/xxx" often
-  return String(id || '').trim().replace(/^models\//, '');
+  return String(id || '')
+    .trim()
+    .replace(/^models\//, '');
 }
 
 function scoreModelId(id: string, mode: 'fast' | 'deep'): number {
@@ -136,11 +148,22 @@ function scoreModelId(id: string, mode: 'fast' | 'deep'): number {
   for (const t of fastTokens) if (s.includes(t)) score += mode === 'fast' ? 40 : -15;
   for (const t of deepTokens) if (s.includes(t)) score += mode === 'deep' ? 40 : -15;
 
-  if (mode === 'deep' && (s.includes('gpt-4') || s.includes('4.1') || s.includes('4o'))) score += 20;
+  if (mode === 'deep' && (s.includes('gpt-4') || s.includes('4.1') || s.includes('4o')))
+    score += 20;
   if (mode === 'fast' && (s.includes('gpt-4') || s.includes('4.1') || s.includes('4o'))) score += 5;
 
   // penalize obvious non-chat / embedding / audio models when picking text LLMs
-  const bad = ['embedding', 'tts', 'whisper', 'speech', 'audio', 'moderation', 'rerank', 'image', 'vision'];
+  const bad = [
+    'embedding',
+    'tts',
+    'whisper',
+    'speech',
+    'audio',
+    'moderation',
+    'rerank',
+    'image',
+    'vision',
+  ];
   for (const b of bad) if (s.includes(b)) score -= 50;
 
   // prefer stable/latest style IDs
@@ -196,7 +219,9 @@ async function listAnthropicModels(apiKey: string, endpoint?: string | null): Pr
 }
 
 async function listOpenAICompatibleModels(apiKey: string, endpoint: string): Promise<string[]> {
-  const base = String(endpoint || '').trim().replace(/\/+$/, '');
+  const base = String(endpoint || '')
+    .trim()
+    .replace(/\/+$/, '');
   if (!base) return [];
   const url = base.toLowerCase().endsWith('/v1') ? `${base}/models` : `${base}/v1/models`;
   const res = await fetch(url, {
@@ -226,7 +251,10 @@ async function listReplicateModels(apiKey: string, endpoint?: string | null): Pr
   return res.ok;
 }
 
-async function findExistingProviderRow(provider: ProviderKey, modelId: string): Promise<ProviderRow | null> {
+async function findExistingProviderRow(
+  provider: ProviderKey,
+  modelId: string
+): Promise<ProviderRow | null> {
   const row = (await dbGet(
     `SELECT * FROM llm_providers WHERE provider = ? AND model_id = ? LIMIT 1`,
     [provider, modelId],
@@ -264,7 +292,9 @@ async function upsertProviderRow(params: {
     origin_vendor: params.origin_vendor,
     endpoint: params.endpoint || null,
     execution_regions: params.execution_regions ? JSON.stringify(params.execution_regions) : null,
-    allowed_data_classes: params.allowed_data_classes ? JSON.stringify(params.allowed_data_classes) : null,
+    allowed_data_classes: params.allowed_data_classes
+      ? JSON.stringify(params.allowed_data_classes)
+      : null,
     is_active: params.is_active === false ? 0 : 1,
     tier: params.tier || 'STANDARD',
   };
@@ -414,7 +444,8 @@ async function discoverRecommendedTextModels(params: {
   const notes: string[] = [];
   try {
     let models: string[] = [];
-    if (params.provider === 'openai') models = await listOpenAIModels(params.apiKey, params.endpoint);
+    if (params.provider === 'openai')
+      models = await listOpenAIModels(params.apiKey, params.endpoint);
     else if (params.provider === 'openrouter')
       models = await listOpenRouterModels(params.apiKey, params.endpoint);
     else if (params.provider === 'anthropic')
@@ -429,8 +460,10 @@ async function discoverRecommendedTextModels(params: {
 
     const fast = pickRecommended(models, 'fast');
     const deep = pickRecommended(models, 'deep');
-    if (!fast) notes.push(`${params.provider}: could not pick fast model from ${models.length} models`);
-    if (!deep) notes.push(`${params.provider}: could not pick deep model from ${models.length} models`);
+    if (!fast)
+      notes.push(`${params.provider}: could not pick fast model from ${models.length} models`);
+    if (!deep)
+      notes.push(`${params.provider}: could not pick deep model from ${models.length} models`);
     return { fast, deep, notes };
   } catch (e: any) {
     notes.push(`${params.provider}: discovery failed (${String(e?.message || e)})`);
@@ -443,7 +476,8 @@ function providerMeta(provider: ProviderKey): {
   origin_vendor: string;
   endpoint?: string;
 } {
-  if (provider === 'openrouter') return { provider_type: 'aggregator', origin_vendor: 'OpenRouter' };
+  if (provider === 'openrouter')
+    return { provider_type: 'aggregator', origin_vendor: 'OpenRouter' };
   if (provider === 'openai') return { provider_type: 'direct', origin_vendor: 'OpenAI' };
   if (provider === 'anthropic') return { provider_type: 'direct', origin_vendor: 'Anthropic' };
   if (provider === 'gemini') return { provider_type: 'direct', origin_vendor: 'Google' };
@@ -496,7 +530,14 @@ export async function applyRecommendedModelPreset(params: {
   }
 
   // 2) Discover and upsert recommended TEXT providers
-  const textProviders: ProviderKey[] = ['openrouter', 'openai', 'anthropic', 'gemini', 'deepseek', 'zai'];
+  const textProviders: ProviderKey[] = [
+    'openrouter',
+    'openai',
+    'anthropic',
+    'gemini',
+    'deepseek',
+    'zai',
+  ];
   const createdIds: Record<string, { fast?: string; deep?: string; image?: string }> = {};
 
   for (const provider of textProviders) {
@@ -515,7 +556,11 @@ export async function applyRecommendedModelPreset(params: {
           ? String(process.env.ZAI_BASE_URL || '').trim()
           : '';
 
-    const { fast, deep, notes: n } = await discoverRecommendedTextModels({
+    const {
+      fast,
+      deep,
+      notes: n,
+    } = await discoverRecommendedTextModels({
       provider,
       apiKey,
       endpoint: endpointOverride || endpoint,
@@ -690,7 +735,9 @@ export async function applyRecommendedModelPreset(params: {
   await assignMany('vision_compare', chainDeep.length ? chainDeep : chainFast, 10);
 
   // Image purposes: prefer OpenAI image row, then Replicate
-  const imageChain = [createdIds.openai?.image, createdIds.replicate?.image].filter(Boolean) as string[];
+  const imageChain = [createdIds.openai?.image, createdIds.replicate?.image].filter(
+    Boolean
+  ) as string[];
   if (imageChain.length > 0) {
     await assignMany('image_cover', imageChain, 10);
     await assignMany('image_diagram', imageChain, 10);
@@ -723,4 +770,3 @@ export async function applyRecommendedModelPreset(params: {
     notes,
   };
 }
-

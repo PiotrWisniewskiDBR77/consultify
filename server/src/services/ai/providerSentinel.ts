@@ -87,15 +87,21 @@ function classifyError(message: string, httpStatus?: number | null): ErrorCatego
   if (s === 401) return 'auth';
   if (s === 402) return 'billing';
   if (s === 429) return 'rate_limit';
-  if (s === 403 && (m.includes('billing') || m.includes('quota') || m.includes('payment'))) return 'billing';
-  if (s === 403 && (m.includes('unauthorized') || m.includes('forbidden') || m.includes('invalid'))) return 'auth';
-  if (m.includes('insufficient_quota') || m.includes('quota') || m.includes('billing')) return 'billing';
+  if (s === 403 && (m.includes('billing') || m.includes('quota') || m.includes('payment')))
+    return 'billing';
+  if (s === 403 && (m.includes('unauthorized') || m.includes('forbidden') || m.includes('invalid')))
+    return 'auth';
+  if (m.includes('insufficient_quota') || m.includes('quota') || m.includes('billing'))
+    return 'billing';
   if (m.includes('rate limit') || m.includes('too many requests')) return 'rate_limit';
-  if (m.includes('timeout') || m.includes('econn') || m.includes('network') || m.includes('socket')) return 'network';
+  if (m.includes('timeout') || m.includes('econn') || m.includes('network') || m.includes('socket'))
+    return 'network';
   return 'unknown';
 }
 
-async function replicateAuthCheck(row: ProviderRow): Promise<{ ok: boolean; detail: string; httpStatus?: number }> {
+async function replicateAuthCheck(
+  row: ProviderRow
+): Promise<{ ok: boolean; detail: string; httpStatus?: number }> {
   const token =
     String(row.api_key || '').trim() ||
     String(process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY || '').trim();
@@ -182,7 +188,11 @@ async function testProvider(row: ProviderRow): Promise<{
   const hasDbKey = !!String(row.api_key || '').trim();
   const configured = hasDbKey || envConfigured(provider);
   if (!configured) {
-    return { status: 'unhealthy', latencyMs: 0, errorMessage: 'MISSING_KEY: Provider not configured' };
+    return {
+      status: 'unhealthy',
+      latencyMs: 0,
+      errorMessage: 'MISSING_KEY: Provider not configured',
+    };
   }
 
   if (kind === 'IMAGE_MODEL') {
@@ -191,8 +201,17 @@ async function testProvider(row: ProviderRow): Promise<{
       const r = await replicateAuthCheck(row);
       const latencyMs = Date.now() - start;
       return r.ok
-        ? { status: latencyMs < 3000 ? 'healthy' : 'degraded', latencyMs, httpStatus: r.httpStatus || null }
-        : { status: 'unhealthy', latencyMs, errorMessage: r.detail, httpStatus: r.httpStatus || null };
+        ? {
+            status: latencyMs < 3000 ? 'healthy' : 'degraded',
+            latencyMs,
+            httpStatus: r.httpStatus || null,
+          }
+        : {
+            status: 'unhealthy',
+            latencyMs,
+            errorMessage: r.detail,
+            httpStatus: r.httpStatus || null,
+          };
     }
     return { status: 'unknown', latencyMs: 0, errorMessage: null };
   }
@@ -229,7 +248,10 @@ class ProviderSentinel {
 
   start(intervalMs = 120_000): void {
     if (this.intervalId) return;
-    this.intervalId = setInterval(() => void this.runOnce().catch(() => {}), Math.max(30_000, intervalMs));
+    this.intervalId = setInterval(
+      () => void this.runOnce().catch(() => {}),
+      Math.max(30_000, intervalMs)
+    );
     void this.runOnce().catch(() => {});
     logger.info('[ProviderSentinel] Started', { intervalMs });
   }
@@ -263,7 +285,9 @@ class ProviderSentinel {
           const r = await testProvider(p);
           const available = r.status === 'healthy' || r.status === 'degraded';
           const cat = r.errorMessage ? classifyError(r.errorMessage, r.httpStatus || null) : null;
-          const errorMsg = r.errorMessage ? `${cat ? `${cat.toUpperCase()}: ` : ''}${r.errorMessage}` : null;
+          const errorMsg = r.errorMessage
+            ? `${cat ? `${cat.toUpperCase()}: ` : ''}${r.errorMessage}`
+            : null;
 
           await writeProviderStatus({ providerId: p.id, status: r.status, checkedAtIso });
           await writeHealthEvent({
@@ -298,4 +322,3 @@ class ProviderSentinel {
 
 export const providerSentinel = new ProviderSentinel();
 export default providerSentinel;
-

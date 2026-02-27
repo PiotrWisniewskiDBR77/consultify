@@ -5,9 +5,9 @@
  * - Event catalog (triggers + actions)
  * - Minimal actions endpoint protected by integration API keys
  */
-import { Response, Router } from 'express';
-import type { Request } from 'express';
 import crypto from 'crypto';
+import type { Request } from 'express';
+import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { verifyAdmin } from '../../middleware/admin.middleware.js';
@@ -79,7 +79,9 @@ const dayStore = new Map<string, RateEntry>();
 
 function nextUtcMidnightMs(nowMs: number): number {
   const d = new Date(nowMs);
-  const next = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1, 0, 0, 0, 0));
+  const next = new Date(
+    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1, 0, 0, 0, 0)
+  );
   return next.getTime();
 }
 
@@ -149,8 +151,18 @@ async function integrationApiKeyAuth(req: any, res: Response, next: any) {
   if (!validated?.organizationId) return res.status(401).json({ error: 'Invalid API key' });
 
   // rate limits
-  const minute = checkWindow(minuteStore, validated.key.id, validated.rateLimitPerMinute, Date.now() + 60 * 1000);
-  const day = checkWindow(dayStore, validated.key.id, validated.rateLimitPerDay, nextUtcMidnightMs(Date.now()));
+  const minute = checkWindow(
+    minuteStore,
+    validated.key.id,
+    validated.rateLimitPerMinute,
+    Date.now() + 60 * 1000
+  );
+  const day = checkWindow(
+    dayStore,
+    validated.key.id,
+    validated.rateLimitPerDay,
+    nextUtcMidnightMs(Date.now())
+  );
 
   res.setHeader('X-RateLimit-Limit-Minute', String(validated.rateLimitPerMinute));
   res.setHeader('X-RateLimit-Remaining-Minute', String(minute.remaining));
@@ -187,9 +199,12 @@ async function integrationApiKeyAuth(req: any, res: Response, next: any) {
 
 function requireAllowedAction(actionId: string) {
   return (req: any, res: Response, next: any) => {
-    const allowed = Array.isArray(req.integrationApiKeyAllowedActions) ? req.integrationApiKeyAllowedActions : [];
+    const allowed = Array.isArray(req.integrationApiKeyAllowedActions)
+      ? req.integrationApiKeyAllowedActions
+      : [];
     if (!allowed.length) return next(); // empty means "all actions" for MVP
-    if (!allowed.includes(actionId)) return res.status(403).json({ error: 'Action not allowed for this key' });
+    if (!allowed.includes(actionId))
+      return res.status(403).json({ error: 'Action not allowed for this key' });
     return next();
   };
 }
@@ -214,7 +229,12 @@ router.get(
         {
           id: 'tasks.create',
           description: 'Create a task in Consultify',
-          inputShape: { title: 'string', description: 'string?', dueDate: 'isoDate?', projectId: 'string?' },
+          inputShape: {
+            title: 'string',
+            description: 'string?',
+            dueDate: 'isoDate?',
+            projectId: 'string?',
+          },
         },
       ],
       auth: { scheme: 'ik_', header: 'X-API-Key' },
@@ -230,7 +250,8 @@ router.get(
   verifyToken,
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!(await tableExists('integration_api_keys'))) return res.status(501).json({ error: 'Not available' });
+    if (!(await tableExists('integration_api_keys')))
+      return res.status(501).json({ error: 'Not available' });
     const orgId = req.user?.organizationId;
     const rows = await dbAll<IntegrationApiKey[]>(
       `SELECT id, organization_id, name, key_prefix, permissions, allowed_events, allowed_actions,
@@ -249,7 +270,8 @@ router.post(
   verifyToken,
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!(await tableExists('integration_api_keys'))) return res.status(501).json({ error: 'Not available' });
+    if (!(await tableExists('integration_api_keys')))
+      return res.status(501).json({ error: 'Not available' });
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -258,11 +280,15 @@ router.post(
 
     const rateLimitPerMinute = Number(req.body?.rateLimitPerMinute || 60);
     const rateLimitPerDay = Number(req.body?.rateLimitPerDay || 10000);
-    const permissions = Array.isArray(req.body?.permissions) ? req.body.permissions.map((p: any) => String(p)) : [];
+    const permissions = Array.isArray(req.body?.permissions)
+      ? req.body.permissions.map((p: any) => String(p))
+      : [];
     const allowedActions = Array.isArray(req.body?.allowedActions)
       ? req.body.allowedActions.map((a: any) => String(a))
       : [];
-    const allowedEvents = Array.isArray(req.body?.allowedEvents) ? req.body.allowedEvents.map((e: any) => String(e)) : [];
+    const allowedEvents = Array.isArray(req.body?.allowedEvents)
+      ? req.body.allowedEvents.map((e: any) => String(e))
+      : [];
 
     const random = crypto.randomBytes(24).toString('base64url'); // ~192 bits
     const plainTextKey = `ik_${random}`;
@@ -295,7 +321,16 @@ router.post(
     return res.status(201).json({
       success: true,
       warning: 'Store this key securely. It cannot be retrieved again.',
-      key: { id, name, keyPrefix, rateLimitPerMinute, rateLimitPerDay, permissions, allowedEvents, allowedActions },
+      key: {
+        id,
+        name,
+        keyPrefix,
+        rateLimitPerMinute,
+        rateLimitPerDay,
+        permissions,
+        allowedEvents,
+        allowedActions,
+      },
       plainTextKey,
     });
   })
@@ -306,7 +341,8 @@ router.delete(
   verifyToken,
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!(await tableExists('integration_api_keys'))) return res.status(501).json({ error: 'Not available' });
+    if (!(await tableExists('integration_api_keys')))
+      return res.status(501).json({ error: 'Not available' });
     const orgId = req.user?.organizationId;
     const id = String(req.params.id || '').trim();
     await dbRun(
@@ -341,9 +377,10 @@ router.post(
       [id, projectId, orgId, title, description, dueDate]
     );
 
-    return res.status(201).json({ success: true, task: { id, title, description, dueDate, projectId } });
+    return res
+      .status(201)
+      .json({ success: true, task: { id, title, description, dueDate, projectId } });
   })
 );
 
 export default router;
-

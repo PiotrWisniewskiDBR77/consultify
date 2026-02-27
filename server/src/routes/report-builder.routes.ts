@@ -2916,7 +2916,9 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
     const { userId, organizationId } = getAuthContext(req);
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const format = String(req.body?.format || '').trim().toLowerCase();
+    const format = String(req.body?.format || '')
+      .trim()
+      .toLowerCase();
     const folderId = req.body?.folderId ? String(req.body.folderId).trim() : undefined;
     const version = String(req.body?.version || req.query?.version || '').trim();
     const useV2 = version === '2' || version === 'v2';
@@ -2929,7 +2931,9 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
     if (!reportData) return res.status(404).json({ error: 'Report not found' });
 
     const exportDir = await ensureExportDir();
-    const safeTitle = String(reportData.report.title || 'report').replace(/[^\w\-]+/g, '_').slice(0, 64);
+    const safeTitle = String(reportData.report.title || 'report')
+      .replace(/[^\w-]+/g, '_')
+      .slice(0, 64);
     const fileName = `${safeTitle}-${id}-${Date.now()}.${format}`;
     const filePath = path.join(exportDir, fileName);
 
@@ -2941,7 +2945,8 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
       // Reuse the same v1/v2 logic as export endpoint, but save to disk and upload.
       let buffer: Buffer;
       if (useV2) {
-        const { PptxPipelineService } = await import('../services/report/pptx/PptxPipelineService.js');
+        const { PptxPipelineService } =
+          await import('../services/report/pptx/PptxPipelineService.js');
         const pipeline = new PptxPipelineService();
         const rpt = reportData.report as any;
 
@@ -2961,7 +2966,9 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
           } catch {}
         }
 
-        const allBlockTypes = await ReportBuilderService.listBlockTypes(organizationId).catch(() => []);
+        const allBlockTypes = await ReportBuilderService.listBlockTypes(organizationId).catch(
+          () => []
+        );
         const btMap = new Map(allBlockTypes.map((bt) => [bt.id, bt] as [string, typeof bt]));
         const v2Sections = (reportData.sections || []).map((s: any) => {
           const btId = s.blockTypeId || s.block_type_id;
@@ -3017,7 +3024,10 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
               data: s.sourceDataSnapshot,
             })),
           } as any,
-          { template: req.body?.template || req.query?.template, language: req.body?.language || req.query?.language }
+          {
+            template: req.body?.template || req.query?.template,
+            language: req.body?.language || req.query?.language,
+          }
         );
       }
 
@@ -3046,11 +3056,20 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
     // Best-effort: write a sync mapping for org-level integrations (if present).
     // This allows Integrations logs/mappings to show the outbound publish action.
     try {
-      const mapCols = await dbAll<{ name: string }>('PRAGMA table_info(integration_sync_mappings)', []).catch(() => []);
-      const hasMappings = (mapCols || []).some((c) => String((c as any).name || '') === 'integration_id');
+      const mapCols = await dbAll<{ name: string }>(
+        'PRAGMA table_info(integration_sync_mappings)',
+        []
+      ).catch(() => []);
+      const hasMappings = (mapCols || []).some(
+        (c) => String((c as any).name || '') === 'integration_id'
+      );
       if (hasMappings) {
         const providerKey =
-          uploaded.provider === 'sharepoint' ? 'onedrive' : String(uploaded.provider || '').trim().toLowerCase();
+          uploaded.provider === 'sharepoint'
+            ? 'onedrive'
+            : String(uploaded.provider || '')
+                .trim()
+                .toLowerCase();
         const integration = await dbGet<{ id: string }>(
           `
           SELECT i.id

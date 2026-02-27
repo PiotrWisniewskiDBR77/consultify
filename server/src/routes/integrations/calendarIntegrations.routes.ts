@@ -34,12 +34,21 @@ function formatIcsDate(dt: Date): string {
   );
 }
 
-async function tryLogIcsSyncAccess(input: { orgId: string; providerName: string; itemsProcessed: number }) {
+async function tryLogIcsSyncAccess(input: {
+  orgId: string;
+  providerName: string;
+  itemsProcessed: number;
+}) {
   const orgId = input.orgId;
-  const provider = String(input.providerName || '').trim().toLowerCase();
+  const provider = String(input.providerName || '')
+    .trim()
+    .toLowerCase();
   if (!orgId || !provider) return;
 
-  const logCols = await dbAll<{ name: string }>('PRAGMA table_info(integration_sync_log)', []).catch(() => []);
+  const logCols = await dbAll<{ name: string }>(
+    'PRAGMA table_info(integration_sync_log)',
+    []
+  ).catch(() => []);
   if (!logCols?.length) return;
   const hasNewCols = (logCols || []).some((c) => String((c as any).name) === 'items_processed');
 
@@ -95,7 +104,19 @@ async function tryLogIcsSyncAccess(input: { orgId: string; providerName: string;
         status, items_synced, items_failed, error_details,
         started_at, completed_at, duration_ms
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [logId, integrationId, 'incremental', 'pull', 'success', input.itemsProcessed, 0, null, nowIso, nowIso, 0]
+      [
+        logId,
+        integrationId,
+        'incremental',
+        'pull',
+        'success',
+        input.itemsProcessed,
+        0,
+        null,
+        nowIso,
+        nowIso,
+        0,
+      ]
     ).catch(() => null);
   }
 }
@@ -109,8 +130,13 @@ router.get(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
     // Minimal "connected" signal: presence of oauth integrations rows (future).
-    const integrationsCols = await dbAll<{ name: string }>('PRAGMA table_info(integrations)', []).catch(() => []);
-    const hasProviderId = (integrationsCols || []).some((c) => String((c as any).name) === 'provider_id');
+    const integrationsCols = await dbAll<{ name: string }>(
+      'PRAGMA table_info(integrations)',
+      []
+    ).catch(() => []);
+    const hasProviderId = (integrationsCols || []).some(
+      (c) => String((c as any).name) === 'provider_id'
+    );
     let connectedGoogle = false;
     let connectedOutlook = false;
 
@@ -150,7 +176,13 @@ router.get(
     if (!orgId) return res.status(401).send('Unauthorized');
 
     const tasks = await dbAll<
-      Array<{ id: string; title: string; description: string | null; due_date: string | null; status: string | null }>
+      Array<{
+        id: string;
+        title: string;
+        description: string | null;
+        due_date: string | null;
+        status: string | null;
+      }>
     >(
       `SELECT id, title, description, due_date, status
        FROM tasks
@@ -161,8 +193,13 @@ router.get(
     );
 
     // Optional: initiative milestones (including gate milestones) as calendar events
-    const milestoneCols = await dbAll<{ name: string }>('PRAGMA table_info(initiative_milestones)', []).catch(() => []);
-    const hasMilestones = (milestoneCols || []).some((c) => String((c as any).name || '') === 'target_date');
+    const milestoneCols = await dbAll<{ name: string }>(
+      'PRAGMA table_info(initiative_milestones)',
+      []
+    ).catch(() => []);
+    const hasMilestones = (milestoneCols || []).some(
+      (c) => String((c as any).name || '') === 'target_date'
+    );
     const milestones = hasMilestones
       ? await dbAll<
           Array<{
@@ -226,7 +263,7 @@ router.get(
       const dtStart = new Date(d.getTime());
       const dtEnd = new Date(d.getTime() + 60 * 60 * 1000);
 
-      const gateTag = (m.is_gate || 0) ? ' [Gate]' : '';
+      const gateTag = m.is_gate || 0 ? ' [Gate]' : '';
       const summary = escapeIcsText(`[Milestone] ${m.name}${gateTag}`);
       const desc = escapeIcsText(
         `${m.description ? `${m.description}\n\n` : ''}Status: ${m.status || 'PENDING'}\nInitiative ID: ${m.initiative_id}`
@@ -246,15 +283,31 @@ router.get(
     lines.push('END:VCALENDAR');
 
     // Best-effort audit: write sync-log entries for connected calendar providers.
-    const integrationsCols = await dbAll<{ name: string }>('PRAGMA table_info(integrations)', []).catch(() => []);
-    const hasProviderId = (integrationsCols || []).some((c) => String((c as any).name) === 'provider_id');
+    const integrationsCols = await dbAll<{ name: string }>(
+      'PRAGMA table_info(integrations)',
+      []
+    ).catch(() => []);
+    const hasProviderId = (integrationsCols || []).some(
+      (c) => String((c as any).name) === 'provider_id'
+    );
     if (hasProviderId) {
-      await tryLogIcsSyncAccess({ orgId, providerName: 'google_calendar', itemsProcessed: (tasks?.length || 0) + (milestones?.length || 0) });
-      await tryLogIcsSyncAccess({ orgId, providerName: 'outlook', itemsProcessed: (tasks?.length || 0) + (milestones?.length || 0) });
+      await tryLogIcsSyncAccess({
+        orgId,
+        providerName: 'google_calendar',
+        itemsProcessed: (tasks?.length || 0) + (milestones?.length || 0),
+      });
+      await tryLogIcsSyncAccess({
+        orgId,
+        providerName: 'outlook',
+        itemsProcessed: (tasks?.length || 0) + (milestones?.length || 0),
+      });
     }
 
     // Always-on feed log (V3-M05)
-    const feedCols = await dbAll<{ name: string }>('PRAGMA table_info(calendar_feed_log)', []).catch(() => []);
+    const feedCols = await dbAll<{ name: string }>(
+      'PRAGMA table_info(calendar_feed_log)',
+      []
+    ).catch(() => []);
     if ((feedCols || []).length) {
       const id = `cfl-${uuidv4()}`;
       await dbRun(
