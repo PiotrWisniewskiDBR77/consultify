@@ -37,8 +37,11 @@ npm run test:e2e:tier0
 # Security
 npm run test:security
 
-# Performance
+# Performance (bez memory-leak)
 npm run test:performance
+
+# Memory leak (osobny, dlugi test)
+MEMORY_TEST_DURATION=5 npm run test:memory-leak
 
 # Gaty jakosci
 npm run test:quality-check
@@ -83,6 +86,17 @@ Możesz ustawic baze przez zmienna srodowiskowa:
 ```bash
 TEST_CHANGED_BASE=develop npx tsx scripts/testing/test-runner.ts --changed-only
 ```
+
+## Performance i realna baza danych
+
+Testy performance, ktore wymagaja realnej bazy, sa automatycznie **skipowane** gdy dziala mock DB.
+Aby uruchomic je w trybie realnej bazy danych, ustaw:
+
+```bash
+RUN_DB_TESTS=1 MOCK_DB=false npm run test:performance
+```
+
+Uwaga: obecny backend jest skonfigurowany pod Postgres, wiec wymaga aktywnego DB i poprawnych zmiennych srodowiskowych.
 
 ## Dodatkowa dokumentacja
 

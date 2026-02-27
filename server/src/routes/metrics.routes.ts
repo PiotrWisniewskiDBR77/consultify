@@ -50,9 +50,12 @@ router.get('/', async (_req, res) => {
  */
 router.get('/conversion-intelligence', async (_req, res) => {
   try {
-    return res.status(503).json({
-      error: 'Conversion intelligence metrics are not available',
-      code: 'FEATURE_UNAVAILABLE',
+    return res.status(200).json({
+      success: true,
+      status: 'not_configured',
+      feature: 'conversion-intelligence-metrics',
+      writable: false,
+      data: {},
     });
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));

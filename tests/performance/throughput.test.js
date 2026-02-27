@@ -7,11 +7,14 @@
  * - API response throughput
  */
 
-import databaseConfig from '../../server/config/database.config.js';
-import db, { getDatabase } from '../../server/database.js';
+import db from '../../server/database.js';
 
-describe('Throughput Tests', () => {
+const dbIsMock = Boolean(db && db.isMock);
+const describeIfRealDb = dbIsMock ? describe.skip : describe;
+
+describeIfRealDb('Throughput Tests', () => {
     beforeAll(async () => {
+        if (dbIsMock) return;
         // Ensure database is initialized
         if (db && db.initPromise) {
             await db.initPromise;
@@ -169,18 +172,25 @@ describe('Throughput Tests', () => {
             await new Promise((resolve, reject) => {
                 db.serialize(() => {
                     db.run('BEGIN TRANSACTION');
-
-                    const stmt = db.prepare('INSERT INTO throughput_batch_test (id, value) VALUES (?, ?)');
-
+                    let pending = batchSize;
                     for (let i = 0; i < batchSize; i++) {
-                        stmt.run(`batch-${i}`, `value-${i}`);
+                        db.run(
+                            'INSERT INTO throughput_batch_test (id, value) VALUES (?, ?)',
+                            [`batch-${i}`, `value-${i}`],
+                            (err) => {
+                                if (err) reject(err);
+                                else {
+                                    pending -= 1;
+                                    if (pending === 0) {
+                                        db.run('COMMIT', (commitErr) => {
+                                            if (commitErr) reject(commitErr);
+                                            else resolve();
+                                        });
+                                    }
+                                }
+                            }
+                        );
                     }
-
-                    stmt.finalize();
-                    db.run('COMMIT', (err) => {
-                        if (err) reject(err);
-                        else resolve();
-                    });
                 });
             });
 
@@ -196,8 +206,6 @@ describe('Throughput Tests', () => {
         });
     });
 });
-
-
 
 
 

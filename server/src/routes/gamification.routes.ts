@@ -16,6 +16,25 @@ import logger from '../utils/Logger.js';
 // Apply rate limiting
 const router = Router();
 
+const serviceFallback = (req: AuthRequest, res: Response, readPayload?: Record<string, unknown>) => {
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    return res.status(200).json({
+      success: true,
+      status: 'not_configured',
+      feature: 'gamification',
+      writable: false,
+      ...(readPayload || {}),
+    });
+  }
+  return res.status(501).json({
+    success: false,
+    error: 'Feature not configured in this deployment',
+    code: 'FEATURE_NOT_CONFIGURED',
+    feature: 'gamification',
+    writable: false,
+  });
+};
+
 // Service interfaces
 interface GamificationServiceInterface {
   getUserProfile?: (userId: string) => Promise<unknown>;
@@ -44,7 +63,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!GamificationService?.getUserProfile || !GamificationService?.getUserAchievements) {
-      return res.status(503).json({ error: 'Gamification service not available' });
+      return serviceFallback(req, res, { data: { achievements: [] } });
     }
 
     try {

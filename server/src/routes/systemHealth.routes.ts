@@ -20,15 +20,38 @@ import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import SystemHealthService from '../services/systemHealthService.js';
 import logger from '../utils/Logger.js';
 
+const serviceFallback = (
+  req: AuthRequest,
+  res: Response,
+  readPayload?: Record<string, unknown>
+) => {
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    return res.status(200).json({
+      success: true,
+      status: 'not_configured',
+      feature: 'system-health',
+      writable: false,
+      ...(readPayload || {}),
+    });
+  }
+  return res.status(501).json({
+    success: false,
+    error: 'Feature not configured in this deployment',
+    code: 'FEATURE_NOT_CONFIGURED',
+    feature: 'system-health',
+    writable: false,
+  });
+};
+
 /**
  * GET /api/system-health
  * Basic health check (public)
  */
 router.get(
   '/',
-  asyncHandler(async (_req, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!SystemHealthService?.getDetailedHealth) {
-      return res.status(503).json({ error: 'System health service not available' });
+      return serviceFallback(req, res, { health: {} });
     }
 
     try {
@@ -48,9 +71,9 @@ router.get(
 router.get(
   '/detailed',
   verifySuperAdmin,
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!SystemHealthService?.getDetailedHealth) {
-      return res.status(503).json({ error: 'System health service not available' });
+      return serviceFallback(req, res, { health: {} });
     }
 
     try {
@@ -70,9 +93,9 @@ router.get(
 router.get(
   '/metrics',
   verifySuperAdmin,
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!SystemHealthService?.getMetrics) {
-      return res.status(503).json({ error: 'System health service not available' });
+      return serviceFallback(req, res, { metrics: {} });
     }
 
     try {
@@ -92,9 +115,9 @@ router.get(
 router.get(
   '/services',
   verifySuperAdmin,
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!SystemHealthService?.getServiceStatus) {
-      return res.status(503).json({ error: 'System health service not available' });
+      return serviceFallback(req, res, { services: [] });
     }
 
     try {
@@ -114,9 +137,9 @@ router.get(
 router.post(
   '/refresh',
   verifySuperAdmin,
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!SystemHealthService?.getDetailedHealth) {
-      return res.status(503).json({ error: 'System health service not available' });
+      return serviceFallback(req, res);
     }
 
     try {

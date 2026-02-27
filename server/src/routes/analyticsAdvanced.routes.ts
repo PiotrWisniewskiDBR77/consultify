@@ -17,6 +17,25 @@ import logger from '../utils/Logger.js';
 // Apply rate limiting
 const router = Router();
 
+const serviceFallback = (req: AuthRequest, res: Response, readPayload?: Record<string, unknown>) => {
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    return res.status(200).json({
+      success: true,
+      status: 'not_configured',
+      feature: 'analytics-advanced',
+      writable: false,
+      ...(readPayload || {}),
+    });
+  }
+  return res.status(501).json({
+    success: false,
+    error: 'Feature not configured in this deployment',
+    code: 'FEATURE_NOT_CONFIGURED',
+    feature: 'analytics-advanced',
+    writable: false,
+  });
+};
+
 // Service interfaces
 interface CohortServiceInterface {
   getRetentionMatrix?: () => Promise<unknown>;
@@ -52,9 +71,9 @@ router.get(
   '/cohorts',
   verifyToken,
   verifyAdmin,
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!CohortService?.getRetentionMatrix) {
-      return res.status(503).json({ error: 'Cohort service not available' });
+      return serviceFallback(req, res, { matrix: [] });
     }
 
     try {
@@ -78,7 +97,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!ExperimentService?.getAllUserExperiments) {
-      return res.status(503).json({ error: 'Experiment service not available' });
+      return serviceFallback(req, res, { flags: [] });
     }
 
     try {

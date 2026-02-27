@@ -21,6 +21,29 @@ import logger from '../utils/Logger.js';
 // Apply rate limiting
 const router = Router();
 
+const serviceFallback = (
+  req: AuthRequest,
+  res: Response,
+  readPayload?: Record<string, unknown>
+) => {
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    return res.status(200).json({
+      success: true,
+      status: 'not_configured',
+      feature: 'access-codes',
+      writable: false,
+      ...(readPayload || {}),
+    });
+  }
+  return res.status(501).json({
+    success: false,
+    error: 'Feature not configured in this deployment',
+    code: 'FEATURE_NOT_CONFIGURED',
+    feature: 'access-codes',
+    writable: false,
+  });
+};
+
 // Service interfaces
 interface AccessCodeServiceInterface {
   CODE_TYPES?: {
@@ -130,7 +153,7 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.generateCode || !AccessCodeService?.CODE_TYPES) {
-      return res.status(503).json({ error: 'SERVICE_UNAVAILABLE', code: 'FEATURE_UNAVAILABLE' });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -219,11 +242,7 @@ router.get(
   validateLimiter,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.validatePublic) {
-      return res.status(503).json({
-        valid: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return serviceFallback(req, res, { valid: false, error: 'SERVICE_UNAVAILABLE' });
     }
 
     try {
@@ -231,11 +250,7 @@ router.get(
       return res.json(result);
     } catch (err: any) {
       // Always return same shape for privacy
-      return res.status(503).json({
-        valid: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return serviceFallback(req, res, { valid: false, error: 'SERVICE_UNAVAILABLE' });
     }
   })
 );
@@ -252,9 +267,7 @@ router.post(
   acceptLimiter,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.acceptCode) {
-      return res
-        .status(503)
-        .json({ ok: false, error: 'SERVICE_UNAVAILABLE', code: 'FEATURE_UNAVAILABLE' });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -309,7 +322,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.listCodes) {
-      return res.status(503).json({ error: 'AccessCodeService not available' });
+      return serviceFallback(req, res, { codes: [] });
     }
 
     try {
@@ -356,7 +369,7 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.revokeCode) {
-      return res.status(503).json({ error: 'AccessCodeService not available' });
+      return serviceFallback(req, res);
     }
 
     try {

@@ -25,7 +25,11 @@ export default defineConfig({
       // Support legacy extensionless tests (to be phased out)
       'tests/performance/**/*.{test,spec}',
     ],
-    exclude: ['node_modules/**'],
+    exclude: [
+      'node_modules/**',
+      // Long-running suite is executed via `npm run test:memory-leak`
+      'tests/performance/memory-leak.test.ts',
+    ],
     // Optimize test execution
     pool: 'forks',
     fileParallelism: true,

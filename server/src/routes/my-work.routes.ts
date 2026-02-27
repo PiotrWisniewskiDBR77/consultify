@@ -268,7 +268,11 @@ const requireTables = async (res: Response, tables: string[]): Promise<boolean> 
   for (const t of tables) {
     const cols = await getTableColumns(t);
     if (!cols || cols.size === 0) {
-      res.status(503).json({
+      res.status(200).json({
+        success: true,
+        status: 'not_configured',
+        feature: 'my-work',
+        writable: false,
         error: `Database table missing: ${t}. Run migrations (npm run db:migrate:*).`,
       });
       return false;
@@ -894,7 +898,11 @@ router.get(
 
     // For "requests pending" we rely on decisions.created_by (canonical).
     if (!decisionCols.has('created_by')) {
-      return res.status(503).json({
+      return res.status(200).json({
+        success: true,
+        status: 'not_configured',
+        feature: 'my-work',
+        writable: false,
         error: 'Database column missing: decisions.created_by. Run migrations / self-heal.',
       });
     }

@@ -31,6 +31,16 @@ npm run test:integration
 npm run test:e2e:tier0
 npm run test:security
 npm run test:performance
+MEMORY_TEST_DURATION=5 npm run test:memory-leak
+```
+
+## Performance i realna baza danych
+
+Testy performance wymagajace realnej bazy sa skipowane, gdy dziala mock DB.
+Aby uruchomic je na prawdziwej bazie:
+
+```bash
+RUN_DB_TESTS=1 MOCK_DB=false npm run test:performance
 ```
 
 ## Dokumenty referencyjne

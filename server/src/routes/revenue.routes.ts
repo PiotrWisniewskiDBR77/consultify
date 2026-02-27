@@ -661,10 +661,12 @@ router.post(
         return res.status(404).json({ error: 'Payment failure not found' });
       }
 
-      return res.status(503).json({
+      return res.status(501).json({
         success: false,
-        error: 'Payment retry processing is not available',
-        code: 'FEATURE_UNAVAILABLE',
+        error: 'Payment retry processing is not configured in this deployment',
+        code: 'FEATURE_NOT_CONFIGURED',
+        feature: 'revenue-payment-retry',
+        writable: false,
       });
     } catch (error: any) {
       logger.error('[Revenue] Retry payment error:', error);
