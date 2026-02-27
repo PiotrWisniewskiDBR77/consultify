@@ -43,8 +43,19 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   private handleReset = () => {
-    localStorage.clear();
-    window.location.href = '/';
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.clear();
+      } catch {}
+      try {
+        window.sessionStorage.clear();
+      } catch {}
+      try {
+        // Some test environments may not route through window.localStorage reference
+        (globalThis as any).localStorage?.clear?.();
+      } catch {}
+      window.location.href = '/';
+    }
   };
 
   public render() {

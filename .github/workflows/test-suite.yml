@@ -2,9 +2,9 @@ name: IRIS 6.0 Automated Test Suite
 
 on:
   push:
-    branches: [main, develop]
+    branches: [Londyn]
   pull_request:
-    branches: [main, develop]
+    branches: [Londyn]
   workflow_dispatch:
     inputs:
       test_type:
@@ -57,6 +57,30 @@ jobs:
           end=$(date +%s)
           dur=$((end - JOB_START))
           echo "Job duration: ${dur}s" >> "$GITHUB_STEP_SUMMARY"
+
+  test-impact:
+    name: 🎯 Test Impact (Summary)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    needs: lint-typecheck
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run test impact analysis
+        run: npx tsx scripts/testing/test-impact-analysis.ts --base ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || 'HEAD~1' }} | tee test-results/test-impact.txt
+      - name: Upload test impact summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-impact
+          path: test-results/test-impact.txt
+          retention-days: 30
 
   # ═══════════════════════════════════════════════════════════════
   # TEST QUALITY (Anti-Placeholder)
@@ -115,6 +139,62 @@ jobs:
             test-results/quality-scorecard.json
             test-results/flaky-tests.json
           retention-days: 30
+
+      - name: PR summary (quality + flaky + impact)
+        if: ${{ github.event_name == 'pull_request' && always() }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const impactPath = path.resolve('test-results/test-impact.txt');
+            const flakyPath = path.resolve('test-results/flaky-tests.json');
+            const scorecardPath = path.resolve('test-results/quality-scorecard.json');
+
+            let out = '## ✅ Test Quality Summary\n\n';
+
+            if (fs.existsSync(impactPath)) {
+              const impact = fs.readFileSync(impactPath, 'utf8').trim();
+              out += '### Test Impact\n';
+              out += '```\n' + impact + '\n```\n\n';
+            }
+
+            if (fs.existsSync(scorecardPath)) {
+              try {
+                const score = JSON.parse(fs.readFileSync(scorecardPath, 'utf8'));
+                out += '### Quality Scorecard\n';
+                out += `- modules: ${score.length}\n`;
+                const critical = score.filter((s) => s.riskLevel === 'critical');
+                const criticalLow = critical.filter((s) => s.grade === 'D' || s.grade === 'F');
+                out += `- critical modules: ${critical.length}\n`;
+                out += `- critical with grade D/F: ${criticalLow.length}\n\n`;
+              } catch (e) {
+                out += '### Quality Scorecard\n- failed to parse JSON\n\n';
+              }
+            }
+
+            if (fs.existsSync(flakyPath)) {
+              try {
+                const flaky = JSON.parse(fs.readFileSync(flakyPath, 'utf8'));
+                const tests = Array.isArray(flaky.tests) ? flaky.tests : [];
+                const flakyCount = tests.filter((t) => t.passRate < 0.7).length;
+                const quarantined = tests.filter((t) => t.quarantined).length;
+                out += '### Flaky Tests\n';
+                out += `- tracked: ${tests.length}\n`;
+                out += `- flaky (<70% pass rate): ${flakyCount}\n`;
+                out += `- quarantined: ${quarantined}\n\n`;
+              } catch (e) {
+                out += '### Flaky Tests\n- failed to parse JSON\n\n';
+              }
+            }
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: out,
+            });
 
   # ═══════════════════════════════════════════════════════════════
   # LEVEL GATES (L1–L3 coverage)

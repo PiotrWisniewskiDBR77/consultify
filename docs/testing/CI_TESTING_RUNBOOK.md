@@ -17,6 +17,7 @@ Uruchamiane kroki:
 - Component tests
 - E2E Tier-0 (smoke)
 - Security integrity gate
+- Quality scorecard + flaky report (artefakty)
 
 ### Push / Manual
 **Cel:** pelna weryfikacja i performance z realna baza.
@@ -32,6 +33,13 @@ Uruchamiane kroki:
 
 Uruchamiane kroki:
 - Full Playwright suite (weekly, Sunday 03:30 UTC)
+
+### Nightly
+**Cel:** pelne testy wydajnosci i bezpieczeństwa poza PR.
+
+Uruchamiane kroki:
+- E2E Tier-1 full regression (nightly)
+- OWASP ZAP security scan (weekly, osobny workflow)
 
 ## Performance tests (real DB)
 
@@ -64,3 +72,4 @@ MEMORY_TEST_DURATION=5 npm run test:memory-leak
 - CI workflow: `.github/workflows/test-suite.yml`
 - Test runner: `scripts/testing/test-runner.ts`
 - Performance config: `vitest.perf.config.ts`
+- PR gates: `docs/testing/PR_PIPELINE.md`

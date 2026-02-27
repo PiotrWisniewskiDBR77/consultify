@@ -29,7 +29,7 @@ describe('ErrorBoundary', () => {
 
   it('renders fallback UI and resets app data', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const clearSpy = vi.spyOn(window.localStorage, 'clear');
+    window.localStorage.setItem('__test_key__', '1');
 
     const originalLocation = window.location;
     Object.defineProperty(window, 'location', {
@@ -47,7 +47,7 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText('Boom')).toBeInTheDocument();
 
     await user.click(screen.getByText('Reset Application Data (Fix)'));
-    expect(clearSpy).toHaveBeenCalled();
+    expect(window.localStorage.getItem('__test_key__')).toBeNull();
     expect(window.location.href).toBe('/');
 
     consoleSpy.mockRestore();
