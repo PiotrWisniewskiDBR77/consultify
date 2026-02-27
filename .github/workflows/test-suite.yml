@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
@@ -67,7 +67,7 @@ jobs:
     timeout-minutes: 3
     needs: lint-typecheck
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
       - name: Setup Node.js
@@ -94,7 +94,7 @@ jobs:
     timeout-minutes: 5
     needs: lint-typecheck
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -126,7 +126,7 @@ jobs:
     timeout-minutes: 3
     needs: lint-typecheck
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
       - name: Setup Node.js
@@ -151,7 +151,7 @@ jobs:
     timeout-minutes: 20
     needs: lint-typecheck
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
       - name: Setup Node.js
@@ -187,7 +187,7 @@ jobs:
       matrix:
         shard: [1, 2, 3, 4]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
@@ -226,7 +226,7 @@ jobs:
     timeout-minutes: 10
     needs: lint-typecheck
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
@@ -277,7 +277,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
@@ -350,7 +350,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
@@ -391,7 +391,7 @@ jobs:
     timeout-minutes: 5
     needs: lint-typecheck
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
@@ -426,7 +426,7 @@ jobs:
     needs: [lint-typecheck, security-integrity]
     if: ${{ github.event_name != 'pull_request' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -457,7 +457,7 @@ jobs:
     timeout-minutes: 10
     needs: [unit-tests, component-tests]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
@@ -524,7 +524,7 @@ jobs:
     needs: [unit-tests, component-tests]
     if: ${{ github.event_name != 'pull_request' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -585,7 +585,7 @@ jobs:
     needs: [unit-tests, component-tests]
     if: ${{ github.event_name != 'pull_request' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -630,7 +630,7 @@ jobs:
     needs: [unit-tests]
     if: ${{ github.event_name != 'pull_request' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -661,7 +661,7 @@ jobs:
     timeout-minutes: 10
     needs: [unit-tests]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
@@ -753,7 +753,7 @@ jobs:
     needs: [unit-tests, component-tests, integration-tests]
     if: ${{ github.event_name == 'pull_request' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -790,7 +790,7 @@ jobs:
     needs: [unit-tests, component-tests, integration-tests]
     if: ${{ github.event_name != 'pull_request' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -879,7 +879,7 @@ jobs:
       ]
     if: always()
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
