@@ -1058,7 +1058,7 @@ jobs:
       - name: Generate flaky report artifact
         if: always()
         run: |
-          node --experimental-strip-types scripts/testing/junit-flaky-report.ts --dir test-artifacts --out test-results/flaky-report
+          npx tsx scripts/testing/junit-flaky-report.ts --dir test-artifacts --out test-results/flaky-report
 
       - name: Upload flaky report artifact
         if: always()
@@ -1071,7 +1071,7 @@ jobs:
       - name: Generate flaky trend (top retries)
         if: always()
         run: |
-          node --experimental-strip-types scripts/testing/junit-retry-trend.ts --dir test-artifacts --out test-results/flaky-trend --top 10
+          npx tsx scripts/testing/junit-retry-trend.ts --dir test-artifacts --out test-results/flaky-trend --top 10
 
       - name: Upload flaky trend
         if: always()
@@ -1084,7 +1084,7 @@ jobs:
       - name: High-risk scan
         if: always()
         run: |
-          node --experimental-strip-types scripts/testing/high-risk-scan.ts
+          npx tsx scripts/testing/high-risk-scan.ts
 
       - name: Upload high-risk scan
         if: always()
