@@ -15,12 +15,12 @@ import logger from '../../utils/Logger.js';
 
 const router = Router();
 
-function respondBackupUnavailable(req: any, res: any, message?: string) {
+function respondBackupUnavailable(_req: any, res: any, _message?: string) {
   return res.status(503).json({
     statusCode: 503,
     status: false,
     type: 'not_configured',
-    message: message || 'Service temporarily unavailable due to missing configuration',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 }
 
