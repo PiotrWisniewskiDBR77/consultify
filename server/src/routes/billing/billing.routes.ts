@@ -1721,39 +1721,39 @@ router.post(
  * Get grace period status for current organization
  * GAP-BILLING-003
  */
-	router.get(
-	  '/grace-period',
-	  verifyToken,
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    try {
-	      const orgId = req.user!.organizationId;
-	      const BillingService = await import('../../services/BillingService.js');
-	      const status = await BillingService.getGracePeriodStatus(orgId);
-	      return res.json(status);
-	    } catch (error: unknown) {
-	      logger.error('[Billing] Grace period status error:', error);
-	      return res.status(500).json({ error: 'Failed to get grace period status' });
-	    }
-	  })
-	);
+router.get(
+  '/grace-period',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const orgId = req.user!.organizationId;
+      const BillingService = await import('../../services/BillingService.js');
+      const status = await BillingService.getGracePeriodStatus(orgId);
+      return res.json(status);
+    } catch (error: unknown) {
+      logger.error('[Billing] Grace period status error:', error);
+      return res.status(500).json({ error: 'Failed to get grace period status' });
+    }
+  })
+);
 
 /**
  * POST /billing/reactivate
  * Reactivate subscription during grace period
  * GAP-BILLING-003
  */
-	router.post(
-	  '/reactivate',
-	  verifyToken,
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    try {
-	      const orgId = req.user!.organizationId;
-	      const BillingService = await import('../../services/BillingService.js');
-	      const result = await BillingService.reactivateSubscription(orgId);
+router.post(
+  '/reactivate',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const orgId = req.user!.organizationId;
+      const BillingService = await import('../../services/BillingService.js');
+      const result = await BillingService.reactivateSubscription(orgId);
 
-	      if (!result.success) {
-	        return res.status(400).json({ error: result.error });
-	      }
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
 
       return res.json({ success: true, message: 'Subscription reactivated successfully' });
     } catch (error: unknown) {
