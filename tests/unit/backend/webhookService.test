@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { setupStandardTest } from '../../helpers/unifiedMockSetup.js';
 import { testOrganizations } from '../../fixtures/testData.js';
-import WebhookService from '../../../server/src/services/webhookService.js';
+import WebhookService from '../../../server/src/services/WebhookService.ts';
 
 /**
  * Webhook Service Tests

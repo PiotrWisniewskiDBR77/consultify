@@ -84,8 +84,8 @@ describe('InvitationService', () => {
             hashSync: vi.fn().mockReturnValue('hashed-password-sync')
         };
 
-        // Import the new TS Facade and named exports
-        InvitationServiceModule = await import('../../../server/src/services/InvitationService.ts');
+        // Import real service (case-sensitive path for Linux CI)
+        InvitationServiceModule = await import('../../../server/src/services/invitationService.ts');
         InvitationService = InvitationServiceModule.default;
 
         // Attach constants to InvitationService instance to match old test structure
