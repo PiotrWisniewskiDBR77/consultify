@@ -14,11 +14,7 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
-const serviceFallback = (
-  _req: any,
-  res: Response,
-  _readPayload?: Record<string, unknown>
-) => {
+const serviceFallback = (_req: any, res: Response, _readPayload?: Record<string, unknown>) => {
   return res.status(503).json({
     statusCode: 503,
     status: false,

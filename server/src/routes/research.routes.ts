@@ -19,6 +19,14 @@ const router = Router();
 router.use(verifyToken);
 router.use(isAuthenticated);
 
+const serviceUnavailable = (res: Response) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
+
 function getOrgId(req: any): string {
   return req.user?.organizationId || req.user?.organization_id || '';
 }
@@ -42,8 +50,7 @@ function padCik(cik: string): string {
 router.get(
   '/evidence',
   asyncHandler(async (req: Request, res: Response) => {
-    if (!(await ensureTable()))
-      return res.status(501).json({ error: 'Research evidence store not available' });
+    if (!(await ensureTable())) return serviceUnavailable(res);
     const orgId = getOrgId(req);
     const source = req.query.source ? String(req.query.source).trim().toLowerCase() : null;
     const limit = Math.min(200, Math.max(1, Number(req.query.limit || 50)));
@@ -69,8 +76,7 @@ router.get(
 router.get(
   '/evidence/:id',
   asyncHandler(async (req: Request, res: Response) => {
-    if (!(await ensureTable()))
-      return res.status(501).json({ error: 'Research evidence store not available' });
+    if (!(await ensureTable())) return serviceUnavailable(res);
     const orgId = getOrgId(req);
     const id = String(req.params.id || '').trim();
     const row = await dbGet<any>(
@@ -97,8 +103,7 @@ router.get(
 router.post(
   '/edgar/submissions',
   asyncHandler(async (req: Request, res: Response) => {
-    if (!(await ensureTable()))
-      return res.status(501).json({ error: 'Research evidence store not available' });
+    if (!(await ensureTable())) return serviceUnavailable(res);
     const orgId = getOrgId(req);
     const cikRaw = String((req.body as any)?.cik || '').trim();
     if (!cikRaw) return res.status(400).json({ error: 'cik is required' });
@@ -170,8 +175,7 @@ router.post(
 router.post(
   '/gdelt/search',
   asyncHandler(async (req: Request, res: Response) => {
-    if (!(await ensureTable()))
-      return res.status(501).json({ error: 'Research evidence store not available' });
+    if (!(await ensureTable())) return serviceUnavailable(res);
     const orgId = getOrgId(req);
     const q = String((req.body as any)?.query || (req.body as any)?.q || '').trim();
     if (!q) return res.status(400).json({ error: 'query is required' });
@@ -248,8 +252,7 @@ router.post(
 router.post(
   '/openalex/search',
   asyncHandler(async (req: Request, res: Response) => {
-    if (!(await ensureTable()))
-      return res.status(501).json({ error: 'Research evidence store not available' });
+    if (!(await ensureTable())) return serviceUnavailable(res);
     const orgId = getOrgId(req);
     const q = String((req.body as any)?.query || (req.body as any)?.q || '').trim();
     if (!q) return res.status(400).json({ error: 'query is required' });
@@ -305,8 +308,7 @@ router.post(
 router.post(
   '/crossref/search',
   asyncHandler(async (req: Request, res: Response) => {
-    if (!(await ensureTable()))
-      return res.status(501).json({ error: 'Research evidence store not available' });
+    if (!(await ensureTable())) return serviceUnavailable(res);
     const orgId = getOrgId(req);
     const q = String((req.body as any)?.query || (req.body as any)?.q || '').trim();
     if (!q) return res.status(400).json({ error: 'query is required' });
@@ -365,8 +367,7 @@ router.post(
 router.post(
   '/competitive/wappalyzer/snapshot',
   asyncHandler(async (req: Request, res: Response) => {
-    if (!(await ensureTable()))
-      return res.status(501).json({ error: 'Research evidence store not available' });
+    if (!(await ensureTable())) return serviceUnavailable(res);
     const orgId = getOrgId(req);
     const domain = String((req.body as any)?.domain || '').trim();
     const apiKey = String((req.body as any)?.apiKey || '').trim();

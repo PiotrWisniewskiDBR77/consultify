@@ -10,10 +10,7 @@ import logger from '../utils/Logger.js';
 const router = Router();
 
 router.use((req, res) => {
-  if (req.method === 'GET' || req.method === 'HEAD') {
-    return res.json({ feature: 'locations', status: 'not_configured', items: [], writable: false });
-  }
-  logger.warn(`[locations] Write blocked - feature not configured`);
+  logger.warn(`[locations] Feature not configured`);
   return res.status(503).json({
     statusCode: 503,
     status: false,

@@ -9073,7 +9073,9 @@ export const Api = {
   // ===== CLOUD STORAGE INTEGRATIONS =====
 
   resolveCloudProviderName: (providerId: string) => {
-    const normalized = String(providerId || '').toLowerCase().trim();
+    const normalized = String(providerId || '')
+      .toLowerCase()
+      .trim();
     if (normalized === 'google-drive' || normalized === 'google_drive') return 'google_drive';
     if (normalized === 'onedrive' || normalized === 'one_drive') return 'onedrive';
     if (normalized === 'dropbox') return 'dropbox';

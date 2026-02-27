@@ -35,10 +35,11 @@ router.get(
     const documents = await legalService.getActiveDocuments();
 
     if (documents.length === 0) {
-      return res.json({
-        success: true,
-        data: [],
-        status: 'not_configured',
+      return res.status(503).json({
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     }
 

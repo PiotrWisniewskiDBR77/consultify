@@ -31,11 +31,11 @@ router.get('/supported-types', async (req, res) => {
   try {
     const mediaIngestionService = await getMediaIngestionService();
     if (!mediaIngestionService?.getSupportedTypes) {
-      return res.json({
-        success: true,
-        supportedTypes: [],
-        status: 'not_configured',
-        writable: false,
+      return res.status(503).json({
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     }
     const supportedTypes = await mediaIngestionService.getSupportedTypes();
@@ -45,11 +45,11 @@ router.get('/supported-types', async (req, res) => {
     });
   } catch (error) {
     logger.error('Error fetching supported types:', error);
-    res.json({
-      success: true,
-      supportedTypes: [],
-      status: 'not_configured',
-      writable: false,
+    res.status(503).json({
+      statusCode: 503,
+      status: false,
+      type: 'not_configured',
+      message: 'Service temporarily unavailable due to missing configuration',
     });
   }
 });
@@ -61,11 +61,11 @@ router.get('/capabilities', async (req, res) => {
   try {
     const mediaIngestionService = await getMediaIngestionService();
     if (!mediaIngestionService?.getCapabilities) {
-      return res.json({
-        success: true,
-        capabilities: { batch: false, youtube: false, url: false, validate: false },
-        status: 'not_configured',
-        writable: false,
+      return res.status(503).json({
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     }
     const capabilities = await mediaIngestionService.getCapabilities();
@@ -75,11 +75,11 @@ router.get('/capabilities', async (req, res) => {
     });
   } catch (error) {
     logger.error('Error fetching capabilities:', error);
-    res.json({
-      success: true,
-      capabilities: { batch: false, youtube: false, url: false, validate: false },
-      status: 'not_configured',
-      writable: false,
+    res.status(503).json({
+      statusCode: 503,
+      status: false,
+      type: 'not_configured',
+      message: 'Service temporarily unavailable due to missing configuration',
     });
   }
 });

@@ -743,25 +743,19 @@ router.post(
   '/admin/user-plans',
   verifyToken,
   requireSuperAdmin,
-  asyncHandler(async (_req, res) =>
-    respondSchemaUnavailable(res, 'User seat plans')
-  )
+  asyncHandler(async (_req, res) => respondSchemaUnavailable(res, 'User seat plans'))
 );
 router.put(
   '/admin/user-plans/:id',
   verifyToken,
   requireSuperAdmin,
-  asyncHandler(async (_req, res) =>
-    respondSchemaUnavailable(res, 'User seat plans')
-  )
+  asyncHandler(async (_req, res) => respondSchemaUnavailable(res, 'User seat plans'))
 );
 router.delete(
   '/admin/user-plans/:id',
   verifyToken,
   requireSuperAdmin,
-  asyncHandler(async (_req, res) =>
-    respondSchemaUnavailable(res, 'User seat plans')
-  )
+  asyncHandler(async (_req, res) => respondSchemaUnavailable(res, 'User seat plans'))
 );
 
 router.get(

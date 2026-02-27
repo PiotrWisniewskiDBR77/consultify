@@ -15,7 +15,11 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 // Apply rate limiting
 const router = Router();
 
-const serviceFallback = (_req: AuthRequest, res: Response, _readPayload?: Record<string, unknown>) =>
+const serviceFallback = (
+  _req: AuthRequest,
+  res: Response,
+  _readPayload?: Record<string, unknown>
+) =>
   res.status(503).json({
     statusCode: 503,
     status: false,

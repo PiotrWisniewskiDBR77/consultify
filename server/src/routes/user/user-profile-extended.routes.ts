@@ -10,16 +10,7 @@ import logger from '../../utils/Logger.js';
 const router = Router();
 
 router.use((req, res) => {
-  if (req.method === 'GET' || req.method === 'HEAD') {
-    return res.json({
-      success: true,
-      feature: 'user-profile-extended',
-      status: 'not_configured',
-      profile: {},
-      writable: false,
-    });
-  }
-  logger.warn(`[user-profile-extended] Write blocked - feature not configured`);
+  logger.warn(`[user-profile-extended] Feature not configured`);
   return res.status(503).json({
     statusCode: 503,
     status: false,

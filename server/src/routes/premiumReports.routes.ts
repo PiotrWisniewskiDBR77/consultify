@@ -23,13 +23,12 @@ function isSchemaMissingError(err: unknown): boolean {
   );
 }
 
-const respondFeatureUnavailable = (req: Request, res: Response, detail?: string) =>
-  res.status(200).json({
-    success: true,
-    status: 'not_configured',
-    feature: FEATURE_NAME,
-    detail,
-    writable: false,
+const respondFeatureUnavailable = (_req: Request, res: Response, _detail?: string) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 
 router.get(

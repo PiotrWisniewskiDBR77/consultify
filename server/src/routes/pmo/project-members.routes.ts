@@ -64,12 +64,11 @@ router.get(
       res.json(members || []);
     } catch (error) {
       if (isSchemaMissingError(error)) {
-        return res.status(200).json({
-          success: true,
-          feature: FEATURE_NAME,
-          status: 'not_configured',
-          writable: false,
-          data: [],
+        return res.status(503).json({
+          statusCode: 503,
+          status: false,
+          type: 'not_configured',
+          message: 'Service temporarily unavailable due to missing configuration',
         });
       }
       throw error;

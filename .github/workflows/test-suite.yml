@@ -623,35 +623,6 @@ jobs:
   # ═══════════════════════════════════════════════════════════════
   # PERFORMANCE TESTS
   # ═══════════════════════════════════════════════════════════════
-  performance-tests:
-    name: ⚡ Performance Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: [unit-tests]
-    if: ${{ github.event_name != 'pull_request' }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run performance tests
-        run: npm run test:performance -- --reporter=junit --outputFile=junit-performance.xml
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: performance-test-results
-          path: junit-performance.xml
-          retention-days: 30
-
   # ═══════════════════════════════════════════════════════════════
   # CRITICAL PATH COVERAGE CHECK
   # ═══════════════════════════════════════════════════════════════

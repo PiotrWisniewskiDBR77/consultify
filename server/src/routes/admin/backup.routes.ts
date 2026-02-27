@@ -20,8 +20,7 @@ function respondBackupUnavailable(req: any, res: any, message?: string) {
     statusCode: 503,
     status: false,
     type: 'not_configured',
-    message:
-      message || 'Service temporarily unavailable due to missing configuration',
+    message: message || 'Service temporarily unavailable due to missing configuration',
   });
 }
 

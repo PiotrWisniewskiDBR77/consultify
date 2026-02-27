@@ -21,6 +21,14 @@ interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
 }
 
+const serviceUnavailable = (res: Response) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
+
 type IntegrationApiKey = {
   id: string;
   organization_id: string;
@@ -250,8 +258,7 @@ router.get(
   verifyToken,
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!(await tableExists('integration_api_keys')))
-      return res.status(501).json({ error: 'Not available' });
+    if (!(await tableExists('integration_api_keys'))) return serviceUnavailable(res);
     const orgId = req.user?.organizationId;
     const rows = await dbAll<IntegrationApiKey[]>(
       `SELECT id, organization_id, name, key_prefix, permissions, allowed_events, allowed_actions,
@@ -270,8 +277,7 @@ router.post(
   verifyToken,
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!(await tableExists('integration_api_keys')))
-      return res.status(501).json({ error: 'Not available' });
+    if (!(await tableExists('integration_api_keys'))) return serviceUnavailable(res);
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -341,8 +347,7 @@ router.delete(
   verifyToken,
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!(await tableExists('integration_api_keys')))
-      return res.status(501).json({ error: 'Not available' });
+    if (!(await tableExists('integration_api_keys'))) return serviceUnavailable(res);
     const orgId = req.user?.organizationId;
     const id = String(req.params.id || '').trim();
     await dbRun(

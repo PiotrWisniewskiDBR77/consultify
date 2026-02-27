@@ -505,7 +505,12 @@ router.post(
     // Ensure imports table exists
     const cols = await tryGetColumns('marketplace_imports');
     if (!cols.size)
-      return res.status(501).json({ error: 'marketplace_imports table not available' });
+      return res.status(503).json({
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
+      });
 
     let createdTargetId: string | null = null;
     if (targetType === 'presentation_template') {

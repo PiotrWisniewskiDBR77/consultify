@@ -99,9 +99,12 @@ router.post(
       () => []
     );
     if (!mcpCols?.length) {
-      return res
-        .status(501)
-        .json({ success: false, error: 'MCP providers registry not available' });
+      return res.status(503).json({
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
+      });
     }
 
     const provider = providerId

@@ -53,13 +53,12 @@ const upload = multer({
   },
 });
 
-const featureReadFallback = (res: Response, data: unknown = []) =>
-  res.status(200).json({
-    success: true,
-    status: 'not_configured',
-    feature: 'documents',
-    writable: false,
-    data,
+const featureReadFallback = (res: Response, _data: unknown = []) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 
 const featureWriteBlocked = (res: Response) =>
