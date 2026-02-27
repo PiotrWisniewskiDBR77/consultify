@@ -12,24 +12,13 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
 
-const serviceFallback = (req: AuthRequest, res: Response) => {
-  if (req.method === 'GET' || req.method === 'HEAD') {
-    return res.status(200).json({
-      success: true,
-      data: [],
-      status: 'not_configured',
-      feature: 'ai-nudges',
-      writable: false,
-    });
-  }
-  return res.status(501).json({
-    success: false,
-    error: 'Feature not configured in this deployment',
-    code: 'FEATURE_NOT_CONFIGURED',
-    feature: 'ai-nudges',
-    writable: false,
+const serviceFallback = (_req: AuthRequest, res: Response) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
-};
 
 // Service interfaces
 interface ProactiveNudgesInterface {
