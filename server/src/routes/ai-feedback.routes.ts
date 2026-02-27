@@ -14,6 +14,30 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js'
 
 const router = Router();
 
+const serviceFallback = (
+  req: AuthRequest,
+  res: Response,
+  feature: string,
+  readPayload?: Record<string, unknown>
+) => {
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    return res.status(200).json({
+      success: true,
+      status: 'not_configured',
+      feature,
+      writable: false,
+      ...(readPayload || {}),
+    });
+  }
+  return res.status(501).json({
+    success: false,
+    error: 'Feature not configured in this deployment',
+    code: 'FEATURE_NOT_CONFIGURED',
+    feature,
+    writable: false,
+  });
+};
+
 // Service interfaces
 interface AILoggerInterface {
   info?: (category: string, message: string) => void;
@@ -579,7 +603,15 @@ router.get(
       !adaptiveResponseService?.getUserFeedbackStats ||
       !adaptiveResponseService?.getRecommendedMode
     ) {
-      return res.status(503).json({ error: 'Adaptive response service not available' });
+      return serviceFallback(req, res, 'ai-feedback-response', {
+        stats: {
+          total_feedback: 0,
+          positive_count: 0,
+          negative_count: 0,
+          satisfaction_rate: null,
+        },
+        recommendedMode: 'standard',
+      });
     }
 
     try {
@@ -690,7 +722,7 @@ router.get(
   '/style-profile',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!userStyleProfileService?.getProfile) {
-      return res.status(503).json({ error: 'Style profile service not available' });
+      return serviceFallback(req, res, 'ai-style-profile', { profile: null, patterns: [] });
     }
 
     try {
@@ -722,7 +754,7 @@ router.put(
   '/style-profile',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!userStyleProfileService?.updateProfile) {
-      return res.status(503).json({ error: 'Style profile service not available' });
+      return serviceFallback(req, res, 'ai-style-profile');
     }
 
     try {

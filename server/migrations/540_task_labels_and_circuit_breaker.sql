@@ -12,6 +12,21 @@ CREATE TABLE IF NOT EXISTS task_labels (
 );
 CREATE INDEX IF NOT EXISTS idx_task_labels_project ON task_labels(project_id);
 
+-- circuit_breaker_state: ensure table exists (older DBs may not have baseline stub)
+CREATE TABLE IF NOT EXISTS circuit_breaker_state (
+    id TEXT PRIMARY KEY,
+    service TEXT,
+    breaker_key TEXT UNIQUE,
+    state TEXT DEFAULT 'CLOSED',
+    failures INTEGER DEFAULT 0,
+    last_failure TIMESTAMP,
+    failure_count INTEGER DEFAULT 0,
+    last_failure_at TIMESTAMP,
+    opened_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- circuit_breaker_state: add failures and last_failure (code expects these; initdb uses failure_count, last_failure_at)
 ALTER TABLE circuit_breaker_state ADD COLUMN IF NOT EXISTS failures INTEGER DEFAULT 0;
 ALTER TABLE circuit_breaker_state ADD COLUMN IF NOT EXISTS last_failure TIMESTAMP;

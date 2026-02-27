@@ -4580,10 +4580,12 @@ router.get(
         AIMemoryMetricsService.__unavailable__ === true ||
         typeof AIMemoryMetricsService.getDashboardMetrics !== 'function'
       ) {
-        return res.status(503).json({
-          success: false,
-          code: 'FEATURE_UNAVAILABLE',
-          error: 'AI memory metrics are not available',
+        return res.status(200).json({
+          success: true,
+          status: 'not_configured',
+          feature: 'ai-memory-metrics',
+          writable: false,
+          metrics: {},
         });
       }
       const { period } = req.query as any;
@@ -4593,10 +4595,12 @@ router.get(
       return res.json({ success: true, ...metrics });
     } catch (err: any) {
       logger.error('[AI] Memory metrics error:', err);
-      return res.status(503).json({
-        success: false,
-        code: 'FEATURE_UNAVAILABLE',
-        error: 'AI memory metrics are not available',
+      return res.status(200).json({
+        success: true,
+        status: 'not_configured',
+        feature: 'ai-memory-metrics',
+        writable: false,
+        metrics: {},
       });
     }
   })
@@ -4615,10 +4619,12 @@ router.get(
         AIMemoryMetricsService.__unavailable__ === true ||
         typeof AIMemoryMetricsService.getCurrentMemoryState !== 'function'
       ) {
-        return res.status(503).json({
-          success: false,
-          code: 'FEATURE_UNAVAILABLE',
-          error: 'AI memory state is not available',
+        return res.status(200).json({
+          success: true,
+          status: 'not_configured',
+          feature: 'ai-memory-state',
+          writable: false,
+          state: null,
         });
       }
       const { projectId } = req.query as any;
@@ -4631,10 +4637,12 @@ router.get(
       return res.json({ success: true, ...state });
     } catch (err: any) {
       logger.error('[AI] Current memory state error:', err);
-      return res.status(503).json({
-        success: false,
-        code: 'FEATURE_UNAVAILABLE',
-        error: 'AI memory state is not available',
+      return res.status(200).json({
+        success: true,
+        status: 'not_configured',
+        feature: 'ai-memory-state',
+        writable: false,
+        state: null,
       });
     }
   })
@@ -4653,10 +4661,12 @@ router.get(
         AIMemoryMetricsService.__unavailable__ === true ||
         typeof AIMemoryMetricsService.getLatencyPercentiles !== 'function'
       ) {
-        return res.status(503).json({
-          success: false,
-          code: 'FEATURE_UNAVAILABLE',
-          error: 'AI memory latency metrics are not available',
+        return res.status(200).json({
+          success: true,
+          status: 'not_configured',
+          feature: 'ai-memory-latency',
+          writable: false,
+          latency: {},
         });
       }
       const { hours } = req.query as any;
@@ -4669,10 +4679,12 @@ router.get(
       return res.json({ success: true, ...latency });
     } catch (err: any) {
       logger.error('[AI] Latency metrics error:', err);
-      return res.status(503).json({
-        success: false,
-        code: 'FEATURE_UNAVAILABLE',
-        error: 'AI memory latency metrics are not available',
+      return res.status(200).json({
+        success: true,
+        status: 'not_configured',
+        feature: 'ai-memory-latency',
+        writable: false,
+        latency: {},
       });
     }
   })

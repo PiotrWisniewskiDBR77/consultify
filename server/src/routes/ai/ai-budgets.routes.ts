@@ -32,6 +32,25 @@ const CreateBudgetSchema = z.object({
 // Apply rate limiting
 const router = Router();
 
+const serviceFallback = (req: AuthRequest, res: Response, readPayload?: Record<string, unknown>) => {
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    return res.status(200).json({
+      success: true,
+      status: 'not_configured',
+      feature: 'ai-budgets',
+      writable: false,
+      ...(readPayload || {}),
+    });
+  }
+  return res.status(501).json({
+    success: false,
+    error: 'Feature not configured in this deployment',
+    code: 'FEATURE_NOT_CONFIGURED',
+    feature: 'ai-budgets',
+    writable: false,
+  });
+};
+
 // Service interfaces
 interface AIBudgetServiceInterface {
   getOrganizationBudgets?: (
@@ -126,7 +145,7 @@ router.get(
   requireRole('admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.getOrganizationBudgets) {
-      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+      return serviceFallback(req, res, { data: [] });
     }
 
     try {
@@ -160,7 +179,7 @@ router.post(
   validateBody(CreateBudgetSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.createBudget) {
-      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -192,7 +211,7 @@ router.get(
   requireRole('admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.getBudget) {
-      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+      return serviceFallback(req, res, { data: null });
     }
 
     try {
@@ -229,7 +248,7 @@ router.put(
   requireRole('admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.updateBudget) {
-      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -266,7 +285,7 @@ router.delete(
   requireRole('admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.deleteBudget) {
-      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -303,7 +322,7 @@ router.post(
   requireRole('admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.resetBudgetUsage) {
-      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -348,7 +367,7 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.recordUsage) {
-      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -391,7 +410,7 @@ router.get(
   requireRole('admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.getUsageStats) {
-      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+      return serviceFallback(req, res, { data: [] });
     }
 
     try {
@@ -434,7 +453,7 @@ router.get(
   requireRole('admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.getAlerts) {
-      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+      return serviceFallback(req, res, { data: [] });
     }
 
     try {
@@ -476,7 +495,7 @@ router.post(
   requireRole('admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.acknowledgeAlert) {
-      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -518,7 +537,7 @@ router.post(
   requireRole('admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.dismissAlert) {
-      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -557,7 +576,7 @@ router.get(
   requireRole('admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.getModelPermissions) {
-      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+      return serviceFallback(req, res, { data: [] });
     }
 
     try {
@@ -598,7 +617,7 @@ router.post(
   requireRole('admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.setModelPermission) {
-      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -663,7 +682,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.checkModelAccess) {
-      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+      return serviceFallback(req, res, { data: null });
     }
 
     try {
@@ -714,7 +733,7 @@ router.delete(
   requireRole('admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.deleteModelPermission) {
-      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -748,9 +767,9 @@ router.delete(
 router.get(
   '/model-costs',
   verifyToken,
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.getModelCosts) {
-      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+      return serviceFallback(req, res, { data: [] });
     }
 
     try {
@@ -778,7 +797,7 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.estimateCost) {
-      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+      return serviceFallback(req, res);
     }
 
     try {

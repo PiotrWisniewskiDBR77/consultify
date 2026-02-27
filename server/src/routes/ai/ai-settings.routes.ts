@@ -91,6 +91,30 @@ const transformSettingsToSnakeCase = (settings: any) => ({
   data_residency: settings.dataResidency,
 });
 
+const respondServiceNotConfigured = (
+  req: Request,
+  res: Response,
+  feature: string,
+  readPayload?: Record<string, unknown>
+) => {
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    return res.status(200).json({
+      success: true,
+      status: 'not_configured',
+      feature,
+      writable: false,
+      ...(readPayload || {}),
+    });
+  }
+  return res.status(501).json({
+    success: false,
+    error: 'Feature not configured in this deployment',
+    code: 'FEATURE_NOT_CONFIGURED',
+    feature,
+    writable: false,
+  });
+};
+
 /**
  * GET /api/ai-settings/superadmin
  * Get global SuperAdmin AI settings
@@ -100,12 +124,9 @@ router.get(
   '/superadmin',
   verifyToken,
   requireRole('superadmin'),
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getSuperAdminSettings) {
-      return res.status(503).json({
-        error: 'AI Settings service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req, res, 'ai-settings', { settings: {} });
     }
 
     try {
@@ -114,10 +135,7 @@ router.get(
       return res.json(transformSettingsToCamelCase(settings));
     } catch (error: any) {
       logger.warn('[AI Settings] Service error:', error);
-      return res.status(503).json({
-        error: 'AI Settings service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req, res, 'ai-settings', { settings: {} });
     }
   })
 );
@@ -144,10 +162,7 @@ router.put(
     const settingsSnakeCase = transformSettingsToSnakeCase(settingsCamelCase);
 
     if (!AISettingsService?.updateSuperAdminSettings) {
-      return res.status(503).json({
-        error: 'AI Settings service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req as Request, res, 'ai-settings');
     }
 
     try {
@@ -166,10 +181,7 @@ router.put(
       return res.json(transformSettingsToCamelCase(updated));
     } catch (error: any) {
       logger.warn('[AI Settings] Service error on update:', error);
-      return res.status(503).json({
-        error: 'AI Settings service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req as Request, res, 'ai-settings');
     }
   })
 );
@@ -188,10 +200,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getOrgSettings) {
-      return res.status(503).json({
-        error: 'AI Settings service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req as Request, res, 'ai-settings', { settings: {} });
     }
 
     try {
@@ -227,10 +236,7 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.updateOrgSettings) {
-      return res.status(503).json({
-        error: 'AI Settings service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req as Request, res, 'ai-settings');
     }
 
     try {
@@ -292,10 +298,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getUserSettings) {
-      return res.status(503).json({
-        error: 'AI Settings service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req as Request, res, 'ai-settings', { settings: {} });
     }
 
     try {
@@ -326,10 +329,7 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.updateUserSettings || !AISettingsService?.getOrgSettings) {
-      return res.status(503).json({
-        error: 'AI Settings service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req as Request, res, 'ai-settings');
     }
 
     try {
@@ -384,10 +384,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getEffectiveSettings) {
-      return res.status(503).json({
-        error: 'AI Settings service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req as Request, res, 'ai-settings', { settings: {} });
     }
 
     try {
@@ -425,10 +422,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getAvailableModels) {
-      return res.status(503).json({
-        error: 'AI Settings service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req as Request, res, 'ai-settings', { models: [] });
     }
 
     try {
@@ -472,9 +466,9 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AIProactivityEngine?.getEffectiveProactivity) {
-      return res.status(503).json({
-        error: 'AI Proactivity Engine not available',
-        code: 'FEATURE_UNAVAILABLE',
+      return respondServiceNotConfigured(req as Request, res, 'ai-proactivity', {
+        mode: 'BALANCED',
+        behaviors: [],
       });
     }
 
@@ -506,12 +500,9 @@ router.get(
 router.get(
   '/proactivity/modes',
   verifyToken,
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AIProactivityEngine?.getAllModes) {
-      return res.status(503).json({
-        error: 'AI Proactivity Engine not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req as Request, res, 'ai-proactivity', { modes: [] });
     }
 
     try {
@@ -542,10 +533,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getAuditLog) {
-      return res.status(503).json({
-        error: 'AI Settings service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req as Request, res, 'ai-settings', { auditLog: [] });
     }
 
     try {
@@ -598,10 +586,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getAuditLog) {
-      return res.status(503).json({
-        error: 'AI Settings service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req as Request, res, 'ai-settings', { auditLog: [] });
     }
 
     try {
@@ -647,10 +632,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getUserCostHistory) {
-      return res.status(503).json({
-        error: 'AI Settings service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req as Request, res, 'ai-settings', { costs: [] });
     }
 
     try {
@@ -688,10 +670,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getOrgUserTiers) {
-      return res.status(503).json({
-        error: 'AI Settings service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req as Request, res, 'ai-settings', { tiers: [] });
     }
 
     try {
@@ -732,10 +711,7 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.assignUserTier) {
-      return res.status(503).json({
-        error: 'AI Settings service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req as Request, res, 'ai-settings');
     }
 
     try {
@@ -791,10 +767,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getOrgCostAttribution) {
-      return res.status(503).json({
-        error: 'AI Settings service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req as Request, res, 'ai-settings', { costs: [] });
     }
 
     try {
@@ -840,10 +813,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.generateComplianceReport) {
-      return res.status(503).json({
-        error: 'AI Settings service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req as Request, res, 'ai-settings', { report: null });
     }
 
     try {
@@ -935,10 +905,7 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.generateComplianceReport) {
-      return res.status(503).json({
-        error: 'AI Settings service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return respondServiceNotConfigured(req as Request, res, 'ai-settings');
     }
 
     try {

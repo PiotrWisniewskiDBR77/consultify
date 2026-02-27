@@ -1,6 +1,29 @@
 -- Bundle 04 (T018-T021) — Tools: Known Tools library + KB linking (top 10)
 -- PostgreSQL-native migration.
 
+-- Ensure base table exists (older DBs may not have 252_tools_system applied)
+CREATE TABLE IF NOT EXISTS tools (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    display_name TEXT NOT NULL,
+    category TEXT NOT NULL,
+    tool_type TEXT,
+    library_category TEXT,
+    description TEXT,
+    description_translations TEXT,
+    library_content_translations TEXT,
+    icon TEXT,
+    is_licensed INTEGER DEFAULT 0,
+    license_holder TEXT,
+    is_active INTEGER DEFAULT 1,
+    is_coming_soon INTEGER DEFAULT 0,
+    config_schema TEXT,
+    help_url TEXT,
+    tags_json TEXT DEFAULT '[]',
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ==========================================
 -- TOOLS LIBRARY FIELDS (extends existing `tools`)
 -- ==========================================

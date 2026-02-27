@@ -8,7 +8,7 @@ INSERT INTO report_builder_templates (
 )
 VALUES (
   'tpl-financial-analysis-export',
-  'SYSTEM',
+  NULL,
   'Financial Analysis Report',
   'Draft report from financial analysis. Covers overview, key metrics, and recommendations.',
   'FINANCIAL_ANALYSIS',

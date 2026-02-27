@@ -2,7 +2,7 @@
 -- Adds system templates for Interview and Tool source types
 
 -- Interview Summary Report template
-INSERT OR IGNORE INTO report_builder_templates (
+INSERT INTO report_builder_templates (
   id, organization_id, name, description, source_type, report_type,
   sections_json, default_options_json, is_system, is_default, is_public,
   created_by, created_at, updated_at
@@ -24,14 +24,27 @@ INSERT OR IGNORE INTO report_builder_templates (
     {"key":"next_steps","type":"action_plan","title":"Next Steps","order":7,"required":true,"defaultLength":"short","defaultLanguage":"business"}
   ]',
   '{"length":"medium","language":"business","verbosity":"standard"}',
-  1, 1, 0,
+  true, true, false,
   'system',
   CURRENT_TIMESTAMP,
   CURRENT_TIMESTAMP
-);
+)
+ON CONFLICT (id) DO UPDATE SET
+  organization_id = EXCLUDED.organization_id,
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  source_type = EXCLUDED.source_type,
+  report_type = EXCLUDED.report_type,
+  sections_json = EXCLUDED.sections_json,
+  default_options_json = EXCLUDED.default_options_json,
+  is_system = EXCLUDED.is_system,
+  is_default = EXCLUDED.is_default,
+  is_public = EXCLUDED.is_public,
+  created_by = EXCLUDED.created_by,
+  updated_at = EXCLUDED.updated_at;
 
 -- Interview Detailed Analysis template
-INSERT OR IGNORE INTO report_builder_templates (
+INSERT INTO report_builder_templates (
   id, organization_id, name, description, source_type, report_type,
   sections_json, default_options_json, is_system, is_default, is_public,
   created_by, created_at, updated_at
@@ -58,14 +71,27 @@ INSERT OR IGNORE INTO report_builder_templates (
     {"key":"appendix","type":"appendix","title":"Appendix: Interview Details","order":12,"required":false,"defaultLength":"long"}
   ]',
   '{"length":"long","language":"business","verbosity":"detailed"}',
-  1, 0, 0,
+  true, false, false,
   'system',
   CURRENT_TIMESTAMP,
   CURRENT_TIMESTAMP
-);
+)
+ON CONFLICT (id) DO UPDATE SET
+  organization_id = EXCLUDED.organization_id,
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  source_type = EXCLUDED.source_type,
+  report_type = EXCLUDED.report_type,
+  sections_json = EXCLUDED.sections_json,
+  default_options_json = EXCLUDED.default_options_json,
+  is_system = EXCLUDED.is_system,
+  is_default = EXCLUDED.is_default,
+  is_public = EXCLUDED.is_public,
+  created_by = EXCLUDED.created_by,
+  updated_at = EXCLUDED.updated_at;
 
 -- Tool Evaluation Report template
-INSERT OR IGNORE INTO report_builder_templates (
+INSERT INTO report_builder_templates (
   id, organization_id, name, description, source_type, report_type,
   sections_json, default_options_json, is_system, is_default, is_public,
   created_by, created_at, updated_at
@@ -87,14 +113,27 @@ INSERT OR IGNORE INTO report_builder_templates (
     {"key":"next_steps","type":"action_plan","title":"Next Steps","order":7,"required":true,"defaultLength":"short","defaultLanguage":"business"}
   ]',
   '{"length":"medium","language":"business","verbosity":"standard"}',
-  1, 1, 0,
+  true, true, false,
   'system',
   CURRENT_TIMESTAMP,
   CURRENT_TIMESTAMP
-);
+)
+ON CONFLICT (id) DO UPDATE SET
+  organization_id = EXCLUDED.organization_id,
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  source_type = EXCLUDED.source_type,
+  report_type = EXCLUDED.report_type,
+  sections_json = EXCLUDED.sections_json,
+  default_options_json = EXCLUDED.default_options_json,
+  is_system = EXCLUDED.is_system,
+  is_default = EXCLUDED.is_default,
+  is_public = EXCLUDED.is_public,
+  created_by = EXCLUDED.created_by,
+  updated_at = EXCLUDED.updated_at;
 
 -- Tool Comparison Report template
-INSERT OR IGNORE INTO report_builder_templates (
+INSERT INTO report_builder_templates (
   id, organization_id, name, description, source_type, report_type,
   sections_json, default_options_json, is_system, is_default, is_public,
   created_by, created_at, updated_at
@@ -115,14 +154,28 @@ INSERT OR IGNORE INTO report_builder_templates (
     {"key":"implementation_plan","type":"action_plan","title":"Implementation Plan","order":6,"required":true,"defaultLength":"medium","defaultLanguage":"business"}
   ]',
   '{"length":"medium","language":"business","verbosity":"standard"}',
-  1, 0, 0,
+  true, false, false,
   'system',
   CURRENT_TIMESTAMP,
   CURRENT_TIMESTAMP
-);
+)
+ON CONFLICT (id) DO UPDATE SET
+  organization_id = EXCLUDED.organization_id,
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  source_type = EXCLUDED.source_type,
+  report_type = EXCLUDED.report_type,
+  sections_json = EXCLUDED.sections_json,
+  default_options_json = EXCLUDED.default_options_json,
+  is_system = EXCLUDED.is_system,
+  is_default = EXCLUDED.is_default,
+  is_public = EXCLUDED.is_public,
+  created_by = EXCLUDED.created_by,
+  updated_at = EXCLUDED.updated_at;
 
 -- Add rejected/utilized columns to assessment_reports if missing
 -- (these columns are referenced by the new reject/utilize endpoints)
 -- SQLite doesn't support IF NOT EXISTS for ALTER TABLE, so we use a safe approach
 CREATE TABLE IF NOT EXISTS _migration_518_done (id INTEGER PRIMARY KEY);
-INSERT OR IGNORE INTO _migration_518_done VALUES (1);
+INSERT INTO _migration_518_done (id) VALUES (1)
+ON CONFLICT (id) DO NOTHING;

@@ -56,9 +56,8 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
   const handleExportPDF = async () => {
     setIsExporting(true);
     try {
-      // TODO: Implement PDF export via backend
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      toast('PDF export is being prepared. Use the copy button for now.', { icon: 'ℹ️' });
+      window.print();
+      toast.success('Use "Save as PDF" in the print dialog to export this summary.');
     } finally {
       setIsExporting(false);
     }

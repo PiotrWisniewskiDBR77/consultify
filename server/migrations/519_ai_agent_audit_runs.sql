@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS ai_agent_audit_runs (
   decision_context_json TEXT,
   selected_agent_ids_json TEXT,
   verdict_json TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_agent_audit_runs_org_time
@@ -23,12 +23,12 @@ CREATE INDEX IF NOT EXISTS idx_agent_audit_runs_conversation
   ON ai_agent_audit_runs (conversation_id);
 
 CREATE TABLE IF NOT EXISTS ai_agent_audit_reviews (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id BIGSERIAL PRIMARY KEY,
   run_id TEXT NOT NULL,
   agent_id TEXT NOT NULL,
   overreach TEXT,
   review_json TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(run_id) REFERENCES ai_agent_audit_runs(id) ON DELETE CASCADE
 );
 

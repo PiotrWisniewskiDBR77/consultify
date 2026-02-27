@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import { Api } from '../services/api';
 
@@ -19,6 +20,23 @@ export type CloudFile = {
 export const useCloudIntegrations = () => {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [activeProvider, setActiveProvider] = useState<CloudProviderId | null>(null);
+  const [connectedProviderIds, setConnectedProviderIds] = useState<CloudProviderId[]>([]);
+  const [isImplemented, setIsImplemented] = useState(false);
+
+  const refreshProviders = useCallback(async () => {
+    try {
+      const result = await Api.getCloudProviders();
+      const providers = Array.isArray((result as any)?.providers) ? (result as any).providers : [];
+      const connected = providers
+        .filter((p: any) => p.connected)
+        .map((p: any) => p.id as CloudProviderId);
+      setConnectedProviderIds(connected);
+      setIsImplemented(true);
+    } catch {
+      setConnectedProviderIds([]);
+      setIsImplemented(false);
+    }
+  }, []);
 
   const openFilePicker = useCallback((providerId: CloudProviderId) => {
     setActiveProvider(providerId);
@@ -29,9 +47,13 @@ export const useCloudIntegrations = () => {
     setIsPickerOpen(false);
   }, []);
 
-  const connectProvider = useCallback((_providerId: CloudProviderId) => {
-    // Stub - no-op for now
-  }, []);
+  const connectProvider = useCallback(
+    async (_providerId: CloudProviderId) => {
+      await refreshProviders();
+      toast('Connect cloud source in Integrations first, then retry.', { icon: 'ℹ️' });
+    },
+    [refreshProviders]
+  );
 
   const selectFile = useCallback(
     async (file: CloudFile, providerId?: CloudProviderId): Promise<File | null> => {
@@ -50,14 +72,18 @@ export const useCloudIntegrations = () => {
     []
   );
 
+  useEffect(() => {
+    void refreshProviders();
+  }, [refreshProviders]);
+
   return {
-    connectedProviderIds: [] as CloudProviderId[],
+    connectedProviderIds,
     openFilePicker,
     connectProvider,
     isPickerOpen,
     activeProvider,
     closeFilePicker,
     selectFile,
-    isImplemented: false, // Flag indicating backend is currently stubbed
+    isImplemented,
   };
 };

@@ -13,6 +13,25 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
 
+const serviceFallback = (req: AuthRequest, res: Response, readPayload?: Record<string, unknown>) => {
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    return res.status(200).json({
+      success: true,
+      status: 'not_configured',
+      feature: 'ai-ab-testing',
+      writable: false,
+      ...(readPayload || {}),
+    });
+  }
+  return res.status(501).json({
+    success: false,
+    error: 'Feature not configured in this deployment',
+    code: 'FEATURE_NOT_CONFIGURED',
+    feature: 'ai-ab-testing',
+    writable: false,
+  });
+};
+
 // Service interfaces
 interface ABTestingServiceInterface {
   listExperiments?: (filters: { status?: string; promptId?: string }) => Promise<
@@ -55,7 +74,7 @@ router.get(
   requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.listExperiments) {
-      return res.status(503).json({ error: 'AB Testing service not available' });
+      return serviceFallback(req, res, { data: [] });
     }
 
     try {
@@ -93,7 +112,7 @@ router.post(
   requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.createExperiment) {
-      return res.status(503).json({ error: 'AB Testing service not available' });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -128,7 +147,7 @@ router.get(
   requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.getExperimentStats) {
-      return res.status(503).json({ error: 'AB Testing service not available' });
+      return serviceFallback(req, res, { data: null });
     }
 
     try {
@@ -155,7 +174,7 @@ router.post(
   requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.startExperiment) {
-      return res.status(503).json({ error: 'AB Testing service not available' });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -187,7 +206,7 @@ router.post(
   requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.stopExperiment) {
-      return res.status(503).json({ error: 'AB Testing service not available' });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -214,7 +233,7 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.recordOutcome) {
-      return res.status(503).json({ error: 'AB Testing service not available' });
+      return serviceFallback(req, res);
     }
 
     try {

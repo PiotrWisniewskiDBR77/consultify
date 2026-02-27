@@ -29,11 +29,12 @@ const isSchemaMissingError = (error: unknown): boolean => {
 };
 
 const respondFeatureUnavailable = (res: Response, detail?: string) =>
-  res.status(503).json({
-    error: 'Feature unavailable',
-    code: 'FEATURE_UNAVAILABLE',
+  res.status(501).json({
+    error: 'Feature not configured in this deployment',
+    code: 'FEATURE_NOT_CONFIGURED',
     feature: FEATURE_NAME,
     detail,
+    writable: false,
   });
 
 /**
@@ -64,7 +65,13 @@ router.get(
       res.json(members || []);
     } catch (error) {
       if (isSchemaMissingError(error)) {
-        return respondFeatureUnavailable(res, 'schema missing');
+        return res.status(200).json({
+          success: true,
+          feature: FEATURE_NAME,
+          status: 'not_configured',
+          writable: false,
+          data: [],
+        });
       }
       throw error;
     }

@@ -53,6 +53,24 @@ const upload = multer({
   },
 });
 
+const featureReadFallback = (res: Response, data: unknown = []) =>
+  res.status(200).json({
+    success: true,
+    status: 'not_configured',
+    feature: 'documents',
+    writable: false,
+    data,
+  });
+
+const featureWriteBlocked = (res: Response) =>
+  res.status(501).json({
+    success: false,
+    error: 'Feature not configured in this deployment',
+    code: 'FEATURE_NOT_CONFIGURED',
+    feature: 'documents',
+    writable: false,
+  });
+
 /**
  * GET /api/documents/project/:projectId
  * List project documents
@@ -62,11 +80,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getProjectDocuments) {
-      return res.status(503).json({
-        error: 'Feature unavailable',
-        code: 'FEATURE_UNAVAILABLE',
-        feature: 'documents',
-      });
+      return featureReadFallback(res, []);
     }
 
     try {
@@ -89,11 +103,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getUserDocuments) {
-      return res.status(503).json({
-        error: 'Feature unavailable',
-        code: 'FEATURE_UNAVAILABLE',
-        feature: 'documents',
-      });
+      return featureReadFallback(res, []);
     }
 
     try {
@@ -121,11 +131,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getAccessibleDocuments) {
-      return res.status(503).json({
-        error: 'Feature unavailable',
-        code: 'FEATURE_UNAVAILABLE',
-        feature: 'documents',
-      });
+      return featureReadFallback(res, []);
     }
 
     try {
@@ -192,11 +198,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getDocumentById) {
-      return res.status(503).json({
-        error: 'Feature unavailable',
-        code: 'FEATURE_UNAVAILABLE',
-        feature: 'documents',
-      });
+      return featureReadFallback(res, null);
     }
 
     try {
@@ -221,10 +223,12 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getDocumentById) {
-      return res.status(503).json({
-        error: 'Feature unavailable',
-        code: 'FEATURE_UNAVAILABLE',
+      return res.status(501).json({
+        success: false,
+        error: 'Document download is not configured in this deployment',
+        code: 'FEATURE_NOT_CONFIGURED',
         feature: 'documents',
+        writable: false,
       });
     }
 
@@ -261,11 +265,7 @@ router.post(
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
-      return res.status(503).json({
-        error: 'Feature unavailable',
-        code: 'FEATURE_UNAVAILABLE',
-        feature: 'documents',
-      });
+      return featureWriteBlocked(res);
     }
 
     try {
@@ -319,11 +319,7 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.moveToProject) {
-      return res.status(503).json({
-        error: 'Feature unavailable',
-        code: 'FEATURE_UNAVAILABLE',
-        feature: 'documents',
-      });
+      return featureWriteBlocked(res);
     }
 
     try {
@@ -359,11 +355,7 @@ router.delete(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.deleteDocument) {
-      return res.status(503).json({
-        error: 'Feature unavailable',
-        code: 'FEATURE_UNAVAILABLE',
-        feature: 'documents',
-      });
+      return featureWriteBlocked(res);
     }
 
     try {

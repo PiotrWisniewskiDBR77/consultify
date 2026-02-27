@@ -991,11 +991,12 @@ router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
     }
 
     if (!llmService) {
-      return res.status(503).json({
+      return res.status(501).json({
         success: false,
         error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
-        message: 'AI report generation is not available (LLM not configured)',
+        code: 'FEATURE_NOT_CONFIGURED',
+        message: 'AI report generation is not configured (LLM missing)',
+        writable: false,
       });
     }
 
@@ -1056,11 +1057,12 @@ Requirements:
 
       const aiContent = String(result?.content || '');
       if (aiContent.length < 50) {
-        return res.status(503).json({
+        return res.status(501).json({
           success: false,
           error: 'SERVICE_UNAVAILABLE',
-          code: 'FEATURE_UNAVAILABLE',
+          code: 'FEATURE_NOT_CONFIGURED',
           message: 'AI report generation returned empty content',
+          writable: false,
         });
       }
 
@@ -1146,11 +1148,12 @@ Requirements:
     return res.json({ success: true, reportId, templateId: resolvedTemplateId });
   } catch (err: any) {
     logger.error('[AssessmentReports] Error generating report:', err);
-    return res.status(503).json({
+    return res.status(501).json({
       success: false,
       error: 'SERVICE_UNAVAILABLE',
-      code: 'FEATURE_UNAVAILABLE',
+      code: 'FEATURE_NOT_CONFIGURED',
       message: 'AI report generation is unavailable',
+      writable: false,
       details: { message: err?.message || String(err) },
     });
   }
@@ -1414,11 +1417,12 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
     }
 
     if (!llmService) {
-      return res.status(503).json({
+      return res.status(501).json({
         success: false,
         error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
-        message: 'AI report editing is not available (LLM not configured)',
+        code: 'FEATURE_NOT_CONFIGURED',
+        message: 'AI report editing is not configured (LLM missing)',
+        writable: false,
       });
     }
 
@@ -1492,11 +1496,12 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
     }
 
     if (attempted && next === current) {
-      return res.status(503).json({
+      return res.status(501).json({
         success: false,
         error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
+        code: 'FEATURE_NOT_CONFIGURED',
         message: failedReason || 'AI action did not produce content',
+        writable: false,
       });
     }
 
@@ -1511,11 +1516,12 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
     return res.json({ success: true, content: next, version: nextVersion });
   } catch (err: any) {
     logger.error('[AssessmentReports] Error AI action:', err);
-    return res.status(503).json({
+    return res.status(501).json({
       success: false,
       error: 'SERVICE_UNAVAILABLE',
-      code: 'FEATURE_UNAVAILABLE',
+      code: 'FEATURE_NOT_CONFIGURED',
       message: 'AI action failed',
+      writable: false,
       details: { message: err?.message || String(err) },
     });
   }
@@ -1586,11 +1592,12 @@ router.post('/:reportId/ai-edit', async (req: AuthRequest, res: Response) => {
     }
 
     if (!llmService) {
-      return res.status(503).json({
+      return res.status(501).json({
         success: false,
         error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
-        message: 'AI editing is not available (LLM not configured)',
+        code: 'FEATURE_NOT_CONFIGURED',
+        message: 'AI editing is not configured (LLM missing)',
+        writable: false,
       });
     }
 
@@ -1613,19 +1620,21 @@ router.post('/:reportId/ai-edit', async (req: AuthRequest, res: Response) => {
 
       editedContent = String(result?.content || currentContent);
       if (editedContent.length < 20) {
-        return res.status(503).json({
+        return res.status(501).json({
           success: false,
           error: 'SERVICE_UNAVAILABLE',
-          code: 'FEATURE_UNAVAILABLE',
+          code: 'FEATURE_NOT_CONFIGURED',
           message: 'AI editing returned empty content',
+          writable: false,
         });
       }
     } catch (callErr: any) {
-      return res.status(503).json({
+      return res.status(501).json({
         success: false,
         error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
+        code: 'FEATURE_NOT_CONFIGURED',
         message: 'AI editing failed',
+        writable: false,
         details: { message: callErr?.message || String(callErr) },
       });
     }
@@ -1642,11 +1651,12 @@ router.post('/:reportId/ai-edit', async (req: AuthRequest, res: Response) => {
     return res.json({ success: true, content: editedContent, version: nextVersion });
   } catch (err: any) {
     logger.error('[AssessmentReports] Error ai-edit:', err);
-    return res.status(503).json({
+    return res.status(501).json({
       success: false,
       error: 'SERVICE_UNAVAILABLE',
-      code: 'FEATURE_UNAVAILABLE',
+      code: 'FEATURE_NOT_CONFIGURED',
       message: 'AI editing failed',
+      writable: false,
       details: { message: err?.message || String(err) },
     });
   }

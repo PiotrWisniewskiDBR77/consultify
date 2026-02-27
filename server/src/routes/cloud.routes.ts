@@ -121,6 +121,37 @@ router.get('/sources/:id/files', verifyToken, async (req: AuthRequest, res: Resp
 });
 
 /**
+ * GET /api/cloud/sources/:id/files/:fileId/download
+ * Download file bytes from a cloud source
+ */
+router.get('/sources/:id/files/:fileId/download', verifyToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const organizationId = req.organizationId;
+    if (!organizationId) {
+      return res.status(400).json({ error: 'Organization context required' });
+    }
+
+    const { downloadCloudFile } = await import('../services/cloudDataService.js');
+    const result = await downloadCloudFile(req.params.id, organizationId, req.params.fileId);
+
+    res.setHeader('Content-Type', result.mimeType || 'application/octet-stream');
+    const safeFileName = String(result.fileName || 'download.bin').replace(/"/g, '');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeFileName}"`);
+    return res.send(result.content);
+  } catch (err: any) {
+    const message = String(err?.message || 'Failed to download cloud file');
+    logger.error('[CloudRoutes] Failed to download file:', message);
+    if (message.includes('not found')) {
+      return res.status(404).json({ error: 'Cloud source or file not found' });
+    }
+    if (message.includes('not supported')) {
+      return res.status(501).json({ error: message, code: 'CLOUD_NOT_IMPLEMENTED' });
+    }
+    return res.status(500).json({ error: 'Failed to download cloud file' });
+  }
+});
+
+/**
  * POST /api/cloud/sources/:id/upload
  * Upload a file to a cloud source.
  *

@@ -62,10 +62,12 @@ router.get(
   '/pending',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!proactiveNudges?.getPendingNudges) {
-      return res.status(503).json({
-        success: false,
-        error: 'Proactive nudges service not available',
-        code: 'FEATURE_UNAVAILABLE',
+      return res.json({
+        success: true,
+        data: [],
+        status: 'not_configured',
+        feature: 'ai-nudges',
+        writable: false,
       });
     }
 
@@ -104,10 +106,11 @@ router.post(
   '/track',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!proactiveNudges?.trackActivity || !proactiveNudges?.checkAndGenerateNudges) {
-      return res.status(503).json({
+      return res.status(501).json({
         success: false,
-        error: 'Proactive nudges service not available',
-        code: 'FEATURE_UNAVAILABLE',
+        error: 'Proactive nudges service is not configured',
+        code: 'FEATURE_NOT_CONFIGURED',
+        writable: false,
       });
     }
 
@@ -156,10 +159,11 @@ router.post(
   '/dismiss',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!proactiveNudges?.dismissNudge) {
-      return res.status(503).json({
+      return res.status(501).json({
         success: false,
-        error: 'Proactive nudges service not available',
-        code: 'FEATURE_UNAVAILABLE',
+        error: 'Proactive nudges service is not configured',
+        code: 'FEATURE_NOT_CONFIGURED',
+        writable: false,
       });
     }
 
@@ -204,10 +208,11 @@ router.post(
   '/acted',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!proactiveNudges?.markNudgeActed) {
-      return res.status(503).json({
+      return res.status(501).json({
         success: false,
-        error: 'Proactive nudges service not available',
-        code: 'FEATURE_UNAVAILABLE',
+        error: 'Proactive nudges service is not configured',
+        code: 'FEATURE_NOT_CONFIGURED',
+        writable: false,
       });
     }
 
@@ -252,10 +257,11 @@ router.post(
   '/suppress',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!proactiveNudges?.suppressNudgeType) {
-      return res.status(503).json({
+      return res.status(501).json({
         success: false,
-        error: 'Proactive nudges service not available',
-        code: 'FEATURE_UNAVAILABLE',
+        error: 'Proactive nudges service is not configured',
+        code: 'FEATURE_NOT_CONFIGURED',
+        writable: false,
       });
     }
 

@@ -123,19 +123,25 @@ CREATE INDEX IF NOT EXISTS idx_report_schedules_active ON report_schedules(is_ac
 -- TRIGGER: Update updated_at on imported_reports
 -- ============================================
 
-CREATE TRIGGER IF NOT EXISTS update_imported_reports_timestamp 
-    AFTER UPDATE ON imported_reports
-    FOR EACH ROW
-    BEGIN
-        UPDATE imported_reports SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-    END;
+CREATE OR REPLACE FUNCTION set_updated_at_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-CREATE TRIGGER IF NOT EXISTS update_report_schedules_timestamp
-    AFTER UPDATE ON report_schedules
-    FOR EACH ROW
-    BEGIN
-        UPDATE report_schedules SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-    END;
+DROP TRIGGER IF EXISTS update_imported_reports_timestamp ON imported_reports;
+CREATE TRIGGER update_imported_reports_timestamp
+BEFORE UPDATE ON imported_reports
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at_timestamp();
+
+DROP TRIGGER IF EXISTS update_report_schedules_timestamp ON report_schedules;
+CREATE TRIGGER update_report_schedules_timestamp
+BEFORE UPDATE ON report_schedules
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at_timestamp();
 
 -- ============================================
 -- SCHEDULE EXECUTIONS TABLE (for execution history)

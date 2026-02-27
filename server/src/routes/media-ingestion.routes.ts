@@ -31,10 +31,11 @@ router.get('/supported-types', async (req, res) => {
   try {
     const mediaIngestionService = await getMediaIngestionService();
     if (!mediaIngestionService?.getSupportedTypes) {
-      return res.status(503).json({
-        success: false,
-        error: 'Media ingestion service unavailable',
-        code: 'FEATURE_UNAVAILABLE',
+      return res.json({
+        success: true,
+        supportedTypes: [],
+        status: 'not_configured',
+        writable: false,
       });
     }
     const supportedTypes = await mediaIngestionService.getSupportedTypes();
@@ -44,10 +45,11 @@ router.get('/supported-types', async (req, res) => {
     });
   } catch (error) {
     logger.error('Error fetching supported types:', error);
-    res.status(503).json({
-      success: false,
-      error: 'Media ingestion service unavailable',
-      code: 'FEATURE_UNAVAILABLE',
+    res.json({
+      success: true,
+      supportedTypes: [],
+      status: 'not_configured',
+      writable: false,
     });
   }
 });
@@ -59,10 +61,11 @@ router.get('/capabilities', async (req, res) => {
   try {
     const mediaIngestionService = await getMediaIngestionService();
     if (!mediaIngestionService?.getCapabilities) {
-      return res.status(503).json({
-        success: false,
-        error: 'Media ingestion service unavailable',
-        code: 'FEATURE_UNAVAILABLE',
+      return res.json({
+        success: true,
+        capabilities: { batch: false, youtube: false, url: false, validate: false },
+        status: 'not_configured',
+        writable: false,
       });
     }
     const capabilities = await mediaIngestionService.getCapabilities();
@@ -72,10 +75,11 @@ router.get('/capabilities', async (req, res) => {
     });
   } catch (error) {
     logger.error('Error fetching capabilities:', error);
-    res.status(503).json({
-      success: false,
-      error: 'Media ingestion service unavailable',
-      code: 'FEATURE_UNAVAILABLE',
+    res.json({
+      success: true,
+      capabilities: { batch: false, youtube: false, url: false, validate: false },
+      status: 'not_configured',
+      writable: false,
     });
   }
 });
@@ -91,20 +95,22 @@ router.post('/validate', async (req, res) => {
     }
     const mediaIngestionService = await getMediaIngestionService();
     if (!mediaIngestionService?.validateMedia) {
-      return res.status(503).json({
+      return res.status(501).json({
         success: false,
-        error: 'Media ingestion service unavailable',
-        code: 'FEATURE_UNAVAILABLE',
+        error: 'Media ingestion validation is not configured',
+        code: 'FEATURE_NOT_CONFIGURED',
+        writable: false,
       });
     }
     const result = await mediaIngestionService.validateMedia(filename, mimeType);
     res.json(result);
   } catch (error) {
     logger.error('Error validating media:', error);
-    res.status(503).json({
+    res.status(501).json({
       success: false,
-      error: 'Media ingestion service unavailable',
-      code: 'FEATURE_UNAVAILABLE',
+      error: 'Media ingestion validation is not configured',
+      code: 'FEATURE_NOT_CONFIGURED',
+      writable: false,
     });
   }
 });
@@ -114,26 +120,29 @@ router.post('/validate', async (req, res) => {
 // ---------------------------------------------------------------------------
 
 router.post('/ingest/batch', async (_req, res) => {
-  return res.status(503).json({
+  return res.status(501).json({
     success: false,
-    error: 'Media ingestion not available',
-    code: 'FEATURE_UNAVAILABLE',
+    error: 'Media ingestion is not configured',
+    code: 'FEATURE_NOT_CONFIGURED',
+    writable: false,
   });
 });
 
 router.post('/ingest/youtube', async (_req, res) => {
-  return res.status(503).json({
+  return res.status(501).json({
     success: false,
-    error: 'Media ingestion not available',
-    code: 'FEATURE_UNAVAILABLE',
+    error: 'Media ingestion is not configured',
+    code: 'FEATURE_NOT_CONFIGURED',
+    writable: false,
   });
 });
 
 router.post('/ingest/url', async (_req, res) => {
-  return res.status(503).json({
+  return res.status(501).json({
     success: false,
-    error: 'Media ingestion not available',
-    code: 'FEATURE_UNAVAILABLE',
+    error: 'Media ingestion is not configured',
+    code: 'FEATURE_NOT_CONFIGURED',
+    writable: false,
   });
 });
 

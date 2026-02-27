@@ -15,12 +15,13 @@ const router = Router();
 const EXPORT_FEATURE = 'management-reports-export';
 
 const respondFeatureUnavailable = (res: Response, detail?: string) =>
-  res.status(503).json({
+  res.status(501).json({
     success: false,
-    error: 'Feature unavailable',
-    code: 'FEATURE_UNAVAILABLE',
+    error: 'Feature not configured in this deployment',
+    code: 'FEATURE_NOT_CONFIGURED',
     feature: EXPORT_FEATURE,
     detail,
+    writable: false,
   });
 
 router.use(verifyToken);

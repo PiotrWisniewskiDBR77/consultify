@@ -166,15 +166,36 @@ ${colors.cyan}╔═════════════════════
 
 // Get changed files from git
 function getChangedFiles(): string[] {
+  const base = process.env.TEST_CHANGED_BASE || process.env.GIT_BASE || 'main';
   try {
-    const stdout = execSync('git diff --name-only HEAD~1 HEAD', { encoding: 'utf-8' });
+    const mergeBase = execSync(`git merge-base ${base} HEAD`, { encoding: 'utf-8' }).trim();
+    const stdout = execSync(`git diff --name-only --diff-filter=ACMR ${mergeBase}...HEAD`, {
+      encoding: 'utf-8',
+    });
     return stdout
       .split('\n')
-      .filter((f) => f.endsWith('.ts') || f.endsWith('.tsx') || f.endsWith('.js'));
+      .map((f) => f.trim())
+      .filter((f) => f.length > 0);
   } catch {
-    console.warn(`${colors.yellow}⚠ Could not determine changed files from git${colors.reset}`);
-    return [];
+    try {
+      const stdout = execSync('git diff --cached --name-only --diff-filter=ACMR', {
+        encoding: 'utf-8',
+      });
+      return stdout
+        .split('\n')
+        .map((f) => f.trim())
+        .filter((f) => f.length > 0);
+    } catch {
+      console.warn(`${colors.yellow}⚠ Could not determine changed files from git${colors.reset}`);
+      return [];
+    }
   }
+}
+
+function isTestFile(filePath: string): boolean {
+  if (/\.(test|spec)\.(ts|tsx|js|jsx)$/.test(filePath)) return true;
+  if (/\.(test|spec)$/.test(filePath)) return true; // legacy extensionless
+  return false;
 }
 
 // Get previously failed tests
@@ -292,10 +313,6 @@ function buildVitestCommand(testPath: string, options: RunnerOptions): string[] 
   if (options.verbose) {
     args.push('--reporter=verbose');
   }
-  if (options.changedOnly) {
-    args.push('--changed');
-  }
-
   return args;
 }
 
@@ -306,6 +323,15 @@ async function main(): Promise<void> {
 
   const results: TestResult[] = [];
   const failedTests: string[] = [];
+
+  const changedFiles = options.changedOnly ? getChangedFiles() : [];
+  const changedTestFiles = options.changedOnly ? changedFiles.filter(isTestFile) : [];
+  if (options.changedOnly && changedTestFiles.length === 0) {
+    console.log(
+      `${colors.yellow}⚠ No changed test files detected (merge-base: ${process.env.TEST_CHANGED_BASE || process.env.GIT_BASE || 'main'}). Running full suite.${colors.reset}`
+    );
+    options.changedOnly = false;
+  }
 
   // Determine which suites to run
   const suitesToRun: Array<{
@@ -371,7 +397,52 @@ async function main(): Promise<void> {
   for (const suite of suitesToRun) {
     let result: TestResult;
 
-    if (suite.type === 'playwright') {
+    if (options.changedOnly) {
+      const suiteBasePath =
+        suite.type === 'playwright'
+          ? 'tests/e2e'
+          : suite.type === 'vitest-config'
+            ? suite.name === 'Security'
+              ? 'tests/security'
+              : suite.name === 'Performance'
+                ? 'tests/performance'
+                : ''
+            : suite.path;
+
+      const suiteChanged = suiteBasePath
+        ? changedTestFiles.filter((f) => f.startsWith(suiteBasePath))
+        : [];
+
+      if (suiteChanged.length === 0) {
+        console.log(
+          `${colors.yellow}⚠ Skipping ${suite.name} (no changed tests in ${suiteBasePath})${colors.reset}`
+        );
+        continue;
+      }
+
+      if (suite.type === 'playwright') {
+        const args = ['playwright', 'test', ...suiteChanged];
+        if (options.shard) {
+          args.push(`--shard=${options.shard}`);
+        }
+        result = await runTests(suite.name, 'npx', args, options);
+      } else {
+        const args = ['vitest', 'run', ...suiteChanged];
+        if (options.coverage) {
+          args.push('--coverage');
+        }
+        if (options.watch) {
+          args[1] = 'watch';
+        }
+        if (options.shard) {
+          args.push(`--shard=${options.shard}`);
+        }
+        if (options.verbose) {
+          args.push('--reporter=verbose');
+        }
+        result = await runTests(suite.name, 'npx', args, options);
+      }
+    } else if (suite.type === 'playwright') {
       const args = ['playwright', 'test'];
       if (options.shard) {
         args.push(`--shard=${options.shard}`);

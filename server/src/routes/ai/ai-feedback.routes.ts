@@ -437,9 +437,10 @@ router.post(
   '/response',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!adaptiveResponseService?.processFeedback) {
-      return res.status(503).json({
-        error: 'Adaptive response service not available',
-        code: 'FEATURE_UNAVAILABLE',
+      return res.status(501).json({
+        error: 'Adaptive response service is not configured',
+        code: 'FEATURE_NOT_CONFIGURED',
+        writable: false,
       });
     }
 
@@ -532,9 +533,18 @@ router.get(
       !adaptiveResponseService?.getUserFeedbackStats ||
       !adaptiveResponseService?.getRecommendedMode
     ) {
-      return res.status(503).json({
-        error: 'Adaptive response service not available',
-        code: 'FEATURE_UNAVAILABLE',
+      return res.json({
+        success: true,
+        stats: {
+          total_feedback: 0,
+          positive_count: 0,
+          negative_count: 0,
+          satisfaction_rate: null,
+        },
+        recommendedMode: 'standard',
+        status: 'not_configured',
+        feature: 'ai-feedback-response',
+        writable: false,
       });
     }
 

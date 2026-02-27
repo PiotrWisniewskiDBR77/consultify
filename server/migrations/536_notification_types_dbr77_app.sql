@@ -1,6 +1,23 @@
 -- Migration 536: Add product/app communication notification types (DBR77 + billing/limits)
 -- These types are used as App→Human and DBR77→Human communication channel.
 
+-- Ensure base table exists (older DBs may not have 257_notification_system applied)
+CREATE TABLE IF NOT EXISTS notification_types (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  category TEXT NOT NULL,
+  display_name TEXT NOT NULL,
+  description TEXT,
+  default_channels TEXT NOT NULL,
+  is_user_configurable BOOLEAN DEFAULT TRUE,
+  is_critical BOOLEAN DEFAULT FALSE,
+  template_subject TEXT,
+  template_body TEXT,
+  icon TEXT,
+  color TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 INSERT OR IGNORE INTO notification_types (id, name, category, display_name, default_channels, icon, is_critical)
 VALUES
   -- App / Billing / Limits comms

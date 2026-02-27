@@ -64,6 +64,12 @@ export type CloudUploadResult = {
   url?: string;
 };
 
+export type CloudDownloadResult = {
+  fileName: string;
+  mimeType: string;
+  content: Buffer;
+};
+
 export async function listCloudSources(organizationId: string): Promise<CloudSource[]> {
   const db = await getDb();
   const rows = (await db.all(
@@ -172,6 +178,98 @@ async function listGoogleDriveFiles(source: CloudSource, folderId?: string): Pro
     path: f.name,
     isFolder: f.mimeType === 'application/vnd.google-apps.folder',
   }));
+}
+
+export async function downloadCloudFile(
+  sourceId: string,
+  organizationId: string,
+  fileId: string
+): Promise<CloudDownloadResult> {
+  const source = await getCloudSource(sourceId, organizationId);
+  if (!source) throw new Error('Cloud source not found');
+
+  if (source.provider === 'google_drive') {
+    return downloadGoogleDriveFile(source, fileId);
+  }
+
+  throw new Error(`Download not supported for provider ${source.provider}`);
+}
+
+async function downloadGoogleDriveFile(
+  source: CloudSource,
+  fileId: string
+): Promise<CloudDownloadResult> {
+  if (!source.accessToken) {
+    throw new Error('Google Drive access token not configured');
+  }
+
+  const metadataRes = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?fields=id,name,mimeType`,
+    {
+      headers: { Authorization: `Bearer ${source.accessToken}` },
+    }
+  );
+  if (!metadataRes.ok) {
+    const errText = await metadataRes.text();
+    logger.error(`[CloudData] Google Drive metadata error: ${errText}`);
+    throw new Error(`Google Drive metadata error: ${metadataRes.status}`);
+  }
+
+  const metadata = (await metadataRes.json()) as { name?: string; mimeType?: string };
+  const mimeType = metadata.mimeType || 'application/octet-stream';
+  const fileName = metadata.name || `cloud-file-${fileId}`;
+  const isGoogleWorkspaceDoc = mimeType.startsWith('application/vnd.google-apps');
+
+  const exportMap: Record<string, { mimeType: string; extension: string }> = {
+    'application/vnd.google-apps.document': {
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      extension: '.docx',
+    },
+    'application/vnd.google-apps.spreadsheet': {
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      extension: '.xlsx',
+    },
+    'application/vnd.google-apps.presentation': {
+      mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      extension: '.pptx',
+    },
+    'application/vnd.google-apps.drawing': {
+      mimeType: 'image/png',
+      extension: '.png',
+    },
+  };
+
+  let downloadUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media`;
+  let responseMimeType = mimeType;
+  let responseFileName = fileName;
+
+  if (isGoogleWorkspaceDoc) {
+    const exportTarget = exportMap[mimeType];
+    if (!exportTarget) {
+      throw new Error(`Unsupported Google Workspace file type for export: ${mimeType}`);
+    }
+    downloadUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}/export?mimeType=${encodeURIComponent(exportTarget.mimeType)}`;
+    responseMimeType = exportTarget.mimeType;
+    if (!responseFileName.toLowerCase().endsWith(exportTarget.extension)) {
+      responseFileName = `${responseFileName}${exportTarget.extension}`;
+    }
+  }
+
+  const contentRes = await fetch(downloadUrl, {
+    headers: { Authorization: `Bearer ${source.accessToken}` },
+  });
+  if (!contentRes.ok) {
+    const errText = await contentRes.text();
+    logger.error(`[CloudData] Google Drive download error: ${errText}`);
+    throw new Error(`Google Drive download error: ${contentRes.status}`);
+  }
+
+  const arrayBuffer = await contentRes.arrayBuffer();
+  return {
+    fileName: responseFileName,
+    mimeType: responseMimeType,
+    content: Buffer.from(arrayBuffer),
+  };
 }
 
 export async function uploadCloudFile(input: {
@@ -617,6 +715,7 @@ export default {
   createCloudSource,
   deleteCloudSource,
   listCloudFiles,
+  downloadCloudFile,
   uploadCloudFile,
   startImportJob,
   getImportJob,

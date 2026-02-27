@@ -1,6 +1,25 @@
 -- 553: OAuth V2 enhancements for T110-T112
 -- Adds missing columns to oauth_links for V2 connect flow
 
+-- Ensure base table exists (older DBs may not have security module baseline)
+CREATE TABLE IF NOT EXISTS oauth_links (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    provider_user_id TEXT NOT NULL,
+    provider_email TEXT,
+    access_token_encrypted TEXT,
+    refresh_token_encrypted TEXT,
+    token_expires_at TIMESTAMPTZ,
+    linked_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    last_login_at TIMESTAMPTZ,
+    display_name TEXT,
+    revoked_at TIMESTAMPTZ,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE(user_id, provider),
+    UNIQUE(provider, provider_user_id)
+);
+
 DO $$
 BEGIN
     -- linked_at may already exist from 055, but ensure it's there

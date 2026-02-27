@@ -46,7 +46,11 @@ router.post(
       };
 
       if (!knowledgeIndexer?.initialize || !knowledgeIndexer?.indexToolKnowledgePacks) {
-        return res.status(503).json({ error: 'KnowledgeIndexer not available' });
+        return res.status(501).json({
+          error: 'KnowledgeIndexer is not configured in this deployment',
+          code: 'FEATURE_NOT_CONFIGURED',
+          writable: false,
+        });
       }
 
       const ok = await knowledgeIndexer.initialize();

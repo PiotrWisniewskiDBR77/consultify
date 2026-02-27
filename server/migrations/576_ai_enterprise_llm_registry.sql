@@ -78,12 +78,18 @@ CREATE TABLE IF NOT EXISTS ai_purpose_assignments (
   priority INTEGER DEFAULT 0,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(organization_id, purpose, provider_id, COALESCE(model_id, ''))
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_ai_purpose_assignments_purpose ON ai_purpose_assignments(purpose);
 CREATE INDEX IF NOT EXISTS idx_ai_purpose_assignments_org ON ai_purpose_assignments(organization_id);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_ai_purpose_assignments_scope
+  ON ai_purpose_assignments (
+    COALESCE(organization_id, ''),
+    purpose,
+    provider_id,
+    COALESCE(model_id, '')
+  );
 
 -- -------------------------------------------------------------------
 -- 5) Pricing snapshots (versioned)

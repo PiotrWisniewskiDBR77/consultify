@@ -4,8 +4,10 @@
 -- Integrated P&L + Balance Sheet + Cash Flow
 -- ============================================
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE TABLE IF NOT EXISTS financial_models (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   organization_id TEXT NOT NULL,
   project_id TEXT,
   initiative_id TEXT,
@@ -34,7 +36,7 @@ CREATE INDEX IF NOT EXISTS idx_fm_status ON financial_models(status);
 
 -- Economic events that drive the model
 CREATE TABLE IF NOT EXISTS financial_model_events (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   model_id TEXT NOT NULL,
   event_type TEXT NOT NULL CHECK (event_type IN (
     'revenue', 'cogs', 'opex',
@@ -67,7 +69,7 @@ CREATE INDEX IF NOT EXISTS idx_fme_type ON financial_model_events(event_type);
 
 -- Computed output snapshots per period
 CREATE TABLE IF NOT EXISTS financial_model_outputs (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   model_id TEXT NOT NULL,
   period_date DATE NOT NULL,
   period_label TEXT,
@@ -86,7 +88,7 @@ CREATE INDEX IF NOT EXISTS idx_fmo_stmt ON financial_model_outputs(statement_typ
 
 -- Validation results per period
 CREATE TABLE IF NOT EXISTS financial_model_validations (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   model_id TEXT NOT NULL,
   period_date DATE,
   check_code TEXT NOT NULL,

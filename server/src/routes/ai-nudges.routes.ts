@@ -12,6 +12,25 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
 
+const serviceFallback = (req: AuthRequest, res: Response) => {
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    return res.status(200).json({
+      success: true,
+      data: [],
+      status: 'not_configured',
+      feature: 'ai-nudges',
+      writable: false,
+    });
+  }
+  return res.status(501).json({
+    success: false,
+    error: 'Feature not configured in this deployment',
+    code: 'FEATURE_NOT_CONFIGURED',
+    feature: 'ai-nudges',
+    writable: false,
+  });
+};
+
 // Service interfaces
 interface ProactiveNudgesInterface {
   getPendingNudges?: (userId: string, organizationId: string) => Promise<unknown[]>;
@@ -58,10 +77,7 @@ router.get(
   '/pending',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!proactiveNudges?.getPendingNudges) {
-      return res.status(503).json({
-        success: false,
-        error: 'Proactive nudges service not available',
-      });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -99,10 +115,7 @@ router.post(
   '/track',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!proactiveNudges?.trackActivity || !proactiveNudges?.checkAndGenerateNudges) {
-      return res.status(503).json({
-        success: false,
-        error: 'Proactive nudges service not available',
-      });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -150,10 +163,7 @@ router.post(
   '/dismiss',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!proactiveNudges?.dismissNudge) {
-      return res.status(503).json({
-        success: false,
-        error: 'Proactive nudges service not available',
-      });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -197,10 +207,7 @@ router.post(
   '/acted',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!proactiveNudges?.markNudgeActed) {
-      return res.status(503).json({
-        success: false,
-        error: 'Proactive nudges service not available',
-      });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -244,10 +251,7 @@ router.post(
   '/suppress',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!proactiveNudges?.suppressNudgeType) {
-      return res.status(503).json({
-        success: false,
-        error: 'Proactive nudges service not available',
-      });
+      return serviceFallback(req, res);
     }
 
     try {

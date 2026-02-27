@@ -4,6 +4,41 @@
 -- Adds missing columns to legal_documents and legal_document_acceptances
 -- ===========================================
 
+-- Ensure base tables exist (some DBs may be missing configuration module baseline)
+CREATE TABLE IF NOT EXISTS legal_documents (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL,
+    name TEXT NOT NULL,
+    version TEXT NOT NULL,
+    content TEXT,
+    url TEXT,
+    status TEXT DEFAULT 'active',
+    effective_date TEXT,
+    requires_acceptance BOOLEAN DEFAULT FALSE,
+    acceptance_required_for TEXT,
+    created_by TEXT,
+    published_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    published_at TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id),
+    FOREIGN KEY (published_by) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS legal_document_acceptances (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    document_id TEXT NOT NULL,
+    document_type TEXT NOT NULL,
+    document_version TEXT NOT NULL,
+    accepted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ip_address TEXT,
+    user_agent TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (document_id) REFERENCES legal_documents(id),
+    UNIQUE(user_id, document_id)
+);
+
 DO $$
 BEGIN
     -- Add content_md column (V2 canonical name for markdown content)

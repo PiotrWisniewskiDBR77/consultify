@@ -12,6 +12,29 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
 
+const serviceFallback = (
+  req: AuthRequest,
+  res: Response,
+  readPayload?: Record<string, unknown>
+) => {
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    return res.status(200).json({
+      success: true,
+      status: 'not_configured',
+      feature: 'ai-drafts',
+      writable: false,
+      ...(readPayload || {}),
+    });
+  }
+  return res.status(501).json({
+    success: false,
+    error: 'Feature not configured in this deployment',
+    code: 'FEATURE_NOT_CONFIGURED',
+    feature: 'ai-drafts',
+    writable: false,
+  });
+};
+
 // Service interfaces
 interface DraftServiceInterface {
   getPendingDrafts?: (
@@ -102,7 +125,7 @@ router.get(
   '/',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!draftService?.getPendingDrafts) {
-      return res.status(503).json({ error: 'Draft service not available' });
+      return serviceFallback(req, res, { drafts: [], count: 0 });
     }
 
     try {
@@ -146,7 +169,7 @@ router.get(
   '/:id',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!draftService?.getDraft) {
-      return res.status(503).json({ error: 'Draft service not available' });
+      return serviceFallback(req, res, { draft: null });
     }
 
     try {
@@ -188,7 +211,7 @@ router.get(
   '/entity/:type/:id',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!draftService?.getDraftsForEntity) {
-      return res.status(503).json({ error: 'Draft service not available' });
+      return serviceFallback(req, res, { drafts: [], count: 0 });
     }
 
     try {
@@ -221,7 +244,7 @@ router.post(
   '/',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!draftService?.createDraft || !DRAFT_TYPES) {
-      return res.status(503).json({ error: 'Draft service not available' });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -297,7 +320,7 @@ router.patch(
   '/:id/approve',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!draftService?.approveDraft || !draftService?.getDraft) {
-      return res.status(503).json({ error: 'Draft service not available' });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -348,7 +371,7 @@ router.patch(
   '/:id/reject',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!draftService?.rejectDraft) {
-      return res.status(503).json({ error: 'Draft service not available' });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -393,7 +416,9 @@ router.get(
   '/user/stats',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!draftService?.getDraftStats) {
-      return res.status(503).json({ error: 'Draft service not available' });
+      return serviceFallback(req, res, {
+        stats: { total: 0, approved: 0, modified: 0, acceptanceRate: null },
+      });
     }
 
     try {
@@ -436,7 +461,7 @@ router.delete(
   '/expired',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!draftService?.expireOldDrafts) {
-      return res.status(503).json({ error: 'Draft service not available' });
+      return serviceFallback(req, res);
     }
 
     try {

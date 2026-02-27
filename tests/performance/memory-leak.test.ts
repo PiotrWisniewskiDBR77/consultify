@@ -7,7 +7,7 @@
  * 
  * Usage:
  *   npm run test:memory-leak
- *   node tests/performance/memory-leak.test.js
+ *   npx vitest run tests/performance/memory-leak.test.ts
  * 
  * Environment Variables:
  *   MEMORY_TEST_DURATION - Test duration in minutes (default: 60)
@@ -165,7 +165,6 @@ describe('Memory Leak Detection', () => {
         expect(stats.samples).toBeGreaterThan(0);
     });
 });
-
 
 
 

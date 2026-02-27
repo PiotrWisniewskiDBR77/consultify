@@ -1,6 +1,6 @@
 /**
- * locations Routes (Feature unavailable)
- * Honest runtime contract: return 503 until implemented.
+ * locations Routes (degraded mode)
+ * Read operations return an empty contract to avoid hard UI dead-ends.
  */
 import { Router } from 'express';
 
@@ -9,13 +9,16 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
-// Stub for missing JS routes
 router.use((req, res) => {
-  logger.warn(`[locations] Feature unavailable`);
-  res.status(503).json({
-    error: 'Feature unavailable',
-    code: 'FEATURE_UNAVAILABLE',
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    return res.json({ feature: 'locations', status: 'not_configured', items: [], writable: false });
+  }
+  logger.warn(`[locations] Write blocked - feature not configured`);
+  return res.status(501).json({
+    error: 'Feature not configured in this deployment',
+    code: 'FEATURE_NOT_CONFIGURED',
     feature: 'locations',
+    writable: false,
   });
 });
 

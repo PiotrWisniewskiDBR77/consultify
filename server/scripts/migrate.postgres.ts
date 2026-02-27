@@ -89,6 +89,29 @@ function getAllMigrations(dir: string): Migration[] {
 
 function isSqliteOnlyMigration(m: Migration): boolean {
   const f = m.filename.toLowerCase();
+  const versionNum = Number.parseInt(m.version, 10);
+
+  // iCloud/duplicate artifacts (e.g. "515_xxx 2.sql")
+  if (/\s+\d+\.sql$/.test(f)) return true;
+
+  // Seed/demo data files should not be part of schema migration flow.
+  if (
+    f.includes('seed') ||
+    f.includes('mock') ||
+    f.includes('demo') ||
+    f.startsWith('add_') ||
+    f === 'assessment-module.sql' ||
+    f === 'fix_conversations_table.sql'
+  ) {
+    return true;
+  }
+
+  // Canonical flow for Postgres uses the core baseline + modern incremental migrations.
+  // Older pre-baseline fragments (<500) are often SQLite-first and conflict with baseline.
+  if (Number.isFinite(versionNum) && versionNum > 0 && versionNum < 500) {
+    if (!f.startsWith('000_z_core_baseline')) return true;
+  }
+
   // Legacy initdb snapshots were generated from older SQLite-first schemas and can conflict with
   // the canonical Postgres baseline migrations (e.g. duplicate tables with missing columns).
   // For Postgres-only deployments we rely on `000_z_core_baseline.sql` + subsequent migrations.

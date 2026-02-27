@@ -4,12 +4,14 @@
 -- T051: Financial Ratio Analysis
 -- ============================================
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- ============================================
 -- T050: FINANCIAL STATEMENTS (actual imported data)
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS financial_statements (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   organization_id TEXT NOT NULL,
   entity_name TEXT,
   statement_type TEXT NOT NULL CHECK (statement_type IN ('P&L', 'BS', 'CF')),
@@ -41,7 +43,7 @@ CREATE INDEX IF NOT EXISTS idx_fs_status ON financial_statements(status);
 
 -- Values extracted from financial statements
 CREATE TABLE IF NOT EXISTS financial_statement_values (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   statement_id TEXT NOT NULL,
   canonical_line_id TEXT,
   original_label TEXT,
@@ -83,7 +85,7 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS financial_ratio_benchmarks (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   organization_id TEXT NOT NULL,
   ratio_code TEXT NOT NULL,
   industry TEXT,
@@ -108,7 +110,7 @@ CREATE INDEX IF NOT EXISTS idx_frb_ratio ON financial_ratio_benchmarks(ratio_cod
 
 -- Computed ratio snapshots (cached results)
 CREATE TABLE IF NOT EXISTS financial_ratio_snapshots (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   organization_id TEXT NOT NULL,
   statement_id TEXT NOT NULL,
   ratio_code TEXT NOT NULL,

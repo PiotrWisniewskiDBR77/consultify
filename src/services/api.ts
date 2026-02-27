@@ -9072,19 +9072,31 @@ export const Api = {
 
   // ===== CLOUD STORAGE INTEGRATIONS =====
 
+  resolveCloudProviderName: (providerId: string) => {
+    const normalized = String(providerId || '').toLowerCase().trim();
+    if (normalized === 'google-drive' || normalized === 'google_drive') return 'google_drive';
+    if (normalized === 'onedrive' || normalized === 'one_drive') return 'onedrive';
+    if (normalized === 'dropbox') return 'dropbox';
+    if (normalized === 'sharepoint') return 'sharepoint';
+    return normalized;
+  },
+
   // Get connected cloud providers
   getCloudProviders: async () => {
-    // TODO: Replace with real API call
-    const stored = localStorage.getItem('cloudIntegrations');
-    if (stored) {
-      return { providers: JSON.parse(stored) };
-    }
+    const res = await fetch(`${API_URL}/cloud/sources`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to load cloud providers');
+    const payload = await res.json();
+    const sources = Array.isArray(payload?.sources) ? payload.sources : [];
+    const connected = new Set(
+      sources.map((s: any) => Api.resolveCloudProviderName(s.provider || s.id || ''))
+    );
     return {
       providers: [
-        { id: 'google-drive', name: 'Google Drive', connected: false },
-        { id: 'onedrive', name: 'OneDrive', connected: false },
-        { id: 'dropbox', name: 'Dropbox', connected: false },
+        { id: 'google-drive', name: 'Google Drive', connected: connected.has('google_drive') },
+        { id: 'onedrive', name: 'OneDrive', connected: connected.has('onedrive') },
+        { id: 'dropbox', name: 'Dropbox', connected: connected.has('dropbox') },
       ],
+      sources,
     };
   },
 
@@ -9100,43 +9112,58 @@ export const Api = {
 
   // Complete OAuth callback
   completeCloudOAuth: async (providerId: string, code: string, state: string) => {
-    console.log(`[CloudAPI] Completing OAuth for ${providerId}`, { code, state });
-    // Update localStorage for demo
-    const stored = localStorage.getItem('cloudIntegrations');
-    const providers = stored ? JSON.parse(stored) : [];
-    const updated = providers.map((p: any) =>
-      p.id === providerId ? { ...p, connected: true, email: 'user@example.com' } : p
-    );
-    localStorage.setItem('cloudIntegrations', JSON.stringify(updated));
-    return { success: true, provider: { id: providerId, connected: true } };
+    console.warn('[CloudAPI] OAuth completion is not implemented in this deployment', {
+      providerId,
+      code,
+      state,
+    });
+    throw new Error('Cloud OAuth flow is not configured yet.');
   },
 
   // Disconnect cloud provider
   disconnectCloudProvider: async (providerId: string) => {
-    console.log(`[CloudAPI] Disconnecting ${providerId}`);
-    const stored = localStorage.getItem('cloudIntegrations');
-    if (stored) {
-      const providers = JSON.parse(stored);
-      const updated = providers.map((p: any) =>
-        p.id === providerId ? { ...p, connected: false, email: undefined } : p
-      );
-      localStorage.setItem('cloudIntegrations', JSON.stringify(updated));
-    }
-    return { success: true };
+    const provider = Api.resolveCloudProviderName(providerId);
+    const sourcesRes = await fetch(`${API_URL}/cloud/sources`, { headers: getHeaders() });
+    if (!sourcesRes.ok) throw new Error('Failed to load cloud sources');
+    const payload = await sourcesRes.json();
+    const sources = Array.isArray(payload?.sources) ? payload.sources : [];
+    const source = sources.find(
+      (s: any) => Api.resolveCloudProviderName(s.provider || s.id || '') === provider
+    );
+    if (!source?.id) return { success: true, disconnected: false };
+    const res = await fetch(`${API_URL}/cloud/sources/${source.id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to disconnect cloud provider');
+    return { success: true, disconnected: true };
   },
 
   // List files from cloud provider
   listCloudFiles: async (providerId: string, folderId?: string): Promise<any[]> => {
     try {
+      const provider = Api.resolveCloudProviderName(providerId);
+      const sourcesRes = await fetch(`${API_URL}/cloud/sources`, { headers: getHeaders() });
+      if (!sourcesRes.ok) throw new Error('Failed to load cloud sources');
+      const payload = await sourcesRes.json();
+      const sources = Array.isArray(payload?.sources) ? payload.sources : [];
+      const source = sources.find(
+        (s: any) => Api.resolveCloudProviderName(s.provider || s.id || '') === provider
+      );
+      if (!source?.id) {
+        throw new Error(`No connected cloud source for provider ${providerId}`);
+      }
+
       const url = folderId
-        ? `${API_URL}/integrations/${providerId}/files?folderId=${folderId}`
-        : `${API_URL}/integrations/${providerId}/files`;
+        ? `${API_URL}/cloud/sources/${source.id}/files?folderId=${encodeURIComponent(folderId)}`
+        : `${API_URL}/cloud/sources/${source.id}/files`;
       const res = await fetch(url, { headers: getHeaders() });
       if (res.status === 501) {
         throw new Error('CLOUD_NOT_IMPLEMENTED');
       }
       if (!res.ok) throw new Error('Failed to list cloud files');
-      return res.json();
+      const data = await res.json();
+      return Array.isArray(data?.files) ? data.files : data;
     } catch (e: any) {
       console.error('[Api] Error listing cloud files:', e);
       if (e?.message === 'CLOUD_NOT_IMPLEMENTED') {
@@ -9148,15 +9175,34 @@ export const Api = {
 
   // Get file download URL
   getCloudFileDownloadUrl: async (providerId: string, fileId: string) => {
-    console.log(`[CloudAPI] Getting download URL for ${providerId}/${fileId}`);
-    // In real implementation, this would return a signed URL
-    return { downloadUrl: `${API_URL}/integrations/${providerId}/files/${fileId}/download` };
+    const provider = Api.resolveCloudProviderName(providerId);
+    const sourcesRes = await fetch(`${API_URL}/cloud/sources`, { headers: getHeaders() });
+    if (!sourcesRes.ok) throw new Error('Failed to load cloud sources');
+    const payload = await sourcesRes.json();
+    const sources = Array.isArray(payload?.sources) ? payload.sources : [];
+    const source = sources.find(
+      (s: any) => Api.resolveCloudProviderName(s.provider || s.id || '') === provider
+    );
+    if (!source?.id) throw new Error(`No connected cloud source for provider ${providerId}`);
+    return { downloadUrl: `${API_URL}/cloud/sources/${source.id}/files/${fileId}/download` };
   },
 
   // Download file from cloud
   downloadCloudFile: async (providerId: string, fileId: string): Promise<Blob> => {
     try {
-      const res = await fetch(`${API_URL}/integrations/${providerId}/files/${fileId}/download`, {
+      const provider = Api.resolveCloudProviderName(providerId);
+      const sourcesRes = await fetch(`${API_URL}/cloud/sources`, { headers: getHeaders() });
+      if (!sourcesRes.ok) throw new Error('Failed to load cloud sources');
+      const payload = await sourcesRes.json();
+      const sources = Array.isArray(payload?.sources) ? payload.sources : [];
+      const source = sources.find(
+        (s: any) => Api.resolveCloudProviderName(s.provider || s.id || '') === provider
+      );
+      if (!source?.id) {
+        throw new Error(`No connected cloud source for provider ${providerId}`);
+      }
+
+      const res = await fetch(`${API_URL}/cloud/sources/${source.id}/files/${fileId}/download`, {
         headers: getHeaders(),
       });
       if (res.status === 501) {
