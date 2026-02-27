@@ -92,26 +92,16 @@ const transformSettingsToSnakeCase = (settings: any) => ({
 });
 
 const respondServiceNotConfigured = (
-  req: Request,
+  _req: Request,
   res: Response,
-  feature: string,
-  readPayload?: Record<string, unknown>
+  _feature: string,
+  _readPayload?: Record<string, unknown>
 ) => {
-  if (req.method === 'GET' || req.method === 'HEAD') {
-    return res.status(200).json({
-      success: true,
-      status: 'not_configured',
-      feature,
-      writable: false,
-      ...(readPayload || {}),
-    });
-  }
-  return res.status(501).json({
-    success: false,
-    error: 'Feature not configured in this deployment',
-    code: 'FEATURE_NOT_CONFIGURED',
-    feature,
-    writable: false,
+  return res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 };
 

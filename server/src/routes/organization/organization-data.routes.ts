@@ -13,10 +13,6 @@ import logger from '../../utils/Logger.js';
 const router = Router();
 router.use(verifyToken);
 
-const FEATURE_UNAVAILABLE_CODE = 'FEATURE_UNAVAILABLE';
-const featureUnavailable = (res: Response, message: string) =>
-  res.status(503).json({ success: false, error: message, code: FEATURE_UNAVAILABLE_CODE });
-
 const SAFE_IDENT_RE = /^[a-zA-Z0-9_]+$/;
 
 const SENSITIVE_COL_RE =

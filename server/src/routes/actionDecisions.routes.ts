@@ -15,15 +15,19 @@ import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
-const respondIfUnavailable = (res: Response, err: unknown, fallbackMessage: string) => {
+const notConfigured = (res: Response) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
+const respondIfUnavailable = (res: Response, err: unknown, _fallbackMessage: string) => {
   const code = (err as any)?.code;
   const statusCode = (err as any)?.statusCode;
 
   if (code === 'FEATURE_UNAVAILABLE' || statusCode === 503) {
-    return res.status(503).json({
-      error: err instanceof Error ? err.message : fallbackMessage,
-      code: 'FEATURE_UNAVAILABLE',
-    });
+    return notConfigured(res);
   }
   return null;
 };
@@ -198,7 +202,7 @@ router.post(
   '/decide',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!ActionDecisionService?.recordDecision) {
-      return res.status(503).json({ error: 'ActionDecisionService not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -257,7 +261,7 @@ router.get(
   '/audit',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!ActionDecisionService?.getAuditLog) {
-      return res.status(503).json({ error: 'ActionDecisionService not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -310,7 +314,7 @@ router.post(
   '/decisions/:id/execute',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!ActionDecisionService?.getAuditLog || !ActionExecutionAdapter?.executeDecision) {
-      return res.status(503).json({ error: 'Services not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -381,7 +385,7 @@ router.post(
   '/decisions/:id/dry-run',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!ActionDecisionService?.getAuditLog || !ActionExecutionAdapter?.executeDecision) {
-      return res.status(503).json({ error: 'Services not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -446,7 +450,7 @@ router.get(
   '/audit/export',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AuditExportService?.exportDecisions) {
-      return res.status(503).json({ error: 'AuditExportService not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -509,7 +513,7 @@ router.get(
   '/executions/export',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AuditExportService?.exportExecutions) {
-      return res.status(503).json({ error: 'AuditExportService not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -576,7 +580,7 @@ router.get(
   '/policy-rules',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!PolicyEngine?.getAllRules || !PolicyEngine?.getRules) {
-      return res.status(503).json({ error: 'PolicyEngine not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -621,7 +625,7 @@ router.patch(
   '/policy-rules/:id/toggle',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!PolicyEngine?.toggleRule) {
-      return res.status(503).json({ error: 'PolicyEngine not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -663,7 +667,7 @@ router.post(
   '/policy-rules',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!PolicyEngine?.createRule) {
-      return res.status(503).json({ error: 'PolicyEngine not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -733,7 +737,7 @@ router.get(
   '/policy-engine/status',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!PolicyEngine?.getGlobalStatus) {
-      return res.status(503).json({ error: 'PolicyEngine not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -762,7 +766,7 @@ router.patch(
   '/policy-engine/global',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!PolicyEngine?.setGlobalStatus) {
-      return res.status(503).json({ error: 'PolicyEngine not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -805,7 +809,7 @@ router.post(
       !ActionProposalEngine?.getProposalById ||
       !ActionDecisionService?.evaluatePolicyForProposal
     ) {
-      return res.status(503).json({ error: 'Services not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -858,7 +862,7 @@ router.post(
   '/decisions/:id/execute-async',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!ActionDecisionService?.getAuditLog || !AsyncJobService?.enqueueActionExecution) {
-      return res.status(503).json({ error: 'Services not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -940,7 +944,7 @@ router.get(
   '/jobs/:jobId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AsyncJobService?.getJob) {
-      return res.status(503).json({ error: 'AsyncJobService not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -991,7 +995,7 @@ router.post(
   '/jobs/:jobId/retry',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AsyncJobService?.retryJob) {
-      return res.status(503).json({ error: 'AsyncJobService not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -1046,7 +1050,7 @@ router.post(
   '/jobs/:jobId/cancel',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AsyncJobService?.cancelJob) {
-      return res.status(503).json({ error: 'AsyncJobService not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -1099,7 +1103,7 @@ router.get(
   '/jobs/dead-letter',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AsyncJobService?.listJobs) {
-      return res.status(503).json({ error: 'AsyncJobService not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -1149,7 +1153,7 @@ router.get(
   '/jobs/stats',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AsyncJobService?.getDeadLetterStats) {
-      return res.status(503).json({ error: 'AsyncJobService not available' });
+      return notConfigured(res);
     }
 
     try {

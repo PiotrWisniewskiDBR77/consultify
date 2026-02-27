@@ -31,6 +31,7 @@ npm run test:integration
 npm run test:e2e:tier0
 npm run test:security
 npm run test:performance
+npm run test:performance:real
 MEMORY_TEST_DURATION=5 npm run test:memory-leak
 ```
 

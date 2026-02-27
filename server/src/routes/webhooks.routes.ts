@@ -80,6 +80,13 @@ interface InvoiceServiceInstance {
 let DunningService: DunningServiceInstance | null = null;
 let InvoiceService: InvoiceServiceInstance | null = null;
 let StripeClient: StripeLib | null = null;
+const notConfigured = (res: Response) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
 
 function getStripeClient(): StripeLib {
   if (StripeClient) return StripeClient;
@@ -314,7 +321,7 @@ router.post(
     console.log(`[Webhook] Received Stripe event: ${type}`);
 
     if (!process.env.STRIPE_SECRET_KEY) {
-      res.status(503).json({ error: 'Stripe is not configured', code: 'FEATURE_UNAVAILABLE' });
+      notConfigured(res);
       return;
     }
 
@@ -344,10 +351,7 @@ router.post(
               }
             }
           } else {
-            res.status(503).json({
-              error: 'Stripe payment intent missing for invoice.payment_failed',
-              code: 'FEATURE_UNAVAILABLE',
-            });
+            notConfigured(res);
             return;
           }
           break;
@@ -363,10 +367,7 @@ router.post(
             )) as StripePaymentIntent;
             await dunning.handlePaymentSucceeded(paymentIntent);
           } else {
-            res.status(503).json({
-              error: 'Stripe payment intent missing for invoice.payment_succeeded',
-              code: 'FEATURE_UNAVAILABLE',
-            });
+            notConfigured(res);
             return;
           }
 

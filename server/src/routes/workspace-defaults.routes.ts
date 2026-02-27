@@ -19,11 +19,11 @@ router.use((req, res) => {
     });
   }
   logger.warn(`[workspace-defaults] Write blocked - feature not configured`);
-  return res.status(501).json({
-    error: 'Feature not configured in this deployment',
-    code: 'FEATURE_NOT_CONFIGURED',
-    feature: 'workspace-defaults',
-    writable: false,
+  return res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 });
 

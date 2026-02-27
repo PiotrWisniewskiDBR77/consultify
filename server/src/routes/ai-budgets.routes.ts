@@ -13,24 +13,13 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
 
-const serviceFallback = (req: AuthRequest, res: Response, readPayload?: Record<string, unknown>) => {
-  if (req.method === 'GET' || req.method === 'HEAD') {
-    return res.status(200).json({
-      success: true,
-      status: 'not_configured',
-      feature: 'ai-budgets',
-      writable: false,
-      ...(readPayload || {}),
-    });
-  }
-  return res.status(501).json({
-    success: false,
-    error: 'Feature not configured in this deployment',
-    code: 'FEATURE_NOT_CONFIGURED',
-    feature: 'ai-budgets',
-    writable: false,
+const serviceFallback = (_req: AuthRequest, res: Response, _readPayload?: Record<string, unknown>) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
-};
 
 // Service interfaces
 interface AIBudgetServiceInterface {

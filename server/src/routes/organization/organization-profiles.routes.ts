@@ -12,6 +12,13 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.
 import logger from '../../utils/Logger.js';
 
 const router = Router();
+const notConfigured = (res: Response) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
 
 // Apply rate limiting and auth
 router.use(apiAuthRateLimiter);
@@ -301,10 +308,7 @@ router.post(
     }
 
     // No fake success: logo uploads require real storage + upload middleware.
-    return res.status(503).json({
-      error: 'Organization logo upload is not available',
-      code: 'FEATURE_UNAVAILABLE',
-    });
+    return notConfigured(res);
   })
 );
 
@@ -336,10 +340,7 @@ router.post(
     }
 
     // No simulated verification in runtime.
-    return res.status(503).json({
-      error: 'Custom domain verification is not available',
-      code: 'FEATURE_UNAVAILABLE',
-    });
+    return notConfigured(res);
   })
 );
 

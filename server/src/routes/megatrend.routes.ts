@@ -15,15 +15,19 @@ import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
+const notConfigured = (res: Response) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
 const respondIfUnavailable = (res: Response, err: unknown) => {
   if (err instanceof AppError && err.code === 'FEATURE_UNAVAILABLE') {
-    return res.status(503).json({ error: err.message, code: 'FEATURE_UNAVAILABLE' });
+    return notConfigured(res);
   }
   if ((err as any)?.code === 'FEATURE_UNAVAILABLE' || (err as any)?.statusCode === 503) {
-    return res.status(503).json({
-      error: err instanceof Error ? err.message : 'Megatrend data is not available',
-      code: 'FEATURE_UNAVAILABLE',
-    });
+    return notConfigured(res);
   }
   return null;
 };
@@ -59,7 +63,7 @@ router.get(
   '/baseline',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!MegatrendService?.getBaselineTrends) {
-      return res.status(503).json({ error: 'Megatrend service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -83,7 +87,7 @@ router.get(
   '/radar',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!MegatrendService?.getRadarData) {
-      return res.status(503).json({ error: 'Megatrend service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -107,7 +111,7 @@ router.get(
   '/:id',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!MegatrendService?.getTrendDetail) {
-      return res.status(503).json({ error: 'Megatrend service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -133,7 +137,7 @@ router.post(
   '/custom',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!MegatrendService?.createCustomTrend) {
-      return res.status(503).json({ error: 'Megatrend service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -161,7 +165,7 @@ router.put(
   '/custom/:id',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!MegatrendService?.updateCustomTrend) {
-      return res.status(503).json({ error: 'Megatrend service not available' });
+      return notConfigured(res);
     }
 
     try {

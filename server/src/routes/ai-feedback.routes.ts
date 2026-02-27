@@ -15,26 +15,16 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js'
 const router = Router();
 
 const serviceFallback = (
-  req: AuthRequest,
+  _req: AuthRequest,
   res: Response,
-  feature: string,
-  readPayload?: Record<string, unknown>
+  _feature: string,
+  _readPayload?: Record<string, unknown>
 ) => {
-  if (req.method === 'GET' || req.method === 'HEAD') {
-    return res.status(200).json({
-      success: true,
-      status: 'not_configured',
-      feature,
-      writable: false,
-      ...(readPayload || {}),
-    });
-  }
-  return res.status(501).json({
-    success: false,
-    error: 'Feature not configured in this deployment',
-    code: 'FEATURE_NOT_CONFIGURED',
-    feature,
-    writable: false,
+  return res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 };
 

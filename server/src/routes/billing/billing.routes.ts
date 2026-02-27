@@ -63,9 +63,12 @@ function isSchemaMissingError(err: unknown): boolean {
   );
 }
 
-function respondSchemaUnavailable(res: Response, feature: string) {
+function respondSchemaUnavailable(res: Response, _feature: string) {
   return res.status(503).json({
-    error: `${feature} not available (database schema missing or misconfigured)`,
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 }
 
@@ -733,9 +736,7 @@ router.get(
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    return res.status(503).json({
-      error: 'User seat plans are not available (no real implementation)',
-    });
+    return respondSchemaUnavailable(res, 'User seat plans');
   })
 );
 router.post(
@@ -743,7 +744,7 @@ router.post(
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (_req, res) =>
-    res.status(503).json({ success: false, error: 'User seat plans are not available' })
+    respondSchemaUnavailable(res, 'User seat plans')
   )
 );
 router.put(
@@ -751,7 +752,7 @@ router.put(
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (_req, res) =>
-    res.status(503).json({ success: false, error: 'User seat plans are not available' })
+    respondSchemaUnavailable(res, 'User seat plans')
   )
 );
 router.delete(
@@ -759,7 +760,7 @@ router.delete(
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (_req, res) =>
-    res.status(503).json({ success: false, error: 'User seat plans are not available' })
+    respondSchemaUnavailable(res, 'User seat plans')
   )
 );
 
@@ -768,9 +769,7 @@ router.get(
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    return res.status(503).json({
-      error: 'Billing transactions are not available (no real implementation)',
-    });
+    return respondSchemaUnavailable(res, 'Billing transactions');
   })
 );
 
@@ -2456,12 +2455,7 @@ router.post(
       process.env.STRIPE_KEY;
 
     if (!stripeKey) {
-      return res.status(503).json({
-        success: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
-        message: 'Stripe is not configured',
-      });
+      return respondSchemaUnavailable(res, 'Stripe');
     }
 
     try {
@@ -2484,12 +2478,7 @@ router.post(
       });
     } catch (err: any) {
       logger.error('[Billing] SetupIntent creation failed:', err);
-      return res.status(503).json({
-        success: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
-        message: 'Failed to create setup intent',
-      });
+      return respondSchemaUnavailable(res, 'Stripe setup intent');
     }
   })
 );

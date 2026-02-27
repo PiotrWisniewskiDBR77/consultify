@@ -14,11 +14,11 @@ router.use((req, res) => {
     return res.json({ feature: 'locations', status: 'not_configured', items: [], writable: false });
   }
   logger.warn(`[locations] Write blocked - feature not configured`);
-  return res.status(501).json({
-    error: 'Feature not configured in this deployment',
-    code: 'FEATURE_NOT_CONFIGURED',
-    feature: 'locations',
-    writable: false,
+  return res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 });
 

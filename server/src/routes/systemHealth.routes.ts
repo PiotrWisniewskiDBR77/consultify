@@ -21,25 +21,15 @@ import SystemHealthService from '../services/systemHealthService.js';
 import logger from '../utils/Logger.js';
 
 const serviceFallback = (
-  req: AuthRequest,
+  _req: AuthRequest,
   res: Response,
-  readPayload?: Record<string, unknown>
+  _readPayload?: Record<string, unknown>
 ) => {
-  if (req.method === 'GET' || req.method === 'HEAD') {
-    return res.status(200).json({
-      success: true,
-      status: 'not_configured',
-      feature: 'system-health',
-      writable: false,
-      ...(readPayload || {}),
-    });
-  }
-  return res.status(501).json({
-    success: false,
-    error: 'Feature not configured in this deployment',
-    code: 'FEATURE_NOT_CONFIGURED',
-    feature: 'system-health',
-    writable: false,
+  return res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 };
 

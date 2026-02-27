@@ -54,6 +54,13 @@ interface AdaptiveResponseServiceInterface {
 // Dynamic imports for services (may not be migrated yet)
 let aiLogger: AILoggerInterface | null = null;
 let adaptiveResponseService: AdaptiveResponseServiceInterface | null = null;
+const notConfigured = (res: Response) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
 
 try {
   const loggerModule = (await import('../../services/ai/logger.js')) as any;
@@ -437,11 +444,7 @@ router.post(
   '/response',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!adaptiveResponseService?.processFeedback) {
-      return res.status(501).json({
-        error: 'Adaptive response service is not configured',
-        code: 'FEATURE_NOT_CONFIGURED',
-        writable: false,
-      });
+      return notConfigured(res);
     }
 
     try {
@@ -533,19 +536,7 @@ router.get(
       !adaptiveResponseService?.getUserFeedbackStats ||
       !adaptiveResponseService?.getRecommendedMode
     ) {
-      return res.json({
-        success: true,
-        stats: {
-          total_feedback: 0,
-          positive_count: 0,
-          negative_count: 0,
-          satisfaction_rate: null,
-        },
-        recommendedMode: 'standard',
-        status: 'not_configured',
-        feature: 'ai-feedback-response',
-        writable: false,
-      });
+      return notConfigured(res);
     }
 
     try {

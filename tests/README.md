@@ -40,6 +40,9 @@ npm run test:security
 # Performance (bez memory-leak)
 npm run test:performance
 
+# Performance z realna baza (Postgres)
+npm run test:performance:real
+
 # Memory leak (osobny, dlugi test)
 MEMORY_TEST_DURATION=5 npm run test:memory-leak
 
@@ -103,3 +106,4 @@ Uwaga: obecny backend jest skonfigurowany pod Postgres, wiec wymaga aktywnego DB
 - `tests/TESTING_GUIDE.md`
 - `tests/TEST_AUDIT_REGISTRY.md`
 - `docs/testing/`
+- `docs/testing/CI_TESTING_RUNBOOK.md`

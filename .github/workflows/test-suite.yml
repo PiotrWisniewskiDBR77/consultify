@@ -228,6 +228,76 @@ jobs:
           dur=$((end - JOB_START))
           echo "Job duration: ${dur}s" >> "$GITHUB_STEP_SUMMARY"
 
+  performance-tests:
+    name: ⚡ Performance Tests (Real DB)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: lint-typecheck
+    if: ${{ github.event_name != 'pull_request' }}
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: iris
+          POSTGRES_PASSWORD: iris_test
+          POSTGRES_DB: iris_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture job start
+        run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run performance tests (real DB)
+        run: npm run test:performance:real -- --reporter=junit --outputFile=junit-performance.xml
+        env:
+          DATABASE_URL: postgres://iris:iris_test@localhost:5432/iris_test
+          RUN_DB_TESTS: '1'
+          MOCK_DB: 'false'
+          PERF_DB_SELECT_MS: '400'
+          PERF_DB_SIMPLE_SELECT_MS: '100'
+          PERF_DB_JOIN_MS: '250'
+          PERF_DB_AGG_MS: '500'
+          PERF_DB_COMPLEX_JOIN_MS: '800'
+          PERF_DB_CONCURRENT_SELECTS_MS: '3000'
+          PERF_DB_CONCURRENT_INSERTS_MS: '2000'
+          PERF_DB_BULK_INSERT_MS: '3000'
+          PERF_DB_BULK_UPDATE_MS: '3000'
+          PERF_DB_INDEX_WHERE_MS: '250'
+          PERF_DB_INDEX_JOIN_MS: '350'
+          PERF_SCALABILITY_CONCURRENT_QUERIES_MS: '10000'
+          PERF_SCALABILITY_CONCURRENT_WRITES_MS: '20000'
+          PERF_SCALABILITY_QUERY_1000_MS: '8000'
+          PERF_SCALABILITY_TX_MS: '20000'
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-test-results
+          path: junit-performance.xml
+          retention-days: 30
+      - name: Job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          dur=$((end - JOB_START))
+          echo "Job duration: ${dur}s" >> "$GITHUB_STEP_SUMMARY"
+
   integration-tests:
     name: 🔗 Integration Tests (Shard ${{ matrix.shard }}/3)
     runs-on: ubuntu-latest

@@ -24,6 +24,14 @@ import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
 const router = Router();
+const notConfigured = (res: Response, details?: Record<string, unknown>) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+    ...(details || {}),
+  });
 
 interface AuthRequest extends Request {
   user?: {
@@ -991,13 +999,7 @@ router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
     }
 
     if (!llmService) {
-      return res.status(501).json({
-        success: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_NOT_CONFIGURED',
-        message: 'AI report generation is not configured (LLM missing)',
-        writable: false,
-      });
+      return notConfigured(res);
     }
 
     const lang = language || 'pl';
@@ -1057,13 +1059,7 @@ Requirements:
 
       const aiContent = String(result?.content || '');
       if (aiContent.length < 50) {
-        return res.status(501).json({
-          success: false,
-          error: 'SERVICE_UNAVAILABLE',
-          code: 'FEATURE_NOT_CONFIGURED',
-          message: 'AI report generation returned empty content',
-          writable: false,
-        });
+        return notConfigured(res);
       }
 
       const dataSnapshot = {
@@ -1148,14 +1144,7 @@ Requirements:
     return res.json({ success: true, reportId, templateId: resolvedTemplateId });
   } catch (err: any) {
     logger.error('[AssessmentReports] Error generating report:', err);
-    return res.status(501).json({
-      success: false,
-      error: 'SERVICE_UNAVAILABLE',
-      code: 'FEATURE_NOT_CONFIGURED',
-      message: 'AI report generation is unavailable',
-      writable: false,
-      details: { message: err?.message || String(err) },
-    });
+    return notConfigured(res, { details: { message: err?.message || String(err) } });
   }
 });
 
@@ -1405,7 +1394,6 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
     const act = String(action || '').toLowerCase();
     let next = current;
     let attempted = false;
-    let failedReason: string | null = null;
 
     // Try to use LLM service for AI actions
     let llmService: any = null;
@@ -1417,13 +1405,7 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
     }
 
     if (!llmService) {
-      return res.status(501).json({
-        success: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_NOT_CONFIGURED',
-        message: 'AI report editing is not configured (LLM missing)',
-        writable: false,
-      });
+      return notConfigured(res);
     }
 
     const sectionContext = `Section: "${sectionRow.title}" (${sectionRow.section_type})\nAssessment: ${reportRow.assessmentName || 'Assessment'} (${reportRow.assessmentType || 'DRD'})`;
@@ -1477,12 +1459,10 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
           });
           next = String(result?.content || current);
           if (next.length < 20) {
-            failedReason = 'AI returned empty content';
             next = current;
           }
         } catch (err: any) {
           attempted = true;
-          failedReason = err?.message || 'AI action failed';
           logger.error('[AssessmentReports] LLM AI action failed:', err?.message);
         }
       }
@@ -1496,13 +1476,7 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
     }
 
     if (attempted && next === current) {
-      return res.status(501).json({
-        success: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_NOT_CONFIGURED',
-        message: failedReason || 'AI action did not produce content',
-        writable: false,
-      });
+      return notConfigured(res);
     }
 
     const nextVersion = Number(sectionRow.version || 1) + 1;
@@ -1516,14 +1490,7 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
     return res.json({ success: true, content: next, version: nextVersion });
   } catch (err: any) {
     logger.error('[AssessmentReports] Error AI action:', err);
-    return res.status(501).json({
-      success: false,
-      error: 'SERVICE_UNAVAILABLE',
-      code: 'FEATURE_NOT_CONFIGURED',
-      message: 'AI action failed',
-      writable: false,
-      details: { message: err?.message || String(err) },
-    });
+    return notConfigured(res, { details: { message: err?.message || String(err) } });
   }
 });
 
@@ -1592,13 +1559,7 @@ router.post('/:reportId/ai-edit', async (req: AuthRequest, res: Response) => {
     }
 
     if (!llmService) {
-      return res.status(501).json({
-        success: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_NOT_CONFIGURED',
-        message: 'AI editing is not configured (LLM missing)',
-        writable: false,
-      });
+      return notConfigured(res);
     }
 
     let editedContent = currentContent;
@@ -1620,23 +1581,10 @@ router.post('/:reportId/ai-edit', async (req: AuthRequest, res: Response) => {
 
       editedContent = String(result?.content || currentContent);
       if (editedContent.length < 20) {
-        return res.status(501).json({
-          success: false,
-          error: 'SERVICE_UNAVAILABLE',
-          code: 'FEATURE_NOT_CONFIGURED',
-          message: 'AI editing returned empty content',
-          writable: false,
-        });
+        return notConfigured(res);
       }
     } catch (callErr: any) {
-      return res.status(501).json({
-        success: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_NOT_CONFIGURED',
-        message: 'AI editing failed',
-        writable: false,
-        details: { message: callErr?.message || String(callErr) },
-      });
+      return notConfigured(res, { details: { message: callErr?.message || String(callErr) } });
     }
 
     const nextVersion = Number(sectionRow.version || 1) + 1;
@@ -1651,14 +1599,7 @@ router.post('/:reportId/ai-edit', async (req: AuthRequest, res: Response) => {
     return res.json({ success: true, content: editedContent, version: nextVersion });
   } catch (err: any) {
     logger.error('[AssessmentReports] Error ai-edit:', err);
-    return res.status(501).json({
-      success: false,
-      error: 'SERVICE_UNAVAILABLE',
-      code: 'FEATURE_NOT_CONFIGURED',
-      message: 'AI editing failed',
-      writable: false,
-      details: { message: err?.message || String(err) },
-    });
+    return notConfigured(res, { details: { message: err?.message || String(err) } });
   }
 });
 

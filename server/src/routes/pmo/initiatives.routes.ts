@@ -28,6 +28,13 @@ import {
 } from '../../validators/initiative.validators.js';
 
 const router = Router();
+const notConfigured = (res: Response) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
 
 // Apply rate limiting
 router.use(apiAuthRateLimiter);
@@ -694,12 +701,7 @@ router.post('/generate-section', async (req: any, res: any) => {
         : 500;
 
     if (statusCode === 503 || err?.code === 'FEATURE_UNAVAILABLE') {
-      return res.status(503).json({
-        success: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
-        message: err?.message || 'AI generation is not available',
-      });
+      return notConfigured(res);
     }
 
     return res.status(statusCode).json({
@@ -813,12 +815,7 @@ router.post('/readiness-analysis', async (req: any, res: any) => {
         : 500;
 
     if (statusCode === 503 || err?.code === 'FEATURE_UNAVAILABLE') {
-      return res.status(503).json({
-        success: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
-        message: err?.message || 'AI readiness analysis is not available',
-      });
+      return notConfigured(res);
     }
 
     return res
@@ -851,12 +848,7 @@ router.post('/suggest-sections', async (req: any, res: any) => {
         : 500;
 
     if (statusCode === 503 || err?.code === 'FEATURE_UNAVAILABLE') {
-      return res.status(503).json({
-        success: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
-        message: err?.message || 'AI section suggestions are not available',
-      });
+      return notConfigured(res);
     }
 
     return res.status(statusCode).json({

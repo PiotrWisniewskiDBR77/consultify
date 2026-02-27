@@ -28,13 +28,12 @@ const isSchemaMissingError = (error: unknown): boolean => {
   );
 };
 
-const respondFeatureUnavailable = (res: Response, detail?: string) =>
-  res.status(501).json({
-    error: 'Feature not configured in this deployment',
-    code: 'FEATURE_NOT_CONFIGURED',
-    feature: FEATURE_NAME,
-    detail,
-    writable: false,
+const respondFeatureUnavailable = (res: Response, _detail?: string) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 
 /**

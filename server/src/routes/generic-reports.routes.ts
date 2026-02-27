@@ -14,7 +14,6 @@ const router = Router();
 interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
 }
-const FEATURE_NAME = 'generic-reports';
 
 const isSchemaMissingError = (error: unknown): boolean => {
   const message = String((error as Error)?.message || '').toLowerCase();
@@ -27,25 +26,13 @@ const isSchemaMissingError = (error: unknown): boolean => {
   );
 };
 
-const respondFeatureUnavailable = (req: Request, res: Response, detail?: string) => {
-  if (req.method === 'GET' || req.method === 'HEAD') {
-    return res.status(200).json({
-      success: true,
-      status: 'not_configured',
-      feature: FEATURE_NAME,
-      writable: false,
-      detail,
-    });
-  }
-  return res.status(501).json({
-    success: false,
-    error: 'Feature not configured in this deployment',
-    code: 'FEATURE_NOT_CONFIGURED',
-    feature: FEATURE_NAME,
-    detail,
-    writable: false,
+const respondFeatureUnavailable = (_req: Request, res: Response, _detail?: string) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
-};
 
 // System-default templates (always available)
 const SYSTEM_TEMPLATES = [

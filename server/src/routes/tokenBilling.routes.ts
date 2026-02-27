@@ -14,6 +14,13 @@ import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
+const notConfigured = (res: Response) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
 
 // Dynamic imports for services that may not be migrated yet
 let TokenBillingService: any = null;
@@ -54,7 +61,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!TokenBillingService?.getBalance) {
-      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+      return notConfigured(res);
     }
 
     const userId = req.user?.id;
@@ -81,7 +88,7 @@ router.get(
   verifyToken,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     if (!TokenBillingService?.getPackages) {
-      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -102,7 +109,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!TokenBillingService?.getTransactions) {
-      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+      return notConfigured(res);
     }
 
     const userId = req.user?.id;
@@ -132,7 +139,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!TokenBillingService?.getUserApiKeys) {
-      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+      return notConfigured(res);
     }
 
     const userId = req.user?.id;
@@ -158,7 +165,7 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!TokenBillingService?.addUserApiKey) {
-      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+      return notConfigured(res);
     }
 
     const userId = req.user?.id;
@@ -195,7 +202,7 @@ router.delete(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!TokenBillingService?.deleteUserApiKey) {
-      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+      return notConfigured(res);
     }
 
     const userId = req.user?.id;
@@ -221,7 +228,7 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!TokenBillingService?.getPackage) {
-      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+      return notConfigured(res);
     }
 
     const userId = req.user?.id;
@@ -259,11 +266,7 @@ router.post(
         });
         res.json({ success: true, checkoutUrl: session.url, sessionId: session.id });
       } else {
-        return res.status(503).json({
-          success: false,
-          code: 'FEATURE_UNAVAILABLE',
-          error: 'Stripe checkout is required to purchase tokens',
-        });
+        return notConfigured(res);
       }
     } catch (error: any) {
       console.error('Purchase error:', error);
@@ -285,11 +288,11 @@ router.post(
     }
 
     if (!stripe) {
-      return res.status(503).json({ error: 'Stripe not available' });
+      return notConfigured(res);
     }
 
     if (!TokenBillingService?.creditTokens) {
-      return res.status(503).json({ error: 'Token billing service not available' });
+      return notConfigured(res);
     }
 
     const sig = req.headers['stripe-signature'] as string;
@@ -332,7 +335,7 @@ router.get(
   verifyAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     if (!TokenBillingService?.getMargins) {
-      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -354,7 +357,7 @@ router.put(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!TokenBillingService?.updateMargin) {
-      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -382,7 +385,7 @@ router.get(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!TokenBillingService?.getRevenueAnalytics) {
-      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -405,7 +408,7 @@ router.get(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!UsageService?.getOperationalCosts) {
-      return res.status(503).json({ success: false, error: 'Usage service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -432,7 +435,7 @@ router.post(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!TokenBillingService?.upsertPackage) {
-      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+      return notConfigured(res);
     }
 
     try {
