@@ -2,6 +2,9 @@
 -- Creates tables for role-based access control in assessments
 -- Supports: Admin, Manager, Editor, Viewer roles with granular permissions
 
+-- Needed for gen_random_uuid() used for TEXT ids
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- ============================================
 -- Table: assessment_roles
 -- Stores user roles and permissions per assessment
@@ -16,20 +19,20 @@ CREATE TABLE IF NOT EXISTS assessment_roles (
   role TEXT NOT NULL CHECK(role IN ('admin', 'manager', 'editor', 'viewer')),
   
   -- Granular permissions (primarily for manager role customization)
-  can_edit BOOLEAN DEFAULT 0,
-  can_approve BOOLEAN DEFAULT 0,
-  can_manage_team BOOLEAN DEFAULT 0,
-  can_change_status BOOLEAN DEFAULT 0,
-  can_generate_report BOOLEAN DEFAULT 0,
-  can_generate_initiatives BOOLEAN DEFAULT 0,
+  can_edit BOOLEAN DEFAULT FALSE,
+  can_approve BOOLEAN DEFAULT FALSE,
+  can_manage_team BOOLEAN DEFAULT FALSE,
+  can_change_status BOOLEAN DEFAULT FALSE,
+  can_generate_report BOOLEAN DEFAULT FALSE,
+  can_generate_initiatives BOOLEAN DEFAULT FALSE,
   
   -- Area restrictions (JSON array of area IDs, NULL = all areas)
   assigned_areas TEXT,
   
   -- Assignment tracking
   assigned_by TEXT NOT NULL,
-  assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  assigned_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   
   -- Ensure one role per user per assessment
   UNIQUE(assessment_id, user_id)
@@ -73,8 +76,8 @@ CREATE TABLE IF NOT EXISTS assessment_access_requests (
   granted_areas TEXT, -- JSON array
   
   -- Timestamps
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Indexes for assessment_access_requests
@@ -86,27 +89,33 @@ CREATE INDEX IF NOT EXISTS idx_assessment_access_requests_org ON assessment_acce
 -- ============================================
 -- Trigger: Auto-update updated_at on assessment_roles
 -- ============================================
-CREATE TRIGGER IF NOT EXISTS trg_assessment_roles_updated_at
-AFTER UPDATE ON assessment_roles
-FOR EACH ROW
+CREATE OR REPLACE FUNCTION set_updated_at_timestamp()
+RETURNS TRIGGER AS $$
 BEGIN
-  UPDATE assessment_roles SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
 END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_assessment_roles_updated_at ON assessment_roles;
+CREATE TRIGGER trg_assessment_roles_updated_at
+BEFORE UPDATE ON assessment_roles
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at_timestamp();
 
 -- ============================================
 -- Trigger: Auto-update updated_at on assessment_access_requests
 -- ============================================
-CREATE TRIGGER IF NOT EXISTS trg_assessment_access_requests_updated_at
-AFTER UPDATE ON assessment_access_requests
+DROP TRIGGER IF EXISTS trg_assessment_access_requests_updated_at ON assessment_access_requests;
+CREATE TRIGGER trg_assessment_access_requests_updated_at
+BEFORE UPDATE ON assessment_access_requests
 FOR EACH ROW
-BEGIN
-  UPDATE assessment_access_requests SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
-END;
+EXECUTE FUNCTION set_updated_at_timestamp();
 
 -- ============================================
 -- Seed: Add permissions to permissions table
 -- ============================================
-INSERT OR IGNORE INTO permissions (key, description, category, created_at)
+INSERT INTO permissions (key, description, category, created_at)
 VALUES 
   ('ASSESSMENT_CREATE', 'Create new assessments', 'ASSESSMENT', CURRENT_TIMESTAMP),
   ('ASSESSMENT_DELETE', 'Delete assessments', 'ASSESSMENT', CURRENT_TIMESTAMP),
@@ -118,38 +127,43 @@ VALUES
   ('ASSESSMENT_APPROVE', 'Approve assessments', 'ASSESSMENT', CURRENT_TIMESTAMP),
   ('ASSESSMENT_GENERATE_REPORT', 'Generate assessment reports', 'ASSESSMENT', CURRENT_TIMESTAMP),
   ('ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessment', 'ASSESSMENT', CURRENT_TIMESTAMP),
-  ('ASSESSMENT_REQUEST_ACCESS', 'Request access to assessments', 'ASSESSMENT', CURRENT_TIMESTAMP);
+  ('ASSESSMENT_REQUEST_ACCESS', 'Request access to assessments', 'ASSESSMENT', CURRENT_TIMESTAMP)
+ON CONFLICT (key) DO NOTHING;
 
 -- ============================================
 -- Seed: Add role permissions mappings
 -- ============================================
 -- ADMIN gets all assessment permissions
-INSERT OR IGNORE INTO role_permissions (id, role, permission_key)
+INSERT INTO role_permissions (id, role, permission_key)
 SELECT 
-  lower(hex(randomblob(16))),
+  gen_random_uuid()::text,
   'ADMIN',
   key
-FROM permissions WHERE category = 'ASSESSMENT';
+FROM permissions WHERE category = 'ASSESSMENT'
+ON CONFLICT (role, permission_key) DO NOTHING;
 
 -- PROJECT_MANAGER gets most assessment permissions except delete
-INSERT OR IGNORE INTO role_permissions (id, role, permission_key)
+INSERT INTO role_permissions (id, role, permission_key)
 SELECT 
-  lower(hex(randomblob(16))),
+  gen_random_uuid()::text,
   'PROJECT_MANAGER',
   key
 FROM permissions 
 WHERE category = 'ASSESSMENT' 
-  AND key NOT IN ('ASSESSMENT_DELETE', 'ASSESSMENT_CREATE');
+  AND key NOT IN ('ASSESSMENT_DELETE', 'ASSESSMENT_CREATE')
+ON CONFLICT (role, permission_key) DO NOTHING;
 
 -- TEAM_MEMBER gets view and edit
-INSERT OR IGNORE INTO role_permissions (id, role, permission_key)
+INSERT INTO role_permissions (id, role, permission_key)
 VALUES 
-  (lower(hex(randomblob(16))), 'TEAM_MEMBER', 'ASSESSMENT_VIEW'),
-  (lower(hex(randomblob(16))), 'TEAM_MEMBER', 'ASSESSMENT_EDIT'),
-  (lower(hex(randomblob(16))), 'TEAM_MEMBER', 'ASSESSMENT_REQUEST_ACCESS');
+  (gen_random_uuid()::text, 'TEAM_MEMBER', 'ASSESSMENT_VIEW'),
+  (gen_random_uuid()::text, 'TEAM_MEMBER', 'ASSESSMENT_EDIT'),
+  (gen_random_uuid()::text, 'TEAM_MEMBER', 'ASSESSMENT_REQUEST_ACCESS')
+ON CONFLICT (role, permission_key) DO NOTHING;
 
 -- VIEWER gets view and request access only
-INSERT OR IGNORE INTO role_permissions (id, role, permission_key)
+INSERT INTO role_permissions (id, role, permission_key)
 VALUES 
-  (lower(hex(randomblob(16))), 'VIEWER', 'ASSESSMENT_VIEW'),
-  (lower(hex(randomblob(16))), 'VIEWER', 'ASSESSMENT_REQUEST_ACCESS');
+  (gen_random_uuid()::text, 'VIEWER', 'ASSESSMENT_VIEW'),
+  (gen_random_uuid()::text, 'VIEWER', 'ASSESSMENT_REQUEST_ACCESS')
+ON CONFLICT (role, permission_key) DO NOTHING;

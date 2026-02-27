@@ -60,3 +60,16 @@ Before modifying any UI components:
 5. **Always support locked state**: `locked?: boolean` prop for read-only artifacts
 
 Detailed rules are in `.cursor/rules/nmode-shared-components.mdc` and `.cursor/rules/ui-standards-documentation.mdc`.
+
+---
+
+## Testing — No Placeholders
+
+**NIGDY nie pisz placeholder testów.** Każdy test MUSI testować rzeczywisty kod aplikacji.
+
+1. **Testy muszą importować i wywoływać prawdziwy kod** — controllery, serwisy, walidatory, komponenty z `server/src/`, `src/components/`.
+2. **Zabronione**: definiowanie logiki w pliku testowym i testowanie jej — to placeholder, nie test.
+3. **Dozwolone**: mockowanie zewnętrznych zależności (DB, API, timery), ale testowana logika musi pochodzić z kodu produkcyjnego.
+4. **Przed napisaniem testu**: sprawdź, czy istnieje walidator/serwis/controller do przetestowania. Jeśli nie — testuj to, co jest (np. integrację z API).
+
+Zasada: test ma wykryć regresję w prawdziwym kodzie. Placeholder tego nie robi.

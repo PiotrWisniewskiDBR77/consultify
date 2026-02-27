@@ -9,8 +9,8 @@
 
 CREATE TABLE IF NOT EXISTS multi_framework_assessments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    project_id UUID NOT NULL,
+    organization_id UUID NOT NULL,
     framework VARCHAR(20) NOT NULL CHECK (framework IN ('SIRI', 'ADMA', 'CMMI', 'LEAN')),
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -28,26 +28,72 @@ CREATE TABLE IF NOT EXISTS multi_framework_assessments (
     
     -- Workflow tracking
     submitted_at TIMESTAMPTZ,
-    submitted_by UUID REFERENCES users(id),
+    submitted_by UUID,
     approved_at TIMESTAMPTZ,
-    approved_by UUID REFERENCES users(id),
+    approved_by UUID,
     rejected_at TIMESTAMPTZ,
-    rejected_by UUID REFERENCES users(id),
+    rejected_by UUID,
     rejection_reason TEXT,
     
     -- Versioning
     version INTEGER DEFAULT 1,
-    previous_version_id UUID REFERENCES multi_framework_assessments(id),
+    previous_version_id UUID,
     
     -- Audit fields
-    created_by UUID REFERENCES users(id),
+    created_by UUID,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_by UUID REFERENCES users(id),
+    updated_by UUID,
     
     -- Uniqueness constraint
     UNIQUE(project_id, framework, name)
 );
+
+-- Backfill columns used by indexes/views on legacy schemas
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'multi_framework_assessments' AND column_name = 'created_by'
+    ) THEN
+        ALTER TABLE multi_framework_assessments ADD COLUMN created_by UUID;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'multi_framework_assessments' AND column_name = 'overall_score'
+    ) THEN
+        ALTER TABLE multi_framework_assessments ADD COLUMN overall_score DECIMAL(3,2);
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'multi_framework_assessments' AND column_name = 'data'
+    ) THEN
+        ALTER TABLE multi_framework_assessments ADD COLUMN data JSONB NOT NULL DEFAULT '{}';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'multi_framework_assessments' AND column_name = 'category_scores'
+    ) THEN
+        ALTER TABLE multi_framework_assessments ADD COLUMN category_scores JSONB DEFAULT '{}';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'multi_framework_assessments' AND column_name = 'version'
+    ) THEN
+        ALTER TABLE multi_framework_assessments ADD COLUMN version INTEGER DEFAULT 1;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'multi_framework_assessments' AND column_name = 'updated_at'
+    ) THEN
+        ALTER TABLE multi_framework_assessments ADD COLUMN updated_at TIMESTAMPTZ DEFAULT NOW();
+    END IF;
+END $$;
 
 -- ============================================
 -- INDEXES FOR PERFORMANCE
@@ -71,13 +117,13 @@ CREATE INDEX IF NOT EXISTS idx_mfa_category_scores_gin ON multi_framework_assess
 
 CREATE TABLE IF NOT EXISTS multi_framework_assessment_versions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    assessment_id UUID NOT NULL REFERENCES multi_framework_assessments(id) ON DELETE CASCADE,
+    assessment_id UUID NOT NULL,
     version INTEGER NOT NULL,
     data JSONB NOT NULL,
     overall_score DECIMAL(3,2),
     category_scores JSONB,
     change_summary TEXT,
-    created_by UUID REFERENCES users(id),
+    created_by UUID,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     
     UNIQUE(assessment_id, version)
@@ -92,8 +138,8 @@ CREATE INDEX IF NOT EXISTS idx_mfav_version ON multi_framework_assessment_versio
 
 CREATE TABLE IF NOT EXISTS multi_framework_assessment_reviewers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    assessment_id UUID NOT NULL REFERENCES multi_framework_assessments(id) ON DELETE CASCADE,
-    reviewer_id UUID NOT NULL REFERENCES users(id),
+    assessment_id UUID NOT NULL,
+    reviewer_id UUID NOT NULL,
     role VARCHAR(50) DEFAULT 'REVIEWER',
     status VARCHAR(30) DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'DECLINED')),
     feedback TEXT,
@@ -114,9 +160,9 @@ CREATE INDEX IF NOT EXISTS idx_mfar_status ON multi_framework_assessment_reviewe
 
 CREATE TABLE IF NOT EXISTS multi_framework_assessment_comments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    assessment_id UUID NOT NULL REFERENCES multi_framework_assessments(id) ON DELETE CASCADE,
-    parent_id UUID REFERENCES multi_framework_assessment_comments(id),
-    author_id UUID NOT NULL REFERENCES users(id),
+    assessment_id UUID NOT NULL,
+    parent_id UUID,
+    author_id UUID NOT NULL,
     content TEXT NOT NULL,
     
     -- Optional: target specific dimension/area
@@ -125,7 +171,7 @@ CREATE TABLE IF NOT EXISTS multi_framework_assessment_comments (
     
     -- Status for resolution tracking
     status VARCHAR(30) DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'RESOLVED', 'WONT_FIX')),
-    resolved_by UUID REFERENCES users(id),
+    resolved_by UUID,
     resolved_at TIMESTAMPTZ,
     
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -143,9 +189,9 @@ CREATE INDEX IF NOT EXISTS idx_mfac_status ON multi_framework_assessment_comment
 
 CREATE TABLE IF NOT EXISTS multi_framework_reports (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    assessment_id UUID NOT NULL REFERENCES multi_framework_assessments(id) ON DELETE CASCADE,
-    project_id UUID NOT NULL REFERENCES projects(id),
-    organization_id UUID NOT NULL REFERENCES organizations(id),
+    assessment_id UUID NOT NULL,
+    project_id UUID NOT NULL,
+    organization_id UUID NOT NULL,
     framework VARCHAR(20) NOT NULL,
     name VARCHAR(255) NOT NULL,
     status VARCHAR(30) DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'FINAL', 'ARCHIVED')),
@@ -164,11 +210,11 @@ CREATE TABLE IF NOT EXISTS multi_framework_reports (
     pdf_generated_at TIMESTAMPTZ,
     
     -- Audit fields
-    created_by UUID REFERENCES users(id),
+    created_by UUID,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     finalized_at TIMESTAMPTZ,
-    finalized_by UUID REFERENCES users(id)
+    finalized_by UUID
 );
 
 CREATE INDEX IF NOT EXISTS idx_mfr_assessment ON multi_framework_reports(assessment_id);
@@ -182,10 +228,10 @@ CREATE INDEX IF NOT EXISTS idx_mfr_status ON multi_framework_reports(status);
 
 CREATE TABLE IF NOT EXISTS multi_framework_initiatives (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    assessment_id UUID REFERENCES multi_framework_assessments(id) ON DELETE SET NULL,
-    report_id UUID REFERENCES multi_framework_reports(id) ON DELETE SET NULL,
-    project_id UUID NOT NULL REFERENCES projects(id),
-    organization_id UUID NOT NULL REFERENCES organizations(id),
+    assessment_id UUID,
+    report_id UUID,
+    project_id UUID NOT NULL,
+    organization_id UUID NOT NULL,
     framework VARCHAR(20) NOT NULL,
     
     -- Initiative details
@@ -211,7 +257,7 @@ CREATE TABLE IF NOT EXISTS multi_framework_initiatives (
     expected_outcomes JSONB DEFAULT '[]',
     
     -- Audit fields
-    created_by UUID REFERENCES users(id),
+    created_by UUID,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -270,13 +316,13 @@ SELECT
     u.first_name || ' ' || u.last_name AS created_by_name,
     p.name AS project_name,
     o.name AS organization_name,
-    (SELECT COUNT(*) FROM multi_framework_assessment_reviewers r WHERE r.assessment_id = mfa.id) AS reviewer_count,
-    (SELECT COUNT(*) FROM multi_framework_assessment_reviewers r WHERE r.assessment_id = mfa.id AND r.status = 'COMPLETED') AS completed_reviews,
-    (SELECT COUNT(*) FROM multi_framework_assessment_comments c WHERE c.assessment_id = mfa.id AND c.status = 'OPEN') AS open_comments
+    (SELECT COUNT(*) FROM multi_framework_assessment_reviewers r WHERE r.assessment_id::text = mfa.id::text) AS reviewer_count,
+    (SELECT COUNT(*) FROM multi_framework_assessment_reviewers r WHERE r.assessment_id::text = mfa.id::text AND r.status = 'COMPLETED') AS completed_reviews,
+    (SELECT COUNT(*) FROM multi_framework_assessment_comments c WHERE c.assessment_id::text = mfa.id::text AND c.status = 'OPEN') AS open_comments
 FROM multi_framework_assessments mfa
-LEFT JOIN users u ON mfa.created_by = u.id
-LEFT JOIN projects p ON mfa.project_id = p.id
-LEFT JOIN organizations o ON mfa.organization_id = o.id;
+LEFT JOIN users u ON mfa.created_by::text = u.id::text
+LEFT JOIN projects p ON mfa.project_id::text = p.id::text
+LEFT JOIN organizations o ON mfa.organization_id::text = o.id::text;
 
 -- ============================================
 -- GRANT PERMISSIONS (adjust as needed)

@@ -1,0 +1,118 @@
+{
+  "generatedAt": "2026-02-26T20:54:36.141Z",
+  "period": "2026-02",
+  "layers": [
+    {
+      "layer": "L1 Unit",
+      "testFiles": 211,
+      "sharding": "4-way",
+      "timeout": "12 min/shard",
+      "prBlocking": true
+    },
+    {
+      "layer": "L2 Component",
+      "testFiles": 97,
+      "sharding": "8-way (npm)",
+      "timeout": "12 min",
+      "prBlocking": true
+    },
+    {
+      "layer": "L3 Integration",
+      "testFiles": 296,
+      "sharding": "3-way",
+      "timeout": "12 min/shard",
+      "prBlocking": true
+    },
+    {
+      "layer": "L4 E2E Smoke (Tier-0)",
+      "testFiles": 20,
+      "sharding": "none",
+      "timeout": "15 min",
+      "prBlocking": true
+    },
+    {
+      "layer": "L4 E2E Full (Tier-1)",
+      "testFiles": 124,
+      "sharding": "none",
+      "timeout": "30 min",
+      "prBlocking": false
+    },
+    {
+      "layer": "L5 Security",
+      "testFiles": 9,
+      "sharding": "none",
+      "timeout": "10 min",
+      "prBlocking": false
+    },
+    {
+      "layer": "L5 Performance",
+      "testFiles": 3,
+      "sharding": "none",
+      "timeout": "10 min",
+      "prBlocking": false
+    }
+  ],
+  "qualityGates": [
+    {
+      "name": "lint + typecheck",
+      "type": "static analysis",
+      "status": "active"
+    },
+    {
+      "name": "quality-check (anti-placeholder)",
+      "type": "test quality",
+      "status": "active"
+    },
+    {
+      "name": "skip-scan (zero .only())",
+      "type": "test hygiene",
+      "status": "active"
+    },
+    {
+      "name": "security-integrity (29 checks)",
+      "type": "security",
+      "status": "active"
+    },
+    {
+      "name": "L1–L3 coverage gates (95%)",
+      "type": "coverage",
+      "status": "active"
+    },
+    {
+      "name": "critical-path coverage (95%)",
+      "type": "coverage",
+      "status": "active"
+    },
+    {
+      "name": "patch coverage (≥80%)",
+      "type": "coverage",
+      "status": "active"
+    }
+  ],
+  "skipAllowlist": {
+    "totalEntries": 1,
+    "expiredEntries": 0,
+    "entriesWithoutOwner": 0
+  },
+  "scorecard": {
+    "modulesTracked": 12,
+    "averageScore": 43,
+    "gradeA": 1,
+    "gradeF": 3,
+    "criticalModulesAvg": 68
+  },
+  "debtItems": [
+    {
+      "area": "Critical modules",
+      "issue": "Critical modules average score 68/100 (target: ≥80)",
+      "priority": "P0",
+      "recommendation": "Prioritize security tests and negative test cases for critical modules"
+    },
+    {
+      "area": "Test coverage",
+      "issue": "3 module(s) with grade F (no meaningful test coverage)",
+      "priority": "P1",
+      "recommendation": "Add at least unit + component tests for each F-graded module"
+    }
+  ]
+}

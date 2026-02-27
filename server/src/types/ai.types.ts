@@ -84,7 +84,15 @@ export interface ToolCall {
 // ==========================================
 
 /** Unified response style – kept in sync with frontend chatSlice */
-export type ResponseStyle = 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
+export type ResponseStyle =
+  | 'normal'
+  | 'executive'
+  | 'analyst'
+  | 'coach'
+  | 'concise'
+  | 'formal'
+  | 'professional'
+  | 'friendly';
 
 /** AI mode toggles sent from the chat UI */
 export interface AIModes {
@@ -92,6 +100,9 @@ export interface AIModes {
   webSearch?: boolean;
   showReasoning?: boolean;
   multiAgent?: boolean;
+  marketResearch?: boolean;
+  coThinkerMode?: string | null;
+  privateMode?: boolean;
   tts?: boolean;
 }
 
@@ -130,6 +141,15 @@ export interface ScreenContext {
 
 export interface AIPipelineRequest {
   capability: CapabilityName;
+  /**
+   * v3 enterprise: stable routing key decoupled from capability implementation.
+   * If omitted, defaults to `capability`.
+   */
+  purpose?: string;
+  /**
+   * v3 enterprise: optional data classification hint used by org AI policy.
+   */
+  dataClass?: 'no_pii' | 'pii' | 'confidential';
   prompt: string;
   userId: string;
   organizationId?: string;

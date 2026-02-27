@@ -23,6 +23,11 @@ type ProviderDefinition = {
   tier: string;
   requiresJWT?: boolean;
   isLocal?: boolean;
+  kind?: 'TEXT_LLM' | 'IMAGE_MODEL' | 'BUSINESS_MODEL';
+  provider_type?: 'direct' | 'aggregator' | 'hosted' | 'local' | 'customer_managed';
+  origin_vendor?: string;
+  execution_regions?: string[];
+  allowed_data_classes?: Array<'no_pii' | 'pii' | 'confidential'>;
 };
 
 type ProviderRow = {
@@ -69,7 +74,12 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     supportsStreaming: true,
     supportsVision: true,
     supportsTools: true,
-    tier: 'BUDGET',
+    tier: 'PREMIUM',
+    kind: 'TEXT_LLM',
+    provider_type: 'direct',
+    origin_vendor: 'openai',
+    execution_regions: ['US', 'EU'],
+    allowed_data_classes: ['no_pii', 'pii'],
   },
   google: {
     id: 'google',
@@ -83,6 +93,11 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     supportsVision: true,
     supportsTools: true,
     tier: 'BUDGET',
+    kind: 'TEXT_LLM',
+    provider_type: 'direct',
+    origin_vendor: 'google',
+    execution_regions: ['US', 'EU'],
+    allowed_data_classes: ['no_pii', 'pii'],
   },
   deepseek: {
     id: 'deepseek',
@@ -95,6 +110,11 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     supportsVision: false,
     supportsTools: true,
     tier: 'BUDGET',
+    kind: 'TEXT_LLM',
+    provider_type: 'direct',
+    origin_vendor: 'deepseek',
+    execution_regions: ['US', 'SG', 'EU'],
+    allowed_data_classes: ['no_pii', 'pii'],
   },
   anthropic: {
     id: 'anthropic',
@@ -107,6 +127,11 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     supportsVision: true,
     supportsTools: true,
     tier: 'PREMIUM',
+    kind: 'TEXT_LLM',
+    provider_type: 'direct',
+    origin_vendor: 'anthropic',
+    execution_regions: ['US', 'EU'],
+    allowed_data_classes: ['no_pii', 'pii'],
   },
   nvidia: {
     id: 'nvidia',
@@ -157,6 +182,11 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     supportsTools: true,
     tier: 'STANDARD',
     requiresJWT: true,
+    kind: 'TEXT_LLM',
+    provider_type: 'direct',
+    origin_vendor: 'zhipu',
+    execution_regions: ['CN', 'US'],
+    allowed_data_classes: ['no_pii', 'pii'],
   },
   openrouter: {
     id: 'openrouter',
@@ -164,12 +194,38 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     envKey: 'OPENROUTER_API_KEY',
     // NOTE: provider SDK expects a base URL (not the full /chat/completions path)
     defaultEndpoint: 'https://openrouter.ai/api/v1',
-    defaultModel: 'anthropic/claude-3.5-sonnet',
+    // Use a widely available, stable default via OpenRouter.
+    defaultModel: 'openai/gpt-4o',
     costPer1k: 0.008,
     supportsStreaming: true,
     supportsVision: true,
     supportsTools: true,
     tier: 'STANDARD',
+    kind: 'TEXT_LLM',
+    provider_type: 'aggregator',
+    origin_vendor: 'openrouter',
+    execution_regions: ['US', 'EU'],
+    allowed_data_classes: ['no_pii', 'pii'],
+  },
+  replicate: {
+    id: 'replicate',
+    name: 'Replicate (Images)',
+    envKey: 'REPLICATE_API_TOKEN',
+    envKeyAliases: ['REPLICATE_API_KEY'],
+    // Base URL for predictions API
+    defaultEndpoint: 'https://api.replicate.com/v1',
+    // Default is informational; actual image model used via ai_purpose_assignments.model_id
+    defaultModel: 'black-forest-labs/flux-schnell',
+    costPer1k: 0,
+    supportsStreaming: false,
+    supportsVision: false,
+    supportsTools: false,
+    tier: 'PREMIUM',
+    kind: 'IMAGE_MODEL',
+    provider_type: 'hosted',
+    origin_vendor: 'replicate',
+    execution_regions: ['US', 'EU'],
+    allowed_data_classes: ['no_pii', 'pii'],
   },
 };
 
@@ -182,6 +238,7 @@ const TIER_PRIORITY: Record<string, number> = {
 };
 
 export const DEFAULT_FALLBACK_CHAIN = [
+  'openrouter',
   'openai',
   'deepseek',
   'google',
@@ -190,6 +247,56 @@ export const DEFAULT_FALLBACK_CHAIN = [
   'cohere',
   'nvidia',
 ];
+
+function isPlaceholderKey(value: unknown): boolean {
+  if (typeof value !== 'string') return true;
+  const v = value.trim();
+  if (!v) return true;
+  const u = v.toUpperCase();
+  return (
+    u.includes('YOUR_') ||
+    u.includes('PLACEHOLDER') ||
+    u === 'CHANGEME' ||
+    u === 'REPLACE_ME' ||
+    u === 'YOUR_OPENROUTER_API_KEY_HERE'
+  );
+}
+
+function getEnvSyncAllowlist(): Set<string> {
+  // Default: keep platform in "OpenRouter-only" mode (lowest risk).
+  //
+  // When migrating to multi-provider routing, enable env sync explicitly:
+  // - LLM_ENV_SYNC_ALLOWLIST="openrouter,openai,anthropic,google"
+  // or:
+  // - LLM_MULTI_PROVIDER=1   (enables a sane default allowlist)
+  const raw = String(process.env.LLM_ENV_SYNC_ALLOWLIST || '').trim();
+  if (raw) {
+    const items = raw
+      .split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+    return new Set(items);
+  }
+
+  const multi =
+    process.env.LLM_MULTI_PROVIDER === '1' ||
+    process.env.LLM_MULTI_PROVIDER === 'true' ||
+    process.env.LLM_MULTI_PROVIDER === 'yes';
+  if (multi) {
+    return new Set([
+      'openrouter',
+      'openai',
+      'anthropic',
+      'google',
+      'deepseek',
+      'zai',
+      'replicate',
+      'ollama',
+    ]);
+  }
+
+  return new Set(['openrouter']);
+}
 
 export class LLMConfigService {
   private providerCache: Map<string, ProviderConfig>;
@@ -236,6 +343,22 @@ export class LLMConfigService {
       );
       await this.runAsync(`CREATE INDEX IF NOT EXISTS idx_llm_logs_status ON llm_logs(status)`);
 
+      await this.runAsync(`
+                CREATE TABLE IF NOT EXISTS llm_health_events (
+                    id TEXT PRIMARY KEY,
+                    provider TEXT NOT NULL,
+                    model TEXT,
+                    status TEXT NOT NULL,
+                    available INTEGER DEFAULT 0,
+                    latency_ms INTEGER DEFAULT 0,
+                    error_message TEXT,
+                    timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+      await this.runAsync(
+        `CREATE INDEX IF NOT EXISTS idx_llm_health_events_provider_timestamp ON llm_health_events(provider, timestamp)`
+      );
+
       this.initialized = true;
       aiLogger.info('LLMConfigService', 'LLM Config Service initialized with analytics storage');
     } catch (error: unknown) {
@@ -266,10 +389,17 @@ export class LLMConfigService {
                 api_key TEXT,
                 endpoint TEXT,
                 model_id TEXT,
+                kind TEXT DEFAULT 'TEXT_LLM',
+                provider_type TEXT DEFAULT 'aggregator',
+                origin_vendor TEXT,
+                execution_regions TEXT,
+                allowed_data_classes TEXT,
+                data_residency_attestation TEXT,
+                subprocessors_ref TEXT,
                 cost_per_1k REAL DEFAULT 0,
-                markup_multiplier REAL DEFAULT 1.0,
-                is_active INTEGER DEFAULT 1,
-                is_default INTEGER DEFAULT 0,
+                markup_multiplier REAL DEFAULT 2.0,
+                is_active BOOLEAN DEFAULT TRUE,
+                is_default BOOLEAN DEFAULT FALSE,
                 visibility TEXT DEFAULT 'public',
                 priority INTEGER DEFAULT 0,
                 tier TEXT DEFAULT 'STANDARD',
@@ -281,6 +411,45 @@ export class LLMConfigService {
         `;
 
     await this.runAsync(sql);
+
+    // Best-effort add enterprise columns for legacy DBs (SQLite dev / older schemas).
+    const addCols = [
+      `ALTER TABLE llm_providers ADD COLUMN kind TEXT DEFAULT 'TEXT_LLM'`,
+      `ALTER TABLE llm_providers ADD COLUMN provider_type TEXT DEFAULT 'aggregator'`,
+      `ALTER TABLE llm_providers ADD COLUMN origin_vendor TEXT`,
+      `ALTER TABLE llm_providers ADD COLUMN execution_regions TEXT`,
+      `ALTER TABLE llm_providers ADD COLUMN allowed_data_classes TEXT`,
+      `ALTER TABLE llm_providers ADD COLUMN data_residency_attestation TEXT`,
+      `ALTER TABLE llm_providers ADD COLUMN subprocessors_ref TEXT`,
+    ];
+    for (const stmt of addCols) {
+      try {
+        await this.runAsync(stmt);
+      } catch {
+        /* ignore */
+      }
+    }
+
+    // Ensure boolean columns are correctly typed on Postgres-only deployments.
+    // Older SQLite-first schemas used INTEGER 0/1, which conflicts with Postgres boolean normalization.
+    try {
+      await this.runAsync(
+        `ALTER TABLE llm_providers
+         ALTER COLUMN is_active TYPE BOOLEAN
+         USING (CASE WHEN (is_active::text) IN ('1', 't', 'true', 'y', 'yes', 'on') THEN TRUE ELSE FALSE END)`
+      );
+    } catch {
+      /* ignore */
+    }
+    try {
+      await this.runAsync(
+        `ALTER TABLE llm_providers
+         ALTER COLUMN is_default TYPE BOOLEAN
+         USING (CASE WHEN (is_default::text) IN ('1', 't', 'true', 'y', 'yes', 'on') THEN TRUE ELSE FALSE END)`
+      );
+    } catch {
+      /* ignore */
+    }
 
     const orgSettingsSql = `
             CREATE TABLE IF NOT EXISTS organization_llm_settings (
@@ -351,45 +520,18 @@ export class LLMConfigService {
   }
 
   async migrateTable(): Promise<void> {
-    const isSQLite = String(process.env.DB_TYPE || '').toLowerCase() === 'sqlite';
-
-    // SQLite does not support `ADD COLUMN IF NOT EXISTS`. Use PRAGMA table_info to detect columns.
-    const existingColumns = new Set<string>();
-    if (isSQLite) {
-      try {
-        const rows = await this.allAsync<{ name: string }>('PRAGMA table_info(llm_providers)');
-        for (const r of rows || []) existingColumns.add(String((r as any).name || ''));
-      } catch (err: unknown) {
-        aiLogger.warn(
-          'LLMConfigService',
-          `SQLite PRAGMA table_info failed: ${(err as any)?.message}`
-        );
-      }
-    }
-
     const migrations = [
-      { col: 'priority', sql: 'ALTER TABLE llm_providers ADD COLUMN priority INTEGER DEFAULT 0' },
-      {
-        col: 'last_health_check',
-        sql: 'ALTER TABLE llm_providers ADD COLUMN last_health_check TEXT',
-      },
-      {
-        col: 'health_status',
-        sql: "ALTER TABLE llm_providers ADD COLUMN health_status TEXT DEFAULT 'unknown'",
-      },
-      { col: 'updated_at', sql: 'ALTER TABLE llm_providers ADD COLUMN updated_at TEXT' },
-      { col: 'description', sql: 'ALTER TABLE llm_providers ADD COLUMN description TEXT' },
-      { col: 'tier', sql: "ALTER TABLE llm_providers ADD COLUMN tier TEXT DEFAULT 'STANDARD'" },
+      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 0',
+      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS last_health_check TEXT',
+      "ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS health_status TEXT DEFAULT 'unknown'",
+      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS updated_at TEXT',
+      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS description TEXT',
+      "ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS tier TEXT DEFAULT 'STANDARD'",
     ];
 
-    for (const m of migrations) {
-      if (isSQLite && existingColumns.has(m.col)) continue;
+    for (const sql of migrations) {
       try {
-        if (isSQLite) {
-          await this.runAsync(m.sql);
-        } else {
-          await this.runAsync(m.sql.replace('ADD COLUMN', 'ADD COLUMN IF NOT EXISTS'));
-        }
+        await this.runAsync(sql);
       } catch (error: unknown) {
         const err = error as Error;
         if (!err.message.includes('duplicate column') && !err.message.includes('already exists')) {
@@ -398,19 +540,16 @@ export class LLMConfigService {
       }
     }
 
-    // Allow FREE tier in llm_tier_assignments (Railway Postgres has a CHECK constraint without it)
-    if (!isSQLite) {
-      try {
-        await this.runAsync(
-          'ALTER TABLE llm_tier_assignments DROP CONSTRAINT IF EXISTS llm_tier_assignments_tier_check'
-        );
-        await this.runAsync(
-          "ALTER TABLE llm_tier_assignments ADD CONSTRAINT llm_tier_assignments_tier_check CHECK ((tier = ANY (ARRAY['BUDGET'::text, 'STANDARD'::text, 'PREMIUM'::text, 'REASONING'::text, 'FREE'::text])))"
-        );
-      } catch (error: unknown) {
-        const err = error as Error;
-        aiLogger.warn('LLMConfigService', `Tier constraint migration warning: ${err.message}`);
-      }
+    try {
+      await this.runAsync(
+        'ALTER TABLE llm_tier_assignments DROP CONSTRAINT IF EXISTS llm_tier_assignments_tier_check'
+      );
+      await this.runAsync(
+        "ALTER TABLE llm_tier_assignments ADD CONSTRAINT llm_tier_assignments_tier_check CHECK ((tier = ANY (ARRAY['BUDGET'::text, 'STANDARD'::text, 'PREMIUM'::text, 'REASONING'::text, 'FREE'::text])))"
+      );
+    } catch (error: unknown) {
+      const err = error as Error;
+      aiLogger.warn('LLMConfigService', `Tier constraint migration warning: ${err.message}`);
     }
   }
 
@@ -442,9 +581,10 @@ export class LLMConfigService {
   async syncDatabaseWithEnv(): Promise<void> {
     aiLogger.info('LLMConfigService', 'Syncing database with environment definitions...');
 
-    const definedProviderIds = new Set(Object.keys(PROVIDER_DEFINITIONS));
+    const allowlist = getEnvSyncAllowlist();
 
     for (const [providerId, definition] of Object.entries(PROVIDER_DEFINITIONS)) {
+      if (!allowlist.has(providerId)) continue;
       const apiKey = this.getApiKeyFromEnv(providerId);
 
       const changes: Record<string, unknown> = {
@@ -454,16 +594,46 @@ export class LLMConfigService {
         cost_per_1k: definition.costPer1k,
         priority: TIER_PRIORITY[definition.tier] || 1,
         tier: definition.tier,
+        ...(definition.kind ? { kind: definition.kind } : {}),
+        ...(definition.provider_type ? { provider_type: definition.provider_type } : {}),
+        ...(definition.origin_vendor ? { origin_vendor: definition.origin_vendor } : {}),
+        ...(definition.execution_regions
+          ? { execution_regions: JSON.stringify(definition.execution_regions) }
+          : {}),
+        ...(definition.allowed_data_classes
+          ? { allowed_data_classes: JSON.stringify(definition.allowed_data_classes) }
+          : {}),
       };
 
       const existingProvider = await this.getProviderFromDb(providerId);
 
       if (existingProvider) {
-        if (apiKey) {
-          changes.api_key = apiKey;
+        const isDev = process.env.NODE_ENV !== 'production';
+        const allowEnvSecretOverride =
+          isDev &&
+          (process.env.LLM_SECRETS_FROM_ENV === 'true' ||
+            process.env.LLM_SECRETS_FROM_ENV === '1' ||
+            process.env.LLM_SECRETS_FROM_ENV === 'yes');
+
+        // DB is the canonical source for secrets (prod). In dev, allow env to override to make
+        // local setup frictionless (paste key into `.env.local` and restart).
+        const existingKey = String(existingProvider.api_key || '').trim();
+        const envKey = String(apiKey || '').trim();
+        if (envKey && (allowEnvSecretOverride || !existingKey || isPlaceholderKey(existingKey))) {
+          changes.api_key = envKey;
+        }
+
+        const effectiveKey = String(
+          (changes.api_key ?? existingProvider.api_key ?? '') || ''
+        ).trim();
+        if (effectiveKey) {
           changes.is_active = 1;
-        } else {
-          changes.is_active = 0;
+        }
+
+        // Only OpenRouter is auto-promoted to "default" by env sync.
+        // Other providers should not silently become default (multi-default can break routing expectations).
+        if (providerId === 'openrouter') {
+          changes.is_default = 1;
         }
 
         await this.updateProviderInDb(providerId, changes);
@@ -474,18 +644,10 @@ export class LLMConfigService {
           provider: providerId,
           api_key: apiKey || null,
           is_active: apiKey ? 1 : 0,
-          is_default: definition.id === 'google' ? 1 : 0,
+          is_default: providerId === 'openrouter' ? 1 : 0,
           ...changes,
         });
         aiLogger.info('LLMConfigService', `Created provider ${providerId} (Active: ${!!apiKey})`);
-      }
-    }
-
-    const rows = await this.allAsync<{ provider: string }>('SELECT provider FROM llm_providers');
-    for (const row of rows || []) {
-      if (!definedProviderIds.has(row.provider)) {
-        await this.updateProviderInDb(row.provider, { is_active: 0 });
-        aiLogger.warn('LLMConfigService', `Deactivated orphan provider: ${row.provider}`);
       }
     }
 
@@ -496,7 +658,7 @@ export class LLMConfigService {
     aiLogger.info('LLMConfigService', 'Seeding tier assignments for active providers...');
 
     const activeProviders = await this.allAsync<{ id: string; provider: string; tier: string }>(
-      'SELECT id, provider, tier FROM llm_providers WHERE is_active = 1'
+      'SELECT id, provider, tier FROM llm_providers WHERE is_active = TRUE'
     );
 
     for (const p of activeProviders || []) {
@@ -593,22 +755,40 @@ export class LLMConfigService {
     if (!organizationId) return providers;
 
     try {
-      const rows = await this.allAsync<{ provider_id: string; is_enabled: number }>(
-        'SELECT provider_id, is_enabled FROM organization_llm_settings WHERE organization_id = ?',
+      const rows = await this.allAsync<{
+        provider_id: string;
+        is_enabled: number | boolean | null;
+        custom_priority?: number | null;
+      }>(
+        'SELECT provider_id, is_enabled, custom_priority FROM organization_provider_settings WHERE organization_id = ?',
         [organizationId]
       );
 
-      const settingsMap = new Map<string, boolean>();
-      rows.forEach((row) => settingsMap.set(row.provider_id, row.is_enabled === 1));
+      const settingsMap = new Map<string, { enabled: boolean; customPriority?: number | null }>();
+      rows.forEach((row) =>
+        settingsMap.set(row.provider_id, {
+          enabled: row.is_enabled === true || row.is_enabled === 1,
+          customPriority: row.custom_priority ?? null,
+        })
+      );
 
       return providers.map((provider) => ({
         ...provider,
-        is_enabled_for_org: settingsMap.has(provider.id) ? settingsMap.get(provider.id) : true,
+        is_enabled_for_org: settingsMap.has(provider.id)
+          ? settingsMap.get(provider.id)!.enabled
+          : true,
+        custom_priority: settingsMap.has(provider.id)
+          ? settingsMap.get(provider.id)!.customPriority
+          : null,
       }));
     } catch (error: unknown) {
       const err = error as Error;
       aiLogger.error('LLMConfigService', `Failed to get org settings: ${err.message}`);
-      return providers.map((provider) => ({ ...provider, is_enabled_for_org: true }));
+      return providers.map((provider) => ({
+        ...provider,
+        is_enabled_for_org: true,
+        custom_priority: null,
+      }));
     }
   }
 
@@ -617,14 +797,15 @@ export class LLMConfigService {
     providerId: string,
     isEnabled: boolean
   ): Promise<{ success: true }> {
+    const id = `${organizationId}-${providerId}`;
     const sql = `
-            INSERT INTO organization_llm_settings (organization_id, provider_id, is_enabled, created_at)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            INSERT INTO organization_provider_settings (id, organization_id, provider_id, is_enabled, updated_at, created_at)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             ON CONFLICT(organization_id, provider_id) 
-            DO UPDATE SET is_enabled = excluded.is_enabled
+            DO UPDATE SET is_enabled = excluded.is_enabled, updated_at = CURRENT_TIMESTAMP
         `;
 
-    await this.runAsync(sql, [organizationId, providerId, isEnabled ? 1 : 0]);
+    await this.runAsync(sql, [id, organizationId, providerId, isEnabled ? 1 : 0]);
     return { success: true };
   }
 
@@ -638,7 +819,7 @@ export class LLMConfigService {
     }
 
     const rows = await this.allAsync<ProviderRow>(
-      'SELECT * FROM llm_providers WHERE is_active = 1 ORDER BY priority DESC, is_default DESC'
+      'SELECT * FROM llm_providers WHERE is_active = TRUE ORDER BY priority DESC, is_default DESC'
     );
 
     this.providerCache.clear();
@@ -692,11 +873,11 @@ export class LLMConfigService {
 
   async getDefaultProvider(): Promise<ProviderConfig | null> {
     let row = await this.getAsync<ProviderRow>(
-      'SELECT * FROM llm_providers WHERE is_default = 1 AND is_active = 1 LIMIT 1'
+      'SELECT * FROM llm_providers WHERE is_default = TRUE AND is_active = TRUE LIMIT 1'
     );
     if (!row) {
       row = await this.getAsync<ProviderRow>(
-        'SELECT * FROM llm_providers WHERE is_active = 1 ORDER BY priority DESC LIMIT 1'
+        'SELECT * FROM llm_providers WHERE is_active = TRUE ORDER BY priority DESC LIMIT 1'
       );
     }
     return row ? this.enrichProviderConfig(row) : null;

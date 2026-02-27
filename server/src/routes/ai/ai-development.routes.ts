@@ -20,6 +20,20 @@ import logger from '../../utils/Logger.js';
 // Apply rate limiting
 const router = Router();
 
+const serviceFallback = (
+  _req: AuthRequest,
+  res: Response,
+  _feature: string,
+  _readPayload?: Record<string, unknown>
+) => {
+  return res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
+};
+
 // Service interfaces
 interface ABTestingServiceInterface {
   listExperiments?: (filters: { status?: string; promptId?: string }) => Promise<
@@ -429,7 +443,7 @@ router.get(
   requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.listExperiments) {
-      return res.status(503).json({ error: 'A/B Testing service not available' });
+      return serviceFallback(req, res, 'ai-development-ab-testing', { data: [] });
     }
 
     try {
@@ -467,7 +481,7 @@ router.post(
   requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.createExperiment) {
-      return res.status(503).json({ error: 'A/B Testing service not available' });
+      return serviceFallback(req, res, 'ai-development-ab-testing');
     }
 
     try {
@@ -502,7 +516,7 @@ router.get(
   requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.getExperimentStats) {
-      return res.status(503).json({ error: 'A/B Testing service not available' });
+      return serviceFallback(req, res, 'ai-development-ab-testing', { data: null });
     }
 
     try {
@@ -528,7 +542,7 @@ router.post(
   requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.startExperiment) {
-      return res.status(503).json({ error: 'A/B Testing service not available' });
+      return serviceFallback(req, res, 'ai-development-ab-testing');
     }
 
     try {
@@ -559,7 +573,7 @@ router.post(
   requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.stopExperiment) {
-      return res.status(503).json({ error: 'A/B Testing service not available' });
+      return serviceFallback(req, res, 'ai-development-ab-testing');
     }
 
     try {
@@ -590,7 +604,7 @@ router.get(
   requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.getCandidates) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return serviceFallback(req, res, 'ai-development-knowledge', { data: [] });
     }
 
     try {
@@ -616,7 +630,7 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.addCandidate) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return serviceFallback(req, res, 'ai-development-knowledge');
     }
 
     try {
@@ -649,7 +663,7 @@ router.put(
   requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.updateCandidateStatus) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return serviceFallback(req, res, 'ai-development-knowledge');
     }
 
     try {
@@ -675,7 +689,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.getApprovedIdeas) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return serviceFallback(req, res, 'ai-development-knowledge', { data: [] });
     }
 
     try {

@@ -9,7 +9,12 @@
 -- SQLite: ALTER TABLE ADD COLUMN is safe to re-run only if column doesn't exist.
 -- Migration runner should tolerate "duplicate column" errors.
 
-ALTER TABLE report_builder_block_types ADD COLUMN category TEXT DEFAULT 'content';
+DO $$
+BEGIN
+  ALTER TABLE report_builder_block_types ADD COLUMN category TEXT DEFAULT 'content';
+EXCEPTION WHEN duplicate_column THEN
+  -- noop
+END $$;
 
 -- Update existing blocks with category
 UPDATE report_builder_block_types SET category = 'content'  WHERE id = 'consulting_takeaway';
@@ -24,7 +29,12 @@ UPDATE report_builder_block_types SET category = 'content'  WHERE id = 'consulti
 -- 2. ADD DISPLAY ORDER COLUMN
 -- ==========================================
 
-ALTER TABLE report_builder_block_types ADD COLUMN display_order INTEGER DEFAULT 999;
+DO $$
+BEGIN
+  ALTER TABLE report_builder_block_types ADD COLUMN display_order INTEGER DEFAULT 999;
+EXCEPTION WHEN duplicate_column THEN
+  -- noop
+END $$;
 
 -- Set order for existing consulting blocks (they go after the core blocks)
 UPDATE report_builder_block_types SET display_order = 50 WHERE id = 'consulting_takeaway';
@@ -39,7 +49,7 @@ UPDATE report_builder_block_types SET display_order = 56 WHERE id = 'consulting_
 -- 3. CONTENT BLOCKS
 -- ==========================================
 
-INSERT OR IGNORE INTO report_builder_block_types (
+INSERT INTO report_builder_block_types (
   id, organization_id, name, description,
   source_types_json, render_kind, prompt_template, input_schema_json,
   default_length, default_language,
@@ -52,8 +62,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","INTERVIEW","TOOL","INITIATIVE"]',
   'markdown',
   'Generate a professional cover page. Include: report title, company name, assessment type, date, and a one-line subtitle that captures the key theme.',
-  NULL, 'short', 'business', 1, 1, 'content', 1,
-  datetime('now'), datetime('now')
+  NULL, 'short', 'business', true, true, 'content', 1,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'summary', NULL, 'Executive Summary',
@@ -61,8 +71,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","INTERVIEW","TOOL","INITIATIVE"]',
   'markdown',
   'Write a concise executive summary covering: overall maturity assessment, top 3-5 key findings, critical gaps, and high-priority recommendations. Use board-ready consulting language.',
-  NULL, 'medium', 'business', 1, 1, 'content', 2,
-  datetime('now'), datetime('now')
+  NULL, 'medium', 'business', true, true, 'content', 2,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'analysis', NULL, 'Detailed Analysis',
@@ -70,8 +80,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT"]',
   'markdown',
   'Provide a detailed analysis of assessment results. Cover each dimension with current state, gaps, strengths, and areas for improvement. Use data-driven insights.',
-  NULL, 'long', 'business', 1, 1, 'content', 3,
-  datetime('now'), datetime('now')
+  NULL, 'long', 'business', true, true, 'content', 3,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'recommendations', NULL, 'Recommendations',
@@ -79,8 +89,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","INTERVIEW","TOOL","INITIATIVE"]',
   'markdown',
   'Provide strategic, actionable recommendations. Each should include: recommendation title, rationale, expected impact, priority (high/medium/low), timeline, and responsible stakeholder role.',
-  NULL, 'medium', 'business', 1, 1, 'content', 4,
-  datetime('now'), datetime('now')
+  NULL, 'medium', 'business', true, true, 'content', 4,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'methodology', NULL, 'Methodology',
@@ -88,8 +98,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT"]',
   'markdown',
   'Describe the assessment methodology used: framework overview, scoring approach (scale, criteria), data collection methods, and any limitations or assumptions.',
-  NULL, 'short', 'technical', 1, 1, 'content', 5,
-  datetime('now'), datetime('now')
+  NULL, 'short', 'technical', true, true, 'content', 5,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'custom', NULL, 'Custom Section',
@@ -97,8 +107,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","INTERVIEW","TOOL","INITIATIVE"]',
   'markdown',
   'Write a section based on the provided context and any custom instructions. Maintain professional consulting tone.',
-  NULL, 'medium', 'business', 1, 1, 'content', 6,
-  datetime('now'), datetime('now')
+  NULL, 'medium', 'business', true, true, 'content', 6,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'quote', NULL, 'Key Quote',
@@ -106,8 +116,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","INTERVIEW","TOOL","INITIATIVE"]',
   'callout',
   'Extract or compose one powerful, memorable quote or key statement that captures the essence of the findings. Keep it punchy and board-ready.',
-  NULL, 'short', 'business', 1, 1, 'content', 7,
-  datetime('now'), datetime('now')
+  NULL, 'short', 'business', true, true, 'content', 7,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'context', NULL, 'Context / Company Profile',
@@ -115,8 +125,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","INTERVIEW","TOOL","INITIATIVE"]',
   'markdown',
   'Describe the business context: company profile, industry, digital maturity journey, scope of assessment, and key assumptions or constraints.',
-  NULL, 'medium', 'business', 1, 1, 'content', 8,
-  datetime('now'), datetime('now')
+  NULL, 'medium', 'business', true, true, 'content', 8,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'axis_analysis', NULL, 'Axis / Topic Analysis',
@@ -124,8 +134,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT"]',
   'markdown',
   'Provide an in-depth analysis of this specific axis/topic. Cover: current maturity score, strengths, weaknesses, area-by-area breakdown, and targeted recommendations.',
-  NULL, 'long', 'business', 1, 1, 'content', 9,
-  datetime('now'), datetime('now')
+  NULL, 'long', 'business', true, true, 'content', 9,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'action_plan', NULL, 'Action Plan / Next Steps',
@@ -133,8 +143,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","INTERVIEW","TOOL","INITIATIVE"]',
   'markdown',
   'Create an action plan organized by timeframe (Now 0-3mo, Next 3-6mo, Later 6-12mo). Each action: title, description, owner role, dependencies, success criteria.',
-  NULL, 'medium', 'business', 1, 1, 'content', 10,
-  datetime('now'), datetime('now')
+  NULL, 'medium', 'business', true, true, 'content', 10,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'appendix', NULL, 'Appendix',
@@ -142,15 +152,29 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","INTERVIEW","TOOL","INITIATIVE"]',
   'markdown',
   'Generate appendix content: detailed scoring tables, methodology reference, glossary of terms, and supporting evidence or data tables.',
-  NULL, 'long', 'technical', 1, 1, 'content', 11,
-  datetime('now'), datetime('now')
-);
+  NULL, 'long', 'technical', true, true, 'content', 11,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+)
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  source_types_json = EXCLUDED.source_types_json,
+  render_kind = EXCLUDED.render_kind,
+  prompt_template = EXCLUDED.prompt_template,
+  input_schema_json = EXCLUDED.input_schema_json,
+  default_length = EXCLUDED.default_length,
+  default_language = EXCLUDED.default_language,
+  is_system = EXCLUDED.is_system,
+  is_active = EXCLUDED.is_active,
+  category = EXCLUDED.category,
+  display_order = EXCLUDED.display_order,
+  updated_at = EXCLUDED.updated_at;
 
 -- ==========================================
 -- 4. DATA BLOCKS
 -- ==========================================
 
-INSERT OR IGNORE INTO report_builder_block_types (
+INSERT INTO report_builder_block_types (
   id, organization_id, name, description,
   source_types_json, render_kind, prompt_template, input_schema_json,
   default_length, default_language,
@@ -163,8 +187,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT"]',
   'matrix',
   'Generate an assessment matrix visualization from the scores data. Present axes, areas, current scores, and target scores in a structured matrix format.',
-  NULL, 'medium', 'business', 1, 1, 'data', 20,
-  datetime('now'), datetime('now')
+  NULL, 'medium', 'business', true, true, 'data', 20,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'table', NULL, 'Data Table',
@@ -173,8 +197,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   'table',
   'Present the relevant data in a clear, structured table format. Include appropriate column headers and organize rows logically.',
   '{"type":"object","properties":{"columns":{"type":"array","items":{"type":"string"}}}}',
-  'medium', 'business', 1, 1, 'data', 21,
-  datetime('now'), datetime('now')
+  'medium', 'business', true, true, 'data', 21,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'findings', NULL, 'Key Findings',
@@ -182,8 +206,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","INTERVIEW","TOOL","INITIATIVE"]',
   'markdown',
   'List the top key findings (5-10). Each finding should have a clear title, supporting evidence, and impact assessment. Rank by importance.',
-  NULL, 'medium', 'business', 1, 1, 'data', 22,
-  datetime('now'), datetime('now')
+  NULL, 'medium', 'business', true, true, 'data', 22,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'dashboard', NULL, 'Dashboard / Score Summary',
@@ -191,8 +215,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","TOOL"]',
   'json',
   'Create a dashboard summary with: overall maturity score, scores by dimension, top 3 gaps, top 3 strengths, and trend indicators. Format as structured data.',
-  NULL, 'medium', 'business', 1, 1, 'data', 23,
-  datetime('now'), datetime('now')
+  NULL, 'medium', 'business', true, true, 'data', 23,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'scorecard', NULL, 'Scorecard',
@@ -200,8 +224,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","TOOL"]',
   'table',
   'Create a scorecard table with columns: Dimension, Current Score, Target Score, Gap, Priority, and Status. Sort by gap size descending.',
-  NULL, 'medium', 'business', 1, 1, 'data', 24,
-  datetime('now'), datetime('now')
+  NULL, 'medium', 'business', true, true, 'data', 24,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'gap_analysis', NULL, 'Gap Analysis',
@@ -209,15 +233,29 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","TOOL"]',
   'table',
   'Perform a gap analysis. For each dimension: current maturity level, target level, gap size, root causes, and recommended actions to close the gap.',
-  NULL, 'medium', 'business', 1, 1, 'data', 25,
-  datetime('now'), datetime('now')
-);
+  NULL, 'medium', 'business', true, true, 'data', 25,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+)
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  source_types_json = EXCLUDED.source_types_json,
+  render_kind = EXCLUDED.render_kind,
+  prompt_template = EXCLUDED.prompt_template,
+  input_schema_json = EXCLUDED.input_schema_json,
+  default_length = EXCLUDED.default_length,
+  default_language = EXCLUDED.default_language,
+  is_system = EXCLUDED.is_system,
+  is_active = EXCLUDED.is_active,
+  category = EXCLUDED.category,
+  display_order = EXCLUDED.display_order,
+  updated_at = EXCLUDED.updated_at;
 
 -- ==========================================
 -- 5. VISUAL BLOCKS
 -- ==========================================
 
-INSERT OR IGNORE INTO report_builder_block_types (
+INSERT INTO report_builder_block_types (
   id, organization_id, name, description,
   source_types_json, render_kind, prompt_template, input_schema_json,
   default_length, default_language,
@@ -231,8 +269,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   'chart',
   'Prepare data for a bar chart visualization. Provide: labels (categories), data series with values, and 2-3 insight bullets. Format as structured chart data.',
   '{"type":"object","properties":{"labels":{"type":"array","items":{"type":"string"}},"series":{"type":"array","items":{"type":"object","properties":{"name":{"type":"string"},"values":{"type":"array","items":{"type":"number"}}}}}}}',
-  'short', 'business', 1, 1, 'visual', 30,
-  datetime('now'), datetime('now')
+  'short', 'business', true, true, 'visual', 30,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'chart_pie', NULL, 'Pie Chart',
@@ -241,8 +279,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   'chart',
   'Prepare data for a pie chart visualization. Provide: segment labels, values (percentages), and 2-3 insight bullets about the distribution.',
   '{"type":"object","properties":{"labels":{"type":"array","items":{"type":"string"}},"values":{"type":"array","items":{"type":"number"}}}}',
-  'short', 'business', 1, 1, 'visual', 31,
-  datetime('now'), datetime('now')
+  'short', 'business', true, true, 'visual', 31,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'image', NULL, 'Image / Diagram',
@@ -250,8 +288,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","INTERVIEW","TOOL","INITIATIVE"]',
   'json',
   'Describe the diagram or visual that should be placed here. Include: diagram type, key elements, relationships, and any labels or annotations needed.',
-  NULL, 'short', 'business', 1, 1, 'visual', 32,
-  datetime('now'), datetime('now')
+  NULL, 'short', 'business', true, true, 'visual', 32,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'roadmap', NULL, 'Roadmap',
@@ -259,8 +297,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","INITIATIVE","TOOL"]',
   'markdown',
   'Create a visual roadmap with phases (Now / Next / Later or Q1-Q4). Each phase: key milestones, deliverables, owners, and dependencies. Keep it slide-ready.',
-  NULL, 'medium', 'business', 1, 1, 'visual', 33,
-  datetime('now'), datetime('now')
+  NULL, 'medium', 'business', true, true, 'visual', 33,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'kpis', NULL, 'KPIs',
@@ -268,8 +306,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","INITIATIVE","TOOL"]',
   'table',
   'Define 5-8 KPIs to track transformation progress. Each KPI: name, current value, target value, measurement frequency, owner role, and status (on track / at risk / off track).',
-  NULL, 'medium', 'business', 1, 1, 'visual', 34,
-  datetime('now'), datetime('now')
+  NULL, 'medium', 'business', true, true, 'visual', 34,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'risk', NULL, 'Risks',
@@ -277,8 +315,8 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","INITIATIVE","TOOL"]',
   'table',
   'Create a risk register (top 8-10 risks). Columns: Risk description, Category, Probability (Low/Med/High), Impact (Low/Med/High), Risk Score, Mitigation strategy, Owner role.',
-  NULL, 'medium', 'business', 1, 1, 'visual', 35,
-  datetime('now'), datetime('now')
+  NULL, 'medium', 'business', true, true, 'visual', 35,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'prioritization', NULL, 'Prioritization',
@@ -286,9 +324,23 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","INITIATIVE","TOOL"]',
   'matrix',
   'Create a prioritization matrix (Impact vs Effort). Place 6-10 initiatives into four quadrants: Quick Wins, Major Projects, Fill-Ins, Thankless Tasks. Include brief rationale.',
-  NULL, 'medium', 'business', 1, 1, 'visual', 36,
-  datetime('now'), datetime('now')
-);
+  NULL, 'medium', 'business', true, true, 'visual', 36,
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+)
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  source_types_json = EXCLUDED.source_types_json,
+  render_kind = EXCLUDED.render_kind,
+  prompt_template = EXCLUDED.prompt_template,
+  input_schema_json = EXCLUDED.input_schema_json,
+  default_length = EXCLUDED.default_length,
+  default_language = EXCLUDED.default_language,
+  is_system = EXCLUDED.is_system,
+  is_active = EXCLUDED.is_active,
+  category = EXCLUDED.category,
+  display_order = EXCLUDED.display_order,
+  updated_at = EXCLUDED.updated_at;
 
 -- ==========================================
 -- 6. INDEX ON CATEGORY + ORDER

@@ -8,15 +8,18 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import NotificationService from '../services/notificationService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
+import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type {
   CreateDecisionRequest,
   DecideRequest,
   EscalateDecisionRequest,
+  RemindDecisionRequest,
   UpdateDecisionRequest,
 } from '../validators/decision.validators.js';
 
@@ -1135,6 +1138,138 @@ export class DecisionController {
       );
 
       res.json({ id, message: 'Decision escalated', escalatedBy: userId });
+    }
+  );
+
+  /**
+   * Remind / nudge a decision owner
+   *
+   * POST /api/decisions/:id/remind
+   * Body: { message?: string }
+   *
+   * Policy:
+   * - Allowed for requester (created_by) and admins.
+   * - Rate limit: max 1 reminder per decision per requester per 24h.
+   * - Writes audit entry to decision_history.
+   */
+  static remindDecision = asyncHandler(
+    async (req: AuthenticatedRequest<RemindDecisionRequest>, res: Response): Promise<void> => {
+      const { id } = req.params;
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const message =
+        typeof (req.body as any)?.message === 'string'
+          ? String((req.body as any).message).trim()
+          : '';
+
+      const decision = await queryHelpers.queryOne<{
+        id: string;
+        title?: string | null;
+        status?: string | null;
+        decision_maker_id?: string | null;
+        created_by?: string | null;
+        organization_id?: string | null;
+      }>(
+        `SELECT id, title, status, decision_maker_id, created_by, organization_id
+         FROM decisions
+         WHERE id = ? AND organization_id = ?
+         LIMIT 1`,
+        [id, orgId]
+      );
+
+      if (!decision) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+
+      const isAdmin = req.user?.role === 'ADMIN' || req.user?.role === 'SUPERADMIN';
+      if (!isAdmin && String(decision.created_by || '') !== String(userId)) {
+        res.status(403).json({ error: 'Only requester can remind' });
+        return;
+      }
+
+      const ownerId = String(decision.decision_maker_id || '').trim();
+      if (!ownerId) {
+        res.status(400).json({ error: 'Decision has no owner' });
+        return;
+      }
+
+      // 24h rate limit per decision+requester (best-effort; if history is missing we still send).
+      try {
+        const last = await queryHelpers.queryOne<{ created_at?: string | null }>(
+          `
+          SELECT created_at
+          FROM decision_history
+          WHERE decision_id = ?
+            AND lower(coalesce(action,'')) = 'reminded'
+            AND changed_by = ?
+          ORDER BY created_at DESC
+          LIMIT 1
+        `,
+          [id, userId]
+        );
+        const lastIso = last?.created_at ? String(last.created_at) : '';
+        if (lastIso) {
+          const diffMs = Date.now() - new Date(lastIso).getTime();
+          if (Number.isFinite(diffMs) && diffMs < 24 * 60 * 60 * 1000) {
+            res
+              .status(429)
+              .json({ error: 'Reminder already sent recently', lastRemindedAt: lastIso });
+            return;
+          }
+        }
+      } catch (e) {
+        // If history table/schema is missing in some envs, don't fail remind entirely.
+        logger.warn(
+          '[Decision.remindDecision] Rate-limit check failed (continuing):',
+          (e as any)?.message || e
+        );
+      }
+
+      const title = String(decision.title || 'Decision');
+      const body = message || `Reminder: please review and decide on "${title}".`;
+
+      await NotificationService.send({
+        userId: ownerId,
+        organizationId: orgId,
+        type: 'DECISION_REMINDER',
+        title: 'Decision reminder',
+        body,
+        entityType: 'decision',
+        entityId: id,
+        priority: 'normal',
+      });
+
+      // Audit trail
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO decision_history (id, decision_id, action, old_status, new_status, changed_by, details)
+           VALUES (?, ?, 'reminded', ?, ?, ?, ?)`,
+          [
+            uuidv4(),
+            id,
+            normalizeStatus(decision.status || null),
+            normalizeStatus(decision.status || null),
+            userId,
+            JSON.stringify({
+              notes: message || 'Reminder sent',
+              remindedTo: ownerId,
+            }),
+          ]
+        );
+      } catch (e) {
+        logger.warn(
+          '[Decision.remindDecision] decision_history insert failed (continuing):',
+          (e as any)?.message || e
+        );
+      }
+
+      res.json({ success: true, id, remindedTo: ownerId, remindedAt: new Date().toISOString() });
     }
   );
 }

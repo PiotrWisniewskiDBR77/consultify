@@ -2,14 +2,14 @@
 -- Tracks run_started/completed/accepted/loop_triggered events.
 
 CREATE TABLE IF NOT EXISTS ai_agent_audit_metrics (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id BIGSERIAL PRIMARY KEY,
   organization_id TEXT NOT NULL,
   user_id TEXT NOT NULL,
   run_id TEXT NOT NULL,
   conversation_id TEXT,
   event_type TEXT NOT NULL,
   payload_json TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_agent_audit_metrics_org_time

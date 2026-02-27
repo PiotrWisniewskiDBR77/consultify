@@ -36,6 +36,25 @@ export class HealthCheckController {
       environment: process.env.NODE_ENV || 'development',
     };
 
+    // Check Database connectivity (fast, bounded)
+    // - We use a strict timeout to keep this endpoint responsive.
+    // - If DB is down/slow, we return degraded state (yellow in UI) instead of failing hard.
+    try {
+      const db = getDatabase();
+      const dbCheck = (async () => {
+        await db.query('SELECT 1');
+        return 'connected';
+      })();
+      const timeout = new Promise<string>((resolve) => setTimeout(() => resolve('timeout'), 150));
+      health.database = await Promise.race([dbCheck, timeout]);
+    } catch {
+      health.database = 'disconnected';
+    }
+
+    if (health.database !== 'connected') {
+      health.status = 'degraded';
+    }
+
     // Check Redis connectivity (non-blocking, timeout after 150ms)
     // We support two Redis client implementations in this codebase:
     // - `services/redis/RedisClient` (ioredis) via `services/ai/redisClient` bridge

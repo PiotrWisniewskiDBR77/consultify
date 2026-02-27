@@ -1,0 +1,189 @@
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
+
+type Threshold = 80 | 90 | 100;
+
+async function ensureTables(): Promise<void> {
+  try {
+    await dbRun(
+      `CREATE TABLE IF NOT EXISTS ai_cost_alerts_sent (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        threshold INTEGER NOT NULL,
+        period_start TEXT NOT NULL,
+        sent_at TEXT NOT NULL,
+        UNIQUE(organization_id, threshold, period_start)
+      )`,
+      [],
+      { fallback: true } as any
+    );
+    await dbRun(
+      `CREATE INDEX IF NOT EXISTS idx_ai_cost_alerts_sent_org_period ON ai_cost_alerts_sent(organization_id, period_start)`,
+      [],
+      { fallback: true } as any
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+function monthStartIso(d = new Date()): string {
+  const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1, 0, 0, 0));
+  return x.toISOString();
+}
+
+async function getOrgMonthlyCostCapUsd(orgId: string): Promise<number | null> {
+  // Prefer organizations.monthly_budget_usd if present (already used by resourceQuota middleware).
+  try {
+    const row = await dbGet(
+      `SELECT monthly_budget_usd FROM organizations WHERE id = ? LIMIT 1`,
+      [orgId],
+      { fallback: true } as any
+    );
+    const v = Number((row as any)?.monthly_budget_usd);
+    return Number.isFinite(v) && v > 0 ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+async function getOrgMonthToDateCostUsd(orgId: string): Promise<number> {
+  try {
+    const row = await dbGet(
+      `SELECT COALESCE(SUM(estimated_cost_usd), 0) as cost
+       FROM ai_usage_logs
+       WHERE organization_id = ?
+         AND status = 'success'
+         AND created_at >= date('now', 'start of month')`,
+      [orgId],
+      { fallback: true } as any
+    );
+    const v = Number((row as any)?.cost || 0);
+    return Number.isFinite(v) ? v : 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function alreadySent(
+  orgId: string,
+  threshold: Threshold,
+  periodStart: string
+): Promise<boolean> {
+  try {
+    const row = await dbGet(
+      `SELECT id FROM ai_cost_alerts_sent WHERE organization_id = ? AND threshold = ? AND period_start = ? LIMIT 1`,
+      [orgId, threshold, periodStart],
+      { fallback: true } as any
+    );
+    return !!row;
+  } catch {
+    return false;
+  }
+}
+
+async function markSent(orgId: string, threshold: Threshold, periodStart: string): Promise<void> {
+  try {
+    await dbRun(
+      `INSERT INTO ai_cost_alerts_sent (id, organization_id, threshold, period_start, sent_at)
+       VALUES (?, ?, ?, ?, ?)`,
+      [
+        `cost-alert-${orgId}-${threshold}-${Date.now()}`,
+        orgId,
+        threshold,
+        periodStart,
+        new Date().toISOString(),
+      ],
+      { fallback: true } as any
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+async function sendEmailToOrgAdmins(params: {
+  orgId: string;
+  threshold: Threshold;
+  usedUsd: number;
+  capUsd: number;
+}): Promise<void> {
+  try {
+    const admins = await dbAll<{ email: string; first_name: string }>(
+      `SELECT email, first_name FROM users WHERE organization_id = ? AND role IN ('ADMIN', 'SUPERADMIN')`,
+      [params.orgId],
+      { fallback: true } as any
+    );
+    if (!admins?.length) return;
+    const org = await dbGet<{ name: string }>(
+      `SELECT name FROM organizations WHERE id = ?`,
+      [params.orgId],
+      { fallback: true } as any
+    );
+
+    const EmailService = (await import('../emailService.js')).default;
+    const subject = `⚠️ AI cost budget: ${params.threshold}% reached`;
+    const html = `
+      <div style="font-family: ui-sans-serif, system-ui, -apple-system; line-height: 1.4">
+        <h2>AI Cost Budget Alert</h2>
+        <p><b>${org?.name || 'Organization'}</b> reached <b>${params.threshold}%</b> of the monthly AI cost budget.</p>
+        <ul>
+          <li>Used: <b>$${params.usedUsd.toFixed(2)}</b></li>
+          <li>Budget: <b>$${params.capUsd.toFixed(2)}</b></li>
+        </ul>
+        <p>Recommended actions:</p>
+        <ul>
+          <li>Review high-spend purposes in SuperAdmin → AI → Analytics → Cost</li>
+          <li>Enable cheaper routing for non-critical purposes (soft cap)</li>
+        </ul>
+      </div>
+    `;
+
+    for (const a of admins) {
+      await EmailService.send({
+        to: a.email,
+        subject,
+        html,
+      });
+    }
+  } catch (e: any) {
+    logger.warn('[AICostAlerts] email send failed', { error: e?.message || e });
+  }
+}
+
+export async function runAiCostBudgetAlerts(): Promise<{ processed: number; sent: number }> {
+  await ensureTables();
+
+  const orgIds = await dbAll<{ id: string }>(`SELECT id FROM organizations`, [], {
+    fallback: true,
+  } as any);
+  const periodStart = monthStartIso();
+
+  let processed = 0;
+  let sent = 0;
+
+  for (const o of orgIds || []) {
+    const orgId = String(o.id || '').trim();
+    if (!orgId) continue;
+    processed += 1;
+
+    const capUsd = await getOrgMonthlyCostCapUsd(orgId);
+    if (!capUsd) continue;
+
+    const usedUsd = await getOrgMonthToDateCostUsd(orgId);
+    const pct = capUsd > 0 ? (usedUsd / capUsd) * 100 : 0;
+
+    const threshold: Threshold | null = pct >= 100 ? 100 : pct >= 90 ? 90 : pct >= 80 ? 80 : null;
+    if (!threshold) continue;
+
+    const wasSent = await alreadySent(orgId, threshold, periodStart);
+    if (wasSent) continue;
+
+    await markSent(orgId, threshold, periodStart);
+    await sendEmailToOrgAdmins({ orgId, threshold, usedUsd, capUsd });
+    sent += 1;
+  }
+
+  return { processed, sent };
+}
+
+export default { runAiCostBudgetAlerts };

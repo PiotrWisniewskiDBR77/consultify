@@ -763,8 +763,10 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       return res.status(503).json({
-        error: 'Model training is not available',
-        code: 'FEATURE_UNAVAILABLE',
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     } catch (error: any) {
       logger.error('[Analytics] Train model error:', error);

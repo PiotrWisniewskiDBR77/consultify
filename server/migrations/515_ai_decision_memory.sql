@@ -26,11 +26,11 @@ CREATE TABLE IF NOT EXISTS ai_decision_outcomes (
   -- Metadata
   industry_context TEXT,
   tags TEXT,                -- JSON array
-  embedding BLOB,           -- Vector for similarity search
+  embedding BYTEA,          -- (Optional) binary embedding for similarity search
   
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  resolved_at DATETIME,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  resolved_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Indexes for common queries
@@ -48,8 +48,16 @@ CREATE INDEX IF NOT EXISTS idx_decision_outcomes_follow_up
   WHERE follow_up_date IS NOT NULL AND outcome_status = 'pending';
 
 -- Trigger to update updated_at
-CREATE TRIGGER IF NOT EXISTS trg_decision_outcomes_updated_at
-AFTER UPDATE ON ai_decision_outcomes
+CREATE OR REPLACE FUNCTION set_updated_at_timestamp()
+RETURNS TRIGGER AS $$
 BEGIN
-  UPDATE ai_decision_outcomes SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
 END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_decision_outcomes_updated_at ON ai_decision_outcomes;
+CREATE TRIGGER trg_decision_outcomes_updated_at
+BEFORE UPDATE ON ai_decision_outcomes
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at_timestamp();

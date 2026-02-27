@@ -42,6 +42,7 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { useDemoSession } from '@/hooks/useDemoSession';
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { INSIGHT_DETECTION_PROMPT, INTERVIEW_SYSTEM_PROMPT } from '@/services/ai/intelligence';
 import { Api } from '@/services/api';
@@ -133,6 +134,7 @@ const parseDetectionJson = (raw: string): unknown[] => {
 export const ProjectIntelligenceView: React.FC = () => {
   const { currentProjectId, isChatCollapsed, toggleChatCollapse, activeChatMessages } =
     useAppStore();
+  const { isDemo } = useDemoSession();
   const [activeTab, setActiveTab] = useState<TabType>('interview');
   const [insights, setInsights] = useState<ProjectInsight[]>([]);
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
@@ -429,7 +431,7 @@ export const ProjectIntelligenceView: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              {insights.length === 0 && (
+              {isDemo && insights.length === 0 && (
                 <button
                   onClick={handleSeedDemoData}
                   disabled={isSeeding}

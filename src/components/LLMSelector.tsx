@@ -183,8 +183,8 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
           className={`w-2 h-2 rounded-full animate-pulse ${!isDisconnected ? activeTier.color : 'bg-red-500'}`}
         />
 
-        {!compact && <span>{t(activeTier.nameKey)}</span>}
-        {compact && <span className="max-w-[60px] truncate">{t(activeTier.nameKey)}</span>}
+        {!compact && <span>{t('llm.model', 'Model')}</span>}
+        {compact && <span className="max-w-[60px] truncate">{t('llm.model', 'Model')}</span>}
 
         <ChevronDown
           size={compact ? 10 : 12}

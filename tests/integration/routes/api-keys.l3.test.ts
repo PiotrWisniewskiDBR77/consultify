@@ -176,6 +176,18 @@ describe('API keys routes integration (L3)', () => {
     );
   });
 
+  it('GET /permissions returns 401 when no token and auth bypass is disabled', async () => {
+    const prev = process.env.ENABLE_TEST_AUTH_BYPASS;
+    process.env.ENABLE_TEST_AUTH_BYPASS = 'false';
+    try {
+      const res = await dispatch({ method: 'GET', url: '/api/api-keys/permissions' });
+      expect(res.status).toBe(401);
+      expect(res.body).toEqual(expect.objectContaining({ error: 'No token provided' }));
+    } finally {
+      process.env.ENABLE_TEST_AUTH_BYPASS = prev;
+    }
+  });
+
   it('GET / returns 403 for guest role', async () => {
     const res = await dispatch({ method: 'GET', url: '/api/api-keys', user: guestUser });
     expect(res.status).toBe(403);
@@ -238,6 +250,17 @@ describe('API keys routes integration (L3)', () => {
     expect(res.body).toEqual(expect.objectContaining({ error: 'Name is required' }));
   });
 
+  it('POST / returns 403 for guest role', async () => {
+    const res = await dispatch({
+      method: 'POST',
+      url: '/api/api-keys',
+      user: guestUser,
+      body: { name: 'Nope' },
+    });
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual(expect.objectContaining({ error: 'Insufficient role' }));
+  });
+
   it('POST / returns 400 for invalid permissions', async () => {
     const res = await dispatch({
       method: 'POST',
@@ -247,6 +270,17 @@ describe('API keys routes integration (L3)', () => {
     });
     expect(res.status).toBe(400);
     expect(res.body).toEqual(expect.objectContaining({ error: 'Invalid permissions' }));
+  });
+
+  it('POST / returns 500 when permissions is not an array', async () => {
+    const res = await dispatch({
+      method: 'POST',
+      url: '/api/api-keys',
+      user: ownerUser,
+      body: { name: 'Bad', permissions: { nope: true } },
+    });
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual(expect.objectContaining({ success: false }));
   });
 
   it('POST / creates key with defaults (permissions, rateLimit) and returns plainTextKey once', async () => {
@@ -265,6 +299,20 @@ describe('API keys routes integration (L3)', () => {
     expect(row.organization_id).toBe('org-1');
     expect(JSON.parse(row.permissions)).toEqual(['read:projects']);
     expect(row.rate_limit).toBe(100);
+  });
+
+  it('POST / sets expiresAt=null when expiresInDays=0', async () => {
+    const res = await dispatch({
+      method: 'POST',
+      url: '/api/api-keys',
+      user: ownerUser,
+      body: { name: 'NoExpiry', expiresInDays: 0 },
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.key.expiresAt).toBe(null);
+
+    const row = await dbGet<any>(`SELECT expires_at FROM api_keys WHERE id = ?`, [res.body.key.id]);
+    expect(row.expires_at).toBe(null);
   });
 
   it('POST / persists ipWhitelist, rateLimit and expiresInDays', async () => {
@@ -289,6 +337,28 @@ describe('API keys routes integration (L3)', () => {
     expect(JSON.parse(row.ip_whitelist)).toEqual(['127.0.0.1']);
     expect(row.rate_limit).toBe(5);
     expect(row.expires_at).toBeTruthy();
+  });
+
+  it('POST /:keyId/rotate returns 403 for guest role', async () => {
+    const res = await dispatch({
+      method: 'POST',
+      url: '/api/api-keys/k-rotate/rotate',
+      user: guestUser,
+      body: { gracePeriodHours: 1 },
+    });
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual(expect.objectContaining({ error: 'Insufficient role' }));
+  });
+
+  it('POST /:keyId/rotate returns 500 when key does not exist', async () => {
+    const res = await dispatch({
+      method: 'POST',
+      url: '/api/api-keys/k-missing/rotate',
+      user: ownerUser,
+      body: { gracePeriodHours: 1 },
+    });
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual(expect.objectContaining({ success: false }));
   });
 
   it('POST /:keyId/rotate rotates an active key and marks old key as rotated', async () => {
@@ -336,6 +406,24 @@ describe('API keys routes integration (L3)', () => {
     const oldRow = await dbGet<any>(`SELECT status, expires_at FROM api_keys WHERE id = ?`, ['k-rotate']);
     expect(oldRow.status).toBe('rotated');
     expect(oldRow.expires_at).toBeTruthy();
+  });
+
+  it('DELETE /:keyId returns 403 for guest role', async () => {
+    const res = await dispatch({ method: 'DELETE', url: '/api/api-keys/k-revoke', user: guestUser });
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual(expect.objectContaining({ error: 'Insufficient role' }));
+  });
+
+  it('DELETE /:keyId is idempotent for a missing key', async () => {
+    const res = await dispatch({
+      method: 'DELETE',
+      url: '/api/api-keys/k-does-not-exist',
+      user: ownerUser,
+    });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(
+      expect.objectContaining({ message: 'API key revoked successfully', keyId: 'k-does-not-exist' })
+    );
   });
 
   it('DELETE /:keyId revokes a key', async () => {

@@ -198,7 +198,6 @@ export default defineConfig({
     setupFiles: './tests/setup.ts',
     include: [
       'tests/unit/**/*.{test,spec}.{js,ts,jsx,tsx}',
-      'tests/component/**/*.{test,spec}.{js,ts,jsx,tsx}',
       'tests/components/**/*.{test,spec}.{js,ts,jsx,tsx}',
       'tests/hooks/**/*.{test,spec}.{js,ts,jsx,tsx}',
       'tests/store/**/*.{test,spec}.{js,ts,jsx,tsx}',

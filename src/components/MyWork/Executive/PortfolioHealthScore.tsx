@@ -257,44 +257,36 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
   return (
     <motion.div
       data-testid="portfolio-health"
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm overflow-hidden"
+      transition={{ duration: 0.22 }}
+      className="rounded-xl bg-white dark:bg-navy-900/50"
     >
       {/* Header */}
-      <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700">
+      <div className="px-5 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-              <Activity size={20} className="text-slate-900 dark:text-white" />
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <Activity size={16} className="text-emerald-500" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-navy-900 dark:text-white">
+              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                 {t('executive.health.title', 'Portfolio Health')}
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 {t('executive.health.subtitle', 'Overall execution performance')}
               </p>
             </div>
           </div>
 
-          {/* Trend Badge – A1.1: only show when real data exists */}
           {hasData && scoreDiff !== 0 && (
-            <div
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
-                trend === 'up'
-                  ? 'bg-emerald-100 dark:bg-emerald-900/30'
-                  : trend === 'down'
-                    ? 'bg-rose-100 dark:bg-rose-900/30'
-                    : 'bg-slate-100 dark:bg-white/5'
-              }`}
-            >
-              <TrendIcon size={14} className={trendColor} />
-              <span className={`text-sm font-semibold ${trendColor}`}>
+            <div className="flex items-center gap-1.5">
+              <TrendIcon size={13} className={trendColor} />
+              <span className={`text-xs font-semibold ${trendColor}`}>
                 {scoreDiff > 0 ? '+' : ''}
                 {scoreDiff}%
               </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">
                 {t('executive.health.vsLastWeek', 'vs last week')}
               </span>
             </div>
@@ -386,14 +378,14 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
       </div>
 
       {/* Footer Status */}
-      <div className="px-6 py-3 bg-slate-50 dark:bg-white/5 border-t border-slate-100 dark:border-navy-700">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-slate-500 dark:text-slate-400">
+      <div className="px-5 py-2.5">
+        <div className="flex items-center justify-between text-[11px]">
+          <span className="text-slate-400 dark:text-slate-500">
             {t('executive.health.lastUpdated', 'Last updated')}:{' '}
             {new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
           </span>
           <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="w-1 h-1 rounded-full bg-emerald-500" />
             {t('executive.health.live', 'Live')}
           </span>
         </div>

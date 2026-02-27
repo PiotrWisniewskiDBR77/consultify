@@ -3,7 +3,7 @@
  *
  * Hook do sprawdzania uprawnień użytkownika w module Interview.
  * Obsługuje dwa poziomy ról:
- * 1. Rola organizacyjna (users.role) - SUPERADMIN, ADMIN, PROJECT_MANAGER, TEAM_MEMBER, VIEWER
+ * 1. Rola organizacyjna (users.role) - SUPERADMIN, OWNER, ADMIN, PROJECT_MANAGER, TEAM_MEMBER, VIEWER
  * 2. Rola projektowa (project_members.project_role) - PMO_LEAD, WORKSTREAM_OWNER, etc.
  *
  * @see wdrozenia/standards/05-RBAC-PERMISSIONS.md
@@ -15,7 +15,8 @@ import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
 // Role organizacyjne z uprawnieniami do przydzielania
-const ORG_ROLES_WITH_ASSIGN = ['SUPERADMIN', 'ADMIN', 'PROJECT_MANAGER'];
+// OWNER dziedziczy uprawnienia ADMIN (plus billing/ownership/deletion)
+const ORG_ROLES_WITH_ASSIGN = ['SUPERADMIN', 'OWNER', 'ADMIN', 'PROJECT_MANAGER'];
 
 // Role projektowe z uprawnieniami do przydzielania
 const PROJECT_ROLES_WITH_ASSIGN = ['PMO_LEAD', 'WORKSTREAM_OWNER', 'INITIATIVE_OWNER', 'SPONSOR'];

@@ -74,6 +74,34 @@ describe('ConversationList (L2)', () => {
     expect(screen.getAllByTestId('conversation-item')).toHaveLength(5);
   });
 
+  it('marks active conversation item based on activeId', () => {
+    const groups = { pinned: [{ id: 'p1', title: 'Pinned 1' }, { id: 'p2', title: 'Pinned 2' }] };
+    render(<ConversationList groups={groups} activeId="p2" onSelect={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: 'Pinned 1' })).toHaveAttribute('data-active', '0');
+    expect(screen.getByRole('button', { name: 'Pinned 2' })).toHaveAttribute('data-active', '1');
+  });
+
+  it('does not render "Show more" toggle when group size is within the limit', () => {
+    const groups = {
+      pinned: Array.from({ length: 5 }).map((_, i) => ({ id: `p${i + 1}`, title: `Pinned ${i + 1}` })),
+    };
+    render(<ConversationList groups={groups} activeId={null} onSelect={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: /show more/i })).not.toBeInTheDocument();
+  });
+
+  it('renders groups in pinned → today order', () => {
+    const groups = {
+      today: [{ id: 't1', title: 'Today 1' }],
+      pinned: [{ id: 'p1', title: 'Pinned 1' }],
+    };
+    render(<ConversationList groups={groups} activeId={null} onSelect={vi.fn()} />);
+
+    const pinned = screen.getByText('Przypięte');
+    const today = screen.getByText('Dzisiaj');
+    expect(pinned.compareDocumentPosition(today) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('collapses/expands a group via click and keyboard and delegates selection', () => {
     const onSelect = vi.fn();
     const groups = {

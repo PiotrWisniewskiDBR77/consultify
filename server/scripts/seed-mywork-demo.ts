@@ -31,8 +31,197 @@ function isoPlusDays(days: number) {
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 }
 
+async function ensureMyWorkStateTables(db: any) {
+  // My Work routes require these tables at runtime (Inbox/Focus/Signals).
+  // Keep DDL cross-DB compatible (SQLite/Postgres) by using TEXT columns.
+  const statements: string[] = [
+    // Inbox triage state
+    `CREATE TABLE IF NOT EXISTS my_work_inbox_triage (
+      user_id TEXT NOT NULL,
+      item_key TEXT NOT NULL,
+      action TEXT NOT NULL,
+      params_json TEXT,
+      triaged_at TEXT NOT NULL,
+      PRIMARY KEY (user_id, item_key)
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_my_work_inbox_triage_user_id ON my_work_inbox_triage(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_my_work_inbox_triage_item_key ON my_work_inbox_triage(item_key)`,
+    `CREATE INDEX IF NOT EXISTS idx_my_work_inbox_triage_triaged_at ON my_work_inbox_triage(triaged_at)`,
+
+    // Focus state
+    `CREATE TABLE IF NOT EXISTS my_work_focus_state (
+      user_id TEXT NOT NULL,
+      focus_date TEXT NOT NULL,
+      item_key TEXT NOT NULL,
+      column_name TEXT NOT NULL,
+      position INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (user_id, focus_date, item_key)
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_my_work_focus_state_user_date ON my_work_focus_state(user_id, focus_date)`,
+    `CREATE INDEX IF NOT EXISTS idx_my_work_focus_state_user_date_column ON my_work_focus_state(user_id, focus_date, column_name)`,
+    `CREATE INDEX IF NOT EXISTS idx_my_work_focus_state_updated_at ON my_work_focus_state(updated_at)`,
+
+    // Signals (T012)
+    `CREATE TABLE IF NOT EXISTS my_work_signal_prefs (
+      user_id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL,
+      muted_types_json TEXT NOT NULL DEFAULT '[]',
+      quiet_hours_json TEXT NOT NULL DEFAULT '{}',
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS my_work_signal_snoozes (
+      user_id TEXT NOT NULL,
+      signal_key TEXT NOT NULL,
+      snoozed_until TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (user_id, signal_key)
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_my_work_signal_snoozes_until ON my_work_signal_snoozes(snoozed_until)`,
+    `CREATE TABLE IF NOT EXISTS my_work_signal_dismissals (
+      user_id TEXT NOT NULL,
+      signal_key TEXT NOT NULL,
+      dismissed_at TEXT NOT NULL,
+      PRIMARY KEY (user_id, signal_key)
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_my_work_signal_dismissals_at ON my_work_signal_dismissals(dismissed_at)`,
+  ];
+
+  for (const sql of statements) {
+    try {
+      await db.run(sql, []);
+    } catch {
+      // Some DB drivers disallow DDL in restricted contexts; seeding should still proceed.
+    }
+  }
+}
+
 function pick<T>(arr: T[], i: number): T {
   return arr[i % arr.length];
+}
+
+function seedKey(orgId: string, userId: string): string {
+  return crypto.createHash('sha1').update(`${orgId}:${userId}`).digest('hex').slice(0, 8);
+}
+
+function buildSeedIdeaMap(opts: {
+  ideaId: string;
+  title: string;
+  language: 'pl' | 'en';
+  branches: Array<{
+    key: string;
+    label: string;
+    items: Array<{ label: string; nodeType?: string; priority?: number; sourceType?: string }>;
+  }>;
+}) {
+  const centerId = 'root';
+  const branchRadius = 320;
+  const isPl = opts.language === 'pl';
+
+  const nodes: any[] = [
+    {
+      id: centerId,
+      type: 'center',
+      position: { x: 0, y: 0 },
+      data: {
+        label: opts.title || (isPl ? 'Wyzwanie' : 'Challenge'),
+        hint: isPl ? 'Kliknij, aby edytować' : 'Click to edit',
+        ideaId: opts.ideaId,
+      },
+      draggable: false,
+    },
+  ];
+
+  const edges: any[] = [];
+
+  const baseAngles = [
+    -Math.PI / 2,
+    -Math.PI / 6,
+    Math.PI / 6,
+    Math.PI / 2,
+    (5 * Math.PI) / 6,
+    (7 * Math.PI) / 6,
+  ];
+
+  for (let i = 0; i < opts.branches.length; i++) {
+    const b = opts.branches[i];
+    const angle = baseAngles[i % baseAngles.length];
+    const bx = Math.cos(angle) * branchRadius;
+    const by = Math.sin(angle) * branchRadius;
+    const branchId = `branch-${b.key}`;
+
+    nodes.push({
+      id: branchId,
+      type: 'branch',
+      position: { x: bx - 50, y: by - 20 },
+      data: { label: b.label, branchKey: b.key, count: b.items.length },
+      draggable: false,
+    });
+
+    edges.push({
+      id: `edge-${centerId}-${branchId}`,
+      source: centerId,
+      target: branchId,
+      type: 'smoothstep',
+      animated: true,
+      style: { stroke: '#94a3b8', strokeWidth: 2.5, opacity: 0.35 },
+      data: { system: true, kind: 'frames' },
+    });
+
+    const itemDx = Math.cos(angle) * 140;
+    const itemDy = Math.sin(angle) * 140;
+    const orthoDx = -Math.sin(angle) * 80;
+    const orthoDy = Math.cos(angle) * 80;
+
+    for (let j = 0; j < b.items.length; j++) {
+      const it = b.items[j];
+      const nid = `n-${crypto.randomUUID()}`;
+      nodes.push({
+        id: nid,
+        type: 'idea',
+        position: {
+          x: bx + itemDx + orthoDx * ((j % 2 === 0 ? 1 : -1) * (0.6 + 0.22 * j)),
+          y: by + itemDy + orthoDy * ((j % 3) - 1) * 0.55,
+        },
+        data: {
+          label: it.label,
+          branchKey: b.key,
+          nodeType: it.nodeType || null,
+          priority: typeof it.priority === 'number' ? it.priority : 55,
+          sourceType: it.sourceType || 'seed',
+          ideaId: opts.ideaId,
+        },
+      });
+
+      edges.push({
+        id: `edge-${crypto.randomUUID()}`,
+        source: branchId,
+        target: nid,
+        type: 'smoothstep',
+        animated: true,
+        style: { stroke: '#8b5cf6', strokeWidth: 2, opacity: 0.75 },
+        data: { userCreated: true, kind: 'seed' },
+      });
+    }
+  }
+
+  return { nodes, edges, version: 1 };
+}
+
+function envBool(name: string, def = false): boolean {
+  const raw = process.env[name];
+  if (raw == null) return def;
+  const v = String(raw).trim().toLowerCase();
+  if (v === '1' || v === 'true' || v === 'yes' || v === 'y') return true;
+  if (v === '0' || v === 'false' || v === 'no' || v === 'n') return false;
+  return def;
+}
+
+function envInt(name: string, def: number, min = 0, max = 10000): number {
+  const raw = process.env[name];
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return def;
+  return Math.min(max, Math.max(min, Math.floor(n)));
 }
 
 async function main() {
@@ -54,6 +243,9 @@ async function main() {
 
   const { getDatabaseAsync } = await import('../src/database/Database.js');
   const db = await getDatabaseAsync();
+
+  // Ensure state tables exist so My Work tabs don't 503 (Inbox/Signals) even on fresh DBs.
+  await ensureMyWorkStateTables(db);
 
   // -------------------------
   // Resolve org / user / project
@@ -78,7 +270,7 @@ async function main() {
   const userRow = await (async () => {
     if (seedUserEmail) {
       const r = await db.query<Row<{ id: string; email: string; organization_id: string }>>(
-        `SELECT id, email, organization_id FROM users WHERE email = ? LIMIT 1`,
+        `SELECT id, email, organization_id FROM users WHERE email = $1 LIMIT 1`,
         [seedUserEmail]
       );
       if (r?.rows?.[0]?.id) return r.rows[0];
@@ -86,7 +278,7 @@ async function main() {
     }
 
     const r = await db.query<Row<{ id: string; email: string; organization_id: string }>>(
-      `SELECT id, email, organization_id FROM users WHERE organization_id = ? ORDER BY created_at DESC LIMIT 1`,
+      `SELECT id, email, organization_id FROM users WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 1`,
       [orgId]
     );
     return r?.rows?.[0] || null;
@@ -98,11 +290,23 @@ async function main() {
   }
   const userId = userRow.id;
 
+  const otherUserId = await (async () => {
+    try {
+      const r = await db.query<Row<{ id: string }>>(
+        `SELECT id FROM users WHERE organization_id = $1 AND id <> $2 LIMIT 1`,
+        [orgId, userId]
+      );
+      return r?.rows?.[0]?.id || null;
+    } catch {
+      return null;
+    }
+  })();
+
   const projectId =
     seedProjectId ||
     (await (async () => {
       const r = await db.query<Row<{ id: string }>>(
-        `SELECT id FROM projects WHERE organization_id = ? ORDER BY updated_at DESC LIMIT 1`,
+        `SELECT id FROM projects WHERE organization_id = $1 ORDER BY updated_at DESC LIMIT 1`,
         [orgId]
       );
       return r?.rows?.[0]?.id || null;
@@ -114,6 +318,70 @@ async function main() {
     userEmail: userRow.email,
     projectId: projectId || '(none)',
   });
+
+  // -------------------------
+  // Options / counts
+  // -------------------------
+  const TASK_COUNT = envInt('SEED_TASKS', 20, 0, 200);
+  const DECISION_COUNT = envInt('SEED_DECISIONS', 20, 0, 200);
+  const NOTIF_COUNT = envInt('SEED_NOTIFICATIONS', 20, 0, 200);
+  const IDEAS_COUNT = envInt('SEED_IDEAS', 20, 0, 200);
+  const NOTEBOOK_COUNT = envInt('SEED_NOTEBOOK_PAGES', 20, 0, 200);
+  const FOCUS_COUNT = envInt('SEED_FOCUS_ITEMS', 20, 0, 200);
+
+  const purgeDecisions = envBool('SEED_PURGE_DECISIONS', false);
+  const purgeAllMyWork = envBool('SEED_PURGE_ALL_MYWORK', false);
+  const confirmPurge = String(process.env.SEED_PURGE_CONFIRM || '').trim().toUpperCase() === 'YES';
+
+  if ((purgeDecisions || purgeAllMyWork) && !confirmPurge) {
+    throw new Error(
+      'Purge requested but not confirmed. Set SEED_PURGE_CONFIRM=YES to proceed with deletions.'
+    );
+  }
+
+  // For safety, purge only within current user+org scope (DBR77 seed use-case).
+  if (purgeAllMyWork) {
+    logger.warn('[seed-mywork-demo] Purging My Work data for user/org scope', { orgId, userId });
+    try {
+      await db.run(`DELETE FROM my_work_focus_state WHERE user_id = $1`, [userId]);
+    } catch {}
+    try {
+      await db.run(`DELETE FROM my_work_inbox_triage WHERE user_id = $1`, [userId]);
+    } catch {}
+    try {
+      await db.run(`DELETE FROM my_work_signal_prefs WHERE user_id = $1`, [userId]);
+      await db.run(`DELETE FROM my_work_signal_snoozes WHERE user_id = $1`, [userId]);
+      await db.run(`DELETE FROM my_work_signal_dismissals WHERE user_id = $1`, [userId]);
+    } catch {}
+    try {
+      await db.run(`DELETE FROM my_ideas WHERE user_id = $1 AND organization_id = $2`, [userId, orgId]);
+    } catch {}
+    try {
+      await db.run(`DELETE FROM my_idea_maps WHERE user_id = $1 AND organization_id = $2`, [userId, orgId]);
+    } catch {}
+    try {
+      await db.run(`DELETE FROM notebook_pages WHERE owner_user_id = $1 AND organization_id = $2`, [
+        userId,
+        orgId,
+      ]);
+    } catch {}
+    try {
+      await db.run(`DELETE FROM notifications WHERE user_id = $1`, [userId]);
+    } catch {}
+    try {
+      await db.run(`DELETE FROM tasks WHERE assignee_id = $1 AND organization_id = $2`, [userId, orgId]);
+    } catch {}
+  }
+
+  if (purgeDecisions) {
+    logger.warn('[seed-mywork-demo] Purging decisions for user/org scope', { orgId, userId });
+    try {
+      await db.run(
+        `DELETE FROM decisions WHERE organization_id = $1 AND (decision_maker_id = $2 OR created_by = $2)`,
+        [orgId, userId]
+      );
+    } catch {}
+  }
 
   // -------------------------
   // Seed tasks
@@ -150,40 +418,60 @@ async function main() {
   const createdAt = nowIso();
 
   const seededTaskIds: string[] = [];
-  for (let i = 0; i < 20; i++) {
+  const personalTasksTarget = Math.min(TASK_COUNT, Math.max(0, Math.floor(TASK_COUNT / 3)));
+  for (let i = 0; i < TASK_COUNT; i++) {
     const id = `seed_task_${baseStamp}_${i}_${crypto.randomUUID()}`;
     const status = pick([...taskStatuses], i);
     const priority = pick([...priorities], i + 1);
     const stepPhase = pick([...phases], i + 2);
     const riskRating = pick([...risks], i + 3);
+    const isPersonal = i < personalTasksTarget;
+    const taskProjectId = !isPersonal && projectId ? projectId : null;
+    const taskType = isPersonal ? 'personal' : i % 4 === 0 ? 'governance' : 'execution';
 
+    // Coverage for UI filters:
+    // - Overdue: open task with due_date in the past
+    // - Today: open task due today
+    // - Week: open task within next 7 days
+    // We force the first few seeded tasks (which are personal) to cover those cases.
     const due =
-      status === 'done'
-        ? isoPlusDays(-Math.max(1, i % 10))
-        : isoPlusDays(Math.max(1, (i % 14) - 3));
+      i === 0
+        ? isoPlusDays(-2) // overdue + open
+        : i === 1
+          ? isoPlusDays(0) // due today
+          : i === 2
+            ? isoPlusDays(3) // due this week
+            : status === 'done'
+              ? isoPlusDays(-Math.max(1, i % 10))
+              : isoPlusDays((i % 14) - 3); // may be past or future
     const completedAt = status === 'done' ? isoPlusDays(-Math.max(1, i % 8)) : null;
 
     const tags = JSON.stringify(
       [
+        'dbr77',
+        'my-work',
         priority === 'critical' ? 'p0' : priority === 'high' ? 'p1' : 'p2',
         status,
         stepPhase,
+        taskType,
       ].filter(Boolean)
     );
 
+    const rowCreatedAt = isoPlusDays(-Math.max(0, i % 21));
     await db.run(
-      `INSERT OR IGNORE INTO tasks(
+      `INSERT INTO tasks(
         id, project_id, organization_id, title, description, status, priority,
         assignee_id, reporter_id, due_date, estimated_hours, tags,
         created_at, updated_at, completed_at,
         task_type, risk_rating, step_phase, initiative_id, acceptance_criteria, blocking_issues, why
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
+      ON CONFLICT (id) DO NOTHING`,
       [
         id,
-        projectId,
+        taskProjectId,
         orgId,
-        taskTitles[i],
-        `Seeded demo task (${status}/${priority}).`,
+        `DBR77: ${pick(taskTitles, i)}`,
+        `DBR77 / My Work: seeded task (${taskType}/${status}/${priority}).`,
         status,
         priority,
         userId,
@@ -191,10 +479,10 @@ async function main() {
         due,
         (i % 6) + 1,
         tags,
-        createdAt,
-        createdAt,
+        rowCreatedAt,
+        rowCreatedAt,
         completedAt,
-        i % 4 === 0 ? 'governance' : 'execution',
+        taskType,
         riskRating,
         stepPhase,
         null,
@@ -210,28 +498,40 @@ async function main() {
   // Seed decisions
   // -------------------------
   const decisionTypes = ['APPROVAL', 'SCOPE', 'RISK', 'TECH', 'GOVERNANCE'] as const;
-  const decisionStatuses = ['pending', 'approved', 'rejected', 'in_review'] as const;
+  const decisionStatuses = ['pending', 'in_review', 'approved', 'rejected', 'escalated'] as const;
 
   const decisionTitles = [
-    'Approve automation scope v1',
-    'Czy włączamy publiczne linki do raportów?',
-    'Wybór modelu LLM dla produkcji',
-    'Priorytet: stabilność vs nowe funkcje',
-    'Decyzja o rollout do domeny publicznej',
-    'Czy resetujemy embeddings po cutover?',
-    'Zasady eskalacji dla zablokowanych zadań',
-    'Wariant: staging environment na Railway',
-    'Czy włączamy strict CSRF na wybranych endpointach?',
-    'Polityka retencji logów i danych',
+    'DBR77: Scope — My Work V2 rollout',
+    'DBR77: Czy włączamy publiczne linki do raportów?',
+    'DBR77: Wybór modelu LLM dla produkcji',
+    'DBR77: Priorytet — stabilność vs nowe funkcje',
+    'DBR77: Rollout do domeny publicznej',
+    'DBR77: Reset embeddings po cutover?',
+    'DBR77: Zasady eskalacji dla zablokowanych zadań',
+    'DBR77: Staging environment na Railway',
+    'DBR77: Strict CSRF na wybranych endpointach?',
+    'DBR77: Polityka retencji logów i danych',
+    'DBR77: CORS — whitelist domen i tryb produkcyjny',
+    'DBR77: Budżet tokenów — limity i alerty',
+    'DBR77: Governance — kto akceptuje gate’y?',
+    'DBR77: SLA Inbox — progi L1/L2/L3',
+    'DBR77: Czy włączamy signals feed w beta?',
+    'DBR77: Priorytety tygodnia — MUST/SHOULD/COULD',
+    'DBR77: Polityka uprawnień (RBAC) dla My Work',
+    'DBR77: Czy “Focus” ma być domyślną tab?',
+    'DBR77: Strategia testów — smoke + e2e',
+    'DBR77: Plan rollback po deploy',
   ];
 
   const seededDecisionIds: string[] = [];
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < DECISION_COUNT; i++) {
     const id = `seed_decision_${baseStamp}_${i}_${crypto.randomUUID()}`;
     const status = pick([...decisionStatuses], i);
     const dtype = pick([...decisionTypes], i + 2);
     const deadline = isoPlusDays((i % 8) - 2);
-    const decidedAt = status === 'approved' || status === 'rejected' ? isoPlusDays(-(i % 5)) : null;
+    const decidedAt =
+      status === 'approved' || status === 'rejected' ? isoPlusDays(-(i % 5)) : null;
+    const decisionMakerId = otherUserId && i % 4 === 1 ? otherUserId : userId;
 
     const options = JSON.stringify(
       [
@@ -245,34 +545,36 @@ async function main() {
       status === 'approved' ? (i % 2 === 0 ? 'A' : 'B') : status === 'rejected' ? 'B' : null;
 
     await db.run(
-      `INSERT OR IGNORE INTO decisions(
+      `INSERT INTO decisions(
         id, organization_id, project_id, task_id,
         title, description, type,
-        decision_maker_id, decision_owner_id,
+        decision_maker_id,
         options, criteria, deadline, escalation_deadline,
         status, selected_option, decision_rationale, decided_at,
         created_by, created_at, updated_at
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+      ON CONFLICT (id) DO NOTHING`,
       [
         id,
         orgId,
         projectId,
-        i < 6 ? seededTaskIds[i] : null,
-        decisionTitles[i],
-        `Seeded decision (${dtype}/${status}).`,
+        i < seededTaskIds.length ? seededTaskIds[i] : null,
+        pick(decisionTitles, i),
+        `DBR77 / My Work: seeded decision (${dtype}/${status}).`,
         dtype,
-        userId,
-        userId,
+        decisionMakerId,
         options,
         'Impact, effort, risk',
         deadline,
         isoPlusDays((i % 8) - 1),
         status,
         selectedOption,
-        status === 'pending' ? null : 'Wybrano na podstawie ryzyk i wpływu na harmonogram.',
+        status === 'pending' || status === 'in_review' || status === 'escalated'
+          ? null
+          : 'Wybrano na podstawie ryzyk i wpływu na harmonogram.',
         decidedAt,
         userId,
-        createdAt,
+        isoPlusDays(-Math.max(0, i % 30)),
         createdAt,
       ]
     );
@@ -371,8 +673,44 @@ async function main() {
     },
   ];
 
-  for (let i = 0; i < notifTemplates.length; i++) {
-    const n = notifTemplates[i];
+  const generatedNotifs: typeof notifTemplates = [];
+  for (let i = 0; i < NOTIF_COUNT; i++) {
+    const base = pick(notifTemplates, i);
+    const taskId = seededTaskIds[i % Math.max(1, seededTaskIds.length)];
+    const decisionId = seededDecisionIds[i % Math.max(1, seededDecisionIds.length)];
+    const isAi = i % 3 === 0;
+    const type = isAi
+      ? pick(['ai_insight', 'ai_recommendation', 'ai_risk_detected', 'ai_overload_detected'], i)
+      : pick(
+          ['task_due_soon', 'task_blocked', 'decision_request', 'mention', 'escalation', 'review_request'],
+          i
+        );
+    const severity = isAi ? (i % 4 === 0 ? 'WARNING' : 'INFO') : i % 5 === 0 ? 'WARNING' : 'INFO';
+    const priority = severity === 'WARNING' ? 'high' : 'normal';
+    const entity_type =
+      type.includes('decision') || type === 'decision_request' ? 'decision' : 'task';
+    const entity_id = entity_type === 'decision' ? decisionId : taskId;
+    const title = `${base.title} · ${isAi ? 'AI' : 'System'} · DBR77`;
+    const message =
+      isAi
+        ? `DBR77: Sygnał z AI (${type}). Sprawdź czy trzeba: snooze/mute/save → Ideas/Notebook.`
+        : `DBR77: Powiadomienie (${type}) do triage w Inbox.`;
+    generatedNotifs.push({
+      ...base,
+      type,
+      title,
+      message,
+      severity,
+      priority,
+      entity_type,
+      entity_id,
+      actor_name: isAi ? 'AI Assistant' : 'System',
+      read: i % 4 === 0,
+    });
+  }
+
+  for (let i = 0; i < generatedNotifs.length; i++) {
+    const n = generatedNotifs[i];
     const id = `seed_notif_${baseStamp}_${i}_${crypto.randomUUID()}`;
     const isRead = !!n.read;
     const readAt = isRead ? nowIso() : null;
@@ -384,19 +722,19 @@ async function main() {
     });
 
     await db.run(
-      `INSERT OR IGNORE INTO notifications(
-        id, user_id, organization_id,
+      `INSERT INTO notifications(
+        id, user_id,
         type, title, message, body,
         data, metadata,
         read, is_read, severity, priority, icon,
         entity_type, entity_id,
         actor_name, read_at,
         created_at
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+      ON CONFLICT (id) DO NOTHING`,
       [
         id,
         userId,
-        orgId,
         n.type,
         n.title,
         n.message,
@@ -404,7 +742,7 @@ async function main() {
         data,
         JSON.stringify({ seeded: true }),
         isRead ? 1 : 0,
-        isRead,
+        isRead ? 1 : 0,
         n.severity || 'normal',
         n.priority || 'normal',
         n.icon || null,
@@ -417,10 +755,413 @@ async function main() {
     );
   }
 
+  // -------------------------
+  // Seed ideas (T009) — My Ideas
+  // -------------------------
+  try {
+    for (let i = 0; i < IDEAS_COUNT; i++) {
+      const id = `seed_idea_${baseStamp}_${i}_${crypto.randomUUID()}`;
+      const title = `DBR77: Pomysł #${i + 1} — My Work`;
+      const body = [
+        'Kontekst: DBR77 / My Work V2.',
+        'Pomysł: uprościć triage w Inbox (SLA + decyzje + eskalacje).',
+        'Następny krok: dodać checklistę, ownera i link do artefaktu.',
+      ].join('\n');
+      const tags = JSON.stringify(['dbr77', 'my-work', i % 2 === 0 ? 'governance' : 'execution']);
+      await db.run(
+        `INSERT INTO my_ideas(
+          id, user_id, organization_id, title, body, tags, source_type, source_conversation_id, source_message_id,
+          created_at, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+        ON CONFLICT (id) DO NOTHING`,
+        [
+          id,
+          userId,
+          orgId,
+          title,
+          body,
+          tags,
+          'seed',
+          null,
+          null,
+          isoPlusDays(-Math.max(0, i % 25)),
+          createdAt,
+        ]
+      );
+    }
+  } catch {
+    logger.warn('[seed-mywork-demo] Ideas seed skipped (missing table?)');
+  }
+
+  // -------------------------
+  // Seed 3 example idea maps (My Ideas → recommendation maps)
+  // -------------------------
+  const seedIdeaMaps = envBool('SEED_IDEA_MAPS', true);
+  if (seedIdeaMaps) {
+    try {
+      const k = seedKey(orgId, userId);
+      const examples: Array<{
+        slug: string;
+        titlePl: string;
+        bodyPl: string;
+        branch: string;
+        area: string;
+        priority: number;
+        map: ReturnType<typeof buildSeedIdeaMap>;
+      }> = [
+        {
+          slug: 'erp',
+          titlePl: 'Wdrożenie ERP (end-to-end)',
+          bodyPl:
+            'Wyzwanie: wdrożyć ERP end-to-end (finanse + logistyka + produkcja) minimalizując ryzyko i zapewniając adopcję.\n' +
+            '\n' +
+            'Cel: przejście na jeden system źródłowy danych, skrócenie cyklu zamknięcia miesiąca, poprawa jakości danych.\n' +
+            'Zakres: procesy core + integracje krytyczne.\n',
+          branch: 'operations',
+          area: 'Finance/Operations',
+          priority: 85,
+          map: buildSeedIdeaMap({
+            ideaId: `seed_idea_map_${k}_erp`,
+            title: 'Wdrożenie ERP (end-to-end)',
+            language: 'pl',
+            branches: [
+              {
+                key: 'problem',
+                label: 'Problem',
+                items: [
+                  { label: 'Rozproszone źródła danych i niespójne raportowanie', nodeType: 'pain_point', priority: 70 },
+                  { label: 'Długi cykl zamknięcia miesiąca', nodeType: 'metric', priority: 65 },
+                ],
+              },
+              {
+                key: 'goal',
+                label: 'Cel / KPI',
+                items: [
+                  { label: 'Zamknięcie miesiąca: -40%', nodeType: 'kpi', priority: 75 },
+                  { label: 'Jakość danych: mniej korekt i ręcznych obejść', nodeType: 'kpi', priority: 70 },
+                ],
+              },
+              {
+                key: 'options',
+                label: 'Opcje',
+                items: [
+                  { label: 'Greenfield vs rollout modułami (phased)', nodeType: 'option', priority: 60 },
+                  { label: 'Integracje: API-first + ESB', nodeType: 'option', priority: 55 },
+                  { label: 'Data governance: master data + ownership', nodeType: 'option', priority: 65 },
+                ],
+              },
+              {
+                key: 'evidence',
+                label: 'Dowody',
+                items: [
+                  { label: 'Mapa procesów + KPI baseline', nodeType: 'evidence', priority: 55 },
+                  { label: 'Audyt danych (quality + lineage)', nodeType: 'evidence', priority: 55 },
+                ],
+              },
+              {
+                key: 'risks',
+                label: 'Ryzyka',
+                items: [
+                  { label: 'Adopcja: opór użytkowników i shadow IT', nodeType: 'risk', priority: 75 },
+                  { label: 'Migracja danych: braki i duplikaty', nodeType: 'risk', priority: 70 },
+                ],
+              },
+              {
+                key: 'experiments',
+                label: 'Eksperymenty',
+                items: [
+                  { label: 'Pilot: 1 proces + 1 zespół (4 tygodnie)', nodeType: 'experiment', priority: 60 },
+                  { label: 'Dry-run migracji na próbce danych', nodeType: 'experiment', priority: 55 },
+                ],
+              },
+            ],
+          }),
+        },
+        {
+          slug: 'backoffice',
+          titlePl: 'Automatyzacja back-office',
+          bodyPl:
+            'Wyzwanie: zautomatyzować powtarzalne procesy back-office (invoice, approvals, HR), aby odciążyć zespół.\n' +
+            'Cel: zmniejszyć czas obsługi i liczbę błędów, skrócić lead time.\n',
+          branch: 'governance',
+          area: 'Operations',
+          priority: 70,
+          map: buildSeedIdeaMap({
+            ideaId: `seed_idea_map_${k}_backoffice`,
+            title: 'Automatyzacja back-office',
+            language: 'pl',
+            branches: [
+              {
+                key: 'problem',
+                label: 'Problem',
+                items: [
+                  { label: 'Dużo ręcznej pracy w approval flow', nodeType: 'pain_point', priority: 65 },
+                  { label: 'Błędy i duplikaty w fakturach', nodeType: 'pain_point', priority: 65 },
+                ],
+              },
+              {
+                key: 'goal',
+                label: 'Cel / KPI',
+                items: [
+                  { label: 'Lead time: -30%', nodeType: 'kpi', priority: 70 },
+                  { label: 'Błędy: -50%', nodeType: 'kpi', priority: 65 },
+                ],
+              },
+              {
+                key: 'options',
+                label: 'Opcje',
+                items: [
+                  { label: 'RPA na wąskich gardłach + monitoring', nodeType: 'option', priority: 55 },
+                  { label: 'Workflow engine + role-based approvals', nodeType: 'option', priority: 60 },
+                ],
+              },
+              {
+                key: 'evidence',
+                label: 'Dowody',
+                items: [{ label: 'Process mining na top 3 procesach', nodeType: 'evidence', priority: 55 }],
+              },
+              {
+                key: 'risks',
+                label: 'Ryzyka',
+                items: [{ label: 'Automatyzacja złego procesu (waste)', nodeType: 'risk', priority: 60 }],
+              },
+              {
+                key: 'experiments',
+                label: 'Eksperymenty',
+                items: [{ label: 'POC: invoice intake + OCR + triage', nodeType: 'experiment', priority: 60 }],
+              },
+            ],
+          }),
+        },
+        {
+          slug: 'ai-quality',
+          titlePl: 'AI monitoring jakości',
+          bodyPl:
+            'Wyzwanie: monitorować jakość (produkcja/usługi) w czasie zbliżonym do rzeczywistego i szybciej reagować na odchylenia.\n' +
+            'Cel: wykrywanie anomalii, redukcja reklamacji, lepsza przyczyna źródłowa.\n',
+          branch: 'execution',
+          area: 'Technology',
+          priority: 75,
+          map: buildSeedIdeaMap({
+            ideaId: `seed_idea_map_${k}_ai_quality`,
+            title: 'AI monitoring jakości',
+            language: 'pl',
+            branches: [
+              {
+                key: 'problem',
+                label: 'Problem',
+                items: [
+                  { label: 'Późne wykrywanie defektów', nodeType: 'pain_point', priority: 70 },
+                  { label: 'Brak wspólnej definicji jakości', nodeType: 'pain_point', priority: 60 },
+                ],
+              },
+              {
+                key: 'goal',
+                label: 'Cel / KPI',
+                items: [
+                  { label: 'Reklamacje: -20%', nodeType: 'kpi', priority: 70 },
+                  { label: 'MTTR: -30%', nodeType: 'kpi', priority: 65 },
+                ],
+              },
+              {
+                key: 'options',
+                label: 'Opcje',
+                items: [
+                  { label: 'Anomaly detection na sygnałach procesowych', nodeType: 'option', priority: 60 },
+                  { label: 'Computer vision na stanowisku kontroli', nodeType: 'option', priority: 60 },
+                ],
+              },
+              {
+                key: 'evidence',
+                label: 'Dowody',
+                items: [{ label: 'Baseline danych i definicje metryk jakości', nodeType: 'evidence', priority: 55 }],
+              },
+              {
+                key: 'risks',
+                label: 'Ryzyka',
+                items: [{ label: 'Drift modelu + false positives', nodeType: 'risk', priority: 65 }],
+              },
+              {
+                key: 'experiments',
+                label: 'Eksperymenty',
+                items: [{ label: 'Pilot: 1 linia / 1 usługa, 2 tygodnie', nodeType: 'experiment', priority: 60 }],
+              },
+            ],
+          }),
+        },
+      ];
+
+      for (const ex of examples) {
+        const ideaId = ex.map.nodes?.[0]?.data?.ideaId || `seed_idea_map_${k}_${ex.slug}`;
+        // Upsert idea
+        await db.run(
+          `INSERT INTO my_ideas(
+            id, user_id, organization_id, title, body, tags, source_type,
+            stage, area, priority, branch,
+            created_at, updated_at
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+          ON CONFLICT (id) DO UPDATE SET
+            title = excluded.title,
+            body = excluded.body,
+            tags = excluded.tags,
+            stage = excluded.stage,
+            area = excluded.area,
+            priority = excluded.priority,
+            branch = excluded.branch,
+            updated_at = excluded.updated_at`,
+          [
+            ideaId,
+            userId,
+            orgId,
+            ex.titlePl,
+            ex.bodyPl,
+            JSON.stringify(['dbr77', 'my-work', 'idea-map', ex.slug]),
+            'seed',
+            'spark',
+            ex.area,
+            ex.priority,
+            ex.branch,
+            isoPlusDays(-5),
+            createdAt,
+          ]
+        );
+
+        // Upsert map (unique: idea_id + user_id + organization_id)
+        const mapId = `seed_idea_maprow_${k}_${ex.slug}`;
+        await db.run(
+          `INSERT INTO my_idea_maps(
+            id, idea_id, user_id, organization_id, nodes_json, edges_json, version, created_at, updated_at
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+          ON CONFLICT (user_id, idea_id) DO UPDATE SET
+            nodes_json = excluded.nodes_json,
+            edges_json = excluded.edges_json,
+            version = excluded.version,
+            updated_at = excluded.updated_at`,
+          [
+            mapId,
+            ideaId,
+            userId,
+            orgId,
+            JSON.stringify(ex.map.nodes),
+            JSON.stringify(ex.map.edges),
+            1,
+            createdAt,
+            createdAt,
+          ]
+        );
+      }
+
+      logger.info('[seed-mywork-demo] Seeded example idea maps', { count: examples.length });
+    } catch {
+      logger.warn('[seed-mywork-demo] Idea maps seed skipped (missing table?)');
+    }
+  }
+
+  // -------------------------
+  // Seed notebook pages (T011)
+  // -------------------------
+  try {
+    const notebookTopics = [
+      'Governance i SLA',
+      'Priorytety tygodnia',
+      'AI Signals (learning loop)',
+      'Cutover i deploy checklist',
+      'CORS/CSRF hardening',
+      'Observability: monitoring + alerting',
+      'Role i uprawnienia (RBAC)',
+      'Zależności i blokery',
+      'Plan testów (smoke/e2e)',
+      'Status dla sponsorów',
+    ];
+
+    for (let i = 0; i < NOTEBOOK_COUNT; i++) {
+      const isProject = Boolean(projectId) && i % 2 === 0;
+      const title = `DBR77: Notatka #${i + 1} — ${pick(notebookTopics, i)}`;
+      const contentText = [
+        `DBR77 / My Work V2 — ${pick(notebookTopics, i)}`,
+        '',
+        '- Co jest do zrobienia (next actions)',
+        '- Ryzyka / blokery',
+        '- Decyzje potrzebne',
+      ].join('\n');
+      const id = `seed_nb_${baseStamp}_${i}_${crypto.randomUUID()}`;
+      const contentJson = JSON.stringify({
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [{ type: 'text', text: contentText }],
+          },
+        ],
+      });
+      await db.run(
+        `INSERT INTO notebook_pages(
+          id, owner_user_id, organization_id, project_id, visibility,
+          title, content_json, content_text, tags_json, created_at, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+        ON CONFLICT (id) DO NOTHING`,
+        [
+          id,
+          userId,
+          orgId,
+          isProject ? projectId : null,
+          isProject ? 'project' : 'private',
+          title,
+          contentJson,
+          contentText,
+          JSON.stringify([
+            'dbr77',
+            'my-work',
+            isProject ? 'project' : 'private',
+            pick(['governance', 'execution', 'ai', 'sla'], i),
+          ]),
+          isoPlusDays(-Math.max(0, i % 40)),
+          createdAt,
+        ]
+      );
+    }
+  } catch (e) {
+    // Notebook may not be migrated in some environments; don't fail seeding tasks/decisions.
+    logger.warn('[seed-mywork-demo] Notebook seed skipped (missing table?)');
+  }
+
+  // -------------------------
+  // Seed focus state (T011) — persisted board layout
+  // -------------------------
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const cols = ['today', 'this_week', 'later'] as const;
+    const keys: string[] = [];
+    for (let i = 0; i < Math.min(seededTaskIds.length, FOCUS_COUNT); i++) keys.push(`task:${seededTaskIds[i]}`);
+    for (let i = 0; keys.length < FOCUS_COUNT && i < seededDecisionIds.length; i++)
+      keys.push(`decision:${seededDecisionIds[i]}`);
+
+    const posByCol: Record<string, number> = {};
+    for (let i = 0; i < keys.length; i++) {
+      const col = cols[i % cols.length];
+      posByCol[col] = (posByCol[col] ?? 0) + 1;
+      await db.run(
+        `INSERT INTO my_work_focus_state(
+          user_id, focus_date, item_key, column_name, position, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6)
+        ON CONFLICT (user_id, focus_date, item_key) DO UPDATE SET
+          column_name = excluded.column_name,
+          position = excluded.position,
+          updated_at = excluded.updated_at`,
+        [userId, today, keys[i], col, posByCol[col] - 1, createdAt]
+      );
+    }
+  } catch {
+    logger.warn('[seed-mywork-demo] Focus seed skipped (missing table?)');
+  }
+
   logger.info('[seed-mywork-demo] Done', {
-    tasks: 20,
-    decisions: 10,
-    notifications: notifTemplates.length,
+    tasks: TASK_COUNT,
+    decisions: DECISION_COUNT,
+    notifications: NOTIF_COUNT,
+    ideas: IDEAS_COUNT,
+    notebookPages: NOTEBOOK_COUNT,
+    focusItems: FOCUS_COUNT,
   });
 }
 

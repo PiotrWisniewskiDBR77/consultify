@@ -110,10 +110,11 @@ router.get(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const model = await getModel(req.params.id);
+    const modelId = String(req.params.id);
+    const model = await getModel(modelId);
     if (!model) return res.status(404).json({ error: 'Model not found' });
 
-    const events = await listEvents(req.params.id);
+    const events = await listEvents(modelId);
     res.json({ ...model, events });
   })
 );
@@ -123,10 +124,11 @@ router.put(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const model = await getModel(req.params.id);
+    const modelId = String(req.params.id);
+    const model = await getModel(modelId);
     if (!model) return res.status(404).json({ error: 'Model not found' });
 
-    await updateModel(req.params.id, req.body);
+    await updateModel(modelId, req.body);
     res.json({ success: true });
   })
 );
@@ -136,17 +138,18 @@ router.delete(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const model = await getModel(req.params.id);
+    const modelId = String(req.params.id);
+    const model = await getModel(modelId);
     if (!model) return res.status(404).json({ error: 'Model not found' });
     if (model.status === 'approved')
       return res.status(400).json({ error: 'Cannot delete approved model. Archive it instead.' });
 
-    await dbRun(`DELETE FROM financial_model_outputs WHERE model_id = ?`, [req.params.id]);
-    await dbRun(`DELETE FROM financial_model_validations WHERE model_id = ?`, [req.params.id]);
-    await dbRun(`DELETE FROM financial_model_events WHERE model_id = ?`, [req.params.id]);
-    await dbRun(`DELETE FROM financial_models WHERE id = ?`, [req.params.id]);
+    await dbRun(`DELETE FROM financial_model_outputs WHERE model_id = ?`, [modelId]);
+    await dbRun(`DELETE FROM financial_model_validations WHERE model_id = ?`, [modelId]);
+    await dbRun(`DELETE FROM financial_model_events WHERE model_id = ?`, [modelId]);
+    await dbRun(`DELETE FROM financial_models WHERE id = ?`, [modelId]);
 
-    res.json({ success: true, deleted: req.params.id });
+    res.json({ success: true, deleted: modelId });
   })
 );
 
@@ -159,12 +162,13 @@ router.post(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const model = await getModel(req.params.id);
+    const modelId = String(req.params.id);
+    const model = await getModel(modelId);
     if (!model) return res.status(404).json({ error: 'Model not found' });
 
     try {
-      const result = await computeModel(req.params.id);
-      await persistComputeResult(req.params.id, result, model.scenario || 'base');
+      const result = await computeModel(modelId);
+      await persistComputeResult(modelId, result, model.scenario || 'base');
 
       res.json({
         success: true,
@@ -188,12 +192,13 @@ router.post(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const model = await getModel(req.params.id);
+    const modelId = String(req.params.id);
+    const model = await getModel(modelId);
     if (!model) return res.status(404).json({ error: 'Model not found' });
     if (model.status !== 'draft')
       return res.status(400).json({ error: 'Only draft models can be submitted for review' });
 
-    await updateModel(req.params.id, { status: 'review' });
+    await updateModel(modelId, { status: 'review' });
     res.json({ success: true, status: 'review' });
   })
 );
@@ -206,7 +211,7 @@ router.post(
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const result = await approveModel(req.params.id, userId);
+    const result = await approveModel(String(req.params.id), userId);
     if (!result.success) {
       return res.status(400).json({ error: result.error });
     }
@@ -223,7 +228,8 @@ router.post(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const model = await getModel(req.params.id);
+    const modelId = String(req.params.id);
+    const model = await getModel(modelId);
     if (!model) return res.status(404).json({ error: 'Model not found' });
 
     const {
@@ -247,7 +253,7 @@ router.post(
     }
 
     const id = await addEvent({
-      modelId: req.params.id,
+      modelId,
       eventType,
       name,
       description,
@@ -272,7 +278,7 @@ router.get(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const events = await listEvents(req.params.id);
+    const events = await listEvents(String(req.params.id));
     res.json(events);
   })
 );
@@ -282,7 +288,7 @@ router.put(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    await updateEvent(req.params.eventId, req.body);
+    await updateEvent(String(req.params.eventId), req.body);
     res.json({ success: true });
   })
 );
@@ -292,7 +298,7 @@ router.delete(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    await deleteEvent(req.params.eventId);
+    await deleteEvent(String(req.params.eventId));
     res.json({ success: true });
   })
 );
@@ -307,7 +313,7 @@ router.get(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const scenario = req.query.scenario as string | undefined;
-    const outputs = await getOutputs(req.params.id, scenario);
+    const outputs = await getOutputs(String(req.params.id), scenario);
 
     // Group by period → statement type → lines
     const grouped: Record<
@@ -334,7 +340,7 @@ router.get(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const validations = await getValidations(req.params.id);
+    const validations = await getValidations(String(req.params.id));
     const summary = {
       total: validations.length,
       pass: validations.filter((v: any) => v.status === 'pass').length,

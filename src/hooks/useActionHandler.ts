@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 export const ACTION_TYPES = {
   NAVIGATE: 'NAVIGATE',
@@ -44,6 +45,147 @@ const VIEW_ROUTE_MAP: Record<string, string> = {
   context: '/context',
   rollout: '/rollout',
   decisions: '/my-work', // Decisions are within My Work
+};
+
+const MODULE_ROUTE_MAP: Record<string, string> = {
+  chat: '/chat',
+  'ai-chat': '/chat',
+  tools: '/discovery-tools',
+  'discovery-tools': '/discovery-tools',
+  discovery: '/discovery-tools',
+  assessment: '/assessment',
+  initiatives: '/initiatives',
+  initiative: '/initiatives',
+  reports: '/reports/builder',
+  'report-builder': '/reports/builder',
+  report_builder: '/reports/builder',
+  presentations: '/reports/builder',
+  presentation: '/reports/builder',
+  results: '/benefits',
+  benefits: '/benefits',
+  economics: '/economics',
+  finance: '/economics',
+  mywork: '/my-work',
+  'my-work': '/my-work',
+};
+
+const normalizeValue = (value: unknown): string => String(value || '').trim();
+
+const toQueryRecord = (value: unknown): Record<string, string> => {
+  if (!value || typeof value !== 'object') return {};
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    if (v == null) continue;
+    if (Array.isArray(v)) {
+      const list = v.map((x) => String(x)).filter(Boolean);
+      if (list.length > 0) out[k] = list.join(',');
+      continue;
+    }
+    if (typeof v === 'object') {
+      out[k] = JSON.stringify(v);
+      continue;
+    }
+    out[k] = String(v);
+  }
+  return out;
+};
+
+const withQuery = (baseRoute: string, params: Record<string, string>): string => {
+  if (!params || Object.keys(params).length === 0) return baseRoute;
+  const search = new URLSearchParams(params).toString();
+  return search ? `${baseRoute}?${search}` : baseRoute;
+};
+
+type NavigateContract = {
+  targetModule?: string;
+  module?: string;
+  view?: string;
+  target?: string;
+  entityType?: string;
+  entityId?: string;
+  id?: string;
+  surface?: string;
+  params?: Record<string, unknown>;
+  sourceType?: string;
+  sourceId?: string;
+  sourceName?: string;
+  templateId?: string;
+};
+
+const buildNavigateRoute = (payload: NavigateContract): string | null => {
+  const targetModuleRaw =
+    normalizeValue(payload.targetModule) ||
+    normalizeValue(payload.module) ||
+    normalizeValue(payload.view) ||
+    normalizeValue(payload.target);
+  if (!targetModuleRaw) return null;
+
+  const moduleKey = targetModuleRaw.toLowerCase().replace(/\s+/g, '-');
+  const surface = normalizeValue(payload.surface).toLowerCase();
+  const entityType = normalizeValue(payload.entityType).toLowerCase();
+  const params = toQueryRecord(payload.params);
+  const entityId =
+    normalizeValue(payload.entityId) || normalizeValue(payload.id) || params.entityId;
+  const baseRoute = MODULE_ROUTE_MAP[moduleKey] || VIEW_ROUTE_MAP[moduleKey];
+
+  if (!baseRoute) return null;
+
+  if (moduleKey === 'initiatives' || moduleKey === 'initiative') {
+    if (entityId) {
+      return withQuery('/initiatives', { open: entityId, mode: 'doc' });
+    }
+    if (surface === 'wizard' || surface === 'new' || surface === 'create' || params.new === '1') {
+      return withQuery('/initiatives', { new: '1' });
+    }
+    return withQuery('/initiatives', params);
+  }
+
+  if (moduleKey === 'tools' || moduleKey === 'discovery-tools' || moduleKey === 'discovery') {
+    if (entityId) {
+      return withQuery('/discovery-tools', { docId: entityId });
+    }
+    return withQuery('/discovery-tools', params);
+  }
+
+  if (
+    moduleKey === 'reports' ||
+    moduleKey === 'report-builder' ||
+    moduleKey === 'report_builder' ||
+    moduleKey === 'presentations' ||
+    moduleKey === 'presentation'
+  ) {
+    const sourceType = normalizeValue(payload.sourceType) || params.sourceType || '';
+    const sourceId = normalizeValue(payload.sourceId) || params.sourceId || '';
+    const sourceName = normalizeValue(payload.sourceName) || params.sourceName || '';
+    const templateId = normalizeValue(payload.templateId) || params.templateId || '';
+    const wantsWizard =
+      surface === 'wizard' ||
+      surface === 'new' ||
+      surface === 'create' ||
+      params.new === '1' ||
+      Boolean(sourceType && sourceId);
+    if (wantsWizard) {
+      const wizardParams: Record<string, string> = {
+        new: '1',
+      };
+      if (sourceType) wizardParams.sourceType = sourceType;
+      if (sourceId) wizardParams.sourceId = sourceId;
+      if (sourceName) wizardParams.sourceName = sourceName;
+      if (templateId) wizardParams.templateId = templateId;
+      return withQuery('/reports/builder', wizardParams);
+    }
+
+    if (entityId) {
+      // Report Builder route supports direct report id.
+      if (entityType.includes('builder') || entityType.includes('report')) {
+        return `/reports/builder/${encodeURIComponent(entityId)}`;
+      }
+      return withQuery('/reports/builder', { docId: entityId });
+    }
+    return withQuery('/reports/builder', params);
+  }
+
+  return withQuery(baseRoute, params);
 };
 
 export type ActionPayload = {
@@ -101,17 +243,49 @@ export const useActionHandler = () => {
     async (action: ActionPayload): Promise<ActionResult> => {
       // Handle navigation actions immediately (no confirmation needed)
       if (action.type === ACTION_TYPES.NAVIGATE || action.type === ACTION_TYPES.OPEN_VIEW) {
-        const view = String(action.payload?.view || action.payload?.target || '');
-        const params = action.payload?.params as Record<string, string> | undefined;
-        const route = resolveRoute(view, params);
+        const payload = (action.payload || {}) as NavigateContract;
+        const view = String(
+          payload.view || payload.target || payload.targetModule || payload.module || ''
+        );
+        const route =
+          buildNavigateRoute(payload) ||
+          resolveRoute(view, toQueryRecord((payload as NavigateContract).params));
+        const targetModule = String(payload.targetModule || payload.module || payload.view || '');
+        const entityType = String(payload.entityType || '');
+        const entityId = String(payload.entityId || payload.id || '');
+
+        trackFunnelEvent('chat_action_clicked', {
+          actionType: action.type,
+          targetModule: targetModule || view || 'unknown',
+          entityType: entityType || null,
+          hasEntityId: Boolean(entityId),
+          surface: payload.surface || null,
+        });
 
         if (route) {
           navigate(route);
-          toast.success(`Navigating to ${view}`, { duration: 1500, icon: '🧭' });
-          return { status: 'success', result: { message: `Navigated to ${view}` } };
+          toast.success(`Navigating to ${targetModule || view || 'module'}`, {
+            duration: 1500,
+            icon: '🧭',
+          });
+          return {
+            status: 'success',
+            result: { message: `Navigated to ${targetModule || view || route}` },
+          };
         } else {
-          toast.error(`Unknown view: "${view}"`, { duration: 3000 });
-          return { status: 'cancelled', result: { message: `Unknown view: ${view}` } };
+          const fallbackRoute = MODULE_ROUTE_MAP[String(targetModule).toLowerCase()] || '/chat';
+          navigate(fallbackRoute);
+          toast.error(`Unknown target. Opened fallback: "${fallbackRoute}"`, { duration: 3000 });
+          trackFunnelEvent('chat_action_failed', {
+            actionType: action.type,
+            targetModule: targetModule || view || 'unknown',
+            reason: 'unknown_route',
+            fallbackRoute,
+          });
+          return {
+            status: 'cancelled',
+            result: { message: `Unknown target route for ${targetModule || view}` },
+          };
         }
       }
 

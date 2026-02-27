@@ -35,6 +35,64 @@ export interface InboundSellixEvent {
   data?: Record<string, unknown>;
 }
 
+export async function verifySellixInboundSignature(input: {
+  timestamp: string;
+  rawBody: string;
+  signature: string;
+}): Promise<boolean> {
+  const timestamp = String(input.timestamp || '');
+  const signature = String(input.signature || '');
+  const rawBody = String(input.rawBody || '');
+  if (!timestamp || !signature) return false;
+
+  const age = Date.now() - new Date(timestamp).getTime();
+  if (Number.isFinite(age) && (age > 300000 || age < -60000)) return false;
+
+  const config = await getConfig();
+  if (!config?.webhookSecret) return true;
+
+  try {
+    return verifySignature(rawBody, signature, config.webhookSecret);
+  } catch {
+    return false;
+  }
+}
+
+export async function recordSellixInboundEvent(input: {
+  eventId: string;
+  eventType: string;
+  organizationId: string | null;
+  payload: unknown;
+}): Promise<{ deduped: boolean }> {
+  const eventId = String(input.eventId || '');
+  if (!eventId) return { deduped: true };
+
+  const existing: any = await dbGet(`SELECT id FROM sellix_events WHERE event_id = $1`, [eventId]);
+  if (existing) return { deduped: true };
+
+  await dbRun(
+    `INSERT INTO sellix_events (id, event_id, event_type, organization_id, payload, signature_valid, processing_status) VALUES ($1, $2, $3, $4, $5, TRUE, 'received')`,
+    [
+      uuidv4(),
+      eventId,
+      String(input.eventType || 'sellix.unknown'),
+      input.organizationId || null,
+      JSON.stringify(input.payload ?? {}),
+    ]
+  );
+
+  return { deduped: false };
+}
+
+export async function markSellixInboundProcessed(input: { eventId: string }): Promise<void> {
+  const eventId = String(input.eventId || '');
+  if (!eventId) return;
+  await dbRun(
+    `UPDATE sellix_events SET processing_status = 'processed', processed_at = NOW() WHERE event_id = $1`,
+    [eventId]
+  );
+}
+
 export async function getConfig(): Promise<SellixConfig | null> {
   const row: any = await dbGet(`SELECT * FROM sellix_config LIMIT 1`, []);
   if (!row) return null;

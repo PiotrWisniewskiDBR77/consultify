@@ -54,110 +54,84 @@ export const ComplianceTab: React.FC = () => {
   const loadCompliance = async () => {
     setLoading(true);
     try {
-      // Mock data - replace with API
-      setChecks([
-        {
-          id: '1',
-          name: 'Data Encryption at Rest',
-          description: 'All AI data is encrypted using AES-256',
-          category: 'security',
-          status: 'compliant',
-          lastChecked: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          name: 'Data Encryption in Transit',
-          description: 'All API calls use TLS 1.3',
-          category: 'security',
-          status: 'compliant',
-          lastChecked: new Date().toISOString(),
-        },
-        {
-          id: '3',
-          name: 'PII Detection in Prompts',
-          description: 'Automatic detection and masking of PII',
-          category: 'data_privacy',
-          status: 'compliant',
-          lastChecked: new Date().toISOString(),
-        },
-        {
-          id: '4',
-          name: 'GDPR Data Subject Rights',
-          description: 'Support for data deletion and export requests',
-          category: 'regulatory',
-          status: 'compliant',
-          lastChecked: new Date().toISOString(),
-        },
-        {
-          id: '5',
-          name: 'AI Model Training Opt-Out',
-          description: 'User data not used for model training',
-          category: 'data_privacy',
-          status: 'compliant',
-          lastChecked: new Date().toISOString(),
-          details: 'All providers configured with training opt-out',
-        },
-        {
-          id: '6',
-          name: 'Data Retention Policy',
-          description: 'Conversation logs retained per policy (90 days)',
-          category: 'operational',
-          status: 'warning',
-          lastChecked: new Date().toISOString(),
-          details: '3 organizations have custom retention not set',
-        },
-        {
-          id: '7',
-          name: 'SOC 2 Type II',
-          description: 'Provider SOC 2 compliance verification',
-          category: 'regulatory',
-          status: 'compliant',
-          lastChecked: new Date().toISOString(),
-        },
-        {
-          id: '8',
-          name: 'Audit Log Completeness',
-          description: 'All AI actions logged with full context',
-          category: 'operational',
-          status: 'compliant',
-          lastChecked: new Date().toISOString(),
-        },
-        {
-          id: '9',
-          name: 'HIPAA Compliance',
-          description: 'Healthcare data handling compliance',
-          category: 'regulatory',
-          status: 'not_applicable',
-          lastChecked: new Date().toISOString(),
-          details: 'No healthcare organizations onboarded',
-        },
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const [healthRes, providersRes] = await Promise.all([
+        fetch('/api/ai-governance/health', { headers }),
+        fetch('/api/llm/providers', { headers }),
       ]);
+
+      const nowIso = new Date().toISOString();
+
+      // Compliance checks (DB + services + env) from AI governance sanity report
+      const healthPayload = await healthRes.json().catch(() => ({}));
+      const report = healthPayload?.data || null;
+      const healthChecks: Array<{ name: string; status: 'ok' | 'warn' | 'error'; detail: string }> =
+        Array.isArray(report?.healthChecks) ? report.healthChecks : [];
+      const duplicates: Array<{ path: string; count: number }> = Array.isArray(
+        report?.duplicateMounts
+      )
+        ? report.duplicateMounts
+        : [];
+
+      const mapStatus = (s: 'ok' | 'warn' | 'error'): ComplianceCheck['status'] => {
+        if (s === 'ok') return 'compliant';
+        if (s === 'warn') return 'warning';
+        return 'non_compliant';
+      };
+      const mapCategory = (name: string): ComplianceCheck['category'] => {
+        if (name.startsWith('service:')) return 'security';
+        if (name.startsWith('db:')) return 'operational';
+        if (name.startsWith('env:')) return 'operational';
+        return 'operational';
+      };
+
+      const nextChecks: ComplianceCheck[] = [
+        ...healthChecks.map((c, idx) => ({
+          id: `sanity-${idx}-${c.name}`,
+          name: c.name,
+          description: c.detail,
+          category: mapCategory(String(c.name || '')),
+          status: mapStatus(c.status),
+          lastChecked: String(report?.timestamp || nowIso),
+        })),
+        ...(duplicates.length
+          ? [
+              {
+                id: 'sanity-duplicate-mounts',
+                name: 'Route mounts duplication',
+                description: 'Duplicate route mounts detected in API gateway',
+                category: 'operational' as const,
+                status: 'warning' as const,
+                lastChecked: String(report?.timestamp || nowIso),
+                details: duplicates.map((d) => `${d.path} × ${d.count}`).join(', '),
+              },
+            ]
+          : []),
+      ];
+      setChecks(nextChecks);
+
+      // Data residency: best-effort summary of configured LLM providers (real DB-backed list)
+      const providersPayload = await providersRes.json().catch(() => []);
+      const providersArray: any[] = Array.isArray(providersPayload) ? providersPayload : [];
+      const providerNames = Array.from(
+        new Set(
+          providersArray.map((p) => String(p?.name || p?.provider || '').trim()).filter((v) => !!v)
+        )
+      );
 
       setResidencyConfigs([
         {
-          region: 'us',
-          label: 'United States',
-          providers: ['OpenAI', 'Anthropic', 'Groq'],
-          isActive: true,
+          region: 'global',
+          label: 'Configured providers',
+          providers: providerNames,
+          isActive: providerNames.length > 0,
           dataTypes: ['Conversations', 'Documents', 'Knowledge Base'],
-        },
-        {
-          region: 'eu',
-          label: 'European Union',
-          providers: ['Azure OpenAI (EU)', 'Anthropic (EU)'],
-          isActive: true,
-          dataTypes: ['Conversations', 'Documents'],
-        },
-        {
-          region: 'ap',
-          label: 'Asia Pacific',
-          providers: ['Azure OpenAI (AP)'],
-          isActive: false,
-          dataTypes: [],
         },
       ]);
 
-      setLastScanTime(new Date().toISOString());
+      setLastScanTime(nowIso);
     } catch (err) {
       toast.error('Failed to load compliance data');
     } finally {

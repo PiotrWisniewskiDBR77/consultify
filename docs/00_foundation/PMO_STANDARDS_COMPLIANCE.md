@@ -139,7 +139,7 @@ Consultinity implements a three-level role hierarchy aligned with PMO standards:
 PLATFORM LEVEL              ORGANIZATION LEVEL           PROJECT LEVEL
 ══════════════════          ══════════════════════       ══════════════════════
 
-SUPERADMIN ──────────────── ADMIN ─────────────────────── SPONSOR
+SUPERADMIN ──────────────── ADMIN / OWNER ────────────────── SPONSOR
     │                         │                               │
     │                         ├── PROJECT_MANAGER ──────────── PMO_LEAD
     │                         │       │                           │
@@ -153,6 +153,8 @@ SUPERADMIN ──────────────── ADMIN ────�
     │                         │
     │                         └── CONSULTANT (External)
 ```
+
+**Note:** OWNER is a special administrator — all ADMIN functions (Admin Panel, users, projects, settings) plus billing, ownership transfer, and org deletion.
 
 ### 5.2 Project Role Definitions
 

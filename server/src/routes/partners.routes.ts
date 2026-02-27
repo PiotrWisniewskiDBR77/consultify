@@ -45,9 +45,13 @@ function isSchemaMissingError(err: unknown): boolean {
   );
 }
 
-const FEATURE_UNAVAILABLE_CODE = 'FEATURE_UNAVAILABLE';
-const featureUnavailable = (res: Response, message: string) =>
-  res.status(503).json({ success: false, error: message, code: FEATURE_UNAVAILABLE_CODE });
+const featureUnavailable = (res: Response, _message: string) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
 
 type CanonicalTier = 'REGISTERED' | 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
 const TIER_ORDER: CanonicalTier[] = ['REGISTERED', 'BRONZE', 'SILVER', 'GOLD', 'PLATINUM'];

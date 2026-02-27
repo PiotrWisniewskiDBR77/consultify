@@ -1,17 +1,6 @@
-export type NotebookVisibility = 'private' | 'project';
+import type { NotebookPage, NotebookVisibility } from '@/types/myWork';
 
-export interface NotebookPage {
-  id: string;
-  title: string;
-  parentId?: string | null;
-  projectId?: string | null;
-  visibility: NotebookVisibility;
-  tags: string[];
-  contentJson: any;
-  contentText: string;
-  createdAt: string;
-  updatedAt: string;
-}
+export type { NotebookPage, NotebookVisibility };
 
 const STORAGE_PREFIX = 'consultinity-notebook-pages-v1:';
 
@@ -25,12 +14,21 @@ const safeParse = (raw: string | null): NotebookPage[] => {
     return data.filter(Boolean).map((x: any) => ({
       id: String(x.id),
       title: String(x.title || ''),
-      parentId: x.parentId ? String(x.parentId) : null,
       projectId: x.projectId ? String(x.projectId) : null,
       visibility: x.visibility === 'project' ? 'project' : 'private',
       tags: Array.isArray(x.tags) ? x.tags.map((t: any) => String(t)).filter(Boolean) : [],
       contentJson: x.contentJson ?? { type: 'doc', content: [] },
       contentText: String(x.contentText || ''),
+      maturity: (['seed', 'growing', 'mature', 'actionable'] as const).includes(x.maturity)
+        ? x.maturity
+        : 'seed',
+      icon: x.icon != null ? String(x.icon) : null,
+      summary: x.summary != null ? String(x.summary) : null,
+      status: (['inbox', 'active', 'converted', 'archived'] as const).includes(x.status)
+        ? x.status
+        : 'active',
+      pinned: Boolean(x.pinned),
+      convertedTo: Array.isArray(x.convertedTo) ? x.convertedTo : null,
       createdAt: String(x.createdAt || new Date().toISOString()),
       updatedAt: String(x.updatedAt || new Date().toISOString()),
     })) as NotebookPage[];
@@ -86,12 +84,17 @@ export const createNotebookPage = (
   const page: NotebookPage = {
     id: `nb_${Math.random().toString(36).slice(2)}_${Date.now()}`,
     title: String(input.title || 'Untitled'),
-    parentId: null,
     projectId: input.projectId ?? null,
     visibility: input.visibility === 'project' ? 'project' : 'private',
     tags: Array.isArray(input.tags) ? input.tags.map(String).filter(Boolean) : [],
     contentJson: input.contentJson ?? { type: 'doc', content: [] },
     contentText: String(input.contentText || ''),
+    maturity: 'seed',
+    icon: null,
+    summary: null,
+    status: 'active',
+    pinned: false,
+    convertedTo: null,
     createdAt: now,
     updatedAt: now,
   };

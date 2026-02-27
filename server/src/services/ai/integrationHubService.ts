@@ -59,6 +59,20 @@ export interface DecisionExportPayload {
   };
 }
 
+export interface ReportBuilderNotionExportPayload {
+  reportId: string;
+  title: string;
+  description?: string;
+  sections: Array<{ title: string; content: string }>;
+  metadata: {
+    createdAt?: string;
+    createdBy?: string;
+    organizationId?: string;
+    sourceType?: string;
+    sourceId?: string;
+  };
+}
+
 // ==========================================
 // NOTION EXPORT
 // ==========================================
@@ -114,6 +128,59 @@ export async function exportToNotion(
     };
   } catch (err: any) {
     logger.error('[IntegrationHub] Notion export failed:', err?.message || err);
+    return {
+      success: false,
+      target: 'notion',
+      error: err?.message || 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Export Report Builder report to a Notion page.
+ */
+export async function exportReportToNotion(
+  payload: ReportBuilderNotionExportPayload,
+  config: NotionConfig
+): Promise<ExportResult> {
+  try {
+    const blocks = buildNotionBlocksFromReport(payload);
+
+    const response = await fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        'Content-Type': 'application/json',
+        'Notion-Version': '2022-06-28',
+      },
+      body: JSON.stringify({
+        parent: config.databaseId
+          ? { database_id: config.databaseId }
+          : { page_id: config.parentPageId },
+        properties: {
+          title: {
+            title: [{ text: { content: payload.title } }],
+          },
+        },
+        children: blocks,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Notion API error: ${error}`);
+    }
+
+    const data = (await response.json()) as any;
+    logger.info(`[IntegrationHub] Exported report to Notion: ${data.url}`);
+
+    return {
+      success: true,
+      target: 'notion',
+      url: data.url,
+    };
+  } catch (err: any) {
+    logger.error('[IntegrationHub] Notion report export failed:', err?.message || err);
     return {
       success: false,
       target: 'notion',
@@ -210,6 +277,83 @@ function buildNotionBlocks(payload: DecisionExportPayload): any[] {
   }
 
   return blocks;
+}
+
+function chunkText(text: string, maxLen = 1800): string[] {
+  const s = String(text || '').trim();
+  if (!s) return [];
+  if (s.length <= maxLen) return [s];
+  const out: string[] = [];
+  let i = 0;
+  while (i < s.length) {
+    out.push(s.slice(i, i + maxLen));
+    i += maxLen;
+  }
+  return out;
+}
+
+function buildNotionBlocksFromReport(payload: ReportBuilderNotionExportPayload): any[] {
+  const blocks: any[] = [];
+
+  // Meta / header
+  const metaLines: string[] = [];
+  if (payload.metadata.sourceType) metaLines.push(`Source: ${payload.metadata.sourceType}`);
+  if (payload.metadata.sourceId) metaLines.push(`Source ID: ${payload.metadata.sourceId}`);
+  if (payload.metadata.createdAt) metaLines.push(`Created at: ${payload.metadata.createdAt}`);
+  if (payload.reportId) metaLines.push(`Report ID: ${payload.reportId}`);
+
+  if (payload.description) {
+    blocks.push({
+      type: 'paragraph',
+      paragraph: { rich_text: [{ text: { content: String(payload.description) } }] },
+    });
+  }
+  if (metaLines.length) {
+    blocks.push({
+      type: 'callout',
+      callout: {
+        icon: { emoji: '📌' },
+        rich_text: [{ text: { content: metaLines.join(' • ') } }],
+      },
+    });
+  }
+
+  // Sections
+  for (const section of payload.sections || []) {
+    const title = String(section.title || 'Section');
+    blocks.push({
+      type: 'heading_2',
+      heading_2: { rich_text: [{ text: { content: title } }] },
+    });
+
+    const content = String(section.content || '').trim();
+    const parts = content
+      ? content
+          .split(/\n{2,}/g)
+          .map((p) => p.trim())
+          .filter(Boolean)
+      : [];
+
+    if (parts.length === 0) {
+      blocks.push({
+        type: 'paragraph',
+        paragraph: { rich_text: [{ text: { content: '(empty)' } }] },
+      });
+      continue;
+    }
+
+    for (const p of parts) {
+      for (const chunk of chunkText(p)) {
+        blocks.push({
+          type: 'paragraph',
+          paragraph: { rich_text: [{ text: { content: chunk } }] },
+        });
+      }
+    }
+  }
+
+  // Avoid Notion API block limits by truncating defensively
+  return blocks.slice(0, 90);
 }
 
 // ==========================================

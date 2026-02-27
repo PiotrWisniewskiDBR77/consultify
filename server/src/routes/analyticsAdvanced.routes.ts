@@ -17,6 +17,18 @@ import logger from '../utils/Logger.js';
 // Apply rate limiting
 const router = Router();
 
+const serviceFallback = (
+  _req: AuthRequest,
+  res: Response,
+  _readPayload?: Record<string, unknown>
+) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
+
 // Service interfaces
 interface CohortServiceInterface {
   getRetentionMatrix?: () => Promise<unknown>;
@@ -52,9 +64,9 @@ router.get(
   '/cohorts',
   verifyToken,
   verifyAdmin,
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!CohortService?.getRetentionMatrix) {
-      return res.status(503).json({ error: 'Cohort service not available' });
+      return serviceFallback(req, res, { matrix: [] });
     }
 
     try {
@@ -78,7 +90,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!ExperimentService?.getAllUserExperiments) {
-      return res.status(503).json({ error: 'Experiment service not available' });
+      return serviceFallback(req, res, { flags: [] });
     }
 
     try {

@@ -1,7 +1,8 @@
 /**
  * ModuleHub
- * Main container component for Assessment and Discovery Tools modules
- * Provides unified layout with 3 tabs, dynamic documents, filters, and table/grid views
+ * Main container for module hubs (Tools, Assessment, Initiatives, etc.)
+ * Provides unified layout with tabs, dynamic documents, filters, and table/grid views
+ * V3 standard: module-hub-standard.md
  */
 
 import React from 'react';

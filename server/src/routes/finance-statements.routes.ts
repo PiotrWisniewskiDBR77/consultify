@@ -115,7 +115,8 @@ router.post(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const stmt = await getStatementOrFail(req.params.id, res);
+    const statementId = String(req.params.id);
+    const stmt = await getStatementOrFail(statementId, res);
     if (!stmt) return;
 
     const text = stmt.notes || '';
@@ -134,11 +135,11 @@ router.post(
         detection.currency,
         detection.scaling,
         detection.confidence,
-        req.params.id,
+        statementId,
       ]
     );
 
-    res.json({ statementId: req.params.id, detection });
+    res.json({ statementId, detection });
   })
 );
 
@@ -147,7 +148,8 @@ router.post(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const stmt = await getStatementOrFail(req.params.id, res);
+    const statementId = String(req.params.id);
+    const stmt = await getStatementOrFail(statementId, res);
     if (!stmt) return;
 
     const text = stmt.notes || '';
@@ -155,10 +157,10 @@ router.post(
 
     const extraction = extractFinancialLines(text, stmt.statement_type);
 
-    await updateStatementStatus(req.params.id, 'imported');
+    await updateStatementStatus(statementId, 'imported');
 
     res.json({
-      statementId: req.params.id,
+      statementId,
       lines: extraction.lines,
       rawTableCount: extraction.rawTableCount,
       warnings: extraction.warnings,
@@ -172,7 +174,8 @@ router.post(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const stmt = await getStatementOrFail(req.params.id, res);
+    const statementId = String(req.params.id);
+    const stmt = await getStatementOrFail(statementId, res);
     if (!stmt) return;
 
     const { lines } = req.body;
@@ -181,9 +184,9 @@ router.post(
 
     const mapped = await autoMapLines(lines, stmt.statement_type);
 
-    await updateStatementStatus(req.params.id, 'mapped');
+    await updateStatementStatus(statementId, 'mapped');
 
-    res.json({ statementId: req.params.id, mappedLines: mapped });
+    res.json({ statementId, mappedLines: mapped });
   })
 );
 
@@ -192,7 +195,8 @@ router.put(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const stmt = await getStatementOrFail(req.params.id, res);
+    const statementId = String(req.params.id);
+    const stmt = await getStatementOrFail(statementId, res);
     if (!stmt) return;
 
     const { values } = req.body;
@@ -200,9 +204,9 @@ router.put(
       return res.status(400).json({ error: 'values array required' });
 
     // Clear old values
-    await dbRun(`DELETE FROM financial_statement_values WHERE statement_id = ?`, [req.params.id]);
+    await dbRun(`DELETE FROM financial_statement_values WHERE statement_id = ?`, [statementId]);
 
-    await saveStatementValues(req.params.id, values);
+    await saveStatementValues(statementId, values);
 
     // Run validation
     const validationResult = validateStatement(
@@ -211,14 +215,14 @@ router.put(
     );
 
     await updateStatementStatus(
-      req.params.id,
+      statementId,
       'mapped',
       validationResult.status,
       validationResult.messages
     );
 
     res.json({
-      statementId: req.params.id,
+      statementId,
       savedCount: values.length,
       validation: validationResult,
     });
@@ -230,19 +234,20 @@ router.post(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const stmt = await getStatementOrFail(req.params.id, res);
+    const statementId = String(req.params.id);
+    const stmt = await getStatementOrFail(statementId, res);
     if (!stmt) return;
 
     const valueRows = (await dbAll(
       `SELECT canonical_line_id as canonicalLineId, value FROM financial_statement_values WHERE statement_id = ?`,
-      [req.params.id]
+      [statementId]
     )) as any[];
 
     const result = validateStatement(valueRows, stmt.statement_type);
 
-    await updateStatementStatus(req.params.id, stmt.status, result.status, result.messages);
+    await updateStatementStatus(statementId, stmt.status, result.status, result.messages);
 
-    res.json({ statementId: req.params.id, validation: result });
+    res.json({ statementId, validation: result });
   })
 );
 
@@ -251,13 +256,14 @@ router.post(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const stmt = await getStatementOrFail(req.params.id, res);
+    const statementId = String(req.params.id);
+    const stmt = await getStatementOrFail(statementId, res);
     if (!stmt) return;
 
-    await confirmStatement(req.params.id, req.user!.id);
-    logger.info(`[FinanceStatements] Statement ${req.params.id} confirmed by ${req.user!.id}`);
+    await confirmStatement(statementId, req.user!.id);
+    logger.info(`[FinanceStatements] Statement ${statementId} confirmed by ${req.user!.id}`);
 
-    res.json({ success: true, statementId: req.params.id, status: 'confirmed' });
+    res.json({ success: true, statementId, status: 'confirmed' });
   })
 );
 
@@ -294,7 +300,8 @@ router.get(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const stmt = await getStatementOrFail(req.params.id, res);
+    const statementId = String(req.params.id);
+    const stmt = await getStatementOrFail(statementId, res);
     if (!stmt) return;
 
     const values = await dbAll(
@@ -303,7 +310,7 @@ router.get(
      FROM financial_statement_values fsv
      LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
      WHERE fsv.statement_id = ? ORDER BY fsv.source_row`,
-      [req.params.id]
+      [statementId]
     );
 
     const { notes, ...stmtData } = stmt;
@@ -320,7 +327,8 @@ router.delete(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const stmt = await getStatementOrFail(req.params.id, res);
+    const statementId = String(req.params.id);
+    const stmt = await getStatementOrFail(statementId, res);
     if (!stmt) return;
 
     if (stmt.status === 'confirmed') {
@@ -329,10 +337,10 @@ router.delete(
         .json({ error: 'Cannot delete confirmed statement. Archive it instead.' });
     }
 
-    await dbRun(`DELETE FROM financial_statement_values WHERE statement_id = ?`, [req.params.id]);
-    await dbRun(`DELETE FROM financial_statements WHERE id = ?`, [req.params.id]);
+    await dbRun(`DELETE FROM financial_statement_values WHERE statement_id = ?`, [statementId]);
+    await dbRun(`DELETE FROM financial_statements WHERE id = ?`, [statementId]);
 
-    res.json({ success: true, deleted: req.params.id });
+    res.json({ success: true, deleted: statementId });
   })
 );
 
@@ -356,7 +364,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     try {
-      const result = await computeRatios(req.params.id, orgId!);
+      const result = await computeRatios(String(req.params.id), orgId!);
       res.json(result);
     } catch (e: any) {
       return res.status(404).json({ error: e.message });

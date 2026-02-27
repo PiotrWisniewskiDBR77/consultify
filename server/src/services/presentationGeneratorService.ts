@@ -9,6 +9,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { materializePlannedVisual } from './ai/deckVisualsService.js';
+import { planDeckVisuals } from './presentationVisualDirectorService.js';
 import { PptxPipelineService } from './report/pptx/PptxPipelineService.js';
 import type {
   SlideIntent,
@@ -31,6 +33,22 @@ export interface DeckSetup {
   confidentiality: 'confidential' | 'internal' | 'public';
   brandColor?: string;
   sourceArtifacts: SourceArtifact[];
+
+  /** V3-A01: Traceability — canonical source of this deck */
+  sourceType?: string;
+  sourceId?: string;
+
+  /**
+   * Gamma-like visuals for PPTX.
+   * - `enabled`: whether to attempt AI image generation (safe to enable even without keys; falls back).
+   * - `priority`: explicit user preference: quality vs cost.
+   */
+  visuals?: {
+    enabled?: boolean;
+    priority?: 'quality' | 'cost';
+    /** Controls how many images we attempt to generate per deck. */
+    imageDensity?: 'low' | 'medium' | 'high';
+  };
 }
 
 export interface SourceArtifact {
@@ -265,7 +283,6 @@ function buildSlideContent(
         content: {
           type: 'initiative_portfolio',
           initiatives: artifactData._initiatives || [],
-          summary: artifactData._portfolioSummary,
         },
       };
 
@@ -322,10 +339,10 @@ function buildSlideContent(
           item.keyMessage || (isPl ? 'Wyniki oceny dojrzałości' : 'Maturity assessment results'),
         content: {
           type: 'assessment',
-          framework: artifactData._framework || 'DRD',
+          matrix_type: 'maturity',
+          axes: [],
+          scale_max: artifactData._maxScore || 5,
           overall_score: artifactData._overallScore || 0,
-          max_score: artifactData._maxScore || 5,
-          categories: artifactData._categories || [],
         },
       };
 
@@ -335,8 +352,10 @@ function buildSlideContent(
         key_message: item.keyMessage || (isPl ? 'Analiza porównawcza' : 'Comparative analysis'),
         content: {
           type: 'comparison',
-          items: artifactData._comparisonItems || [],
-          chart_type: 'bar',
+          left_label: isPl ? 'Opcja A' : 'Option A',
+          right_label: isPl ? 'Opcja B' : 'Option B',
+          left_items: (artifactData._comparisonItems || []).map((i: any) => String(i?.left || i)),
+          right_items: (artifactData._comparisonItems || []).map((i: any) => String(i?.right || i)),
         },
       };
 
@@ -360,7 +379,6 @@ function buildSlideContent(
               deadline: 'TBD',
             },
           ],
-          decisions: artifactData._decisions || [],
         },
       };
 
@@ -370,14 +388,10 @@ function buildSlideContent(
         key_message: 'Disclaimers & Methodology',
         content: {
           type: 'appendix',
-          sections: [
-            {
-              title: isPl ? 'Zastrzeżenia' : 'Disclaimers',
-              body: isPl
-                ? 'Niniejsza prezentacja została wygenerowana automatycznie na bazie danych z platformy. Wszystkie liczby oparte na zadeklarowanych założeniach.'
-                : 'This presentation was auto-generated from platform data. All figures are based on stated assumptions.',
-            },
-          ],
+          title: isPl ? 'Zastrzeżenia i metodologia' : 'Disclaimers & Methodology',
+          body: isPl
+            ? 'Niniejsza prezentacja została wygenerowana automatycznie na bazie danych z platformy. Wszystkie liczby oparte na zadeklarowanych założeniach.'
+            : 'This presentation was auto-generated from platform data. All figures are based on stated assumptions.',
         },
       };
 
@@ -496,9 +510,12 @@ export async function generateOutline(
   }
 
   const deckId = uuidv4().replace(/-/g, '');
+  const resolvedSourceType =
+    setup.sourceType || (setup.sourceArtifacts?.[0]?.type === 'tool_session' ? 'tool' : 'manual');
+  const resolvedSourceId = setup.sourceId || setup.sourceArtifacts?.[0]?.id || null;
   await dbRun(
-    `INSERT INTO presentation_decks (id, organization_id, title, template_id, deck_type, audience, goal, language, confidentiality, theme, brand_kit_id, source_artifacts, outline_json, status, generated_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?)`,
+    `INSERT INTO presentation_decks (id, organization_id, title, template_id, deck_type, audience, goal, language, confidentiality, theme, brand_kit_id, source_artifacts, outline_json, status, generated_by, source_type, source_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?)`,
     [
       deckId,
       organizationId,
@@ -514,6 +531,8 @@ export async function generateOutline(
       JSON.stringify(setup.sourceArtifacts),
       JSON.stringify(outline),
       null,
+      resolvedSourceType,
+      resolvedSourceId,
     ]
   );
 
@@ -559,6 +578,68 @@ export async function generateDeck(
       template: setup.theme,
     };
 
+    const extraWarnings: string[] = [];
+
+    // ------------------------------------------------------------
+    // Gamma-like visuals (best-effort)
+    // ------------------------------------------------------------
+    const visualsEnabled = setup.visuals?.enabled !== false; // default ON if caller doesn't specify
+    const visualPriority = setup.visuals?.priority || 'quality';
+    if (visualsEnabled && slides.length > 0) {
+      const density: 'low' | 'medium' | 'high' =
+        setup.visuals?.imageDensity || (visualPriority === 'quality' ? 'medium' : 'low');
+      const maxImages =
+        visualPriority === 'cost' ? 1 : density === 'high' ? 6 : density === 'medium' ? 3 : 1;
+
+      // 1) Plan visuals (deterministic v1)
+      const plannedSlides = planDeckVisuals({
+        slides,
+        meta,
+        deckTitle: setup.title,
+        audience: setup.audience,
+        goal: setup.goal,
+        brandColor,
+        settings: {
+          enabled: true,
+          priority: visualPriority,
+          imageDensity: density,
+        },
+      });
+      // Apply planned visuals back into the slides array (in-place by index)
+      for (let i = 0; i < slides.length; i++) slides[i] = plannedSlides[i];
+
+      // 2) Materialize planned visuals up to maxImages
+      let used = 0;
+      for (let i = 0; i < slides.length && used < maxImages; i++) {
+        const s = slides[i];
+        const planned = s.visuals || [];
+        if (!planned.length) continue;
+
+        for (let j = 0; j < planned.length && used < maxImages; j++) {
+          const v = planned[j];
+          // Skip already materialized
+          if (v?.asset?.path || v?.asset?.dataUri || v?.asset?.url) continue;
+
+          const { visual, warning } = await materializePlannedVisual({
+            deckId,
+            organizationId,
+            meta,
+            visual: v,
+            brandColor,
+            priority: visualPriority,
+            dataClass: 'no_pii',
+          });
+          if (warning) extraWarnings.push(warning);
+          if (visual) {
+            planned[j] = visual;
+            used++;
+          }
+        }
+
+        s.visuals = planned;
+      }
+    }
+
     const unifiedJson: UnifiedReportJSON = { meta, slides };
     const pipeline = new PptxPipelineService();
     const result = await pipeline.generateFromUnifiedJson(unifiedJson, {
@@ -582,13 +663,18 @@ export async function generateDeck(
         JSON.stringify(unifiedJson),
         result.slideCount,
         exportPath,
-        JSON.stringify(result.warnings),
+        JSON.stringify([...(result.warnings || []), ...extraWarnings]),
         JSON.stringify(outline),
         deckId,
       ]
     );
 
-    return { deckId, slideCount: result.slideCount, warnings: result.warnings, exportPath };
+    return {
+      deckId,
+      slideCount: result.slideCount,
+      warnings: [...(result.warnings || []), ...extraWarnings],
+      exportPath,
+    };
   } catch (err: any) {
     logger.error(`[PresentationGen] Generation failed for ${deckId}: ${err.message}`);
     await dbRun(

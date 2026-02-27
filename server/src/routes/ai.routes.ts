@@ -529,6 +529,36 @@ router.post(
 );
 
 /**
+ * T121: Conversation-scoped approval for `requires_approval` documents.
+ * Allows a user to explicitly approve a document for AI access within a conversation.
+ */
+router.post(
+  '/documents/:id/approve',
+  verifyToken,
+  validateBody(
+    z.object({
+      conversationId: z.string().min(1, 'conversationId is required'),
+    })
+  ),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const docId = String(req.params.id || '').trim();
+    const conversationId = String((req.body as any)?.conversationId || '').trim();
+    if (!req.userId || !req.organizationId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!docId) return res.status(400).json({ error: 'Invalid document id' });
+
+    const { approveDocumentForConversation } = await import('../services/ai/documentGovernance.js');
+    await approveDocumentForConversation({
+      conversationId,
+      documentId: docId,
+      userId: req.userId,
+      organizationId: req.organizationId,
+    });
+
+    return res.json({ success: true });
+  })
+);
+
+/**
  * Deep Thinking: Confirm Understanding (blocking gate)
  *
  * Returns a decision-ready paraphrase of the user's task + minimal questions/gaps
@@ -565,7 +595,15 @@ router.post(
         projectData?: boolean;
         organizationData?: boolean;
       };
-      responseStyle?: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
+      responseStyle?:
+        | 'normal'
+        | 'executive'
+        | 'analyst'
+        | 'coach'
+        | 'concise'
+        | 'formal'
+        | 'professional'
+        | 'friendly';
     };
 
     const {
@@ -586,17 +624,18 @@ router.post(
     } = body;
 
     // Fast-fail when no LLM provider is configured (dev UX parity with stream)
-    const hasEnvProvider =
-      !!process.env.OPENAI_API_KEY ||
-      !!process.env.GEMINI_API_KEY ||
-      !!process.env.GOOGLE_AI_API_KEY ||
-      !!process.env.ANTHROPIC_API_KEY ||
-      !!process.env.MISTRAL_API_KEY;
+    const hasEnvProvider = !!String(process.env.OPENROUTER_API_KEY || '').trim();
+    const hasDbProvider = !!(await dbGet(
+      `SELECT 1 AS ok
+       FROM llm_providers
+       WHERE is_active = 1 AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
+       LIMIT 1`
+    ));
 
-    if (!hasEnvProvider) {
+    if (!hasEnvProvider && !hasDbProvider) {
       return res.status(500).json({
         error:
-          'No LLM provider configured on the backend. Set OPENAI_API_KEY or GEMINI_API_KEY (or configure providers in llm_providers).',
+          'No LLM provider configured on the backend. Set OPENROUTER_API_KEY or configure OpenRouter in llm_providers.',
         code: 'NO_LLM_PROVIDER',
       });
     }
@@ -802,6 +841,7 @@ router.post(
       selectedModelId?: string | null;
       provider?: string;
       endpoint?: string;
+      privateMode?: boolean;
       aiModes?: {
         deepResearch?: boolean;
         webSearch?: boolean;
@@ -815,7 +855,15 @@ router.post(
         projectData?: boolean;
         organizationData?: boolean;
       };
-      responseStyle?: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
+      responseStyle?:
+        | 'normal'
+        | 'executive'
+        | 'analyst'
+        | 'coach'
+        | 'concise'
+        | 'formal'
+        | 'professional'
+        | 'friendly';
     };
 
     const {
@@ -834,6 +882,7 @@ router.post(
       selectedModelId,
       provider: bodyProvider,
       endpoint: bodyEndpoint,
+      privateMode,
       aiModes,
       knowledgeSources,
       responseStyle,
@@ -959,6 +1008,20 @@ router.post(
     res.setHeader('X-Accel-Buffering', 'no'); // Disable Nginx buffering for SSE
     res.setHeader('X-Stream-Session-Id', streamSessionId);
     res.flushHeaders();
+    // Emit an immediate first SSE event so the client never experiences a "dead" stream
+    // while backend performs DB/policy checks (or optional tracing).
+    try {
+      res.write(
+        `data: ${JSON.stringify({
+          type: 'thought',
+          step: 'starting',
+          status: 'in_progress',
+          label: language?.startsWith('pl') ? 'Rozpoczynam…' : 'Starting…',
+        })}\n\n`
+      );
+    } catch {
+      // ignore (connection already closed)
+    }
 
     // SSE heartbeat: keep connection alive during long AI processing (context build,
     // RAG retrieval, Deep Thinking research). Prevents proxy/ALB idle timeouts.
@@ -1091,18 +1154,19 @@ router.post(
       // --------------------------------------------------------
       // Without at least one provider (env key or configured provider table),
       // the pipeline can end up returning empty content or failing late.
-      const hasEnvProvider =
-        !!process.env.OPENAI_API_KEY ||
-        !!process.env.GEMINI_API_KEY ||
-        !!process.env.GOOGLE_AI_API_KEY ||
-        !!process.env.ANTHROPIC_API_KEY ||
-        !!process.env.MISTRAL_API_KEY;
+      const hasEnvProvider = !!String(process.env.OPENROUTER_API_KEY || '').trim();
+      const hasDbProvider = !!(await dbGet(
+        `SELECT 1 AS ok
+         FROM llm_providers
+         WHERE is_active = 1 AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
+         LIMIT 1`
+      ));
 
-      if (!hasEnvProvider) {
+      if (!hasEnvProvider && !hasDbProvider) {
         res.write(
           `data: ${JSON.stringify({
             error:
-              'No LLM provider configured on the backend. Set OPENAI_API_KEY or GEMINI_API_KEY (or configure providers in llm_providers).',
+              'No LLM provider configured on the backend. Set OPENROUTER_API_KEY or configure OpenRouter in llm_providers.',
             code: 'NO_LLM_PROVIDER',
           })}\n\n`
         );
@@ -1226,6 +1290,8 @@ router.post(
         focusMode, // Focus mode for context filtering
         context: {
           ...(context || {}),
+          userId: req.userId,
+          organizationId: req.organizationId,
           projectId,
           screenContext,
           focusMode,
@@ -1238,6 +1304,7 @@ router.post(
           selectedModelId: effectiveSelectedModelId,
           provider: bodyProvider,
           endpoint: bodyEndpoint,
+          privateMode: Boolean(privateMode),
         },
         stream: true,
         options: {
@@ -1251,6 +1318,7 @@ router.post(
           selectedModelId: effectiveSelectedModelId,
           provider: bodyProvider,
           endpoint: bodyEndpoint,
+          privateMode: Boolean(privateMode),
         },
       };
 
@@ -1275,15 +1343,27 @@ router.post(
             selectedModelId: selectedModelId || null,
             language: language || null,
             resumeFromPartial: Boolean(resumeFromPartial),
+            privateMode: Boolean(privateMode),
           },
           context: {
             projectId,
             focusMode,
             hasScreenContext: Boolean(screenContext),
             attachmentDocIds: (context as any)?.attachmentDocIds || null,
+            privateMode: Boolean(privateMode),
           },
         });
         chatRunId = String(created?.runId || '') || null;
+        if (chatRunId) {
+          try {
+            (pipelineRequest as any).context = {
+              ...((pipelineRequest as any).context || {}),
+              chatRunId,
+            };
+          } catch {
+            // ignore
+          }
+        }
       } catch {
         // ignore tracing failures
       }
@@ -1298,87 +1378,109 @@ router.post(
         res.write(`data: ${JSON.stringify(payload)}\n\n`);
       };
 
+      // T120: Private mode / retention — memory injection must be gated.
+      // Also: Deep Thinking autonomy should not inject memory add-ons into the system instruction.
+      let memoryInjectionAllowed = !privateMode && !aiModes?.deepResearch;
+      if (memoryInjectionAllowed && req.userId) {
+        try {
+          const upMod = (await import('../services/ai/userPrivacyService.js')) as any;
+          const privacy = (upMod.default || upMod) as any;
+          if (privacy?.getUserPrivacySettings) {
+            const settings = await privacy.getUserPrivacySettings(req.userId);
+            const canRead =
+              typeof privacy.canReadMemory === 'function'
+                ? privacy.canReadMemory(settings, false /* isPrivateMode */)
+                : Boolean(settings?.memoryEnabled);
+            if (!canRead || settings?.retentionMode === 'none') memoryInjectionAllowed = false;
+          }
+        } catch {
+          // fail-open: keep current decision
+        }
+      }
+
       // --------------------------------------------------------
       // Memory injection (short-term summary + long-term user/org)
       // --------------------------------------------------------
-      emitSSE({
-        type: 'thought',
-        step: 'memory',
-        status: 'in_progress',
-        label: language?.startsWith('pl')
-          ? 'Wczytuję kontekst rozmowy i pamięć…'
-          : 'Loading conversation context and memory…',
-      });
-      try {
-        const convIdForMemory = conversationId || null;
-        const [convSummary, ltmAddon] = await Promise.all([
-          convIdForMemory
-            ? import('../services/ai/conversationSummaryService.js')
-                .then((mod: any) => (mod.default || mod).get(convIdForMemory))
-                .catch(() => '')
-            : Promise.resolve(''),
-          req.userId && req.organizationId
-            ? import('../services/ai/longTermMemoryService.js')
-                .then((mod: any) =>
-                  (mod.default || mod).getPromptAddendum({
-                    userId: req.userId,
-                    organizationId: req.organizationId,
-                  })
-                )
-                .catch(() => '')
-            : Promise.resolve(''),
-        ]);
+      if (memoryInjectionAllowed) {
+        emitSSE({
+          type: 'thought',
+          step: 'memory',
+          status: 'in_progress',
+          label: language?.startsWith('pl')
+            ? 'Wczytuję kontekst rozmowy i pamięć…'
+            : 'Loading conversation context and memory…',
+        });
+        try {
+          const convIdForMemory = conversationId || null;
+          const [convSummary, ltmAddon] = await Promise.all([
+            convIdForMemory
+              ? import('../services/ai/conversationSummaryService.js')
+                  .then((mod: any) => (mod.default || mod).get(convIdForMemory))
+                  .catch(() => '')
+              : Promise.resolve(''),
+            req.userId && req.organizationId
+              ? import('../services/ai/longTermMemoryService.js')
+                  .then((mod: any) =>
+                    (mod.default || mod).getPromptAddendum({
+                      userId: req.userId,
+                      organizationId: req.organizationId,
+                    })
+                  )
+                  .catch(() => '')
+              : Promise.resolve(''),
+          ]);
 
-        const parts: string[] = [];
-        const hasSummary = Boolean(convSummary && String(convSummary).trim().length > 0);
-        const hasLtm = Boolean(ltmAddon && String(ltmAddon).trim().length > 0);
+          const parts: string[] = [];
+          const hasSummary = Boolean(convSummary && String(convSummary).trim().length > 0);
+          const hasLtm = Boolean(ltmAddon && String(ltmAddon).trim().length > 0);
 
-        if (hasSummary) {
-          parts.push('## SHORT-TERM MEMORY (conversation summary)');
-          parts.push(String(convSummary).trim());
-          parts.push(
-            '',
-            'Rules:',
-            '- Use this as context, but prefer the latest user message if there is conflict.',
-            '- Do not mention the existence of this summary unless asked.'
-          );
-        }
-        if (hasLtm) {
-          parts.push(String(ltmAddon).trim());
-        }
+          if (hasSummary) {
+            parts.push('## SHORT-TERM MEMORY (conversation summary)');
+            parts.push(String(convSummary).trim());
+            parts.push(
+              '',
+              'Rules:',
+              '- Use this as context, but prefer the latest user message if there is conflict.',
+              '- Do not mention the existence of this summary unless asked.'
+            );
+          }
+          if (hasLtm) {
+            parts.push(String(ltmAddon).trim());
+          }
 
-        const memoryAddon = parts.join('\n');
-        if (memoryAddon.trim().length > 0) {
-          pipelineRequest = {
-            ...pipelineRequest,
-            options: {
-              ...(pipelineRequest.options || {}),
-              systemInstruction:
-                String((pipelineRequest.options as any)?.systemInstruction || '') +
-                `\n\n${memoryAddon}\n`,
-            },
-            context: {
-              ...((pipelineRequest as any).context || {}),
-              memory: {
-                conversationSummary: convSummary || '',
-                longTermInjected: hasLtm,
+          const memoryAddon = parts.join('\n');
+          if (memoryAddon.trim().length > 0) {
+            pipelineRequest = {
+              ...pipelineRequest,
+              options: {
+                ...(pipelineRequest.options || {}),
+                systemInstruction:
+                  String((pipelineRequest.options as any)?.systemInstruction || '') +
+                  `\n\n${memoryAddon}\n`,
               },
-            },
-          } as any;
-        }
+              context: {
+                ...((pipelineRequest as any).context || {}),
+                memory: {
+                  conversationSummary: convSummary || '',
+                  longTermInjected: hasLtm,
+                },
+              },
+            } as any;
+          }
 
-        // Trace event (best-effort)
-        if (chatRunId) {
-          import('../services/ai/chatTraceService.js')
-            .then((m: any) =>
-              (m.default || m).addEvent(chatRunId, 'memory_injected', { hasSummary, hasLtm })
-            )
-            .catch(() => {
-              /* ignore */
-            });
+          // Trace event (best-effort)
+          if (chatRunId) {
+            import('../services/ai/chatTraceService.js')
+              .then((m: any) =>
+                (m.default || m).addEvent(chatRunId, 'memory_injected', { hasSummary, hasLtm })
+              )
+              .catch(() => {
+                /* ignore */
+              });
+          }
+        } catch {
+          // ignore memory failures
         }
-      } catch {
-        // ignore memory failures
       }
 
       logger.info(`[AI Stream] Processing request for user ${req.userId}`, {
@@ -1504,8 +1606,26 @@ router.post(
         });
       }
       if (!aiModes?.deepResearch) {
-        const tavilyKey = (process.env.TAVILY_API_KEY || '').trim();
         const userEnabledWebSearch = aiModes?.webSearch === true;
+        const orgIdForWeb = req.organizationId || null;
+
+        // T118: unified governance for all web search (policy + SSRF + allow/deny + sanitize + cache)
+        let webPolicy: any = null;
+        let webGov: any = null;
+        try {
+          webGov = (await import('../services/ai/webSearchGovernance.js')) as any;
+          const getEffectiveWebSearchPolicy =
+            webGov.getEffectiveWebSearchPolicy || webGov.default?.getEffectiveWebSearchPolicy;
+          if (orgIdForWeb && typeof getEffectiveWebSearchPolicy === 'function') {
+            webPolicy = await getEffectiveWebSearchPolicy(
+              String(orgIdForWeb),
+              projectId || undefined
+            );
+          }
+        } catch {
+          webPolicy = null;
+          webGov = null;
+        }
 
         // Auto-detect web search intent
         let searchIntent: any = null;
@@ -1531,11 +1651,17 @@ router.post(
           }
         }
 
-        if (searchIntent?.shouldSearch && tavilyKey) {
+        if (searchIntent?.shouldSearch && webPolicy?.internetEnabled) {
           try {
             const { TavilyWebSearchService } =
               await import('../services/ai/tavilyWebSearchService.js');
-            const svc = new (TavilyWebSearchService as any)(tavilyKey);
+            const svc = new (TavilyWebSearchService as any)(
+              (process.env.TAVILY_API_KEY || '').trim()
+            );
+            const sanitizeQuery = webGov?.sanitizeQuery || webGov?.default?.sanitizeQuery;
+            const filterResults = webGov?.filterResults || webGov?.default?.filterResults;
+            const getCached = webGov?.getCached || webGov?.default?.getCached;
+            const setCache = webGov?.setCache || webGov?.default?.setCache;
 
             // Execute search queries (possibly multiple for complex questions)
             const searchQueries: string[] =
@@ -1553,14 +1679,40 @@ router.post(
             const allAnswers: string[] = [];
             for (const query of searchQueries.slice(0, 3)) {
               try {
-                const resp = await svc.search(query, {
-                  maxResults: searchIntent.maxResults ?? 5,
-                  includeNews: true,
-                  searchDepth: searchIntent.searchDepth ?? 'basic',
-                });
-                const results = Array.isArray(resp?.results) ? resp.results : [];
+                const cleanQuery =
+                  typeof sanitizeQuery === 'function' ? sanitizeQuery(String(query || '')) : query;
+                const cached =
+                  orgIdForWeb && typeof getCached === 'function'
+                    ? getCached(String(orgIdForWeb), cleanQuery, language)
+                    : null;
+                const resp =
+                  cached ||
+                  (await svc.search(cleanQuery, {
+                    maxResults: searchIntent.maxResults ?? 5,
+                    includeNews: true,
+                    searchDepth: searchIntent.searchDepth ?? 'basic',
+                  }));
+                const resultsRaw = Array.isArray((resp as any)?.results)
+                  ? (resp as any).results
+                  : [];
+                const results =
+                  typeof filterResults === 'function'
+                    ? filterResults(resultsRaw, webPolicy)
+                    : resultsRaw;
                 allResults.push(...results);
-                if (resp?.answer) allAnswers.push(resp.answer);
+                if ((resp as any)?.answer) allAnswers.push((resp as any).answer);
+                if (!cached && orgIdForWeb && typeof setCache === 'function') {
+                  try {
+                    setCache(
+                      String(orgIdForWeb),
+                      cleanQuery,
+                      { ...(resp as any), query: cleanQuery, results },
+                      language
+                    );
+                  } catch {
+                    // ignore
+                  }
+                }
               } catch (qErr: any) {
                 logger.debug(`[AI Stream] Query "${query}" failed: ${qErr?.message}`);
               }
@@ -1656,16 +1808,18 @@ router.post(
               error: 'Web research unavailable',
             });
           }
-        } else if (searchIntent?.shouldSearch && !tavilyKey) {
-          // User/auto-detect wants web search but no API key configured
-          logger.info('[AI Stream] Web search intent detected but TAVILY_API_KEY not set');
+        } else if (searchIntent?.shouldSearch && !webPolicy?.internetEnabled) {
+          // User/auto-detect wants web search but policy forbids or key missing
+          logger.info('[AI Stream] Web search intent detected but internet is disabled', {
+            reason: webPolicy?.reason || null,
+          });
           emitSSE({
             type: 'research_progress',
             topic: message,
             stage: 'complete',
             queries: [],
             sources: [],
-            error: 'Web search unavailable — TAVILY_API_KEY not configured',
+            error: webPolicy?.reason || 'Web search unavailable',
           });
         }
       }
@@ -1952,9 +2106,27 @@ router.post(
             }
           }
           const multiAgentContent = parts.join('\n');
+          // Ensure the stream always returns a visible payload AND terminates.
+          // Some frontends render `type: content` via onThinking, while others rely on `{ text }` chunks.
+          accumulatedContent = multiAgentContent;
           emitSSE({ type: 'content', content: multiAgentContent });
           emitSSE({ type: 'done', content: multiAgentContent });
           emitSSE({ type: 'end' });
+          if (isClientConnected && !res.destroyed) {
+            try {
+              // Also emit as a standard text chunk to keep SSE contract consistent.
+              res.write(`data: ${JSON.stringify({ text: multiAgentContent })}\n\n`);
+            } catch {
+              /* ignore */
+            }
+            try {
+              res.write('data: [DONE]\n\n');
+            } catch {
+              /* ignore */
+            }
+          }
+          streamCompleted = true;
+          clearInterval(heartbeatInterval);
 
           // Complete chat trace
           if (chatRunId) {
@@ -1965,7 +2137,7 @@ router.post(
               /* ignore */
             }
           }
-          return; // Skip standard pipeline
+          return res.end(); // Skip standard pipeline
         } catch (err) {
           logger.warn(
             '[AI Stream] Multi-agent mode failed, falling back to standard pipeline',
@@ -2132,9 +2304,12 @@ router.post(
             // Without this, the frontend may see only [DONE] and appear "dead".
             res.write(
               `data: ${JSON.stringify({
-                error:
-                  'AI stream ended without output. Check LLM provider configuration and backend logs.',
+                error: 'AI stream ended without output.',
                 code: 'EMPTY_STREAM',
+                sessionId: streamSessionId,
+                provider: pipelineMeta?.provider || null,
+                model: pipelineMeta?.model || null,
+                traceId: pipelineMeta?.traceId || pipelineMeta?.trace_id || null,
               })}\n\n`
             );
           }
@@ -2825,16 +3000,17 @@ router.post(
     const { text, mode, systemInstruction, fieldLabel, artifactContext, language } = req.body;
 
     // --- Provider check ---
-    const hasEnvProvider =
-      !!process.env.OPENAI_API_KEY ||
-      !!process.env.GEMINI_API_KEY ||
-      !!process.env.GOOGLE_AI_API_KEY ||
-      !!process.env.ANTHROPIC_API_KEY ||
-      !!process.env.MISTRAL_API_KEY;
+    const hasEnvProvider = !!String(process.env.OPENROUTER_API_KEY || '').trim();
+    const hasDbProvider = !!(await dbGet(
+      `SELECT 1 AS ok
+       FROM llm_providers
+       WHERE is_active = 1 AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
+       LIMIT 1`
+    ));
 
-    if (!hasEnvProvider) {
+    if (!hasEnvProvider && !hasDbProvider) {
       return res.status(500).json({
-        error: 'No LLM provider configured. Set OPENAI_API_KEY or GEMINI_API_KEY.',
+        error: 'No LLM provider configured. Set OPENROUTER_API_KEY or configure OpenRouter.',
         code: 'NO_LLM_PROVIDER',
       });
     }
@@ -4405,9 +4581,10 @@ router.get(
         typeof AIMemoryMetricsService.getDashboardMetrics !== 'function'
       ) {
         return res.status(503).json({
-          success: false,
-          code: 'FEATURE_UNAVAILABLE',
-          error: 'AI memory metrics are not available',
+          statusCode: 503,
+          status: false,
+          type: 'not_configured',
+          message: 'Service temporarily unavailable due to missing configuration',
         });
       }
       const { period } = req.query as any;
@@ -4418,9 +4595,10 @@ router.get(
     } catch (err: any) {
       logger.error('[AI] Memory metrics error:', err);
       return res.status(503).json({
-        success: false,
-        code: 'FEATURE_UNAVAILABLE',
-        error: 'AI memory metrics are not available',
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     }
   })
@@ -4440,9 +4618,10 @@ router.get(
         typeof AIMemoryMetricsService.getCurrentMemoryState !== 'function'
       ) {
         return res.status(503).json({
-          success: false,
-          code: 'FEATURE_UNAVAILABLE',
-          error: 'AI memory state is not available',
+          statusCode: 503,
+          status: false,
+          type: 'not_configured',
+          message: 'Service temporarily unavailable due to missing configuration',
         });
       }
       const { projectId } = req.query as any;
@@ -4456,9 +4635,10 @@ router.get(
     } catch (err: any) {
       logger.error('[AI] Current memory state error:', err);
       return res.status(503).json({
-        success: false,
-        code: 'FEATURE_UNAVAILABLE',
-        error: 'AI memory state is not available',
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     }
   })
@@ -4478,9 +4658,10 @@ router.get(
         typeof AIMemoryMetricsService.getLatencyPercentiles !== 'function'
       ) {
         return res.status(503).json({
-          success: false,
-          code: 'FEATURE_UNAVAILABLE',
-          error: 'AI memory latency metrics are not available',
+          statusCode: 503,
+          status: false,
+          type: 'not_configured',
+          message: 'Service temporarily unavailable due to missing configuration',
         });
       }
       const { hours } = req.query as any;
@@ -4494,9 +4675,10 @@ router.get(
     } catch (err: any) {
       logger.error('[AI] Latency metrics error:', err);
       return res.status(503).json({
-        success: false,
-        code: 'FEATURE_UNAVAILABLE',
-        error: 'AI memory latency metrics are not available',
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     }
   })

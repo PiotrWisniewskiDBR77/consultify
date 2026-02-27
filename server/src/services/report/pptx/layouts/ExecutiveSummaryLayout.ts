@@ -4,6 +4,7 @@
  */
 import { Footnote } from '../atomics/Footnote.js';
 import { HeaderBar } from '../atomics/HeaderBar.js';
+import { Image } from '../atomics/Image.js';
 import { PageNumber } from '../atomics/PageNumber.js';
 import { SlideTitle } from '../atomics/SlideTitle.js';
 import { ExecutiveSummaryPanel } from '../composites/ExecutiveSummaryPanel.js';
@@ -23,6 +24,26 @@ export function ExecutiveSummaryLayout(
   const c = slide.content as ExecutiveSummaryContent;
   const elements = [];
 
+  // Optional right-side illustration (render first, behind panel)
+  const side = (slide.visuals || []).find((v) => v && v.slot === 'side_illustration');
+  const asset = side?.asset;
+  const hasSide = !!(asset?.path || asset?.dataUri);
+  if (hasSide) {
+    const sideW = 2.9;
+    elements.push(
+      Image(
+        {
+          position: { x: tokens.grid.slideW - sideW, y: 0, w: sideW, h: tokens.grid.slideH },
+          path: asset?.path,
+          data: asset?.dataUri,
+          fit: 'cover',
+          transparency: 12,
+        },
+        tokens
+      )
+    );
+  }
+
   elements.push(HeaderBar({}, tokens));
   elements.push(
     SlideTitle(
@@ -33,6 +54,7 @@ export function ExecutiveSummaryLayout(
   elements.push(PageNumber({}, tokens));
 
   // Main panel
+  const panelW = hasSide ? tokens.grid.contentW - 2.3 : tokens.grid.contentW;
   const panelElements = ExecutiveSummaryPanel(
     {
       headline: c.headline,
@@ -42,7 +64,7 @@ export function ExecutiveSummaryLayout(
       position: {
         x: tokens.grid.contentX,
         y: tokens.grid.contentY,
-        w: tokens.grid.contentW,
+        w: panelW,
         h: tokens.grid.contentH,
       },
     },

@@ -42,6 +42,36 @@ CREATE TABLE IF NOT EXISTS multi_framework_assessments (
     last_modified_by TEXT REFERENCES users(id)
 );
 
+-- Backfill critical columns for legacy instances where table existed with partial schema
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'multi_framework_assessments' AND column_name = 'framework'
+    ) THEN
+        ALTER TABLE multi_framework_assessments
+            ADD COLUMN framework TEXT NOT NULL DEFAULT 'DRD'
+            CHECK (framework IN ('DRD', 'SIRI', 'ADMA', 'CMMI', 'LEAN'));
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'multi_framework_assessments' AND column_name = 'status'
+    ) THEN
+        ALTER TABLE multi_framework_assessments
+            ADD COLUMN status TEXT DEFAULT 'DRAFT'
+            CHECK (status IN ('DRAFT', 'IN_PROGRESS', 'COMPLETED', 'ARCHIVED'));
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'multi_framework_assessments' AND column_name = 'created_at'
+    ) THEN
+        ALTER TABLE multi_framework_assessments
+            ADD COLUMN created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+    END IF;
+END $$;
+
 -- Indexes for multi_framework_assessments
 CREATE INDEX IF NOT EXISTS idx_mfa_project ON multi_framework_assessments(project_id);
 CREATE INDEX IF NOT EXISTS idx_mfa_organization ON multi_framework_assessments(organization_id);

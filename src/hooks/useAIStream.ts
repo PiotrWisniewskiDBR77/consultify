@@ -1136,6 +1136,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
             multiAgent: aiConfig?.multiAgent,
             marketResearch: (aiConfig as any)?.marketResearch,
             coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
+            privateMode: (aiConfig as any)?.privateMode ?? false,
             knowledgeSources: {
               pmoDocuments: true,
               projectData: true,
@@ -1190,6 +1191,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
                   multiAgent: aiConfig?.multiAgent,
                   marketResearch: (aiConfig as any)?.marketResearch,
                   coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
+                  privateMode: (aiConfig as any)?.privateMode ?? false,
                   knowledgeSources: {
                     pmoDocuments: true,
                     projectData: true,

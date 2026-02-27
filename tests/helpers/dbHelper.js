@@ -24,15 +24,16 @@ export async function initTestDb() {
   // Clear mock flag if set
   delete process.env.MOCK_DB;
 
-  // IMPORTANT: Enable foreign key constraints for proper testing
-  await new Promise((resolve, reject) => {
-    db.run('PRAGMA foreign_keys = ON', (err) => {
-      if (err) {
-        console.warn('Could not enable foreign keys:', err.message);
-      }
-      resolve();
+  // PostgreSQL: foreign keys always enforced. No PRAGMA needed.
+  // (SQLite used PRAGMA foreign_keys = ON)
+  if (typeof db.run !== 'function') return;
+  try {
+    await new Promise((resolve, reject) => {
+      db.run?.('SELECT 1', [], (err) => (err ? resolve() : resolve()));
     });
-  });
+  } catch {
+    // Ignore - Postgres doesn't need PRAGMA
+  }
 }
 
 /**
@@ -80,34 +81,19 @@ export async function commitTransaction() {
  */
 export async function cleanTables(tables) {
   const db = await getDb();
-  return new Promise((resolve, reject) => {
-    db.serialize(() => {
-      // Disable foreign keys temporarily for faster cleanup
-      db.run('PRAGMA foreign_keys = OFF', (err) => {
-        if (err) return reject(err);
+  if (tables.length === 0) return;
 
-        let completed = 0;
-        const total = tables.length;
-
-        if (total === 0) {
-          db.run('PRAGMA foreign_keys = ON', () => resolve());
-          return;
-        }
-
-        tables.forEach((table) => {
-          db.run(`DELETE FROM ${table}`, (err) => {
-            if (err && !err.message.includes('no such table')) {
-              console.warn(`Warning: Could not clean table ${table}:`, err.message);
-            }
-            completed++;
-            if (completed === total) {
-              db.run('PRAGMA foreign_keys = ON', () => resolve());
-            }
-          });
-        });
+  for (const table of tables) {
+    try {
+      await new Promise((resolve, reject) => {
+        db.run(`DELETE FROM ${table}`, [], (err) => (err ? reject(err) : resolve()));
       });
-    });
-  });
+    } catch (err) {
+      if (!err?.message?.includes('does not exist') && !err?.message?.includes('relation')) {
+        console.warn(`Warning: Could not clean table ${table}:`, err?.message);
+      }
+    }
+  }
 }
 
 /**

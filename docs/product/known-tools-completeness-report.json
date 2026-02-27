@@ -1,0 +1,165 @@
+{
+  "generatedAt": "2026-02-26T19:15:51.114Z",
+  "summary": {
+    "totalTools": 19,
+    "r0": 8,
+    "r1": 11,
+    "r2": 0,
+    "r0Complete": 8,
+    "averageCompleteness": 100
+  },
+  "audits": [
+    {
+      "toolType": "capability-mapper",
+      "displayName": "Capability Mapper",
+      "category": "strategic",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R0"
+    },
+    {
+      "toolType": "dynamic-swot",
+      "displayName": "Dynamic SWOT",
+      "category": "strategic",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R0"
+    },
+    {
+      "toolType": "growth-paths",
+      "displayName": "Growth Paths (Ansoff)",
+      "category": "strategic",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R0"
+    },
+    {
+      "toolType": "market-forces",
+      "displayName": "Market Forces (Porter)",
+      "category": "strategic",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R0"
+    },
+    {
+      "toolType": "portfolio-priority",
+      "displayName": "Portfolio Prioritization",
+      "category": "strategic",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R0"
+    },
+    {
+      "toolType": "process-automation",
+      "displayName": "Process Automation (Speed Tool)",
+      "category": "automation",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R0"
+    },
+    {
+      "toolType": "risk-uncertainty",
+      "displayName": "Risk & Uncertainty",
+      "category": "strategic",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R0"
+    },
+    {
+      "toolType": "value-chain",
+      "displayName": "Value Chain Analysis",
+      "category": "strategic",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R0"
+    },
+    {
+      "toolType": "a3-problem-solving",
+      "displayName": "A3 Problem Solving",
+      "category": "operational",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R1"
+    },
+    {
+      "toolType": "ai-discovery",
+      "displayName": "AI Discovery",
+      "category": "digital",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R1"
+    },
+    {
+      "toolType": "automation-pipeline",
+      "displayName": "Automation Pipeline",
+      "category": "operational",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R1"
+    },
+    {
+      "toolType": "constraint-control",
+      "displayName": "Constraint Control (TOC)",
+      "category": "operational",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R1"
+    },
+    {
+      "toolType": "control-tower",
+      "displayName": "Control Tower",
+      "category": "operational",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R1"
+    },
+    {
+      "toolType": "decision-engine",
+      "displayName": "Decision Engine",
+      "category": "operational",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R1"
+    },
+    {
+      "toolType": "logistics-automation",
+      "displayName": "Logistics Automation",
+      "category": "digital",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R1"
+    },
+    {
+      "toolType": "robotics-feasibility",
+      "displayName": "Robotics Feasibility",
+      "category": "digital",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R1"
+    },
+    {
+      "toolType": "rpa-scanner",
+      "displayName": "RPA Scanner",
+      "category": "digital",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R1"
+    },
+    {
+      "toolType": "sop-builder",
+      "displayName": "SOP Builder",
+      "category": "operational",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R1"
+    },
+    {
+      "toolType": "vsm-builder",
+      "displayName": "VSM Builder",
+      "category": "operational",
+      "completenessPercent": 100,
+      "missingFields": [],
+      "priority": "R1"
+    }
+  ]
+}

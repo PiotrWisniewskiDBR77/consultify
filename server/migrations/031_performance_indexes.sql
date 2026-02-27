@@ -57,27 +57,59 @@ ON initiatives(organization_id, status);
 -- ==========================================
 
 -- Optimize: Decisions by owner and status
-CREATE INDEX IF NOT EXISTS idx_decisions_owner_status 
-ON decisions(decision_maker_id, status) 
-WHERE status IN ('pending', 'escalated');
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'decisions'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_decisions_owner_status
+             ON decisions(decision_maker_id, status)
+             WHERE status IN (''pending'', ''escalated'')';
+  END IF;
+END $$;
 
 -- Optimize: Decisions by project
-CREATE INDEX IF NOT EXISTS idx_decisions_project 
-ON decisions(project_id) 
-WHERE project_id IS NOT NULL;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'decisions'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_decisions_project
+             ON decisions(project_id)
+             WHERE project_id IS NOT NULL';
+  END IF;
+END $$;
 
 -- ==========================================
 -- NOTIFICATIONS TABLE INDEXES
 -- ==========================================
 
 -- Optimize: Notifications by user and read status
-CREATE INDEX IF NOT EXISTS idx_notifications_user_read 
-ON notifications(user_id, is_read, created_at) 
-WHERE is_read = 0;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'notifications' AND column_name = 'read'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_notifications_user_read
+             ON notifications(user_id, read, created_at)
+             WHERE read = 0';
+  END IF;
+END $$;
 
 -- Optimize: Notifications by user and severity
-CREATE INDEX IF NOT EXISTS idx_notifications_user_severity 
-ON notifications(user_id, severity, created_at);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'notifications' AND column_name = 'severity'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_notifications_user_severity
+             ON notifications(user_id, severity, created_at)';
+  END IF;
+END $$;
 
 -- ==========================================
 -- USERS TABLE INDEXES
@@ -105,19 +137,43 @@ ON activity_logs(entity_type, entity_id);
 -- ==========================================
 
 -- Optimize: User capacity profiles
-CREATE INDEX IF NOT EXISTS idx_user_capacity_profile_user 
-ON user_capacity_profile(user_id);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'user_capacity_profile'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_user_capacity_profile_user
+             ON user_capacity_profile(user_id)';
+  END IF;
+END $$;
 
 -- ==========================================
 -- INITIATIVE_LOCATIONS TABLE INDEXES
 -- ==========================================
 
 -- Optimize: Initiative locations lookup
-CREATE INDEX IF NOT EXISTS idx_initiative_locations_initiative 
-ON initiative_locations(initiative_id);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'initiative_locations'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_initiative_locations_initiative
+             ON initiative_locations(initiative_id)';
+  END IF;
+END $$;
 
-CREATE INDEX IF NOT EXISTS idx_initiative_locations_location 
-ON initiative_locations(location_id);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'initiative_locations'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_initiative_locations_location
+             ON initiative_locations(location_id)';
+  END IF;
+END $$;
 
 -- ==========================================
 -- KNOWLEDGE_CHUNKS TABLE INDEXES

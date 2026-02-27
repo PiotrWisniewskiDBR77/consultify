@@ -2,8 +2,51 @@
 -- Consultinity AI - PostgreSQL with pgvector initialization
 -- =====================================================
 
--- Enable pgvector extension
-CREATE EXTENSION IF NOT EXISTS vector;
+-- Enable pgvector extension (best-effort; not all Postgres builds include it)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = 'vector') THEN
+    CREATE EXTENSION IF NOT EXISTS vector;
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  NULL;
+END $$;
+
+-- Create embeddings storage only when pgvector is available
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'vector') THEN
+    EXECUTE $SQL$
+      CREATE TABLE IF NOT EXISTS ai_knowledge_embeddings (
+        id BIGSERIAL PRIMARY KEY,
+        document_id TEXT,
+        chunk_index INTEGER DEFAULT 0,
+        chunk_text TEXT NOT NULL,
+        embedding vector(1536),
+        metadata JSONB DEFAULT '{}'::jsonb,
+        source_type TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    $SQL$;
+
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_ai_embeddings_doc ON ai_knowledge_embeddings(document_id)';
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_ai_embeddings_source ON ai_knowledge_embeddings(source_type)';
+
+    -- Optional HNSW index (best-effort; older pgvector may not support it)
+    BEGIN
+      EXECUTE 'DROP INDEX IF EXISTS idx_ai_embeddings_vector';
+      EXECUTE 'CREATE INDEX idx_ai_embeddings_vector ON ai_knowledge_embeddings USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64)';
+    EXCEPTION WHEN OTHERS THEN
+      NULL;
+    END;
+  END IF;
+END $$;
+
+/*
+LEGACY INIT (disabled):
+- The sections below were an early bootstrap script and are not part of the canonical V3 schema.
+- Keeping it commented prevents accidental creation of conflicting tables/types on Postgres.
+
 
 -- =====================================================
 -- AI Audit Logs - Track all AI interactions
@@ -184,6 +227,8 @@ BEGIN
         GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO consultinity;
     END IF;
 END $$;
+
+*/
 
 
 

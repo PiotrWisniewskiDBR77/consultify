@@ -7,6 +7,7 @@ import { Api } from '@/services/api';
 import { Task } from '@/types';
 
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
+type CalendarSource = 'all' | 'project' | 'personal';
 
 interface TaskCounts {
   total: number;
@@ -22,6 +23,7 @@ interface TasksCalendarViewProps {
   onTaskClick: (taskId: string, taskData?: Task) => void;
   onCreateTask: () => void;
   onCountsChange: (counts: TaskCounts) => void;
+  refreshTrigger?: number;
 }
 
 const startOfWeekMonday = (d: Date) => {
@@ -66,6 +68,7 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
   searchQuery,
   onTaskClick,
   onCountsChange,
+  refreshTrigger,
 }) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.language || 'en';
@@ -74,12 +77,18 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
   const [loading, setLoading] = useState(true);
   const [weekStart, setWeekStart] = useState(() => startOfWeekMonday(new Date()));
   const [updatingDueDate, setUpdatingDueDate] = useState<Record<string, boolean>>({});
+  const [source, setSource] = useState<CalendarSource>('all');
 
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await Api.getPersonalTasks();
-      setTasks(data || []);
+      const params = new URLSearchParams();
+      params.set('source', source);
+      params.set('includeDone', 'false');
+      params.set('limit', '500');
+      const res = (await Api.get(`/my-work/calendar?${params.toString()}`)) as any;
+      const list = Array.isArray(res) ? res : res?.tasks || [];
+      setTasks(list || []);
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error('Failed to fetch tasks (calendar view):', e);
@@ -87,11 +96,11 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [t, source]);
 
   useEffect(() => {
     fetchTasks();
-  }, [fetchTasks]);
+  }, [fetchTasks, refreshTrigger]);
 
   const filteredTasks = useMemo(() => {
     let list = tasks;
@@ -188,7 +197,12 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
     async (task: Task, dueDate: string) => {
       setUpdatingDueDate((prev) => ({ ...prev, [task.id]: true }));
       try {
-        await Api.updatePersonalTask(task.id, { dueDate: dueDate || null });
+        const taskType = String((task as any)?.taskType || '').toLowerCase();
+        if (taskType === 'personal') {
+          await Api.updatePersonalTask(task.id, { dueDate: dueDate || null });
+        } else {
+          await Api.updateTask(task.id, { dueDate: dueDate || null });
+        }
         await fetchTasks();
         toast.success(t('myWork.tasks.dueDateUpdated', 'Due date updated'));
       } catch (e) {
@@ -218,9 +232,33 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm font-medium text-slate-800 dark:text-slate-200">
           <CalendarDays size={16} />
-          <span>{t('myWork.calendar.title', 'Project Calendar')}</span>
+          <span>{t('myWork.calendar.title', 'Calendar')}</span>
         </div>
         <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 overflow-hidden">
+            {(
+              [
+                { id: 'all' as const, label: t('myWork.calendar.source.all', 'All') },
+                { id: 'project' as const, label: t('myWork.calendar.source.project', 'Project') },
+                {
+                  id: 'personal' as const,
+                  label: t('myWork.calendar.source.personal', 'Personal'),
+                },
+              ] as const
+            ).map((opt) => (
+              <button
+                key={opt.id}
+                className={`px-2 py-1 text-xs transition-colors ${
+                  source === opt.id
+                    ? 'bg-brand/10 text-brand'
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                }`}
+                onClick={() => setSource(opt.id)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
           <button
             className="rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2 py-1 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800"
             onClick={() =>

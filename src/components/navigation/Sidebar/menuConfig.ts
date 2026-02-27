@@ -21,6 +21,7 @@ import {
   Lightbulb,
   Map,
   MessageSquare,
+  Package,
   Rocket,
   Settings,
   Shield,
@@ -64,7 +65,6 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       label: t('sidebar.discoveryTools', 'Tools'),
       icon: React.createElement(Wrench, { size: 20 }),
       viewId: AppView.DISCOVERY_TOOLS,
-      badge: 'new',
     },
     // 4. Licensed Tools (Assessment module) - DRD/SIRI/ADMA/Lean
     {
@@ -107,6 +107,20 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       label: t('sidebar.reports', 'Reports'),
       icon: React.createElement(BookOpen, { size: 20 }),
       viewId: AppView.FULL_STEP6_REPORTS,
+    },
+    {
+      id: 'MCP_IRIS',
+      label: t('sidebar.mcpIris', 'MCP IRIS'),
+      icon: React.createElement(Brain, { size: 20 }),
+      viewId: AppView.MCP_IRIS_COMING_SOON,
+      badge: 'soon',
+    },
+    {
+      id: 'MCP_MARKETPLACE',
+      label: t('sidebar.mcpMarketplace', 'MCP Marketplace'),
+      icon: React.createElement(Package, { size: 20 }),
+      viewId: AppView.MCP_MARKETPLACE_COMING_SOON,
+      badge: 'soon',
     },
     // Ecosystem affiliate dashboard (Phase G - conditional)
     ...(journeyState === 'ECOSYSTEM_NODE'
@@ -209,6 +223,8 @@ export function getViewName(view: AppView, t: TranslationFn): string {
     [AppView.PORTFOLIO_ROADMAP]: t('sidebar.portfolioRoadmap', 'Portfolio & Roadmap'),
     [AppView.FULL_STEP5_EXECUTION]: t('sidebar.realization'),
     [AppView.MY_WORK]: t('myWork.title', 'My Work'),
+    [AppView.MCP_IRIS_COMING_SOON]: t('sidebar.mcpIris', 'MCP IRIS'),
+    [AppView.MCP_MARKETPLACE_COMING_SOON]: t('sidebar.mcpMarketplace', 'MCP Marketplace'),
   };
   return viewNames[view] || t('common.previousStep');
 }

@@ -2,7 +2,6 @@ import {
   AlertCircle,
   AlertTriangle,
   ArrowRight,
-  Bell,
   BookOpen,
   Bot,
   Check,
@@ -11,6 +10,7 @@ import {
   Clock,
   CreditCard,
   Flag,
+  Inbox,
   Info,
   Megaphone,
   MessageSquare,
@@ -126,7 +126,7 @@ export const NotificationDropdown = () => {
     }
 
     setMyWorkIntent({
-      tab: 'notifications',
+      tab: 'inbox',
       open: {
         type: 'notification',
         id: notification.id,
@@ -268,7 +268,7 @@ export const NotificationDropdown = () => {
     if (t.includes('TASK')) return <CheckSquare size={16} className="text-blue-400" />;
     if (t.includes('FEEDBACK') || t.includes('TICKET'))
       return <MessageSquare size={16} className="text-amber-400" />;
-    return <Bell size={16} className="text-slate-400" />;
+    return <Inbox size={16} className="text-slate-400" />;
   };
 
   // Severity color dot
@@ -333,8 +333,9 @@ export const NotificationDropdown = () => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 outline-none focus:ring-2 focus:ring-purple-500/20"
+        title={isPolish ? 'Inbox' : 'Inbox'}
       >
-        <Bell size={20} />
+        <Inbox size={20} />
         {unreadCount > 0 && (
           <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full px-1 border-2 border-white dark:border-navy-950 shadow-sm">
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -348,7 +349,7 @@ export const NotificationDropdown = () => {
           <div className="px-4 py-3 border-b border-purple-200/40 dark:border-purple-500/20 flex items-center justify-between bg-gradient-to-r from-white/80 via-purple-50/30 to-white/80 dark:from-navy-900/80 dark:via-purple-900/20 dark:to-navy-900/80">
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-navy-900 dark:text-white text-sm">
-                {isPolish ? 'Powiadomienia' : 'Notifications'}
+                {isPolish ? 'Inbox' : 'Inbox'}
               </h3>
               {unreadCount > 0 && (
                 <span className="bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-300 px-2 py-0.5 rounded-full text-xs font-medium">
@@ -370,7 +371,7 @@ export const NotificationDropdown = () => {
               </button>
               <button
                 onClick={() => {
-                  setMyWorkIntent({ tab: 'notifications' });
+                  setMyWorkIntent({ tab: 'inbox' });
                   setCurrentView(AppView.MY_WORK);
                   setIsOpen(false);
                 }}
@@ -408,7 +409,7 @@ export const NotificationDropdown = () => {
             ) : notifications.filter((n) => !isSnoozed(n.id)).length === 0 ? (
               <div className="p-8 text-center flex flex-col items-center">
                 <div className="w-12 h-12 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-3">
-                  <Bell size={20} className="text-slate-300" />
+                  <Inbox size={20} className="text-slate-300" />
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
                   {isPolish ? 'Brak powiadomień' : 'No notifications yet'}

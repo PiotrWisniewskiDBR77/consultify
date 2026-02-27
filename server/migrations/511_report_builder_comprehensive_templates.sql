@@ -12,7 +12,7 @@
 -- ==========================================
 
 -- DRD Full Diagnostic Report (Pełny Raport Diagnostyczny)
-INSERT OR REPLACE INTO report_builder_templates (
+INSERT INTO report_builder_templates (
   id, organization_id, name, description, source_type, report_type, 
   sections_json, default_options_json, is_system, is_default, is_public, created_at
 ) VALUES (
@@ -304,14 +304,26 @@ INSERT OR REPLACE INTO report_builder_templates (
     }
   ]',
   '{"length": "long", "language": "business", "includeCharts": true, "includeMatrices": true}',
-  1,
-  1,
-  1,
+  true,
+  true,
+  true,
   CURRENT_TIMESTAMP
-);
+)
+ON CONFLICT (id) DO UPDATE SET
+  organization_id = EXCLUDED.organization_id,
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  source_type = EXCLUDED.source_type,
+  report_type = EXCLUDED.report_type,
+  sections_json = EXCLUDED.sections_json,
+  default_options_json = EXCLUDED.default_options_json,
+  is_system = EXCLUDED.is_system,
+  is_default = EXCLUDED.is_default,
+  is_public = EXCLUDED.is_public,
+  created_at = EXCLUDED.created_at;
 
 -- DRD Board Pack (Raport dla Zarządu)
-INSERT OR REPLACE INTO report_builder_templates (
+INSERT INTO report_builder_templates (
   id, organization_id, name, description, source_type, report_type, 
   sections_json, default_options_json, is_system, is_default, is_public, created_at
 ) VALUES (
@@ -447,14 +459,26 @@ INSERT OR REPLACE INTO report_builder_templates (
     }
   ]',
   '{"length": "medium", "language": "business", "style": "executive", "includeCharts": true}',
-  1,
-  0,
-  1,
+  true,
+  false,
+  true,
   CURRENT_TIMESTAMP
-);
+)
+ON CONFLICT (id) DO UPDATE SET
+  organization_id = EXCLUDED.organization_id,
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  source_type = EXCLUDED.source_type,
+  report_type = EXCLUDED.report_type,
+  sections_json = EXCLUDED.sections_json,
+  default_options_json = EXCLUDED.default_options_json,
+  is_system = EXCLUDED.is_system,
+  is_default = EXCLUDED.is_default,
+  is_public = EXCLUDED.is_public,
+  created_at = EXCLUDED.created_at;
 
 -- DRD Bank Pack (Raport do Banku)
-INSERT OR REPLACE INTO report_builder_templates (
+INSERT INTO report_builder_templates (
   id, organization_id, name, description, source_type, report_type, 
   sections_json, default_options_json, is_system, is_default, is_public, created_at
 ) VALUES (
@@ -630,18 +654,30 @@ INSERT OR REPLACE INTO report_builder_templates (
     }
   ]',
   '{"length": "medium", "language": "business", "style": "formal", "includeCharts": true}',
-  1,
-  0,
-  1,
+  true,
+  false,
+  true,
   CURRENT_TIMESTAMP
-);
+)
+ON CONFLICT (id) DO UPDATE SET
+  organization_id = EXCLUDED.organization_id,
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  source_type = EXCLUDED.source_type,
+  report_type = EXCLUDED.report_type,
+  sections_json = EXCLUDED.sections_json,
+  default_options_json = EXCLUDED.default_options_json,
+  is_system = EXCLUDED.is_system,
+  is_default = EXCLUDED.is_default,
+  is_public = EXCLUDED.is_public,
+  created_at = EXCLUDED.created_at;
 
 -- ==========================================
 -- SIRI TEMPLATES
 -- ==========================================
 
 -- SIRI Full Diagnostic Report
-INSERT OR REPLACE INTO report_builder_templates (
+INSERT INTO report_builder_templates (
   id, organization_id, name, description, source_type, report_type, 
   sections_json, default_options_json, is_system, is_default, is_public, created_at
 ) VALUES (
@@ -879,14 +915,26 @@ INSERT OR REPLACE INTO report_builder_templates (
     }
   ]',
   '{"length": "long", "language": "business", "includeCharts": true, "includeMatrices": true}',
-  1,
-  1,
-  1,
+  true,
+  true,
+  true,
   CURRENT_TIMESTAMP
-);
+)
+ON CONFLICT (id) DO UPDATE SET
+  organization_id = EXCLUDED.organization_id,
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  source_type = EXCLUDED.source_type,
+  report_type = EXCLUDED.report_type,
+  sections_json = EXCLUDED.sections_json,
+  default_options_json = EXCLUDED.default_options_json,
+  is_system = EXCLUDED.is_system,
+  is_default = EXCLUDED.is_default,
+  is_public = EXCLUDED.is_public,
+  created_at = EXCLUDED.created_at;
 
 -- SIRI Board Pack
-INSERT OR REPLACE INTO report_builder_templates (
+INSERT INTO report_builder_templates (
   id, organization_id, name, description, source_type, report_type, 
   sections_json, default_options_json, is_system, is_default, is_public, created_at
 ) VALUES (
@@ -1009,14 +1057,26 @@ INSERT OR REPLACE INTO report_builder_templates (
     }
   ]',
   '{"length": "medium", "language": "business", "style": "executive"}',
-  1,
-  0,
-  1,
+  true,
+  false,
+  true,
   CURRENT_TIMESTAMP
-);
+)
+ON CONFLICT (id) DO UPDATE SET
+  organization_id = EXCLUDED.organization_id,
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  source_type = EXCLUDED.source_type,
+  report_type = EXCLUDED.report_type,
+  sections_json = EXCLUDED.sections_json,
+  default_options_json = EXCLUDED.default_options_json,
+  is_system = EXCLUDED.is_system,
+  is_default = EXCLUDED.is_default,
+  is_public = EXCLUDED.is_public,
+  created_at = EXCLUDED.created_at;
 
 -- SIRI Bank Pack
-INSERT OR REPLACE INTO report_builder_templates (
+INSERT INTO report_builder_templates (
   id, organization_id, name, description, source_type, report_type, 
   sections_json, default_options_json, is_system, is_default, is_public, created_at
 ) VALUES (
@@ -1166,18 +1226,30 @@ INSERT OR REPLACE INTO report_builder_templates (
     }
   ]',
   '{"length": "medium", "language": "business", "style": "formal"}',
-  1,
-  0,
-  1,
+  true,
+  false,
+  true,
   CURRENT_TIMESTAMP
-);
+)
+ON CONFLICT (id) DO UPDATE SET
+  organization_id = EXCLUDED.organization_id,
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  source_type = EXCLUDED.source_type,
+  report_type = EXCLUDED.report_type,
+  sections_json = EXCLUDED.sections_json,
+  default_options_json = EXCLUDED.default_options_json,
+  is_system = EXCLUDED.is_system,
+  is_default = EXCLUDED.is_default,
+  is_public = EXCLUDED.is_public,
+  created_at = EXCLUDED.created_at;
 
 -- ==========================================
 -- ADMA TEMPLATES
 -- ==========================================
 
 -- ADMA Full Diagnostic Report
-INSERT OR REPLACE INTO report_builder_templates (
+INSERT INTO report_builder_templates (
   id, organization_id, name, description, source_type, report_type, 
   sections_json, default_options_json, is_system, is_default, is_public, created_at
 ) VALUES (
@@ -1431,14 +1503,26 @@ INSERT OR REPLACE INTO report_builder_templates (
     }
   ]',
   '{"length": "long", "language": "business", "includeCharts": true, "includeMatrices": true}',
-  1,
-  1,
-  1,
+  true,
+  true,
+  true,
   CURRENT_TIMESTAMP
-);
+)
+ON CONFLICT (id) DO UPDATE SET
+  organization_id = EXCLUDED.organization_id,
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  source_type = EXCLUDED.source_type,
+  report_type = EXCLUDED.report_type,
+  sections_json = EXCLUDED.sections_json,
+  default_options_json = EXCLUDED.default_options_json,
+  is_system = EXCLUDED.is_system,
+  is_default = EXCLUDED.is_default,
+  is_public = EXCLUDED.is_public,
+  created_at = EXCLUDED.created_at;
 
 -- ADMA Board Pack
-INSERT OR REPLACE INTO report_builder_templates (
+INSERT INTO report_builder_templates (
   id, organization_id, name, description, source_type, report_type, 
   sections_json, default_options_json, is_system, is_default, is_public, created_at
 ) VALUES (
@@ -1559,14 +1643,26 @@ INSERT OR REPLACE INTO report_builder_templates (
     }
   ]',
   '{"length": "medium", "language": "business", "style": "executive"}',
-  1,
-  0,
-  1,
+  true,
+  false,
+  true,
   CURRENT_TIMESTAMP
-);
+)
+ON CONFLICT (id) DO UPDATE SET
+  organization_id = EXCLUDED.organization_id,
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  source_type = EXCLUDED.source_type,
+  report_type = EXCLUDED.report_type,
+  sections_json = EXCLUDED.sections_json,
+  default_options_json = EXCLUDED.default_options_json,
+  is_system = EXCLUDED.is_system,
+  is_default = EXCLUDED.is_default,
+  is_public = EXCLUDED.is_public,
+  created_at = EXCLUDED.created_at;
 
 -- ADMA Bank Pack
-INSERT OR REPLACE INTO report_builder_templates (
+INSERT INTO report_builder_templates (
   id, organization_id, name, description, source_type, report_type, 
   sections_json, default_options_json, is_system, is_default, is_public, created_at
 ) VALUES (
@@ -1724,11 +1820,23 @@ INSERT OR REPLACE INTO report_builder_templates (
     }
   ]',
   '{"length": "medium", "language": "business", "style": "formal"}',
-  1,
-  0,
-  1,
+  true,
+  false,
+  true,
   CURRENT_TIMESTAMP
-);
+)
+ON CONFLICT (id) DO UPDATE SET
+  organization_id = EXCLUDED.organization_id,
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  source_type = EXCLUDED.source_type,
+  report_type = EXCLUDED.report_type,
+  sections_json = EXCLUDED.sections_json,
+  default_options_json = EXCLUDED.default_options_json,
+  is_system = EXCLUDED.is_system,
+  is_default = EXCLUDED.is_default,
+  is_public = EXCLUDED.is_public,
+  created_at = EXCLUDED.created_at;
 
 -- ==========================================
 -- INDEXES FOR PERFORMANCE

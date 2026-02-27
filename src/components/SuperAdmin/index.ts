@@ -24,6 +24,9 @@ export { SuperAdminAISettings } from './SuperAdminAISettings';
 // LLM Tier Management
 export { ModelTierAssignments } from './ModelTierAssignments';
 
+// Model Registry (V3-A06)
+export { ModelRegistryHub } from './ModelRegistry';
+
 // Security Management
 export * from './security';
 

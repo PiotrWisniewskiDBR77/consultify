@@ -548,6 +548,21 @@ Najpierw dopinamy **pracę na taskach wewnątrz platformy** (ClickUp-like). Sync
 - Czy sync ma być import-only czy bidirectional (per vendor)?
 - Jak rozwiązujemy konflikty i źródło prawdy?
 
+**Definition of Done (DoD):**
+- Scope V2 pozostaje jawnie odroczony (defer) i nie blokuje R0/R1.
+- Istnieje lista P0 integracji do kolejnego etapu (min. 1 backlog item per integracja).
+- Dla każdej integracji P0 zdefiniowano minimalny kontrakt: auth model, kierunek sync (import/bidirectional), ownership danych i obsługę konfliktów.
+- Wymagania bezpieczeństwa i audytu (token handling + audit trail) są opisane jako warunek wejścia do implementacji.
+
+**Acceptance / test plan:**
+- Review checklist: decyzja defer jest odnotowana i zaakceptowana przez ownera programu.
+- Review backlogu: co najmniej 3 kandydatów integracji ma opisany minimalny kontrakt.
+- Review ryzyk: opisane są przynajmniej 2 scenariusze konfliktu danych i zasada rozstrzygania.
+
+**Rollout plan:**
+- Implementacja przeniesiona do post‑V2 jako osobny workstream integracyjny.
+- Pierwsze wdrożenia tylko na feature flag i na ograniczonej grupie organizacji.
+
 ---
 
 ## T009 — 🟡 my work — My Ideas (Private Idea Repository)

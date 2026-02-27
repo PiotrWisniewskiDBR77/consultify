@@ -32,6 +32,8 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
+
 interface Model {
   id: string;
   name: string;
@@ -42,9 +44,8 @@ interface Model {
   tier: 'budget' | 'standard' | 'premium' | 'reasoning';
   capabilities: string[];
   contextWindow: number;
-  maxOutputTokens: number;
-  costPerInputToken: number;
-  costPerOutputToken: number;
+  maxOutputTokens?: number;
+  costPer1k: number;
   avgLatency: number;
   successRate: number;
   lastUsed: string;
@@ -67,143 +68,89 @@ export const ModelRegistryTab: React.FC = () => {
   const loadModels = async () => {
     setLoading(true);
     try {
-      // Mock data - replace with API call
-      const mockModels: Model[] = [
-        {
-          id: '1',
-          name: 'GPT-4o',
-          provider: 'OpenAI',
-          modelId: 'gpt-4o',
-          version: '2024-08-06',
-          status: 'active',
-          tier: 'premium',
-          capabilities: ['text', 'vision', 'function_calling', 'json_mode'],
-          contextWindow: 128000,
-          maxOutputTokens: 16384,
-          costPerInputToken: 0.000005,
-          costPerOutputToken: 0.000015,
-          avgLatency: 1200,
-          successRate: 99.8,
-          lastUsed: new Date().toISOString(),
-          totalRequests: 1250000,
-          createdAt: '2024-05-13',
-        },
-        {
-          id: '2',
-          name: 'GPT-4o Mini',
-          provider: 'OpenAI',
-          modelId: 'gpt-4o-mini',
-          version: '2024-07-18',
-          status: 'active',
-          tier: 'budget',
-          capabilities: ['text', 'vision', 'function_calling'],
-          contextWindow: 128000,
-          maxOutputTokens: 16384,
-          costPerInputToken: 0.00000015,
-          costPerOutputToken: 0.0000006,
-          avgLatency: 800,
-          successRate: 99.9,
-          lastUsed: new Date().toISOString(),
-          totalRequests: 3500000,
-          createdAt: '2024-07-18',
-        },
-        {
-          id: '3',
-          name: 'Claude 3.5 Sonnet',
-          provider: 'Anthropic',
-          modelId: 'claude-3-5-sonnet-20241022',
-          version: '20241022',
-          status: 'active',
-          tier: 'premium',
-          capabilities: ['text', 'vision', 'function_calling', 'computer_use'],
-          contextWindow: 200000,
-          maxOutputTokens: 8192,
-          costPerInputToken: 0.000003,
-          costPerOutputToken: 0.000015,
-          avgLatency: 1100,
-          successRate: 99.7,
-          lastUsed: new Date().toISOString(),
-          totalRequests: 890000,
-          createdAt: '2024-10-22',
-        },
-        {
-          id: '4',
-          name: 'o1-preview',
-          provider: 'OpenAI',
-          modelId: 'o1-preview',
-          version: '2024-09-12',
-          status: 'beta',
-          tier: 'reasoning',
-          capabilities: ['text', 'reasoning', 'chain_of_thought'],
-          contextWindow: 128000,
-          maxOutputTokens: 32768,
-          costPerInputToken: 0.000015,
-          costPerOutputToken: 0.00006,
-          avgLatency: 15000,
-          successRate: 98.5,
-          lastUsed: new Date().toISOString(),
-          totalRequests: 45000,
-          createdAt: '2024-09-12',
-        },
-        {
-          id: '5',
-          name: 'Claude 3 Haiku',
-          provider: 'Anthropic',
-          modelId: 'claude-3-haiku-20240307',
-          version: '20240307',
-          status: 'active',
-          tier: 'budget',
-          capabilities: ['text', 'vision'],
-          contextWindow: 200000,
-          maxOutputTokens: 4096,
-          costPerInputToken: 0.00000025,
-          costPerOutputToken: 0.00000125,
-          avgLatency: 400,
-          successRate: 99.9,
-          lastUsed: new Date().toISOString(),
-          totalRequests: 2100000,
-          createdAt: '2024-03-07',
-        },
-        {
-          id: '6',
-          name: 'Llama 3.1 70B',
-          provider: 'Groq',
-          modelId: 'llama-3.1-70b-versatile',
-          version: '3.1',
-          status: 'active',
-          tier: 'standard',
-          capabilities: ['text', 'function_calling'],
-          contextWindow: 131072,
-          maxOutputTokens: 8192,
-          costPerInputToken: 0.00000059,
-          costPerOutputToken: 0.00000079,
-          avgLatency: 200,
-          successRate: 99.5,
-          lastUsed: new Date().toISOString(),
-          totalRequests: 560000,
-          createdAt: '2024-07-23',
-        },
-        {
-          id: '7',
-          name: 'GPT-4 Turbo',
-          provider: 'OpenAI',
-          modelId: 'gpt-4-turbo-preview',
-          version: '2024-04-09',
-          status: 'deprecated',
-          tier: 'premium',
-          capabilities: ['text', 'vision', 'function_calling'],
-          contextWindow: 128000,
-          maxOutputTokens: 4096,
-          costPerInputToken: 0.00001,
-          costPerOutputToken: 0.00003,
-          avgLatency: 2000,
-          successRate: 99.5,
-          lastUsed: '2024-10-15T00:00:00Z',
-          totalRequests: 5600000,
-          createdAt: '2024-01-25',
-        },
-      ];
-      setModels(mockModels);
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const [providersRes, healthRes, usageRes] = await Promise.all([
+        fetch('/api/llm/providers', { headers }),
+        fetch('/api/llm/health/detailed', { headers }),
+        fetch('/api/llm/control/usage', { headers }),
+      ]);
+
+      const providersPayload = await providersRes.json().catch(() => []);
+      const healthPayload = await healthRes.json().catch(() => ({}));
+      const usagePayload = await usageRes.json().catch(() => ({}));
+
+      const providers: any[] = Array.isArray(providersPayload) ? providersPayload : [];
+      const healthProviders: any[] = Array.isArray(healthPayload?.providers)
+        ? healthPayload.providers
+        : [];
+      const usageByProvider: Array<{ provider?: string; calls?: number }> = Array.isArray(
+        usagePayload?.byProvider
+      )
+        ? usagePayload.byProvider
+        : [];
+
+      const callsByProvider = new Map(
+        usageByProvider
+          .map((r) => ({
+            key: String(r?.provider || '').toLowerCase(),
+            calls: Number(r?.calls || 0),
+          }))
+          .filter((r) => !!r.key)
+          .map((r) => [r.key, r.calls] as const)
+      );
+
+      const healthById = new Map(healthProviders.map((p) => [String(p?.id || ''), p] as const));
+
+      const normalizeTier = (tier: any): Model['tier'] => {
+        const t = String(tier || 'standard').toLowerCase();
+        if (t === 'budget') return 'budget';
+        if (t === 'premium') return 'premium';
+        if (t === 'reasoning') return 'reasoning';
+        return 'standard';
+      };
+
+      const statusFromProvider = (p: any): Model['status'] => {
+        if (!p) return 'archived';
+        const isActive = p.is_active === 1 || p.is_active === true;
+        return isActive ? 'active' : 'archived';
+      };
+
+      const nextModels: Model[] = providers.map((p) => {
+        const id = String(p?.id || p?.model_id || p?.name || '');
+        const health = healthById.get(String(p?.id || ''));
+        const respMs = Number(health?.responseTime || health?.latency || 0);
+        const status = statusFromProvider(p);
+        const isUp =
+          String(health?.status || '').toLowerCase() === 'healthy' ||
+          String(health?.status || '').toLowerCase() === 'degraded';
+        const providerKey = String(p?.provider || '').toLowerCase();
+        return {
+          id,
+          name: String(p?.name || p?.model_id || p?.provider || 'Unknown'),
+          provider: String(p?.provider || 'Unknown'),
+          modelId: String(p?.model_id || ''),
+          version: String(p?.updated_at || p?.created_at || ''),
+          status,
+          tier: normalizeTier(p?.tier),
+          capabilities: [],
+          contextWindow: Number(p?.context_window || 0),
+          maxOutputTokens: undefined,
+          costPer1k: Number(p?.cost_per_1k || 0),
+          avgLatency: respMs,
+          successRate: isUp ? 100 : 0,
+          lastUsed: String(p?.updated_at || p?.created_at || ''),
+          totalRequests: callsByProvider.get(providerKey) || 0,
+          createdAt: String(p?.created_at || ''),
+        };
+      });
+
+      setModels(nextModels);
+      trackFunnelEvent('model_registry_viewed', {
+        source: 'superadmin_ai_platform',
+        count: nextModels.length,
+      });
     } catch (err) {
       toast.error('Failed to load models');
     } finally {
@@ -239,14 +186,16 @@ export const ModelRegistryTab: React.FC = () => {
     );
   };
 
-  const formatNumber = (num: number) => {
+  const formatNumber = (num: number | null | undefined) => {
+    if (num === null || num === undefined) return '—';
+    if (!Number.isFinite(num)) return '—';
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
     return num.toString();
   };
 
-  const formatCost = (cost: number) => {
-    return `$${(cost * 1000000).toFixed(2)}/1M`;
+  const formatCostPer1k = (costPer1k: number) => {
+    return `$${Number(costPer1k || 0).toFixed(4)}/1k`;
   };
 
   const filteredModels = models.filter((model) => {
@@ -381,7 +330,7 @@ export const ModelRegistryTab: React.FC = () => {
                 Status
               </th>
               <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Cost (In/Out)
+                Cost
               </th>
               <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
                 Latency
@@ -421,10 +370,7 @@ export const ModelRegistryTab: React.FC = () => {
                 <td className="px-6 py-4">
                   <div className="text-xs">
                     <div className="text-slate-700 dark:text-slate-300">
-                      {formatCost(model.costPerInputToken)}
-                    </div>
-                    <div className="text-slate-500 dark:text-slate-400">
-                      {formatCost(model.costPerOutputToken)}
+                      {formatCostPer1k(model.costPer1k)}
                     </div>
                   </div>
                 </td>
@@ -519,14 +465,18 @@ export const ModelRegistryTab: React.FC = () => {
               <div>
                 <div className="text-sm text-slate-500 dark:text-slate-400 mb-2">Capabilities</div>
                 <div className="flex flex-wrap gap-2">
-                  {selectedModel.capabilities.map((cap) => (
-                    <span
-                      key={cap}
-                      className="px-2 py-1 bg-indigo-500/10 text-indigo-500 rounded text-xs"
-                    >
-                      {cap}
-                    </span>
-                  ))}
+                  {selectedModel.capabilities.length === 0 ? (
+                    <span className="text-xs text-slate-500 dark:text-slate-400">—</span>
+                  ) : (
+                    selectedModel.capabilities.map((cap) => (
+                      <span
+                        key={cap}
+                        className="px-2 py-1 bg-indigo-500/10 text-indigo-500 rounded text-xs"
+                      >
+                        {cap}
+                      </span>
+                    ))
+                  )}
                 </div>
               </div>
 

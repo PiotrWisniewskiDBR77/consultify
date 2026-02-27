@@ -66,7 +66,11 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
     setChatPanelWidth,
     currentView: appCurrentView,
     returnToFullChat,
+    chatSystemPrompt: storeChatSystemPrompt,
+    chatQuickPrompts: storeChatQuickPrompts,
   } = useAppStore();
+
+  const effectiveSystemPrompt = chatSystemPrompt || storeChatSystemPrompt || undefined;
 
   const { setDisplayMode, expandToFullScreen, setWorkspaceContext } = useConversationStore();
 
@@ -272,9 +276,10 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
             showHistoryTrigger={true}
             showFocusMode={true}
             title={typeof title === 'string' ? title : undefined}
-            systemPrompt={chatSystemPrompt}
+            systemPrompt={effectiveSystemPrompt}
             roleName={chatRoleName}
-            onMessageSent={onSendMessage} // Pass override if provided
+            quickPrompts={storeChatQuickPrompts || undefined}
+            onMessageSent={onSendMessage}
           />
         </div>
       )}
@@ -362,10 +367,11 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                 showModeToggle={true}
                 onModeToggle={handleExpandToFullChat}
                 showHistoryTrigger={true}
-                showFocusMode={false} // Compact on mobile
-                systemPrompt={chatSystemPrompt}
+                showFocusMode={false}
+                systemPrompt={effectiveSystemPrompt}
                 roleName={chatRoleName}
-                onMessageSent={onSendMessage} // Pass override if provided
+                quickPrompts={storeChatQuickPrompts || undefined}
+                onMessageSent={onSendMessage}
               />
             </div>
           </div>

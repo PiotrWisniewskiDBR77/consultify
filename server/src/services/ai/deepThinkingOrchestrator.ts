@@ -276,63 +276,114 @@ export class DeepThinkingOrchestrator {
 
     if (webSearchEnabled && tavilyKey) {
       try {
-        const { conductDeepResearch } = await import('./deepResearchService.js');
-        const { TavilyWebSearchService } = await import('./tavilyWebSearchService.js');
-        const webSearchService = new (TavilyWebSearchService as any)(tavilyKey);
+        const orgId = String((context as any)?.organizationId || '').trim();
+        const projectId = String((context as any)?.projectId || '').trim() || undefined;
 
-        const maxQueries = depth === 'light' ? 4 : depth === 'hard' ? 12 : 8;
-        const maxSourcesPerQuery = depth === 'light' ? 4 : depth === 'hard' ? 8 : 8;
-        const iterativeDeepening = depth !== 'light';
-        const maxFollowUpQueries = depth === 'hard' ? 8 : 5;
+        // T118: central governance (policy + SSRF + allow/deny + sanitize + cache)
+        const govMod = (await import('./webSearchGovernance.js')) as any;
+        const getEffectiveWebSearchPolicy =
+          govMod.getEffectiveWebSearchPolicy || govMod.default?.getEffectiveWebSearchPolicy;
+        const sanitizeQuery = govMod.sanitizeQuery || govMod.default?.sanitizeQuery;
+        const filterResults = govMod.filterResults || govMod.default?.filterResults;
+        const getCached = govMod.getCached || govMod.default?.getCached;
+        const setCache = govMod.setCache || govMod.default?.setCache;
 
-        researchOutput = await conductDeepResearch(
-          message,
-          {
-            maxQueries,
-            maxSourcesPerQuery,
-            includeNewsResults: true,
-            timeRange: 'all',
-            language: (language || 'en').split('-')[0],
-            iterativeDeepening,
-            maxFollowUpQueries,
-            forceResearchType: forcedResearchType || undefined,
-            orgContext: orgContext || undefined,
-            clarificationAnswers: clarificationAnswers || undefined,
-          },
-          {
-            webSearchService,
-            onProgress: (status: {
-              stage: string;
-              queries: unknown[];
-              round?: number;
-              totalRounds?: number;
-            }) => {
-              emit({
-                type: 'research_progress',
-                topic: message,
-                stage: status.stage,
-                queries: status.queries,
-                round: status.round,
-                totalRounds: status.totalRounds,
-              });
+        const policy =
+          orgId && typeof getEffectiveWebSearchPolicy === 'function'
+            ? await getEffectiveWebSearchPolicy(orgId, projectId)
+            : { internetEnabled: false, reason: 'Organization context missing' };
+
+        if (!policy?.internetEnabled) {
+          emit({
+            type: 'research_progress',
+            topic: message,
+            stage: 'complete',
+            queries: [],
+            sources: [],
+            error: policy?.reason || 'Internet disabled by policy',
+          });
+          researchOutput = null;
+        } else {
+          const { conductDeepResearch } = await import('./deepResearchService.js');
+          const { TavilyWebSearchService } = await import('./tavilyWebSearchService.js');
+          const base = new (TavilyWebSearchService as any)(tavilyKey);
+
+          const webSearchService = {
+            search: async (rawQuery: string, options: any) => {
+              const clean =
+                typeof sanitizeQuery === 'function'
+                  ? sanitizeQuery(String(rawQuery || ''))
+                  : rawQuery;
+              const cached =
+                typeof getCached === 'function' ? getCached(orgId, clean, language) : null;
+              if (cached) return cached as any;
+              const resp = await base.search(clean, options);
+              const filtered =
+                typeof filterResults === 'function'
+                  ? filterResults(resp.results || [], policy)
+                  : resp.results || [];
+              const out = { ...resp, query: clean, results: filtered };
+              if (typeof setCache === 'function') setCache(orgId, clean, out, language);
+              return out;
             },
-          }
-        );
+          };
 
-        emit({
-          type: 'research_progress',
-          topic: message,
-          stage: 'complete',
-          queries: researchOutput.queries,
-          sources: (researchOutput.sources || []).map((s: any) => ({
-            url: s.url,
-            title: s.title,
-            domain: s.domain,
-            relevanceScore: s.relevanceScore,
-          })),
-          researchType: researchOutput.researchType,
-          rounds: researchOutput.metadata?.rounds || 1,
-        });
+          const maxQueries = depth === 'light' ? 4 : depth === 'hard' ? 12 : 8;
+          const maxSourcesPerQuery = depth === 'light' ? 4 : depth === 'hard' ? 8 : 8;
+          const iterativeDeepening = depth !== 'light';
+          const maxFollowUpQueries = depth === 'hard' ? 8 : 5;
+
+          researchOutput = await conductDeepResearch(
+            message,
+            {
+              maxQueries,
+              maxSourcesPerQuery,
+              includeNewsResults: true,
+              timeRange: 'all',
+              language: (language || 'en').split('-')[0],
+              iterativeDeepening,
+              maxFollowUpQueries,
+              forceResearchType: forcedResearchType || undefined,
+              orgContext: orgContext || undefined,
+              clarificationAnswers: clarificationAnswers || undefined,
+            },
+            {
+              webSearchService,
+              onProgress: (status: {
+                stage: string;
+                queries: unknown[];
+                round?: number;
+                totalRounds?: number;
+              }) => {
+                emit({
+                  type: 'research_progress',
+                  topic: message,
+                  stage: status.stage,
+                  queries: status.queries,
+                  round: status.round,
+                  totalRounds: status.totalRounds,
+                });
+              },
+            }
+          );
+        }
+
+        if (researchOutput) {
+          emit({
+            type: 'research_progress',
+            topic: message,
+            stage: 'complete',
+            queries: researchOutput.queries,
+            sources: (researchOutput.sources || []).map((s: any) => ({
+              url: s.url,
+              title: s.title,
+              domain: s.domain,
+              relevanceScore: s.relevanceScore,
+            })),
+            researchType: researchOutput.researchType,
+            rounds: researchOutput.metadata?.rounds || 1,
+          });
+        }
       } catch (err: any) {
         logger.warn('[DeepThinking] Web research failed, continuing without it:', err?.message);
         emit({

@@ -29,7 +29,7 @@ import { AppView, ChatResponseAction } from '../../types';
 
 interface ResponseActionsProps {
   actions: ChatResponseAction[];
-  onActionComplete?: (action: ChatResponseAction, result?: any) => void;
+  onActionComplete?: (action: ChatResponseAction, result?: any) => void | Promise<void>;
 }
 
 // Icon mapping for common action icons
@@ -64,12 +64,17 @@ export const ResponseActions: React.FC<ResponseActionsProps> = ({ actions, onAct
   if (!actions || actions.length === 0) return null;
 
   const handleAction = async (action: ChatResponseAction) => {
+    // Parent can fully own action execution (recommended path for chat router).
+    if (onActionComplete) {
+      await onActionComplete(action);
+      return;
+    }
+
     switch (action.type) {
       case 'navigate':
         if (action.payload.view) {
           setCurrentView(action.payload.view as AppView);
         }
-        onActionComplete?.(action);
         break;
 
       case 'execute':
@@ -82,7 +87,7 @@ export const ResponseActions: React.FC<ResponseActionsProps> = ({ actions, onAct
             const result = isActionEndpoint
               ? await Api.executeAIAction(endpoint.split('/').pop()!, action.payload.data || {})
               : await Api.genericPost(endpoint, action.payload.data || {});
-            onActionComplete?.(action, result);
+            void result;
           } catch (err) {
             console.error('[ResponseActions] Execute error:', err);
           } finally {
@@ -96,13 +101,11 @@ export const ResponseActions: React.FC<ResponseActionsProps> = ({ actions, onAct
         await navigator.clipboard.writeText(textToCopy);
         setCopiedAction(action.id);
         setTimeout(() => setCopiedAction(null), 2000);
-        onActionComplete?.(action);
         break;
       }
 
       case 'expand':
         // Handle expand/collapse - typically managed by parent
-        onActionComplete?.(action);
         break;
     }
   };

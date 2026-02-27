@@ -225,6 +225,9 @@ router.get(
         case '30d':
           timeFilter = "datetime('now', '-30 days')";
           break;
+        case '90d':
+          timeFilter = "datetime('now', '-90 days')";
+          break;
         default:
           timeFilter = "datetime('now', '-24 hours')";
       }
@@ -308,6 +311,10 @@ router.get(
           break;
         case '30d':
           timeFilter = "datetime('now', '-30 days')";
+          groupBy = "strftime('%Y-%m-%d', created_at)";
+          break;
+        case '90d':
+          timeFilter = "datetime('now', '-90 days')";
           groupBy = "strftime('%Y-%m-%d', created_at)";
           break;
         default:

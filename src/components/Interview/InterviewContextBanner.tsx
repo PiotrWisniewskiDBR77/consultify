@@ -135,14 +135,19 @@ export const InterviewContextBanner: React.FC<InterviewContextBannerProps> = ({
           {/* Context preview */}
           {context && (
             <div className="flex flex-wrap gap-2 mb-3">
-              {context.transformationGoals.length > 0 && (
+              {context.keyMetrics.length > 0 && (
                 <span className="px-2 py-1 text-xs bg-white dark:bg-navy-800 rounded border border-slate-200 dark:border-navy-700">
-                  {context.transformationGoals.length} goals
+                  {context.keyMetrics.length} metrics
                 </span>
               )}
-              {context.currentChallenges.length > 0 && (
+              {context.stakeholders.length > 0 && (
                 <span className="px-2 py-1 text-xs bg-white dark:bg-navy-800 rounded border border-slate-200 dark:border-navy-700">
-                  {context.currentChallenges.length} challenges
+                  {context.stakeholders.length} stakeholders
+                </span>
+              )}
+              {context.openGaps.length > 0 && (
+                <span className="px-2 py-1 text-xs bg-white dark:bg-navy-800 rounded border border-slate-200 dark:border-navy-700">
+                  {context.openGaps.length} gaps
                 </span>
               )}
               {insights.length > 0 && (

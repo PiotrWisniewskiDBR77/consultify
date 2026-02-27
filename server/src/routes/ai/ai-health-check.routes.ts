@@ -103,9 +103,18 @@ async function checkToolsMenu(): Promise<SubsystemHealth> {
     status: 'healthy',
     message: 'Tools menu is fully functional',
     details: {
-      aiModes: ['deepResearch', 'webSearch', 'showReasoning', 'textToSpeech'],
+      aiModes: ['deepResearch', 'webSearch', 'showReasoning', 'privateMode', 'textToSpeech'],
       knowledgeSources: ['pmoDocuments', 'projectData', 'organizationData'],
-      responseStyles: ['normal', 'executive', 'analyst', 'coach', 'concise', 'formal'],
+      responseStyles: [
+        'normal',
+        'executive',
+        'analyst',
+        'coach',
+        'concise',
+        'formal',
+        'professional',
+        'friendly',
+      ],
     },
     lastChecked: new Date().toISOString(),
   };
@@ -115,7 +124,7 @@ async function checkChatConversation(): Promise<SubsystemHealth> {
   try {
     // Check if conversations table exists and is accessible
     const result = await dbGet(
-      "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='conversations'"
+      "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='conversations'"
     );
 
     const tableExists = (result as any)?.count > 0;
@@ -188,10 +197,10 @@ async function checkHistoryManagement(): Promise<SubsystemHealth> {
   try {
     // Check conversations and messages tables
     const conversationsCheck = await dbGet(
-      "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='conversations'"
+      "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='conversations'"
     );
     const messagesCheck = await dbGet(
-      "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='conversation_messages'"
+      "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='conversation_messages'"
     );
 
     const hasConversations = (conversationsCheck as any)?.count > 0;
@@ -241,7 +250,7 @@ async function checkLLMManagement(): Promise<SubsystemHealth> {
   try {
     // Check if LLM providers table exists
     const providersCheck = await dbGet(
-      "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='llm_providers'"
+      "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='llm_providers'"
     );
 
     const hasProviders = (providersCheck as any)?.count > 0;
@@ -307,7 +316,7 @@ async function checkVectorDatabase(): Promise<SubsystemHealth> {
   try {
     // Check if embeddings table exists
     const embeddingsCheck = await dbGet(
-      "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='ai_knowledge_embeddings'"
+      "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='ai_knowledge_embeddings'"
     );
     const hasEmbeddings = (embeddingsCheck as any)?.count > 0;
 
@@ -361,13 +370,13 @@ async function checkAIMemory(): Promise<SubsystemHealth> {
   try {
     // Check user memory table
     const userMemoryCheck = await dbGet(
-      "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='ai_user_memory'"
+      "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='ai_user_memory'"
     );
     const hasUserMemory = (userMemoryCheck as any)?.count > 0;
 
     // Check organization memory table
     const orgMemoryCheck = await dbGet(
-      "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='organization_memory'"
+      "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='organization_memory'"
     );
     const hasOrgMemory = (orgMemoryCheck as any)?.count > 0;
 
@@ -422,19 +431,19 @@ async function checkAILearning(): Promise<SubsystemHealth> {
   try {
     // Check feedback table
     const feedbackCheck = await dbGet(
-      "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='ai_feedback'"
+      "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='ai_feedback'"
     );
     const hasFeedback = (feedbackCheck as any)?.count > 0;
 
     // Check patterns table
     const patternsCheck = await dbGet(
-      "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='ai_learning_patterns'"
+      "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='ai_learning_patterns'"
     );
     const hasPatterns = (patternsCheck as any)?.count > 0;
 
     // Check suggestions table
     const suggestionsCheck = await dbGet(
-      "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='ai_instruction_suggestions'"
+      "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='ai_instruction_suggestions'"
     );
     const hasSuggestions = (suggestionsCheck as any)?.count > 0;
 
@@ -493,13 +502,13 @@ async function checkUserStyleProfiles(): Promise<SubsystemHealth> {
   try {
     // Check style profiles table
     const profilesCheck = await dbGet(
-      "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='ai_user_style_profiles'"
+      "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='ai_user_style_profiles'"
     );
     const hasProfiles = (profilesCheck as any)?.count > 0;
 
     // Check style learning patterns table
     const patternsCheck = await dbGet(
-      "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='ai_style_learning_patterns'"
+      "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='ai_style_learning_patterns'"
     );
     const hasPatterns = (patternsCheck as any)?.count > 0;
 
@@ -547,7 +556,7 @@ async function checkContextBuilder(): Promise<SubsystemHealth> {
   try {
     // Check if embeddings are available for RAG
     const embeddingsCheck = await dbGet(
-      "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='ai_knowledge_embeddings'"
+      "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='ai_knowledge_embeddings'"
     );
     const hasEmbeddings = (embeddingsCheck as any)?.count > 0;
 
@@ -609,7 +618,8 @@ async function checkDatabaseTables(): Promise<SubsystemHealth> {
 
     for (const table of requiredTables) {
       const check = await dbGet(
-        `SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='${table}'`
+        `SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name=$1`,
+        [table]
       );
       tableStatuses[table] = (check as any)?.count > 0;
     }
@@ -711,7 +721,7 @@ async function checkAdminManagement(): Promise<SubsystemHealth> {
   try {
     // Check if LLM providers table exists for admin management
     const providersCheck = await dbGet(
-      "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='llm_providers'"
+      "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='llm_providers'"
     );
     const hasProviders = (providersCheck as any)?.count > 0;
 
@@ -744,7 +754,7 @@ async function checkQualityObservability(): Promise<SubsystemHealth> {
   try {
     // Check feedback table for quality metrics
     const feedbackCheck = await dbGet(
-      "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='ai_feedback'"
+      "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='ai_feedback'"
     );
     const hasFeedback = (feedbackCheck as any)?.count > 0;
 

@@ -53,6 +53,22 @@ const upload = multer({
   },
 });
 
+const featureReadFallback = (res: Response, _data: unknown = []) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
+
+const featureWriteBlocked = (res: Response) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
+
 /**
  * GET /api/documents/project/:projectId
  * List project documents
@@ -62,11 +78,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getProjectDocuments) {
-      return res.status(503).json({
-        error: 'Feature unavailable',
-        code: 'FEATURE_UNAVAILABLE',
-        feature: 'documents',
-      });
+      return featureReadFallback(res, []);
     }
 
     try {
@@ -89,11 +101,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getUserDocuments) {
-      return res.status(503).json({
-        error: 'Feature unavailable',
-        code: 'FEATURE_UNAVAILABLE',
-        feature: 'documents',
-      });
+      return featureReadFallback(res, []);
     }
 
     try {
@@ -121,11 +129,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getAccessibleDocuments) {
-      return res.status(503).json({
-        error: 'Feature unavailable',
-        code: 'FEATURE_UNAVAILABLE',
-        feature: 'documents',
-      });
+      return featureReadFallback(res, []);
     }
 
     try {
@@ -192,11 +196,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getDocumentById) {
-      return res.status(503).json({
-        error: 'Feature unavailable',
-        code: 'FEATURE_UNAVAILABLE',
-        feature: 'documents',
-      });
+      return featureReadFallback(res, null);
     }
 
     try {
@@ -222,9 +222,10 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getDocumentById) {
       return res.status(503).json({
-        error: 'Feature unavailable',
-        code: 'FEATURE_UNAVAILABLE',
-        feature: 'documents',
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     }
 
@@ -261,11 +262,7 @@ router.post(
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
-      return res.status(503).json({
-        error: 'Feature unavailable',
-        code: 'FEATURE_UNAVAILABLE',
-        feature: 'documents',
-      });
+      return featureWriteBlocked(res);
     }
 
     try {
@@ -319,11 +316,7 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.moveToProject) {
-      return res.status(503).json({
-        error: 'Feature unavailable',
-        code: 'FEATURE_UNAVAILABLE',
-        feature: 'documents',
-      });
+      return featureWriteBlocked(res);
     }
 
     try {
@@ -359,11 +352,7 @@ router.delete(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.deleteDocument) {
-      return res.status(503).json({
-        error: 'Feature unavailable',
-        code: 'FEATURE_UNAVAILABLE',
-        feature: 'documents',
-      });
+      return featureWriteBlocked(res);
     }
 
     try {

@@ -14,12 +14,24 @@ interface Document {
   filename: string;
   category?: string;
   tags?: string[];
+  ai_visibility?: 'allowed' | 'blocked' | 'requires_approval';
+  sensitivity?: 'public' | 'internal' | 'confidential';
   status: string;
   created_at: string;
   chunk_count?: number;
 }
 
 const DOCUMENT_CATEGORIES = ['Best Practices', 'Methodology', 'Standards', 'Templates', 'Other'];
+const AI_VISIBILITY_OPTIONS: Array<NonNullable<Document['ai_visibility']>> = [
+  'allowed',
+  'requires_approval',
+  'blocked',
+];
+const SENSITIVITY_OPTIONS: Array<NonNullable<Document['sensitivity']>> = [
+  'public',
+  'internal',
+  'confidential',
+];
 
 export const DocumentsRAGTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -33,6 +45,10 @@ export const DocumentsRAGTab: React.FC = () => {
   const [editingDoc, setEditingDoc] = useState<Document | null>(null);
   const [editDocCategory, setEditDocCategory] = useState('');
   const [editDocTags, setEditDocTags] = useState('');
+  const [editDocVisibility, setEditDocVisibility] =
+    useState<NonNullable<Document['ai_visibility']>>('allowed');
+  const [editDocSensitivity, setEditDocSensitivity] =
+    useState<NonNullable<Document['sensitivity']>>('internal');
 
   useEffect(() => {
     loadDocuments();
@@ -83,14 +99,44 @@ export const DocumentsRAGTab: React.FC = () => {
         .split(',')
         .map((t) => t.trim())
         .filter((t) => t.length > 0);
-      await Api.updateKnowledgeDocument(docId, {
-        category: editDocCategory || undefined,
-        tags: tagsArray.length > 0 ? tagsArray : undefined,
-      });
+      await Promise.all([
+        Api.updateKnowledgeDocument(docId, {
+          category: editDocCategory || undefined,
+          tags: tagsArray.length > 0 ? tagsArray : undefined,
+        }),
+        fetch(`/api/ai-governance/documents/${docId}/ai-visibility`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: JSON.stringify({ visibility: editDocVisibility }),
+        }).then(async (res) => {
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data?.error || 'Failed to update AI visibility');
+          }
+        }),
+        fetch(`/api/ai-governance/documents/${docId}/sensitivity`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: JSON.stringify({ sensitivity: editDocSensitivity }),
+        }).then(async (res) => {
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data?.error || 'Failed to update sensitivity');
+          }
+        }),
+      ]);
       toast.success('Document updated');
       setEditingDoc(null);
       setEditDocCategory('');
       setEditDocTags('');
+      setEditDocVisibility('allowed');
+      setEditDocSensitivity('internal');
       loadDocuments();
     } catch (err: any) {
       toast.error(err.message || 'Update failed');
@@ -296,6 +342,8 @@ export const DocumentsRAGTab: React.FC = () => {
                         setEditingDoc(doc);
                         setEditDocCategory(doc.category || '');
                         setEditDocTags(doc.tags?.join(', ') || '');
+                        setEditDocVisibility(doc.ai_visibility || 'allowed');
+                        setEditDocSensitivity(doc.sensitivity || 'internal');
                       }}
                       className="p-1.5 text-slate-400 hover:text-indigo-500 transition-colors"
                       title="Edit"
@@ -363,6 +411,41 @@ export const DocumentsRAGTab: React.FC = () => {
                   className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    AI visibility
+                  </label>
+                  <select
+                    value={editDocVisibility}
+                    onChange={(e) => setEditDocVisibility(e.target.value as any)}
+                    className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                  >
+                    {AI_VISIBILITY_OPTIONS.map((v) => (
+                      <option key={v} value={v}>
+                        {v}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Sensitivity
+                  </label>
+                  <select
+                    value={editDocSensitivity}
+                    onChange={(e) => setEditDocSensitivity(e.target.value as any)}
+                    className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                  >
+                    {SENSITIVITY_OPTIONS.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
               <div className="pt-4 flex gap-3">
                 <button
                   type="button"
@@ -370,6 +453,8 @@ export const DocumentsRAGTab: React.FC = () => {
                     setEditingDoc(null);
                     setEditDocCategory('');
                     setEditDocTags('');
+                    setEditDocVisibility('allowed');
+                    setEditDocSensitivity('internal');
                   }}
                   className="flex-1 py-2 bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium hover:bg-slate-200 dark:hover:bg-navy-600"
                 >

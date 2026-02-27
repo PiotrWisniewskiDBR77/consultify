@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   ArrowRight,
   Award,
+  BookOpen,
   Brain,
   Calendar,
   CheckCircle,
@@ -94,6 +95,11 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
       { id: string; title: string; body?: string; tags?: string[]; createdAt?: string }[]
     >([]);
     const [suggestedIdeasLoading, setSuggestedIdeasLoading] = useState(false);
+    // T011: Suggested notebook pages
+    const [suggestedNotes, setSuggestedNotes] = useState<
+      { id: string; title: string; contentText?: string; tags?: string[]; updatedAt?: string }[]
+    >([]);
+    const [suggestedNotesLoading, setSuggestedNotesLoading] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const [newComment, setNewComment] = useState('');
 
@@ -110,6 +116,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
         .trim();
       if (!q) {
         setSuggestedIdeas([]);
+        setSuggestedNotes([]);
         return;
       }
 
@@ -126,6 +133,26 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
           setSuggestedIdeas([]);
         } finally {
           setSuggestedIdeasLoading(false);
+        }
+
+        try {
+          setSuggestedNotesLoading(true);
+          const params = new URLSearchParams();
+          params.set('q', String(q).slice(0, 400));
+          params.set('limit', '5');
+          const notes = (await Api.get(`/my-work/notebook/pages?${params.toString()}`)) as any;
+          const arr = Array.isArray(notes) ? notes : [];
+          setSuggestedNotes(arr);
+          if (arr.length > 0) {
+            trackFunnelEvent('active_notes_suggested', {
+              surface: 'initiative',
+              count: arr.length,
+            });
+          }
+        } catch {
+          setSuggestedNotes([]);
+        } finally {
+          setSuggestedNotesLoading(false);
         }
       }, 450);
 
@@ -643,6 +670,75 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               }}
                             >
                               {t('myWork.ideas.insert', 'Insert')}
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Relevant notes (T011) */}
+                <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-navy-700 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
+                      <BookOpen size={16} className="text-slate-700 dark:text-slate-300" />{' '}
+                      {t('myWork.notebook.suggestions', 'Relevant notes')}
+                    </h3>
+                    {suggestedNotesLoading ? (
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {t('common.loading', 'Loading…')}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {suggestedNotes.length === 0 ? (
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {t(
+                        'myWork.notebook.suggestionsEmpty',
+                        'No suggestions yet. Create notebook pages to build a searchable library.'
+                      )}
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {suggestedNotes.map((note) => (
+                        <div
+                          key={note.id}
+                          className="bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 p-3"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-navy-900 dark:text-white truncate">
+                                {note.title}
+                              </div>
+                              {note.contentText ? (
+                                <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                                  {note.contentText}
+                                </div>
+                              ) : null}
+                            </div>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => {
+                                const insert = [
+                                  initiative.applicantOneLiner || '',
+                                  '',
+                                  `---`,
+                                  `${t('myWork.notebook.note', 'Note')}: ${note.title}`,
+                                  note.contentText || '',
+                                ]
+                                  .filter(Boolean)
+                                  .join('\n');
+                                setInitiative({ ...initiative, applicantOneLiner: insert });
+                                trackFunnelEvent('active_notes_inserted', {
+                                  surface: 'initiative',
+                                  noteId: note.id,
+                                });
+                                toast.success(t('myWork.notebook.insertedToast', 'Inserted'));
+                              }}
+                            >
+                              {t('myWork.notebook.insert', 'Insert')}
                             </Button>
                           </div>
                         </div>

@@ -71,6 +71,13 @@ export interface IKnowledgeDocument {
 }
 
 const router = Router();
+const notConfigured = (res: Response) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
 
 // Apply rate limiting
 router.use(apiAuthRateLimiter);
@@ -150,7 +157,7 @@ router.get(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.getCandidates) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -173,7 +180,7 @@ router.post(
   '/candidates',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.addCandidate) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -203,7 +210,7 @@ router.put(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.updateCandidateStatus) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -227,7 +234,7 @@ router.put(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.updateCandidate) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -260,7 +267,7 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.linkIdeaToProject) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -293,7 +300,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.getApprovedIdeas) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -319,7 +326,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.getIdeasByCategory) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -342,7 +349,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.getIdeasByProject) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -364,7 +371,7 @@ router.get(
   '/strategies',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.getAllStrategies || !KnowledgeService?.getActiveStrategies) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -391,7 +398,7 @@ router.post(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.addStrategy) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -427,7 +434,7 @@ router.put(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.updateStrategy) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -464,7 +471,7 @@ router.post(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.linkStrategyToDocument) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -493,7 +500,7 @@ router.post(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.linkStrategyToIdea) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -522,7 +529,7 @@ router.delete(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.unlinkStrategyFromDocument) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -548,7 +555,7 @@ router.delete(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.unlinkStrategyFromIdea) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -574,7 +581,7 @@ router.put(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.updateStrategyProgress) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -606,7 +613,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.getStrategyWithRelated) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -633,7 +640,7 @@ router.put(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.toggleStrategy) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -671,7 +678,7 @@ router.post(
         !KnowledgeService?.addDocument ||
         !KnowledgeService?.processDocument
       ) {
-        return res.status(503).json({ error: 'Required services not available' });
+        return notConfigured(res);
         return;
       }
 
@@ -767,7 +774,7 @@ router.get(
       !KnowledgeService?.getDocumentsByCategory ||
       !KnowledgeService?.getDocumentsByStrategy
     ) {
-      return res.status(503).json({ error: 'Knowledge service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -803,6 +810,41 @@ router.get(
       return res.status(500).json({ error: message });
     }
     return;
+  })
+);
+
+/**
+ * PUT /api/knowledge/documents/:id
+ * Update knowledge document metadata (SuperAdmin only)
+ */
+router.put(
+  '/documents/:id',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!KnowledgeService?.updateDocumentMetadata) {
+      return notConfigured(res);
+    }
+
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { id } = req.params;
+    const { category, tags } = req.body || {};
+
+    if (category !== undefined && category !== null && typeof category !== 'string') {
+      return res.status(400).json({ error: 'Invalid category' });
+    }
+    if (tags !== undefined && tags !== null && !Array.isArray(tags)) {
+      return res.status(400).json({ error: 'Invalid tags' });
+    }
+
+    const result = await KnowledgeService.updateDocumentMetadata(orgId, id, {
+      category: category ?? null,
+      tags: Array.isArray(tags) ? tags : null,
+    });
+
+    return res.json({ success: true, ...result });
   })
 );
 

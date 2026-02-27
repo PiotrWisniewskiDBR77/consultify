@@ -108,6 +108,105 @@ class ProactiveNudgesServiceImpl {
       return all;
     }
   }
+
+  async getPendingNudges(userId: string, orgId?: string, limit = 10, offset = 0) {
+    const active = await this.getActiveNudges(userId, orgId);
+    return active.slice(offset, offset + limit);
+  }
+
+  async trackActivity(
+    userId: string,
+    orgId: string,
+    activity: { type: string; entityId: string; action: string }
+  ) {
+    try {
+      await dbRun(
+        `CREATE TABLE IF NOT EXISTS ai_nudge_activity (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id TEXT NOT NULL,
+          organization_id TEXT NOT NULL,
+          activity_type TEXT NOT NULL,
+          entity_id TEXT,
+          action TEXT,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )`,
+        []
+      );
+      await dbRun(
+        `INSERT INTO ai_nudge_activity (user_id, organization_id, activity_type, entity_id, action) VALUES (?, ?, ?, ?, ?)`,
+        [userId, orgId, activity.type, activity.entityId, activity.action]
+      );
+      return { tracked: true };
+    } catch {
+      return { tracked: false };
+    }
+  }
+
+  async checkAndGenerateNudges(
+    userId: string,
+    orgId: string,
+    context?: { focusItems?: number; inboxCount?: number }
+  ) {
+    const nudges = await this.generateNudges(userId, orgId);
+    if (context?.inboxCount && context.inboxCount > 20) {
+      nudges.push({
+        id: `nudge_inbox_overload_${Date.now()}`,
+        userId,
+        type: 'inbox_overload',
+        title: 'Inbox overload',
+        message: `You have ${context.inboxCount} items in your inbox. Consider batch triaging.`,
+        priority: 'medium',
+        actionUrl: '/my-work?tab=inbox',
+        dismissed: false,
+        createdAt: new Date().toISOString(),
+      });
+    }
+    return nudges;
+  }
+
+  async markNudgeActed(userId: string, nudgeId: string, action: string) {
+    try {
+      await dbRun(
+        `CREATE TABLE IF NOT EXISTS ai_nudge_actions (
+          nudge_id TEXT NOT NULL,
+          user_id TEXT NOT NULL,
+          action TEXT NOT NULL,
+          acted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (nudge_id, user_id)
+        )`,
+        []
+      );
+      await dbRun(
+        `INSERT OR REPLACE INTO ai_nudge_actions (nudge_id, user_id, action) VALUES (?, ?, ?)`,
+        [nudgeId, userId, action]
+      );
+      return { acted: true };
+    } catch {
+      return { acted: false };
+    }
+  }
+
+  async suppressNudgeType(userId: string, nudgeType: string, durationHours = 168) {
+    try {
+      await dbRun(
+        `CREATE TABLE IF NOT EXISTS ai_nudge_suppressions (
+          user_id TEXT NOT NULL,
+          nudge_type TEXT NOT NULL,
+          suppressed_until TEXT NOT NULL,
+          PRIMARY KEY (user_id, nudge_type)
+        )`,
+        []
+      );
+      const until = new Date(Date.now() + durationHours * 3600000).toISOString();
+      await dbRun(
+        `INSERT OR REPLACE INTO ai_nudge_suppressions (user_id, nudge_type, suppressed_until) VALUES (?, ?, ?)`,
+        [userId, nudgeType, until]
+      );
+      return { suppressed: true, until };
+    } catch {
+      return { suppressed: false };
+    }
+  }
 }
 
 export const proactiveNudgesService = new ProactiveNudgesServiceImpl();

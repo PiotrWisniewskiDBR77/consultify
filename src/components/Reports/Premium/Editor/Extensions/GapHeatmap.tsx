@@ -10,6 +10,8 @@ import { NodeViewProps, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/r
 import { RefreshCw, Settings } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import { useDemoSession } from '@/hooks/useDemoSession';
+
 interface GapHeatmapAttrs {
   assessmentId: string | null;
   showNumbers: boolean;
@@ -51,6 +53,7 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
   const [data, setData] = useState<GapData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const { isDemo } = useDemoSession();
 
   const attrs = node.attrs as GapHeatmapAttrs;
   const {
@@ -63,18 +66,45 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
   // Fetch or use demo data
   useEffect(() => {
     if (!assessmentId) {
-      // Demo data
-      setData({
-        axes: [
-          { id: 'processes', name: 'Procesy', actual: 3.2, target: 5.0, gap: 1.8 },
-          { id: 'digitalProducts', name: 'Produkty Cyfrowe', actual: 2.8, target: 4.5, gap: 1.7 },
-          { id: 'businessModels', name: 'Modele Biznesowe', actual: 2.5, target: 4.0, gap: 1.5 },
-          { id: 'dataManagement', name: 'Zarządzanie Danymi', actual: 3.5, target: 5.5, gap: 2.0 },
-          { id: 'culture', name: 'Kultura', actual: 3.0, target: 4.5, gap: 1.5 },
-          { id: 'cybersecurity', name: 'Cyberbezpieczeństwo', actual: 4.0, target: 5.0, gap: 1.0 },
-          { id: 'aiMaturity', name: 'Dojrzałość AI', actual: 2.0, target: 4.0, gap: 2.0 },
-        ],
-      });
+      setData(
+        isDemo
+          ? {
+              axes: [
+                { id: 'processes', name: 'Procesy', actual: 3.2, target: 5.0, gap: 1.8 },
+                {
+                  id: 'digitalProducts',
+                  name: 'Produkty Cyfrowe',
+                  actual: 2.8,
+                  target: 4.5,
+                  gap: 1.7,
+                },
+                {
+                  id: 'businessModels',
+                  name: 'Modele Biznesowe',
+                  actual: 2.5,
+                  target: 4.0,
+                  gap: 1.5,
+                },
+                {
+                  id: 'dataManagement',
+                  name: 'Zarządzanie Danymi',
+                  actual: 3.5,
+                  target: 5.5,
+                  gap: 2.0,
+                },
+                { id: 'culture', name: 'Kultura', actual: 3.0, target: 4.5, gap: 1.5 },
+                {
+                  id: 'cybersecurity',
+                  name: 'Cyberbezpieczeństwo',
+                  actual: 4.0,
+                  target: 5.0,
+                  gap: 1.0,
+                },
+                { id: 'aiMaturity', name: 'Dojrzałość AI', actual: 2.0, target: 4.0, gap: 2.0 },
+              ],
+            }
+          : null
+      );
       setIsLoading(false);
       return;
     }
@@ -96,7 +126,7 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
     };
 
     fetchData();
-  }, [assessmentId]);
+  }, [assessmentId, isDemo]);
 
   return (
     <NodeViewWrapper

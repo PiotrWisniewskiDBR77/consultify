@@ -31,6 +31,13 @@ router.get('/sessions', InterviewController.getSessions);
 /** GET /interview/sessions/completed - Get completed sessions (for Insights tab) */
 router.get('/sessions/completed', InterviewController.getCompletedSessions);
 
+/** GET /interview/sessions/accepted - Get accepted sessions (manager pipeline) */
+router.get(
+  '/sessions/accepted',
+  requirePermission('INTERVIEW_ASSIGN_VIEW'),
+  InterviewController.getAcceptedSessions
+);
+
 /** GET /interview/sessions/:id - Get single session */
 router.get('/sessions/:id', InterviewController.getSession);
 
@@ -170,13 +177,6 @@ router.post(
   InterviewController.createTemplate
 );
 
-/** POST /interview/templates - Create new template */
-router.post(
-  '/templates',
-  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
-  InterviewController.createTemplate
-);
-
 /** GET /interview/templates/:id - Get template metadata */
 router.get(
   '/templates/:id',
@@ -196,13 +196,6 @@ router.post(
   '/templates/:id/use',
   requirePermission('INTERVIEW_TEMPLATE_USE'),
   InterviewController.useTemplate
-);
-
-/** POST /interview/templates/:id/clone - Clone template */
-router.post(
-  '/templates/:id/clone',
-  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
-  InterviewController.cloneTemplate
 );
 
 /** POST /interview/templates/:id/clone - Clone template */

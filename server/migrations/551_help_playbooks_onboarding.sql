@@ -34,6 +34,16 @@ CREATE TABLE IF NOT EXISTS help_playbook_steps (
 CREATE INDEX IF NOT EXISTS idx_help_playbook_steps_playbook
   ON help_playbook_steps(playbook_key, step_order);
 
+-- Ensure help_events exists (older DBs may not have baseline stub)
+CREATE TABLE IF NOT EXISTS help_events (
+  id TEXT PRIMARY KEY,
+  user_id TEXT,
+  event_type TEXT,
+  event_data TEXT DEFAULT '{}',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
 -- Extend help_events for progress tracking (one-time migration)
 ALTER TABLE help_events ADD COLUMN organization_id TEXT;
 ALTER TABLE help_events ADD COLUMN playbook_key TEXT;

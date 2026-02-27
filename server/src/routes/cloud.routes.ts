@@ -121,6 +121,92 @@ router.get('/sources/:id/files', verifyToken, async (req: AuthRequest, res: Resp
 });
 
 /**
+ * GET /api/cloud/sources/:id/files/:fileId/download
+ * Download file bytes from a cloud source
+ */
+router.get(
+  '/sources/:id/files/:fileId/download',
+  verifyToken,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const organizationId = req.organizationId;
+      if (!organizationId) {
+        return res.status(400).json({ error: 'Organization context required' });
+      }
+
+      const { downloadCloudFile } = await import('../services/cloudDataService.js');
+      const result = await downloadCloudFile(req.params.id, organizationId, req.params.fileId);
+
+      res.setHeader('Content-Type', result.mimeType || 'application/octet-stream');
+      const safeFileName = String(result.fileName || 'download.bin').replace(/"/g, '');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeFileName}"`);
+      return res.send(result.content);
+    } catch (err: any) {
+      const message = String(err?.message || 'Failed to download cloud file');
+      logger.error('[CloudRoutes] Failed to download file:', message);
+      if (message.includes('not found')) {
+        return res.status(404).json({ error: 'Cloud source or file not found' });
+      }
+      if (message.includes('not supported')) {
+        return res.status(503).json({
+          statusCode: 503,
+          status: false,
+          type: 'not_configured',
+          message: 'Service temporarily unavailable due to missing configuration',
+        });
+      }
+      return res.status(500).json({ error: 'Failed to download cloud file' });
+    }
+  }
+);
+
+/**
+ * POST /api/cloud/sources/:id/upload
+ * Upload a file to a cloud source.
+ *
+ * Body:
+ *  - fileName: string (required)
+ *  - mimeType: string (required)
+ *  - contentBase64: string (required)  base64 of file bytes
+ *  - folderId: string (optional) provider-specific folder/driveItem id
+ */
+router.post('/sources/:id/upload', verifyToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const organizationId = req.organizationId;
+    if (!organizationId) {
+      return res.status(400).json({ error: 'Organization context required' });
+    }
+
+    const fileName = String(req.body?.fileName || '').trim();
+    const mimeType = String(req.body?.mimeType || '').trim();
+    const contentBase64 = String(req.body?.contentBase64 || '').trim();
+    const folderId = req.body?.folderId ? String(req.body.folderId).trim() : undefined;
+
+    if (!fileName || !mimeType || !contentBase64) {
+      return res.status(400).json({ error: 'fileName, mimeType, contentBase64 are required' });
+    }
+
+    const content = Buffer.from(contentBase64, 'base64');
+    if (!content.length) return res.status(400).json({ error: 'Empty content' });
+
+    const { uploadCloudFile } = await import('../services/cloudDataService.js');
+    const result = await uploadCloudFile({
+      sourceId: req.params.id,
+      organizationId,
+      fileName,
+      mimeType,
+      content,
+      folderId,
+    });
+
+    return res.status(201).json({ file: result });
+  } catch (err: any) {
+    logger.error('[CloudRoutes] Failed to upload file:', err?.message);
+    return res.status(500).json({ error: 'Failed to upload file' });
+  }
+});
+
+/**
  * POST /api/cloud/import
  * Start a file import job from a cloud source
  */

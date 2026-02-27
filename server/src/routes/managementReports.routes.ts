@@ -12,15 +12,13 @@ import managementReportsService from '../services/managementReportsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
-const EXPORT_FEATURE = 'management-reports-export';
 
-const respondFeatureUnavailable = (res: Response, detail?: string) =>
+const respondFeatureUnavailable = (res: Response, _detail?: string) =>
   res.status(503).json({
-    success: false,
-    error: 'Feature unavailable',
-    code: 'FEATURE_UNAVAILABLE',
-    feature: EXPORT_FEATURE,
-    detail,
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 
 router.use(verifyToken);

@@ -48,6 +48,7 @@ export const RoutingRulesTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [rules, setRules] = useState<RoutingRule[]>([]);
   const [tierRoutings, setTierRoutings] = useState<TierRouting[]>([]);
+  const [providerModelOptions, setProviderModelOptions] = useState<string[]>([]);
   const [showAddRule, setShowAddRule] = useState(false);
 
   useEffect(() => {
@@ -57,74 +58,86 @@ export const RoutingRulesTab: React.FC = () => {
   const loadRoutingConfig = async () => {
     setLoading(true);
     try {
-      // Mock data - replace with API call
-      setTierRoutings([
-        {
-          tier: 'BUDGET',
-          label: 'Budget Tier',
-          description: 'Simple questions, fast responses',
-          defaultModel: 'gpt-4o-mini',
-          fallbackModel: 'claude-3-haiku',
-        },
-        {
-          tier: 'STANDARD',
-          label: 'Standard Tier',
-          description: 'Most tasks (chat, magic wand)',
-          defaultModel: 'gpt-4o',
-          fallbackModel: 'claude-3-5-sonnet',
-        },
-        {
-          tier: 'PREMIUM',
-          label: 'Premium Tier',
-          description: 'Complex analysis, reports',
-          defaultModel: 'gpt-4o',
-          fallbackModel: 'claude-3-5-sonnet',
-        },
-        {
-          tier: 'REASONING',
-          label: 'Reasoning Tier',
-          description: 'MAX Mode, deep thinking',
-          defaultModel: 'o1-preview',
-          fallbackModel: 'claude-3-5-sonnet',
-        },
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const [assignmentsRes, providersRes, healthRes] = await Promise.all([
+        fetch('/api/llm/tiers/assignments', { headers }),
+        fetch('/api/llm/providers', { headers }),
+        fetch('/api/llm/health/detailed', { headers }),
       ]);
+
+      const assignmentsPayload = await assignmentsRes.json().catch(() => ({}));
+      const providersPayload = await providersRes.json().catch(() => []);
+      const healthPayload = await healthRes.json().catch(() => ({}));
+
+      const providers: any[] = Array.isArray(providersPayload) ? providersPayload : [];
+      const assignments: Record<string, any[]> = assignmentsPayload?.assignments || {};
+
+      const providerModelIds = Array.from(
+        new Set(providers.map((p) => String(p?.model_id || '').trim()).filter((v) => !!v))
+      );
+      setProviderModelOptions(providerModelIds);
+
+      // Tier routing (derive default model = first priority in tier, fallback model = second)
+      const tierMeta: Array<{ tier: string; label: string; description: string }> = [
+        { tier: 'BUDGET', label: 'Budget Tier', description: 'Simple questions, fast responses' },
+        { tier: 'STANDARD', label: 'Standard Tier', description: 'Most tasks (chat, magic wand)' },
+        { tier: 'PREMIUM', label: 'Premium Tier', description: 'Complex analysis, reports' },
+        { tier: 'REASONING', label: 'Reasoning Tier', description: 'MAX Mode, deep thinking' },
+      ];
+
+      const nextTierRoutings: TierRouting[] = tierMeta.map((t) => {
+        const rows = Array.isArray(assignments?.[t.tier]) ? assignments[t.tier] : [];
+        const sorted = [...rows].sort((a, b) => Number(a.priority || 0) - Number(b.priority || 0));
+        const defaultModel = String(sorted?.[0]?.model_id || sorted?.[0]?.modelId || '').trim();
+        const fallbackModel = String(sorted?.[1]?.model_id || sorted?.[1]?.modelId || '').trim();
+        return {
+          tier: t.tier,
+          label: t.label,
+          description: t.description,
+          defaultModel: defaultModel || '—',
+          fallbackModel: fallbackModel || '—',
+        };
+      });
+      setTierRoutings(nextTierRoutings);
+
+      // Routing rules (best-effort derived “policy-like” rules from existing live signals)
+      const healthSummary = healthPayload?.summary || healthPayload?.data?.summary || null;
+      const hasUnhealthy =
+        typeof healthSummary?.unhealthy === 'number' ? healthSummary.unhealthy > 0 : false;
+      const hasDegraded =
+        typeof healthSummary?.degraded === 'number' ? healthSummary.degraded > 0 : false;
+
+      const activeProviders = providers.filter((p) => Boolean(p?.is_active));
+      const byTier: Record<string, any[]> = {};
+      for (const p of activeProviders) {
+        const tier = String(p?.tier || 'standard').toUpperCase();
+        byTier[tier] ||= [];
+        byTier[tier].push(p);
+      }
+      const cheapestProvider = Object.values(byTier)
+        .flat()
+        .sort((a, b) => Number(a?.cost_per_1k || 0) - Number(b?.cost_per_1k || 0))[0];
 
       setRules([
         {
-          id: '1',
-          name: 'Cost Optimization',
-          description: 'Route to cheapest available provider',
-          type: 'cost',
-          priority: 1,
-          isActive: true,
-          config: { threshold: 0.001 },
-        },
-        {
-          id: '2',
-          name: 'Latency Guard',
-          description: 'Failover when latency exceeds threshold',
-          type: 'latency',
-          priority: 2,
-          isActive: true,
-          config: { threshold: 5000, fallbackProvider: 'groq' },
-        },
-        {
-          id: '3',
+          id: 'derived-health-failover',
           name: 'Health Check Failover',
-          description: 'Auto-failover on provider health issues',
+          description: 'Failover when provider health indicates degraded/unhealthy state',
           type: 'health',
-          priority: 3,
-          isActive: true,
+          priority: 1,
+          isActive: hasUnhealthy || hasDegraded,
           config: {},
         },
         {
-          id: '4',
-          name: 'EU Data Residency',
-          description: 'Route EU users to EU-based providers',
-          type: 'geographic',
-          priority: 4,
-          isActive: false,
-          config: { region: 'eu' },
+          id: 'derived-cost-optimization',
+          name: 'Cost Optimization',
+          description: 'Prefer lowest cost-per-1k provider for eligible tiers',
+          type: 'cost',
+          priority: 2,
+          isActive: true,
+          config: { threshold: Number(cheapestProvider?.cost_per_1k || 0) },
         },
       ]);
     } catch (err) {
@@ -135,8 +148,10 @@ export const RoutingRulesTab: React.FC = () => {
   };
 
   const toggleRule = (ruleId: string) => {
+    // This tab currently displays derived routing signals (read-only).
+    // We keep the UI toggle for UX continuity but do not persist to backend yet.
     setRules((prev) => prev.map((r) => (r.id === ruleId ? { ...r, isActive: !r.isActive } : r)));
-    toast.success('Rule updated');
+    toast.success('Rule toggled (preview only)');
   };
 
   const getTypeIcon = (type: RoutingRule['type']) => {
@@ -228,6 +243,14 @@ export const RoutingRulesTab: React.FC = () => {
                   value={item.defaultModel}
                   className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
                 >
+                  {item.defaultModel && !providerModelOptions.includes(item.defaultModel) && (
+                    <option value={item.defaultModel}>{item.defaultModel}</option>
+                  )}
+                  {providerModelOptions.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
                   <option value="gpt-4o-mini">gpt-4o-mini</option>
                   <option value="gpt-4o">gpt-4o</option>
                   <option value="o1-preview">o1-preview</option>
@@ -240,6 +263,16 @@ export const RoutingRulesTab: React.FC = () => {
                   className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
                 >
                   <option value="">No fallback</option>
+                  {item.fallbackModel &&
+                    item.fallbackModel !== '' &&
+                    !providerModelOptions.includes(item.fallbackModel) && (
+                      <option value={item.fallbackModel}>{item.fallbackModel}</option>
+                    )}
+                  {providerModelOptions.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
                   <option value="gpt-4o-mini">gpt-4o-mini</option>
                   <option value="gpt-4o">gpt-4o</option>
                   <option value="claude-3-haiku">claude-3-haiku</option>

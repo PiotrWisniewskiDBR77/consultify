@@ -37,26 +37,26 @@ CREATE TABLE IF NOT EXISTS assessment_gate_decisions (
   )),
   
   -- Request tracking
-  requested_at DATETIME,
+  requested_at TIMESTAMPTZ,
   requested_by TEXT,
   request_comment TEXT,
   
   -- Decision tracking
-  decided_at DATETIME,
+  decided_at TIMESTAMPTZ,
   decided_by TEXT,
   decision_comment TEXT,
   
   -- Notification tracking
-  notification_sent_at DATETIME,
+  notification_sent_at TIMESTAMPTZ,
   reminder_count INTEGER DEFAULT 0,
-  last_reminder_at DATETIME,
+  last_reminder_at TIMESTAMPTZ,
   
   -- Requirements snapshot (JSON) - captures DoD state at request time
   requirements_snapshot TEXT,
   
   -- Timestamps
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   
   -- One gate decision per gate type per assessment
   UNIQUE(assessment_id, gate_type),
@@ -76,17 +76,24 @@ CREATE INDEX IF NOT EXISTS idx_gate_decisions_pending ON assessment_gate_decisio
 -- ============================================
 -- Trigger: Auto-update updated_at
 -- ============================================
-CREATE TRIGGER IF NOT EXISTS trg_gate_decisions_updated_at
-AFTER UPDATE ON assessment_gate_decisions
-FOR EACH ROW
+CREATE OR REPLACE FUNCTION set_updated_at_timestamp()
+RETURNS TRIGGER AS $$
 BEGIN
-  UPDATE assessment_gate_decisions SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
 END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_gate_decisions_updated_at ON assessment_gate_decisions;
+CREATE TRIGGER trg_gate_decisions_updated_at
+BEFORE UPDATE ON assessment_gate_decisions
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at_timestamp();
 
 -- ============================================
 -- View: Pending gate decisions for user inbox
 -- ============================================
-CREATE VIEW IF NOT EXISTS v_pending_gate_decisions AS
+CREATE OR REPLACE VIEW v_pending_gate_decisions AS
 SELECT 
   gd.id,
   gd.assessment_id,
@@ -101,15 +108,15 @@ SELECT
   gd.requested_by,
   gd.request_comment,
   gd.reminder_count,
-  a.assessment_type,
+  NULL::text as assessment_type,
   a.status as assessment_status,
-  a.completion_percent,
-  a.confidence_avg,
-  u_req.display_name as requester_name,
+  NULL::numeric as completion_percent,
+  NULL::numeric as confidence_avg,
+  COALESCE(NULLIF(trim(concat_ws(' ', u_req.first_name, u_req.last_name)), ''), u_req.email, u_req.id) as requester_name,
   u_req.email as requester_email,
-  u_ass.display_name as assignee_name,
+  COALESCE(NULLIF(trim(concat_ws(' ', u_ass.first_name, u_ass.last_name)), ''), u_ass.email, u_ass.id) as assignee_name,
   u_ass.email as assignee_email,
-  CAST((julianday('now') - julianday(gd.requested_at)) AS INTEGER) as days_waiting
+  EXTRACT(DAY FROM (NOW() - gd.requested_at))::int as days_waiting
 FROM assessment_gate_decisions gd
 JOIN assessments a ON a.id = gd.assessment_id
 LEFT JOIN users u_req ON u_req.id = gd.requested_by

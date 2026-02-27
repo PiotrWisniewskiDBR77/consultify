@@ -8,8 +8,10 @@ import {
   EyeOff,
   Info,
   Plus,
+  Puzzle,
   RefreshCw,
   Send,
+  Settings,
   Trash2,
   Webhook,
 } from 'lucide-react';
@@ -26,6 +28,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
@@ -47,34 +50,32 @@ interface EventCategory {
   events: { type: string; description: string }[];
 }
 
-// Provider Config
-const INTEGRATION_PROVIDERS = [
-  { id: 'slack', name: 'Slack', icon: Slack, description: 'Connect channel for updates' }, // Lucide has Slack
-  { id: 'teams', name: 'Microsoft Teams', icon: MessageCircle, description: 'Webhook integration' }, // Fallback icon
-  {
-    id: 'whatsapp',
-    name: 'WhatsApp',
-    icon: MessageCircle,
-    description: 'Business API notifications',
-  },
-  { id: 'trello', name: 'Trello', icon: Trello, description: 'Sync boards and cards' }, // Lucide has Trello
-  { id: 'jira', name: 'Jira', icon: Database, description: 'Issue tracking sync' },
-  { id: 'clickup', name: 'ClickUp', icon: CheckSquare, description: 'Task management sync' },
-  { id: 'asana', name: 'Asana', icon: CheckSquare, description: 'Task and project tracking' },
-  {
-    id: 'monday',
-    name: 'Monday.com',
-    icon: Calendar,
-    description: 'Work OS and project management',
-  },
-  { id: 'notion', name: 'Notion', icon: FileText, description: 'All-in-one workspace' },
-  {
-    id: 'basecamp',
-    name: 'Basecamp',
-    icon: MessageSquare,
-    description: 'Project management and communication',
-  },
-];
+interface IntegrationProvider {
+  id: string;
+  name: string;
+  displayName: string;
+  category: string;
+  description?: string | null;
+  authType?: 'oauth2' | 'api_key' | 'webhook' | string;
+  isActive: boolean;
+  isBeta: boolean;
+  isEnterpriseOnly: boolean;
+}
+
+const PROVIDER_ICON: Record<string, any> = {
+  slack: Slack,
+  microsoft_teams: MessageCircle,
+  jira: Database,
+  asana: CheckSquare,
+  monday: Calendar,
+  google_drive: FileText,
+  google_calendar: Calendar,
+  onedrive: FileText,
+  outlook: Calendar,
+  zapier: RefreshCw,
+  make: RefreshCw,
+  trello: Trello,
+};
 
 interface IntegrationSettingsProps {
   currentUser: User;
@@ -82,21 +83,38 @@ interface IntegrationSettingsProps {
 
 interface Integration {
   id: string;
+  name?: string;
   provider: string;
   config: any;
-  status: 'active' | 'error' | 'disabled';
+  status: 'active' | 'paused' | 'error' | 'disconnected' | 'connected' | 'disabled' | string;
+  created_at?: string | null;
+  last_synced_at?: string | null;
+  last_error?: string | null;
+  error_count?: number | null;
 }
 
 export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ currentUser }) => {
+  const { t } = useTranslation();
+  const [providers, setProviders] = useState<IntegrationProvider[]>([]);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+  const [editingIntegrationId, setEditingIntegrationId] = useState<string | null>(null);
   const [configInput, setConfigInput] = useState('');
   const [connecting, setConnecting] = useState(false);
+  const [syncingIntegrationId, setSyncingIntegrationId] = useState<string | null>(null);
+
+  const [logsModal, setLogsModal] = useState<{
+    open: boolean;
+    integrationId: string | null;
+    providerLabel?: string;
+    loading: boolean;
+    logs: any[];
+  }>({ open: false, integrationId: null, loading: false, logs: [] });
 
   // Webhooks state
-  const [activeTab, setActiveTab] = useState<'integrations' | 'webhooks'>('integrations');
+  const [activeTab, setActiveTab] = useState<'integrations' | 'webhooks' | 'mcp'>('integrations');
   const [webhooks, setWebhooks] = useState<WebhookSubscription[]>([]);
   const [availableEvents, setAvailableEvents] = useState<EventCategory[]>([]);
   const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
@@ -108,11 +126,90 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
   const [testingWebhook, setTestingWebhook] = useState(false);
   const [showSecret, setShowSecret] = useState<string | null>(null);
 
+  // MCP state
+  const isAdmin =
+    String((currentUser as any)?.role || '')
+      .toLowerCase()
+      .includes('admin') ||
+    String((currentUser as any)?.role || '')
+      .toLowerCase()
+      .includes('super');
+
+  const [mcpProviders, setMcpProviders] = useState<any[]>([]);
+  const [mcpLoading, setMcpLoading] = useState(false);
+  const [mcpModal, setMcpModal] = useState<{
+    open: boolean;
+    providerId: string | null;
+    name: string;
+    status: string;
+    configInput: string;
+  }>({ open: false, providerId: null, name: '', status: 'active', configInput: '' });
+  const [testingMcpProviderId, setTestingMcpProviderId] = useState<string | null>(null);
+  const [mcpToolsModal, setMcpToolsModal] = useState<{
+    open: boolean;
+    providerId: string | null;
+    name?: string;
+    loading: boolean;
+    tools: any;
+  }>({ open: false, providerId: null, loading: false, tools: null });
+  const [allowlistModal, setAllowlistModal] = useState<{
+    open: boolean;
+    providerId: string | null;
+    loading: boolean;
+    mode: 'allow' | 'deny';
+    toolsText: string;
+    saving: boolean;
+  }>({
+    open: false,
+    providerId: null,
+    loading: false,
+    mode: 'allow',
+    toolsText: '["*"]',
+    saving: false,
+  });
+
+  const fetchMcpProviders = useCallback(async () => {
+    setMcpLoading(true);
+    try {
+      const data = await (Api as any).getMcpProviders?.();
+      setMcpProviders(Array.isArray(data) ? data : data?.providers || []);
+    } catch (e: any) {
+      setMcpProviders([]);
+      // Non-admin users may not have access depending on environment policy; keep quiet unless user is admin.
+      if (isAdmin) toast.error(e?.message || 'Failed to load MCP providers');
+    } finally {
+      setMcpLoading(false);
+    }
+  }, [isAdmin]);
+
   // Fetch Webhooks
   const fetchWebhooks = useCallback(async () => {
     try {
-      const result = await Api.get('/webhooks');
-      setWebhooks(result.subscriptions || []);
+      const result = await Api.get('/integrations/webhook-subscriptions');
+      const rows = Array.isArray(result) ? result : result?.subscriptions || [];
+      const subs: WebhookSubscription[] = (rows || []).map((r: any) => {
+        const eventsRaw = r?.events_json ?? r?.events ?? r?.eventsJson ?? r?.eventsJSON ?? null;
+        let eventTypes: string[] = [];
+        try {
+          eventTypes = Array.isArray(eventsRaw)
+            ? eventsRaw
+            : typeof eventsRaw === 'string'
+              ? (JSON.parse(eventsRaw) as string[])
+              : [];
+        } catch {
+          eventTypes = [];
+        }
+        return {
+          id: String(r?.id),
+          name: String(r?.name || ''),
+          targetUrl: String(r?.url || r?.targetUrl || ''),
+          eventTypes,
+          isActive: Boolean(r?.is_active ?? r?.isActive ?? true),
+          secretKey: typeof r?.secret === 'string' ? r.secret : undefined,
+          createdAt: String(r?.created_at || r?.createdAt || new Date().toISOString()),
+        };
+      });
+      setWebhooks(subs);
     } catch (error) {
       console.error('Failed to fetch webhooks:', error);
     }
@@ -121,8 +218,25 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
   // Fetch Available Events
   const fetchAvailableEvents = useCallback(async () => {
     try {
-      const result = await Api.get('/webhooks/events');
-      setAvailableEvents(result.events || []);
+      const result = await Api.get('/integrations/webhook-subscriptions/catalog');
+      const events = Array.isArray(result?.events) ? result.events : [];
+      const byCategory = new Map<string, { type: string; description: string }[]>();
+      for (const e of events) {
+        const id = String(e?.id || '').trim();
+        if (!id) continue;
+        const category = id.includes('.') ? id.split('.')[0] : 'other';
+        const entry = { type: id, description: String(e?.description || id) };
+        const list = byCategory.get(category) || [];
+        list.push(entry);
+        byCategory.set(category, list);
+      }
+      const categories: EventCategory[] = Array.from(byCategory.entries()).map(
+        ([category, evs]) => ({
+          category,
+          events: evs.sort((a, b) => a.type.localeCompare(b.type)),
+        })
+      );
+      setAvailableEvents(categories.sort((a, b) => a.category.localeCompare(b.category)));
     } catch (error) {
       console.error('Failed to fetch events:', error);
     }
@@ -154,11 +268,24 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
     }
   };
 
+  const fetchProviders = useCallback(async () => {
+    try {
+      const data = await (Api as any).getIntegrationProviders?.();
+      const list = Array.isArray(data) ? data : data?.providers || [];
+      setProviders(list || []);
+    } catch (err) {
+      console.error('Failed to load integration providers:', err);
+      setProviders([]);
+    }
+  }, []);
+
   useEffect(() => {
     fetchIntegrations();
+    fetchProviders();
     fetchWebhooks();
     fetchAvailableEvents();
-  }, [currentUser.organizationId, fetchWebhooks, fetchAvailableEvents]);
+    fetchMcpProviders();
+  }, [currentUser.organizationId, fetchWebhooks, fetchAvailableEvents, fetchProviders]);
 
   // Show message if user has no organization
   if (!currentUser.organizationId) {
@@ -194,7 +321,25 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
 
   const handleConnect = (providerId: string) => {
     setSelectedProvider(providerId);
+    setEditingIntegrationId(null);
     setConfigInput('');
+    setIsModalOpen(true);
+  };
+
+  const handleEditConfig = (integration: Integration) => {
+    setSelectedProvider(integration.provider);
+    setEditingIntegrationId(integration.id);
+    try {
+      const raw = integration.config;
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      setConfigInput(JSON.stringify(parsed || {}, null, 2));
+    } catch {
+      setConfigInput(
+        typeof integration.config === 'string'
+          ? integration.config
+          : JSON.stringify(integration.config)
+      );
+    }
     setIsModalOpen(true);
   };
 
@@ -205,15 +350,32 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
     }
     setConnecting(true);
     try {
-      // Use connectIntegration API method
-      await Api.connectIntegration(selectedProvider);
+      const config = (() => {
+        const raw = String(configInput || '').trim();
+        if (!raw) return {};
+        try {
+          return JSON.parse(raw);
+        } catch {
+          // Treat non-JSON as a webhook URL for quick setup
+          return { webhookUrl: raw };
+        }
+      })();
 
-      toast.success(
-        `${INTEGRATION_PROVIDERS.find((p) => p.id === selectedProvider)?.name} connected successfully!`
-      );
+      if (editingIntegrationId) {
+        await (Api as any).updateIntegrationSettings?.(editingIntegrationId, config);
+        toast.success('Integration settings updated!');
+      } else {
+        // Use connectIntegration API method (provider slug/name)
+        await Api.connectIntegration(selectedProvider, config);
+        toast.success(
+          `${providers.find((p) => p.name === selectedProvider)?.displayName || selectedProvider} connected successfully!`
+        );
+      }
+
       await fetchIntegrations();
       setIsModalOpen(false);
       setConfigInput('');
+      setEditingIntegrationId(null);
     } catch (err: any) {
       console.error('Failed to connect integration:', err);
       toast.error(err.message || 'Failed to connect integration');
@@ -232,8 +394,8 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
         return;
       }
 
-      // Use disconnectIntegration API method with provider name
-      await Api.disconnectIntegration(integration.provider);
+      // Use disconnectIntegration API method with integration id
+      await Api.disconnectIntegration(integration.id);
       toast.success('Integration disconnected');
       fetchIntegrations();
     } catch (err: any) {
@@ -251,7 +413,11 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
 
     setConnecting(true);
     try {
-      await Api.post('/webhooks', webhookForm);
+      await Api.post('/integrations/webhook-subscriptions', {
+        name: webhookForm.name,
+        url: webhookForm.targetUrl,
+        events: webhookForm.eventTypes,
+      });
       toast.success('Webhook created successfully!');
       setIsWebhookModalOpen(false);
       setWebhookForm({ name: '', targetUrl: '', eventTypes: [] });
@@ -266,7 +432,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
   const handleDeleteWebhook = async (id: string) => {
     if (!confirm('Delete this webhook?')) return;
     try {
-      await Api.delete(`/webhooks/${id}`);
+      await Api.delete(`/integrations/webhook-subscriptions/${id}`);
       toast.success('Webhook deleted');
       fetchWebhooks();
     } catch (error: any) {
@@ -277,9 +443,9 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
   const handleTestWebhook = async (targetUrl: string) => {
     setTestingWebhook(true);
     try {
-      const result = await Api.post('/webhooks/test', { targetUrl });
+      const result = await Api.post('/integrations/webhook-subscriptions/test', { targetUrl });
       if (result.success) {
-        toast.success(`Test successful! Response: ${result.statusCode} (${result.duration}ms)`);
+        toast.success(`Test successful! Response: ${result.statusCode} (${result.durationMs}ms)`);
       } else {
         toast.error(`Test failed: ${result.error}`);
       }
@@ -309,13 +475,221 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
     toast.success('Copied to clipboard');
   };
 
+  const openMcpPreset = (preset: 'iris' | 'marketplace') => {
+    if (!isAdmin) {
+      toast.error('Admin permissions required');
+      return;
+    }
+    const base =
+      preset === 'iris'
+        ? {
+            mes_base_url: '',
+            mcpPath: '/mcp',
+            mes_api_token: '',
+            factory_id: '',
+            headers: {},
+          }
+        : {
+            baseUrl: '',
+            mcpPath: '/mcp',
+            marketplace_token: '',
+            headers: {},
+          };
+    setMcpModal({
+      open: true,
+      providerId: null,
+      name: preset === 'iris' ? 'IRIS' : 'Marketplace',
+      status: 'active',
+      configInput: JSON.stringify(base, null, 2),
+    });
+  };
+
+  const openEditMcpProvider = (p: any) => {
+    if (!isAdmin) {
+      toast.error('Admin permissions required');
+      return;
+    }
+    const cfg = typeof p?.config === 'string' ? p.config : JSON.stringify(p?.config || {});
+    let pretty = cfg;
+    try {
+      pretty = JSON.stringify(
+        typeof p?.config === 'string' ? JSON.parse(p.config) : p.config || {},
+        null,
+        2
+      );
+    } catch {}
+    setMcpModal({
+      open: true,
+      providerId: p.id,
+      name: String(p.name || ''),
+      status: String(p.status || 'active'),
+      configInput: pretty,
+    });
+  };
+
+  const saveMcpProvider = async () => {
+    if (!isAdmin) {
+      toast.error('Admin permissions required');
+      return;
+    }
+    const name = String(mcpModal.name || '').trim();
+    if (!name) {
+      toast.error('Name is required');
+      return;
+    }
+    let cfg: any = {};
+    try {
+      cfg = JSON.parse(String(mcpModal.configInput || '{}'));
+    } catch {
+      toast.error('Config must be valid JSON');
+      return;
+    }
+    try {
+      if (mcpModal.providerId) {
+        await (Api as any).updateMcpProvider?.(mcpModal.providerId, {
+          name,
+          status: mcpModal.status,
+          config: cfg,
+        });
+        toast.success('MCP provider updated');
+      } else {
+        await (Api as any).createMcpProvider?.({
+          name,
+          type: 'streamable_http',
+          status: mcpModal.status,
+          config: cfg,
+        });
+        toast.success('MCP provider created');
+      }
+      setMcpModal({ open: false, providerId: null, name: '', status: 'active', configInput: '' });
+      await fetchMcpProviders();
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to save MCP provider');
+    }
+  };
+
+  const testMcpProvider = async (providerId: string) => {
+    if (!isAdmin) {
+      toast.error('Admin permissions required');
+      return;
+    }
+    setTestingMcpProviderId(providerId);
+    try {
+      const data = await (Api as any).testMcpProvider?.(providerId);
+      toast.success('Test completed. Tools cached.');
+      setMcpToolsModal({ open: true, providerId, loading: false, tools: data?.tools || data });
+      await fetchMcpProviders();
+    } catch (e: any) {
+      toast.error(e?.message || 'Test failed');
+    } finally {
+      setTestingMcpProviderId(null);
+    }
+  };
+
+  const openMcpTools = async (providerId: string, name?: string) => {
+    if (!isAdmin) {
+      toast.error('Admin permissions required');
+      return;
+    }
+    setMcpToolsModal({ open: true, providerId, name, loading: true, tools: null });
+    try {
+      const data = await (Api as any).getMcpProviderTools?.(providerId);
+      setMcpToolsModal({
+        open: true,
+        providerId,
+        name,
+        loading: false,
+        tools: data?.tools || data,
+      });
+    } catch (e: any) {
+      setMcpToolsModal({ open: true, providerId, name, loading: false, tools: null });
+      toast.error(e?.message || 'Failed to load tools cache');
+    }
+  };
+
+  const openAllowlist = async (providerId: string) => {
+    if (!isAdmin) {
+      toast.error('Admin permissions required');
+      return;
+    }
+    setAllowlistModal({
+      open: true,
+      providerId,
+      loading: true,
+      mode: 'allow',
+      toolsText: '["*"]',
+      saving: false,
+    });
+    try {
+      const data = await (Api as any).getMcpProviderAllowlist?.(providerId);
+      const mode = String(data?.mode || 'allow') as any;
+      const raw = data?.tools_json || data?.toolsJson || data?.tools || '["*"]';
+      setAllowlistModal({
+        open: true,
+        providerId,
+        loading: false,
+        mode: mode === 'deny' ? 'deny' : 'allow',
+        toolsText: typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2),
+        saving: false,
+      });
+    } catch (e: any) {
+      setAllowlistModal((s) => ({ ...s, loading: false }));
+      toast.error(e?.message || 'Failed to load allowlist');
+    }
+  };
+
+  const saveAllowlist = async () => {
+    if (!isAdmin || !allowlistModal.providerId) return;
+    setAllowlistModal((s) => ({ ...s, saving: true }));
+    try {
+      const tools = JSON.parse(String(allowlistModal.toolsText || '["*"]'));
+      if (!Array.isArray(tools)) throw new Error('tools must be a JSON array');
+      await (Api as any).updateMcpProviderAllowlist?.(allowlistModal.providerId, {
+        mode: allowlistModal.mode,
+        tools,
+      });
+      toast.success('Allowlist updated');
+      setAllowlistModal((s) => ({ ...s, saving: false, open: false }));
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to save allowlist');
+      setAllowlistModal((s) => ({ ...s, saving: false }));
+    }
+  };
+
+  const handleSyncNow = async (integrationId: string) => {
+    setSyncingIntegrationId(integrationId);
+    try {
+      await (Api as any).syncIntegration?.(integrationId);
+      toast.success('Sync initiated');
+      await fetchIntegrations();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to sync integration');
+    } finally {
+      setSyncingIntegrationId(null);
+    }
+  };
+
+  const handleOpenLogs = async (integrationId: string, providerLabel?: string) => {
+    setLogsModal({ open: true, integrationId, providerLabel, loading: true, logs: [] });
+    try {
+      const data = await (Api as any).getIntegrationLogs?.(integrationId);
+      const logs = Array.isArray(data) ? data : data?.logs || [];
+      setLogsModal({ open: true, integrationId, providerLabel, loading: false, logs });
+    } catch (err: any) {
+      setLogsModal({ open: true, integrationId, providerLabel, loading: false, logs: [] });
+      toast.error(err?.message || 'Failed to load sync logs');
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 relative">
       <InfoButton cardId="settings-integrations" position="top-right" />
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Integrations</h2>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+          {t('settings.integrations.title', 'Integrations')}
+        </h2>
         <p className="text-slate-500 dark:text-slate-400">
-          Connect external tools and configure webhooks.
+          {t('settings.integrations.description', 'Connect external tools and configure webhooks.')}
         </p>
       </div>
       {/* Tabs */}
@@ -341,50 +715,125 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
           <Webhook size={16} />
           Webhooks
         </button>
+        <button
+          onClick={() => setActiveTab('mcp')}
+          className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 ${
+            activeTab === 'mcp'
+              ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white shadow'
+              : 'text-slate-500 hover:text-slate-700 dark:text-slate-300'
+          }`}
+        >
+          <Database size={16} />
+          MCP
+        </button>
       </div>
       {activeTab === 'integrations' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {INTEGRATION_PROVIDERS.map((p) => {
-            const connected = integrations.find((i) => i.provider === p.id);
-            const Icon = p.icon;
+          {(providers || [])
+            .filter((p) => p.isActive !== false)
+            .map((p) => {
+              const connected = integrations.find(
+                (i) => i.provider === p.name || i.provider === p.id
+              );
+              const Icon = PROVIDER_ICON[p.name] || PROVIDER_ICON[p.id] || Puzzle;
 
-            return (
-              <div
-                key={p.id}
-                className="bg-white dark:bg-navy-800 p-6 rounded-xl border border-slate-200 dark:border-navy-700 flex flex-col justify-between hover:shadow-lg transition-shadow"
-              >
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div
-                      className={`p-2 rounded-lg ${connected ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : 'bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-slate-300'}`}
-                    >
-                      <Icon size={24} />
+              return (
+                <div
+                  key={p.id}
+                  className="bg-white dark:bg-navy-800 p-6 rounded-xl border border-slate-200 dark:border-navy-700 flex flex-col justify-between hover:shadow-lg transition-shadow"
+                >
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div
+                        className={`p-2 rounded-lg ${connected ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : 'bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-slate-300'}`}
+                      >
+                        <Icon size={24} />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-slate-900 dark:text-white">
+                          {p.displayName}
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {p.description || p.category}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-900 dark:text-white">{p.name}</h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{p.description}</p>
-                    </div>
+                    {connected && (
+                      <div className="mb-4 space-y-2">
+                        <div className="text-xs bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 px-2 py-1 rounded inline-flex items-center gap-1">
+                          <CheckCircle size={12} /> Connected
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          <div>
+                            Status:{' '}
+                            <span className="font-medium text-slate-700 dark:text-slate-200">
+                              {connected.status || 'active'}
+                            </span>
+                          </div>
+                          <div>
+                            Last sync:{' '}
+                            <span className="font-medium text-slate-700 dark:text-slate-200">
+                              {connected.last_synced_at
+                                ? new Date(connected.last_synced_at).toLocaleString()
+                                : '—'}
+                            </span>
+                          </div>
+                          {connected.last_error ? (
+                            <div className="text-red-600 dark:text-red-400 mt-1">
+                              Last error: {String(connected.last_error).slice(0, 120)}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  {connected && (
-                    <div className="mb-4 text-xs bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 px-2 py-1 rounded inline-flex items-center gap-1">
-                      <CheckCircle size={12} /> Connected
+
+                  {connected ? (
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => handleSyncNow(connected.id)}
+                        disabled={syncingIntegrationId === connected.id}
+                        className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10 flex items-center justify-center gap-2 disabled:opacity-60"
+                      >
+                        {syncingIntegrationId === connected.id ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <RefreshCw size={16} />
+                        )}
+                        Sync now
+                      </button>
+                      <button
+                        onClick={() => handleOpenLogs(connected.id, p.displayName)}
+                        className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800 flex items-center justify-center gap-2"
+                      >
+                        <Eye size={16} />
+                        View logs
+                      </button>
+                      <button
+                        onClick={() => handleEditConfig(connected)}
+                        className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 dark:bg-navy-800 dark:text-slate-200 dark:hover:bg-navy-700 dark:border-navy-700 flex items-center justify-center gap-2"
+                      >
+                        <Settings size={16} />
+                        Edit config
+                      </button>
+                      <button
+                        onClick={() => handleDelete(connected.id)}
+                        className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                      >
+                        Disconnect
+                      </button>
                     </div>
+                  ) : (
+                    <button
+                      onClick={() => handleConnect(p.name)}
+                      className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700"
+                    >
+                      Connect
+                    </button>
                   )}
                 </div>
-
-                <button
-                  onClick={() => (connected ? handleDelete(connected.id) : handleConnect(p.id))}
-                  className={`w-full py-2 rounded-lg text-sm font-medium transition-colors ${
-                    connected
-                      ? 'bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-red-900/20 dark:hover:text-red-400'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  }`}
-                >
-                  {connected ? 'Disconnect' : 'Connect'}
-                </button>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       )}{' '}
       {/* Connection Modal */}
@@ -392,18 +841,18 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white dark:bg-navy-800 rounded-xl max-w-md w-full p-6 shadow-2xl">
             <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">
-              Connect {INTEGRATION_PROVIDERS.find((p) => p.id === selectedProvider)?.name}
+              {editingIntegrationId ? 'Edit' : 'Connect'}{' '}
+              {providers.find((p) => p.name === selectedProvider)?.displayName || selectedProvider}
             </h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Webhook URL / API Token
+                  Webhook URL / API Token / JSON config
                 </label>
-                <input
-                  type="text"
+                <textarea
                   value={configInput}
                   onChange={(e) => setConfigInput(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px] font-mono text-xs"
                   placeholder="https://hooks.slack.com/..."
                 />
               </div>
@@ -420,10 +869,101 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium flex items-center gap-2"
                 >
                   {connecting && <Loader2 size={16} className="animate-spin" />}
-                  {connecting ? 'Connecting...' : 'Save Integration'}
+                  {connecting
+                    ? editingIntegrationId
+                      ? 'Saving...'
+                      : 'Connecting...'
+                    : editingIntegrationId
+                      ? 'Save settings'
+                      : 'Save integration'}
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Logs Modal */}
+      {logsModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white dark:bg-navy-800 rounded-xl max-w-2xl w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                Sync logs{logsModal.providerLabel ? ` — ${logsModal.providerLabel}` : ''}
+              </h3>
+              <button
+                onClick={() =>
+                  setLogsModal({ open: false, integrationId: null, loading: false, logs: [] })
+                }
+                className="px-3 py-1 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
+              >
+                Close
+              </button>
+            </div>
+
+            {logsModal.loading ? (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 size={24} className="animate-spin text-blue-600" />
+              </div>
+            ) : logsModal.logs.length === 0 ? (
+              <div className="text-sm text-slate-500 dark:text-slate-400 py-10 text-center">
+                No sync logs yet.
+              </div>
+            ) : (
+              <div className="overflow-auto border border-slate-200 dark:border-navy-700 rounded-xl">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 dark:bg-navy-900">
+                    <tr>
+                      <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
+                        Started
+                      </th>
+                      <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
+                        Status
+                      </th>
+                      <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
+                        Type
+                      </th>
+                      <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
+                        Processed
+                      </th>
+                      <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
+                        Duration
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {logsModal.logs.map((l: any) => (
+                      <tr key={l.id} className="border-t border-slate-200 dark:border-navy-700">
+                        <td className="p-3 text-slate-800 dark:text-slate-100">
+                          {l.startedAt ? new Date(l.startedAt).toLocaleString() : '—'}
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2 py-0.5 rounded text-xs font-medium ${
+                              l.status === 'success'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                                : l.status === 'failed'
+                                  ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                                  : 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300'
+                            }`}
+                          >
+                            {l.status || 'unknown'}
+                          </span>
+                        </td>
+                        <td className="p-3 text-slate-700 dark:text-slate-200">
+                          {l.syncType || '—'}
+                        </td>
+                        <td className="p-3 text-slate-700 dark:text-slate-200">
+                          {typeof l.itemsProcessed === 'number' ? l.itemsProcessed : '—'}
+                        </td>
+                        <td className="p-3 text-slate-700 dark:text-slate-200">
+                          {typeof l.durationMs === 'number' ? `${l.durationMs}ms` : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -655,6 +1195,370 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
               </div>
             </div>
           </div>
+        </div>
+      )}
+      {/* MCP Tab */}
+      {activeTab === 'mcp' && (
+        <div className="space-y-6">
+          <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <Info size={20} className="text-indigo-600 dark:text-indigo-400 mt-0.5" />
+              <div>
+                <h4 className="font-medium text-indigo-900 dark:text-indigo-300">
+                  {t('settings.mcp.title', 'MCP Providers')}
+                </h4>
+                <p className="text-sm text-indigo-700 dark:text-indigo-400 mt-1">
+                  {t(
+                    'settings.mcp.description',
+                    'Configure external MCP servers (IRIS, Marketplace). Use “Test” to cache the tools list.'
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex gap-2">
+              <button
+                onClick={() => openMcpPreset('iris')}
+                disabled={!isAdmin}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50"
+              >
+                <Plus size={18} />
+                {t('settings.mcp.addIris', 'Add IRIS preset')}
+              </button>
+              <button
+                onClick={() => openMcpPreset('marketplace')}
+                disabled={!isAdmin}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50"
+              >
+                <Plus size={18} />
+                {t('settings.mcp.addMarketplace', 'Add Marketplace preset')}
+              </button>
+            </div>
+            <button
+              onClick={fetchMcpProviders}
+              className="px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700 flex items-center gap-2"
+            >
+              <RefreshCw size={16} />
+              {t('common.refresh', 'Refresh')}
+            </button>
+          </div>
+
+          {mcpLoading ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 size={24} className="animate-spin text-indigo-600" />
+            </div>
+          ) : mcpProviders.length === 0 ? (
+            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-12 text-center">
+              <Database size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                {t('settings.mcp.emptyTitle', 'No MCP providers configured')}
+              </h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm">
+                {t('settings.mcp.emptyHint', 'Add IRIS or Marketplace preset to start.')}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {mcpProviders.map((p: any) => (
+                <div
+                  key={p.id}
+                  className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-slate-900 dark:text-white">{p.name}</h3>
+                        <span
+                          className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                            String(p.status || '').toLowerCase() === 'active'
+                              ? 'bg-green-500/10 text-green-600'
+                              : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300'
+                          }`}
+                        >
+                          {String(p.status || 'active')}
+                        </span>
+                        <span className="px-2 py-0.5 text-xs font-medium bg-indigo-500/10 text-indigo-600 rounded-full">
+                          {String(p.type || 'streamable_http')}
+                        </span>
+                      </div>
+                      {p.last_error ? (
+                        <div className="text-sm text-red-600 dark:text-red-400 mt-2">
+                          {t('common.error', 'Error')}: {String(p.last_error).slice(0, 160)}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() => testMcpProvider(p.id)}
+                        disabled={!isAdmin || testingMcpProviderId === p.id}
+                        className="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10 flex items-center gap-2 disabled:opacity-60"
+                      >
+                        {testingMcpProviderId === p.id ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <Send size={16} />
+                        )}
+                        {t('settings.mcp.test', 'Test + cache tools')}
+                      </button>
+                      <button
+                        onClick={() => openMcpTools(p.id, p.name)}
+                        disabled={!isAdmin}
+                        className="px-3 py-2 rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800 flex items-center gap-2 disabled:opacity-60"
+                      >
+                        <Eye size={16} />
+                        {t('settings.mcp.viewTools', 'View tools')}
+                      </button>
+                      <button
+                        onClick={() => openAllowlist(p.id)}
+                        disabled={!isAdmin}
+                        className="px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-navy-800 dark:border-navy-700 dark:text-slate-200 dark:hover:bg-navy-700 flex items-center gap-2 disabled:opacity-60"
+                      >
+                        <CheckSquare size={16} />
+                        {t('settings.mcp.allowlist', 'Allowlist')}
+                      </button>
+                      <button
+                        onClick={() => openEditMcpProvider(p)}
+                        disabled={!isAdmin}
+                        className="px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-navy-800 dark:border-navy-700 dark:text-slate-200 dark:hover:bg-navy-700 flex items-center gap-2 disabled:opacity-60"
+                      >
+                        <Settings size={16} />
+                        {t('common.edit', 'Edit')}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (!isAdmin) {
+                            toast.error('Admin permissions required');
+                            return;
+                          }
+                          if (!confirm(`Delete MCP provider "${p.name}"?`)) return;
+                          try {
+                            await (Api as any).deleteMcpProvider?.(p.id);
+                            toast.success('Deleted');
+                            await fetchMcpProviders();
+                          } catch (e: any) {
+                            toast.error(e?.message || 'Failed to delete');
+                          }
+                        }}
+                        disabled={!isAdmin}
+                        className="px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 flex items-center gap-2 disabled:opacity-60"
+                      >
+                        <Trash2 size={16} />
+                        {t('common.delete', 'Delete')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* MCP Provider Modal */}
+          {mcpModal.open && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+              <div className="bg-white dark:bg-navy-800 rounded-xl max-w-xl w-full p-6 shadow-2xl">
+                <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">
+                  {mcpModal.providerId
+                    ? t('settings.mcp.edit', 'Edit MCP provider')
+                    : t('settings.mcp.add', 'Add MCP provider')}
+                </h3>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        {t('common.name', 'Name')}
+                      </label>
+                      <input
+                        value={mcpModal.name}
+                        onChange={(e) => setMcpModal((s) => ({ ...s, name: e.target.value }))}
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        {t('common.status', 'Status')}
+                      </label>
+                      <select
+                        value={mcpModal.status}
+                        onChange={(e) => setMcpModal((s) => ({ ...s, status: e.target.value }))}
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="active">active</option>
+                        <option value="disabled">disabled</option>
+                        <option value="error">error</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      {t('settings.mcp.configJson', 'Config (JSON)')}
+                    </label>
+                    <textarea
+                      value={mcpModal.configInput}
+                      onChange={(e) => setMcpModal((s) => ({ ...s, configInput: e.target.value }))}
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[180px] font-mono text-xs"
+                      placeholder='{"baseUrl":"https://...","mcpPath":"/mcp"}'
+                    />
+                  </div>
+                  <div className="flex gap-3 justify-end pt-2">
+                    <button
+                      onClick={() =>
+                        setMcpModal({
+                          open: false,
+                          providerId: null,
+                          name: '',
+                          status: 'active',
+                          configInput: '',
+                        })
+                      }
+                      className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg font-medium"
+                    >
+                      {t('common.cancel', 'Cancel')}
+                    </button>
+                    <button
+                      onClick={saveMcpProvider}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+                    >
+                      {t('common.save', 'Save')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MCP Tools Modal */}
+          {mcpToolsModal.open && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+              <div className="bg-white dark:bg-navy-800 rounded-xl max-w-3xl w-full p-6 shadow-2xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                    {t('settings.mcp.toolsCache', 'Tools cache')}
+                    {mcpToolsModal.name ? ` — ${mcpToolsModal.name}` : ''}
+                  </h3>
+                  <button
+                    onClick={() =>
+                      setMcpToolsModal({
+                        open: false,
+                        providerId: null,
+                        loading: false,
+                        tools: null,
+                      })
+                    }
+                    className="px-3 py-1 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
+                  >
+                    {t('common.close', 'Close')}
+                  </button>
+                </div>
+                {mcpToolsModal.loading ? (
+                  <div className="flex items-center justify-center py-10">
+                    <Loader2 size={24} className="animate-spin text-indigo-600" />
+                  </div>
+                ) : (
+                  <pre className="text-xs bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 overflow-auto max-h-[60vh]">
+                    {JSON.stringify(mcpToolsModal.tools, null, 2)}
+                  </pre>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Allowlist Modal */}
+          {allowlistModal.open && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+              <div className="bg-white dark:bg-navy-800 rounded-xl max-w-xl w-full p-6 shadow-2xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                    {t('settings.mcp.allowlistTitle', 'Provider allowlist')}
+                  </h3>
+                  <button
+                    onClick={() =>
+                      setAllowlistModal((s) => ({
+                        ...s,
+                        open: false,
+                        providerId: null,
+                        loading: false,
+                      }))
+                    }
+                    className="px-3 py-1 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
+                  >
+                    {t('common.close', 'Close')}
+                  </button>
+                </div>
+
+                {allowlistModal.loading ? (
+                  <div className="flex items-center justify-center py-10">
+                    <Loader2 size={24} className="animate-spin text-indigo-600" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        {t('settings.mcp.allowlistMode', 'Mode')}
+                      </label>
+                      <select
+                        value={allowlistModal.mode}
+                        onChange={(e) =>
+                          setAllowlistModal((s) => ({
+                            ...s,
+                            mode: e.target.value === 'deny' ? 'deny' : 'allow',
+                          }))
+                        }
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="allow">allow</option>
+                        <option value="deny">deny</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        {t('settings.mcp.toolsJson', 'Tools (JSON array)')}
+                      </label>
+                      <textarea
+                        value={allowlistModal.toolsText}
+                        onChange={(e) =>
+                          setAllowlistModal((s) => ({ ...s, toolsText: e.target.value }))
+                        }
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[140px] font-mono text-xs"
+                        placeholder='["*"]'
+                      />
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                        {t(
+                          'settings.mcp.allowlistHint',
+                          'Use ["*"] to allow/deny everything, or list specific tool names.'
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex justify-end gap-3 pt-2">
+                      <button
+                        onClick={() =>
+                          setAllowlistModal((s) => ({
+                            ...s,
+                            open: false,
+                            providerId: null,
+                            loading: false,
+                          }))
+                        }
+                        className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg font-medium"
+                      >
+                        {t('common.cancel', 'Cancel')}
+                      </button>
+                      <button
+                        onClick={saveAllowlist}
+                        disabled={allowlistModal.saving}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium disabled:opacity-50"
+                      >
+                        {allowlistModal.saving
+                          ? t('common.saving', 'Saving...')
+                          : t('common.save', 'Save')}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

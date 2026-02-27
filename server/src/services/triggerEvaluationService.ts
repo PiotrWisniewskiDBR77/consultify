@@ -146,7 +146,7 @@ export async function deleteTriggerRule(ruleId: string): Promise<boolean> {
 async function scanDelaySignals(organizationId: string): Promise<TriggerSignal[]> {
   const signals: TriggerSignal[] = [];
   try {
-    const rows = await dbAll(
+    const rows = (await dbAll(
       `SELECT id, name, planned_end_date, status
        FROM projects
        WHERE organization_id = ?
@@ -154,7 +154,7 @@ async function scanDelaySignals(organizationId: string): Promise<TriggerSignal[]
          AND planned_end_date IS NOT NULL
          AND planned_end_date < datetime('now')`,
       [organizationId]
-    );
+    )) as any[];
 
     for (const row of rows) {
       const delayDays = Math.floor(
@@ -179,7 +179,7 @@ async function scanDelaySignals(organizationId: string): Promise<TriggerSignal[]
 async function scanRiskSignals(organizationId: string): Promise<TriggerSignal[]> {
   const signals: TriggerSignal[] = [];
   try {
-    const rows = await dbAll(
+    const rows = (await dbAll(
       `SELECT r.id, r.title, r.severity, r.project_id, p.name as project_name
        FROM raid_items r
        JOIN projects p ON r.project_id = p.id
@@ -188,7 +188,7 @@ async function scanRiskSignals(organizationId: string): Promise<TriggerSignal[]>
          AND r.severity IN ('high', 'critical', 'HIGH', 'CRITICAL')
          AND r.status NOT IN ('closed', 'mitigated', 'CLOSED', 'MITIGATED')`,
       [organizationId]
-    );
+    )) as any[];
 
     for (const row of rows) {
       signals.push({
@@ -215,14 +215,14 @@ async function scanRiskSignals(organizationId: string): Promise<TriggerSignal[]>
 async function scanBudgetSignals(organizationId: string): Promise<TriggerSignal[]> {
   const signals: TriggerSignal[] = [];
   try {
-    const rows = await dbAll(
+    const rows = (await dbAll(
       `SELECT id, name, budget_planned, budget_actual
        FROM projects
        WHERE organization_id = ?
          AND budget_planned > 0
          AND budget_actual IS NOT NULL`,
       [organizationId]
-    );
+    )) as any[];
 
     for (const row of rows) {
       const consumptionPct = Math.round((row.budget_actual / row.budget_planned) * 100);
@@ -257,13 +257,13 @@ async function isThrottled(
 ): Promise<boolean> {
   const cutoff = new Date(Date.now() - throttleHours * 60 * 60 * 1000).toISOString();
 
-  const row = await dbGet(
+  const row = (await dbGet(
     `SELECT COUNT(*) as cnt FROM trigger_fire_log
      WHERE rule_id = ? AND project_id = ? AND fired_at > ? AND throttled = 0`,
     [ruleId, projectId, cutoff]
-  );
+  )) as { cnt?: number } | undefined;
 
-  return (row?.cnt || 0) > 0;
+  return (row?.cnt ?? 0) > 0;
 }
 
 // ============================================
@@ -277,7 +277,7 @@ async function isThrottled(
 export async function evaluateTriggers(organizationId: string): Promise<TriggerFireResult[]> {
   const results: TriggerFireResult[] = [];
 
-  const scheduleRows = await dbAll(
+  const scheduleRows = (await dbAll(
     `SELECT rs.*, str.id as rule_id, str.trigger_type, str.conditions_json,
             str.is_active as rule_active, str.throttle_hours
      FROM report_schedules rs
@@ -287,7 +287,7 @@ export async function evaluateTriggers(organizationId: string): Promise<TriggerF
        AND rs.schedule_type IN ('event_triggered', 'hybrid')
        AND str.is_active = 1`,
     [organizationId]
-  );
+  )) as any[];
 
   if (scheduleRows.length === 0) return results;
 

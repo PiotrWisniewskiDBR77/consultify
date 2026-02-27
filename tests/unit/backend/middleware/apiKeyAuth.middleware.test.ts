@@ -8,7 +8,10 @@ type DbHandle = {
   exec: (sql: string) => Promise<unknown>;
 };
 
-describe('apiKeyAuth.middleware (L1)', () => {
+const RUN_DB_TESTS = process.env.RUN_DB_TESTS === '1';
+const describeIfDb = RUN_DB_TESTS ? describe : describe.skip;
+
+describeIfDb('apiKeyAuth.middleware (L1)', () => {
   const originalEnv = { ...process.env };
   const workerId = process.env.VITEST_WORKER_ID || '0';
   const sqlitePath = path.join(os.tmpdir(), `consultify-api-key-auth-${workerId}.db`);

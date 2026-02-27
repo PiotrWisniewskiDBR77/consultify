@@ -24,6 +24,14 @@ import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
 const router = Router();
+const notConfigured = (res: Response, details?: Record<string, unknown>) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+    ...(details || {}),
+  });
 
 interface AuthRequest extends Request {
   user?: {
@@ -286,19 +294,19 @@ const createDraftContent = (opts: {
     return `# ${assessmentName}\n\n**Assessment type:** ${assessmentType}\n\n**Status:** ${assessmentStatus}\n\n---\n\n_Report template draft. Fill in client name, date, authors._\n`;
   }
   if (sectionType === 'executive_summary') {
-    return `## Executive Summary\n\nThis is a first draft generated from the assessment context.\n\n- Current maturity: _TBD_\n- Target maturity: _TBD_\n- Top gaps: _TBD_\n- Recommended priorities: _TBD_\n`;
+    return `## Executive Summary\n\nThis first draft summarizes key findings from the assessment context and should be refined during review.\n\n- Current maturity: summarize observed baseline from completed answers and evidence.\n- Target maturity: define a realistic near-term target aligned with business goals.\n- Top gaps: list the most material capability gaps affecting outcomes.\n- Recommended priorities: rank actions by impact, urgency, and implementation feasibility.\n`;
   }
   if (sectionType === 'maturity_overview') {
     return `## Maturity Overview\n\n_This section will summarize maturity levels across axes and highlight key gaps._\n`;
   }
   if (sectionType === 'methodology') {
-    return `## Methodology\n\nThis report is based on the assessment tool **${assessmentType}**.\n\n- Scope: _TBD_\n- Evidence sources: _TBD_\n- Scoring approach: _TBD_\n`;
+    return `## Methodology\n\nThis report is based on the assessment tool **${assessmentType}**.\n\n- Scope: document covered domains, teams, and process boundaries.\n- Evidence sources: reference workshops, interviews, system data, and uploaded materials.\n- Scoring approach: explain the scale used, weighting assumptions, and normalization rules.\n`;
   }
   if (sectionType === 'axis_detail') {
-    return `## ${sectionTitle}\n\n_Axis ${axisId || '—'} analysis draft._\n\n- Current state: _TBD_\n- Target state: _TBD_\n- Key gaps: _TBD_\n- Recommended initiatives: _TBD_\n`;
+    return `## ${sectionTitle}\n\n_Axis ${axisId || '—'} analysis draft._\n\n- Current state: summarize observed operating reality with evidence.\n- Target state: define measurable target capabilities for this axis.\n- Key gaps: list the most important deltas between current and target state.\n- Recommended initiatives: propose actions with owner, horizon, and expected impact.\n`;
   }
   if (sectionType === 'recommendations') {
-    return `## Recommendations\n\n- Recommendation 1: _TBD_\n- Recommendation 2: _TBD_\n- Recommendation 3: _TBD_\n`;
+    return `## Recommendations\n\n- Recommendation 1: highest-impact action with clear owner and timeline.\n- Recommendation 2: dependency action needed to unblock execution risk.\n- Recommendation 3: enabling action to improve sustainability and governance.\n`;
   }
   if (sectionType === 'next_steps') {
     return `## Next Steps\n\n1. Validate findings with stakeholders\n2. Prioritize initiatives (impact vs effort)\n3. Assign owners and timelines\n`;
@@ -307,10 +315,10 @@ const createDraftContent = (opts: {
     return `## Appendix\n\n- Raw notes\n- Source links\n- Supporting evidence\n`;
   }
   if (sectionType === 'gap_analysis') {
-    return `## ${sectionTitle}\n\n- Strengths: _TBD_\n- Areas for improvement: _TBD_\n`;
+    return `## ${sectionTitle}\n\n- Strengths: capture capabilities that consistently deliver target outcomes.\n- Areas for improvement: capture capability gaps with direct business consequences.\n`;
   }
 
-  return `## ${sectionTitle}\n\n_Draft content to be completed._\n`;
+  return `## ${sectionTitle}\n\nThis draft section is generated from available context and should be refined with concrete evidence, decisions, and implementation detail during review.\n`;
 };
 
 const computeAxisDataFromAssessment = (assessment: any): Record<string, any> => {
@@ -991,12 +999,7 @@ router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
     }
 
     if (!llmService) {
-      return res.status(503).json({
-        success: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
-        message: 'AI report generation is not available (LLM not configured)',
-      });
+      return notConfigured(res);
     }
 
     const lang = language || 'pl';
@@ -1056,12 +1059,7 @@ Requirements:
 
       const aiContent = String(result?.content || '');
       if (aiContent.length < 50) {
-        return res.status(503).json({
-          success: false,
-          error: 'SERVICE_UNAVAILABLE',
-          code: 'FEATURE_UNAVAILABLE',
-          message: 'AI report generation returned empty content',
-        });
+        return notConfigured(res);
       }
 
       const dataSnapshot = {
@@ -1146,13 +1144,7 @@ Requirements:
     return res.json({ success: true, reportId, templateId: resolvedTemplateId });
   } catch (err: any) {
     logger.error('[AssessmentReports] Error generating report:', err);
-    return res.status(503).json({
-      success: false,
-      error: 'SERVICE_UNAVAILABLE',
-      code: 'FEATURE_UNAVAILABLE',
-      message: 'AI report generation is unavailable',
-      details: { message: err?.message || String(err) },
-    });
+    return notConfigured(res, { details: { message: err?.message || String(err) } });
   }
 });
 
@@ -1402,7 +1394,6 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
     const act = String(action || '').toLowerCase();
     let next = current;
     let attempted = false;
-    let failedReason: string | null = null;
 
     // Try to use LLM service for AI actions
     let llmService: any = null;
@@ -1414,12 +1405,7 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
     }
 
     if (!llmService) {
-      return res.status(503).json({
-        success: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
-        message: 'AI report editing is not available (LLM not configured)',
-      });
+      return notConfigured(res);
     }
 
     const sectionContext = `Section: "${sectionRow.title}" (${sectionRow.section_type})\nAssessment: ${reportRow.assessmentName || 'Assessment'} (${reportRow.assessmentType || 'DRD'})`;
@@ -1473,12 +1459,10 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
           });
           next = String(result?.content || current);
           if (next.length < 20) {
-            failedReason = 'AI returned empty content';
             next = current;
           }
         } catch (err: any) {
           attempted = true;
-          failedReason = err?.message || 'AI action failed';
           logger.error('[AssessmentReports] LLM AI action failed:', err?.message);
         }
       }
@@ -1492,12 +1476,7 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
     }
 
     if (attempted && next === current) {
-      return res.status(503).json({
-        success: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
-        message: failedReason || 'AI action did not produce content',
-      });
+      return notConfigured(res);
     }
 
     const nextVersion = Number(sectionRow.version || 1) + 1;
@@ -1511,13 +1490,7 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
     return res.json({ success: true, content: next, version: nextVersion });
   } catch (err: any) {
     logger.error('[AssessmentReports] Error AI action:', err);
-    return res.status(503).json({
-      success: false,
-      error: 'SERVICE_UNAVAILABLE',
-      code: 'FEATURE_UNAVAILABLE',
-      message: 'AI action failed',
-      details: { message: err?.message || String(err) },
-    });
+    return notConfigured(res, { details: { message: err?.message || String(err) } });
   }
 });
 
@@ -1586,12 +1559,7 @@ router.post('/:reportId/ai-edit', async (req: AuthRequest, res: Response) => {
     }
 
     if (!llmService) {
-      return res.status(503).json({
-        success: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
-        message: 'AI editing is not available (LLM not configured)',
-      });
+      return notConfigured(res);
     }
 
     let editedContent = currentContent;
@@ -1613,21 +1581,10 @@ router.post('/:reportId/ai-edit', async (req: AuthRequest, res: Response) => {
 
       editedContent = String(result?.content || currentContent);
       if (editedContent.length < 20) {
-        return res.status(503).json({
-          success: false,
-          error: 'SERVICE_UNAVAILABLE',
-          code: 'FEATURE_UNAVAILABLE',
-          message: 'AI editing returned empty content',
-        });
+        return notConfigured(res);
       }
     } catch (callErr: any) {
-      return res.status(503).json({
-        success: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
-        message: 'AI editing failed',
-        details: { message: callErr?.message || String(callErr) },
-      });
+      return notConfigured(res, { details: { message: callErr?.message || String(callErr) } });
     }
 
     const nextVersion = Number(sectionRow.version || 1) + 1;
@@ -1642,13 +1599,7 @@ router.post('/:reportId/ai-edit', async (req: AuthRequest, res: Response) => {
     return res.json({ success: true, content: editedContent, version: nextVersion });
   } catch (err: any) {
     logger.error('[AssessmentReports] Error ai-edit:', err);
-    return res.status(503).json({
-      success: false,
-      error: 'SERVICE_UNAVAILABLE',
-      code: 'FEATURE_UNAVAILABLE',
-      message: 'AI editing failed',
-      details: { message: err?.message || String(err) },
-    });
+    return notConfigured(res, { details: { message: err?.message || String(err) } });
   }
 });
 

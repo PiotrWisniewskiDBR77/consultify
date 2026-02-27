@@ -1,10 +1,10 @@
 /**
- * DiscoveryToolsHub
- * Discovery Tools module with 3 tabs (Discovery, Reports, Initiatives)
- * and 4 category buttons (Strategy, Operations, Digital, Process Automation)
+ * DiscoveryToolsHub (V3: unified "Tools" hub)
+ * Single mental model: Library → Sessions → Outputs → Initiatives
+ * Categories: Strategy, Operations, Digital, Process Automation, Licensed
  *
- * Connected to real API - fetches tool sessions from backend
- * Initiatives tab shows DRAFT initiatives with tasks
+ * V3-E01: User has one "Tools" entry point, licensed/assessment is a category
+ * not a separate world. Breadcrumbs: "Tools > ..."
  */
 
 import {
@@ -20,12 +20,15 @@ import {
   FileText,
   Filter,
   Flag,
+  FolderOutput,
   Library,
   Lightbulb,
   ListTodo,
   Loader2,
+  Play,
   Plus,
   Settings,
+  Shield,
   Target,
   TrendingUp,
   User,
@@ -35,7 +38,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
@@ -61,9 +64,10 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 
-// Tool category types
-type ToolCategory = 'strategic' | 'operational' | 'digital' | 'automation';
+// Tool category types (V3: includes licensed assessments)
+type ToolCategory = 'strategic' | 'operational' | 'digital' | 'automation' | 'licensed';
 // Using ItemStatus from ModuleHub types (uppercase): DRAFT, REVIEW, APPROVED, DONE, etc.
 // Helper to map lowercase statuses from API to uppercase for GridItem
 const mapStatusToUppercase = (status: string): import('../shared/ModuleHub').ItemStatus => {
@@ -195,6 +199,12 @@ const CATEGORY_META: Record<
     icon: <Zap size={16} />,
     color: 'amber',
     count: 1,
+  },
+  licensed: {
+    name: 'Licensed',
+    icon: <Shield size={16} />,
+    color: 'rose',
+    count: 3,
   },
 };
 
@@ -509,18 +519,22 @@ interface DiscoveryToolsHubProps {
 }
 
 export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab = 'library' }) => {
+  // V3-E01: Normalize legacy tab ids
+  const normalizedInitialTab =
+    initialTab === 'list' ? 'sessions' : initialTab === 'reports' ? 'outputs' : initialTab;
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { currentProjectId } = useAppStore();
   const { i18n, t } = useTranslation();
   const lang = i18n.language === 'pl' ? 'pl' : 'en';
 
   // UI State
-  const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
+  const [activeTab, setActiveTab] = useState<ModuleTab>(normalizedInitialTab);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
-  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
-  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+  const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId, hydrated } =
+    useModuleOpenDocuments('tools');
   const [selectedCategory, setSelectedCategory] = useState<ToolCategory | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
@@ -702,8 +716,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   // Get status options based on active tab
   const currentStatusOptions = useMemo(() => {
     switch (activeTab) {
+      case 'sessions':
       case 'list':
         return DISCOVERY_STATUSES;
+      case 'outputs':
       case 'reports':
         return REPORTS_STATUSES;
       case 'initiatives':
@@ -728,15 +744,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         count: knownTools.length,
       },
       {
-        id: 'list' as ModuleTab,
+        id: 'sessions' as ModuleTab,
         label: t('tools.hub.tabs.sessions', 'Sessions'),
-        icon: <Target size={16} />,
+        icon: <Play size={16} />,
         count: discoveries.length,
       },
       {
-        id: 'reports' as ModuleTab,
-        label: t('tools.hub.tabs.reports', 'Reports'),
-        icon: <FileText size={16} />,
+        id: 'outputs' as ModuleTab,
+        label: t('tools.hub.tabs.outputs', 'Outputs'),
+        icon: <FolderOutput size={16} />,
         count: reports.length,
       },
       {
@@ -1114,6 +1130,68 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     [fetchInitiativeDetails]
   );
 
+  const openDocumentById = useCallback(
+    async (id: string) => {
+      const existing = openDocuments.find((d) => d.id === id);
+      if (existing) {
+        setActiveDocumentId(existing.id);
+        return;
+      }
+
+      const reportMatch = reports.find((r) => r.id === id);
+      if (reportMatch) {
+        handleOpenDocument(reportMatch);
+        return;
+      }
+
+      const initiativeMatch = initiatives.find((i) => i.id === id);
+      if (initiativeMatch) {
+        handleOpenDocument(initiativeMatch);
+        return;
+      }
+
+      const sessionMatch = discoveries.find((d) => d.id === id);
+      if (sessionMatch) {
+        handleOpenDocument(sessionMatch);
+        return;
+      }
+
+      try {
+        const session = await Api.getToolSession(id);
+        if (session?.id) {
+          handleOpenDocument(transformToolSession(session));
+          return;
+        }
+      } catch {
+        // Best-effort deep-link hydration
+      }
+
+      try {
+        const initiative = await Api.get(`/api/initiatives/${id}`);
+        const row = initiative?.data;
+        if (row?.id) {
+          handleOpenDocument({
+            id: row.id,
+            name: row.title || row.name || 'Untitled Initiative',
+            status: mapStatusToUppercase(String(row.status || 'DRAFT')),
+            apiToolType: 'initiative',
+          });
+        }
+      } catch {
+        // Ignore invalid deep-link ids.
+      }
+    },
+    [
+      openDocuments,
+      reports,
+      initiatives,
+      discoveries,
+      setActiveDocumentId,
+      handleOpenDocument,
+      transformToolSession,
+    ]
+  );
+
   const handleOpenKnownTool = useCallback(
     (row: any) => {
       const toolType = String(row?.toolType || '').trim();
@@ -1175,6 +1253,17 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     setInitiativeTasks([]);
   }, []);
 
+  useEffect(() => {
+    if (!hydrated) return;
+    const docId = String(searchParams.get('docId') || '').trim();
+    if (!docId) return;
+    void openDocumentById(docId).finally(() => {
+      const next = new URLSearchParams(searchParams);
+      next.delete('docId');
+      setSearchParams(next, { replace: true });
+    });
+  }, [hydrated, openDocumentById, searchParams, setSearchParams]);
+
   const handleRemoveFilter = useCallback((id: string) => {
     setActiveFilters((prev) => prev.filter((f) => f.id !== id));
   }, []);
@@ -1200,9 +1289,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       case 'library':
         data = [];
         break;
+      case 'sessions':
       case 'list':
         data = discoveries;
         break;
+      case 'outputs':
       case 'reports':
         data = reports;
         break;
@@ -1863,10 +1954,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     // Table view (default)
     // Use different columns and empty messages based on active tab
     const isInitiativesTab = activeTab === 'initiatives';
+    const isOutputsTab = activeTab === 'outputs' || activeTab === 'reports';
     const columns = isInitiativesTab ? initiativeColumns : discoveryColumns;
     const emptyMessage = isInitiativesTab
       ? 'No draft initiatives yet. Run a tool or assessment to generate initiatives.'
-      : 'No discoveries yet. Select a tool category to start.';
+      : isOutputsTab
+        ? 'No outputs yet. Finalize a tool session to generate reports and presentations.'
+        : 'No active sessions. Start a tool from the Library to begin.';
 
     return (
       <FilterableTable
@@ -1969,7 +2063,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         categoryButtons={categoryButtons}
-        rightControls={activeTab === 'library' ? null : StatusFilterDropdown}
+        rightControls={activeTab === 'library' ? undefined : StatusFilterDropdown}
       >
         {renderContent()}
       </ModuleHub>

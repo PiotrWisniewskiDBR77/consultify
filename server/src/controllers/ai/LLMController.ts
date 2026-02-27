@@ -14,6 +14,69 @@ import { llmService } from '../../services/ai/llmService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 
 export class LLMController {
+  private static lastHealthEventWriteAt = new Map<string, number>();
+  private static resolveEnvConfigured(provider: string): {
+    isConfigured: boolean;
+    envKey?: string;
+  } {
+    const p = String(provider || '').toLowerCase();
+    if (!p) return { isConfigured: false };
+
+    if (p === 'openrouter') {
+      const v = String(process.env.OPENROUTER_API_KEY || '').trim();
+      return { isConfigured: !!v, envKey: 'OPENROUTER_API_KEY' };
+    }
+    if (p === 'openai') {
+      const v = String(process.env.OPENAI_API_KEY || '').trim();
+      return { isConfigured: !!v, envKey: 'OPENAI_API_KEY' };
+    }
+    if (p === 'anthropic') {
+      const v = String(process.env.ANTHROPIC_API_KEY || '').trim();
+      return { isConfigured: !!v, envKey: 'ANTHROPIC_API_KEY' };
+    }
+    if (p === 'google' || p === 'gemini') {
+      const v = String(
+        process.env.GEMINI_API_KEY ||
+          process.env.GOOGLE_AI_API_KEY ||
+          (process.env as any).GOOGLE_API_KEY ||
+          ''
+      ).trim();
+      return { isConfigured: !!v, envKey: 'GEMINI_API_KEY' };
+    }
+    if (p === 'deepseek') {
+      const v = String(process.env.DEEPSEEK_API_KEY || '').trim();
+      return { isConfigured: !!v, envKey: 'DEEPSEEK_API_KEY' };
+    }
+    if (p === 'zai' || p === 'z_ai') {
+      const v = String(process.env.ZAI_API_KEY || '').trim();
+      return { isConfigured: !!v, envKey: 'ZAI_API_KEY' };
+    }
+    if (p === 'replicate') {
+      const v = String(
+        process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY || ''
+      ).trim();
+      return { isConfigured: !!v, envKey: 'REPLICATE_API_TOKEN' };
+    }
+
+    return { isConfigured: false };
+  }
+
+  private static sanitizeProvider(row: any): any {
+    if (!row || typeof row !== 'object') return row;
+    const api_key = (row as any)?.api_key;
+    const hasApiKey = !!String(api_key || '').trim();
+    const { isConfigured: envConfigured, envKey } = LLMController.resolveEnvConfigured(
+      (row as any)?.provider
+    );
+    const { api_key: _secret, ...rest } = row;
+    // Never return secrets from any endpoint.
+    return {
+      ...rest,
+      has_api_key: hasApiKey,
+      is_configured: hasApiKey || envConfigured,
+      env_key: envKey,
+    };
+  }
   /**
    * GET /api/llm/providers
    * List all configured providers
@@ -21,7 +84,57 @@ export class LLMController {
   static async listProviders(req: Request, res: Response) {
     try {
       const providers = await dbAll('SELECT * FROM llm_providers', []);
-      return res.json(providers);
+
+      // Optional org context enrichment (used by Settings UI to show what models are enabled for the org).
+      // Caller may send:
+      // - x-org-context header (explicit org id), or
+      // - rely on auth middleware fields (organizationId on req/user).
+      const orgId = String(
+        (req as any)?.headers?.['x-org-context'] ||
+          (req as any)?.organizationId ||
+          (req as any)?.user?.organizationId ||
+          (req as any)?.user?.organization_id ||
+          ''
+      ).trim();
+
+      let settingsMap: Map<string, { enabled: boolean; customPriority: number | null }> | null =
+        null;
+      if (orgId) {
+        try {
+          const rows = await dbAll(
+            'SELECT provider_id, is_enabled, custom_priority FROM organization_provider_settings WHERE organization_id = ?',
+            [orgId]
+          );
+          settingsMap = new Map(
+            (rows || []).map((r: any) => [
+              String(r.provider_id),
+              {
+                enabled: r.is_enabled === true || r.is_enabled === 1,
+                customPriority:
+                  typeof r.custom_priority === 'number'
+                    ? r.custom_priority
+                    : (r.custom_priority ?? null),
+              },
+            ])
+          );
+        } catch {
+          settingsMap = null;
+        }
+      }
+
+      const safe = (providers || []).map((p: any) => {
+        const base = LLMController.sanitizeProvider(p);
+        if (!orgId || !settingsMap) return base;
+        const key = String((p as any)?.id || '');
+        const has = key && settingsMap.has(key);
+        const s = has ? settingsMap.get(key)! : null;
+        return {
+          ...base,
+          is_enabled_for_org: has ? s!.enabled : true,
+          custom_priority: has ? s!.customPriority : null,
+        };
+      });
+      return res.json(safe);
     } catch (error: any) {
       console.error('[LLMController] Error listing providers:', error);
       return res.status(500).json({ error: error.message });
@@ -56,25 +169,78 @@ export class LLMController {
    */
   static async testProvider(req: Request, res: Response) {
     try {
-      const { provider, api_key, model_id, endpoint } = req.body;
+      const { provider, api_key, model_id, endpoint, providerId } = req.body as any;
 
-      if (!provider) {
+      // Allow testing an existing provider without sending secrets from the UI:
+      // client may send { providerId } and we load api_key/model/endpoint from DB.
+      let effectiveProvider = provider;
+      let effectiveApiKey = api_key;
+      let effectiveModelId = model_id;
+      let effectiveEndpoint = endpoint;
+
+      if (providerId && (!effectiveApiKey || !effectiveProvider || !effectiveModelId)) {
+        try {
+          const row = await dbGet('SELECT * FROM llm_providers WHERE id = ?', [providerId]);
+          if (row) {
+            effectiveProvider = effectiveProvider || (row as any).provider;
+            effectiveApiKey = effectiveApiKey || (row as any).api_key;
+            effectiveModelId = effectiveModelId || (row as any).model_id;
+            effectiveEndpoint = effectiveEndpoint || (row as any).endpoint;
+          }
+        } catch {
+          // ignore and let validation below handle missing fields
+        }
+      }
+
+      if (!effectiveProvider) {
         return res.status(400).json({ error: 'Provider is required' });
       }
 
+      // OpenRouter expects namespaced model ids (e.g. "openai/gpt-4o").
+      if (String(effectiveProvider || '').toLowerCase() === 'openrouter') {
+        const raw = String(effectiveModelId || '').trim();
+        if (!raw) {
+          effectiveModelId = 'openai/gpt-4o-mini';
+        }
+        if (raw && !raw.includes('/') && !raw.includes('://')) {
+          const lower = raw.toLowerCase();
+          if (lower === 'gpt-4o') effectiveModelId = 'openai/gpt-4o';
+          else if (lower === 'gpt-4o-mini') effectiveModelId = 'openai/gpt-4o-mini';
+          else if (lower === 'o1-preview') effectiveModelId = 'openai/o1-preview';
+          else if (lower === 'o1-mini' || lower === 'o1') effectiveModelId = 'openai/o1-mini';
+          else if (lower.startsWith('claude')) effectiveModelId = `anthropic/${raw}`;
+          else if (lower.startsWith('gemini')) effectiveModelId = `google/${raw}`;
+        }
+      }
+
       const result = await llmService.testConnection({
-        provider,
-        api_key,
-        apiKey: api_key,
-        id: model_id,
-        endpoint,
+        provider: effectiveProvider,
+        api_key: effectiveApiKey,
+        apiKey: effectiveApiKey,
+        id: effectiveModelId,
+        endpoint: effectiveEndpoint,
       });
 
-      if (result.success) {
-        return res.json(result);
-      } else {
-        return res.status(400).json(result);
+      const ok = (result as any)?.success === true;
+      const latency = (result as any)?.latency;
+      const baseMessage = ok
+        ? `Connection OK${typeof latency === 'number' ? ` (${latency}ms)` : ''}`
+        : String((result as any)?.error || (result as any)?.message || 'Connection failed');
+
+      const payload = {
+        ...result,
+        message: baseMessage,
+      };
+
+      if (ok) {
+        try {
+          await llmService.resetCircuit(String(effectiveProvider || '').toLowerCase());
+        } catch {
+          // ignore reset failures
+        }
+        return res.json(payload);
       }
+      return res.status(400).json(payload);
     } catch (error: any) {
       console.error('[LLMController] Error testing provider:', error);
       return res.status(500).json({ error: error.message });
@@ -140,6 +306,13 @@ export class LLMController {
         model_id,
         api_key,
         endpoint,
+        kind = 'TEXT_LLM',
+        provider_type = 'direct',
+        origin_vendor = null,
+        execution_regions = null,
+        allowed_data_classes = null,
+        data_residency_attestation = null,
+        subprocessors_ref = null,
         tier = 'standard',
         visibility = 'admin',
         is_active = true,
@@ -155,8 +328,12 @@ export class LLMController {
       const id = uuidv4();
       await dbRun(
         `
-                INSERT INTO llm_providers (id, name, provider, model_id, api_key, endpoint, tier, visibility, is_active, is_default, cost_per_1k, context_window, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                INSERT INTO llm_providers (
+                  id, name, provider, model_id, api_key, endpoint,
+                  kind, provider_type, origin_vendor, execution_regions, allowed_data_classes, data_residency_attestation, subprocessors_ref,
+                  tier, visibility, is_active, is_default, cost_per_1k, context_window, created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             `,
         [
           id,
@@ -165,6 +342,17 @@ export class LLMController {
           model_id,
           api_key,
           endpoint,
+          kind,
+          provider_type,
+          origin_vendor,
+          typeof execution_regions === 'string'
+            ? execution_regions
+            : JSON.stringify(execution_regions || []),
+          typeof allowed_data_classes === 'string'
+            ? allowed_data_classes
+            : JSON.stringify(allowed_data_classes || []),
+          data_residency_attestation,
+          subprocessors_ref,
           tier,
           visibility,
           is_active ? 1 : 0,
@@ -175,7 +363,7 @@ export class LLMController {
       );
 
       const newProvider = await dbGet('SELECT * FROM llm_providers WHERE id = ?', [id]);
-      return res.status(201).json(newProvider);
+      return res.status(201).json(LLMController.sanitizeProvider(newProvider));
     } catch (error: any) {
       console.error('[LLMController] Error creating provider:', error);
       return res.status(500).json({ error: error.message });
@@ -202,6 +390,13 @@ export class LLMController {
         'model_id',
         'api_key',
         'endpoint',
+        'kind',
+        'provider_type',
+        'origin_vendor',
+        'execution_regions',
+        'allowed_data_classes',
+        'data_residency_attestation',
+        'subprocessors_ref',
         'tier',
         'visibility',
         'is_active',
@@ -214,6 +409,10 @@ export class LLMController {
 
       for (const field of allowedFields) {
         if (updates[field] !== undefined) {
+          // Never allow "empty string" to wipe an API key.
+          if (field === 'api_key' && typeof updates[field] === 'string' && !updates[field].trim()) {
+            continue;
+          }
           setClauses.push(`${field} = ?`);
           values.push(
             typeof updates[field] === 'boolean' ? (updates[field] ? 1 : 0) : updates[field]
@@ -231,7 +430,7 @@ export class LLMController {
       await dbRun(`UPDATE llm_providers SET ${setClauses.join(', ')} WHERE id = ?`, values);
 
       const updated = await dbGet('SELECT * FROM llm_providers WHERE id = ?', [id]);
-      return res.json(updated);
+      return res.json(LLMController.sanitizeProvider(updated));
     } catch (error: any) {
       console.error('[LLMController] Error updating provider:', error);
       return res.status(500).json({ error: error.message });
@@ -255,6 +454,70 @@ export class LLMController {
       return res.json({ success: true, message: 'Provider deleted' });
     } catch (error: any) {
       console.error('[LLMController] Error deleting provider:', error);
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  /**
+   * POST /api/llm/providers/:id/clone-model
+   * Server-side clone of an existing provider row, without exposing api_key to the client.
+   * Used to quickly add additional models for the same vendor/key/endpoint.
+   */
+  static async cloneProviderModel(req: Request, res: Response) {
+    try {
+      const sourceId = String(req.params.id || '').trim();
+      const { name, model_id, tier, visibility, is_active, priority } = req.body as any;
+      if (!sourceId) return res.status(400).json({ error: 'Source provider id is required' });
+
+      const source = (await dbGet('SELECT * FROM llm_providers WHERE id = ?', [sourceId])) as any;
+      if (!source) return res.status(404).json({ error: 'Source provider not found' });
+
+      const nextModelId = String(model_id || '').trim();
+      if (!nextModelId) return res.status(400).json({ error: 'model_id is required' });
+
+      const nextName =
+        String(name || '').trim() ||
+        `${String(source.name || source.provider || 'Provider')} — ${nextModelId}`;
+
+      const id = uuidv4();
+      await dbRun(
+        `
+        INSERT INTO llm_providers (
+          id, name, provider, model_id, api_key, endpoint,
+          kind, provider_type, origin_vendor, execution_regions, allowed_data_classes, data_residency_attestation, subprocessors_ref,
+          cost_per_1k, markup_multiplier, is_active, is_default, visibility, priority, tier,
+          last_health_check, health_status, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'unknown', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `,
+        [
+          id,
+          nextName,
+          source.provider,
+          nextModelId,
+          source.api_key,
+          source.endpoint,
+          source.kind,
+          source.provider_type,
+          source.origin_vendor,
+          source.execution_regions,
+          source.allowed_data_classes,
+          source.data_residency_attestation,
+          source.subprocessors_ref,
+          source.cost_per_1k,
+          source.markup_multiplier,
+          typeof is_active === 'boolean' ? (is_active ? 1 : 0) : source.is_active,
+          0, // never clone default flag
+          visibility ?? source.visibility,
+          typeof priority === 'number' ? priority : source.priority,
+          tier ?? source.tier,
+        ]
+      );
+
+      const row = await dbGet('SELECT * FROM llm_providers WHERE id = ?', [id]);
+      return res.status(201).json(LLMController.sanitizeProvider(row));
+    } catch (error: any) {
+      console.error('[LLMController] Error cloning provider model:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -310,8 +573,53 @@ export class LLMController {
    */
   static async getDetailedHealth(req: Request, res: Response) {
     try {
-      const allProviders = (await dbAll('SELECT * FROM llm_providers', [])) as any[];
+      const live = String((req.query as any)?.live || '').toLowerCase() === 'true';
+      const allProviders = (await dbAll(
+        'SELECT id, name, provider, kind, api_key, endpoint, model_id, is_active, health_status, last_health_check FROM llm_providers',
+        []
+      )) as any[];
       const alerts: any[] = [];
+      const nowIso = new Date().toISOString();
+
+      function classifyErrorCategory(raw: string | null): string | null {
+        const s = String(raw || '').trim();
+        if (!s) return null;
+        const m = s.match(/^([A-Z_]+):\s+/);
+        if (m?.[1]) return m[1].toLowerCase();
+        return 'unknown';
+      }
+
+      async function replicateAuthCheck(
+        provider: any
+      ): Promise<{ ok: boolean; httpStatus: number | null; detail?: string }> {
+        const token =
+          String(provider.api_key || '').trim() ||
+          String(process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY || '').trim();
+        if (!token)
+          return {
+            ok: false,
+            httpStatus: null,
+            detail: 'MISSING_KEY: Missing token (REPLICATE_API_TOKEN)',
+          };
+        const base = String(provider.endpoint || 'https://api.replicate.com/v1').replace(
+          /\/+$/,
+          ''
+        );
+        const startedAt = Date.now();
+        const resp = await fetch(`${base}/models?limit=1`, {
+          method: 'GET',
+          headers: { Authorization: `Token ${token}`, 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(15_000),
+        });
+        const latencyMs = Date.now() - startedAt;
+        if (resp.ok) return { ok: true, httpStatus: resp.status, detail: `OK (${latencyMs}ms)` };
+        const text = await resp.text().catch(() => '');
+        return {
+          ok: false,
+          httpStatus: resp.status,
+          detail: `HTTP ${resp.status} (${latencyMs}ms): ${text.slice(0, 160)}`,
+        };
+      }
 
       const providerHealthResults = await Promise.all(
         allProviders.map(async (provider: any) => {
@@ -319,25 +627,105 @@ export class LLMController {
           let error: any = null;
           let responseTime = 0;
           let rawError: string | null = null;
-          const statusCode: number | null = null;
+          let statusCode: number | null = null;
+          const lastCheckIso = provider.last_health_check || nowIso;
 
-          if (provider.is_active) {
+          const isActive = !!provider.is_active;
+          const providerKey = String(provider.provider || '').toLowerCase();
+
+          if (!isActive) {
+            status = 'unknown';
+          } else if (!live) {
+            status = (provider.health_status as any) || 'unknown';
+            try {
+              const lastEvent = (await dbGet(
+                `SELECT latency_ms, error_message
+                 FROM llm_health_events
+                 WHERE provider = ? AND (model = ? OR model IS NULL)
+                 ORDER BY timestamp DESC
+                 LIMIT 1`,
+                [providerKey, provider.model_id || null]
+              )) as any;
+              responseTime = Number(lastEvent?.latency_ms || 0) || 0;
+              rawError = lastEvent?.error_message ? String(lastEvent.error_message) : null;
+            } catch {
+              /* ignore */
+            }
+          } else {
+            // Live diagnostics (explicit) - cheap but may consume minimal tokens for TEXT_LLM
             try {
               const startTime = Date.now();
-              const result = await llmService.testConnection({
-                provider: provider.provider,
-                apiKey: provider.api_key,
-                api_key: provider.api_key,
-                endpoint: provider.endpoint,
-                id: provider.model_id,
-              });
-              responseTime = Date.now() - startTime;
 
-              if (result.success) {
-                status = responseTime < 3000 ? 'healthy' : 'degraded';
+              if (String(provider.kind || 'TEXT_LLM').toUpperCase() === 'IMAGE_MODEL') {
+                if (providerKey === 'replicate') {
+                  const r = await replicateAuthCheck(provider);
+                  responseTime = Date.now() - startTime;
+                  statusCode = r.httpStatus;
+                  if (r.ok) {
+                    status = responseTime < 3000 ? 'healthy' : 'degraded';
+                  } else {
+                    status = 'unhealthy';
+                    rawError = String(r.detail || 'Connection failed');
+                  }
+                } else {
+                  status = 'unknown';
+                }
               } else {
-                status = 'unhealthy';
-                rawError = String(result.error || 'Connection failed');
+                const result = await llmService.testConnection({
+                  provider: provider.provider,
+                  apiKey: provider.api_key,
+                  api_key: provider.api_key,
+                  endpoint: provider.endpoint,
+                  id: provider.model_id,
+                });
+                responseTime = Date.now() - startTime;
+                statusCode = (result as any)?.httpStatus ?? null;
+
+                if (result.success) {
+                  status = responseTime < 3000 ? 'healthy' : 'degraded';
+                } else {
+                  status = 'unhealthy';
+                  rawError = String(result.error || 'Connection failed');
+                }
+              }
+
+              // Persist cache fields for router + UI
+              try {
+                await dbRun(
+                  `UPDATE llm_providers
+                   SET health_status = ?, last_health_check = ?, updated_at = CURRENT_TIMESTAMP
+                   WHERE id = ?`,
+                  [status, nowIso, provider.id]
+                );
+              } catch {
+                /* ignore */
+              }
+
+              // Best-effort: persist health events (throttled ~60s/provider key)
+              try {
+                const lastAt = LLMController.lastHealthEventWriteAt.get(providerKey) || 0;
+                if (Date.now() - lastAt > 60_000) {
+                  LLMController.lastHealthEventWriteAt.set(providerKey, Date.now());
+                  const available = status === 'healthy' || status === 'degraded';
+                  void dbRun(
+                    `INSERT INTO llm_health_events (id, provider, model, status, available, latency_ms, error_message, timestamp)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                      uuidv4(),
+                      providerKey,
+                      provider.model_id || null,
+                      status,
+                      available ? 1 : 0,
+                      responseTime || 0,
+                      available ? null : rawError || 'Unhealthy',
+                      nowIso,
+                    ]
+                  ).catch(() => {
+                    /* ignore */
+                  });
+                }
+              } catch {
+                /* ignore */
               }
             } catch (e: any) {
               status = 'unhealthy';
@@ -348,18 +736,6 @@ export class LLMController {
                 action: 'Check API key and endpoint configuration',
                 code: 'CONNECTION_ERROR',
               };
-
-              // Add alert for unhealthy providers
-              alerts.push({
-                severity: 'error',
-                provider: provider.name,
-                providerId: provider.id,
-                title: 'Provider Unhealthy',
-                description: e.message,
-                action: 'Verify API credentials and network connectivity',
-                code: 'PROVIDER_UNHEALTHY',
-                timestamp: new Date().toISOString(),
-              });
             }
           }
 
@@ -370,41 +746,73 @@ export class LLMController {
             unknown: { text: 'Nieznany', textEn: 'Unknown', color: 'gray', icon: 'question' },
           };
 
+          const errorCategory = classifyErrorCategory(rawError) || (error ? 'connection' : null);
+          if (isActive && status === 'unhealthy') {
+            alerts.push({
+              severity: 'error',
+              provider: provider.name,
+              providerId: provider.id,
+              title:
+                errorCategory === 'missing_key'
+                  ? 'Missing API key'
+                  : errorCategory === 'billing'
+                    ? 'Billing / quota issue'
+                    : errorCategory === 'rate_limit'
+                      ? 'Rate limit'
+                      : 'Provider unhealthy',
+              description: rawError || error?.description || 'Provider health check failed',
+              action:
+                errorCategory === 'missing_key'
+                  ? 'Add API key (env var or provider key) and re-test'
+                  : errorCategory === 'billing'
+                    ? 'Check billing / credits, then re-test'
+                    : errorCategory === 'rate_limit'
+                      ? 'Lower concurrency or add fallback provider'
+                      : 'Verify API credentials and network connectivity',
+              code: String(errorCategory || 'provider_unhealthy').toUpperCase(),
+              timestamp: new Date().toISOString(),
+            });
+          }
+
           return {
             id: provider.id,
             name: provider.name,
             providerId: provider.provider,
+            isActive: !!provider.is_active,
             status,
             statusLabel: statusLabels[status],
             isHealthy: status === 'healthy',
             isDegraded: status === 'degraded',
             isUnhealthy: status === 'unhealthy',
-            errorCategory: error ? 'connection' : null,
+            errorCategory,
             error,
             rawError,
             statusCode,
             responseTime,
-            lastCheck: new Date().toISOString(),
+            lastCheck: live ? nowIso : lastCheckIso,
           };
         })
       );
 
-      const healthyCount = providerHealthResults.filter((p) => p.status === 'healthy').length;
-      const degradedCount = providerHealthResults.filter((p) => p.status === 'degraded').length;
-      const unhealthyCount = providerHealthResults.filter((p) => p.status === 'unhealthy').length;
+      // Summary should reflect only ACTIVE providers; inactive rows are not part of platform health.
+      const activeResults = providerHealthResults.filter((p: any) => !!p.isActive);
+      const healthyCount = activeResults.filter((p: any) => p.status === 'healthy').length;
+      const degradedCount = activeResults.filter((p: any) => p.status === 'degraded').length;
+      const unhealthyCount = activeResults.filter((p: any) => p.status === 'unhealthy').length;
 
       return res.json({
         success: true,
         providers: providerHealthResults,
         alerts,
         summary: {
-          total: allProviders.length,
+          total: activeResults.length,
           healthy: healthyCount,
           degraded: degradedCount,
           unhealthy: unhealthyCount,
           healthyCount,
           degradedCount,
           unhealthyCount,
+          inactive: (providerHealthResults.length || 0) - (activeResults.length || 0),
           lastCheck: new Date().toISOString(),
         },
       });
@@ -431,21 +839,74 @@ export class LLMController {
 
       const startTime = Date.now();
       try {
-        const result = await llmService.testConnection({
-          provider: provider.provider,
-          apiKey: provider.api_key,
-          api_key: provider.api_key,
-          endpoint: provider.endpoint,
-          id: provider.model_id,
-        });
+        let result: any = null;
+        let ok = false;
+        let errMsg: string | null = null;
+        let httpStatus: number | null = null;
+
+        const providerKey = String(provider.provider || '').toLowerCase();
+        const kind = String(provider.kind || 'TEXT_LLM').toUpperCase();
+
+        if (kind === 'IMAGE_MODEL' && providerKey === 'replicate') {
+          const token =
+            String(provider.api_key || '').trim() ||
+            String(process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY || '').trim();
+          if (!token) {
+            ok = false;
+            errMsg = 'MISSING_KEY: Missing token (REPLICATE_API_TOKEN)';
+          } else {
+            const base = String(provider.endpoint || 'https://api.replicate.com/v1').replace(
+              /\/+$/,
+              ''
+            );
+            const resp = await fetch(`${base}/models?limit=1`, {
+              method: 'GET',
+              headers: { Authorization: `Token ${token}`, 'Content-Type': 'application/json' },
+              signal: AbortSignal.timeout(15_000),
+            });
+            httpStatus = resp.status;
+            ok = resp.ok;
+            if (!resp.ok) {
+              const text = await resp.text().catch(() => '');
+              errMsg = `HTTP ${resp.status}: ${text.slice(0, 160)}`;
+            }
+          }
+        } else {
+          result = await llmService.testConnection({
+            provider: provider.provider,
+            apiKey: provider.api_key,
+            api_key: provider.api_key,
+            endpoint: provider.endpoint,
+            id: provider.model_id,
+          });
+          ok = !!result?.success;
+          errMsg = ok ? null : String(result?.error || 'Connection failed');
+          httpStatus = result?.httpStatus ?? null;
+        }
+
+        const responseTimeMs = Date.now() - startTime;
+        const status = ok ? (responseTimeMs < 3000 ? 'healthy' : 'degraded') : 'unhealthy';
+
+        // Update cached status for router + UI
+        try {
+          await dbRun(
+            `UPDATE llm_providers
+             SET health_status = ?, last_health_check = ?, updated_at = CURRENT_TIMESTAMP
+             WHERE id = ?`,
+            [status, new Date().toISOString(), provider.id]
+          );
+        } catch {
+          /* ignore */
+        }
 
         return res.json({
-          success: result.success,
+          success: ok,
           providerId: provider.id,
           providerName: provider.name,
-          responseTime: Date.now() - startTime,
-          status: result.success ? 'healthy' : 'unhealthy',
-          error: result.error || null,
+          responseTime: responseTimeMs,
+          status,
+          statusCode: httpStatus,
+          error: errMsg,
         });
       } catch (e: any) {
         return res.json({
@@ -778,7 +1239,7 @@ export class LLMController {
           const isLocal = providerId === 'ollama';
 
           if (!hasKey && !isLocal) {
-            return {
+            const row = {
               id: provider.id || provider.model_id || provider.provider,
               name: provider.name || provider.provider,
               provider: provider.provider,
@@ -786,6 +1247,7 @@ export class LLMController {
               available: false,
               lastCheck: nowIso,
             };
+            return row;
           }
 
           try {
@@ -804,7 +1266,7 @@ export class LLMController {
             );
 
             const ok = !!(result as any)?.success;
-            return {
+            const row = {
               id: provider.id || provider.model_id || provider.provider,
               name: provider.name || provider.provider,
               provider: provider.provider,
@@ -813,8 +1275,35 @@ export class LLMController {
               latency: (result as any)?.latency || 0,
               lastCheck: nowIso,
             };
+            // Best-effort: persist health events (throttled ~60s/provider)
+            try {
+              const providerKey = String(provider.provider || '').toLowerCase();
+              const lastAt = LLMController.lastHealthEventWriteAt.get(providerKey) || 0;
+              if (Date.now() - lastAt > 60_000) {
+                LLMController.lastHealthEventWriteAt.set(providerKey, Date.now());
+                void dbRun(
+                  `INSERT INTO llm_health_events (id, provider, model, status, available, latency_ms, error_message, timestamp)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                  [
+                    uuidv4(),
+                    providerKey,
+                    provider.model_id || null,
+                    row.status,
+                    row.available ? 1 : 0,
+                    row.latency || 0,
+                    ok ? null : String((result as any)?.error || 'Unhealthy'),
+                    nowIso,
+                  ]
+                ).catch(() => {
+                  /* ignore */
+                });
+              }
+            } catch {
+              /* ignore */
+            }
+            return row;
           } catch (e: any) {
-            return {
+            const row = {
               id: provider.id || provider.model_id || provider.provider,
               name: provider.name || provider.provider,
               provider: provider.provider,
@@ -823,6 +1312,32 @@ export class LLMController {
               error: e?.message || String(e),
               lastCheck: nowIso,
             };
+            try {
+              const providerKey = String(provider.provider || '').toLowerCase();
+              const lastAt = LLMController.lastHealthEventWriteAt.get(providerKey) || 0;
+              if (Date.now() - lastAt > 60_000) {
+                LLMController.lastHealthEventWriteAt.set(providerKey, Date.now());
+                void dbRun(
+                  `INSERT INTO llm_health_events (id, provider, model, status, available, latency_ms, error_message, timestamp)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                  [
+                    uuidv4(),
+                    providerKey,
+                    provider.model_id || null,
+                    'unhealthy',
+                    0,
+                    0,
+                    String(row.error || 'Unhealthy'),
+                    nowIso,
+                  ]
+                ).catch(() => {
+                  /* ignore */
+                });
+              }
+            } catch {
+              /* ignore */
+            }
+            return row;
           }
         })
       );
@@ -900,6 +1415,149 @@ export class LLMController {
   }
 
   /**
+   * GET /api/llm/incidents
+   * Timeline of downtime incidents based on llm_health_events.
+   *
+   * Query:
+   * - from: ISO string (optional)
+   * - to: ISO string (optional)
+   * - provider: provider id (default: openrouter)
+   */
+  static async getIncidents(req: Request, res: Response) {
+    try {
+      const provider = String((req.query.provider as string) || 'openrouter').toLowerCase();
+      const now = Date.now();
+      const fromIso = String(req.query.from || new Date(now - 24 * 60 * 60 * 1000).toISOString());
+      const toIso = String(req.query.to || new Date(now).toISOString());
+
+      const rows = (await dbAll(
+        `SELECT provider, model, status, available, latency_ms, error_message, timestamp
+         FROM llm_health_events
+         WHERE provider = ? AND timestamp >= ? AND timestamp <= ?
+         ORDER BY timestamp ASC`,
+        [provider, fromIso, toIso]
+      )) as Array<{
+        provider: string;
+        model?: string | null;
+        status: string;
+        available: number | boolean;
+        latency_ms?: number | null;
+        error_message?: string | null;
+        timestamp: string;
+      }>;
+
+      const events = (rows || [])
+        .map((r) => {
+          const ts = new Date(String(r.timestamp)).getTime();
+          if (!Number.isFinite(ts)) return null;
+          return {
+            provider: r.provider,
+            model: r.model || null,
+            available: !!r.available,
+            status: String(r.status || ''),
+            latencyMs: typeof r.latency_ms === 'number' ? r.latency_ms : Number(r.latency_ms || 0),
+            error: r.error_message || null,
+            timestamp: new Date(ts).toISOString(),
+            ts,
+          };
+        })
+        .filter(Boolean) as Array<{
+        provider: string;
+        model: string | null;
+        available: boolean;
+        status: string;
+        latencyMs: number;
+        error: string | null;
+        timestamp: string;
+        ts: number;
+      }>;
+
+      // Build incidents: contiguous unavailable periods.
+      const incidents: Array<{
+        start: string;
+        end: string | null;
+        durationMs: number;
+        samples: number;
+        lastError: string | null;
+      }> = [];
+
+      let current: {
+        startTs: number;
+        samples: number;
+        lastError: string | null;
+      } | null = null;
+
+      for (const ev of events) {
+        if (!ev.available) {
+          if (!current) {
+            current = { startTs: ev.ts, samples: 0, lastError: null };
+          }
+          current.samples += 1;
+          if (ev.error) current.lastError = ev.error;
+        } else if (current) {
+          const endTs = ev.ts;
+          incidents.push({
+            start: new Date(current.startTs).toISOString(),
+            end: new Date(endTs).toISOString(),
+            durationMs: Math.max(0, endTs - current.startTs),
+            samples: current.samples,
+            lastError: current.lastError,
+          });
+          current = null;
+        }
+      }
+      if (current) {
+        const endTs = new Date(toIso).getTime();
+        incidents.push({
+          start: new Date(current.startTs).toISOString(),
+          end: null,
+          durationMs: Math.max(0, (Number.isFinite(endTs) ? endTs : Date.now()) - current.startTs),
+          samples: current.samples,
+          lastError: current.lastError,
+        });
+      }
+
+      // Rough uptime estimate using deltas between samples.
+      const windowStartTs = new Date(fromIso).getTime();
+      const windowEndTs = new Date(toIso).getTime();
+      const totalMs =
+        Number.isFinite(windowStartTs) &&
+        Number.isFinite(windowEndTs) &&
+        windowEndTs > windowStartTs
+          ? windowEndTs - windowStartTs
+          : 0;
+      let downMs = 0;
+      for (const inc of incidents) {
+        const s = new Date(inc.start).getTime();
+        const e = inc.end ? new Date(inc.end).getTime() : windowEndTs;
+        if (Number.isFinite(s) && Number.isFinite(e) && e > s) {
+          downMs += e - s;
+        }
+      }
+      const uptimePct =
+        totalMs > 0 ? Math.max(0, Math.min(100, ((totalMs - downMs) / totalMs) * 100)) : 0;
+
+      return res.json({
+        success: true,
+        provider,
+        from: fromIso,
+        to: toIso,
+        uptime: {
+          totalMs,
+          downMs,
+          upMs: Math.max(0, totalMs - downMs),
+          uptimePct: Number(uptimePct.toFixed(2)),
+          samples: events.length,
+        },
+        incidents,
+      });
+    } catch (error: any) {
+      console.error('[LLMController] Error getting incidents:', error);
+      return res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  /**
    * GET /api/llm/control/usage
    * Get usage statistics for control panel
    */
@@ -966,17 +1624,21 @@ export class LLMController {
   static async getCosts(req: Request, res: Response) {
     try {
       const providers = (await dbAll(
-        'SELECT id, name, provider, cost_per_1k FROM llm_providers',
+        'SELECT provider, cost_per_1k FROM llm_providers',
         []
       )) as any[];
 
+      // Prefer v3: estimated_cost_usd if present (written by AIPipeline when price snapshot is bound).
+      // Fallback to legacy token-based estimate using llm_providers.cost_per_1k.
       const usage = (await dbAll(
         `
                 SELECT 
                     provider,
-                    COALESCE(SUM(tokens_used), 0) as totalTokens
+                    COALESCE(SUM(tokens_used), 0) as totalTokens,
+                    SUM(CASE WHEN estimated_cost_usd IS NOT NULL THEN estimated_cost_usd ELSE 0 END) as totalEstimatedCostUsd
                 FROM ai_usage_logs 
                 WHERE created_at >= date('now', 'start of month')
+                  AND status = 'success'
                 GROUP BY provider
             `,
         []
@@ -985,13 +1647,21 @@ export class LLMController {
       let totalCost = 0;
       const costByProvider: Record<string, { tokens: number; cost: number }> = {};
 
-      for (const u of usage) {
-        const providerConfig = providers.find((p) => p.provider === u.provider);
-        const costPer1k = providerConfig?.cost_per_1k || 0;
-        const cost = (u.totalTokens / 1000) * costPer1k;
+      for (const u of usage || []) {
+        const providerKey = String(u.provider || 'unknown');
+        const totalTokens = Number(u.totalTokens || 0) || 0;
+        const snapshotCost = Number(u.totalEstimatedCostUsd || 0) || 0;
+        let cost = snapshotCost;
+
+        if (!Number.isFinite(cost) || cost <= 0) {
+          const providerConfig = providers.find((p: any) => String(p.provider) === providerKey);
+          const costPer1k = Number(providerConfig?.cost_per_1k || 0) || 0;
+          cost = (totalTokens / 1000) * costPer1k;
+        }
+
         totalCost += cost;
-        costByProvider[u.provider] = {
-          tokens: u.totalTokens,
+        costByProvider[providerKey] = {
+          tokens: totalTokens,
           cost: Math.round(cost * 100) / 100,
         };
       }

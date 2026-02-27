@@ -67,7 +67,7 @@ interface SectionRow {
 // ── Command Parser ─────────────────────────────────────────────
 
 const COMMAND_PATTERNS: Array<{ pattern: RegExp; action: AgentActionType }> = [
-  { pattern: /(?:move|reorder|swap|put|shift)\b/i, action: 'REORDER_SECTIONS' },
+  { pattern: /\b(?:move|reorder|swap|put|shift)\b/i, action: 'REORDER_SECTIONS' },
   {
     pattern: /(?:add|insert|include|create)\s+(?:a\s+)?(?:section|block|chapter)/i,
     action: 'ADD_SECTION',

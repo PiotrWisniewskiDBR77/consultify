@@ -1,187 +1,111 @@
-# IRIS 6.0 Automated Testing Toolkit
+# Consultinity Automated Testing Toolkit
 
-Kompletny zestaw narzędzi do automatycznego testowania platformy IRIS 6.0.
+Kompletny zestaw narzedzi do automatycznego testowania platformy Consultinity.
 
-## 📊 Obecny Status
+## Status (stan na 2026-02-27)
 
-| Metryka | Wartość |
-|---------|---------|
-| Pliki testów | 1,096+ |
-| Pass Rate (Unit) | 98.9% |
-| Pass Rate (Blended) | 96.4% |
-| Pokrycie | 85%+ |
+**Liczba plikow testowych (wg `rg`)**
+- Razem w `tests/`: **1022**
+- Unit (`tests/unit`): **301**
+- Component (`tests/components`): **196**
+- Integration (`tests/integration`): **307**
+- E2E (`tests/e2e`): **158**
+- Security (`tests/security`): **10**
+- Performance (`tests/performance`): **7**
 
-## 🚀 Quick Start
+**Uwaga o coverage**
+Aktualne ustawienia `vitest.config.ts` licza coverage glownie dla backendu (`server/src/**`). Nie jest to globalne coverage calej aplikacji.
 
-```bash
-# Wszystkie testy
-npx tsx scripts/testing/test-runner.ts --all
-
-# Unit testy z pokryciem
-npx tsx scripts/testing/test-runner.ts --unit --coverage
-
-# Skan bezpieczeństwa
-npx tsx scripts/testing/security-scan.ts --quick
-
-# Audyt wydajności
-npx tsx scripts/testing/performance-audit.ts --baseline
-
-# Generowanie raportu
-npx tsx scripts/testing/test-report-generator.ts
-```
-
-## 🛠️ Dostępne Narzędzia
-
-### Test Runner (`scripts/testing/test-runner.ts`)
-
-Unified CLI do wszystkich operacji testowych:
+## Quick Start (runbook 5-10 komend)
 
 ```bash
-# Wyświetl pomoc
-npx tsx scripts/testing/test-runner.ts --help
+# Szybkie uruchomienie calosci (unit + component + integration)
+npm run test:all
 
-# Opcje
---all, -a           Wszystkie testy
---unit, -u          Tylko unit testy
---integration, -i   Testy integracyjne
---component, -c     Testy komponentów
---e2e, -e           Testy E2E (Playwright)
---security, -s      Testy bezpieczeństwa
---performance, -p   Testy wydajności
---coverage, --cov   Generuj raport pokrycia
---watch, -w         Watch mode
---changed-only      Tylko zmienione pliki
---failed-first      Najpierw failed testy
---module=<name>     Konkretny moduł (np. --module=mes)
---shard=<n/total>   Sharding dla CI (np. --shard=1/4)
---report, -r        Generuj raport HTML
---verbose, -v       Verbose output
+# Unit
+npm run test:unit
+
+# Component
+npm run test:component
+
+# Integration
+npm run test:integration
+
+# E2E (tier-0 smoke)
+npm run test:e2e:tier0
+
+# Security
+npm run test:security
+
+# Performance (bez memory-leak)
+npm run test:performance
+
+# Performance z realna baza (Postgres)
+npm run test:performance:real
+
+# Memory leak (osobny, dlugi test)
+MEMORY_TEST_DURATION=5 npm run test:memory-leak
+
+# Gaty jakosci
+npm run test:quality-check
+npm run test:skip-scan
+
+# Impact analysis (targeted)
+npm run test:impact
 ```
 
-### Security Scan (`scripts/testing/security-scan.ts`)
-
-Orkiestrator testów bezpieczeństwa:
-
-```bash
---full, -f     Pełny skan (wszystkie testy)
---quick, -q    Szybki skan (krytyczne testy)
-```
-
-**Sprawdzane elementy:**
-- SQL Injection (`tests/security/sql-injection.test.ts`)
-- XSS Prevention (`tests/security/xss-prevention.test.ts`)
-- CSRF Protection (`tests/security/csrf-protection.test.ts`)
-- npm audit (CVE)
-
-### Performance Audit (`scripts/testing/performance-audit.ts`)
-
-Audyt wydajności z porównaniem baseline:
-
-```bash
---baseline, -b    Zapisz baseline
---compare, -c     Porównaj z baseline
-```
-
-**Metryki:**
-- Latency (p50, p95, p99)
-- Memory (heap used/total)
-- Bundle size
-
-### Flaky Test Tracker (`scripts/testing/flaky-test-tracker.ts`)
-
-Śledzenie niestabilnych testów:
-
-```bash
---report, -r              Raport flaky testów
---quarantine=<test>       Kwarantanna testu
---unquarantine=<test>     Usuń z kwarantanny
-```
-
-### Report Generator (`scripts/testing/test-report-generator.ts`)
-
-Generator raportów HTML/JSON:
-
-```bash
---html    Tylko raport HTML
---json    Tylko raport JSON
-```
-
-## 📁 Struktura Testów
+## Struktura testow
 
 ```
 tests/
-├── unit/           # Unit testy (442 files)
-├── components/     # Testy komponentów (251 files)
-├── integration/    # Testy integracyjne (180 files)
-├── e2e/            # E2E Playwright (170 files)
-├── security/       # Testy bezpieczeństwa
-│   ├── sql-injection.test.ts
-│   ├── xss-prevention.test.ts
-│   └── csrf-protection.test.ts
-└── performance/    # Testy wydajności
-    ├── memory-leak-detector.test.ts
-    ├── api-latency-baseline.test.ts
-    └── bundle-size.test.ts
+├── unit/           # Unit testy
+├── components/     # Testy komponentow (UI i L2)
+├── integration/    # Testy integracyjne
+├── e2e/            # E2E Playwright
+├── security/       # Testy bezpieczenstwa
+└── performance/    # Testy wydajnosci
 ```
 
-## 📋 npm Scripts
+Dodatkowe katalogi testow (pomocnicze) znajduja sie m.in. w:
+- `tests/hooks`, `tests/views`, `tests/store`, `tests/utils`, `tests/services`
+
+## Standardy nazewnictwa
+
+- Nie dodajemy plikow z sufiksami `" 2"`, `" 3"` itd.
+- Nie dodajemy plikow testowych bez rozszerzenia (np. `.test` bez `.ts/.js`).
+- Preferowany format: `*.test.ts` / `*.spec.ts`.
+
+## Narzedzia i gaty jakosci
+
+- `scripts/testing/quality-check.ts` — wykrywa placeholdery i "fake" testy.
+- `scripts/testing/skip-scan-gate.ts` — blokuje `.only()` i niedozwolone `.skip()`.
+- `scripts/security/verify-security-integrity.ts` — gate dla krytycznych obszarow.
+
+## Zmiany plikow i `--changed-only`
+
+`test-runner` uzywa merge-base (domyslnie `Londyn`) do wyznaczania zmienionych plikow.
+Możesz ustawic baze przez zmienna srodowiskowa:
 
 ```bash
-npm run test:unit           # Unit testy
-npm run test:component      # Testy komponentów
-npm run test:integration    # Testy integracyjne
-npm run test:e2e            # E2E (Playwright)
-npm run test:security       # Testy bezpieczeństwa
-npm run test:performance    # Testy wydajności
-npm run test:all            # Unit + Component + Integration
-npm run test:complete       # Wszystko + E2E + Security
-npm run test:coverage       # Z pokryciem
+TEST_CHANGED_BASE=develop npx tsx scripts/testing/test-runner.ts --changed-only
 ```
 
-## 🔧 Konfiguracje
+## Performance i realna baza danych
 
-| Plik | Opis |
-|------|------|
-| `vitest.config.ts` | Główna konfiguracja Vitest |
-| `vitest.security.config.ts` | Konfiguracja testów security |
-| `vitest.perf.config.ts` | Konfiguracja testów wydajności |
-| `playwright.config.ts` | Konfiguracja E2E |
+Testy performance, ktore wymagaja realnej bazy, sa automatycznie **skipowane** gdy dziala mock DB.
+Aby uruchomic je w trybie realnej bazy danych, ustaw:
 
-## 🎯 Progi Jakości
-
-| Metryka | Próg |
-|---------|------|
-| Coverage (global) | 85% |
-| Coverage (critical) | 95% |
-| Unit pass rate | 98% |
-| Integration pass rate | 91% |
-| E2E pass rate | 94% |
-| p95 latency | <200ms |
-| Bundle size | <500KB |
-
-## 🚨 Troubleshooting
-
-### SQLite binding crash (`napi_throw`)
 ```bash
-NODE_OPTIONS=--max-old-space-size=4096 npm run test:integration -- --max-concurrency=4
+RUN_DB_TESTS=1 MOCK_DB=false npm run test:performance
 ```
 
-### Memory issues
-```bash
-export NODE_OPTIONS="--max-old-space-size=4096"
-```
+Uwaga: obecny backend jest skonfigurowany pod Postgres, wiec wymaga aktywnego DB i poprawnych zmiennych srodowiskowych.
 
-### Flaky testy
-```bash
-# Sprawdź registry
-cat test-results/flaky-tests.json
+## Dodatkowa dokumentacja
 
-# Raport
-npx tsx scripts/testing/flaky-test-tracker.ts --report
-```
-
-## 📚 Więcej Informacji
-
-- [TESTING_GUIDE.md](./TESTING_GUIDE.md) - Szczegółowy przewodnik
-- [TEST_AUDIT_REGISTRY.md](./TEST_AUDIT_REGISTRY.md) - Rejestr audytów
-- [docs/testing/](../docs/testing/) - Dokumentacja testów
+- `tests/TESTING_GUIDE.md`
+- `tests/TEST_AUDIT_REGISTRY.md`
+- `docs/testing/`
+- `docs/testing/CI_TESTING_RUNBOOK.md`
+- `docs/testing/TESTING.md`
+- `docs/testing/PR_PIPELINE.md`

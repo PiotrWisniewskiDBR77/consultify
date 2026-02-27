@@ -52,6 +52,7 @@ export interface MessageRendererProps {
   displayMessages: ChatMessage[];
   isCompact: boolean;
   isDisabled: boolean;
+  isRtlChatLanguage?: boolean;
 
   // Conversation context
   activeConversationId: string | null;
@@ -139,6 +140,7 @@ export interface MessageRendererProps {
   handleDeepThinkingReconfirm: () => void;
   handleSaveAsDecision: (messageId: string, content: string) => void;
   handleSaveAsIdea: (messageId: string, content: string) => void;
+  handleSaveAsNote: (messageId: string, content: string) => void;
   handleRunDirectedDeepening: (agentAuditPayload: any) => void;
   handleMultiSelectToggle: (value: string) => void;
   handleMultiSelectConfirm: () => void;
@@ -172,6 +174,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   displayMessages,
   isCompact,
   isDisabled,
+  isRtlChatLanguage = false,
   activeConversationId,
   thinkingSteps,
   streamStartedAt,
@@ -215,6 +218,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   handleDeepThinkingReconfirm,
   handleSaveAsDecision,
   handleSaveAsIdea,
+  handleSaveAsNote,
   handleRunDirectedDeepening,
   handleMultiSelectToggle,
   handleMultiSelectConfirm,
@@ -304,7 +308,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         <div className="flex flex-col max-w-[85%]">
           {/* Author name for team messages */}
           {msg.role === 'user' && msg.authorName && (
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 mb-0.5 text-right pr-1 font-medium">
+            <span
+              className={`text-[10px] text-slate-500 dark:text-slate-400 mb-0.5 pr-1 font-medium ${
+                isRtlChatLanguage ? 'text-right' : 'text-left'
+              }`}
+            >
               {msg.authorName}
             </span>
           )}
@@ -313,7 +321,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               msg.role === 'user'
                 ? 'bg-primary-600 text-white rounded-tr-none'
                 : 'bg-slate-50 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 rounded-tl-none'
-            }`}
+            } ${isRtlChatLanguage ? 'text-right' : 'text-left'}`}
+            dir={isRtlChatLanguage ? 'rtl' : 'ltr'}
           >
             {/* AI Message Content */}
             {msg.role === 'ai' ? (
@@ -588,37 +597,92 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   </div>
                 ) : (
                   <>
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        code: ({ inline, className: codeClassName, children }: any) => {
-                          if (inline) {
-                            return (
-                              <code className="px-1 py-0.5 bg-slate-200 dark:bg-navy-700 rounded text-primary-600 dark:text-primary-400 text-xs font-mono">
-                                {children}
-                              </code>
-                            );
-                          }
-                          return (
-                            <pre className="bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-slate-100 p-2 rounded-lg overflow-x-auto text-xs my-2">
-                              <code className={codeClassName}>{children}</code>
-                            </pre>
-                          );
-                        },
-                        a: ({ href, children }: any) => (
-                          <a
-                            href={href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary-600 hover:text-primary-700 underline"
+                    {(() => {
+                      const ideaHintRegex = /💡\s*IDEA_HINT:\s*(.+?)\s*\|\s*(.+)/g;
+                      const hints: { title: string; description: string }[] = [];
+                      let match: RegExpExecArray | null;
+                      while ((match = ideaHintRegex.exec(msg.content)) !== null) {
+                        hints.push({ title: match[1].trim(), description: match[2].trim() });
+                      }
+                      const cleanContent = msg.content
+                        .replace(/💡\s*IDEA_HINT:\s*.+?\|.+/g, '')
+                        .trim();
+
+                      return (
+                        <>
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              code: ({ inline, className: codeClassName, children }: any) => {
+                                if (inline) {
+                                  return (
+                                    <code className="px-1 py-0.5 bg-slate-200 dark:bg-navy-700 rounded text-primary-600 dark:text-primary-400 text-xs font-mono">
+                                      {children}
+                                    </code>
+                                  );
+                                }
+                                return (
+                                  <pre className="bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-slate-100 p-2 rounded-lg overflow-x-auto text-xs my-2">
+                                    <code className={codeClassName}>{children}</code>
+                                  </pre>
+                                );
+                              },
+                              a: ({ href, children }: any) => (
+                                <a
+                                  href={href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary-600 hover:text-primary-700 underline"
+                                >
+                                  {children}
+                                </a>
+                              ),
+                            }}
                           >
-                            {children}
-                          </a>
-                        ),
-                      }}
-                    >
-                      {msg.content}
-                    </ReactMarkdown>
+                            {cleanContent}
+                          </ReactMarkdown>
+                          {hints.length > 0 && !msg.isStreaming && (
+                            <div className="mt-3 space-y-2">
+                              {hints.map((hint, hIdx) => (
+                                <div
+                                  key={hIdx}
+                                  className="flex items-start gap-3 p-3 rounded-xl bg-gradient-to-r from-amber-50/80 to-emerald-50/40 dark:from-amber-900/15 dark:to-emerald-900/10 border border-amber-200/50 dark:border-amber-500/25 hover:shadow-md hover:shadow-amber-500/10 transition-all group"
+                                >
+                                  <div className="flex-shrink-0 p-1.5 rounded-lg bg-gradient-to-br from-amber-400/20 to-emerald-400/15 group-hover:from-amber-400/30 group-hover:to-emerald-400/20 transition-colors">
+                                    <Lightbulb size={16} className="text-amber-500" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-[10px] uppercase tracking-wide text-amber-600/70 dark:text-amber-500/60 font-semibold mb-0.5">
+                                      {t('myWork.ideas.gardenSpark', 'Idea Garden Spark')}
+                                    </div>
+                                    <div className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                                      {hint.title}
+                                    </div>
+                                    <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                                      {hint.description}
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleSaveAsIdea(
+                                        msg.id,
+                                        `${hint.title}\n\n${hint.description}`
+                                      );
+                                    }}
+                                    className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-gradient-to-r from-amber-500/15 to-emerald-500/10 text-amber-700 dark:text-amber-400 hover:from-amber-500/25 hover:to-emerald-500/15 border border-amber-400/30 transition-colors"
+                                    title={t('myWork.ideas.plantInGarden', 'Plant in Idea Garden')}
+                                  >
+                                    <Sparkles size={12} />
+                                    {t('myWork.ideas.plantInGarden', 'Plant')}
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                     {msg.role === 'ai' &&
                       !msg.isStreaming &&
                       (msg as any).metadata?.agentAudit?.kind === 'verdict' && (
@@ -1168,10 +1232,27 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   </button>
                 )}
 
+                {/* Save as Note (T011) */}
+                {msg.role === 'ai' && (
+                  <button
+                    onClick={() => handleSaveAsNote(msg.id, msg.content)}
+                    className="p-1 rounded-md text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/10"
+                    title={t('myWork.notebook.saveAsNote', 'Save as note')}
+                  >
+                    <Bookmark size={12} />
+                  </button>
+                )}
+
                 {/* Speak */}
                 {msg.role === 'ai' && (
                   <button
-                    onClick={() => (voiceState.isSpeaking ? stopSpeaking() : speak(msg.content))}
+                    onClick={() => {
+                      // Replay behavior: always restart reading from the beginning.
+                      stopSpeaking();
+                      setTimeout(() => {
+                        speak(msg.content);
+                      }, 60);
+                    }}
                     className={`p-1 rounded-md ${voiceState.isSpeaking ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'} hover:bg-slate-100 dark:hover:bg-navy-700`}
                     title={
                       voiceState.isSpeaking
@@ -1301,7 +1382,6 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               {/* Board-Ready Export */}
               <button
                 onClick={() => {
-                  // Export as Markdown file (board-ready format)
                   const now = new Date();
                   const dateStr = now.toISOString().slice(0, 10);
                   const header = [
@@ -1326,6 +1406,20 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               >
                 <Download size={12} />
                 {t('deepThinking.exportReport', 'Export Report')}
+              </button>
+              {/* Save report to Notebook (T004/T005 → T011) */}
+              <button
+                onClick={() => {
+                  const isMarketResearch = !!(aiConfig as any)?.marketResearch;
+                  const reportType = isMarketResearch ? 'Market Research' : 'Deep Thinking';
+                  const dateStr = new Date().toISOString().slice(0, 10);
+                  const reportTitle = `${reportType} Report — ${dateStr}`;
+                  handleSaveAsNote(msg.id, `# ${reportTitle}\n\n${msg.content}`);
+                }}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-1"
+              >
+                <Bookmark size={12} />
+                {t('deepThinking.saveToNotebook', 'Save to Notebook')}
               </button>
               {/* Voice Executive Brief */}
               <button

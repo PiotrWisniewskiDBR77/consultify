@@ -241,6 +241,7 @@ function getProviderSync(modelConfig: ModelConfig) {
   // Reason: in local + Railway deployments, env vars are the intended source of truth.
   // DB keys are still supported as a fallback when env vars are not set.
   const envOpenAI = process.env.OPENAI_API_KEY?.trim();
+  const envOpenRouter = process.env.OPENROUTER_API_KEY?.trim();
   const envGemini = (
     process.env.GEMINI_API_KEY ||
     // preferred naming in this repo
@@ -249,6 +250,8 @@ function getProviderSync(modelConfig: ModelConfig) {
     (process.env as any).GOOGLE_API_KEY ||
     (process.env as any).GOOGLE_API_KEY
   )?.trim();
+  const envDeepSeek = process.env.DEEPSEEK_API_KEY?.trim();
+  const envZai = process.env.ZAI_API_KEY?.trim();
 
   switch (providerName.toLowerCase()) {
     case 'openai':
@@ -278,13 +281,26 @@ function getProviderSync(modelConfig: ModelConfig) {
       });
     }
     case 'deepseek':
+      return createOpenAI({
+        apiKey: envDeepSeek || effectiveApiKey,
+        baseURL: normalizedBaseUrl || 'https://api.deepseek.com',
+      });
     case 'z_ai':
     case 'zai':
+      // z.ai (Zhipu) is OpenAI-compatible, but uses a different base URL than DeepSeek.
+      return createOpenAI({
+        apiKey: envZai || effectiveApiKey,
+        baseURL: normalizedBaseUrl || 'https://api.z.ai/api/paas/v4',
+      });
     case 'qwen':
+      return createOpenAI({
+        apiKey: effectiveApiKey,
+        baseURL: normalizedBaseUrl || 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
+      });
     case 'mistral':
       return createOpenAI({
         apiKey: effectiveApiKey,
-        baseURL: normalizedBaseUrl || 'https://api.deepseek.com',
+        baseURL: normalizedBaseUrl || 'https://api.mistral.ai/v1',
       });
     case 'nvidia':
       return createOpenAI({
@@ -297,8 +313,12 @@ function getProviderSync(modelConfig: ModelConfig) {
         baseURL: normalizedBaseUrl || 'https://api.cohere.ai/v1',
       });
     case 'openrouter':
+      if (!envOpenRouter && !effectiveApiKey) {
+        throw new Error('No OpenRouter API key configured (set OPENROUTER_API_KEY).');
+      }
       return createOpenAI({
-        apiKey: effectiveApiKey || process.env.OPENROUTER_API_KEY,
+        // SuperAdmin-managed DB key should win when present; ENV is a bootstrap fallback.
+        apiKey: effectiveApiKey || envOpenRouter,
         baseURL: normalizedBaseUrl || 'https://openrouter.ai/api/v1',
       });
     case 'ollama':
@@ -812,16 +832,25 @@ export class LLMService {
             throw firstChunkError;
           }
 
+          // Some providers can successfully initialize a stream but immediately end it
+          // without producing any tokens (e.g. blocked/empty completion). Treat this as
+          // a failure so AIPipeline can try its cross-provider fallback chain.
+          if (firstChunk.done) {
+            const emptyErr: any = new Error(
+              `LLM stream ended immediately without output (${providerId}/${String(modelConfig.id)}).`
+            );
+            emptyErr.code = 'EMPTY_STREAM';
+            throw emptyErr;
+          }
+
           // Build a generator that yields the first chunk we already consumed,
           // then delegates to the rest of the iterator.
           async function* prependedStream(): AsyncGenerator<string> {
-            if (!firstChunk.done && firstChunk.value) {
-              yield firstChunk.value;
-            }
+            if (typeof firstChunk.value === 'string') yield firstChunk.value;
             while (true) {
               const next = await rawIterator.next();
               if (next.done) break;
-              if (next.value) yield next.value;
+              if (typeof next.value === 'string') yield next.value;
             }
           }
 
@@ -959,6 +988,75 @@ export class LLMService {
           error: msg,
           code: data?.error?.code,
           type: data?.error?.type,
+          httpStatus: res.status,
+          circuitState: (await circuitBreaker.canExecute(providerId)).state,
+        };
+      }
+
+      // Fast-path for OpenRouter (SDK is fine, but this yields clearer 401/403 errors and bypasses breaker OPEN short-circuit).
+      if (providerId.toLowerCase() === 'openrouter') {
+        const apiKey =
+          (typeof modelConfig.apiKey === 'string' ? modelConfig.apiKey : undefined) ||
+          (typeof modelConfig.api_key === 'string' ? modelConfig.api_key : undefined) ||
+          process.env.OPENROUTER_API_KEY;
+        if (!apiKey) throw new Error('No OpenRouter API key configured (set OPENROUTER_API_KEY).');
+
+        const base =
+          normalizeBaseUrl(
+            typeof modelConfig.endpoint === 'string' ? modelConfig.endpoint : undefined
+          ) || 'https://openrouter.ai/api/v1';
+        const baseUrl = String(base).replace(/\/+$/, '');
+
+        const normalizeModelId = (id: string): string => {
+          const raw = String(id || '').trim();
+          if (!raw) return 'openai/gpt-4o-mini';
+          if (raw.includes('/') && !raw.includes('://')) return raw;
+          const lower = raw.toLowerCase();
+          if (lower === 'gpt-4o') return 'openai/gpt-4o';
+          if (lower === 'gpt-4o-mini') return 'openai/gpt-4o-mini';
+          if (lower === 'o1-preview') return 'openai/o1-preview';
+          if (lower === 'o1-mini' || lower === 'o1') return 'openai/o1-mini';
+          if (lower.startsWith('claude')) return `anthropic/${raw}`;
+          if (lower.startsWith('gemini')) return `google/${raw}`;
+          return raw;
+        };
+
+        const modelId = normalizeModelId(String(modelConfig.id || ''));
+        const res = await fetch(`${baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${String(apiKey).trim()}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: modelId,
+            messages: [{ role: 'user', content: 'ping' }],
+            max_tokens: 5,
+          }),
+          signal: AbortSignal.timeout(timeoutMs),
+        });
+
+        if (res.ok) {
+          await circuitBreaker.recordSuccess(providerId);
+          return {
+            success: true,
+            latency: Date.now() - startedAt,
+            httpStatus: res.status,
+            circuitState: (await circuitBreaker.canExecute(providerId)).state,
+          };
+        }
+
+        const data: any = await res.json().catch(() => null);
+        const msg =
+          data?.error?.message ||
+          data?.message ||
+          `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}`;
+        await circuitBreaker.recordFailure(providerId, new Error(msg));
+        return {
+          success: false,
+          latency: Date.now() - startedAt,
+          error: msg,
+          code: data?.error?.code,
           httpStatus: res.status,
           circuitState: (await circuitBreaker.canExecute(providerId)).state,
         };

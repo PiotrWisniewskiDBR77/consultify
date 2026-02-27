@@ -120,7 +120,12 @@ router.post(
             );
     } catch (err: unknown) {
       if (isMissingTableError(err)) {
-        return res.status(503).json({ error: 'Notification broadcast unavailable' });
+        return res.status(503).json({
+          statusCode: 503,
+          status: false,
+          type: 'not_configured',
+          message: 'Service temporarily unavailable due to missing configuration',
+        });
       }
       throw err;
     }

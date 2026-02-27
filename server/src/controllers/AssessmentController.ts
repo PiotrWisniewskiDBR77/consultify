@@ -306,49 +306,12 @@ const logAudit = async (
 // Schema initialization
 const ensureAssessmentSchema = async (): Promise<void> => {
   try {
-    const isSQLite = String(process.env.DB_TYPE || '').toLowerCase() === 'sqlite';
-    const tableColumnsCache = new Map<string, Set<string>>();
-
-    const getTableColumns = async (table: string): Promise<Set<string>> => {
-      const cached = tableColumnsCache.get(table);
-      if (cached) return cached;
-      const cols = new Set<string>();
-      try {
-        const rows = await queryHelpers.getTableColumns(table);
-        for (const r of rows || []) {
-          if (r?.name) cols.add(String(r.name));
-        }
-      } catch {
-        // ignore
-      }
-      tableColumnsCache.set(table, cols);
-      return cols;
-    };
-
     const tryAddColumn = async (
       table: string,
-      columnName: string,
+      _columnName: string,
       columnDefSql: string
     ): Promise<void> => {
-      // PostgreSQL: use IF NOT EXISTS to avoid errors and log spam when column exists
-      if (!isSQLite) {
-        await queryHelpers.queryRun(
-          `ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${columnDefSql}`
-        );
-        return;
-      }
-      // SQLite: check first (SQLite lacks ADD COLUMN IF NOT EXISTS in older versions)
-      const cols = await getTableColumns(table);
-      if (cols.has(columnName)) return;
-      try {
-        await queryHelpers.queryRun(`ALTER TABLE ${table} ADD COLUMN ${columnDefSql}`);
-        cols.add(columnName);
-      } catch (e: any) {
-        const msg = String(e?.message || e || '');
-        if (msg.includes('duplicate column name')) return;
-        if (msg.includes('no such table') || msg.includes('does not exist')) return;
-        throw e;
-      }
+      await queryHelpers.queryRun(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${columnDefSql}`);
     };
 
     // Assessments table

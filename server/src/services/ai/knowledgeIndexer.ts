@@ -317,6 +317,11 @@ export class KnowledgeIndexer {
     } else if (ext === '.txt') {
       content = fs.readFileSync(filePath, 'utf-8');
       chunks = this.chunkText(content, config.chunkSize || 1000, config.overlap || 200);
+    } else if (ext === '.md' || ext === '.markdown') {
+      // Treat markdown as plain text for chunking purposes.
+      // (We keep headers/bullets to improve retrieval anchors.)
+      content = fs.readFileSync(filePath, 'utf-8');
+      chunks = this.chunkText(content, config.chunkSize || 1000, config.overlap || 200);
     } else {
       throw new Error(`Unsupported file type: ${ext}`);
     }
@@ -367,6 +372,147 @@ export class KnowledgeIndexer {
       filename,
       chunkCount: successCount,
     };
+  }
+
+  // ============================================
+  // Tool Knowledge Packs (knowledge/tool-kb)
+  // ============================================
+
+  private walkDirForMdFiles(rootAbs: string): string[] {
+    const out: string[] = [];
+    const stack: string[] = [rootAbs];
+    while (stack.length > 0) {
+      const dir = stack.pop();
+      if (!dir) break;
+      let entries: Array<{ name: string; isDirectory: () => boolean; isFile: () => boolean }> = [];
+      try {
+        entries = fs.readdirSync(dir, { withFileTypes: true }) as any;
+      } catch {
+        continue;
+      }
+      for (const e of entries) {
+        const abs = path.join(dir, e.name);
+        if (e.isDirectory()) {
+          // Skip templates (never ingest)
+          if (e.name === '_templates') continue;
+          stack.push(abs);
+          continue;
+        }
+        if (!e.isFile()) continue;
+        const ext = path.extname(e.name).toLowerCase();
+        if (ext === '.md' || ext === '.markdown') out.push(abs);
+      }
+    }
+    return out;
+  }
+
+  private parseToolKbPath(relativeFilePath: string): {
+    toolSlug: string | null;
+    packType: string | null;
+    majorVersion: number | null;
+    language: string | null;
+  } {
+    // Expected:
+    // knowledge/tool-kb/<tool_slug>/<pack_type>/v<major>/<filename>.<lang>.md
+    const normalized = relativeFilePath.replace(/\\/g, '/');
+    const parts = normalized.split('/').filter(Boolean);
+    const idx = parts.indexOf('tool-kb');
+    if (idx < 0) return { toolSlug: null, packType: null, majorVersion: null, language: null };
+    const toolSlug = parts[idx + 1] || null;
+    const packType = parts[idx + 2] || null;
+    const vPart = parts[idx + 3] || null;
+    const majorVersion = vPart && /^v\d+$/i.test(vPart) ? Number(vPart.slice(1)) : null;
+
+    const base = path.basename(normalized);
+    const m = base.match(/\.([a-z]{2})\.(md|markdown)$/i);
+    const language = m?.[1]?.toLowerCase() || null;
+    return { toolSlug, packType, majorVersion, language };
+  }
+
+  private async deleteDocAndChunks(docId: string): Promise<void> {
+    if (!docId) return;
+    if (this.isPg) {
+      const db = getDatabase();
+      await db.query('DELETE FROM knowledge_chunks WHERE doc_id = $1', [docId]);
+      await db.query('DELETE FROM knowledge_docs WHERE id = $1', [docId]);
+      return;
+    }
+    await DbPromise.run('DELETE FROM knowledge_chunks WHERE doc_id = ?', [docId], {
+      fallback: false,
+    });
+    await DbPromise.run('DELETE FROM knowledge_docs WHERE id = ?', [docId], { fallback: false });
+  }
+
+  /**
+   * Index all Tool Knowledge Packs under `knowledge/tool-kb/`.
+   *
+   * - Uses `source_type = 'tool_pack'` for all such docs.
+   * - Stores pack metadata in `knowledge_docs.metadata` and per-chunk `knowledge_chunks.metadata`.
+   * - Idempotent by `knowledge_docs.filepath` (relative path). If `forceReindex=true`, replaces doc+chunks.
+   */
+  async indexToolKnowledgePacks(options: { forceReindex?: boolean } = {}): Promise<{
+    indexed: Array<{ file: string; chunks: number; docId: string }>;
+    skipped: Array<{ file: string; reason: string }>;
+    failed: Array<{ file: string; error: string }>;
+  }> {
+    const { forceReindex = false } = options;
+    const results = {
+      indexed: [] as Array<{ file: string; chunks: number; docId: string }>,
+      skipped: [] as Array<{ file: string; reason: string }>,
+      failed: [] as Array<{ file: string; error: string }>,
+    };
+
+    const toolKbAbs = path.join(this.projectRoot, 'knowledge/tool-kb');
+    if (!fs.existsSync(toolKbAbs)) {
+      results.failed.push({ file: 'knowledge/tool-kb', error: 'Folder not found' });
+      return results;
+    }
+
+    const filesAbs = this.walkDirForMdFiles(toolKbAbs);
+    for (const abs of filesAbs) {
+      const relativeFilePath = path.relative(this.projectRoot, abs).replace(/\\/g, '/').trim();
+
+      try {
+        const existing = await this.getDocByPath(relativeFilePath);
+        if (existing && !forceReindex) {
+          results.skipped.push({ file: relativeFilePath, reason: 'Already indexed' });
+          continue;
+        }
+
+        if (existing && forceReindex) {
+          await this.deleteDocAndChunks(existing.id);
+        }
+
+        const inferred = this.parseToolKbPath(relativeFilePath);
+        const metadata = {
+          type: 'tool_pack',
+          source_kind: 'tool_pack',
+          tool_slug: inferred.toolSlug,
+          pack_type: inferred.packType,
+          pack_major: inferred.majorVersion,
+          language: inferred.language,
+          weight: 1.0,
+          filepath: relativeFilePath,
+        };
+
+        const res = await this.indexFile(abs, {
+          name: 'Tool Knowledge Pack',
+          files: [relativeFilePath],
+          chunkSize: 1100,
+          overlap: 200,
+          metadata,
+          sourceName: 'tool_pack',
+          relativeFilePath,
+        });
+
+        results.indexed.push({ file: relativeFilePath, chunks: res.chunkCount, docId: res.docId });
+      } catch (error: unknown) {
+        const err = error as Error;
+        results.failed.push({ file: abs, error: err.message });
+      }
+    }
+
+    return results;
   }
 
   /**

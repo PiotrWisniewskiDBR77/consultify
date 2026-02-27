@@ -1,6 +1,8 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
+
 import { ROUTES } from './routeConfig';
 
 /**
@@ -13,5 +15,14 @@ export const LicensedToolsRedirect: React.FC = () => {
     pathname === '/licensed-tools'
       ? ROUTES.ASSESSMENT.ROOT
       : `${ROUTES.ASSESSMENT.ROOT}${pathname.slice('/licensed-tools'.length)}`;
+
+  React.useEffect(() => {
+    trackFunnelEvent('route_redirected', {
+      from: pathname,
+      to: target,
+      reason: 'licensed_tools_alias',
+    });
+  }, [pathname, target]);
+
   return <Navigate to={target} replace />;
 };

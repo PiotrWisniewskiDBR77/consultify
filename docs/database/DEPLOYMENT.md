@@ -61,11 +61,9 @@ curl http://localhost:3005/api/health/database
 npm run db:backup
 ```
 
-Expected output:
-
-```
-✅ Backup created: server/backups/consultinity_backup_20260106.db.gz
-```
+Notes:
+- W środowisku Railway backupy rób przez mechanizmy Railway (snapshots / managed backups).
+- Lokalnie dla Postgresa użyj `pg_dump`/`pg_restore` (ten projekt nie wspiera produkcyjnego SQLite).
 
 #### 2. Configure Environment
 
@@ -410,7 +408,7 @@ npm run db:rollback         # Rollback migration
 npm run db:generate-er      # Generate ER diagram
 
 # Testing
-npm run test:database       # Run database tests
+npm run test:integration    # Run database-related integration tests
 ```
 
 ### API Endpoints

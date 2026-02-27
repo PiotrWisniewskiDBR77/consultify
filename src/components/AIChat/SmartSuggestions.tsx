@@ -17,11 +17,16 @@ import {
   Target,
   X,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
+
+const prefersReducedMotion = (): boolean => {
+  if (typeof window === 'undefined') return true;
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? true;
+};
 
 interface Suggestion {
   id: string;
@@ -78,11 +83,225 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
   recentDecisions,
   orgPatterns,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { setCurrentView } = useAppStore();
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [minimalVisibleIdx, setMinimalVisibleIdx] = useState<number[]>([0, 1, 2, 3]);
+  const minimalNextIdxRef = React.useRef(4);
+  const minimalSwapSlotRef = React.useRef(0);
+  const minimalFadeTimeoutRef = React.useRef<number | undefined>(undefined);
+  const [minimalFadeSlot, setMinimalFadeSlot] = useState<number | null>(null);
+
+  const minimalPool: Array<{ id: string; text: string; prompt: string }> = useMemo(
+    () => [
+      {
+        id: 'brief',
+        text: t('aiChat.quickClicks.brief.label', 'Daily brief'),
+        prompt: '__DAILY_BRIEF__',
+      },
+      {
+        id: 'savings',
+        text: t('aiChat.quickClicks.savings.label', 'Oszczędności'),
+        prompt: t(
+          'aiChat.quickClicks.savings.prompt',
+          'Poszukajmy oszczędności — gdzie najszybciej możemy obniżyć koszty bez utraty jakości?'
+        ),
+      },
+      {
+        id: 'newProduct',
+        text: t('aiChat.quickClicks.newProduct.label', 'Nowy produkt'),
+        prompt: t(
+          'aiChat.quickClicks.newProduct.prompt',
+          'Wymyślmy pomysł na nowy produkt: 5 koncepcji + ocena rynku, ROI i trudności wdrożenia.'
+        ),
+      },
+      {
+        id: 'planReview',
+        text: t('aiChat.quickClicks.planReview.label', 'Plany'),
+        prompt: t(
+          'aiChat.quickClicks.planReview.prompt',
+          'Zrób przegląd naszych planów i inicjatyw: priorytety, ryzyka i co do korekty.'
+        ),
+      },
+      {
+        id: 'situation',
+        text: t('aiChat.quickClicks.situation.label', 'Sytuacja'),
+        prompt: t(
+          'aiChat.quickClicks.situation.prompt',
+          'Daj mi przegląd sytuacji: postęp, ryzyka, blokery, najbliższe decyzje i kolejne kroki.'
+        ),
+      },
+      {
+        id: 'roi',
+        text: t('aiChat.quickClicks.roi.label', 'ROI'),
+        prompt: t(
+          'aiChat.quickClicks.roi.prompt',
+          'Przeanalizuj ROI portfela inicjatyw i wskaż top 3 ruchy o najwyższym zwrocie.'
+        ),
+      },
+      {
+        id: 'risks',
+        text: t('aiChat.quickClicks.risks.label', 'Ryzyka'),
+        prompt: t(
+          'aiChat.quickClicks.risks.prompt',
+          'Zrób mapę ryzyk (top 10) i zaproponuj mitygacje oraz właścicieli.'
+        ),
+      },
+      {
+        id: 'priorities',
+        text: t('aiChat.quickClicks.priorities.label', 'Priorytety'),
+        prompt: t(
+          'aiChat.quickClicks.priorities.prompt',
+          'Ustal priorytety na tydzień: MUST/SHOULD/COULD + uzasadnienie.'
+        ),
+      },
+      {
+        id: 'kpi',
+        text: t('aiChat.quickClicks.kpi.label', 'KPI'),
+        prompt: t(
+          'aiChat.quickClicks.kpi.prompt',
+          'Zrób przegląd kluczowych KPI: co się poprawia, co spada, co wymaga reakcji.'
+        ),
+      },
+      {
+        id: 'scenario',
+        text: t('aiChat.quickClicks.scenario.label', 'Scenariusze'),
+        prompt: t(
+          'aiChat.quickClicks.scenario.prompt',
+          'Zbuduj 3 scenariusze (bazowy/optymistyczny/pesymistyczny) i powiedz jak zmieniają plan.'
+        ),
+      },
+      {
+        id: 'decision',
+        text: t('aiChat.quickClicks.decision.label', 'Decyzja'),
+        prompt: t(
+          'aiChat.quickClicks.decision.prompt',
+          'Pomóż podjąć decyzję: warianty, trade‑offy, ryzyka, koszty i rekomendacja w 5 punktach.'
+        ),
+      },
+      {
+        id: 'stakeholders',
+        text: t('aiChat.quickClicks.stakeholders.label', 'Stakeholderzy'),
+        prompt: t(
+          'aiChat.quickClicks.stakeholders.prompt',
+          'Przygotuj krótką aktualizację dla stakeholderów: status, ryzyka, decyzje do podjęcia, next steps.'
+        ),
+      },
+      {
+        id: 'governance',
+        text: t('aiChat.quickClicks.governance.label', 'Governance'),
+        prompt: t(
+          'aiChat.quickClicks.governance.prompt',
+          'Ułóż lekkie governance: rytm, KPI, decyzje, eskalacje i odpowiedzialności.'
+        ),
+      },
+      {
+        id: 'budget',
+        text: t('aiChat.quickClicks.budget.label', 'Budżet'),
+        prompt: t(
+          'aiChat.quickClicks.budget.prompt',
+          'Przeanalizuj budżet inicjatyw: odchylenia, ryzyka i gdzie warto przesunąć środki.'
+        ),
+      },
+      {
+        id: 'timeline',
+        text: t('aiChat.quickClicks.timeline.label', 'Harmonogram'),
+        prompt: t(
+          'aiChat.quickClicks.timeline.prompt',
+          'Sprawdź harmonogram: opóźnienia, krytyczna ścieżka i rekomendacje korekt.'
+        ),
+      },
+      {
+        id: 'team',
+        text: t('aiChat.quickClicks.team.label', 'Zespół'),
+        prompt: t(
+          'aiChat.quickClicks.team.prompt',
+          'Oceń obciążenie zespołu: przeciążenia, ryzyka i szybkie usprawnienia przepływu pracy.'
+        ),
+      },
+      {
+        id: 'benefits',
+        text: t('aiChat.quickClicks.benefits.label', 'Korzyści'),
+        prompt: t(
+          'aiChat.quickClicks.benefits.prompt',
+          'Ułóż plan realizacji korzyści: metryki, baseline, ownerzy, tracking i raportowanie.'
+        ),
+      },
+      {
+        id: 'capability',
+        text: t('aiChat.quickClicks.capability.label', 'Kompetencje'),
+        prompt: t(
+          'aiChat.quickClicks.capability.prompt',
+          'Jakich kompetencji brakuje? Zaproponuj plan rozwoju (edukacja + praktyka) na 6 tygodni.'
+        ),
+      },
+      {
+        id: 'dependencies',
+        text: t('aiChat.quickClicks.dependencies.label', 'Zależności'),
+        prompt: t(
+          'aiChat.quickClicks.dependencies.prompt',
+          'Wskaż zależności i wąskie gardła między inicjatywami oraz zaproponuj sequencing.'
+        ),
+      },
+      {
+        id: 'quickWins',
+        text: t('aiChat.quickClicks.quickWins.label', 'Quick wins'),
+        prompt: t(
+          'aiChat.quickClicks.quickWins.prompt',
+          'Zaproponuj 10 quick wins na 2 tygodnie: wartość, wysiłek, owner i pierwszy krok.'
+        ),
+      },
+    ],
+    [t, i18n.language]
+  );
+
+  // Rotate minimal chips from a pool (~20), one-at-a-time (slower)
+  useEffect(() => {
+    if (variant !== 'minimal') return;
+    if (minimalPool.length <= 4) return;
+
+    setMinimalVisibleIdx([0, 1, 2, 3].filter((x) => x < minimalPool.length));
+    minimalNextIdxRef.current = 4 % minimalPool.length;
+    minimalSwapSlotRef.current = 0;
+    setMinimalFadeSlot(null);
+
+    const reduce = prefersReducedMotion();
+    const intervalMs = reduce ? 15000 : 12000;
+    const interval = window.setInterval(() => {
+      // Replace one chip at a time, round-robin slots 0..3
+      const slot = minimalSwapSlotRef.current % 4;
+      minimalSwapSlotRef.current = (minimalSwapSlotRef.current + 1) % 4;
+
+      if (!reduce) {
+        setMinimalFadeSlot(slot);
+        if (minimalFadeTimeoutRef.current) window.clearTimeout(minimalFadeTimeoutRef.current);
+        minimalFadeTimeoutRef.current = window.setTimeout(() => setMinimalFadeSlot(null), 220);
+      }
+
+      setMinimalVisibleIdx((prev) => {
+        const visibleCount = Math.min(4, minimalPool.length);
+        const base =
+          Array.isArray(prev) && prev.length === visibleCount
+            ? [...prev]
+            : Array.from({ length: visibleCount }, (_, i) => i);
+
+        let candidate = minimalNextIdxRef.current % minimalPool.length;
+        let guard = 0;
+        while (base.includes(candidate) && guard < minimalPool.length) {
+          candidate = (candidate + 1) % minimalPool.length;
+          guard += 1;
+        }
+
+        minimalNextIdxRef.current = (candidate + 1) % minimalPool.length;
+        if (slot < base.length) base[slot] = candidate;
+        return base;
+      });
+    }, intervalMs);
+
+    return () => window.clearInterval(interval);
+  }, [variant, i18n.language, minimalPool.length]);
 
   // Fetch suggestions on mount and when projectId changes (only for full variant)
   useEffect(() => {
@@ -141,442 +360,25 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
 
   // Minimal variant - context-aware text suggestions
   if (variant === 'minimal') {
-    // Build context-aware suggestions based on workspace type
-    const contextSuggestions: Array<{ id: string; text: string; prompt: string }> = [];
-
-    // Always include daily brief
-    contextSuggestions.push({
-      id: 'brief',
-      text: t('aiChat.dailyBrief', 'Daily brief'),
-      prompt: '__DAILY_BRIEF__',
-    });
-
-    // Workspace-specific suggestions
-    switch (workspaceType) {
-      case 'assessment':
-        contextSuggestions.push(
-          {
-            id: 'assess-help',
-            text: entityName
-              ? t('aiChat.quickActions.assessHelp.label', 'Analyze {{name}}', { name: entityName })
-              : t('aiChat.quickActions.assessGeneral.label', 'Assessment tips'),
-            prompt: entityName
-              ? t(
-                  'aiChat.quickActions.assessHelp.prompt',
-                  'Help me analyze the assessment "{{name}}" — what are the key findings and recommendations?',
-                  { name: entityName }
-                )
-              : t(
-                  'aiChat.quickActions.assessGeneral.prompt',
-                  'What are best practices for conducting a digital maturity assessment?'
-                ),
-          },
-          {
-            id: 'assess-gaps',
-            text: t('aiChat.quickActions.identifyGaps.label', 'Identify gaps'),
-            prompt: t(
-              'aiChat.quickActions.identifyGaps.prompt',
-              'What are the biggest gaps in our digital maturity and how should we prioritize closing them?'
-            ),
-          }
-        );
-        break;
-      case 'initiative':
-        contextSuggestions.push(
-          {
-            id: 'init-prioritize',
-            text: t('aiChat.quickActions.prioritize.label', 'Prioritize initiatives'),
-            prompt: t(
-              'aiChat.quickActions.prioritize.prompt',
-              'Help me prioritize the current initiatives by impact and feasibility'
-            ),
-          },
-          {
-            id: 'init-risks',
-            text: t('aiChat.quickActions.risks.label', 'Risk analysis'),
-            prompt: t(
-              'aiChat.quickActions.risks.prompt',
-              'What are the main risks for our active initiatives and how should we mitigate them?'
-            ),
-          }
-        );
-        break;
-      case 'roadmap':
-        contextSuggestions.push(
-          {
-            id: 'road-timeline',
-            text: t('aiChat.quickActions.timeline.label', 'Review timeline'),
-            prompt: t(
-              'aiChat.quickActions.timeline.prompt',
-              'Review our transformation roadmap timeline — are we on track?'
-            ),
-          },
-          {
-            id: 'road-deps',
-            text: t('aiChat.quickActions.dependencies.label', 'Check dependencies'),
-            prompt: t(
-              'aiChat.quickActions.dependencies.prompt',
-              'Analyze dependencies between our roadmap items and flag potential bottlenecks'
-            ),
-          }
-        );
-        break;
-      case 'task':
-        contextSuggestions.push(
-          {
-            id: 'task-plan',
-            text: t('aiChat.quickActions.planWeek.label', 'Plan the week'),
-            prompt: t(
-              'aiChat.quickActions.planWeek.prompt',
-              'Help me plan priorities for the next week'
-            ),
-          },
-          {
-            id: 'task-blockers',
-            text: t('aiChat.quickActions.blockers.label', 'Unblock me'),
-            prompt: t(
-              'aiChat.quickActions.blockers.prompt',
-              'I am blocked — help me find solutions for my current blockers'
-            ),
-          }
-        );
-        break;
-      case 'report':
-        contextSuggestions.push(
-          {
-            id: 'report-summary',
-            text: t('aiChat.quickActions.reportSummary.label', 'Summarize report'),
-            prompt: t(
-              'aiChat.quickActions.reportSummary.prompt',
-              'Summarize the key findings and action items from the current report'
-            ),
-          },
-          {
-            id: 'report-exec',
-            text: t('aiChat.quickActions.execSummary.label', 'Executive summary'),
-            prompt: t(
-              'aiChat.quickActions.execSummary.prompt',
-              'Write a concise executive summary for stakeholder communication'
-            ),
-          }
-        );
-        break;
-      case 'dashboard':
-        contextSuggestions.push(
-          {
-            id: 'dash-summary',
-            text: t('aiChat.quickActions.daySummary.label', 'Podsumuj mój dzień'),
-            prompt: t(
-              'aiChat.quickActions.daySummary.prompt',
-              'Podsumuj mój dzień — co wymaga mojej uwagi, jakie mam blokery i co powinienem zrobić?'
-            ),
-          },
-          {
-            id: 'dash-next',
-            text: t('aiChat.quickActions.nextSteps.label', 'Kolejne kroki'),
-            prompt: t(
-              'aiChat.quickActions.nextSteps.prompt',
-              'Jakie powinny być moje kolejne kroki na podstawie obecnego stanu projektów?'
-            ),
-          }
-        );
-        break;
-      case 'economics':
-      case 'financial':
-        contextSuggestions.push(
-          {
-            id: 'econ-roi',
-            text: t('aiChat.quickActions.roiAnalysis.label', 'Analiza ROI'),
-            prompt: t(
-              'aiChat.quickActions.roiAnalysis.prompt',
-              'Przeanalizuj ROI naszego portfela inicjatyw — który scenariusz jest najbardziej realistyczny?'
-            ),
-          },
-          {
-            id: 'econ-compare',
-            text: t('aiChat.quickActions.compareScenarios.label', 'Porównaj scenariusze'),
-            prompt: t(
-              'aiChat.quickActions.compareScenarios.prompt',
-              'Porównaj scenariusze finansowe (bazowy, optymistyczny, pesymistyczny) i zarekomenduj działania.'
-            ),
-          }
-        );
-        break;
-      case 'admin':
-      case 'admin_dashboard':
-        contextSuggestions.push(
-          {
-            id: 'admin-usage',
-            text: t('aiChat.quickActions.usageMetrics.label', 'Metryki użycia'),
-            prompt: t(
-              'aiChat.quickActions.usageMetrics.prompt',
-              'Pokaż mi kluczowe metryki użycia platformy — aktywność użytkowników, trendy, adoption rate.'
-            ),
-          },
-          {
-            id: 'admin-optimize',
-            text: t('aiChat.quickActions.optimize.label', 'Optymalizuj koszty'),
-            prompt: t(
-              'aiChat.quickActions.optimize.prompt',
-              'Jakie mam możliwości optymalizacji kosztów i usage w organizacji?'
-            ),
-          }
-        );
-        break;
-      case 'context_builder':
-        contextSuggestions.push(
-          {
-            id: 'ctx-fill',
-            text: t('aiChat.quickActions.helpFill.label', 'Pomóż wypełnić profil'),
-            prompt: t(
-              'aiChat.quickActions.helpFill.prompt',
-              'Pomóż mi wypełnić profil organizacji — zadawaj pytania a ja odpowiem.'
-            ),
-          },
-          {
-            id: 'ctx-challenge',
-            text: t('aiChat.quickActions.challengeGoals.label', 'Ocena celów'),
-            prompt: t(
-              'aiChat.quickActions.challengeGoals.prompt',
-              'Oceń moje cele strategiczne — czy są SMART? Co powinienem zmienić?'
-            ),
-          }
-        );
-        break;
-      case 'decision':
-        contextSuggestions.push(
-          {
-            id: 'dec-analyze',
-            text: t('aiChat.quickActions.analyzeDecision.label', 'Analizuj opcje'),
-            prompt: t(
-              'aiChat.quickActions.analyzeDecision.prompt',
-              'Przeanalizuj opcje tej decyzji — jakie są za i przeciw każdej opcji?'
-            ),
-          },
-          {
-            id: 'dec-recommend',
-            text: t('aiChat.quickActions.recommend.label', 'Rekomendacja'),
-            prompt: t(
-              'aiChat.quickActions.recommend.prompt',
-              'Na podstawie kontekstu projektu, którą opcję rekomendujesz i dlaczego?'
-            ),
-          }
-        );
-        break;
-      default:
-        // Generic suggestions
-        contextSuggestions.push(
-          {
-            id: 'week',
-            text: t('aiChat.quickActions.planWeek.label', 'Plan the week'),
-            prompt: t(
-              'aiChat.quickActions.planWeek.prompt',
-              'Help me plan priorities for the next week'
-            ),
-          },
-          {
-            id: 'overview',
-            text: t('aiChat.quickActions.overview.label', 'Przegląd sytuacji'),
-            prompt: t(
-              'aiChat.quickActions.overview.prompt',
-              'Daj mi przegląd obecnej sytuacji — co idzie dobrze, co wymaga uwagi?'
-            ),
-          }
-        );
-    }
-
-    // Universal pool of suggestions (~20) for rotation (C2.1)
-    const universalPool: Array<{ id: string; text: string; prompt: string }> = [
-      {
-        id: 'u-strategy',
-        text: t('aiChat.pool.strategy', 'Analiza strategii'),
-        prompt: t(
-          'aiChat.pool.strategyPrompt',
-          'Przeanalizuj naszą obecną strategię transformacji — co działa, a co wymaga korekty?'
-        ),
-      },
-      {
-        id: 'u-risks',
-        text: t('aiChat.pool.risks', 'Mapa ryzyk'),
-        prompt: t(
-          'aiChat.pool.risksPrompt',
-          'Jakie są najważniejsze ryzyka w naszym portfelu i jak je mitygować?'
-        ),
-      },
-      {
-        id: 'u-kpi',
-        text: t('aiChat.pool.kpi', 'Przegląd KPI'),
-        prompt: t('aiChat.pool.kpiPrompt', 'Pokaż mi przegląd kluczowych KPI — co wymaga uwagi?'),
-      },
-      {
-        id: 'u-blockers',
-        text: t('aiChat.pool.blockers', 'Blokery'),
-        prompt: t(
-          'aiChat.pool.blockersPrompt',
-          'Jakie blokery mam w moich zadaniach i jak je rozwiązać?'
-        ),
-      },
-      {
-        id: 'u-priorities',
-        text: t('aiChat.pool.priorities', 'Priorytety tygodnia'),
-        prompt: t('aiChat.pool.prioritiesPrompt', 'Pomóż mi ustalić priorytety na ten tydzień.'),
-      },
-      {
-        id: 'u-stakeholders',
-        text: t('aiChat.pool.stakeholders', 'Komunikacja ze stakeholderami'),
-        prompt: t(
-          'aiChat.pool.stakeholdersPrompt',
-          'Przygotuj podsumowanie postępów dla stakeholderów.'
-        ),
-      },
-      {
-        id: 'u-budget',
-        text: t('aiChat.pool.budget', 'Analiza budżetu'),
-        prompt: t(
-          'aiChat.pool.budgetPrompt',
-          'Przeanalizuj wykorzystanie budżetu w naszych inicjatywach.'
-        ),
-      },
-      {
-        id: 'u-timeline',
-        text: t('aiChat.pool.timeline', 'Harmonogram'),
-        prompt: t(
-          'aiChat.pool.timelinePrompt',
-          'Czy jesteśmy na dobrej drodze z harmonogramem? Pokaż opóźnienia.'
-        ),
-      },
-      {
-        id: 'u-team',
-        text: t('aiChat.pool.team', 'Obciążenie zespołu'),
-        prompt: t(
-          'aiChat.pool.teamPrompt',
-          'Jak wygląda obciążenie zespołu? Kto jest przeciążony?'
-        ),
-      },
-      {
-        id: 'u-maturity',
-        text: t('aiChat.pool.maturity', 'Dojrzałość cyfrowa'),
-        prompt: t(
-          'aiChat.pool.maturityPrompt',
-          'Jakie są nasze największe luki w dojrzałości cyfrowej?'
-        ),
-      },
-      {
-        id: 'u-roi',
-        text: t('aiChat.pool.roi', 'Analiza ROI'),
-        prompt: t('aiChat.pool.roiPrompt', 'Przeanalizuj ROI naszych top 5 inicjatyw.'),
-      },
-      {
-        id: 'u-decisions',
-        text: t('aiChat.pool.decisions', 'Oczekujące decyzje'),
-        prompt: t(
-          'aiChat.pool.decisionsPrompt',
-          'Jakie decyzje czekają na mnie i które są najpilniejsze?'
-        ),
-      },
-      {
-        id: 'u-benchmark',
-        text: t('aiChat.pool.benchmark', 'Benchmark branżowy'),
-        prompt: t(
-          'aiChat.pool.benchmarkPrompt',
-          'Jak wypadamy na tle branży w kluczowych obszarach?'
-        ),
-      },
-      {
-        id: 'u-quick-wins',
-        text: t('aiChat.pool.quickWins', 'Quick wins'),
-        prompt: t(
-          'aiChat.pool.quickWinsPrompt',
-          'Jakie quick wins możemy zrealizować w najbliższych 2 tygodniach?'
-        ),
-      },
-      {
-        id: 'u-lessons',
-        text: t('aiChat.pool.lessons', 'Lessons learned'),
-        prompt: t(
-          'aiChat.pool.lessonsPrompt',
-          'Jakie wnioski wyciągnęliśmy z ostatnich projektów?'
-        ),
-      },
-      {
-        id: 'u-innovation',
-        text: t('aiChat.pool.innovation', 'Pomysły na innowacje'),
-        prompt: t(
-          'aiChat.pool.innovationPrompt',
-          'Zaproponuj innowacyjne podejścia do naszych obecnych wyzwań.'
-        ),
-      },
-      {
-        id: 'u-change',
-        text: t('aiChat.pool.change', 'Zarządzanie zmianą'),
-        prompt: t(
-          'aiChat.pool.changePrompt',
-          'Jak zarządzać oporem wobec zmian w naszej organizacji?'
-        ),
-      },
-      {
-        id: 'u-report',
-        text: t('aiChat.pool.report', 'Raport tygodniowy'),
-        prompt: t(
-          'aiChat.pool.reportPrompt',
-          'Wygeneruj raport tygodniowy z postępów transformacji.'
-        ),
-      },
-      {
-        id: 'u-dependencies',
-        text: t('aiChat.pool.dependencies', 'Zależności'),
-        prompt: t(
-          'aiChat.pool.dependenciesPrompt',
-          'Pokaż zależności między inicjatywami i potencjalne wąskie gardła.'
-        ),
-      },
-      {
-        id: 'u-next-steps',
-        text: t('aiChat.pool.nextSteps', 'Kolejne kroki'),
-        prompt: t(
-          'aiChat.pool.nextStepsPrompt',
-          'Jakie powinny być moje kolejne kroki na podstawie obecnego stanu?'
-        ),
-      },
-    ];
-
-    // Merge context-specific with universal pool, deduplicate by id
-    const contextIds = new Set(contextSuggestions.map((s) => s.id));
-    const merged = [...contextSuggestions, ...universalPool.filter((s) => !contextIds.has(s.id))];
-
-    // Shuffle using a seed based on the current hour (rotates every hour)
-    const hourSeed = Math.floor(Date.now() / (1000 * 60 * 60));
-    const shuffled = [...merged];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = ((hourSeed * (i + 1) * 2654435761) >>> 0) % (i + 1);
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-
-    // Always keep Daily Brief first, then pick 3 more from shuffled pool
-    const dailyBrief = contextSuggestions.find((s) => s.id === 'brief');
-    const rest = shuffled.filter((s) => s.id !== 'brief');
-    const minimalSuggestions = dailyBrief ? [dailyBrief, ...rest.slice(0, 3)] : rest.slice(0, 4);
+    const pool = minimalPool.length ? minimalPool : [];
+    const visibleCount = Math.min(4, pool.length);
+    const idx = minimalVisibleIdx.slice(0, visibleCount);
+    const minimalSuggestions = idx.map((i) => pool[i]).filter(Boolean);
 
     return (
-      <div className={`flex flex-wrap items-center justify-center gap-2 ${className}`}>
-        {minimalSuggestions.map((item) => (
+      <div
+        className={`w-full max-w-5xl mx-auto flex items-center justify-center gap-2 ${className}`}
+      >
+        {minimalSuggestions.map((item, i) => (
           <button
             key={item.id}
             onClick={() => handleMinimalClick(item.prompt)}
-            className="
-              px-3 py-1.5 text-xs
-              rounded-full
-              border border-slate-200/70 dark:border-navy-700/70
-              bg-white/60 dark:bg-navy-900/40
-              text-slate-600 dark:text-slate-400
-              hover:text-primary-600 dark:hover:text-primary-400
-              hover:border-primary-300 dark:hover:border-primary-700
-              hover:bg-primary-50/50 dark:hover:bg-primary-900/20
-              transition-all duration-200
-              backdrop-blur-sm
-            "
+            title={item.text}
+            className={`min-w-0 max-w-[calc(25%-0.5rem)] px-3 py-1.5 text-[11px] rounded-full border border-slate-200/70 dark:border-navy-700/70 bg-white/60 dark:bg-navy-900/40 text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/50 dark:hover:bg-primary-900/20 transition-all duration-200 backdrop-blur-sm ${
+              minimalFadeSlot === i ? 'opacity-0' : 'opacity-100'
+            }`}
           >
-            {item.text}
+            <span className="block min-w-0 truncate">{item.text}</span>
           </button>
         ))}
       </div>

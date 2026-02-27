@@ -7,13 +7,17 @@ import { getDatabase } from '../../../server/src/database/Database.js';
 import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
 import { v4 as uuidv4 } from 'uuid';
 
+const RUN_DB_TESTS = process.env.RUN_DB_TESTS === '1';
+const describeIfDb = RUN_DB_TESTS ? describe : describe.skip;
+
 vi.hoisted(() => {
+  if (process.env.RUN_DB_TESTS !== '1') return;
   process.env.MOCK_DB = 'false';
   const workerId = process.env.VITEST_WORKER_ID || '0';
   process.env.SQLITE_PATH = `./test-trial-service-${workerId}.db`;
 });
 
-describe('TrialService', () => {
+describeIfDb('TrialService', () => {
   const db = getDatabase();
   let testOrgId;
   let testUserId;

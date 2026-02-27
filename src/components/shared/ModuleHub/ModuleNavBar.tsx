@@ -82,9 +82,32 @@ interface ModuleNavBarProps {
   rightControls?: React.ReactNode;
 }
 
-// Shared button styles for consistency
+/**
+ * V3-A03: 3-level button system (visual-language.md 8.3)
+ * Level A — Pill / Outline + Surface: main tabs, important chips
+ * Level B — Pill / Soft: helper actions, view toggles
+ * Level C — Ghost / Text: link-like, per-row actions
+ */
+const TAB_BASE = `
+  inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-sm font-medium
+  transition-colors duration-150
+`;
+
+const TAB_INACTIVE = `
+  ${TAB_BASE}
+  border border-slate-200 dark:border-navy-700
+  text-slate-700 dark:text-slate-300
+  hover:bg-slate-100/70 dark:hover:bg-white/[0.05]
+`;
+
+const TAB_ACTIVE = `
+  ${TAB_BASE}
+  border border-primary-500/40
+  bg-primary-500/10 text-slate-900 dark:text-slate-100
+`;
+
 const BUTTON_BASE = `
-  inline-flex items-center gap-2 h-9 px-3 rounded-lg text-sm font-medium
+  inline-flex items-center gap-2 h-9 px-3 rounded-full text-sm font-medium
   transition-colors duration-150
 `;
 
@@ -136,15 +159,22 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
     }
   }, [showSearch]);
 
-  // View mode icons and labels
+  /**
+   * V3-A03: Canonical view-mode order (MUST):
+   * table → kanban → timeline → calendar → matrix → grid
+   */
+  const VIEW_MODE_ORDER: ViewMode[] = ['table', 'kanban', 'timeline', 'calendar', 'matrix', 'grid'];
+
   const viewModeConfig: Record<ViewMode, { icon: React.ReactNode; label: string }> = {
     table: { icon: <List size={16} />, label: 'Table' },
-    grid: { icon: <Grid3X3 size={16} />, label: 'Grid' },
     kanban: { icon: <Kanban size={16} />, label: 'Kanban' },
     timeline: { icon: <Calendar size={16} />, label: 'Timeline' },
     calendar: { icon: <CalendarDays size={16} />, label: 'Calendar' },
     matrix: { icon: <LayoutGrid size={16} />, label: 'Matrix' },
+    grid: { icon: <Grid3X3 size={16} />, label: 'Grid' },
   };
+
+  const orderedViewModes = VIEW_MODE_ORDER.filter((m) => availableViewModes.includes(m));
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -176,22 +206,22 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             <Search size={18} />
           </button>
 
-          {/* Main Tabs - bordered style like category buttons */}
-          <div className="flex items-center gap-2">
+          {/* Main Tabs — V3-A03: Level A pill (rounded-full) */}
+          <div className="flex items-center gap-1.5">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => onTabChange(tab.id)}
-                  className={isActive ? BUTTON_ACTIVE : BUTTON_INACTIVE}
+                  className={isActive ? TAB_ACTIVE : TAB_INACTIVE}
                 >
                   {tab.icon}
                   <span>{tab.label}</span>
                   {tab.count !== undefined && (
                     <span
                       className={`
-                      px-1.5 py-0.5 text-xs rounded-full
+                      px-1.5 py-0.5 text-[11px] rounded-full
                       ${
                         isActive
                           ? 'bg-primary-500/30 text-primary-600 dark:text-primary-300'
@@ -261,10 +291,10 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
         {/* Right: View Toggle + Actions */}
         <div className="flex items-center gap-3">
           {rightControls}
-          {/* View Mode Toggle - supports 2-5 modes */}
-          {availableViewModes.length > 1 && (
-            <div className="flex items-center bg-slate-50 dark:bg-navy-950/70 border border-slate-200/60 dark:border-white/5 rounded-lg p-1 h-9">
-              {availableViewModes.map((mode) => {
+          {/* View Mode Toggle — V3-A03: canonical order */}
+          {orderedViewModes.length > 1 && (
+            <div className="flex items-center bg-slate-50 dark:bg-navy-950/70 border border-slate-200/60 dark:border-white/5 rounded-full p-1 h-9">
+              {orderedViewModes.map((mode) => {
                 const config = viewModeConfig[mode];
                 const isActive = viewMode === mode;
                 return (
@@ -306,11 +336,10 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
               ))}
             </div>
           ) : onNewItem ? (
-            // Assessment: Single "New" button - gradient style
             <button
               onClick={onNewItem}
               className="
-                inline-flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-medium
+                inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium
                 bg-hig-primary text-white
                 hover:bg-hig-primary-hover
                 transition-colors duration-150

@@ -26,20 +26,16 @@ import {
   ChevronRight,
   Clock,
   Copy,
-  DollarSign,
   Download,
   Edit3,
   FileText,
   Link2,
   Loader2,
   MessageSquare,
-  Monitor,
   Paperclip,
-  Plus,
   RefreshCw,
   Save,
   Send,
-  Settings,
   Sparkles,
   Target,
   Users,
@@ -49,9 +45,19 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Callout } from '@/components/shared/NModeBlocks';
+import {
+  type NModeAction,
+  type NModePropertyField,
+  type NModeSection,
+  NModeSectionWrapper,
+  NModeShell,
+} from '@/components/shared/NModeLayout';
 import { Api } from '@/services/api';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
+import { buildArtifactCode } from '@/utils/artifactLinks';
 
 import {
   type Attachment,
@@ -59,6 +65,7 @@ import {
   type LinkedItem,
   LinkedItemsSection,
 } from '../MyWork/shared';
+import { AttachmentsLinksCanvas } from '../shared/NModeSections';
 import {
   CATEGORY_CONFIG,
   CATEGORY_ORDER,
@@ -69,6 +76,7 @@ import { CompanyProfile, KeyMetric, OpenGap, Stakeholder } from './CompanyFactsP
 import { EvidencePanel, InterviewEvidence } from './EvidencePanel';
 import { InterviewNote, NotesPanel } from './NotesPanel';
 import { InterviewQuestion, QuestionsList } from './QuestionsList';
+import { RuntimeMode, RuntimeModeSelector } from './RuntimeModeSelector';
 
 // ==========================================
 // TYPES
@@ -134,9 +142,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const [notes, setNotes] = useState<InterviewNote[]>([]);
   const [evidence, setEvidence] = useState<InterviewEvidence[]>([]);
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile>({});
-  const [keyMetrics, setKeyMetrics] = useState<KeyMetric[]>([]);
-  const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
-  const [openGaps, setOpenGaps] = useState<OpenGap[]>([]);
+  const [stakeholders] = useState<Stakeholder[]>([]);
+  const [openGaps] = useState<OpenGap[]>([]);
   const [summaryData, setSummaryData] = useState<SummaryData>({
     facts: [],
     gaps: [],
@@ -172,7 +179,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   // Domyślnie nie wybieramy żadnej kategorii - użytkownik sam zdecyduje
   const [activeCategory, setActiveCategory] = useState<InterviewCategory | undefined>(undefined);
+  const [runtimeMode, setRuntimeMode] = useState<RuntimeMode>('task_list');
   const questionsTopRef = useRef<HTMLDivElement | null>(null);
+
+  // N-mode: active section in the left nav
+  const [activeSection, setActiveSection] = useState<string>('overview');
 
   // Nie auto-wybieraj kategorii - użytkownik sam zdecyduje, co otworzyć
   // useEffect(() => {
@@ -208,8 +219,6 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const answeredQuestions = categoryProgress.reduce((sum, p) => sum + p.answeredQuestions, 0);
   const overallPercent =
     totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
-  const completedCategories = categoryProgress.filter((p) => p.isComplete).length;
-
   const activeCategoryConfig = activeCategory ? CATEGORY_CONFIG[activeCategory] : undefined;
   const ActiveCategoryIcon = activeCategoryConfig?.icon || FileText;
   const activeCategoryProgress = activeCategory
@@ -338,9 +347,53 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     [session, isPolish]
   );
 
+  const handleRuntimeModeSelect = useCallback(
+    (nextMode: RuntimeMode) => {
+      const previous = runtimeMode;
+      setRuntimeMode(nextMode);
+
+      trackFunnelEvent('interview_runtime_mode_selected', {
+        mode: nextMode,
+        templateId: session?.id || null,
+      });
+
+      if (previous !== nextMode) {
+        trackFunnelEvent('interview_runtime_mode_changed', {
+          mode: nextMode,
+          previousMode: previous,
+          templateId: session?.id || null,
+        });
+      }
+    },
+    [runtimeMode, session?.id]
+  );
+
   // ==========================================
   // EFFECTS
   // ==========================================
+
+  useEffect(() => {
+    const runtimeKey = `interview_runtime_mode:${session?.id || initialSessionId || 'new'}`;
+    try {
+      const saved = window.localStorage.getItem(runtimeKey);
+      if (saved === 'single_question' || saved === 'task_list') {
+        setRuntimeMode(saved);
+      } else {
+        setRuntimeMode('task_list');
+      }
+    } catch {
+      setRuntimeMode('task_list');
+    }
+  }, [initialSessionId, session?.id]);
+
+  useEffect(() => {
+    const runtimeKey = `interview_runtime_mode:${session?.id || initialSessionId || 'new'}`;
+    try {
+      window.localStorage.setItem(runtimeKey, runtimeMode);
+    } catch {
+      // ignore persistence errors
+    }
+  }, [initialSessionId, runtimeMode, session?.id]);
 
   // Load session data
   useEffect(() => {
@@ -409,7 +462,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
           if (contextRes && typeof contextRes === 'object') {
             const ctx = contextRes as Record<string, unknown>;
-            const profile = (ctx.companyProfile as CompanyProfile) || {};
+            const profile: CompanyProfile = {
+              name: (ctx.companyName as string) || undefined,
+              industry: (ctx.industry as string) || undefined,
+              size: (ctx.companySize as string) || undefined,
+              location: (ctx.location as string) || undefined,
+              employees: (ctx.employeeCount as number) || undefined,
+              revenue: (ctx.annualRevenue as string) || undefined,
+            };
             setCompanyProfile(profile);
             setEditedProfile(profile);
           }
@@ -622,7 +682,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     setIsSaving(true);
 
     try {
-      await Api.put('/interview/context', { companyProfile: editedProfile });
+      await Api.put('/interview/context', {
+        companyName: editedProfile.name,
+        industry: editedProfile.industry,
+        companySize: editedProfile.size,
+        location: editedProfile.location,
+        employeeCount: editedProfile.employees,
+        annualRevenue: editedProfile.revenue,
+      });
       setCompanyProfile(editedProfile);
       setIsEditingProfile(false);
       toast.success(isPolish ? 'Profil zapisany' : 'Profile saved');
@@ -642,6 +709,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     try {
       await Api.patch(`/interview/sessions/${session.id}`, { name: sessionName });
       toast.success(isPolish ? 'Zapisano' : 'Saved');
+      // Keep local session state in sync (used for isDirty and title)
+      setSession((prev) => (prev ? { ...prev, name: sessionName } : prev));
     } catch (error) {
       console.error('[InterviewWorkspace] Failed to save:', error);
       toast.error(isPolish ? 'Nie udało się zapisać' : 'Failed to save');
@@ -663,6 +732,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           const first = missing[0];
           if (first?.category) {
             setActiveCategory(first.category as InterviewCategory);
+            setActiveSection('questions');
             requestAnimationFrame(() => {
               questionsTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
@@ -922,6 +992,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         <QuestionsList
           questions={questions}
           category={category}
+          runtimeMode={runtimeMode}
           onUpdateQuestion={handleUpdateQuestion}
           onAddQuestion={handleAddQuestion}
           readOnly={isLocked}
@@ -951,7 +1022,542 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   // MAIN RENDER
   // ==========================================
 
-  return (
+  const isDirty = Boolean(session) && sessionName !== (session?.name || '');
+
+  const handleNextMissing = () => {
+    const first = questions.find((q) => q.status !== 'answered');
+    if (first?.category) {
+      setActiveCategory(first.category as InterviewCategory);
+      setActiveSection('questions');
+      requestAnimationFrame(() => {
+        questionsTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  };
+
+  const properties: NModePropertyField[] = (() => {
+    const templateName =
+      (assignmentInfo as any)?.template?.name || (session as any)?.templateName || '-';
+    const assignee =
+      (assignmentInfo as any)?.assignee?.name ||
+      (assignmentInfo as any)?.assigneeName ||
+      currentUser?.displayName ||
+      '-';
+    const dueAt = (assignmentInfo as any)?.dueAt ? String((assignmentInfo as any)?.dueAt) : '';
+    const dueDateOnly = dueAt ? new Date(dueAt).toISOString().slice(0, 10) : '';
+
+    return [
+      {
+        id: 'template',
+        label: { en: 'Template', pl: 'Szablon' },
+        type: 'text',
+        value: String(templateName || '-'),
+        onChange: () => {},
+        readOnly: true,
+      },
+      {
+        id: 'assignee',
+        label: { en: 'Assignee', pl: 'Przypisany' },
+        type: 'text',
+        value: String(assignee || '-'),
+        onChange: () => {},
+        readOnly: true,
+      },
+      {
+        id: 'due',
+        label: { en: 'Due', pl: 'Termin' },
+        type: 'date',
+        value: dueDateOnly,
+        onChange: () => {},
+        readOnly: true,
+      },
+      {
+        id: 'progress',
+        label: { en: 'Progress', pl: 'Postęp' },
+        type: 'text',
+        value: `${overallPercent}% (${answeredQuestions}/${totalQuestions})`,
+        onChange: () => {},
+        readOnly: true,
+      },
+      {
+        id: 'locked',
+        label: { en: 'Editable', pl: 'Edycja' },
+        type: 'text',
+        value: isLocked ? (isPolish ? 'Zablokowane' : 'Locked') : isPolish ? 'Aktywne' : 'Active',
+        onChange: () => {},
+        readOnly: true,
+      },
+      {
+        id: 'lastActivity',
+        label: { en: 'Last activity', pl: 'Aktywność' },
+        type: 'text',
+        value: session?.lastActivityAt
+          ? new Date(session.lastActivityAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')
+          : '-',
+        onChange: () => {},
+        readOnly: true,
+      },
+    ];
+  })();
+
+  const actions: NModeAction[] = (() => {
+    const out: NModeAction[] = [];
+
+    if (!isLocked) {
+      if (allowedTransitions.length > 0) {
+        for (const t of allowedTransitions) {
+          out.push({
+            id: `transition-${t.status}`,
+            label: t.label,
+            icon:
+              t.status === 'accepted'
+                ? Check
+                : t.status === 'rejected'
+                  ? X
+                  : t.status === 'review'
+                    ? Send
+                    : RefreshCw,
+            variant:
+              t.status === 'rejected' ? 'danger' : t.status === 'accepted' ? 'success' : 'neutral',
+            onClick: () => handleStatusTransition(t.status),
+            disabled: isSaving,
+          });
+        }
+      } else if (isAssignmentMode) {
+        out.push({
+          id: 'submit',
+          label: { en: 'Submit for review', pl: 'Wyślij do przeglądu' },
+          icon: Send,
+          variant: 'success',
+          onClick: () => handleSubmitSession(),
+          disabled: isSaving || isLocked,
+        });
+      }
+    }
+
+    out.push({
+      id: 'export-md',
+      label: { en: 'Markdown', pl: 'Markdown' },
+      icon: Download,
+      variant: 'neutral',
+      onClick: handleExportMarkdown,
+    });
+    out.push({
+      id: 'copy',
+      label: { en: 'Copy', pl: 'Kopiuj' },
+      icon: Copy,
+      variant: 'neutral',
+      onClick: handleCopy,
+    });
+
+    return out;
+  })();
+
+  const sections: NModeSection[] = (() => {
+    const overview = (
+      <NModeSectionWrapper heading={{ en: 'Overview', pl: 'Podgląd' }}>
+        <Callout
+          variant={isLocked ? 'info' : 'purple'}
+          title={
+            isLocked
+              ? isPolish
+                ? 'Tryb tylko do odczytu'
+                : 'Read-only'
+              : isPolish
+                ? 'Następny krok'
+                : 'Next action'
+          }
+          action={
+            isLocked
+              ? undefined
+              : {
+                  label: isPolish ? 'Następne brakujące' : 'Next missing',
+                  onClick: handleNextMissing,
+                }
+          }
+          compact
+        >
+          {isPolish
+            ? `Postęp: ${answeredQuestions}/${totalQuestions} (${overallPercent}%).`
+            : `Progress: ${answeredQuestions}/${totalQuestions} (${overallPercent}%).`}
+        </Callout>
+      </NModeSectionWrapper>
+    );
+
+    const questionsSection = (
+      <NModeSectionWrapper heading={{ en: 'Questions', pl: 'Pytania' }}>
+        <div ref={questionsTopRef} />
+        <div className="mb-4 inline-flex items-center gap-2">
+          <button
+            onClick={handleNextMissing}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+          >
+            <ArrowRight size={14} />
+            {isPolish ? 'Następne brakujące' : 'Next missing'}
+          </button>
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            {answeredQuestions}/{totalQuestions}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap gap-2 mb-4">
+          {CATEGORY_ORDER.map((cat) => {
+            const cfg = CATEGORY_CONFIG[cat];
+            const isActive = cat === activeCategory;
+            return (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                  isActive
+                    ? 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300 border-primary-500/30'
+                    : 'bg-white/60 dark:bg-navy-900/40 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-navy-700/60 hover:bg-slate-50/80 dark:hover:bg-navy-800/50'
+                }`}
+              >
+                <cfg.icon size={14} className={isActive ? 'text-primary-500' : 'text-slate-400'} />
+                {isPolish ? cfg.labelPl : cfg.labelEn}
+              </button>
+            );
+          })}
+        </div>
+
+        {activeCategory ? (
+          <QuestionsList
+            questions={questions}
+            category={activeCategory}
+            runtimeMode={runtimeMode}
+            onUpdateQuestion={handleUpdateQuestion}
+            onAddQuestion={handleAddQuestion}
+            readOnly={isLocked}
+          />
+        ) : (
+          <Callout
+            variant="info"
+            title={isPolish ? 'Wybierz sekcję' : 'Pick a section'}
+            compact
+            action={{
+              label: isPolish ? 'Następne brakujące' : 'Next missing',
+              onClick: handleNextMissing,
+            }}
+          >
+            {isPolish
+              ? 'Zacznij od pierwszej brakującej odpowiedzi — poprowadzę Cię przez flow.'
+              : 'Start with the next missing answer — we’ll guide you through the flow.'}
+          </Callout>
+        )}
+      </NModeSectionWrapper>
+    );
+
+    const notesSection = (
+      <NModeSectionWrapper heading={{ en: 'Notes', pl: 'Notatki' }}>
+        <NotesPanel
+          notes={notes}
+          activeCategory={activeCategory}
+          onCreateNote={handleCreateNote}
+          onUpdateNote={handleUpdateNote}
+          onDeleteNote={handleDeleteNote}
+          readOnly={isLocked}
+        />
+      </NModeSectionWrapper>
+    );
+
+    const evidenceSection = (
+      <NModeSectionWrapper heading={{ en: 'Evidence', pl: 'Dowody' }}>
+        <EvidencePanel
+          evidence={evidence}
+          activeCategory={activeCategory}
+          onUploadFile={handleUploadFile}
+          onAddLink={handleAddLink}
+          onDeleteEvidence={handleDeleteEvidence}
+          readOnly={isLocked}
+        />
+      </NModeSectionWrapper>
+    );
+
+    const companyFactsSection = (
+      <NModeSectionWrapper heading={{ en: 'Company facts', pl: 'Fakty o firmie' }}>
+        <div className="space-y-3">
+          {isEditingProfile ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">
+                    {isPolish ? 'Nazwa' : 'Name'}
+                  </label>
+                  <input
+                    type="text"
+                    value={editedProfile.name || ''}
+                    onChange={(e) => setEditedProfile({ ...editedProfile, name: e.target.value })}
+                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-slate-700 dark:text-slate-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">
+                    {isPolish ? 'Branża' : 'Industry'}
+                  </label>
+                  <input
+                    type="text"
+                    value={editedProfile.industry || ''}
+                    onChange={(e) =>
+                      setEditedProfile({ ...editedProfile, industry: e.target.value })
+                    }
+                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-slate-700 dark:text-slate-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">
+                    {isPolish ? 'Wielkość' : 'Size'}
+                  </label>
+                  <input
+                    type="text"
+                    value={editedProfile.size || ''}
+                    onChange={(e) => setEditedProfile({ ...editedProfile, size: e.target.value })}
+                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-slate-700 dark:text-slate-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">
+                    {isPolish ? 'Lokalizacja' : 'Location'}
+                  </label>
+                  <input
+                    type="text"
+                    value={editedProfile.location || ''}
+                    onChange={(e) =>
+                      setEditedProfile({ ...editedProfile, location: e.target.value })
+                    }
+                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-slate-700 dark:text-slate-200"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleUpdateProfile}
+                  disabled={isSaving}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-blue-500/30 text-blue-700 dark:text-blue-300 bg-blue-500/10 hover:bg-blue-500/15 disabled:opacity-50"
+                >
+                  {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  {isPolish ? 'Zapisz' : 'Save'}
+                </button>
+                <button
+                  onClick={() => {
+                    setEditedProfile(companyProfile);
+                    setIsEditingProfile(false);
+                  }}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-700/60 text-slate-600 dark:text-slate-300 bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50"
+                >
+                  <X size={14} />
+                  {isPolish ? 'Anuluj' : 'Cancel'}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-sm text-slate-700 dark:text-slate-200">
+                {companyProfile.name ? (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Building2 size={14} className="text-slate-400" /> {companyProfile.name}
+                    </div>
+                    {companyProfile.industry && (
+                      <div className="text-xs text-slate-500">{companyProfile.industry}</div>
+                    )}
+                    {companyProfile.location && (
+                      <div className="text-xs text-slate-500">{companyProfile.location}</div>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-slate-400">
+                    {isPolish ? 'Brak danych firmy' : 'No company data yet'}
+                  </span>
+                )}
+              </div>
+              {!isLocked && (
+                <button
+                  onClick={() => setIsEditingProfile(true)}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-700/60 text-slate-600 dark:text-slate-300 bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50"
+                >
+                  <Edit3 size={14} />
+                  {isPolish ? 'Edytuj' : 'Edit'}
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      </NModeSectionWrapper>
+    );
+
+    const stakeholdersSection = (
+      <NModeSectionWrapper
+        heading={{ en: 'Stakeholders', pl: 'Interesariusze' }}
+        isEmpty={stakeholders.length === 0}
+        emptyState={{
+          icon: Users,
+          message: { en: 'No stakeholders yet.', pl: 'Brak interesariuszy.' },
+        }}
+      >
+        <div className="space-y-2">
+          {stakeholders.map((s) => (
+            <div
+              key={s.id}
+              className="flex items-center gap-3 p-2 rounded-xl bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60"
+            >
+              <div className="w-8 h-8 rounded-full bg-cyan-500/15 flex items-center justify-center">
+                <Users size={14} className="text-cyan-500" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+                  {s.name}
+                </div>
+                <div className="text-xs text-slate-500 truncate">{s.role}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </NModeSectionWrapper>
+    );
+
+    const gapsSection = (
+      <NModeSectionWrapper
+        heading={{ en: 'Open gaps', pl: 'Luki informacyjne' }}
+        isEmpty={openGaps.length === 0}
+        emptyState={{
+          icon: AlertTriangle,
+          message: { en: 'No gaps identified.', pl: 'Brak zidentyfikowanych luk.' },
+        }}
+      >
+        <div className="space-y-2">
+          {openGaps.map((gap) => (
+            <div
+              key={gap.id}
+              className={`p-3 rounded-xl border ${
+                gap.priority === 'high'
+                  ? 'border-red-500/20 bg-red-500/5 dark:bg-red-500/10'
+                  : gap.priority === 'medium'
+                    ? 'border-amber-500/20 bg-amber-500/5 dark:bg-amber-500/10'
+                    : 'border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-900/40'
+              }`}
+            >
+              <div className="text-sm text-slate-700 dark:text-slate-200">{gap.description}</div>
+              <div className="text-xs text-slate-500 mt-1">{gap.category}</div>
+            </div>
+          ))}
+        </div>
+      </NModeSectionWrapper>
+    );
+
+    const attachmentsLinksSection = (
+      <NModeSectionWrapper heading={{ en: 'Attachments & links', pl: 'Załączniki i linki' }}>
+        <AttachmentsLinksCanvas
+          attachments={attachments}
+          onUploadAttachments={handleUploadAttachment}
+          onDeleteAttachment={handleDeleteAttachment}
+          linkedItems={linkedItems}
+          onAddLinkedItem={handleAddLinkedItem}
+          onRemoveLinkedItem={(item) => handleRemoveLinkedItem(item.id)}
+          searchLinkedItems={(q) => searchLinkedItems(q) as any}
+          readOnly={isLocked}
+        />
+      </NModeSectionWrapper>
+    );
+
+    const base: NModeSection[] = [
+      {
+        id: 'overview',
+        icon: BarChart3,
+        label: { en: 'Overview', pl: 'Podgląd' },
+        component: overview,
+      },
+      {
+        id: 'questions',
+        icon: FileText,
+        label: { en: 'Questions', pl: 'Pytania' },
+        badge: questions.filter((q) => q.status !== 'answered').length,
+        component: questionsSection,
+      },
+      {
+        id: 'notes',
+        icon: FileText,
+        label: { en: 'Notes', pl: 'Notatki' },
+        badge: notes.length,
+        component: notesSection,
+      },
+      {
+        id: 'evidence',
+        icon: Paperclip,
+        label: { en: 'Evidence', pl: 'Dowody' },
+        badge: evidence.length,
+        component: evidenceSection,
+      },
+      {
+        id: 'company-facts',
+        icon: Building2,
+        label: { en: 'Company facts', pl: 'Fakty' },
+        component: companyFactsSection,
+      },
+      {
+        id: 'stakeholders',
+        icon: Users,
+        label: { en: 'Stakeholders', pl: 'Interesariusze' },
+        badge: stakeholders.length,
+        component: stakeholdersSection,
+      },
+      {
+        id: 'open-gaps',
+        icon: AlertTriangle,
+        label: { en: 'Open gaps', pl: 'Luki' },
+        badge: openGaps.length,
+        component: gapsSection,
+      },
+      {
+        id: 'attachments-links',
+        icon: Link2,
+        label: { en: 'Links', pl: 'Linki' },
+        component: attachmentsLinksSection,
+      },
+    ];
+
+    if (!isAssignmentMode) {
+      base.push({
+        id: 'summary',
+        icon: Sparkles,
+        label: { en: 'Summary', pl: 'Podsumowanie' },
+        component: (
+          <NModeSectionWrapper
+            heading={{ en: 'Summary (facts only)', pl: 'Podsumowanie (tylko fakty)' }}
+          >
+            <Callout variant="warning" title={isPolish ? 'Tylko fakty' : 'Facts only'} compact>
+              {isPolish
+                ? 'Bez rekomendacji i planów działań.'
+                : 'No recommendations or action plans.'}
+            </Callout>
+            <div className="mt-4 space-y-3">
+              {summaryData.facts.length > 0 ? (
+                <ul className="space-y-2">
+                  {summaryData.facts.map((f, idx) => (
+                    <li
+                      key={idx}
+                      className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300"
+                    >
+                      <Check size={14} className="text-emerald-500 mt-0.5" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-sm text-slate-400">
+                  {isPolish ? 'Brak faktów' : 'No facts yet'}
+                </div>
+              )}
+            </div>
+          </NModeSectionWrapper>
+        ),
+      });
+    }
+
+    return base;
+  })();
+
+  const legacyRender = (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
       {/* ==========================================
           FULL-WIDTH HEADER
@@ -1251,6 +1857,15 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           <div className="lg:col-span-6 space-y-5 order-2">
             <div ref={questionsTopRef} />
 
+            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden p-4">
+              <RuntimeModeSelector
+                currentMode={runtimeMode}
+                recommendedMode="task_list"
+                onModeSelect={handleRuntimeModeSelect}
+                locked={isLocked}
+              />
+            </div>
+
             {activeCategory && activeCategoryConfig ? (
               <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
@@ -1284,6 +1899,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   <QuestionsList
                     questions={questions}
                     category={activeCategory}
+                    runtimeMode={runtimeMode}
                     onUpdateQuestion={handleUpdateQuestion}
                     onAddQuestion={handleAddQuestion}
                     readOnly={isLocked}
@@ -1886,6 +2502,36 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         </div>
       </div>
     </div>
+  );
+
+  return (
+    <NModeShell
+      header={{
+        title: sessionName,
+        onTitleChange: setSessionName,
+        titlePlaceholder: { en: 'Session name...', pl: 'Nazwa sesji...' },
+        artifactId: session?.id,
+        artifactType: 'tool',
+        onSave: handleSave,
+        saving: isSaving,
+        isDirty,
+        onChat: handleOpenChat,
+        onClose: onClose || (() => {}),
+        statusDotColor: statusConfig.color,
+      }}
+      properties={properties}
+      sections={sections}
+      actions={actions}
+      actionsVisible={actions.length > 0}
+      activeSection={activeSection}
+      onSectionChange={setActiveSection}
+      presentationMode="n"
+      onPresentationModeChange={() => {}}
+      showModeSwitcher={false}
+      buildArtifactCode={(type, id) => buildArtifactCode(type as any, id)}
+    >
+      <div />
+    </NModeShell>
   );
 };
 

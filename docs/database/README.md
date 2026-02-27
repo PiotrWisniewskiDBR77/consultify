@@ -48,9 +48,11 @@ Expected: `{"status":"healthy",...}`
 
 ---
 
-## Dev Troubleshooting (SQLite)
+## Dev Troubleshooting (legacy local SQLite)
 
-Jeśli w trybie dev widzisz losowe `HTTP 500` oraz w logach backendu pojawiają się błędy typu:
+Produkcyjnie (V3) wspieramy **Postgres** (Railway) jako źródło prawdy. SQLite może pojawiać się jedynie w starych skryptach seed/test i nie jest wspieranym trybem uruchomieniowym backendu.
+
+Jeśli mimo to w trybie dev widzisz losowe `HTTP 500` oraz w logach backendu pojawiają się błędy typu:
 
 - `SQLITE_ERROR: table activity_logs has no column named ...`
 
@@ -120,7 +122,7 @@ npm run db:metrics              # Database metrics
 npm run db:slow-queries         # Slow queries
 
 # Testing
-npm run test:database           # Run database tests
+npm run test:integration        # Run database-related integration tests
 ```
 
 ### 9 API Endpoints Added

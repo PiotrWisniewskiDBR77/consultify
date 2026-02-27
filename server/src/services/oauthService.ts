@@ -194,7 +194,7 @@ class OAuthService {
       return null;
     }
 
-    const data = await resp.json();
+    const data = (await resp.json()) as any;
     return {
       accessToken: data.access_token,
       idToken: data.id_token,
@@ -220,7 +220,7 @@ class OAuthService {
       return null;
     }
 
-    const data = await resp.json();
+    const data = (await resp.json()) as any;
 
     if (provider === 'google') {
       return {

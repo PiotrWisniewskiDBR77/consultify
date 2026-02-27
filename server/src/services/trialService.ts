@@ -21,6 +21,7 @@ import {
   type TrialLockdownResult,
   type TrialWarningResult,
 } from './access/AccessTypes.js';
+import { DEMO_TRIAL_EVENT_TYPES, recordDemoTrialEvent } from './demoTrialTelemetryService.js';
 
 interface TrialOrgRow {
   id: string;
@@ -68,7 +69,7 @@ async function getNotificationService(): Promise<NotificationService | null> {
   if (notificationService) return notificationService;
   try {
     const mod = await import('./notificationService.js');
-    notificationService = (mod.default || mod) as NotificationService;
+    notificationService = (mod.default || mod) as unknown as NotificationService;
     return notificationService;
   } catch {
     logger.warn('[TrialService] NotificationService not available');
@@ -80,7 +81,7 @@ async function getAuditService(): Promise<AuditService | null> {
   if (auditService) return auditService;
   try {
     const mod = await import('./auditService.js');
-    auditService = (mod.default || mod) as AuditService;
+    auditService = (mod.default || mod) as unknown as AuditService;
     return auditService;
   } catch {
     logger.warn('[TrialService] AuditService not available');
@@ -180,6 +181,15 @@ class TrialServiceImpl {
     }
 
     logger.info(`[TrialService] Converted trial org ${trialId} to PAID`);
+    await recordDemoTrialEvent({
+      eventType: DEMO_TRIAL_EVENT_TYPES.TRIAL_CONVERTED_TO_PAID,
+      organizationId: trialId,
+      userId,
+      source: 'trial_service',
+      metadata: {
+        previousOrgType: org.organization_type,
+      },
+    });
 
     return {
       newOrganizationId: trialId,
@@ -278,6 +288,16 @@ class TrialServiceImpl {
           metadata: { warningLevel, daysRemaining, notifiedCount: targets.length },
         });
       }
+
+      await recordDemoTrialEvent({
+        eventType: DEMO_TRIAL_EVENT_TYPES.TRIAL_EXPIRY_WARNING_SHOWN,
+        organizationId: org.id,
+        source: 'trial_cron',
+        metadata: {
+          warningLevel,
+          daysRemaining,
+        },
+      });
     }
 
     logger.info(`[TrialService] Sent ${totalSent} trial warning(s) for ${orgs.length} org(s)`);

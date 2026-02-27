@@ -288,6 +288,10 @@ RULES:
   },
 ];
 
+export function getAvailableCoThinkerModes(): CoThinkerModeConfig[] {
+  return CO_THINKER_MODES;
+}
+
 /**
  * Build the system prompt for a Co-Thinker mode.
  */

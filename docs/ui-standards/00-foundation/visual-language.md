@@ -77,8 +77,8 @@ Interfejs MUSI mieć **minimum 3 warstwy głębi** poprzez odcienie tła. Różn
 | Warstwa                | Rola                        | Dark mode        | Light mode                   |
 | ---------------------- | --------------------------- | ---------------- | ---------------------------- |
 | **Layer 0** (deepest)  | Sidebar, system chrome      | `bg-navy-950`    | `bg-slate-100`               |
-| **Layer 1** (base)     | Główna content area         | `bg-navy-900`    | `bg-white`                   |
-| **Layer 2** (elevated) | Karty, panele, sekcje       | `bg-navy-800/50` | `bg-slate-50`                |
+| **Layer 1** (base)     | Główna content area         | `bg-navy-900`    | `bg-slate-50`                |
+| **Layer 2** (elevated) | Karty, panele, sekcje       | `bg-navy-800/50` | `bg-white`                   |
 | **Layer 3** (floating) | Modale, dropdowny, tooltipy | `bg-navy-800`    | `bg-white` + `shadow-hig-xl` |
 
 **MUST:**
@@ -87,6 +87,17 @@ Interfejs MUSI mieć **minimum 3 warstwy głębi** poprzez odcienie tła. Różn
 - Nigdy `#ffffff` jako tekst w dark mode — najjaśniejszy tekst = `text-slate-100` (`#f1f5f9`)
 - Sidebar jest **ciemniejszy** od content area (Layer 0 vs Layer 1)
 - Sidebar NIE MA `border-right` — separacja odbywa się wyłącznie przez zmianę tła
+
+### 3.3 Light mode readability (v3 refinement)
+
+W light mode “za białe” surfaces powodują spadek czytelności (mało separacji i “szary tekst na białym”).
+
+**KANON v3:**
+
+- Base content area (Layer 1) = `bg-slate-50` (nie `bg-white`)
+- Elevated surfaces (Layer 2) = `bg-white` (karty/panele), separacja bez ciężkich ramek
+- Primary text w light mode preferuje `text-slate-900` / `text-navy-900` (czytelność)
+- Badge/chips: zakaz zestawienia “jasne tło + jasny tekst tego samego koloru” (przenieś sygnał na dot/ikonę/border albo przyciemnij tekst)
 
 ### 3.2 Standardowe powierzchnie (MUST)
 
@@ -156,6 +167,19 @@ Zaokrąglenia są **kontekstowe**, nie jednolite:
 
 **Wzorzec:** ChatGPT = najbardziej zaokrąglony (pill shapes), ClickUp/Notion = bardziej geometryczne. Consultify celuje w złoty środek.
 
+#### v3: “bardziej okrągłe” + system globalnej zmiany (MUST)
+
+Żeby móc eksperymentować i zmieniać rounding **systemowo** (bez ręcznego szukania `rounded-*` po kodzie),
+w v3 preferujemy użycie tokenów HIG:
+
+- `rounded-hig-xs|sm|md|lg|xl|2xl|3xl|full` (SSOT: `tailwind.config.js` → `theme.extend.borderRadius`)
+
+**Reguła migracji:**
+
+- Nowy kod powinien używać `rounded-hig-*` zamiast gołych `rounded-lg/xl/2xl`.
+- Zmiana “bardziej okrągłe / mniej okrągłe” odbywa się przez korektę tokenów w `tailwind.config.js`,
+  a nie przez ad-hoc styling w komponentach.
+
 ---
 
 ## 5) Typografia (KANON)
@@ -204,6 +228,27 @@ Typografia **buduje strukturę** strony. Hierarchia powstaje przez size + weight
 
 **SHOULD:** jeśli komponent jest premium/kluczowy, używaj tokenów `hig-*` z `tailwind.config.js`.
 
+### 6.1 Gęstość danych (dashboards / analytics) — "Structure beats emptiness" (KANON v3)
+
+Duże “oddechy” działają tylko wtedy, gdy:
+1) typografia jest czytelna, a
+2) granice grup są jednoznaczne (warstwy tła / sekcje).
+
+W ekranach typu Executive / analytics łatwo wpaść w anty‑pattern: **dużo pustej przestrzeni + mały tekst + słabe separatory** ⇒ spadek czytelności.
+
+**MUST (dashboard readability):**
+
+- **Nie łącz `text-xs` z dużym paddingiem w tile’ach.** Jeśli tile ma “oddech”, tekst musi być większy (min `text-sm` 13–14px dla etykiet/treści UI).
+- **Liczby/KPI muszą mieć jasną hierarchię:** wartości (np. 7 / 83% / 10) powinny być w skali “headline” (typowo `text-xl`–`text-2xl`), nie “body”.
+- **Padding wewnątrz tile’ów** dla dashboardów jest gęstszy niż w content: typowo **12–16px**, nie 24–32px.
+- **Separacja sekcji** przez warstwy tła (Layer 1 → Layer 2) i rytm spacing, a nie przez “niewidoczne” linie.
+- **Sekcje dashboardu muszą mieć nagłówki** (np. `text-sm` + `font-semibold`) — to jest “mapa” dla oka, ważniejsze niż dodatkowe bordery.
+
+**SHOULD (komfort skanowania):**
+
+- **MUST:** Wprowadź **Density** (Compact / Comfortable) dla dashboardów w menu “View” (bez dodatkowych toolbarów na ekranie).
+- Utrzymuj stały grid: równe gutters (12–16px) i wyrównania pionowe/poziome.
+
 ---
 
 ## 7) Depth / shadows (KANON) — "Shadow only on floating"
@@ -243,6 +288,38 @@ Typografia **buduje strukturę** strony. Hierarchia powstaje przez size + weight
 - Nigdy zmiana koloru tekstu na hover (wyjątek: link)
 - Nigdy outline/border na hover
 - Nigdy nagła zmiana — zawsze transition
+
+---
+
+## 8.3 Przyciski (KANON) — 3 poziomy ważności (2025/2026)
+
+Cel: jeden spójny system przycisków, który skaluje się od “top chrome” do gęstych toolbarów bez chaosu.
+
+**MUST:** w obrębie jednego topbara/toolbara nie mieszamy więcej niż **2 poziomów** naraz (inaczej robi się “zupa guzików”).
+
+### Poziom A — **Pill / Outline + Surface** (ważne, ale nie krzykliwe)
+
+- **Kiedy:** główne przełączniki surface’ów (tabs w module), istotne “chipsy” kontekstowe (liczniki), selektory w topbarze.
+- **Jak wygląda:** cienka ramka + subtelne tło (Layer‑2/neutral surface), **rounded‑full**.
+- **Interakcja:** hover = tylko tło (bez border shift).
+
+### Poziom B — **Pill / Soft (bez ramki)** (drugorzędne akcje)
+
+- **Kiedy:** akcje pomocnicze, które muszą być widoczne, ale nie mają dominować (np. przełączniki widoku, quick tools).
+- **Jak wygląda:** brak ramki, tylko subtelne tło; rounded‑full.
+- **Interakcja:** hover = tylko tło.
+
+### Poziom C — **Ghost / Text** (najlżejsze)
+
+- **Kiedy:** linkopodobne akcje, menu, “więcej…”, akcje per‑wiersz.
+- **Jak wygląda:** brak ramki i brak tła w stanie spoczynku.
+- **Interakcja:** hover może dodać subtelne tło (ale nadal bez border shift).
+
+### Reguły nadrzędne (MUST)
+
+- **Na ekranie max 1 kolorowy element** (Primary CTA). Reszta monochromatyczna.
+- **Rounding:** preferuj tokeny `rounded-hig-*`, a dla pill `rounded-hig-full`.
+- **Wysokość kontrolek w topbarze:** trzymaj `h-9` (spójność rytmu).
 
 ### 8.2 Inne interakcje
 

@@ -319,45 +319,65 @@ UPDATE initiative_templates SET
 WHERE id = 'tpl-card-economics';
 
 -- Update template_data.cardScope to match visible_sections for backward compat
-UPDATE initiative_templates SET template_data = json_set(
-  template_data,
-  '$.cardScope.showOverview', 1,
-  '$.cardScope.showTasks', json_extract(visible_sections, '$.tasks'),
-  '$.cardScope.showDecisions', json_extract(visible_sections, '$.decisions'),
-  '$.cardScope.showRaid', json_extract(visible_sections, '$.raid'),
-  '$.cardScope.showGates', json_extract(visible_sections, '$.gates'),
-  '$.cardScope.showFinancialAnalysis', json_extract(visible_sections, '$.financialAnalysis'),
-  '$.cardScope.showFinancialImpact', json_extract(visible_sections, '$.financialImpact'),
-  '$.cardScope.showTeam', json_extract(visible_sections, '$.team')
-) WHERE is_system = 1;
+UPDATE initiative_templates
+SET template_data = (
+  jsonb_set(
+    jsonb_set(
+      jsonb_set(
+        jsonb_set(
+          jsonb_set(
+            jsonb_set(
+              jsonb_set(
+                jsonb_set(
+                  template_data::jsonb,
+                  '{cardScope,showOverview}', 'true'::jsonb, true
+                ),
+                '{cardScope,showTasks}', COALESCE(visible_sections::jsonb->'tasks', 'false'::jsonb), true
+              ),
+              '{cardScope,showDecisions}', COALESCE(visible_sections::jsonb->'decisions', 'false'::jsonb), true
+            ),
+            '{cardScope,showRaid}', COALESCE(visible_sections::jsonb->'raid', 'false'::jsonb), true
+          ),
+          '{cardScope,showGates}', COALESCE(visible_sections::jsonb->'gates', 'false'::jsonb), true
+        ),
+        '{cardScope,showFinancialAnalysis}', COALESCE(visible_sections::jsonb->'financialAnalysis', 'false'::jsonb), true
+      ),
+      '{cardScope,showFinancialImpact}', COALESCE(visible_sections::jsonb->'financialImpact', 'false'::jsonb), true
+    ),
+    '{cardScope,showTeam}', COALESCE(visible_sections::jsonb->'team', 'false'::jsonb), true
+  )::text
+)
+WHERE is_system = 1;
 
 -- Update suggested tasks using template_data for backward compat
-UPDATE initiative_templates SET template_data = json_set(
-  template_data,
-  '$.suggestedTasks', json('[]'),
-  '$.suggestedRoles', json('[]')
-) WHERE is_system = 1 AND level = 'quick_win';
+UPDATE initiative_templates
+SET template_data = jsonb_set(
+  jsonb_set(template_data::jsonb, '{suggestedTasks}', '[]'::jsonb, true),
+  '{suggestedRoles}', '[]'::jsonb, true
+)::text
+WHERE is_system = 1 AND level = 'quick_win';
 
-UPDATE initiative_templates SET template_data = json_set(
-  template_data,
-  '$.suggestedTasks', json('[
+UPDATE initiative_templates
+SET template_data = jsonb_set(
+  jsonb_set(template_data::jsonb, '{suggestedTasks}', '[
     {"title":"Define problem statement and target state","taskType":"analysis","stepPhase":"design","priority":"high"},
     {"title":"Identify key stakeholders","taskType":"analysis","stepPhase":"design","priority":"medium"},
     {"title":"Define deliverables and success criteria","taskType":"design","stepPhase":"design","priority":"high"},
     {"title":"Create implementation plan","taskType":"design","stepPhase":"design","priority":"high"},
     {"title":"Execute implementation","taskType":"execution","stepPhase":"pilot","priority":"high"},
     {"title":"Validate results against success criteria","taskType":"test","stepPhase":"pilot","priority":"high"}
-  ]'),
-  '$.suggestedRoles', json('[
+  ]'::jsonb, true),
+  '{suggestedRoles}', '[
     {"role":"Initiative Owner","allocation":30},
     {"role":"Business Owner","allocation":15},
     {"role":"Team Member","allocation":50}
-  ]')
-) WHERE is_system = 1 AND level = 'standard';
+  ]'::jsonb, true)
+::text
+WHERE is_system = 1 AND level = 'standard';
 
-UPDATE initiative_templates SET template_data = json_set(
-  template_data,
-  '$.suggestedTasks', json('[
+UPDATE initiative_templates
+SET template_data = jsonb_set(
+  jsonb_set(template_data::jsonb, '{suggestedTasks}', '[
     {"title":"Develop business case","taskType":"analysis","stepPhase":"design","priority":"critical"},
     {"title":"Stakeholder analysis and RACI mapping","taskType":"analysis","stepPhase":"design","priority":"high"},
     {"title":"Define problem structure (symptom, root cause, cost of inaction)","taskType":"analysis","stepPhase":"design","priority":"high"},
@@ -373,8 +393,8 @@ UPDATE initiative_templates SET template_data = json_set(
     {"title":"Full rollout planning","taskType":"design","stepPhase":"rollout","priority":"high"},
     {"title":"Execute rollout","taskType":"execution","stepPhase":"rollout","priority":"high"},
     {"title":"Post-implementation review","taskType":"test","stepPhase":"rollout","priority":"medium"}
-  ]'),
-  '$.suggestedRoles', json('[
+  ]'::jsonb, true),
+  '{suggestedRoles}', '[
     {"role":"Initiative Owner","allocation":40},
     {"role":"Business Owner","allocation":20},
     {"role":"Sponsor","allocation":5},
@@ -382,12 +402,13 @@ UPDATE initiative_templates SET template_data = json_set(
     {"role":"Team Lead","allocation":60},
     {"role":"Team Member","allocation":80},
     {"role":"Subject Matter Expert","allocation":10}
-  ]')
-) WHERE is_system = 1 AND level = 'enterprise';
+  ]'::jsonb, true)
+::text
+WHERE is_system = 1 AND level = 'enterprise';
 
-UPDATE initiative_templates SET template_data = json_set(
-  template_data,
-  '$.suggestedTasks', json('[
+UPDATE initiative_templates
+SET template_data = jsonb_set(
+  jsonb_set(template_data::jsonb, '{suggestedTasks}', '[
     {"title":"Develop comprehensive business case with NPV/IRR analysis","taskType":"analysis","stepPhase":"design","priority":"critical"},
     {"title":"Executive stakeholder mapping and engagement plan","taskType":"analysis","stepPhase":"design","priority":"critical"},
     {"title":"Define structured problem (symptom, root cause, cost of inaction)","taskType":"analysis","stepPhase":"design","priority":"high"},
@@ -409,8 +430,8 @@ UPDATE initiative_templates SET template_data = json_set(
     {"title":"Establish benefits measurement baseline","taskType":"analysis","stepPhase":"rollout","priority":"high"},
     {"title":"6-month benefits review","taskType":"analysis","stepPhase":"rollout","priority":"high"},
     {"title":"12-month benefits review and case study","taskType":"analysis","stepPhase":"rollout","priority":"medium"}
-  ]'),
-  '$.suggestedRoles', json('[
+  ]'::jsonb, true),
+  '{suggestedRoles}', '[
     {"role":"Executive Sponsor","allocation":5},
     {"role":"Initiative Owner","allocation":50},
     {"role":"Business Owner","allocation":25},
@@ -421,5 +442,6 @@ UPDATE initiative_templates SET template_data = json_set(
     {"role":"Change Manager","allocation":30},
     {"role":"Subject Matter Expert","allocation":15},
     {"role":"Benefits Analyst","allocation":15}
-  ]')
-) WHERE is_system = 1 AND level = 'full_charter';
+  ]'::jsonb, true)
+::text
+WHERE is_system = 1 AND level = 'full_charter';

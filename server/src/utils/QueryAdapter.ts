@@ -2,14 +2,12 @@
  * Database Query Adapter
  * Enterprise SaaS Architecture - TypeScript Backend
  *
- * Full TypeScript migration of queryAdapter.js
- * Provides a unified interface for both SQLite and PostgreSQL
+ * Unified interface for PostgreSQL.
  */
 
 import type { IDatabase, RunResult } from '../database/IDatabase.js';
-import { run as dbRunPromise } from './DbPromise.js';
 
-export type DatabaseType = 'sqlite' | 'postgres';
+export type DatabaseType = 'postgres';
 
 export interface AdaptedQuery {
   sql: string;
@@ -18,22 +16,20 @@ export interface AdaptedQuery {
 
 /**
  * Database Query Adapter
- * Provides a unified interface for both SQLite and PostgreSQL
+ * Provides a unified interface for PostgreSQL
  */
 export class QueryAdapter {
   private db: IDatabase;
-  private type: DatabaseType;
 
-  constructor(db: IDatabase, type: DatabaseType = 'sqlite') {
+  constructor(db: IDatabase) {
     this.db = db;
-    this.type = type;
   }
 
   /**
    * Convert SQLite placeholder (?) to PostgreSQL ($1, $2, ...)
    */
   adaptQuery(sql: string, params: unknown[] = []): AdaptedQuery {
-    if (this.type === 'postgres' && sql.includes('?')) {
+    if (sql.includes('?')) {
       let paramIndex = 1;
       sql = sql.replace(/\?/g, () => `$${paramIndex++}`);
     }
@@ -45,18 +41,8 @@ export class QueryAdapter {
    */
   async all<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
     const adapted = this.adaptQuery(sql, params);
-
-    if (this.type === 'postgres') {
-      const result = await this.db.query<T>(adapted.sql, adapted.params);
-      return result.rows;
-    } else {
-      return new Promise<T[]>((resolve, reject) => {
-        this.db.all<T>(adapted.sql, adapted.params, (err: Error | null, rows: unknown) => {
-          if (err) reject(err);
-          else resolve((rows as T[]) || []);
-        });
-      });
-    }
+    const result = await this.db.query<T>(adapted.sql, adapted.params);
+    return result.rows;
   }
 
   /**
@@ -64,18 +50,8 @@ export class QueryAdapter {
    */
   async get<T = unknown>(sql: string, params: unknown[] = []): Promise<T | null> {
     const adapted = this.adaptQuery(sql, params);
-
-    if (this.type === 'postgres') {
-      const result = await this.db.query<T>(adapted.sql, adapted.params);
-      return result.rows[0] || null;
-    } else {
-      return new Promise<T | null>((resolve, reject) => {
-        this.db.get<T>(adapted.sql, adapted.params, (err: Error | null, row: unknown) => {
-          if (err) reject(err);
-          else resolve((row as T) || null);
-        });
-      });
-    }
+    const result = await this.db.query<T>(adapted.sql, adapted.params);
+    return result.rows[0] || null;
   }
 
   /**
@@ -83,81 +59,53 @@ export class QueryAdapter {
    */
   async run(sql: string, params: unknown[] = []): Promise<RunResult> {
     const adapted = this.adaptQuery(sql, params);
-
-    if (this.type === 'postgres') {
-      const result = await this.db.query(adapted.sql, adapted.params);
-      return {
-        changes: result.rowCount,
-        lastID: (result.rows[0] as { id?: number })?.id, // For RETURNING id
-      };
-    } else {
-      const result = await dbRunPromise(adapted.sql, adapted.params);
-      if (!result.success) {
-        throw new Error(result.error || 'Database operation failed');
-      }
-      return {
-        changes: result.changes || 0,
-        lastID: result.lastID,
-      };
-    }
+    const result = await this.db.query(adapted.sql, adapted.params);
+    return {
+      changes: result.rowCount,
+      lastID: (result.rows[0] as { id?: number })?.id,
+    };
   }
 
   /**
    * Begin transaction
    */
   async beginTransaction(): Promise<void> {
-    if (this.type === 'postgres') {
-      await this.db.query('BEGIN');
-    } else {
-      await this.run('BEGIN TRANSACTION');
-    }
+    await this.db.query('BEGIN');
   }
 
   /**
    * Commit transaction
    */
   async commit(): Promise<void> {
-    if (this.type === 'postgres') {
-      await this.db.query('COMMIT');
-    } else {
-      await this.run('COMMIT');
-    }
+    await this.db.query('COMMIT');
   }
 
   /**
    * Rollback transaction
    */
   async rollback(): Promise<void> {
-    if (this.type === 'postgres') {
-      await this.db.query('ROLLBACK');
-    } else {
-      await this.run('ROLLBACK');
-    }
+    await this.db.query('ROLLBACK');
   }
 
   /**
-   * Get placeholder syntax for the database type
+   * Get placeholder syntax for PostgreSQL
    */
   placeholder(index: number): string {
-    return this.type === 'postgres' ? `$${index}` : '?';
+    return `$${index}`;
   }
 
   /**
-   * Get RETURNING clause (PostgreSQL) or nothing (SQLite uses lastID)
+   * Get RETURNING clause (PostgreSQL)
    */
   returning(column: string = 'id'): string {
-    return this.type === 'postgres' ? ` RETURNING ${column}` : '';
+    return ` RETURNING ${column}`;
   }
 
   /**
-   * JSON functions differ between databases
+   * JSON extract for PostgreSQL
    */
   jsonExtract(column: string, path: string): string {
-    if (this.type === 'postgres') {
-      return `${column}->>'${path}'`;
-    } else {
-      return `json_extract(${column}, '$.${path}')`;
-    }
+    return `${column}->>'${path}'`;
   }
 }
 

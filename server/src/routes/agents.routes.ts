@@ -16,11 +16,16 @@ import logger from '../utils/Logger.js';
 // Apply rate limiting
 const router = Router();
 
-function featureUnavailable(res: Response) {
+function featureUnavailable(
+  _req: AuthRequest,
+  res: Response,
+  _readPayload?: Record<string, unknown>
+) {
   return res.status(503).json({
-    success: false,
-    error: 'Agents service unavailable',
-    code: 'FEATURE_UNAVAILABLE',
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 }
 
@@ -77,7 +82,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.processMessageWithAgents) {
-      return featureUnavailable(res);
+      return featureUnavailable(req, res);
     }
 
     try {
@@ -108,7 +113,7 @@ router.post(
       return res.json(result);
     } catch (error: unknown) {
       logger.error('[Agents API] Error processing query:', error);
-      return featureUnavailable(res);
+      return featureUnavailable(req, res);
     }
   })
 );
@@ -123,7 +128,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.querySpecialistAgent) {
-      return featureUnavailable(res);
+      return featureUnavailable(req, res);
     }
 
     try {
@@ -158,7 +163,7 @@ router.post(
       return res.json(result);
     } catch (error: unknown) {
       logger.error('[Agents API] Error querying specialist:', error);
-      return featureUnavailable(res);
+      return featureUnavailable(req, res);
     }
   })
 );
@@ -173,7 +178,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.getMultiAgentRecommendations) {
-      return featureUnavailable(res);
+      return featureUnavailable(req, res);
     }
 
     try {
@@ -199,7 +204,7 @@ router.post(
       return res.json(recommendations);
     } catch (error: unknown) {
       logger.error('[Agents API] Error getting recommendations:', error);
-      return featureUnavailable(res);
+      return featureUnavailable(req, res);
     }
   })
 );
@@ -211,10 +216,10 @@ router.post(
 router.get(
   '/',
   verifyToken,
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.getAvailableAgents) {
-      return featureUnavailable(res);
+      return featureUnavailable(req, res, { agents: [] });
     }
 
     try {
@@ -222,7 +227,7 @@ router.get(
       return res.json({ agents });
     } catch (error: unknown) {
       logger.error('[Agents API] Error getting agents:', error);
-      return featureUnavailable(res);
+      return featureUnavailable(req, res, { agents: [] });
     }
   })
 );
@@ -235,10 +240,10 @@ router.get(
   '/metrics',
   verifyToken,
   verifyAdmin,
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.getAgentMetrics) {
-      return featureUnavailable(res);
+      return featureUnavailable(req, res, { metrics: {} });
     }
 
     try {
@@ -246,7 +251,7 @@ router.get(
       return res.json(metrics);
     } catch (error: unknown) {
       logger.error('[Agents API] Error getting metrics:', error);
-      return featureUnavailable(res);
+      return featureUnavailable(req, res, { metrics: {} });
     }
   })
 );
@@ -261,7 +266,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.processMessageWithAgents) {
-      return featureUnavailable(res);
+      return featureUnavailable(req, res);
     }
 
     try {
@@ -296,7 +301,7 @@ router.post(
       });
     } catch (error: unknown) {
       logger.error('[Agents API] Error analyzing initiative:', error);
-      return featureUnavailable(res);
+      return featureUnavailable(req, res);
     }
   })
 );
@@ -311,7 +316,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.processMessageWithAgents) {
-      return featureUnavailable(res);
+      return featureUnavailable(req, res);
     }
 
     try {
@@ -348,7 +353,7 @@ router.post(
       });
     } catch (error: unknown) {
       logger.error('[Agents API] Error conducting strategic review:', error);
-      return featureUnavailable(res);
+      return featureUnavailable(req, res);
     }
   })
 );

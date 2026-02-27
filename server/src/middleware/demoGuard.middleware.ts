@@ -167,13 +167,29 @@ export const checkUserDemoPreference = async (userId: string): Promise<boolean> 
 export const setUserDemoPreference = async (userId: string, enabled: boolean): Promise<void> => {
   try {
     await requireUserPreferencesTable();
-    const result = await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [userId, DEMO_PREF_KEY, JSON.stringify(Boolean(enabled))],
+    const payload = JSON.stringify(Boolean(enabled));
+    const now = new Date().toISOString();
+
+    // Update-first strategy is portable across SQLite/Postgres and avoids ON CONFLICT
+    // mismatches on environments with composite PK(user_id, key).
+    const updated = await dbRun(
+      `UPDATE user_preferences
+       SET value = ?, updated_at = ?
+       WHERE user_id = ? AND key = ?`,
+      [payload, now, userId, DEMO_PREF_KEY],
       { fallback: false }
     );
-    if (!result.success) throw new Error(result.error || 'Failed to store demo preference');
+    if ((updated.changes || 0) > 0) {
+      return;
+    }
+
+    const inserted = await dbRun(
+      `INSERT INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, ?)`,
+      [userId, DEMO_PREF_KEY, payload, now],
+      { fallback: false }
+    );
+    if (!inserted.success) throw new Error(inserted.error || 'Failed to store demo preference');
   } catch (error: unknown) {
     if (isMissingTableError(error)) throw new Error('Demo preference storage unavailable');
     throw error;

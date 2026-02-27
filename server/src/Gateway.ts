@@ -75,6 +75,7 @@ import demoRoutes from './routes/demo.routes.js';
 import documentRoutes from './routes/documents.routes.js';
 import economicsRoutes from './routes/economics.routes.js';
 import executionControlRoutes from './routes/executionControl.routes.js';
+import executiveAggregateRoutes from './routes/executiveAggregate.routes.js';
 import externalAssessmentsRoutes from './routes/external-assessments.routes.js';
 import featureFlagsRoutes from './routes/featureFlags.routes.js';
 import featureFlagRoutes from './routes/featureFlags.routes.js';
@@ -91,6 +92,7 @@ import helpAnalyticsRoutes from './routes/helpAnalytics.routes.js';
 import helpChatRoutes from './routes/helpChat.routes.js';
 import helpFeedbackRoutes from './routes/helpFeedback.routes.js';
 import initiativeGeneratorRoutes from './routes/initiative-generator.routes.js';
+import automationRoutes from './routes/integrations/automation.routes.js';
 import calendarIntegrationsRoutes from './routes/integrations/calendarIntegrations.routes.js';
 import connectorRoutes from './routes/integrations/connectors.routes.js';
 import integrationsRoutes from './routes/integrations/integrations.routes.js';
@@ -114,6 +116,7 @@ import mediaIngestionRoutes from './routes/media-ingestion.routes.js';
 import megatrendRoutes from './routes/megatrend.routes.js';
 import metricsRoutes from './routes/metrics.routes.js';
 import mfaRoutes from './routes/mfa.routes.js';
+import modelRegistryRoutes from './routes/modelRegistry.routes.js';
 import multiFrameworkAssessmentRoutes from './routes/multi-framework-assessment.routes.js';
 import multiFrameworkWorkflowRoutes from './routes/multi-framework-workflow.routes.js';
 import myWorkRoutes from './routes/my-work.routes.js';
@@ -170,6 +173,7 @@ import reportCommentsRoutes from './routes/report-comments.routes.js';
 import reportImportRoutes from './routes/report-import.routes.js';
 import reportInitiativesRoutes from './routes/report-initiatives.routes.js';
 import reportsRoutes from './routes/reports.routes.js';
+import researchRoutes from './routes/research.routes.js';
 import resourceManagementRoutes from './routes/resourceManagement.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import scenariosRoutes from './routes/scenarios.routes.js';
@@ -205,7 +209,6 @@ import userProfileCompletenessRoutes from './routes/user/user-profile-completene
 import userProfileExtendedRoutes from './routes/user/user-profile-extended.routes.js';
 import userSecurityAdvancedRoutes from './routes/user/user-security-advanced.routes.js';
 import userGoalsRoutes from './routes/user/userGoals.routes.js';
-import userIntegrationsRoutes from './routes/user/userIntegrations.routes.js';
 import userOrgsRoutes from './routes/user/userOrgs.routes.js';
 import userRoutes from './routes/user/users.routes.js';
 import verifyRoutes from './routes/verify.routes.js';
@@ -315,6 +318,7 @@ export class ApiGateway {
       app.use('/api/admin-alerts', adminAlertsRoutes);
       app.use('/api/admin/backups', adminBackupRoutes);
       app.use('/api/admin/ai-quality', adminAIQualityRoutes);
+      app.use('/api/admin/model-registry', modelRegistryRoutes);
 
       // AI-related legacy/duplicate routes (cleaned up)
       app.use('/api/conversations', conversationsRoutes);
@@ -329,6 +333,17 @@ export class ApiGateway {
       app.use('/api/ai-memory', aiMemoryRoutes);
       app.use('/api/ai-drafts', aiDraftsRoutes);
       app.use('/api/ai-prompts', aiPromptsRoutes);
+      // Legacy alias (no-breaking rollout): prefer canonical `/api/ai-prompts`.
+      app.use('/api/ai/prompts', (req, res, next) => {
+        try {
+          res.setHeader('X-Deprecated-Endpoint', '/api/ai/prompts');
+          res.setHeader('X-Deprecated-Replacement', '/api/ai-prompts');
+        } catch {
+          // ignore
+        }
+        logger.warn(`[DEPRECATED] ${req.method} ${req.originalUrl} → use /api/ai-prompts`);
+        next();
+      });
       app.use('/api/ai/prompts', aiPromptsRoutes);
       app.use('/api/ai-governance', aiGovernanceRoutes);
       app.use('/api/admin/ai/governance', aiGovernanceRoutes);
@@ -345,12 +360,12 @@ export class ApiGateway {
       app.use('/api/voice', voiceRoutes);
       app.use('/api/documents', documentRoutes);
       app.use('/api/settings', settingsRoutes);
-      app.use('/api/settings/integrations', userIntegrationsRoutes);
       mountStub(
         '/api/integrations/calendar',
         calendarIntegrationsRoutes,
         'calendarIntegrationsRoutes'
       );
+      mountStub('/api/integrations/automation', automationRoutes, 'automationRoutes');
       mountStub('/api/mcp', mcpRoutes, 'mcpRoutes');
 
       // Admin routes
@@ -366,6 +381,7 @@ export class ApiGateway {
       mountStub('/api/system-config', systemConfigRoutes, 'systemConfigRoutes');
       app.use('/api/system-health', systemHealthRoutes);
       mountStub('/api/api-keys', apiKeysRoutes, 'apiKeysRoutes');
+      mountStub('/api/research', researchRoutes, 'researchRoutes');
       app.use('/api/backups', backupRoutes);
 
       // Core API routes
@@ -439,7 +455,9 @@ export class ApiGateway {
       app.use('/api/rbac', rbacRoutes);
       app.use('/api/branding', brandingRoutes);
       mountStub('/api/workspace-defaults', workspaceDefaultsRoutes, 'workspaceDefaultsRoutes');
-      mountStub('/api/my-work', myWorkRoutes, 'myWorkRoutes');
+      // My Work is a production-critical module (not a stub).
+      // It must remain available in production to avoid broken navigation from notifications/actionUrl deep links.
+      app.use('/api/my-work', myWorkRoutes);
 
       // Governance routes
       app.use('/api/governance', governanceRoutes);
@@ -507,6 +525,7 @@ export class ApiGateway {
       app.use('/api/scheduled-reports', scheduledReportsRoutes);
       app.use('/api/management-reports', managementReportsRoutes);
       app.use('/api/management-reports/analytics', managementReportsAnalyticsRoutes);
+      app.use('/api/executive', executiveAggregateRoutes);
 
       // Analytics routes
       console.log(

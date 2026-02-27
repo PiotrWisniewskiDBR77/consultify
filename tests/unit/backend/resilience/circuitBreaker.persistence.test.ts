@@ -29,9 +29,13 @@ describe('CircuitBreaker: persistence', () => {
 
     await breaker.recordFailure(new Error('network timeout'));
     expect(breaker.state).toBe(mod.STATES.OPEN);
-    expect(dbAll).toHaveBeenCalledWith(expect.stringContaining('PRAGMA table_info'), [], {
+    expect(dbAll).toHaveBeenCalledWith(
+      expect.stringContaining('information_schema.columns'),
+      ['circuit_breaker_state'],
+      {
       fallback: true,
-    });
+      }
+    );
     expect(dbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT OR REPLACE INTO circuit_breaker_state'),
       expect.arrayContaining(['svc', 'svc', mod.STATES.OPEN, 1, expect.any(String)]),

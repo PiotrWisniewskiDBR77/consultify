@@ -42,8 +42,8 @@ CREATE TABLE IF NOT EXISTS initiative_section_types (
   default_config TEXT,           -- JSON: default section-specific config
 
   -- Status
-  is_system BOOLEAN DEFAULT FALSE,
-  is_active BOOLEAN DEFAULT TRUE,
+  is_system INTEGER DEFAULT 0,
+  is_active INTEGER DEFAULT 1,
 
   -- Audit
   created_by TEXT,
@@ -53,6 +53,44 @@ CREATE TABLE IF NOT EXISTS initiative_section_types (
   FOREIGN KEY (organization_id) REFERENCES organizations(id),
   FOREIGN KEY (created_by) REFERENCES users(id)
 );
+
+-- If a partial/legacy run created boolean flags, normalize to INTEGER flags (0/1).
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'initiative_section_types'
+      AND column_name = 'is_system'
+      AND data_type = 'boolean'
+  ) THEN
+    ALTER TABLE initiative_section_types
+      ALTER COLUMN is_system DROP DEFAULT;
+    ALTER TABLE initiative_section_types
+      ALTER COLUMN is_system TYPE INTEGER
+      USING (CASE WHEN is_system THEN 1 ELSE 0 END);
+    ALTER TABLE initiative_section_types
+      ALTER COLUMN is_system SET DEFAULT 0;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'initiative_section_types'
+      AND column_name = 'is_active'
+      AND data_type = 'boolean'
+  ) THEN
+    ALTER TABLE initiative_section_types
+      ALTER COLUMN is_active DROP DEFAULT;
+    ALTER TABLE initiative_section_types
+      ALTER COLUMN is_active TYPE INTEGER
+      USING (CASE WHEN is_active THEN 1 ELSE 0 END);
+    ALTER TABLE initiative_section_types
+      ALTER COLUMN is_active SET DEFAULT 1;
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_ist_org ON initiative_section_types(organization_id);
 CREATE INDEX IF NOT EXISTS idx_ist_key ON initiative_section_types(key);

@@ -12,16 +12,19 @@ export interface DocumentAccessResult {
   allowed: string[];
   blocked: string[];
   requiresApproval: string[];
+  approvedViaConversation?: string[];
 }
 
 export async function filterDocumentsByVisibility(
   docIds: string[],
-  projectId?: string
+  projectId?: string,
+  conversationId?: string
 ): Promise<DocumentAccessResult> {
   const result: DocumentAccessResult = {
     allowed: [],
     blocked: [],
     requiresApproval: [],
+    approvedViaConversation: [],
   };
   if (!docIds.length) return result;
 
@@ -67,6 +70,29 @@ export async function filterDocumentsByVisibility(
         result.requiresApproval.push(row.id);
       } else {
         result.allowed.push(row.id);
+      }
+    }
+
+    // Conversation-scoped HITL: allow requires_approval documents only after explicit approval.
+    if (conversationId && result.requiresApproval.length > 0) {
+      try {
+        const placeholders = result.requiresApproval.map(() => '?').join(',');
+        const rows = (await dbAll(
+          `SELECT document_id FROM ai_doc_access_approvals
+           WHERE conversation_id = ?
+             AND document_id IN (${placeholders})
+             AND status = 'approved'`,
+          [conversationId, ...result.requiresApproval]
+        )) as Array<{ document_id: string }>;
+        const approved = (rows || []).map((r) => r.document_id).filter(Boolean);
+        if (approved.length > 0) {
+          result.approvedViaConversation = approved;
+          // Move approved docs from requiresApproval to allowed
+          result.allowed.push(...approved);
+          result.requiresApproval = result.requiresApproval.filter((id) => !approved.includes(id));
+        }
+      } catch {
+        // approvals table may not exist yet
       }
     }
 
@@ -146,9 +172,66 @@ export async function logDocumentUsage(
   }
 }
 
+async function ensureApprovalsTable(): Promise<void> {
+  // Minimal, SQLite-friendly DDL (Postgres will also accept IF NOT EXISTS in most setups).
+  // If the environment uses migrations instead, this is a harmless no-op.
+  try {
+    await dbRun(
+      `CREATE TABLE IF NOT EXISTS ai_doc_access_approvals (
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT,
+        document_id TEXT,
+        user_id TEXT,
+        organization_id TEXT,
+        status TEXT DEFAULT 'approved',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`,
+      []
+    );
+    await dbRun(
+      `CREATE INDEX IF NOT EXISTS idx_ai_doc_access_approvals_conv ON ai_doc_access_approvals(conversation_id)`,
+      []
+    );
+    await dbRun(
+      `CREATE INDEX IF NOT EXISTS idx_ai_doc_access_approvals_doc ON ai_doc_access_approvals(document_id)`,
+      []
+    );
+  } catch {
+    // ignore
+  }
+}
+
+export async function approveDocumentForConversation(params: {
+  conversationId: string;
+  documentId: string;
+  userId: string;
+  organizationId: string;
+}): Promise<void> {
+  const { conversationId, documentId, userId, organizationId } = params;
+  if (!conversationId || !documentId) return;
+
+  await ensureApprovalsTable();
+  try {
+    await dbRun(
+      `INSERT INTO ai_doc_access_approvals (id, conversation_id, document_id, user_id, organization_id, status, created_at)
+       VALUES (?, ?, ?, ?, ?, 'approved', datetime('now'))`,
+      [
+        `dapp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        conversationId,
+        documentId,
+        userId,
+        organizationId,
+      ]
+    );
+  } catch {
+    // ignore duplicates / schema differences
+  }
+}
+
 export default {
   filterDocumentsByVisibility,
   setDocumentVisibility,
   setDocumentSensitivity,
   logDocumentUsage,
+  approveDocumentForConversation,
 };

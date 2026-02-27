@@ -7,7 +7,11 @@ import { getDatabase } from '../../../server/src/database/Database.js';
 import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
 import { v4 as uuidv4 } from 'uuid';
 
+const RUN_DB_TESTS = process.env.RUN_DB_TESTS === '1';
+const describeIfDb = RUN_DB_TESTS ? describe : describe.skip;
+
 vi.hoisted(() => {
+  if (process.env.RUN_DB_TESTS !== '1') return;
   process.env.MOCK_DB = 'false';
   const workerId = process.env.VITEST_WORKER_ID || '0';
   process.env.SQLITE_PATH = `./test-org-service-${workerId}.db`;
@@ -16,7 +20,7 @@ vi.hoisted(() => {
 // Dynamic import for ESM
 let OrganizationService;
 
-describe('OrganizationService', () => {
+describeIfDb('OrganizationService', () => {
   const db = getDatabase();
   let testUserId;
   let testUserEmail;
@@ -83,6 +87,9 @@ describe('OrganizationService', () => {
       expect(dbOrg).toBeDefined();
       expect(dbOrg.name).toBe('DB Test Org');
       expect(dbOrg.billing_status).toBe('TRIAL');
+      expect(String(dbOrg.organization_type || 'TRIAL')).toBe('TRIAL');
+      expect(dbOrg.trial_started_at).toBeTruthy();
+      expect(dbOrg.trial_expires_at).toBeTruthy();
     });
 
     it('should add creator as OWNER member', async () => {

@@ -117,22 +117,42 @@ Important clarifications:
 | Consultant overlay            | Interview, Tools, Assessment, Initiatives | advisory/structuring work; visible & auditable; not authority by itself |
 | AI System                     | everywhere (support layer)                | analysis, summaries, recommendations; never decides                     |
 
-## 4. Core artefacts (final, closed list)
+## 4. Artefacts (canonical lists)
+
+This section defines two closed lists:
+
+- **(A) Core governance artefacts** — drive the system axis and governance rules
+- **(B) Supporting / document artefacts** — enable work (notes, decks, workspaces, finance runs) without breaking the axis
 
 No additional artefacts are allowed without explicit design extension.
 
-### 4.1 Artefacts by type
+### 4.1 (A) Core governance artefacts (final, closed list)
 
 1. Insight (Interview artefact; context)
-2. Tool Output (Tools artefact; can create initiative drafts)
-3. Assessment Report (Assessment module only)
+2. ToolSession (Tools artefact; the canonical source snapshot)
+3. Assessment Report (Assessment module only; canonical source snapshot)
 4. Initiative (central)
 5. Task (operational; always linked to an initiative)
 6. Decision (governance; gate-required; auditable)
-7. Economic Analysis (tool; multiple templates; linked to initiative)
+7. Economic Analysis (tool; linked to initiative)
 8. Benefits / Tracking Records (Benefits module)
 
-### 4.2 Artefact semantics (canonical)
+### 4.2 (B) Supporting / document artefacts (v3, closed list)
+
+These artefacts are “work surfaces” and outputs, but they must remain traceable and must not create initiatives directly
+(see `docs/product/SOURCE_TRACEABILITY_SPEC.md`).
+
+1. NotebookPage (Living Notebook)
+2. Workspace (visual canvas)
+3. Report (final report artefact)
+4. Presentation / Deck (final deck artefact)
+5. FinancialModel (import + mapping + snapshots)
+6. FinancialAnalysisRun (saved analysis)
+7. FinancialScenario (saved scenario / assumptions)
+8. Valuation (valuation run)
+9. InvestmentCase (per-initiative investment analysis)
+
+### 4.3 Artefact semantics (canonical)
 
 This section defines “what an artefact is” and where it is created/used.
 
@@ -144,12 +164,12 @@ This section defines “what an artefact is” and where it is created/used.
 - **Used for**: context; informs Tools/Assessment/Initiatives
 - **Rule**: does not create initiatives directly
 
-2. **Tool Output**
+2. **ToolSession (Tools output snapshot)**
 
-- **Definition**: output of a specific consulting tool (e.g., SWOT, Value Pool)
-- **Created in**: Tools
-- **Created by**: Consultant/User (AI can structure)
-- **Used for**: can create initiative draft (`DRAFT`)
+- **Definition**: a source snapshot of one execution of a specific consulting tool (e.g., SWOT, Value Pool)
+- **Created in**: Tools (and also via “MyWork seed → ToolSession(MYWORK)” when needed for traceability)
+- **Created by**: Consultant/User (AI can structure; never modifies a finalized source)
+- **Used for**: canonical source of initiative creation (after finalization), plus traceability for report/presentation outputs
 - **Rule**: tools do not create insights
 - **Persistence**: stored as a ToolSession snapshot (see `docs/product/RESET_ERD_CONSULTINITY.md`)
 
@@ -200,7 +220,7 @@ This section defines “what an artefact is” and where it is created/used.
 
 ## 5. Work process (where what happens)
 
-Chat → Interview (Insights) → Tools (Tool outputs → Initiative) → Assessment (Report → Initiative) → Initiatives (planning + decisions) → Implementation (tasks + execution) → Benefits (evaluation + outcomes) → Reporting
+Chat → Interview (Insights) → Tools (ToolSession → Initiative) → Assessment (Assessment Report → Initiative) → Initiatives (planning + decisions) → Implementation (tasks + execution) → Benefits (evaluation + outcomes) → Reporting
 
 ## 6. System rules (non-negotiable)
 

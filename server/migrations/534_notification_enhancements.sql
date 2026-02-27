@@ -60,7 +60,18 @@ ALTER TABLE notifications ADD COLUMN task_id TEXT;
 RELEASE add_task_id;
 
 -- Update existing notifications: sync is_read with read column
-UPDATE notifications SET is_read = 1 WHERE is_read = 0 AND read = 1;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'notifications'
+      AND column_name = 'read'
+  ) THEN
+    UPDATE notifications SET is_read = 1 WHERE is_read = 0 AND read = 1;
+  END IF;
+END $$;
 
 -- Update existing notifications: compute severity from type for rows with NULL severity
 UPDATE notifications SET severity = 'CRITICAL'
@@ -75,6 +86,20 @@ UPDATE notifications SET severity = 'INFO'
   WHERE severity IS NULL OR severity = '';
 
 -- Sync message from body where message is empty
-UPDATE notifications SET message = body WHERE (message IS NULL OR message = '') AND body IS NOT NULL AND body != '';
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'notifications'
+      AND column_name = 'body'
+  ) THEN
+    UPDATE notifications
+    SET message = body
+    WHERE (message IS NULL OR message = '')
+      AND body IS NOT NULL AND body != '';
+  END IF;
+END $$;
 
 COMMIT;

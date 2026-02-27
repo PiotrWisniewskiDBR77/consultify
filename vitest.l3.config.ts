@@ -36,6 +36,7 @@ export default defineConfig({
       'tests/integration/routes/health-controller.l3.test.ts',
       'tests/integration/routes/health-controller-faults.l3.test.ts',
       'tests/integration/routes/billing.routes.l3.test.ts',
+      'tests/integration/routes/billing.routes.full.l3.test.ts',
     ],
     exclude: ['node_modules/**', 'tests/e2e/**'],
     env: {

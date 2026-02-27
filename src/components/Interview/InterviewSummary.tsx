@@ -3,51 +3,67 @@
  *
  * Displays a summary of the interview session with all collected context.
  * Allows export to Tools/Assessment.
+ * Uses the canonical 5 categories: Strategy, Operations, Digital, People, Finance.
  */
 
 import {
-  AlertTriangle,
-  Award,
   CheckCircle,
+  DollarSign,
   Download,
   ExternalLink,
-  Lightbulb,
-  Link,
-  Lock,
+  Monitor,
+  Settings,
   Target,
   Users,
 } from 'lucide-react';
 import React from 'react';
 
-type InsightCategory =
-  | 'objective'
-  | 'stakeholder'
-  | 'risk'
-  | 'assumption'
-  | 'constraint'
-  | 'decision'
-  | 'dependency'
-  | 'success_criteria';
+import { InterviewInsight, OrganizationContext } from '@/hooks/useInterviewContext';
 
-interface InterviewInsight {
-  id: string;
-  category: string;
-  title: string;
-  description?: string;
-  insightType: string;
-  impactLevel: string;
-  confidence: string;
-  status: string;
-}
+import { type InterviewCategory } from './CategorySidebar';
 
-interface OrganizationContext {
-  companyProfile: Record<string, unknown>;
-  transformationGoals: string[];
-  currentChallenges: string[];
-  strategicPriorities: string[];
-  technologyStack: string[];
-  completenessPercent: number;
-}
+const SUMMARY_CATEGORY_CONFIG: Record<
+  InterviewCategory,
+  {
+    label: string;
+    icon: React.ComponentType<{ size?: number; className?: string }>;
+    color: string;
+    bgColor: string;
+  }
+> = {
+  strategy: {
+    label: 'Strategy',
+    icon: Target,
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+  },
+  operations: {
+    label: 'Operations',
+    icon: Settings,
+    color: 'text-green-600 dark:text-green-400',
+    bgColor: 'bg-green-100 dark:bg-green-900/30',
+  },
+  digital: {
+    label: 'Digital',
+    icon: Monitor,
+    color: 'text-purple-600 dark:text-purple-400',
+    bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+  },
+  people: {
+    label: 'People',
+    icon: Users,
+    color: 'text-amber-600 dark:text-amber-400',
+    bgColor: 'bg-amber-100 dark:bg-amber-900/30',
+  },
+  finance: {
+    label: 'Finance',
+    icon: DollarSign,
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
+  },
+};
+
+const CATEGORY_KEYS = Object.keys(SUMMARY_CATEGORY_CONFIG) as InterviewCategory[];
 
 interface InterviewSummaryProps {
   sessionId: string;
@@ -59,65 +75,6 @@ interface InterviewSummaryProps {
   onViewDetails?: (category: string) => void;
 }
 
-const CATEGORY_CONFIG: Record<
-  InsightCategory,
-  {
-    label: string;
-    icon: React.ComponentType<{ size?: number; className?: string }>;
-    color: string;
-    bgColor: string;
-  }
-> = {
-  objective: {
-    label: 'Objectives',
-    icon: Target,
-    color: 'text-emerald-600 dark:text-emerald-400',
-    bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
-  },
-  stakeholder: {
-    label: 'Stakeholders',
-    icon: Users,
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
-  },
-  risk: {
-    label: 'Risks',
-    icon: AlertTriangle,
-    color: 'text-amber-600 dark:text-amber-400',
-    bgColor: 'bg-amber-100 dark:bg-amber-900/30',
-  },
-  assumption: {
-    label: 'Assumptions',
-    icon: Lightbulb,
-    color: 'text-yellow-600 dark:text-yellow-400',
-    bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
-  },
-  constraint: {
-    label: 'Constraints',
-    icon: Lock,
-    color: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-100 dark:bg-red-900/30',
-  },
-  decision: {
-    label: 'Decisions',
-    icon: CheckCircle,
-    color: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'bg-purple-100 dark:bg-purple-900/30',
-  },
-  dependency: {
-    label: 'Dependencies',
-    icon: Link,
-    color: 'text-indigo-600 dark:text-indigo-400',
-    bgColor: 'bg-indigo-100 dark:bg-indigo-900/30',
-  },
-  success_criteria: {
-    label: 'Success Criteria',
-    icon: Award,
-    color: 'text-teal-600 dark:text-teal-400',
-    bgColor: 'bg-teal-100 dark:bg-teal-900/30',
-  },
-};
-
 export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
   sessionId,
   insights,
@@ -127,18 +84,16 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
   onExportToAssessment,
   onViewDetails,
 }) => {
-  // Group insights by category
   const insightsByCategory = insights.reduce(
     (acc, insight) => {
-      const cat = insight.category as InsightCategory;
+      const cat = insight.category as InterviewCategory;
       if (!acc[cat]) acc[cat] = [];
       acc[cat].push(insight);
       return acc;
     },
-    {} as Record<InsightCategory, InterviewInsight[]>
+    {} as Record<InterviewCategory, InterviewInsight[]>
   );
 
-  // Calculate stats
   const totalInsights = insights.length;
   const confirmedInsights = insights.filter((i) => i.status === 'confirmed').length;
   const highImpactInsights = insights.filter((i) => i.impactLevel === 'high').length;
@@ -149,7 +104,7 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
       <div className="p-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
         <h3 className="font-bold text-navy-900 dark:text-white">Interview Summary</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          {completedCategories.length} of 8 categories completed
+          {completedCategories.length} of {CATEGORY_KEYS.length} categories completed
         </p>
       </div>
 
@@ -175,8 +130,8 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
 
       {/* Categories Overview */}
       <div className="p-4 space-y-3">
-        {(Object.keys(CATEGORY_CONFIG) as InsightCategory[]).map((category) => {
-          const config = CATEGORY_CONFIG[category];
+        {CATEGORY_KEYS.map((category) => {
+          const config = SUMMARY_CATEGORY_CONFIG[category];
           const CategoryIcon = config.icon;
           const categoryInsights = insightsByCategory[category] || [];
           const isCompleted = completedCategories.includes(category);
@@ -235,23 +190,27 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
             Organization Context
           </h4>
           <div className="space-y-2">
-            {context.transformationGoals.length > 0 && (
+            {context.keyMetrics.length > 0 && (
               <div className="text-xs">
-                <span className="text-slate-500 dark:text-slate-400">Goals:</span>
+                <span className="text-slate-500 dark:text-slate-400">Key Metrics:</span>
                 <span className="ml-1 text-slate-700 dark:text-slate-300">
-                  {context.transformationGoals.slice(0, 2).join(', ')}
-                  {context.transformationGoals.length > 2 &&
-                    ` +${context.transformationGoals.length - 2} more`}
+                  {context.keyMetrics
+                    .slice(0, 2)
+                    .map((m) => `${m.name}: ${m.value}`)
+                    .join(', ')}
+                  {context.keyMetrics.length > 2 && ` +${context.keyMetrics.length - 2} more`}
                 </span>
               </div>
             )}
-            {context.currentChallenges.length > 0 && (
+            {context.stakeholders.length > 0 && (
               <div className="text-xs">
-                <span className="text-slate-500 dark:text-slate-400">Challenges:</span>
+                <span className="text-slate-500 dark:text-slate-400">Stakeholders:</span>
                 <span className="ml-1 text-slate-700 dark:text-slate-300">
-                  {context.currentChallenges.slice(0, 2).join(', ')}
-                  {context.currentChallenges.length > 2 &&
-                    ` +${context.currentChallenges.length - 2} more`}
+                  {context.stakeholders
+                    .slice(0, 2)
+                    .map((s) => `${s.name} (${s.role})`)
+                    .join(', ')}
+                  {context.stakeholders.length > 2 && ` +${context.stakeholders.length - 2} more`}
                 </span>
               </div>
             )}

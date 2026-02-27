@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useDeviceType } from '../../../hooks/useDeviceType';
 import { getRouteFromAppView } from '../../../routes/routeConfig';
+import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
 import { useConversationStore } from '../../../store/useConversationStore';
 import { AppView, UserRole } from '../../../types';
@@ -36,6 +37,9 @@ export const Sidebar: React.FC = () => {
   const { t } = useTranslation();
   const { isTablet, isMobile, isTouchDevice } = useDeviceType();
   const navigate = useNavigate();
+
+  // Prefetch route modules / data on hover to reduce perceived navigation latency.
+  const prefetchedRef = React.useRef<Set<string>>(new Set());
 
   // NOTE (React 19 + useSyncExternalStore):
   // Avoid selectors returning new objects/arrays each call (even with shallow),
@@ -147,7 +151,11 @@ export const Sidebar: React.FC = () => {
       const isLocked =
         item.requiresView &&
         !completedViews.includes(item.requiresView) &&
-        !(currentUser?.role === UserRole.ADMIN || currentUser?.role === 'SUPERADMIN');
+        !(
+          currentUser?.role === UserRole.ADMIN ||
+          currentUser?.role === UserRole.OWNER ||
+          currentUser?.role === 'SUPERADMIN'
+        );
 
       if (isLocked) {
         console.warn('[Sidebar] BLOCKED - Item is locked:', {
@@ -216,6 +224,21 @@ export const Sidebar: React.FC = () => {
   const handleItemMouseEnter = React.useCallback(
     (e: React.MouseEvent<HTMLDivElement>, item: MenuItem) => {
       if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+
+      // Warm up the most-used modules & their first API calls.
+      // This is especially helpful in dev (Vite transforms on-demand) and on large routes like My Work.
+      try {
+        if (item.id && !prefetchedRef.current.has(item.id)) {
+          prefetchedRef.current.add(item.id);
+
+          if (item.viewId === AppView.MY_WORK) {
+            void import('@/views/MyWorkView');
+            void Api.getPersonalTasks().catch(() => {});
+          }
+        }
+      } catch {
+        // ignore prefetch errors
+      }
 
       const hasSubItems = item.subItems && item.subItems.length > 0;
       const shouldShow = hasSubItems || !showFull;
@@ -360,9 +383,13 @@ export const Sidebar: React.FC = () => {
           t={t as any}
           showPartnerPortal={currentUser?.role !== 'SUPERADMIN'}
         >
-          {(currentUser?.role === UserRole.ADMIN || currentUser?.role === 'SUPERADMIN') &&
+          {(currentUser?.role === UserRole.ADMIN ||
+            currentUser?.role === UserRole.OWNER ||
+            currentUser?.role === 'SUPERADMIN') &&
             renderNavItem(organizationMenuItem)}
-          {(currentUser?.role === UserRole.ADMIN || currentUser?.role === 'SUPERADMIN') &&
+          {(currentUser?.role === UserRole.ADMIN ||
+            currentUser?.role === UserRole.OWNER ||
+            currentUser?.role === 'SUPERADMIN') &&
             renderNavItem(adminMenuItem)}
           {currentUser?.role === 'SUPERADMIN' && renderNavItem(superAdminMenuItem)}
           {renderNavItem(settingsMenuItem)}

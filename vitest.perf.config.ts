@@ -20,8 +20,16 @@ export default defineConfig({
       DB_TYPE: 'sqlite',
       NODE_ENV: 'test',
     },
-    include: ['tests/performance/**/*.test.js'],
-    exclude: ['node_modules/**'],
+    include: [
+      'tests/performance/**/*.{test,spec}.{js,ts,jsx,tsx}',
+      // Support legacy extensionless tests (to be phased out)
+      'tests/performance/**/*.{test,spec}',
+    ],
+    exclude: [
+      'node_modules/**',
+      // Long-running suite is executed via `npm run test:memory-leak`
+      'tests/performance/memory-leak.test.ts',
+    ],
     // Optimize test execution
     pool: 'forks',
     fileParallelism: true,

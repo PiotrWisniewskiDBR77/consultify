@@ -194,7 +194,9 @@ const attachUser = async (
   // Permanent role fix for selected internal accounts:
   // even if a stale token says ADMIN, treat them as SUPERADMIN for authorization.
   try {
-    const normalizedEmail = String(decoded.email || '').trim().toLowerCase();
+    const normalizedEmail = String(decoded.email || '')
+      .trim()
+      .toLowerCase();
     if (normalizedEmail && FORCED_SUPERADMIN_EMAILS.has(normalizedEmail)) {
       req.userRole = 'SUPERADMIN';
       decoded.isSuperAdmin = true;

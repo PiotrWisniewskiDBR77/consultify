@@ -23,6 +23,8 @@ import { RefreshCw, Settings } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { Radar } from 'react-chartjs-2';
 
+import { useDemoSession } from '@/hooks/useDemoSession';
+
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
 interface MaturityRadarAttrs {
@@ -39,6 +41,7 @@ const MaturityRadarComponent: React.FC<NodeViewProps> = ({ node, updateAttribute
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const { isDemo } = useDemoSession();
 
   const attrs = node.attrs as MaturityRadarAttrs;
   const { assessmentId, showTarget = true, showLegend = true, title = 'Maturity Overview' } = attrs;
@@ -46,18 +49,21 @@ const MaturityRadarComponent: React.FC<NodeViewProps> = ({ node, updateAttribute
   // Fetch assessment data
   useEffect(() => {
     if (!assessmentId) {
-      // Demo data
-      setData({
-        axes: [
-          { id: 'processes', name: 'Procesy', actual: 3.2, target: 5.0 },
-          { id: 'digitalProducts', name: 'Produkty Cyfrowe', actual: 2.8, target: 4.5 },
-          { id: 'businessModels', name: 'Modele Biznesowe', actual: 2.5, target: 4.0 },
-          { id: 'dataManagement', name: 'Zarządzanie Danymi', actual: 3.5, target: 5.5 },
-          { id: 'culture', name: 'Kultura', actual: 3.0, target: 4.5 },
-          { id: 'cybersecurity', name: 'Cyberbezpieczeństwo', actual: 4.0, target: 5.0 },
-          { id: 'aiMaturity', name: 'Dojrzałość AI', actual: 2.0, target: 4.0 },
-        ],
-      });
+      setData(
+        isDemo
+          ? {
+              axes: [
+                { id: 'processes', name: 'Procesy', actual: 3.2, target: 5.0 },
+                { id: 'digitalProducts', name: 'Produkty Cyfrowe', actual: 2.8, target: 4.5 },
+                { id: 'businessModels', name: 'Modele Biznesowe', actual: 2.5, target: 4.0 },
+                { id: 'dataManagement', name: 'Zarządzanie Danymi', actual: 3.5, target: 5.5 },
+                { id: 'culture', name: 'Kultura', actual: 3.0, target: 4.5 },
+                { id: 'cybersecurity', name: 'Cyberbezpieczeństwo', actual: 4.0, target: 5.0 },
+                { id: 'aiMaturity', name: 'Dojrzałość AI', actual: 2.0, target: 4.0 },
+              ],
+            }
+          : null
+      );
       setIsLoading(false);
       return;
     }
@@ -79,7 +85,7 @@ const MaturityRadarComponent: React.FC<NodeViewProps> = ({ node, updateAttribute
     };
 
     fetchData();
-  }, [assessmentId]);
+  }, [assessmentId, isDemo]);
 
   // Chart configuration
   const chartData: ChartData<'radar'> | null = data

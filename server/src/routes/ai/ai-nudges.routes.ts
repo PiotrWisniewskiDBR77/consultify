@@ -14,6 +14,13 @@ import logger from '../../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
+const notConfigured = (res: Response) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
 
 // Service interfaces
 interface ProactiveNudgesInterface {
@@ -62,11 +69,7 @@ router.get(
   '/pending',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!proactiveNudges?.getPendingNudges) {
-      return res.status(503).json({
-        success: false,
-        error: 'Proactive nudges service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return notConfigured(res);
     }
 
     try {
@@ -104,11 +107,7 @@ router.post(
   '/track',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!proactiveNudges?.trackActivity || !proactiveNudges?.checkAndGenerateNudges) {
-      return res.status(503).json({
-        success: false,
-        error: 'Proactive nudges service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return notConfigured(res);
     }
 
     try {
@@ -156,11 +155,7 @@ router.post(
   '/dismiss',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!proactiveNudges?.dismissNudge) {
-      return res.status(503).json({
-        success: false,
-        error: 'Proactive nudges service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return notConfigured(res);
     }
 
     try {
@@ -204,11 +199,7 @@ router.post(
   '/acted',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!proactiveNudges?.markNudgeActed) {
-      return res.status(503).json({
-        success: false,
-        error: 'Proactive nudges service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return notConfigured(res);
     }
 
     try {
@@ -252,11 +243,7 @@ router.post(
   '/suppress',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!proactiveNudges?.suppressNudgeType) {
-      return res.status(503).json({
-        success: false,
-        error: 'Proactive nudges service not available',
-        code: 'FEATURE_UNAVAILABLE',
-      });
+      return notConfigured(res);
     }
 
     try {

@@ -27,7 +27,7 @@ interface MyWorkViewProps {
 
 export const MyWorkView: React.FC<MyWorkViewProps> = ({ onNavigate }) => {
   return (
-    <div data-testid="mywork-view">
+    <div data-testid="mywork-view" className="h-full">
       <SplitLayout title="My Work" currentView={AppView.MY_WORK}>
         <MyWorkHub onNavigate={onNavigate} />
       </SplitLayout>

@@ -7,6 +7,7 @@ import { appCache } from '../redis/CacheService.js';
 import type { LLMConfigService } from './llmConfigService.js';
 import { aiLogger } from './logger.js';
 import { modelMeetsRequirements, type ModelRequirements } from './modelCapabilities.js';
+import { modelRegistryService } from './modelRegistryService.js';
 
 export const TIER_HIERARCHY = ['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING'] as const;
 export type Tier = (typeof TIER_HIERARCHY)[number] | 'VISION';
@@ -32,70 +33,62 @@ export const CAPABILITY_TIERS: Record<string, Tier> = {
 };
 
 export const MODEL_PROVIDER_MAP: Record<string, string> = {
-  'gpt-4o': 'openai',
-  'gpt-4o-mini': 'openai',
-  'gpt-4-turbo': 'openai',
-  'gpt-3.5-turbo': 'openai',
-  'o1-preview': 'openai',
-  o1: 'openai',
-  'o1-mini': 'openai',
-  'claude-3-5-sonnet': 'anthropic',
-  'claude-3-5-sonnet-20241022': 'anthropic',
-  'claude-3-opus': 'anthropic',
-  'claude-3-sonnet': 'anthropic',
-  'claude-3-haiku': 'anthropic',
-  'claude-3-haiku-20240307': 'anthropic',
-  'gemini-2.5-pro': 'google',
-  'gemini-2.5-flash': 'google',
-  'gemini-2.0-flash': 'google',
-  'gemini-1.5-flash': 'google', // deprecated alias
-  'gemini-1.5-pro': 'google', // deprecated alias
-  'gemini-pro': 'google', // deprecated alias
-  'deepseek-chat': 'deepseek',
-  'deepseek-coder': 'deepseek',
-  'qwen-max': 'qwen',
-  'qwen-turbo': 'qwen',
-  'qwen-plus': 'qwen',
-  'command-r': 'cohere',
-  'command-r-plus': 'cohere',
-  'meta/llama-3.1-70b-instruct': 'nvidia',
-  'meta/llama3-8b-instruct': 'nvidia',
-  'glm-4-plus': 'zai',
-  'glm-4': 'zai',
-  'glm-4.6': 'zai',
-  // Ollama local models (fallback)
-  'gemma3:27b': 'ollama',
-  'qwen3-coder:30b': 'ollama',
-  'devstral-2:latest': 'ollama',
+  // OpenRouter is our single stable provider; model ids are routed through it.
+  // (We keep this map mainly for legacy non-namespaced ids.)
+  'gpt-4o': 'openrouter',
+  'gpt-4o-mini': 'openrouter',
+  'o1-preview': 'openrouter',
+  'o1-mini': 'openrouter',
+  'claude-3-5-sonnet': 'openrouter',
+  'claude-3-5-sonnet-20241022': 'openrouter',
+  'claude-3-haiku': 'openrouter',
+  'gemini-2.0-flash': 'openrouter',
 };
 
 export const TIER_DEFAULTS: Record<string, string> = {
-  BUDGET: 'gpt-4o-mini',
-  STANDARD: 'gpt-4o',
-  PREMIUM: 'gpt-4o',
-  REASONING: 'gpt-4o',
-  VISION: 'gpt-4o',
+  BUDGET: 'openai/gpt-4o-mini',
+  STANDARD: 'openai/gpt-4o',
+  PREMIUM: 'anthropic/claude-3.5-sonnet',
+  REASONING: 'openai/o1-mini',
+  VISION: 'openai/gpt-4o',
 };
 
-// Ollama local model used as last-resort fallback when all cloud APIs fail
-const OLLAMA_FALLBACK = process.env.OLLAMA_MODEL || 'gemma3:27b';
-
 export const TIER_FALLBACK_CHAINS: Record<string, string[]> = {
-  // Active providers: OpenAI + Gemini + Anthropic + Ollama (local last-resort)
-  BUDGET: ['gpt-4o-mini', 'gemini-2.0-flash', 'claude-3-haiku', OLLAMA_FALLBACK],
-  STANDARD: ['gpt-4o', 'gemini-2.5-flash', 'claude-3-sonnet', OLLAMA_FALLBACK],
-  PREMIUM: ['gpt-4o', 'gemini-2.5-pro', 'claude-3-5-sonnet', OLLAMA_FALLBACK],
-  REASONING: ['o1-preview', 'gpt-4o', 'gemini-2.5-pro', 'claude-3-5-sonnet', OLLAMA_FALLBACK],
-  VISION: ['gpt-4o', 'gemini-2.5-flash', 'claude-3-5-sonnet', OLLAMA_FALLBACK],
+  // OpenRouter-only fallbacks (all are OpenRouter model ids)
+  BUDGET: ['openai/gpt-4o-mini', 'anthropic/claude-3.5-haiku'],
+  STANDARD: ['openai/gpt-4o', 'anthropic/claude-3.5-sonnet'],
+  PREMIUM: ['anthropic/claude-3.5-sonnet', 'openai/gpt-4o'],
+  REASONING: ['openai/o1-mini', 'openai/gpt-4o', 'anthropic/claude-3.5-sonnet'],
+  VISION: ['openai/gpt-4o', 'anthropic/claude-3.5-sonnet'],
 };
 
 export const TIER_FALLBACKS: Record<string, string> = {
-  BUDGET: 'gpt-4o-mini',
-  STANDARD: 'gpt-4o-mini',
-  PREMIUM: 'gpt-4o',
-  REASONING: 'gpt-4o',
-  VISION: 'gemini-2.5-flash',
+  BUDGET: 'openai/gpt-4o-mini',
+  STANDARD: 'openai/gpt-4o-mini',
+  PREMIUM: 'anthropic/claude-3.5-sonnet',
+  REASONING: 'openai/o1-mini',
+  VISION: 'openai/gpt-4o',
 };
+
+const MULTI_PROVIDER_ENABLED =
+  process.env.LLM_MULTI_PROVIDER === '1' ||
+  process.env.LLM_MULTI_PROVIDER === 'true' ||
+  process.env.LLM_MULTI_PROVIDER === 'yes';
+
+const PURPOSE_ROUTING_ENABLED =
+  process.env.LLM_PURPOSE_ROUTING === '1' ||
+  process.env.LLM_PURPOSE_ROUTING === 'true' ||
+  process.env.LLM_PURPOSE_ROUTING === 'yes';
+
+const ORG_POLICY_ENABLED =
+  process.env.LLM_ORG_POLICY === '1' ||
+  process.env.LLM_ORG_POLICY === 'true' ||
+  process.env.LLM_ORG_POLICY === 'yes';
+
+const MODEL_REGISTRY_ENABLED =
+  process.env.LLM_MODEL_REGISTRY === '1' ||
+  process.env.LLM_MODEL_REGISTRY === 'true' ||
+  process.env.LLM_MODEL_REGISTRY === 'yes';
 
 type ProviderRow = {
   id: string;
@@ -108,6 +101,11 @@ type ProviderRow = {
   priority?: number | null;
   health_status?: string | null;
   is_active?: number | null;
+  kind?: string | null;
+  provider_type?: string | null;
+  origin_vendor?: string | null;
+  execution_regions?: any;
+  allowed_data_classes?: any;
 };
 
 type TierAssignmentRow = {
@@ -142,10 +140,20 @@ type ProviderConfig = {
 
 type SelectParams = {
   capability?: string;
+  /**
+   * v3: prefer purpose over capability (capability kept for backwards compatibility).
+   * For now, purpose is treated as an alias of capability in routing logs and overrides.
+   */
+  purpose?: string;
   tier?: string;
   organizationId?: string;
   options?: { tier?: string };
   requirements?: ModelRequirements;
+  /**
+   * Optional data classification hint used by org policy (enterprise).
+   * If omitted, policy enforcement should treat as lowest sensitivity.
+   */
+  dataClass?: 'no_pii' | 'pii' | 'confidential';
 };
 
 let _llmConfigService: LLMConfigService | null = null;
@@ -188,8 +196,9 @@ export class ModelRouter {
   }
 
   async select(params: SelectParams): Promise<ProviderConfig> {
-    const { capability, organizationId, options = {}, requirements } = params;
-    const tier = (options.tier ||
+    const capability = params.purpose || params.capability;
+    const { organizationId, options = {}, requirements } = params;
+    let tier = (options.tier ||
       params.tier ||
       CAPABILITY_TIERS[capability || ''] ||
       'STANDARD') as Tier;
@@ -199,9 +208,87 @@ export class ModelRouter {
       `Selecting model for tier: ${tier}, org: ${organizationId || 'global'}`
     );
 
+    const orgPolicy =
+      ORG_POLICY_ENABLED && organizationId ? await this.getOrgPolicy(organizationId) : null;
+
+    // -------------------------------------------------------------------------
+    // v3 soft cap (degraded mode): if org is near/exceeded monthly AI cost budget,
+    // degrade non-critical purposes to cheaper tiers (no hard cut).
+    //
+    // Budget source: organizations.monthly_budget_usd (existing column).
+    // Spend source: ai_usage_logs.estimated_cost_usd (written by AIPipeline when available).
+    //
+    // Controls:
+    // - AI_COST_SOFT_CAP_ENABLED=false to disable
+    // - AI_COST_SOFT_CAP_THRESHOLD_PCT (default 90)
+    // - AI_COST_SOFT_CAP_SEVERE_PCT (default 110)
+    // -------------------------------------------------------------------------
+    if (
+      organizationId &&
+      String(process.env.AI_COST_SOFT_CAP_ENABLED || '')
+        .trim()
+        .toLowerCase() !== 'false'
+    ) {
+      try {
+        const capRow = await DbPromise.get<{ monthly_budget_usd?: number | null }>(
+          `SELECT monthly_budget_usd FROM organizations WHERE id = ? LIMIT 1`,
+          [organizationId],
+          { fallback: true }
+        );
+        const capUsd = Number(capRow?.monthly_budget_usd);
+        if (Number.isFinite(capUsd) && capUsd > 0) {
+          const spendRow = await DbPromise.get<{ cost?: number | null }>(
+            `SELECT COALESCE(SUM(estimated_cost_usd), 0) as cost
+             FROM ai_usage_logs
+             WHERE organization_id = ?
+               AND status = 'success'
+               AND created_at >= date('now', 'start of month')`,
+            [organizationId],
+            { fallback: true }
+          );
+          const spendUsd = Number(spendRow?.cost || 0) || 0;
+          const pct = capUsd > 0 ? (spendUsd / capUsd) * 100 : 0;
+
+          const thresholdPct = Number(process.env.AI_COST_SOFT_CAP_THRESHOLD_PCT || 90) || 90;
+          const severePct = Number(process.env.AI_COST_SOFT_CAP_SEVERE_PCT || 110) || 110;
+
+          const purpose = String(capability || '').trim();
+          const nonCritical =
+            ['chat_simple', 'chat_confirm', 'deck_copy_polish', 'chat_complex'].includes(purpose) ||
+            purpose.startsWith('results_');
+
+          // Respect explicit tier override from the caller.
+          const hasExplicitTierOverride = !!options.tier || !!params.tier;
+
+          if (!hasExplicitTierOverride && nonCritical && pct >= thresholdPct && tier !== 'BUDGET') {
+            aiLogger.warn(
+              'ModelRouter',
+              `AI cost soft-cap (${pct.toFixed(1)}%): forcing BUDGET for ${purpose}`
+            );
+            tier = 'BUDGET';
+          }
+
+          if (!hasExplicitTierOverride && pct >= severePct && tier === 'REASONING') {
+            aiLogger.warn(
+              'ModelRouter',
+              `AI cost soft-cap severe (${pct.toFixed(1)}%): degrading REASONING->STANDARD for ${purpose}`
+            );
+            tier = 'STANDARD';
+          }
+        }
+      } catch {
+        // Fail-open: never block routing due to budget checks.
+      }
+    }
+
     const override = await this.getOrgOverride(organizationId, capability);
     if (override) {
-      if (modelMeetsRequirements(override.model_id, requirements)) {
+      if (
+        modelMeetsRequirements(
+          this.normalizeModelIdForCapabilities(override.model_id),
+          requirements
+        )
+      ) {
         aiLogger.info('ModelRouter', `Using org override for ${capability}: ${override.model_id}`);
         return this.getProviderConfig(override.model_id, (override.tier || tier) as Tier);
       }
@@ -211,23 +298,87 @@ export class ModelRouter {
       );
     }
 
-    // If an env var is explicitly set to empty string, treat that provider as disabled.
-    // This is used for single-provider local tests (e.g. Gemini-only with OPENAI_API_KEY=).
-    const openaiDisabled =
-      process.env.OPENAI_API_KEY !== undefined && String(process.env.OPENAI_API_KEY).trim() === '';
+    // v3 enterprise: purpose assignments (higher priority than tier routing)
+    if (PURPOSE_ROUTING_ENABLED && capability) {
+      // V3-A06: Try model registry first (health gating, fallback chain)
+      if (MODEL_REGISTRY_ENABLED && organizationId) {
+        try {
+          const config = await this.resolveByPurpose(capability, organizationId, {
+            ...options,
+            requirements,
+            dataClass: params.dataClass,
+          });
+          aiLogger.info(
+            'ModelRouter',
+            `Selected via model registry: ${config.id} (${config.provider})`
+          );
+          return config;
+        } catch (e: any) {
+          aiLogger.warn('ModelRouter', `Model registry routing failed: ${e?.message || String(e)}`);
+        }
+      }
+
+      try {
+        const assigned = await this.getModelsForPurpose(capability, organizationId);
+        const filtered = assigned
+          .filter((m) => this.isProviderUsable(m))
+          .filter((m) =>
+            requirements
+              ? modelMeetsRequirements(
+                  this.normalizeModelIdForCapabilities(String((m as any).model_id || m.id || '')),
+                  requirements
+                )
+              : true
+          )
+          .filter((m) =>
+            ORG_POLICY_ENABLED ? this.isAllowedByOrgPolicyInternal(m, params, orgPolicy) : true
+          );
+
+        if (filtered.length > 0) {
+          const pick = filtered[0];
+          aiLogger.info(
+            'ModelRouter',
+            `Selected via purpose assignment: ${pick.model_id} (${pick.provider})`
+          );
+          return {
+            id: pick.model_id || pick.id,
+            tier,
+            provider: pick.provider,
+            apiKey: pick.api_key || null,
+            endpoint: pick.endpoint || null,
+            source: 'purpose_assignment',
+            raw: pick,
+          };
+        }
+      } catch (e: any) {
+        aiLogger.warn('ModelRouter', `Purpose routing failed: ${e?.message || String(e)}`);
+      }
+    }
 
     const availableModelsRaw = await this.getModelsForTier(tier, organizationId);
-    const availableModelsFilteredByProvider = openaiDisabled
-      ? availableModelsRaw.filter((m) => String(m.provider || '').toLowerCase() !== 'openai')
-      : availableModelsRaw;
-    const availableModels = requirements
-      ? availableModelsFilteredByProvider.filter((m) =>
-          modelMeetsRequirements(String((m as any).model_id || m.id || ''), requirements)
-        )
-      : availableModelsFilteredByProvider;
+    const candidates = MULTI_PROVIDER_ENABLED
+      ? availableModelsRaw.filter((m) => this.isProviderUsable(m))
+      : availableModelsRaw.filter((m) => String(m.provider || '').toLowerCase() === 'openrouter');
 
-    if (availableModels.length > 0) {
-      const selectedModel = await this.selectWithRoundRobin(tier, organizationId, availableModels);
+    const availableModels = requirements
+      ? candidates.filter((m) =>
+          modelMeetsRequirements(
+            this.normalizeModelIdForCapabilities(String((m as any).model_id || m.id || '')),
+            requirements
+          )
+        )
+      : candidates;
+
+    const availableModelsAfterPolicy = ORG_POLICY_ENABLED
+      ? availableModels.filter((m) => this.isAllowedByOrgPolicyInternal(m, params, orgPolicy))
+      : availableModels;
+
+    if (availableModelsAfterPolicy.length > 0) {
+      const selectedModel = await this.selectWithRoundRobin(
+        tier,
+        organizationId,
+        availableModelsAfterPolicy
+      );
       if (selectedModel) {
         aiLogger.info(
           'ModelRouter',
@@ -280,8 +431,8 @@ export class ModelRouter {
     const defaultProvider = await this.getDefaultProvider();
     if (
       defaultProvider &&
+      String(defaultProvider.provider || '').toLowerCase() === 'openrouter' &&
       defaultProvider.api_key &&
-      !(openaiDisabled && String(defaultProvider.provider || '').toLowerCase() === 'openai') &&
       modelMeetsRequirements(
         String(defaultProvider.model_id || defaultProvider.id || ''),
         requirements
@@ -300,29 +451,8 @@ export class ModelRouter {
       };
     }
 
-    // Static fallback should respect what providers are actually configured.
-    // This enables "Gemini-only" setups without changing DB defaults.
-    const hasOpenAI = !!(process.env.OPENAI_API_KEY || '').trim();
-    const hasGemini = !!(
-      (process.env.GEMINI_API_KEY ||
-        process.env.GOOGLE_AI_API_KEY ||
-        // legacy fallback
-        (process.env as any).GOOGLE_API_KEY ||
-        '') as string
-    ).trim();
-
-    const geminiDefaultByTier: Record<string, string> = {
-      BUDGET: 'gemini-2.0-flash',
-      STANDARD: 'gemini-2.5-flash',
-      PREMIUM: 'gemini-2.5-pro',
-      REASONING: 'gemini-2.5-pro',
-      VISION: 'gemini-2.5-flash',
-    };
-
-    const staticCandidates =
-      !hasOpenAI && hasGemini
-        ? [geminiDefaultByTier[tier] || 'gemini-2.0-flash', ...(TIER_FALLBACK_CHAINS[tier] || [])]
-        : [TIER_DEFAULTS[tier], ...(TIER_FALLBACK_CHAINS[tier] || [])];
+    // Static fallback (OpenRouter-only)
+    const staticCandidates = [TIER_DEFAULTS[tier], ...(TIER_FALLBACK_CHAINS[tier] || [])];
     const staticPick = staticCandidates.find((m) =>
       modelMeetsRequirements(String(m || ''), requirements)
     );
@@ -333,6 +463,97 @@ export class ModelRouter {
     }
     aiLogger.warn('ModelRouter', `Using static fallback: ${staticPick} for tier ${tier}`);
     return this.getProviderConfig(staticPick, tier);
+  }
+
+  /**
+   * V3-A06: Resolve model by purpose using the model registry.
+   * Uses health gating, org policy, fallback chain. Throws on no candidate (no silent degradation).
+   */
+  async resolveByPurpose(
+    purpose: string,
+    organizationId: string,
+    options?: {
+      tier?: string;
+      requirements?: ModelRequirements;
+      dataClass?: 'no_pii' | 'pii' | 'confidential';
+      preferLocal?: boolean;
+    }
+  ): Promise<ProviderConfig> {
+    const req = {
+      organizationId,
+      purpose,
+      requirements: options?.requirements
+        ? {
+            vision: options.requirements.vision,
+            tools: options.requirements.tools,
+            streaming: options.requirements.streaming,
+            jsonMode: (options.requirements as any).jsonMode,
+            contextWindow: (options.requirements as any).contextWindow,
+          }
+        : undefined,
+      options: {
+        preferLocal: options?.preferLocal,
+        dataClass: options?.dataClass,
+      },
+    };
+
+    const result = await modelRegistryService.resolveModel(req);
+    const baseConfig = await this.getProviderConfig(
+      result.modelId,
+      (options?.tier || 'STANDARD') as Tier
+    );
+    return {
+      ...baseConfig,
+      id: result.modelId,
+      source: result.isFallback ? 'model_registry_fallback' : 'model_registry',
+      raw: baseConfig.raw
+        ? ({ ...baseConfig.raw, modelRegistryId: result.modelRegistryId } as ProviderRow)
+        : null,
+    };
+  }
+
+  async getModelsForPurpose(purpose: string, organizationId?: string): Promise<ProviderRow[]> {
+    const p = String(purpose || '').trim();
+    if (!p) return [];
+
+    // Prefer org assignments, then global (NULL org) assignments
+    const query = organizationId
+      ? `
+        SELECT lp.*, apa.priority as purpose_priority
+        FROM ai_purpose_assignments apa
+        INNER JOIN llm_providers lp ON lp.id = apa.provider_id
+        LEFT JOIN organization_provider_settings ops ON lp.id = ops.provider_id AND ops.organization_id = ?
+        WHERE apa.purpose = ?
+          AND (apa.organization_id = ? OR apa.organization_id IS NULL)
+          AND apa.is_active = TRUE
+          AND lp.is_active = 1
+          AND (ops.is_enabled IS NULL OR ops.is_enabled = 1)
+          AND (lp.health_status IS NULL OR lp.health_status != 'unhealthy')
+        ORDER BY
+          CASE WHEN apa.organization_id = ? THEN 0 ELSE 1 END,
+          apa.priority,
+          lp.cost_per_1k,
+          lp.priority
+      `
+      : `
+        SELECT lp.*, apa.priority as purpose_priority
+        FROM ai_purpose_assignments apa
+        INNER JOIN llm_providers lp ON lp.id = apa.provider_id
+        WHERE apa.purpose = ?
+          AND apa.organization_id IS NULL
+          AND apa.is_active = TRUE
+          AND lp.is_active = 1
+          AND (lp.health_status IS NULL OR lp.health_status != 'unhealthy')
+        ORDER BY apa.priority, lp.cost_per_1k, lp.priority
+      `;
+
+    const params = organizationId ? [organizationId, p, organizationId, organizationId] : [p];
+
+    try {
+      return await DbPromise.all<ProviderRow>(query, params, { fallback: true });
+    } catch {
+      return [];
+    }
   }
 
   async getModelsForTier(tier: Tier, organizationId?: string): Promise<ProviderRow[]> {
@@ -348,8 +569,6 @@ export class ModelRouter {
                 WHERE mta.tier = ?
                   AND mta.is_active = true
                   AND p.is_active = 1
-                  AND p.api_key IS NOT NULL
-                  AND p.api_key != ''
                   AND (ops.is_enabled IS NULL OR ops.is_enabled = 1)
                   AND (p.health_status IS NULL OR p.health_status != 'unhealthy')
                 ORDER BY COALESCE(ops.custom_priority, mta.priority), p.cost_per_1k, p.priority
@@ -363,8 +582,6 @@ export class ModelRouter {
                 WHERE mta.tier = ?
                   AND mta.is_active = true
                   AND p.is_active = 1
-                  AND p.api_key IS NOT NULL
-                  AND p.api_key != ''
                   AND (p.health_status IS NULL OR p.health_status != 'unhealthy')
                 ORDER BY mta.priority, p.cost_per_1k, p.priority
             `;
@@ -655,12 +872,29 @@ export class ModelRouter {
   async getProviderConfig(modelId: string, tier: Tier): Promise<ProviderConfig> {
     const providerName = this.inferProvider(modelId);
 
+    const normalizeOpenRouterModelId = (id: string): string => {
+      const raw = String(id || '').trim();
+      if (!raw) return raw;
+      if (raw.includes('/') && !raw.includes('://')) return raw;
+      const lower = raw.toLowerCase();
+      if (lower === 'gpt-4o') return 'openai/gpt-4o';
+      if (lower === 'gpt-4o-mini') return 'openai/gpt-4o-mini';
+      if (lower === 'o1-preview') return 'openai/o1-preview';
+      if (lower === 'o1-mini' || lower === 'o1') return 'openai/o1-mini';
+      if (lower.startsWith('claude')) return `anthropic/${raw}`;
+      if (lower.startsWith('gemini')) return `google/${raw}`;
+      return raw;
+    };
+
+    const requestedModelId =
+      providerName === 'openrouter' ? normalizeOpenRouterModelId(modelId) : modelId;
+
     let provider = await DbPromise.get<ProviderRow>(
       `SELECT * FROM llm_providers 
              WHERE provider = ? AND is_active = 1 
              AND (model_id = ? OR model_id IS NULL OR model_id = '') 
              LIMIT 1`,
-      [providerName, modelId],
+      [providerName, requestedModelId],
       { fallback: true }
     );
 
@@ -672,36 +906,13 @@ export class ModelRouter {
       );
     }
 
-    // Ollama is local and doesn't require an API key - just a reachable URL
-    if (providerName === 'ollama') {
-      const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-      aiLogger.info('ModelRouter', `Using local Ollama at ${ollamaUrl} for model ${modelId}`);
-      return {
-        id: modelId,
-        tier,
-        provider: 'ollama',
-        apiKey: 'ollama', // Dummy key required by OpenAI SDK
-        endpoint: `${ollamaUrl}/v1`,
-        source: 'local',
-        markupMultiplier: 0,
-        raw: provider || null,
-      };
-    }
-
     if (!provider || !provider.api_key) {
       const envKey = this.getEnvKeyForProvider(providerName);
-      const envApiKey =
-        process.env[envKey] ||
-        // Also accept repo-standard + legacy keys for Google/Gemini
-        (providerName === 'google' || providerName === 'gemini'
-          ? process.env.GOOGLE_AI_API_KEY ||
-            process.env.GOOGLE_API_KEY ||
-            process.env.GEMINI_API_KEY
-          : undefined);
+      const envApiKey = process.env[envKey];
       if (envApiKey) {
         aiLogger.info('ModelRouter', `Using env fallback for ${providerName}`);
         return {
-          id: modelId,
+          id: requestedModelId,
           tier,
           provider: providerName,
           apiKey: envApiKey,
@@ -714,7 +925,10 @@ export class ModelRouter {
     }
 
     return {
-      id: provider?.model_id || modelId,
+      id:
+        providerName === 'openrouter'
+          ? normalizeOpenRouterModelId(String(provider?.model_id || requestedModelId))
+          : provider?.model_id || requestedModelId,
       tier,
       provider: providerName,
       apiKey: provider?.api_key || null,
@@ -775,58 +989,230 @@ export class ModelRouter {
   }
 
   inferProvider(modelId?: string): string {
-    if (!modelId) return 'openai';
+    if (!modelId) return 'openrouter';
+
+    // OpenRouter uses namespaced model IDs like "openai/gpt-4o".
+    // Treat any "org/model" id as OpenRouter unless it is a URL.
+    if (modelId.includes('/') && !modelId.includes('://')) {
+      return 'openrouter';
+    }
 
     const mapped = MODEL_PROVIDER_MAP[modelId];
     if (mapped) return mapped;
 
     const modelLower = modelId.toLowerCase();
-    if (modelLower.startsWith('gpt') || modelLower.startsWith('o1')) return 'openai';
-    if (modelLower.startsWith('claude')) return 'anthropic';
-    if (modelLower.startsWith('gemini')) return 'google';
-    if (modelLower.startsWith('deepseek')) return 'deepseek';
-    if (modelLower.startsWith('qwen')) return 'qwen';
-    if (modelLower.startsWith('command')) return 'cohere';
-    if (modelLower.startsWith('glm')) return 'zai';
-    if (modelLower.includes('llama') || modelLower.includes('meta/')) return 'nvidia';
-    // Ollama local models (typically use name:tag format like "gemma3:27b")
-    if (modelLower.includes('gemma') || modelLower.includes('devstral') || modelLower.includes(':'))
-      return 'ollama';
+    if (
+      modelLower.startsWith('gpt') ||
+      modelLower.startsWith('o1') ||
+      modelLower.startsWith('claude') ||
+      modelLower.startsWith('gemini')
+    ) {
+      return 'openrouter';
+    }
 
-    return 'openai';
+    return 'openrouter';
+  }
+
+  private normalizeModelIdForCapabilities(modelId: string): string {
+    const raw = String(modelId || '').trim();
+    if (!raw) return raw;
+    // OpenRouter often uses namespaced ids like "openai/gpt-4o".
+    if (raw.includes('/') && !raw.includes('://')) {
+      return raw.split('/').slice(-1)[0] || raw;
+    }
+    return raw;
+  }
+
+  private isProviderUsable(row: ProviderRow): boolean {
+    const provider = String(row.provider || '').toLowerCase();
+    const apiKey = String(row.api_key || '').trim();
+
+    // If a DB key exists, it's usable.
+    if (apiKey) return true;
+
+    // Some providers can be configured via env vars (llmService prefers env keys).
+    if (provider === 'openrouter') return !!process.env.OPENROUTER_API_KEY?.trim();
+    if (provider === 'openai') return !!process.env.OPENAI_API_KEY?.trim();
+    if (provider === 'anthropic') return !!process.env.ANTHROPIC_API_KEY?.trim();
+    if (provider === 'google' || provider === 'gemini') {
+      return !!(
+        process.env.GEMINI_API_KEY ||
+        process.env.GOOGLE_AI_API_KEY ||
+        (process.env as any).GOOGLE_API_KEY
+      )?.trim();
+    }
+    if (provider === 'deepseek') return !!process.env.DEEPSEEK_API_KEY?.trim();
+    if (provider === 'zai' || provider === 'z_ai') return !!process.env.ZAI_API_KEY?.trim();
+    if (provider === 'replicate') {
+      return !!(process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY)?.trim();
+    }
+
+    // Local providers usually don't require an API key.
+    if (provider === 'ollama') return true;
+
+    // Otherwise: require DB key.
+    return false;
+  }
+
+  private isAllowedByOrgPolicyInternal(
+    row: ProviderRow,
+    params: SelectParams,
+    policy: any | null
+  ): boolean {
+    const dataClass = params.dataClass || 'no_pii';
+    if (!ORG_POLICY_ENABLED) return true;
+
+    const pt = String(row.provider_type || '').toLowerCase() || 'unknown';
+    const origin = String(row.origin_vendor || '').toLowerCase() || 'unknown';
+    const regions = this.normalizeRegions(row.execution_regions);
+
+    if (policy && typeof policy === 'object') {
+      const denyProviderTypes = this.normalizeStringSet(
+        policy.deny_provider_types || policy.denyProviderTypes
+      );
+      if (denyProviderTypes.size > 0 && denyProviderTypes.has(pt)) return false;
+
+      const allowProviderTypes = this.normalizeStringSet(
+        policy.allow_provider_types || policy.allowProviderTypes
+      );
+      if (allowProviderTypes.size > 0 && !allowProviderTypes.has(pt)) return false;
+
+      const denyOrigins = this.normalizeStringSet(policy.deny_origin_vendors || policy.denyOrigins);
+      if (denyOrigins.size > 0 && denyOrigins.has(origin)) return false;
+
+      const allowOrigins = this.normalizeStringSet(
+        policy.allow_origin_vendors || policy.allowOrigins
+      );
+      if (allowOrigins.size > 0 && !allowOrigins.has(origin)) return false;
+
+      const denyRegions = this.normalizeStringSet(policy.deny_regions || policy.denyRegions);
+      if (denyRegions.size > 0 && regions.some((r) => denyRegions.has(r))) return false;
+
+      const allowRegions = this.normalizeStringSet(policy.allow_regions || policy.allowRegions);
+      if (allowRegions.size > 0 && !regions.some((r) => allowRegions.has(r))) return false;
+
+      const requireLocalFor = this.normalizeStringSet(
+        policy.require_local_for_data_classes || policy.requireLocalForDataClasses
+      );
+      if (requireLocalFor.size > 0 && requireLocalFor.has(dataClass)) {
+        if (pt !== 'local' && pt !== 'customer_managed') return false;
+      }
+    } else {
+      // No explicit policy stored: still enforce "confidential -> local" if the caller asked for it.
+      if (dataClass === 'confidential') {
+        if (pt !== 'local' && pt !== 'customer_managed') return false;
+      }
+    }
+    return true;
+  }
+
+  private normalizeRegions(value: any): string[] {
+    try {
+      if (!value) return ['UNKNOWN'];
+      if (Array.isArray(value)) {
+        return value.map((x) => String(x).trim().toUpperCase()).filter(Boolean);
+      }
+      const s = String(value || '').trim();
+      if (!s) return ['UNKNOWN'];
+      if (s.startsWith('[')) {
+        const arr = JSON.parse(s);
+        if (Array.isArray(arr)) {
+          return arr.map((x) => String(x).trim().toUpperCase()).filter(Boolean);
+        }
+      }
+      // Comma separated
+      return s
+        .split(',')
+        .map((x) => x.trim().toUpperCase())
+        .filter(Boolean);
+    } catch {
+      return ['UNKNOWN'];
+    }
+  }
+
+  private normalizeStringSet(value: any): Set<string> {
+    const out = new Set<string>();
+    if (!value) return out;
+    if (Array.isArray(value)) {
+      for (const v of value) {
+        const s = String(v || '')
+          .trim()
+          .toLowerCase();
+        if (s) out.add(s);
+      }
+      return out;
+    }
+    const s = String(value || '').trim();
+    if (!s) return out;
+    for (const item of s.split(',')) {
+      const v = String(item || '')
+        .trim()
+        .toLowerCase();
+      if (v) out.add(v);
+    }
+    return out;
+  }
+
+  private async getOrgPolicy(organizationId: string): Promise<any | null> {
+    const orgId = String(organizationId || '').trim();
+    if (!orgId) return null;
+    const CACHE_KEY = `router:org_policy:${orgId}`;
+    try {
+      const cached = await appCache.get<any>(CACHE_KEY);
+      if (cached) return cached;
+    } catch {
+      /* ignore */
+    }
+
+    try {
+      const row = await DbPromise.get<{ policy?: any }>(
+        `SELECT policy FROM organization_ai_policy WHERE organization_id = ?`,
+        [orgId],
+        { fallback: true }
+      );
+      const raw = (row as any)?.policy ?? null;
+      let parsed = raw;
+      if (typeof raw === 'string') {
+        try {
+          parsed = JSON.parse(raw);
+        } catch {
+          parsed = null;
+        }
+      }
+      await appCache.set(CACHE_KEY, parsed || null, 300);
+      return parsed || null;
+    } catch {
+      return null;
+    }
   }
 
   getEnvKeyForProvider(provider: string): string {
     const envKeys: Record<string, string> = {
+      openrouter: 'OPENROUTER_API_KEY',
       openai: 'OPENAI_API_KEY',
       anthropic: 'ANTHROPIC_API_KEY',
-      // Prefer repo-standard names (Gemini). Keep legacy keys as fallback in getProviderConfig.
       google: 'GEMINI_API_KEY',
       gemini: 'GEMINI_API_KEY',
       deepseek: 'DEEPSEEK_API_KEY',
-      cohere: 'COHERE_API_KEY',
-      nvidia: 'NVIDIA_API_KEY',
-      qwen: 'ALIBABA_API_KEY',
+      z_ai: 'ZAI_API_KEY',
       zai: 'ZAI_API_KEY',
-      ollama: 'OLLAMA_BASE_URL',
+      replicate: 'REPLICATE_API_TOKEN',
     };
     return envKeys[provider] || `${provider.toUpperCase()}_API_KEY`;
   }
 
   getDefaultEndpoint(provider: string): string | null {
-    const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
     const endpoints: Record<string, string> = {
-      openai: 'https://api.openai.com/v1/chat/completions',
-      anthropic: 'https://api.anthropic.com/v1/messages',
+      // Base URL (not the /chat/completions path) — matches our llmService OpenRouter client usage.
+      openrouter: 'https://openrouter.ai/api/v1',
+      openai: 'https://api.openai.com/v1',
+      anthropic: 'https://api.anthropic.com',
       google: 'https://generativelanguage.googleapis.com/v1beta',
       gemini: 'https://generativelanguage.googleapis.com/v1beta',
-      deepseek: 'https://api.deepseek.com/chat/completions',
-      cohere: 'https://api.cohere.ai/v1/chat',
-      nvidia: 'https://integrate.api.nvidia.com/v1/chat/completions',
-      qwen: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
-      zai: 'https://api.z.ai/api/paas/v4/chat/completions',
-      openrouter: 'https://openrouter.ai/api/v1/chat/completions',
-      ollama: `${ollamaUrl}/v1`,
+      deepseek: 'https://api.deepseek.com',
+      z_ai: 'https://api.z.ai/api/paas/v4',
+      zai: 'https://api.z.ai/api/paas/v4',
+      replicate: 'https://api.replicate.com/v1',
     };
     return endpoints[provider] || null;
   }

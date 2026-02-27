@@ -33,7 +33,7 @@ type SeedUser = {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'ADMIN';
+  role: 'ADMIN' | 'OWNER';
 };
 
 function requireEnv(name: string): string {
@@ -90,50 +90,26 @@ async function main() {
   const orgId = String(process.env.SEED_ORG_ID || 'dbr77');
   const orgName = String(process.env.SEED_ORG_NAME || 'Consultinity / DBR77');
 
-  // Requested users
+  // Requested users (password: 123456 for all)
   const users: SeedUser[] = [
-    {
-      email: 'piotr.wisniewski@dbr77.com',
-      firstName: 'Piotr',
-      lastName: 'Wiśniewski',
-      role: 'ADMIN',
-    },
-    {
-      email: 'justyna.laskowska@dbr77.com',
-      firstName: 'Justyna',
-      lastName: 'Laskowska',
-      role: 'ADMIN',
-    },
-    {
-      email: 'tomasz.jankowski@dbr77.com',
-      firstName: 'Tomasz',
-      lastName: 'Jankowski',
-      role: 'ADMIN',
-    },
-    {
-      email: 'konrad.milewski@dbr77.com',
-      firstName: 'Konrad',
-      lastName: 'Milewski',
-      role: 'ADMIN',
-    },
-    {
-      email: 'pawel.mroczkowski@dbr77.com',
-      firstName: 'Paweł',
-      lastName: 'Mroczkowski',
-      role: 'ADMIN',
-    },
-    {
-      email: 'bartek.straszak@dbr77.com',
-      firstName: 'Bartek',
-      lastName: 'Straszak',
-      role: 'ADMIN',
-    },
-    {
-      email: 'katarzyna.szreniawska@dbr77.com',
-      firstName: 'Katarzyna',
-      lastName: 'Szreniawska',
-      role: 'ADMIN',
-    },
+    { email: 'piotr.wisniewski@dbr77.com', firstName: 'Piotr', lastName: 'Wiśniewski', role: 'OWNER' },
+    { email: 'justyna.laskowska@dbr77.com', firstName: 'Justyna', lastName: 'Laskowska', role: 'ADMIN' },
+    { email: 'konrad.milewski@dbr77.com', firstName: 'Konrad', lastName: 'Milewski', role: 'ADMIN' },
+    { email: 'bartosz.solomski@dbr77.com', firstName: 'Bartosz', lastName: 'Sołomski', role: 'ADMIN' },
+    { email: 'konrad.stefanik@dbr77.com', firstName: 'Konrad', lastName: 'Stefanik', role: 'ADMIN' },
+    { email: 'wojciech.wesolowski@dbr77.com', firstName: 'Wojciech', lastName: 'Wesołowski', role: 'ADMIN' },
+    { email: 'pawel.mroczkowski@dbr77.com', firstName: 'Paweł', lastName: 'Mroczkowski', role: 'ADMIN' },
+    { email: 'bartlomiej.straszka@dbr77.com', firstName: 'Bartłomiej', lastName: 'Straszka', role: 'ADMIN' },
+    { email: 'torian.richardson@dbr77.com', firstName: 'Torian', lastName: 'Richardson', role: 'ADMIN' },
+    { email: 'tomasz.jankowski@dbr77.com', firstName: 'Tomasz', lastName: 'Jankowski', role: 'ADMIN' },
+    { email: 'katarzyna.marszalkiewicz@dbr77.com', firstName: 'Katarzyna', lastName: 'Marszałkiewicz', role: 'ADMIN' },
+    { email: 'katarzyna.szwarocka@dbr77.com', firstName: 'Katarzyna', lastName: 'Szwarocka', role: 'ADMIN' },
+    { email: 'michal.lomzynski@dbr77.com', firstName: 'Michał', lastName: 'Łomżyński', role: 'ADMIN' },
+    { email: 'jeremiasz.kazmierczak@dbr77.com', firstName: 'Jeremiasz', lastName: 'Kaźmierczak', role: 'ADMIN' },
+    { email: 'anja.nugmanowa@dbr77.com', firstName: 'Anja', lastName: 'Nugmanowa', role: 'ADMIN' },
+    { email: 'doreen.mittelstaedt@dbr77.com', firstName: 'Doreen', lastName: 'Mittelstaedt', role: 'ADMIN' },
+    { email: 'pawel.dera@dbr77.com', firstName: 'Paweł', lastName: 'Dera', role: 'ADMIN' },
+    { email: 'kamil.kuczek@dbr77.com', firstName: 'Kamil', lastName: 'Kuczek', role: 'ADMIN' },
   ];
 
   const pool = new Pool({

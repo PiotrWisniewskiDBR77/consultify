@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   ArrowDownUp,
   ArrowUp,
+  BookOpen,
   Calendar,
   Check,
   ChevronDown,
@@ -62,6 +63,7 @@ import {
   type CloudProviderId,
   useCloudIntegrations,
 } from '@/hooks/useCloudIntegrations';
+import { useDemoSession } from '@/hooks/useDemoSession';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { ROUTES } from '@/routes/routeConfig';
@@ -119,6 +121,10 @@ import {
   StakeholdersSection,
   type WarningThresholds,
 } from './shared';
+import { AIConnections } from './shared/AIConnections';
+import { buildAskAIMessage } from './shared/askAiHelper';
+import { PostDecisionFollowUp } from './shared/PostDecisionFollowUp';
+import { RelatedContext } from './shared/RelatedContext';
 
 // ── Decision accordion section IDs ──────────────────────────────────────────
 const DECISION_SECTION_IDS = [
@@ -643,9 +649,16 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   onClose,
   onSaved,
 }) => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const { isChatCollapsed, toggleChatCollapse, currentProjectId } = useAppStore();
+  const { isDemo } = useDemoSession();
+  const {
+    isChatCollapsed,
+    toggleChatCollapse,
+    setChatKickoffMessage,
+    currentProjectId,
+    emitMyWorkEvent,
+  } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
   const {
     connectedProviderIds,
@@ -658,6 +671,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   } = useCloudIntegrations();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showFollowUp, setShowFollowUp] = useState(false);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -732,9 +746,17 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const [comments, setComments] = useState<Comment[]>([]);
   const [linkedItems, setLinkedItems] = useState<LinkedItem[]>([]);
 
+  // Origin tracking
+  const [sourceType, setSourceType] = useState<string | null>(null);
+  const [sourceId, setSourceId] = useState<string | null>(null);
+
   // Tags
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
+
+  // Related Notes (notebook pages mentioning decision title)
+  const [relatedNotes, setRelatedNotes] = useState<{ id: string; title: string }[]>([]);
+  const [relatedNotesExpanded, setRelatedNotesExpanded] = useState(true);
 
   // Activity Log
   interface ActivityLogEntry {
@@ -1113,6 +1135,30 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     loadUsers();
   }, []);
 
+  // Fetch related notebook pages that mention the decision title
+  useEffect(() => {
+    const q = (title || '').trim();
+    if (!q) {
+      setRelatedNotes([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const pages = await Api.getNotebookPages({ q, limit: 5 });
+        const arr = Array.isArray(pages) ? pages : [];
+        if (!cancelled) {
+          setRelatedNotes(arr.map((p: any) => ({ id: p.id, title: p.title || '' })));
+        }
+      } catch {
+        if (!cancelled) setRelatedNotes([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [title]);
+
   useEffect(() => {
     setLastPublishedSnapshot('');
     setLastDraftSavedAt(null);
@@ -1440,7 +1486,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       setDueDate(decision.dueDate ? decision.dueDate.split('T')[0] : '');
       setRationale(
         decision.rationale ||
-          'Delayed decision on report generation approach will block 4 active client projects from receiving their DRD reports on time. Each week of delay increases manual effort costs by ~€8,000 and risks client satisfaction scores dropping below SLA thresholds. Two enterprise clients have contractual deadlines in March 2026.'
+          (isDemo
+            ? 'Delayed decision on report generation approach will block 4 active client projects from receiving their DRD reports on time. Each week of delay increases manual effort costs by ~€8,000 and risks client satisfaction scores dropping below SLA thresholds. Two enterprise clients have contractual deadlines in March 2026.'
+            : '')
       );
       setRequesterName(decision.requestedByName || '');
       setDeciderId(decision.deciderId || '');
@@ -1449,41 +1497,49 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       setDecisionDate(decision.decisionDate || '');
       setCreatedAt(decision.createdAt || '');
       setUpdatedAt(decision.updatedAt || '');
-      // Use API data or fallback to demo data for rich UI testing
+      // Use API data; demo fallback only in demo sessions
       const apiAlternatives = decision.alternatives || [];
       setAlternatives(
-        withProsConsFallback(apiAlternatives.length > 0 ? apiAlternatives : DEMO_ALTERNATIVES)
+        withProsConsFallback(
+          apiAlternatives.length > 0 ? apiAlternatives : isDemo ? DEMO_ALTERNATIVES : []
+        )
       );
       setSelectedAlternativeId(decision.selectedAlternativeId || '');
       if (decision.impact) {
         setImpact(decision.impact);
       }
       const apiAttachments = decision.attachments || [];
-      setAttachments(apiAttachments.length > 0 ? apiAttachments : DEMO_ATTACHMENTS);
+      setAttachments(apiAttachments.length > 0 ? apiAttachments : isDemo ? DEMO_ATTACHMENTS : []);
       const apiComments = decision.comments || [];
-      setComments(apiComments.length > 0 ? apiComments : DEMO_COMMENTS);
+      setComments(apiComments.length > 0 ? apiComments : isDemo ? DEMO_COMMENTS : []);
       const apiLinkedItems = decision.linkedItems || [];
-      setLinkedItems(apiLinkedItems.length > 0 ? apiLinkedItems : DEMO_LINKED_ITEMS);
+      setLinkedItems(apiLinkedItems.length > 0 ? apiLinkedItems : isDemo ? DEMO_LINKED_ITEMS : []);
+      setSourceType(decision.sourceType || decision.source_type || null);
+      setSourceId(decision.sourceId || decision.source_id || null);
 
       // Risks — demo fallback
       const apiRisks = decision.risks || [];
-      setRisks(apiRisks.length > 0 ? apiRisks : DEMO_RISKS);
+      setRisks(apiRisks.length > 0 ? apiRisks : isDemo ? DEMO_RISKS : []);
 
       // Reminders & escalation — demo fallback
       const apiReminders = decision.reminders || [];
-      const loadedReminders = (apiReminders.length > 0 ? apiReminders : DEMO_REMINDERS).map(
-        (rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule)
-      );
+      const loadedReminders = (
+        apiReminders.length > 0 ? apiReminders : isDemo ? DEMO_REMINDERS : []
+      ).map((rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule));
       setReminders(loadedReminders);
-      const loadedEscalation = decision.escalation || DEMO_ESCALATION;
+      const loadedEscalation = decision.escalation || (isDemo ? DEMO_ESCALATION : null);
       setEscalation(loadedEscalation);
-      setEscalationRules([
-        normalizeEscalationRule({
-          ...loadedEscalation,
-          warningDays: thresholds.warningDays,
-          criticalDays: thresholds.criticalDays,
-        }),
-      ]);
+      setEscalationRules(
+        loadedEscalation
+          ? [
+              normalizeEscalationRule({
+                ...loadedEscalation,
+                warningDays: thresholds.warningDays,
+                criticalDays: thresholds.criticalDays,
+              }),
+            ]
+          : []
+      );
 
       // Load stakeholders
       try {
@@ -1492,11 +1548,13 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         setStakeholders(
           apiStakeholders.length > 0
             ? apiStakeholders
-            : DEMO_STAKEHOLDERS.map((s) => ({ ...s, decisionId: id }))
+            : isDemo
+              ? DEMO_STAKEHOLDERS.map((s) => ({ ...s, decisionId: id }))
+              : []
         );
       } catch {
-        // Stakeholders endpoint may not exist yet — use demo data
-        setStakeholders(DEMO_STAKEHOLDERS.map((s) => ({ ...s, decisionId: id })));
+        // Stakeholders endpoint may not exist yet — demo fallback only in demo sessions
+        setStakeholders(isDemo ? DEMO_STAKEHOLDERS.map((s) => ({ ...s, decisionId: id })) : []);
       }
 
       // Load decision history from real API
@@ -1652,6 +1710,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       if (decisionId) {
         await Api.updateDecision(decisionId, payload);
         if (!silent) toast.success(isPolish ? 'Decyzja zaktualizowana' : 'Decision updated');
+        emitMyWorkEvent({ type: 'item:updated', entityType: 'decision', entityId: decisionId });
       } else {
         await Api.createDecision(payload);
         if (!silent) toast.success(isPolish ? 'Decyzja utworzona' : 'Decision created');
@@ -1669,6 +1728,17 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   };
 
   const handleOpenChat = async () => {
+    setChatKickoffMessage(
+      buildAskAIMessage({
+        type: 'decision',
+        title,
+        status,
+        priority,
+        dueDate: dueDate || undefined,
+        description: description || undefined,
+      })
+    );
+
     // Persist local draft so user never loses input
     persistDraft('chat');
 
@@ -1710,7 +1780,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         isPolish ? 'Zatwierdzona' : 'Approved'
       );
       toast.success(isPolish ? 'Decyzja zatwierdzona' : 'Decision approved');
+      emitMyWorkEvent({ type: 'item:completed', entityType: 'decision', entityId: decisionId! });
       onSaved?.({ title, status: 'approved' });
+      setShowFollowUp(true);
     } catch (error) {
       toast.error(isPolish ? 'Nie udało się zatwierdzić' : 'Failed to approve');
     }
@@ -1730,7 +1802,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         isPolish ? 'Odrzucona' : 'Rejected'
       );
       toast.success(isPolish ? 'Decyzja odrzucona' : 'Decision rejected');
+      emitMyWorkEvent({ type: 'item:completed', entityType: 'decision', entityId: decisionId! });
       onSaved?.({ title, status: 'rejected' });
+      setShowFollowUp(true);
     } catch (error) {
       toast.error(isPolish ? 'Nie udało się odrzucić' : 'Failed to reject');
     }
@@ -4318,6 +4392,38 @@ Context: ${JSON.stringify(projectContext)}`;
                   },
                 ]}
               />
+              {/* ── Origin Badge ──────────────────────────────────── */}
+              {sourceType && sourceId && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 text-xs">
+                  {sourceType === 'idea' && <Lightbulb size={14} className="text-amber-500" />}
+                  {sourceType === 'notebook' && <FileText size={14} className="text-blue-500" />}
+                  {sourceType === 'task' && <Settings size={14} className="text-slate-500" />}
+                  <span className="text-slate-600 dark:text-slate-300">
+                    {sourceType === 'idea'
+                      ? 'Created from Idea'
+                      : sourceType === 'notebook'
+                        ? 'Created from Note'
+                        : `Created from ${sourceType}`}
+                  </span>
+                  <button
+                    onClick={() => {
+                      window.dispatchEvent(
+                        new CustomEvent('mywork-open-item', {
+                          detail: {
+                            type: sourceType === 'notebook' ? 'notebook' : sourceType,
+                            id: sourceId,
+                            name: `Source ${sourceType}`,
+                          },
+                        })
+                      );
+                    }}
+                    className="text-amber-600 dark:text-amber-400 hover:underline font-medium"
+                  >
+                    View source →
+                  </button>
+                </div>
+              )}
+
               {/* ── Inline ActionBar (kept for now, will migrate to NModeActionBar) */}
               <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
                 {/* Action buttons for pending decisions */}
@@ -6445,6 +6551,16 @@ Context: ${JSON.stringify(projectContext)}`;
                         />
                       )}
 
+                      {decisionId && title && (
+                        <RelatedContext
+                          entityType="decision"
+                          entityId={decisionId}
+                          entityTitle={title}
+                        />
+                      )}
+
+                      {decisionId && <AIConnections entityType="decision" entityId={decisionId} />}
+
                       {/* ── Section: Activity Log (shared ActivityLogCanvas) */}
                       {activeNotionSection === 'activity-log' && (
                         <ActivityLogCanvas
@@ -7379,6 +7495,59 @@ Context: ${JSON.stringify(projectContext)}`;
                       </div>
                     </div>
                   </div>
+
+                  {relatedNotes.length > 0 && (
+                    <div className="bg-white/80 dark:bg-navy-900/80 rounded-2xl border border-slate-200 dark:border-navy-700/60 overflow-hidden">
+                      <motion.button
+                        whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => setRelatedNotesExpanded((e) => !e)}
+                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors duration-200"
+                      >
+                        <div className="flex items-center gap-2.5 text-slate-700 dark:text-slate-200">
+                          <BookOpen size={16} className="text-slate-500 dark:text-slate-400" />
+                          <span className="text-sm font-semibold">
+                            {t('myWork.decisions.relatedNotes', 'Related Notes')}
+                          </span>
+                        </div>
+                        <motion.div
+                          animate={{ rotate: relatedNotesExpanded ? 180 : 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
+                        </motion.div>
+                      </motion.button>
+                      <AnimatePresence>
+                        {relatedNotesExpanded && (
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={{ height: 'auto' }}
+                            exit={{ height: 0 }}
+                            className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                          >
+                            <div className="p-3 space-y-2">
+                              {relatedNotes.map((note) => (
+                                <button
+                                  key={note.id}
+                                  type="button"
+                                  onClick={() => {
+                                    window.dispatchEvent(
+                                      new CustomEvent('mywork-open-item', {
+                                        detail: { type: 'notebook', id: note.id, name: note.title },
+                                      })
+                                    );
+                                  }}
+                                  className="w-full text-left p-2.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/50 dark:bg-navy-800/30 hover:bg-slate-50 dark:hover:bg-navy-800/60 transition-colors text-sm font-medium text-slate-700 dark:text-slate-200 truncate"
+                                >
+                                  {note.title}
+                                </button>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -7414,6 +7583,17 @@ Context: ${JSON.stringify(projectContext)}`;
                   : 'Delegation saved, but failed to refresh data'
               );
             }
+          }}
+        />
+      )}
+
+      {showFollowUp && decisionId && (
+        <PostDecisionFollowUp
+          decision={{ id: decisionId, title, status, description, category }}
+          onClose={() => setShowFollowUp(false)}
+          onTasksCreated={(count) => {
+            toast.success(isPolish ? `Utworzono ${count} zadań` : `Created ${count} tasks`);
+            setShowFollowUp(false);
           }}
         />
       )}

@@ -17,7 +17,13 @@ import { upsertAssessmentReportForBuilder } from './assessmentReportBuilderLinkS
 // TYPES
 // ==========================================
 
-export type ReportSourceType = 'ASSESSMENT' | 'INTERVIEW' | 'TOOL' | 'INITIATIVE';
+export type ReportSourceType =
+  | 'ASSESSMENT'
+  | 'INTERVIEW'
+  | 'TOOL'
+  | 'INITIATIVE'
+  | 'UPLOAD_BUNDLE'
+  | 'FINANCIAL_ANALYSIS';
 export type ReportStatus =
   | 'DRAFT'
   | 'CONFIGURING'
@@ -105,6 +111,7 @@ export interface CreateReportParams {
   organizationId: string;
   sourceType: ReportSourceType;
   sourceId: string;
+  sourceName?: string;
   title: string;
   description?: string;
   /**
@@ -114,6 +121,14 @@ export interface CreateReportParams {
   config?: Record<string, unknown>;
   createdBy: string;
   templateId?: string;
+}
+
+export interface GenerateFromTemplateOptions {
+  assessmentId?: string;
+  projectId?: string;
+  title?: string;
+  description?: string;
+  config?: Record<string, unknown>;
 }
 
 export interface UpdateSectionConfigParams {
@@ -333,6 +348,7 @@ export async function getTemplateForSource(
   organizationId?: string
 ): Promise<{ id: string; sections: unknown[] } | null> {
   const reportType = framework ? `${sourceType}_${framework}` : sourceType;
+  const fallbackSourceType = sourceType === 'UPLOAD_BUNDLE' ? 'INTERVIEW' : sourceType;
 
   let row: { id: string; sections_json: string } | null = null;
   try {
@@ -340,14 +356,25 @@ export async function getTemplateForSource(
       `
       SELECT id, sections_json
       FROM report_builder_templates
-      WHERE source_type = ?
-        AND (report_type = ? OR report_type IS NULL)
+      WHERE (source_type = ? OR source_type = ?)
+        AND (report_type = ? OR report_type = ? OR report_type IS NULL)
         AND (organization_id IS NULL OR organization_id = ?)
-      AND is_default = 1
-      ORDER BY CASE WHEN report_type IS NULL THEN 1 ELSE 0 END, report_type DESC
+        AND is_default = 1
+      ORDER BY
+        CASE WHEN source_type = ? THEN 0 ELSE 1 END,
+        CASE WHEN report_type = ? THEN 0 WHEN report_type = ? THEN 1 ELSE 2 END
       LIMIT 1
     `,
-      [sourceType, reportType, organizationId || null]
+      [
+        sourceType,
+        fallbackSourceType,
+        reportType,
+        fallbackSourceType,
+        organizationId || null,
+        sourceType,
+        reportType,
+        fallbackSourceType,
+      ]
     );
   } catch (err: any) {
     // Graceful degradation: in some local SQLite DBs this optional table may not exist yet.
@@ -379,6 +406,7 @@ export async function createReport(params: CreateReportParams): Promise<{
     organizationId,
     sourceType,
     sourceId,
+    sourceName: sourceNameInput,
     title,
     description,
     config,
@@ -387,7 +415,7 @@ export async function createReport(params: CreateReportParams): Promise<{
   } = params;
 
   // Get source data
-  let sourceName = '';
+  let sourceName = sourceNameInput || '';
   let sourceFramework = '';
   let projectId: string | null = null;
   let companyContext: Record<string, unknown> = {};
@@ -420,10 +448,14 @@ export async function createReport(params: CreateReportParams): Promise<{
     // Validate compatibility
     const tplSourceType = String((tpl as any).source_type || '').toUpperCase();
     const tplReportType = (tpl as any).report_type ? String((tpl as any).report_type) : null;
-    if (tplSourceType && tplSourceType !== sourceType) {
+    const isUploadBundleTemplateFallback =
+      sourceType === 'UPLOAD_BUNDLE' && (tplSourceType === 'INTERVIEW' || tplSourceType === 'TOOL');
+    if (tplSourceType && tplSourceType !== sourceType && !isUploadBundleTemplateFallback) {
       throw new Error('Template source type mismatch');
     }
-    if (tplReportType && tplReportType !== derivedReportType) {
+    const isUploadBundleReportTypeFallback =
+      sourceType === 'UPLOAD_BUNDLE' && (tplReportType === 'INTERVIEW' || tplReportType === 'TOOL');
+    if (tplReportType && tplReportType !== derivedReportType && !isUploadBundleReportTypeFallback) {
       throw new Error('Template report type mismatch');
     }
 
@@ -571,6 +603,52 @@ export async function createReport(params: CreateReportParams): Promise<{
   };
 
   return { report, sections };
+}
+
+/**
+ * Generate a new report from a template.
+ *
+ * Used by `ScheduledReportService` when executing recurring schedules.
+ * This creates the report structure (report + sections). Content generation is a separate step.
+ */
+export async function generateFromTemplate(
+  templateId: string | undefined,
+  organizationId: string,
+  userId: string,
+  options?: GenerateFromTemplateOptions
+): Promise<ReportRecord> {
+  const tpl = templateId
+    ? await getTemplateById(templateId, organizationId)
+    : await getTemplateForSource('ASSESSMENT', undefined, organizationId);
+
+  if (!tpl) throw new Error('Template not found');
+
+  const sourceType = String(
+    (tpl as any).source_type || 'ASSESSMENT'
+  ).toUpperCase() as ReportSourceType;
+
+  // Scheduler provides sourceAssessmentId/sourceProjectId in options. We store it as report.source_id.
+  const sourceId = options?.assessmentId || options?.projectId || '';
+  if (!sourceId) {
+    throw new Error('Missing sourceId for template generation (assessmentId/projectId required)');
+  }
+
+  const title =
+    options?.title ||
+    `${String((tpl as any).name || 'Report')} • ${new Date().toISOString().slice(0, 10)}`;
+
+  const created = await createReport({
+    organizationId,
+    sourceType,
+    sourceId,
+    title,
+    description: options?.description || String((tpl as any).description || ''),
+    config: options?.config,
+    createdBy: userId,
+    templateId: String((tpl as any).id || templateId || ''),
+  });
+
+  return created.report;
 }
 
 /**
@@ -1595,7 +1673,7 @@ export interface ReportExportRecord {
   id: string;
   reportId: string;
   reportType: string;
-  format: 'pdf' | 'pptx' | 'docx' | 'xlsx';
+  format: 'pdf' | 'pptx' | 'docx' | 'xlsx' | 'notion';
   filePath?: string;
   fileSize?: number;
   language: string;
@@ -1633,7 +1711,7 @@ export interface PublicLinkRecord {
 export async function createExportRecord(params: {
   reportId: string;
   reportType: string;
-  format: 'pdf' | 'pptx' | 'docx' | 'xlsx';
+  format: 'pdf' | 'pptx' | 'docx' | 'xlsx' | 'notion';
   filePath: string;
   fileSize: number;
   language?: string;
@@ -2435,6 +2513,7 @@ const ReportBuilderService = {
   listAssessmentSources,
   getTemplateForSource,
   createReport,
+  generateFromTemplate,
   getReport,
   listReports,
   listBlockTypes,

@@ -14,7 +14,6 @@ const router = Router();
 interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
 }
-const FEATURE_NAME = 'generic-reports';
 
 const isSchemaMissingError = (error: unknown): boolean => {
   const message = String((error as Error)?.message || '').toLowerCase();
@@ -27,12 +26,12 @@ const isSchemaMissingError = (error: unknown): boolean => {
   );
 };
 
-const respondFeatureUnavailable = (res: Response, detail?: string) =>
+const respondFeatureUnavailable = (_req: Request, res: Response, _detail?: string) =>
   res.status(503).json({
-    error: 'Feature unavailable',
-    code: 'FEATURE_UNAVAILABLE',
-    feature: FEATURE_NAME,
-    detail,
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 
 // System-default templates (always available)
@@ -62,7 +61,7 @@ router.get(
       res.json(reports || []);
     } catch (error) {
       if (isSchemaMissingError(error)) {
-        return respondFeatureUnavailable(res, 'schema missing');
+        return respondFeatureUnavailable(req, res, 'schema missing');
       }
       throw error;
     }
@@ -118,7 +117,7 @@ router.post(
       res.status(201).json({ success: true, id });
     } catch (error) {
       if (isSchemaMissingError(error)) {
-        return respondFeatureUnavailable(res, 'schema missing');
+        return respondFeatureUnavailable(req, res, 'schema missing');
       }
       throw error;
     }
@@ -160,7 +159,7 @@ router.post(
         await dbRun(`UPDATE reports SET status = 'failed' WHERE id = ?`, [id], {
           fallback: false,
         });
-        return respondFeatureUnavailable(res, 'llm unavailable');
+        return respondFeatureUnavailable(req, res, 'llm unavailable');
       }
 
       const config = report.config ? JSON.parse(report.config) : {};
@@ -184,7 +183,7 @@ router.post(
         await dbRun(`UPDATE reports SET status = 'failed' WHERE id = ?`, [id], {
           fallback: false,
         });
-        return respondFeatureUnavailable(res, 'llm returned empty response');
+        return respondFeatureUnavailable(req, res, 'llm returned empty response');
       }
 
       await dbRun(
@@ -198,7 +197,7 @@ router.post(
       res.json({ success: true, message: 'Report generation completed', generated: true });
     } catch (error) {
       if (isSchemaMissingError(error)) {
-        return respondFeatureUnavailable(res, 'schema missing');
+        return respondFeatureUnavailable(req, res, 'schema missing');
       }
       throw error;
     }
@@ -224,7 +223,7 @@ router.delete(
       res.json({ success: true });
     } catch (error) {
       if (isSchemaMissingError(error)) {
-        return respondFeatureUnavailable(res, 'schema missing');
+        return respondFeatureUnavailable(req, res, 'schema missing');
       }
       throw error;
     }

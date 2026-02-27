@@ -595,6 +595,7 @@
     "filter": "Filter",
     "sort": "Sort",
     "view": "View",
+    "refresh": "Refresh",
     "download": "Download",
     "upload": "Upload",
     "submit": "Submit",
@@ -625,7 +626,44 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "themeLabel": "Theme",
-    "languageLabel": "Language"
+    "languageLabel": "Language",
+    "preview": "Preview",
+    "openFull": "Open full"
+  },
+  "dynamicTabBar": {
+    "unsaved": "Unsaved changes",
+    "unsavedTitle": "Unsaved changes",
+    "unsavedDesc": "This document has unsaved changes. Close anyway?",
+    "closeAnyway": "Close",
+    "closeTab": "Close tab",
+    "closeAll": "Close all",
+    "closeAllTitle": "Close all tabs?",
+    "closeAllDesc": "{{count}} tab(s) have unsaved changes. Close anyway?"
+  },
+  "preview": {
+    "open": "Open",
+    "openSession": "Open session",
+    "openDetail": "Open detail",
+    "resumeWizard": "Resume wizard",
+    "export": "Export",
+    "editStatus": "Edit status",
+    "addEvidence": "Add evidence",
+    "status": "Status",
+    "created": "Created",
+    "lastModified": "Last modified",
+    "currentStep": "Current step",
+    "step": "Step",
+    "progress": "Progress",
+    "owner": "Owner",
+    "priority": "Priority",
+    "startDate": "Start date",
+    "targetDate": "Target date",
+    "toolSessions": "Tool sessions",
+    "currentScore": "Current score",
+    "targetScore": "Target score",
+    "gap": "Gap",
+    "evidenceCount": "Evidence",
+    "recommendationsCount": "Recommendations"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -648,8 +686,12 @@
     "initiatives": "Initiatives",
     "execution": "Execution",
     "benefits": "Benefits",
+    "results": "Results",
     "economics": "Economics",
     "reports": "Reports",
+    "reportsBuilder": "Report Builder",
+    "reportsManagement": "Management Reports",
+    "presentations": "Presentations",
     "partnerPortal": "Partner Portal"
   },
   "widgets": {
@@ -664,12 +706,105 @@
     "documents": {
       "title": "Documents",
       "tooltip": "Documents"
+    },
+    "ab": {
+      "title": "A/B Experiments",
+      "tooltip": "A/B Experiments"
     }
   },
   "myWork": {
     "title": "My Work",
     "inbox": "Inbox",
-    "focus": "Focus",
+    "focus": {
+      "label": "Focus",
+      "columns": {
+        "today": "Today",
+        "thisWeek": "This Week",
+        "later": "Later"
+      },
+      "task": "Task",
+      "decision": "Decision",
+      "emptyColumn": "No items",
+      "actions": {
+        "done": "Done",
+        "snooze": "Snooze",
+        "remove": "Remove from focus",
+        "delegate": "Delegate"
+      },
+      "delegateTitle": "Delegate Task",
+      "completed": "Marked as done!",
+      "reopened": "Reopened",
+      "loadError": "Failed to load focus items",
+      "snoozed": "Snoozed",
+      "movedTo": "Moved to",
+      "removed": "Removed from focus",
+      "delegated": "Successfully delegated",
+      "error": "Failed to update",
+      "empty": {
+        "title": "No items to focus on",
+        "description": "Your tasks and decisions will appear here. Start by checking your inbox."
+      },
+      "goToInbox": "Go to Inbox",
+      "progress": {
+        "done": "done today",
+        "allClear": "All clear!",
+        "total": "total"
+      },
+      "planMyDay": {
+        "title": "Plan Your Day",
+        "subtitle": "Pick items to focus on today. Sorted by priority and urgency.",
+        "addToday": "Today",
+        "skip": "Skip",
+        "done": "Done planning",
+        "noSuggestions": "No more items to suggest."
+      },
+      "filters": {
+        "all": "All",
+        "tasks": "Tasks",
+        "decisions": "Decisions",
+        "hideCompleted": "Hide completed",
+        "sortManual": "Manual",
+        "sortPriority": "Priority",
+        "sortDueDate": "Due date"
+      },
+      "snooze": {
+        "moveTo": "Move to",
+        "thisWeek": "This Week",
+        "later": "Later"
+      },
+      "card": {
+        "blocked": "Blocked",
+        "approve": "Approve",
+        "reject": "Reject"
+      },
+      "shortcuts": {
+        "navigate": "Navigate",
+        "done": "Done",
+        "snooze": "Snooze",
+        "remove": "Remove",
+        "moveToday": "Today",
+        "moveWeek": "Week",
+        "open": "Open"
+      },
+      "focusCockpit": {
+        "lanes": {
+          "myList": "My list (capture)",
+          "today": "Today",
+          "thisWeek": "This Week"
+        },
+        "addTask": "Task",
+        "toggleTask": "Toggle task",
+        "preview": "Preview",
+        "dueToday": "Today",
+        "dueTomorrow": "Tomorrow",
+        "priority": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "critical": "Critical"
+        }
+      }
+    },
     "calendar": "Calendar",
     "tasks": "Tasks",
     "notifications": {
@@ -681,7 +816,17 @@
       "emptyColumn": "No decisions",
       "emptyTitle": "No decisions yet",
       "emptySubtitle": "Create your first decision to get started",
-      "createCta": "Create Decision"
+      "createCta": "Create Decision",
+      "relatedNotes": "Related Notes",
+      "fetchFailed": "Failed to load decisions",
+      "timeline": {
+        "zoomDay": "Day",
+        "zoomWeek": "Week",
+        "zoomMonth": "Month",
+        "zoomQuarter": "Quarter",
+        "priorityFilter": "Priority",
+        "empty": "No decisions in range"
+      }
     },
     "errors": {
       "fetchFailed": "Failed to load",
@@ -705,7 +850,34 @@
         "inProgress": "In progress",
         "blocked": "Blocked"
       },
-      "statusUpdated": "Status updated"
+      "statusUpdated": "Status updated",
+      "deleteTitle": "Delete task?",
+      "deleteDesc": "This task will be permanently deleted.",
+      "bulkDeleteTitle": "Delete selected tasks?",
+      "bulkDeleteDesc": "Selected tasks will be permanently deleted. This cannot be undone.",
+      "smartSort": "Smart sort",
+      "smartSortTooltip": "Smart sort: Overdue → Today → High priority → by due date",
+      "columns": "Columns",
+      "toggleColumns": "Toggle columns"
+    },
+    "triage": {
+      "infoStrip": "New tasks to triage. Use row actions to Accept, Schedule, Snooze, or Archive.",
+      "acceptToday": "Accept (Today)",
+      "acceptedToday": "Accepted for today",
+      "schedule": "Schedule",
+      "scheduled": "Scheduled",
+      "snooze": "Snooze 2 days",
+      "snoozed": "Snoozed for 2 days",
+      "archive": "Archive",
+      "archived": "Archived"
+    },
+    "savedViews": {
+      "label": "Views",
+      "title": "Saved Views",
+      "namePlaceholder": "View name…",
+      "saved": "View saved",
+      "deleted": "View deleted",
+      "empty": "No saved views yet"
     },
     "ideas": {
       "saveAsIdea": "Save as idea",
@@ -740,7 +912,73 @@
       "suggestionsEmpty": "Save ideas from chat to build your private library.",
       "idea": "Idea",
       "insert": "Insert",
-      "open": "Open"
+      "open": "Open",
+      "canvasTools": {
+        "ariaLabel": "Canvas tool",
+        "mindmap": "Mind map",
+        "mindmapTooltip": "Mind map view — hierarchical nodes and connections",
+        "processFlow": "Process flow",
+        "processFlowTooltip": "Process flow view — sequential steps and dependencies",
+        "table": "Table",
+        "tableTooltip": "Table view — structured list of ideas",
+        "whiteboard": "Whiteboard",
+        "whiteboardTooltip": "Whiteboard view — free-form canvas"
+      }
+    },
+    "notebook": {
+      "title": "Notebook",
+      "new": "New page",
+      "searchHint": "Use the main search above",
+      "empty": "No pages yet",
+      "project": "Project",
+      "private": "Private",
+      "noSelection": "Select or create a page",
+      "autoSaved": "Auto-saved",
+      "suggestions": "Relevant notes",
+      "suggestionsEmptyTitle": "No suggestions",
+      "suggestionsEmpty": "Save notes to build your personal knowledge base.",
+      "note": "Note",
+      "insertedToast": "Inserted into description",
+      "insert": "Insert",
+      "open": "Open",
+      "saveAsNote": "Save as note",
+      "savedToast": "Saved to Notebook",
+      "addTag": "Add tag…",
+      "slashHint": "Type / to insert a block",
+      "linkedIdeas": "Linked Ideas",
+      "noLinkedIdeas": "No related ideas found",
+      "insertIdea": "Insert into page",
+      "templateModalTitle": "New Note",
+      "templateModalHint": "Pick a template to get started faster",
+      "templateBlank": "Blank page",
+      "templateStrategic": "Strategic Observation",
+      "templateRisk": "Risk Analysis",
+      "templateMeeting": "Meeting Notes",
+      "templateHypothesis": "Business Hypothesis",
+      "templateResearch": "Research Notes",
+      "knowledgePulse": "Knowledge Pulse",
+      "noConnections": "No connections found",
+      "addContentForConnections": "Add tags and content to discover connections",
+      "insertReference": "Insert reference",
+      "maturitySeed": "Seed",
+      "maturityGrowing": "Growing",
+      "maturityMature": "Mature",
+      "maturityActionable": "Actionable",
+      "readyForAction": "This note looks ready for action",
+      "createInitiative": "Initiative",
+      "createTask": "Task",
+      "createDecision": "Decision",
+      "aiAsk": "AI: Ask",
+      "aiExpand": "AI: Expand",
+      "aiChallenge": "AI: Challenge",
+      "aiAction": "AI: Next Steps",
+      "aiAnswer": "AI Answer",
+      "aiExpansion": "AI Expansion",
+      "aiChallengeTitle": "AI Challenge",
+      "aiActionPlan": "AI Action Plan",
+      "insertIntoNote": "Insert into note",
+      "dismiss": "Dismiss",
+      "generatingResponse": "Generating response…"
     }
   },
   "step1": {
@@ -821,6 +1059,45 @@
       "draft": "Draft",
       "reviewed": "Reviewed",
       "approved": "Approved"
+    },
+    "sufficiency": {
+      "title": "Sufficiency",
+      "proceed": "Proceed to Insights",
+      "sendBack": "Send Back",
+      "sendBackConfirm": "Send Back",
+      "criteria": "Criteria",
+      "status": {
+        "red": "Insufficient",
+        "amber": "Partial",
+        "green": "Ready"
+      },
+      "sendBackDialog": {
+        "title": "Send Back Interview",
+        "description": "The interview does not meet the sufficiency threshold. Add a note to explain what's missing so the interviewee can improve their responses.",
+        "missingItems": "Missing items",
+        "noteLabel": "Note for interviewee",
+        "notePlaceholder": "Describe what additional information or clarity is needed..."
+      }
+    },
+    "runtimeMode": {
+      "label": "Mode",
+      "chooseTitle": "Choose interview mode",
+      "recommended": "Recommended",
+      "switch": "Switch mode",
+      "pros": "Pros",
+      "cons": "Cons",
+      "singleQuestion": {
+        "title": "Single Question Mode",
+        "description": "AI presents one focused question at a time. Guided, deeper exploration.",
+        "pros": "Deeper answers, guided flow, better for complex topics",
+        "cons": "Slower, requires interviewer presence"
+      },
+      "taskList": {
+        "title": "Task List Mode",
+        "description": "AI presents a checklist of questions. Interviewee fills at their pace.",
+        "pros": "Faster, self-service, async-friendly",
+        "cons": "Shallower answers, less guidance"
+      }
     }
   },
   "assessment": {
@@ -940,6 +1217,87 @@
       "allGatesPassed": "All gates passed!",
       "requiredApprovalsForStatus": "Required approvals for status",
       "notRequested": "Not requested"
+    },
+    "tabs": {
+      "portfolio": "Portfolio",
+      "analysis": "Analysis"
+    },
+    "analysis": {
+      "resources": {
+        "title": "Resources",
+        "resource": "Resource",
+        "role": "Role",
+        "initiatives": "Initiatives",
+        "utilization": "Utilization",
+        "status": "Status",
+        "ok": "OK",
+        "overallocated": "Overallocated",
+        "underutilized": "Underutilized",
+        "overallocatedCount": "{{count}} overallocated resource(s)",
+        "noData": "No resource allocation data available."
+      },
+      "feasibility": {
+        "title": "Feasibility",
+        "initiative": "Initiative",
+        "budget": "Budget",
+        "skills": "Skills",
+        "time": "Time",
+        "risk": "Risk",
+        "score": "Score",
+        "highRiskCount": "{{count}} high-risk initiative(s)",
+        "noData": "No feasibility data available."
+      },
+      "logic": {
+        "title": "Logic",
+        "dependencies": "Dependencies",
+        "criticalDependencyIssues": "{{count}} critical dependency issue(s)",
+        "noData": "No dependency data available."
+      },
+      "timeline": {
+        "title": "Timeline",
+        "initiativeTimelines": "Initiative timelines",
+        "issuesCount": "{{count}} timeline issue(s) (delayed or no dates)",
+        "onSchedule": "On schedule",
+        "delayed": "Delayed",
+        "atRisk": "At risk",
+        "noDates": "No dates",
+        "noData": "No timeline data available."
+      },
+      "completeness": {
+        "title": "Completeness",
+        "initiative": "Initiative",
+        "level": "Level",
+        "status": "Status",
+        "completeness": "Completeness",
+        "missingCritical": "Missing critical",
+        "missingTotal": "Missing total",
+        "actions": "Actions",
+        "notGateReady": "{{count}} initiative(s) not gate-ready",
+        "noData": "No completeness data available."
+      },
+      "issues": "Issues",
+      "openInitiative": "Open initiative"
+    },
+    "templates": {
+      "quick_win": {
+        "label": "Quick Win",
+        "description": "Small improvements done in <1 month. Minimal governance."
+      },
+      "standard": {
+        "label": "Standard",
+        "description": "Typical consulting initiatives with full planning."
+      },
+      "strategic": {
+        "label": "Strategic",
+        "description": "Strategic priorities with governance and budget."
+      },
+      "transformation": {
+        "label": "Transformation",
+        "description": "Major org transformations with full governance."
+      },
+      "recommended": "Recommended",
+      "sections": "{{count}} sections",
+      "ariaLabel": "Select initiative level"
     }
   },
   "execution": {
@@ -948,6 +1306,104 @@
     "calendar": "Calendar",
     "decisions": "Decisions",
     "heatmap": "Workload Heatmap",
+    "demo": {
+      "label": "Demo",
+      "toggleHint": "Toggle demo data for Execution Center (local only)",
+      "reportsCaption": "Demo report history",
+      "lastGenerated": "Last",
+      "nextRun": "Next",
+      "empty": "No demo items"
+    },
+    "execSnapshot": {
+      "title": "Executive snapshot",
+      "generatedAt": "Generated at",
+      "loading": "Loading snapshot...",
+      "refresh": "Refresh",
+      "period": "Period",
+      "error": "Snapshot error",
+      "loadFailed": "Failed to load executive snapshot",
+      "ai": {
+        "label": "AI",
+        "toggle": "Toggle AI",
+        "title": "AI consultant insights",
+        "disabled": "AI insights are disabled for this view (or your role).",
+        "warnings": "Warnings",
+        "recommendedActions": "Recommended actions",
+        "urgency": "Urgency",
+        "action": "Action",
+        "owner": "Owner",
+        "noActions": "No actions suggested.",
+        "noInsights": "No insights available yet."
+      },
+      "overview": {
+        "title": "Overview",
+        "progress": "Progress",
+        "phase": "Phase",
+        "alerts": "Priority alerts",
+        "noAlerts": "No critical alerts.",
+        "nextMilestones": "Next milestones",
+        "initiative": "Initiative",
+        "targetDate": "Target",
+        "noMilestones": "No upcoming milestones."
+      },
+      "workstreams": {
+        "title": "Workstreams",
+        "name": "Workstream",
+        "owner": "Owner",
+        "progress": "Progress",
+        "initiatives": "Initiatives",
+        "unassigned": "Unassigned",
+        "unassignedHint": "Initiatives without a workstream",
+        "empty": "No workstreams defined.",
+        "emptyHint": "Create workstreams to improve accountability and reporting.",
+        "openPMO": "Open PMO"
+      },
+      "kpis": {
+        "title": "KPIs",
+        "kpi": "KPI",
+        "current": "Current",
+        "target": "Target",
+        "empty": "No KPIs available.",
+        "dataQuality": "Data quality",
+        "derived": {
+          "initiativesExecuting": "Initiatives executing",
+          "initiativesBlocked": "Initiatives blocked",
+          "tasksOverdue": "Overdue tasks",
+          "decisionsPending": "Pending decisions"
+        }
+      },
+      "roi": {
+        "title": "ROI / financial impact",
+        "projected": "Projected",
+        "realized": "Realized",
+        "variance": "Variance",
+        "coverage": "Coverage",
+        "initiatives": "Top initiatives",
+        "initiative": "Initiative",
+        "empty": "No ROI data available.",
+        "emptyHint": "Connect initiatives to benefit tracking to compute financial impact.",
+        "openBenefits": "Open Benefits",
+        "noItems": "No initiatives mapped to ROI."
+      },
+      "risks": {
+        "title": "Risks",
+        "heatmap": "Heatmap (P×I)",
+        "cell": "Cell",
+        "count": "Count",
+        "noHeatmap": "No risk heatmap data.",
+        "top": "Top risks",
+        "risk": "Risk",
+        "score": "Score",
+        "due": "Due",
+        "noTop": "No top risks.",
+        "signals": "Signals",
+        "signalCounts": "Risk/Delay/Overspend signals",
+        "openPanels": "Control panels",
+        "panelsHint": "See detailed signals in the panels below.",
+        "raids": "RAID log",
+        "raidsHint": "Top risks are sourced from the project RAID log."
+      }
+    },
     "workloadAi": {
       "button": "AI suggestions",
       "title": "AI workload suggestions",
@@ -1312,6 +1768,16 @@
     }
   },
   "reports": {
+    "entry": {
+      "title": "Reports",
+      "subtitle": "Choose how you want to work with reports",
+      "builderTitle": "Report Builder",
+      "builderDesc": "Create deliverable reports for clients",
+      "managementTitle": "Management Reports",
+      "managementDesc": "Internal PMO reporting",
+      "openBuilder": "Open Report Builder",
+      "openManagement": "Open Management Reports"
+    },
     "automation": {
       "title": "Reporting Automation",
       "subtitle": "Automated recurring and event-triggered report generation",
@@ -1446,6 +1912,11 @@
       "watch": "Watch",
       "skip": "Skip",
       "dontShow": "Don't show again"
+    },
+    "microVideoPrompt": {
+      "header": "Quick Tutorial",
+      "moreToExplore": "More to explore",
+      "videoPlaceholder": "Video placeholder"
     }
   },
   "settings": {
@@ -2097,7 +2568,70 @@
     "newChat": "New chat",
     "history": "Chat history",
     "autoReadOn": "Turn on auto-read",
-    "autoReadOff": "Turn off auto-read"
+    "autoReadOff": "Turn off auto-read",
+    "navigate": {
+      "success": "Navigating…",
+      "fallback": "Opened fallback view",
+      "retry": "Try again"
+    },
+    "action": {
+      "unsupported": "Action not supported"
+    },
+    "actions": {
+      "navigate": {
+        "label": "Go to",
+        "description": "Navigate to a module or entity"
+      },
+      "createTask": {
+        "label": "Create task",
+        "description": "Create a new task"
+      },
+      "createDecision": {
+        "label": "Create decision",
+        "description": "Create a new decision"
+      },
+      "createInitiative": {
+        "label": "Create initiative",
+        "description": "Create a new initiative"
+      },
+      "generateReport": {
+        "label": "Generate report",
+        "description": "Open Report Builder wizard"
+      },
+      "generatePresentation": {
+        "label": "Generate presentation",
+        "description": "Open Presentation wizard"
+      },
+      "startTool": {
+        "label": "Start tool",
+        "description": "Open Discovery Tool wizard"
+      },
+      "openPreview": {
+        "label": "Preview",
+        "description": "Open entity preview"
+      },
+      "assignInterview": {
+        "label": "Assign interview",
+        "description": "Assign interview to team members"
+      },
+      "recordKpi": {
+        "label": "Record KPI",
+        "description": "Record KPI time-series value"
+      }
+    },
+    "coThinker": {
+      "title": "Co-Thinker",
+      "active": "Active",
+      "clear": "Clear",
+      "personas": {
+        "consultant": "Consultant",
+        "ideaCreator": "Idea Creator",
+        "analyst": "Analyst",
+        "auditor": "Auditor",
+        "editor": "Editor",
+        "marketResearcher": "Market Researcher"
+      }
+    }
   },
   "aiChat": {
     "language": "Conversation language",
@@ -2105,6 +2639,121 @@
     "openSidebar": "Open sidebar",
     "newChat": "New conversation",
     "dailyBrief": "Daily brief",
+    "signals": {
+      "title": "Important signals",
+      "count": "{{count}} signals",
+      "empty": "No signals right now.",
+      "untitled": "Signal",
+      "noDetails": "No details",
+      "loadFailed": "Failed to load signals",
+      "saveNotebook": "Save to Notebook",
+      "saveIdeas": "Save to My Ideas",
+      "snooze": "Snooze",
+      "muteType": "Mute type",
+      "dismiss": "Dismiss",
+      "mutedHint": "Muted types:"
+    },
+    "quickClicks": {
+      "brief": { "label": "Daily brief" },
+      "savings": {
+        "label": "Quick savings",
+        "prompt": "Let’s find savings — where can we cut cost fastest without losing quality?"
+      },
+      "newProduct": {
+        "label": "Product idea",
+        "prompt": "Let’s ideate a new product: 5 concepts + market, ROI, and delivery difficulty."
+      },
+      "planReview": {
+        "label": "Plan review",
+        "prompt": "Review our plans and initiatives: priorities, risks, and what to adjust."
+      },
+      "situation": {
+        "label": "Situation overview",
+        "prompt": "Give me a situation overview: progress, risks, blockers, upcoming decisions, and next steps."
+      },
+      "roi": {
+        "label": "ROI analysis",
+        "prompt": "Analyze initiative ROI and point to the top 3 moves with the highest return."
+      },
+      "risks": {
+        "label": "Risk map",
+        "prompt": "Create a top-10 risk map and propose concrete mitigations and owners."
+      },
+      "priorities": {
+        "label": "Weekly priorities",
+        "prompt": "Set weekly priorities: MUST/SHOULD/COULD with rationale."
+      },
+      "kpi": {
+        "label": "Key KPIs",
+        "prompt": "Review key KPIs: what’s improving, what’s declining, what needs action now."
+      },
+      "scenario": {
+        "label": "Finance scenarios",
+        "prompt": "Build 3 scenarios (base/optimistic/pessimistic) and how each changes the plan."
+      },
+      "decision": {
+        "label": "Decision support",
+        "prompt": "Help me decide: options, trade-offs, risks, costs, and a 5-bullet recommendation."
+      },
+      "stakeholders": {
+        "label": "Exec update",
+        "prompt": "Draft a short stakeholder update: status, risks, decisions needed, and next steps."
+      },
+      "governance": {
+        "label": "Light governance",
+        "prompt": "Design lightweight governance: cadence, KPIs, decisions, escalations, and ownership."
+      },
+      "budget": {
+        "label": "Budget review",
+        "prompt": "Analyze initiative budget: variances, risks, and where we should reallocate."
+      },
+      "timeline": {
+        "label": "Timeline check",
+        "prompt": "Check the timeline: delays, critical path, and recommended corrections."
+      },
+      "team": {
+        "label": "Team workload",
+        "prompt": "Assess team load: overloads, risks, and quick flow improvements."
+      },
+      "benefits": {
+        "label": "Benefits plan",
+        "prompt": "Build a benefits-realization plan: metrics, baseline, owners, tracking, and reporting."
+      },
+      "capability": {
+        "label": "Skills plan",
+        "prompt": "What capabilities are missing most? Propose a 6-week upskilling plan (learn + do)."
+      },
+      "dependencies": {
+        "label": "Portfolio deps",
+        "prompt": "Identify dependencies and bottlenecks across initiatives and propose sequencing."
+      },
+      "quickWins": {
+        "label": "Quick wins list",
+        "prompt": "Propose 10 quick wins for the next 2 weeks: value, effort, owner, and first step."
+      }
+    },
+    "homeCards": {
+      "market": {
+        "label": "Market analysis",
+        "desc": "Market, competitors, positioning",
+        "kickoff": "I want to do a market analysis. Ask me the questions you need to define the industry, segment, geography, customers, competitors, and differentiation. Start with 5 questions."
+      },
+      "finance": {
+        "label": "Financial analysis",
+        "desc": "ROI, budget, scenarios",
+        "kickoff": "I want to run a financial analysis. What should we analyze (budget, costs, revenue, ROI, CAPEX/OPEX)? Ask me 5 questions, then propose an analysis structure."
+      },
+      "consulting": {
+        "label": "Classic consulting",
+        "desc": "Frameworks and toolkits",
+        "kickoff": "I want to use classic consulting frameworks. What problem are we solving and in what context? Ask me 5 questions, then recommend 2–3 best frameworks (e.g., SWOT, 5 Forces, Ansoff, Value Chain)."
+      },
+      "digital": {
+        "label": "Digital transformation",
+        "desc": "Licensed diagnostics and assessments",
+        "kickoff": "I want to assess digital transformation readiness. Which areas should we evaluate and what criteria should we use? Ask me 5 questions and propose a quick diagnostic plan."
+      }
+    },
     "suggestions": {
       "title": "Suggested for you",
       "startAssessment": "Start your digital maturity assessment"
@@ -2178,15 +2827,82 @@
       "afternoon": "Let's make progress on your initiatives",
       "evening": "Review your transformation journey"
     },
+    "subtitleRotator": {
+      "morning": [
+        "Ready to shape strategy, operations, and execution—end to end?",
+        "Turn ambition into a roadmap, and the roadmap into results.",
+        "From insight to action: align teams, portfolios, and outcomes.",
+        "Design the operating model. Drive the change. Measure the value.",
+        "Build clarity across strategy, delivery, and governance—today.",
+        "Let’s turn complexity into a plan your teams can actually run.",
+        "Make smarter decisions with data, scenarios, and real-world constraints.",
+        "Connect vision, initiatives, budgets, and benefits in one flow.",
+        "Spot risks early, course-correct fast, and keep momentum.",
+        "Create strategic narratives that executives and teams both trust.",
+        "Model options, test assumptions, and choose the winning path.",
+        "Make learning part of execution: upskill while you deliver.",
+        "Bring structure to discovery, rigor to analysis, and speed to delivery.",
+        "Translate strategy into initiatives your organization can own.",
+        "Make governance lightweight—and outcomes unmistakable.",
+        "Plan, execute, and learn in a continuous transformation loop.",
+        "See the whole system: people, process, tech, and economics.",
+        "Elevate conversations from tasks to decisions and trade-offs.",
+        "Run your transformation like a product: iterate, measure, improve.",
+        "Start with a question. End with an actionable next step."
+      ],
+      "afternoon": [
+        "Ready to shape strategy, operations, and execution—end to end?",
+        "Turn ambition into a roadmap, and the roadmap into results.",
+        "From insight to action: align teams, portfolios, and outcomes.",
+        "Design the operating model. Drive the change. Measure the value.",
+        "Build clarity across strategy, delivery, and governance—today.",
+        "Let’s turn complexity into a plan your teams can actually run.",
+        "Make smarter decisions with data, scenarios, and real-world constraints.",
+        "Connect vision, initiatives, budgets, and benefits in one flow.",
+        "Spot risks early, course-correct fast, and keep momentum.",
+        "Create strategic narratives that executives and teams both trust.",
+        "Model options, test assumptions, and choose the winning path.",
+        "Make learning part of execution: upskill while you deliver.",
+        "Bring structure to discovery, rigor to analysis, and speed to delivery.",
+        "Translate strategy into initiatives your organization can own.",
+        "Make governance lightweight—and outcomes unmistakable.",
+        "Plan, execute, and learn in a continuous transformation loop.",
+        "See the whole system: people, process, tech, and economics.",
+        "Elevate conversations from tasks to decisions and trade-offs.",
+        "Run your transformation like a product: iterate, measure, improve.",
+        "Start with a question. End with an actionable next step."
+      ],
+      "evening": [
+        "Ready to shape strategy, operations, and execution—end to end?",
+        "Turn ambition into a roadmap, and the roadmap into results.",
+        "From insight to action: align teams, portfolios, and outcomes.",
+        "Design the operating model. Drive the change. Measure the value.",
+        "Build clarity across strategy, delivery, and governance—today.",
+        "Let’s turn complexity into a plan your teams can actually run.",
+        "Make smarter decisions with data, scenarios, and real-world constraints.",
+        "Connect vision, initiatives, budgets, and benefits in one flow.",
+        "Spot risks early, course-correct fast, and keep momentum.",
+        "Create strategic narratives that executives and teams both trust.",
+        "Model options, test assumptions, and choose the winning path.",
+        "Make learning part of execution: upskill while you deliver.",
+        "Bring structure to discovery, rigor to analysis, and speed to delivery.",
+        "Translate strategy into initiatives your organization can own.",
+        "Make governance lightweight—and outcomes unmistakable.",
+        "Plan, execute, and learn in a continuous transformation loop.",
+        "See the whole system: people, process, tech, and economics.",
+        "Elevate conversations from tasks to decisions and trade-offs.",
+        "Run your transformation like a product: iterate, measure, improve.",
+        "Start with a question. End with an actionable next step."
+      ]
+    },
     "frozenPlaceholder": "AI temporarily unavailable",
     "dictating": "Dictating…",
     "voiceConversation": "Listening… speak naturally",
     "groups": {
       "pinned": "Pinned",
       "today": "Today",
-      "yesterday": "Yesterday",
       "thisWeek": "This week",
-      "lastMonth": "Last month",
+      "thisMonth": "This month",
       "older": "Older",
       "archived": "Archived"
     },
@@ -2195,6 +2911,9 @@
       "aiModes": "AI modes",
       "knowledgeSources": "Knowledge sources",
       "responseStyle": "Response style",
+      "personalizeTitle": "Personalize AI responses",
+      "personalizeInstructions": "Custom instructions",
+      "personalizeInstructionsPlaceholder": "How should AI respond?",
       "ttsSettings": "Voice settings",
       "ttsSpeed": "Speed",
       "ttsVoice": "Voice",
@@ -2203,6 +2922,11 @@
       "ttsTest": "Test voice",
       "ttsTestUtterance": "Hi, this is a voice test.",
       "addFiles": "Add files",
+      "uploadFile": "Upload file",
+      "connectToProvider": "Connect to {{provider}}",
+      "openProvider": "Open {{provider}}",
+      "recent": "Recent",
+      "recentEmpty": "No recent attachments",
       "uploadFromDevice": "From device",
       "cloudStorage": "Cloud",
       "connectInSettings": "Connect more in Settings → Integrations",
@@ -2222,6 +2946,10 @@
         "multiAgent": {
           "label": "Multi-agent analysis",
           "desc": "CFO/CTO/CHRO/COO perspectives"
+        },
+        "privateMode": {
+          "label": "Private mode",
+          "desc": "Disable memory injection and personalization for this chat"
         },
         "textToSpeech": {
           "label": "Read responses",
@@ -2247,7 +2975,7 @@
         }
       },
       "styles": {
-        "normal": "Normal",
+        "normal": "Standard",
         "normalDesc": "Balanced, conversational responses",
         "executive": "Executive",
         "executiveDesc": "Concise, decision-focused, 3-5 bullet points",
@@ -2258,10 +2986,32 @@
         "concise": "Concise",
         "conciseDesc": "Key points only, no digressions",
         "formal": "Formal",
-        "formalDesc": "Business/official language, precise and neutral"
+        "formalDesc": "Business/official language, precise and neutral",
+        "professional": "Professional",
+        "professionalDesc": "Consulting tone, McKinsey/BCG structure, recommendations",
+        "friendly": "Friendly",
+        "friendlyDesc": "Warm, casual tone, like chatting with a good friend"
+      },
+      "stylePresets": {
+        "normal": "",
+        "concise": "Respond briefly and directly, using as few words as possible. Focus on the core point without elaboration or follow-up questions.",
+        "executive": "Respond like a senior consulting partner. Start with the recommendation, then 3-5 bullets with rationale. Add risks and next steps. Skip introductions.",
+        "analyst": "Respond like a data analyst. Use tables, metrics, and benchmarks. Cite sources and confidence intervals. Structure data for easy further analysis.",
+        "formal": "Use a formal, professional tone. Write clear, well-structured sentences with precise language. Maintain professionalism and avoid colloquialisms. Provide thorough explanations while remaining concise, as if addressing a board-level colleague.",
+        "coach": "Respond as a coach and mentor. Instead of giving direct answers, ask guiding questions. Walk through reasoning step by step, helping discover insights independently.",
+        "professional": "Respond like an experienced strategy consultant. Use the structure: situation → analysis → recommendation → next steps. Provide specific metrics and KPIs. Reference frameworks (SWOT, Porter, BCG matrix). Use precise business language with a clear action plan.",
+        "friendly": "Respond warmly and casually, like a good friend. Use simple language, add emoji where they fit. Be supportive, enthusiastic, and positive. Keep it approachable but still helpful and on-point."
       },
       "customInstructions": "My instructions",
       "customInstructionsPlaceholder": "e.g. \"Always respond in English\", \"I prefer tables over text\", \"I am a CTO at a manufacturing company\"",
+      "customInstructionsTitle": "My instructions",
+      "customInstructionsDesc": "These preferences are applied to every response in Chat.",
+      "customInstructionsStarters": "Starters (click to insert)",
+      "customInstructionsStarter1": "I prefer short, actionable answers with a checklist and clear owners.",
+      "customInstructionsStarter2": "Use tables when comparing options. Always include risks and mitigations.",
+      "customInstructionsStarter3": "Ask 2-3 clarifying questions when the request is ambiguous before answering.",
+      "customInstructionsStarter4": "Write in Polish and keep a professional consulting tone.",
+      "customInstructionsTip": "Tip: mention your role, industry, and preferred output format.",
       "instructionsSaved": "Instructions saved",
       "instructionsSaveError": "Failed to save instructions",
       "toast": {
@@ -2673,6 +3423,27 @@
       "achievements": "Achievements"
     }
   },
+  "nmodeCompleteness": {
+    "pillComplete": "Complete",
+    "pillMissing": "{{count}} missing",
+    "missing": "missing",
+    "missingTitle": "Missing fields",
+    "missingSubtitle": "{{count}} required field(s) not filled",
+    "noMissing": "All required fields are filled.",
+    "critical": "Critical",
+    "gateBlockedHint": "Critical items block status transitions. Fill them to proceed.",
+    "aiFill": "AI Fill",
+    "aiFillAll": "AI Fill All",
+    "aiFillTitle": "AI Fill Proposal",
+    "aiFillBulkTitle": "AI Fill Proposals",
+    "accept": "Accept",
+    "acceptAll": "Accept All",
+    "reject": "Reject",
+    "edit": "Edit",
+    "cancelEdit": "Cancel",
+    "close": "Close",
+    "source": "Source"
+  },
   "partners": {
     "outreach": {
       "title": "Partner Outreach",
@@ -2983,6 +3754,27 @@
     }
   },
   "finance": {
+    "export": {
+      "title": "Export Financial Analysis",
+      "report": "Report",
+      "reportDesc": "Create a deliverable report from this analysis",
+      "presentation": "Presentation",
+      "presentationDesc": "Create a presentation deck from this analysis",
+      "useTemplate": "Use template",
+      "selectTemplate": "Select template",
+      "loadingTemplates": "Loading...",
+      "noTemplates": "No templates available",
+      "analysisSummary": "Analysis summary",
+      "name": "Name",
+      "type": "Type",
+      "date": "Date",
+      "createDraft": "Create Draft",
+      "creating": "Creating...",
+      "button": "Export",
+      "toastSuccess": "Draft created successfully",
+      "openOutput": "Open output",
+      "openSource": "Open source"
+    },
     "model": {
       "title": "Financial Models",
       "createModel": "Create Financial Model",
@@ -3502,6 +4294,26 @@
       "gatingNotice": "Available only in test environment with proper credentials."
     }
   },
+  "modelRegistry": {
+    "catalog": {
+      "title": "Model Catalog",
+      "description": "All registered models across TEXT_LLM, IMAGE_MODEL, and BUSINESS_MODEL kinds",
+      "addModel": "Add Model",
+      "searchPlaceholder": "Search by name, model ID, provider..."
+    },
+    "assignments": {
+      "title": "{{kind}} Assignments",
+      "description": "Assign models to purposes with priority ordering and fallbacks"
+    },
+    "audit": {
+      "title": "Model Audit Log",
+      "description": "Timeline of all model registry configuration changes"
+    },
+    "pricing": {
+      "title": "Model Pricing",
+      "description": "View and manage model pricing with versioned snapshots"
+    }
+  },
   "aiPrompts": {
     "title": "AI Prompt Management",
     "registry": "Prompt Registry",
@@ -3907,5 +4719,263 @@
     "tokenPurchase": "Token Purchase",
     "tokenCredited": "Tokens Credited",
     "auditTrail": "Audit Trail"
+  },
+  "command": {
+    "placeholder": "Search commands, actions, navigation...",
+    "noResults": "No results found",
+    "tryDifferent": "Try a different search term",
+    "category": {
+      "navigation": "Navigate",
+      "actions": "Actions",
+      "recent": "Recent"
+    },
+    "hint": {
+      "navigate": "Navigate",
+      "select": "Select",
+      "close": "Close",
+      "powered": "Quick Actions"
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "dashboardDesc": "Executive overview",
+      "focus": "Focus Board",
+      "focusDesc": "Daily focus tasks",
+      "inbox": "Inbox",
+      "inboxDesc": "Triage new items",
+      "tasks": "All Tasks",
+      "tasksDesc": "View all tasks",
+      "decisions": "Decisions",
+      "decisionsDesc": "Pending decisions",
+      "team": "Team Performance",
+      "teamDesc": "Team analytics & capacity",
+      "settings": "Settings",
+      "settingsDesc": "Preferences & notifications"
+    },
+    "action": {
+      "createTask": "Create Task",
+      "createTaskDesc": "Add a new task",
+      "approveAll": "Quick Approve",
+      "approveAllDesc": "Approve the next pending decision",
+      "reviewNextDecision": "Review next decision",
+      "reviewNextDecisionDesc": "Queue mode with shortcuts (J/K, A/R/S, ?)",
+      "approved": "Decision approved",
+      "error": "Something went wrong",
+      "noDecisions": "No pending decisions",
+      "markDone": "Mark Task Done",
+      "markDoneDesc": "Complete current task",
+      "filterOverdue": "Show Overdue",
+      "filterOverdueDesc": "Filter overdue tasks",
+      "schedule": "Open Calendar",
+      "scheduleDesc": "View scheduled items"
+    }
+  },
+  "presentations": {
+    "tabs": {
+      "allDecks": "All Decks",
+      "recent": "Recent"
+    },
+    "columns": {
+      "title": "Title",
+      "sourceType": "Source",
+      "owner": "Owner",
+      "date": "Date"
+    },
+    "sourceType": {
+      "tool": "Tool",
+      "assessment": "Assessment",
+      "finance": "Finance",
+      "upload": "Upload",
+      "unknown": "Unknown"
+    },
+    "actions": {
+      "rename": "Rename",
+      "export": "Export",
+      "openSource": "Open source"
+    },
+    "loading": "Loading decks...",
+    "empty": "No presentations yet.",
+    "minimalPreview": "Minimal preview — full editor coming soon",
+    "previewPlaceholder": "Deck preview will be rendered here.",
+    "exportSuccess": "Export started",
+    "renameSuccess": "Renamed",
+    "renamePlaceholder": "Deck title",
+    "comingSoon": "Coming soon"
+  },
+  "results": {
+    "moduleName": "Results",
+    "tabs": {
+      "allKpis": "All KPIs",
+      "byInitiative": "By Initiative",
+      "global": "Global",
+      "roiTracking": "ROI Tracking",
+      "operational": "Operational",
+      "roiAnalysis": "ROI Analysis"
+    },
+    "addKpi": "+ Add KPI",
+    "emptyState": "No KPIs found",
+    "columns": {
+      "name": "Name",
+      "initiative": "Initiative",
+      "baseline": "Baseline",
+      "target": "Target",
+      "current": "Current",
+      "status": "Status",
+      "trend": "Trend",
+      "frequency": "Frequency",
+      "owner": "Owner",
+      "lastUpdated": "Updated"
+    },
+    "actions": {
+      "openDetail": "Open detail",
+      "recordValue": "Record value",
+      "mapInitiative": "Map to initiative"
+    },
+    "direction": {
+      "increase": "Increase",
+      "decrease": "Decrease",
+      "maintain": "Maintain"
+    },
+    "createModal": {
+      "title": "New KPI",
+      "name": "Name",
+      "namePlaceholder": "e.g. Revenue Growth %",
+      "description": "Description",
+      "descriptionPlaceholder": "What does this KPI measure?",
+      "unit": "Unit",
+      "frequency": "Frequency",
+      "direction": "Direction",
+      "initiative": "Initiative (optional)",
+      "globalKpi": "— Global KPI (no initiative) —",
+      "create": "Create KPI"
+    },
+    "drawer": {
+      "baseline": "Baseline",
+      "gap": "Gap",
+      "chartTitle": "Value Over Time",
+      "noMeasurements": "No measurements yet",
+      "recordTitle": "Record New Value",
+      "valuePlaceholder": "Value",
+      "notesPlaceholder": "Notes (optional)",
+      "record": "Record",
+      "history": "History",
+      "historyDate": "Date",
+      "historyValue": "Value",
+      "historyNotes": "Notes",
+      "historyBy": "By"
+    },
+    "operational": {
+      "totalTracked": "Total KPIs Tracked",
+      "onTargetPct": "On Target %",
+      "belowTarget": "Below Target",
+      "avgScore": "Average Score",
+      "filters": "Filters",
+      "sortBy": "Sort by",
+      "sort": {
+        "worst": "Worst performing",
+        "best": "Best performing",
+        "recent": "Most recent"
+      },
+      "trends": "KPI Trends",
+      "onTarget": "On target",
+      "below": "Below",
+      "noData": "No data"
+    },
+    "roiAnalysis": {
+      "totalPlanned": "Total Planned Value",
+      "totalRealized": "Total Realized Value",
+      "portfolioVariance": "Portfolio Variance",
+      "anomalyTitle": "AI-suggested insights",
+      "anomalyBelow": "{{count}} initiatives significantly below plan",
+      "contributionsChart": "Initiative Contributions to ROI",
+      "plannedRoi": "Planned ROI",
+      "realizedRoi": "Realized ROI"
+    },
+    "roi": {
+      "totalPlanned": "Total Planned ROI",
+      "totalRealized": "Total Realized ROI",
+      "overallVariance": "Overall Variance",
+      "emptyState": "No initiatives with ROI data",
+      "periodYtd": "YTD",
+      "statusOnTrack": "On track",
+      "statusBelow": "Below plan",
+      "statusAbove": "Above plan",
+      "columns": {
+        "initiative": "Initiative",
+        "plannedRoi": "Planned ROI",
+        "realizedRoi": "Realized ROI",
+        "variance": "Variance",
+        "status": "Status",
+        "period": "Period",
+        "owner": "Owner"
+      },
+      "actions": {
+        "openDetail": "Open detail",
+        "recordActual": "Record actual",
+        "viewHistory": "View history"
+      },
+      "chartTitle": "Plan vs Realized per Period",
+      "noRealizedData": "No realized data yet",
+      "assumptionsTitle": "ROI Assumptions",
+      "assumptionDescription": "Description",
+      "assumptionAmount": "Amount",
+      "assumptionPeriod": "Period",
+      "assumptionConfidence": "Confidence",
+      "assumptionSource": "Source",
+      "rowRevenueDelta": "Revenue delta",
+      "rowCostDelta": "Cost delta",
+      "rowCapex": "CAPEX",
+      "rowOpex": "OPEX (annual)",
+      "periodMonth": "Month",
+      "periodQuarter": "Quarter",
+      "periodYear": "Year",
+      "confidenceHigh": "High",
+      "confidenceMedium": "Medium",
+      "confidenceLow": "Low",
+      "sourceManual": "Manual",
+      "sourceToolSession": "Tool session",
+      "total": "Total",
+      "recordActual": "Record Actual",
+      "period": "Period",
+      "amount": "Amount",
+      "notesPlaceholder": "Notes (optional)",
+      "submit": "Submit",
+      "history": "History",
+      "historyPeriod": "Period",
+      "historyPlanned": "Planned",
+      "historyRealized": "Realized",
+      "historyVariance": "Variance",
+      "historyNotes": "Notes",
+      "historyBy": "By",
+      "historyDate": "Date",
+      "noHistory": "No history yet"
+    }
+  },
+  "traceability": {
+    "source": "Source",
+    "noSource": "No source",
+    "openSource": "Open source",
+    "sourceType": {
+      "tool_session": "Tool session",
+      "mywork": "MyWork",
+      "assessment": "Assessment",
+      "financial_analysis": "Financial analysis",
+      "interview": "Interview",
+      "manual": "Manual"
+    },
+    "convertTo": {
+      "title": "Convert to output",
+      "description": "This will create a MyWork session as the source for your {{target}}.",
+      "sourceItems": "Source items",
+      "targetType": "Target type",
+      "confirm": "Confirm & create",
+      "cancel": "Cancel",
+      "initiative": "Initiative",
+      "report": "Report",
+      "presentation": "Presentation",
+      "createsSession": "Creates a MyWork session first",
+      "createdFrom": "Created {{type}} from {{source}}",
+      "openOutput": "Open output",
+      "openSourceSession": "Open source session"
+    }
   }
 }

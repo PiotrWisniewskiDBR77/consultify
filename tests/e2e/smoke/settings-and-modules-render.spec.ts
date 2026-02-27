@@ -61,7 +61,7 @@ const ROUTE_CASES: Array<{ name: string; path: string }> = [
   { name: 'Legal > Terms', path: '/terms' },
 ];
 
-test.describe('L4 Smoke — settings & modules render', () => {
+test.describe('L4 Smoke — settings & modules render [@module:settings]', () => {
   test.setTimeout(90000);
 
   for (const { name, path } of ROUTE_CASES) {

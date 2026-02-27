@@ -37,7 +37,7 @@ router.post(
 router.get(
   '/template/:templateId',
   asyncHandler(async (req: Request, res: Response) => {
-    const template = miniAssessmentService.getTemplate(req.params.templateId);
+    const template = miniAssessmentService.getTemplate(String(req.params.templateId));
     if (!template) return res.status(404).json({ error: 'Template not found' });
     res.json(template);
   })
@@ -46,7 +46,8 @@ router.get(
 router.get(
   '/:token',
   asyncHandler(async (req: Request, res: Response) => {
-    const assessment = await miniAssessmentService.getAssessmentByToken(req.params.token);
+    const token = String(req.params.token);
+    const assessment = await miniAssessmentService.getAssessmentByToken(token);
     if (!assessment) return res.status(404).json({ error: 'Assessment not found' });
 
     const template = miniAssessmentService.getTemplate(assessment.template_id);
@@ -68,6 +69,7 @@ router.get(
 router.post(
   '/:token/submit',
   asyncHandler(async (req: Request, res: Response) => {
+    const token = String(req.params.token);
     const { answers, respondentEmail, respondentName } = req.body;
     if (!answers || !Array.isArray(answers)) {
       return res.status(400).json({ error: 'answers array is required' });
@@ -81,7 +83,7 @@ router.post(
 
     try {
       const result = await miniAssessmentService.submitAnswers({
-        token: req.params.token,
+        token,
         answers,
         respondentEmail,
         respondentName,

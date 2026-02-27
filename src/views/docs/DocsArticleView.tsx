@@ -31,6 +31,7 @@ import remarkGfm from 'remark-gfm';
 
 import { useDocsArticle, useDocsTrackView } from '@/hooks/useDocs';
 import { cn } from '@/lib/utils';
+import { getHeaders } from '@/services/api';
 
 // Extract headings for TOC
 const extractHeadings = (content: string): { id: string; text: string; level: number }[] => {
@@ -95,9 +96,23 @@ export const DocsArticleView: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleFeedback = (type: 'up' | 'down') => {
+  const handleFeedback = async (type: 'up' | 'down') => {
     setFeedbackGiven(type);
-    // TODO: Send feedback to backend
+    if (!article?.id) return;
+    try {
+      await fetch('/api/help/feedback', {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          content_type: 'article',
+          content_id: article.id,
+          is_helpful: type === 'up',
+          comment: null,
+        }),
+      });
+    } catch (err) {
+      console.warn('[DocsArticleView] Failed to send feedback', err);
+    }
   };
 
   if (isLoading) {

@@ -434,7 +434,7 @@ export class ToolController {
 
       await ensureToolsSchema();
 
-      const { toolType, name, projectId } = req.body;
+      const { toolType, name, projectId, derivedFrom, snapshotJson } = req.body;
       if (!toolType || !name) {
         res.status(400).json({ error: 'toolType and name are required' });
         return;
@@ -442,6 +442,15 @@ export class ToolController {
 
       const id = uuidv4();
       const now = new Date().toISOString();
+
+      // V3-C03: MYWORK sessions store derived_from + snapshot in context_snapshot
+      let contextSnapshot = '{}';
+      if (String(toolType).toUpperCase() === 'MYWORK' && (derivedFrom?.length || snapshotJson)) {
+        contextSnapshot = JSON.stringify({
+          derived_from: derivedFrom || [],
+          snapshot: snapshotJson || {},
+        });
+      }
 
       await queryHelpers.queryRun(
         `INSERT INTO tool_sessions (
@@ -459,7 +468,7 @@ export class ToolController {
           0,
           0,
           '{}',
-          '{}',
+          contextSnapshot,
           user.id,
           user.id,
           now,

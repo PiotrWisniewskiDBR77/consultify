@@ -37,6 +37,13 @@ Wszystkie kontrolki w top barze mają być **tej samej wysokości**: **`h-9`**.
 
 Wynik: więcej miejsca na akcje po prawej i czytelne wyrównanie.
 
+**MUST (brak duplikacji kontrolek):**
+
+- Jeśli moduł ma **Module Topbar** (view modes + filters), to tabela nie może dokładać dodatkowych “mini‑toolbarów” typu: `Smart sort`, `Columns`, `Views` pod wyszukiwarką.
+- Zasada: **jedno miejsce** do zmiany widoku/filtrów/kolumn = Module Topbar + header filters w tabeli.
+  - “Columns” = konfiguracja kolumn (R1+) w menu/panelu, nie jako stały pasek pod search.
+  - “Views” = saved filters/scopes w `Filters…`, nie jako osobny rząd przycisków.
+
 ### 5) Wyszukiwarka – wzór “toggle → expandable”
 
 - W top barze jest **ikona lupy** (toggle).
@@ -53,6 +60,29 @@ Wynik: więcej miejsca na akcje po prawej i czytelne wyrównanie.
   - spójne szerokości
   - bezpieczny rendering (patrz niżej)
   - filtr w headerze, jeśli mają służyć do filtrowania
+
+**MUST (resizer UI):**
+
+- Chwytaki/linie resizerów nie mogą wyglądać jak “podwójne grube separatory”.
+- Standard: **pojedyncza, subtelna linia** (opacity 3–8% w dark), a hover resizera to tylko delikatne wzmocnienie tła, bez “ramki”.
+
+**MUST (Actions column):**
+
+- Ostatnia kolumna to **Actions** i zawiera **jedno** wejście do menu akcji: ikonę **kebab (⋮)**.
+- **Zawsze pionowe 3 kropki (⋮)**, nigdy poziome (⋯).
+- Menu akcji zawiera: open / quick actions / destructive (z confirm) zależnie od encji.
+- W całej aplikacji Actions column działa identycznie (miejsce, zachowanie, ikonografia).
+
+**MUST (wiersz = jedna linia “primary” + reszta w kolumnach):**
+
+- Nie duplikujemy informacji w “drugiej linii” pod tytułem (np. nazwa szablonu/kategorii powtórzona pod nazwą).
+- Jeśli potrzebujesz pokazać typ/kategorię/slug — to jest **osobna kolumna** (i wtedy może być filtrowalna).
+- Domyślny rytm listy ma być stabilny (wysokość wiersza), żeby oko mogło skanować tabelę bez “falowania”.
+
+**MUST (zero ad-hoc pasów między topbarem a tabelą):**
+
+- Nie dodajemy dodatkowych, niestandardowych “help stripów”, bannerów i opisów workflow **pomiędzy** Module Topbar a tabelą.
+- Jeśli trzeba pokazać liczniki typu “3 spóźnione / 5 do zatwierdzenia” — używamy **Command Row (Context counters)** zgodnie z `module-hub-standard.md`.
 
 ### 7) Stabilność danych (ważne)
 

@@ -132,29 +132,44 @@ describe('Permission Middleware - Real Production Tests', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('tries bridged legacy role candidates (USER -> TEAM_MEMBER) until one passes', async () => {
+    it('bridges legacy USER -> TEAM_MEMBER candidates (tries both roles)', async () => {
       mockReq.user.role = 'USER';
       mockPermissionService.hasPermission
         .mockResolvedValueOnce(false) // USER
         .mockResolvedValueOnce(true); // TEAM_MEMBER
 
-      const middleware = requirePermission('PROJECT_CREATE');
+      const middleware = requirePermission('PROJECT_VIEW');
       await middleware(mockReq, mockRes, mockNext);
-
       expect(mockPermissionService.hasPermission).toHaveBeenCalledTimes(2);
       expect(mockPermissionService.hasPermission).toHaveBeenNthCalledWith(
         1,
         'user-123',
         'org-456',
-        'PROJECT_CREATE',
+        'PROJECT_VIEW',
         'USER'
       );
       expect(mockPermissionService.hasPermission).toHaveBeenNthCalledWith(
         2,
         'user-123',
         'org-456',
-        'PROJECT_CREATE',
+        'PROJECT_VIEW',
         'TEAM_MEMBER'
+      );
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('normalizes "administrator" to ADMIN for DB role checks', async () => {
+      mockReq.user.role = 'administrator';
+      mockPermissionService.hasPermission.mockResolvedValue(true);
+
+      const middleware = requirePermission('USER_MANAGE');
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).toHaveBeenCalledWith(
+        'user-123',
+        'org-456',
+        'USER_MANAGE',
+        'ADMIN'
       );
       expect(mockNext).toHaveBeenCalled();
     });
@@ -224,6 +239,20 @@ describe('Permission Middleware - Real Production Tests', () => {
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    it('stops after the first successful permission (does not over-query)', async () => {
+      mockReq.user.role = 'USER';
+      mockPermissionService.hasPermission
+        // For key A: USER -> false, TEAM_MEMBER -> true (should stop here)
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(true);
+
+      const middleware = requireAnyPermission(['A', 'B', 'C']);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+      expect(mockPermissionService.hasPermission).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('requireAllPermissions', () => {
@@ -246,6 +275,9 @@ describe('Permission Middleware - Real Production Tests', () => {
       await middleware(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({ missing: ['PROJECT_DELETE'], code: 'PERMISSION_DENIED' })
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
 

@@ -20,6 +20,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { useDemoSession } from '../../hooks/useDemoSession';
 import { Api } from '../../services/api';
 
 interface AuditEntry {
@@ -63,6 +64,7 @@ const ACTION_ICONS: Record<string, React.ReactNode> = {
 };
 
 export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId }) => {
+  const { isDemo } = useDemoSession();
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -84,57 +86,61 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
       setEntries(data.entries || []);
     } catch (err) {
       console.error('Failed to fetch audit trail:', err);
-      // Use mock data for demonstration
-      setEntries([
-        {
-          id: '1',
-          projectId,
-          pmoDomainId: 'GOVERNANCE_DECISION_MAKING',
-          pmoPhase: 'Initiation',
-          objectType: 'DECISION',
-          objectId: 'd-1',
-          action: 'approved',
-          actorId: 'user-1',
-          actorName: 'John Smith',
-          iso21500Mapping: 'Governance Decision (Clause 4.3.4)',
-          pmbokMapping: 'Project Decision / Authorization',
-          prince2Mapping: 'Project Board Decision',
-          createdAt: new Date().toISOString(),
-          details: { decision: 'Approve Phase 1 Budget', value: '€250,000' },
-        },
-        {
-          id: '2',
-          projectId,
-          pmoDomainId: 'SCOPE_CHANGE_CONTROL',
-          pmoPhase: 'Execution',
-          objectType: 'CHANGE_REQUEST',
-          objectId: 'cr-1',
-          action: 'created',
-          actorId: 'user-2',
-          actorName: 'Anna Kowalska',
-          iso21500Mapping: 'Change Request (Clause 4.4.23)',
-          pmbokMapping: 'Change Request',
-          prince2Mapping: 'Request for Change (RFC)',
-          createdAt: new Date(Date.now() - 3600000).toISOString(),
-          details: { title: 'Extend pilot timeline by 2 weeks', impact: 'Medium' },
-        },
-        {
-          id: '3',
-          projectId,
-          pmoDomainId: 'SCHEDULE_MILESTONES',
-          pmoPhase: 'Planning',
-          objectType: 'ROADMAP',
-          objectId: 'rm-1',
-          action: 'updated',
-          actorId: 'user-1',
-          actorName: 'John Smith',
-          iso21500Mapping: 'Project Schedule (Clause 4.4.10)',
-          pmbokMapping: 'Project Schedule',
-          prince2Mapping: 'Project Plan / Stage Plan',
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-          details: { change: 'Resequenced Q2 initiatives' },
-        },
-      ]);
+      if (isDemo) {
+        setEntries([
+          {
+            id: 'demo-1',
+            projectId,
+            pmoDomainId: 'GOVERNANCE_DECISION_MAKING',
+            pmoPhase: 'Initiation',
+            objectType: 'DECISION',
+            objectId: 'd-1',
+            action: 'approved',
+            actorId: 'user-1',
+            actorName: 'John Smith',
+            iso21500Mapping: 'Governance Decision (Clause 4.3.4)',
+            pmbokMapping: 'Project Decision / Authorization',
+            prince2Mapping: 'Project Board Decision',
+            createdAt: new Date().toISOString(),
+            details: { decision: 'Approve Phase 1 Budget', value: '€250,000' },
+          },
+          {
+            id: 'demo-2',
+            projectId,
+            pmoDomainId: 'SCOPE_CHANGE_CONTROL',
+            pmoPhase: 'Execution',
+            objectType: 'CHANGE_REQUEST',
+            objectId: 'cr-1',
+            action: 'created',
+            actorId: 'user-2',
+            actorName: 'Anna Kowalska',
+            iso21500Mapping: 'Change Request (Clause 4.4.23)',
+            pmbokMapping: 'Change Request',
+            prince2Mapping: 'Request for Change (RFC)',
+            createdAt: new Date(Date.now() - 3600000).toISOString(),
+            details: { title: 'Extend pilot timeline by 2 weeks', impact: 'Medium' },
+          },
+          {
+            id: 'demo-3',
+            projectId,
+            pmoDomainId: 'SCHEDULE_MILESTONES',
+            pmoPhase: 'Planning',
+            objectType: 'ROADMAP',
+            objectId: 'rm-1',
+            action: 'updated',
+            actorId: 'user-1',
+            actorName: 'John Smith',
+            iso21500Mapping: 'Project Schedule (Clause 4.4.10)',
+            pmbokMapping: 'Project Schedule',
+            prince2Mapping: 'Project Plan / Stage Plan',
+            createdAt: new Date(Date.now() - 86400000).toISOString(),
+            details: { change: 'Resequenced Q2 initiatives' },
+          },
+        ]);
+      } else {
+        setEntries([]);
+        toast.error('Failed to load audit trail');
+      }
     } finally {
       setLoading(false);
     }
@@ -152,11 +158,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
 
   const exportAuditTrail = async () => {
     try {
-      toast.loading('Generating audit report...');
-      // In production, this would call an API to generate PDF/Excel
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.dismiss();
-      toast.success('Audit report downloaded');
+      toast.error('Export not available yet');
     } catch (err) {
       toast.error('Failed to export audit trail');
     }

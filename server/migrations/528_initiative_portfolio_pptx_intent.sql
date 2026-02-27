@@ -65,7 +65,7 @@ WHERE id = 'consulting_2x2';
 -- 2. NEW BLOCK: initiatives → initiative_portfolio
 -- ==========================================
 
-INSERT OR IGNORE INTO report_builder_block_types (
+INSERT INTO report_builder_block_types (
   id, organization_id, name, description,
   source_types_json, render_kind, prompt_template,
   input_schema_json, default_length, default_language,
@@ -78,7 +78,7 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","INTERVIEW","TOOL","INITIATIVE"]',
   'initiatives',
   'Generate a structured set of digital transformation initiatives based on assessment findings. Return JSON with initiative details including name, summary, strategic intent, priority, impact, effort, budget, ROI, timeline, and owner.',
-  NULL, 'long', 'business', 1, 1, 'visual', 30,
+  NULL, 'long', 'business', true, true, 'visual', 30,
   'initiative_portfolio',
   'Generate a JSON object for an initiative portfolio slide.
 
@@ -110,5 +110,22 @@ Rules: 4-8 initiatives. Mix of strategic intents and roles. Sort by priority.
 Impact and effort are 1-5 integers. Include a mix of timelines.
 Context: {{assessment}}, {{axisData}}, {{companyContext}}.',
   '{"type":"object","required":["type","initiatives"],"properties":{"type":{"const":"initiative_portfolio"},"initiatives":{"type":"array","minItems":1,"maxItems":12,"items":{"type":"object","required":["name","priority","impact","effort"],"properties":{"name":{"type":"string"},"summary":{"type":"string"},"strategicIntent":{"type":"string"},"strategicRole":{"type":"string"},"priority":{"enum":["critical","high","medium","low"]},"timeline":{"type":"string"},"impact":{"type":"integer","minimum":1,"maximum":5},"effort":{"type":"integer","minimum":1,"maximum":5},"effortProfile":{"type":"object"},"budget":{"type":"string"},"roi":{"type":"string"},"owner":{"type":"string"},"relatedGap":{"type":"string"},"relatedAxis":{"type":"string"},"tags":{"type":"array","items":{"type":"string"}}}}}}}',
-  datetime('now'), datetime('now')
-);
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+)
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  source_types_json = EXCLUDED.source_types_json,
+  render_kind = EXCLUDED.render_kind,
+  prompt_template = EXCLUDED.prompt_template,
+  input_schema_json = EXCLUDED.input_schema_json,
+  default_length = EXCLUDED.default_length,
+  default_language = EXCLUDED.default_language,
+  is_system = EXCLUDED.is_system,
+  is_active = EXCLUDED.is_active,
+  category = EXCLUDED.category,
+  display_order = EXCLUDED.display_order,
+  slide_intent = EXCLUDED.slide_intent,
+  pptx_prompt_template = EXCLUDED.pptx_prompt_template,
+  pptx_output_schema = EXCLUDED.pptx_output_schema,
+  updated_at = EXCLUDED.updated_at;

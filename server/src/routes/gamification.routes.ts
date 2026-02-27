@@ -16,6 +16,18 @@ import logger from '../utils/Logger.js';
 // Apply rate limiting
 const router = Router();
 
+const serviceFallback = (
+  _req: AuthRequest,
+  res: Response,
+  _readPayload?: Record<string, unknown>
+) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
+
 // Service interfaces
 interface GamificationServiceInterface {
   getUserProfile?: (userId: string) => Promise<unknown>;
@@ -44,7 +56,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!GamificationService?.getUserProfile || !GamificationService?.getUserAchievements) {
-      return res.status(503).json({ error: 'Gamification service not available' });
+      return serviceFallback(req, res, { data: { achievements: [] } });
     }
 
     try {

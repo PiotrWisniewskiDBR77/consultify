@@ -14,20 +14,24 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowRight,
   Bell,
+  BookOpen,
   Calendar,
   CheckCircle2,
   CheckSquare,
   Clock,
   Command,
   FileQuestion,
+  FileText,
   Filter,
   History,
   Inbox,
   LayoutDashboard,
+  Pin,
   Plus,
   Search,
   Settings,
   SortAsc,
+  Sparkles,
   Star,
   Target,
   TrendingUp,
@@ -169,6 +173,19 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         },
       },
       {
+        id: 'nav-notebook',
+        title: t('command.nav.notebook', 'Notebook'),
+        subtitle: t('command.nav.notebookDesc', 'Notes, ideas & capture'),
+        icon: <BookOpen size={18} />,
+        category: 'navigation',
+        shortcut: 'G N',
+        keywords: ['notes', 'notebook', 'capture', 'write', 'notatki'],
+        action: () => {
+          onNavigate?.('notebook');
+          onClose();
+        },
+      },
+      {
         id: 'nav-settings',
         title: t('command.nav.settings', 'Settings'),
         subtitle: t('command.nav.settingsDesc', 'Preferences & notifications'),
@@ -212,10 +229,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         action: async () => {
           if (pendingDecisions.length > 0) {
             try {
-              await Api.put(`/decisions/${pendingDecisions[0].id}/decide`, {
-                status: 'APPROVED',
-                outcome: '',
-              });
+              await Api.decideDecision(pendingDecisions[0].id, 'approved', 'Approved');
               toast.success(t('command.action.approved', 'Decision approved'));
             } catch (error) {
               toast.error(t('command.action.error', 'Failed to approve'));
@@ -223,6 +237,22 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
           } else {
             toast(t('command.action.noDecisions', 'No pending decisions'), { icon: 'ℹ️' });
           }
+          onClose();
+        },
+      },
+      {
+        id: 'action-review-next-decision',
+        title: t('command.action.reviewNextDecision', 'Review next decision'),
+        subtitle: t(
+          'command.action.reviewNextDecisionDesc',
+          'Queue mode with shortcuts (J/K, A/R/S, ?)'
+        ),
+        icon: <FileQuestion size={18} className="text-violet-500" />,
+        category: 'action',
+        keywords: ['review', 'queue', 'decisions', 'inbox'],
+        action: () => {
+          window.dispatchEvent(new CustomEvent('mywork-review-next-decisions'));
+          onNavigate?.('decisions');
           onClose();
         },
       },
@@ -261,6 +291,44 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         keywords: ['calendar', 'schedule', 'timeline'],
         action: () => {
           navigate('/projects');
+          onClose();
+        },
+      },
+      {
+        id: 'action-new-note',
+        title: t('command.action.newNote', 'New Note'),
+        subtitle: t('command.action.newNoteDesc', 'Create a new notebook page'),
+        icon: <FileText size={18} className="text-indigo-500" />,
+        category: 'action',
+        shortcut: 'N N',
+        keywords: ['note', 'create', 'write', 'notebook', 'notatka'],
+        action: () => {
+          onNavigate?.('notebook');
+          window.dispatchEvent(new CustomEvent('notebook-new-page'));
+          onClose();
+        },
+      },
+      {
+        id: 'action-search-notes',
+        title: t('command.action.searchNotes', 'Search Notes'),
+        subtitle: t('command.action.searchNotesDesc', 'Find in your notebook'),
+        icon: <Search size={18} className="text-indigo-500" />,
+        category: 'action',
+        keywords: ['find', 'search', 'notes', 'notebook'],
+        action: () => {
+          onNavigate?.('notebook');
+          onClose();
+        },
+      },
+      {
+        id: 'action-extract-actions',
+        title: t('command.action.extractActions', 'Extract AI Actions'),
+        subtitle: t('command.action.extractActionsDesc', 'AI action items from current note'),
+        icon: <Sparkles size={18} className="text-amber-500" />,
+        category: 'action',
+        keywords: ['ai', 'extract', 'actions', 'items', 'tasks'],
+        action: () => {
+          window.dispatchEvent(new CustomEvent('notebook-extract-actions'));
           onClose();
         },
       },

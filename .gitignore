@@ -16,6 +16,7 @@ dist-ssr
 __tmp_ai_agent__
 .tmp/
 .codex-worktrees/
+.tmp/
 
 # Editor directories and files
 .vscode/*
@@ -32,6 +33,7 @@ __tmp_ai_agent__
 .env
 .env.local
 .env.production
+.env.staging.local
 server/.env
 
 # Auth tokens and session files
@@ -110,6 +112,7 @@ SETUP_*.md
 
 # Allow tracked plans under docs/
 !docs/PLAN_*.md
+!docs/testing/PLAN_*.md
 
 # Debug and trace files
 trace_*.cjs
@@ -195,6 +198,12 @@ _analysis/
 
 # Client data (never commit)
 Plast-met/
+
+# Knowledge bank: keep markdown packs in repo, ignore raw source binaries
+knowledge/**/*.pdf
+knowledge/**/*.xlsx
+knowledge/**/*.pptx
+knowledge/**/*.docx
 
 # Duplicate lib artifacts
 lib/

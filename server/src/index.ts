@@ -50,6 +50,7 @@ const PORT = Number(process.env.PORT) || 3005;
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
 const skipRateLimit = process.env.DISABLE_RATE_LIMIT === 'true';
+const enableRateLimitInNonProd = process.env.ENABLE_RATE_LIMIT === 'true';
 
 // Validate environment variables on startup (skip in test mode)
 if (!isTest && !process.env.SKIP_ENV_VALIDATION) {
@@ -173,17 +174,47 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   });
 });
 
+const skipManagedSchema =
+  process.env.DB_MANAGED_SCHEMA === 'false' ||
+  process.env.DB_MANAGED_SCHEMA === '0' ||
+  process.env.DB_MANAGED_SCHEMA === 'off';
+
+if (skipManagedSchema) {
+  logger.warn('[Server] DB_MANAGED_SCHEMA=off (no auto-DDL/migrations).');
+}
+if (String(process.env.DB_READONLY || '').trim()) {
+  logger.warn('[Server] DB_READONLY is enabled (writes blocked).');
+}
+
 const databaseInitPromise: Promise<void> =
   !isTest || process.env.E2E_MODE === 'true' || process.env.ENABLE_TEST_GATEWAY === 'true'
     ? (async () => {
         try {
+          const mockDbEnabled =
+            process.env.MOCK_DB === 'true' ||
+            (process.env.NODE_ENV === 'test' &&
+              process.env.RUN_DB_TESTS !== '1' &&
+              process.env.MOCK_DB !== 'false');
+
           logger.info('[Server] Initializing database...');
           const db = await getDatabaseAsync();
           logger.info('[Server] Database instance created:', db ? 'OK' : 'MOCK');
 
+          if ((db as any)?.isMock || mockDbEnabled) {
+            logger.info('[Server] MOCK_DB enabled; skipping schema init + connection pool');
+            dbReady = true;
+            dbInitError = null;
+            return;
+          }
+
           // Initialize and verify schema
           const { initializeDatabase } = await import('./database/DatabaseInitializer.js');
-          const initResult = await initializeDatabase();
+          const initResult = skipManagedSchema
+            ? {
+                success: true,
+                message: 'DB_MANAGED_SCHEMA disabled; skipping initializeDatabase()',
+              }
+            : await initializeDatabase();
 
           if (!initResult.success) {
             logger.error(`[Server] Database initialization failed: ${initResult.message}`);
@@ -399,6 +430,20 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
       logger.warn('[Server] AI Health Monitor not available:', error.message);
     }
   })();
+
+  // Init AI Provider Sentinel (continuous provider diagnostics) - non-blocking
+  (async () => {
+    try {
+      if (process.env.DISABLE_AI_PROVIDER_SENTINEL === 'true') return;
+      const { default: providerSentinel } = await import('./services/ai/providerSentinel.js');
+      const intervalMs = Number(process.env.AI_PROVIDER_SENTINEL_INTERVAL_MS || 120_000);
+      providerSentinel.start(Number.isFinite(intervalMs) ? intervalMs : 120_000);
+      logger.info('[Server] AI Provider Sentinel started');
+    } catch (err: any) {
+      const error = err as Error;
+      logger.warn('[Server] AI Provider Sentinel not available:', error.message);
+    }
+  })();
 }
 
 // ============================================================
@@ -503,11 +548,16 @@ const authRedisStore = new RedisRateLimitStore({ windowMs: 60 * 60 * 1000 });
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: isProduction ? 300 : 1000, // Increased for production to support paginated calls
+  // Dev SPA polls many endpoints; keep rate limiting meaningful in prod, but avoid breaking dev.
+  max: isProduction ? 300 : 20000,
   standardHeaders: true,
   legacyHeaders: false,
   store: redisStore,
-  skip: (req) => skipRateLimit || isTest || req.originalUrl.includes('/api/auth/'),
+  skip: (req) =>
+    skipRateLimit ||
+    isTest ||
+    (!isProduction && !enableRateLimitInNonProd) ||
+    req.originalUrl.includes('/api/auth/'),
   message: { error: 'Too many requests, please try again later.' },
   keyGenerator: (req) => {
     try {

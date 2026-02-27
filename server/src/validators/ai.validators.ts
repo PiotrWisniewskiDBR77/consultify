@@ -41,12 +41,17 @@ export const ChatConfirmRequestSchema = z.object({
   focusMode: z.string().optional(),
   selectedTier: z.enum(['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING']).optional(),
   selectedModelId: z.union([z.string().min(1), z.null()]).optional(),
+  // Privacy
+  privateMode: z.boolean().optional(),
   aiModes: z
     .object({
       deepResearch: z.boolean().optional(),
       webSearch: z.boolean().optional(),
       showReasoning: z.boolean().optional(),
       multiAgent: z.boolean().optional(),
+      marketResearch: z.boolean().optional(),
+      coThinkerMode: z.union([z.string().min(1), z.null()]).optional(),
+      privateMode: z.boolean().optional(),
     })
     .optional(),
   knowledgeSources: z
@@ -57,7 +62,16 @@ export const ChatConfirmRequestSchema = z.object({
     })
     .optional(),
   responseStyle: z
-    .enum(['normal', 'executive', 'analyst', 'coach', 'concise', 'formal'])
+    .enum([
+      'normal',
+      'executive',
+      'analyst',
+      'coach',
+      'concise',
+      'formal',
+      'professional',
+      'friendly',
+    ])
     .optional(),
   language: z
     .string()
@@ -103,12 +117,17 @@ export const ChatStreamRequestSchema = z.object({
   // Explicit provider override (used for per-user local inference like Ollama)
   provider: z.string().min(1).optional(),
   endpoint: z.string().min(1).optional(),
+  // Privacy
+  privateMode: z.boolean().optional(),
   aiModes: z
     .object({
       deepResearch: z.boolean().optional(),
       webSearch: z.boolean().optional(),
       showReasoning: z.boolean().optional(),
       multiAgent: z.boolean().optional(),
+      marketResearch: z.boolean().optional(),
+      coThinkerMode: z.union([z.string().min(1), z.null()]).optional(),
+      privateMode: z.boolean().optional(),
     })
     .optional(),
   knowledgeSources: z
@@ -119,7 +138,16 @@ export const ChatStreamRequestSchema = z.object({
     })
     .optional(),
   responseStyle: z
-    .enum(['normal', 'executive', 'analyst', 'coach', 'concise', 'formal'])
+    .enum([
+      'normal',
+      'executive',
+      'analyst',
+      'coach',
+      'concise',
+      'formal',
+      'professional',
+      'friendly',
+    ])
     .optional(),
   language: z
     .string()
@@ -277,8 +305,31 @@ const InitiativeAIItemSchema = z.object({
   name: z.string(),
   priority: z.string().optional(),
   owner: z.string().optional(),
-  plannedStartDate: z.string().datetime().optional(),
-  plannedEndDate: z.string().datetime().optional(),
+  // Accept both full ISO date-time and HTML date input (YYYY-MM-DD) to match initiative validators.
+  plannedStartDate: z
+    .string()
+    .transform((v) => String(v ?? '').trim())
+    .refine(
+      (v) => {
+        if (!v) return true;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return true;
+        return z.string().datetime().safeParse(v).success;
+      },
+      { message: 'Invalid date format (expected YYYY-MM-DD or ISO datetime)' }
+    )
+    .optional(),
+  plannedEndDate: z
+    .string()
+    .transform((v) => String(v ?? '').trim())
+    .refine(
+      (v) => {
+        if (!v) return true;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return true;
+        return z.string().datetime().safeParse(v).success;
+      },
+      { message: 'Invalid date format (expected YYYY-MM-DD or ISO datetime)' }
+    )
+    .optional(),
   capacity: z.number().optional(),
 });
 
@@ -475,7 +526,7 @@ export const AIAuthoringAuditRequestSchema = z.object({
   outputText: z.string().optional(),
   wasApplied: z.boolean(),
   wasUndone: z.boolean().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 // ── T033: AI Readiness Analysis ────────────────────────────────────

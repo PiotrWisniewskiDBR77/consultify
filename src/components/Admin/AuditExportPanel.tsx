@@ -2,20 +2,78 @@
  * AuditExportPanel - Export audit logs and compliance reports
  */
 
-import { Calendar, Download, FileText } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { getHeaders } from '../../services/api';
 
 export const AuditExportPanel: React.FC = () => {
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [exportFormat, setExportFormat] = useState<'csv' | 'json' | 'pdf'>('csv');
   const [isExporting, setIsExporting] = useState(false);
 
+  const toCsv = (rows: Record<string, unknown>[]) => {
+    if (!rows.length) return '';
+    const headers = Array.from(
+      rows.reduce<Set<string>>((acc, row) => {
+        Object.keys(row).forEach((k) => acc.add(k));
+        return acc;
+      }, new Set<string>())
+    );
+    const escapeCell = (value: unknown) => {
+      if (value == null) return '';
+      const str =
+        typeof value === 'object' ? JSON.stringify(value) : String(value).replace(/\r?\n/g, ' ');
+      if (str.includes('"') || str.includes(',') || str.includes(';')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+    const lines = [
+      headers.join(','),
+      ...rows.map((row) => headers.map((key) => escapeCell(row[key])).join(',')),
+    ];
+    return lines.join('\n');
+  };
+
+  const triggerDownload = (content: string, mimeType: string, extension: string) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `audit-logs-${new Date().toISOString().slice(0, 10)}.${extension}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      // TODO: Implement actual export
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const query = new URLSearchParams();
+      if (dateRange.start) query.set('startDate', dateRange.start);
+      if (dateRange.end) query.set('endDate', dateRange.end);
+      const qs = query.toString();
+      const res = await fetch(`/api/admin/export/audit${qs ? `?${qs}` : ''}`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) {
+        throw new Error('Audit export endpoint is unavailable');
+      }
+      const rows = await res.json();
+      const normalizedRows = Array.isArray(rows) ? rows : [];
+
+      if (exportFormat === 'json') {
+        triggerDownload(JSON.stringify(normalizedRows, null, 2), 'application/json', 'json');
+      } else if (exportFormat === 'csv') {
+        triggerDownload(toCsv(normalizedRows), 'text/csv', 'csv');
+      } else {
+        // Browser-native PDF flow avoids fake backend placeholders.
+        window.print();
+      }
+
       toast.success(`Audit log exported as ${exportFormat.toUpperCase()}`);
     } catch (err: any) {
       toast.error(err?.message || 'Export failed');

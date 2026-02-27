@@ -35,6 +35,7 @@ import {
   SuperAdminSidebar,
 } from '../../components/layout/SuperAdminSidebar';
 import { UserProfileMenu } from '../../components/layout/UserProfileMenu';
+import { FeatureFlagsDevToolsToggleButton } from '../../components/settings/FeatureFlagsDevToolsToggleButton';
 import { SuperAdminSignalCenter } from '../../components/SuperAdmin/SuperAdminSignalCenter';
 import { SuperAdminStatusIndicators } from '../../components/SuperAdmin/SuperAdminStatusIndicators';
 import { useAppStore } from '../../store/useAppStore';
@@ -314,6 +315,9 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         </div>
         <div className="pointer-events-auto">
           <DocumentToggleButton />
+        </div>
+        <div className="pointer-events-auto">
+          <FeatureFlagsDevToolsToggleButton />
         </div>
       </div>
       <HelpSidePanel />

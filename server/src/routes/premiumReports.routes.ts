@@ -23,12 +23,12 @@ function isSchemaMissingError(err: unknown): boolean {
   );
 }
 
-const respondFeatureUnavailable = (res: Response, detail?: string) =>
+const respondFeatureUnavailable = (_req: Request, res: Response, _detail?: string) =>
   res.status(503).json({
-    error: 'Feature unavailable',
-    code: 'FEATURE_UNAVAILABLE',
-    feature: FEATURE_NAME,
-    detail,
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 
 router.get(
@@ -49,7 +49,7 @@ router.get(
       res.json(reports || []);
     } catch (error: unknown) {
       if (isSchemaMissingError(error)) {
-        return respondFeatureUnavailable(res, 'schema missing');
+        return respondFeatureUnavailable(req, res, 'schema missing');
       }
       throw error;
     }
@@ -69,7 +69,7 @@ router.get(
       res.json(report);
     } catch (error: unknown) {
       if (isSchemaMissingError(error)) {
-        return respondFeatureUnavailable(res, 'schema missing');
+        return respondFeatureUnavailable(req, res, 'schema missing');
       }
       throw error;
     }
@@ -94,7 +94,7 @@ router.get(
       res.json({ hasAccess: !!access });
     } catch (error: unknown) {
       if (isSchemaMissingError(error)) {
-        return respondFeatureUnavailable(res, 'schema missing');
+        return respondFeatureUnavailable(req, res, 'schema missing');
       }
       throw error;
     }

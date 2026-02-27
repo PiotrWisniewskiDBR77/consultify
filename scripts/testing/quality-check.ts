@@ -377,6 +377,13 @@ function scan(): void {
   const placeholderCount = buckets.PLACEHOLDER.count + buckets.FAKE_UNIT.count;
   if (placeholderCount > 0) {
     console.log(`❌ PLACEHOLDER/FAKE_UNIT tests detected: ${placeholderCount}`);
+    const files = [
+      ...(buckets.PLACEHOLDER.files || []),
+      ...(buckets.FAKE_UNIT.files || []),
+    ];
+    if (files.length > 0) {
+      console.log('Files:', files.join(', '));
+    }
     process.exit(1);
   }
   if (buckets.FAKE_INTEGRATION.count > 0) {

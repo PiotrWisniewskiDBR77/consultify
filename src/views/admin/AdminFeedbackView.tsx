@@ -38,6 +38,8 @@ import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { useDemoSession } from '@/hooks/useDemoSession';
+
 interface FeedbackItem {
   id: string;
   userId: string;
@@ -67,6 +69,7 @@ interface AdminFeedbackViewProps {
 
 export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className = '' }) => {
   const { t } = useTranslation();
+  const { isDemo } = useDemoSession();
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -120,76 +123,81 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
       }
     } catch (error) {
       console.error('Feedback fetch error:', error);
-      // Fallback to demo data if API fails
-      setFeedback([
-        {
-          id: '1',
-          userId: 'u1',
-          userEmail: 'jan.kowalski@firma.pl',
-          userName: 'Jan Kowalski',
-          type: 'bug',
-          message:
-            'Strona logowania nie ładuje się poprawnie na urządzeniach mobilnych. Problem występuje głównie na iPhone 14 Pro.',
-          status: 'new',
-          priority: 'high',
-          createdAt: new Date().toISOString(),
-          metadata: { browser: 'Safari Mobile 16.0', page: '/login' },
-        },
-        {
-          id: '2',
-          userId: 'u2',
-          userEmail: 'anna.nowak@example.com',
-          userName: 'Anna Nowak',
-          type: 'feature',
-          rating: 4,
-          message:
-            'Byłoby świetnie mieć tryb ciemny dla całego dashboardu. Pracuję często w nocy i jasne kolory męczą oczy.',
-          status: 'in_progress',
-          priority: 'medium',
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-          adminNotes: 'Dark mode już w rozwoju - planowany release Q2',
-        },
-        {
-          id: '3',
-          userId: 'u3',
-          userEmail: 'piotr.wisniewski@corp.pl',
-          userName: 'Piotr Wiśniewski',
-          type: 'praise',
-          rating: 5,
-          message:
-            'Świetny produkt! Moduł AI znacząco poprawił naszą produktywność. Szczególnie doceniam szybkość generowania raportów.',
-          status: 'reviewed',
-          createdAt: new Date(Date.now() - 172800000).toISOString(),
-          adminResponse: 'Dziękujemy za miłe słowa! Cieszymy się, że platforma jest pomocna.',
-          respondedAt: new Date(Date.now() - 86400000).toISOString(),
-        },
-        {
-          id: '4',
-          userId: 'u4',
-          userEmail: 'maria.zielinska@startup.io',
-          userName: 'Maria Zielińska',
-          type: 'improvement',
-          rating: 3,
-          message:
-            'Skróty klawiszowe byłyby bardzo przydatne dla power userów. Szczególnie dla nawigacji między modułami.',
-          status: 'pending',
-          priority: 'low',
-          createdAt: new Date(Date.now() - 259200000).toISOString(),
-        },
-        {
-          id: '5',
-          userId: 'u5',
-          userEmail: 'tomasz.kaczmarek@enterprise.com',
-          userName: 'Tomasz Kaczmarek',
-          type: 'bug',
-          message: 'Export do PDF nie działa dla raportów powyżej 100 stron. System zawiesza się.',
-          status: 'resolved',
-          priority: 'critical',
-          createdAt: new Date(Date.now() - 604800000).toISOString(),
-          adminResponse: 'Naprawione w wersji 2.3.1. Prosimy o aktualizację.',
-          respondedAt: new Date(Date.now() - 432000000).toISOString(),
-        },
-      ]);
+      if (isDemo) {
+        setFeedback([
+          {
+            id: 'demo-1',
+            userId: 'u1',
+            userEmail: 'jan.kowalski@firma.pl',
+            userName: 'Jan Kowalski',
+            type: 'bug',
+            message:
+              'Strona logowania nie ładuje się poprawnie na urządzeniach mobilnych. Problem występuje głównie na iPhone 14 Pro.',
+            status: 'new',
+            priority: 'high',
+            createdAt: new Date().toISOString(),
+            metadata: { browser: 'Safari Mobile 16.0', page: '/login' },
+          },
+          {
+            id: 'demo-2',
+            userId: 'u2',
+            userEmail: 'anna.nowak@example.com',
+            userName: 'Anna Nowak',
+            type: 'feature',
+            rating: 4,
+            message:
+              'Byłoby świetnie mieć tryb ciemny dla całego dashboardu. Pracuję często w nocy i jasne kolory męczą oczy.',
+            status: 'in_progress',
+            priority: 'medium',
+            createdAt: new Date(Date.now() - 86400000).toISOString(),
+            adminNotes: 'Dark mode już w rozwoju - planowany release Q2',
+          },
+          {
+            id: 'demo-3',
+            userId: 'u3',
+            userEmail: 'piotr.wisniewski@corp.pl',
+            userName: 'Piotr Wiśniewski',
+            type: 'praise',
+            rating: 5,
+            message:
+              'Świetny produkt! Moduł AI znacząco poprawił naszą produktywność. Szczególnie doceniam szybkość generowania raportów.',
+            status: 'reviewed',
+            createdAt: new Date(Date.now() - 172800000).toISOString(),
+            adminResponse: 'Dziękujemy za miłe słowa! Cieszymy się, że platforma jest pomocna.',
+            respondedAt: new Date(Date.now() - 86400000).toISOString(),
+          },
+          {
+            id: 'demo-4',
+            userId: 'u4',
+            userEmail: 'maria.zielinska@startup.io',
+            userName: 'Maria Zielińska',
+            type: 'improvement',
+            rating: 3,
+            message:
+              'Skróty klawiszowe byłyby bardzo przydatne dla power userów. Szczególnie dla nawigacji między modułami.',
+            status: 'pending',
+            priority: 'low',
+            createdAt: new Date(Date.now() - 259200000).toISOString(),
+          },
+          {
+            id: 'demo-5',
+            userId: 'u5',
+            userEmail: 'tomasz.kaczmarek@enterprise.com',
+            userName: 'Tomasz Kaczmarek',
+            type: 'bug',
+            message:
+              'Export do PDF nie działa dla raportów powyżej 100 stron. System zawiesza się.',
+            status: 'resolved',
+            priority: 'critical',
+            createdAt: new Date(Date.now() - 604800000).toISOString(),
+            adminResponse: 'Naprawione w wersji 2.3.1. Prosimy o aktualizację.',
+            respondedAt: new Date(Date.now() - 432000000).toISOString(),
+          },
+        ]);
+      } else {
+        setFeedback([]);
+        toast.error(t('admin.feedback.loadError', 'Nie udało się załadować feedbacku'));
+      }
     } finally {
       setLoading(false);
     }

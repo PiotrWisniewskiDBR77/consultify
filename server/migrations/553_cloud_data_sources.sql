@@ -1,8 +1,11 @@
 -- Migration 553: Cloud Data Sources
 -- Tables for managing external cloud storage connections (Google Drive, OneDrive, etc.)
 
+-- Needed for gen_random_uuid() used for TEXT ids
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE TABLE IF NOT EXISTS cloud_sources (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   organization_id TEXT NOT NULL,
   user_id TEXT NOT NULL,
   provider TEXT NOT NULL CHECK (provider IN ('google_drive', 'onedrive', 'dropbox', 'sharepoint')),
@@ -23,7 +26,7 @@ CREATE INDEX IF NOT EXISTS idx_cloud_sources_org ON cloud_sources(organization_i
 CREATE INDEX IF NOT EXISTS idx_cloud_sources_user ON cloud_sources(user_id);
 
 CREATE TABLE IF NOT EXISTS cloud_import_jobs (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   cloud_source_id TEXT NOT NULL,
   organization_id TEXT NOT NULL,
   user_id TEXT NOT NULL,

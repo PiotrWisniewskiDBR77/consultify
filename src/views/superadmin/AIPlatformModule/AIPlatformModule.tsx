@@ -24,6 +24,7 @@ import {
   FileText,
   FlaskConical,
   Gauge,
+  Globe,
   HeartPulse,
   Key,
   Layers,
@@ -39,15 +40,20 @@ import {
 import React, { useEffect, useState } from 'react';
 
 import { InfoButton } from '../../../components/shared/InfoButton';
+import { ModelRegistryHub } from '../../../components/SuperAdmin/ModelRegistry';
 import { CostAnalyticsTab } from './Analytics/CostAnalyticsTab';
 import { CustomReportsTab } from './Analytics/CustomReportsTab';
 import { PerformanceMetricsTab } from './Analytics/PerformanceMetricsTab';
+import { PricingRegistryTab } from './Analytics/PricingRegistryTab';
 // Analytics Tab Components
 import { UsageAnalyticsTab } from './Analytics/UsageAnalyticsTab';
+import { AIGovernanceTab } from './Configuration/AIGovernanceTab';
 import { GlobalSettingsTab } from './Configuration/GlobalSettingsTab';
 // Configuration Tab Components
 import { LLMProvidersTab } from './Configuration/LLMProvidersTab';
 import { ModelTiersTab } from './Configuration/ModelTiersTab';
+import { OrgAIPolicyTab } from './Configuration/OrgAIPolicyTab';
+import { PurposeAssignmentsTab } from './Configuration/PurposeAssignmentsTab';
 import { RoutingRulesTab } from './Configuration/RoutingRulesTab';
 import { ExperimentsTab } from './Development/ExperimentsTab';
 import { ModelRegistryTab } from './Development/ModelRegistryTab';
@@ -59,6 +65,7 @@ import { DocumentsRAGTab } from './Knowledge/DocumentsRAGTab';
 import { KnowledgeBaseTab } from './Knowledge/KnowledgeBaseTab';
 import { StrategicDirectionsTab } from './Knowledge/StrategicDirectionsTab';
 import { HealthMonitoringTab } from './Operations/HealthMonitoringTab';
+import { MarketInboxTab } from './Operations/MarketInboxTab';
 // Operations Tab Components
 import { MissionControlTab } from './Operations/MissionControlTab';
 import { PerformanceDashboardTab } from './Operations/PerformanceDashboardTab';
@@ -96,6 +103,9 @@ const AI_PLATFORM_TABS: MainTab[] = [
       { id: 'llm-providers', label: 'LLM Providers', icon: <Cpu size={16} /> },
       { id: 'model-tiers', label: 'Model Tiers', icon: <Layers size={16} /> },
       { id: 'routing-rules', label: 'Routing Rules', icon: <Route size={16} /> },
+      { id: 'purposes-assignments', label: 'Purposes & Assignments', icon: <Target size={16} /> },
+      { id: 'org-ai-policy', label: 'Org AI Policy', icon: <Globe size={16} /> },
+      { id: 'ai-governance', label: 'AI Governance', icon: <Shield size={16} /> },
       { id: 'global-settings', label: 'Global Settings', icon: <Settings size={16} /> },
     ],
   },
@@ -121,6 +131,7 @@ const AI_PLATFORM_TABS: MainTab[] = [
       { id: 'health-monitoring', label: 'Health Monitoring', icon: <HeartPulse size={16} /> },
       { id: 'performance-dashboard', label: 'Performance', icon: <Activity size={16} /> },
       { id: 'sla-management', label: 'SLA Management', icon: <Shield size={16} /> },
+      { id: 'market-inbox', label: 'Market Inbox', icon: <Database size={16} /> },
     ],
   },
   {
@@ -131,6 +142,7 @@ const AI_PLATFORM_TABS: MainTab[] = [
     subTabs: [
       { id: 'usage-analytics', label: 'Usage Analytics', icon: <TrendingUp size={16} /> },
       { id: 'cost-analytics', label: 'Cost Analytics', icon: <DollarSign size={16} /> },
+      { id: 'pricing-registry', label: 'Pricing Registry', icon: <DollarSign size={16} /> },
       { id: 'performance-metrics', label: 'Performance Metrics', icon: <Gauge size={16} /> },
       { id: 'custom-reports', label: 'Custom Reports', icon: <FileBarChart size={16} /> },
     ],
@@ -205,6 +217,12 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
         return <ModelTiersTab />;
       case 'configuration/routing-rules':
         return <RoutingRulesTab />;
+      case 'configuration/purposes-assignments':
+        return <PurposeAssignmentsTab />;
+      case 'configuration/org-ai-policy':
+        return <OrgAIPolicyTab />;
+      case 'configuration/ai-governance':
+        return <AIGovernanceTab />;
       case 'configuration/global-settings':
         return <GlobalSettingsTab />;
 
@@ -216,7 +234,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       case 'development/experiments':
         return <ExperimentsTab />;
       case 'development/model-registry':
-        return <ModelRegistryTab />;
+        return <ModelRegistryHub />;
 
       // Operations
       case 'operations/mission-control':
@@ -227,12 +245,16 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
         return <PerformanceDashboardTab />;
       case 'operations/sla-management':
         return <SLAManagementTab />;
+      case 'operations/market-inbox':
+        return <MarketInboxTab />;
 
       // Analytics
       case 'analytics/usage-analytics':
         return <UsageAnalyticsTab />;
       case 'analytics/cost-analytics':
         return <CostAnalyticsTab />;
+      case 'analytics/pricing-registry':
+        return <PricingRegistryTab />;
       case 'analytics/performance-metrics':
         return <PerformanceMetricsTab />;
       case 'analytics/custom-reports':

@@ -97,6 +97,10 @@ describe('sanitizeString (L1)', () => {
     // Keep '=' and '/' intact; security relies on escaping HTML special chars.
     expect(result).toContain('onerror=');
   });
+
+  it('escapes all special characters in one pass', () => {
+    expect(sanitizeString(`&<>"'\``)).toBe('&amp;&lt;&gt;&quot;&#x27;&#96;');
+  });
 });
 
 // ═══════════════════════════════════════════════
@@ -326,6 +330,9 @@ describe('isValidUUID (L1)', () => {
   it('accepts valid UUID v4', () => {
     expect(isValidUUID('550e8400-e29b-41d4-a716-446655440000')).toBe(true);
   });
+  it('accepts uppercase UUID', () => {
+    expect(isValidUUID('550E8400-E29B-41D4-A716-446655440000')).toBe(true);
+  });
   it('rejects null', () => {
     expect(isValidUUID(null)).toBe(false);
   });
@@ -341,12 +348,27 @@ describe('isValidUUID (L1)', () => {
   it('rejects UUID with wrong length', () => {
     expect(isValidUUID('550e8400-e29b-41d4-a716')).toBe(false);
   });
+  it.each([
+    '550e8400e29b41d4a716446655440000', // missing dashes
+    '550e8400-e29b-41d4-a716-44665544000g', // non-hex
+    '550e8400-e29b-41d4-a716-446655440000 ', // trailing space
+    ' 550e8400-e29b-41d4-a716-446655440000', // leading space
+    '550e8400-e29b-41d4-a716-4466554400000', // too long
+  ])('rejects UUID edge case: %s', (uuid) => {
+    expect(isValidUUID(uuid)).toBe(false);
+  });
 });
 
 describe('isValidEmail (L1)', () => {
   it('accepts valid email', () => {
     expect(isValidEmail('user@example.com')).toBe(true);
   });
+  it.each(['USER@EXAMPLE.COM', 'user.name+tag@sub.example.co.uk', 'u@e.io'])(
+    'accepts valid variant: %s',
+    (email) => {
+      expect(isValidEmail(email)).toBe(true);
+    }
+  );
   it('rejects missing @', () => {
     expect(isValidEmail('userexample.com')).toBe(false);
   });
@@ -355,6 +377,16 @@ describe('isValidEmail (L1)', () => {
   });
   it('rejects spaces', () => {
     expect(isValidEmail('user @example.com')).toBe(false);
+  });
+  it.each([
+    '@example.com',
+    'user@',
+    'user@example',
+    'user@example.',
+    'user@@example.com',
+    'user@example.com ',
+  ])('rejects invalid variant: %s', (email) => {
+    expect(isValidEmail(email)).toBe(false);
   });
 });
 

@@ -118,6 +118,11 @@ export const PresentationWizard: React.FC<{ onClose?: () => void }> = ({ onClose
   const [confidentiality, setConfidentiality] =
     useState<(typeof CONFIDENTIALITIES)[number]>('internal');
 
+  // Visuals (Gamma-like)
+  const [visualsEnabled, setVisualsEnabled] = useState(true);
+  const [visualsPriority, setVisualsPriority] = useState<'quality' | 'cost'>('quality');
+  const [imageDensity, setImageDensity] = useState<'low' | 'medium' | 'high'>('medium');
+
   // Outline
   const [outline, setOutline] = useState<OutlineItem[]>([]);
   const [deckId, setDeckId] = useState('');
@@ -210,6 +215,11 @@ export const PresentationWizard: React.FC<{ onClose?: () => void }> = ({ onClose
           theme,
           confidentiality,
           sourceArtifacts: selectedSources,
+          visuals: {
+            enabled: visualsEnabled,
+            priority: visualsPriority,
+            imageDensity,
+          },
         },
       });
       setResult(res.data);
@@ -503,6 +513,86 @@ export const PresentationWizard: React.FC<{ onClose?: () => void }> = ({ onClose
                 label: t(`presentations.confidentialities.${c}`, c),
               }))}
             />
+
+            {/* Visuals (Gamma-like) */}
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-medium text-slate-900 dark:text-white text-sm">
+                    {t('presentations.setup.visuals.title', 'Visuals (AI images)')}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {t(
+                      'presentations.setup.visuals.desc',
+                      'Gamma-like visuals: cover + subtle textures. Works best in Quality mode.'
+                    )}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setVisualsEnabled((v) => !v)}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium border transition-all ${
+                    visualsEnabled
+                      ? 'bg-purple-600 text-white border-purple-600 hover:bg-purple-500'
+                      : 'bg-slate-50 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-navy-600 hover:border-slate-300'
+                  }`}
+                >
+                  {visualsEnabled ? t('common.on', 'On') : t('common.off', 'Off')}
+                </button>
+              </div>
+
+              <div
+                className={`mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 ${!visualsEnabled ? 'opacity-60 pointer-events-none' : ''}`}
+              >
+                <div>
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-2">
+                    {t('presentations.setup.visuals.priority', 'Priority')}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setVisualsPriority('quality')}
+                      className={`px-3 py-2 rounded-lg border text-sm transition-all ${
+                        visualsPriority === 'quality'
+                          ? 'border-purple-500 bg-purple-500/10 text-slate-900 dark:text-white'
+                          : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      {t('presentations.setup.visuals.quality', 'Quality')}
+                    </button>
+                    <button
+                      onClick={() => setVisualsPriority('cost')}
+                      className={`px-3 py-2 rounded-lg border text-sm transition-all ${
+                        visualsPriority === 'cost'
+                          ? 'border-purple-500 bg-purple-500/10 text-slate-900 dark:text-white'
+                          : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      {t('presentations.setup.visuals.cost', 'Cost')}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-2">
+                    {t('presentations.setup.visuals.density', 'Image density')}
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['low', 'medium', 'high'] as const).map((d) => (
+                      <button
+                        key={d}
+                        onClick={() => setImageDensity(d)}
+                        className={`px-3 py-2 rounded-lg border text-sm transition-all ${
+                          imageDensity === d
+                            ? 'border-purple-500 bg-purple-500/10 text-slate-900 dark:text-white'
+                            : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 hover:border-slate-300'
+                        }`}
+                      >
+                        {t(`presentations.setup.visuals.density.${d}`, d)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Navigation */}
             <div className="flex justify-between">

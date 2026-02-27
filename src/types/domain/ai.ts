@@ -13,6 +13,8 @@ export type LLMProviderId =
   | 'openai'
   | 'anthropic'
   | 'google'
+  | 'gemini'
+  | 'openrouter'
   | 'mistral'
   | 'groq'
   | 'together'
@@ -21,6 +23,8 @@ export type LLMProviderId =
   | 'qwen'
   | 'ernie'
   | 'z_ai'
+  | 'zai'
+  | 'replicate'
   | 'ollama'
   | 'tavily'
   | 'google_search'
@@ -82,6 +86,20 @@ export interface LLMProviderConfig {
   max_outputs?: number; // Max output tokens
   description?: string;
   capabilities: LLMCapability[] | string[];
+
+  // Enterprise metadata (v3)
+  kind?: 'TEXT_LLM' | 'IMAGE_MODEL' | 'BUSINESS_MODEL' | string;
+  provider_type?: 'direct' | 'aggregator' | 'hosted' | 'local' | 'customer_managed' | string;
+  origin_vendor?: string;
+  execution_regions?: string | string[];
+  allowed_data_classes?: string | string[];
+  data_residency_attestation?: string;
+  subprocessors_ref?: string;
+
+  // Secret status (never expose secret value)
+  has_api_key?: boolean;
+  is_configured?: boolean;
+  env_key?: string;
 
   // Runtime status
   healthStatus?: 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
@@ -205,6 +223,16 @@ export interface ChatResponseAction {
   icon?: string;
   payload: {
     view?: AppView | string;
+    targetModule?: string;
+    module?: string;
+    entityType?: string;
+    entityId?: string;
+    surface?: string;
+    params?: Record<string, unknown>;
+    sourceType?: string;
+    sourceId?: string;
+    sourceName?: string;
+    templateId?: string;
     apiCall?: string;
     data?: Record<string, unknown>;
     copyText?: string;

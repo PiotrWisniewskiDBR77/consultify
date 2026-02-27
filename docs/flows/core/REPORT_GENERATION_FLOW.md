@@ -197,36 +197,43 @@ download_count INTEGER DEFAULT 0
 
 ## Gap Analysis
 
-### GAP-REPORT-001: Brak PDF/PPT/Word export
+### GAP-REPORT-001: (Resolved) Exporty PDF/DOCX/PPTX są zaimplementowane w Report Builder
 
 | Attribute    | Value                                     |
 | ------------ | ----------------------------------------- |
-| **Priority** | HIGH                                      |
-| **Effort**   | 12h                                       |
-| **Impact**   | Użytkownicy nie mogą eksportować raportów |
+| **Priority** | HIGH (historyczne)                        |
+| **Effort**   | —                                         |
+| **Impact**   | —                                         |
 
-**Solution:**
+**Status (as-is, verified in code):**
 
-- PDF: Use pdfkit or puppeteer for generation
-- PPT/Word: Mark as "Coming Soon", implement in P1
-- Excel: Data export with basic formatting
+- Report Builder export endpoints istnieją:
+  - PDF: `GET /api/report-builder/:id/export/pdf`
+  - DOCX: `GET /api/report-builder/:id/export/docx` (+ alias `/doc`)
+  - PPTX: `GET /api/report-builder/:id/export/pptx`
+- Baseline jakości: `docs/REPORT_BUILDER_EXPORTS_STANDARD.md`
 
 ---
 
-### GAP-REPORT-002: Brak public link sharing
+### GAP-REPORT-002: (Resolved) Public link sharing jest zaimplementowane (2 równoległe mechanizmy)
 
 | Attribute    | Value                             |
 | ------------ | --------------------------------- |
-| **Priority** | MEDIUM                            |
-| **Effort**   | 6h                                |
-| **Impact**   | Raporty nie mogą być udostępniane |
+| **Priority** | MEDIUM (historyczne)              |
+| **Effort**   | —                                 |
+| **Impact**   | —                                 |
 
-**Solution:**
+**Status (as-is, verified in code):**
 
-- Generate unique public link ID
-- Optional password protection
-- Expiration date configuration
-- Public route without auth
+- **Report Builder sharing**:
+  - `POST /api/report-builder/:id/share` (password + expiry + branding flags)
+  - public viewer: `/shared/report/:token` (frontend) + public backend route
+- **Legacy public snapshots**:
+  - `POST /api/reports/:reportId/share`
+  - `GET /api/reports/public/:linkToken` (+ password verify)
+  - public viewer: `src/views/reports/PublicReportView.tsx`
+
+**Uwaga (v3):** SSOT dla ujednolicenia share/export jest w `docs/product/REPORT_GENERATOR_V3.md` (rozdział “as-is subsystems + legacy”).
 
 ## API Endpoints
 

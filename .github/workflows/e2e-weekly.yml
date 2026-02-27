@@ -1,0 +1,53 @@
+name: Weekly E2E (Full Playwright Suite)
+
+on:
+  schedule:
+    - cron: '30 3 * * 0'
+  workflow_dispatch: {}
+
+env:
+  NODE_VERSION: '20.x'
+  CI: true
+
+jobs:
+  e2e-full:
+    name: 🗓️ Weekly E2E Full Regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build application
+        run: npm run build
+
+      - name: Run full E2E suite
+        run: npx playwright test --reporter=junit
+        env:
+          NODE_ENV: test
+          E2E_MODE: true
+          E2E_USE_WEB_SERVER: 'true'
+          E2E_API_URL: http://127.0.0.1:3001
+          E2E_BASE_URL: http://127.0.0.1:3000
+          TEST_SUPPORT_KEY: local-test-support-key-change-me
+
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-e2e-weekly-${{ github.run_number }}
+          path: |
+            e2e-results.xml
+            test-results/
+          retention-days: 30

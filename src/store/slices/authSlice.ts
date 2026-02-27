@@ -88,6 +88,7 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
         deepResearch: false,
         marketResearch: false,
         coThinkerMode: null,
+        privateMode: false,
         webSearch: true,
         showReasoning: false,
         multiAgent: false,

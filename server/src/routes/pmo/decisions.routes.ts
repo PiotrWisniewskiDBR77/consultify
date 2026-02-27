@@ -16,6 +16,7 @@ import {
   CreateDecisionSchema,
   DecideSchema,
   EscalateDecisionSchema,
+  RemindDecisionSchema,
   UpdateDecisionSchema,
 } from '../../validators/decision.validators.js';
 
@@ -80,5 +81,11 @@ router.post(
   validateBody(EscalateDecisionSchema),
   DecisionController.escalateDecision
 );
+
+/**
+ * POST /api/decisions/:id/remind
+ * Send a nudge/reminder to the current decision owner (rate-limited server-side).
+ */
+router.post('/:id/remind', validateBody(RemindDecisionSchema), DecisionController.remindDecision);
 
 export default router;

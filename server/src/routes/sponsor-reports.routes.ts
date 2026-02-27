@@ -62,7 +62,8 @@ router.get(
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const report = await sponsorReportService.getReport(req.params.reportId, orgId);
+    const reportId = String(req.params.reportId);
+    const report = await sponsorReportService.getReport(reportId, orgId);
     if (!report) return res.status(404).json({ error: 'Report not found' });
 
     res.json(report);
@@ -73,7 +74,9 @@ router.put(
   '/:reportId/sections/:sectionId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { content } = req.body;
-    await sponsorReportService.updateSection(req.params.sectionId, req.params.reportId, content);
+    const sectionId = String(req.params.sectionId);
+    const reportId = String(req.params.reportId);
+    await sponsorReportService.updateSection(sectionId, reportId, content);
     res.json({ success: true });
   })
 );
@@ -85,7 +88,8 @@ router.put(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
     const { status, approvedBy, rejectedReason, utilizationNotes } = req.body;
-    await sponsorReportService.updateReportStatus(req.params.reportId, orgId, status, {
+    const reportId = String(req.params.reportId);
+    await sponsorReportService.updateReportStatus(reportId, orgId, status, {
       approvedBy: approvedBy || req.user?.id,
       rejectedReason,
       utilizationNotes,
@@ -101,7 +105,8 @@ router.get(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
     const format = (req.query.format as string) || 'pptx';
-    const reportData = await sponsorReportService.getReportForExport(req.params.reportId, orgId);
+    const reportId = String(req.params.reportId);
+    const reportData = await sponsorReportService.getReportForExport(reportId, orgId);
     if (!reportData) return res.status(404).json({ error: 'Report not found' });
 
     if (format === 'json') {

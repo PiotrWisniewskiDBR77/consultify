@@ -296,6 +296,27 @@ describe('MFASetup Component', () => {
       expect(screen.getByPlaceholderText('000000')).toBeInTheDocument();
     });
 
+    it('keeps "Verify & Enable" disabled until 6 digits are entered', async () => {
+      const user = await setupToVerifyStep();
+      const input = screen.getByPlaceholderText('000000');
+      const verify = screen.getByRole('button', { name: 'Verify & Enable' });
+
+      expect(verify).toBeDisabled();
+      await user.type(input, '12345');
+      expect(verify).toBeDisabled();
+
+      await user.type(input, '6');
+      expect(verify).not.toBeDisabled();
+    });
+
+    it('sanitizes verification code input to digits only (max 6)', async () => {
+      const user = await setupToVerifyStep();
+      const input = screen.getByPlaceholderText('000000') as HTMLInputElement;
+
+      await user.type(input, '12ab34-56-78');
+      expect(input.value).toBe('123456');
+    });
+
     it('should have Back and Verify buttons', async () => {
       await setupToVerifyStep();
 

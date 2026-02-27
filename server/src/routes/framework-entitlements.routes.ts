@@ -31,7 +31,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Organization context required' });
-    const fwId = req.params.frameworkId.toUpperCase();
+    const fwId = String(req.params.frameworkId).toUpperCase();
     res.json({
       frameworkId: fwId,
       ...(await FrameworkEntitlementService.checkAccess(orgId, fwId)),
@@ -48,7 +48,7 @@ router.post(
     if (!orgId || !userId) return res.status(401).json({ error: 'Auth required' });
     if (role !== 'ADMIN' && role !== 'OWNER')
       return res.status(403).json({ error: 'Only admins can grant access' });
-    const fwId = req.params.frameworkId.toUpperCase();
+    const fwId = String(req.params.frameworkId).toUpperCase();
     const { accessLevel, expiresAt, notes, targetOrgId } = req.body;
     if (!['locked', 'trial', 'full', 'educational'].includes(accessLevel))
       return res.status(400).json({ error: 'Invalid access level' });
@@ -74,7 +74,7 @@ router.post(
     if (!orgId || !userId) return res.status(401).json({ error: 'Auth required' });
     if (role !== 'ADMIN' && role !== 'OWNER')
       return res.status(403).json({ error: 'Only admins can revoke access' });
-    const fwId = req.params.frameworkId.toUpperCase();
+    const fwId = String(req.params.frameworkId).toUpperCase();
     await FrameworkEntitlementService.revokeAccess(req.body.targetOrgId || orgId, fwId);
     res.json({ success: true, frameworkId: fwId, accessLevel: 'locked' });
   })

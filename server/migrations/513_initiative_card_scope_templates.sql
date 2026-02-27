@@ -13,7 +13,7 @@ ALTER TABLE initiatives
 CREATE INDEX IF NOT EXISTS idx_initiatives_template_id ON initiatives(initiative_template_id);
 
 -- Seed public card-scope templates (id is stable for frontend references)
-INSERT OR IGNORE INTO initiative_templates
+INSERT INTO initiative_templates
   (id, name, category, description, applicable_axes, template_data, is_public, organization_id, created_by, created_at, updated_at)
 VALUES
   (
@@ -115,5 +115,15 @@ VALUES
     NULL,
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
-  );
+  )
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  category = EXCLUDED.category,
+  description = EXCLUDED.description,
+  applicable_axes = EXCLUDED.applicable_axes,
+  template_data = EXCLUDED.template_data,
+  is_public = EXCLUDED.is_public,
+  organization_id = EXCLUDED.organization_id,
+  created_by = EXCLUDED.created_by,
+  updated_at = EXCLUDED.updated_at;
 

@@ -17,7 +17,7 @@ router.post(
     const orgId = req.user?.organizationId ?? '';
     const pulse = await sentimentSvc.submitPulse(orgId, {
       ...req.body,
-      userId: req.user?.userId,
+      userId: req.user?.id,
     });
     res.status(201).json({ data: pulse });
   })
@@ -46,7 +46,7 @@ router.post(
     const orgId = req.user?.organizationId ?? '';
     const fb = await sentimentSvc.submitFeedback(orgId, {
       ...req.body,
-      userId: req.user?.userId,
+      userId: req.user?.id,
     });
     res.status(201).json({ data: fb });
   })
@@ -99,7 +99,7 @@ router.post(
   '/alerts/:id/acknowledge',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId ?? '';
-    const alert = await sentimentSvc.acknowledgeAlert(orgId, req.params.id, req.user?.userId ?? '');
+    const alert = await sentimentSvc.acknowledgeAlert(orgId, req.params.id, req.user?.id ?? '');
     if (!alert) return res.status(404).json({ error: 'Alert not found' });
     res.json({ data: alert });
   })

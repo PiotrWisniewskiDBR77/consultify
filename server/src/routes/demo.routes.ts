@@ -17,6 +17,10 @@ import {
   setUserDemoPreference,
 } from '../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import {
+  DEMO_TRIAL_EVENT_TYPES,
+  recordDemoTrialEvent,
+} from '../services/demoTrialTelemetryService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
@@ -25,6 +29,12 @@ const router = Router();
 function isUnavailableError(error: unknown): boolean {
   const message = (error as any)?.message;
   return typeof message === 'string' && message.toLowerCase().includes('unavailable');
+}
+
+function preferredLanguage(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const normalized = raw.split(',')[0]?.trim().split('-')[0]?.toLowerCase();
+  return normalized || null;
 }
 
 // Apply rate limiting
@@ -75,6 +85,21 @@ router.post(
         }
 
         logger.info(`[DemoMode] User ${userId} enabled demo mode`);
+        const language = preferredLanguage(String(req.get('Accept-Language') || ''));
+        await recordDemoTrialEvent({
+          eventType: DEMO_TRIAL_EVENT_TYPES.DEMO_MODE_ENABLED,
+          organizationId: demoOrganization.id || DEMO_ORG_ID,
+          userId,
+          source: 'demo_toggle',
+          language,
+        });
+        await recordDemoTrialEvent({
+          eventType: DEMO_TRIAL_EVENT_TYPES.DEMO_STARTED,
+          organizationId: demoOrganization.id || DEMO_ORG_ID,
+          userId,
+          source: 'demo_toggle',
+          language,
+        });
 
         return res.json({
           success: true,
@@ -90,6 +115,13 @@ router.post(
         });
       } else {
         logger.info(`[DemoMode] User ${userId} disabled demo mode`);
+        await recordDemoTrialEvent({
+          eventType: DEMO_TRIAL_EVENT_TYPES.DEMO_MODE_DISABLED,
+          organizationId: DEMO_ORG_ID,
+          userId,
+          source: 'demo_toggle',
+          language: preferredLanguage(String(req.get('Accept-Language') || '')),
+        });
 
         return res.json({
           success: true,

@@ -22,6 +22,8 @@ export interface ChatSlice {
     showReasoning: boolean; // Pokaż rozumowanie - widoczny tok myślenia AI
     multiAgent: boolean; // Analiza wieloagentowa - perspektywy CFO/CTO/CHRO/COO
     coThinkerMode: string | null; // Tryb Co-Thinker - persona doradcza
+    // Privacy
+    privateMode: boolean; // Private mode - disable memory injection/read/write for this chat session
     // Knowledge Sources (Źródła wiedzy)
     knowledgeSources: {
       pmoDocuments: boolean; // Dokumenty PMO - ISO 21500, PMBOK, PRINCE2
@@ -29,7 +31,15 @@ export interface ChatSlice {
       organizationData: boolean; // Dane organizacji - zespoły, role, procesy
     };
     // Response Style (Styl odpowiedzi - domain-specific presets)
-    responseStyle: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
+    responseStyle:
+      | 'normal'
+      | 'executive'
+      | 'analyst'
+      | 'coach'
+      | 'concise'
+      | 'formal'
+      | 'professional'
+      | 'friendly';
     // Text-to-Speech (Czytanie odpowiedzi na głos)
     textToSpeech: boolean; // Włącz/wyłącz czytanie odpowiedzi
     ttsVoice: string | null; // Wybrany głos (voice URI)
@@ -91,6 +101,7 @@ export const createChatSlice: StateCreator<AppState, [], [], ChatSlice> = (set) 
     showReasoning: false,
     multiAgent: false,
     coThinkerMode: null,
+    privateMode: false,
     // Knowledge Sources (default: use internal context where safe/useful)
     knowledgeSources: {
       pmoDocuments: true,

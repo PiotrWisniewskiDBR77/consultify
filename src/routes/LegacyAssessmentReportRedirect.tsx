@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 
 import { Api } from '@/services/api';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 export const LegacyAssessmentReportRedirect: React.FC = () => {
   const params = useParams<{ reportId?: string }>();
@@ -28,6 +29,22 @@ export const LegacyAssessmentReportRedirect: React.FC = () => {
       cancelled = true;
     };
   }, [reportId]);
+
+  React.useEffect(() => {
+    if (!reportId) {
+      trackFunnelEvent('route_redirected', {
+        from: '/assessment-reports/:reportId',
+        to: '/reports/builder',
+        reason: 'legacy_assessment_report_missing_id',
+      });
+      return;
+    }
+    trackFunnelEvent('route_redirected', {
+      from: `/assessment-reports/${reportId}`,
+      to: target || `/reports/builder/${reportId}`,
+      reason: 'legacy_assessment_report_alias',
+    });
+  }, [reportId, target]);
 
   if (!reportId) return <Navigate to="/reports/builder" replace />;
 

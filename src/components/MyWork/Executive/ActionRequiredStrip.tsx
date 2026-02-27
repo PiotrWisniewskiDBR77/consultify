@@ -1,6 +1,7 @@
 /**
  * ActionRequiredStrip - Urgent items requiring immediate attention
- * BCG/McKinsey style: Prominent, scannable, action-oriented
+ * Tech Sexy v2.0: Monochromatic cards, subtle urgency indicators,
+ * quiet buttons — red reserved strictly for destructive actions.
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
@@ -8,12 +9,12 @@ import {
   AlertTriangle,
   ArrowRight,
   Calendar,
-  CheckCircle2,
+  Check,
   ChevronRight,
   Clock,
   FileQuestion,
+  Minus,
   User,
-  XCircle,
   Zap,
 } from 'lucide-react';
 import React from 'react';
@@ -44,7 +45,6 @@ interface ActionRequiredStripProps {
   onReject?: (id: string) => void;
 }
 
-// Type icon mapping
 const typeIcons = {
   decision: FileQuestion,
   task: Clock,
@@ -52,32 +52,18 @@ const typeIcons = {
   blocker: AlertTriangle,
 };
 
-// Urgency styling
-const urgencyConfig = {
-  critical: {
-    bg: 'bg-rose-50 dark:bg-rose-900/20',
-    border: 'border-rose-200 dark:border-rose-500/30',
-    text: 'text-rose-700 dark:text-rose-300',
-    badge: 'bg-rose-500 text-white',
-    glow: 'shadow-rose-500/20',
-  },
-  high: {
-    bg: 'bg-amber-50 dark:bg-amber-900/20',
-    border: 'border-amber-200 dark:border-amber-500/30',
-    text: 'text-amber-700 dark:text-amber-300',
-    badge: 'bg-amber-500 text-white',
-    glow: 'shadow-amber-500/20',
-  },
-  medium: {
-    bg: 'bg-blue-50 dark:bg-blue-900/20',
-    border: 'border-blue-200 dark:border-blue-500/30',
-    text: 'text-blue-700 dark:text-blue-300',
-    badge: 'bg-blue-500 text-white',
-    glow: 'shadow-blue-500/20',
-  },
+const urgencyDot: Record<string, string> = {
+  critical: 'bg-rose-500',
+  high: 'bg-amber-500',
+  medium: 'bg-slate-400 dark:bg-slate-500',
 };
 
-// Action Item Card
+const urgencyLabel: Record<string, string> = {
+  critical: 'text-rose-500 dark:text-rose-400',
+  high: 'text-amber-600 dark:text-amber-400',
+  medium: 'text-slate-500 dark:text-slate-400',
+};
+
 const ActionItemCard: React.FC<{
   item: ActionItem;
   onApprove?: (id: string) => void;
@@ -86,7 +72,6 @@ const ActionItemCard: React.FC<{
 }> = ({ item, onApprove, onReject, onClick }) => {
   const { t } = useTranslation();
   const Icon = typeIcons[item.type];
-  const config = urgencyConfig[item.urgency];
 
   return (
     <motion.div
@@ -94,51 +79,48 @@ const ActionItemCard: React.FC<{
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      whileHover={{ scale: 1.01 }}
-      className={`
-                flex-shrink-0 w-80 p-4 rounded-xl border ${config.border} ${config.bg}
-                cursor-pointer transition-all hover:shadow-lg ${config.glow}
-            `}
+      className="flex-shrink-0 w-72 p-4 rounded-xl bg-slate-50/80 dark:bg-white/[0.03] hover:bg-slate-100/80 dark:hover:bg-white/[0.06] cursor-pointer transition-colors duration-150"
       onClick={onClick}
     >
-      {/* Header */}
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <div className={`w-8 h-8 rounded-lg ${config.badge} flex items-center justify-center`}>
-            <Icon size={16} />
-          </div>
-          <div>
-            <span className={`text-[10px] font-bold uppercase tracking-wider ${config.text}`}>
-              {item.type === 'decision'
-                ? t('executive.action.decision', 'Decision')
-                : item.type === 'task'
-                  ? t('executive.action.task', 'Task')
-                  : item.type === 'escalation'
-                    ? t('executive.action.escalation', 'Escalation')
-                    : t('executive.action.blocker', 'Blocker')}
-            </span>
-            {item.urgency === 'critical' && (
-              <span className="ml-2 px-1.5 py-0.5 bg-rose-500 text-white text-[9px] font-bold rounded animate-pulse">
-                CRITICAL
-              </span>
-            )}
-          </div>
-        </div>
-        {item.daysOverdue !== undefined && item.daysOverdue > 0 && (
-          <span className={`text-xs font-bold ${config.text} flex items-center gap-1`}>
-            <AlertTriangle size={12} />
-            {item.daysOverdue}d
+      {/* Header row */}
+      <div className="flex items-center gap-2 mb-2.5">
+        <Icon size={15} className="text-slate-400 dark:text-slate-500 shrink-0" />
+        <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          {item.type === 'decision'
+            ? t('executive.action.decision', 'Decision')
+            : item.type === 'task'
+              ? t('executive.action.task', 'Task')
+              : item.type === 'escalation'
+                ? t('executive.action.escalation', 'Escalation')
+                : t('executive.action.blocker', 'Blocker')}
+        </span>
+
+        {/* Urgency indicator — small dot + label, not screaming banner */}
+        <span className="ml-auto flex items-center gap-1.5">
+          <span className={`w-1.5 h-1.5 rounded-full ${urgencyDot[item.urgency]}`} />
+          <span className={`text-[10px] font-semibold uppercase ${urgencyLabel[item.urgency]}`}>
+            {item.urgency === 'critical'
+              ? t('executive.urgency.critical', 'Critical')
+              : item.urgency === 'high'
+                ? t('executive.urgency.high', 'High')
+                : ''}
           </span>
-        )}
+        </span>
       </div>
 
       {/* Title */}
-      <h4 className="text-sm font-semibold text-navy-900 dark:text-white line-clamp-2 mb-2">
+      <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100 line-clamp-2 mb-2 leading-snug">
         {item.title}
       </h4>
 
       {/* Meta */}
-      <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mb-3">
+      <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400 mb-3">
+        {item.daysOverdue !== undefined && item.daysOverdue > 0 && (
+          <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
+            <AlertTriangle size={10} />
+            {item.daysOverdue}d
+          </span>
+        )}
         {item.projectName && <span className="truncate max-w-[100px]">{item.projectName}</span>}
         {item.owner && (
           <span className="flex items-center gap-1">
@@ -149,12 +131,15 @@ const ActionItemCard: React.FC<{
         {item.dueDate && (
           <span className="flex items-center gap-1">
             <Calendar size={10} />
-            {new Date(item.dueDate).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}
+            {new Date(item.dueDate).toLocaleDateString('pl-PL', {
+              day: 'numeric',
+              month: 'short',
+            })}
           </span>
         )}
       </div>
 
-      {/* Quick Actions for Decisions */}
+      {/* Decision actions — quiet, not screaming */}
       {item.type === 'decision' && (
         <div className="flex items-center gap-2">
           <button
@@ -162,9 +147,9 @@ const ActionItemCard: React.FC<{
               e.stopPropagation();
               onApprove?.(item.id);
             }}
-            className="flex-1 px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition-colors flex items-center justify-center gap-1"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors duration-150"
           >
-            <CheckCircle2 size={12} />
+            <Check size={12} />
             {t('executive.action.approve', 'Approve')}
           </button>
           <button
@@ -172,17 +157,17 @@ const ActionItemCard: React.FC<{
               e.stopPropagation();
               onReject?.(item.id);
             }}
-            className="flex-1 px-3 py-1.5 rounded-lg bg-rose-500 text-white text-xs font-semibold hover:bg-rose-600 transition-colors flex items-center justify-center gap-1"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-white/[0.06] transition-colors duration-150"
           >
-            <XCircle size={12} />
+            <Minus size={12} />
             {t('executive.action.reject', 'Reject')}
           </button>
         </div>
       )}
 
-      {/* View Action for non-decisions */}
+      {/* Non-decision CTA */}
       {item.type !== 'decision' && (
-        <div className="flex items-center justify-end text-xs font-medium text-brand">
+        <div className="flex items-center justify-end text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors">
           {t('executive.action.view', 'View details')}
           <ChevronRight size={14} />
         </div>
@@ -201,7 +186,6 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  // Real data only - no mock fallbacks
   const displayItems: ActionItem[] = items;
 
   const criticalCount = displayItems.filter((i) => i.urgency === 'critical').length;
@@ -209,16 +193,16 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+      <div className="rounded-xl bg-white dark:bg-navy-900/50 p-5">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-white/10 animate-pulse" />
-          <div className="h-5 w-40 bg-slate-200 dark:bg-white/10 rounded animate-pulse" />
+          <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 animate-pulse" />
+          <div className="h-4 w-36 bg-slate-200 dark:bg-white/10 rounded animate-pulse" />
         </div>
-        <div className="flex gap-4 overflow-hidden">
+        <div className="flex gap-3 overflow-hidden">
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="flex-shrink-0 w-80 h-36 bg-slate-100 dark:bg-white/5 rounded-xl animate-pulse"
+              className="flex-shrink-0 w-72 h-32 bg-slate-100 dark:bg-white/[0.03] rounded-xl animate-pulse"
             />
           ))}
         </div>
@@ -231,17 +215,17 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-500/20 p-6"
+        className="rounded-xl bg-white dark:bg-navy-900/50 p-6"
       >
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center">
-            <CheckCircle2 size={24} className="text-white" />
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+            <Check size={16} className="text-emerald-500" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-emerald-800 dark:text-emerald-200">
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
               {t('executive.action.allClear', 'All Clear!')}
             </h3>
-            <p className="text-sm text-emerald-600 dark:text-emerald-300">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               {t('executive.action.noUrgent', 'No urgent items requiring your attention.')}
             </p>
           </div>
@@ -252,65 +236,58 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm overflow-hidden"
+      transition={{ duration: 0.22 }}
+      className="rounded-xl bg-white dark:bg-navy-900/50"
     >
       {/* Header */}
-      <div className="px-5 py-4 border-b border-slate-100 dark:border-navy-700">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                criticalCount > 0
-                  ? 'bg-gradient-to-br from-rose-500 to-red-600 shadow-lg shadow-rose-500/30 animate-pulse'
-                  : 'bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/30'
-              }`}
-            >
-              <Zap size={20} className="text-white" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                {t('executive.action.title', 'Action Required')}
-                <span
-                  className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                    criticalCount > 0
-                      ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
-                      : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                  }`}
-                >
-                  {displayItems.length}
-                </span>
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                {criticalCount > 0 && (
-                  <span className="text-rose-500 font-medium">{criticalCount} critical</span>
-                )}
-                {criticalCount > 0 && highCount > 0 && ' • '}
-                {highCount > 0 && (
-                  <span className="text-amber-500 font-medium">{highCount} high priority</span>
-                )}
-              </p>
-            </div>
+      <div className="flex items-center justify-between px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+            <Zap size={16} className="text-amber-500" />
           </div>
-
-          {onViewAll && (
-            <button
-              onClick={onViewAll}
-              className="text-sm text-brand font-medium hover:text-brand-hover flex items-center gap-1 transition-colors"
-            >
-              {t('executive.action.viewAll', 'View all')}
-              <ArrowRight size={14} />
-            </button>
-          )}
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              {t('executive.action.title', 'Action Required')}
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200/80 text-slate-600 dark:bg-white/10 dark:text-slate-300 tabular-nums">
+                {displayItems.length}
+              </span>
+            </h3>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              {criticalCount > 0 && (
+                <span className="text-rose-500 dark:text-rose-400 font-medium">
+                  {criticalCount} critical
+                </span>
+              )}
+              {criticalCount > 0 && highCount > 0 && (
+                <span className="text-slate-300 dark:text-slate-600"> · </span>
+              )}
+              {highCount > 0 && (
+                <span className="text-amber-600 dark:text-amber-400 font-medium">
+                  {highCount} high priority
+                </span>
+              )}
+            </p>
+          </div>
         </div>
+
+        {onViewAll && (
+          <button
+            onClick={onViewAll}
+            className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 flex items-center gap-1 transition-colors duration-150"
+          >
+            {t('executive.action.viewAll', 'View all')}
+            <ArrowRight size={13} />
+          </button>
+        )}
       </div>
 
-      {/* Scrollable Items */}
-      <div className="p-4">
-        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+      {/* Cards */}
+      <div className="px-5 pb-5">
+        <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
           <AnimatePresence mode="popLayout">
-            {displayItems.map((item, idx) => (
+            {displayItems.map((item) => (
               <ActionItemCard
                 key={item.id}
                 item={item}

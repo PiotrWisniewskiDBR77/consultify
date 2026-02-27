@@ -228,6 +228,24 @@ describe('Resource Quota Middleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
+    it('should treat cpu_quota_percent=0 as configured and block when usage is above 0', async () => {
+      vi.mocked(queryHelpers.queryOne)
+        .mockResolvedValueOnce({ subscription_plan_id: 'plan-123' })
+        .mockResolvedValueOnce({ id: 'plan-123', cpu_quota_percent: 0 })
+        .mockResolvedValueOnce({ cpu_usage_percent_avg: 1 });
+
+      await checkCPUQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(statusSpy).toHaveBeenCalledWith(429);
+      expect(jsonSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'CPU quota exceeded',
+          details: expect.objectContaining({ limit: 0, current: 1 }),
+        })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
     it('should return error when organization not found', async () => {
       vi.mocked(queryHelpers.queryOne)
         .mockResolvedValueOnce({ subscription_plan_id: 'plan-123' })
@@ -295,6 +313,36 @@ describe('Resource Quota Middleware', () => {
       expect(statusSpy).not.toHaveBeenCalled();
     });
 
+    it('should treat monthly_budget_usd=0 as configured and block when spent is above 0', async () => {
+      vi.mocked(queryHelpers.queryOne).mockResolvedValue({
+        monthly_budget_usd: 0,
+        budget_spent_current_period: 1,
+      });
+
+      await checkBudgetQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(statusSpy).toHaveBeenCalledWith(429);
+      expect(jsonSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Monthly budget exceeded',
+          details: expect.objectContaining({ limit: 0, spent: 1 }),
+        })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should allow when monthly_budget_usd=0 and spent is 0', async () => {
+      vi.mocked(queryHelpers.queryOne).mockResolvedValue({
+        monthly_budget_usd: 0,
+        budget_spent_current_period: 0,
+      });
+
+      await checkBudgetQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+      expect(statusSpy).not.toHaveBeenCalled();
+    });
+
     it('should block when budget exceeded', async () => {
       vi.mocked(queryHelpers.queryOne).mockResolvedValue({
         monthly_budget_usd: 1000,
@@ -309,6 +357,26 @@ describe('Resource Quota Middleware', () => {
         details: {
           spent: 1500,
           limit: 1000,
+          message: expect.stringContaining('exceeded its monthly budget'),
+        },
+      });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should include spent=0 when spent is null but budget data is invalid (defensive)', async () => {
+      vi.mocked(queryHelpers.queryOne).mockResolvedValue({
+        monthly_budget_usd: -1,
+        budget_spent_current_period: null,
+      });
+
+      await checkBudgetQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(statusSpy).toHaveBeenCalledWith(429);
+      expect(jsonSpy).toHaveBeenCalledWith({
+        error: 'Monthly budget exceeded',
+        details: {
+          spent: 0,
+          limit: -1,
           message: expect.stringContaining('exceeded its monthly budget'),
         },
       });

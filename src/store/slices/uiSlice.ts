@@ -22,6 +22,12 @@ export interface UISlice {
   // Side Panels
   activeSidePanel: 'HELP' | 'DOCUMENTS' | 'FEEDBACK' | null;
 
+  // One-shot chat kickoff (cross-module)
+  // Used to open split AI panel and automatically send a first message.
+  chatKickoffMessage: string | null;
+  setChatKickoffMessage: (message: string | null) => void;
+  clearChatKickoffMessage: () => void;
+
   // Unified Navigation
   previousView: AppView | null;
 
@@ -50,7 +56,7 @@ export interface UISlice {
 
   // Cross-module deep links (e.g., header → My Work)
   myWorkIntent: {
-    tab?: 'executive' | 'inbox' | 'focus' | 'tasks' | 'ideas' | 'decisions' | 'notifications';
+    tab?: 'executive' | 'inbox' | 'focus' | 'tasks' | 'ideas' | 'decisions' | 'notebook';
     open?: {
       type: 'notification' | 'task' | 'idea' | 'decision';
       id: string;
@@ -60,6 +66,32 @@ export interface UISlice {
   } | null;
   setMyWorkIntent: (intent: UISlice['myWorkIntent']) => void;
   clearMyWorkIntent: () => void;
+
+  // Cross-tab event bus for MyWork module
+  myWorkEvent: {
+    type:
+      | 'item:completed'
+      | 'item:created'
+      | 'item:moved'
+      | 'item:triaged'
+      | 'item:converted'
+      | 'item:updated'
+      | 'item:deleted';
+    entityType: 'task' | 'decision' | 'idea' | 'notebook' | 'inbox';
+    entityId: string;
+    meta?: Record<string, unknown>;
+    timestamp: number;
+  } | null;
+  emitMyWorkEvent: (event: Omit<NonNullable<UISlice['myWorkEvent']>, 'timestamp'>) => void;
+  clearMyWorkEvent: () => void;
+
+  // Per-tab chat system prompt
+  chatSystemPrompt: string | null;
+  setChatSystemPrompt: (prompt: string | null) => void;
+
+  // Per-tab quick prompts shown in chat
+  chatQuickPrompts: string[] | null;
+  setChatQuickPrompts: (prompts: string[] | null) => void;
 }
 
 export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get) => ({
@@ -77,10 +109,14 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
 
   activeSidePanel: null,
   previousView: null,
+  chatKickoffMessage: null,
 
   navigateFn: undefined,
   pendingNavigation: null,
   myWorkIntent: null,
+  myWorkEvent: null,
+  chatSystemPrompt: null,
+  chatQuickPrompts: null,
 
   setNavigateFn: (fn) => {
     const pending = get().pendingNavigation;
@@ -99,6 +135,15 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
   },
   setMyWorkIntent: (intent) => set({ myWorkIntent: intent }),
   clearMyWorkIntent: () => set({ myWorkIntent: null }),
+
+  emitMyWorkEvent: (event) => set({ myWorkEvent: { ...event, timestamp: Date.now() } }),
+  clearMyWorkEvent: () => set({ myWorkEvent: null }),
+
+  setChatSystemPrompt: (prompt) => set({ chatSystemPrompt: prompt }),
+  setChatQuickPrompts: (prompts) => set({ chatQuickPrompts: prompts }),
+
+  setChatKickoffMessage: (message) => set({ chatKickoffMessage: message }),
+  clearChatKickoffMessage: () => set({ chatKickoffMessage: null }),
 
   setCurrentView: (view) => {
     const previousView = get().currentView;

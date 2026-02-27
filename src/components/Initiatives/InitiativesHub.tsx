@@ -5,7 +5,17 @@
  * Connected to real API endpoints
  */
 
-import { AlertTriangle, Edit2, Filter, Lightbulb, Plus, RefreshCw, Shield } from 'lucide-react';
+import {
+  AlertTriangle,
+  BarChart3,
+  Edit2,
+  Filter,
+  Lightbulb,
+  List,
+  Plus,
+  RefreshCw,
+  Shield,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -36,6 +46,8 @@ import {
   StatusDropdown,
   ViewMode,
 } from '../shared/ModuleHub';
+import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import { PortfolioAnalysisView } from './Analysis';
 // Compact side panel (replaces old 50% drawer)
 import { InitiativeCompactPanel } from './InitiativeCompactPanel';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
@@ -119,8 +131,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
-  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
-  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+  // V3-A02: Persistent dynamic tabs via sessionStorage
+  const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
+    useModuleOpenDocuments('initiatives');
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
   /** Active/All scope toggle — used for Kanban columns and data filtering */
   const [scope, setScope] = useState<KanbanScope>('active');
@@ -274,11 +287,26 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     return counts;
   }, [initiatives]);
 
-  // Available view modes
-  const availableViewModes: ViewMode[] = ['table', 'grid', 'kanban', 'timeline'];
+  // Available view modes — hide when Analysis tab is active
+  const availableViewModes: ViewMode[] =
+    activeTab === 'analysis' ? [] : ['table', 'kanban', 'timeline', 'grid'];
 
-  // Empty tabs - using status filters instead
-  const tabs: any[] = [];
+  // V3-F02: Portfolio Analysis tab + main portfolio tab
+  const tabs = useMemo(
+    () => [
+      {
+        id: 'list' as ModuleTab,
+        label: t('initiatives.tabs.portfolio', 'Portfolio'),
+        icon: <List size={16} />,
+      },
+      {
+        id: 'analysis' as ModuleTab,
+        label: t('initiatives.tabs.analysis', 'Analysis'),
+        icon: <BarChart3 size={16} />,
+      },
+    ],
+    [t]
+  );
 
   // Bulk edit lives inside Filters dropdown (per contract: no extra top-level icons/buttons)
   const filterActions = useMemo(() => {
@@ -637,6 +665,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // ============================================
 
   const renderContent = () => {
+    // V3-F02: Analysis tab — portfolio quality gate
+    if (activeTab === 'analysis') {
+      return (
+        <PortfolioAnalysisView
+          initiatives={initiatives}
+          onOpenInitiative={(id) => {
+            const init = initiatives.find((i) => i.id === id);
+            if (init) handleOpenFullScreen(init);
+          }}
+        />
+      );
+    }
+
     // If there's an active document, show the appropriate view based on type
     if (activeDocumentId) {
       const activeDoc = openDocuments.find((d) => d.id === activeDocumentId);

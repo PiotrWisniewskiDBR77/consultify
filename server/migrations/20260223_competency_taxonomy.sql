@@ -3,8 +3,8 @@
 
 -- 1. Competency categories (Strategy, Operations, Digital, Change, Finance, etc.)
 CREATE TABLE IF NOT EXISTS competency_categories (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   name_pl TEXT,
   description TEXT,
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS competency_categories (
   sort_order INTEGER DEFAULT 0,
   is_system BOOLEAN DEFAULT FALSE,
   is_active BOOLEAN DEFAULT TRUE,
-  created_by UUID,
+  created_by TEXT,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -23,8 +23,8 @@ CREATE INDEX IF NOT EXISTS idx_comp_categories_org ON competency_categories(orga
 
 -- 2. Competency levels (1-5 scale with labels per org)
 CREATE TABLE IF NOT EXISTS competency_levels (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   level_value INTEGER NOT NULL CHECK (level_value BETWEEN 1 AND 10),
   label TEXT NOT NULL,
   label_pl TEXT,
@@ -44,7 +44,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_name = 'capabilities' AND column_name = 'category_id'
   ) THEN
-    ALTER TABLE capabilities ADD COLUMN category_id UUID REFERENCES competency_categories(id) ON DELETE SET NULL;
+    ALTER TABLE capabilities ADD COLUMN category_id TEXT REFERENCES competency_categories(id) ON DELETE SET NULL;
   END IF;
 END $$;
 

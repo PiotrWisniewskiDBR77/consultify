@@ -3,16 +3,184 @@
  * API endpoints for LLM provider management, testing, health monitoring, and analytics
  */
 
+import { randomUUID } from 'node:crypto';
+
 import { Router } from 'express';
 
 import { LLMController } from '../controllers/ai/LLMController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import circuitBreaker from '../services/ai/circuitBreaker.js';
 import llmConfigService from '../services/ai/llmConfigService.js';
 import { llmService } from '../services/ai/llmService.js';
+import { syncOpenRouterMarket } from '../services/ai/openRouterMarketService.js';
+import { applyRecommendedModelPreset } from '../services/ai/recommendedModelPresetService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
 const router = Router();
+
+function getAuditActor(req: any): string {
+  return String(req?.user?.id || req?.userId || req?.auth?.userId || 'system');
+}
+
+// ---------------------------------------------------------------------------
+// Enterprise schema bootstrap (safe in DB_MANAGED_SCHEMA=off environments)
+// ---------------------------------------------------------------------------
+let _enterpriseSchemaEnsured = false;
+let _enterpriseSchemaEnsuring: Promise<void> | null = null;
+
+async function ensureEnterpriseSchema(): Promise<void> {
+  if (_enterpriseSchemaEnsured) return;
+  if (_enterpriseSchemaEnsuring) return _enterpriseSchemaEnsuring;
+
+  _enterpriseSchemaEnsuring = (async () => {
+    try {
+      // NOTE: We intentionally use SQL that is accepted by both SQLite and Postgres adapters.
+      // JSON columns are stored as TEXT and JSON.stringify'ed by the API layer.
+      const stmts: Array<{ sql: string; params?: unknown[] }> = [
+        // ai_purposes
+        {
+          sql: `CREATE TABLE IF NOT EXISTS ai_purposes (
+            purpose TEXT PRIMARY KEY,
+            kind TEXT NOT NULL,
+            default_tier TEXT,
+            requirements TEXT,
+            description TEXT,
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )`,
+        },
+        // ai_purpose_assignments
+        {
+          sql: `CREATE TABLE IF NOT EXISTS ai_purpose_assignments (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT,
+            purpose TEXT NOT NULL,
+            provider_id TEXT NOT NULL,
+            model_id TEXT NOT NULL DEFAULT '',
+            priority INTEGER DEFAULT 0,
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(organization_id, purpose, provider_id, model_id)
+          )`,
+        },
+        {
+          sql: `CREATE INDEX IF NOT EXISTS idx_ai_purpose_assignments_purpose ON ai_purpose_assignments(purpose)`,
+        },
+        {
+          sql: `CREATE INDEX IF NOT EXISTS idx_ai_purpose_assignments_org ON ai_purpose_assignments(organization_id)`,
+        },
+
+        // organization_ai_policy
+        {
+          sql: `CREATE TABLE IF NOT EXISTS organization_ai_policy (
+            organization_id TEXT PRIMARY KEY,
+            policy TEXT NOT NULL DEFAULT '{}',
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )`,
+        },
+
+        // ai_price_snapshots
+        {
+          sql: `CREATE TABLE IF NOT EXISTS ai_price_snapshots (
+            id TEXT PRIMARY KEY,
+            provider TEXT NOT NULL,
+            model_id TEXT NOT NULL,
+            currency TEXT NOT NULL DEFAULT 'USD',
+            source TEXT NOT NULL DEFAULT 'manual',
+            effective_from TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            effective_to TIMESTAMP,
+            units TEXT NOT NULL DEFAULT '{}',
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )`,
+        },
+        {
+          sql: `CREATE INDEX IF NOT EXISTS idx_ai_price_snapshots_provider_model ON ai_price_snapshots(provider, model_id)`,
+        },
+
+        // ai_market_snapshots + ai_market_inbox
+        {
+          sql: `CREATE TABLE IF NOT EXISTS ai_market_snapshots (
+            id TEXT PRIMARY KEY,
+            source TEXT NOT NULL,
+            payload TEXT NOT NULL,
+            fetched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )`,
+        },
+        {
+          sql: `CREATE TABLE IF NOT EXISTS ai_market_inbox (
+            id TEXT PRIMARY KEY,
+            source TEXT NOT NULL,
+            change_type TEXT NOT NULL,
+            model_id TEXT,
+            diff TEXT,
+            status TEXT NOT NULL DEFAULT 'new',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            reviewed_at TIMESTAMP
+          )`,
+        },
+        { sql: `CREATE INDEX IF NOT EXISTS idx_ai_market_inbox_status ON ai_market_inbox(status)` },
+
+        // ai_usage_logs extensions (best-effort)
+        { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS action TEXT` },
+        { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS tokens_used INTEGER DEFAULT 0` },
+        { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'success'` },
+        { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS error_class TEXT` },
+        { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS metadata TEXT` },
+        { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS purpose TEXT` },
+        { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS kind TEXT` },
+        { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS price_snapshot_id TEXT` },
+        { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS estimated_cost_usd REAL` },
+        { sql: `CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_action ON ai_usage_logs(action)` },
+        { sql: `CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_purpose ON ai_usage_logs(purpose)` },
+        {
+          sql: `CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_error_class ON ai_usage_logs(error_class)`,
+        },
+      ];
+
+      for (const s of stmts) {
+        await dbRun(s.sql, s.params || [], { fallback: false } as any);
+      }
+      _enterpriseSchemaEnsured = true;
+    } finally {
+      // Allow retry on failure (don't permanently lock the app in "not ensured").
+      _enterpriseSchemaEnsuring = null;
+    }
+  })();
+
+  return _enterpriseSchemaEnsuring;
+}
+
+async function logModelAuditEntry(entry: {
+  action: string;
+  entityType: string;
+  entityId: string;
+  changedBy: string;
+  changes?: Record<string, unknown>;
+}): Promise<void> {
+  try {
+    await dbRun(
+      `INSERT INTO model_audit_log (id, action, entity_type, entity_id, changed_by, changed_at, changes_json)
+       VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)`,
+      [
+        randomUUID(),
+        entry.action,
+        entry.entityType,
+        entry.entityId,
+        entry.changedBy,
+        JSON.stringify(entry.changes || {}),
+      ],
+      { fallback: true } as any
+    );
+  } catch {
+    // Audit log is best-effort for legacy LLM endpoints.
+  }
+}
 
 function sanitizeProviderForStatus(p: any) {
   if (!p) return p;
@@ -259,6 +427,47 @@ router.get(
 router.get('/providers', verifyToken, asyncHandler(LLMController.listProviders));
 
 /**
+ * POST /api/llm/providers/organization/toggle
+ * Enable/disable a provider row for the caller's organization.
+ *
+ * Used by Admin settings UI to control which models are available to the org.
+ *
+ * Security:
+ * - requires auth
+ * - requires org admin permission (`edit_organization_settings`)
+ */
+router.post(
+  '/providers/organization/toggle',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const organizationId = String(req?.organizationId || req?.user?.organizationId || '').trim();
+    if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
+
+    // Prefer permission capability check (most precise); fallback to role check if `can` is missing.
+    const canEdit =
+      typeof req?.can === 'function' ? Boolean(req.can('edit_organization_settings')) : false;
+    const role = String(req?.user?.role || req?.userRole || '').toLowerCase();
+    const roleOk =
+      role === 'admin' ||
+      role === 'administrator' ||
+      role === 'owner' ||
+      role === 'super_admin' ||
+      role === 'superadmin';
+    if (!canEdit && !roleOk) return res.status(403).json({ error: 'Permission denied' });
+
+    const providerId = String((req.body as any)?.providerId || '').trim();
+    const enabledRaw = (req.body as any)?.enabled;
+    const enabled =
+      enabledRaw === true || enabledRaw === 1 || String(enabledRaw).toLowerCase() === 'true';
+    if (!providerId) return res.status(400).json({ error: 'providerId is required' });
+
+    // Persist to organization_provider_settings (best-effort; schema may not exist in some envs yet).
+    await llmConfigService.toggleOrganizationProvider(organizationId, providerId, enabled);
+    return res.json({ success: true, providerId, enabled });
+  })
+);
+
+/**
  * GET /api/llm/providers/public
  * List public providers (no auth required)
  */
@@ -268,6 +477,8 @@ router.get('/providers/public', asyncHandler(LLMController.listPublicProviders))
  * GET /api/llm/providers/health
  * Get health status of all providers
  */
+// Public: used by the frontend to render "LLM Online/Offline" state on first load.
+// Endpoint should not require auth; sensitive fields (api_key) must never be returned by controller.
 router.get('/providers/health', asyncHandler(LLMController.getProvidersHealth));
 
 /**
@@ -277,22 +488,38 @@ router.get('/providers/health', asyncHandler(LLMController.getProvidersHealth));
 router.get('/providers/recommended', asyncHandler(LLMController.getRecommendedProvider));
 
 /**
+ * GET /api/llm/incidents
+ * Timeline of LLM downtime incidents (for SuperAdmin monitoring)
+ */
+router.get('/incidents', verifyToken, asyncHandler(LLMController.getIncidents));
+
+/**
  * POST /api/llm/providers
  * Create a new provider
  */
-router.post('/providers', verifyToken, asyncHandler(LLMController.createProvider));
+router.post('/providers', verifySuperAdmin, asyncHandler(LLMController.createProvider));
 
 /**
  * PUT /api/llm/providers/:id
  * Update a provider
  */
-router.put('/providers/:id', verifyToken, asyncHandler(LLMController.updateProvider));
+router.put('/providers/:id', verifySuperAdmin, asyncHandler(LLMController.updateProvider));
+
+/**
+ * POST /api/llm/providers/:id/clone-model
+ * Clone an existing provider row and override model_id/name (server-side, no secret leak).
+ */
+router.post(
+  '/providers/:id/clone-model',
+  verifySuperAdmin,
+  asyncHandler(LLMController.cloneProviderModel)
+);
 
 /**
  * DELETE /api/llm/providers/:id
  * Delete a provider
  */
-router.delete('/providers/:id', verifyToken, asyncHandler(LLMController.deleteProvider));
+router.delete('/providers/:id', verifySuperAdmin, asyncHandler(LLMController.deleteProvider));
 
 // ==================== TESTING ====================
 
@@ -300,13 +527,13 @@ router.delete('/providers/:id', verifyToken, asyncHandler(LLMController.deletePr
  * POST /api/llm/test
  * Test a provider connection
  */
-router.post('/test', verifyToken, asyncHandler(LLMController.testProvider));
+router.post('/test', verifySuperAdmin, asyncHandler(LLMController.testProvider));
 
 /**
  * POST /api/llm/test-ollama
  * Test Ollama connection
  */
-router.post('/test-ollama', verifyToken, asyncHandler(LLMController.testOllama));
+router.post('/test-ollama', verifySuperAdmin, asyncHandler(LLMController.testOllama));
 
 /**
  * GET /api/llm/ollama-models
@@ -403,7 +630,7 @@ router.get('/diagnose', asyncHandler(LLMController.diagnose));
  * PUT /api/llm/providers/:id/tier
  * Update provider tier
  */
-router.put('/providers/:id/tier', verifyToken, asyncHandler(LLMController.updateProviderTier));
+router.put('/providers/:id/tier', verifySuperAdmin, asyncHandler(LLMController.updateProviderTier));
 
 // ==================== TIER ASSIGNMENTS ====================
 
@@ -430,5 +657,732 @@ router.delete('/tiers/assign', verifyToken, asyncHandler(LLMController.removeFro
  * Update priority within a tier
  */
 router.put('/tiers/priority', verifyToken, asyncHandler(LLMController.updateTierPriority));
+
+// ==================== ENTERPRISE: PURPOSES / POLICY / PRICING / MARKET ====================
+
+/**
+ * GET /api/llm/purposes
+ * List configured AI purposes (registry).
+ */
+router.get(
+  '/purposes',
+  verifyToken,
+  asyncHandler(async (_req, res) => {
+    await ensureEnterpriseSchema();
+    const rows = await dbAll(
+      `SELECT purpose, kind, default_tier, requirements, description, is_active, created_at, updated_at
+       FROM ai_purposes
+       ORDER BY purpose`,
+      [],
+      { fallback: false } as any
+    );
+    return res.json({ success: true, purposes: rows || [] });
+  })
+);
+
+/**
+ * POST /api/llm/purposes
+ * Upsert a purpose definition.
+ */
+router.post(
+  '/purposes',
+  verifyToken,
+  asyncHandler(async (req, res) => {
+    await ensureEnterpriseSchema();
+    const purpose = String(req.body?.purpose || '').trim();
+    const kind = String(req.body?.kind || '').trim();
+    if (!purpose || !kind)
+      return res.status(400).json({ success: false, error: 'purpose and kind are required' });
+    const defaultTier = req.body?.default_tier ? String(req.body.default_tier).trim() : null;
+    const requirements = req.body?.requirements ?? null;
+    const description = req.body?.description ? String(req.body.description).trim() : null;
+    const isActive = req.body?.is_active === false ? 0 : 1;
+
+    await dbRun(
+      `INSERT INTO ai_purposes (purpose, kind, default_tier, requirements, description, is_active, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+       ON CONFLICT(purpose) DO UPDATE SET
+         kind = excluded.kind,
+         default_tier = excluded.default_tier,
+         requirements = excluded.requirements,
+         description = excluded.description,
+         is_active = excluded.is_active,
+         updated_at = CURRENT_TIMESTAMP`,
+      [
+        purpose,
+        kind,
+        defaultTier,
+        requirements ? JSON.stringify(requirements) : null,
+        description,
+        isActive,
+      ],
+      { fallback: false } as any
+    );
+    const row = await dbGet(`SELECT * FROM ai_purposes WHERE purpose = ?`, [purpose], {
+      fallback: false,
+    } as any);
+    await logModelAuditEntry({
+      action: 'updated',
+      entityType: 'policy',
+      entityId: `purpose:${purpose}`,
+      changedBy: getAuditActor(req),
+      changes: {
+        purpose,
+        kind,
+        defaultTier,
+        requirements: requirements || null,
+        description,
+        isActive,
+      },
+    });
+    return res.json({ success: true, purpose: row });
+  })
+);
+
+/**
+ * GET /api/llm/purposes/:purpose/assignments
+ * List purpose assignments (optionally filtered by org).
+ */
+router.get(
+  '/purposes/:purpose/assignments',
+  verifyToken,
+  asyncHandler(async (req, res) => {
+    await ensureEnterpriseSchema();
+    const purpose = String(req.params.purpose || '').trim();
+    const organizationId = req.query.organizationId
+      ? String(req.query.organizationId).trim()
+      : null;
+    if (!purpose) return res.status(400).json({ success: false, error: 'purpose is required' });
+
+    const params: unknown[] = [purpose];
+    let sql = `
+      SELECT
+        apa.*,
+        lp.name as provider_name,
+        lp.provider as provider,
+        lp.model_id as provider_model_id,
+        lp.health_status as health_status,
+        lp.kind as kind,
+        lp.provider_type as provider_type,
+        lp.origin_vendor as origin_vendor
+      FROM ai_purpose_assignments apa
+      INNER JOIN llm_providers lp ON lp.id = apa.provider_id
+      WHERE apa.purpose = ?
+    `;
+
+    if (organizationId) {
+      sql += ` AND (apa.organization_id = ? OR apa.organization_id IS NULL)`;
+      params.push(organizationId);
+      sql += ` ORDER BY CASE WHEN apa.organization_id = ? THEN 0 ELSE 1 END, apa.priority`;
+      params.push(organizationId);
+    } else {
+      sql += ` AND apa.organization_id IS NULL ORDER BY apa.priority`;
+    }
+
+    const rows = await dbAll(sql, params, { fallback: false } as any);
+    return res.json({ success: true, assignments: rows || [] });
+  })
+);
+
+/**
+ * POST /api/llm/purposes/:purpose/assignments
+ * Create/update a purpose assignment.
+ */
+router.post(
+  '/purposes/:purpose/assignments',
+  verifyToken,
+  asyncHandler(async (req, res) => {
+    await ensureEnterpriseSchema();
+    const purpose = String(req.params.purpose || '').trim();
+    const providerId = String(req.body?.providerId || '').trim();
+    const organizationId = req.body?.organizationId ? String(req.body.organizationId).trim() : null;
+    const modelId = req.body?.modelId ? String(req.body.modelId).trim() : '';
+    const priority = Number.isFinite(Number(req.body?.priority)) ? Number(req.body.priority) : 0;
+    const isActive = req.body?.is_active === false ? 0 : 1;
+
+    if (!purpose || !providerId) {
+      return res.status(400).json({ success: false, error: 'purpose and providerId are required' });
+    }
+    const id = `${organizationId || 'global'}-${purpose}-${providerId}-${modelId || 'default'}`;
+    await dbRun(
+      `INSERT INTO ai_purpose_assignments (id, organization_id, purpose, provider_id, model_id, priority, is_active, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+       ON CONFLICT(organization_id, purpose, provider_id, model_id) DO UPDATE SET
+         priority = excluded.priority,
+         is_active = excluded.is_active,
+         updated_at = CURRENT_TIMESTAMP`,
+      [id, organizationId, purpose, providerId, modelId, priority, isActive],
+      { fallback: false } as any
+    );
+    await logModelAuditEntry({
+      action: 'assignment_changed',
+      entityType: 'assignment',
+      entityId: id,
+      changedBy: getAuditActor(req),
+      changes: {
+        purpose,
+        providerId,
+        organizationId,
+        modelId: modelId || null,
+        priority,
+        isActive,
+      },
+    });
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * DELETE /api/llm/purposes/:purpose/assignments
+ * Remove a purpose assignment.
+ */
+router.delete(
+  '/purposes/:purpose/assignments',
+  verifyToken,
+  asyncHandler(async (req, res) => {
+    await ensureEnterpriseSchema();
+    const purpose = String(req.params.purpose || '').trim();
+    const providerId = String(req.body?.providerId || '').trim();
+    const organizationId = req.body?.organizationId ? String(req.body.organizationId).trim() : null;
+    const modelId = req.body?.modelId ? String(req.body.modelId).trim() : '';
+    if (!purpose || !providerId) {
+      return res.status(400).json({ success: false, error: 'purpose and providerId are required' });
+    }
+    await dbRun(
+      `DELETE FROM ai_purpose_assignments
+       WHERE purpose = ? AND provider_id = ?
+         AND ((? IS NULL AND organization_id IS NULL) OR organization_id = ?)
+         AND model_id = ?`,
+      [purpose, providerId, organizationId, organizationId, modelId],
+      { fallback: false } as any
+    );
+    await logModelAuditEntry({
+      action: 'deleted',
+      entityType: 'assignment',
+      entityId: `${organizationId || 'global'}-${purpose}-${providerId}-${modelId || 'default'}`,
+      changedBy: getAuditActor(req),
+      changes: { purpose, providerId, organizationId, modelId: modelId || null },
+    });
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * POST /api/llm/presets/v3/recommended
+ * Apply v3 recommended purposes + model set (fast/deep/image) and assignments.
+ *
+ * Body (optional):
+ * - dryRun?: boolean
+ * - overwrite?: boolean
+ * - replicateImageModel?: string  (or env REPLICATE_DEFAULT_IMAGE_MODEL)
+ * - openaiImageModel?: string     (or env OPENAI_IMAGE_MODEL_ID, default 'gpt-image-1')
+ */
+router.post(
+  '/presets/v3/recommended',
+  verifySuperAdmin,
+  asyncHandler(async (req, res) => {
+    await ensureEnterpriseSchema();
+    const result = await applyRecommendedModelPreset({
+      dryRun: req.body?.dryRun === true,
+      overwrite: req.body?.overwrite === true,
+      replicateImageModel: req.body?.replicateImageModel,
+      openaiImageModel: req.body?.openaiImageModel,
+    });
+    return res.json(result);
+  })
+);
+
+/**
+ * GET /api/llm/org/:organizationId/policy
+ * Get org AI policy JSON.
+ */
+router.get(
+  '/org/:organizationId/policy',
+  verifyToken,
+  asyncHandler(async (req, res) => {
+    await ensureEnterpriseSchema();
+    const organizationId = String(req.params.organizationId || '').trim();
+    if (!organizationId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const row = await dbGet(
+      `SELECT organization_id, policy, updated_at, created_at FROM organization_ai_policy WHERE organization_id = ?`,
+      [organizationId],
+      { fallback: false } as any
+    );
+    return res.json({
+      success: true,
+      policy: row || { organization_id: organizationId, policy: {} },
+    });
+  })
+);
+
+/**
+ * PUT /api/llm/org/:organizationId/policy
+ * Upsert org AI policy JSON.
+ */
+router.put(
+  '/org/:organizationId/policy',
+  verifyToken,
+  asyncHandler(async (req, res) => {
+    await ensureEnterpriseSchema();
+    const organizationId = String(req.params.organizationId || '').trim();
+    if (!organizationId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const policy = req.body?.policy ?? req.body ?? {};
+    await dbRun(
+      `INSERT INTO organization_ai_policy (organization_id, policy, updated_at, created_at)
+       VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+       ON CONFLICT(organization_id) DO UPDATE SET
+         policy = excluded.policy,
+         updated_at = CURRENT_TIMESTAMP`,
+      [organizationId, JSON.stringify(policy)],
+      { fallback: false } as any
+    );
+    const row = await dbGet(
+      `SELECT organization_id, policy, updated_at, created_at FROM organization_ai_policy WHERE organization_id = ?`,
+      [organizationId],
+      { fallback: false } as any
+    );
+    await logModelAuditEntry({
+      action: 'updated',
+      entityType: 'policy',
+      entityId: `org:${organizationId}`,
+      changedBy: getAuditActor(req),
+      changes: { organizationId, policy },
+    });
+    return res.json({ success: true, policy: row });
+  })
+);
+
+/**
+ * GET /api/llm/audit-log
+ * Backwards-compatible model audit log feed for SuperAdmin UI.
+ */
+router.get(
+  '/audit-log',
+  verifyToken,
+  asyncHandler(async (req, res) => {
+    const action = req.query.action ? String(req.query.action).trim() : null;
+    const entityType = req.query.entityType ? String(req.query.entityType).trim() : null;
+    const from = req.query.from ? String(req.query.from).trim() : null;
+    const to = req.query.to ? String(req.query.to).trim() : null;
+    const limitRaw = Number(req.query.limit ?? 200);
+    const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(1000, limitRaw)) : 200;
+
+    const params: unknown[] = [];
+    let sql = `SELECT id, action, entity_type, entity_id, changed_by, changed_at, changes_json
+       FROM model_audit_log
+       WHERE 1=1`;
+    if (action) {
+      sql += ` AND action = ?`;
+      params.push(action);
+    }
+    if (entityType) {
+      sql += ` AND entity_type = ?`;
+      params.push(entityType);
+    }
+    if (from) {
+      sql += ` AND changed_at >= ?`;
+      params.push(from);
+    }
+    if (to) {
+      sql += ` AND changed_at <= ?`;
+      params.push(to);
+    }
+    sql += ` ORDER BY changed_at DESC LIMIT ?`;
+    params.push(limit);
+
+    const rows = await dbAll(sql, params, { fallback: true } as any);
+
+    const entries = (rows || []).map((row: any) => {
+      let changes: Record<string, unknown> = {};
+      try {
+        changes =
+          typeof row?.changes_json === 'string'
+            ? JSON.parse(row.changes_json)
+            : row?.changes_json || {};
+      } catch {
+        changes = {};
+      }
+
+      return {
+        id: String(row?.id || ''),
+        action: String(row?.action || 'updated'),
+        entity_type: String(row?.entity_type || 'model'),
+        entity_id: String(row?.entity_id || ''),
+        changed_by: String(row?.changed_by || ''),
+        changed_at: String(row?.changed_at || ''),
+        changes,
+      };
+    });
+
+    return res.json({ success: true, entries });
+  })
+);
+
+/**
+ * GET /api/llm/pricing/snapshots
+ * List price snapshots (optionally filtered).
+ */
+router.get(
+  '/pricing/snapshots',
+  verifyToken,
+  asyncHandler(async (req, res) => {
+    await ensureEnterpriseSchema();
+    const provider = req.query.provider ? String(req.query.provider).trim() : null;
+    const modelId = req.query.model_id ? String(req.query.model_id).trim() : null;
+    const params: unknown[] = [];
+    let sql = `SELECT * FROM ai_price_snapshots WHERE 1=1`;
+    if (provider) {
+      sql += ` AND provider = ?`;
+      params.push(provider);
+    }
+    if (modelId) {
+      sql += ` AND model_id = ?`;
+      params.push(modelId);
+    }
+    sql += ` ORDER BY effective_from DESC, created_at DESC LIMIT 500`;
+    const rows = await dbAll(sql, params, { fallback: false } as any);
+    return res.json({ success: true, snapshots: rows || [] });
+  })
+);
+
+/**
+ * POST /api/llm/pricing/snapshots
+ * Create a new price snapshot.
+ */
+router.post(
+  '/pricing/snapshots',
+  verifyToken,
+  asyncHandler(async (req, res) => {
+    await ensureEnterpriseSchema();
+    const provider = String(req.body?.provider || '').trim();
+    const modelId = String(req.body?.model_id || req.body?.modelId || '').trim();
+    if (!provider || !modelId)
+      return res.status(400).json({ success: false, error: 'provider and model_id are required' });
+    const id = randomUUID();
+    const currency = String(req.body?.currency || 'USD').trim();
+    const source = String(req.body?.source || 'manual').trim();
+    const effectiveFrom = req.body?.effective_from || null;
+    const effectiveTo = req.body?.effective_to || null;
+    const units = req.body?.units ?? {};
+    const notes = req.body?.notes ? String(req.body.notes) : null;
+
+    await dbRun(
+      `INSERT INTO ai_price_snapshots (id, provider, model_id, currency, source, effective_from, effective_to, units, notes, created_at)
+       VALUES (?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP), ?, ?, ?, CURRENT_TIMESTAMP)`,
+      [
+        id,
+        provider,
+        modelId,
+        currency,
+        source,
+        effectiveFrom,
+        effectiveTo,
+        JSON.stringify(units),
+        notes,
+      ],
+      { fallback: false } as any
+    );
+    const row = await dbGet(`SELECT * FROM ai_price_snapshots WHERE id = ?`, [id], {
+      fallback: false,
+    } as any);
+    return res.status(201).json({ success: true, snapshot: row });
+  })
+);
+
+/**
+ * POST /api/llm/market/openrouter/sync
+ * Fetch OpenRouter models and write snapshot + inbox diffs (best-effort).
+ */
+router.post(
+  '/market/openrouter/sync',
+  verifyToken,
+  asyncHandler(async (_req, res) => {
+    await ensureEnterpriseSchema();
+    const result = await syncOpenRouterMarket();
+    if (!result.success) return res.status(502).json(result);
+    return res.json(result);
+  })
+);
+
+/**
+ * GET /api/llm/market/inbox
+ * List market inbox entries (optionally filtered by status/source).
+ */
+router.get(
+  '/market/inbox',
+  verifyToken,
+  asyncHandler(async (req, res) => {
+    await ensureEnterpriseSchema();
+    const status = req.query.status ? String(req.query.status).trim() : null;
+    const source = req.query.source ? String(req.query.source).trim() : null;
+    const params: unknown[] = [];
+    let sql = `SELECT * FROM ai_market_inbox WHERE 1=1`;
+    if (status) {
+      sql += ` AND status = ?`;
+      params.push(status);
+    }
+    if (source) {
+      sql += ` AND source = ?`;
+      params.push(source);
+    }
+    sql += ` ORDER BY created_at DESC LIMIT 500`;
+    const rows = await dbAll(sql, params, { fallback: false } as any);
+    return res.json({ success: true, inbox: rows || [] });
+  })
+);
+
+/**
+ * PUT /api/llm/market/inbox/:id
+ * Update inbox item status (new|approved|ignored|applied).
+ */
+router.put(
+  '/market/inbox/:id',
+  verifyToken,
+  asyncHandler(async (req, res) => {
+    await ensureEnterpriseSchema();
+    const id = String(req.params.id || '').trim();
+    const status = String(req.body?.status || '').trim();
+    if (!id || !status) {
+      return res.status(400).json({ success: false, error: 'id and status are required' });
+    }
+    await dbRun(
+      `UPDATE ai_market_inbox
+       SET status = ?, reviewed_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [status, id],
+      { fallback: false } as any
+    );
+    const row = await dbGet(`SELECT * FROM ai_market_inbox WHERE id = ?`, [id], {
+      fallback: false,
+    } as any);
+    return res.json({ success: true, item: row });
+  })
+);
+
+function parseOpenRouterPricingToUnits(pricing: any): Record<string, number> {
+  // OpenRouter commonly returns pricing fields as strings.
+  // We normalize into v3 snapshot units: input/output per 1M tokens.
+  const p = pricing || {};
+  const prompt = Number(
+    p.prompt ?? p.input ?? p.prompt_token ?? p.input_token ?? p.input_per_token
+  );
+  const completion = Number(
+    p.completion ?? p.output ?? p.completion_token ?? p.output_token ?? p.output_per_token
+  );
+
+  const toPer1M = (v: number) => {
+    if (!Number.isFinite(v)) return null;
+    // Heuristic:
+    // - if v is tiny (<$0.01), assume it's per-token ($/token) and scale to 1M
+    // - otherwise assume it's already per-1M tokens ($/1M)
+    return v < 0.01 ? v * 1_000_000 : v;
+  };
+
+  const inputPer1M = toPer1M(prompt);
+  const outputPer1M = toPer1M(completion);
+
+  const units: Record<string, number> = {};
+  if (typeof inputPer1M === 'number' && Number.isFinite(inputPer1M)) {
+    units.input_per_1m_tokens = inputPer1M;
+  }
+  if (typeof outputPer1M === 'number' && Number.isFinite(outputPer1M)) {
+    units.output_per_1m_tokens = outputPer1M;
+  }
+  return units;
+}
+
+/**
+ * POST /api/llm/market/inbox/:id/apply
+ * Apply an approved inbox item into our curated registry:
+ * - PRICING_CHANGED -> create ai_price_snapshot (api_sync) and close previous
+ * - MODEL_ADDED -> create inactive llm_providers row suggestion (openrouter)
+ */
+router.post(
+  '/market/inbox/:id/apply',
+  verifySuperAdmin,
+  asyncHandler(async (req, res) => {
+    await ensureEnterpriseSchema();
+    const id = String(req.params.id || '').trim();
+    if (!id) return res.status(400).json({ success: false, error: 'id is required' });
+
+    const row = await dbGet(`SELECT * FROM ai_market_inbox WHERE id = ?`, [id], {
+      fallback: false,
+    } as any);
+    if (!row) return res.status(404).json({ success: false, error: 'Inbox item not found' });
+
+    const currentStatus = String((row as any).status || '')
+      .trim()
+      .toLowerCase();
+    if (currentStatus === 'applied') {
+      return res.json({ success: true, item: row, actions: [], note: 'Already applied' });
+    }
+    if (currentStatus !== 'approved') {
+      return res.status(409).json({
+        success: false,
+        error: `Inbox item must be approved before apply (status=${currentStatus || 'unknown'})`,
+      });
+    }
+
+    const changeType = String((row as any).change_type || '').trim();
+    const modelId = String((row as any).model_id || '').trim();
+    const diffRaw = (row as any).diff ? String((row as any).diff) : null;
+    const diff = diffRaw
+      ? (() => {
+          try {
+            return JSON.parse(diffRaw);
+          } catch {
+            return null;
+          }
+        })()
+      : null;
+
+    const actions: any[] = [];
+
+    if (changeType === 'PRICING_CHANGED') {
+      const afterPricing = diff?.after?.pricing ?? null;
+      const units = parseOpenRouterPricingToUnits(afterPricing);
+      if (!modelId) return res.status(400).json({ success: false, error: 'model_id missing' });
+      if (!units.input_per_1m_tokens && !units.output_per_1m_tokens) {
+        return res.status(400).json({ success: false, error: 'Could not parse pricing units' });
+      }
+
+      // Close previous "open" snapshot (effective_to NULL) for same provider/model.
+      const nowIso = new Date().toISOString();
+      try {
+        await dbRun(
+          `UPDATE ai_price_snapshots
+           SET effective_to = ?
+           WHERE provider = 'openrouter'
+             AND model_id = ?
+             AND effective_to IS NULL`,
+          [nowIso, modelId],
+          { fallback: false } as any
+        );
+      } catch {
+        /* ignore */
+      }
+
+      const snapId = randomUUID();
+      await dbRun(
+        `INSERT INTO ai_price_snapshots (id, provider, model_id, currency, source, effective_from, effective_to, units, notes, created_at)
+         VALUES (?, 'openrouter', ?, 'USD', 'api_sync', ?, NULL, ?, ?, CURRENT_TIMESTAMP)`,
+        [snapId, modelId, nowIso, JSON.stringify(units), `Applied from market inbox ${id}`],
+        { fallback: false } as any
+      );
+      actions.push({
+        kind: 'price_snapshot_created',
+        id: snapId,
+        provider: 'openrouter',
+        modelId,
+        units,
+      });
+    } else if (changeType === 'MODEL_ADDED') {
+      if (!modelId) return res.status(400).json({ success: false, error: 'model_id missing' });
+      const after = diff?.after ?? null;
+      const ctx = after?.context_length ?? after?.contextLength ?? null;
+      const pricing = after?.pricing ?? null;
+      const units = pricing ? parseOpenRouterPricingToUnits(pricing) : {};
+
+      const existing = await dbGet(
+        `SELECT id FROM llm_providers WHERE provider = 'openrouter' AND model_id = ? LIMIT 1`,
+        [modelId],
+        { fallback: true } as any
+      );
+      if (!existing) {
+        const providerId = randomUUID();
+        await dbRun(
+          `INSERT INTO llm_providers
+           (id, name, provider, description, api_key, endpoint, model_id, kind, provider_type, origin_vendor, execution_regions, allowed_data_classes, cost_per_1k, markup_multiplier, is_active, is_default, visibility, priority, tier, created_at, updated_at)
+           VALUES (?, ?, 'openrouter', ?, NULL, 'https://openrouter.ai/api/v1', ?, 'TEXT_LLM', 'aggregator', 'OpenRouter', ?, ?, 0, 1.0, 0, 0, 'admin', 0, 'STANDARD', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          [
+            providerId,
+            `OpenRouter — ${modelId}`,
+            ctx
+              ? `Auto-added from market inbox. context_length=${ctx}`
+              : `Auto-added from market inbox.`,
+            modelId,
+            JSON.stringify(['UNKNOWN']),
+            JSON.stringify(['no_pii', 'pii']),
+          ],
+          { fallback: true } as any
+        );
+        actions.push({
+          kind: 'provider_suggestion_created',
+          id: providerId,
+          provider: 'openrouter',
+          modelId,
+        });
+      } else {
+        actions.push({ kind: 'provider_suggestion_exists', provider: 'openrouter', modelId });
+      }
+
+      // Optional: also create a price snapshot if pricing exists.
+      if (units.input_per_1m_tokens || units.output_per_1m_tokens) {
+        const nowIso = new Date().toISOString();
+        const snapId = randomUUID();
+        await dbRun(
+          `INSERT INTO ai_price_snapshots (id, provider, model_id, currency, source, effective_from, effective_to, units, notes, created_at)
+           VALUES (?, 'openrouter', ?, 'USD', 'api_sync', ?, NULL, ?, ?, CURRENT_TIMESTAMP)`,
+          [
+            snapId,
+            modelId,
+            nowIso,
+            JSON.stringify(units),
+            `Auto snapshot from MODEL_ADDED inbox ${id}`,
+          ],
+          { fallback: false } as any
+        );
+        actions.push({
+          kind: 'price_snapshot_created',
+          id: snapId,
+          provider: 'openrouter',
+          modelId,
+          units,
+        });
+      }
+    } else if (changeType === 'MODEL_REMOVED') {
+      // Conservative: do not delete providers automatically; just mark inbox as applied.
+      actions.push({ kind: 'noop', reason: 'MODEL_REMOVED not auto-applied' });
+    } else if (changeType === 'CTX_CHANGED') {
+      actions.push({
+        kind: 'noop',
+        reason: 'CTX_CHANGED not auto-applied (no registry field yet)',
+      });
+    } else {
+      return res
+        .status(400)
+        .json({ success: false, error: `Unsupported change_type: ${changeType}` });
+    }
+
+    await dbRun(
+      `UPDATE ai_market_inbox SET status = 'applied', reviewed_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [id],
+      { fallback: false } as any
+    );
+    const updated = await dbGet(`SELECT * FROM ai_market_inbox WHERE id = ?`, [id], {
+      fallback: false,
+    } as any);
+
+    try {
+      await logModelAuditEntry({
+        action: 'MARKET_INBOX_APPLY',
+        entityType: 'ai_market_inbox',
+        entityId: id,
+        changedBy: getAuditActor(req),
+        changes: {
+          change_type: changeType,
+          model_id: modelId || null,
+          actions,
+        },
+      });
+    } catch {
+      // best-effort
+    }
+
+    return res.json({ success: true, item: updated, actions });
+  })
+);
 
 export default router;

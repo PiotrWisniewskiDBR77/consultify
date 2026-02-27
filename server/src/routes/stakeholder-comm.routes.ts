@@ -24,7 +24,7 @@ router.post(
   '/segments',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId ?? '';
-    const seg = await commSvc.createSegment(orgId, { ...req.body, createdBy: req.user?.userId });
+    const seg = await commSvc.createSegment(orgId, { ...req.body, createdBy: req.user?.id });
     res.status(201).json({ data: seg });
   })
 );
@@ -65,7 +65,7 @@ router.post(
   '/plans',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId ?? '';
-    const plan = await commSvc.createPlan(orgId, { ...req.body, createdBy: req.user?.userId });
+    const plan = await commSvc.createPlan(orgId, { ...req.body, createdBy: req.user?.id });
     res.status(201).json({ data: plan });
   })
 );
@@ -105,8 +105,12 @@ router.post(
   '/plans/:planId/items/:itemId/send',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId ?? '';
-    const userId = req.user?.userId ?? '';
-    const item = await commSvc.markItemSent(req.params.planId, req.params.itemId, userId);
+    const userId = req.user?.id ?? '';
+    const item = await commSvc.markItemSent(
+      String(req.params.planId),
+      String(req.params.itemId),
+      userId
+    );
     if (!item) return res.status(404).json({ error: 'Item not found' });
     await commSvc.logSend(orgId, {
       planItemId: item.id,
@@ -117,7 +121,7 @@ router.post(
       sentBy: userId,
       followUpTask: req.body.followUpTask,
     });
-    await commSvc.advancePlanDue(orgId, req.params.planId);
+    await commSvc.advancePlanDue(orgId, String(req.params.planId));
     res.json({ data: item });
   })
 );
@@ -139,7 +143,7 @@ router.post(
   '/templates',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId ?? '';
-    const tpl = await commSvc.createTemplate(orgId, { ...req.body, createdBy: req.user?.userId });
+    const tpl = await commSvc.createTemplate(orgId, { ...req.body, createdBy: req.user?.id });
     res.status(201).json({ data: tpl });
   })
 );

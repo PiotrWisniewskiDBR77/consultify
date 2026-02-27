@@ -41,9 +41,11 @@ System roles exist **outside projects** and primarily control administration.
 
 | Role    | Scope              | Primary authority                           | Typical actions                                     | Not responsible for                    |
 | ------- | ------------------ | ------------------------------------------- | --------------------------------------------------- | -------------------------------------- |
-| `OWNER` | Org/account        | billing + ultimate tenant governance        | billing, subscription, high-level access            | day-to-day initiative work             |
-| `ADMIN` | Org                | configuration + user/project administration | create projects, manage members, configure policies | being a gate decision maker by default |
+| `OWNER` | Org/account        | **ADMIN +** billing + ownership transfer + deletion | all admin functions + billing, subscription, ownership transfer, org deletion | day-to-day initiative work             |
+| `ADMIN` | Org                | configuration + user/project administration | create projects, manage members, configure policies, Admin Panel | being a gate decision maker by default |
 | `USER`  | Project scope only | none by itself                              | acts only via project role & initiative context     | any system configuration               |
+
+**Owner is a special administrator:** OWNER has **all normal ADMIN functions** (Admin Panel, users, projects, settings, AI config, etc.) **plus** additional powers: billing, subscription, ownership transfer, and organization deletion. Implementations must treat OWNER as ADMIN+ for route guards, sidebar visibility, and permission checks.
 
 Notes:
 
@@ -194,7 +196,7 @@ Today (v1) we keep legacy identifiers for some gates:
 Additional rules:
 
 - if `consultant_profile != NONE` ⇒ add effective role `CONSULTANT` (identity/visibility for workflow rules)
-- if system role is admin (`ADMIN`/`SUPERADMIN`) ⇒ add effective role `ADMIN`
+- if system role is admin (`ADMIN`/`OWNER`/`SUPERADMIN`) ⇒ add effective role `ADMIN` (OWNER is special admin with all admin functions + billing/ownership/deletion)
 
 ---
 

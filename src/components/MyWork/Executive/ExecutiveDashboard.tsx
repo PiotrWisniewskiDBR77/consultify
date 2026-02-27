@@ -4,14 +4,23 @@
  *
  * Layout:
  * - Personalized greeting with date
- * - Portfolio Health Score (prominent)
- * - KPI Grid (4 quadrants)
+ * - Portfolio Health Score (prominent) + KPI Grid (4 quadrants)
  * - Action Required Strip
  * - Two-column: Decision Queue + Team Performance
+ * - Initiative/Project Progress Overview
+ * - Bottleneck Alerts + AI Signals
  */
 
 import { motion } from 'framer-motion';
-import { Bell, Calendar, Moon, RefreshCw, Settings, Sparkles, Sun, Sunrise } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  Calendar,
+  Folder,
+  Lightbulb,
+  RefreshCw,
+  Zap,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -25,35 +34,41 @@ import { PortfolioHealthScore } from './PortfolioHealthScore';
 import { TeamPerformancePreview } from './TeamPerformancePreview';
 
 interface ExecutiveDashboardProps {
-  onNavigate?: (section: string) => void;
+  onNavigate?: (section: string, options?: { filter?: string }) => void;
   onDecisionApprove?: (id: string) => void;
   onDecisionReject?: (id: string) => void;
+  refreshTrigger?: number;
 }
 
-// Get greeting based on time of day
-const getGreeting = (
-  t: (key: string, fallback: string) => string
-): { text: string; icon: React.ReactNode } => {
+interface InitiativeProgress {
+  id: string;
+  name: string;
+  status: string;
+  priority: string;
+  tasksDone: number;
+  tasksTotal: number;
+  completionPct: number;
+  overdueCount: number;
+}
+
+interface AISignal {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  severity: string;
+  entityType?: string;
+  entityId?: string;
+  createdAt: string;
+}
+
+const getGreetingText = (t: (key: string, fallback: string) => string): string => {
   const hour = new Date().getHours();
-  if (hour < 12) {
-    return {
-      text: t('executive.greeting.morning', 'Good morning'),
-      icon: <Sunrise size={24} className="text-amber-500" />,
-    };
-  }
-  if (hour < 18) {
-    return {
-      text: t('executive.greeting.afternoon', 'Good afternoon'),
-      icon: <Sun size={24} className="text-orange-500" />,
-    };
-  }
-  return {
-    text: t('executive.greeting.evening', 'Good evening'),
-    icon: <Moon size={24} className="text-indigo-500" />,
-  };
+  if (hour < 12) return t('executive.greeting.morning', 'Good morning');
+  if (hour < 18) return t('executive.greeting.afternoon', 'Good afternoon');
+  return t('executive.greeting.evening', 'Good evening');
 };
 
-// Format date in BCG style (e.g., "Monday, December 29, 2024")
 const formatDate = (): string => {
   return new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -63,10 +78,123 @@ const formatDate = (): string => {
   });
 };
 
+// --- Initiative Progress Card ---
+const InitiativeCard: React.FC<{
+  initiative: InitiativeProgress;
+  onClick?: () => void;
+}> = ({ initiative, onClick }) => {
+  const statusColors: Record<string, string> = {
+    ACTIVE: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+    IN_PROGRESS: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    PLANNING: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
+    AT_RISK: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+    BLOCKED: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+    DRAFT: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-400',
+    COMPLETED: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+  };
+
+  const barColor =
+    initiative.completionPct >= 75
+      ? 'bg-emerald-500'
+      : initiative.completionPct >= 50
+        ? 'bg-cyan-500'
+        : initiative.completionPct >= 25
+          ? 'bg-amber-500'
+          : 'bg-slate-400';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      onClick={onClick}
+      className="p-4 rounded-xl bg-slate-50/80 dark:bg-white/[0.03] hover:bg-slate-100/80 dark:hover:bg-white/[0.06] cursor-pointer transition-colors duration-150"
+    >
+      <div className="flex items-start justify-between mb-2">
+        <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100 line-clamp-1 flex-1">
+          {initiative.name}
+        </h4>
+        <span
+          className={`ml-2 px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${
+            statusColors[initiative.status?.toUpperCase()] || statusColors.DRAFT
+          }`}
+        >
+          {initiative.status?.replace(/_/g, ' ')}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-2 mb-2">
+        <div className="flex-1 h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${initiative.completionPct}%` }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            className={`h-full rounded-full ${barColor}`}
+          />
+        </div>
+        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 tabular-nums w-10 text-right">
+          {initiative.completionPct}%
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+        <span>
+          {initiative.tasksDone}/{initiative.tasksTotal} tasks
+        </span>
+        {initiative.overdueCount > 0 && (
+          <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
+            <AlertTriangle size={10} />
+            {initiative.overdueCount} overdue
+          </span>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
+// --- AI Signal Card ---
+const SignalCard: React.FC<{ signal: AISignal; onClick?: () => void }> = ({ signal, onClick }) => {
+  const severityConfig: Record<string, { border: string; icon: string }> = {
+    CRITICAL: { border: 'border-l-rose-500', icon: 'text-rose-500' },
+    WARNING: { border: 'border-l-amber-500', icon: 'text-amber-500' },
+    INFO: { border: 'border-l-blue-500', icon: 'text-blue-500' },
+  };
+  const cfg = severityConfig[signal.severity?.toUpperCase()] || severityConfig.INFO;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      onClick={onClick}
+      className="px-4 py-3 rounded-lg hover:bg-slate-50/60 dark:hover:bg-white/[0.03] cursor-pointer transition-colors duration-150"
+    >
+      <div className="flex items-start gap-2.5">
+        <span
+          className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
+            signal.severity?.toUpperCase() === 'CRITICAL'
+              ? 'bg-rose-500'
+              : signal.severity?.toUpperCase() === 'WARNING'
+                ? 'bg-amber-500'
+                : 'bg-slate-400 dark:bg-slate-500'
+          }`}
+        />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-slate-800 dark:text-slate-100 line-clamp-1">
+            {signal.title}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">
+            {signal.message}
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   onNavigate,
   onDecisionApprove,
   onDecisionReject,
+  refreshTrigger,
 }) => {
   const { t } = useTranslation();
   const user = useAppStore((state) => state.currentUser);
@@ -75,7 +203,6 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  // Dashboard data state
   const [healthScore, setHealthScore] = useState({
     score: 0,
     previousScore: 0,
@@ -88,21 +215,44 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
     },
   });
 
-  const [kpiData, setKpiData] = useState({
-    tasks: { completed: 0, total: 0, overdueCount: 0, onTimeRate: 0, trend: 'stable' as const },
-    decisions: { pending: 0, avgWaitDays: 0, critical: 0, trend: 'stable' as const },
-    team: { avgCapacity: 0, overloaded: 0, available: 0, trend: 'stable' as const },
-    risk: { level: 'low' as const, blockers: 0, escalations: 0, trend: 'stable' as const },
+  type TrendDir = 'up' | 'down' | 'stable';
+  type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
+  const [kpiData, setKpiData] = useState<{
+    tasks: {
+      completed: number;
+      total: number;
+      overdueCount: number;
+      onTimeRate: number;
+      trend: TrendDir;
+    };
+    decisions: { pending: number; avgWaitDays: number; critical: number; trend: TrendDir };
+    team: { avgCapacity: number; overloaded: number; available: number; trend: TrendDir };
+    risk: { level: RiskLevel; blockers: number; escalations: number; trend: TrendDir };
+  }>({
+    tasks: { completed: 0, total: 0, overdueCount: 0, onTimeRate: 0, trend: 'stable' },
+    decisions: { pending: 0, avgWaitDays: 0, critical: 0, trend: 'stable' },
+    team: { avgCapacity: 0, overloaded: 0, available: 0, trend: 'stable' },
+    risk: { level: 'low', blockers: 0, escalations: 0, trend: 'stable' },
   });
 
   const [actionItems, setActionItems] = useState<any[]>([]);
   const [decisions, setDecisions] = useState<any[]>([]);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [initiatives, setInitiatives] = useState<InitiativeProgress[]>([]);
+  const [signals, setSignals] = useState<AISignal[]>([]);
+  const [patterns, setPatterns] = useState<any>(null);
 
-  const greeting = getGreeting(t);
-  const userName = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Executive';
+  const isPolish =
+    t('language', 'en') === 'pl' ||
+    (typeof navigator !== 'undefined' && navigator.language?.startsWith('pl'));
 
-  // Fetch dashboard data
+  const greetingText = getGreetingText(t);
+  const userName =
+    user?.firstName ||
+    (user as any)?.displayName?.split(' ')[0] ||
+    user?.email?.split('@')[0] ||
+    '';
+
   const fetchDashboardData = useCallback(
     async (isRefresh = false) => {
       try {
@@ -113,34 +263,42 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           setLoading(true);
         }
 
-        // Parallel API calls for performance
-        const [statsRes, decisionsRes, teamRes, tasksRes] = await Promise.allSettled([
-          Api.get('/my-work/stats?period=week'),
-          Api.get('/decisions?limit=10'),
-          Api.get('/my-work/team-workload'),
-          Api.getTasks({ assigneeId: user?.id, status: 'todo,in_progress' } as any),
-        ]);
+        const [statsRes, decisionsRes, teamRes, tasksRes, initiativesRes, signalsRes] =
+          await Promise.allSettled([
+            Api.get('/my-work/stats?period=week'),
+            Api.get('/my-work/decisions?limit=10&onlyPending=true'),
+            Api.get('/my-work/team-workload'),
+            Api.getTasks({ assigneeId: user?.id, status: 'todo,in_progress' } as any),
+            Api.get('/initiatives'),
+            Api.get('/my-work/signals?limit=5'),
+          ]);
 
-        // Process stats
+        // --- Process stats (with real previous period data) ---
         if (statsRes.status === 'fulfilled' && statsRes.value) {
           const stats = statsRes.value;
           const completionRate =
             stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
           const onTimeRate = stats.onTimeRate || 0;
 
+          const prevCompletionRate =
+            stats.previous?.total > 0
+              ? Math.round((stats.previous.completed / stats.previous.total) * 100)
+              : 0;
+          const prevOnTimeRate = stats.previous?.onTimeRate || 0;
+
+          const currentHealthScore = Math.round((completionRate + onTimeRate) / 2);
+          const previousHealthScore = Math.round((prevCompletionRate + prevOnTimeRate) / 2);
+
           setHealthScore({
-            // A1.1: data source – computed from /my-work/stats completionRate + onTimeRate
-            score: Math.round((completionRate + onTimeRate) / 2),
-            previousScore: Math.max(0, Math.round((completionRate + onTimeRate) / 2) - 5),
+            score: currentHealthScore,
+            previousScore: previousHealthScore,
             trend: stats.trend || 'stable',
             breakdown: {
               execution: completionRate,
-              // A1.1: Derive breakdown from available data sources
               decisions:
-                decisionsRes.status === 'fulfilled' &&
-                Array.isArray(decisionsRes.value?.decisions || decisionsRes.value)
+                decisionsRes.status === 'fulfilled' && Array.isArray(decisionsRes.value)
                   ? (() => {
-                      const decs = decisionsRes.value?.decisions || decisionsRes.value || [];
+                      const decs = decisionsRes.value || [];
                       const resolved = decs.filter((d: any) =>
                         ['APPROVED', 'RESOLVED', 'COMPLETED'].includes(
                           String(d.status).toUpperCase()
@@ -152,17 +310,13 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                     })()
                   : 0,
               capacity:
-                teamRes.status === 'fulfilled' && teamRes.value
+                teamRes.status === 'fulfilled' && Array.isArray(teamRes.value)
                   ? (() => {
-                      const team = Array.isArray(teamRes.value)
-                        ? teamRes.value
-                        : teamRes.value?.members || [];
+                      const team = teamRes.value || [];
                       if (team.length === 0) return 0;
                       const avgUtil =
-                        team.reduce(
-                          (sum: number, m: any) => sum + (m.utilization || m.capacity || 0),
-                          0
-                        ) / team.length;
+                        team.reduce((sum: number, m: any) => sum + (m.capacity || 0), 0) /
+                        team.length;
                       return Math.round(Math.min(100, avgUtil));
                     })()
                   : 0,
@@ -188,42 +342,40 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           }));
         }
 
-        // Process decisions
-        console.log('[ExecutiveDashboard] decisionsRes:', decisionsRes);
+        // --- Process decisions (using /my-work/decisions which returns flat array) ---
         if (decisionsRes.status === 'fulfilled' && decisionsRes.value) {
           const decisionList = Array.isArray(decisionsRes.value) ? decisionsRes.value : [];
-          console.log('[ExecutiveDashboard] decisionList:', decisionList);
           const pendingDecisions = decisionList.filter((d: any) =>
-            ['PENDING', 'ESCALATED'].includes(d.status)
+            ['PENDING', 'ESCALATED', 'pending', 'escalated'].includes(d.status)
           );
-          console.log('[ExecutiveDashboard] pendingDecisions:', pendingDecisions);
 
           setDecisions(
             pendingDecisions.map((d: any) => ({
               id: d.id,
               title: d.title,
               type: d.decisionType || 'GENERAL',
-              priority: d.priority?.toLowerCase() || 'medium',
-              daysWaiting: Math.floor(
-                (Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-              ),
+              priority: (d.priority || 'medium').toLowerCase(),
+              daysWaiting:
+                d.daysWaiting ??
+                Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
               requestedBy: d.requestedByName,
               projectName: d.projectName,
             }))
           );
 
           const criticalCount = pendingDecisions.filter(
-            (d: any) => d.priority === 'CRITICAL'
+            (d: any) => (d.priority || '').toUpperCase() === 'CRITICAL'
           ).length;
 
-          // Calculate real average wait days
           const avgWaitDays =
             pendingDecisions.length > 0
               ? Math.round(
                   (pendingDecisions.reduce((sum: number, d: any) => {
-                    const days = Math.floor(
-                      (Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-                    );
+                    const days =
+                      d.daysWaiting ??
+                      Math.floor(
+                        (Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+                      );
                     return sum + days;
                   }, 0) /
                     pendingDecisions.length) *
@@ -237,39 +389,36 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               pending: pendingDecisions.length,
               avgWaitDays,
               critical: criticalCount,
-              trend: 'stable',
+              trend: pendingDecisions.length > 5 ? 'down' : 'stable',
             },
           }));
 
-          // Build action items from critical decisions
           const urgentItems = pendingDecisions
-            .filter((d: any) => d.priority === 'CRITICAL' || d.priority === 'HIGH')
+            .filter(
+              (d: any) =>
+                (d.priority || '').toUpperCase() === 'CRITICAL' ||
+                (d.priority || '').toUpperCase() === 'HIGH'
+            )
             .slice(0, 3)
             .map((d: any) => ({
               id: d.id,
               type: 'decision',
               title: d.title,
-              urgency: d.priority === 'CRITICAL' ? 'critical' : 'high',
+              urgency: (d.priority || '').toUpperCase() === 'CRITICAL' ? 'critical' : 'high',
               projectName: d.projectName,
               owner: d.requestedByName,
-              daysOverdue: Math.max(
-                0,
-                Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)) -
-                  7
-              ),
+              daysOverdue: Math.max(0, (d.daysWaiting || 0) - 7),
             }));
 
           setActionItems(urgentItems);
         }
 
-        // Process team data
-        console.log('[ExecutiveDashboard] teamRes:', teamRes);
+        // --- Process team data ---
         if (
           teamRes.status === 'fulfilled' &&
           Array.isArray(teamRes.value) &&
           teamRes.value.length > 0
         ) {
-          console.log('[ExecutiveDashboard] Setting teamMembers:', teamRes.value);
           setTeamMembers(
             teamRes.value.map((m: any) => ({
               id: m.id,
@@ -279,11 +428,12 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                 (m.name || 'U')
                   .split(' ')
                   .map((n: string) => n[0])
-                  .join(''),
+                  .join('')
+                  .slice(0, 2),
               capacity: m.capacity || 0,
               tasksCompleted: m.tasksCompleted || 0,
               tasksTotal: m.tasksAssigned || 0,
-              trend: 'stable',
+              trend: 'stable' as const,
             }))
           );
 
@@ -300,55 +450,115 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               avgCapacity,
               overloaded: overloadedCount,
               available: availableCount,
-              trend: 'stable',
+              trend: overloadedCount > 2 ? 'down' : 'stable',
             },
           }));
         }
 
-        // Process tasks for risk assessment and action items
+        // --- Process tasks for risk assessment ---
         if (tasksRes.status === 'fulfilled' && Array.isArray(tasksRes.value)) {
-          const overdueTasks = tasksRes.value.filter((t: any) => {
-            if (!t.dueDate) return false;
-            return new Date(t.dueDate) < new Date();
+          const overdueTasks = tasksRes.value.filter((task: any) => {
+            if (!task.dueDate) return false;
+            return new Date(task.dueDate) < new Date();
           });
 
-          const riskLevel =
-            overdueTasks.length > 5 ? 'high' : overdueTasks.length > 2 ? 'medium' : 'low';
+          const escalationsCount =
+            statsRes.status === 'fulfilled' ? (statsRes.value as any)?.byStatus?.escalated || 0 : 0;
+
+          const riskLevel: RiskLevel =
+            overdueTasks.length > 5 || escalationsCount > 3
+              ? 'high'
+              : overdueTasks.length > 2 || escalationsCount > 1
+                ? 'medium'
+                : 'low';
 
           setKpiData((prev) => ({
             ...prev,
             risk: {
-              level: riskLevel as any,
+              level: riskLevel,
               blockers: overdueTasks.length,
-              escalations: prev.risk.escalations,
-              trend: 'stable',
+              escalations: escalationsCount,
+              trend: overdueTasks.length > 5 ? 'down' : overdueTasks.length === 0 ? 'up' : 'stable',
             },
           }));
 
-          // Add overdue tasks to action items
-          const overdueTaskItems = overdueTasks.slice(0, 3).map((t: any) => {
+          const overdueTaskItems = overdueTasks.slice(0, 3).map((task: any) => {
             const daysOverdue = Math.floor(
-              (Date.now() - new Date(t.dueDate).getTime()) / (1000 * 60 * 60 * 24)
+              (Date.now() - new Date(task.dueDate).getTime()) / (1000 * 60 * 60 * 24)
             );
             return {
-              id: t.id,
+              id: task.id,
               type: 'task' as const,
-              title: t.title,
+              title: task.title,
               urgency: daysOverdue > 7 ? 'critical' : daysOverdue > 3 ? 'high' : 'medium',
-              projectName: t.projectName || t.initiativeName,
-              owner: t.assigneeName,
+              projectName: task.projectName || task.initiativeName,
+              owner: task.assigneeName,
               daysOverdue,
             };
           });
 
-          // Merge with decision action items
           setActionItems((prev) => {
             const decisionItems = prev.filter((i) => i.type === 'decision');
             return [...decisionItems, ...overdueTaskItems].slice(0, 5);
           });
         }
 
+        // --- Process initiatives for progress overview ---
+        if (initiativesRes.status === 'fulfilled' && Array.isArray(initiativesRes.value)) {
+          const raw = initiativesRes.value || [];
+          const active = raw.filter(
+            (i: any) =>
+              !['COMPLETED', 'CANCELLED', 'ARCHIVED'].includes((i.status || '').toUpperCase())
+          );
+
+          const progressItems: InitiativeProgress[] = active.slice(0, 6).map((i: any) => {
+            const tasksDone = Number(i.tasksCompleted || 0);
+            const tasksTotal = Number(i.tasksTotal || i.taskCount || 0);
+            return {
+              id: i.id,
+              name: i.name || i.title || 'Untitled',
+              status: i.status || 'DRAFT',
+              priority: i.priority || 'MEDIUM',
+              tasksDone,
+              tasksTotal,
+              completionPct: tasksTotal > 0 ? Math.round((tasksDone / tasksTotal) * 100) : 0,
+              overdueCount: Number(i.overdueCount || 0),
+            };
+          });
+
+          setInitiatives(progressItems);
+        }
+
+        // --- Process AI signals ---
+        if (signalsRes.status === 'fulfilled' && signalsRes.value) {
+          const signalData = signalsRes.value?.signals || signalsRes.value || [];
+          if (Array.isArray(signalData)) {
+            setSignals(
+              signalData.slice(0, 5).map((s: any) => ({
+                id: s.id || s.key || s.notificationId,
+                type: s.type || 'INFO',
+                title: s.title || '',
+                message: s.message || s.body || '',
+                severity: s.severity || 'INFO',
+                entityType: s.entityType,
+                entityId: s.entityId,
+                createdAt: s.createdAt || '',
+              }))
+            );
+          }
+        }
+
         setLastUpdated(new Date());
+
+        try {
+          const token = localStorage.getItem('token');
+          const pRes = await fetch('/api/my-work/work-patterns', {
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          });
+          if (pRes.ok) setPatterns(await pRes.json());
+        } catch {
+          /* ignore */
+        }
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
         setLoadError(t('executive.loadError', 'Failed to load dashboard data'));
@@ -364,7 +574,6 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   useEffect(() => {
     fetchDashboardData();
 
-    // Auto-refresh every 5 minutes
     const interval = setInterval(
       () => {
         fetchDashboardData(true);
@@ -373,16 +582,15 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
     );
 
     return () => clearInterval(interval);
-  }, [fetchDashboardData]);
+  }, [fetchDashboardData, refreshTrigger]);
 
-  // Handle decision actions
   const handleApprove = async (id: string) => {
     try {
       await Api.put(`/decisions/${id}/decide`, { status: 'APPROVED', outcome: '' });
       toast.success(t('executive.decisions.approved', 'Decision approved'));
       onDecisionApprove?.(id);
       fetchDashboardData(true);
-    } catch (error) {
+    } catch {
       toast.error(t('executive.decisions.error', 'Failed to approve'));
     }
   };
@@ -393,7 +601,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       toast.success(t('executive.decisions.rejected', 'Decision rejected'));
       onDecisionReject?.(id);
       fetchDashboardData(true);
-    } catch (error) {
+    } catch {
       toast.error(t('executive.decisions.error', 'Failed to reject'));
     }
   };
@@ -401,40 +609,34 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   return (
     <div className="space-y-6">
       {loadError && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-500/30 px-4 py-3 text-sm text-red-700 dark:text-red-300">
           {loadError}
         </div>
       )}
+
       {/* Header with Greeting */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-between"
       >
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl shadow-lg shadow-violet-500/30">
-            {greeting.icon}
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
-              {greeting.text}, {userName}
-              <Sparkles size={20} className="text-amber-500" />
-            </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
-              <Calendar size={14} />
-              {formatDate()}
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-navy-900 dark:text-white">
+            {greetingText}
+            {userName ? `, ${userName}` : ''}
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
+            <Calendar size={14} />
+            {formatDate()}
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Last updated indicator */}
           <span className="text-xs text-slate-400 dark:text-slate-500 mr-2">
             {t('executive.lastUpdated', 'Updated')}:{' '}
             {lastUpdated.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
           </span>
 
-          {/* Refresh button */}
           <button
             onClick={() => fetchDashboardData(true)}
             disabled={refreshing}
@@ -448,7 +650,6 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
 
       {/* Portfolio Health + KPI Grid Row */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Portfolio Health Score - Takes 1/3 on large screens */}
         <div className="xl:col-span-1">
           <PortfolioHealthScore
             score={healthScore.score}
@@ -459,7 +660,6 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           />
         </div>
 
-        {/* KPI Grid - Takes 2/3 on large screens */}
         <div className="xl:col-span-2">
           <KPIGrid data={kpiData} loading={loading} onNavigate={onNavigate} />
         </div>
@@ -481,8 +681,60 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         }}
       />
 
-      {/* Two-Column: Decisions + Team Performance */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* L3: Work Patterns */}
+      {patterns && (
+        <div className="mt-4 p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+          <h3 className="text-sm font-semibold mb-3 text-slate-700 dark:text-slate-200">
+            {isPolish ? 'Twoje wzorce pracy' : 'Your Work Patterns'}
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+            {patterns.avgVelocity != null && (
+              <div className="text-center">
+                <div className="text-lg font-bold text-purple-600">{patterns.avgVelocity}</div>
+                <div className="text-[10px] text-slate-500">
+                  {isPolish ? 'tasków/tydzień' : 'tasks/week'}
+                </div>
+              </div>
+            )}
+            {patterns.avgCompletionDays != null && (
+              <div className="text-center">
+                <div className="text-lg font-bold text-blue-600">{patterns.avgCompletionDays}d</div>
+                <div className="text-[10px] text-slate-500">
+                  {isPolish ? 'śr. czas zadania' : 'avg task time'}
+                </div>
+              </div>
+            )}
+            {patterns.avgDecisionDays != null && (
+              <div className="text-center">
+                <div className="text-lg font-bold text-amber-600">{patterns.avgDecisionDays}d</div>
+                <div className="text-[10px] text-slate-500">
+                  {isPolish ? 'śr. czas decyzji' : 'avg decision time'}
+                </div>
+              </div>
+            )}
+            {patterns.overdueRate != null && (
+              <div className="text-center">
+                <div className="text-lg font-bold text-red-600">{patterns.overdueRate}%</div>
+                <div className="text-[10px] text-slate-500">
+                  {isPolish ? 'spóźnień' : 'overdue rate'}
+                </div>
+              </div>
+            )}
+          </div>
+          {patterns.insights?.length > 0 && (
+            <div className="space-y-1">
+              {patterns.insights.map((insight: string, i: number) => (
+                <p key={i} className="text-xs text-slate-600 dark:text-slate-400">
+                  💡 {insight}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Three-Column: Decisions + Team Performance + AI Signals */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <DecisionQueuePreview
           decisions={decisions}
           loading={loading}
@@ -498,7 +750,117 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           onViewAll={() => onNavigate?.('team')}
           onMemberClick={(id) => onNavigate?.('team')}
         />
+
+        {/* AI Signals & Insights */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.22 }}
+          className="rounded-xl bg-white dark:bg-navy-900/50 h-full flex flex-col"
+        >
+          <div className="flex items-center justify-between px-5 py-4 shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                <Zap size={16} className="text-amber-500" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {t('executive.signals.title', 'AI Signals & Insights')}
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {t('executive.signals.subtitle', 'Intelligent alerts from your portfolio')}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => onNavigate?.('notifications')}
+              className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 flex items-center gap-1 transition-colors duration-150"
+            >
+              {t('executive.signals.viewAll', 'View all')}
+              <ArrowRight size={13} />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-0.5">
+            {!loading && signals.length > 0 ? (
+              signals.map((signal) => (
+                <SignalCard
+                  key={signal.id}
+                  signal={signal}
+                  onClick={() => onNavigate?.('notifications')}
+                />
+              ))
+            ) : !loading ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <Zap size={20} className="text-slate-300 dark:text-slate-600 mb-2" />
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {t('executive.signals.empty', 'No signals')}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3 animate-pulse">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="h-10 bg-slate-100 dark:bg-white/[0.03] rounded-lg" />
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
       </div>
+
+      {/* Initiative Progress Overview */}
+      {!loading && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.22 }}
+          className="rounded-xl bg-white dark:bg-navy-900/50"
+        >
+          <div className="flex items-center justify-between px-5 py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                <Folder size={16} className="text-indigo-500" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {t('executive.initiatives.title', 'Initiative Progress')}
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {initiatives.length} {t('executive.initiatives.active', 'active initiatives')}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => onNavigate?.('initiatives')}
+              className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 flex items-center gap-1 transition-colors duration-150"
+            >
+              {t('executive.initiatives.viewAll', 'View all')}
+              <ArrowRight size={13} />
+            </button>
+          </div>
+
+          <div className="px-5 pb-5">
+            {initiatives.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                {initiatives.map((init) => (
+                  <InitiativeCard
+                    key={init.id}
+                    initiative={init}
+                    onClick={() => onNavigate?.('initiatives')}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <Folder size={24} className="text-slate-300 dark:text-slate-600 mb-2" />
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {t('executive.initiatives.empty', 'No active initiatives')}
+                </p>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 };

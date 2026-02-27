@@ -15,14 +15,18 @@
  * @version 2.0.0
  */
 
-import { ArrowUp, Mic, Plus, Square, StopCircle, Wrench } from 'lucide-react';
+import { ArrowUp, Mic, Pen, Square, StopCircle } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { CloudFile, CloudProviderId, useCloudIntegrations } from '../../hooks/useCloudIntegrations';
 import { useAppStore } from '../../store/useAppStore';
+import { useConversationStore } from '../../store/useConversationStore';
 import { AddFilesMenu } from './AddFilesMenu';
 import { CloudFilePicker } from './CloudFilePicker';
+import { CoThinkerMenu } from './CoThinkerMenu';
+import { MoveToProjectModal } from './MoveToProjectModal';
 import { ToolsMenu } from './ToolsMenu';
 
 // ============================================================================
@@ -61,6 +65,7 @@ interface EnhancedChatInputProps {
   };
   startVoiceListening?: () => void;
   stopVoiceListening?: () => void;
+  onToolSelect?: (tool: string) => void;
 }
 
 // ============================================================================
@@ -83,6 +88,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   voiceState,
   startVoiceListening,
   stopVoiceListening,
+  onToolSelect,
 }) => {
   const { t, i18n } = useTranslation();
   const { aiFreezeStatus } = useAppStore();
@@ -135,6 +141,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   const isInputDisabled = isDisabled || isStreaming;
   const hasText = value.trim().length > 0;
   const canSend = hasText && !isInputDisabled;
+  const { activeConversationId, conversations } = useConversationStore();
+  const [showMoveToProject, setShowMoveToProject] = useState(false);
 
   // Use either internal or external voice state
   const isDictatingVal = isDictating;
@@ -189,7 +197,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      const maxPx = variant === 'compact' ? 140 : 200;
+      const maxPx = variant === 'compact' ? 220 : 280;
       textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, maxPx) + 'px';
     }
   }, [value, variant]);
@@ -630,6 +638,31 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     [activeProvider, selectFile, closeFilePicker]
   );
 
+  const activeConversation = activeConversationId
+    ? conversations.find((c) => c.id === activeConversationId) || null
+    : null;
+
+  const handleToolSelect = useCallback(
+    (tool: string) => {
+      if (tool === 'addToProject') {
+        if (!activeConversation) {
+          toast.error(
+            t(
+              'aiChat.conversation.addToProjectRequiresConversation',
+              'Najpierw wyślij pierwszą wiadomość, aby dodać rozmowę do projektu.'
+            )
+          );
+          onToolSelect?.(tool);
+          return;
+        }
+        setShowMoveToProject(true);
+      }
+
+      onToolSelect?.(tool);
+    },
+    [activeConversation, onToolSelect, t]
+  );
+
   // ========================================================================
   // Render
   // ========================================================================
@@ -721,7 +754,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           onBlur={() => setIsFocused(false)}
           placeholder={placeholderText}
           disabled={isInputDisabled}
-          rows={variant === 'compact' ? 2 : 1}
+          rows={variant === 'compact' ? 3 : 2}
           data-testid="chat-input"
           className={`
                         w-full bg-transparent text-navy-900 dark:text-white
@@ -744,11 +777,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               isCloudImplemented={isCloudImplemented}
               disabled={isInputDisabled}
             />
-            <ToolsMenu
-              onToolSelect={(tool) => console.log('Tool selected:', tool)}
-              disabled={isInputDisabled}
-              icon={Wrench}
-            />
+            <ToolsMenu onToolSelect={handleToolSelect} disabled={isInputDisabled} icon={Pen} />
+            <CoThinkerMenu disabled={isInputDisabled} />
           </div>
 
           {/* Right Actions */}
@@ -812,6 +842,14 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           onClose={closeFilePicker}
           provider={activeProvider}
           onFileSelect={handleCloudFilePickerSelect}
+        />
+      )}
+
+      {activeConversation && (
+        <MoveToProjectModal
+          isOpen={showMoveToProject}
+          onClose={() => setShowMoveToProject(false)}
+          conversation={activeConversation as any}
         />
       )}
     </div>

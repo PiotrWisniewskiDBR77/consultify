@@ -7,6 +7,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import logger from '../utils/Logger.js';
+import { DEMO_TRIAL_EVENT_TYPES, recordDemoTrialEvent } from './demoTrialTelemetryService.js';
 import { appCache } from './redis/CacheService.js';
 
 // ==========================================
@@ -194,6 +195,17 @@ export const AIOrchestrator = {
 
     // Check daily AI limit
     if (accessContext.dailyAIUsage.remaining <= 0 && !accessContext.isPaid) {
+      if (accessContext.isDemo) {
+        void recordDemoTrialEvent({
+          eventType: DEMO_TRIAL_EVENT_TYPES.DEMO_AI_LIMIT_REACHED,
+          organizationId,
+          userId,
+          source: 'ai_orchestrator',
+          metadata: {
+            limit: accessContext.dailyAIUsage.limit,
+          },
+        });
+      }
       return {
         blocked: true,
         errorCode: 'AI_LIMIT_REACHED',
@@ -553,7 +565,12 @@ RULES:
 2. Never invent data - only use provided context
 3. Be transparent about uncertainty
 4. Respect governance boundaries
-5. State "Based on: ..." before significant statements`;
+5. State "Based on: ..." before significant statements
+
+IDEA GENERATION:
+When you spot an opportunity for innovation, improvement, or a creative approach during conversation, include an idea hint using this exact format on its own line:
+💡 IDEA_HINT: <short catchy title> | <1-sentence description of the opportunity>
+This helps users capture creative sparks. Do this naturally, at most once per response, and only when genuinely relevant.`;
 
     const aiGovernanceRole = responseContext.aiGovernance?.activeRole || 'ADVISOR';
     const roleConstraints: Record<string, string> = {
@@ -754,6 +771,17 @@ USER MESSAGE: ${userMessage}`;
     }
 
     if (accessContext.dailyAIUsage.remaining <= 0 && !accessContext.isPaid) {
+      if (accessContext.isDemo) {
+        void recordDemoTrialEvent({
+          eventType: DEMO_TRIAL_EVENT_TYPES.DEMO_AI_LIMIT_REACHED,
+          organizationId,
+          userId,
+          source: 'ai_orchestrator',
+          metadata: {
+            limit: accessContext.dailyAIUsage.limit,
+          },
+        });
+      }
       return {
         blocked: true,
         errorCode: 'AI_LIMIT_REACHED',

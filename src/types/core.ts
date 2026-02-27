@@ -86,8 +86,11 @@ export enum AppView {
   IMPLEMENTATION = 'IMPLEMENTATION', // Module 4: Wdrożenie
   FULL_PILOT_EXECUTION = 'FULL_PILOT_EXECUTION', // @deprecated - alias for IMPLEMENTATION
   FULL_ROLLOUT = 'FULL_ROLLOUT', // Module 5
-  FULL_STEP6_REPORTS = 'FULL_STEP6_REPORTS',
+  FULL_STEP6_REPORTS = 'FULL_STEP6_REPORTS', // Report Builder (deliverable reports)
+  REPORTS_ENTRY = 'REPORTS_ENTRY', // Reports landing /reports (entry router)
+  REPORTS_MANAGEMENT = 'REPORTS_MANAGEMENT', // Management Reports (PMO)
   DRD_AUDIT_REPORT = 'DRD_AUDIT_REPORT', // DRD Audit Report Builder
+  PRESENTATIONS = 'PRESENTATIONS', // Presentations library
   KPI_OKR_DASHBOARD = 'KPI_OKR_DASHBOARD', // Module: KPI/OKR post-implementation tracking
 
   MASTERCLASS = 'MASTERCLASS',
@@ -158,6 +161,8 @@ export enum AppView {
   INITIATIVE_MANAGEMENT = 'INITIATIVE_MANAGEMENT', // @deprecated - use PORTFOLIO_ROADMAP
   PORTFOLIO_ROADMAP = 'PORTFOLIO_ROADMAP', // Unified Portfolio & Roadmap view (replaces INITIATIVE_MANAGEMENT + FULL_STEP3_ROADMAP)
   BENEFITS_REALIZATION = 'BENEFITS_REALIZATION', // DONE, BLOCKED, CANCELLED, ARCHIVED + KPIs
+  MCP_IRIS_COMING_SOON = 'MCP_IRIS_COMING_SOON',
+  MCP_MARKETPLACE_COMING_SOON = 'MCP_MARKETPLACE_COMING_SOON',
 
   // Step D: Executive View (Read-only reporting for executives)
   EXECUTIVE_VIEW = 'EXECUTIVE_VIEW',
@@ -300,9 +305,10 @@ export enum AuthStep {
  * For project-level roles (PM, Team Lead, etc.), see ProjectRole enum below.
  *
  * Account Types:
- * - OWNER: Organization owner with billing, ownership transfer, deletion rights
- * - ADMIN: Administrator - full access except billing
- * - USER: Standard user - works in assigned projects only
+ * - OWNER: Special administrator — all ADMIN functions PLUS billing, ownership transfer, deletion.
+ *          Must have Admin Panel, users, projects, settings, AI config, etc. (same as ADMIN).
+ * - ADMIN: Administrator - full access except billing (users, projects, settings, Admin Panel).
+ * - USER: Standard user - works in assigned projects only.
  *
  * Note: CONSULTANT is deprecated as a separate account type.
  *       Consultants should have USER account type + CONSULTANT project role.
@@ -312,7 +318,7 @@ export enum UserRole {
   SUPERADMIN = 'SUPERADMIN', // DBR77 Platform Owner - manages all tenants
 
   // Organization Level (Account Types)
-  OWNER = 'OWNER', // Organization Owner - billing, ownership, deletion
+  OWNER = 'OWNER', // Special admin: ADMIN + billing, ownership transfer, deletion
   ADMIN = 'ADMIN', // Organization Admin - users, projects, settings
   USER = 'USER', // Standard User - project access only
 

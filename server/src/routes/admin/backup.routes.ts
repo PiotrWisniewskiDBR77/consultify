@@ -15,12 +15,12 @@ import logger from '../../utils/Logger.js';
 
 const router = Router();
 
-function respondBackupUnavailable(res: any, message?: string) {
+function respondBackupUnavailable(_req: any, res: any, _message?: string) {
   return res.status(503).json({
-    success: false,
-    error:
-      message ||
-      'Backup system is not available (service missing or not configured). Configure backups before enabling this endpoint.',
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 }
 
@@ -49,7 +49,7 @@ router.get('/', async (req, res) => {
     return res.json({ backups, total: backups.length });
   } catch (error: any) {
     logger.warn('[BackupRoutes] BackupService not available for list');
-    return respondBackupUnavailable(res);
+    return respondBackupUnavailable(req, res);
   }
 });
 
@@ -67,7 +67,7 @@ router.get('/status', async (req, res) => {
     return res.json(status);
   } catch (error: any) {
     logger.warn('[BackupRoutes] BackupService not available for status');
-    return respondBackupUnavailable(res);
+    return respondBackupUnavailable(req, res);
   }
 });
 
@@ -96,7 +96,7 @@ router.get('/:id/status', async (req, res) => {
     });
   } catch (error: any) {
     logger.warn('[BackupRoutes] BackupService not available for backup status lookup');
-    return respondBackupUnavailable(res);
+    return respondBackupUnavailable(req, res);
   }
 });
 
@@ -120,6 +120,7 @@ router.post('/restore', verifySuperAdmin, async (req, res) => {
   } catch (error: any) {
     logger.warn('[BackupRoutes] BackupService not available for restore');
     return respondBackupUnavailable(
+      req,
       res,
       'Backup restore is not available (service missing or not configured).'
     );
@@ -142,6 +143,7 @@ router.delete('/:id', verifySuperAdmin, async (req, res) => {
   } catch (error: any) {
     logger.warn('[BackupRoutes] BackupService not available for delete');
     return respondBackupUnavailable(
+      req,
       res,
       'Backup delete is not available (service missing or not configured).'
     );
@@ -164,6 +166,7 @@ router.post('/manual', verifySuperAdmin, async (req, res) => {
   } catch (error: any) {
     logger.warn('[BackupRoutes] BackupService not available for manual backup');
     return respondBackupUnavailable(
+      req,
       res,
       'Manual backup is not available (service missing or not configured).'
     );

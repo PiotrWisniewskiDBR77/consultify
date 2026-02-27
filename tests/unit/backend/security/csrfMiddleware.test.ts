@@ -60,6 +60,13 @@ describe('CSRF middleware (L1)', () => {
       expect(next).toHaveBeenCalled();
     });
 
+    it('treats empty csrf_token cookie as missing (generates new cookie)', () => {
+      const { req, res, next } = createMocks({ cookies: { csrf_token: '' } });
+      csrfTokenMiddleware(req, res, next);
+      expect(res.cookie).toHaveBeenCalled();
+      expect(next).toHaveBeenCalled();
+    });
+
     it('treats non-string csrf_token cookie as missing (generates a new token)', () => {
       const { req, res, next } = createMocks({ cookies: { csrf_token: 123 as any } });
       csrfTokenMiddleware(req, res, next);
@@ -163,6 +170,20 @@ describe('CSRF middleware (L1)', () => {
         process.env.NODE_ENV = origNodeEnv;
       }
     });
+
+    it('does not set secure cookie in non-secure non-production requests', () => {
+      const origNodeEnv = process.env.NODE_ENV;
+      try {
+        process.env.NODE_ENV = 'test';
+        const { req, res, next } = createMocks({ headers: { 'x-forwarded-proto': 'http' } });
+        csrfTokenMiddleware(req, res, next);
+        const opts = res.cookie.mock.calls[0][2];
+        expect(opts.secure).toBe(false);
+        expect(next).toHaveBeenCalled();
+      } finally {
+        process.env.NODE_ENV = origNodeEnv;
+      }
+    });
   });
 
   // ── csrfValidationMiddleware ──
@@ -234,7 +255,7 @@ describe('CSRF middleware (L1)', () => {
       expect(next).toHaveBeenCalled();
     });
 
-    it('accepts header token when provided under uppercase header key', () => {
+    it('accepts matching cookie and header when header is provided with uppercase key', () => {
       const tok = 'x'.repeat(64);
       const { req, res, next } = createMocks({
         method: 'POST',
@@ -246,17 +267,16 @@ describe('CSRF middleware (L1)', () => {
       expect(next).toHaveBeenCalled();
     });
 
-    it('accepts non-string tokens that stringify to the same value', () => {
+    it('accepts when cookie token is non-string but matches header after String() coercion', () => {
       const { req, res, next } = createMocks({
         method: 'POST',
         path: '/api/test',
         cookies: { csrf_token: 123 as any },
-        headers: { 'x-csrf-token': 123 as any } as any,
+        headers: { 'x-csrf-token': '123' },
       });
       csrfValidationMiddleware(req, res, next);
       expect(next).toHaveBeenCalled();
     });
-
     // Exempt paths
     it.each([
       '/api/auth/login',
@@ -395,6 +415,16 @@ describe('CSRF middleware (L1)', () => {
       const { req, res } = createMocks({ cookies: { csrf_token: 'existing-disabled' } });
       getCsrfTokenHandler(req, res);
       expect(res.json).toHaveBeenCalledWith({ token: 'existing-disabled' });
+      expect(res.cookie).not.toHaveBeenCalled();
+    });
+
+    it('when CSRF is disabled: ignores empty cookie token and returns a fresh token', () => {
+      delete process.env.ENABLE_CSRF_IN_TESTS;
+      const { req, res } = createMocks({ cookies: { csrf_token: '' } });
+      getCsrfTokenHandler(req, res);
+      const token = res.json.mock.calls[0][0].token as string;
+      expect(token).toBeTruthy();
+      expect(token).not.toBe('');
       expect(res.cookie).not.toHaveBeenCalled();
     });
   });

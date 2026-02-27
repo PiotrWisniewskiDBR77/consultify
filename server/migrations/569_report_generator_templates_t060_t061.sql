@@ -43,11 +43,18 @@ CREATE INDEX IF NOT EXISTS idx_quality_gates_report ON report_quality_gates(repo
 -- T061: Canonical Business Report Templates
 -- ============================================================
 
+-- Ensure template table supports activation flag (older schemas may not have it)
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'report_builder_templates' AND column_name = 'is_active') THEN
+        ALTER TABLE report_builder_templates ADD COLUMN is_active BOOLEAN DEFAULT TRUE;
+    END IF;
+END $$;
+
 -- Template: Strategic Review / Executive Brief
 INSERT INTO report_builder_templates (id, organization_id, name, description, source_type, report_type, is_public, is_system, is_active, sections_json)
 VALUES (
     'tpl-strategic-review-exec',
-    'SYSTEM',
+    NULL,
     'Strategic Review & Executive Brief',
     'High-level strategic assessment for board members and executive sponsors. Covers situation analysis, strategic options, recommendations, and implementation roadmap.',
     'ASSESSMENT',
@@ -69,7 +76,7 @@ VALUES (
 INSERT INTO report_builder_templates (id, organization_id, name, description, source_type, report_type, is_public, is_system, is_active, sections_json)
 VALUES (
     'tpl-transformation-roadmap',
-    'SYSTEM',
+    NULL,
     'Transformation Roadmap & Portfolio Review',
     'Comprehensive portfolio and roadmap document for transformation programs. Includes initiative portfolio, timeline, resource allocation, and benefits tracking.',
     'INITIATIVE',
@@ -93,7 +100,7 @@ VALUES (
 INSERT INTO report_builder_templates (id, organization_id, name, description, source_type, report_type, is_public, is_system, is_active, sections_json)
 VALUES (
     'tpl-financial-analysis',
-    'SYSTEM',
+    NULL,
     'Financial Analysis & Business Case',
     'Comprehensive financial analysis including statements, ratios, budget analysis, and business case justification. Suitable for CFO and finance committee presentations.',
     'INITIATIVE',
@@ -117,7 +124,7 @@ VALUES (
 INSERT INTO report_builder_templates (id, organization_id, name, description, source_type, report_type, is_public, is_system, is_active, sections_json)
 VALUES (
     'tpl-steering-committee',
-    'SYSTEM',
+    NULL,
     'Steering Committee / Program Update',
     'Concise program status report for steering committee meetings. Traffic light status, key decisions, escalations, and forward plan.',
     'INITIATIVE',
@@ -140,7 +147,7 @@ VALUES (
 INSERT INTO report_builder_templates (id, organization_id, name, description, source_type, report_type, is_public, is_system, is_active, sections_json)
 VALUES (
     'tpl-valuation-pack',
-    'SYSTEM',
+    NULL,
     'Valuation Pack & Investment Summary',
     'Comprehensive valuation document for investment decisions. Includes DCF analysis, comparables, sensitivity analysis, and investment thesis.',
     'INITIATIVE',
@@ -164,7 +171,7 @@ VALUES (
 INSERT INTO report_builder_templates (id, organization_id, name, description, source_type, report_type, is_public, is_system, is_active, sections_json)
 VALUES (
     'tpl-tool-workshop-summary',
-    'SYSTEM',
+    NULL,
     'Tool Workshop Summary',
     'Summary report from consulting tool workshops. Captures methodology, findings, generated initiatives, and recommended actions.',
     'TOOL',
@@ -187,7 +194,7 @@ VALUES (
 INSERT INTO report_builder_templates (id, organization_id, name, description, source_type, report_type, is_public, is_system, is_active, sections_json)
 VALUES (
     'tpl-assessment-summary-v2',
-    'SYSTEM',
+    NULL,
     'Assessment Summary Report',
     'Structured assessment summary report covering maturity scores, gaps, strengths, and actionable recommendations. Works with DRD, SIRI, and ADMA frameworks.',
     'ASSESSMENT',

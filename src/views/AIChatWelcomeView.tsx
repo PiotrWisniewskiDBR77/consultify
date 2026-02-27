@@ -13,14 +13,14 @@
  */
 
 import {
-  BarChart3,
-  Brain,
-  FileText,
-  PanelLeft,
+  Calculator,
+  CheckCircle2,
   RefreshCw,
-  Shield,
+  Search,
   Sparkles,
-  Zap,
+  Volume2,
+  VolumeX,
+  Wrench,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +30,7 @@ import remarkGfm from 'remark-gfm';
 import { useAIContext } from '@/contexts/AIContext';
 import { isValidLanguage, type SupportedLanguage } from '@/i18n';
 import { Api } from '@/services/api.ts';
+import { AppView } from '@/types';
 
 import { ChatExportModal } from '../components/AIChat/ChatExportModal';
 // Components
@@ -53,6 +54,7 @@ import { ChatCitation, ChatMessage, ChatResponseAction } from '../types';
 import { MessageFeedback } from '../types';
 import { exportConversationToPDF } from '../utils/pdfExport';
 import { cleanTextForSpeech } from '../utils/textCleaning';
+import { isRtlLanguage, textDirection } from '../utils/textDirection';
 
 // Time-aware greeting helper
 const getTimeContext = () => {
@@ -81,6 +83,11 @@ const getTimeContext = () => {
   }
 };
 
+const prefersReducedMotion = (): boolean => {
+  if (typeof window === 'undefined') return true;
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? true;
+};
+
 /** Download a string as a file */
 function downloadFile(filename: string, content: string, mimeType: string): void {
   const blob = new Blob([content], { type: mimeType });
@@ -99,7 +106,17 @@ export const AIChatWelcomeView: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // App state
-  const { currentUser, currentProjectId, aiConfig, currentOrganization } = useAppStore();
+  const {
+    currentUser,
+    currentProjectId,
+    aiConfig,
+    currentOrganization,
+    setCurrentView,
+    isChatCollapsed,
+    toggleChatCollapse,
+    setAIConfig,
+    setChatKickoffMessage,
+  } = useAppStore();
   const { projectName } = usePMOStore();
   const brandLogoDarkSrc = new URL(
     '../../Logo consultinity/Consultinity_logo_dark_medium.svg',
@@ -124,7 +141,6 @@ export const AIChatWelcomeView: React.FC = () => {
     isLoading: isConversationLoading,
     isSidebarOpen,
     workspaceContext,
-    toggleSidebar,
     createConversation,
     addMessage,
     setActiveConversation,
@@ -165,6 +181,7 @@ export const AIChatWelcomeView: React.FC = () => {
     const base = String(candidate).split('-')[0];
     return (isValidLanguage(base) ? base : 'pl') as SupportedLanguage;
   }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage]);
+  const isRtlChatLanguage = isRtlLanguage(chatLanguage);
 
   // AI stream with persistence callback
   const handleStreamDone = useCallback(
@@ -319,6 +336,7 @@ export const AIChatWelcomeView: React.FC = () => {
   const [continuousVoiceMode, setContinuousVoiceMode] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [orgLogoUrl, setOrgLogoUrl] = useState<string | null>(null);
+  const [orgLogoLoaded, setOrgLogoLoaded] = useState(false);
   const [aiMemoryContext, setAiMemoryContext] = useState<string | null>(null);
   const [coThinkerPhase, setCoThinkerPhase] = useState<string>('discovery');
   const [messageFeedback, setMessageFeedback] = useState<Record<string, MessageFeedback>>({});
@@ -326,11 +344,61 @@ export const AIChatWelcomeView: React.FC = () => {
   const [editingText, setEditingText] = useState<string>('');
   const [editBusy, setEditBusy] = useState(false);
   const lastSpokenContentRef = useRef<string>('');
+  const autoReadEnabled = Boolean(aiConfig?.textToSpeech);
 
   // Get time-aware context
   const timeContext = useMemo(() => getTimeContext(), []);
   const firstName = currentUser?.firstName || '';
   const orgId = currentOrganization?.id || currentUser?.organizationId || null;
+
+  const subtitleVariants: string[] = useMemo(() => {
+    const raw = t(`aiChat.subtitleRotator.${timeContext.greetingKey}`, {
+      returnObjects: true,
+      defaultValue: [],
+    }) as unknown;
+    if (!Array.isArray(raw)) return [];
+    return raw.map((x) => String(x || '').trim()).filter(Boolean);
+  }, [t, i18n.language, timeContext.greetingKey]);
+
+  const [subtitleIndex, setSubtitleIndex] = useState(0);
+  const [subtitleFading, setSubtitleFading] = useState(false);
+
+  // Reset subtitle when language / time bucket changes
+  useEffect(() => {
+    setSubtitleIndex(0);
+    setSubtitleFading(false);
+  }, [i18n.language, timeContext.greetingKey, subtitleVariants.length]);
+
+  // Rotate subtitle variants (welcome header)
+  useEffect(() => {
+    if (subtitleVariants.length < 2) return;
+
+    const reduce = prefersReducedMotion();
+    let fadeTimeout: number | undefined;
+
+    const interval = window.setInterval(() => {
+      if (reduce) {
+        setSubtitleIndex((i) => (i + 1) % subtitleVariants.length);
+        return;
+      }
+
+      setSubtitleFading(true);
+      fadeTimeout = window.setTimeout(() => {
+        setSubtitleIndex((i) => (i + 1) % subtitleVariants.length);
+        setSubtitleFading(false);
+      }, 200);
+    }, 6500);
+
+    return () => {
+      window.clearInterval(interval);
+      if (fadeTimeout) window.clearTimeout(fadeTimeout);
+    };
+  }, [subtitleVariants]);
+
+  const subtitleText =
+    subtitleVariants.length > 0
+      ? subtitleVariants[subtitleIndex]!
+      : t(`aiChat.${timeContext.subtitleKey}`, timeContext.subtitleFallback);
 
   // Fetch org logo for white-label branding (set in Admin → Organization Profile)
   useEffect(() => {
@@ -345,7 +413,10 @@ export const AIChatWelcomeView: React.FC = () => {
       try {
         const resp = await Api.get(`/organization-profiles/${orgId}`);
         const url = resp?.profile?.logoUrl ? String(resp.profile.logoUrl || '') : '';
-        if (!cancelled) setOrgLogoUrl(url || null);
+        if (!cancelled) {
+          setOrgLogoUrl(url || null);
+          setOrgLogoLoaded(false);
+        }
       } catch (err) {
         // Non-blocking: branding is optional.
         if (!cancelled) setOrgLogoUrl(null);
@@ -457,6 +528,19 @@ export const AIChatWelcomeView: React.FC = () => {
       }
     },
     [stopSpeaking, continuousVoiceMode, stopContinuousMode]
+  );
+
+  // Always replay from start: stop current audio and read again.
+  const replaySpeech = useCallback(
+    (rawText: string) => {
+      const text = cleanTextForSpeech(rawText || '');
+      if (!text) return;
+      stopSpeaking();
+      window.setTimeout(() => {
+        speak(text).catch((err) => console.warn('[TTS] replay error:', err));
+      }, 60);
+    },
+    [speak, stopSpeaking]
   );
 
   // Handle continuous voice mode toggle
@@ -777,6 +861,9 @@ For example: REMEMBER: preferred_language: Polish`;
               deepResearch: aiConfig?.deepResearch,
               webSearch: aiConfig?.webSearch,
               showReasoning: aiConfig?.showReasoning,
+              marketResearch: (aiConfig as any)?.marketResearch,
+              coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
+              privateMode: (aiConfig as any)?.privateMode ?? false,
               knowledgeSources: aiConfig?.knowledgeSources,
               responseStyle: aiConfig?.responseStyle,
               selectedTier: (aiConfig as any)?.selectedTier || undefined,
@@ -937,6 +1024,25 @@ For example: REMEMBER: preferred_language: Polish`;
       selectedProject,
       setActiveConversation,
       setConversationChatLanguage,
+    ]
+  );
+
+  const startModuleWithKickoff = useCallback(
+    (view: AppView, aiPatch: any, kickoff: string) => {
+      setAIConfig(aiPatch);
+      setChatKickoffMessage(kickoff);
+      // Ensure a clean conversation so kickoff can auto-send safely
+      clearActiveChat();
+      if (isChatCollapsed) toggleChatCollapse();
+      setCurrentView(view);
+    },
+    [
+      clearActiveChat,
+      isChatCollapsed,
+      setAIConfig,
+      setChatKickoffMessage,
+      setCurrentView,
+      toggleChatCollapse,
     ]
   );
 
@@ -1197,6 +1303,9 @@ For example: REMEMBER: preferred_language: Polish`;
                 deepResearch: aiConfig?.deepResearch,
                 webSearch: aiConfig?.webSearch,
                 showReasoning: aiConfig?.showReasoning,
+                marketResearch: (aiConfig as any)?.marketResearch,
+                coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
+                privateMode: (aiConfig as any)?.privateMode ?? false,
                 knowledgeSources: aiConfig?.knowledgeSources,
                 responseStyle: aiConfig?.responseStyle,
                 selectedTier: (aiConfig as any)?.selectedTier || undefined,
@@ -1337,21 +1446,52 @@ For example: REMEMBER: preferred_language: Polish`;
         {/* Main Chat Area - Full width, sidebar is overlay */}
         <div className="h-full flex flex-col overflow-hidden">
           {/* Header with Sidebar Toggle */}
-          <div className="shrink-0 h-14 border-b border-slate-200 dark:border-navy-700 flex items-center px-4 justify-between bg-white/50 dark:bg-navy-950/50 backdrop-blur-sm z-10">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => toggleSidebar()}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-500 dark:text-slate-400 transition-colors"
-                title={t('aiChat.openSidebar', 'Open Sidebar')}
-              >
-                <PanelLeft size={20} />
-              </button>
+          <div className="shrink-0 h-14 border-b border-slate-200 dark:border-navy-700 flex items-center px-4 justify-end bg-white/50 dark:bg-navy-950/50 backdrop-blur-sm z-10">
+            <div className="flex items-center gap-1">
+              {voiceSupported && (
+                <button
+                  onClick={() => {
+                    // While speaking, this button must behave as immediate mute/off.
+                    if (voiceState.isSpeaking) {
+                      stopSpeaking();
+                    }
+                    const nextState = voiceState.isSpeaking ? false : !autoReadEnabled;
+                    setAIConfig({ textToSpeech: nextState } as any);
+                  }}
+                  data-testid="chat-autoread-button"
+                  className={`p-1.5 rounded-lg transition-colors ${
+                    autoReadEnabled
+                      ? 'text-primary-600 dark:text-primary-400 bg-primary-50/40 dark:bg-primary-900/15'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
+                  }`}
+                  title={
+                    voiceState.isSpeaking
+                      ? t('aiChat.muteNow', 'Mute now')
+                      : autoReadEnabled
+                        ? t('aiChat.autoReadOff', 'Turn off auto-read')
+                        : t('aiChat.autoReadOn', 'Turn on auto-read')
+                  }
+                  aria-label={
+                    voiceState.isSpeaking
+                      ? t('aiChat.muteNow', 'Mute now')
+                      : autoReadEnabled
+                        ? t('aiChat.autoReadOff', 'Turn off auto-read')
+                        : t('aiChat.autoReadOn', 'Turn on auto-read')
+                  }
+                >
+                  {autoReadEnabled ? (
+                    <Volume2 size={18} strokeWidth={1.75} />
+                  ) : (
+                    <VolumeX size={18} strokeWidth={1.75} />
+                  )}
+                </button>
+              )}
             </div>
           </div>
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto">
-            <div className="max-w-3xl mx-auto px-4 py-8">
+            <div className="max-w-5xl mx-auto px-4 py-8">
               {activeChatMessages.map((msg, index) => {
                 const isLastMessage = index === activeChatMessages.length - 1;
                 const isAiMessage = msg.role === 'ai';
@@ -1365,7 +1505,10 @@ For example: REMEMBER: preferred_language: Polish`;
                 }
 
                 return (
-                  <div key={msg.id} className={`mb-6 ${msg.role === 'user' ? 'text-right' : ''}`}>
+                  <div
+                    key={msg.id}
+                    className={`mb-6 ${msg.role === 'user' ? 'flex justify-end' : ''}`}
+                  >
                     {/* Thinking Block - 5-step progress (visible during streaming) */}
                     {isAiMessage && isStreamingThis && thinkingSteps.length > 0 && (
                       <div className="mb-2 max-w-[85%]">
@@ -1403,7 +1546,8 @@ For example: REMEMBER: preferred_language: Polish`;
                         msg.role === 'user'
                           ? 'bg-primary-600 text-white rounded-xl rounded-br-md px-4 py-3'
                           : 'text-navy-900 dark:text-slate-200'
-                      }`}
+                      } ${isRtlChatLanguage ? 'text-right' : 'text-left'}`}
+                      dir={textDirection(chatLanguage)}
                     >
                       <div className="text-[15px] leading-relaxed">
                         {isEditingThis ? (
@@ -1470,7 +1614,7 @@ For example: REMEMBER: preferred_language: Polish`;
                       {/* Voice Mode Indicator */}
                       {isAiMessage && !isStreamingThis && voiceModeEnabled && voiceSupported && (
                         <button
-                          onClick={() => speak(cleanTextForSpeech(displayContent))}
+                          onClick={() => replaySpeech(displayContent)}
                           className="mt-2 text-xs text-slate-400 dark:text-slate-500 hover:text-primary-500 flex items-center gap-1"
                           title="Odtwórz głosowo"
                         >
@@ -1581,11 +1725,7 @@ For example: REMEMBER: preferred_language: Polish`;
                           onFeedback={handleFeedback}
                           onReport={handleReport}
                           onRegenerate={handleRegenerate}
-                          onSpeak={
-                            voiceSupported
-                              ? (content) => speak(cleanTextForSpeech(content))
-                              : undefined
-                          }
+                          onSpeak={voiceSupported ? (content) => replaySpeech(content) : undefined}
                           showAlwaysVisible={true}
                         />
                       </div>
@@ -1601,7 +1741,7 @@ For example: REMEMBER: preferred_language: Polish`;
           {/* Pending Actions Banner */}
           {pendingActions.length > 0 && (
             <div className="shrink-0 p-3 bg-yellow-50 dark:bg-yellow-900/20 border-t border-yellow-200 dark:border-yellow-800">
-              <div className="max-w-3xl mx-auto">
+              <div className="max-w-5xl mx-auto">
                 {pendingActions.map((pa) => {
                   const message =
                     typeof pa.payload?.message === 'string'
@@ -1635,7 +1775,7 @@ For example: REMEMBER: preferred_language: Polish`;
           {/* Continuous Voice Mode Indicator */}
           {continuousVoiceMode && (
             <div className="shrink-0 p-2 bg-primary-50 dark:bg-primary-900/20 border-t border-primary-200 dark:border-primary-800">
-              <div className="max-w-3xl mx-auto flex items-center justify-center gap-3 text-sm">
+              <div className="max-w-5xl mx-auto flex items-center justify-center gap-3 text-sm">
                 <span
                   className={`w-3 h-3 rounded-full ${voiceState.isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-400'}`}
                 />
@@ -1663,7 +1803,7 @@ For example: REMEMBER: preferred_language: Polish`;
 
           {/* Input at bottom */}
           <div className="shrink-0 p-4 border-t border-slate-200 dark:border-navy-700">
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-5xl mx-auto">
               {!!lastError && !isStreaming && (
                 <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
                   <div className="text-xs text-amber-800 dark:text-amber-200">
@@ -1726,15 +1866,46 @@ For example: REMEMBER: preferred_language: Polish`;
       {/* Main Welcome Area - Full width, sidebar is overlay */}
       <div className="h-full flex flex-col overflow-hidden">
         {/* Header with Sidebar Toggle */}
-        <div className="shrink-0 h-14 flex items-center px-4 justify-start absolute top-0 left-0 right-0 z-10">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => toggleSidebar()}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-500 dark:text-slate-400 transition-colors"
-              title={t('aiChat.openSidebar', 'Open Sidebar')}
-            >
-              <PanelLeft size={20} />
-            </button>
+        <div className="shrink-0 h-14 flex items-center px-4 justify-end absolute top-0 left-0 right-0 z-10">
+          <div className="flex items-center gap-1">
+            {voiceSupported && (
+              <button
+                onClick={() => {
+                  // While speaking, this button must behave as immediate mute/off.
+                  if (voiceState.isSpeaking) {
+                    stopSpeaking();
+                  }
+                  const nextState = voiceState.isSpeaking ? false : !autoReadEnabled;
+                  setAIConfig({ textToSpeech: nextState } as any);
+                }}
+                data-testid="chat-autoread-button"
+                className={`p-1.5 rounded-lg transition-colors ${
+                  autoReadEnabled
+                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50/40 dark:bg-primary-900/15'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
+                }`}
+                title={
+                  voiceState.isSpeaking
+                    ? t('aiChat.muteNow', 'Mute now')
+                    : autoReadEnabled
+                      ? t('aiChat.autoReadOff', 'Turn off auto-read')
+                      : t('aiChat.autoReadOn', 'Turn on auto-read')
+                }
+                aria-label={
+                  voiceState.isSpeaking
+                    ? t('aiChat.muteNow', 'Mute now')
+                    : autoReadEnabled
+                      ? t('aiChat.autoReadOff', 'Turn off auto-read')
+                      : t('aiChat.autoReadOn', 'Turn on auto-read')
+                }
+              >
+                {autoReadEnabled ? (
+                  <Volume2 size={18} strokeWidth={1.75} />
+                ) : (
+                  <VolumeX size={18} strokeWidth={1.75} />
+                )}
+              </button>
+            )}
           </div>
         </div>
 
@@ -1746,13 +1917,17 @@ For example: REMEMBER: preferred_language: Polish`;
               {t(`aiChat.greeting.${timeContext.greetingKey}`, timeContext.greetingFallback)}
               {firstName && <span className="text-primary-600">, {firstName}</span>}
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-4 text-lg">
-              {t(`aiChat.${timeContext.subtitleKey}`, timeContext.subtitleFallback)}
+            <p
+              className={`text-slate-500 dark:text-slate-400 mt-4 text-lg transition-opacity duration-200 ${
+                subtitleFading ? 'opacity-0' : 'opacity-100'
+              }`}
+            >
+              {subtitleText}
             </p>
           </div>
 
           {/* Chat Input */}
-          <div className="w-full max-w-3xl">
+          <div className="w-full max-w-5xl">
             {!!lastError && !isStreaming && (
               <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
                 <div className="text-xs text-amber-800 dark:text-amber-200">
@@ -1788,7 +1963,7 @@ For example: REMEMBER: preferred_language: Polish`;
           </div>
 
           {/* Minimal Suggestions */}
-          <div className="w-full max-w-3xl mt-5">
+          <div className="w-full max-w-5xl mt-5">
             <SmartSuggestions
               projectId={selectedProject?.id}
               onSuggestionClick={handleSuggestionClick}
@@ -1802,56 +1977,108 @@ For example: REMEMBER: preferred_language: Polish`;
           <div className="w-full max-w-2xl mt-6 grid grid-cols-2 md:grid-cols-4 gap-2">
             {[
               {
-                icon: Brain,
-                label: t('aiChat.capabilities.deepThinking', 'Deep Thinking'),
+                icon: Search,
+                label: t('aiChat.homeCards.market.label', 'Analiza rynku'),
                 desc: t(
-                  'aiChat.capabilities.deepThinkingDesc',
-                  'Multi-step analysis with web research'
+                  'aiChat.homeCards.market.desc',
+                  'Research a market, competitors, and positioning'
                 ),
                 color: 'text-violet-500',
                 bg: 'bg-violet-50 dark:bg-violet-900/20',
-                prompt: t(
-                  'aiChat.capabilities.deepThinkingPrompt',
-                  'Analyze the biggest risk to our current strategy and suggest 3 mitigations'
-                ),
+                onClick: () => {
+                  const kickoff = t(
+                    'aiChat.homeCards.market.kickoff',
+                    'Chcę zrobić analizę rynku. Opisz proszę, jakie pytania musisz mi zadać, żeby dobrze zdefiniować: branżę, segment, kraj, klientów, konkurencję i przewagę. Zacznij od 5 pytań.'
+                  );
+                  setAIConfig({
+                    deepResearch: true,
+                    marketResearch: true,
+                    webSearch: true,
+                    coThinkerMode: null,
+                    responseStyle: 'analyst',
+                  } as any);
+                  void handleSend(kickoff);
+                },
               },
               {
-                icon: BarChart3,
-                label: t('aiChat.capabilities.scenarios', 'Scenario Modeling'),
-                desc: t('aiChat.capabilities.scenariosDesc', 'Monte Carlo ROI & what-if analysis'),
+                icon: Calculator,
+                label: t('aiChat.homeCards.finance.label', 'Analiza finansowa'),
+                desc: t('aiChat.homeCards.finance.desc', 'Analyze ROI, budgets, and scenarios'),
                 color: 'text-emerald-500',
                 bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-                prompt: t(
-                  'aiChat.capabilities.scenariosPrompt',
-                  'Run a Monte Carlo simulation for the ROI of our top initiative'
-                ),
+                onClick: () => {
+                  const kickoff = t(
+                    'aiChat.homeCards.finance.kickoff',
+                    'Chcę zrobić analizę finansową. Jakie dane mamy przeanalizować (budżet, koszty, przychody, ROI, CAPEX/OPEX)? Zadaj mi 5 pytań, a potem zaproponuj strukturę analizy.'
+                  );
+                  startModuleWithKickoff(
+                    AppView.ECONOMICS,
+                    {
+                      deepResearch: false,
+                      marketResearch: false,
+                      webSearch: false,
+                      coThinkerMode: 'competitive_analyst',
+                      responseStyle: 'analyst',
+                    },
+                    kickoff
+                  );
+                },
               },
               {
-                icon: Shield,
-                label: t('aiChat.capabilities.riskAlerts', 'Risk Alerts'),
-                desc: t('aiChat.capabilities.riskAlertsDesc', 'Predictive risk & budget warnings'),
+                icon: Wrench,
+                label: t('aiChat.homeCards.consulting.label', 'Klasyczny consulting'),
+                desc: t('aiChat.homeCards.consulting.desc', 'Use classic frameworks and tools'),
                 color: 'text-amber-500',
                 bg: 'bg-amber-50 dark:bg-amber-900/20',
-                prompt: t(
-                  'aiChat.capabilities.riskAlertsPrompt',
-                  'What are the top risks in my portfolio right now?'
-                ),
+                onClick: () => {
+                  const kickoff = t(
+                    'aiChat.homeCards.consulting.kickoff',
+                    'Chcę użyć klasycznych narzędzi consultingowych. Jaki problem rozwiązujemy i w jakim kontekście? Zadaj mi 5 pytań, a potem zaproponuj 2–3 najlepsze ramy (np. SWOT, 5 Forces, Ansoff, Value Chain).'
+                  );
+                  startModuleWithKickoff(
+                    AppView.DISCOVERY_TOOLS,
+                    {
+                      deepResearch: false,
+                      marketResearch: false,
+                      webSearch: false,
+                      coThinkerMode: 'multi_consultant',
+                      responseStyle: 'professional',
+                    },
+                    kickoff
+                  );
+                },
               },
               {
-                icon: Zap,
-                label: t('aiChat.capabilities.actions', 'Quick Actions'),
-                desc: t('aiChat.capabilities.actionsDesc', 'Create tasks, decisions & reports'),
+                icon: CheckCircle2,
+                label: t('aiChat.homeCards.digital.label', 'Transformacja cyfrowa'),
+                desc: t(
+                  'aiChat.homeCards.digital.desc',
+                  'Run licensed diagnostics and assessments'
+                ),
                 color: 'text-blue-500',
                 bg: 'bg-blue-50 dark:bg-blue-900/20',
-                prompt: t(
-                  'aiChat.capabilities.actionsPrompt',
-                  'Create a task to review our Q1 roadmap progress'
-                ),
+                onClick: () => {
+                  const kickoff = t(
+                    'aiChat.homeCards.digital.kickoff',
+                    'Chcę ocenić gotowość do transformacji cyfrowej. Jakie obszary mamy ocenić i jakie są kryteria? Zadaj mi 5 pytań i zaproponuj szybki plan diagnozy.'
+                  );
+                  startModuleWithKickoff(
+                    AppView.ASSESSMENT_OVERVIEW,
+                    {
+                      deepResearch: false,
+                      marketResearch: false,
+                      webSearch: false,
+                      coThinkerMode: 'multi_consultant',
+                      responseStyle: 'coach',
+                    },
+                    kickoff
+                  );
+                },
               },
             ].map((cap) => (
               <button
                 key={cap.label}
-                onClick={() => handleSuggestionClick(cap.prompt)}
+                onClick={cap.onClick}
                 className="group flex flex-col items-start gap-1.5 p-2.5 rounded-lg border border-slate-200/60 dark:border-white/5 bg-white/60 dark:bg-white/[0.02] hover:bg-white dark:hover:bg-white/5 hover:border-slate-300 dark:hover:border-white/10 transition-all duration-200 text-left"
               >
                 <div className={`p-1.5 rounded-md ${cap.bg}`}>
@@ -1882,15 +2109,21 @@ For example: REMEMBER: preferred_language: Polish`;
         </div>
       </div>
 
-      {/* Organization logo (if configured in Admin settings) */}
+      {/* Organization logo — visible only after the image loads successfully */}
       {!!orgLogoUrl && (
-        <div className="absolute bottom-4 right-16 sm:right-20 z-20 pointer-events-none select-none">
+        <div
+          className={`absolute bottom-4 right-16 sm:right-20 z-20 pointer-events-none select-none transition-opacity duration-300 ${
+            orgLogoLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
           <div className="rounded-xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-navy-950/40 backdrop-blur-md px-3 py-2 shadow-lg">
             <img
               src={orgLogoUrl}
               alt={currentOrganization?.name || currentUser?.organizationName || 'Organization'}
               className="h-10 sm:h-12 w-auto max-w-[190px] object-contain opacity-95"
               draggable={false}
+              onLoad={() => setOrgLogoLoaded(true)}
+              onError={() => setOrgLogoLoaded(false)}
             />
           </div>
         </div>

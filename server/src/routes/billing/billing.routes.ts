@@ -63,9 +63,12 @@ function isSchemaMissingError(err: unknown): boolean {
   );
 }
 
-function respondSchemaUnavailable(res: Response, feature: string) {
+function respondSchemaUnavailable(res: Response, _feature: string) {
   return res.status(503).json({
-    error: `${feature} not available (database schema missing or misconfigured)`,
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 }
 
@@ -733,34 +736,26 @@ router.get(
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    return res.status(503).json({
-      error: 'User seat plans are not available (no real implementation)',
-    });
+    return respondSchemaUnavailable(res, 'User seat plans');
   })
 );
 router.post(
   '/admin/user-plans',
   verifyToken,
   requireSuperAdmin,
-  asyncHandler(async (_req, res) =>
-    res.status(503).json({ success: false, error: 'User seat plans are not available' })
-  )
+  asyncHandler(async (_req, res) => respondSchemaUnavailable(res, 'User seat plans'))
 );
 router.put(
   '/admin/user-plans/:id',
   verifyToken,
   requireSuperAdmin,
-  asyncHandler(async (_req, res) =>
-    res.status(503).json({ success: false, error: 'User seat plans are not available' })
-  )
+  asyncHandler(async (_req, res) => respondSchemaUnavailable(res, 'User seat plans'))
 );
 router.delete(
   '/admin/user-plans/:id',
   verifyToken,
   requireSuperAdmin,
-  asyncHandler(async (_req, res) =>
-    res.status(503).json({ success: false, error: 'User seat plans are not available' })
-  )
+  asyncHandler(async (_req, res) => respondSchemaUnavailable(res, 'User seat plans'))
 );
 
 router.get(
@@ -768,9 +763,7 @@ router.get(
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    return res.status(503).json({
-      error: 'Billing transactions are not available (no real implementation)',
-    });
+    return respondSchemaUnavailable(res, 'Billing transactions');
   })
 );
 
@@ -1734,10 +1727,8 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      const BillingCommandService = (
-        await import('../../services/billing/BillingCommandService.js')
-      ).default;
-      const status = await BillingCommandService.getGracePeriodStatus(orgId);
+      const BillingService = await import('../../services/BillingService.js');
+      const status = await BillingService.getGracePeriodStatus(orgId);
       return res.json(status);
     } catch (error: unknown) {
       logger.error('[Billing] Grace period status error:', error);
@@ -1757,10 +1748,8 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      const BillingCommandService = (
-        await import('../../services/billing/BillingCommandService.js')
-      ).default;
-      const result = await BillingCommandService.reactivateSubscription(orgId);
+      const BillingService = await import('../../services/BillingService.js');
+      const result = await BillingService.reactivateSubscription(orgId);
 
       if (!result.success) {
         return res.status(400).json({ error: result.error });
@@ -2466,12 +2455,7 @@ router.post(
       process.env.STRIPE_KEY;
 
     if (!stripeKey) {
-      return res.status(503).json({
-        success: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
-        message: 'Stripe is not configured',
-      });
+      return respondSchemaUnavailable(res, 'Stripe');
     }
 
     try {
@@ -2494,12 +2478,7 @@ router.post(
       });
     } catch (err: any) {
       logger.error('[Billing] SetupIntent creation failed:', err);
-      return res.status(503).json({
-        success: false,
-        error: 'SERVICE_UNAVAILABLE',
-        code: 'FEATURE_UNAVAILABLE',
-        message: 'Failed to create setup intent',
-      });
+      return respondSchemaUnavailable(res, 'Stripe setup intent');
     }
   })
 );
@@ -2658,7 +2637,7 @@ router.post(
 // ==========================================
 
 router.get(
-  '/usage',
+  '/usage-records',
   verifyToken,
   validateQuery(UsageQuerySchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {

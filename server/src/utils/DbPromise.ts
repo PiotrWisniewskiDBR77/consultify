@@ -108,18 +108,14 @@ const getDb = (): Database => {
 /**
  * Promise wrapper for db.all() - returns array of rows
  */
-export function all<T = unknown>(
-  sql: string,
-  params?: unknown[],
-  options?: QueryOptions
-): Promise<T[]>;
-export function all<T = unknown>(
+export function all<T = any>(sql: string, params?: unknown[], options?: QueryOptions): Promise<T[]>;
+export function all<T = any>(
   db: Database,
   sql: string,
   params?: unknown[],
   options?: QueryOptions
 ): Promise<T[]>;
-export function all<T = unknown>(
+export function all<T = any>(
   dbOrSql: Database | string,
   sqlOrParams?: string | unknown[],
   paramsOrOptions?: unknown[] | QueryOptions,
@@ -216,18 +212,18 @@ export function all<T = unknown>(
 /**
  * Promise wrapper for db.get() - returns single row
  */
-export function get<T = unknown>(
+export function get<T = any>(
   sql: string,
   params?: unknown[],
   options?: QueryOptions
 ): Promise<T | null>;
-export function get<T = unknown>(
+export function get<T = any>(
   db: Database,
   sql: string,
   params?: unknown[],
   options?: QueryOptions
 ): Promise<T | null>;
-export function get<T = unknown>(
+export function get<T = any>(
   dbOrSql: Database | string,
   sqlOrParams?: string | unknown[],
   paramsOrOptions?: unknown[] | QueryOptions,
@@ -407,11 +403,12 @@ export async function transaction(statements: TransactionStatement[]): Promise<T
 }
 
 /**
- * Check if a table exists
+ * Check if a table exists (PostgreSQL)
  */
 export async function tableExists(tableName: string): Promise<boolean> {
-  const result = await get<{ name: string }>(
-    "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+  const result = await get<{ table_name: string }>(
+    `SELECT table_name FROM information_schema.tables 
+     WHERE table_schema = 'public' AND table_type = 'BASE TABLE' AND table_name = $1`,
     [tableName]
   );
   return result !== null;

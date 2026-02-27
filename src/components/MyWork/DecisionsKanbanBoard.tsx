@@ -90,7 +90,8 @@ interface Decision {
   reminderCount?: number;
 }
 
-type DecisionFilter = 'my' | 'awaiting';
+type DecisionFilter = 'all' | 'my' | 'awaiting';
+type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
 interface DecisionCounts {
   total: number;
@@ -100,10 +101,12 @@ interface DecisionCounts {
 
 interface DecisionsKanbanBoardProps {
   viewMode: DecisionFilter;
+  priorityFilter?: DecisionPriorityFilter;
   searchQuery: string;
   onDecisionClick?: (id: string, decisionData?: Decision) => void;
   onCreateDecision?: () => void;
   onCountsChange: (counts: DecisionCounts) => void;
+  refreshTrigger?: number;
 }
 
 /* ─── Status columns config (pipeline) ─── */
@@ -575,10 +578,12 @@ const findContainer = (containers: ContainerItems, id: UniqueIdentifier): string
 
 export const DecisionsKanbanBoard: React.FC<DecisionsKanbanBoardProps> = ({
   viewMode,
+  priorityFilter = 'all',
   searchQuery,
   onDecisionClick,
   onCreateDecision,
   onCountsChange,
+  refreshTrigger,
 }) => {
   const { t } = useTranslation();
   const { currentUser } = useAppStore();
@@ -622,12 +627,18 @@ export const DecisionsKanbanBoard: React.FC<DecisionsKanbanBoardProps> = ({
 
   useEffect(() => {
     fetchDecisions();
-  }, [fetchDecisions]);
+  }, [fetchDecisions, refreshTrigger]);
 
   /* ─── Filtering ─── */
 
   const filteredDecisions = useMemo(() => {
     let result = decisions;
+    const userId = currentUser?.id;
+
+    const isMineToDecide = (d: Decision) => Boolean(userId) && d.decisionOwnerId === userId;
+    const isMyRequest = (d: Decision) =>
+      Boolean(userId) && d.requestedById === userId && d.decisionOwnerId !== userId;
+    const isRelevantToMe = (d: Decision) => isMineToDecide(d) || isMyRequest(d);
 
     // Filter by search
     if (searchQuery) {
@@ -640,13 +651,22 @@ export const DecisionsKanbanBoard: React.FC<DecisionsKanbanBoardProps> = ({
 
     // Filter by view mode
     if (viewMode === 'my') {
-      result = result.filter((d) => d.decisionOwnerId === currentUser?.id);
+      result = result.filter(isMineToDecide);
     } else if (viewMode === 'awaiting') {
-      result = result.filter((d) => d.decisionOwnerId !== currentUser?.id);
+      result = result.filter(isMyRequest);
+    } else {
+      result = result.filter(isRelevantToMe);
+    }
+
+    // Filter by priority
+    if (priorityFilter !== 'all') {
+      result = result.filter(
+        (d) => String(d.priority || 'MEDIUM').toUpperCase() === String(priorityFilter).toUpperCase()
+      );
     }
 
     return result;
-  }, [decisions, searchQuery, viewMode, currentUser?.id]);
+  }, [decisions, searchQuery, viewMode, priorityFilter, currentUser?.id]);
 
   // Rebuild containerItems when filtered decisions change (but NOT during an active drag)
   useEffect(() => {
@@ -658,10 +678,17 @@ export const DecisionsKanbanBoard: React.FC<DecisionsKanbanBoardProps> = ({
   /* ─── Counts reporting ─── */
 
   useEffect(() => {
-    const myCount = decisions.filter((d) => d.decisionOwnerId === currentUser?.id).length;
-    const awaitingCount = decisions.filter((d) => d.decisionOwnerId !== currentUser?.id).length;
+    const userId = currentUser?.id;
+    const isOpen = (d: Decision) =>
+      ['PENDING', 'ESCALATED'].includes(String(d.status || '').toUpperCase());
+    const myCount = decisions.filter(
+      (d) => userId && d.decisionOwnerId === userId && isOpen(d)
+    ).length;
+    const awaitingCount = decisions.filter(
+      (d) => userId && d.requestedById === userId && d.decisionOwnerId !== userId && isOpen(d)
+    ).length;
     onCountsChange({
-      total: decisions.length,
+      total: myCount + awaitingCount,
       my: myCount,
       awaiting: awaitingCount,
     });

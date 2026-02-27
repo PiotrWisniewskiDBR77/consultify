@@ -17,82 +17,62 @@ let readPool: Pool | null = null;
 let initDbPromise: Promise<void> | null = null;
 const SLOW_QUERY_THRESHOLD_MS = 1000;
 
+function isDbReadOnlyEnabled(): boolean {
+  const v = String(process.env.DB_READONLY || '')
+    .trim()
+    .toLowerCase();
+  if (!v) return false;
+  return v === '1' || v === 'true' || v === 'yes' || v === 'on';
+}
+
+function looksLikeWriteQuery(sql: string): boolean {
+  const s = String(sql || '')
+    .trim()
+    .toLowerCase();
+  // Strip leading SQL comments (common in migrations / multi-statement scripts)
+  const cleaned = s.replace(/^(?:\s*--.*\n|\s*\/\*[\s\S]*?\*\/\s*)+/g, '').trim();
+
+  // Hard block any obvious mutating keywords anywhere.
+  // We keep it conservative; false positives are acceptable in staging read-only.
+  if (
+    /\b(insert|update|delete|upsert|merge|truncate|create|alter|drop|grant|revoke|comment|vacuum|analyze|reindex)\b/.test(
+      cleaned
+    )
+  )
+    return true;
+
+  // Non-mutating common statements
+  if (cleaned.startsWith('select')) return false;
+  if (cleaned.startsWith('with')) return false; // assume CTE is read-only unless it contains mutating keywords above
+  if (cleaned.startsWith('show') || cleaned.startsWith('explain') || cleaned.startsWith('describe'))
+    return false;
+
+  // Default: treat as write/unsafe.
+  return true;
+}
+
+function enforceReadOnly(sql: string): void {
+  if (!isDbReadOnlyEnabled()) return;
+  if (!looksLikeWriteQuery(sql)) return;
+  const err: any = new Error(
+    'DB is in read-only mode (DB_READONLY=1). Blocked a write query. Disable DB_READONLY to proceed.'
+  );
+  err.code = 'DB_READONLY';
+  throw err;
+}
+
 /**
  * Postgres boolean-flag normalization for legacy SQLite-style 0/1 queries.
  *
  * Some tables use `BOOLEAN` (true/false), while older code paths still emit `0/1`.
  * We normalize on the SQL adapter layer to avoid DB-level custom operators/casts.
  */
-const BOOLEAN_IS_ACTIVE_TABLES = new Set<string>([
-  'ai_budgets',
-  'ai_conversation_context',
-  'ai_instructions_org',
-  'ai_instructions_system',
-  'ai_model_permissions',
-  'ai_playbook_templates',
-  'ai_policies',
-  'ai_prompt_blocks',
-  'ai_system_prompts',
-  'api_keys',
-  'approval_workflows',
-  'assessment_frameworks',
-  'assessment_questions',
-  'business_metrics',
-  'content_categories',
-  'content_tags',
-  'custom_roles',
-  'customer_lifecycle_stages',
-  'customer_success_playbooks',
-  'dashboard_widgets',
-  'dlp_policies',
-  'global_strategies',
-  'integration_api_keys',
-  'integration_providers',
-  'integration_webhooks',
-  'knowledge_documents',
-  'kpi_definitions',
-  'llm_providers',
-  'llm_tier_assignments',
-  'locations',
-  'organization_memory',
-  'management_report_templates',
-  'mobile_devices',
-  'module_help',
-  'notification_templates',
-  'onboarding_tooltips',
-  'onboarding_tours',
-  'partner_campaign_links',
-  'partner_discount_config',
-  'partner_learning_modules',
-  'partner_resources',
-  'permission_definitions',
-  'pmo_standards',
-  'report_templates',
-  'retention_policies',
-  'sandbox_projects',
-  'sandbox_templates',
-  'scim_group_mappings',
-  'scim_service_providers',
-  'settings_templates',
-  'spending_alerts',
-  'sub_processors',
-  'supported_locales',
-  'tools',
-  'user_role_assignments',
-  'webauthn_credentials',
-  'white_label_assets',
-]);
+// IMPORTANT: Only include tables whose `is_active` column is actually BOOLEAN in Postgres.
+// Otherwise we can create `integer = boolean` errors by rewriting `is_active = 1` → `TRUE`.
+const BOOLEAN_IS_ACTIVE_TABLES = new Set<string>(['initiative_section_types', 'llm_providers']);
 
-const BOOLEAN_IS_DEFAULT_TABLES = new Set<string>([
-  'custom_dashboards',
-  'custom_roles',
-  'llm_providers',
-  'management_report_approval_presets',
-  'management_report_templates',
-  'payment_methods',
-  'report_templates',
-  'user_dashboard_layouts',
-]);
+// IMPORTANT: Only include tables whose `is_default` column is actually BOOLEAN in Postgres.
+const BOOLEAN_IS_DEFAULT_TABLES = new Set<string>(['llm_providers']);
 
 function findPrimaryTableForBooleanFlags(sql: string): string | null {
   const cleaned = sql.trim();
@@ -143,7 +123,12 @@ function getPool(): Pool {
     });
 
     // Initialize schema lazily if needed - must complete before first query
-    if (process.env.NODE_ENV !== 'test') {
+    const skipSchemaInit =
+      process.env.DB_MANAGED_SCHEMA === 'false' ||
+      process.env.DB_MANAGED_SCHEMA === '0' ||
+      process.env.DB_MANAGED_SCHEMA === 'off';
+
+    if (process.env.NODE_ENV !== 'test' && !skipSchemaInit) {
       initDbPromise = initDb()
         .then(() => {
           logger.info('[Postgres] Schema initialization completed successfully');
@@ -156,6 +141,9 @@ function getPool(): Pool {
           throw err;
         });
     } else {
+      if (skipSchemaInit) {
+        logger.warn('[Postgres] DB_MANAGED_SCHEMA is disabled; skipping initDb()');
+      }
       initDbPromise = Promise.resolve();
     }
   }
@@ -213,6 +201,13 @@ async function executeWithLogging<T>(
  * Helper to convert SQLite params (?) to Postgres params ($1, $2)
  */
 function adaptQuery(sql: string): string {
+  // SQLite transaction flavor → Postgres
+  // SQLite uses BEGIN IMMEDIATE/EXCLUSIVE to acquire a write lock early.
+  // Postgres doesn't support those modifiers; BEGIN is sufficient.
+  if (/^\s*BEGIN\s+(IMMEDIATE|EXCLUSIVE)\s*;?\s*$/i.test(sql)) {
+    return 'BEGIN';
+  }
+
   // Handle PRAGMA table_info(table_name) -> Postgres equivalent
   const pragmaMatch = sql.match(/^\s*PRAGMA\s+table_info\(["']?(\w+)["']?\)\s*$/i);
   if (pragmaMatch) {
@@ -225,10 +220,43 @@ function adaptQuery(sql: string): string {
     return 'SELECT 1 WHERE false'; // No-op query
   }
 
+  // sqlite_master -> information_schema (PostgreSQL)
+  let adapted = sql;
+  if (adapted.includes('sqlite_master')) {
+    adapted = adapted.replace(
+      /SELECT\s+name\s+FROM\s+sqlite_master\s+WHERE\s+type\s*=\s*['"]table['"]\s+AND\s+name\s*=\s*\?/gi,
+      "SELECT table_name as name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name = $1"
+    );
+    adapted = adapted.replace(
+      /SELECT\s+name\s+FROM\s+sqlite_master\s+WHERE\s+type\s*=\s*['"]table['"]\s+AND\s+name\s+NOT\s+LIKE\s+['"]sqlite_%['"]\s*(ORDER\s+BY\s+name)?/gi,
+      "SELECT table_name as name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name NOT LIKE 'sqlite_%' ORDER BY table_name"
+    );
+    adapted = adapted.replace(
+      /SELECT\s+COUNT\s*\(\s*\*\s*\)\s+as\s+(\w+)\s+FROM\s+sqlite_master\s+WHERE\s+type\s*=\s*['"]table['"]\s+AND\s+name\s*=\s*['"](\w+)['"]/gi,
+      "SELECT COUNT(*)::int as $1 FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='$2'"
+    );
+    adapted = adapted.replace(
+      /SELECT\s+COUNT\s*\(\s*\*\s*\)\s+as\s+(\w+)\s+FROM\s+sqlite_master\s+WHERE\s+type\s*=\s*\?/gi,
+      "SELECT COUNT(*)::int as $1 FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'"
+    );
+    adapted = adapted.replace(
+      /SELECT\s+COUNT\s*\(\s*\*\s*\)\s+as\s+count\s+FROM\s+sqlite_master\s+WHERE\s+type\s*=\s*['"]table['"]\s+AND\s+name\s*=\s*['"](\w+)['"]/gi,
+      "SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='$1'"
+    );
+    adapted = adapted.replace(
+      /SELECT\s+1\s+FROM\s+sqlite_master\s+WHERE\s+type\s*=\s*['"]table['"]\s+AND\s+name\s*=\s*['"](\w+)['"]/gi,
+      "SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='$1'"
+    );
+    adapted = adapted.replace(
+      /FROM\s+sqlite_master\s+WHERE\s+type\s*=\s*['"]table['"]/gi,
+      "FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'"
+    );
+  }
+
   let paramIndex = 1;
   // Replace ? with $1, $2, etc.
   // Also replace SQLite specific functions if possible
-  let adapted = sql.replace(/\?/g, () => `$${paramIndex++}`);
+  adapted = adapted.replace(/\?/g, () => `$${paramIndex++}`);
 
   // Replace datetime('now') and datetime("now") with NOW()
   adapted = adapted.replace(/datetime\(['"]now['"]\)/g, 'NOW()');
@@ -509,6 +537,13 @@ class PostgresDatabase implements IDatabase {
           params = args.slice(0, -1) as unknown[];
         }
 
+        try {
+          enforceReadOnly(adaptedSql);
+        } catch (e: any) {
+          if (callback) callback(e);
+          return;
+        }
+
         executeWithLogging<unknown>(getPool, adaptedSql, params, 'RUN')
           .then((res) => {
             if (callback) callback.call({ changes: res.rowCount, lastID: null }, null);
@@ -536,6 +571,16 @@ class PostgresDatabase implements IDatabase {
     params = params || [];
 
     const adaptedSql = adaptQuery(sql);
+
+    try {
+      enforceReadOnly(adaptedSql);
+    } catch (e: any) {
+      if (callback) {
+        callback(e);
+        return this;
+      }
+      return Promise.reject(e);
+    }
 
     const promise = executeWithLogging<unknown>(getPool, adaptedSql, params || [], 'RUN')
       .then((res) => {
@@ -630,6 +675,15 @@ class PostgresDatabase implements IDatabase {
   }
 
   exec(sql: string, callback?: (err: Error | null) => void): this | Promise<void> {
+    try {
+      enforceReadOnly(sql);
+    } catch (e: any) {
+      if (callback) {
+        callback(e);
+        return this;
+      }
+      return Promise.reject(e);
+    }
     const promise = executeWithLogging(getPool, sql, [], 'RUN')
       .then(() => {
         if (callback) callback(null);
@@ -686,6 +740,7 @@ class PostgresDatabase implements IDatabase {
 
   async query<T = unknown>(text: string, params?: unknown[]): Promise<QueryResult<T>> {
     const adapted = adaptQuery(text);
+    enforceReadOnly(adapted);
     try {
       const result = await executeWithLogging<T>(
         getPool, // Generic query defaults to primary often used for writes too
@@ -704,13 +759,25 @@ class PostgresDatabase implements IDatabase {
   }
 }
 
-// Test connection with retry
+// Test connection with retry; verify we are connected to PostgreSQL (not SQLite or other)
 async function testConnection(retries = 3, delay = 2000): Promise<boolean> {
   for (let i = 0; i < retries; i++) {
     try {
       logger.info(`[Postgres] Testing connection (attempt ${i + 1}/${retries})...`);
       const result = await getPool().query('SELECT NOW() as current_time');
-      logger.info('[Postgres] Connection test successful:', result.rows[0]);
+      const versionResult = await getPool().query<{ version: string }>(
+        'SELECT version() as version'
+      );
+      const version = String(versionResult?.rows?.[0]?.version || '').toUpperCase();
+      if (!version.includes('POSTGRESQL')) {
+        logger.error(
+          '[Postgres] CRITICAL: Connected database is NOT PostgreSQL. version()=' +
+            version.substring(0, 80)
+        );
+        logger.error('[Postgres] This application requires PostgreSQL. Check DATABASE_URL.');
+        process.exit(1);
+      }
+      logger.info('[Postgres] Connection test successful (PostgreSQL verified):', result.rows[0]);
       return true;
     } catch (err: any) {
       logger.error(
@@ -988,7 +1055,8 @@ export async function initDb(): Promise<void> {
                 FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL
             )`);
 
-    // Ensure knowledge_docs has project_id/organization_id on existing DBs (Railway etc.)
+    // Ensure knowledge_docs has required columns on existing DBs (Railway etc.)
+    // NOTE: RAG + tool packs rely on `source_type`, `metadata`, `chunk_count`, and timestamps.
     const ensureKnowledgeDocColumn = async (col: string, ddl: string) => {
       if (!(await columnExists('knowledge_docs', col))) {
         await query(`ALTER TABLE knowledge_docs ADD COLUMN ${ddl}`);
@@ -996,6 +1064,18 @@ export async function initDb(): Promise<void> {
     };
     await ensureKnowledgeDocColumn('organization_id', 'organization_id TEXT');
     await ensureKnowledgeDocColumn('project_id', 'project_id TEXT');
+    await ensureKnowledgeDocColumn('source_type', 'source_type TEXT');
+    await ensureKnowledgeDocColumn('file_hash', 'file_hash TEXT');
+    await ensureKnowledgeDocColumn('chunk_count', 'chunk_count INTEGER DEFAULT 0');
+    await ensureKnowledgeDocColumn('metadata', 'metadata TEXT');
+    await ensureKnowledgeDocColumn('indexed_at', 'indexed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+    await ensureKnowledgeDocColumn('updated_at', 'updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+    // Optional content classification (used by ops and filtering)
+    await ensureKnowledgeDocColumn('category', 'category TEXT');
+    await ensureKnowledgeDocColumn('tags', 'tags TEXT');
+    // Lightweight versioning
+    await ensureKnowledgeDocColumn('version', 'version INTEGER DEFAULT 1');
+    await ensureKnowledgeDocColumn('parent_doc_id', 'parent_doc_id TEXT');
 
     // Knowledge Chunks
     await query(`CREATE TABLE IF NOT EXISTS knowledge_chunks(
@@ -1007,6 +1087,18 @@ export async function initDb(): Promise<void> {
                 FOREIGN KEY(doc_id) REFERENCES knowledge_docs(id) ON DELETE CASCADE
             )`);
 
+    const ensureKnowledgeChunkColumn = async (col: string, ddl: string) => {
+      if (!(await columnExists('knowledge_chunks', col))) {
+        await query(`ALTER TABLE knowledge_chunks ADD COLUMN ${ddl}`);
+      }
+    };
+    // Required for pack-scoped retrieval and provenance
+    await ensureKnowledgeChunkColumn('metadata', 'metadata TEXT');
+    await ensureKnowledgeChunkColumn(
+      'created_at',
+      'created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP'
+    );
+
     // LLM Providers
     await query(`CREATE TABLE IF NOT EXISTS llm_providers(
                 id TEXT PRIMARY KEY,
@@ -1016,10 +1108,28 @@ export async function initDb(): Promise<void> {
                 endpoint TEXT,
                 model_id TEXT,
                 cost_per_1k REAL DEFAULT 0,
-                is_active INTEGER DEFAULT 1,
-                is_default INTEGER DEFAULT 0,
+                is_active BOOLEAN DEFAULT TRUE,
+                is_default BOOLEAN DEFAULT FALSE,
                 visibility TEXT DEFAULT 'admin'
             )`);
+
+    // Ensure boolean flags are correct on older DBs (avoid integer/boolean operator errors)
+    try {
+      await query(
+        `ALTER TABLE llm_providers
+         ALTER COLUMN is_active TYPE BOOLEAN USING (CASE WHEN (is_active::text) IN ('1', 't', 'true', 'y', 'yes', 'on') THEN TRUE ELSE FALSE END)`
+      );
+    } catch {
+      /* ignore: column may already be boolean or missing */
+    }
+    try {
+      await query(
+        `ALTER TABLE llm_providers
+         ALTER COLUMN is_default TYPE BOOLEAN USING (CASE WHEN (is_default::text) IN ('1', 't', 'true', 'y', 'yes', 'on') THEN TRUE ELSE FALSE END)`
+      );
+    } catch {
+      /* ignore */
+    }
 
     // Teams
     await query(`CREATE TABLE IF NOT EXISTS teams(
@@ -1670,6 +1780,8 @@ export async function initDb(): Promise<void> {
             resource_tools TEXT DEFAULT '[]',
             tags TEXT DEFAULT '[]',
             target_state TEXT DEFAULT '{}',
+            baseline_version INTEGER DEFAULT 0,
+            schedule_baseline_id TEXT,
             report_id TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -1702,6 +1814,125 @@ export async function initDb(): Promise<void> {
     await ensureColumn('created_from', 'created_from TEXT');
     await ensureColumn('created_by', 'created_by TEXT');
     await ensureColumn('updated_by', 'updated_by TEXT');
+    await ensureColumn('baseline_version', 'baseline_version INTEGER DEFAULT 0');
+    await ensureColumn('schedule_baseline_id', 'schedule_baseline_id TEXT');
+
+    // Initiative timeline tables (baseline snapshots + milestones + dependencies)
+    await query(`CREATE TABLE IF NOT EXISTS initiative_schedule_baselines (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            initiative_id TEXT NOT NULL,
+            version INTEGER NOT NULL,
+            status_at_baseline TEXT,
+            planned_start_date TIMESTAMP,
+            planned_end_date TIMESTAMP,
+            snapshot TEXT NOT NULL DEFAULT '{}',
+            created_by TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+    await query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_ini_schedule_baselines_unique
+        ON initiative_schedule_baselines(initiative_id, version)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_ini_schedule_baselines_org
+        ON initiative_schedule_baselines(organization_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_ini_schedule_baselines_initiative
+        ON initiative_schedule_baselines(initiative_id)`);
+
+    // Decisions registry (required by initiative gates and MyWork integrations).
+    await query(`CREATE TABLE IF NOT EXISTS decisions (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            project_id TEXT,
+            initiative_id TEXT,
+            task_id TEXT,
+            title TEXT NOT NULL,
+            type TEXT DEFAULT 'APPROVAL',
+            decision_maker_id TEXT,
+            created_by TEXT,
+            status TEXT DEFAULT 'pending',
+            options TEXT DEFAULT '[]',
+            criteria TEXT,
+            deadline TIMESTAMP,
+            escalation_deadline TIMESTAMP,
+            selected_option TEXT,
+            decision_rationale TEXT,
+            decided_at TIMESTAMP,
+            source_type TEXT,
+            source_id TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL,
+            FOREIGN KEY(initiative_id) REFERENCES initiatives(id) ON DELETE SET NULL,
+            FOREIGN KEY(task_id) REFERENCES tasks(id) ON DELETE SET NULL,
+            FOREIGN KEY(decision_maker_id) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_decisions_org ON decisions(organization_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_decisions_project ON decisions(project_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_decisions_initiative ON decisions(initiative_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_decisions_status ON decisions(status)`);
+
+    await query(`CREATE TABLE IF NOT EXISTS initiative_milestones (
+            id TEXT PRIMARY KEY,
+            initiative_id TEXT NOT NULL,
+            organization_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            target_date DATE,
+            actual_date DATE,
+            status TEXT DEFAULT 'PENDING',
+            order_index INTEGER DEFAULT 0,
+            is_gate INTEGER DEFAULT 0,
+            gate_decision_id TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_by TEXT,
+            FOREIGN KEY(initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(gate_decision_id) REFERENCES decisions(id) ON DELETE SET NULL
+        )`);
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_milestones_initiative ON initiative_milestones(initiative_id)`
+    );
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_milestones_org ON initiative_milestones(organization_id)`
+    );
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_milestones_target_date ON initiative_milestones(target_date)`
+    );
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_milestones_status ON initiative_milestones(status)`
+    );
+
+    await query(`CREATE TABLE IF NOT EXISTS initiative_dependencies (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            project_id TEXT,
+            from_initiative_id TEXT NOT NULL,
+            to_initiative_id TEXT NOT NULL,
+            type TEXT DEFAULT 'FINISH_TO_START',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_by TEXT,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL,
+            FOREIGN KEY(from_initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE,
+            FOREIGN KEY(to_initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE
+        )`);
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_initiative_dependencies_org ON initiative_dependencies(organization_id)`
+    );
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_initiative_dependencies_project ON initiative_dependencies(project_id)`
+    );
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_initiative_dependencies_from ON initiative_dependencies(from_initiative_id)`
+    );
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_initiative_dependencies_to ON initiative_dependencies(to_initiative_id)`
+    );
 
     // Task Dependencies
     await query(`CREATE TABLE IF NOT EXISTS task_dependencies(
@@ -1747,6 +1978,116 @@ export async function initDb(): Promise<void> {
             is_active INTEGER DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
+
+    // SaaS persistence: ensure subscription_plans is compatible with current billing/quota code.
+    // Older schemas used TEXT flags and omitted quota columns.
+    if (await tableExists('subscription_plans')) {
+      const ensurePlanCol = async (column: string, ddl: string) => {
+        if (!(await columnExists('subscription_plans', column))) {
+          await querySafe(
+            `ALTER TABLE subscription_plans ADD COLUMN ${ddl}`,
+            [],
+            `subscription_plans.${column}`
+          );
+        }
+      };
+
+      await ensurePlanCol('token_limit', 'token_limit INTEGER');
+      await ensurePlanCol('storage_limit_gb', 'storage_limit_gb REAL');
+      await ensurePlanCol('memory_limit_mb', 'memory_limit_mb INTEGER');
+      await ensurePlanCol('cpu_quota_percent', 'cpu_quota_percent REAL');
+      await ensurePlanCol('max_concurrent_ai_jobs', 'max_concurrent_ai_jobs INTEGER');
+      await ensurePlanCol('token_overage_rate', 'token_overage_rate REAL');
+      await ensurePlanCol('storage_overage_rate', 'storage_overage_rate REAL');
+      await ensurePlanCol('stripe_price_id', 'stripe_price_id TEXT');
+
+      // Fix legacy TEXT flags: is_active/is_public/sort_order/updated_at sometimes existed as TEXT.
+      try {
+        const typeRes = await getPool().query(
+          `SELECT column_name, data_type
+           FROM information_schema.columns
+           WHERE table_schema='public' AND table_name='subscription_plans'
+             AND column_name IN ('is_active','is_public','sort_order')`
+        );
+        const types = new Map<string, string>(
+          (typeRes.rows || []).map((r: any) => [String(r.column_name), String(r.data_type)])
+        );
+
+        if (types.get('is_active') === 'text') {
+          await querySafe(
+            `ALTER TABLE subscription_plans
+             ALTER COLUMN is_active TYPE INTEGER
+             USING (
+               CASE
+                 WHEN COALESCE(is_active,'') = '' THEN 1
+                 WHEN lower(is_active) IN ('1','t','true','y','yes','on') THEN 1
+                 ELSE 0
+               END
+             )`,
+            [],
+            'subscription_plans.is_active type cast'
+          );
+          await querySafe(
+            `ALTER TABLE subscription_plans ALTER COLUMN is_active SET DEFAULT 1`,
+            [],
+            'subscription_plans.is_active default'
+          );
+        }
+
+        if (types.get('is_public') === 'text') {
+          await querySafe(
+            `ALTER TABLE subscription_plans
+             ALTER COLUMN is_public TYPE INTEGER
+             USING (
+               CASE
+                 WHEN COALESCE(is_public,'') = '' THEN 1
+                 WHEN lower(is_public) IN ('1','t','true','y','yes','on') THEN 1
+                 ELSE 0
+               END
+             )`,
+            [],
+            'subscription_plans.is_public type cast'
+          );
+          await querySafe(
+            `ALTER TABLE subscription_plans ALTER COLUMN is_public SET DEFAULT 1`,
+            [],
+            'subscription_plans.is_public default'
+          );
+        }
+
+        if (types.get('sort_order') === 'text') {
+          await querySafe(
+            `ALTER TABLE subscription_plans
+             ALTER COLUMN sort_order TYPE INTEGER
+             USING (
+               CASE
+                 WHEN sort_order ~ '^[0-9]+$' THEN sort_order::integer
+                 ELSE 0
+               END
+             )`,
+            [],
+            'subscription_plans.sort_order type cast'
+          );
+          await querySafe(
+            `ALTER TABLE subscription_plans ALTER COLUMN sort_order SET DEFAULT 0`,
+            [],
+            'subscription_plans.sort_order default'
+          );
+        }
+
+        // Ensure existing rows default to active/public if legacy values were NULL/empty
+        await querySafe(
+          `UPDATE subscription_plans
+           SET is_active = COALESCE(is_active, 1),
+               is_public = COALESCE(is_public, 1),
+               sort_order = COALESCE(sort_order, 0)`,
+          [],
+          'subscription_plans normalize legacy nulls'
+        );
+      } catch (e: any) {
+        logger.debug('[Postgres] subscription_plans compatibility patch skipped:', e?.message || e);
+      }
+    }
 
     // Organization Billing
     await query(`CREATE TABLE IF NOT EXISTS organization_billing(

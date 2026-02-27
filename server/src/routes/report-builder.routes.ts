@@ -31,6 +31,7 @@ import {
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { default as defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { exportReportToNotion } from '../services/ai/integrationHubService.js';
 import { upsertAssessmentReportForBuilder } from '../services/assessmentReportBuilderLinkService.js';
 import notificationService from '../services/notificationService.js';
 import {
@@ -42,6 +43,7 @@ import ReportBuilderCommentsService from '../services/reportBuilderCommentsServi
 import ReportBuilderService from '../services/reportBuilderService.js';
 import ReportGenerationService from '../services/reportGenerationService.js';
 import { checkQualityGates } from '../services/reportQualityGatesService.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 // ==========================================
@@ -117,6 +119,38 @@ function getAuthContext(req: any): { userId: string; organizationId: string } {
   const userId = req?.user?.id || req?.userId || '';
   const organizationId = req?.user?.organizationId || req?.organizationId || 'org-default';
   return { userId, organizationId };
+}
+
+async function getNotionConfigForUser(userId: string): Promise<{
+  apiKey: string;
+  parentPageId?: string;
+  databaseId?: string;
+} | null> {
+  const prefKey = 'settings:integrations';
+  const row = await dbGet<{ preferences_data: string }>(
+    `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+    [userId, prefKey],
+    { fallback: true } as any
+  );
+
+  if (!row?.preferences_data) return null;
+  let integrations: any[] = [];
+  try {
+    integrations = JSON.parse(row.preferences_data);
+  } catch {
+    integrations = [];
+  }
+
+  const notion = integrations.find((i) => String(i?.provider || '').toLowerCase() === 'notion');
+  if (!notion || notion.status !== 'active') return null;
+
+  const cfg = notion.config || {};
+  const apiKey = String(cfg.apiKey || '').trim();
+  const parentPageId = cfg.parentPageId ? String(cfg.parentPageId) : undefined;
+  const databaseId = cfg.databaseId ? String(cfg.databaseId) : undefined;
+  if (!apiKey) return null;
+  if (!parentPageId && !databaseId) return null;
+  return { apiKey, parentPageId, databaseId };
 }
 
 // Helper to safely extract string from params (handles string | string[])
@@ -551,6 +585,120 @@ router.get('/sources/tool/:sourceId', async (req: Request, res: Response, next: 
   }
 });
 
+/**
+ * GET /api/report-builder/sources/upload_bundle
+ * List uploaded document bundles available for draft report generation
+ */
+router.get('/sources/upload_bundle', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { organizationId } = getAuthContext(req);
+    const { getDatabase } = await import('../database/index.js');
+    const db = getDatabase();
+
+    const imports = await new Promise<any[]>((resolve, reject) => {
+      db.all(
+        `SELECT id, source_file_name, source_format, detected_framework, detection_confidence,
+                status, created_at, updated_at, processed_at, coverage_percent
+         FROM imported_reports
+         WHERE organization_id = ?
+           AND status IN ('ready_for_review', 'assessment_created', 'initiatives_created', 'completed')
+         ORDER BY COALESCE(processed_at, updated_at, created_at) DESC
+         LIMIT 100`,
+        [organizationId],
+        (err: Error | null, rows: any[]) => {
+          if (err) reject(err);
+          else resolve(rows || []);
+        }
+      );
+    });
+
+    const sources = imports.map((item) => ({
+      id: item.id,
+      sourceType: 'UPLOAD_BUNDLE',
+      name: item.source_file_name || 'Uploaded bundle',
+      status: item.status || 'ready_for_review',
+      framework: item.detected_framework || 'UPLOAD',
+      sourceFormat: item.source_format || 'unknown',
+      detectionConfidence: Number(item.detection_confidence || 0),
+      coveragePercent: Number(item.coverage_percent || 0),
+      processedAt: item.processed_at || null,
+      createdAt: item.created_at || null,
+      updatedAt: item.updated_at || null,
+    }));
+
+    res.json({ sources });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error listing upload bundle sources:', err);
+    next(err);
+  }
+});
+
+/**
+ * GET /api/report-builder/sources/upload_bundle/:sourceId
+ * Get uploaded bundle source data for report generation
+ */
+router.get(
+  '/sources/upload_bundle/:sourceId',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const sourceId = paramStr(req.params.sourceId);
+      const { organizationId } = getAuthContext(req);
+      const { getDatabase } = await import('../database/index.js');
+      const db = getDatabase();
+
+      const row = await new Promise<any>((resolve, reject) => {
+        db.get(
+          `SELECT id, source_file_name, source_file_size, source_format, detected_framework,
+                  detection_confidence, extracted_data_json, document_metadata_json, canonical_markdown,
+                  auto_summary, coverage_percent, status, created_at, updated_at, processed_at
+           FROM imported_reports
+           WHERE id = ? AND organization_id = ?`,
+          [sourceId, organizationId],
+          (err: Error | null, item: any) => {
+            if (err) reject(err);
+            else resolve(item || null);
+          }
+        );
+      });
+
+      if (!row) {
+        return res.status(404).json({ error: 'Upload bundle not found' });
+      }
+
+      const safeJsonParse = (value: string | null | undefined, fallback: any) => {
+        if (!value) return fallback;
+        try {
+          return JSON.parse(value);
+        } catch {
+          return fallback;
+        }
+      };
+
+      res.json({
+        id: row.id,
+        sourceType: 'UPLOAD_BUNDLE',
+        name: row.source_file_name || 'Uploaded bundle',
+        status: row.status || 'ready_for_review',
+        framework: row.detected_framework || 'UPLOAD',
+        sourceFormat: row.source_format || 'unknown',
+        sourceFileSize: Number(row.source_file_size || 0),
+        detectionConfidence: Number(row.detection_confidence || 0),
+        coveragePercent: Number(row.coverage_percent || 0),
+        summary: row.auto_summary || null,
+        canonicalMarkdown: row.canonical_markdown || null,
+        metadata: safeJsonParse(row.document_metadata_json, {}),
+        extractedData: safeJsonParse(row.extracted_data_json, null),
+        processedAt: row.processed_at || null,
+        createdAt: row.created_at || null,
+        updatedAt: row.updated_at || null,
+      });
+    } catch (err) {
+      logger.error('[ReportBuilder] Error getting upload bundle source:', err);
+      next(err);
+    }
+  }
+);
+
 // ==========================================
 // TEMPLATE MARKETPLACE ENDPOINTS
 // ==========================================
@@ -971,7 +1119,7 @@ router.delete(
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { userId, organizationId } = getAuthContext(req);
-    const { sourceType, sourceId, title, description, templateId, config } = req.body;
+    const { sourceType, sourceId, sourceName, title, description, templateId, config } = req.body;
 
     if (!sourceType || !sourceId || !title) {
       return res.status(400).json({ error: 'sourceType, sourceId, and title are required' });
@@ -981,6 +1129,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       organizationId,
       sourceType: sourceType.toUpperCase(),
       sourceId,
+      sourceName,
       title,
       description,
       config:
@@ -2394,6 +2543,69 @@ const writeReportBuilderDocx = async (report: any, sections: any[], filePath: st
  * GET /api/report-builder/:id/export/pdf
  * Export report as PDF
  */
+router.post('/:id/export/notion', async (req: Request, res: Response) => {
+  try {
+    const id = paramStr(req.params.id);
+    const { userId, organizationId } = getAuthContext(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const reportData = await ReportBuilderService.getReport(id, organizationId);
+    if (!reportData) return res.status(404).json({ error: 'Report not found' });
+
+    const notionConfig = await getNotionConfigForUser(userId);
+    if (!notionConfig) {
+      return res.status(400).json({
+        error: 'Notion integration not configured',
+        hint: 'Configure Notion in Settings → Integrations (apiKey + parentPageId/databaseId)',
+      });
+    }
+
+    const sections = (reportData.sections || [])
+      .filter((s: any) => s.enabled !== false)
+      .sort((a: any, b: any) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
+      .map((s: any) => ({
+        title: String(s.title || s.sectionKey || 'Section'),
+        content: String(s.editedContent || s.generatedContent || ''),
+      }));
+
+    const result = await exportReportToNotion(
+      {
+        reportId: id,
+        title: reportData.report.title || 'Report',
+        description: reportData.report.description || undefined,
+        sections,
+        metadata: {
+          createdAt: reportData.report.createdAt,
+          createdBy: reportData.report.createdBy,
+          organizationId,
+          sourceType: reportData.report.sourceType,
+          sourceId: reportData.report.sourceId,
+        },
+      },
+      notionConfig
+    );
+
+    if (!result.success || !result.url) {
+      return res.status(500).json({ error: result.error || 'Failed to export to Notion' });
+    }
+
+    await ReportBuilderService.createExportRecord({
+      reportId: id,
+      reportType: 'report_builder',
+      format: 'notion',
+      filePath: result.url,
+      fileSize: 0,
+      language: 'en',
+      exportedBy: userId,
+    }).catch(() => null);
+
+    return res.json({ success: true, url: result.url });
+  } catch (err: any) {
+    logger.error('[ReportBuilder] Error exporting to Notion:', err);
+    return res.status(500).json({ error: 'Failed to export to Notion', message: err.message });
+  }
+});
+
 router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = paramStr(req.params.id);
@@ -2685,6 +2897,242 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
   } catch (err: any) {
     logger.error('[ReportBuilder] Error exporting PPTX:', err);
     return res.status(500).json({ error: 'Failed to export PPTX', message: err.message });
+  }
+});
+
+/**
+ * POST /api/report-builder/:id/publish/cloud/:cloudSourceId
+ * Generate an export (pdf/docx/pptx) and upload it to a connected cloud source.
+ *
+ * Body:
+ *  - format: 'pdf' | 'docx' | 'pptx' (required)
+ *  - folderId?: string (optional)
+ *  - version?: '2' | 'v2' (optional for pptx; defaults to v1)
+ */
+router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Response) => {
+  try {
+    const id = paramStr(req.params.id);
+    const cloudSourceId = paramStr(req.params.cloudSourceId);
+    const { userId, organizationId } = getAuthContext(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const format = String(req.body?.format || '')
+      .trim()
+      .toLowerCase();
+    const folderId = req.body?.folderId ? String(req.body.folderId).trim() : undefined;
+    const version = String(req.body?.version || req.query?.version || '').trim();
+    const useV2 = version === '2' || version === 'v2';
+
+    if (!['pdf', 'docx', 'pptx'].includes(format)) {
+      return res.status(400).json({ error: 'format must be one of: pdf, docx, pptx' });
+    }
+
+    const reportData = await ReportBuilderService.getReport(id, organizationId);
+    if (!reportData) return res.status(404).json({ error: 'Report not found' });
+
+    const exportDir = await ensureExportDir();
+    const safeTitle = String(reportData.report.title || 'report')
+      .replace(/[^\w-]+/g, '_')
+      .slice(0, 64);
+    const fileName = `${safeTitle}-${id}-${Date.now()}.${format}`;
+    const filePath = path.join(exportDir, fileName);
+
+    if (format === 'pdf') {
+      await writeReportBuilderPdf(reportData.report, reportData.sections, filePath);
+    } else if (format === 'docx') {
+      await writeReportBuilderDocx(reportData.report, reportData.sections, filePath);
+    } else if (format === 'pptx') {
+      // Reuse the same v1/v2 logic as export endpoint, but save to disk and upload.
+      let buffer: Buffer;
+      if (useV2) {
+        const { PptxPipelineService } =
+          await import('../services/report/pptx/PptxPipelineService.js');
+        const pipeline = new PptxPipelineService();
+        const rpt = reportData.report as any;
+
+        let scoreSummary: any = undefined;
+        const rawScore = rpt.scoreSummary || rpt.score_summary;
+        if (rawScore) {
+          try {
+            scoreSummary = typeof rawScore === 'string' ? JSON.parse(rawScore) : rawScore;
+          } catch {}
+        }
+
+        let config: any = undefined;
+        const rawConfig = rpt.config || rpt.config_json;
+        if (rawConfig) {
+          try {
+            config = typeof rawConfig === 'string' ? JSON.parse(rawConfig) : rawConfig;
+          } catch {}
+        }
+
+        const allBlockTypes = await ReportBuilderService.listBlockTypes(organizationId).catch(
+          () => []
+        );
+        const btMap = new Map(allBlockTypes.map((bt) => [bt.id, bt] as [string, typeof bt]));
+        const v2Sections = (reportData.sections || []).map((s: any) => {
+          const btId = s.blockTypeId || s.block_type_id;
+          const bt = btId ? btMap.get(btId) : undefined;
+          return {
+            sectionKey: s.sectionKey || s.section_key,
+            sectionType: s.sectionType || s.section_type,
+            title: s.title || s.sectionKey || s.section_key,
+            orderIndex: s.orderIndex ?? s.order_index ?? 0,
+            enabled: s.enabled !== false,
+            blockTypeId: btId,
+            blockConfig: s.blockConfig || s.block_config,
+            renderKind: s.renderKind || s.render_kind,
+            generatedContent: s.generatedContent || s.generated_content,
+            editedContent: s.editedContent || s.edited_content,
+            slideIntent: bt?.slideIntent || undefined,
+          };
+        });
+
+        buffer = await pipeline.generateFromLegacyReport({
+          report: {
+            id: rpt.id,
+            name: rpt.title || 'Report',
+            sourceType: rpt.sourceType || rpt.source_type || 'TOOL',
+            sourceFramework: rpt.sourceFramework || rpt.source_framework,
+            organizationName: rpt.organizationName || rpt.organization_name,
+            projectName: rpt.projectName || rpt.project_name,
+            createdAt: rpt.createdAt || rpt.created_at,
+            intentConfig: config?.intentConfig || config?.intent_config,
+            sections: v2Sections,
+            scoreSummary,
+          } as any,
+          options: { confidentiality: req.body?.confidentiality || req.query?.confidentiality },
+        });
+      } else {
+        const { PptxExportService } = await import('../services/report/PptxExportService.js');
+        const pptx = new PptxExportService();
+        buffer = await pptx.generatePresentation(
+          {
+            id: reportData.report.id,
+            name: reportData.report.title || 'Report',
+            sourceType: reportData.report.sourceType || 'TOOL',
+            sourceFramework: reportData.report.sourceFramework,
+            organizationName: reportData.report.organizationName,
+            projectName: reportData.report.projectName,
+            createdAt: reportData.report.createdAt,
+            sections: (reportData.sections || []).map((s: any) => ({
+              key: s.sectionKey,
+              title: s.title,
+              type: s.sectionType,
+              content: s.editedContent || s.generatedContent || '',
+              renderKind: s.renderKind,
+              data: s.sourceDataSnapshot,
+            })),
+          } as any,
+          {
+            template: req.body?.template || req.query?.template,
+            language: req.body?.language || req.query?.language,
+          }
+        );
+      }
+
+      await fs.promises.writeFile(filePath, buffer);
+    }
+
+    const stats = await fs.promises.stat(filePath);
+    const buf = await fs.promises.readFile(filePath);
+    const mimeType =
+      format === 'pdf'
+        ? 'application/pdf'
+        : format === 'docx'
+          ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          : 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+
+    const { uploadCloudFile } = await import('../services/cloudDataService.js');
+    const uploaded = await uploadCloudFile({
+      sourceId: cloudSourceId,
+      organizationId,
+      fileName,
+      mimeType,
+      content: buf,
+      folderId,
+    });
+
+    // Best-effort: write a sync mapping for org-level integrations (if present).
+    // This allows Integrations logs/mappings to show the outbound publish action.
+    try {
+      const mapCols = await dbAll<{ name: string }>(
+        'PRAGMA table_info(integration_sync_mappings)',
+        []
+      ).catch(() => []);
+      const hasMappings = (mapCols || []).some(
+        (c) => String((c as any).name || '') === 'integration_id'
+      );
+      if (hasMappings) {
+        const providerKey =
+          uploaded.provider === 'sharepoint'
+            ? 'onedrive'
+            : String(uploaded.provider || '')
+                .trim()
+                .toLowerCase();
+        const integration = await dbGet<{ id: string }>(
+          `
+          SELECT i.id
+          FROM integrations i
+          LEFT JOIN integration_providers p ON p.id = i.provider_id
+          WHERE i.organization_id = ?
+            AND p.name = ?
+            AND (i.status IS NULL OR i.status IN ('active','connected'))
+          ORDER BY COALESCE(i.connected_at, i.updated_at, i.last_sync_at) DESC
+          LIMIT 1
+        `,
+          [organizationId, providerKey]
+        );
+        const integrationId = integration?.id ? String(integration.id) : '';
+        if (integrationId) {
+          const mappingId = `sync-${uuidv4()}`;
+          const now = new Date().toISOString();
+          await dbRun(
+            `INSERT INTO integration_sync_mappings (
+              id, integration_id,
+              local_type, local_id,
+              external_type, external_id, external_url,
+              sync_status, created_at, updated_at, metadata
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
+            [
+              mappingId,
+              integrationId,
+              'report_builder',
+              id,
+              'file',
+              uploaded.fileId,
+              uploaded.url || null,
+              now,
+              now,
+              JSON.stringify({
+                source: 'report_builder_publish_cloud',
+                format,
+                cloudSourceId,
+                fileName,
+                mimeType,
+              }),
+            ]
+          ).catch(() => null);
+        }
+      }
+    } catch {
+      // ignore (best-effort)
+    }
+
+    await ReportBuilderService.createExportRecord({
+      reportId: id,
+      reportType: 'report_builder',
+      format: `cloud_${format}`,
+      filePath: uploaded.url || uploaded.fileId,
+      fileSize: stats.size,
+      language: 'en',
+      exportedBy: userId,
+    }).catch(() => null);
+
+    return res.json({ success: true, uploaded });
+  } catch (err: any) {
+    logger.error('[ReportBuilder] Error publishing to cloud:', err);
+    return res.status(500).json({ error: 'Failed to publish to cloud', message: err.message });
   }
 });
 

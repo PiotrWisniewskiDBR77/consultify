@@ -1,12 +1,14 @@
 -- Migration 567: Presentations generator + brand kits + templates
 -- Bundle 17: T058 (Presentation Generator) + T059 (Business Presentation Templates)
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- ============================================
 -- T059: BRAND KITS (per organization)
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS brand_kits (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   organization_id TEXT NOT NULL UNIQUE,
   name TEXT DEFAULT 'Default',
   logo_url TEXT,
@@ -34,7 +36,7 @@ CREATE INDEX IF NOT EXISTS idx_brand_kits_org ON brand_kits(organization_id);
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS presentation_templates (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   organization_id TEXT,
   name TEXT NOT NULL,
   description TEXT,
@@ -124,7 +126,7 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS presentation_decks (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   organization_id TEXT NOT NULL,
   project_id TEXT,
   title TEXT NOT NULL,

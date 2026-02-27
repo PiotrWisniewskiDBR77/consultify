@@ -32,9 +32,10 @@ router.get('/supported-types', async (req, res) => {
     const mediaIngestionService = await getMediaIngestionService();
     if (!mediaIngestionService?.getSupportedTypes) {
       return res.status(503).json({
-        success: false,
-        error: 'Media ingestion service unavailable',
-        code: 'FEATURE_UNAVAILABLE',
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     }
     const supportedTypes = await mediaIngestionService.getSupportedTypes();
@@ -45,9 +46,10 @@ router.get('/supported-types', async (req, res) => {
   } catch (error) {
     logger.error('Error fetching supported types:', error);
     res.status(503).json({
-      success: false,
-      error: 'Media ingestion service unavailable',
-      code: 'FEATURE_UNAVAILABLE',
+      statusCode: 503,
+      status: false,
+      type: 'not_configured',
+      message: 'Service temporarily unavailable due to missing configuration',
     });
   }
 });
@@ -60,9 +62,10 @@ router.get('/capabilities', async (req, res) => {
     const mediaIngestionService = await getMediaIngestionService();
     if (!mediaIngestionService?.getCapabilities) {
       return res.status(503).json({
-        success: false,
-        error: 'Media ingestion service unavailable',
-        code: 'FEATURE_UNAVAILABLE',
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     }
     const capabilities = await mediaIngestionService.getCapabilities();
@@ -73,9 +76,10 @@ router.get('/capabilities', async (req, res) => {
   } catch (error) {
     logger.error('Error fetching capabilities:', error);
     res.status(503).json({
-      success: false,
-      error: 'Media ingestion service unavailable',
-      code: 'FEATURE_UNAVAILABLE',
+      statusCode: 503,
+      status: false,
+      type: 'not_configured',
+      message: 'Service temporarily unavailable due to missing configuration',
     });
   }
 });
@@ -92,9 +96,10 @@ router.post('/validate', async (req, res) => {
     const mediaIngestionService = await getMediaIngestionService();
     if (!mediaIngestionService?.validateMedia) {
       return res.status(503).json({
-        success: false,
-        error: 'Media ingestion service unavailable',
-        code: 'FEATURE_UNAVAILABLE',
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     }
     const result = await mediaIngestionService.validateMedia(filename, mimeType);
@@ -102,9 +107,10 @@ router.post('/validate', async (req, res) => {
   } catch (error) {
     logger.error('Error validating media:', error);
     res.status(503).json({
-      success: false,
-      error: 'Media ingestion service unavailable',
-      code: 'FEATURE_UNAVAILABLE',
+      statusCode: 503,
+      status: false,
+      type: 'not_configured',
+      message: 'Service temporarily unavailable due to missing configuration',
     });
   }
 });
@@ -115,25 +121,28 @@ router.post('/validate', async (req, res) => {
 
 router.post('/ingest/batch', async (_req, res) => {
   return res.status(503).json({
-    success: false,
-    error: 'Media ingestion not available',
-    code: 'FEATURE_UNAVAILABLE',
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 });
 
 router.post('/ingest/youtube', async (_req, res) => {
   return res.status(503).json({
-    success: false,
-    error: 'Media ingestion not available',
-    code: 'FEATURE_UNAVAILABLE',
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 });
 
 router.post('/ingest/url', async (_req, res) => {
   return res.status(503).json({
-    success: false,
-    error: 'Media ingestion not available',
-    code: 'FEATURE_UNAVAILABLE',
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 });
 

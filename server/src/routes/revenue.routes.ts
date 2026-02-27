@@ -662,9 +662,10 @@ router.post(
       }
 
       return res.status(503).json({
-        success: false,
-        error: 'Payment retry processing is not available',
-        code: 'FEATURE_UNAVAILABLE',
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     } catch (error: any) {
       logger.error('[Revenue] Retry payment error:', error);

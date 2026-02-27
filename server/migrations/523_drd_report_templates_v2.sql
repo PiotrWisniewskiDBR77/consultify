@@ -194,7 +194,7 @@ INSERT INTO report_builder_templates (
     }
   ]',
   '{"intent": {"audience": "executive", "goal": "diagnosis", "tone": "consulting", "scope": "full", "targetLength": "long"}, "styling": {"theme": "professional", "layoutOrientation": "vertical", "footerMode": "minimal"}}',
-  1, 1, 1, CURRENT_TIMESTAMP
+  true, true, true, CURRENT_TIMESTAMP
 );
 
 
@@ -308,7 +308,7 @@ INSERT INTO report_builder_templates (
     }
   ]',
   '{"intent": {"audience": "board", "goal": "investment_decision", "tone": "decisive", "scope": "executive", "targetLength": "short"}, "styling": {"theme": "corporate", "layoutOrientation": "vertical", "footerMode": "minimal"}}',
-  1, 0, 1, CURRENT_TIMESTAMP
+  true, false, true, CURRENT_TIMESTAMP
 );
 
 
@@ -442,5 +442,5 @@ INSERT INTO report_builder_templates (
     }
   ]',
   '{"intent": {"audience": "mixed", "goal": "stakeholder_update", "tone": "consulting", "scope": "full", "targetLength": "standard"}, "styling": {"theme": "modern", "layoutOrientation": "horizontal", "footerMode": "none"}}',
-  1, 0, 1, CURRENT_TIMESTAMP
+  true, false, true, CURRENT_TIMESTAMP
 );

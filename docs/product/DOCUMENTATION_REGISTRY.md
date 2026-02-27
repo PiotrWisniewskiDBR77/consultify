@@ -82,6 +82,23 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: system purpose, core modules order, role vocabulary, closed artefact list
   - **Authority**: Highest for “what the system is” and “what artefacts exist”
 
+### Reports & Presentations (v3) — canonical generator specs
+
+- `docs/product/PRESENTATIONS_AND_REPORTS_V3.md`
+  - **Owner**: Product
+  - **Scope**: libraries + generators (Gamma-like UX), template system, export requirements (high level)
+  - **Authority**: High (product behavior for Reports/Presentations)
+
+- `docs/product/PRESENTATION_GENERATOR_V3.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: end-to-end Presentation Generator SSOT (modes: SHOW/DOCUMENT/BRIEFING/WORKSHOP, wizard flow, deck builder, AI agent, themes/brand kits, curated palettes, image presets, refresh rules, animations, export policy, undo/no realtime)
+  - **Authority**: Highest for presentation generator behavior
+
+- `docs/product/REPORT_GENERATOR_V3.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: end-to-end Report Generator SSOT (R1–R4 canonical report types, wizard/builder, templates, AI narrative, RAG/escalation mapping, export quality gates PDF/DOCX/PPTX)
+  - **Authority**: Highest for report generator behavior
+
 ### Authoritative backend data model (ERD)
 
 - `docs/product/RESET_ERD_CONSULTINITY.md`

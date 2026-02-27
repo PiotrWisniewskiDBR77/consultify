@@ -321,21 +321,68 @@ export async function executeToolCall(
 
 async function executeWebSearch(args: any, ctx: ToolExecutionContext): Promise<string> {
   try {
+    const orgId = ctx.organizationId;
+    if (!orgId) {
+      return JSON.stringify({
+        source: 'web_search',
+        error: 'Web search unavailable: missing organization context',
+      });
+    }
+
+    const govMod = (await import('./webSearchGovernance.js')) as any;
+    const getEffectiveWebSearchPolicy =
+      govMod.getEffectiveWebSearchPolicy || govMod.default?.getEffectiveWebSearchPolicy;
+    const sanitizeQuery = govMod.sanitizeQuery || govMod.default?.sanitizeQuery;
+    const filterResults = govMod.filterResults || govMod.default?.filterResults;
+    const getCached = govMod.getCached || govMod.default?.getCached;
+    const setCache = govMod.setCache || govMod.default?.setCache;
+
+    const policy =
+      typeof getEffectiveWebSearchPolicy === 'function'
+        ? await getEffectiveWebSearchPolicy(orgId, ctx.projectId || undefined)
+        : { internetEnabled: false, reason: 'Policy engine unavailable' };
+
+    if (!policy?.internetEnabled) {
+      return JSON.stringify({
+        source: 'web_search',
+        error: policy?.reason || 'Internet disabled by policy',
+      });
+    }
+
     const { TavilyWebSearchService } = await import('./tavilyWebSearchService.js');
     const tavily = new TavilyWebSearchService(process.env.TAVILY_API_KEY || '');
-    const results = await tavily.search(args.query, {
-      maxResults: Math.min(args.max_results || 5, 8),
-      searchDepth: 'basic',
-    });
+    const cleanQuery =
+      typeof sanitizeQuery === 'function' ? sanitizeQuery(String(args.query || '')) : args.query;
+
+    const cached =
+      typeof getCached === 'function' ? getCached(orgId, cleanQuery, (ctx as any)?.language) : null;
+    const results =
+      cached ||
+      (await tavily.search(cleanQuery, {
+        maxResults: Math.min(args.max_results || 5, policy.maxCitations || 8),
+        searchDepth: 'basic',
+      }));
+    const rawResults = Array.isArray((results as any)?.results) ? (results as any).results : [];
+    const filtered =
+      typeof filterResults === 'function' ? filterResults(rawResults, policy) : rawResults;
+    const out = { ...(results as any), query: cleanQuery, results: filtered };
+
+    if (!cached && typeof setCache === 'function') {
+      try {
+        setCache(orgId, cleanQuery, out, (ctx as any)?.language);
+      } catch {
+        // ignore
+      }
+    }
     return JSON.stringify({
       source: 'web_search',
-      query: args.query,
-      results: results.results.slice(0, 5).map((r: any) => ({
+      query: cleanQuery,
+      results: (out as any).results.slice(0, 5).map((r: any) => ({
         title: r.title,
         url: r.url,
         snippet: r.snippet?.slice(0, 300),
       })),
-      answer: results.answer || null,
+      answer: (out as any).answer || null,
     });
   } catch (err: any) {
     return JSON.stringify({

@@ -597,4 +597,41 @@ export interface PMOCategoryConfig {
   priority: number; // Sort order
 }
 
+// ============================================================================
+// NOTEBOOK (T011)
+// ============================================================================
+
+export type NotebookVisibility = 'private' | 'project';
+export type NotebookMaturity = 'seed' | 'growing' | 'mature' | 'actionable';
+export type NotebookPageStatus = 'inbox' | 'active' | 'converted' | 'archived';
+
+export interface NotebookPage {
+  id: string;
+  title: string;
+  projectId: string | null;
+  visibility: NotebookVisibility;
+  tags: string[];
+  contentJson: any;
+  contentText: string;
+  maturity: NotebookMaturity;
+  icon: string | null;
+  summary: string | null;
+  status: NotebookPageStatus;
+  pinned: boolean;
+  convertedTo:
+    | {
+        type: 'task' | 'decision' | 'initiative' | 'report' | 'presentation';
+        id: string;
+      }[]
+    | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NotebookCounts {
+  total: number;
+  inbox: number;
+  active: number;
+}
+
 // Redundant re-exports removed to avoid index collisions

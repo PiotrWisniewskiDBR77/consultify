@@ -1,12 +1,32 @@
 -- Migration 564: KPI time series, ROI tracking, attribution, financial mapping
 -- Bundle 12: T046 (ROI Tracking) + T047 (KPI Mapping) + T048 (Attribution) + T049 (Financial Mapping)
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- Ensure base KPI table exists (older DBs may not have 061_initiative_lifecycle applied)
+CREATE TABLE IF NOT EXISTS initiative_kpis (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  initiative_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  target_value REAL,
+  unit TEXT,
+  measurement_frequency TEXT DEFAULT 'MONTHLY',
+  alert_threshold REAL,
+  alert_direction TEXT DEFAULT 'BELOW',
+  is_primary INTEGER DEFAULT 0,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE
+);
+
 -- ============================================
 -- T047: KPI TIME SERIES VALUES
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS kpi_time_series (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   kpi_id TEXT NOT NULL,
   initiative_id TEXT,
   organization_id TEXT NOT NULL,
@@ -30,7 +50,7 @@ CREATE INDEX IF NOT EXISTS idx_kpi_ts_initiative ON kpi_time_series(initiative_i
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS initiative_kpi_mappings (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   initiative_id TEXT NOT NULL,
   kpi_id TEXT NOT NULL,
   organization_id TEXT NOT NULL,
@@ -57,7 +77,7 @@ CREATE INDEX IF NOT EXISTS idx_ikm_kpi ON initiative_kpi_mappings(kpi_id);
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS roi_assumptions (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   initiative_id TEXT NOT NULL UNIQUE,
   organization_id TEXT NOT NULL,
   capex REAL DEFAULT 0,
@@ -84,7 +104,7 @@ CREATE INDEX IF NOT EXISTS idx_roi_assumptions_initiative ON roi_assumptions(ini
 CREATE INDEX IF NOT EXISTS idx_roi_assumptions_org ON roi_assumptions(organization_id);
 
 CREATE TABLE IF NOT EXISTS roi_realized_values (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   initiative_id TEXT NOT NULL,
   organization_id TEXT NOT NULL,
   period_month DATE NOT NULL,
@@ -106,7 +126,7 @@ CREATE INDEX IF NOT EXISTS idx_roi_realized_period ON roi_realized_values(period
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS kpi_attribution_snapshots (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   kpi_id TEXT NOT NULL,
   organization_id TEXT NOT NULL,
   period_start DATE NOT NULL,
@@ -132,7 +152,7 @@ CREATE INDEX IF NOT EXISTS idx_attr_period ON kpi_attribution_snapshots(period_s
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS financial_statement_lines (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   organization_id TEXT,
   statement_type TEXT NOT NULL CHECK (statement_type IN ('P&L', 'BS', 'CF')),
   line_code TEXT NOT NULL,
@@ -167,7 +187,7 @@ INSERT INTO financial_statement_lines (id, statement_type, line_code, line_name,
 ON CONFLICT (id) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS kpi_financial_mappings (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   kpi_id TEXT NOT NULL,
   statement_line_id TEXT NOT NULL,
   organization_id TEXT NOT NULL,

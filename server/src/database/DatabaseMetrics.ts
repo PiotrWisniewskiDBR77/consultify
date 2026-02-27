@@ -154,31 +154,28 @@ export class DatabaseMetrics extends EventEmitter {
   }
 
   /**
-   * Get database size metrics
+   * Get database size metrics (PostgreSQL)
    */
   async getDatabaseMetrics(db: any): Promise<DatabaseMetricsStats> {
     try {
-      // Get database size (SQLite specific)
-      const sizeResult = await db.query('PRAGMA page_count;', []);
-      const pageSizeResult = await db.query('PRAGMA page_size;', []);
+      const sizeResult = await db.query(
+        'SELECT pg_database_size(current_database()) as size_bytes',
+        []
+      );
+      const sizeBytes = Number(sizeResult.rows[0]?.size_bytes) || 0;
 
-      const pageCount = sizeResult.rows[0]?.page_count || 0;
-      const pageSize = pageSizeResult.rows[0]?.page_size || 0;
-      const sizeBytes = pageCount * pageSize;
-
-      // Get table count
       const tableResult = await db.query(
-        "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table';",
+        `SELECT COUNT(*)::int as count FROM information_schema.tables 
+         WHERE table_schema = 'public' AND table_type = 'BASE TABLE'`,
         []
       );
-      const tableCount = tableResult.rows[0]?.count || 0;
+      const tableCount = Number(tableResult.rows[0]?.count) || 0;
 
-      // Get index count
       const indexResult = await db.query(
-        "SELECT COUNT(*) as count FROM sqlite_master WHERE type='index';",
+        `SELECT COUNT(*)::int as count FROM pg_indexes WHERE schemaname = 'public'`,
         []
       );
-      const indexCount = indexResult.rows[0]?.count || 0;
+      const indexCount = Number(indexResult.rows[0]?.count) || 0;
 
       return {
         sizeBytes,

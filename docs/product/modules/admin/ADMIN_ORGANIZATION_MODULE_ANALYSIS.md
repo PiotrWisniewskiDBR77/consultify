@@ -130,7 +130,7 @@ POST /api/organizations/:orgId/verify-domain // Weryfikacja domeny
 - Pobieranie profilu z `organizations`, `organization_profiles`, `organization_settings`
 - Aktualizacja profilu z upsert do `organization_profiles`
 - Przechowywanie ustawień branding w `organization_settings` (klucz: 'branding')
-- Walidacja uprawnień (tylko ADMIN może edytować)
+- Walidacja uprawnień (tylko ADMIN lub OWNER może edytować; OWNER = specjalny admin)
 - Weryfikacja custom domain (symulowana)
 
 ---

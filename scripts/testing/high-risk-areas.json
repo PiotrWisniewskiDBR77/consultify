@@ -1,0 +1,12 @@
+{
+  "prefixes": [
+    "server/src/middleware/",
+    "server/src/routes/auth",
+    "server/src/routes/security",
+    "server/src/services/billing",
+    "server/src/services/permission",
+    "server/src/services/accessPolicy",
+    "server/src/services/tokenBilling",
+    "server/src/services/aiCostControl"
+  ]
+}

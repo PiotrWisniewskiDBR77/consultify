@@ -10,6 +10,8 @@ import simpleImportSort from 'eslint-plugin-simple-import-sort';
 export default tseslint.config(
   {
     ignores: [
+      '.codex-worktrees/**',
+      '**/.codex-worktrees/**',
       'dist',
       '**/dist/**',
       '**/build/**',

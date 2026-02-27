@@ -13,6 +13,14 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
+const notConfigured = (res: Response) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
+
 router.use(apiAuthRateLimiter);
 
 interface TrialServiceInterface {
@@ -75,7 +83,7 @@ router.get(
       }
 
       if (!AccessPolicyService?.buildPolicySnapshot) {
-        return res.status(503).json({ error: 'Policy service not available' });
+        return notConfigured(res);
       }
 
       const snapshot = await AccessPolicyService.buildPolicySnapshot(orgId);
@@ -133,10 +141,7 @@ router.post(
       }
 
       if (!TrialService?.convertTrialToOrg) {
-        return res.status(503).json({
-          error: 'Trial service not available',
-          errorCode: 'SERVICE_UNAVAILABLE',
-        });
+        return notConfigured(res);
       }
 
       const result = await TrialService.convertTrialToOrg(trialId, userId, newOrgName);
@@ -180,7 +185,7 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AuditService?.log) {
-      return res.status(503).json({ error: 'Audit service not available' });
+      return notConfigured(res);
     }
 
     try {

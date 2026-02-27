@@ -51,8 +51,10 @@ router.get('/', async (_req, res) => {
 router.get('/conversion-intelligence', async (_req, res) => {
   try {
     return res.status(503).json({
-      error: 'Conversion intelligence metrics are not available',
-      code: 'FEATURE_UNAVAILABLE',
+      statusCode: 503,
+      status: false,
+      type: 'not_configured',
+      message: 'Service temporarily unavailable due to missing configuration',
     });
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));

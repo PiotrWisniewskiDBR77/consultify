@@ -1,6 +1,6 @@
 /**
- * workspace-defaults Routes (Feature unavailable)
- * Honest runtime contract: return 503 until implemented.
+ * workspace-defaults Routes (degraded mode)
+ * Read operations return an empty contract to avoid hard UI dead-ends.
  */
 import { Router } from 'express';
 
@@ -9,13 +9,13 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
-// Stub for missing JS routes
 router.use((req, res) => {
-  logger.warn(`[workspace-defaults] Feature unavailable`);
-  res.status(503).json({
-    error: 'Feature unavailable',
-    code: 'FEATURE_UNAVAILABLE',
-    feature: 'workspace-defaults',
+  logger.warn(`[workspace-defaults] Feature not configured`);
+  return res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 });
 

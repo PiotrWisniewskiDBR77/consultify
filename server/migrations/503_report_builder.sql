@@ -224,7 +224,7 @@ CREATE INDEX IF NOT EXISTS idx_rb_activity_time ON report_builder_activity(actio
 -- INSERT DEFAULT TEMPLATES
 -- ==========================================
 
-INSERT OR IGNORE INTO report_builder_templates (
+INSERT INTO report_builder_templates (
   id, organization_id, name, description, source_type, report_type, 
   sections_json, default_options_json, is_system, is_default, created_at
 ) VALUES 
@@ -254,8 +254,8 @@ INSERT OR IGNORE INTO report_builder_templates (
     {"key": "appendix", "type": "appendix", "title": "Appendix", "required": false, "order": 200, "defaultLength": "long", "defaultLanguage": "technical"}
   ]',
   '{"length": "medium", "language": "business"}',
-  1,
-  1,
+  true,
+  true,
   CURRENT_TIMESTAMP
 ),
 (
@@ -276,7 +276,8 @@ INSERT OR IGNORE INTO report_builder_templates (
     {"key": "next_steps", "type": "action_plan", "title": "Next Steps", "required": true, "order": 103, "defaultLength": "medium", "defaultLanguage": "business"}
   ]',
   '{"length": "medium", "language": "business"}',
-  1,
-  0,
+  true,
+  false,
   CURRENT_TIMESTAMP
-);
+)
+ON CONFLICT (id) DO NOTHING;

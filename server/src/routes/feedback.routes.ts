@@ -127,7 +127,7 @@ router.post(
     }
 
     // T106: Write context to dedicated columns if available
-    const contextCols: Record<string, string> = {
+    const contextCols: Record<string, string | undefined> = {
       route_path: req.body.routePath,
       device_type: req.body.deviceType,
       screen_size: req.body.screenSize,

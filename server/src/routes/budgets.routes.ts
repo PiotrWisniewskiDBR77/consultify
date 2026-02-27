@@ -15,6 +15,14 @@ import logger from '../utils/Logger.js';
 // Apply rate limiting
 const router = Router();
 
+const notConfigured = (res: Response) =>
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
+
 // Service interfaces
 interface BudgetManagementServiceInterface {
   getBudgetStatus?: (orgId: string, userId?: string | null, projectId?: string) => Promise<any>;
@@ -56,7 +64,7 @@ router.get(
   requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!budgetManagementService?.getBudgetStatus) {
-      return res.status(503).json({ error: 'Budget service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -87,7 +95,7 @@ router.put(
   requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!budgetManagementService?.setUserBudget) {
-      return res.status(503).json({ error: 'Budget service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -119,7 +127,7 @@ router.get(
   requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!budgetManagementService?.getBudgetStatus) {
-      return res.status(503).json({ error: 'Budget service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -150,7 +158,7 @@ router.put(
   requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!budgetManagementService?.setProjectBudget) {
-      return res.status(503).json({ error: 'Budget service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -182,7 +190,7 @@ router.get(
   requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!budgetManagementService?.getBudgetStatus) {
-      return res.status(503).json({ error: 'Budget service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -212,7 +220,7 @@ router.put(
   requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!budgetManagementService?.setOrgBudget) {
-      return res.status(503).json({ error: 'Budget service not available' });
+      return notConfigured(res);
     }
 
     try {
@@ -243,7 +251,7 @@ router.get(
   requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!budgetManagementService?.getBudgetStatus) {
-      return res.status(503).json({ error: 'Budget service not available' });
+      return notConfigured(res);
     }
 
     try {

@@ -87,9 +87,16 @@ export const ROUTES = {
   EXECUTION: '/execution',
   IMPLEMENTATION: '/implementation',
   ROLLOUT: '/rollout',
-  REPORTS: '/reports/builder',
+  REPORTS: {
+    ROOT: '/reports',
+    BUILDER: '/reports/builder',
+    MANAGEMENT: '/reports/management',
+  },
+  PRESENTATIONS: '/presentations',
   KPI_OKR: '/kpi-okr',
   BENEFITS: '/benefits',
+  MCP_IRIS: '/mcp/iris',
+  MCP_MARKETPLACE: '/mcp/marketplace',
 
   // Project Intelligence
   PROJECT_INTELLIGENCE: '/project-intelligence',
@@ -248,12 +255,17 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.IMPLEMENTATION]: ROUTES.IMPLEMENTATION,
   [AppView.FULL_PILOT_EXECUTION]: ROUTES.IMPLEMENTATION,
   [AppView.FULL_ROLLOUT]: ROUTES.ROLLOUT,
-  [AppView.FULL_STEP6_REPORTS]: ROUTES.REPORTS,
-  [AppView.DRD_AUDIT_REPORT]: ROUTES.REPORTS,
+  [AppView.FULL_STEP6_REPORTS]: ROUTES.REPORTS.BUILDER,
+  [AppView.REPORTS_ENTRY]: ROUTES.REPORTS.ROOT,
+  [AppView.REPORTS_MANAGEMENT]: ROUTES.REPORTS.MANAGEMENT,
+  [AppView.DRD_AUDIT_REPORT]: ROUTES.REPORTS.BUILDER,
+  [AppView.PRESENTATIONS]: ROUTES.PRESENTATIONS,
   [AppView.KPI_OKR_DASHBOARD]: ROUTES.KPI_OKR,
   [AppView.PORTFOLIO_ROADMAP]: ROUTES.PORTFOLIO,
   [AppView.INITIATIVE_MANAGEMENT]: ROUTES.PORTFOLIO,
   [AppView.BENEFITS_REALIZATION]: ROUTES.BENEFITS,
+  [AppView.MCP_IRIS_COMING_SOON]: ROUTES.MCP_IRIS,
+  [AppView.MCP_MARKETPLACE_COMING_SOON]: ROUTES.MCP_MARKETPLACE,
 
   // Interview (was Project Intelligence)
   [AppView.PROJECT_INTELLIGENCE]: ROUTES.PROJECT_INTELLIGENCE,
@@ -460,6 +472,13 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.DISCOVERY_TOOLS.ROOT)) return AppView.DISCOVERY_TOOLS;
   if (normalized.startsWith(ROUTES.CONTEXT_BUILDER.ROOT)) return AppView.CONTEXT_BUILDER;
   if (normalized.startsWith(ROUTES.ORGANIZATION.ROOT)) return AppView.ORGANIZATION_PROFILE;
+
+  // Reports module: /reports (entry), /reports/builder, /reports/management
+  if (normalized.startsWith(ROUTES.REPORTS.ROOT)) {
+    if (normalized === ROUTES.REPORTS.ROOT) return AppView.REPORTS_ENTRY;
+    if (normalized.startsWith(ROUTES.REPORTS.MANAGEMENT)) return AppView.REPORTS_MANAGEMENT;
+    return AppView.FULL_STEP6_REPORTS; // builder or builder/:id
+  }
 
   return null;
 }

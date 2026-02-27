@@ -4024,7 +4024,7 @@ router.delete(
 
       // Log security event
       try {
-        const { securityService } = await import('../services/securityService.js');
+        const { default: securityService } = await import('../services/securityService.js');
         await securityService.logSecurityEvent({
           userId,
           eventType: 'oauth_unlinked',

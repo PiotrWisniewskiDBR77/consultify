@@ -25,7 +25,7 @@ router.post(
   '/',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId ?? '';
-    const cap = await capSvc.createCapability(orgId, { ...req.body, createdBy: req.user?.userId });
+    const cap = await capSvc.createCapability(orgId, { ...req.body, createdBy: req.user?.id });
     res.status(201).json({ data: cap });
   })
 );
@@ -101,7 +101,7 @@ router.post(
   '/requirements',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId ?? '';
-    const r = await capSvc.setRequirement(orgId, { ...req.body, createdBy: req.user?.userId });
+    const r = await capSvc.setRequirement(orgId, { ...req.body, createdBy: req.user?.id });
     res.status(201).json({ data: r });
   })
 );
@@ -135,7 +135,7 @@ router.post(
   '/assignments',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId ?? '';
-    const a = await capSvc.recordAssignment(orgId, { ...req.body, decidedBy: req.user?.userId });
+    const a = await capSvc.recordAssignment(orgId, { ...req.body, decidedBy: req.user?.id });
     res.status(201).json({ data: a });
   })
 );

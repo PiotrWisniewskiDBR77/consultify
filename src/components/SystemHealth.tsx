@@ -16,7 +16,7 @@ interface SystemMetrics {
 
 export const SystemHealth = () => {
   const { t } = useTranslation();
-  const [status, setStatus] = useState<'online' | 'offline' | 'loading'>('loading');
+  const [status, setStatus] = useState<'online' | 'degraded' | 'offline' | 'loading'>('loading');
   const [metrics, setMetrics] = useState<SystemMetrics>({
     latency: 0,
     dbStatus: 'online',
@@ -37,11 +37,14 @@ export const SystemHealth = () => {
         const endTime = performance.now();
         const measuredLatency = Math.round(endTime - startTime);
 
-        setStatus('online');
+        const dbRaw = String((data as any)?.database || '').toLowerCase();
+        const isDbConnected = dbRaw === 'connected';
+
+        setStatus(isDbConnected ? 'online' : 'degraded');
         setMetrics((prev) => ({
           ...prev,
           latency: data.latency ?? measuredLatency,
-          dbStatus: 'online',
+          dbStatus: isDbConnected ? 'online' : 'offline',
           dbResponseTime: data.dbResponseTime ?? measuredLatency,
           storageUsed: data.storageUsed ?? prev.storageUsed,
           storageLimit: data.storageLimit ?? prev.storageLimit,
@@ -75,7 +78,22 @@ export const SystemHealth = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (status === 'loading') return null;
+  if (status === 'loading') {
+    return (
+      <div className="relative" ref={dropdownRef}>
+        <button
+          disabled
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 bg-transparent border-slate-200 dark:border-navy-700 opacity-70 cursor-not-allowed"
+        >
+          <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
+          <span className="text-xs font-medium text-navy-900 dark:text-white">
+            {t('system.data', 'Data')}
+          </span>
+          <ChevronDown size={14} className="text-slate-400" />
+        </button>
+      </div>
+    );
+  }
 
   const storagePercent = Math.round((metrics.storageUsed / metrics.storageLimit) * 100);
   const apiPercent = Math.round((metrics.apiCallsUsed / metrics.apiCallsLimit) * 100);
@@ -87,14 +105,22 @@ export const SystemHealth = () => {
         className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 ${
           status === 'offline'
             ? 'bg-red-50/70 dark:bg-red-500/10 border-red-400/50 dark:border-red-500/40 hover:bg-red-100/70 dark:hover:bg-red-500/15'
-            : 'bg-transparent border-slate-200 dark:border-navy-700 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5'
+            : status === 'degraded'
+              ? 'bg-amber-50/70 dark:bg-amber-500/10 border-amber-400/50 dark:border-amber-500/40 hover:bg-amber-100/70 dark:hover:bg-amber-500/15'
+              : 'bg-transparent border-slate-200 dark:border-navy-700 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5'
         }`}
       >
         <div
-          className={`w-2 h-2 rounded-full ${status === 'online' ? 'bg-green-500' : 'bg-red-500'}`}
+          className={`w-2 h-2 rounded-full ${
+            status === 'online'
+              ? 'bg-green-500'
+              : status === 'degraded'
+                ? 'bg-amber-500'
+                : 'bg-red-500'
+          }`}
         />
         <span className="text-xs font-medium text-navy-900 dark:text-white">
-          {status === 'online' ? t('system.online', 'Online') : t('system.offline', 'Offline')}
+          {t('system.data', 'Data')}
         </span>
         <ChevronDown
           size={14}
@@ -108,10 +134,16 @@ export const SystemHealth = () => {
           <div className="px-4 py-3 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
             <div className="flex items-center gap-2">
               <div
-                className={`w-2.5 h-2.5 rounded-full ${status === 'online' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}
+                className={`w-2.5 h-2.5 rounded-full ${
+                  status === 'online'
+                    ? 'bg-green-500 animate-pulse'
+                    : status === 'degraded'
+                      ? 'bg-amber-500 animate-pulse'
+                      : 'bg-red-500'
+                }`}
               />
               <span className="text-sm font-semibold text-navy-900 dark:text-white">
-                {t('system.status', 'System Status')}
+                {t('system.dataAccess', 'Data Access')}
               </span>
             </div>
           </div>

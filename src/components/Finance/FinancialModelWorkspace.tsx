@@ -33,6 +33,7 @@ import { useTranslation } from 'react-i18next';
 
 import Api from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import { ExportButton } from './ExportButton';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -482,6 +483,12 @@ export const FinancialModelWorkspace: React.FC<Props> = ({ projectId }) => {
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                <ExportButton
+                  analysisId={selectedModel.id}
+                  analysisTitle={selectedModel.name}
+                  analysisType="financial_model"
+                  className="shrink-0"
+                />
                 <button
                   onClick={handleCompute}
                   disabled={computing || events.length === 0}

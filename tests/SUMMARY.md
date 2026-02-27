@@ -1,124 +1,50 @@
-# Podsumowanie Systemu Testów
+# Podsumowanie Systemu Testow
 
-## ✅ Status: System Gotowy
+## Status (stan na 2026-02-27)
 
-### Wykonane Zadania
+System testow jest aktywny i uruchamialny, z rozbudowanymi poziomami L1-L5 oraz gate'ami jakosci.
 
-#### 1. ✅ Analiza i Planowanie
+**Liczba plikow testowych (wg `rg`)**
+- Razem w `tests/`: **1022**
+- Unit (`tests/unit`): **301**
+- Component (`tests/components`): **196**
+- Integration (`tests/integration`): **307**
+- E2E (`tests/e2e`): **158**
+- Security (`tests/security`): **10**
+- Performance (`tests/performance`): **7**
 
-- Przeanalizowano obecny stan testów
-- Utworzono strategię na 5 poziomach
-- Zidentyfikowano brakujące obszary
+**Uwaga o coverage**
+Coverage jest obecnie liczony glownie dla backendu (`server/src/**`) zgodnie z `vitest.config.ts`.
 
-#### 2. ✅ Migracja na Prawdziwą Bazę Danych
+## Najwazniejsze gate'y
+- `npm run test:quality-check`
+- `npm run test:skip-scan`
+- `npx tsx scripts/security/verify-security-integrity.ts`
 
-- Utworzono `dbHelper.cjs` dla zarządzania bazą testową
-- Zmigrowano 3 testy backendowe z mocków na prawdziwą bazę
-- Wszystkie testy backendowe (8/8) używają SQLite in-memory
-
-#### 3. ✅ Testy Sprawności Baz Danych
-
-- `databaseHealth.test.js` - health checks, integrity, performance
-- `transaction.test.js` - transakcje, commit, rollback
-- `databasePerformance.test.js` - benchmarki wydajnościowe
-
-#### 4. ✅ Testy Sprawności LLMów
-
-- `llmHealth.test.js` - connection, latency, quality
-- `llmPerformance.test.js` - wydajność i throughput
-
-#### 5. ✅ Rozszerzenie Testów E2E
-
-- `fullFlow.spec.ts` - pełne flow użytkownika
-
-#### 6. ✅ Testy Accessibility
-
-- `a11y.test.tsx` - podstawowe testy dostępności
-
-#### 7. ✅ Testy Wydajnościowe
-
-- `stress.test.js` - testy obciążeniowe
-- Rozszerzone testy performance
-
----
-
-## 📈 Statystyki Końcowe
-
-### Pliki Testowe
-
-- **53 pliki testowe** w całym systemie
-- **25+ plików** w głównych katalogach testowych
-
-### Testy
-
-- **Poziom 1 (Unit)**: 144+ testów ✅
-- **Poziom 2 (Integration)**: 44+ testów ✅
-- **Poziom 3 (Component)**: 52+ testów ✅
-- **Poziom 4 (E2E)**: 5+ testów ✅
-- **Poziom 5 (Performance)**: 4+ testów ✅
-
-**Razem**: ~250+ testów
-
-### Pokrycie
-
-- Backend: ~85% pokrycia
-- Frontend: ~80% pokrycia
-- Cel: 90% (osiągalny po uzupełnieniu brakujących obszarów)
-
----
-
-## 🎯 Osiągnięcia
-
-### ✅ Kompletny System Testów
-
-- 5 poziomów testowania zaimplementowanych
-- Wszystkie poziomy działają i są uruchamialne
-- Dokumentacja kompletna
-
-### ✅ Testy Sprawności
-
-- Baza danych: health, performance, integrity ✅
-- LLM: connection, latency, quality ✅
-
-### ✅ Best Practices
-
-- Wszystkie testy backendowe używają prawdziwej bazy
-- Testy są izolowane i niezależne
-- Helpery ułatwiają zarządzanie testami
-
----
-
-## 📝 Dokumentacja
-
-Utworzone dokumenty:
-
-1. `TEST_SYSTEM_COMPLETE.md` - Kompletna dokumentacja systemu
-2. `TEST_STRATEGY_5_LEVELS.md` - Strategia na 5 poziomach
-3. `TEST_MIGRATION_PLAN.md` - Plan migracji
-4. `tests/README.md` - Quick start guide
-5. `tests/SUMMARY.md` - To podsumowanie
-
----
-
-## 🚀 Uruchamianie
+## Uruchamianie (skrot)
 
 ```bash
-# Wszystkie testy
 npm run test:all
-
-# Z pokryciem
-npm run test:coverage
-
-# Konkretny poziom
 npm run test:unit
-npm run test:integration
 npm run test:component
-npm run test:e2e
+npm run test:integration
+npm run test:e2e:tier0
+npm run test:security
 npm run test:performance
+npm run test:performance:real
+MEMORY_TEST_DURATION=5 npm run test:memory-leak
 ```
 
----
+## Performance i realna baza danych
 
-## ✨ System Gotowy do Użycia!
+Testy performance wymagajace realnej bazy sa skipowane, gdy dziala mock DB.
+Aby uruchomic je na prawdziwej bazie:
 
-Wszystkie poziomy testów są zaimplementowane i gotowe do użycia. System testów jest kompletny, udokumentowany i zgodny z best practices.
+```bash
+RUN_DB_TESTS=1 MOCK_DB=false npm run test:performance
+```
+
+## Dokumenty referencyjne
+- `tests/README.md` (source of truth)
+- `tests/TESTING_GUIDE.md`
+- `docs/testing/`

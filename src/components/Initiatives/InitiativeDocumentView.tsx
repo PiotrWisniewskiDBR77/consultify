@@ -109,6 +109,7 @@ import {
   type SortOrder,
 } from '../shared/NModeSections';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
+import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
 import { InitiativeScrollView } from './InitiativeScrollView';
 import {
   DEFAULT_SECTION_ORDER,
@@ -4881,6 +4882,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       },
     ];
   }, [
+    initiative,
     status,
     priority,
     ownerId,

@@ -73,7 +73,7 @@ const OAuthConfigSchema = z.object({
  */
 const DatabaseConfigSchema = z
   .object({
-    DB_TYPE: z.enum(['sqlite', 'postgres']).optional(),
+    DB_TYPE: z.enum(['postgres']).optional(),
     DATABASE_URL: z.string().url().optional(),
     // PostgreSQL individual fields (required if DB_TYPE=postgres in production)
     DB_HOST: z.string().optional(),
@@ -86,8 +86,6 @@ const DatabaseConfigSchema = z
     DB_POOL_SIZE: z.number().int().positive().default(10),
     DB_CONNECTION_TIMEOUT: z.number().int().positive().default(30000),
     DB_STATEMENT_TIMEOUT: z.number().int().positive().default(60000),
-    // SQLite
-    SQLITE_PATH: z.string().optional(),
   })
   .refine(
     (data) => {

@@ -146,8 +146,9 @@ describe('AISettings', () => {
     await user.click(saveKeyBtn);
 
     await waitFor(() => {
-      expect(screen.getByText('My Key')).toBeInTheDocument();
-      expect(localStorage.getItem('user_ai_providers')).toContain('My Key');
+      expect(screen.getAllByText('My Key').length).toBeGreaterThan(0);
+      const stored = localStorage.getItem(`user_ai_providers:${mockUser.id}`);
+      expect(stored || '').toContain('My Key');
     });
   });
 });

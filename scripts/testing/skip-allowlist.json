@@ -1,11 +1,19 @@
 {
-  "version": 1,
+  "version": 2,
+  "policy": {
+    "maxTTLDays": 14,
+    "maxEntries": 5,
+    "escalationAfterDays": 14,
+    "ownerRequired": true
+  },
   "entries": [
     {
       "kind": "skip",
       "filePattern": "^tests/unit/backend/assessmentReportService\\.test$",
       "matchPattern": "describe\\.skip\\(",
       "reason": "Temporary: CJS mock limitation noted in test file; tracked as debt until full TS/ESM migration.",
+      "owner": "engineering-lead",
+      "createdOn": "2026-01-15",
       "expiresOn": "2026-03-31"
     }
   ]

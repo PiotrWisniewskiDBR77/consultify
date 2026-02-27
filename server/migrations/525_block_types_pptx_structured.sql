@@ -18,9 +18,24 @@
 -- 1. NEW COLUMNS
 -- ==========================================
 
-ALTER TABLE report_builder_block_types ADD COLUMN slide_intent TEXT;
-ALTER TABLE report_builder_block_types ADD COLUMN pptx_prompt_template TEXT;
-ALTER TABLE report_builder_block_types ADD COLUMN pptx_output_schema TEXT;
+DO $$
+BEGIN
+  ALTER TABLE report_builder_block_types ADD COLUMN slide_intent TEXT;
+EXCEPTION WHEN duplicate_column THEN
+  -- noop
+END $$;
+DO $$
+BEGIN
+  ALTER TABLE report_builder_block_types ADD COLUMN pptx_prompt_template TEXT;
+EXCEPTION WHEN duplicate_column THEN
+  -- noop
+END $$;
+DO $$
+BEGIN
+  ALTER TABLE report_builder_block_types ADD COLUMN pptx_output_schema TEXT;
+EXCEPTION WHEN duplicate_column THEN
+  -- noop
+END $$;
 
 -- ==========================================
 -- 2. CONTENT BLOCKS — PPTX prompts + intent
@@ -553,7 +568,7 @@ WHERE id = 'consulting_roadmap';
 -- 6. NEW BLOCKS — missing intents
 -- ==========================================
 
-INSERT OR IGNORE INTO report_builder_block_types (
+INSERT INTO report_builder_block_types (
   id, organization_id, name, description,
   source_types_json, render_kind, prompt_template,
   input_schema_json, default_length, default_language,
@@ -567,7 +582,7 @@ INSERT OR IGNORE INTO report_builder_block_types (
   '["ASSESSMENT","INTERVIEW","TOOL","INITIATIVE"]',
   'markdown',
   'Perform a root cause analysis. Identify the main problem, list 3-5 root causes, and for each cause describe the business impact and severity (high/medium/low).',
-  NULL, 'medium', 'business', 1, 1, 'data', 26,
+  NULL, 'medium', 'business', true, true, 'data', 26,
   'root_cause',
   'Generate a JSON object for a root cause analysis slide.
 
@@ -583,7 +598,7 @@ Return ONLY valid JSON:
 Rules: 3-5 causes. Sort by severity.
 Context: {{assessment}}, {{axisData}}, {{companyContext}}.',
   '{"type":"object","required":["type","problem","causes"],"properties":{"type":{"const":"root_cause"},"problem":{"type":"string"},"causes":{"type":"array","minItems":1,"maxItems":5,"items":{"type":"object","required":["cause","impact","severity"],"properties":{"cause":{"type":"string"},"impact":{"type":"string"},"severity":{"enum":["high","medium","low"]}}}}}}',
-  datetime('now'), datetime('now')
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'comparison', NULL, 'Comparison (A vs B)',
@@ -591,7 +606,7 @@ Context: {{assessment}}, {{axisData}}, {{companyContext}}.',
   '["ASSESSMENT","INTERVIEW","TOOL","INITIATIVE"]',
   'markdown',
   'Create a side-by-side comparison. Define two sides with labels and 3-5 bullet points each. Include a verdict or recommendation.',
-  NULL, 'medium', 'business', 1, 1, 'data', 27,
+  NULL, 'medium', 'business', true, true, 'data', 27,
   'comparison',
   'Generate a JSON object for a comparison slide.
 
@@ -608,7 +623,7 @@ Return ONLY valid JSON:
 Rules: 3-5 items per side. Keep items concise (max 10 words each).
 Context: {{assessment}}, {{axisData}}, {{companyContext}}.',
   '{"type":"object","required":["type","left_label","right_label","left_items","right_items"],"properties":{"type":{"const":"comparison"},"left_label":{"type":"string"},"right_label":{"type":"string"},"left_items":{"type":"array","maxItems":5},"right_items":{"type":"array","maxItems":5},"verdict":{"type":"string"}}}',
-  datetime('now'), datetime('now')
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'section_intro', NULL, 'Section Intro / Divider',
@@ -616,7 +631,7 @@ Context: {{assessment}}, {{axisData}}, {{companyContext}}.',
   '["ASSESSMENT","INTERVIEW","TOOL","INITIATIVE"]',
   'markdown',
   'Create a section introduction with a clear title and 1-2 sentence description of what this section covers.',
-  NULL, 'short', 'business', 1, 1, 'content', 12,
+  NULL, 'short', 'business', true, true, 'content', 12,
   'section_intro',
   'Generate a JSON object for a section intro slide.
 
@@ -628,7 +643,7 @@ Return ONLY valid JSON:
   "description": "<1-2 sentence description of section scope>"
 }',
   '{"type":"object","required":["type","section_title"],"properties":{"type":{"const":"section_intro"},"section_title":{"type":"string"},"section_number":{"type":"number"},"description":{"type":"string"}}}',
-  datetime('now'), datetime('now')
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'key_messages', NULL, 'Key Messages',
@@ -636,7 +651,7 @@ Return ONLY valid JSON:
   '["ASSESSMENT","INTERVIEW","TOOL","INITIATIVE"]',
   'markdown',
   'Identify 3-4 key messages that frame the narrative of this report. Each message should have a headline and supporting detail.',
-  NULL, 'short', 'business', 1, 1, 'content', 13,
+  NULL, 'short', 'business', true, true, 'content', 13,
   'key_messages',
   'Generate a JSON object for a key messages slide.
 
@@ -651,7 +666,7 @@ Return ONLY valid JSON:
 Rules: 3-4 messages. Each title max 8 words.
 Context: {{assessment}}, {{axisData}}, {{companyContext}}.',
   '{"type":"object","required":["type","messages"],"properties":{"type":{"const":"key_messages"},"messages":{"type":"array","minItems":1,"maxItems":4}}}',
-  datetime('now'), datetime('now')
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 ),
 (
   'next_steps', NULL, 'Next Steps / Call to Action',
@@ -659,7 +674,7 @@ Context: {{assessment}}, {{axisData}}, {{companyContext}}.',
   '["ASSESSMENT","INTERVIEW","TOOL","INITIATIVE"]',
   'markdown',
   'Define 5-8 concrete next steps. Each should have: action description, responsible owner/role, and target deadline or timeframe.',
-  NULL, 'medium', 'business', 1, 1, 'content', 14,
+  NULL, 'medium', 'business', true, true, 'content', 14,
   'next_steps',
   'Generate a JSON object for a next steps slide.
 
@@ -675,8 +690,25 @@ Return ONLY valid JSON:
 Rules: 5-8 actions. Sort by urgency.
 Context: {{assessment}}, {{axisData}}, {{companyContext}}.',
   '{"type":"object","required":["type","actions"],"properties":{"type":{"const":"next_steps"},"actions":{"type":"array","minItems":1,"maxItems":10,"items":{"type":"object","required":["action"],"properties":{"action":{"type":"string"},"owner":{"type":"string"},"deadline":{"type":"string"},"status":{"enum":["pending","in_progress","done"]}}}},"closing_message":{"type":"string"}}}',
-  datetime('now'), datetime('now')
-);
+  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+)
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  source_types_json = EXCLUDED.source_types_json,
+  render_kind = EXCLUDED.render_kind,
+  prompt_template = EXCLUDED.prompt_template,
+  input_schema_json = EXCLUDED.input_schema_json,
+  default_length = EXCLUDED.default_length,
+  default_language = EXCLUDED.default_language,
+  is_system = EXCLUDED.is_system,
+  is_active = EXCLUDED.is_active,
+  category = EXCLUDED.category,
+  display_order = EXCLUDED.display_order,
+  slide_intent = EXCLUDED.slide_intent,
+  pptx_prompt_template = EXCLUDED.pptx_prompt_template,
+  pptx_output_schema = EXCLUDED.pptx_output_schema,
+  updated_at = EXCLUDED.updated_at;
 
 -- ==========================================
 -- 7. INDEXES

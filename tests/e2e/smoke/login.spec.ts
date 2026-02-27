@@ -30,7 +30,7 @@ async function dismissTourModal(page: Page) {
   }
 }
 
-test.describe('L4 Smoke', () => {
+test.describe('L4 Smoke [@module:auth]', () => {
   test.setTimeout(60000);
 
   test('app renders dashboard after demo login', async ({ page }) => {

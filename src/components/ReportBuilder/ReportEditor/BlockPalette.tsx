@@ -430,7 +430,7 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
               ? (b.sourceTypes as string[])
                   .map((s) => String(s || '').toUpperCase())
                   .filter((s): s is ReportSourceType =>
-                    ['ASSESSMENT', 'INTERVIEW', 'TOOL', 'INITIATIVE'].includes(s)
+                    ['ASSESSMENT', 'INTERVIEW', 'TOOL', 'INITIATIVE', 'UPLOAD_BUNDLE'].includes(s)
                   )
               : undefined,
             blockTypeId: String(b.id),

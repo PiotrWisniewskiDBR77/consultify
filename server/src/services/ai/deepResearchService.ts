@@ -312,6 +312,16 @@ function getQueryGenerationInstructions(type: ResearchType): string {
 7. Technology stack and differentiators
 8. SWOT analysis elements and market positioning`,
 
+    market_research: `Generate queries that cover:
+1. Market size (TAM/SAM/SOM) and growth projections
+2. Key customer segments and buyer personas
+3. Pricing benchmarks and willingness-to-pay signals
+4. Leading vendors/brands and distribution channels
+5. Recent news and major market events (2025-2026)
+6. Geographic breakdown if a region is mentioned
+7. Regulatory or compliance considerations (if applicable)
+8. Public datasets or industry reports to cite`,
+
     market_entry: `Generate queries that cover:
 1. Target market size, growth rate, and key players
 2. Local regulations, compliance requirements, and standards
@@ -361,9 +371,19 @@ function getQueryGenerationInstructions(type: ResearchType): string {
 6. Best practices and implementation guides
 7. Case studies and real-world examples
 8. Future trends and predictions`,
+
+    deep_thinking: `Generate queries that cover:
+1. Underlying assumptions, mental models, and frameworks for the topic
+2. Expert opinions, thought leadership, and long-form analysis
+3. Contrasting viewpoints and critiques
+4. Historical context and how thinking evolved over time
+5. Second-order effects and unintended consequences
+6. Decision-making heuristics and practical applications
+7. Measurement/validation approaches and common pitfalls
+8. Recent discourse and developments (2025-2026)`,
   };
 
-  return instructions[type];
+  return instructions[type] || instructions.general_research;
 }
 
 /**

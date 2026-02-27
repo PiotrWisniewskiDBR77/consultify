@@ -28,12 +28,12 @@ const isSchemaMissingError = (error: unknown): boolean => {
   );
 };
 
-const respondFeatureUnavailable = (res: Response, detail?: string) =>
+const respondFeatureUnavailable = (res: Response, _detail?: string) =>
   res.status(503).json({
-    error: 'Feature unavailable',
-    code: 'FEATURE_UNAVAILABLE',
-    feature: FEATURE_NAME,
-    detail,
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 
 /**
@@ -64,7 +64,12 @@ router.get(
       res.json(members || []);
     } catch (error) {
       if (isSchemaMissingError(error)) {
-        return respondFeatureUnavailable(res, 'schema missing');
+        return res.status(503).json({
+          statusCode: 503,
+          status: false,
+          type: 'not_configured',
+          message: 'Service temporarily unavailable due to missing configuration',
+        });
       }
       throw error;
     }

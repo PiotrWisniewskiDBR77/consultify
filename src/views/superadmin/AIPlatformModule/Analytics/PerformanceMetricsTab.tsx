@@ -36,10 +36,7 @@ interface PerformanceMetric {
 interface ProviderMetrics {
   provider: string;
   avgLatency: number;
-  p95Latency: number;
-  p99Latency: number;
   successRate: number;
-  throughput: number;
   errorRate: number;
 }
 
@@ -48,6 +45,9 @@ export const PerformanceMetricsTab: React.FC = () => {
   const [dateRange, setDateRange] = useState<'1d' | '7d' | '30d' | '90d'>('7d');
   const [metrics, setMetrics] = useState<PerformanceMetric[]>([]);
   const [providerMetrics, setProviderMetrics] = useState<ProviderMetrics[]>([]);
+  const [alerts, setAlerts] = useState<
+    Array<{ severity?: string; title?: string; description?: string; provider?: string }>
+  >([]);
 
   useEffect(() => {
     loadMetrics();
@@ -56,98 +56,157 @@ export const PerformanceMetricsTab: React.FC = () => {
   const loadMetrics = async () => {
     setLoading(true);
     try {
-      // Mock data - replace with API call
-      setMetrics([
-        {
-          id: '1',
-          name: 'Average Response Time',
-          value: 1250,
-          unit: 'ms',
-          change: -8.5,
-          changeType: 'positive',
-          target: 1500,
-          history: [1400, 1350, 1280, 1250, 1200, 1300, 1250],
-        },
-        {
-          id: '2',
-          name: 'P95 Latency',
-          value: 2800,
-          unit: 'ms',
-          change: -12.3,
-          changeType: 'positive',
-          target: 3000,
-          history: [3200, 3100, 2950, 2800, 2750, 2900, 2800],
-        },
-        {
-          id: '3',
-          name: 'Token Throughput',
-          value: 125000,
-          unit: 'tokens/min',
-          change: 15.2,
-          changeType: 'positive',
-          history: [100000, 105000, 110000, 115000, 120000, 123000, 125000],
-        },
-        {
-          id: '4',
-          name: 'Error Rate',
-          value: 0.15,
-          unit: '%',
-          change: 0.02,
-          changeType: 'negative',
-          target: 0.1,
-          history: [0.12, 0.11, 0.13, 0.14, 0.13, 0.14, 0.15],
-        },
-        {
-          id: '5',
-          name: 'Cache Hit Rate',
-          value: 42.5,
-          unit: '%',
-          change: 5.3,
-          changeType: 'positive',
-          target: 50,
-          history: [35, 37, 38, 40, 41, 42, 42.5],
-        },
-        {
-          id: '6',
-          name: 'Queue Depth',
-          value: 12,
-          unit: 'requests',
-          change: -3,
-          changeType: 'positive',
-          target: 20,
-          history: [18, 16, 14, 13, 12, 11, 12],
-        },
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const periodMap: Record<typeof dateRange, string> = {
+        '1d': '24h',
+        '7d': '7d',
+        '30d': '30d',
+        '90d': '90d',
+      };
+      const period = periodMap[dateRange];
+
+      const [metricsRes, trendsRes, providersRes, llmHealthRes] = await Promise.all([
+        fetch(`/api/ai-operations/performance/metrics?period=${encodeURIComponent(period)}`, {
+          headers,
+        }),
+        fetch(`/api/ai-operations/performance/trends?period=${encodeURIComponent(period)}`, {
+          headers,
+        }),
+        fetch('/api/ai-operations/mission-control/providers', { headers }),
+        fetch('/api/llm/health/detailed', { headers }),
       ]);
 
-      setProviderMetrics([
+      const metricsPayload = await metricsRes.json().catch(() => ({}));
+      const trendsPayload = await trendsRes.json().catch(() => ({}));
+      const providersPayload = await providersRes.json().catch(() => ({}));
+      const llmHealthPayload = await llmHealthRes.json().catch(() => ({}));
+
+      const cur = metricsPayload?.data || {};
+      const trends: Array<{
+        timestamp?: string;
+        avgLatency?: number;
+        requests?: number;
+        successRate?: string;
+      }> = Array.isArray(trendsPayload?.data) ? trendsPayload.data : [];
+
+      const historyLatency = trends.map((t) => Number(t?.avgLatency || 0)).slice(-12);
+      const historyRequests = trends.map((t) => Number(t?.requests || 0)).slice(-12);
+      const historySuccessRate = trends
+        .map((t) => Number(String(t?.successRate || '0')))
+        .slice(-12);
+
+      const avgLatency = Number(cur?.avgLatency || 0);
+      const successRate = Number(String(cur?.successRate || '0'));
+      const errorRate = Math.max(0, 100 - successRate);
+      const avgTokens = Number(cur?.avgTokens || 0);
+
+      const prevLatency =
+        historyLatency.length >= 2 ? historyLatency[historyLatency.length - 2] : avgLatency;
+      const prevReq =
+        historyRequests.length >= 2
+          ? historyRequests[historyRequests.length - 2]
+          : Number(cur?.totalRequests || 0);
+      const prevErr =
+        historySuccessRate.length >= 2
+          ? 100 - historySuccessRate[historySuccessRate.length - 2]
+          : errorRate;
+
+      const pctChange = (current: number, prev: number) => {
+        if (!Number.isFinite(prev) || prev === 0) return 0;
+        return ((current - prev) / prev) * 100;
+      };
+
+      const nextMetrics: PerformanceMetric[] = [
         {
-          provider: 'OpenAI',
-          avgLatency: 1150,
-          p95Latency: 2500,
-          p99Latency: 3800,
-          successRate: 99.85,
-          throughput: 85000,
-          errorRate: 0.15,
+          id: 'avg-latency',
+          name: 'Average Response Time',
+          value: avgLatency,
+          unit: 'ms',
+          change: parseFloat(pctChange(avgLatency, prevLatency).toFixed(1)),
+          changeType: avgLatency <= prevLatency ? 'positive' : 'negative',
+          target: 2000,
+          history: historyLatency.length ? historyLatency : [avgLatency],
         },
         {
-          provider: 'Anthropic',
-          avgLatency: 1050,
-          p95Latency: 2200,
-          p99Latency: 3200,
-          successRate: 99.72,
-          throughput: 32000,
-          errorRate: 0.28,
+          id: 'success-rate',
+          name: 'Success Rate',
+          value: successRate,
+          unit: '%',
+          change: parseFloat(pctChange(successRate, 100 - prevErr).toFixed(1)),
+          changeType: successRate >= 100 - prevErr ? 'positive' : 'negative',
+          target: 99.9,
+          history: historySuccessRate.length ? historySuccessRate : [successRate],
         },
         {
-          provider: 'Groq',
-          avgLatency: 280,
-          p95Latency: 450,
-          p99Latency: 680,
-          successRate: 99.45,
-          throughput: 8000,
-          errorRate: 0.55,
+          id: 'error-rate',
+          name: 'Error Rate',
+          value: parseFloat(errorRate.toFixed(2)),
+          unit: '%',
+          change: parseFloat(pctChange(errorRate, prevErr).toFixed(1)),
+          changeType: errorRate <= prevErr ? 'positive' : 'negative',
+          target: 1,
+          history: historySuccessRate.length ? historySuccessRate.map((s) => 100 - s) : [errorRate],
         },
-      ]);
+        {
+          id: 'avg-tokens',
+          name: 'Average Tokens / Request',
+          value: avgTokens,
+          unit: 'tokens',
+          change: 0,
+          changeType: 'neutral',
+          history: [avgTokens],
+        },
+        {
+          id: 'requests',
+          name: 'Total Requests',
+          value: Number(cur?.totalRequests || 0),
+          unit: '',
+          change: parseFloat(pctChange(Number(cur?.totalRequests || 0), prevReq).toFixed(1)),
+          changeType: Number(cur?.totalRequests || 0) >= prevReq ? 'positive' : 'negative',
+          history: historyRequests.length ? historyRequests : [Number(cur?.totalRequests || 0)],
+        },
+      ];
+      setMetrics(nextMetrics);
+
+      const providersRows: Array<{
+        name?: string;
+        is_active?: boolean;
+        health_status?: string;
+        avg_latency_ms?: number;
+      }> = Array.isArray(providersPayload?.data) ? providersPayload.data : [];
+
+      // We can estimate provider-level error rate from detailed LLM health (healthy/unhealthy),
+      // and use avg_latency_ms from mission-control/providers.
+      const healthProviders: any[] = Array.isArray(llmHealthPayload?.providers)
+        ? llmHealthPayload.providers
+        : [];
+      const healthByName = new Map(
+        healthProviders.map((p) => [String(p?.name || '').toLowerCase(), p] as const)
+      );
+
+      const nextProviderMetrics: ProviderMetrics[] = providersRows.map((p) => {
+        const name = String(p?.name || 'Unknown');
+        const h = healthByName.get(name.toLowerCase());
+        const status = String(h?.status || '').toLowerCase();
+        const isUp = status === 'healthy' || status === 'degraded';
+        return {
+          provider: name,
+          avgLatency: Number(p?.avg_latency_ms || h?.responseTime || 0),
+          successRate: isUp ? 100 : 0,
+          errorRate: isUp ? 0 : 100,
+        };
+      });
+      setProviderMetrics(nextProviderMetrics);
+
+      const nextAlerts: Array<{
+        severity?: string;
+        title?: string;
+        description?: string;
+        provider?: string;
+      }> = Array.isArray(llmHealthPayload?.alerts) ? llmHealthPayload.alerts : [];
+      setAlerts(nextAlerts);
     } catch (err) {
       toast.error('Failed to load performance metrics');
     } finally {
@@ -303,16 +362,7 @@ export const PerformanceMetricsTab: React.FC = () => {
                 Avg Latency
               </th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                P95 Latency
-              </th>
-              <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                P99 Latency
-              </th>
-              <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
                 Success Rate
-              </th>
-              <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Throughput
               </th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
                 Error Rate
@@ -329,12 +379,6 @@ export const PerformanceMetricsTab: React.FC = () => {
                   <span className="text-slate-700 dark:text-slate-300">{pm.avgLatency}ms</span>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <span className="text-slate-700 dark:text-slate-300">{pm.p95Latency}ms</span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <span className="text-slate-700 dark:text-slate-300">{pm.p99Latency}ms</span>
-                </td>
-                <td className="px-6 py-4 text-right">
                   <span
                     className={
                       pm.successRate >= 99.5
@@ -345,11 +389,6 @@ export const PerformanceMetricsTab: React.FC = () => {
                     }
                   >
                     {pm.successRate.toFixed(2)}%
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <span className="text-slate-700 dark:text-slate-300">
-                    {formatNumber(pm.throughput)} t/min
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
@@ -378,34 +417,48 @@ export const PerformanceMetricsTab: React.FC = () => {
           Performance Alerts
         </h3>
         <div className="space-y-3">
-          <div className="flex items-center gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-            <AlertTriangle size={16} className="text-amber-500" />
-            <div className="flex-1">
-              <div className="text-sm font-medium text-slate-900 dark:text-white">
-                Error rate above target
-              </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                Current: 0.15% | Target: 0.10% | Since 2 hours ago
-              </div>
-            </div>
-            <span className="px-2 py-1 bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs rounded">
-              Warning
-            </span>
-          </div>
-          <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-            <Zap size={16} className="text-emerald-500" />
-            <div className="flex-1">
-              <div className="text-sm font-medium text-slate-900 dark:text-white">
-                Latency improved
-              </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                P95 latency decreased by 12.3% in the last 7 days
-              </div>
-            </div>
-            <span className="px-2 py-1 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs rounded">
-              Improvement
-            </span>
-          </div>
+          {alerts.length === 0 ? (
+            <div className="text-sm text-slate-500 dark:text-slate-400">No active alerts.</div>
+          ) : (
+            alerts.slice(0, 10).map((a, idx) => {
+              const sev = String(a?.severity || 'info').toLowerCase();
+              const isErr = sev === 'error';
+              return (
+                <div
+                  key={`${a?.provider || 'alert'}-${idx}`}
+                  className={`flex items-center gap-3 p-3 rounded-lg border ${
+                    isErr
+                      ? 'bg-red-500/10 border-red-500/20'
+                      : 'bg-amber-500/10 border-amber-500/20'
+                  }`}
+                >
+                  {isErr ? (
+                    <AlertTriangle size={16} className="text-red-500" />
+                  ) : (
+                    <AlertTriangle size={16} className="text-amber-500" />
+                  )}
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-slate-900 dark:text-white">
+                      {a?.title || 'Alert'}
+                      {a?.provider ? ` • ${a.provider}` : ''}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      {a?.description || '—'}
+                    </div>
+                  </div>
+                  <span
+                    className={`px-2 py-1 text-xs rounded ${
+                      isErr
+                        ? 'bg-red-500/20 text-red-600 dark:text-red-400'
+                        : 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                    }`}
+                  >
+                    {isErr ? 'Error' : 'Warning'}
+                  </span>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>

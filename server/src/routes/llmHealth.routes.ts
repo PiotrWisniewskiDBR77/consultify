@@ -14,6 +14,15 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
+const serviceFallback = (_req: any, res: Response, _readPayload?: Record<string, unknown>) => {
+  return res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
+  });
+};
+
 // Apply rate limiting
 router.use(aiRateLimiter);
 
@@ -74,11 +83,11 @@ function getStatusLabel(status: string): { text: string; color: string } {
  */
 router.get(
   '/health',
-  asyncHandler(async (_req, res: Response) => {
+  asyncHandler(async (req, res: Response) => {
     if (!llmHealthMonitor?.checkAllProviders || !llmHealthMonitor?.getSummary) {
-      return res.status(503).json({
-        success: false,
-        error: 'LLM health monitor not available',
+      return serviceFallback(req, res, {
+        summary: { total: 0, healthy: 0, degraded: 0, unhealthy: 0 },
+        providers: [],
       });
     }
 
@@ -164,10 +173,7 @@ router.get(
   '/health/:providerId',
   asyncHandler(async (req, res: Response) => {
     if (!llmHealthMonitor?.testProvider) {
-      return res.status(503).json({
-        success: false,
-        error: 'LLM health monitor not available',
-      });
+      return serviceFallback(req, res, { provider: null });
     }
 
     try {
@@ -244,10 +250,7 @@ router.post(
   '/health/test',
   asyncHandler(async (req, res: Response) => {
     if (!llmHealthMonitor?.testProvider || !HealthStatusEnum) {
-      return res.status(503).json({
-        success: false,
-        error: 'LLM health monitor not available',
-      });
+      return serviceFallback(req, res);
     }
 
     try {
@@ -306,15 +309,15 @@ router.post(
  */
 router.get(
   '/health/summary',
-  asyncHandler(async (_req, res: Response) => {
+  asyncHandler(async (req, res: Response) => {
     if (
       !llmHealthMonitor?.getSummary ||
       !llmHealthMonitor?.getAllCachedStatuses ||
       !HealthStatusEnum
     ) {
-      return res.status(503).json({
-        success: false,
-        error: 'LLM health monitor not available',
+      return serviceFallback(req, res, {
+        summary: { total: 0, healthy: 0, degraded: 0, unhealthy: 0, byCategory: {} },
+        alerts: [],
       });
     }
 
@@ -374,12 +377,9 @@ router.get(
  */
 router.get(
   '/health/errors',
-  asyncHandler(async (_req, res: Response) => {
+  asyncHandler(async (req, res: Response) => {
     if (!ErrorMessagesEnum) {
-      return res.status(503).json({
-        success: false,
-        error: 'Error messages not available',
-      });
+      return serviceFallback(req, res, { categories: [] });
     }
 
     return res.json({

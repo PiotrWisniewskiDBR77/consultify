@@ -37,5 +37,16 @@ ALTER TABLE api_logs ADD COLUMN organization_id TEXT;
 ALTER TABLE api_logs ADD COLUMN error_message TEXT;
 
 -- Add index for user-level journey queries
-CREATE INDEX IF NOT EXISTS idx_journey_user_created ON journey_events(user_id, created_at);
-CREATE INDEX IF NOT EXISTS idx_activation_phase ON user_activation_status(current_phase);
+DO $$
+BEGIN
+  IF to_regclass('journey_events') IS NOT NULL THEN
+    CREATE INDEX IF NOT EXISTS idx_journey_user_created ON journey_events(user_id, created_at);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF to_regclass('user_activation_status') IS NOT NULL THEN
+    CREATE INDEX IF NOT EXISTS idx_activation_phase ON user_activation_status(current_phase);
+  END IF;
+END $$;

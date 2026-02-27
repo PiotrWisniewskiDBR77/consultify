@@ -1,0 +1,61 @@
+name: Domain Closure Smoke (A03/E06/E07)
+
+on:
+  workflow_dispatch:
+    inputs:
+      include_typecheck:
+        description: 'Run TypeScript type-check after smoke pack'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  NODE_VERSION: '20.x'
+  CI: true
+
+jobs:
+  domain-closure-smoke:
+    name: 🧪 Domain Closure Smoke Pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run closure smoke pack (A03/E06/E07)
+        run: npm run -s smoke:agent2-agent3-closure
+
+      - name: Run type-check (optional)
+        if: ${{ inputs.include_typecheck }}
+        run: npm run -s type-check
+
+      - name: Upload Known Tools audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: known-tools-audit-artifacts
+          path: |
+            docs/product/known-tools-completeness-report.json
+            docs/product/KNOWN_TOOLS_FILL_PLAN_V3.md
+          retention-days: 30
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "# Domain Closure Smoke (A03/E06/E07)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- smoke pack: \`npm run -s smoke:agent2-agent3-closure\`" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ inputs.include_typecheck }}" = "true" ]; then
+            echo "- type-check: \`npm run -s type-check\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- type-check: skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "- audit artifacts uploaded: \`known-tools-audit-artifacts\`" >> $GITHUB_STEP_SUMMARY

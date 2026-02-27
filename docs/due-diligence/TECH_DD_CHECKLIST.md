@@ -91,27 +91,52 @@
 
 ### Q: What is your test coverage?
 
-**A**: ✅ **96% coverage, 100% pass rate**
+**A**: ✅ **96% coverage, 765+ test files across 5 layers**
 
-- **5,826 tests** (840 test files)
-- **14,800+ assertions**
-- **78 E2E tests** (Playwright)
-- **1,063 real database tests**
-- **258 real HTTP tests**
+- **765+ test files** (222 unit, 108 component, 296 integration, 122 E2E, 13 security+perf)
+- **Quality Scorecard**: avg 59/100, critical modules avg 95/100, 0 F-graded modules
+- **Coverage**: 96% global, 95% per-file on critical paths (auth, billing, permissions)
+- **Patch coverage**: ≥80% enforced on every PR
+- **E2E**: 122 Playwright specs (18 smoke, 5 in Tier-0 PR gate)
+- **Integration**: Real PostgreSQL tests (296 files, 3-way sharded)
 
-**Verdict**: ✅ **READY FOR VC TECHNICAL DD**
-
-**Reference**: [Quality Metrics](../metrics/QUALITY_METRICS.md)
+**References**:
+- [Quality Metrics Dashboard](../metrics/QUALITY_METRICS.md)
+- [Baseline Metrics (Feb 2026)](../testing/baseline-metrics.json)
+- [Quality Scorecard per Module](../testing/quality-scorecard.json)
 
 ### Q: How do you ensure code quality?
 
-**A**:
+**A**: Multi-layered automated enforcement (7 quality gates on every PR):
 
-- **TypeScript**: 85%+ adoption (backend 100%)
-- **Linting**: ESLint + Prettier
-- **Code Reviews**: Mandatory for all PRs
-- **CI/CD**: Automated testing on every commit
-- **Type Safety**: Zod schemas for runtime validation
+1. **Lint + Type Check** — ESLint + TypeScript strict mode
+2. **Anti-Placeholder Gate** — Detects and blocks fake/placeholder tests (8 classifications)
+3. **Skip/Only Gate** — Zero-tolerance on `.only()`, managed `.skip()` with TTL allowlist
+4. **Security Integrity Gate** — 29 automated checks (CSRF, auth, CORS, JWT, encryption, CSP, HSTS, rate limiting)
+5. **Coverage Gates (L1–L3)** — 95% per-file on critical security middleware, auth components, API routes
+6. **Patch Coverage Gate** — ≥80% on files changed in the PR
+7. **Tier-0 E2E Smoke** — 5 test files (~40 scenarios) must pass before merge
+
+**Additional tooling**:
+- **Quality Scorecard** — Per-module scoring (12 modules, A–F grades)
+- **Test Impact Analysis** — Maps changed files → impacted test directories; high-risk changes trigger full suite
+- **Flaky Test Tracker** — Registry with quarantine, auto-detection, TTL management
+
+**References**:
+- [Testing Maturity Model](../testing/TESTING_MATURITY_MODEL.md) — Level 4 (Automated Governance)
+- [Test Development Plan (90-day)](../testing/PLAN_ROZWOJU_SYSTEMU_TESTOW_AUTOMATYCZNYCH_2026-02-26.md)
+- [Definition of Done — High-Risk Areas](../testing/DEFINITION_OF_DONE_HIGH_RISK.md)
+- [CI Workflow (17 jobs)](../../.github/workflows/test-suite.yml)
+
+### Q: How do you handle security testing?
+
+**A**: Three-layer approach:
+
+1. **Static verification** (every PR): 29 automated integrity checks — no merge if any fails
+2. **Dynamic tests** (nightly): Dedicated security test suite + OWASP ZAP scan (weekly)
+3. **Policy enforcement**: High-risk changes (auth, billing, permissions) require negative tests + 95% coverage
+
+**Reference**: [Security Integrity Gate](../../scripts/security/verify-security-integrity.ts) · [Compliance Matrix](../security-compliance/COMPLIANCE_MATRIX.md)
 
 ---
 
@@ -170,13 +195,15 @@
 
 ### Q: What technical debt exists?
 
-**A**: **Low to Moderate**
+**A**: **Low to Moderate**, systematically tracked
 
 - **Frontend**: 15% JSX→TSX migration remaining
-- **Test Coverage**: 4% to reach 100%
+- **Test Coverage**: 4% to reach 100% global; scorecard avg 59/100, critical modules avg 95/100
 - **Migration Plan**: Structured, tracked
+- **Test Debt**: Tracked per module via [Quality Scorecard](../testing/quality-scorecard.json) — 0 modules with grade F; all high-risk modules at B or above
+- **Flaky Tests**: 1 entry in skip-allowlist (with expiration date)
 
-**Assessment**: Manageable, not blocking
+**Assessment**: Manageable, fully tracked, with reduction plan. [Monthly audit process defined](../testing/PLAN_ROZWOJU_SYSTEMU_TESTOW_AUTOMATYCZNYCH_2026-02-26.md).
 
 ---
 
@@ -246,7 +273,7 @@
 | **Scalability**      | ✅ Ready       | Multi-tenant, stateless, Redis |
 | **Security**         | ✅ Enterprise  | OAuth, RBAC, encryption, CSRF  |
 | **Compliance**       | 🟡 In Progress | GDPR/SOC2 ready, audit Q1 2026 |
-| **Quality**          | ✅ Excellent   | 96% coverage, 100% pass rate   |
+| **Quality**          | ✅ Excellent   | 96% coverage, 7 automated gates, Level 4 maturity |
 | **IP**               | ✅ Clean       | 100% owned, no GPL             |
 | **Team**             | ✅ Strong      | Agile, TDD, code reviews       |
 | **Debt**             | ✅ Low         | Manageable, tracked            |

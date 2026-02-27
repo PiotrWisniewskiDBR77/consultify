@@ -36,8 +36,10 @@ router.get(
 
     if (documents.length === 0) {
       return res.status(503).json({
-        error: 'No active legal documents configured',
-        code: 'LEGAL_NOT_CONFIGURED',
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     }
 
@@ -200,9 +202,9 @@ router.get(
     const doc = await legalService.getActiveDocumentByType(type);
 
     if (!doc) {
-      return res.status(503).json({
-        error: 'Legal document not configured',
-        code: 'LEGAL_NOT_CONFIGURED',
+      return res.status(404).json({
+        error: 'Legal document not found',
+        code: 'LEGAL_DOC_NOT_FOUND',
         type: type.toUpperCase(),
       });
     }
