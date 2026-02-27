@@ -488,7 +488,7 @@ jobs:
         run: npx tsx scripts/security/verify-security-integrity.ts
 
       - name: Run npm audit gate (high/critical blocking; allowlisted)
-        run: node --experimental-strip-types scripts/security/npm-audit-gate.ts
+        run: npx tsx scripts/security/npm-audit-gate.ts
       - name: Job duration
         if: always()
         run: |
