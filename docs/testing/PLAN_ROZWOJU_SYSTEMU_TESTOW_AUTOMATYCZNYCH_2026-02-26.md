@@ -78,6 +78,8 @@ V3 zostało domknięte na poziomie implementacji (**38/38 FULL**). Kolejny krok 
 
 **Runbook:** `docs/testing/TIER0_MANUAL_RUNBOOK_V3.md`
 
+**Release readiness checklist (V2+V3):** `docs/testing/V2_V3_RELEASE_READINESS_CHECKLIST.md`
+
 **Zakres R0 (must-pass):**
 - Traceability end‑to‑end (idea/notebook → tool_session → initiative/report/presentation)
 - Dynamic tabs persistence (Interview + MyWork + Initiatives + Presentations)
@@ -380,6 +382,7 @@ Poza E2E Tier-0 utrzymujemy lekkie, deterministyczne smoke kontraktowe dla kryty
 | V3-E06 (Licensed methodologies parity) | `npm run -s smoke:e06-methodology-parity` | PASS/FAIL + parity checks |
 | V3-E07 (Known Tools completeness) | `npm run -s audit:e07-known-tools` | raport JSON + fill plan |
 | V3-AI (Provider connections + purpose coverage) | `npm run -s smoke:ai:providers` | PASS/FAIL + lista providerów + coverage per purpose |
+| V3-AI-RESEARCH (Deep Research Evidence Ledger contract) | (do wdrożenia) `npm run -s smoke:ai:research-ledger` | PASS/FAIL + citation coverage % + unsupported claim rate + kontrakt Claim→Evidence |
 | Pakiet closure | `npm run -s smoke:agent2-agent3-closure` | zbiorczy sygnał green/red |
 
 Zasada operacyjna:
