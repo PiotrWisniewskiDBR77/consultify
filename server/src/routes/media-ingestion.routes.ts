@@ -95,22 +95,22 @@ router.post('/validate', async (req, res) => {
     }
     const mediaIngestionService = await getMediaIngestionService();
     if (!mediaIngestionService?.validateMedia) {
-      return res.status(501).json({
-        success: false,
-        error: 'Media ingestion validation is not configured',
-        code: 'FEATURE_NOT_CONFIGURED',
-        writable: false,
+      return res.status(503).json({
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     }
     const result = await mediaIngestionService.validateMedia(filename, mimeType);
     res.json(result);
   } catch (error) {
     logger.error('Error validating media:', error);
-    res.status(501).json({
-      success: false,
-      error: 'Media ingestion validation is not configured',
-      code: 'FEATURE_NOT_CONFIGURED',
-      writable: false,
+    res.status(503).json({
+      statusCode: 503,
+      status: false,
+      type: 'not_configured',
+      message: 'Service temporarily unavailable due to missing configuration',
     });
   }
 });
@@ -120,29 +120,29 @@ router.post('/validate', async (req, res) => {
 // ---------------------------------------------------------------------------
 
 router.post('/ingest/batch', async (_req, res) => {
-  return res.status(501).json({
-    success: false,
-    error: 'Media ingestion is not configured',
-    code: 'FEATURE_NOT_CONFIGURED',
-    writable: false,
+  return res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 });
 
 router.post('/ingest/youtube', async (_req, res) => {
-  return res.status(501).json({
-    success: false,
-    error: 'Media ingestion is not configured',
-    code: 'FEATURE_NOT_CONFIGURED',
-    writable: false,
+  return res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 });
 
 router.post('/ingest/url', async (_req, res) => {
-  return res.status(501).json({
-    success: false,
-    error: 'Media ingestion is not configured',
-    code: 'FEATURE_NOT_CONFIGURED',
-    writable: false,
+  return res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 });
 

@@ -233,7 +233,7 @@ router.get(
   validateLimiter,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.validatePublic) {
-      return serviceFallback(req, res, { valid: false, error: 'SERVICE_UNAVAILABLE' });
+      return serviceFallback(req, res, { valid: false });
     }
 
     try {
@@ -241,7 +241,7 @@ router.get(
       return res.json(result);
     } catch (err: any) {
       // Always return same shape for privacy
-      return serviceFallback(req, res, { valid: false, error: 'SERVICE_UNAVAILABLE' });
+      return serviceFallback(req, res, { valid: false });
     }
   })
 );

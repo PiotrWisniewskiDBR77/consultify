@@ -125,11 +125,11 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     if (isProduction && !endpointSecret) {
       logger.error('[Stripe Webhook] Missing STRIPE_WEBHOOK_SECRET in production.');
-      return res.status(501).json({
-        error: 'Stripe webhook is not configured',
-        code: 'FEATURE_NOT_CONFIGURED',
-        feature: 'stripe-webhook',
-        writable: false,
+      return res.status(503).json({
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     }
 

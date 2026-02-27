@@ -63,12 +63,11 @@ const featureReadFallback = (res: Response, data: unknown = []) =>
   });
 
 const featureWriteBlocked = (res: Response) =>
-  res.status(501).json({
-    success: false,
-    error: 'Feature not configured in this deployment',
-    code: 'FEATURE_NOT_CONFIGURED',
-    feature: 'documents',
-    writable: false,
+  res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 
 /**
@@ -223,12 +222,11 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getDocumentById) {
-      return res.status(501).json({
-        success: false,
-        error: 'Document download is not configured in this deployment',
-        code: 'FEATURE_NOT_CONFIGURED',
-        feature: 'documents',
-        writable: false,
+      return res.status(503).json({
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     }
 

@@ -27,6 +27,12 @@ Uruchamiane kroki:
 - Security tests (pelne)
 - L4 smoke (jeżeli skonfigurowane sekrety)
 
+### Weekly
+**Cel:** pelna regresja E2E.
+
+Uruchamiane kroki:
+- Full Playwright suite (weekly, Sunday 03:30 UTC)
+
 ## Performance tests (real DB)
 
 Performance tests uruchamiane w CI korzystaja z realnej bazy Postgres (service container). Wymagane zmienne:

@@ -661,12 +661,11 @@ router.post(
         return res.status(404).json({ error: 'Payment failure not found' });
       }
 
-      return res.status(501).json({
-        success: false,
-        error: 'Payment retry processing is not configured in this deployment',
-        code: 'FEATURE_NOT_CONFIGURED',
-        feature: 'revenue-payment-retry',
-        writable: false,
+      return res.status(503).json({
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     } catch (error: any) {
       logger.error('[Revenue] Retry payment error:', error);

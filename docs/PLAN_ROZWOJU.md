@@ -13,6 +13,13 @@ Celem planu jest szybkie ustabilizowanie i uwiarygodnienie uruchamiania testow (
 ## Etap 0 (0-1 miesiac): Stabilnosc i spojnosci uruchomienia
 **Cel:** testy uruchamiaja sie deterministycznie, bez "martwych" skryptow, z przejrzystym gate'ingiem.
 
+### Status Etap 0 (aktualizacja)
+- Naprawione uruchamianie performance (TS/JS + legacy).
+- `test:memory-leak` przeniesiony do osobnego, dlugiego uruchomienia.
+- `test:database` usuniety (martwy skrypt).
+- `tests/component` ujednolicone do `tests/components`.
+- Runbook CI: `docs/testing/CI_TESTING_RUNBOOK.md`.
+
 ### Zadania - Agent 1 (Testy/Backend)
 1. Naprawa uruchamiania testow performance:
    - `vitest.perf.config.ts`: wlaczenie `*.test.{ts,js}` oraz obslugi plikow bez rozszerzenia (jesli zostaja).

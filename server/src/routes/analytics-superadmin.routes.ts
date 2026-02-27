@@ -762,10 +762,11 @@ router.post(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      return res.status(501).json({
-        error: 'Model training is not configured in this deployment',
-        code: 'FEATURE_NOT_CONFIGURED',
-        writable: false,
+      return res.status(503).json({
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     } catch (error: any) {
       logger.error('[Analytics] Train model error:', error);

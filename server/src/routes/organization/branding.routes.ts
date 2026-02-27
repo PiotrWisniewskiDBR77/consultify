@@ -471,10 +471,11 @@ router.post(
       }
 
       // No simulated DNS verification in runtime.
-      return res.status(501).json({
-        error: 'Custom domain verification is not configured in this deployment',
-        code: 'FEATURE_NOT_CONFIGURED',
-        writable: false,
+      return res.status(503).json({
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: 'Service temporarily unavailable due to missing configuration',
       });
     } catch (err: any) {
       logger.error(`[branding] Error verifying domain for ${orgId}:`, err);

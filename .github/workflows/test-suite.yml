@@ -88,6 +88,34 @@ jobs:
           dur=$((end - JOB_START))
           echo "Job duration: ${dur}s" >> "$GITHUB_STEP_SUMMARY"
 
+  quality-scorecard:
+    name: 📊 Quality Scorecard + Flaky Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: lint-typecheck
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate quality scorecard (JSON)
+        run: npx tsx scripts/testing/quality-scorecard.ts --json --output test-results/quality-scorecard.json
+      - name: Generate flaky test report
+        run: npx tsx scripts/testing/flaky-test-tracker.ts --report
+      - name: Upload quality artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-scorecard-and-flaky-report
+          path: |
+            test-results/quality-scorecard.json
+            test-results/flaky-tests.json
+          retention-days: 30
+
   # ═══════════════════════════════════════════════════════════════
   # LEVEL GATES (L1–L3 coverage)
   # Enforces per-file 95% coverage gates defined in vitest.l*.config.ts

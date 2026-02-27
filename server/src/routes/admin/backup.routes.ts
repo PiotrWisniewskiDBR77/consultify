@@ -16,25 +16,12 @@ import logger from '../../utils/Logger.js';
 const router = Router();
 
 function respondBackupUnavailable(req: any, res: any, message?: string) {
-  if (req.method === 'GET' || req.method === 'HEAD') {
-    return res.status(200).json({
-      success: true,
-      status: 'not_configured',
-      feature: 'admin-backups',
-      writable: false,
-      message:
-        message ||
-        'Backup system is not available (service missing or not configured). Configure backups before enabling this endpoint.',
-    });
-  }
-  return res.status(501).json({
-    success: false,
-    error:
-      message ||
-      'Backup system is not available (service missing or not configured). Configure backups before enabling this endpoint.',
-    code: 'FEATURE_NOT_CONFIGURED',
-    feature: 'admin-backups',
-    writable: false,
+  return res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message:
+      message || 'Service temporarily unavailable due to missing configuration',
   });
 }
 

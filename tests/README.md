@@ -107,3 +107,4 @@ Uwaga: obecny backend jest skonfigurowany pod Postgres, wiec wymaga aktywnego DB
 - `tests/TEST_AUDIT_REGISTRY.md`
 - `docs/testing/`
 - `docs/testing/CI_TESTING_RUNBOOK.md`
+- `docs/testing/TESTING.md`
