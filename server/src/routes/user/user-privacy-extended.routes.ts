@@ -20,12 +20,11 @@ router.use((req, res) => {
     });
   }
   logger.warn(`[user-privacy-extended] Write blocked - feature not configured`);
-  return res.status(501).json({
-    success: false,
-    code: 'FEATURE_NOT_CONFIGURED',
-    error: 'User privacy settings (extended) write operations are not configured',
-    feature: 'user-privacy-extended',
-    writable: false,
+  return res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Service temporarily unavailable due to missing configuration',
   });
 });
 
