@@ -7,7 +7,7 @@
 ## Summary
 
 - **V3 tasks found**: 54 (with DoD: 54, missing DoD: 0)
-- **V2 tasks found**: 122 (with DoD: 121, missing DoD: 1)
+- **V2 tasks found**: 122 (with DoD: 122, missing DoD: 0)
 - **Conflicts detected (heuristic, V2 vs V3 canon)**: 0
 
 ## Conflicts removed / to remove
@@ -290,7 +290,7 @@
 
 - **tasks_total**: 122
 - **tasks_with_DoD**: 121
-- **tasks_missing_DoD**: 1
+- **tasks_missing_DoD**: 0
 
 ### T001 — 🟪 chat — Chat Title Suggestion System
 - System generuje tytuł dla nowego czatu i zapisuje go.
@@ -328,7 +328,9 @@
 - Taski pojawiają się w kalendarzu/workload (jeśli moduły są włączone).
 
 ### T008 — 🟡 my work — External System Synchronization (defer)
-- **DoD**: MISSING
+- Scope V2 pozostaje jawnie odroczony (defer) i nie blokuje R0/R1.
+- Istnieje lista P0 integracji do kolejnego etapu (minimum backlog + minimalny kontrakt integracyjny).
+- Dla każdej integracji P0 zdefiniowano: auth model, kierunek sync i ownership danych.
 
 ### T009 — 🟡 my work — My Ideas (Private Idea Repository)
 - Użytkownik zapisuje ideę z czatu i widzi ją w My Ideas.

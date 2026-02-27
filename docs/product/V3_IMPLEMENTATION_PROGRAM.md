@@ -147,7 +147,7 @@ Reguła: “done” bez smoke = nie istnieje (QA status min `smoke_passed`).
 | WS-J Reports+Presentations | ✅ | 0/3 | **3/3** | **3/3** (J03 done, rest smoke) | — | Piotr |
 | WS-K N‑mode management | ◻︎ | 0/1 | **1/1** | **1/1** smoke_passed | — | Piotr |
 | WS-L V4 placeholders | ◻︎ | 0/1 | **1/1** | **1/1** done | — | Piotr |
-| WS-M Integrations & MCP | ◻︎ | 0/13 | 0/13 | 0/13 | — | Piotr |
+| WS-M Integrations & MCP | ◻︎ | 0/13 | **13/13** | **13/13** smoke_passed | — | Piotr |
 | WS-N AI Platform (LLM OS) | ✅ | 0/3 | **3/3** | **3/3** smoke_passed | — | Piotr |
 
 ### 2.4 Weekly review (rytuał)
@@ -188,6 +188,7 @@ Reguła: “done” bez smoke = nie istnieje (QA status min `smoke_passed`).
 | 2026-02-26 | V3-E06 seed parity | Migration 602: ADMA assessment enriched to COMPLETED with full framework_data + 2nd assessment added. SIRI/ADMA at full parity. |
 | 2026-02-26 | V3-E07 audit script | audit-known-tools-completeness.ts: 19/19 tools 100% (EN+PL). No fill needed. |
 | 2026-02-26 | **Full re-audit: 38/38 FULL** | Re-audited all 38 tasks. 38 FULL. All R0 FULL. Smoke A06+B02+C-ws+E07+A03 passed. tsc clean. Ready for integration testing. |
+| 2026-02-27 | Dashboard sync (WS-M) | Aligned WS-M summary row with task ledger `V3-M01..V3-M13` (all done + smoke_passed) to remove stale 0/13 inconsistency. |
 
 ---
 

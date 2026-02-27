@@ -15,10 +15,10 @@
 Jeśli którekolwiek z poniższych jest niespełnione — **nie robimy release**:
 
 - [ ] **CI PR gates** (V2) są zielone (lint/type-check, quality-check, skip-scan, security-integrity, coverage gates, Tier‑0 E2E)
-- [ ] **`npm run smoke:agent3`** jest zielone
-- [ ] **`npm run type-check`** jest zielone
+- [x] **`npm run smoke:agent3`** jest zielone
+- [x] **`npm run type-check`** jest zielone
 - [ ] **`npm run lint`** jest zielone
-- [ ] **DB migrations** są w repo + można je zastosować na czystej bazie bez błędów
+- [x] **DB migrations** są w repo + można je zastosować na czystej bazie bez błędów
 - [ ] **Tier‑0 manual runbook V3** jest wykonany i evidence jest zapisane (sekcja 2)
 
 ---
@@ -30,7 +30,7 @@ Jeśli którekolwiek z poniższych jest niespełnione — **nie robimy release**
 
 ### 1.1 Repo hygiene (przed testami)
 
-- [ ] Working tree jest czyste: `git status`
+- [x] Working tree jest czyste: `git status`
 - [ ] Migrations są w repo i mają spójną numerację: `server/migrations/*`
 - [ ] Bez “dev hacks” w stylu `--no-verify` / “quick fixes” w main path
 
@@ -42,16 +42,17 @@ Jeśli którekolwiek z poniższych jest niespełnione — **nie robimy release**
 Odpal i zapisz wynik (CI link preferowany):
 
 - [ ] Lint: `npm run lint`
-- [ ] Type check: `npm run type-check`
+- [x] Type check: `npm run type-check`
 - [ ] Unit: `npm run test:unit`
 - [ ] Integration: `npm run test:integration`
 - [ ] Tier‑0 E2E: `npm run test:e2e:tier0`
-- [ ] Security integrity: `npm run security:integrity` (albo gate w CI)
+- [x] Security integrity: `npm run security:integrity` (albo gate w CI)
 - [ ] Patch coverage (jeśli włączony gate): `patch-coverage` job w CI (≥ 80%)
 
 **Evidence**
-- [ ] CI run URL (test-suite): `__________`
-- [ ] (Opcjonalnie) artefakty: JUnit / coverage / summary: `__________`
+- [ ] CI run URL (test-suite): `N/A (local verification 2026-02-27)`
+- [ ] (Opcjonalnie) artefakty: JUnit / coverage / summary: `local logs only`
+- [ ] Blocker notes (local): `lint=FAIL (repo lint debt), integration=BLOCKED (database "consultinity_test" missing), e2e:tier0=FAIL (localhost:3000 not running)`
 
 ### 1.3 V2 “audit-ready” (DD / compliance)
 
@@ -87,16 +88,16 @@ Wykonaj 1:1: `docs/testing/TIER0_MANUAL_RUNBOOK_V3.md`.
 
 ### 2.2 Deterministyczne smoke kontraktowe (V3)
 
-- [ ] Demo/Trial contract smoke: `npm run smoke:demo:script-a`
-- [ ] Interview D01/D02 contract smoke: `npm run smoke:interview:d01d02`
-- [ ] Upload bundle + Execution telemetry contract smoke: `npm run smoke:j03g01`
-- [ ] Tools content/methodology audit smoke: `npm run smoke:e04e06e07l01`
-- [ ] Unified chat actions smoke: `npm run smoke:b02-chat-actions`
-- [ ] Model registry audit smoke: `npm run smoke:a06-model-registry`
-- [ ] Full pack: `npm run smoke:agent3`
+- [x] Demo/Trial contract smoke: `npm run smoke:demo:script-a`
+- [x] Interview D01/D02 contract smoke: `npm run smoke:interview:d01d02`
+- [x] Upload bundle + Execution telemetry contract smoke: `npm run smoke:j03g01`
+- [x] Tools content/methodology audit smoke: `npm run smoke:e04e06e07l01`
+- [x] Unified chat actions smoke: `npm run smoke:b02-chat-actions`
+- [x] Model registry audit smoke: `npm run smoke:a06-model-registry`
+- [x] Full pack: `npm run smoke:agent3`
 
 **Evidence**
-- [ ] Log output / CI artifact link: `__________`
+- [x] Log output / CI artifact link: `local run 2026-02-27 (all smoke contracts PASS)`
 
 ### 2.3 V3 dataset (Demo/Trial) — contract
 
@@ -132,7 +133,7 @@ Jeśli w scope:
 
 ### 4.1 Database & migrations
 
-- [ ] `npm run db:migrate` przechodzi na czystej bazie
+- [x] `npm run db:migrate` przechodzi na czystej bazie
 - [ ] migracje mają rollback plan (jeśli wymagany) / brak destrukcyjnych zmian bez migracji danych
 
 ### 4.2 Observability / telemetry
@@ -151,9 +152,18 @@ Jeśli w scope:
 
 | Obszar | Owner | Status | Data | Link do evidence |
 | --- | --- | --- | --- | --- |
-| V2 Quality gates | Eng Lead | ⬜/✅ | ____ | ____ |
-| V3 Product gates (Runbook) | PO/CTO | ⬜/✅ | ____ | ____ |
-| V3 Smoke pack | Eng Lead | ⬜/✅ | ____ | ____ |
-| DB migrations | Backend | ⬜/✅ | ____ | ____ |
+| V2 Quality gates | Eng Lead | ⬜ (blocked) | 2026-02-27 | lint fail + integration DB missing + e2e server not running |
+| V3 Product gates (Runbook) | PO/CTO | ⬜ (not executed) | 2026-02-27 | runbook evidence not collected yet |
+| V3 Smoke pack | Eng Lead | ✅ | 2026-02-27 | `npm run smoke:agent3` PASS |
+| DB migrations | Backend | ✅ | 2026-02-27 | `npm run db:migrate` PASS |
 | UI/UX compliance | Frontend | ⬜/✅ | ____ | ____ |
+
+---
+
+## 6) Immediate Remediation Plan (snapshot: 2026-02-27)
+
+- [ ] **Lint gate**: wyczyścić repo-level lint debt i doprowadzić `npm run lint` do PASS.
+- [ ] **Integration gate**: przygotować bazę testową `consultinity_test` (bootstrap DB + schema) i ponowić `npm run test:integration`.
+- [ ] **Tier-0 E2E gate**: uruchomić frontend/backend test stack (localhost:3000) przed `npm run test:e2e:tier0`.
+- [ ] **Manual runbook V3**: wykonać `docs/testing/TIER0_MANUAL_RUNBOOK_V3.md` i wkleić evidence pack do sekcji 2.1.
 

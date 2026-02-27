@@ -1,13 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { NextFunction, Response } from 'express';
+import jwt from 'jsonwebtoken';
+
+import config from '../../../../server/src/config/Config.js';
 
 type Req = {
   headers: Record<string, string>;
-  body?: any;
-  query?: any;
-  cookies?: any;
+  body?: unknown;
+  query?: unknown;
+  cookies?: unknown;
   path?: string;
-  user?: any;
+  user?: unknown;
   userId?: string;
   organizationId?: string;
   can?: (capability: string) => boolean;
@@ -20,74 +23,62 @@ function makeRes() {
   } as unknown as Response;
 }
 
-describe('auth.middleware getDeps (dynamic import fallbacks)', () => {
-  it('uses jsonwebtoken module object when default export is missing', async () => {
-    vi.resetModules();
+describe('auth.middleware getDeps (runtime sanity)', () => {
+  it('verifies a real JWT using Config.JWT_SECRET and attaches req.user', async () => {
+    const prev = { ...process.env };
+    try {
+      process.env.NODE_ENV = 'test';
+      process.env.E2E_MODE = 'false';
+      process.env.ENABLE_TEST_AUTH_BYPASS = 'false';
 
-    const jwtMock = {
-      verify: vi.fn((_token: string, _secret: string, cb: any) => cb(null, { id: 'u1' })),
-      decode: vi.fn(),
-    };
+      const token = jwt.sign(
+        {
+          id: 'u1',
+          role: 'ADMIN',
+          organizationId: 'org-1',
+          email: 'u1@local.test',
+          name: 'User One',
+          // no jti -> skip revocation DB checks
+        },
+        config.JWT_SECRET
+      );
 
-    vi.doMock('jsonwebtoken', () => jwtMock);
-    vi.doMock('../../../../server/src/config/Config.js', () => ({ JWT_SECRET: 's1' }));
-    vi.doMock('../../../../server/src/services/permissionService.js', () => ({ can: vi.fn(() => true) }));
+      const { verifyToken } = await import('../../../../server/src/middleware/auth.middleware.ts?getdeps_runtime=1');
 
-    const { verifyToken } = await import('../../../../server/src/middleware/auth.middleware.ts');
+      const req: Req = { headers: { authorization: `Bearer ${token}` }, body: {}, query: {}, cookies: {} };
+      const res = makeRes();
+      const next = vi.fn() as unknown as NextFunction;
 
-    const req: Req = { headers: { authorization: 'Bearer t1' }, body: {}, query: {}, cookies: {} };
-    const res = makeRes();
-    const next = vi.fn() as unknown as NextFunction;
+      await verifyToken(req as any, res, next);
 
-    await verifyToken(req as any, res, next);
-    expect(jwtMock.verify).toHaveBeenCalled();
-    expect(next).toHaveBeenCalled();
+      expect(next).toHaveBeenCalled();
+      expect((req as any).user?.id).toBe('u1');
+      expect((req as any).organizationId).toBe('org-1');
+    } finally {
+      process.env = prev;
+    }
   });
 
-  it('uses Config default export when config export is missing', async () => {
-    vi.resetModules();
+  it('returns 401 for an invalid token', async () => {
+    const prev = { ...process.env };
+    try {
+      process.env.NODE_ENV = 'test';
+      process.env.E2E_MODE = 'false';
+      process.env.ENABLE_TEST_AUTH_BYPASS = 'false';
 
-    const jwtMock = {
-      verify: vi.fn((_token: string, _secret: string, cb: any) => cb(null, { id: 'u2' })),
-      decode: vi.fn(),
-    };
+      const { verifyToken } = await import('../../../../server/src/middleware/auth.middleware.ts?getdeps_runtime_invalid=1');
 
-    vi.doMock('jsonwebtoken', () => jwtMock);
-    vi.doMock('../../../../server/src/config/Config.js', () => ({ default: { JWT_SECRET: 's2' } }));
-    vi.doMock('../../../../server/src/services/permissionService.js', () => ({ can: vi.fn(() => true) }));
+      const req: Req = { headers: { authorization: 'Bearer not-a-jwt' }, body: {}, query: {}, cookies: {} };
+      const res: any = makeRes();
+      const next = vi.fn() as unknown as NextFunction;
 
-    const { verifyToken } = await import('../../../../server/src/middleware/auth.middleware.ts');
+      await verifyToken(req as any, res, next);
 
-    const req: Req = { headers: { authorization: 'Bearer t2' }, body: {}, query: {}, cookies: {} };
-    const res = makeRes();
-    const next = vi.fn() as unknown as NextFunction;
-
-    await verifyToken(req as any, res, next);
-    expect(jwtMock.verify).toHaveBeenCalledWith('t2', 's2', expect.any(Function));
-    expect(next).toHaveBeenCalled();
-  });
-
-  it('uses Config module object when both config and default are missing', async () => {
-    vi.resetModules();
-
-    const jwtMock = {
-      verify: vi.fn((_token: string, _secret: string, cb: any) => cb(null, { id: 'u3' })),
-      decode: vi.fn(),
-    };
-
-    vi.doMock('jsonwebtoken', () => jwtMock);
-    vi.doMock('../../../../server/src/config/Config.js', () => ({ JWT_SECRET: 's3' }));
-    vi.doMock('../../../../server/src/services/permissionService.js', () => ({ can: vi.fn(() => true) }));
-
-    const { verifyToken } = await import('../../../../server/src/middleware/auth.middleware.ts');
-
-    const req: Req = { headers: { authorization: 'Bearer t3' }, body: {}, query: {}, cookies: {} };
-    const res = makeRes();
-    const next = vi.fn() as unknown as NextFunction;
-
-    await verifyToken(req as any, res, next);
-    expect(jwtMock.verify).toHaveBeenCalledWith('t3', 's3', expect.any(Function));
-    expect(next).toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(next).not.toHaveBeenCalled();
+    } finally {
+      process.env = prev;
+    }
   });
 });
 
