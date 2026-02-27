@@ -816,6 +816,16 @@
     "title": "التقارير",
     "management": "تقارير الإدارة",
     "assessment": "تقارير التقييم",
+    "entry": {
+      "title": "التقارير",
+      "subtitle": "اختر كيف تريد العمل مع التقارير",
+      "builderTitle": "منشئ التقارير",
+      "builderDesc": "أنشئ تقارير قابلة للتسليم للعملاء",
+      "managementTitle": "تقارير الإدارة",
+      "managementDesc": "تقارير PMO الداخلية",
+      "openBuilder": "افتح منشئ التقارير",
+      "openManagement": "افتح تقارير الإدارة"
+    },
     "automation": {
       "title": "Reporting Automation",
       "subtitle": "Automated recurring and event-triggered report generation",

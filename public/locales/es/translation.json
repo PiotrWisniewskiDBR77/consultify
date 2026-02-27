@@ -816,6 +816,16 @@
     "title": "Informes",
     "management": "Informes de Gestión",
     "assessment": "Informes de Evaluación",
+    "entry": {
+      "title": "Informes",
+      "subtitle": "Elige cómo quieres trabajar con los informes",
+      "builderTitle": "Creador de Informes",
+      "builderDesc": "Crea informes entregables para clientes",
+      "managementTitle": "Informes de Gestión",
+      "managementDesc": "Informes internos de PMO",
+      "openBuilder": "Abrir Creador de Informes",
+      "openManagement": "Abrir Informes de Gestión"
+    },
     "automation": {
       "title": "Reporting Automation",
       "subtitle": "Automated recurring and event-triggered report generation",

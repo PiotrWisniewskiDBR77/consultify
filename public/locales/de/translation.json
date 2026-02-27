@@ -816,6 +816,16 @@
     "title": "Berichte",
     "management": "Managementberichte",
     "assessment": "Bewertungsberichte",
+    "entry": {
+      "title": "Berichte",
+      "subtitle": "Wähle, wie du mit Berichten arbeiten möchtest",
+      "builderTitle": "Berichtsersteller",
+      "builderDesc": "Erstelle lieferbare Berichte für Kunden",
+      "managementTitle": "Managementberichte",
+      "managementDesc": "Internes PMO-Reporting",
+      "openBuilder": "Berichtsersteller öffnen",
+      "openManagement": "Managementberichte öffnen"
+    },
     "automation": {
       "title": "Reporting Automation",
       "subtitle": "Automated recurring and event-triggered report generation",

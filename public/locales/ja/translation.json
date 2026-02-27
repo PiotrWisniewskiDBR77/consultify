@@ -496,6 +496,16 @@
     "title": "レポート",
     "management": "経営レポート",
     "assessment": "アセスメントレポート",
+    "entry": {
+      "title": "レポート",
+      "subtitle": "レポートの扱い方を選択してください",
+      "builderTitle": "レポートビルダー",
+      "builderDesc": "クライアント向けの成果物レポートを作成",
+      "managementTitle": "経営レポート",
+      "managementDesc": "PMO向け社内レポーティング",
+      "openBuilder": "レポートビルダーを開く",
+      "openManagement": "経営レポートを開く"
+    },
     "automation": {
       "title": "Reporting Automation",
       "subtitle": "Automated recurring and event-triggered report generation",
