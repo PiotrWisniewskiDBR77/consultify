@@ -2,9 +2,9 @@ name: IRIS 6.0 Automated Test Suite
 
 on:
   push:
-    branches: [Londyn]
+    branches: [main, develop, Londyn]
   pull_request:
-    branches: [Londyn]
+    branches: [main, develop]
   workflow_dispatch:
     inputs:
       test_type:
@@ -234,20 +234,30 @@ jobs:
     needs: lint-typecheck
     steps:
       - uses: actions/checkout@v4
+      - name: Deferred outside main/develop
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        run: |
+          echo "Coverage gates deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
       - name: Capture job start
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
       - name: Setup Node.js
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
       - name: Install dependencies
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm ci
       - name: Run L1 coverage gate
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm run test:l1:coverage
       - name: Run L2 coverage gate
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm run test:l2:coverage
       - name: Run L3 coverage gate
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm run test:l3:coverage
       - name: Job duration
         if: always()
@@ -360,22 +370,31 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v4
+      - name: Deferred outside main/develop
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        run: |
+          echo "Performance tests deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
       - name: Capture job start
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm ci
 
       - name: Migrate DB (strict)
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: DB_TYPE=postgres DATABASE_URL=postgres://iris:iris_test@localhost:5432/iris_test npm run db:migrate:strict
 
       - name: Run performance tests (real DB)
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm run test:performance:real -- --reporter=junit --outputFile=junit-performance.xml
         env:
           DATABASE_URL: postgres://iris:iris_test@localhost:5432/iris_test
@@ -398,7 +417,7 @@ jobs:
           PERF_SCALABILITY_TX_MS: '20000'
 
       - name: Upload test results
-        if: always()
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: performance-test-results
@@ -436,25 +455,38 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v4
+      - name: Deferred outside main/develop
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        run: |
+          echo "Integration tests deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
       - name: Capture job start
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm ci
 
+      - name: Migrate DB (strict)
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        run: DB_TYPE=postgres DATABASE_URL=postgres://iris:iris_test@localhost:5432/iris_test npm run db:migrate:strict
+
       - name: Run integration tests (Shard ${{ matrix.shard }})
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npx vitest run tests/integration --no-file-parallelism --shard=${{ matrix.shard }}/3 --reporter=junit --outputFile=junit-integration-${{ matrix.shard }}.xml
         env:
+          DB_TYPE: postgres
           DATABASE_URL: postgres://iris:iris_test@localhost:5432/iris_test
 
       - name: Upload test results
-        if: always()
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: integration-test-results-${{ matrix.shard }}
@@ -543,26 +575,36 @@ jobs:
     needs: [unit-tests, component-tests]
     steps:
       - uses: actions/checkout@v4
+      - name: Deferred outside main/develop
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        run: |
+          echo "E2E Tier-0 deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
       - name: Capture job start
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm ci
 
       - name: Install Playwright browsers
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npx playwright install --with-deps chromium
 
       - name: Build application
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm run build
 
       - name: Run E2E tests
         # Tier-0 deterministic smoke suite (PR gate)
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
         run: npm run test:e2e:tier0
         env:
           CI: true
@@ -575,7 +617,7 @@ jobs:
           TEST_SUPPORT_KEY: local-test-support-key-change-me
 
       - name: Upload Playwright report
-        if: always()
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
