@@ -65,6 +65,8 @@ jobs:
     needs: lint-typecheck
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
