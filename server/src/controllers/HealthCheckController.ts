@@ -211,20 +211,15 @@ export class HealthCheckController {
       overall = 'down';
     }
 
+    let redisConnected = false;
     try {
-      let connected = false;
-      try {
-        const { isRedisConnected } = await import('../services/ai/redisClient.js');
-        connected = isRedisConnected();
-      } catch {
-        /* ignore */
-      }
-      components.redis = { status: connected ? 'healthy' : 'degraded' };
-      if (!connected && overall === 'healthy') overall = 'degraded';
+      const { isRedisConnected } = await import('../services/ai/redisClient.js');
+      redisConnected = isRedisConnected();
     } catch {
-      components.redis = { status: 'degraded' };
-      if (overall === 'healthy') overall = 'degraded';
+      /* ignore */
     }
+    components.redis = { status: redisConnected ? 'healthy' : 'degraded' };
+    if (!redisConnected && overall === 'healthy') overall = 'degraded';
 
     try {
       const { getWatchdogStats } = await import('../middleware/alertWatchdog.middleware.js');

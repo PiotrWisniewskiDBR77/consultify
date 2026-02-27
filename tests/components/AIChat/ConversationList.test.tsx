@@ -2,6 +2,20 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: any, arg2?: any, arg3?: any) => {
+      if (typeof arg2 === 'string') {
+        if (arg3 && typeof arg3 === 'object') {
+          return arg2.replaceAll('{{label}}', String((arg3 as any).label ?? ''));
+        }
+        return arg2;
+      }
+      return String(key);
+    },
+  }),
+}));
+
 const toggleConversationGroupCollapsedMock = vi.fn();
 let collapsedConversationGroupsState: Record<string, boolean> = {};
 
@@ -53,10 +67,10 @@ describe('ConversationList (L2)', () => {
     expect(screen.getByText('Przypięte')).toBeInTheDocument();
     expect(screen.getAllByTestId('conversation-item')).toHaveLength(5);
 
-    fireEvent.click(screen.getByRole('button', { name: /show more/i }));
+    fireEvent.click(screen.getByRole('button', { name: /(show more|pokaż więcej|aiChat\.showMore)/i }));
     expect(screen.getAllByTestId('conversation-item')).toHaveLength(6);
 
-    fireEvent.click(screen.getByRole('button', { name: /show less/i }));
+    fireEvent.click(screen.getByRole('button', { name: /(show less|pokaż mniej|aiChat\.showLess)/i }));
     expect(screen.getAllByTestId('conversation-item')).toHaveLength(5);
   });
 
@@ -95,16 +109,14 @@ describe('ConversationList (L2)', () => {
     };
     render(<ConversationList groups={groups} activeId={null} onSelect={onSelect} />);
 
-    const pinnedHeader = screen.getByText('Przypięte').closest('[role="button"]') as HTMLElement | null;
-    expect(pinnedHeader).not.toBeNull();
-
-    fireEvent.click(pinnedHeader as HTMLElement);
+    const groupHeader = screen.getByRole('button', { name: /przypięte/i });
+    fireEvent.click(groupHeader);
     expect(toggleConversationGroupCollapsedMock).toHaveBeenCalledWith('pinned');
 
-    fireEvent.keyDown(pinnedHeader as HTMLElement, { key: 'Enter' });
+    fireEvent.keyDown(groupHeader, { key: 'Enter' });
     expect(toggleConversationGroupCollapsedMock).toHaveBeenCalledWith('pinned');
 
-    fireEvent.keyDown(pinnedHeader as HTMLElement, { key: ' ' });
+    fireEvent.keyDown(groupHeader, { key: ' ' });
     expect(toggleConversationGroupCollapsedMock).toHaveBeenCalledWith('pinned');
 
     fireEvent.click(screen.getByRole('button', { name: /pinned 1/i }));

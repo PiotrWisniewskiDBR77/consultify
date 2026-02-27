@@ -1,3 +1,4 @@
+import { getDatabaseType } from '../config/DatabaseConfig.js';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { QueryAdapter } from '../utils/QueryAdapter.js';
@@ -70,11 +71,14 @@ function pickTranslation(
 }
 
 function pickLibraryContent(rawJson: string | null | undefined, lang: 'en' | 'pl') {
-  const translations = safeJsonParse<Record<string, any>>(rawJson, {});
-  const en = translations?.en && typeof translations.en === 'object' ? translations.en : {};
+  const translations = safeJsonParse<Record<string, unknown>>(rawJson, {});
+  const en =
+    translations?.en && typeof translations.en === 'object' ? (translations.en as object) : {};
   const picked =
-    translations?.[lang] && typeof translations[lang] === 'object' ? translations[lang] : {};
-  return { ...en, ...picked };
+    translations?.[lang] && typeof translations[lang] === 'object'
+      ? (translations[lang] as object)
+      : {};
+  return { ...(en as Record<string, unknown>), ...(picked as Record<string, unknown>) };
 }
 
 type SeedKnownTool = {
@@ -365,20 +369,44 @@ class KnownToolsService {
     return this.db;
   }
 
-  private async ensureToolsSeedOnce(): Promise<void> {
+  private async ensureSqliteSchemaAndSeedOnce(): Promise<void> {
+    const dbType = getDatabaseType();
+    if (dbType !== 'sqlite') return;
     if (this.ensuredSqliteSeed) return;
     this.ensuredSqliteSeed = true;
 
     const db = await this.getDb();
-    const q = new QueryAdapter(db);
+    const q = new QueryAdapter(db, 'sqlite');
 
-    // Seed if empty (PostgreSQL; schema from migrations).
+    // Ensure extra columns exist (best-effort; ignore if already present)
+    const alters = [
+      `ALTER TABLE tools ADD COLUMN tool_type TEXT`,
+      `ALTER TABLE tools ADD COLUMN library_category TEXT`,
+      `ALTER TABLE tools ADD COLUMN library_content_translations TEXT`,
+      `ALTER TABLE tools ADD COLUMN tags_json TEXT`,
+    ];
+    for (const sql of alters) {
+      try {
+        await q.run(sql, []);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e || '');
+        if (
+          msg.toLowerCase().includes('duplicate column') ||
+          msg.toLowerCase().includes('already exists')
+        ) {
+          continue;
+        }
+        // Ignore other schema drift issues for local dev; listKnownTools will still behave gracefully.
+      }
+    }
+
+    // Seed if empty (SQLite local/dev often runs migrations in safe mode and skips PG-style $$ blocks).
     try {
       const row = await q.get<{ total: number }>(
         `SELECT COUNT(*) as total FROM tools WHERE is_active = 1 AND tool_type IS NOT NULL`,
         []
       );
-      const total = Number((row as any)?.total || 0);
+      const total = Number(row?.total ?? 0);
       if (total > 0) return;
 
       for (const tool of SQLITE_KNOWN_TOOLS_SEED) {
@@ -393,7 +421,7 @@ class KnownToolsService {
         const tagsJson = JSON.stringify(tool.tags || []);
 
         await q.run(
-          `INSERT INTO tools (
+          `INSERT OR IGNORE INTO tools (
             id, name, tool_type, display_name, category, library_category,
             description, description_translations, library_content_translations,
             icon, is_licensed, is_active, is_coming_soon, tags_json, sort_order
@@ -401,7 +429,7 @@ class KnownToolsService {
             ?, ?, ?, ?, ?, ?,
             ?, ?, ?,
             ?, ?, ?, ?, ?, ?
-          ) ON CONFLICT (id) DO NOTHING`,
+          )`,
           [
             tool.id,
             tool.toolType,
@@ -433,15 +461,16 @@ class KnownToolsService {
     limit?: number;
     offset?: number;
   }): Promise<{ items: KnownToolListItem[]; total: number; limit: number; offset: number }> {
-    await this.ensureToolsSeedOnce();
+    await this.ensureSqliteSchemaAndSeedOnce();
     const db = await this.getDb();
-    const q = new QueryAdapter(db);
+    const dbType = getDatabaseType();
+    const q = new QueryAdapter(db, dbType);
     const lang = normalizeLanguage(params.lang);
     const limit = Math.min(50, Math.max(1, Number(params.limit || 20)));
     const offset = Math.max(0, Number(params.offset || 0));
 
     const where: string[] = ['is_active = 1', 'tool_type IS NOT NULL'];
-    const args: any[] = [];
+    const args: unknown[] = [];
 
     if (params.category) {
       where.push('library_category = ?');
@@ -456,11 +485,11 @@ class KnownToolsService {
 
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
-    const countRow = await q.get<{ total: unknown }>(
+    const countRow = await q.get<{ total: number | string }>(
       `SELECT COUNT(*) as total FROM tools ${whereSql}`,
       args
     );
-    const total = Number((countRow as any)?.total || 0);
+    const total = Number(countRow?.total ?? 0);
 
     const rows = await q.all<ToolRow>(
       `SELECT id, name, tool_type, display_name, library_category, description, description_translations,
@@ -502,9 +531,10 @@ class KnownToolsService {
   }
 
   async getKnownTool(toolTypeOrName: string, langRaw?: string): Promise<KnownToolDetail | null> {
-    await this.ensureToolsSeedOnce();
+    await this.ensureSqliteSchemaAndSeedOnce();
     const db = await this.getDb();
-    const q = new QueryAdapter(db);
+    const dbType = getDatabaseType();
+    const q = new QueryAdapter(db, dbType);
     const lang = normalizeLanguage(langRaw);
     const toolType = String(toolTypeOrName || '').trim();
     if (!toolType) return null;

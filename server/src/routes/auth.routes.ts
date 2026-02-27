@@ -261,13 +261,7 @@ router.get(
 
       // Permanent role fix for selected internal accounts.
       // Ensure DB is updated so future tokens stay consistent.
-      if (
-        FORCED_SUPERADMIN_EMAILS.has(
-          String(user.email || '')
-            .trim()
-            .toLowerCase()
-        )
-      ) {
+      if (FORCED_SUPERADMIN_EMAILS.has(String(user.email || '').trim().toLowerCase())) {
         if (user.role !== 'SUPERADMIN') {
           try {
             await dbRun(`UPDATE users SET role = ? WHERE id = ?`, ['SUPERADMIN', user.id]);

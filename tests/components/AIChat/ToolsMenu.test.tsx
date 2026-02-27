@@ -4,6 +4,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import toast from 'react-hot-toast';
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: any, arg2?: any, arg3?: any) => {
+      if (typeof arg2 === 'string') {
+        if (arg3 && typeof arg3 === 'object') {
+          return arg2.replaceAll('{{label}}', String((arg3 as any).label ?? ''));
+        }
+        return arg2;
+      }
+      return String(key);
+    },
+  }),
+}));
+
 const onToolSelect = vi.fn();
 const setAIConfigMock = vi.fn();
 let aiConfigState: any = {};

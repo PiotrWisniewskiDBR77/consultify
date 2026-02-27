@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import jwt from 'jsonwebtoken';
 import { RefreshTokenService } from '../../../../server/src/services/RefreshTokenService.js';
 
@@ -78,4 +78,3 @@ describe('RefreshTokenService - forced SUPERADMIN', () => {
     );
   });
 });
-

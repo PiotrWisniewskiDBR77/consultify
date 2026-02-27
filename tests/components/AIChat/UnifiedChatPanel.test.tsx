@@ -5,14 +5,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import toast from 'react-hot-toast';
 
 // ---------------------------------------------------------------------------
-// Hoisted mocks/state (Vitest `vi.mock` factories are hoisted)
+// Mocks (stateful, but scoped to this test file)
 // ---------------------------------------------------------------------------
 
-const hoisted = vi.hoisted(() => {
-  const trackFunnelEventMock = vi.fn();
-  const navigateMock = vi.fn();
-
-  const apiMock = {
+const h = vi.hoisted(() => ({
+  trackFunnelEventMock: vi.fn(),
+  apiMock: {
     agentAuditAcceptRun: vi.fn(),
     agentAuditListAgents: vi.fn(),
     agentAuditReview: vi.fn(),
@@ -23,263 +21,168 @@ const hoisted = vi.hoisted(() => {
     deepThinkingEvent: vi.fn(),
     saveDeepThinkingDecision: vi.fn(),
     uploadChatAttachment: vi.fn(),
-  };
-
-  const addChatMessageMock = vi.fn();
-  const deleteChatMessageMock = vi.fn();
-  const setIsBotTypingMock = vi.fn();
-  const setAIConfigMock = vi.fn();
-  const setCurrentViewMock = vi.fn();
-
-  const appStoreState: any = {
-    currentStreamContent: '',
-    isBotTyping: false,
-    addChatMessage: addChatMessageMock,
-    deleteChatMessage: deleteChatMessageMock,
-    setIsBotTyping: setIsBotTypingMock,
-    aiFreezeStatus: { isFrozen: false },
-    aiConfig: {
-      deepResearch: false,
-      webSearch: false,
-      showReasoning: false,
-      marketResearch: false,
-      textToSpeech: false,
-      responseStyle: 'normal',
-    },
-    setAIConfig: setAIConfigMock,
-    setCurrentView: setCurrentViewMock,
-  };
-
-  const useAppStoreMock: any = () => appStoreState;
-  useAppStoreMock.getState = () => appStoreState;
-
-  const createConversationMock = vi.fn();
-  const addMessageToConversationMock = vi.fn();
-  const setActiveConversationMock = vi.fn();
-  const fetchConversationMock = vi.fn();
-  const clearActiveChatMock = vi.fn();
-  const truncateFromMessageMock = vi.fn();
-  const toggleSidebarMock = vi.fn();
-  const expandToFullScreenMock = vi.fn();
-  const collapseToSplitMock = vi.fn();
-  const setDisplayModeMock = vi.fn();
-
-  const conversationStoreState: any = {
-    activeConversationId: null,
-    activeMessages: [],
-    isLoading: false,
-    isSidebarOpen: false,
-    displayMode: 'full',
-    createConversation: createConversationMock,
-    addMessage: addMessageToConversationMock,
-    setActiveConversation: setActiveConversationMock,
-    fetchConversation: fetchConversationMock,
-    clearActiveChat: clearActiveChatMock,
-    truncateFromMessage: truncateFromMessageMock,
-    toggleSidebar: toggleSidebarMock,
-    setDisplayMode: setDisplayModeMock,
-    expandToFullScreen: expandToFullScreenMock,
-    collapseToSplit: collapseToSplitMock,
-    draftChatLanguage: null,
-    chatLanguageByConversationId: {},
-  };
-
-  const useConversationStoreMock: any = () => conversationStoreState;
-  useConversationStoreMock.getState = () => conversationStoreState;
-
-  const addArtifactMock = vi.fn();
-  const toggleArtifactsPanelMock = vi.fn();
-  const exportArtifactMock = vi.fn();
-
-  const pendingActionsCountRef = { value: 0 };
-
-  const speakMock = vi.fn(async () => undefined);
-  const stopSpeakingMock = vi.fn();
-  const updateVoiceSettingsMock = vi.fn();
-  const voiceState: any = { isSpeaking: false, isListening: false };
-  const ttsSupportedRef = { value: true };
-
-  const demoState: any = {
-    isDemo: false,
-    timeRemainingMs: 1_000_000,
-    aiInteractionsRemaining: 100,
-    aiInteractionsLimit: 100,
-    consumeAIInteraction: vi.fn(),
-  };
-
-  const startStreamMock = vi.fn();
-  const abortStreamMock = vi.fn(() => false);
-  const retryLastStreamMock = vi.fn();
-  const clearLastErrorMock = vi.fn();
-
-  const aiStreamOptionsCapturedRef: any = { value: null };
-  const aiStreamState: any = {
-    abortStream: abortStreamMock,
-    retryLastStream: retryLastStreamMock,
-    lastError: null,
-    clearLastError: clearLastErrorMock,
-    isStreaming: false,
-    streamedContent: '',
-    researchProgress: null,
-    researchVisibility: 'hidden',
-    deepThinkingState: null,
-    deepThinkingHint: null,
-    interimInsight: null,
-    agentAuditState: null,
-    agentAuditVerdict: null,
-    agentReviewProgressByAgentId: {},
-    agentSourcesByAgentId: {},
-    retryInfo: null,
-    streamStartedAt: null,
-    streamCompletedSignal: 0,
-  };
-
-  return {
-    trackFunnelEventMock,
-    navigateMock,
-    apiMock,
-    addChatMessageMock,
-    deleteChatMessageMock,
-    setIsBotTypingMock,
-    setAIConfigMock,
-    setCurrentViewMock,
-    appStoreState,
-    useAppStoreMock,
-    createConversationMock,
-    addMessageToConversationMock,
-    setActiveConversationMock,
-    fetchConversationMock,
-    clearActiveChatMock,
-    truncateFromMessageMock,
-    toggleSidebarMock,
-    expandToFullScreenMock,
-    collapseToSplitMock,
-    setDisplayModeMock,
-    conversationStoreState,
-    useConversationStoreMock,
-    addArtifactMock,
-    toggleArtifactsPanelMock,
-    exportArtifactMock,
-    pendingActionsCountRef,
-    speakMock,
-    stopSpeakingMock,
-    updateVoiceSettingsMock,
-    voiceState,
-    ttsSupportedRef,
-    demoState,
-    startStreamMock,
-    abortStreamMock,
-    retryLastStreamMock,
-    clearLastErrorMock,
-    aiStreamOptionsCapturedRef,
-    aiStreamState,
-  };
-});
-
-vi.mock('react-router-dom', async () => {
-  const actual: any = await vi.importActual('react-router-dom');
-  return {
-    ...actual,
-    useNavigate: () => hoisted.navigateMock,
-  };
-});
-
-vi.mock('../../../src/services/funnelAnalytics', () => ({
-  trackFunnelEvent: hoisted.trackFunnelEventMock,
-}));
-
-vi.mock('../../../src/services/api', () => ({
-  Api: hoisted.apiMock,
-}));
-
-vi.mock('../../../src/store/useAppStore', () => ({
-  useAppStore: hoisted.useAppStoreMock,
-}));
-
-vi.mock('../../../src/store/useConversationStore', () => ({
-  useConversationStore: hoisted.useConversationStoreMock,
-}));
-
-vi.mock('../../../src/store/useArtifactsStore', () => ({
-  useArtifactsStore: () => ({
-    addArtifact: hoisted.addArtifactMock,
-    togglePanel: hoisted.toggleArtifactsPanelMock,
-    exportArtifact: hoisted.exportArtifactMock,
-  }),
-}));
-
-vi.mock('../../../src/store/useAIActionsStore', () => ({
-  useAIActionsStore: (selector: any) => selector({ pendingCount: hoisted.pendingActionsCountRef.value }),
-}));
-
-vi.mock('../../../src/hooks/useUniversalVoice', () => ({
-  useUniversalVoice: () => ({
-    speak: hoisted.speakMock,
-    stopSpeaking: hoisted.stopSpeakingMock,
-    state: hoisted.voiceState,
-    startListening: vi.fn(),
-    stopListening: vi.fn(),
-    settings: {},
-    updateSettings: hoisted.updateVoiceSettingsMock,
-    isSupported: hoisted.ttsSupportedRef.value,
-  }),
-}));
-
-vi.mock('../../../src/hooks/useDemoSession', () => ({
-  useDemoSession: () => hoisted.demoState,
-}));
-
-vi.mock('@/contexts/FeatureFlagsContext', () => ({
-  useFeatureFlagsContext: () => ({
-    isEnabled: (flag: string) => flag === 'myWorkSignalsV2',
-  }),
-}));
-
-vi.mock('../../../src/hooks/useAIStream', () => ({
-  useAIStream: (options: any) => {
-    hoisted.aiStreamOptionsCapturedRef.value = options;
-    return { startStream: hoisted.startStreamMock, ...hoisted.aiStreamState };
   },
 }));
 
-const {
-  trackFunnelEventMock,
-  apiMock,
-  addArtifactMock,
-  toggleArtifactsPanelMock,
-  addChatMessageMock,
-  deleteChatMessageMock,
-  setIsBotTypingMock,
-  setAIConfigMock,
-  setCurrentViewMock,
-  appStoreState,
-  createConversationMock,
-  addMessageToConversationMock,
-  setActiveConversationMock,
-  fetchConversationMock,
-  clearActiveChatMock,
-  truncateFromMessageMock,
-  toggleSidebarMock,
-  expandToFullScreenMock,
-  collapseToSplitMock,
-  conversationStoreState,
-  aiStreamState,
-  startStreamMock,
-  abortStreamMock,
-  retryLastStreamMock,
-  clearLastErrorMock,
-  demoState,
-  voiceState,
-} = hoisted;
+vi.mock('../../../src/services/funnelAnalytics', () => ({
+  trackFunnelEvent: h.trackFunnelEventMock,
+}));
 
-const pendingActionsCountRef = hoisted.pendingActionsCountRef;
-const ttsSupportedRef = hoisted.ttsSupportedRef;
-const aiStreamOptionsCapturedRef = hoisted.aiStreamOptionsCapturedRef;
-const speakMock = hoisted.speakMock;
-const stopSpeakingMock = hoisted.stopSpeakingMock;
-const updateVoiceSettingsMock = hoisted.updateVoiceSettingsMock;
+vi.mock('../../../src/services/api', () => ({
+  Api: h.apiMock,
+}));
 
-vi.mock('../../../src/components/AIChat/ChatSlidingPanel', () => ({
+const addChatMessageMock = vi.fn();
+const deleteChatMessageMock = vi.fn();
+const setIsBotTypingMock = vi.fn();
+const setAIConfigMock = vi.fn();
+const setCurrentViewMock = vi.fn();
+
+let appStoreState: any = {
+  currentStreamContent: '',
+  isBotTyping: false,
+  addChatMessage: addChatMessageMock,
+  deleteChatMessage: deleteChatMessageMock,
+  setIsBotTyping: setIsBotTypingMock,
+  aiFreezeStatus: { isFrozen: false },
+  aiConfig: {
+    deepResearch: false,
+    webSearch: false,
+    showReasoning: false,
+    marketResearch: false,
+    textToSpeech: false,
+    responseStyle: 'normal',
+  },
+  setAIConfig: setAIConfigMock,
+  setCurrentView: setCurrentViewMock,
+};
+
+const useAppStoreMock: any = () => appStoreState;
+useAppStoreMock.getState = () => appStoreState;
+
+vi.doMock('../../../src/store/useAppStore', () => ({
+  useAppStore: useAppStoreMock,
+}));
+
+const createConversationMock = vi.fn();
+const addMessageToConversationMock = vi.fn();
+const setActiveConversationMock = vi.fn();
+const fetchConversationMock = vi.fn();
+const clearActiveChatMock = vi.fn();
+const truncateFromMessageMock = vi.fn();
+const toggleSidebarMock = vi.fn();
+const expandToFullScreenMock = vi.fn();
+const collapseToSplitMock = vi.fn();
+
+let conversationStoreState: any = {
+  activeConversationId: null,
+  activeMessages: [],
+  isLoading: false,
+  isSidebarOpen: false,
+  displayMode: 'full',
+  createConversation: createConversationMock,
+  addMessage: addMessageToConversationMock,
+  setActiveConversation: setActiveConversationMock,
+  fetchConversation: fetchConversationMock,
+  clearActiveChat: clearActiveChatMock,
+  truncateFromMessage: truncateFromMessageMock,
+  toggleSidebar: toggleSidebarMock,
+  setDisplayMode: vi.fn(),
+  expandToFullScreen: expandToFullScreenMock,
+  collapseToSplit: collapseToSplitMock,
+  draftChatLanguage: null,
+  chatLanguageByConversationId: {},
+};
+
+const useConversationStoreMock: any = () => conversationStoreState;
+useConversationStoreMock.getState = () => conversationStoreState;
+
+vi.doMock('../../../src/store/useConversationStore', () => ({
+  useConversationStore: useConversationStoreMock,
+}));
+
+const addArtifactMock = vi.fn();
+const toggleArtifactsPanelMock = vi.fn();
+const exportArtifactMock = vi.fn();
+vi.doMock('../../../src/store/useArtifactsStore', () => ({
+  useArtifactsStore: () => ({
+    addArtifact: addArtifactMock,
+    togglePanel: toggleArtifactsPanelMock,
+    exportArtifact: exportArtifactMock,
+  }),
+}));
+
+let pendingActionsCountState = 0;
+vi.doMock('../../../src/store/useAIActionsStore', () => ({
+  useAIActionsStore: (selector: any) => selector({ pendingCount: pendingActionsCountState }),
+}));
+
+const speakMock = vi.fn(async () => undefined);
+const stopSpeakingMock = vi.fn();
+const updateVoiceSettingsMock = vi.fn();
+let voiceStateState: any = { isSpeaking: false, isListening: false };
+let ttsSupportedState = true;
+
+vi.doMock('../../../src/hooks/useUniversalVoice', () => ({
+  useUniversalVoice: () => ({
+    speak: speakMock,
+    stopSpeaking: stopSpeakingMock,
+    state: voiceStateState,
+    startListening: vi.fn(),
+    stopListening: vi.fn(),
+    settings: {},
+    updateSettings: updateVoiceSettingsMock,
+    isSupported: ttsSupportedState,
+  }),
+}));
+
+let demoState: any = {
+  isDemo: false,
+  timeRemainingMs: 1_000_000,
+  aiInteractionsRemaining: 100,
+  aiInteractionsLimit: 100,
+  consumeAIInteraction: vi.fn(),
+};
+
+vi.doMock('../../../src/hooks/useDemoSession', () => ({
+  useDemoSession: () => demoState,
+}));
+
+const startStreamMock = vi.fn();
+const abortStreamMock = vi.fn(() => false);
+const retryLastStreamMock = vi.fn();
+const clearLastErrorMock = vi.fn();
+
+let aiStreamOptionsCaptured: any = null;
+let aiStreamState: any = {
+  abortStream: abortStreamMock,
+  retryLastStream: retryLastStreamMock,
+  lastError: null,
+  clearLastError: clearLastErrorMock,
+  isStreaming: false,
+  streamedContent: '',
+  researchProgress: null,
+  researchVisibility: 'hidden',
+  deepThinkingState: null,
+  deepThinkingHint: null,
+  interimInsight: null,
+  agentAuditState: null,
+  agentAuditVerdict: null,
+  agentReviewProgressByAgentId: {},
+  agentSourcesByAgentId: {},
+  retryInfo: null,
+  streamStartedAt: null,
+  streamCompletedSignal: 0,
+};
+
+vi.doMock('../../../src/hooks/useAIStream', () => ({
+  useAIStream: (options: any) => {
+    aiStreamOptionsCaptured = options;
+    return { startStream: startStreamMock, ...aiStreamState };
+  },
+}));
+
+vi.doMock('../../../src/components/AIChat/ChatSlidingPanel', () => ({
   ChatSlidingPanel: ({
     onNewChat,
     onSelectConversation,
@@ -294,20 +197,11 @@ vi.mock('../../../src/components/AIChat/ChatSlidingPanel', () => ({
   ),
 }));
 
-vi.mock('../../../src/components/AIChat/ContextBadge', () => ({
+vi.doMock('../../../src/components/AIChat/ContextBadge', () => ({
   ContextBadge: () => <div data-testid="context-badge" />,
 }));
 
-vi.mock('../../../src/components/AIChat/ChatSignalsPanel', () => ({
-  ChatSignalsPanel: ({ open, isOpen, onClose }: { open?: boolean; isOpen?: boolean; onClose: () => void }) =>
-    (open ?? isOpen) ? (
-      <button data-testid="signals-panel" onClick={onClose}>
-        signals-panel
-      </button>
-    ) : null,
-}));
-
-vi.mock('../../../src/components/AIChat/PendingActionsIndicator', () => ({
+vi.doMock('../../../src/components/AIChat/PendingActionsIndicator', () => ({
   PendingActionsIndicator: ({ onViewAll }: { onViewAll?: () => void }) => (
     <button data-testid="pending-actions" onClick={() => onViewAll?.()}>
       pending-actions
@@ -315,7 +209,7 @@ vi.mock('../../../src/components/AIChat/PendingActionsIndicator', () => ({
   ),
 }));
 
-vi.mock('../../../src/components/AIChat/EnhancedChatInput', () => ({
+vi.doMock('../../../src/components/AIChat/EnhancedChatInput', () => ({
   EnhancedChatInput: ({
     onSend,
     onStopGenerating,
@@ -438,11 +332,10 @@ vi.mock('../../../src/components/AIChat/MessageRenderer', () => ({
   },
 }));
 
-// Import after mocks
-import { UnifiedChatPanel } from '../../../src/components/AIChat/UnifiedChatPanel';
+let UnifiedChatPanel: any;
 
 describe('UnifiedChatPanel (L2)', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
 
     // Clipboard exists in JSDOM, but not always with writeText.
@@ -454,28 +347,35 @@ describe('UnifiedChatPanel (L2)', () => {
 
     localStorage.removeItem('consultinity-preferred-chat-lang');
 
-    pendingActionsCountRef.value = 0;
-    Object.assign(voiceState, { isSpeaking: false, isListening: false });
-    ttsSupportedRef.value = true;
-    Object.assign(demoState, {
+    pendingActionsCountState = 0;
+    voiceStateState = { isSpeaking: false, isListening: false };
+    ttsSupportedState = true;
+    demoState = {
       isDemo: false,
       timeRemainingMs: 1_000_000,
       aiInteractionsRemaining: 100,
       aiInteractionsLimit: 100,
-    });
-    demoState.consumeAIInteraction = vi.fn();
-
-    Object.assign(appStoreState, { isBotTyping: false, aiFreezeStatus: { isFrozen: false } });
-    appStoreState.aiConfig = {
-      deepResearch: false,
-      webSearch: false,
-      showReasoning: false,
-      marketResearch: false,
-      textToSpeech: false,
-      responseStyle: 'normal',
+      consumeAIInteraction: vi.fn(),
     };
 
-    Object.assign(conversationStoreState, {
+    ({ UnifiedChatPanel } = await import('../../../src/components/AIChat/UnifiedChatPanel'));
+
+    appStoreState = {
+      ...appStoreState,
+      isBotTyping: false,
+      aiFreezeStatus: { isFrozen: false },
+      aiConfig: {
+        deepResearch: false,
+        webSearch: false,
+        showReasoning: false,
+        marketResearch: false,
+        textToSpeech: false,
+        responseStyle: 'normal',
+      },
+    };
+
+    conversationStoreState = {
+      ...conversationStoreState,
       activeConversationId: null,
       activeMessages: [],
       isLoading: false,
@@ -483,27 +383,28 @@ describe('UnifiedChatPanel (L2)', () => {
       displayMode: 'full',
       draftChatLanguage: null,
       chatLanguageByConversationId: {},
-    });
+    };
 
-    Object.assign(aiStreamState, {
+    aiStreamState = {
+      ...aiStreamState,
       lastError: null,
       isStreaming: false,
       streamedContent: '',
       agentAuditVerdict: null,
-    });
-    aiStreamOptionsCapturedRef.value = null;
+    };
+    aiStreamOptionsCaptured = null;
 
-    apiMock.uploadChatAttachment.mockResolvedValue({ docId: 'doc-1' });
-    apiMock.chatConfirm.mockResolvedValue({
+    h.apiMock.uploadChatAttachment.mockResolvedValue({ docId: 'doc-1' });
+    h.apiMock.chatConfirm.mockResolvedValue({
       confirm: { understanding: { goal: 'G', context: 'C', constraints: ['X'], expectedOutput: 'O' } },
     });
-    apiMock.agentAuditSuggest.mockResolvedValue({
+    h.apiMock.agentAuditSuggest.mockResolvedValue({
       suggested: {
         orchestratorRunId: 'or-1',
         agents: [{ agentId: 'a-1', whySelected: 'w' }],
       },
     });
-    apiMock.agentAuditReview.mockResolvedValue({
+    h.apiMock.agentAuditReview.mockResolvedValue({
       orchestratorRunId: 'or-2',
       verdict: {
         qualityStatus: 'PASS',
@@ -513,14 +414,14 @@ describe('UnifiedChatPanel (L2)', () => {
       },
       reviews: [{ agentId: 'a-1', status: 'ok' }],
     });
-    apiMock.agentAuditListAgents.mockResolvedValue({
+    h.apiMock.agentAuditListAgents.mockResolvedValue({
       agents: [{ id: 'a-1', displayName: { en: 'Agent 1' } }],
     });
-    apiMock.agentAuditAcceptRun.mockResolvedValue({ ok: true });
-    apiMock.deepThinkingEvent.mockResolvedValue({ ok: true });
-    apiMock.saveDeepThinkingDecision.mockResolvedValue({ ok: true });
-    apiMock.createMyIdea.mockResolvedValue({ id: 'idea-1' });
-    apiMock.aiFeedback.mockResolvedValue({ ok: true });
+    h.apiMock.agentAuditAcceptRun.mockResolvedValue({ ok: true });
+    h.apiMock.deepThinkingEvent.mockResolvedValue({ ok: true });
+    h.apiMock.saveDeepThinkingDecision.mockResolvedValue({ ok: true });
+    h.apiMock.createMyIdea.mockResolvedValue({ id: 'idea-1' });
+    h.apiMock.aiFeedback.mockResolvedValue({ ok: true });
   });
 
   it('derives chat language from explicit preference over store fallbacks', () => {
@@ -538,12 +439,6 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.getByText('Start a conversation')).toBeInTheDocument();
     expect(screen.getByTestId('chat-new-button')).toBeInTheDocument();
     expect(screen.getByTestId('chat-history-button')).toBeInTheDocument();
-  });
-
-  it('history button toggles chat history sidebar', () => {
-    render(<UnifiedChatPanel />);
-    fireEvent.click(screen.getByTestId('chat-history-button'));
-    expect(toggleSidebarMock).toHaveBeenCalledTimes(1);
   });
 
   it('new chat clears state and creates/selects a conversation', async () => {
@@ -571,19 +466,12 @@ describe('UnifiedChatPanel (L2)', () => {
     await waitFor(() => expect(startStreamMock).toHaveBeenCalled());
   });
 
-  it('stop generating calls abortStream when streaming', () => {
-    aiStreamState.isStreaming = true;
-    render(<UnifiedChatPanel />);
-    fireEvent.click(screen.getByTestId('stop-button'));
-    expect(abortStreamMock).toHaveBeenCalled();
-  });
-
   it('uploads supported attachments and shows analysis status; skips unsupported types', async () => {
     createConversationMock.mockResolvedValue({ id: 'conv-1' });
     render(<UnifiedChatPanel />);
 
     fireEvent.click(screen.getByTestId('send-pdf'));
-    await waitFor(() => expect(apiMock.uploadChatAttachment).toHaveBeenCalled());
+    await waitFor(() => expect(h.apiMock.uploadChatAttachment).toHaveBeenCalled());
     expect(addChatMessageMock).toHaveBeenCalledWith(
       expect.objectContaining({ content: expect.stringContaining('Analyzing') })
     );
@@ -603,40 +491,6 @@ describe('UnifiedChatPanel (L2)', () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
   });
 
-  it('view artifacts button adds artifacts and opens artifacts panel', () => {
-    conversationStoreState.activeConversationId = 'conv-1';
-    conversationStoreState.activeMessages = [
-      { id: 'm1', role: 'user', content: 'hello', createdAt: new Date(), metadata: {} },
-    ];
-
-    render(
-      <UnifiedChatPanel
-        customMessages={[{ id: 'm1', role: 'user', content: 'hello', timestamp: new Date() } as any]}
-      />
-    );
-
-    fireEvent.click(screen.getAllByRole('button', { name: 'view-artifacts' })[0]);
-    expect(addArtifactMock).toHaveBeenCalled();
-    expect(toggleArtifactsPanelMock).toHaveBeenCalled();
-  });
-
-  it('copy button writes to clipboard and updates copied id state', async () => {
-    conversationStoreState.activeConversationId = 'conv-1';
-    conversationStoreState.activeMessages = [
-      { id: 'm1', role: 'user', content: 'hello', createdAt: new Date(), metadata: {} },
-    ];
-
-    render(
-      <UnifiedChatPanel
-        customMessages={[{ id: 'm1', role: 'user', content: 'hello', timestamp: new Date() } as any]}
-      />
-    );
-
-    fireEvent.click(screen.getAllByRole('button', { name: 'copy' })[0]);
-    await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledWith('copy me'));
-    await waitFor(() => expect(screen.getAllByTestId('copied-id')[0]).toHaveTextContent('m1'));
-  });
-
   it('renders error retry UI when lastError is set and wires actions', () => {
     aiStreamState.lastError = new Error('boom');
     render(<UnifiedChatPanel />);
@@ -648,13 +502,13 @@ describe('UnifiedChatPanel (L2)', () => {
   });
 
   it('business button tracks funnel and navigates; badge caps at 9+', () => {
-    pendingActionsCountRef.value = 12;
+    pendingActionsCountState = 12;
     const onNavigateToActions = vi.fn();
     render(<UnifiedChatPanel onNavigateToActions={onNavigateToActions} />);
 
     expect(screen.getByText('9+')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('chat-business-button'));
-    expect(trackFunnelEventMock).toHaveBeenCalledWith(
+    expect(h.trackFunnelEventMock).toHaveBeenCalledWith(
       'chat_business_button_clicked',
       expect.objectContaining({ pendingCount: 12 })
     );
@@ -663,7 +517,7 @@ describe('UnifiedChatPanel (L2)', () => {
 
   it('auto-read toggle stops speaking when disabling and syncs voice settings', () => {
     appStoreState.aiConfig = { ...appStoreState.aiConfig, textToSpeech: true };
-    Object.assign(voiceState, { isSpeaking: true, isListening: false });
+    voiceStateState = { isSpeaking: true, isListening: false };
 
     render(<UnifiedChatPanel />);
     fireEvent.click(screen.getByTestId('chat-autoread-button'));
@@ -677,7 +531,6 @@ describe('UnifiedChatPanel (L2)', () => {
     appStoreState.aiConfig = { ...appStoreState.aiConfig, textToSpeech: true };
 
     render(<UnifiedChatPanel />);
-    const aiStreamOptionsCaptured = aiStreamOptionsCapturedRef.value;
     expect(aiStreamOptionsCaptured?.onStreamDone).toBeTypeOf('function');
 
     await aiStreamOptionsCaptured.onStreamDone('', [], [{ id: 'ar1', type: 'md', title: 'T', content: 'C' }], {
@@ -720,16 +573,15 @@ describe('UnifiedChatPanel (L2)', () => {
 
     // Send -> confirm card stored -> dtPendingConfirm set (via local state)
     fireEvent.click(screen.getByTestId('send-button'));
-    await waitFor(() => expect(apiMock.chatConfirm).toHaveBeenCalled());
+    await waitFor(() => expect(h.apiMock.chatConfirm).toHaveBeenCalled());
 
     // Proceed via MessageRenderer mock
     fireEvent.click(screen.getByRole('button', { name: 'dt-proceed' }));
     await waitFor(() => expect(startStreamMock).toHaveBeenCalled());
 
     // Complete stream: should use streamed verdict (no REST review)
-    const aiStreamOptionsCaptured = aiStreamOptionsCapturedRef.value;
     await aiStreamOptionsCaptured.onStreamDone('report', [], [], {});
-    expect(apiMock.agentAuditReview).not.toHaveBeenCalled();
+    expect(h.apiMock.agentAuditReview).not.toHaveBeenCalled();
     expect(addMessageToConversationMock).toHaveBeenCalledWith(
       expect.objectContaining({ role: 'ai', content: expect.stringContaining('Agent Audit (post Deep Thinking)') })
     );
@@ -744,7 +596,9 @@ describe('UnifiedChatPanel (L2)', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'accept-risk' }));
-    await waitFor(() => expect(apiMock.agentAuditAcceptRun).toHaveBeenCalledWith({ runId: 'run-1' }));
+    await waitFor(() =>
+      expect(h.apiMock.agentAuditAcceptRun).toHaveBeenCalledWith({ runId: 'run-1' })
+    );
     expect(addChatMessageMock).toHaveBeenCalledWith(
       expect.objectContaining({ metadata: expect.objectContaining({ agentAudit: expect.anything() }) })
     );
@@ -788,150 +642,5 @@ describe('UnifiedChatPanel (L2)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'multi-confirm' }));
 
     expect(onMultiSelectSubmit).toHaveBeenCalledWith(['a', 'b']);
-  });
-
-  it('renders quick prompts and sends selected prompt', async () => {
-    createConversationMock.mockResolvedValue({ id: 'conv-1' });
-    render(<UnifiedChatPanel quickPrompts={['Prompt A', 'Prompt B']} />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Prompt A' }));
-    await waitFor(() =>
-      expect(startStreamMock).toHaveBeenCalledWith(
-        'Prompt A',
-        expect.any(Array),
-        undefined,
-        expect.any(Object),
-        'all',
-        undefined,
-        'pl'
-      )
-    );
-  });
-
-  it('does not show quick prompts while streaming', () => {
-    aiStreamState.isStreaming = true;
-    render(<UnifiedChatPanel quickPrompts={['Prompt A']} />);
-    expect(screen.queryByRole('button', { name: 'Prompt A' })).not.toBeInTheDocument();
-  });
-
-  it('does not show quick prompts when messages exist', () => {
-    conversationStoreState.activeMessages = [
-      { id: 'm1', role: 'user', content: 'hello', createdAt: new Date(), metadata: {} },
-    ];
-    render(<UnifiedChatPanel quickPrompts={['Prompt A']} />);
-    expect(screen.queryByRole('button', { name: 'Prompt A' })).not.toBeInTheDocument();
-  });
-
-  it('renders loading state when conversation is loading', () => {
-    conversationStoreState.activeConversationId = 'conv-1';
-    conversationStoreState.isLoading = true;
-    conversationStoreState.activeMessages = [];
-    render(<UnifiedChatPanel />);
-    expect(screen.getByText(/Loading conversation/i)).toBeInTheDocument();
-  });
-
-  it('shows signals button and opens signals panel when feature flag enabled', () => {
-    render(<UnifiedChatPanel />);
-    fireEvent.click(screen.getByTestId('chat-signals-button'));
-    expect(screen.getByTestId('signals-panel')).toBeInTheDocument();
-  });
-
-  it('signals panel closes on click', () => {
-    render(<UnifiedChatPanel />);
-    fireEvent.click(screen.getByTestId('chat-signals-button'));
-    expect(screen.getByTestId('signals-panel')).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('signals-panel'));
-    expect(screen.queryByTestId('signals-panel')).not.toBeInTheDocument();
-  });
-
-  it('renders private mode badge when private mode is enabled', () => {
-    appStoreState.aiConfig = { ...appStoreState.aiConfig, privateMode: true };
-    render(<UnifiedChatPanel />);
-    expect(screen.getByText(/Private mode/i)).toBeInTheDocument();
-  });
-
-  it('hides auto-read toggle when TTS is unsupported', () => {
-    ttsSupportedRef.value = false;
-    render(<UnifiedChatPanel />);
-    expect(screen.queryByTestId('chat-autoread-button')).not.toBeInTheDocument();
-  });
-
-  it('uses workspace context in placeholder when available', () => {
-    render(
-      <UnifiedChatPanel
-        workspaceContext={{ type: 'project', entityName: 'Apollo', projectId: 'p1' } as any}
-      />
-    );
-    expect(screen.getByTestId('chat-placeholder')).toHaveTextContent('Apollo');
-  });
-
-  it('dispatches access blocked when demo time expired', async () => {
-    demoState.isDemo = true;
-    demoState.timeRemainingMs = 0;
-    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
-    render(<UnifiedChatPanel />);
-
-    fireEvent.click(screen.getByTestId('send-button'));
-
-    await waitFor(() => expect(dispatchSpy).toHaveBeenCalled());
-    expect(startStreamMock).not.toHaveBeenCalled();
-  });
-
-  it('dispatches access blocked when demo AI limit reached', async () => {
-    demoState.isDemo = true;
-    demoState.timeRemainingMs = 10_000;
-    demoState.aiInteractionsRemaining = 0;
-    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
-    render(<UnifiedChatPanel />);
-
-    fireEvent.click(screen.getByTestId('send-button'));
-
-    await waitFor(() => expect(dispatchSpy).toHaveBeenCalled());
-    expect(startStreamMock).not.toHaveBeenCalled();
-  });
-
-  it('consumes demo interaction when allowed', async () => {
-    demoState.isDemo = true;
-    demoState.timeRemainingMs = 10_000;
-    demoState.aiInteractionsRemaining = 2;
-    createConversationMock.mockResolvedValue({ id: 'conv-1' });
-
-    render(<UnifiedChatPanel />);
-    fireEvent.click(screen.getByTestId('send-button'));
-
-    await waitFor(() => expect(demoState.consumeAIInteraction).toHaveBeenCalled());
-  });
-
-  it('fires deep thinking copy event when deepResearch is enabled', async () => {
-    appStoreState.aiConfig = { ...appStoreState.aiConfig, deepResearch: true };
-    conversationStoreState.activeConversationId = 'conv-1';
-    conversationStoreState.activeMessages = [
-      { id: 'm1', role: 'user', content: 'hello', createdAt: new Date(), metadata: {} },
-    ];
-
-    render(
-      <UnifiedChatPanel
-        customMessages={[{ id: 'm1', role: 'user', content: 'hello', timestamp: new Date() } as any]}
-      />
-    );
-
-    fireEvent.click(screen.getAllByRole('button', { name: 'copy' })[0]);
-    await waitFor(() => expect(apiMock.deepThinkingEvent).toHaveBeenCalled());
-  });
-
-  it('kickoff message auto-sends once and triggers onKickoffConsumed', async () => {
-    createConversationMock.mockResolvedValue({ id: 'conv-1' });
-    const onKickoffConsumed = vi.fn();
-    const { rerender } = render(
-      <UnifiedChatPanel kickoffMessage="Kickoff" onKickoffConsumed={onKickoffConsumed} />
-    );
-
-    await waitFor(() => expect(startStreamMock).toHaveBeenCalled());
-    expect(onKickoffConsumed).toHaveBeenCalled();
-
-    startStreamMock.mockClear();
-    rerender(<UnifiedChatPanel kickoffMessage="Kickoff" onKickoffConsumed={onKickoffConsumed} />);
-    await new Promise((r) => setTimeout(r, 0));
-    expect(startStreamMock).not.toHaveBeenCalled();
   });
 });

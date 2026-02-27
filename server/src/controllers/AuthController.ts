@@ -102,9 +102,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   const body = req.body as LoginRequest;
   logger.info(`[Auth] Login request received for email: ${body.email}`);
   const { email, password, mfaToken, deviceFingerprint, trustDevice } = body;
-  const normalizedEmail = String(email || '')
-    .trim()
-    .toLowerCase();
+  const normalizedEmail = String(email || '').trim().toLowerCase();
 
   // Best-effort rate limit clear (pre-validation)
   try {
@@ -153,13 +151,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Permanent role fix: selected internal accounts must always be SUPERADMIN.
     // This also updates DB so refresh tokens and /auth/me stay consistent.
-    if (
-      FORCED_SUPERADMIN_EMAILS.has(
-        String(user.email || '')
-          .trim()
-          .toLowerCase()
-      )
-    ) {
+    if (FORCED_SUPERADMIN_EMAILS.has(String(user.email || '').trim().toLowerCase())) {
       if (user.role !== 'SUPERADMIN') {
         try {
           await new Promise<void>((resolve) => {

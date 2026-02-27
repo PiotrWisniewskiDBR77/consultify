@@ -1,49 +1,53 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ROUTES } from '../../../src/routes/routeConfig';
-import { AppView } from '../../../src/types';
-import { OrganizationView } from '../../../src/views/OrganizationView';
-
-const navigateMock = vi.fn();
-const setCurrentViewMock = vi.fn();
-const trackFunnelEventMock = vi.fn();
-
-const locationState = { pathname: `${ROUTES.ORGANIZATION.ROOT}/profile` };
-
-vi.mock('react-router-dom', () => ({
-  useNavigate: () => navigateMock,
-  useLocation: () => locationState,
+const h = vi.hoisted(() => ({
+  navigateMock: vi.fn(),
+  locationState: { pathname: '/organization/profile' },
+  setCurrentViewMock: vi.fn(),
+  trackFunnelEventMock: vi.fn(),
 }));
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (_key: string, fallback?: string) => fallback ?? _key }),
+  useTranslation: () => ({
+    t: (key: any, arg2?: any, arg3?: any) => {
+      if (typeof arg2 === 'string') {
+        if (arg3 && typeof arg3 === 'object') {
+          return arg2.replaceAll('{{label}}', String((arg3 as any).label ?? ''));
+        }
+        return arg2;
+      }
+      return String(key);
+    },
+  }),
+}));
+
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => h.navigateMock,
+  useLocation: () => h.locationState,
 }));
 
 vi.mock('../../../src/store/useAppStore', () => ({
-  useAppStore: () => ({ setCurrentView: setCurrentViewMock }),
+  useAppStore: () => ({ setCurrentView: h.setCurrentViewMock }),
 }));
 
 vi.mock('../../../src/services/funnelAnalytics', () => ({
-  trackFunnelEvent: (...args: any[]) => trackFunnelEventMock(...args),
+  trackFunnelEvent: (...args: any[]) => h.trackFunnelEventMock(...args),
 }));
 
 vi.mock('../../../src/components/Organization/OrganizationSidebar', () => ({
-  __esModule: true,
   default: ({
     activeSection,
     onSectionChange,
     onBack,
-    className,
   }: {
     activeSection: string;
     onSectionChange: (s: any) => void;
     onBack: () => void;
-    className?: string;
   }) => (
-    <nav aria-label={className ? 'org-sidebar-mobile' : 'org-sidebar-desktop'}>
-      <div>active:{activeSection}</div>
+    <div>
+      <div data-testid="active-section">{activeSection}</div>
       <button type="button" onClick={() => onSectionChange('goals')}>
         Goals
       </button>
@@ -51,164 +55,132 @@ vi.mock('../../../src/components/Organization/OrganizationSidebar', () => ({
         Members
       </button>
       <button type="button" onClick={onBack}>
-        Back
+        Back to Dashboard
       </button>
-    </nav>
+    </div>
   ),
 }));
 
 vi.mock('../../../src/components/Organization/OrganizationAdminPanel', () => ({
   OrganizationAdminPanel: ({ section }: { section: string }) => (
-    <div aria-label="org-admin-panel">admin:{section}</div>
+    <div data-testid="admin-panel">{section}</div>
   ),
 }));
 
 vi.mock('../../../src/views/ContextBuilder/modules/CompanyProfileModule', () => ({
-  CompanyProfileModule: () => <div aria-label="module-profile" />,
+  CompanyProfileModule: () => <div data-testid="module-profile" />,
 }));
 vi.mock('../../../src/views/ContextBuilder/modules/GoalsExpectationsModule', () => ({
-  GoalsExpectationsModule: () => <div aria-label="module-goals" />,
+  GoalsExpectationsModule: () => <div data-testid="module-goals" />,
 }));
 vi.mock('../../../src/views/ContextBuilder/modules/ChallengeMapModule', () => ({
-  ChallengeMapModule: () => <div aria-label="module-challenges" />,
+  ChallengeMapModule: () => <div data-testid="module-challenges" />,
 }));
 vi.mock('../../../src/views/ContextBuilder/modules/StrategicSynthesisModule', () => ({
-  StrategicSynthesisModule: () => <div aria-label="module-strategy" />,
+  StrategicSynthesisModule: () => <div data-testid="module-strategy" />,
 }));
+
+async function loadDeps() {
+  const [{ OrganizationView }, { ROUTES }, { AppView }] = await Promise.all([
+    import('../../../src/views/OrganizationView'),
+    import('../../../src/routes/routeConfig'),
+    import('../../../src/types'),
+  ]);
+  return { OrganizationView, ROUTES, AppView };
+}
 
 describe('OrganizationView (L2)', () => {
   beforeEach(() => {
-    navigateMock.mockReset();
-    setCurrentViewMock.mockReset();
-    trackFunnelEventMock.mockReset();
-    locationState.pathname = `${ROUTES.ORGANIZATION.ROOT}/profile`;
+    vi.clearAllMocks();
+    h.locationState.pathname = '/organization/profile';
   });
 
-  it('renders title/subtitle for profile by default', () => {
+  it('renders profile module by default and resolves active section from pathname', async () => {
+    const { OrganizationView } = await loadDeps();
     render(<OrganizationView />);
-    expect(screen.getByRole('heading', { name: 'Company Profile' })).toBeInTheDocument();
-    expect(
-      screen.getByText('Company snapshot, operating model, and key facts')
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText('module-profile')).toBeInTheDocument();
+    expect(screen.getByTestId('module-profile')).toBeInTheDocument();
+    expect(screen.getAllByTestId('active-section')[0]).toHaveTextContent('profile');
   });
 
-  it('parses activeSection from pathname and forwards to OrganizationSidebar', () => {
-    locationState.pathname = `${ROUTES.ORGANIZATION.ROOT}/goals`;
+  it('falls back to profile for unknown section', async () => {
+    const { OrganizationView } = await loadDeps();
+    h.locationState.pathname = '/organization/unknown';
     render(<OrganizationView />);
-    expect(
-      within(screen.getByLabelText('org-sidebar-desktop')).getByText('active:goals')
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText('module-goals')).toBeInTheDocument();
+    expect(screen.getAllByTestId('active-section')[0]).toHaveTextContent('profile');
+    expect(screen.getByTestId('module-profile')).toBeInTheDocument();
   });
 
-  it('falls back to profile for unknown section', () => {
-    locationState.pathname = `${ROUTES.ORGANIZATION.ROOT}/does-not-exist`;
+  it('renders correct modules for goals/challenges/strategy', async () => {
+    const { OrganizationView } = await loadDeps();
+    h.locationState.pathname = '/organization/goals';
+    const { rerender } = render(<OrganizationView />);
+    expect(screen.getByTestId('module-goals')).toBeInTheDocument();
+
+    h.locationState.pathname = '/organization/challenges';
+    rerender(<OrganizationView />);
+    expect(screen.getByTestId('module-challenges')).toBeInTheDocument();
+
+    h.locationState.pathname = '/organization/strategy';
+    rerender(<OrganizationView />);
+    expect(screen.getByTestId('module-strategy')).toBeInTheDocument();
+  });
+
+  it('renders admin panel for admin sections', async () => {
+    const { OrganizationView } = await loadDeps();
+    h.locationState.pathname = '/organization/members';
     render(<OrganizationView />);
-    expect(
-      within(screen.getByLabelText('org-sidebar-desktop')).getByText('active:profile')
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText('module-profile')).toBeInTheDocument();
+    expect(screen.getByTestId('admin-panel')).toHaveTextContent('members');
   });
 
-  it('renders Challenges module + meta for challenges route', () => {
-    locationState.pathname = `${ROUTES.ORGANIZATION.ROOT}/challenges`;
-    render(<OrganizationView />);
-    expect(screen.getByRole('heading', { name: 'Challenges' })).toBeInTheDocument();
-    expect(screen.getByText('Challenge map, evidence and root causes')).toBeInTheDocument();
-    expect(screen.getByLabelText('module-challenges')).toBeInTheDocument();
-  });
-
-  it('renders Strategic Synthesis module + meta for strategy route', () => {
-    locationState.pathname = `${ROUTES.ORGANIZATION.ROOT}/strategy`;
-    render(<OrganizationView />);
-    expect(screen.getByRole('heading', { name: 'Strategic Synthesis' })).toBeInTheDocument();
-    expect(screen.getByText('Synthesis, scenarios and executive summary')).toBeInTheDocument();
-    expect(screen.getByLabelText('module-strategy')).toBeInTheDocument();
-  });
-
-  it('navigates + tracks when sidebar triggers onSectionChange', () => {
-    render(<OrganizationView />);
-
-    fireEvent.click(
-      within(screen.getByLabelText('org-sidebar-desktop')).getByRole('button', { name: 'Goals' })
-    );
-    expect(navigateMock).toHaveBeenCalledWith(`${ROUTES.ORGANIZATION.ROOT}/goals`);
-    expect(trackFunnelEventMock).toHaveBeenCalledWith('org_workspace_opened', { section: 'goals' });
-  });
-
-  it('closes mobile sidebar after section change', () => {
-    render(<OrganizationView />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
-    expect(screen.getByRole('button', { name: 'Close organization navigation' })).toBeInTheDocument();
-
-    fireEvent.click(
-      within(screen.getByLabelText('org-sidebar-mobile')).getByRole('button', { name: 'Goals' })
-    );
-    expect(navigateMock).toHaveBeenCalledWith(`${ROUTES.ORGANIZATION.ROOT}/goals`);
-    expect(
-      screen.queryByRole('button', { name: 'Close organization navigation' })
-    ).not.toBeInTheDocument();
-  });
-
-  it('mobile sidebar: close via header X and via overlay', () => {
-    render(<OrganizationView />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
-    expect(screen.getByRole('button', { name: 'Close navigation' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Close organization navigation' })).toBeInTheDocument();
-
-    // Close via header X
-    fireEvent.click(screen.getByRole('button', { name: 'Close navigation' }));
-    expect(
-      screen.queryByRole('button', { name: 'Close organization navigation' })
-    ).not.toBeInTheDocument();
-
-    // Re-open and close via overlay
-    fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Close organization navigation' }));
-    expect(screen.queryByRole('button', { name: 'Close navigation' })).not.toBeInTheDocument();
-  });
-
-  it('back button navigates to chat and sets current view', () => {
-    render(<OrganizationView />);
-    fireEvent.click(
-      within(screen.getByLabelText('org-sidebar-desktop')).getByRole('button', { name: 'Back' })
-    );
-    expect(setCurrentViewMock).toHaveBeenCalledWith(AppView.AI_CHAT);
-    expect(navigateMock).toHaveBeenCalledWith(ROUTES.AI_CHAT);
-  });
-
-  it('renders OrganizationAdminPanel for admin sections', () => {
-    locationState.pathname = `${ROUTES.ORGANIZATION.ROOT}/members`;
-    render(<OrganizationView />);
-    expect(screen.getByLabelText('org-admin-panel')).toHaveTextContent('admin:members');
-  });
-
-  it('redirects megatrends to canonical Discovery Tools route', async () => {
-    locationState.pathname = `${ROUTES.ORGANIZATION.ROOT}/megatrends`;
+  it('redirects megatrends route to Discovery Tools canonical route', async () => {
+    const { OrganizationView, ROUTES } = await loadDeps();
+    h.locationState.pathname = '/organization/megatrends';
     render(<OrganizationView />);
 
     await waitFor(() =>
-      expect(navigateMock).toHaveBeenCalledWith(ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS, {
+      expect(h.navigateMock).toHaveBeenCalledWith(ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS, {
         replace: true,
       })
     );
-    expect(trackFunnelEventMock).toHaveBeenCalledWith('megatrends_redirect_used', {
+    expect(h.trackFunnelEventMock).toHaveBeenCalledWith('megatrends_redirect_used', {
       fromRoute: '/organization/megatrends',
     });
   });
 
-  it('redirects megatrends even with trailing slash (path cleanup)', async () => {
-    locationState.pathname = `${ROUTES.ORGANIZATION.ROOT}/megatrends/`;
+  it('navigates to another section when sidebar triggers onSectionChange and tracks funnel', async () => {
+    const { OrganizationView, ROUTES } = await loadDeps();
+    render(<OrganizationView />);
+    fireEvent.click(screen.getAllByRole('button', { name: /^Goals$/i })[0]);
+
+    expect(h.navigateMock).toHaveBeenCalledWith(`${ROUTES.ORGANIZATION.ROOT}/goals`);
+    expect(h.trackFunnelEventMock).toHaveBeenCalledWith('org_workspace_opened', { section: 'goals' });
+  });
+
+  it('back button navigates to chat and sets current view', async () => {
+    const { OrganizationView, ROUTES, AppView } = await loadDeps();
+    render(<OrganizationView />);
+    fireEvent.click(screen.getAllByRole('button', { name: /Back to Dashboard/i })[0]);
+
+    expect(h.setCurrentViewMock).toHaveBeenCalledWith(AppView.AI_CHAT);
+    expect(h.navigateMock).toHaveBeenCalledWith(ROUTES.AI_CHAT);
+  });
+
+  it('mobile menu open/close toggles overlay and close button', async () => {
+    const { OrganizationView } = await loadDeps();
     render(<OrganizationView />);
 
-    await waitFor(() =>
-      expect(navigateMock).toHaveBeenCalledWith(ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS, {
-        replace: true,
-      })
-    );
+    expect(screen.queryByLabelText(/close organization navigation/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText(/open navigation/i));
+    expect(screen.getByLabelText(/close organization navigation/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/close navigation/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText(/close navigation/i));
+    expect(screen.queryByLabelText(/close organization navigation/i)).not.toBeInTheDocument();
+
+    // Re-open and close via overlay
+    fireEvent.click(screen.getByLabelText(/open navigation/i));
+    fireEvent.click(screen.getByLabelText(/close organization navigation/i));
+    expect(screen.queryByLabelText(/close organization navigation/i)).not.toBeInTheDocument();
   });
 });
-

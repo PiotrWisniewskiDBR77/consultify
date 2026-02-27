@@ -237,7 +237,16 @@ const TIER_PRIORITY: Record<string, number> = {
   FREE: 1,
 };
 
-export const DEFAULT_FALLBACK_CHAIN = ['openrouter'];
+export const DEFAULT_FALLBACK_CHAIN = [
+  'openrouter',
+  'openai',
+  'deepseek',
+  'google',
+  'anthropic',
+  'qwen',
+  'cohere',
+  'nvidia',
+];
 
 function isPlaceholderKey(value: unknown): boolean {
   if (typeof value !== 'string') return true;
