@@ -190,9 +190,22 @@ const databaseInitPromise: Promise<void> =
   !isTest || process.env.E2E_MODE === 'true' || process.env.ENABLE_TEST_GATEWAY === 'true'
     ? (async () => {
         try {
+          const mockDbEnabled =
+            process.env.MOCK_DB === 'true' ||
+            (process.env.NODE_ENV === 'test' &&
+              process.env.RUN_DB_TESTS !== '1' &&
+              process.env.MOCK_DB !== 'false');
+
           logger.info('[Server] Initializing database...');
           const db = await getDatabaseAsync();
           logger.info('[Server] Database instance created:', db ? 'OK' : 'MOCK');
+
+          if ((db as any)?.isMock || mockDbEnabled) {
+            logger.info('[Server] MOCK_DB enabled; skipping schema init + connection pool');
+            dbReady = true;
+            dbInitError = null;
+            return;
+          }
 
           // Initialize and verify schema
           const { initializeDatabase } = await import('./database/DatabaseInitializer.js');

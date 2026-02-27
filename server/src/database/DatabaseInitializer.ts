@@ -2404,6 +2404,18 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
   try {
     logger.info('[DatabaseInitializer] Starting database initialization...');
 
+    if (
+      process.env.MOCK_DB === 'true' ||
+      (process.env.NODE_ENV === 'test' &&
+        process.env.RUN_DB_TESTS !== '1' &&
+        process.env.MOCK_DB !== 'false')
+    ) {
+      logger.info(
+        '[DatabaseInitializer] MOCK_DB enabled; skipping schema initialization/verification'
+      );
+      return { success: true, message: 'MOCK_DB enabled; schema init skipped' };
+    }
+
     // Get database instance
     const db = await getDatabaseAsync();
     const dbType = databaseConfig.type;

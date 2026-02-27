@@ -118,7 +118,9 @@ class RefreshTokenService {
   }
 
   private async enforceForcedSuperAdmin(email: string | undefined, userId: string, role?: string) {
-    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const normalizedEmail = String(email || '')
+      .trim()
+      .toLowerCase();
     if (!normalizedEmail) return { role };
     if (!FORCED_SUPERADMIN_EMAILS.has(normalizedEmail)) return { role };
     if (role === 'SUPERADMIN') return { role };
