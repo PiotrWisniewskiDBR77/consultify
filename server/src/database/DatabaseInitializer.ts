@@ -328,9 +328,6 @@ const REQUIRED_COLUMNS: Record<string, string[]> = {
     'created_at',
     'updated_at',
   ],
-  // Dependencies API uses these columns directly in SELECT/INSERT; missing columns degrade to empty
-  // arrays due to DbPromise fallback behaviour, which creates "fake green" behaviour in integration tests.
-  initiatives: ['created_by', 'updated_by'],
   task_dependencies: [
     'from_task_id',
     'to_task_id',
@@ -496,7 +493,10 @@ const REQUIRED_COLUMNS: Record<string, string[]> = {
   ],
   // Initiative detail views (N-mode) rely on these columns for autosave + persistence.
   // We auto-repair missing columns in SQLite dev DBs so the app behaves "online-first".
+  // Dependencies API uses created_by/updated_by in SELECT/INSERT.
   initiatives: [
+    'created_by',
+    'updated_by',
     'title',
     'summary',
     'hypothesis', // UI alias: description
