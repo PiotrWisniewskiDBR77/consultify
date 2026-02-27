@@ -78,7 +78,22 @@ export const SystemHealth = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (status === 'loading') return null;
+  if (status === 'loading') {
+    return (
+      <div className="relative" ref={dropdownRef}>
+        <button
+          disabled
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 bg-transparent border-slate-200 dark:border-navy-700 opacity-70 cursor-not-allowed"
+        >
+          <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
+          <span className="text-xs font-medium text-navy-900 dark:text-white">
+            {t('system.data', 'Data')}
+          </span>
+          <ChevronDown size={14} className="text-slate-400" />
+        </button>
+      </div>
+    );
+  }
 
   const storagePercent = Math.round((metrics.storageUsed / metrics.storageLimit) * 100);
   const apiPercent = Math.round((metrics.apiCallsUsed / metrics.apiCallsLimit) * 100);

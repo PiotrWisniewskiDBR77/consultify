@@ -224,8 +224,9 @@ describe('ToolsMenu (L2)', () => {
     const trigger = screen.getByTestId('chat-tools-button');
     fireEvent.click(trigger);
 
-    expect(screen.getByText('2')).toBeInTheDocument();
-    expect(screen.getByText(/2.*active/i)).toBeInTheDocument();
+    // deepResearch + privateMode + textToSpeech (enabled by default in this test setup)
+    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByText(/3.*active/i)).toBeInTheDocument();
   });
 
   it('applies response style preset into custom instructions', async () => {
@@ -260,12 +261,15 @@ describe('ToolsMenu (L2)', () => {
   });
 
   it('renders TTS settings only when textToSpeech is enabled', () => {
+    aiConfigState = { ...aiConfigState, textToSpeech: false };
     const { rerender } = render(<ToolsMenu onToolSelect={onToolSelect} />);
     fireEvent.click(screen.getByTestId('chat-tools-button'));
     expect(screen.queryByText(/voice settings/i)).not.toBeInTheDocument();
 
     aiConfigState = { ...aiConfigState, textToSpeech: true };
     rerender(<ToolsMenu onToolSelect={onToolSelect} />);
+    // Menu is still open (component state persists across rerender), so close and re-open.
+    fireEvent.mouseDown(document.body);
     fireEvent.click(screen.getByTestId('chat-tools-button'));
     expect(screen.getByText(/voice settings/i)).toBeInTheDocument();
   });

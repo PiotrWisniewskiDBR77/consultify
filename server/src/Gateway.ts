@@ -93,6 +93,7 @@ import helpChatRoutes from './routes/helpChat.routes.js';
 import helpFeedbackRoutes from './routes/helpFeedback.routes.js';
 import initiativeGeneratorRoutes from './routes/initiative-generator.routes.js';
 import calendarIntegrationsRoutes from './routes/integrations/calendarIntegrations.routes.js';
+import automationRoutes from './routes/integrations/automation.routes.js';
 import connectorRoutes from './routes/integrations/connectors.routes.js';
 import integrationsRoutes from './routes/integrations/integrations.routes.js';
 import scimRoutes from './routes/integrations/scim.routes.js';
@@ -166,6 +167,7 @@ import publicOutreachRoutes from './routes/public-outreach.routes.js';
 import raidRoutes from './routes/raid.routes.js';
 import rapidleanRoutes from './routes/rapidlean.routes.js';
 import referralRoutes from './routes/referrals.routes.js';
+import researchRoutes from './routes/research.routes.js';
 import reportBuilderRoutes from './routes/report-builder.routes.js';
 import reportBuilderPublicRoutes from './routes/report-builder-public.routes.js';
 import reportCommentsRoutes from './routes/report-comments.routes.js';
@@ -363,6 +365,7 @@ export class ApiGateway {
         calendarIntegrationsRoutes,
         'calendarIntegrationsRoutes'
       );
+      mountStub('/api/integrations/automation', automationRoutes, 'automationRoutes');
       mountStub('/api/mcp', mcpRoutes, 'mcpRoutes');
 
       // Admin routes
@@ -378,6 +381,7 @@ export class ApiGateway {
       mountStub('/api/system-config', systemConfigRoutes, 'systemConfigRoutes');
       app.use('/api/system-health', systemHealthRoutes);
       mountStub('/api/api-keys', apiKeysRoutes, 'apiKeysRoutes');
+      mountStub('/api/research', researchRoutes, 'researchRoutes');
       app.use('/api/backups', backupRoutes);
 
       // Core API routes

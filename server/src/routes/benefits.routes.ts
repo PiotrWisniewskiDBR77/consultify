@@ -8,6 +8,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { computeAttribution } from '../services/kpiAttributionService.js';
+import {
+  callRemoteTool,
+  makeIrisHeaders,
+  parseStreamableHttpConfig,
+} from '../services/mcp/mcpProviderClient.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -72,6 +77,247 @@ router.post(
     }
 
     res.json({ success: true, data: { id, kpiId, value, periodStart } });
+  })
+);
+
+// ============================================================
+// V3-M08: MCP-IRIS proof path (read-only KPI refresh)
+// ============================================================
+router.post(
+  '/kpis/:kpiId/refresh/iris',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const { kpiId } = req.params;
+    const providerId = req.body?.providerId ? String(req.body.providerId).trim() : null;
+    const factoryId = req.body?.factoryId ? String(req.body.factoryId).trim() : null;
+
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    if (!kpiId) return res.status(400).json({ success: false, error: 'kpiId is required' });
+
+    // Ensure MCP providers table exists
+    const mcpCols = await dbAll<{ name: string }>('PRAGMA table_info(mcp_providers)', []).catch(() => []);
+    if (!mcpCols?.length) {
+      return res.status(501).json({ success: false, error: 'MCP providers registry not available' });
+    }
+
+    const provider = providerId
+      ? await dbGet<any>(
+          `SELECT id, name, type, status, config FROM mcp_providers WHERE id = ? AND organization_id = ? AND status = 'active'`,
+          [providerId, orgId]
+        )
+      : await dbGet<any>(
+          `SELECT id, name, type, status, config
+           FROM mcp_providers
+           WHERE organization_id = ? AND status = 'active' AND lower(name) LIKE '%iris%'
+           ORDER BY updated_at DESC, created_at DESC
+           LIMIT 1`,
+          [orgId]
+        );
+
+    if (!provider?.id) {
+      return res.status(404).json({ success: false, error: 'IRIS MCP provider not configured' });
+    }
+
+    const cfgObj = (() => {
+      try {
+        return provider.config ? (typeof provider.config === 'string' ? JSON.parse(provider.config) : provider.config) : {};
+      } catch {
+        return {};
+      }
+    })() as Record<string, unknown>;
+
+    const cfg = parseStreamableHttpConfig(provider.config);
+    if (!cfg) {
+      return res.status(400).json({ success: false, error: 'Invalid IRIS provider config (baseUrl required)' });
+    }
+
+    const toolName = 'iris.kpi.timeseries.get';
+    const args = {
+      kpiId,
+      range: req.body?.range || { days: 30 },
+    };
+
+    const started = Date.now();
+    try {
+      const result = await callRemoteTool({
+        providerId: String(provider.id),
+        orgId,
+        userId: (req as any).user?.id || null,
+        config: cfg,
+        toolName,
+        args,
+        extraHeaders: makeIrisHeaders(cfgObj, factoryId),
+      });
+
+      // Accept a few common shapes:
+      // - { points: [{ periodStart, value }, ...] }
+      // - { values: [{ date|periodStart, value }, ...] }
+      // - [{ periodStart, value }, ...]
+      const pointsRaw: any[] = Array.isArray((result as any)?.points)
+        ? (result as any).points
+        : Array.isArray((result as any)?.values)
+          ? (result as any).values
+          : Array.isArray(result)
+            ? (result as any)
+            : [];
+
+      const points = pointsRaw
+        .map((p: any) => ({
+          periodStart: String(p?.periodStart || p?.period_start || p?.date || '').slice(0, 10),
+          value: Number(p?.value),
+        }))
+        .filter((p) => p.periodStart && Number.isFinite(p.value));
+
+      if (!points.length) {
+        return res.json({
+          success: true,
+          providerId: String(provider.id),
+          inserted: 0,
+          durationMs: Math.max(0, Date.now() - started),
+          note: 'No points returned by IRIS tool',
+        });
+      }
+
+      // Insert points (best-effort, no hard dedupe). Source marked for traceability.
+      let inserted = 0;
+      for (const p of points.slice(0, 500)) {
+        const id = uuidv4().replace(/-/g, '');
+        await dbRun(
+          `INSERT INTO kpi_time_series (id, kpi_id, organization_id, value, period_start, period_end, source, notes, recorded_by)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            kpiId,
+            orgId,
+            p.value,
+            p.periodStart,
+            null,
+            'mcp_iris',
+            `ref:provider=${provider.id}`,
+            (req as any).user?.id,
+          ]
+        ).catch(() => null);
+        inserted += 1;
+      }
+
+      // Update current_value to the newest point if initiative_kpis table exists.
+      const ikCols = await dbAll<{ name: string }>('PRAGMA table_info(initiative_kpis)', []).catch(() => []);
+      if (ikCols?.length) {
+        const last = points[points.length - 1];
+        await dbRun(
+          `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+          [last.value, kpiId]
+        ).catch(() => null);
+      }
+
+      return res.json({
+        success: true,
+        providerId: String(provider.id),
+        toolName,
+        inserted,
+        durationMs: Math.max(0, Date.now() - started),
+      });
+    } catch (e: any) {
+      const msg = String(e?.message || 'iris_refresh_failed');
+      const retriable = /HTTP\s*5\d\d/i.test(msg) || /timeout/i.test(msg) || /ECONN/i.test(msg);
+      logger.warn('[Benefits] IRIS KPI refresh failed', { orgId, kpiId, providerId: provider?.id, error: msg, retriable });
+      return res.status(502).json({ success: false, error: msg, retriable });
+    }
+  })
+);
+
+router.get(
+  '/iris/health',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const provider = await dbGet<any>(
+      `SELECT id, name, status, config
+       FROM mcp_providers
+       WHERE organization_id = ? AND status = 'active' AND lower(name) LIKE '%iris%'
+       ORDER BY updated_at DESC, created_at DESC
+       LIMIT 1`,
+      [orgId]
+    ).catch(() => null);
+
+    if (!provider?.id) return res.status(404).json({ success: false, error: 'IRIS MCP provider not configured' });
+    const cfg = parseStreamableHttpConfig(provider.config);
+    if (!cfg) return res.status(400).json({ success: false, error: 'Invalid IRIS provider config (baseUrl required)' });
+
+    const cfgObj = (() => {
+      try {
+        return provider.config ? (typeof provider.config === 'string' ? JSON.parse(provider.config) : provider.config) : {};
+      } catch {
+        return {};
+      }
+    })() as Record<string, unknown>;
+
+    try {
+      const result = await callRemoteTool({
+        providerId: String(provider.id),
+        orgId,
+        userId: (req as any).user?.id || null,
+        config: cfg,
+        toolName: 'iris.health.get',
+        args: {},
+        extraHeaders: makeIrisHeaders(cfgObj, null),
+      });
+      return res.json({ success: true, providerId: String(provider.id), result });
+    } catch (e: any) {
+      const msg = String(e?.message || 'iris_health_failed');
+      const retriable = /HTTP\s*5\d\d/i.test(msg) || /timeout/i.test(msg) || /ECONN/i.test(msg);
+      return res.status(502).json({ success: false, error: msg, retriable });
+    }
+  })
+);
+
+router.post(
+  '/iris/assets/search',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const q = String(req.body?.q || req.body?.query || '').trim();
+    if (!q) return res.status(400).json({ success: false, error: 'q is required' });
+
+    const provider = await dbGet<any>(
+      `SELECT id, name, status, config
+       FROM mcp_providers
+       WHERE organization_id = ? AND status = 'active' AND lower(name) LIKE '%iris%'
+       ORDER BY updated_at DESC, created_at DESC
+       LIMIT 1`,
+      [orgId]
+    ).catch(() => null);
+
+    if (!provider?.id) return res.status(404).json({ success: false, error: 'IRIS MCP provider not configured' });
+    const cfg = parseStreamableHttpConfig(provider.config);
+    if (!cfg) return res.status(400).json({ success: false, error: 'Invalid IRIS provider config (baseUrl required)' });
+
+    const cfgObj = (() => {
+      try {
+        return provider.config ? (typeof provider.config === 'string' ? JSON.parse(provider.config) : provider.config) : {};
+      } catch {
+        return {};
+      }
+    })() as Record<string, unknown>;
+
+    try {
+      const result = await callRemoteTool({
+        providerId: String(provider.id),
+        orgId,
+        userId: (req as any).user?.id || null,
+        config: cfg,
+        toolName: 'iris.assets.search',
+        args: { q, limit: Math.min(50, Math.max(1, Number(req.body?.limit || 10))) },
+        extraHeaders: makeIrisHeaders(cfgObj, String(req.body?.factoryId || '').trim() || null),
+      });
+      return res.json({ success: true, providerId: String(provider.id), result });
+    } catch (e: any) {
+      const msg = String(e?.message || 'iris_assets_search_failed');
+      const retriable = /HTTP\s*5\d\d/i.test(msg) || /timeout/i.test(msg) || /ECONN/i.test(msg);
+      return res.status(502).json({ success: false, error: msg, retriable });
+    }
   })
 );
 

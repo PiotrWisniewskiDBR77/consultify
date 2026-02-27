@@ -449,7 +449,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                       key={style.id}
                       onClick={() => {
                         setAIConfig({ responseStyle: style.id });
-                        const preset = t(style.presetKey, '');
+                        const preset = t(style.presetKey, style.presetKey);
                         if (preset) setCustomInstructions(preset);
                         const styleLabel = t(style.labelKey);
                         toast.success(t('aiChat.menu.toast.responseStyle', { style: styleLabel }), {

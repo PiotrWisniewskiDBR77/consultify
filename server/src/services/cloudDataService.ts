@@ -185,15 +185,68 @@ export async function uploadCloudFile(input: {
   const source = await getCloudSource(input.sourceId, input.organizationId);
   if (!source) throw new Error('Cloud source not found');
 
-  if (source.provider === 'google_drive') {
-    return uploadGoogleDriveFile(source, input.fileName, input.mimeType, input.content, input.folderId);
-  }
+  try {
+    const startedAt = Date.now();
+    let result: CloudUploadResult;
 
-  if (source.provider === 'onedrive' || source.provider === 'sharepoint') {
-    return uploadOneDriveFile(source, input.fileName, input.mimeType, input.content, input.folderId);
-  }
+    if (source.provider === 'google_drive') {
+      result = await uploadGoogleDriveFile(source, input.fileName, input.mimeType, input.content, input.folderId);
+    } else if (source.provider === 'onedrive' || source.provider === 'sharepoint') {
+      result = await uploadOneDriveFile(source, input.fileName, input.mimeType, input.content, input.folderId);
+    } else {
+      throw new Error(`Upload not supported for provider ${source.provider}`);
+    }
 
-  throw new Error(`Upload not supported for provider ${source.provider}`);
+    await tryLogCloudSync({
+      cloudSourceId: input.sourceId,
+      organizationId: input.organizationId,
+      status: 'success',
+      itemsProcessed: 1,
+      itemsCreated: 1,
+      itemsFailed: 0,
+      errorMessage: null,
+      durationMs: Math.max(0, Date.now() - startedAt),
+      metadata: { provider: source.provider, fileName: input.fileName, fileId: result.fileId, url: result.url },
+    });
+
+    // Best-effort: write an integration_sync_log entry if org-level integration exists.
+    await tryLogIntegrationSync({
+      organizationId: input.organizationId,
+      providerName: source.provider === 'sharepoint' ? 'onedrive' : source.provider,
+      status: 'success',
+      itemsProcessed: 1,
+      itemsCreated: 1,
+      itemsFailed: 0,
+      errorDetails: null,
+      metadata: { cloudSourceId: input.sourceId, fileName: input.fileName, fileId: result.fileId, url: result.url },
+    });
+
+    return result;
+  } catch (e: any) {
+    await tryLogCloudSync({
+      cloudSourceId: input.sourceId,
+      organizationId: input.organizationId,
+      status: 'failed',
+      itemsProcessed: 1,
+      itemsCreated: 0,
+      itemsFailed: 1,
+      errorMessage: String(e?.message || 'upload_failed'),
+      durationMs: null,
+      metadata: { provider: source.provider, fileName: input.fileName },
+    }).catch(() => null);
+
+    await tryLogIntegrationSync({
+      organizationId: input.organizationId,
+      providerName: source.provider === 'sharepoint' ? 'onedrive' : source.provider,
+      status: 'failed',
+      itemsProcessed: 1,
+      itemsCreated: 0,
+      itemsFailed: 1,
+      errorDetails: [String(e?.message || 'upload_failed')],
+      metadata: { cloudSourceId: input.sourceId, fileName: input.fileName },
+    }).catch(() => null);
+    throw e;
+  }
 }
 
 async function uploadGoogleDriveFile(
@@ -290,6 +343,148 @@ async function uploadOneDriveFile(
     mimeType,
     url: data?.webUrl ? String(data.webUrl) : undefined,
   };
+}
+
+async function tryLogIntegrationSync(input: {
+  organizationId: string;
+  providerName: string;
+  status: 'success' | 'partial' | 'failed';
+  itemsProcessed: number;
+  itemsCreated: number;
+  itemsFailed: number;
+  errorDetails: string[] | null;
+  metadata: Record<string, unknown>;
+}): Promise<void> {
+  const db = await getDb();
+
+  // Table existence / columns (best-effort, supports both SQLite and Postgres via adapter).
+  const logCols = (await db.all<{ name: string }>('PRAGMA table_info(integration_sync_log)', []).catch(() => [])) as any[];
+  if (!logCols?.length) return;
+  const hasNewCols = logCols.some((c) => String((c as any).name) === 'items_processed');
+
+  const intCols = (await db.all<{ name: string }>('PRAGMA table_info(integrations)', []).catch(() => [])) as any[];
+  const provCols = (await db.all<{ name: string }>('PRAGMA table_info(integration_providers)', []).catch(() => [])) as any[];
+  if (!intCols?.length || !provCols?.length) return;
+
+  const hasProviderId = intCols.some((c) => String((c as any).name) === 'provider_id');
+  if (!hasProviderId) return;
+
+  const integration = (await db.get(
+    `
+    SELECT i.id
+    FROM integrations i
+    LEFT JOIN integration_providers p ON p.id = i.provider_id
+    WHERE i.organization_id = ?
+      AND p.name = ?
+      AND (i.status IS NULL OR i.status IN ('active','connected'))
+    ORDER BY COALESCE(i.connected_at, i.updated_at, i.last_sync_at) DESC
+    LIMIT 1
+  `,
+    [input.organizationId, String(input.providerName || '').trim().toLowerCase()]
+  )) as any;
+
+  const integrationId = integration?.id ? String(integration.id) : '';
+  if (!integrationId) return;
+
+  const nowIso = new Date().toISOString();
+  const id = `log-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const errorDetails =
+    input.errorDetails && input.errorDetails.length ? JSON.stringify(input.errorDetails.slice(0, 50)) : null;
+
+  if (hasNewCols) {
+    await db.run(
+      `INSERT INTO integration_sync_log (
+        id, integration_id, sync_type, direction, trigger_type,
+        status, items_processed, items_created, items_updated, items_deleted, items_failed, items_skipped,
+        error_summary, error_details, started_at, completed_at, duration_ms
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        integrationId,
+        'single_item',
+        'push',
+        'manual',
+        input.status,
+        input.itemsProcessed,
+        input.itemsCreated,
+        0,
+        0,
+        input.itemsFailed,
+        0,
+        input.status === 'failed' ? 'cloud_upload_failed' : null,
+        errorDetails,
+        nowIso,
+        nowIso,
+        0,
+      ]
+    );
+  } else {
+    await db.run(
+      `INSERT INTO integration_sync_log (
+        id, integration_id, sync_type, direction,
+        status, items_synced, items_failed, error_details,
+        started_at, completed_at, duration_ms
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        integrationId,
+        'single_item',
+        'push',
+        input.status,
+        input.itemsProcessed,
+        input.itemsFailed,
+        errorDetails,
+        nowIso,
+        nowIso,
+        0,
+      ]
+    );
+  }
+
+  // Non-blocking trace metadata (if table exists in this schema).
+  const metaCols = (await db.all<{ name: string }>('PRAGMA table_info(integration_sync_mappings)', []).catch(() => [])) as any[];
+  if (!metaCols?.length) return;
+  const hasMetadata = metaCols.some((c) => String((c as any).name) === 'metadata');
+  if (!hasMetadata) return;
+  // We intentionally do not create a mapping here because we don't know the local object context.
+  // The caller route (e.g. Report Builder publish) can write a mapping with local_id/external_id.
+}
+
+async function tryLogCloudSync(input: {
+  cloudSourceId: string;
+  organizationId: string;
+  status: 'success' | 'partial' | 'failed';
+  itemsProcessed: number;
+  itemsCreated: number;
+  itemsFailed: number;
+  errorMessage: string | null;
+  durationMs: number | null;
+  metadata: Record<string, unknown>;
+}): Promise<void> {
+  const db = await getDb();
+  const cols = (await db.all<{ name: string }>('PRAGMA table_info(cloud_sync_log)', []).catch(() => [])) as any[];
+  if (!cols?.length) return;
+
+  const id = `csl-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  await db.run(
+    `INSERT INTO cloud_sync_log (
+      id, cloud_source_id, organization_id, direction, status,
+      items_processed, items_created, items_failed, error_message,
+      metadata_json, duration_ms, created_at
+    ) VALUES (?, ?, ?, 'push', ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+    [
+      id,
+      input.cloudSourceId,
+      input.organizationId,
+      input.status,
+      input.itemsProcessed,
+      input.itemsCreated,
+      input.itemsFailed,
+      input.errorMessage,
+      JSON.stringify(input.metadata || {}),
+      input.durationMs,
+    ]
+  ).catch(() => null);
 }
 
 export async function startImportJob(data: {

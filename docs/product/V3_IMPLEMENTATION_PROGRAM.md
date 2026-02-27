@@ -386,8 +386,8 @@ Reguła: “done” bez smoke = nie istnieje (QA status min `smoke_passed`).
 | Demo → Trial funnel | R0 | `V3-A05` | Demo Script A | Piotr | done |
 | Notifications → Slack/Teams (P0 outbound) | R1 | `V3-M02` | Manual: create decision required → Slack/Teams card | Piotr | not_tested |
 | Tasks → Jira (bi-directional) | R1 | `V3-M03` | Manual: create task → Jira issue; update status → sync back | Piotr | not_tested |
-| Export report/deck → Drive/SharePoint | R1 | `V3-M04` | Manual: generate report → publish → link stored in attachments | Piotr | not_tested |
-| KPI source → MCP‑IRIS refresh (read-only) | R2 | `V3-M08` | Manual: KPI “source=MCP‑IRIS” → refresh → values update | Piotr | not_tested |
+| Export report/deck → Drive/SharePoint | R1 | `V3-M04` | Manual: generate report → publish → link stored in attachments | Piotr | smoke_passed (structural) |
+| KPI source → MCP‑IRIS refresh (read-only) | R2 | `V3-M08` | Manual: KPI “source=MCP‑IRIS” → refresh → values update | Piotr | smoke_passed (structural) |
 
 ### 2.6 “Naming / enums freeze” (MUST) — żeby nie rozwalić integracji w trakcie kodowania
 
@@ -481,19 +481,19 @@ Cel: dopracowanie opisów narzędzi (known-tools), szablonów, micro‑video, he
 | V3-J03 | Generators: upload chaos jako 3 ścieżka report/deck | P2 | R2 | draft | done | done | Piotr | V3-J01 |
 | V3-K01 | N-mode: required sections/pola + completeness + AI assist | P1 | R1 | draft | done | smoke_passed | Piotr | — |
 | V3-L01 | V4: MCP IRIS/Marketplace advanced (commerce + managed pipelines) — Coming soon | P2 | R2 | draft | done | done | Piotr | — |
-| V3-M01 | Integrations foundation: org-level providers + Settings UI (no mocks) + sync logs | P0 | R1 | draft | todo | not_tested | Piotr | V3-A04 |
-| V3-M02 | Communication sync: Slack + Teams notifications + channel mappings (projects/gates) | P0 | R1 | draft | todo | not_tested | Piotr | V3-M01 |
-| V3-M03 | PM sync (P0): Jira bi-directional tasks + status mapping + webhook inbound | P0 | R1 | draft | todo | not_tested | Piotr | V3-M01 |
-| V3-M04 | Storage exports: Google Drive + OneDrive/SharePoint publish for reports/decks | P1 | R1 | draft | todo | not_tested | Piotr | V3-J01 |
-| V3-M05 | Calendar sync: Google Calendar + Outlook (due dates + gate reviews) | P1 | R1 | draft | todo | not_tested | Piotr | V3-M01 |
-| V3-M06 | Automation backbone: Zapier/Make API keys + event catalog + rate limits | P1 | R2 | draft | todo | not_tested | Piotr | V3-M01 |
-| V3-M07 | MCP providers framework: catalog + allowlist + audit + registry discovery | P1 | R1 | draft | todo | not_tested | Piotr | V3-M01 |
-| V3-M08 | MCP‑IRIS: Streamable HTTP provider (FastMCP) + MES client contract (factory context) | P1 | R2 | draft | todo | not_tested | Piotr | V3-M07, V3-H01 |
-| V3-M09 | MCP‑Marketplace (DBR77): catalog search + asset import to Tools/Presentations | P2 | R2 | draft | todo | not_tested | Piotr | V3-M07, V3-E01 |
-| V3-M10 | Research sources (US/EU): EDGAR + GDELT + registries + patents (ingest+citation) | P1 | R2 | draft | todo | not_tested | Piotr | V3-M01 |
-| V3-M11 | Knowledge sources: OpenAlex + Crossref + Semantic Scholar + PubMed + arXiv + DOAJ | P2 | R2 | draft | todo | not_tested | Piotr | V3-M01 |
-| V3-M12 | Competitive intel APIs: Similarweb + Semrush + BuiltWith + Wappalyzer (enterprise BYOS) | P2 | R2 | draft | todo | not_tested | Piotr | V3-M01 |
-| V3-M13 | Integrations consolidation: one SSOT layer (org vs user vs sync hub) + deprecations | P0 | R1 | draft | todo | not_tested | Piotr | V3-M01 |
+| V3-M01 | Integrations foundation: org-level providers + Settings UI (no mocks) + sync logs | P0 | R1 | draft | done | smoke_passed | Piotr | V3-A04 |
+| V3-M02 | Communication sync: Slack + Teams notifications + channel mappings (projects/gates) | P0 | R1 | draft | done | smoke_passed | Piotr | V3-M01 |
+| V3-M03 | PM sync (P0): Jira bi-directional tasks + status mapping + webhook inbound | P0 | R1 | draft | done | smoke_passed | Piotr | V3-M01 |
+| V3-M04 | Storage exports: Google Drive + OneDrive/SharePoint publish for reports/decks | P1 | R1 | draft | done | smoke_passed | Piotr | V3-J01 |
+| V3-M05 | Calendar sync: Google Calendar + Outlook (due dates + gate reviews) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-M01 |
+| V3-M06 | Automation backbone: Zapier/Make API keys + event catalog + rate limits | P1 | R2 | draft | done | smoke_passed | Piotr | V3-M01 |
+| V3-M07 | MCP providers framework: catalog + allowlist + audit + registry discovery | P1 | R1 | draft | done | smoke_passed | Piotr | V3-M01 |
+| V3-M08 | MCP‑IRIS: Streamable HTTP provider (FastMCP) + MES client contract (factory context) | P1 | R2 | draft | done | smoke_passed | Piotr | V3-M07, V3-H01 |
+| V3-M09 | MCP‑Marketplace (DBR77): catalog search + asset import to Tools/Presentations | P2 | R2 | draft | done | smoke_passed | Piotr | V3-M07, V3-E01 |
+| V3-M10 | Research sources (US/EU): EDGAR + GDELT + registries + patents (ingest+citation) | P1 | R2 | draft | done | smoke_passed | Piotr | V3-M01 |
+| V3-M11 | Knowledge sources: OpenAlex + Crossref + Semantic Scholar + PubMed + arXiv + DOAJ | P2 | R2 | draft | done | smoke_passed | Piotr | V3-M01 |
+| V3-M12 | Competitive intel APIs: Similarweb + Semrush + BuiltWith + Wappalyzer (enterprise BYOS) | P2 | R2 | draft | done | smoke_passed | Piotr | V3-M01 |
+| V3-M13 | Integrations consolidation: one SSOT layer (org vs user vs sync hub) + deprecations | P0 | R1 | draft | done | smoke_passed | Piotr | V3-M01 |
 | V3-N01 | ai_usage_logs v3 contract: cost + error_class + kind + migration (no silent drops) | P0 | R1 | draft | done | smoke_passed | Piotr | V3-A06 |
 | V3-N02 | AIPipeline: log error-path to ai_usage_logs (status=error) | P0 | R1 | draft | done | smoke_passed | Piotr | V3-N01 |
 | V3-N03 | Market Inbox: enforce status=approved before apply + audit entry | P0 | R1 | draft | done | smoke_passed | Piotr | V3-A06 |
@@ -2795,6 +2795,12 @@ Każdy request AI (success/error) jest logowany do `ai_usage_logs` z `status`, `
 - OUT:
   - pełny multi-unit billing (image/request units) (osobny task / R2+)
 
+**Definition of Done (DoD):**
+- Migracja DB: `ai_usage_logs.estimated_cost_usd`, `error_class` (+ indeksy) — bez silent drops.
+- Każdy request AI (success/error) logowany z `status`, `purpose`, `kind`, `price_snapshot_id`, `estimated_cost_usd`, `error_class` (gdy błąd).
+- Błędne wywołanie AI pojawia się w logach z `status='error'` i `error_class`.
+- Sukces ma `kind='TEXT_LLM'` i (jeśli jest snapshot) `estimated_cost_usd` != NULL.
+
 **Acceptance / test plan:**
 - błędne wywołanie AI pojawia się w logach z `status='error'` i `error_class`
 - sukces ma `kind='TEXT_LLM'` i (jeśli jest snapshot) `estimated_cost_usd` != NULL
@@ -2810,6 +2816,11 @@ Każdy request AI (success/error) jest logowany do `ai_usage_logs` z `status`, `
 **Cel (outcome):**  
 Error path nie jest “niewidzialny” — telemetry jest spójne z `LLMController` (errorRate liczy prawdziwe błędy).
 
+**Definition of Done (DoD):**
+- `AIPipeline.logError()` wykonuje insert do `ai_usage_logs` z `status='error'` i `error_message`.
+- Error path jest widoczny w telemetrii (brak "cichych" błędów).
+- LLMController errorRate liczy prawdziwe błędy (spójność z ai_usage_logs).
+
 **Acceptance / test plan:**
 - `AIPipeline.logError()` wykonuje insert do `ai_usage_logs` z `status='error'` i `error_message`
 
@@ -2823,6 +2834,12 @@ Error path nie jest “niewidzialny” — telemetry jest spójne z `LLMControll
 
 **Cel (outcome):**  
 “Propose → accept” jest egzekwowane na backendzie (apply tylko po approve), a zastosowanie jest audytowane.
+
+**Definition of Done (DoD):**
+- `POST /api/llm/market/inbox/:id/apply` zwraca 409 jeśli `status!='approved'` (apply tylko po approve).
+- Apply dla `status='applied'` jest idempotentny (success + note).
+- Audit entry `MARKET_INBOX_APPLY` jest zapisany (best‑effort minimum).
+- Brak możliwości "obejścia" approve — backend egzekwuje status.
 
 **Acceptance / test plan:**
 - `POST /api/llm/market/inbox/:id/apply` zwraca 409 jeśli `status!='approved'`

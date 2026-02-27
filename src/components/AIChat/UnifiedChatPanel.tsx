@@ -2792,7 +2792,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           disabled={isDisabled}
           placeholder={
             workspaceContext && workspaceContext.type !== 'empty' && workspaceContext.entityName
-              ? t('aiChat.contextPlaceholder', 'Jak mogę pomóc z {{context}}?', {
+              ? t('aiChat.contextPlaceholder', {
+                  defaultValue: 'Jak mogę pomóc z {{context}}?',
                   context: workspaceContext.entityName,
                 })
               : t('aiChat.placeholder', 'How can I help you?')

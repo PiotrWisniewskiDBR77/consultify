@@ -36,6 +36,18 @@ function parseJsonObject(raw: unknown): Record<string, unknown> {
   return {};
 }
 
+async function getMarketplaceProvider(orgId: string): Promise<any | null> {
+  const provider = await dbGet<any>(
+    `SELECT id, name, type, status, config
+     FROM mcp_providers
+     WHERE organization_id = ? AND status = 'active' AND lower(name) LIKE '%marketplace%'
+     ORDER BY updated_at DESC, created_at DESC
+     LIMIT 1`,
+    [orgId]
+  ).catch(() => null);
+  return provider || null;
+}
+
 async function tryGetColumns(table: string): Promise<Set<string>> {
   try {
     const rows = await dbAll<{ name: string }>(`PRAGMA table_info(${table})`, []);
@@ -335,6 +347,179 @@ router.get(
         { id: 'msgraph', name: 'Microsoft Graph', type: 'mcp', note: 'Outlook/Teams/SharePoint via Graph' },
         { id: 'notion', name: 'Notion', type: 'mcp', note: 'Already supported via Report Builder export' },
       ],
+    });
+  })
+);
+
+// ============================================================
+// V3-M09: MCP-Marketplace (read-only) + minimal import
+// ============================================================
+router.get(
+  '/marketplace/search',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const q = String(req.query.q || '').trim();
+    const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit || '10'), 10) || 10));
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!q) return res.status(400).json({ error: 'q is required' });
+
+    const provider = await getMarketplaceProvider(orgId);
+    if (!provider) return res.status(404).json({ error: 'Marketplace provider not configured' });
+
+    const cfgObj = parseJsonObject(provider.config);
+    const cfg = parseStreamableHttpConfig(provider.config);
+    if (!cfg) return res.status(400).json({ error: 'Invalid provider config (baseUrl required)' });
+
+    const result = await callRemoteTool({
+      providerId: String(provider.id),
+      orgId,
+      userId: req.user?.id || null,
+      config: cfg,
+      toolName: 'marketplace.catalog.search',
+      args: { q, limit },
+      extraHeaders: makeMarketplaceHeaders(cfgObj),
+    });
+    return res.json({ success: true, providerId: String(provider.id), result });
+  })
+);
+
+router.get(
+  '/marketplace/assets/:assetId',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const assetId = String(req.params.assetId || '').trim();
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!assetId) return res.status(400).json({ error: 'assetId is required' });
+
+    const provider = await getMarketplaceProvider(orgId);
+    if (!provider) return res.status(404).json({ error: 'Marketplace provider not configured' });
+
+    const cfgObj = parseJsonObject(provider.config);
+    const cfg = parseStreamableHttpConfig(provider.config);
+    if (!cfg) return res.status(400).json({ error: 'Invalid provider config (baseUrl required)' });
+
+    const result = await callRemoteTool({
+      providerId: String(provider.id),
+      orgId,
+      userId: req.user?.id || null,
+      config: cfg,
+      toolName: 'marketplace.asset.get',
+      args: { id: assetId },
+      extraHeaders: makeMarketplaceHeaders(cfgObj),
+    });
+    return res.json({ success: true, providerId: String(provider.id), result });
+  })
+);
+
+router.post(
+  '/marketplace/assets/:assetId/import',
+  verifyToken,
+  verifyAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const assetId = String(req.params.assetId || '').trim();
+    const targetType = String(req.body?.targetType || 'presentation_template').trim();
+    const nameOverride = req.body?.name ? String(req.body.name).trim() : null;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!assetId) return res.status(400).json({ error: 'assetId is required' });
+
+    const provider = await getMarketplaceProvider(orgId);
+    if (!provider) return res.status(404).json({ error: 'Marketplace provider not configured' });
+
+    const cfgObj = parseJsonObject(provider.config);
+    const cfg = parseStreamableHttpConfig(provider.config);
+    if (!cfg) return res.status(400).json({ error: 'Invalid provider config (baseUrl required)' });
+
+    const asset = await callRemoteTool({
+      providerId: String(provider.id),
+      orgId,
+      userId: req.user?.id || null,
+      config: cfg,
+      toolName: 'marketplace.asset.get',
+      args: { id: assetId },
+      extraHeaders: makeMarketplaceHeaders(cfgObj),
+    });
+
+    const assetObj = (asset && typeof asset === 'object' ? asset : {}) as any;
+    const assetJson = JSON.stringify(assetObj);
+    const assetKind = String(assetObj.kind || assetObj.type || 'asset');
+    const sourceUrl = assetObj.url ? String(assetObj.url) : null;
+
+    // Ensure imports table exists
+    const cols = await tryGetColumns('marketplace_imports');
+    if (!cols.size) return res.status(501).json({ error: 'marketplace_imports table not available' });
+
+    let createdTargetId: string | null = null;
+    if (targetType === 'presentation_template') {
+      const ptCols = await tryGetColumns('presentation_templates');
+      if (ptCols.size) {
+        const id = uuidv4().replace(/-/g, '');
+        const outline =
+          assetObj.outline_json ||
+          assetObj.outline ||
+          assetObj.template?.outline ||
+          assetObj.template ||
+          [];
+        await dbRun(
+          `INSERT INTO presentation_templates (
+            id, organization_id, name, description, deck_type, audience, goal, language_default,
+            confidentiality_default, theme, outline_json, max_slides, min_slides,
+            must_have_intents, recommended_visuals, is_system, is_active, created_by, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, TRUE, ?, CURRENT_TIMESTAMP)`,
+          [
+            id,
+            orgId,
+            nameOverride || String(assetObj.name || assetObj.title || `Marketplace ${assetId}`),
+            String(assetObj.description || ''),
+            String(assetObj.deck_type || 'marketplace'),
+            String(assetObj.audience || ''),
+            String(assetObj.goal || ''),
+            String(assetObj.language_default || 'en'),
+            String(assetObj.confidentiality_default || 'internal'),
+            String(assetObj.theme || 'corporate'),
+            JSON.stringify(outline),
+            Number(assetObj.max_slides || 15),
+            Number(assetObj.min_slides || 5),
+            JSON.stringify(assetObj.must_have_intents || []),
+            JSON.stringify(assetObj.recommended_visuals || []),
+            req.user?.id || null,
+          ]
+        ).catch(() => null);
+        createdTargetId = id;
+      }
+    }
+
+    const importId = `mpi-${uuidv4()}`;
+    await dbRun(
+      `INSERT INTO marketplace_imports (
+        id, organization_id, provider_id, asset_id, asset_kind, target_type, target_id, source_url, imported_by, asset_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        importId,
+        orgId,
+        String(provider.id),
+        assetId,
+        assetKind,
+        targetType,
+        createdTargetId,
+        sourceUrl,
+        req.user?.id || null,
+        assetJson,
+      ]
+    );
+
+    return res.status(201).json({
+      success: true,
+      importId,
+      providerId: String(provider.id),
+      assetId,
+      assetKind,
+      targetType,
+      targetId: createdTargetId,
     });
   })
 );

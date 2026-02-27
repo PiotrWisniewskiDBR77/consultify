@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 
 const hoisted = vi.hoisted(() => {
   const trackFunnelEventMock = vi.fn();
+  const navigateMock = vi.fn();
 
   const apiMock = {
     agentAuditAcceptRun: vi.fn(),
@@ -135,6 +136,7 @@ const hoisted = vi.hoisted(() => {
 
   return {
     trackFunnelEventMock,
+    navigateMock,
     apiMock,
     addChatMessageMock,
     deleteChatMessageMock,
@@ -171,6 +173,14 @@ const hoisted = vi.hoisted(() => {
     clearLastErrorMock,
     aiStreamOptionsCapturedRef,
     aiStreamState,
+  };
+});
+
+vi.mock('react-router-dom', async () => {
+  const actual: any = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => hoisted.navigateMock,
   };
 });
 
@@ -289,8 +299,8 @@ vi.mock('../../../src/components/AIChat/ContextBadge', () => ({
 }));
 
 vi.mock('../../../src/components/AIChat/ChatSignalsPanel', () => ({
-  ChatSignalsPanel: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) =>
-    isOpen ? (
+  ChatSignalsPanel: ({ open, isOpen, onClose }: { open?: boolean; isOpen?: boolean; onClose: () => void }) =>
+    (open ?? isOpen) ? (
       <button data-testid="signals-panel" onClick={onClose}>
         signals-panel
       </button>
@@ -785,15 +795,17 @@ describe('UnifiedChatPanel (L2)', () => {
     render(<UnifiedChatPanel quickPrompts={['Prompt A', 'Prompt B']} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Prompt A' }));
-    await waitFor(() => expect(startStreamMock).toHaveBeenCalledWith(
-      'Prompt A',
-      expect.anything(),
-      expect.anything(),
-      expect.anything(),
-      expect.anything(),
-      expect.anything(),
-      expect.anything()
-    ));
+    await waitFor(() =>
+      expect(startStreamMock).toHaveBeenCalledWith(
+        'Prompt A',
+        expect.any(Array),
+        undefined,
+        expect.any(Object),
+        'all',
+        undefined,
+        'pl'
+      )
+    );
   });
 
   it('does not show quick prompts while streaming', () => {
@@ -827,6 +839,7 @@ describe('UnifiedChatPanel (L2)', () => {
   it('signals panel closes on click', () => {
     render(<UnifiedChatPanel />);
     fireEvent.click(screen.getByTestId('chat-signals-button'));
+    expect(screen.getByTestId('signals-panel')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('signals-panel'));
     expect(screen.queryByTestId('signals-panel')).not.toBeInTheDocument();
   });

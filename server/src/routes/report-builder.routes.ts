@@ -43,7 +43,7 @@ import ReportBuilderCommentsService from '../services/reportBuilderCommentsServi
 import ReportBuilderService from '../services/reportBuilderService.js';
 import ReportGenerationService from '../services/reportGenerationService.js';
 import { checkQualityGates } from '../services/reportQualityGatesService.js';
-import { get as dbGet } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 // ==========================================
@@ -3042,6 +3042,63 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
       content: buf,
       folderId,
     });
+
+    // Best-effort: write a sync mapping for org-level integrations (if present).
+    // This allows Integrations logs/mappings to show the outbound publish action.
+    try {
+      const mapCols = await dbAll<{ name: string }>('PRAGMA table_info(integration_sync_mappings)', []).catch(() => []);
+      const hasMappings = (mapCols || []).some((c) => String((c as any).name || '') === 'integration_id');
+      if (hasMappings) {
+        const providerKey =
+          uploaded.provider === 'sharepoint' ? 'onedrive' : String(uploaded.provider || '').trim().toLowerCase();
+        const integration = await dbGet<{ id: string }>(
+          `
+          SELECT i.id
+          FROM integrations i
+          LEFT JOIN integration_providers p ON p.id = i.provider_id
+          WHERE i.organization_id = ?
+            AND p.name = ?
+            AND (i.status IS NULL OR i.status IN ('active','connected'))
+          ORDER BY COALESCE(i.connected_at, i.updated_at, i.last_sync_at) DESC
+          LIMIT 1
+        `,
+          [organizationId, providerKey]
+        );
+        const integrationId = integration?.id ? String(integration.id) : '';
+        if (integrationId) {
+          const mappingId = `sync-${uuidv4()}`;
+          const now = new Date().toISOString();
+          await dbRun(
+            `INSERT INTO integration_sync_mappings (
+              id, integration_id,
+              local_type, local_id,
+              external_type, external_id, external_url,
+              sync_status, created_at, updated_at, metadata
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
+            [
+              mappingId,
+              integrationId,
+              'report_builder',
+              id,
+              'file',
+              uploaded.fileId,
+              uploaded.url || null,
+              now,
+              now,
+              JSON.stringify({
+                source: 'report_builder_publish_cloud',
+                format,
+                cloudSourceId,
+                fileName,
+                mimeType,
+              }),
+            ]
+          ).catch(() => null);
+        }
+      }
+    } catch {
+      // ignore (best-effort)
+    }
 
     await ReportBuilderService.createExportRecord({
       reportId: id,
