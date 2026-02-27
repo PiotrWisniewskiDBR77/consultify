@@ -8,6 +8,7 @@
 > - Model Registry v3 (kategorie i assignments): `docs/product/MODEL_REGISTRY_V3.md`
 > - Operating model v3 (moduły i flow): `docs/product/OPERATING_MODEL_V3.md`
 > - AI usage & limits (quota/billing): `docs/flows/ai/AI_USAGE_LIMITS_FLOW.md`
+> - AI LLM operating system (ideal v3): `docs/product/modules/ai/AI_LLM_OPERATING_SYSTEM_V3.md`
 >
 > **As‑is code references (MUST keep compatible):**
 > - capability→tier routing: `server/src/services/ai/modelRouter.ts`
@@ -113,6 +114,46 @@ Każdy purpose ma wymagania (`ModelRequirements`):
 - `deck_copy_polish`  
   - polish językowy, krótkie iteracje
 
+### 2.6 Deep Research (wiarygodne raporty + evidence ledger)
+
+> SSOT systemu: `docs/product/modules/ai/AI_DEEP_RESEARCH_EVIDENCE_SYSTEM_V3.md`
+
+- `deep_research_plan`  
+  - **kind:** `TEXT_LLM`  
+  - **default tier:** `STANDARD`  
+  - **requirements:** structured output preferowane (plan + pytania brakujące), niska latencja nie jest krytyczna  
+  - **typowe użycia:** plan badań, coverage questions, stopping criteria
+
+- `deep_research_claims_extract`  
+  - **kind:** `TEXT_LLM`  
+  - **default tier:** `STANDARD`  
+  - **requirements:** structured output (claims + snippet refs), wysoka precyzja, “no invention”  
+  - **typowe użycia:** budowa Evidence Ledger (Claim → Evidence)
+
+- `deep_research_synthesis`  
+  - **kind:** `TEXT_LLM`  
+  - **default tier:** `REASONING`  
+  - **requirements:** długi kontekst, cytowania `[n]`, rozdzielenie facts vs assumptions, bez chain-of-thought  
+  - **typowe użycia:** finalny raport jako dokument (TOC, sekcje, wnioski)
+
+- `deep_research_contradictions`  
+  - **kind:** `TEXT_LLM`  
+  - **default tier:** `STANDARD`  
+  - **requirements:** structured output (lista sprzeczności + plan domknięcia), wykrywanie konfliktów liczb/dat/definicji  
+  - **typowe użycia:** “What sources disagree on” + “needs more data”
+
+- `deep_research_export_polish`  
+  - **kind:** `TEXT_LLM`  
+  - **default tier:** `BUDGET`  
+  - **requirements:** krótkie iteracje, poprawa języka, spójność stylu bez zmiany faktów  
+  - **typowe użycia:** polishing sekcji i wersji eksportowych (MD/PDF/DOCX)
+
+- `deep_research_quality_gate`  
+  - **kind:** `TEXT_LLM`  
+  - **default tier:** `STANDARD`  
+  - **requirements:** reviewer role; wykrywa unsupported claims, brak cytowań, “numbers without evidence”  
+  - **typowe użycia:** automatyczny gate jakości przed publikacją artefaktu
+
 ### 2.6 Vision (image input → text)
 
 - `vision_extract`  
@@ -186,4 +227,16 @@ Przykładowe mapowanie (do doprecyzowania w implementacji):
 - Każdy `purpose` ma: kind, default tier (jeśli dotyczy), requirements, oraz telemetrykę.
 - SuperAdmin ma widok katalogu purpose i przypisań.
 - `capability` pozostaje wspierane jako alias, ale nie jest SSOT.
+
+---
+
+## 6) Implementacja “as‑is” w kodzie (V3) — seed purposes + routing by purpose (DONE)
+
+- Seed / upsert purposes:
+  - Preset endpoint: `POST /api/llm/presets/v3/recommended` tworzy/aktualizuje kanoniczny zestaw purposes v3 w `ai_purposes`.
+- Routing:
+  - `server/src/services/ai/modelRouter.ts` preferuje `purpose` (alias do capability) i wspiera purpose assignments oraz model registry routing.
+
+Uwaga (as‑is):
+- Preset v3 seeduje też purposes dla deep research: `deep_research_*` oraz tworzy dla nich globalne purpose assignments (łańcuch “deep chain” z fallbackiem).
 

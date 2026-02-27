@@ -163,6 +163,13 @@ const parseChatSaveIntent = (rawContent: string): ChatSaveIntent | null => {
   return null;
 };
 
+export const __private__ = {
+  firstMatchIndex,
+  isLikelyAiFailureText,
+  extractSlashPayload,
+  parseChatSaveIntent,
+};
+
 interface UnifiedChatPanelProps {
   /** Display mode: full-screen or split-screen */
   mode?: ChatDisplayMode;
@@ -1398,6 +1405,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         // Provide file names and types so the AI can reference them in its response
         attachmentFileNames: uploadedAttachments.map((a) => a.filename),
         hasAttachments: uploadedAttachments.length > 0,
+        // v3 context-awareness: pass project + screen context in the shape expected by backend
+        projectId: workspaceContext?.projectId || null,
+        screenContext: {
+          screenId: workspaceContext?.view || workspaceContext?.type || null,
+          currentScreen: workspaceContext?.type || null,
+          selectedObjectId: workspaceContext?.entityId || null,
+          selectedObjectType: workspaceContext?.type || null,
+        },
         workspaceContext,
         conversationId,
         conversationLanguage: chatLanguage,
@@ -2267,6 +2282,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         focusMode,
         attachments: [],
         workspaceContext,
+        // v3 context-awareness: pass project + screen context in the shape expected by backend
+        projectId: workspaceContext?.projectId || null,
+        screenContext: {
+          screenId: workspaceContext?.view || workspaceContext?.type || null,
+          currentScreen: workspaceContext?.type || null,
+          selectedObjectId: workspaceContext?.entityId || null,
+          selectedObjectType: workspaceContext?.type || null,
+        },
         conversationId: activeConversationId,
         conversationLanguage: chatLanguage,
       };

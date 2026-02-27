@@ -1055,7 +1055,8 @@ export async function initDb(): Promise<void> {
                 FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL
             )`);
 
-    // Ensure knowledge_docs has project_id/organization_id on existing DBs (Railway etc.)
+    // Ensure knowledge_docs has required columns on existing DBs (Railway etc.)
+    // NOTE: RAG + tool packs rely on `source_type`, `metadata`, `chunk_count`, and timestamps.
     const ensureKnowledgeDocColumn = async (col: string, ddl: string) => {
       if (!(await columnExists('knowledge_docs', col))) {
         await query(`ALTER TABLE knowledge_docs ADD COLUMN ${ddl}`);
@@ -1063,6 +1064,18 @@ export async function initDb(): Promise<void> {
     };
     await ensureKnowledgeDocColumn('organization_id', 'organization_id TEXT');
     await ensureKnowledgeDocColumn('project_id', 'project_id TEXT');
+    await ensureKnowledgeDocColumn('source_type', 'source_type TEXT');
+    await ensureKnowledgeDocColumn('file_hash', 'file_hash TEXT');
+    await ensureKnowledgeDocColumn('chunk_count', 'chunk_count INTEGER DEFAULT 0');
+    await ensureKnowledgeDocColumn('metadata', 'metadata TEXT');
+    await ensureKnowledgeDocColumn('indexed_at', 'indexed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+    await ensureKnowledgeDocColumn('updated_at', 'updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+    // Optional content classification (used by ops and filtering)
+    await ensureKnowledgeDocColumn('category', 'category TEXT');
+    await ensureKnowledgeDocColumn('tags', 'tags TEXT');
+    // Lightweight versioning
+    await ensureKnowledgeDocColumn('version', 'version INTEGER DEFAULT 1');
+    await ensureKnowledgeDocColumn('parent_doc_id', 'parent_doc_id TEXT');
 
     // Knowledge Chunks
     await query(`CREATE TABLE IF NOT EXISTS knowledge_chunks(
@@ -1073,6 +1086,15 @@ export async function initDb(): Promise<void> {
                 embedding TEXT,
                 FOREIGN KEY(doc_id) REFERENCES knowledge_docs(id) ON DELETE CASCADE
             )`);
+
+    const ensureKnowledgeChunkColumn = async (col: string, ddl: string) => {
+      if (!(await columnExists('knowledge_chunks', col))) {
+        await query(`ALTER TABLE knowledge_chunks ADD COLUMN ${ddl}`);
+      }
+    };
+    // Required for pack-scoped retrieval and provenance
+    await ensureKnowledgeChunkColumn('metadata', 'metadata TEXT');
+    await ensureKnowledgeChunkColumn('created_at', 'created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
 
     // LLM Providers
     await query(`CREATE TABLE IF NOT EXISTS llm_providers(

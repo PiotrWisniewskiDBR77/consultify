@@ -161,3 +161,49 @@ Akcje SA:
 - Price snapshots są wersjonowane i przypisywane do usage.
 - Deprecation modeli generuje alert i “migration plan”, a nie ciche zniknięcie.
 
+---
+
+## 10) Implementacja “as‑is” w kodzie (V3) — OpenRouter Connector + Inbox + Apply (DONE)
+
+### 10.1 Tabele (DB)
+
+- `ai_market_snapshots` — surowe snapshoty payloadów z rynku (source=`openrouter`)
+- `ai_market_inbox` — elementy diff do zatwierdzenia (status: `new|approved|ignored|applied`)
+
+### 10.2 Endpointy (backend)
+
+- **Sync (manual + cron)**: `POST /api/llm/market/openrouter/sync`
+  - zapisuje nowy snapshot do `ai_market_snapshots`
+  - generuje diff i wpisy do `ai_market_inbox` (limit 200, żeby nie zalać inboxa)
+  - implementacja: `server/src/services/ai/openRouterMarketService.ts` + route w `server/src/routes/llm.routes.ts`
+
+- **Inbox list**: `GET /api/llm/market/inbox?status=new&source=openrouter`
+- **Approve/ignore**: `PUT /api/llm/market/inbox/:id` (ustawia status + `reviewed_at`)
+
+- **Apply (curated rollout)**: `POST /api/llm/market/inbox/:id/apply` (**SUPERADMIN**)
+  - `PRICING_CHANGED` → tworzy `ai_price_snapshots` (`source=api_sync`) i zamyka poprzedni “open” snapshot (`effective_to`)
+  - `MODEL_ADDED` → tworzy “suggestion” w `llm_providers` (domyślnie `is_active=0`) + opcjonalny snapshot ceny jeśli pricing jest w payload
+  - `MODEL_REMOVED` / `CTX_CHANGED` → konserwatywnie `noop` (wymaga ręcznego rollout planu)
+
+### 10.3 Wykrywane klasy zmian (diff engine)
+
+W praktyce sync wykrywa i zapisuje do `ai_market_inbox.change_type`:
+
+- `MODEL_ADDED`
+- `MODEL_REMOVED`
+- `PRICING_CHANGED`
+- `CTX_CHANGED`
+
+### 10.4 Harmonogram (cron)
+
+- Scheduler: `server/src/cron/Scheduler.ts`
+- Job: “AI Market sync (OpenRouter)” co 6 godzin (`15 */6 * * *`)
+- Wyłączenie: `DISABLE_AI_MARKET_SYNC=true`
+
+### 10.5 UI (SuperAdmin)
+
+- Operacje → “Market Inbox (OpenRouter)”
+  - `Sync now` (uruchamia `/market/openrouter/sync`)
+  - Approve/Ignore
+  - **Apply** (wymaga status=`approved`) — zapis zmian do registry/pricing zgodnie z zasadą approve→rollout
+

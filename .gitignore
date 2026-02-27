@@ -196,5 +196,11 @@ _analysis/
 # Client data (never commit)
 Plast-met/
 
+# Knowledge bank: keep markdown packs in repo, ignore raw source binaries
+knowledge/**/*.pdf
+knowledge/**/*.xlsx
+knowledge/**/*.pptx
+knowledge/**/*.docx
+
 # Duplicate lib artifacts
 lib/

@@ -1999,6 +1999,20 @@ export const Api = {
     return res.json();
   },
 
+  applyRecommendedAiModelPresetV3: async (params?: {
+    dryRun?: boolean;
+    overwrite?: boolean;
+    replicateImageModel?: string;
+    openaiImageModel?: string;
+  }): Promise<any> => {
+    const res = await fetch(`${API_URL}/llm/presets/v3/recommended`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(params || {}),
+    });
+    return handleResponse(res, 'Failed to apply recommended preset');
+  },
+
   testLLMConnection: async (
     config: any
   ): Promise<{ success: boolean; message: string; response?: string }> => {
@@ -8789,6 +8803,85 @@ export const Api = {
       body: JSON.stringify({ settings: settings || {} }),
     });
     return handleResponse(res, 'Failed to update integration settings');
+  },
+
+  // MCP Providers (org-scoped registry)
+  getMcpProviders: async () => {
+    const res = await fetchWithRetry(`${API_URL}/mcp/providers`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch MCP providers');
+  },
+
+  createMcpProvider: async (input: { name: string; type?: string; status?: string; config?: any }) => {
+    const res = await fetchWithRetry(`${API_URL}/mcp/providers`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(input || {}),
+    });
+    return handleResponse(res, 'Failed to create MCP provider');
+  },
+
+  updateMcpProvider: async (providerId: string, input: { name?: string; status?: string; config?: any }) => {
+    const res = await fetchWithRetry(`${API_URL}/mcp/providers/${providerId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(input || {}),
+    });
+    return handleResponse(res, 'Failed to update MCP provider');
+  },
+
+  deleteMcpProvider: async (providerId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/mcp/providers/${providerId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to delete MCP provider');
+  },
+
+  testMcpProvider: async (providerId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/mcp/providers/${providerId}/test`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({}),
+    });
+    return handleResponse(res, 'Failed to test MCP provider');
+  },
+
+  getMcpProviderTools: async (providerId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/mcp/providers/${providerId}/tools`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch MCP provider tools');
+  },
+
+  getMcpProviderAllowlist: async (providerId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/mcp/providers/${providerId}/allowlist`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch MCP provider allowlist');
+  },
+
+  updateMcpProviderAllowlist: async (
+    providerId: string,
+    input: { mode: 'allow' | 'deny'; tools: string[] }
+  ) => {
+    const res = await fetchWithRetry(`${API_URL}/mcp/providers/${providerId}/allowlist`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(input || {}),
+    });
+    return handleResponse(res, 'Failed to update MCP provider allowlist');
+  },
+
+  getMcpAudit: async (limit = 50) => {
+    const res = await fetchWithRetry(`${API_URL}/mcp/audit?limit=${encodeURIComponent(String(limit))}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch MCP audit');
+  },
+
+  getMcpDiscovery: async () => {
+    const res = await fetchWithRetry(`${API_URL}/mcp/discovery`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch MCP discovery');
   },
 
   // Keyboard Shortcuts

@@ -13,6 +13,8 @@ import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import circuitBreaker from '../services/ai/circuitBreaker.js';
 import llmConfigService from '../services/ai/llmConfigService.js';
 import { llmService } from '../services/ai/llmService.js';
+import { applyRecommendedModelPreset } from '../services/ai/recommendedModelPresetService.js';
+import { syncOpenRouterMarket } from '../services/ai/openRouterMarketService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
@@ -128,12 +130,15 @@ async function ensureEnterpriseSchema(): Promise<void> {
         { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS action TEXT` },
         { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS tokens_used INTEGER DEFAULT 0` },
         { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'success'` },
+        { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS error_class TEXT` },
         { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS metadata TEXT` },
         { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS purpose TEXT` },
         { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS kind TEXT` },
         { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS price_snapshot_id TEXT` },
+        { sql: `ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS estimated_cost_usd REAL` },
         { sql: `CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_action ON ai_usage_logs(action)` },
         { sql: `CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_purpose ON ai_usage_logs(purpose)` },
+        { sql: `CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_error_class ON ai_usage_logs(error_class)` },
       ];
 
       for (const s of stmts) {
@@ -418,6 +423,40 @@ router.get(
  * List all configured providers
  */
 router.get('/providers', verifyToken, asyncHandler(LLMController.listProviders));
+
+/**
+ * POST /api/llm/providers/organization/toggle
+ * Enable/disable a provider row for the caller's organization.
+ *
+ * Used by Admin settings UI to control which models are available to the org.
+ *
+ * Security:
+ * - requires auth
+ * - requires org admin permission (`edit_organization_settings`)
+ */
+router.post(
+  '/providers/organization/toggle',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const organizationId = String(req?.organizationId || req?.user?.organizationId || '').trim();
+    if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
+
+    // Prefer permission capability check (most precise); fallback to role check if `can` is missing.
+    const canEdit = typeof req?.can === 'function' ? Boolean(req.can('edit_organization_settings')) : false;
+    const role = String(req?.user?.role || req?.userRole || '').toLowerCase();
+    const roleOk = role === 'admin' || role === 'administrator' || role === 'owner' || role === 'super_admin' || role === 'superadmin';
+    if (!canEdit && !roleOk) return res.status(403).json({ error: 'Permission denied' });
+
+    const providerId = String((req.body as any)?.providerId || '').trim();
+    const enabledRaw = (req.body as any)?.enabled;
+    const enabled = enabledRaw === true || enabledRaw === 1 || String(enabledRaw).toLowerCase() === 'true';
+    if (!providerId) return res.status(400).json({ error: 'providerId is required' });
+
+    // Persist to organization_provider_settings (best-effort; schema may not exist in some envs yet).
+    await llmConfigService.toggleOrganizationProvider(organizationId, providerId, enabled);
+    return res.json({ success: true, providerId, enabled });
+  })
+);
 
 /**
  * GET /api/llm/providers/public
@@ -816,6 +855,31 @@ router.delete(
 );
 
 /**
+ * POST /api/llm/presets/v3/recommended
+ * Apply v3 recommended purposes + model set (fast/deep/image) and assignments.
+ *
+ * Body (optional):
+ * - dryRun?: boolean
+ * - overwrite?: boolean
+ * - replicateImageModel?: string  (or env REPLICATE_DEFAULT_IMAGE_MODEL)
+ * - openaiImageModel?: string     (or env OPENAI_IMAGE_MODEL_ID, default 'gpt-image-1')
+ */
+router.post(
+  '/presets/v3/recommended',
+  verifySuperAdmin,
+  asyncHandler(async (req, res) => {
+    await ensureEnterpriseSchema();
+    const result = await applyRecommendedModelPreset({
+      dryRun: req.body?.dryRun === true,
+      overwrite: req.body?.overwrite === true,
+      replicateImageModel: req.body?.replicateImageModel,
+      openaiImageModel: req.body?.openaiImageModel,
+    });
+    return res.json(result);
+  })
+);
+
+/**
  * GET /api/llm/org/:organizationId/policy
  * Get org AI policy JSON.
  */
@@ -1023,119 +1087,9 @@ router.post(
   verifyToken,
   asyncHandler(async (_req, res) => {
     await ensureEnterpriseSchema();
-    const apiKey = process.env.OPENROUTER_API_KEY?.trim();
-    if (!apiKey)
-      return res.status(400).json({ success: false, error: 'OPENROUTER_API_KEY not configured' });
-
-    const resp = await fetch('https://openrouter.ai/api/v1/models', {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
-    if (!resp.ok) {
-      return res
-        .status(502)
-        .json({ success: false, error: `OpenRouter fetch failed: ${resp.status}` });
-    }
-    const payload = await resp.json();
-    const snapshotId = randomUUID();
-    await dbRun(
-      `INSERT INTO ai_market_snapshots (id, source, payload, fetched_at) VALUES (?, 'openrouter', ?, CURRENT_TIMESTAMP)`,
-      [snapshotId, JSON.stringify(payload)],
-      { fallback: false } as any
-    );
-
-    // Best-effort diff: compare with previous snapshot (ids + pricing + context_length).
-    try {
-      const prev = await dbGet(
-        `SELECT payload FROM ai_market_snapshots WHERE source = 'openrouter' AND id != ? ORDER BY fetched_at DESC LIMIT 1`,
-        [snapshotId],
-        { fallback: false } as any
-      );
-      const prevData = (prev as any)?.payload ? JSON.parse(String((prev as any).payload)) : null;
-      const prevList = Array.isArray(prevData?.data)
-        ? prevData.data
-        : Array.isArray(prevData?.models)
-          ? prevData.models
-          : [];
-      const nextList = Array.isArray((payload as any)?.data)
-        ? (payload as any).data
-        : Array.isArray((payload as any)?.models)
-          ? (payload as any).models
-          : [];
-
-      const toMap = (list: any[]) => {
-        const m = new Map<string, any>();
-        for (const row of list || []) {
-          const id = String((row as any)?.id || '').trim();
-          if (id) m.set(id, row);
-        }
-        return m;
-      };
-      const prevMap = toMap(prevList);
-      const nextMap = toMap(nextList);
-
-      const prevIds = new Set(prevMap.keys());
-      const nextIds = new Set(nextMap.keys());
-
-      const added = Array.from(nextIds).filter((id) => !prevIds.has(id));
-      const removed = Array.from(prevIds).filter((id) => !nextIds.has(id));
-
-      const inserts: Array<{ change_type: string; model_id: string; diff: any }> = [];
-      for (const id of added)
-        inserts.push({ change_type: 'MODEL_ADDED', model_id: id, diff: { model_id: id } });
-      for (const id of removed)
-        inserts.push({ change_type: 'MODEL_REMOVED', model_id: id, diff: { model_id: id } });
-
-      const stableJson = (v: any) => {
-        try {
-          return JSON.stringify(v ?? null);
-        } catch {
-          return 'null';
-        }
-      };
-
-      // Detect changes for models present in both snapshots.
-      const intersect = Array.from(nextIds).filter((id) => prevIds.has(id));
-      for (const id of intersect) {
-        const before = prevMap.get(id);
-        const after = nextMap.get(id);
-        if (!before || !after) continue;
-
-        const beforePricing = (before as any)?.pricing ?? null;
-        const afterPricing = (after as any)?.pricing ?? null;
-        const beforeCtx = (before as any)?.context_length ?? (before as any)?.contextLength ?? null;
-        const afterCtx = (after as any)?.context_length ?? (after as any)?.contextLength ?? null;
-
-        if (stableJson(beforePricing) !== stableJson(afterPricing)) {
-          inserts.push({
-            change_type: 'PRICING_CHANGED',
-            model_id: id,
-            diff: { before: { pricing: beforePricing }, after: { pricing: afterPricing } },
-          });
-        }
-        if (String(beforeCtx ?? '') !== String(afterCtx ?? '')) {
-          inserts.push({
-            change_type: 'CTX_CHANGED',
-            model_id: id,
-            diff: { before: { context_length: beforeCtx }, after: { context_length: afterCtx } },
-          });
-        }
-      }
-
-      // Avoid flooding the inbox on first run.
-      const limited = inserts.slice(0, 200);
-      for (const it of limited) {
-        await dbRun(
-          `INSERT INTO ai_market_inbox (id, source, change_type, model_id, diff, status, created_at)
-           VALUES (?, 'openrouter', ?, ?, ?, 'new', CURRENT_TIMESTAMP)`,
-          [randomUUID(), it.change_type, it.model_id, JSON.stringify(it.diff)],
-          { fallback: false } as any
-        );
-      }
-    } catch {
-      // ignore diffs
-    }
-
-    return res.json({ success: true, snapshotId });
+    const result = await syncOpenRouterMarket();
+    if (!result.success) return res.status(502).json(result);
+    return res.json(result);
   })
 );
 
@@ -1191,6 +1145,200 @@ router.put(
       fallback: false,
     } as any);
     return res.json({ success: true, item: row });
+  })
+);
+
+function parseOpenRouterPricingToUnits(pricing: any): Record<string, number> {
+  // OpenRouter commonly returns pricing fields as strings.
+  // We normalize into v3 snapshot units: input/output per 1M tokens.
+  const p = pricing || {};
+  const prompt = Number(p.prompt ?? p.input ?? p.prompt_token ?? p.input_token ?? p.input_per_token);
+  const completion = Number(
+    p.completion ?? p.output ?? p.completion_token ?? p.output_token ?? p.output_per_token
+  );
+
+  const toPer1M = (v: number) => {
+    if (!Number.isFinite(v)) return null;
+    // Heuristic:
+    // - if v is tiny (<$0.01), assume it's per-token ($/token) and scale to 1M
+    // - otherwise assume it's already per-1M tokens ($/1M)
+    return v < 0.01 ? v * 1_000_000 : v;
+  };
+
+  const inputPer1M = toPer1M(prompt);
+  const outputPer1M = toPer1M(completion);
+
+  const units: Record<string, number> = {};
+  if (typeof inputPer1M === 'number' && Number.isFinite(inputPer1M)) {
+    units.input_per_1m_tokens = inputPer1M;
+  }
+  if (typeof outputPer1M === 'number' && Number.isFinite(outputPer1M)) {
+    units.output_per_1m_tokens = outputPer1M;
+  }
+  return units;
+}
+
+/**
+ * POST /api/llm/market/inbox/:id/apply
+ * Apply an approved inbox item into our curated registry:
+ * - PRICING_CHANGED -> create ai_price_snapshot (api_sync) and close previous
+ * - MODEL_ADDED -> create inactive llm_providers row suggestion (openrouter)
+ */
+router.post(
+  '/market/inbox/:id/apply',
+  verifySuperAdmin,
+  asyncHandler(async (req, res) => {
+    await ensureEnterpriseSchema();
+    const id = String(req.params.id || '').trim();
+    if (!id) return res.status(400).json({ success: false, error: 'id is required' });
+
+    const row = await dbGet(`SELECT * FROM ai_market_inbox WHERE id = ?`, [id], {
+      fallback: false,
+    } as any);
+    if (!row) return res.status(404).json({ success: false, error: 'Inbox item not found' });
+
+    const currentStatus = String((row as any).status || '').trim().toLowerCase();
+    if (currentStatus === 'applied') {
+      return res.json({ success: true, item: row, actions: [], note: 'Already applied' });
+    }
+    if (currentStatus !== 'approved') {
+      return res.status(409).json({
+        success: false,
+        error: `Inbox item must be approved before apply (status=${currentStatus || 'unknown'})`,
+      });
+    }
+
+    const changeType = String((row as any).change_type || '').trim();
+    const modelId = String((row as any).model_id || '').trim();
+    const diffRaw = (row as any).diff ? String((row as any).diff) : null;
+    const diff = diffRaw ? (() => { try { return JSON.parse(diffRaw); } catch { return null; } })() : null;
+
+    const actions: any[] = [];
+
+    if (changeType === 'PRICING_CHANGED') {
+      const afterPricing = diff?.after?.pricing ?? null;
+      const units = parseOpenRouterPricingToUnits(afterPricing);
+      if (!modelId) return res.status(400).json({ success: false, error: 'model_id missing' });
+      if (!units.input_per_1m_tokens && !units.output_per_1m_tokens) {
+        return res.status(400).json({ success: false, error: 'Could not parse pricing units' });
+      }
+
+      // Close previous "open" snapshot (effective_to NULL) for same provider/model.
+      const nowIso = new Date().toISOString();
+      try {
+        await dbRun(
+          `UPDATE ai_price_snapshots
+           SET effective_to = ?
+           WHERE provider = 'openrouter'
+             AND model_id = ?
+             AND effective_to IS NULL`,
+          [nowIso, modelId],
+          { fallback: false } as any
+        );
+      } catch {
+        /* ignore */
+      }
+
+      const snapId = randomUUID();
+      await dbRun(
+        `INSERT INTO ai_price_snapshots (id, provider, model_id, currency, source, effective_from, effective_to, units, notes, created_at)
+         VALUES (?, 'openrouter', ?, 'USD', 'api_sync', ?, NULL, ?, ?, CURRENT_TIMESTAMP)`,
+        [
+          snapId,
+          modelId,
+          nowIso,
+          JSON.stringify(units),
+          `Applied from market inbox ${id}`,
+        ],
+        { fallback: false } as any
+      );
+      actions.push({ kind: 'price_snapshot_created', id: snapId, provider: 'openrouter', modelId, units });
+    } else if (changeType === 'MODEL_ADDED') {
+      if (!modelId) return res.status(400).json({ success: false, error: 'model_id missing' });
+      const after = diff?.after ?? null;
+      const ctx = after?.context_length ?? after?.contextLength ?? null;
+      const pricing = after?.pricing ?? null;
+      const units = pricing ? parseOpenRouterPricingToUnits(pricing) : {};
+
+      const existing = await dbGet(
+        `SELECT id FROM llm_providers WHERE provider = 'openrouter' AND model_id = ? LIMIT 1`,
+        [modelId],
+        { fallback: true } as any
+      );
+      if (!existing) {
+        const providerId = randomUUID();
+        await dbRun(
+          `INSERT INTO llm_providers
+           (id, name, provider, description, api_key, endpoint, model_id, kind, provider_type, origin_vendor, execution_regions, allowed_data_classes, cost_per_1k, markup_multiplier, is_active, is_default, visibility, priority, tier, created_at, updated_at)
+           VALUES (?, ?, 'openrouter', ?, NULL, 'https://openrouter.ai/api/v1', ?, 'TEXT_LLM', 'aggregator', 'OpenRouter', ?, ?, 0, 1.0, 0, 0, 'admin', 0, 'STANDARD', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          [
+            providerId,
+            `OpenRouter — ${modelId}`,
+            ctx ? `Auto-added from market inbox. context_length=${ctx}` : `Auto-added from market inbox.`,
+            modelId,
+            JSON.stringify(['UNKNOWN']),
+            JSON.stringify(['no_pii', 'pii']),
+          ],
+          { fallback: true } as any
+        );
+        actions.push({ kind: 'provider_suggestion_created', id: providerId, provider: 'openrouter', modelId });
+      } else {
+        actions.push({ kind: 'provider_suggestion_exists', provider: 'openrouter', modelId });
+      }
+
+      // Optional: also create a price snapshot if pricing exists.
+      if (units.input_per_1m_tokens || units.output_per_1m_tokens) {
+        const nowIso = new Date().toISOString();
+        const snapId = randomUUID();
+        await dbRun(
+          `INSERT INTO ai_price_snapshots (id, provider, model_id, currency, source, effective_from, effective_to, units, notes, created_at)
+           VALUES (?, 'openrouter', ?, 'USD', 'api_sync', ?, NULL, ?, ?, CURRENT_TIMESTAMP)`,
+          [
+            snapId,
+            modelId,
+            nowIso,
+            JSON.stringify(units),
+            `Auto snapshot from MODEL_ADDED inbox ${id}`,
+          ],
+          { fallback: false } as any
+        );
+        actions.push({ kind: 'price_snapshot_created', id: snapId, provider: 'openrouter', modelId, units });
+      }
+    } else if (changeType === 'MODEL_REMOVED') {
+      // Conservative: do not delete providers automatically; just mark inbox as applied.
+      actions.push({ kind: 'noop', reason: 'MODEL_REMOVED not auto-applied' });
+    } else if (changeType === 'CTX_CHANGED') {
+      actions.push({ kind: 'noop', reason: 'CTX_CHANGED not auto-applied (no registry field yet)' });
+    } else {
+      return res.status(400).json({ success: false, error: `Unsupported change_type: ${changeType}` });
+    }
+
+    await dbRun(
+      `UPDATE ai_market_inbox SET status = 'applied', reviewed_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [id],
+      { fallback: false } as any
+    );
+    const updated = await dbGet(`SELECT * FROM ai_market_inbox WHERE id = ?`, [id], {
+      fallback: false,
+    } as any);
+
+    try {
+      await logModelAuditEntry({
+        action: 'MARKET_INBOX_APPLY',
+        entityType: 'ai_market_inbox',
+        entityId: id,
+        changedBy: getAuditActor(req),
+        changes: {
+          change_type: changeType,
+          model_id: modelId || null,
+          actions,
+        },
+      });
+    } catch {
+      // best-effort
+    }
+
+    return res.json({ success: true, item: updated, actions });
   })
 );
 

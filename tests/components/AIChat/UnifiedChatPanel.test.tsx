@@ -219,6 +219,12 @@ vi.mock('../../../src/hooks/useDemoSession', () => ({
   useDemoSession: () => hoisted.demoState,
 }));
 
+vi.mock('@/contexts/FeatureFlagsContext', () => ({
+  useFeatureFlagsContext: () => ({
+    isEnabled: (flag: string) => flag === 'myWorkSignalsV2',
+  }),
+}));
+
 vi.mock('../../../src/hooks/useAIStream', () => ({
   useAIStream: (options: any) => {
     hoisted.aiStreamOptionsCapturedRef.value = options;
@@ -280,6 +286,15 @@ vi.mock('../../../src/components/AIChat/ChatSlidingPanel', () => ({
 
 vi.mock('../../../src/components/AIChat/ContextBadge', () => ({
   ContextBadge: () => <div data-testid="context-badge" />,
+}));
+
+vi.mock('../../../src/components/AIChat/ChatSignalsPanel', () => ({
+  ChatSignalsPanel: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) =>
+    isOpen ? (
+      <button data-testid="signals-panel" onClick={onClose}>
+        signals-panel
+      </button>
+    ) : null,
 }));
 
 vi.mock('../../../src/components/AIChat/PendingActionsIndicator', () => ({
@@ -763,5 +778,147 @@ describe('UnifiedChatPanel (L2)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'multi-confirm' }));
 
     expect(onMultiSelectSubmit).toHaveBeenCalledWith(['a', 'b']);
+  });
+
+  it('renders quick prompts and sends selected prompt', async () => {
+    createConversationMock.mockResolvedValue({ id: 'conv-1' });
+    render(<UnifiedChatPanel quickPrompts={['Prompt A', 'Prompt B']} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Prompt A' }));
+    await waitFor(() => expect(startStreamMock).toHaveBeenCalledWith(
+      'Prompt A',
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything()
+    ));
+  });
+
+  it('does not show quick prompts while streaming', () => {
+    aiStreamState.isStreaming = true;
+    render(<UnifiedChatPanel quickPrompts={['Prompt A']} />);
+    expect(screen.queryByRole('button', { name: 'Prompt A' })).not.toBeInTheDocument();
+  });
+
+  it('does not show quick prompts when messages exist', () => {
+    conversationStoreState.activeMessages = [
+      { id: 'm1', role: 'user', content: 'hello', createdAt: new Date(), metadata: {} },
+    ];
+    render(<UnifiedChatPanel quickPrompts={['Prompt A']} />);
+    expect(screen.queryByRole('button', { name: 'Prompt A' })).not.toBeInTheDocument();
+  });
+
+  it('renders loading state when conversation is loading', () => {
+    conversationStoreState.activeConversationId = 'conv-1';
+    conversationStoreState.isLoading = true;
+    conversationStoreState.activeMessages = [];
+    render(<UnifiedChatPanel />);
+    expect(screen.getByText(/Loading conversation/i)).toBeInTheDocument();
+  });
+
+  it('shows signals button and opens signals panel when feature flag enabled', () => {
+    render(<UnifiedChatPanel />);
+    fireEvent.click(screen.getByTestId('chat-signals-button'));
+    expect(screen.getByTestId('signals-panel')).toBeInTheDocument();
+  });
+
+  it('signals panel closes on click', () => {
+    render(<UnifiedChatPanel />);
+    fireEvent.click(screen.getByTestId('chat-signals-button'));
+    fireEvent.click(screen.getByTestId('signals-panel'));
+    expect(screen.queryByTestId('signals-panel')).not.toBeInTheDocument();
+  });
+
+  it('renders private mode badge when private mode is enabled', () => {
+    appStoreState.aiConfig = { ...appStoreState.aiConfig, privateMode: true };
+    render(<UnifiedChatPanel />);
+    expect(screen.getByText(/Private mode/i)).toBeInTheDocument();
+  });
+
+  it('hides auto-read toggle when TTS is unsupported', () => {
+    ttsSupportedRef.value = false;
+    render(<UnifiedChatPanel />);
+    expect(screen.queryByTestId('chat-autoread-button')).not.toBeInTheDocument();
+  });
+
+  it('uses workspace context in placeholder when available', () => {
+    render(
+      <UnifiedChatPanel
+        workspaceContext={{ type: 'project', entityName: 'Apollo', projectId: 'p1' } as any}
+      />
+    );
+    expect(screen.getByTestId('chat-placeholder')).toHaveTextContent('Apollo');
+  });
+
+  it('dispatches access blocked when demo time expired', async () => {
+    demoState.isDemo = true;
+    demoState.timeRemainingMs = 0;
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+    render(<UnifiedChatPanel />);
+
+    fireEvent.click(screen.getByTestId('send-button'));
+
+    await waitFor(() => expect(dispatchSpy).toHaveBeenCalled());
+    expect(startStreamMock).not.toHaveBeenCalled();
+  });
+
+  it('dispatches access blocked when demo AI limit reached', async () => {
+    demoState.isDemo = true;
+    demoState.timeRemainingMs = 10_000;
+    demoState.aiInteractionsRemaining = 0;
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+    render(<UnifiedChatPanel />);
+
+    fireEvent.click(screen.getByTestId('send-button'));
+
+    await waitFor(() => expect(dispatchSpy).toHaveBeenCalled());
+    expect(startStreamMock).not.toHaveBeenCalled();
+  });
+
+  it('consumes demo interaction when allowed', async () => {
+    demoState.isDemo = true;
+    demoState.timeRemainingMs = 10_000;
+    demoState.aiInteractionsRemaining = 2;
+    createConversationMock.mockResolvedValue({ id: 'conv-1' });
+
+    render(<UnifiedChatPanel />);
+    fireEvent.click(screen.getByTestId('send-button'));
+
+    await waitFor(() => expect(demoState.consumeAIInteraction).toHaveBeenCalled());
+  });
+
+  it('fires deep thinking copy event when deepResearch is enabled', async () => {
+    appStoreState.aiConfig = { ...appStoreState.aiConfig, deepResearch: true };
+    conversationStoreState.activeConversationId = 'conv-1';
+    conversationStoreState.activeMessages = [
+      { id: 'm1', role: 'user', content: 'hello', createdAt: new Date(), metadata: {} },
+    ];
+
+    render(
+      <UnifiedChatPanel
+        customMessages={[{ id: 'm1', role: 'user', content: 'hello', timestamp: new Date() } as any]}
+      />
+    );
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'copy' })[0]);
+    await waitFor(() => expect(apiMock.deepThinkingEvent).toHaveBeenCalled());
+  });
+
+  it('kickoff message auto-sends once and triggers onKickoffConsumed', async () => {
+    createConversationMock.mockResolvedValue({ id: 'conv-1' });
+    const onKickoffConsumed = vi.fn();
+    const { rerender } = render(
+      <UnifiedChatPanel kickoffMessage="Kickoff" onKickoffConsumed={onKickoffConsumed} />
+    );
+
+    await waitFor(() => expect(startStreamMock).toHaveBeenCalled());
+    expect(onKickoffConsumed).toHaveBeenCalled();
+
+    startStreamMock.mockClear();
+    rerender(<UnifiedChatPanel kickoffMessage="Kickoff" onKickoffConsumed={onKickoffConsumed} />);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(startStreamMock).not.toHaveBeenCalled();
   });
 });

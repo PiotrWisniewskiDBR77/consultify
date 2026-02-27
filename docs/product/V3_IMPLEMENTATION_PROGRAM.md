@@ -35,6 +35,8 @@ Last update: 2026-02-25
 - AI pricing & cost controls: `docs/product/modules/ai/AI_PRICING_COST_CONTROLS_V3.md`
 - AI market update standard: `docs/product/modules/ai/AI_MARKET_UPDATE_STANDARD_V3.md`
 - AI agent orchestration: `docs/product/modules/ai/AI_AGENT_ORCHESTRATION_V3.md`
+- Tools knowledge bank (packs + RAG): `docs/product/TOOLS_KNOWLEDGE_BANK_V3.md`
+- Tools SSOT sources (KPI/SIRI/ADMA): `docs/product/TOOLS_SSOT_SOURCES_V3.md`
 - Video enablement: `docs/product/VIDEO_ENABLEMENT_V3.md`
 
 UI/UX (canonical):
@@ -69,7 +71,10 @@ V3 ma być “ultimate MVP” gotowe na pierwszego klienta: spójne UI/UX, kompl
 
 ### 1.3 Out of scope v3 (explicit)
 
-- MCP IRIS + MCP Marketplace = **V4** (w menu: **Coming soon**).
+- **MCP IRIS / MCP Marketplace (advanced)** = V4:
+  - commerce/licensing/billing (zakup assetów, licencje, płatności, entitlementy)
+  - w pełni zarządzane pipeline’y sync (write-back, konflikty, retry/queue, operacyjne SLO)
+  - “marketplace as a product” (ratings, publishing, moderation, partner ops)
 - Zaawansowane timeline dependencies / critical path w portfolio = v4+ (w v3 dopuszczamy “timeline minimal”).
 - Real-time collaboration = nie w v3.
 
@@ -142,7 +147,8 @@ Reguła: “done” bez smoke = nie istnieje (QA status min `smoke_passed`).
 | WS-J Reports+Presentations | ✅ | 0/3 | **3/3** | **3/3** (J03 done, rest smoke) | — | Piotr |
 | WS-K N‑mode management | ◻︎ | 0/1 | **1/1** | **1/1** smoke_passed | — | Piotr |
 | WS-L V4 placeholders | ◻︎ | 0/1 | **1/1** | **1/1** done | — | Piotr |
-| WS-M Integrations & MCP | ◻︎ | 0/9 | 0/9 | 0/9 | — | Piotr |
+| WS-M Integrations & MCP | ◻︎ | 0/13 | 0/13 | 0/13 | — | Piotr |
+| WS-N AI Platform (LLM OS) | ✅ | 0/3 | **3/3** | **3/3** smoke_passed | — | Piotr |
 
 ### 2.4 Weekly review (rytuał)
 
@@ -407,8 +413,9 @@ W3: Program jest podzielony na workstreamy (epiki). Każdy ma taski z identyfika
 - **WS-I Finance v3**: model + analizy + powiązania do inicjatyw + eksport do report/deck.
 - **WS-J Reports & Presentations v3**: biblioteki + generatory + upload mode + share/export.
 - **WS-K N‑mode management**: required sections, completeness, AI assist w uzupełnianiu.
-- **WS-L V4 placeholders**: MCP IRIS + Marketplace “Coming soon”.
+- **WS-L V4 placeholders**: advanced MCP IRIS/Marketplace (commerce + managed pipelines) “Coming soon”.
 - **WS-M Integrations & MCP**: synchronizacje zewnętrzne (email/komunikatory/chmury/PM/kalendarze/PMO) + MCP providers + MCP‑IRIS + MCP‑Marketplace.
+- **WS-N AI Platform (LLM OS)**: metering/koszty/alerty, market inbox governance, telemetry błędów, kontrakty “purpose-first”.
 
 ---
 
@@ -473,7 +480,7 @@ Cel: dopracowanie opisów narzędzi (known-tools), szablonów, micro‑video, he
 | V3-J02 | Presentations: biblioteka decków (hub table+cards) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-A02 |
 | V3-J03 | Generators: upload chaos jako 3 ścieżka report/deck | P2 | R2 | draft | done | done | Piotr | V3-J01 |
 | V3-K01 | N-mode: required sections/pola + completeness + AI assist | P1 | R1 | draft | done | smoke_passed | Piotr | — |
-| V3-L01 | V4: MCP IRIS + Marketplace w menu (Coming soon) | P2 | R2 | draft | done | done | Piotr | — |
+| V3-L01 | V4: MCP IRIS/Marketplace advanced (commerce + managed pipelines) — Coming soon | P2 | R2 | draft | done | done | Piotr | — |
 | V3-M01 | Integrations foundation: org-level providers + Settings UI (no mocks) + sync logs | P0 | R1 | draft | todo | not_tested | Piotr | V3-A04 |
 | V3-M02 | Communication sync: Slack + Teams notifications + channel mappings (projects/gates) | P0 | R1 | draft | todo | not_tested | Piotr | V3-M01 |
 | V3-M03 | PM sync (P0): Jira bi-directional tasks + status mapping + webhook inbound | P0 | R1 | draft | todo | not_tested | Piotr | V3-M01 |
@@ -483,6 +490,13 @@ Cel: dopracowanie opisów narzędzi (known-tools), szablonów, micro‑video, he
 | V3-M07 | MCP providers framework: catalog + allowlist + audit + registry discovery | P1 | R1 | draft | todo | not_tested | Piotr | V3-M01 |
 | V3-M08 | MCP‑IRIS: Streamable HTTP provider (FastMCP) + MES client contract (factory context) | P1 | R2 | draft | todo | not_tested | Piotr | V3-M07, V3-H01 |
 | V3-M09 | MCP‑Marketplace (DBR77): catalog search + asset import to Tools/Presentations | P2 | R2 | draft | todo | not_tested | Piotr | V3-M07, V3-E01 |
+| V3-M10 | Research sources (US/EU): EDGAR + GDELT + registries + patents (ingest+citation) | P1 | R2 | draft | todo | not_tested | Piotr | V3-M01 |
+| V3-M11 | Knowledge sources: OpenAlex + Crossref + Semantic Scholar + PubMed + arXiv + DOAJ | P2 | R2 | draft | todo | not_tested | Piotr | V3-M01 |
+| V3-M12 | Competitive intel APIs: Similarweb + Semrush + BuiltWith + Wappalyzer (enterprise BYOS) | P2 | R2 | draft | todo | not_tested | Piotr | V3-M01 |
+| V3-M13 | Integrations consolidation: one SSOT layer (org vs user vs sync hub) + deprecations | P0 | R1 | draft | todo | not_tested | Piotr | V3-M01 |
+| V3-N01 | ai_usage_logs v3 contract: cost + error_class + kind + migration (no silent drops) | P0 | R1 | draft | done | smoke_passed | Piotr | V3-A06 |
+| V3-N02 | AIPipeline: log error-path to ai_usage_logs (status=error) | P0 | R1 | draft | done | smoke_passed | Piotr | V3-N01 |
+| V3-N03 | Market Inbox: enforce status=approved before apply + audit entry | P0 | R1 | draft | done | smoke_passed | Piotr | V3-A06 |
 
 ---
 
@@ -2650,18 +2664,187 @@ Read-only marketplace: wyszukiwanie i import assetów/template’ów do Tools/Pr
 
 ---
 
+#### V3-M10 — [Integrations] Research sources (US/EU): EDGAR + GDELT + registries + patents (ingest+citation)
+- Status spec: draft
+- Priorytet: P1
+- Target: R2
+- Moduł: Research / Evidence / Knowledge Base
+- SSOT: `docs/product/INTEGRATIONS_CONNECTOR_RUNBOOKS_ENTERPRISE_V3.md`
+
+**Cel:**  
+Zapewnić “enterprise research backbone” (US/EU): automatyczny ingest metadanych + cytowania (source-of-truth) do benchmarkingu, bez ręcznego “googlowania”.
+
+**Zakres (IN/OUT):**
+- IN:
+  - SEC EDGAR (data.sec.gov): submissions + XBRL facts (z fair access)
+  - GDELT: news/event metadata ingest (query builder + scheduler)
+  - Company registries: identity resolution (EU/UK) pod future enrich
+  - Patents: basic queries (assignee → trend) pod benchmark
+  - Każdy rekord ma: `source`, `retrieved_at`, `source_url`, `hash`, `license_note`
+- OUT:
+  - płatne “competitive intel” (to V3-M12)
+
+**DoD:**
+- Min. 2 “research connectors” działają end-to-end i zapisują evidence z cytowaniem.
+- UI (min.) pozwala wywołać “refresh” i zobaczyć ostatni wynik + źródło.
+
+**Acceptance / test plan:**
+- EDGAR: podaj CIK → pobierz submissions JSON → zapisz evidence.
+- GDELT: query=brand+competitor → pobierz 10 rekordów → zapisz evidence.
+
+**Dependencies:** V3-M01
+
+---
+
+#### V3-M11 — [Integrations] Knowledge sources: OpenAlex + Crossref + Semantic Scholar + PubMed + arXiv + DOAJ
+- Status spec: draft
+- Priorytet: P2
+- Target: R2
+- Moduł: Research / Knowledge / RAG
+- SSOT: `docs/product/INTEGRATIONS_CONNECTOR_RUNBOOKS_ENTERPRISE_V3.md`
+
+**Cel:**  
+Źródła pogłębionej wiedzy (papers/books/metadata) do: research memos, citations, i budowania KB/RAG (tam gdzie licencja pozwala).
+
+**DoD:**
+- Unified “search” interface w backendzie (adapter pattern) dla min. 2 providerów.
+- Każdy wynik ma cytowanie + deduplikację po DOI/arXivId/PMID.
+
+**Acceptance / test plan:**
+- OpenAlex search works (topic/company) → zapis metadanych + citation.
+- Crossref query bibliographic → DOI resolution → zapis evidence.
+
+**Dependencies:** V3-M01
+
+---
+
+#### V3-M12 — [Integrations] Competitive intel APIs: Similarweb + Semrush + BuiltWith + Wappalyzer (enterprise BYOS)
+- Status spec: draft
+- Priorytet: P2
+- Target: R2
+- Moduł: Research / Benchmarking
+- SSOT: `docs/product/INTEGRATIONS_CONNECTOR_RUNBOOKS_ENTERPRISE_V3.md`
+
+**Cel:**  
+Płatne źródła benchmarkingu (web traffic, SEO, tech stack) w modelu customer-provided credentials.
+
+**DoD:**
+- “Bring your subscription” config w Settings (API keys) + health check.
+- Min. 1 provider działa end-to-end i zapisuje time-series evidence.
+
+**Acceptance / test plan:**
+- Semrush (lub BuiltWith): domain → pobierz snapshot → zapisz evidence + timestamp.
+
+**Dependencies:** V3-M01
+
+---
+
+#### V3-M13 — [Integrations] Integrations consolidation: one SSOT layer (org vs user vs sync hub) + deprecations
+- Status spec: draft
+- Priorytet: P0
+- Target: R1
+- Moduł: Platform / Settings / Integrations / Admin
+- SSOT: `docs/product/INTEGRATIONS_CONNECTOR_RUNBOOKS_ENTERPRISE_V3.md`
+
+**Business challenge (problem):**  
+W repo istnieją równoległe warstwy integracji (org-level `/api/integrations`, user-level preferences `/api/settings/integrations`, oraz `/api/sync-hub`). Bez konsolidacji **nie da się zorganizować systemu pracy** i nie da się utrzymać SSOT (co jest prawdą i gdzie to konfigurujemy).
+
+**Cel (outcome):**  
+Jedna kanoniczna “warstwa integracji” (org-level) + jasny podział: co jest personal preference, a co jest enterprise sync. Wszystkie UI/endpointy wskazują na tę samą prawdę.
+
+**Zakres (IN/OUT):**
+- IN:
+  - wybrać i opisać w SSOT kanoniczną ścieżkę: **org-level integrations** jako system-of-record dla synchronizacji
+  - zdeprecjonować / ukryć mock‑surfaces (`IntegrationsMarketplace`, `IntegrationHealthSettings` jeśli nie działa) albo przepiąć na kanoniczne endpointy
+  - dopiąć role: superadmin (catalog policies) vs org admin (connect/mappings) vs user (preferences)
+  - spójne “toggles” i iconography w UI (status, enabled, reauth, test, sync)
+- OUT:
+  - implementacja wszystkich konektorów (to osobne taski M02..M12)
+
+**DoD:**
+- W dokumentacji jest jednoznacznie: “gdzie co ustawiamy” (superadmin/admin/user) oraz które endpointy są kanoniczne.
+- W UI nie ma miejsc, które sugerują “działające integracje”, a są mock/stub.
+- Każdy connector ma te same podstawowe przełączniki: connect/disconnect, enabled, test, logs, mappings.
+
+**Acceptance / test plan:**
+- User admin wchodzi w Settings → Integrations i widzi spójny stan integracji (bez alternatywnych, sprzecznych ekranów).
+- Zmiana w jednym miejscu od razu widoczna w pozostałych powierzchniach (brak dwóch źródeł prawdy).
+
+**Dependencies:** V3-M01
+
+---
+
+### WS-N — AI Platform (LLM OS) v3
+
+#### V3-N01 — [AI] ai_usage_logs v3 contract: cost + error_class + kind + migration (no silent drops)
+- Status spec: draft
+- Priorytet: P0
+- Target: R1
+- SSOT: `docs/product/modules/ai/AI_PRICING_COST_CONTROLS_V3.md`, `docs/product/modules/ai/AI_LLM_OPERATING_SYSTEM_V3.md`
+
+**Business challenge (problem):**  
+Bez twardego kontraktu meteringu/cost i statusów błędów nie da się prowadzić governance, alertów i analityki (a silent-fail logów zabija zaufanie).
+
+**Cel (outcome):**  
+Każdy request AI (success/error) jest logowany do `ai_usage_logs` z `status`, `purpose`, `kind`, `price_snapshot_id`, `estimated_cost_usd` i `error_class` (gdy błąd).
+
+**Zakres (IN/OUT):**
+- IN:
+  - migracja DB: `ai_usage_logs.estimated_cost_usd`, `error_class` (+ indeksy)
+  - kompatybilność: bootstrap “enterprise schema” uzupełnia brakujące kolumny w środowiskach `DB_MANAGED_SCHEMA=off`
+- OUT:
+  - pełny multi-unit billing (image/request units) (osobny task / R2+)
+
+**Acceptance / test plan:**
+- błędne wywołanie AI pojawia się w logach z `status='error'` i `error_class`
+- sukces ma `kind='TEXT_LLM'` i (jeśli jest snapshot) `estimated_cost_usd` != NULL
+
+**Dependencies:** V3-A06  
+
+#### V3-N02 — [AI] AIPipeline: log error-path to ai_usage_logs (status=error)
+- Status spec: draft
+- Priorytet: P0
+- Target: R1
+- SSOT: `docs/product/modules/ai/AI_PRICING_COST_CONTROLS_V3.md`
+
+**Cel (outcome):**  
+Error path nie jest “niewidzialny” — telemetry jest spójne z `LLMController` (errorRate liczy prawdziwe błędy).
+
+**Acceptance / test plan:**
+- `AIPipeline.logError()` wykonuje insert do `ai_usage_logs` z `status='error'` i `error_message`
+
+**Dependencies:** V3-N01  
+
+#### V3-N03 — [AI] Market Inbox: enforce status=approved before apply + audit entry
+- Status spec: draft
+- Priorytet: P0
+- Target: R1
+- SSOT: `docs/product/modules/ai/AI_MARKET_UPDATE_STANDARD_V3.md`, `docs/product/MODEL_REGISTRY_V3.md`
+
+**Cel (outcome):**  
+“Propose → accept” jest egzekwowane na backendzie (apply tylko po approve), a zastosowanie jest audytowane.
+
+**Acceptance / test plan:**
+- `POST /api/llm/market/inbox/:id/apply` zwraca 409 jeśli `status!='approved'`
+- apply dla `status='applied'` jest idempotentny (success + note)
+- audit entry `MARKET_INBOX_APPLY` jest zapisany best‑effort
+
+**Dependencies:** V3-A06  
+
+---
+
 ### WS-L — V4 placeholders (Coming soon)
 
-#### V3-L01 — [V4] MCP IRIS + MCP Marketplace w menu jako “Coming soon”
+#### V3-L01 — [V4] MCP IRIS/Marketplace (advanced) w menu jako “Coming soon”
 - Status spec: draft
 - Priorytet: P2
 - Target: R2
 
 **Business challenge (problem):**  
-Chcemy komunikować roadmapę V4 bez ryzyka obietnic w V3 i bez rozpraszania użytkownika w go‑live.
+Chcemy komunikować roadmapę V4 (advanced MCP) bez ryzyka obietnic w V3 i bez rozpraszania użytkownika w go‑live — jednocześnie nie zaprzeczając temu, że w V3 istnieje już MCP Providers (registry + allowlist + audit + tool-call) w ramach Integrations.
 
 **Cel (outcome):**  
-Użytkownik widzi w menu “MCP IRIS” i “MCP Marketplace” jako jasne placeholdery V4 (“Coming soon”), bez wpływu na flow V3.
+Użytkownik widzi w menu “MCP IRIS (advanced)” i “MCP Marketplace (commerce)” jako jasne placeholdery V4 (“Coming soon”), bez wpływu na flow V3 i bez mylenia z działającym w V3 frameworkiem MCP Providers.
 
 **Użytkownicy i scenariusze:**
 - User widzi nowe pozycje, klika z ciekawości i dostaje krótki, spójny ekran informacji.
@@ -2672,7 +2855,7 @@ Użytkownik widzi w menu “MCP IRIS” i “MCP Marketplace” jako jasne place
   - 2 pozycje menu + badge “Coming soon”
   - ekran placeholder z opisem (3 bullet points) i bez CTA
 - OUT:
-  - jakakolwiek funkcjonalność MCP w V3
+  - funkcje V4: commerce/licensing/billing oraz w pełni zarządzane pipeline’y sync (write-back, konflikty, retry/queue, operacyjne SLO)
 
 **AI behavior:** —
 
@@ -2681,7 +2864,7 @@ Użytkownik widzi w menu “MCP IRIS” i “MCP Marketplace” jako jasne place
 
 **UX / UI notes:**
 - Menu item ma badge “Coming soon”.
-- Klik otwiera prosty ekran: “MCP IRIS / Marketplace — Coming soon (V4)”, 3 bullet points “co to da” bez dat.
+- Klik otwiera prosty ekran: “MCP IRIS (advanced) / Marketplace (commerce) — Coming soon (V4)”, 3 bullet points “co to da” bez dat.
 - Brak CTA typu “join waitlist” (żeby nie psuć go-live v3).
 
 **Data / integrations:** brak (statyczny placeholder).

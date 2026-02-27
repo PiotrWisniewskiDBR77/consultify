@@ -339,3 +339,172 @@ Proponowany zestaw MCP tools/resources:
   - audyt w `mcp_audit_logs`,
   - jedno realne użycie w UI (Results dla IRIS, Tools/Presentations dla Marketplace).
 
+---
+
+## 9) SSOT (docelowy stan enterprise) — katalog integracji + runbooki admina
+
+Ta sekcja jest **kanonicznym źródłem prawdy**: *jakie platformy integrujemy*, *po co*, *jakim typem połączenia (API/MCP/Webhook)* i *jak admin ma to skonfigurować w praktyce*.  
+Uwzględnia również **płatne źródła enterprise** (model: *customer brings subscription*).
+
+**Szczegółowe runbooki per dostawca (SSOT)**:  
+`docs/product/INTEGRATIONS_CONNECTOR_RUNBOOKS_ENTERPRISE_V3.md`
+
+### 9.1 Obszary integracji (kategorie)
+
+Poniższe kategorie odpowiadają realnym potrzebom konsultingowym i mapują się na moduły Consultify:
+
+1) **Communication & Collaboration** — outbound/inbound komunikacja (powiadomienia, approvals, digests)  
+2) **Work & Project Management (PMO)** — synchronizacja `task/initiative` z systemami backlogu  
+3) **Cloud & Document Storage** — publikacja eksportów i evidence + import materiałów  
+4) **Knowledge & Content Management** — źródła kontekstu i “source of truth” (wiki, workspace)  
+5) **Data Infrastructure (DB/DWH/Lakehouse)** — źródła KPI/ROI/finance (read-only grounding)  
+6) **Analytics & Core Business Systems** — BI/CRM/ERP/MES jako źródła danych i evidence  
+7) **External Knowledge Sources (books/science/expert)** — pogłębiona wiedza + cytowania  
+8) **External Information Sources (news/market/finance/competitive intel)** — benchmarking, monitoring, financial briefs  
+9) **DBR77 MCP Ecosystem** — IRIS + Marketplace jako wewnętrzne MCP providery
+
+### 9.2 Katalog integracji (docelowy) — co integrujemy i jak to zasila Consultify
+
+Legenda połączeń:
+- **API (OAuth2)**: enterprise standard (Microsoft Graph/Google/Atlassian etc.) — tokeny, refresh, minimal scopes  
+- **API (API key / token)**: szybkie wdrożenie, ograniczone uprawnienia  
+- **Webhook (incoming/outgoing)**: zdarzenia, automatyzacje, inbound updates  
+- **MCP provider**: “AI-first” warstwa narzędzi (często wrapper na API) z allowlist + audytem
+
+| Kategoria | Platformy (docelowo) | Typ połączenia | Co robimy (use-cases) | Gdzie w Consultify (ścieżki UI) |
+|---|---|---|---|---|
+| Communication | Slack | Webhook + API (MCP wrapper opcjonalnie) | outbound alerts (gates/risks/tasks), per-project routing, (P1) inbound actions | MyWork Inbox/Notifications; Initiative/Gates; Settings→Integrations |
+| Communication | Microsoft Teams | Webhook + **Microsoft Graph** | jak Slack + enterprise compliance; (P1) approvals/ack | jw. |
+| Email | Outlook / Microsoft 365 Mail | **Microsoft Graph** | digests, share report/deck links, (P2) ingest threads as evidence | MyWork Inbox; Reports/Presentations share; Settings→Integrations |
+| Email | Gmail / Google Workspace | Google APIs OAuth2 | jw. dla klientów Google | jw. |
+| PMO | Jira | REST + webhooks (MCP wrapper opcjonalnie) | task↔issue bi-directional, status mapping, traceability | MyWork Tasks; Initiatives; Execution; Settings→Integrations |
+| PMO | Azure DevOps | REST + service hooks | work item sync, status, evidence links | jw. (enterprise) |
+| PMO | Asana / Monday.com / ClickUp | REST + webhooks | alternatywne PM — task sync (MVP) | jw. |
+| Storage | Google Drive | Drive API | publish exports (PDF/PPTX/DOCX), folder-per-project, evidence links | Reports/Presentations export; Attachments; Settings→Cloud/Integrations |
+| Storage | OneDrive / SharePoint | **Microsoft Graph** | jw. (enterprise standard) | jw. |
+| Storage | Dropbox / Box | REST OAuth2 | publish/export + archiwizacja evidence | jw. |
+| Storage (infra) | AWS S3 / Azure Blob | keys/roles | cold storage, retention, signed links | Exports, evidence archives (enterprise) |
+| Calendar | Outlook Calendar | (A) ICS subscribe (MVP) → (B) Graph | due dates + gate reviews; (P1) bi-directional event sync | Calendar Sync; Gates; Tasks |
+| Calendar | Google Calendar | (A) ICS subscribe (MVP) → (B) Google Calendar API | jw. | jw. |
+| Knowledge (workspace) | Notion | Notion API (często MCP) | KB as sources, export reports, structured notes | Reports export; Knowledge; Settings |
+| Knowledge (wiki) | Confluence | Atlassian API | KB + governance packs + decision logs | Governance; Reports; Settings |
+| Knowledge (enterprise) | SharePoint Knowledge | **Microsoft Graph** | repo wiedzy z uprawnieniami, import do RAG | Knowledge; Settings |
+| Docs authoring | Google Docs | Docs+Drive API | generate client-ready docs/memos | Reports/Exports; Settings |
+| Data infra | Postgres/MySQL/MongoDB | DB connectors | read-only KPI/ROI grounding, benchmarking datasets | Results; Intelligence; Admin data sources |
+| DWH/Lakehouse | BigQuery/Snowflake/Redshift/Databricks | cloud APIs/JDBC | enterprise analytics sources | Results; Finance; Reports |
+| BI | Power BI/Tableau/Looker | REST/embed/export | link/snapshot dashboards as evidence; KPI catalog | Results; Attachments; Reports |
+| CRM | Salesforce/HubSpot | REST OAuth2 | pipeline & customer context for initiatives/business cases | Initiatives; Economics; Reports |
+| ERP/MES (enterprise) | SAP/Oracle/Dynamics; Siemens/Rockwell/SAP ME | deployment-specific APIs | KPI/ops evidence; typically project-by-project | Results; Evidence; Integrations |
+| External knowledge (books) | Open Library / Google Books / ISBNdb | public API / paid API | bibliography + discovery | Intelligence; Knowledge |
+| External knowledge (science) | OpenAlex/Crossref/Semantic Scholar/arXiv/DOAJ/PubMed | public APIs | deep research + citations + OA ingestion (where allowed) | Intelligence; Knowledge; Reports |
+| External info (news) | RSS ingestion + GDELT | RSS + public API | market/news signals, competitor monitoring, risk alerts | Intelligence; MyWork Inbox |
+| External info (finance) | SEC EDGAR (US) + premium aggregators | public API + paid APIs | filings + financial briefs + peer comparisons | Intelligence; Finance; Reports |
+| External info (company/registry) | OpenCorporates + (UK) Companies House | token API + public API | company identity, subsidiaries, filings metadata | Intelligence; Governance; Reports |
+| External info (patents) | USPTO PatentsView + EPO OPS | API key / credentials | innovation benchmarking, competitor R&D signals | Intelligence; Reports |
+| Competitive web signals | Similarweb/Semrush/BuiltWith/Wappalyzer | paid APIs | traffic/SEO/tech stack benchmarking | Intelligence; Reports |
+| MCP (internal) | **IRIS** | MCP Streamable HTTP | KPI timeseries, evidence/events, workorders (phased) | Results; Evidence; Execution; Settings→MCP |
+| MCP (internal) | **DBR77 Marketplace** | MCP Streamable HTTP | search/get/import assets & templates | Tools; Presentations; Settings→MCP |
+
+### 9.3 Runbook admina — gdzie i jak konfigurować integracje
+
+#### 9.3.1 Entry point w UI (admin)
+
+**Settings → Integrations** (org-level):
+- **External Tools**: Slack/Teams/Jira/Drive/… (org integrations, sync logs)  
+- **Webhooks**: outgoing subscriptions + deliveries + event catalog  
+- **MCP**: MCP providers registry (IRIS/Marketplace + inne serwery MCP)
+
+Docelowo dodatkowo:
+- **Settings → Cloud Data Sources**: tokeny i źródła dla importu/eksportu plików (Drive/OneDrive/SharePoint/…)  
+
+#### 9.3.2 Microsoft 365 / Outlook / Teams / SharePoint / OneDrive (idealny enterprise flow)
+
+**Cel**: Jedno “połączenie M365” zasila wiele capability: Mail, Calendar, Teams, Files.  
+
+**Model autoryzacji**: OAuth2 (Microsoft Entra ID) + Microsoft Graph.  
+**Kto konfiguruje**: admin organizacji (czasem z udziałem admina IT klienta).
+
+**Kroki (po stronie klienta / IT) — Entra ID**:
+1) Utwórz **App Registration** (single-tenant dla klienta albo multi-tenant jeśli mamy marketplace app).
+2) Ustaw **Redirect URI** do Consultify (callback endpoint OAuth).
+3) Skonfiguruj **scopes** (minimalne):
+   - **Mail**: `Mail.Send` (outbound) + opcjonalnie `Mail.Read` (inbound, P2)
+   - **Calendar**: `Calendars.ReadWrite` (push/pull events)
+   - **Files**: `Files.ReadWrite.All` + (SharePoint) `Sites.ReadWrite.All`
+   - **Teams**: zależnie od modelu (webhook vs Graph messages), zwykle P1/P2
+   - `offline_access` (refresh token)
+4) Zatwierdź **Admin consent** jeśli wymagane.
+
+**Kroki (w Consultify) — Settings → Integrations**:
+1) Wybierz “Microsoft 365 / Outlook” i kliknij **Connect**.
+2) Przejdź przez OAuth consent (SSO).
+3) Po podłączeniu:
+   - “Test” wysyła wiadomość testową / tworzy event testowy / uploaduje plik testowy (w zależności od capability),
+   - integracja zapisuje tokeny (zaszyfrowane) i ustawienia (np. docelowy folder/SharePoint site).
+
+**Jak to zasila moduły**:
+- **MyWork Inbox/Notifications**: digests + share links
+- **Calendar Sync**: due dates + gate reviews
+- **Reports/Presentations**: publish exports do OneDrive/SharePoint + link w attachments
+- **Governance**: audit trail + evidence links
+
+**MVP fallback (zawsze działa)**:
+- **ICS subscribe** (bez OAuth): użytkownik subskrybuje feed `.ics` w Outlook/Google Calendar.
+
+#### 9.3.3 Google Workspace (Gmail/Calendar/Drive)
+
+Analogiczny model OAuth2 + Google APIs. Docelowo:
+- Drive: publish exports + folder per project
+- Calendar: event sync
+- Gmail: outbound digests/share links
+
+#### 9.3.4 Jira (PMO) — standard enterprise
+
+**Auth**: OAuth2 (preferred) albo API token (quick-start).  
+**Outbound**:
+- Create/update issue dla tasków/initiatives
+- Mapping: `integration_sync_mappings`
+**Inbound**:
+- Jira webhooks → update status/due date/assignee w Consultify
+**Obsługa konfliktów**: jawny `conflict` + log + retry policy
+
+#### 9.3.5 Research & Benchmarking (US/EU) — “enterprise sources”
+
+**Zasada**: jeśli źródło jest płatne, integracja działa w modelu **customer brings subscription**.  
+My dostarczamy:
+- konektor API / MCP wrapper,
+- polityki (allowlist, rate limits),
+- ingest do RAG + cytowania,
+- “benchmark pack” jako output do report/deck.
+
+Źródła docelowe (zalecane do enterprise consulting research):
+- **News/market intelligence**: GDELT (public) + premium (Reuters/Bloomberg/Factiva/LexisNexis) jeśli klient ma licencję/API.
+- **Financial filings**: SEC EDGAR (US) + komercyjne agregatory (S&P Capital IQ / Refinitiv).
+- **Company / ownership / registry**: OpenCorporates + Companies House (UK) + dostawcy komercyjni.
+- **Patents**: USPTO PatentsView + EPO OPS.
+- **Competitive web signals**: Similarweb / Semrush / BuiltWith / Wappalyzer.
+
+---
+
+## 10) Architektura “idealna” — jak integracje współpracują z Consultify
+
+### 10.1 Co jest “source of truth” dla danych
+
+- **Consultify jako system-of-record** dla: `initiative`, `decision`, `artifact` (report/deck), governance metadata.  
+- **PMO (Jira/Ado/Asana/…) jako system-of-record** dla: backlog execution w organizacjach, które tego wymagają (wtedy Consultify trzyma mapping i kontekst).  
+- **Storage (Drive/SharePoint/S3)** jako system-of-record dla: plików eksportów i evidence (Consultify trzyma linki + metadane).  
+- **External research sources** jako system-of-record dla: cytowanych faktów (Consultify trzyma: link, timestamp, excerpt, hash).
+
+### 10.2 Standardowy pipeline: event → context → action → audit
+
+1) **Event** (task updated / gate pending / new filing found)  
+2) **Context** (projekt, initiative, źródła, allowlist integracji)  
+3) **Action**:
+   - outbound notification (Slack/Teams/Email)
+   - PMO sync (issue/work item)
+   - storage publish (Drive/SharePoint/S3)
+   - research ingest (EDGAR/GDELT/patents/…)
+4) **Audit**:
+   - `integration_sync_log` / webhook deliveries
+   - `mcp_audit_logs` (dla MCP calls)
+

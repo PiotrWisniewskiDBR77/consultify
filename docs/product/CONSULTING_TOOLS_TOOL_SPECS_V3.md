@@ -4,12 +4,16 @@
 > **Purpose:** A complete, implementation-ready plan **per consulting tool** (non-licensed).  
 > Each tool spec includes: Library preview content, wizard/workflow steps, expected result surface (table/workspace/hybrid), CTAs to outputs, and traceability requirements.
 >
-> **Important:** Licensed assessments (DRD/SIRI/ADMA) are handled as **Methodology Packs** (separate artefact SSOT) and are **out of scope** for this document.
+> **Important:** This SSOT covers the **31 interactive consulting toolTypes** (Strategy/Operations/Digital/Process Automation) that are implemented as “Known Tools” entries in the Consulting Tools module.  
+> **Out of scope:**  
+> - Licensed assessments (DRD/SIRI/ADMA) as **Methodology Packs**  
+> - The **60 classic consulting frameworks** shipped as Workspace templates (“Consulting Templates library”) — see `docs/product/CONSULTING_TEMPLATES_LIBRARY_V3.md`.
 
 ## 0) References (SSOT)
 
 - Consulting Tools module workflow: `docs/product/CONSULTING_TOOLS_V3.md`
 - Tools catalog (library registry): `docs/product/TOOLS_CATALOG_V3.md`
+- Consulting Templates library (60 classic frameworks): `docs/product/CONSULTING_TEMPLATES_LIBRARY_V3.md`
 - Source traceability: `docs/product/SOURCE_TRACEABILITY_SPEC.md`
 - Link Graph (context/backlinks): `docs/product/LINK_GRAPH_V3.md`
 - UI/UX canon (must):
@@ -23,6 +27,13 @@
 ## 1) Canonical spec template (copy 1:1)
 
 Every consulting tool must have the following sections fully completed (PL+EN where applicable).
+
+> **KB routing rule (v3, deterministic):** every toolType has a Help article slug: `tools-<toolType>-how-to`.  
+> In v3 we treat this as mandatory and seed-backed; if a per-tool section below still says `KB: TBD`, the canonical slug is still `tools-<toolType>-how-to` (content quality can be improved later, but the entry must exist).
+>
+> **Marketing assets rule (v3):** every toolType must define:
+> - preview graphic requirements (what the illustration must show)
+> - a 45–60s micro-video script outline (and eventually URL in KB)
 
 ### 1.1 Library preview (must be complete)
 
@@ -275,15 +286,41 @@ Where content is not yet authored, fields are explicitly marked as **TBD** (not 
 
 #### Library preview
 - **Name (EN/PL)**: Ambition Decomposer / Dekompozycja ambicji
-- **Goal**: translate vision into measurable dimensions and trade-offs
-- **Inputs**: vision statement, strategic targets, stakeholders
-- **Preview graphic**: ambition tree (vision → dimensions → metrics)
-- **Micro‑video**: “vision → dimensions → initiatives”
-- **KB**: TBD
+- **Goal**: translate vision into measurable dimensions, targets and initiative themes
+- **When to use**:
+  - **Use**: when you have a vision/OKRs but need a defensible decomposition into measurable drivers and initiative clusters
+  - **Avoid**: when you already have a validated issue tree and only need execution sequencing (use Portfolio Prioritization / Roadmap tools)
+- **Inputs (required)**:
+  - vision / north star statement
+  - 1–3 top strategic targets (baseline → target if known)
+  - scope + time horizon
+  - key constraints (budget, org, compliance)
+- **Assumptions (consultant adds)**:
+  - typical driver structure and benchmarking ranges
+  - interpretation caveats (what the targets assume)
+- **How it works**:
+  - ambition → dimensions → measurable targets → gap list → initiative themes (per dimension)
+- **What you get**: ambition tree + metric targets + 3–7 initiative themes
+- **Common mistakes**: vague ambition; too many dimensions; no baseline/target; mixing outcomes with activities
+- **Example**: ambition “+30% OTIF in 12 months” → dimensions OTIF/lead time/quality → initiatives “control tower”, “WIP limits”, “quality gates”
+- **Next steps (CTAs)**: Create initiatives batch; Generate report/deck
+- **KB**: `tools-ambition-decomposer-how-to` (EN+PL; seeded)
+- **Preview graphic (MUST)**: ambition tree (vision → dimensions → metrics) + “initiative chips” per dimension
+- **Micro‑video (60s)**:
+  - 0–10s: the problem (vision ≠ plan)
+  - 10–25s: inputs (vision, targets, constraints)
+  - 25–45s: decomposition to dimensions + metrics + gaps
+  - 45–60s: what you get + outputs (initiatives/deck)
 
 #### Wizard plan
-- Work: table-first + optional workspace tree
-- Outputs: initiative clusters per dimension
+- **Define**: vision + horizon + audience (who needs to buy in)
+- **Inputs & assumptions**: baseline/targets where available + assumptions register
+- **Work surface**: hybrid
+  - table-first: dimensions + metrics + targets + evidence/assumptions tags
+  - optional workspace tree: ambition tree visualization (for workshops)
+- **Review**: missing checklist (targets missing, owners missing, evidence missing)
+- **Finalize**: lock snapshots
+- **Outputs**: initiative clusters per dimension + report/deck drafts (traceable)
 
 ---
 
@@ -292,14 +329,37 @@ Where content is not yet authored, fields are explicitly marked as **TBD** (not 
 #### Library preview
 - **Name (EN/PL)**: Focus & Trade-off / Fokus i kompromisy
 - **Goal**: identify conflicts and what NOT to do; generate exit/stop initiatives
-- **Inputs**: competing priorities, constraints, stakeholder positions
-- **Preview graphic**: trade-off map (A vs B) + decision notes
-- **Micro‑video**: “conflicts → choices → stop/exit initiatives”
-- **KB**: TBD
+- **When to use**:
+  - **Use**: when priorities conflict, scope creep appears, or stakeholders pull in different directions
+  - **Avoid**: when you only need scoring/prioritization of many options (use Portfolio Prioritization / Decision Engine)
+- **Inputs (required)**:
+  - competing priorities/options (2–6)
+  - constraints (capacity, deadlines, compliance, budget)
+  - stakeholder positions and non-negotiables
+- **Assumptions**: weighting heuristics; risk appetite framing
+- **How it works**:
+  - list conflicts → define decision criteria → compare alternatives → document trade-offs and rationale → draft stop-doing/enabling initiatives
+- **What you get**: trade-off map + decision rationale + stop-doing list + 3–7 initiative concepts
+- **Common mistakes**: avoiding a decision; hidden constraints; no explicit rationale; conflating “preference” with “constraint”
+- **Example**: trade-off “speed vs compliance” → decision “phase rollout + controls”; stop “custom exceptions”
+- **Next steps (CTAs)**: Create initiatives batch; Generate report/deck
+- **KB**: `tools-focus-tradeoff-how-to` (EN+PL; seeded)
+- **Preview graphic (MUST)**: 2-axis trade-off map (A vs B) + criteria list + decision note
+- **Micro‑video (60s)**:
+  - 0–10s: why trade-offs kill execution
+  - 10–25s: inputs (options, constraints, stakeholder positions)
+  - 25–45s: make decision defensible (criteria + rationale)
+  - 45–60s: outputs (stop-doing + enabling initiatives)
 
 #### Wizard plan
-- Work: table (conflicts) + optional workspace map
-- Outputs: decision package + initiatives
+- **Define**: decision scope (what must be decided now) + audience
+- **Inputs & assumptions**: options + constraints + stakeholder positions
+- **Work surface**: hybrid
+  - table: conflicts, criteria, weights, risks/assumptions, recommendation
+  - optional workspace: visual trade-off map for workshop alignment
+- **Review**: missing checklist (criteria missing, owners missing, constraints unclear)
+- **Finalize**: lock snapshots
+- **Outputs**: decision package + initiatives batch (traceable)
 
 ---
 
@@ -340,14 +400,37 @@ Where content is not yet authored, fields are explicitly marked as **TBD** (not 
 #### Library preview
 - **Name (EN/PL)**: Narrative & Alignment / Narracja i wyrównanie
 - **Goal**: create coherent strategy narrative and test alignment
-- **Inputs**: strategy choices, stakeholder messages, target audiences
-- **Preview graphic**: narrative structure + alignment score
-- **Micro‑video**: “build narrative → test alignment → communication initiatives”
-- **KB**: TBD
+- **When to use**:
+  - **Use**: when you must communicate strategy consistently across stakeholders (leadership, managers, frontline, partners)
+  - **Avoid**: when you still don’t have the strategic choices (use SWOT/Issue Tree first)
+- **Inputs (required)**:
+  - strategy choices (what we do / don’t do)
+  - target audiences (2–6) + their key questions
+  - stakeholder messages / disagreements
+  - evidence/proof points (or explicit assumptions)
+- **How it works**:
+  - answer-first narrative → supporting points → proof points → alignment checklist → messaging gaps → initiative drafts
+- **What you get**: narrative outline + alignment risks + 3–7 comms/enablement initiatives
+- **Common mistakes**: no answer-first; too much detail; missing proof points; ignoring stakeholder conflicts
+- **Example**: narrative “We win by reliability” → proof points + initiatives “control tower”, “standard work rollout”, “vendor scorecards”
+- **Next steps (CTAs)**: Generate report/deck; Create initiatives batch
+- **KB**: `tools-narrative-engine-how-to` (EN+PL; seeded)
+- **Preview graphic (MUST)**: storyline structure (top-line + pillars) + “alignment heat” badges per audience
+- **Micro‑video (60s)**:
+  - 0–10s: strategy fails without a coherent story
+  - 10–25s: inputs (choices, audiences, proof points)
+  - 25–45s: build narrative + test alignment
+  - 45–60s: outputs (deck + initiatives)
 
 #### Wizard plan
-- Work: document-first (structured sections) + alignment checklist
-- Outputs: comms initiatives + deck/report
+- **Define**: audience + decision required + tone (exec vs internal)
+- **Inputs & assumptions**: strategy choices + proof points + gaps
+- **Work surface**: document-first (structured sections) + alignment checklist
+  - sections: answer-first, pillars, proof points, objections, Q&A, risks/assumptions
+  - alignment: per-audience “do they understand / agree / what blocks adoption”
+- **Review**: missing checklist (proof points, unresolved conflicts, unclear decision)
+- **Finalize**: lock narrative snapshot
+- **Outputs**: comms initiatives + deck/report drafts (traceable)
 
 ---
 
@@ -404,14 +487,37 @@ Where content is not yet authored, fields are explicitly marked as **TBD** (not 
 #### Library preview
 - **Name (EN/PL)**: SMED Planner / Planer SMED
 - **Goal**: reduce changeover time; separate internal/external; compute ROI of improvements
-- **Inputs**: changeover steps, time per step, constraints
-- **Preview graphic**: internal vs external split + ROI card
-- **Micro‑video**: “map steps → classify → improve → quantify”
-- **KB**: TBD
+- **When to use**:
+  - **Use**: when changeovers drive downtime, batching, and unstable delivery
+  - **Avoid**: if the issue is not changeover but chronic breakdowns (use TPM/OEE)
+- **Inputs (required)**:
+  - changeover steps (observed reality)
+  - time per step (baseline)
+  - safety/quality constraints
+  - optional: volume/impact assumptions for ROI
+- **How it works**:
+  - capture steps → classify internal/external → convert internal→external → standardize tools/layout → estimate impact → draft initiatives
+- **What you get**: internal/external split + conversion plan + target time + initiative drafts
+- **Common mistakes**: no baseline; ignoring safety/quality; no sustain plan
+- **Example**: quick clamps + external tool prep → 45→25 min
+- **Next steps (CTAs)**: Create initiatives batch; Generate report/deck
+- **KB**: `tools-smed-planner-how-to` (EN+PL; seeded)
+- **Preview graphic (MUST)**: steps timeline with internal/external color split + “target time” card + ROI range
+- **Micro‑video (60s)**:
+  - 0–10s: why changeovers create waste
+  - 10–25s: inputs (steps + times)
+  - 25–45s: classify & convert internal→external
+  - 45–60s: target time + initiative set
 
 #### Wizard plan
-- Work: table-first (steps) + summary ROI section
-- Outputs: improvement initiatives + report
+- **Define**: product family / changeover type + target time
+- **Inputs & assumptions**: baseline times + safety/quality constraints + ROI assumptions
+- **Work surface**: hybrid
+  - table-first: steps list with time, classification, conversion idea, prerequisites
+  - summary: baseline vs target, ROI range (optional)
+- **Review**: missing checklist (baseline times, classification coverage, conversion actions)
+- **Finalize**: lock snapshots
+- **Outputs**: improvement initiatives + report/deck drafts (traceable)
 
 ---
 
@@ -420,14 +526,38 @@ Where content is not yet authored, fields are explicitly marked as **TBD** (not 
 #### Library preview
 - **Name (EN/PL)**: Daily Management System / System zarządzania dziennego
 - **Goal**: define tier meetings, KPIs, escalation rules, and issue→initiative pipeline
-- **Inputs**: org structure, key KPIs, meeting cadence
-- **Preview graphic**: tier cadence + KPI board
-- **Micro‑video**: “cadence + KPIs + escalation → operating rhythm”
-- **KB**: TBD
+- **When to use**:
+  - **Use**: when firefighting dominates, outcomes drift, and there is no clear cadence/ownership/escalation
+  - **Avoid**: if you only need KPI definitions (use Control Tower); DMS is cadence + governance
+- **Inputs (required)**:
+  - org structure / operational tiers (T1/T2/T3)
+  - leading/lagging KPIs + baselines
+  - meeting cadence constraints + decision rights
+  - example issues (for issue→initiative pipeline)
+- **How it works**:
+  - define tiers → select KPIs → set thresholds → set escalation rules → define routines → draft rollout initiatives
+- **What you get**: tier cadence + KPI board + escalation rules + rollout initiatives
+- **Common mistakes**: too many KPIs; meetings without decisions; no escalation logic; no ownership
+- **Example**: Tier 1 daily + Tier 2 weekly; OTIF breach escalates within 24h
+- **Next steps (CTAs)**: Create initiatives batch; Generate report/deck
+- **KB**: `tools-dms-builder-how-to` (EN+PL; seeded)
+- **Preview graphic (MUST)**: tier cadence ladder + KPI board with thresholds + escalation arrows
+- **Micro‑video (60s)**:
+  - 0–10s: “metrics without cadence don’t change outcomes”
+  - 10–25s: inputs (tiers, KPIs, thresholds)
+  - 25–45s: cadence + escalation + ownership
+  - 45–60s: outputs (operating rhythm + initiatives)
 
 #### Wizard plan
-- Work: interactive board (tiers, KPIs, escalation)
-- Outputs: initiatives for rollout + report/deck
+- **Define**: tiers and scope (plant/warehouse/function) + outcomes
+- **Inputs & assumptions**: KPIs, thresholds, decision rights, constraints
+- **Work surface**: interactive board (tiers, KPIs, escalation)
+  - table/board: tiers, meetings, agenda, owners
+  - KPI dictionary: KPI, threshold, owner, cadence
+  - escalation: rule cards (if threshold breached → who/when/what action)
+- **Review**: missing checklist (owners missing, thresholds missing, agenda incomplete)
+- **Finalize**: lock cadence snapshot
+- **Outputs**: rollout initiatives + report/deck drafts (traceable)
 
 ---
 
@@ -500,14 +630,44 @@ Where content is not yet authored, fields are explicitly marked as **TBD** (not 
 #### Library preview
 - **Name (EN/PL)**: Inventory Autopilot / Autopilot zapasów
 - **Goal**: classify SKUs, define replenishment policies, simulate cash/stockout impact
-- **Inputs**: SKU groups, demand variability, lead times, service level targets
-- **Preview graphic**: ABC/XYZ map + policy table
-- **Micro‑video**: “classify → policies → simulate → initiatives”
-- **KB**: TBD
+- **When to use**:
+  - **Use**: when inventory is too high OR stockouts are frequent AND policies are inconsistent across teams/products
+  - **Avoid**: if you have no SKU/demand/lead-time data at all (start with data inventory first)
+- **Inputs (required)**:
+  - SKU segmentation inputs (ABC/XYZ or equivalent)
+  - demand variability signals
+  - lead time and its variability
+  - service level targets by segment
+  - (optional) cost assumptions (holding cost, stockout cost proxy)
+- **How it works**:
+  - segment SKUs → define service targets → set policy parameters → simulate scenarios → draft governance + improvement initiatives
+- **What you get**: segmentation + policy table + scenario notes + initiative drafts
+- **Common mistakes**: no segmentation; ignoring lead time variability; no governance cadence; policies not linked to service target
+- **Example**: A/X items: high service + frequent review; C/Z: MTO or low service target
+- **Next steps (CTAs)**: Create initiatives batch; Generate report/deck
+- **KB**: `tools-inventory-autopilot-how-to` (EN+PL; seeded)
+- **Preview graphic (MUST)**: ABC/XYZ matrix + policy table + scenario slider/notes
+- **Micro‑video (60s)**:
+  - 0–10s: “inventory is a policy problem”
+  - 10–25s: inputs (segments, service levels, lead times)
+  - 25–45s: policies + simulation
+  - 45–60s: outputs (cash vs service + initiatives)
 
 #### Wizard plan
-- Work: interactive board (SKU classes + policies)
-- Outputs: initiatives + report
+- **Define**:
+  - scope (product family / warehouse / region) + target outcome (cash release vs service improvement)
+- **Inputs & assumptions**:
+  - segmentation rules + lead times + service targets
+  - assumptions: holding cost, stockout proxy, review cadence
+- **Work surface**: interactive board (SKU classes + policies)
+  - matrix view: ABC/XYZ distribution
+  - table: policy parameters per class (review cadence, reorder point, safety stock logic)
+  - scenario notes: baseline vs target (what changes and why)
+- **Review**:
+  - missing: segmentation coverage, service targets, lead time variability
+  - governance checklist: owners, cadence, exception handling
+- **Finalize**: lock policy snapshot
+- **Outputs**: initiatives (policy governance + data/forecasting improvements) + report/deck drafts (traceable)
 
 ---
 

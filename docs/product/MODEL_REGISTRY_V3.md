@@ -18,6 +18,9 @@
 - AI provider/residency policy (v3 SSOT): `docs/product/modules/ai/AI_PROVIDER_RESIDENCY_POLICY_V3.md`
 - AI pricing & cost controls (v3 SSOT): `docs/product/modules/ai/AI_PRICING_COST_CONTROLS_V3.md`
 - AI agent orchestration (v3 SSOT): `docs/product/modules/ai/AI_AGENT_ORCHESTRATION_V3.md`
+- Deep Research + Evidence Ledger system (v3 SSOT): `docs/product/modules/ai/AI_DEEP_RESEARCH_EVIDENCE_SYSTEM_V3.md`
+- AI LLM operating system (ideal v3): `docs/product/modules/ai/AI_LLM_OPERATING_SYSTEM_V3.md`
+- AI platform readiness audit (v3 SSOT): `docs/product/modules/ai/AI_PLATFORM_READINESS_AUDIT_V3.md`
 - AI market update standard (v3 SSOT): `docs/product/modules/ai/AI_MARKET_UPDATE_STANDARD_V3.md`
 - AI API keys checklist (v3 SSOT): `docs/product/modules/ai/AI_API_KEYS_CHECKLIST_V3.md`
 
@@ -89,6 +92,25 @@ SuperAdmin ma 3 konfiguracje:
 
 **MUST:** org‑level overrides (opcjonalnie) są jawne i audytowalne.
 
+### 4.3 Admin (Org) — dostępność modeli dla organizacji (as‑is + MUST)
+
+Cel: organizacja ma kontrolę nad tym **które wpisy `llm_providers` są dostępne** (np. z powodów compliance/kosztów).
+
+- **Źródło danych**: `organization_provider_settings`
+  - `organization_id`
+  - `provider_id` (FK logiczny do `llm_providers.id`)
+  - `is_enabled`
+  - `custom_priority` (opcjonalnie)
+- **API (as‑is)**:
+  - `GET /api/llm/providers` (auth) — zwraca listę providerów **bez sekretów**; dodatkowo best‑effort wzbogaca o:
+    - `is_enabled_for_org`
+    - `custom_priority`
+  - `POST /api/llm/providers/organization/toggle` (auth; admin permission) — włącza/wyłącza provider dla organizacji (zapis do `organization_provider_settings`)
+
+**MUST (wdrożeniowo):**
+- UI Admin (`OrgAISettingsView` / `AISettings`) pokazuje listę modeli z flagą `is_enabled_for_org` i pozwala sterować dostępnością.
+- Router i UI respektują `is_enabled_for_org` jako ograniczenie “availability” (tzn. jeśli org wyłączy model, nie powinien on być używany ani sugerowany).
+
 ---
 
 ## 5) Governance: audit + safety (MUST)
@@ -105,4 +127,60 @@ SuperAdmin ma 3 konfiguracje:
 2) Rozszerzyć SuperAdmin: widok i edycja assignments dla IMAGE i BUSINESS (LeanLM)
 3) Dopiąć routing: feature calls wybierają model przez purpose (nie “na sztywno”)
 4) Audyt + telemetryka kosztów per purpose (do limitów/billing)
+
+---
+
+## 7) Implementacja “as‑is” w kodzie (V3) — Providers/Models, Presets, Health, Purpose routing (DONE/IN USE)
+
+### 7.1 Purpose registry + assignments (enterprise)
+
+- Schemat (bootstrapped): `server/src/routes/llm.routes.ts`
+  - `ai_purposes`
+  - `ai_purpose_assignments`
+  - `organization_ai_policy`
+- API:
+  - `GET/POST /api/llm/purposes`
+  - `GET/POST/DELETE /api/llm/purposes/:purpose/assignments`
+
+### 7.2 Preset “recommended v3” (fast / deep / image)
+
+Cel: jednym kliknięciem skonfigurować zestaw modeli “fast response / deep analysis / image build” zgodnie z v3 (routing przez `purpose`, a nie “na sztywno”).
+
+- Backend:
+  - Endpoint: `POST /api/llm/presets/v3/recommended` (**SUPERADMIN**)
+  - Implementacja: `server/src/services/ai/recommendedModelPresetService.ts`
+  - Działanie:
+    - seeduje kanoniczne purposes (default set v3)
+    - dla każdego podłączonego providera pobiera listę modeli (`/models`) i wybiera FAST + DEEP
+    - tworzy wpisy w `llm_providers` oraz globalne purpose assignments (fallback chains)
+    - dla obrazów tworzy rows dla OpenAI/Replicate (IMAGE_MODEL) i przypina do `image_*` purposes
+
+- SuperAdmin UI:
+  - `src/views/superadmin/LLMManagementView.tsx` → przycisk “Apply v3 recommended preset”
+
+### 7.3 Health gating (provider health → routing safety)
+
+- Health jest przechowywany w `llm_providers.health_status` + `last_health_check`
+- Router pomija `unhealthy` w tier/purpose routing (gating)
+- Monitoring ciągły:
+  - `server/src/services/ai/providerSentinel.ts` (cykliczne testy providerów i zapis do DB + `llm_health_events`)
+  - start serwera: `server/src/index.ts`
+
+### 7.4 Health UI (SuperAdmin)
+
+- Panel: `src/components/Admin/LLMHealthPanel.tsx`
+- Endpointy:
+  - `GET /api/llm/health/detailed` — domyślnie czyta z DB (cache), bez kosztownych pingów
+  - `GET /api/llm/health/detailed?live=true` — live test (na żądanie)
+  - `POST /api/llm/health/test-provider` — test pojedynczego providera (wspiera TEXT + Replicate IMAGE)
+
+### 7.5 Cost controls (powiązanie z registry)
+
+Registry wspiera pola:
+
+- `cost_per_1k` (legacy)
+- `markup_multiplier` (platform margin / “drożej”)
+- `ai_price_snapshots` + `price_snapshot_id` w `ai_usage_logs` (historyczny koszt per request)
+
+Szczegóły: `docs/product/modules/ai/AI_PRICING_COST_CONTROLS_V3.md`.
 

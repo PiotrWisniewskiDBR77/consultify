@@ -211,4 +211,90 @@ describe('ToolsMenu (L2)', () => {
     fireEvent.mouseDown(document.body);
     expect(screen.queryByText(/ai modes/i)).not.toBeInTheDocument();
   });
+
+  it('shows active mode badge and header count when modes are enabled', () => {
+    aiConfigState = {
+      ...aiConfigState,
+      deepResearch: true,
+      privateMode: true,
+    };
+
+    render(<ToolsMenu onToolSelect={onToolSelect} />);
+
+    const trigger = screen.getByTestId('chat-tools-button');
+    fireEvent.click(trigger);
+
+    expect(screen.getByText('2')).toBeInTheDocument();
+    expect(screen.getByText(/2.*active/i)).toBeInTheDocument();
+  });
+
+  it('applies response style preset into custom instructions', async () => {
+    render(<ToolsMenu onToolSelect={onToolSelect} />);
+
+    fireEvent.click(screen.getByTestId('chat-tools-button'));
+    fireEvent.click(screen.getByRole('button', { name: /response style|styl odpowiedzi/i }));
+
+    const analyst = await screen.findByRole('button', {
+      name: /aiChat\.menu\.styles\.analyst/i,
+    });
+    fireEvent.click(analyst);
+
+    const textbox = await screen.findByRole('textbox');
+    expect(textbox).toHaveValue('aiChat.menu.stylePresets.analyst');
+  });
+
+  it('limits custom instructions to 1000 chars and resets to normal', async () => {
+    render(<ToolsMenu onToolSelect={onToolSelect} />);
+
+    fireEvent.click(screen.getByTestId('chat-tools-button'));
+    fireEvent.click(screen.getByRole('button', { name: /response style|styl odpowiedzi/i }));
+
+    const textbox = await screen.findByRole('textbox');
+    fireEvent.change(textbox, { target: { value: 'x'.repeat(1100) } });
+    expect((textbox as HTMLTextAreaElement).value.length).toBe(1000);
+    expect(screen.getByText(/1000\/1000/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /reset/i }));
+    expect(setAIConfigMock).toHaveBeenCalledWith({ responseStyle: 'normal' });
+    expect((textbox as HTMLTextAreaElement).value).toBe('');
+  });
+
+  it('renders TTS settings only when textToSpeech is enabled', () => {
+    const { rerender } = render(<ToolsMenu onToolSelect={onToolSelect} />);
+    fireEvent.click(screen.getByTestId('chat-tools-button'));
+    expect(screen.queryByText(/voice settings/i)).not.toBeInTheDocument();
+
+    aiConfigState = { ...aiConfigState, textToSpeech: true };
+    rerender(<ToolsMenu onToolSelect={onToolSelect} />);
+    fireEvent.click(screen.getByTestId('chat-tools-button'));
+    expect(screen.getByText(/voice settings/i)).toBeInTheDocument();
+  });
+
+  it('voice test uses selected voice when available', () => {
+    aiConfigState = { ...aiConfigState, textToSpeech: true, ttsVoice: 'en' };
+    const speakSpy = vi.fn();
+    Object.defineProperty(window, 'speechSynthesis', {
+      value: {
+        getVoices: () => [
+          { name: 'English Voice', lang: 'en-US', voiceURI: 'en' },
+          { name: 'Polish Voice', lang: 'pl-PL', voiceURI: 'pl' },
+        ],
+        speak: speakSpy,
+        cancel: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      },
+      writable: true,
+    });
+
+    render(<ToolsMenu onToolSelect={onToolSelect} />);
+
+    fireEvent.click(screen.getByTestId('chat-tools-button'));
+    fireEvent.click(screen.getByText(/voice settings/i));
+    fireEvent.click(screen.getByRole('button', { name: /test voice|testuj głos/i }));
+
+    const utterance = speakSpy.mock.calls[0]?.[0];
+    expect(utterance?.voice?.voiceURI).toBe('en');
+    expect(utterance?.lang).toBe('en-US');
+  });
 });

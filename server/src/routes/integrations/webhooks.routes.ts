@@ -33,6 +33,91 @@ router.post(
   })
 );
 
+// Jira webhook (integration-scoped)
+// Configure Jira to send webhooks to: /api/webhooks/jira/<integrationId>
+router.post(
+  '/jira/:integrationId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const integrationId = String(req.params.integrationId || '').trim();
+    if (!integrationId) return res.status(400).json({ error: 'integrationId required' });
+
+    const payload = req.body || {};
+    const issue = (payload as any).issue || (payload as any).data?.issue || null;
+    const issueId = String(issue?.id || '').trim();
+    const issueKey = String(issue?.key || '').trim();
+    const statusName =
+      String(issue?.fields?.status?.name || issue?.fields?.status?.statusCategory?.name || '').trim() ||
+      null;
+
+    // Store raw webhook event for audit/debugging (best-effort)
+    try {
+      await dbRun(
+        `INSERT INTO webhook_events (id, provider, event_type, payload, processed, created_at)
+         VALUES (?, 'jira', ?, ?, 0, datetime('now'))`,
+        [`jira-${Date.now().toString()}`, String((payload as any).webhookEvent || 'jira'), JSON.stringify(payload)]
+      );
+    } catch {
+      // ignore if table doesn't exist
+    }
+
+    if (!issueId && !issueKey) {
+      return res.status(200).json({ received: true, skipped: true, reason: 'no_issue' });
+    }
+
+    // Find mapping (external_id is Jira issue id; we also store key in metadata)
+    const mapping = await dbAll<
+      Array<{
+        local_id: string;
+        external_id: string;
+        metadata: string | null;
+      }>
+    >(
+      `SELECT local_id, external_id, metadata
+       FROM integration_sync_mappings
+       WHERE integration_id = ?
+         AND external_type = 'issue'
+         AND (external_id = ? OR metadata LIKE ?)
+       LIMIT 1`,
+      [integrationId, issueId || '—', issueKey ? `%\"key\":\"${issueKey}\"%` : '%']
+    );
+
+    const localTaskId = mapping?.[0]?.local_id;
+    if (!localTaskId) {
+      return res.status(200).json({ received: true, skipped: true, reason: 'no_mapping' });
+    }
+
+    // Minimal status mapping
+    const normalize = (s: string) => String(s || '').toLowerCase();
+    const jira = normalize(statusName || '');
+    const mappedStatus =
+      jira.includes('done') || jira.includes('closed')
+        ? 'done'
+        : jira.includes('progress') || jira.includes('in progress')
+          ? 'in_progress'
+          : jira.includes('review')
+            ? 'review'
+            : jira.includes('blocked')
+              ? 'blocked'
+              : 'todo';
+
+    try {
+      await dbRun(`UPDATE tasks SET status = ?, updated_at = datetime('now') WHERE id = ?`, [
+        mappedStatus,
+        localTaskId,
+      ]);
+      await dbRun(
+        `UPDATE integration_sync_mappings SET last_external_update = datetime('now'), last_sync_at = datetime('now'), updated_at = datetime('now') WHERE integration_id = ? AND local_type = 'task' AND local_id = ?`,
+        [integrationId, localTaskId]
+      );
+    } catch (e) {
+      logger.warn('[Webhook] Jira webhook task update failed', { integrationId, localTaskId, e });
+      return res.status(500).json({ received: false, error: 'Failed to update task' });
+    }
+
+    return res.json({ received: true, updated: true, localTaskId, status: mappedStatus });
+  })
+);
+
 // Generic webhook receiver
 router.post(
   '/:provider',

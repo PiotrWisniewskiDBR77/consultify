@@ -16,6 +16,8 @@
   - Initiative levels/templates: `docs/product/INITIATIVE_LEVEL_TEMPLATES_V3.md`
 - Program:
   - `docs/product/V3_IMPLEMENTATION_PROGRAM.md` → `V3-H01`, `V3-H02`, `V3-H03`
+- KPI deviation workflow (thresholds + action loop):
+  - `docs/product/RESULTS_KPI_DEVIATION_MANAGEMENT_V3.md`
 
 ---
 
@@ -78,7 +80,10 @@ Dodanie KPI nie jest inline w tabeli (żeby nie robić śmieciowych wpisów). CT
 1) **Definicja KPI**
    - nazwa (PL/EN), opis celu, obszar/typ (opcjonalnie),
    - jednostka (%, PLN, szt., h, …),
+   - wzór / sposób liczenia (tekst + opcjonalnie “source field mapping”),
    - baseline (opcjonalnie) + target,
+   - **target per okres** (opcjonalnie): miesiące/kwartały, gdy KPI jest sezonowy / scorecardowy,
+   - progi bezpieczeństwa (green/amber/red) + tryb (absolutny lub % od targetu),
    - częstotliwość (weekly/monthly/quarterly) + “period anchor” (np. miesiąc kalendarzowy),
    - owner (osoba/rola).
 2) **Źródło danych (3 tryby, R0 = manual)**
@@ -91,6 +96,10 @@ Dodanie KPI nie jest inline w tabeli (żeby nie robić śmieciowych wpisów). CT
    - jeśli KPI tworzone z inicjatywy → mapping domyślnie ustawiony.
 
 **MUST:** AI może *proponować* parametry (np. unit/target/frequency), ale zapis = zawsze “propose→accept”.
+
+> **Rozszerzenie v3 (R1)**: KPI jest “actionable” — po przekroczeniu progów tworzy się `Deviation Case`
+> i owner dostaje wezwanie do wyjaśnienia + action plan. Kontrakt w:
+> `docs/product/RESULTS_KPI_DEVIATION_MANAGEMENT_V3.md`.
 
 ### 3.3 Tracking time‑series (manual, R0)
 

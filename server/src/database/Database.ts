@@ -80,8 +80,8 @@ export async function createDatabase(): Promise<IDatabase> {
     if (
       process.env.MOCK_DB === 'true' ||
       (process.env.NODE_ENV === 'test' &&
-        process.env.MOCK_DB !== 'false' &&
-        !process.env.DATABASE_URL)
+        process.env.RUN_DB_TESTS !== '1' &&
+        process.env.MOCK_DB !== 'false')
     ) {
       const mockDb = (global as any).__TEST_DB_MOCK__ || createMockDatabase();
       setToGlobal(mockDb);
@@ -127,20 +127,21 @@ export function getDatabaseInstance(): IDatabase {
     return dbInstance;
   }
 
-  if (!databaseConfig.type || databaseConfig.type === 'postgres') {
-    const db = PostgresDatabase as unknown as IDatabase;
-    setToGlobal(db);
-    return db;
-  }
-
   if (
     process.env.NODE_ENV === 'test' &&
+    process.env.RUN_DB_TESTS !== '1' &&
     process.env.MOCK_DB !== 'false' &&
-    !process.env.DATABASE_URL
+    true
   ) {
     const mockDb = createMockDatabase();
     setToGlobal(mockDb);
     return mockDb;
+  }
+
+  if (!databaseConfig.type || databaseConfig.type === 'postgres') {
+    const db = PostgresDatabase as unknown as IDatabase;
+    setToGlobal(db);
+    return db;
   }
 
   throw new Error('Database not initialized. Call getDatabaseAsync() first.');

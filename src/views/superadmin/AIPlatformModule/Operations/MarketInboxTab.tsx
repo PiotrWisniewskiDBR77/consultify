@@ -6,7 +6,7 @@
  * - review diffs in ai_market_inbox
  * - mark items approved/ignored/applied
  */
-import { Check, RefreshCw, Server, X } from 'lucide-react';
+import { Check, RefreshCw, Server, X, Zap } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -86,6 +86,25 @@ export const MarketInboxTab: React.FC = () => {
       setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
     } catch (e: any) {
       toast.error(e?.message || 'Update failed');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const applyItem = async (id: string) => {
+    setUpdating(true);
+    try {
+      const res = await fetch(`/api/llm/market/inbox/${encodeURIComponent(id)}/apply`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({}),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || 'Apply failed');
+      toast.success('Applied');
+      await load();
+    } catch (e: any) {
+      toast.error(e?.message || 'Apply failed');
     } finally {
       setUpdating(false);
     }
@@ -176,6 +195,14 @@ export const MarketInboxTab: React.FC = () => {
                   <td className="px-4 py-3">{r.status}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => applyItem(r.id)}
+                        disabled={updating || r.status !== 'approved'}
+                        className="p-2 rounded-lg hover:bg-indigo-500/10 text-slate-500 hover:text-indigo-500 transition-colors disabled:opacity-40"
+                        title="Apply (requires approved)"
+                      >
+                        <Zap size={16} />
+                      </button>
                       <button
                         onClick={() => setStatus(r.id, 'approved')}
                         disabled={updating}

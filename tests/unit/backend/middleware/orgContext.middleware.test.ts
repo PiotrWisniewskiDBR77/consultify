@@ -5,7 +5,10 @@ type DbHandle = {
   run: (sql: string, params?: unknown[]) => Promise<unknown>;
 };
 
-describe('orgContext.middleware (L1)', () => {
+const RUN_DB_TESTS = process.env.RUN_DB_TESTS === '1';
+const describeIfDb = RUN_DB_TESTS ? describe : describe.skip;
+
+describeIfDb('orgContext.middleware (L1)', () => {
   const prevEnv = { ...process.env };
   const workerId = process.env.VITEST_WORKER_ID || '0';
   const sqlitePath = `./test-org-context-${workerId}.db`;

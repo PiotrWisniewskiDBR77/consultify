@@ -11,6 +11,8 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
+import { SlackServiceClass } from '../../services/slackService.js';
+import { createIssueFromTask, parseJiraConfig } from '../../services/integrations/jiraOrgClient.js';
 
 const router = Router();
 
@@ -39,6 +41,35 @@ function boolish(v: unknown, fallback = false): boolean {
   if (typeof v === 'number') return v === 1;
   if (typeof v === 'string') return v === '1' || v.toLowerCase() === 'true';
   return fallback;
+}
+
+function parseJsonObject(raw: unknown): Record<string, unknown> {
+  if (!raw) return {};
+  if (typeof raw === 'object' && !Array.isArray(raw)) return raw as Record<string, unknown>;
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+function extractWebhookUrl(cfg: Record<string, unknown>): string | null {
+  const candidates = [
+    (cfg as any).webhookUrl,
+    (cfg as any).webhook_url,
+    (cfg as any).incomingWebhookUrl,
+    (cfg as any).incoming_webhook_url,
+    (cfg as any)?.webhook?.url,
+    (cfg as any)?.incoming_webhook?.url,
+  ];
+  for (const c of candidates) {
+    if (typeof c === 'string' && c.trim()) return c.trim();
+  }
+  return null;
 }
 
 async function tryGetColumns(table: string): Promise<Set<string>> {
@@ -172,6 +203,68 @@ router.get(
     }));
 
     return res.json({ providers });
+  })
+);
+
+// Send a test message through a connected integration (Slack/Teams webhook-based).
+router.post(
+  '/test/:provider',
+  verifyToken,
+  verifyAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const provider = String(req.params.provider || '').trim().toLowerCase();
+    if (!provider) return res.status(400).json({ error: 'Provider is required' });
+
+    const cols = await tryGetColumns('integrations');
+
+    // Try find integration row (new schema)
+    if (cols.has('provider_id') && cols.has('settings')) {
+      const row = await dbGet<{
+        id: string;
+        settings: string | null;
+        provider_id: string | null;
+        provider_name?: string | null;
+        provider_display_name?: string | null;
+      }>(
+        `
+        SELECT i.id, i.settings, i.provider_id, p.name as provider_name, p.display_name as provider_display_name
+        FROM integrations i
+        LEFT JOIN integration_providers p ON p.id = i.provider_id
+        WHERE i.organization_id = ?
+          AND (p.name = ? OR i.provider_id = ?)
+          AND (i.status IS NULL OR i.status IN ('active','connected'))
+        ORDER BY COALESCE(i.connected_at, i.updated_at, i.last_sync_at) DESC
+        LIMIT 1
+      `,
+        [orgId, provider, provider]
+      );
+
+      const cfg = parseJsonObject(row?.settings || null);
+      const webhookUrl = extractWebhookUrl(cfg);
+      if (!row?.id) return res.status(404).json({ error: 'Integration not connected' });
+      if (!webhookUrl) return res.status(400).json({ error: 'Missing webhookUrl in integration settings' });
+
+      if (provider === 'slack') {
+        const slack = new SlackServiceClass({ webhookUrl });
+        await slack.sendSystemAlert('Integrations test', 'Slack webhook test from Consultify', 'INFO');
+        return res.json({ success: true });
+      }
+
+      if (provider === 'microsoft_teams' || provider === 'teams') {
+        await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: 'Teams webhook test from Consultify' }),
+        });
+        return res.json({ success: true });
+      }
+
+      return res.status(400).json({ error: 'Test not implemented for this provider' });
+    }
+
+    return res.status(400).json({ error: 'Integrations schema not supported for test' });
   })
 );
 
@@ -589,7 +682,106 @@ router.post(
     const logCols = await tryGetColumns('integration_sync_log');
     const intCols = await tryGetColumns('integrations');
 
-    // Record a minimal sync run entry (foundation task: real logs, even if connector is stubbed).
+    // Determine provider + settings (new schema only for now).
+    let providerName: string | null = null;
+    let settingsRaw: string | null = null;
+    try {
+      const row = await dbGet<{
+        provider_id?: string | null;
+        settings?: string | null;
+        provider_name?: string | null;
+      }>(
+        `
+        SELECT i.provider_id, i.settings, p.name as provider_name
+        FROM integrations i
+        LEFT JOIN integration_providers p ON p.id = i.provider_id
+        WHERE i.id = ? AND i.organization_id = ?
+        LIMIT 1
+      `,
+        [id, orgId]
+      );
+      providerName = String(row?.provider_name || row?.provider_id || '').trim() || null;
+      settingsRaw = row?.settings || null;
+    } catch {
+      // ignore
+    }
+
+    const settings = parseJsonObject(settingsRaw);
+    let status: 'success' | 'partial' | 'failed' = 'success';
+    let itemsProcessed = 0;
+    let itemsCreated = 0;
+    let itemsUpdated = 0;
+    let itemsFailed = 0;
+    const errors: string[] = [];
+
+    // Provider-specific sync (M03: Jira push)
+    if (providerName === 'jira') {
+      const cfg = parseJiraConfig(settings);
+      if (!cfg) {
+        status = 'failed';
+        errors.push('Missing Jira config fields (baseUrl/email/apiToken/projectKey)');
+      } else {
+        // Push tasks without mapping -> create Jira issues + write mappings.
+        const mapCols = await tryGetColumns('integration_sync_mappings');
+        if (!mapCols.size) {
+          status = 'failed';
+          errors.push('integration_sync_mappings table missing');
+        } else {
+          const tasks = await dbAll<
+            Array<{ id: string; title: string; description: string | null; status: string | null }>
+          >(
+            `SELECT id, title, description, status FROM tasks WHERE organization_id = ? ORDER BY created_at DESC LIMIT 200`,
+            [orgId]
+          );
+          for (const t of tasks || []) {
+            itemsProcessed++;
+            try {
+              const existing = await dbGet<{ id: string }>(
+                `SELECT id FROM integration_sync_mappings WHERE integration_id = ? AND local_type = 'task' AND local_id = ? LIMIT 1`,
+                [id, t.id]
+              );
+              if (existing?.id) continue;
+
+              const created = await createIssueFromTask({
+                config: cfg,
+                task: { id: t.id, title: t.title, description: t.description, status: t.status },
+                deepLinkUrl: null,
+              });
+
+              const mappingId = `sync-${uuidv4()}`;
+              const now = new Date().toISOString();
+              await dbRun(
+                `INSERT INTO integration_sync_mappings (
+                   id, integration_id,
+                   local_type, local_id,
+                   external_type, external_id, external_url,
+                   sync_status, created_at, updated_at, metadata
+                 ) VALUES (?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
+                [
+                  mappingId,
+                  id,
+                  'task',
+                  t.id,
+                  'issue',
+                  created.id,
+                  created.browseUrl,
+                  now,
+                  now,
+                  JSON.stringify({ key: created.key }),
+                ]
+              );
+              itemsCreated++;
+            } catch (e: any) {
+              itemsFailed++;
+              status = status === 'success' ? 'partial' : status;
+              errors.push(e?.message || 'Failed to sync task to Jira');
+            }
+          }
+        }
+      }
+    }
+
+    // Record sync run entry (real log with counts).
     if (logCols.size) {
       const logId = `log-${uuidv4()}`;
       const completedIso = new Date().toISOString();
@@ -608,13 +800,13 @@ router.post(
             'single_item',
             'bidirectional',
             'manual',
-            'success',
-            0,
-            0,
-            0,
-            0,
-            null,
-            null,
+            status,
+            itemsProcessed,
+            itemsCreated,
+            itemsUpdated,
+            itemsFailed,
+            errors.length ? 'sync_errors' : null,
+            errors.length ? JSON.stringify(errors.slice(0, 50)) : null,
             startedIso,
             completedIso,
             durationMs,
@@ -627,7 +819,19 @@ router.post(
              status, items_synced, items_failed, error_details,
              started_at, completed_at, duration_ms
            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [logId, id, 'single_item', 'bidirectional', 'success', 0, 0, null, startedIso, completedIso, durationMs]
+          [
+            logId,
+            id,
+            'single_item',
+            'bidirectional',
+            status,
+            itemsProcessed,
+            itemsFailed,
+            errors.length ? JSON.stringify(errors.slice(0, 50)) : null,
+            startedIso,
+            completedIso,
+            durationMs,
+          ]
         );
       }
     }
@@ -648,8 +852,20 @@ router.post(
       ]);
     }
 
-    logger.info(`[Integrations] Sync requested for integration ${id} (logged)`);
-    return res.json({ success: true, message: 'Sync initiated' });
+    logger.info(`[Integrations] Sync requested for integration ${id} (logged)`, {
+      providerName,
+      status,
+      itemsProcessed,
+      itemsCreated,
+      itemsFailed,
+    });
+    return res.json({
+      success: status !== 'failed',
+      status,
+      message: status === 'failed' ? 'Sync failed' : 'Sync completed',
+      counts: { itemsProcessed, itemsCreated, itemsUpdated, itemsFailed },
+      errors: errors.slice(0, 5),
+    });
   })
 );
 

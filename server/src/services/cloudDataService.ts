@@ -56,6 +56,14 @@ async function getDb() {
   return dbMod;
 }
 
+export type CloudUploadResult = {
+  provider: CloudSource['provider'];
+  fileId: string;
+  name: string;
+  mimeType: string;
+  url?: string;
+};
+
 export async function listCloudSources(organizationId: string): Promise<CloudSource[]> {
   const db = await getDb();
   const rows = (await db.all(
@@ -166,6 +174,124 @@ async function listGoogleDriveFiles(source: CloudSource, folderId?: string): Pro
   }));
 }
 
+export async function uploadCloudFile(input: {
+  sourceId: string;
+  organizationId: string;
+  fileName: string;
+  mimeType: string;
+  content: Buffer;
+  folderId?: string;
+}): Promise<CloudUploadResult> {
+  const source = await getCloudSource(input.sourceId, input.organizationId);
+  if (!source) throw new Error('Cloud source not found');
+
+  if (source.provider === 'google_drive') {
+    return uploadGoogleDriveFile(source, input.fileName, input.mimeType, input.content, input.folderId);
+  }
+
+  if (source.provider === 'onedrive' || source.provider === 'sharepoint') {
+    return uploadOneDriveFile(source, input.fileName, input.mimeType, input.content, input.folderId);
+  }
+
+  throw new Error(`Upload not supported for provider ${source.provider}`);
+}
+
+async function uploadGoogleDriveFile(
+  source: CloudSource,
+  fileName: string,
+  mimeType: string,
+  content: Buffer,
+  folderId?: string
+): Promise<CloudUploadResult> {
+  if (!source.accessToken) throw new Error('Google Drive access token not configured');
+
+  const boundary = `-------consultify-${Date.now()}`;
+  const metadata: any = { name: fileName };
+  if (folderId || source.rootFolderId) {
+    metadata.parents = [folderId || source.rootFolderId];
+  }
+
+  const delimiter = `\r\n--${boundary}\r\n`;
+  const closeDelimiter = `\r\n--${boundary}--`;
+
+  const multipartBody = Buffer.concat([
+    Buffer.from(
+      delimiter +
+        'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+        JSON.stringify(metadata) +
+        delimiter +
+        `Content-Type: ${mimeType}\r\n\r\n`
+    ),
+    content,
+    Buffer.from(closeDelimiter),
+  ]);
+
+  const url = `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${source.accessToken}`,
+      'Content-Type': `multipart/related; boundary=${boundary}`,
+      'Content-Length': String(multipartBody.length),
+    },
+    body: multipartBody,
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '');
+    logger.error(`[CloudData] Google Drive upload error: ${errText}`);
+    throw new Error(`Google Drive upload error: ${response.status}`);
+  }
+
+  const data = (await response.json()) as any;
+  return {
+    provider: source.provider,
+    fileId: String(data?.id || ''),
+    name: String(data?.name || fileName),
+    mimeType,
+    url: data?.webViewLink ? String(data.webViewLink) : undefined,
+  };
+}
+
+async function uploadOneDriveFile(
+  source: CloudSource,
+  fileName: string,
+  mimeType: string,
+  content: Buffer,
+  folderId?: string
+): Promise<CloudUploadResult> {
+  if (!source.accessToken) throw new Error('OneDrive access token not configured');
+
+  const safeName = encodeURIComponent(fileName);
+  const uploadUrl = folderId
+    ? `https://graph.microsoft.com/v1.0/me/drive/items/${encodeURIComponent(folderId)}:/${safeName}:/content`
+    : `https://graph.microsoft.com/v1.0/me/drive/root:/${safeName}:/content`;
+
+  const response = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${source.accessToken}`,
+      'Content-Type': mimeType,
+    },
+    body: content,
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '');
+    logger.error(`[CloudData] OneDrive upload error: ${errText}`);
+    throw new Error(`OneDrive upload error: ${response.status}`);
+  }
+
+  const data = (await response.json()) as any;
+  return {
+    provider: source.provider,
+    fileId: String(data?.id || ''),
+    name: String(data?.name || fileName),
+    mimeType,
+    url: data?.webUrl ? String(data.webUrl) : undefined,
+  };
+}
+
 export async function startImportJob(data: {
   cloudSourceId: string;
   organizationId: string;
@@ -255,6 +381,7 @@ export default {
   createCloudSource,
   deleteCloudSource,
   listCloudFiles,
+  uploadCloudFile,
   startImportJob,
   getImportJob,
 };

@@ -198,7 +198,7 @@ export class ModelRouter {
   async select(params: SelectParams): Promise<ProviderConfig> {
     const capability = params.purpose || params.capability;
     const { organizationId, options = {}, requirements } = params;
-    const tier = (options.tier ||
+    let tier = (options.tier ||
       params.tier ||
       CAPABILITY_TIERS[capability || ''] ||
       'STANDARD') as Tier;
@@ -210,6 +210,74 @@ export class ModelRouter {
 
     const orgPolicy =
       ORG_POLICY_ENABLED && organizationId ? await this.getOrgPolicy(organizationId) : null;
+
+    // -------------------------------------------------------------------------
+    // v3 soft cap (degraded mode): if org is near/exceeded monthly AI cost budget,
+    // degrade non-critical purposes to cheaper tiers (no hard cut).
+    //
+    // Budget source: organizations.monthly_budget_usd (existing column).
+    // Spend source: ai_usage_logs.estimated_cost_usd (written by AIPipeline when available).
+    //
+    // Controls:
+    // - AI_COST_SOFT_CAP_ENABLED=false to disable
+    // - AI_COST_SOFT_CAP_THRESHOLD_PCT (default 90)
+    // - AI_COST_SOFT_CAP_SEVERE_PCT (default 110)
+    // -------------------------------------------------------------------------
+    if (
+      organizationId &&
+      String(process.env.AI_COST_SOFT_CAP_ENABLED || '').trim().toLowerCase() !== 'false'
+    ) {
+      try {
+        const capRow = await DbPromise.get<{ monthly_budget_usd?: number | null }>(
+          `SELECT monthly_budget_usd FROM organizations WHERE id = ? LIMIT 1`,
+          [organizationId],
+          { fallback: true }
+        );
+        const capUsd = Number(capRow?.monthly_budget_usd);
+        if (Number.isFinite(capUsd) && capUsd > 0) {
+          const spendRow = await DbPromise.get<{ cost?: number | null }>(
+            `SELECT COALESCE(SUM(estimated_cost_usd), 0) as cost
+             FROM ai_usage_logs
+             WHERE organization_id = ?
+               AND status = 'success'
+               AND created_at >= date('now', 'start of month')`,
+            [organizationId],
+            { fallback: true }
+          );
+          const spendUsd = Number(spendRow?.cost || 0) || 0;
+          const pct = capUsd > 0 ? (spendUsd / capUsd) * 100 : 0;
+
+          const thresholdPct = Number(process.env.AI_COST_SOFT_CAP_THRESHOLD_PCT || 90) || 90;
+          const severePct = Number(process.env.AI_COST_SOFT_CAP_SEVERE_PCT || 110) || 110;
+
+          const purpose = String(capability || '').trim();
+          const nonCritical =
+            ['chat_simple', 'chat_confirm', 'deck_copy_polish', 'chat_complex'].includes(purpose) ||
+            purpose.startsWith('results_');
+
+          // Respect explicit tier override from the caller.
+          const hasExplicitTierOverride = !!options.tier || !!params.tier;
+
+          if (!hasExplicitTierOverride && nonCritical && pct >= thresholdPct && tier !== 'BUDGET') {
+            aiLogger.warn(
+              'ModelRouter',
+              `AI cost soft-cap (${pct.toFixed(1)}%): forcing BUDGET for ${purpose}`
+            );
+            tier = 'BUDGET';
+          }
+
+          if (!hasExplicitTierOverride && pct >= severePct && tier === 'REASONING') {
+            aiLogger.warn(
+              'ModelRouter',
+              `AI cost soft-cap severe (${pct.toFixed(1)}%): degrading REASONING->STANDARD for ${purpose}`
+            );
+            tier = 'STANDARD';
+          }
+        }
+      } catch {
+        // Fail-open: never block routing due to budget checks.
+      }
+    }
 
     const override = await this.getOrgOverride(organizationId, capability);
     if (override) {

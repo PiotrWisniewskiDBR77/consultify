@@ -5,11 +5,14 @@
 >
 > **Zakres:** Consulting tools (31) + ich “Known Tools” wpisy w `tools` registry + KB “How to use” content.  
 > Licensed assessments (DRD/SIRI/ADMA) mają własny tor (Methodology Packs) i nie są audytowane tutaj.
+>
+> **Poza zakresem tego audytu:** klasyczne frameworki jako **Consulting Templates library** (60 narzędzi) wdrażane jako Workspace templates — SSOT: `docs/product/CONSULTING_TEMPLATES_LIBRARY_V3.md`.
 
 ## 0) Źródła prawdy (techniczne)
 
 - Workflow modułu: `docs/product/CONSULTING_TOOLS_V3.md`
 - “One task per tool” spec: `docs/product/CONSULTING_TOOLS_TOOL_SPECS_V3.md`
+- Consulting Templates library (60 classic frameworks): `docs/product/CONSULTING_TEMPLATES_LIBRARY_V3.md`
 - Registry Known Tools (DB seed):
   - `server/migrations/559_tools_known_tools_library.sql` (top tools)
   - `server/migrations/562_tools_toolsets_speed.sql` (toolsets + speed tool + KB)
@@ -52,17 +55,17 @@ Per tool (`toolType`) wymagamy:
 
 ### 2.1 Co już jest kompletne tekstowo (Library + whenToUse/inputs/steps/outputs)
 
-W seedach mamy 25 narzędzi z kompletnym `library_content_translations` (EN+PL):
+W seedach mamy 31 narzędzi z kompletnym `library_content_translations` (EN+PL):
 
 - 10 narzędzi z `559_tools_known_tools_library.sql` (top set)
 - 15 narzędzi z `562_tools_toolsets_speed.sql` (ops+digital+process automation + KB)
+- 6 narzędzi z `604_tools_missing_known_tools_library.sql` (uzupełnienie brakujących toolType w inventory v3)
 
 ### 2.2 Największy realny brak as‑is
 
-- **6 narzędzi nie ma wpisu w Known Tools registry** (czyli brakuje *wszystkiego* w Library/KB):
-  - Strategy: `ambition-decomposer`, `focus-tradeoff`, `narrative-engine`
-  - Operations: `smed-planner`, `dms-builder`, `inventory-autopilot`
-- **Micro‑video + preview graphic**: brak jako “asset pipeline” (w KB `video_url`/`thumbnail_url` są puste → do produkcji).
+- ✅ **0 narzędzi brakujących w Known Tools registry** — inventory 31/31 jest już seeded (Library + KB slugs) w migracjach powyżej.
+- **Micro‑video + preview graphic**: nadal brak jako “asset pipeline” (w KB `video_url`/`thumbnail_url` często `NULL` → do produkcji).
+- **Video script / GFX assumptions**: w wielu tool specach jest oznaczone jako TBD — do uzupełnienia content trackiem.
 
 ---
 

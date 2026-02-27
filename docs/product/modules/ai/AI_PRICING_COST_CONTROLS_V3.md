@@ -132,3 +132,74 @@ Typowe reguły:
 - Soft cap działa jako degradation (nie “off switch”).
 - Alerty threshold i anomalii są widoczne w SuperAdmin.
 
+---
+
+## 8) Implementacja “as‑is” w kodzie (V3) — Pricing Registry + Metering + Alerts + Soft‑cap (DONE/IN USE)
+
+### 8.1 Price registry (DB + API)
+
+- Tabela: `ai_price_snapshots` (tworzona w `server/src/routes/llm.routes.ts`)
+- API:
+  - `GET /api/llm/pricing/snapshots` (list)
+  - `POST /api/llm/pricing/snapshots` (create manual/contract/api_sync)
+- Market apply workflow (OpenRouter):
+  - `POST /api/llm/market/inbox/:id/apply` tworzy snapshoty z `source=api_sync` oraz zamyka poprzedni snapshot (ustawia `effective_to`)
+
+### 8.2 Metering per request (price_snapshot_id + estimated cost)
+
+Źródłem prawdy dla kosztu per request jest log requestu w AI pipeline:
+
+- `server/src/services/ai/AIPipeline.ts`
+  - binduje `ai_usage_logs.price_snapshot_id` (match po `(provider, model_id)` + `effective_to`)
+  - liczy koszt z `ai_price_snapshots.units` (per 1M / per 1K / legacy)
+  - zapisuje:
+    - `ai_usage_logs.price_snapshot_id`
+    - `ai_usage_logs.estimated_cost_usd` (**kolumna dodana “best-effort” w schema ensure**)
+    - oraz `metadata.estimated_cost` (dla debug/trace)
+
+### 8.3 Analytics (dashboard i endpointy)
+
+- `GET /api/llm/costs` (controller: `server/src/controllers/ai/LLMController.ts`)
+  - **preferuje v3**: sumuje `ai_usage_logs.estimated_cost_usd` (MTD)
+  - fallback do legacy: `tokens_used * llm_providers.cost_per_1k`
+- UI: `src/components/Admin/AICostDashboard.tsx` korzysta z `/api/llm/costs`
+
+### 8.4 Markup (“drożej na 100%”)
+
+Markup jest stosowany w momencie wyliczania kosztu (czyli wpływa na limity/alerty/soft-cap):
+
+- Default w `llm_providers`: `markup_multiplier` (dla nowych wpisów domyślnie **2.0**)
+  - definicja tabeli: `server/src/services/ai/llmConfigService.ts`
+- Wyliczenie kosztu:
+  - `server/src/services/ai/AIPipeline.ts` mnoży koszt snapshota przez markup (priorytet: DB → env → default)
+- Env override:
+  - `AI_MARKUP_MULTIPLIER` lub `AI_PRICE_MARKUP_MULTIPLIER`
+
+### 8.5 Alerty progowe 80/90/100% (kosztowe)
+
+- Serwis: `server/src/services/ai/aiCostAlertsService.ts`
+  - liczy MTD koszt per org z `ai_usage_logs.estimated_cost_usd`
+  - budżet: `organizations.monthly_budget_usd`
+  - deduplikacja wysyłek: `ai_cost_alerts_sent` (per org / threshold / period)
+- Cron: `server/src/cron/Scheduler.ts` (co godzinę)
+- Wyłączenie: `DISABLE_AI_COST_ALERTS=true`
+
+### 8.6 Soft cap / degraded mode (routing)
+
+- Router: `server/src/services/ai/modelRouter.ts`
+  - jeśli org ma ustawiony `organizations.monthly_budget_usd` i MTD koszt zbliża się do limitu:
+    - degraduje nie‑krytyczne purpose do tańszego tieru (np. do `BUDGET`) zamiast twardego odcięcia
+  - sterowanie:
+    - `AI_COST_SOFT_CAP_ENABLED=false` (wyłącza)
+    - `AI_COST_SOFT_CAP_THRESHOLD_PCT` (domyślnie 90)
+    - `AI_COST_SOFT_CAP_SEVERE_PCT` (domyślnie 110)
+
+### 8.7 Źródło cen (OpenRouter) — normalizacja units
+
+W apply workflow (OpenRouter) pricing jest normalizowany do:
+
+- `units.input_per_1m_tokens`
+- `units.output_per_1m_tokens`
+
+co pozwala spójnie liczyć koszt w `AIPipeline` oraz zachować historyczność przez `price_snapshot_id`.
+

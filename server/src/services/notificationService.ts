@@ -215,13 +215,19 @@ class NotificationService {
 
     // Determine channels
     let channels = typeConfig?.defaultChannels || ['in_app'];
-    if (prefs?.typeSettings?.[input.type]) {
-      const typePref = prefs.typeSettings[input.type];
-      if (!typePref.enabled) {
-        logger.debug(`[NotificationService] Type ${input.type} disabled for user ${input.userId}`);
-        return id;
+    if (prefs?.typeSettings) {
+      const key =
+        Object.keys(prefs.typeSettings).find(
+          (k) => String(k || '').toLowerCase() === String(input.type || '').toLowerCase()
+        ) || null;
+      const typePref = key ? prefs.typeSettings[key] : null;
+      if (typePref) {
+        if (!typePref.enabled) {
+          logger.debug(`[NotificationService] Type ${input.type} disabled for user ${input.userId}`);
+          return id;
+        }
+        channels = typePref.channels;
       }
-      channels = typePref.channels;
     }
 
     // Auto-compute severity from type + data
@@ -1201,12 +1207,19 @@ class NotificationService {
     const row = await db.get<{
       default_channels: string;
       icon: string;
-    }>(`SELECT default_channels, icon FROM notification_types WHERE name = ?`, [type]);
+    }>(`SELECT default_channels, icon FROM notification_types WHERE lower(name) = lower(?)`, [type]);
 
     if (!row) return null;
 
     return {
-      defaultChannels: JSON.parse(row.default_channels || '["in_app"]'),
+      defaultChannels: (() => {
+        try {
+          const parsed = JSON.parse(row.default_channels || '["in_app"]');
+          return Array.isArray(parsed) ? parsed : ['in_app'];
+        } catch {
+          return ['in_app'];
+        }
+      })(),
       icon: row.icon,
     };
   }

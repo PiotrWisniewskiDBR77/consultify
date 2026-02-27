@@ -79,7 +79,53 @@ export class LLMController {
   static async listProviders(req: Request, res: Response) {
     try {
       const providers = await dbAll('SELECT * FROM llm_providers', []);
-      const safe = (providers || []).map((p: any) => LLMController.sanitizeProvider(p));
+
+      // Optional org context enrichment (used by Settings UI to show what models are enabled for the org).
+      // Caller may send:
+      // - x-org-context header (explicit org id), or
+      // - rely on auth middleware fields (organizationId on req/user).
+      const orgId = String(
+        (req as any)?.headers?.['x-org-context'] ||
+          (req as any)?.organizationId ||
+          (req as any)?.user?.organizationId ||
+          (req as any)?.user?.organization_id ||
+          ''
+      ).trim();
+
+      let settingsMap: Map<string, { enabled: boolean; customPriority: number | null }> | null = null;
+      if (orgId) {
+        try {
+          const rows = await dbAll(
+            'SELECT provider_id, is_enabled, custom_priority FROM organization_provider_settings WHERE organization_id = ?',
+            [orgId]
+          );
+          settingsMap = new Map(
+            (rows || []).map((r: any) => [
+              String(r.provider_id),
+              {
+                enabled: r.is_enabled === true || r.is_enabled === 1,
+                customPriority:
+                  typeof r.custom_priority === 'number' ? r.custom_priority : r.custom_priority ?? null,
+              },
+            ])
+          );
+        } catch {
+          settingsMap = null;
+        }
+      }
+
+      const safe = (providers || []).map((p: any) => {
+        const base = LLMController.sanitizeProvider(p);
+        if (!orgId || !settingsMap) return base;
+        const key = String((p as any)?.id || '');
+        const has = key && settingsMap.has(key);
+        const s = has ? settingsMap.get(key)! : null;
+        return {
+          ...base,
+          is_enabled_for_org: has ? s!.enabled : true,
+          custom_priority: has ? s!.customPriority : null,
+        };
+      });
       return res.json(safe);
     } catch (error: any) {
       console.error('[LLMController] Error listing providers:', error);
@@ -1549,18 +1595,19 @@ export class LLMController {
    */
   static async getCosts(req: Request, res: Response) {
     try {
-      const providers = (await dbAll(
-        'SELECT id, name, provider, cost_per_1k FROM llm_providers',
-        []
-      )) as any[];
+      const providers = (await dbAll('SELECT provider, cost_per_1k FROM llm_providers', [])) as any[];
 
+      // Prefer v3: estimated_cost_usd if present (written by AIPipeline when price snapshot is bound).
+      // Fallback to legacy token-based estimate using llm_providers.cost_per_1k.
       const usage = (await dbAll(
         `
                 SELECT 
                     provider,
-                    COALESCE(SUM(tokens_used), 0) as totalTokens
+                    COALESCE(SUM(tokens_used), 0) as totalTokens,
+                    SUM(CASE WHEN estimated_cost_usd IS NOT NULL THEN estimated_cost_usd ELSE 0 END) as totalEstimatedCostUsd
                 FROM ai_usage_logs 
                 WHERE created_at >= date('now', 'start of month')
+                  AND status = 'success'
                 GROUP BY provider
             `,
         []
@@ -1569,13 +1616,21 @@ export class LLMController {
       let totalCost = 0;
       const costByProvider: Record<string, { tokens: number; cost: number }> = {};
 
-      for (const u of usage) {
-        const providerConfig = providers.find((p) => p.provider === u.provider);
-        const costPer1k = providerConfig?.cost_per_1k || 0;
-        const cost = (u.totalTokens / 1000) * costPer1k;
+      for (const u of usage || []) {
+        const providerKey = String(u.provider || 'unknown');
+        const totalTokens = Number(u.totalTokens || 0) || 0;
+        const snapshotCost = Number(u.totalEstimatedCostUsd || 0) || 0;
+        let cost = snapshotCost;
+
+        if (!Number.isFinite(cost) || cost <= 0) {
+          const providerConfig = providers.find((p: any) => String(p.provider) === providerKey);
+          const costPer1k = Number(providerConfig?.cost_per_1k || 0) || 0;
+          cost = (totalTokens / 1000) * costPer1k;
+        }
+
         totalCost += cost;
-        costByProvider[u.provider] = {
-          tokens: u.totalTokens,
+        costByProvider[providerKey] = {
+          tokens: totalTokens,
           cost: Math.round(cost * 100) / 100,
         };
       }

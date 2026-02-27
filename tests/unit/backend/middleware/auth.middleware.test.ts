@@ -832,7 +832,7 @@ describe('AuthMiddleware', () => {
   describe('getDeps', () => {
     it('uses module export when jsonwebtoken lacks default', async () => {
       vi.resetModules();
-      vi.doMock('jsonwebtoken', () => ({ verify: vi.fn(), decode: vi.fn() }));
+      vi.doMock('jsonwebtoken', () => ({ default: undefined, verify: vi.fn(), decode: vi.fn() }));
       vi.doMock('../../../../server/src/config/Config.js', () => ({ config: { JWT_SECRET: 'x' } }));
       vi.doMock('../../../../server/src/services/permissionService.js', () => ({
         default: { can: vi.fn() },
@@ -856,9 +856,12 @@ describe('AuthMiddleware', () => {
       vi.resetModules();
       vi.doMock('jsonwebtoken', () => ({ default: { verify: vi.fn(), decode: vi.fn() } }));
       vi.doMock('../../../../server/src/config/Config.js', () => ({
+        config: undefined,
         default: { JWT_SECRET: 'y' },
       }));
-      vi.doMock('../../../../server/src/services/permissionService.js', () => ({ can: vi.fn() }));
+      vi.doMock('../../../../server/src/services/permissionService.js', () => ({
+        default: { can: vi.fn() },
+      }));
 
       const mod = await import(
         '../../../../server/src/middleware/auth.middleware.ts?get_deps_default_config=1'

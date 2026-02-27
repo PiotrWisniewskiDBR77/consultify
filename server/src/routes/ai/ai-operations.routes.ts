@@ -19,6 +19,52 @@ import logger from '../../utils/Logger.js';
 const router = Router();
 
 // ==========================================
+// KNOWLEDGE OPS (Tool Knowledge Packs / RAG)
+// ==========================================
+
+/**
+ * POST /api/ai-operations/knowledge/tool-packs/index
+ *
+ * Index `knowledge/tool-kb/**` markdown packs into `knowledge_docs` + `knowledge_chunks`.
+ * SuperAdmin/Admin only.
+ *
+ * Body:
+ * - forceReindex?: boolean
+ */
+router.post(
+  '/knowledge/tool-packs/index',
+  verifyToken,
+  requireRole('super_admin', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const forceReindex = Boolean((req.body as any)?.forceReindex);
+
+      const mod = (await import('../../services/ai/knowledgeIndexer.js')) as any;
+      const knowledgeIndexer = (mod.knowledgeIndexer || mod.default?.knowledgeIndexer) as {
+        initialize: () => Promise<boolean>;
+        indexToolKnowledgePacks: (opts: { forceReindex?: boolean }) => Promise<unknown>;
+      };
+
+      if (!knowledgeIndexer?.initialize || !knowledgeIndexer?.indexToolKnowledgePacks) {
+        return res.status(503).json({ error: 'KnowledgeIndexer not available' });
+      }
+
+      const ok = await knowledgeIndexer.initialize();
+      if (!ok) return res.status(500).json({ error: 'KnowledgeIndexer initialize() failed' });
+
+      const result = await knowledgeIndexer.indexToolKnowledgePacks({ forceReindex });
+      return res.json({ success: true, forceReindex, result });
+    } catch (error: unknown) {
+      logger.error('[AI Operations] Tool packs indexing failed:', error);
+      return res.status(500).json({
+        error: 'Tool packs indexing failed',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
+);
+
+// ==========================================
 // MISSION CONTROL ENDPOINTS
 // ==========================================
 

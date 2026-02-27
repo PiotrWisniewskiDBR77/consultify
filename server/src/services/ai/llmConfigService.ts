@@ -379,7 +379,7 @@ export class LLMConfigService {
                 data_residency_attestation TEXT,
                 subprocessors_ref TEXT,
                 cost_per_1k REAL DEFAULT 0,
-                markup_multiplier REAL DEFAULT 1.0,
+                markup_multiplier REAL DEFAULT 2.0,
                 is_active BOOLEAN DEFAULT TRUE,
                 is_default BOOLEAN DEFAULT FALSE,
                 visibility TEXT DEFAULT 'public',

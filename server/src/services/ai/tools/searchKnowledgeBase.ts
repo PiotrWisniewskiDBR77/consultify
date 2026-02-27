@@ -1,13 +1,20 @@
 /**
  * Tool: search_knowledge_base
- * Searches the DRD methodology knowledge base using RAG.
+ * Searches the knowledge base using RAG.
+ *
+ * Defaults to "global" search. When `toolSlug` / `packType` / `language` are provided,
+ * it restricts retrieval to Tool Knowledge Packs indexed from `knowledge/tool-kb/**`.
  */
 
 import logger from '../../../utils/Logger.js';
+import { all as dbAll } from '../../../utils/DbPromise.js';
 
 type SearchParams = {
   query: string;
   maxResults?: number;
+  toolSlug?: string;
+  packType?: string;
+  language?: string;
 };
 
 type SearchContext = {
@@ -30,7 +37,7 @@ export async function searchKnowledgeBase(
   results: Array<{ content: string; source: string; relevance: number }>;
   totalFound: number;
 }> {
-  const { query, maxResults = 5 } = params;
+  const { query, maxResults = 5, toolSlug, packType, language } = params;
 
   try {
     const ragModule = await import('../../ragService.js');
@@ -41,9 +48,47 @@ export async function searchKnowledgeBase(
       ) => Promise<RagChunk[]>;
     };
 
+    const hasToolFilter = Boolean(toolSlug || packType || language);
+    let documentIds: string[] | undefined = undefined;
+    if (hasToolFilter) {
+      try {
+        const rows = (await dbAll(
+          `SELECT id, metadata, filename FROM knowledge_docs WHERE source_type = ?`,
+          ['tool_pack'],
+          { fallback: true } as any
+        )) as Array<{ id?: string; metadata?: string; filename?: string }>;
+
+        const filtered = (rows || []).filter((r) => {
+          if (!r?.id) return false;
+          let meta: any = {};
+          try {
+            meta = r.metadata ? JSON.parse(String(r.metadata)) : {};
+          } catch {
+            meta = {};
+          }
+          const okTool = toolSlug
+            ? String(meta?.tool_slug || '').toLowerCase() === String(toolSlug).toLowerCase()
+            : true;
+          const okPack = packType
+            ? String(meta?.pack_type || '').toLowerCase() === String(packType).toLowerCase()
+            : true;
+          const okLang = language
+            ? String(meta?.language || '').toLowerCase() === String(language).toLowerCase()
+            : true;
+          return okTool && okPack && okLang;
+        });
+
+        documentIds = filtered.map((r) => String(r.id));
+      } catch (e: any) {
+        logger.warn('[searchKnowledgeBase] Tool-pack filtering failed:', e?.message || String(e));
+        documentIds = undefined;
+      }
+    }
+
     const results = await ragService.searchRelevantChunks(query, {
       limit: maxResults,
       organizationId: context.organizationId,
+      ...(documentIds && documentIds.length > 0 ? { documentIds } : {}),
     });
 
     return {

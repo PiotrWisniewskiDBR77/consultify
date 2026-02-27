@@ -2901,6 +2901,166 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
 });
 
 /**
+ * POST /api/report-builder/:id/publish/cloud/:cloudSourceId
+ * Generate an export (pdf/docx/pptx) and upload it to a connected cloud source.
+ *
+ * Body:
+ *  - format: 'pdf' | 'docx' | 'pptx' (required)
+ *  - folderId?: string (optional)
+ *  - version?: '2' | 'v2' (optional for pptx; defaults to v1)
+ */
+router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Response) => {
+  try {
+    const id = paramStr(req.params.id);
+    const cloudSourceId = paramStr(req.params.cloudSourceId);
+    const { userId, organizationId } = getAuthContext(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const format = String(req.body?.format || '').trim().toLowerCase();
+    const folderId = req.body?.folderId ? String(req.body.folderId).trim() : undefined;
+    const version = String(req.body?.version || req.query?.version || '').trim();
+    const useV2 = version === '2' || version === 'v2';
+
+    if (!['pdf', 'docx', 'pptx'].includes(format)) {
+      return res.status(400).json({ error: 'format must be one of: pdf, docx, pptx' });
+    }
+
+    const reportData = await ReportBuilderService.getReport(id, organizationId);
+    if (!reportData) return res.status(404).json({ error: 'Report not found' });
+
+    const exportDir = await ensureExportDir();
+    const safeTitle = String(reportData.report.title || 'report').replace(/[^\w\-]+/g, '_').slice(0, 64);
+    const fileName = `${safeTitle}-${id}-${Date.now()}.${format}`;
+    const filePath = path.join(exportDir, fileName);
+
+    if (format === 'pdf') {
+      await writeReportBuilderPdf(reportData.report, reportData.sections, filePath);
+    } else if (format === 'docx') {
+      await writeReportBuilderDocx(reportData.report, reportData.sections, filePath);
+    } else if (format === 'pptx') {
+      // Reuse the same v1/v2 logic as export endpoint, but save to disk and upload.
+      let buffer: Buffer;
+      if (useV2) {
+        const { PptxPipelineService } = await import('../services/report/pptx/PptxPipelineService.js');
+        const pipeline = new PptxPipelineService();
+        const rpt = reportData.report as any;
+
+        let scoreSummary: any = undefined;
+        const rawScore = rpt.scoreSummary || rpt.score_summary;
+        if (rawScore) {
+          try {
+            scoreSummary = typeof rawScore === 'string' ? JSON.parse(rawScore) : rawScore;
+          } catch {}
+        }
+
+        let config: any = undefined;
+        const rawConfig = rpt.config || rpt.config_json;
+        if (rawConfig) {
+          try {
+            config = typeof rawConfig === 'string' ? JSON.parse(rawConfig) : rawConfig;
+          } catch {}
+        }
+
+        const allBlockTypes = await ReportBuilderService.listBlockTypes(organizationId).catch(() => []);
+        const btMap = new Map(allBlockTypes.map((bt) => [bt.id, bt] as [string, typeof bt]));
+        const v2Sections = (reportData.sections || []).map((s: any) => {
+          const btId = s.blockTypeId || s.block_type_id;
+          const bt = btId ? btMap.get(btId) : undefined;
+          return {
+            sectionKey: s.sectionKey || s.section_key,
+            sectionType: s.sectionType || s.section_type,
+            title: s.title || s.sectionKey || s.section_key,
+            orderIndex: s.orderIndex ?? s.order_index ?? 0,
+            enabled: s.enabled !== false,
+            blockTypeId: btId,
+            blockConfig: s.blockConfig || s.block_config,
+            renderKind: s.renderKind || s.render_kind,
+            generatedContent: s.generatedContent || s.generated_content,
+            editedContent: s.editedContent || s.edited_content,
+            slideIntent: bt?.slideIntent || undefined,
+          };
+        });
+
+        buffer = await pipeline.generateFromLegacyReport({
+          report: {
+            id: rpt.id,
+            name: rpt.title || 'Report',
+            sourceType: rpt.sourceType || rpt.source_type || 'TOOL',
+            sourceFramework: rpt.sourceFramework || rpt.source_framework,
+            organizationName: rpt.organizationName || rpt.organization_name,
+            projectName: rpt.projectName || rpt.project_name,
+            createdAt: rpt.createdAt || rpt.created_at,
+            intentConfig: config?.intentConfig || config?.intent_config,
+            sections: v2Sections,
+            scoreSummary,
+          } as any,
+          options: { confidentiality: req.body?.confidentiality || req.query?.confidentiality },
+        });
+      } else {
+        const { PptxExportService } = await import('../services/report/PptxExportService.js');
+        const pptx = new PptxExportService();
+        buffer = await pptx.generatePresentation(
+          {
+            id: reportData.report.id,
+            name: reportData.report.title || 'Report',
+            sourceType: reportData.report.sourceType || 'TOOL',
+            sourceFramework: reportData.report.sourceFramework,
+            organizationName: reportData.report.organizationName,
+            projectName: reportData.report.projectName,
+            createdAt: reportData.report.createdAt,
+            sections: (reportData.sections || []).map((s: any) => ({
+              key: s.sectionKey,
+              title: s.title,
+              type: s.sectionType,
+              content: s.editedContent || s.generatedContent || '',
+              renderKind: s.renderKind,
+              data: s.sourceDataSnapshot,
+            })),
+          } as any,
+          { template: req.body?.template || req.query?.template, language: req.body?.language || req.query?.language }
+        );
+      }
+
+      await fs.promises.writeFile(filePath, buffer);
+    }
+
+    const stats = await fs.promises.stat(filePath);
+    const buf = await fs.promises.readFile(filePath);
+    const mimeType =
+      format === 'pdf'
+        ? 'application/pdf'
+        : format === 'docx'
+          ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          : 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+
+    const { uploadCloudFile } = await import('../services/cloudDataService.js');
+    const uploaded = await uploadCloudFile({
+      sourceId: cloudSourceId,
+      organizationId,
+      fileName,
+      mimeType,
+      content: buf,
+      folderId,
+    });
+
+    await ReportBuilderService.createExportRecord({
+      reportId: id,
+      reportType: 'report_builder',
+      format: `cloud_${format}`,
+      filePath: uploaded.url || uploaded.fileId,
+      fileSize: stats.size,
+      language: 'en',
+      exportedBy: userId,
+    }).catch(() => null);
+
+    return res.json({ success: true, uploaded });
+  } catch (err: any) {
+    logger.error('[ReportBuilder] Error publishing to cloud:', err);
+    return res.status(500).json({ error: 'Failed to publish to cloud', message: err.message });
+  }
+});
+
+/**
  * GET /api/report-builder/:id/exports
  * List export records for a report
  */

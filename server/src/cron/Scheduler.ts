@@ -229,6 +229,43 @@ export const Scheduler = {
     });
     this.jobs.push(job12);
 
+    // 12b. AI Market (OpenRouter) sync - Run every 6 hours (offset from pattern extraction)
+    const job12b = cron.schedule('15 */6 * * *', async () => {
+      if (process.env.DISABLE_AI_MARKET_SYNC === 'true') return;
+      logger.info('[Scheduler] Running AI Market sync (OpenRouter)');
+      try {
+        const { syncOpenRouterMarket } = await import('../services/ai/openRouterMarketService.js');
+        const result = await syncOpenRouterMarket();
+        if (!result.success) {
+          logger.warn('[Scheduler] AI Market sync failed', { error: result.error });
+        } else {
+          logger.info('[Scheduler] AI Market sync completed', {
+            snapshotId: result.snapshotId,
+            insertedInboxItems: result.insertedInboxItems,
+            limited: result.limited,
+          });
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] AI Market sync job failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job12b);
+
+    // 12c. AI Cost budget alerts (80/90/100%) - Run every hour
+    const job12c = cron.schedule('5 * * * *', async () => {
+      if (process.env.DISABLE_AI_COST_ALERTS === 'true') return;
+      try {
+        const { runAiCostBudgetAlerts } = await import('../services/ai/aiCostAlertsService.js');
+        const result = await runAiCostBudgetAlerts();
+        if (result.sent > 0) {
+          logger.warn('[Scheduler] AI cost budget alerts sent', result);
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] AI cost alerts job failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job12c);
+
     // 13. AI Learning Data Cleanup - Run weekly on Monday at 5:00 AM
     const job13 = cron.schedule('0 5 * * 1', async () => {
       logger.info('[Scheduler] Running AI Learning Data Cleanup');

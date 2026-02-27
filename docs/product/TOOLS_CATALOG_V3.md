@@ -108,6 +108,10 @@ Poniżej mapujemy Twoją listę (z mapy) na aktualny kod i to-be v3.
 > 6. **Consulting Templates** — SWOT/5 Forces/7S/Canvas itd.  
 >    **Kanon v3:** template’y strategiczne/operacyjne są budowane na silniku Workspace. Nie budujemy osobnych edytorów.
 >
+>    **Kanon v3 (SSOT wdrożeniowy):** pełna biblioteka „classic frameworks” (Strategia/Operacje/Transformacja — 60 narzędzi) oraz ich kontrakt implementacji w Consultify jest opisana w:
+>    - `docs/product/CONSULTING_TEMPLATES_LIBRARY_V3.md`
+>    - oraz merytorycznie w `wdrozenia/modules/tools/catalog/{strategy,operations,transformation}/`
+>
 > **Integracja z biblioteką narzędzi (MUST):**
 > - user wybiera tool w Library → system tworzy nadrzędny obiekt (ToolSession/Assessment/…) → ładuje Workspace z template’em.
 >

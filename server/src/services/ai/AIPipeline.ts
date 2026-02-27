@@ -2008,6 +2008,35 @@ export class AIPipeline {
             } else if (hasLegacy) {
               amount = ((inTok + outTok) / 1_000) * safeLegacy1K;
             }
+
+            // Apply platform markup (+100% => 2.0) to match "drożej na 100%".
+            // Priority: llm_providers.markup_multiplier -> env -> default 2.0.
+            let markup = 2.0;
+            try {
+              const row = await dbGet(
+                `SELECT markup_multiplier
+                 FROM llm_providers
+                 WHERE provider = ? AND model_id = ?
+                 ORDER BY is_active DESC, is_default DESC
+                 LIMIT 1`,
+                [providerKey, modelKey],
+                { fallback: true } as any
+              );
+              const m = Number((row as any)?.markup_multiplier);
+              if (Number.isFinite(m) && m > 0) markup = m;
+            } catch {
+              /* ignore */
+            }
+            try {
+              const env = Number(process.env.AI_MARKUP_MULTIPLIER || process.env.AI_PRICE_MARKUP_MULTIPLIER);
+              if (Number.isFinite(env) && env > 0) markup = env;
+            } catch {
+              /* ignore */
+            }
+
+            if (Number.isFinite(amount) && amount > 0 && Number.isFinite(markup) && markup > 0) {
+              amount = amount * markup;
+            }
             if (Number.isFinite(amount) && amount > 0) {
               estimatedCost = { amount, currency };
             }
@@ -2016,6 +2045,11 @@ export class AIPipeline {
       } catch {
         // ignore pricing binding
       }
+
+      const estimatedCostUsd =
+        estimatedCost && String(estimatedCost.currency || '').toUpperCase() === 'USD'
+          ? Number(estimatedCost.amount)
+          : null;
 
       await dbRun(
         `INSERT INTO ai_usage_logs (
@@ -2028,16 +2062,18 @@ export class AIPipeline {
             purpose,
             kind,
             price_snapshot_id,
+            estimated_cost_usd,
             prompt_tokens,
             completion_tokens,
             tokens_used,
             latency_ms,
             status,
+            error_class,
             error_message,
             metadata,
             created_at
          )
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'success', NULL, ?, CURRENT_TIMESTAMP)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'success', NULL, NULL, ?, CURRENT_TIMESTAMP)`,
         [
           uuidv4(),
           request.userId || null,
@@ -2046,8 +2082,9 @@ export class AIPipeline {
           usedModel ? String(usedModel) : null,
           String(request.capability || 'unknown'),
           String((request as any).purpose || request.capability || 'unknown'),
-          null,
+          'TEXT_LLM',
           priceSnapshotId,
+          typeof estimatedCostUsd === 'number' && Number.isFinite(estimatedCostUsd) ? estimatedCostUsd : null,
           Number.isFinite(promptTokens) ? promptTokens : 0,
           Number.isFinite(completionTokens) ? completionTokens : 0,
           Number.isFinite(tokensUsed) ? tokensUsed : 0,
@@ -2074,12 +2111,96 @@ export class AIPipeline {
   private async logError(
     request: AIPipelineRequest,
     error: AIError,
-    _latency: number,
+    latency: number,
     traceId: string
   ): Promise<void> {
     logger.error(
       `[AI Pipeline] ${request.capability} failed: ${error.message} (trace: ${traceId})`
     );
+
+    // Best-effort DB-backed error usage log.
+    // Never fail the request if logging is unavailable.
+    try {
+      const { run: dbRun, get: dbGet } = await import('../../utils/DbPromise.js');
+      const { v4: uuidv4 } = await import('uuid');
+
+      const usedProvider =
+        (request as any)?._modelConfigForLog?.provider || (request as any)?._provider || 'unknown';
+      const usedModel =
+        (request as any)?._modelConfigForLog?.model || (request as any)?._model || null;
+
+      let priceSnapshotId: string | null = null;
+      try {
+        const providerKey = String(usedProvider || '').trim();
+        const modelKey = usedModel ? String(usedModel).trim() : '';
+        if (providerKey && modelKey) {
+          const snap = await dbGet(
+            `SELECT id
+             FROM ai_price_snapshots
+             WHERE provider = ? AND model_id = ?
+               AND (effective_to IS NULL OR effective_to > CURRENT_TIMESTAMP)
+             ORDER BY effective_from DESC, created_at DESC
+             LIMIT 1`,
+            [providerKey, modelKey],
+            { fallback: true } as any
+          );
+          if (snap?.id) priceSnapshotId = String(snap.id);
+        }
+      } catch {
+        /* ignore */
+      }
+
+      const status = 'error';
+      const errorMessage = String(error?.message || 'AI request failed');
+      const errorClass = String((error as any)?.code || 'AI_ERROR');
+
+      await dbRun(
+        `INSERT INTO ai_usage_logs (
+            id,
+            user_id,
+            organization_id,
+            provider,
+            model,
+            action,
+            purpose,
+            kind,
+            price_snapshot_id,
+            estimated_cost_usd,
+            prompt_tokens,
+            completion_tokens,
+            tokens_used,
+            latency_ms,
+            status,
+            error_class,
+            error_message,
+            metadata,
+            created_at
+         )
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 0, 0, 0, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [
+          uuidv4(),
+          request.userId || null,
+          request.organizationId || null,
+          String(usedProvider || 'unknown'),
+          usedModel ? String(usedModel) : null,
+          String(request.capability || 'unknown'),
+          String((request as any).purpose || request.capability || 'unknown'),
+          'TEXT_LLM',
+          priceSnapshotId,
+          Number.isFinite(latency) ? latency : 0,
+          status,
+          errorClass,
+          errorMessage,
+          JSON.stringify({
+            traceId,
+            error_class: errorClass,
+            retryable: Boolean((error as any)?.retryable),
+          }),
+        ]
+      );
+    } catch {
+      // ignore
+    }
   }
 
   private handleError(error: unknown): AIError {

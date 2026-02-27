@@ -8,13 +8,17 @@ import { initializeDatabase } from '../../../server/src/database/DatabaseInitial
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
 
+const RUN_DB_TESTS = process.env.RUN_DB_TESTS === '1';
+const describeIfDb = RUN_DB_TESTS ? describe : describe.skip;
+
 vi.hoisted(() => {
+  if (process.env.RUN_DB_TESTS !== '1') return;
   process.env.MOCK_DB = 'false';
   const workerId = process.env.VITEST_WORKER_ID || '0';
   process.env.SQLITE_PATH = `./test-user-service-${workerId}.db`;
 });
 
-describe('UserService', () => {
+describeIfDb('UserService', () => {
   const db = getDatabase();
   let testOrgId;
   let createdUserIds = [];

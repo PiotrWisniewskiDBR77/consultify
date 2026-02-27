@@ -207,7 +207,6 @@ import userProfileCompletenessRoutes from './routes/user/user-profile-completene
 import userProfileExtendedRoutes from './routes/user/user-profile-extended.routes.js';
 import userSecurityAdvancedRoutes from './routes/user/user-security-advanced.routes.js';
 import userGoalsRoutes from './routes/user/userGoals.routes.js';
-import userIntegrationsRoutes from './routes/user/userIntegrations.routes.js';
 import userOrgsRoutes from './routes/user/userOrgs.routes.js';
 import userRoutes from './routes/user/users.routes.js';
 import verifyRoutes from './routes/verify.routes.js';
@@ -359,7 +358,6 @@ export class ApiGateway {
       app.use('/api/voice', voiceRoutes);
       app.use('/api/documents', documentRoutes);
       app.use('/api/settings', settingsRoutes);
-      app.use('/api/settings/integrations', userIntegrationsRoutes);
       mountStub(
         '/api/integrations/calendar',
         calendarIntegrationsRoutes,

@@ -46,6 +46,7 @@ type LLMConfigTab = 'providers' | 'routing' | 'usage' | 'health';
 export const LLMManagementView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<LLMConfigTab>('providers');
   const [loading, setLoading] = useState(true);
+  const [applyingPreset, setApplyingPreset] = useState(false);
 
   // Providers
   const [providers, setProviders] = useState<LLMProviderConfig[]>([]);
@@ -151,6 +152,26 @@ export const LLMManagementView: React.FC = () => {
       toast.error('Failed to load LLM configuration');
     }
     setLoading(false);
+  };
+
+  const handleApplyRecommendedPreset = async () => {
+    if (applyingPreset) return;
+    setApplyingPreset(true);
+    try {
+      const result = await (Api as any).applyRecommendedAiModelPresetV3?.({});
+      const createdProviders = Number(result?.createdProviders || 0);
+      const updatedProviders = Number(result?.updatedProviders || 0);
+      const createdPurposes = Number(result?.createdPurposes || 0);
+      const createdPurposeAssignments = Number(result?.createdPurposeAssignments || 0);
+      toast.success(
+        `Preset applied: +${createdProviders} providers, ~${updatedProviders} updated, +${createdPurposes} purposes, +${createdPurposeAssignments} assignments`
+      );
+      await loadInitialData();
+    } catch (e: any) {
+      toast.error(String(e?.message || e || 'Failed to apply preset'));
+    } finally {
+      setApplyingPreset(false);
+    }
   };
 
   const handleProviderSubmit = async (e: React.FormEvent) => {
@@ -332,6 +353,15 @@ export const LLMManagementView: React.FC = () => {
                 subtitle="Configure AI models available to tenants"
               />
               <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={handleApplyRecommendedPreset}
+                  icon={Settings}
+                  size="sm"
+                  disabled={applyingPreset}
+                >
+                  {applyingPreset ? 'Applying preset...' : 'Apply v3 recommended preset'}
+                </Button>
                 <Button
                   variant="ghost"
                   onClick={() => setShowInactive(!showInactive)}

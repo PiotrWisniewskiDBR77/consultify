@@ -10,6 +10,7 @@
 
 - Tools catalog: `docs/product/TOOLS_CATALOG_V3.md`
 - One task per consulting tool (tool specs SSOT): `docs/product/CONSULTING_TOOLS_TOOL_SPECS_V3.md`
+- Consulting Templates library (60 classic frameworks; implementation contract): `docs/product/CONSULTING_TEMPLATES_LIBRARY_V3.md`
 - Known Tools content completeness audit (v3): `docs/product/KNOWN_TOOLS_CONTENT_COMPLETENESS_AUDIT_V3.md`
 - Operating model: `docs/product/OPERATING_MODEL_V3.md`
 - Source traceability: `docs/product/SOURCE_TRACEABILITY_SPEC.md`
@@ -79,9 +80,9 @@ This matches `docs/product/TOOLS_CATALOG_V3.md` and `V3-E01` in the program ledg
 
 ---
 
-## 3) Two classes of “tools” inside one module
+## 3) Three classes of “tools” inside one module
 
-The module contains two classes of work methods. They share the **same workflow skeleton** and the same output system, but differ in knowledge density and runtime mechanics.
+The module contains three classes of work methods. They share the **same workflow skeleton** and the same output system, but differ in knowledge density and runtime mechanics.
 
 ### 3.1 Consulting tools (small-to-medium methods)
 
@@ -93,7 +94,23 @@ Characteristics:
 - may rely on externally sourced knowledge (internet research) + internal heuristics,
 - run as a **Tool Session** (wizard/workspace/table/hybrid).
 
-### 3.2 Licensed assessments / methodologies (knowledge-heavy)
+### 3.2 Consulting Templates (classic frameworks; workspace templates)
+
+Examples: MECE issue trees, PESTEL, Business Model Canvas, Balanced Scorecard, VSM, SIPOC, SCOR, TOM, Process Mining, ADKAR, etc.
+
+Canonical source-of-truth for their method + implementation contract lives in:
+
+- `wdrozenia/modules/tools/catalog/{strategy,operations,transformation}/` (method + worked examples)
+- `docs/product/CONSULTING_TEMPLATES_LIBRARY_V3.md` (how each template is implemented in Consultify)
+
+Characteristics:
+
+- are primarily **workspace templates** (no bespoke editors),
+- run as a **Tool Session** using the universal wizard skeleton, but the Work step is **Workspace-first**,
+- have deterministic artifact structure (blocks/matrix/tree/scorecard/process map) + deterministic DoD checklist,
+- always generate **traceable** outputs (initiatives / report / deck) only after finalization.
+
+### 3.3 Licensed assessments / methodologies (knowledge-heavy)
 
 Examples: DRD, SIRI, ADMA (and future licensed packs).
 
@@ -104,7 +121,7 @@ Characteristics:
 - should be treated as a distinct **methodology artefact** (licensed pack),
   not merely “another small tool template”.
 
-#### 3.2.1 Canonical artefact: Methodology Pack (v3)
+#### 3.3.1 Canonical artefact: Methodology Pack (v3)
 
 We model licensed assessments as a first-class artefact:
 
@@ -207,6 +224,14 @@ Assumptions are a visible and auditable layer of the session. They must be:
 - included in session snapshots upon finalization,
 - traceable into outputs (as part of “why these conclusions exist”).
 
+#### 4.2.1a Evidence is first-class (MUST)
+
+Every tool session must support an explicit “evidence layer”:
+
+- key claims should be tagged as **evidence-backed** (linked) vs **assumption**,
+- evidence can be: attachments, links, embedded references to platform artifacts (Notebook/Interview/Reports/Workspaces),
+- the “missing items” checklist must include missing evidence for high-impact claims (not only missing text fields).
+
 #### 4.2.2 “Work surface” types (MUST)
 
 A tool chooses one of the canonical surface types:
@@ -250,6 +275,19 @@ All outputs must be:
 - created with **traceability** (`source_type`, `source_id`, `source_version`)
 - able to “Open source” back to the session
 - recorded as artefacts visible in module surfaces (Outputs tabs and/or canonical libraries)
+
+#### 4.4.1 Report / Presentation generators (MUST integration contract)
+
+When the user clicks **Create Report** or **Create Presentation** from a finalized ToolSession:
+
+- the generator must open with the ToolSession pre-selected as a primary source input,
+- the created artifact must store source traceability (`source_type=TOOL`, `source_id=tool_session_id`, `source_version=session.version`),
+- blocks/sections/slides should preserve block-level traceability where feasible (“Open source” to the exact session).
+
+SSOT:
+
+- Reports: `docs/product/REPORT_GENERATOR_V3.md`
+- Presentations: `docs/product/PRESENTATION_GENERATOR_V3.md`
 
 ### 4.5 Step E — Initiatives (traceability & control)
 
@@ -301,7 +339,7 @@ This section defines the minimum logical model required to implement the workflo
 ToolDefinition MUST include:
 
 - identity: `tool_id`, `name`, `category` (strategy/ops/digital/process_auto/licensed)
-- class: `tool_class = consulting_tool | methodology_pack`
+- class: `tool_class = consulting_tool | framework_template | methodology_pack`
 - surface type: `table | workspace | wizard | hybrid | questionnaire`
 - `when_to_use`, `inputs_schema`, `outputs_capabilities`
 - preview assets:
