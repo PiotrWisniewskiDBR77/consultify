@@ -50,6 +50,7 @@ import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocumen
 import { PortfolioAnalysisView } from './Analysis';
 // Compact side panel (replaces old 50% drawer)
 import { InitiativeCompactPanel } from './InitiativeCompactPanel';
+import { InitiativePreview } from './InitiativePreview';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
 
@@ -792,6 +793,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           <PortfolioListView
             initiatives={searchedInitiatives}
             onInitiativeClick={handleInitiativeClick}
+            onOpenFull={handleOpenFullScreen}
             onStatusChange={handleStatusChange}
             onQuickUpdate={handleQuickUpdate}
             onSelectionChange={setSelectedIds}
@@ -932,20 +934,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         <div className="flex-1 overflow-hidden">{renderContent()}</div>
       </ModuleHub>
 
-      {/* Initiative Compact Side Panel */}
-      <InitiativeCompactPanel
-        initiative={selectedInitiative}
-        isOpen={isSidePanelOpen}
-        onClose={handleCloseSidePanel}
-        onUpdate={(updated) => {
-          setInitiatives((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
-          if (selectedInitiative?.id === updated.id) {
-            setSelectedInitiative(updated);
-          }
-        }}
-        onOpenFull={handleOpenFullScreen}
-        users={users}
-      />
+      {/* Initiative Preview Pane (V3 PreviewPaneShell standard) */}
+      {isSidePanelOpen && selectedInitiative && (
+        <div className="fixed right-0 top-0 bottom-0 w-[380px] z-40 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl overflow-y-auto">
+          <InitiativePreview
+            initiative={selectedInitiative as any}
+            onOpen={() => handleOpenFullScreen(selectedInitiative)}
+            onClose={handleCloseSidePanel}
+          />
+        </div>
+      )}
 
       {/* New Initiative Modal — D1.1: includes type/level selector */}
       {showNewModal && (

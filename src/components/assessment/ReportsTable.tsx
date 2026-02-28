@@ -41,6 +41,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
+import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { ImportReportModal } from '../Reports/ImportReportModal';
 
 // ============================================
@@ -661,227 +662,49 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                       <td className="px-4 py-4 text-sm text-slate-500 dark:text-slate-400">
                         {formatDate(report.updatedAt)}
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-end gap-1">
-                          {/* Primary Action based on status */}
-                          {report.status === 'IN_REVIEW' ? (
-                            <button
-                              onClick={() => handleApproveReport(report.id)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors"
-                            >
-                              <CheckCircle2 size={14} />
-                              {isPolish ? 'Zatwierdź' : 'Approve'}
-                            </button>
-                          ) : report.status === 'APPROVED' ? (
-                            <button
-                              onClick={() => handleMarkSentInternal(report.id)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors"
-                            >
-                              <Send size={14} />
-                              {isPolish ? 'Wyślij wewn.' : 'Send Internal'}
-                            </button>
-                          ) : report.status === 'SENT_INTERNAL' ? (
-                            <button
-                              onClick={() => handleMarkSentExternal(report.id)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-colors"
-                            >
-                              <ArrowRight size={14} />
-                              {isPolish ? 'Wyślij zewn.' : 'Send External'}
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() =>
-                                handleOpenReport(report.id, report.name, report.status)
+                      <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-end">
+                          <RowActionsMenu
+                            iconVariant="vertical"
+                            actions={(() => {
+                              const actions: RowAction[] = [
+                                {
+                                  id: 'view',
+                                  label: isPolish ? 'Podgląd raportu' : 'View Report',
+                                  icon: Eye,
+                                  variant: 'primary',
+                                  onClick: () => handleOpenReport(report.id, report.name, report.status),
+                                },
+                              ];
+                              if (report.status === 'IN_REVIEW') {
+                                actions.push(
+                                  { id: 'approve', label: isPolish ? 'Zatwierdź' : 'Approve', icon: CheckCircle2, divider: true, onClick: () => handleApproveReport(report.id) },
+                                  { id: 'send-back', label: isPolish ? 'Odeślij do edycji' : 'Send Back', icon: ArrowRight, onClick: () => handleSendBack(report.id) },
+                                );
                               }
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
-                            >
-                              <Eye size={14} />
-                              {isPolish ? 'Podgląd' : 'View'}
-                            </button>
-                          )}
-
-                          {/* Download PDF - for approved+ reports */}
-                          {[
-                            'GENERATED',
-                            'IN_REVIEW',
-                            'APPROVED',
-                            'SENT_INTERNAL',
-                            'SENT_EXTERNAL',
-                            'UTILIZED',
-                          ].includes(report.status) && (
-                            <button
-                              onClick={() => handleExportPDF(report.id, report.name)}
-                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
-                              title="Download PDF"
-                            >
-                              <Download size={16} />
-                            </button>
-                          )}
-
-                          {/* More menu */}
-                          <div className="relative">
-                            <button
-                              onClick={() =>
-                                setActiveRowMenu(activeRowMenu === report.id ? null : report.id)
+                              if (report.status === 'APPROVED') {
+                                actions.push({ id: 'send-int', label: isPolish ? 'Wyślij wewn.' : 'Send Internal', icon: Send, divider: true, onClick: () => handleMarkSentInternal(report.id) });
                               }
-                              className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
-                            >
-                              <MoreVertical size={16} />
-                            </button>
-
-                            {activeRowMenu === report.id && (
-                              <>
-                                <div
-                                  className="fixed inset-0 z-40"
-                                  onClick={() => setActiveRowMenu(null)}
-                                />
-                                <div className="absolute right-0 top-full mt-1 w-52 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1 z-50">
-                                  <button
-                                    onClick={() => {
-                                      handleOpenReport(report.id, report.name, report.status);
-                                      setActiveRowMenu(null);
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
-                                  >
-                                    <Eye size={14} />
-                                    {isPolish ? 'Podgląd raportu' : 'View Report'}
-                                  </button>
-
-                                  {report.status === 'IN_REVIEW' && (
-                                    <>
-                                      <button
-                                        onClick={() => {
-                                          handleApproveReport(report.id);
-                                          setActiveRowMenu(null);
-                                        }}
-                                        className="w-full text-left px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/10 flex items-center gap-2"
-                                      >
-                                        <CheckCircle2 size={14} />
-                                        {isPolish ? 'Zatwierdź' : 'Approve'}
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          handleSendBack(report.id);
-                                          setActiveRowMenu(null);
-                                        }}
-                                        className="w-full text-left px-4 py-2 text-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/10 flex items-center gap-2"
-                                      >
-                                        <ArrowRight size={14} className="rotate-180" />
-                                        {isPolish ? 'Odeślij do edycji' : 'Send Back'}
-                                      </button>
-                                    </>
-                                  )}
-
-                                  {report.status === 'APPROVED' && (
-                                    <button
-                                      onClick={() => {
-                                        handleMarkSentInternal(report.id);
-                                        setActiveRowMenu(null);
-                                      }}
-                                      className="w-full text-left px-4 py-2 text-sm text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/10 flex items-center gap-2"
-                                    >
-                                      <Send size={14} />
-                                      {isPolish
-                                        ? 'Oznacz jako wysłany wewn.'
-                                        : 'Mark Sent Internal'}
-                                    </button>
-                                  )}
-
-                                  {report.status === 'SENT_INTERNAL' && (
-                                    <button
-                                      onClick={() => {
-                                        handleMarkSentExternal(report.id);
-                                        setActiveRowMenu(null);
-                                      }}
-                                      className="w-full text-left px-4 py-2 text-sm text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/10 flex items-center gap-2"
-                                    >
-                                      <ArrowRight size={14} />
-                                      {isPolish
-                                        ? 'Oznacz jako wysłany zewn.'
-                                        : 'Mark Sent External'}
-                                    </button>
-                                  )}
-
-                                  {[
-                                    'GENERATED',
-                                    'IN_REVIEW',
-                                    'APPROVED',
-                                    'SENT_INTERNAL',
-                                    'SENT_EXTERNAL',
-                                    'UTILIZED',
-                                  ].includes(report.status) && (
-                                    <>
-                                      <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
-                                      <button
-                                        onClick={() => {
-                                          handleExportPDF(report.id, report.name);
-                                          setActiveRowMenu(null);
-                                        }}
-                                        className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
-                                      >
-                                        <FileText size={14} />
-                                        {isPolish ? 'Eksportuj PDF' : 'Export PDF'}
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          handleExportPPTX(report.id, report.name);
-                                          setActiveRowMenu(null);
-                                        }}
-                                        className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
-                                      >
-                                        <FileText size={14} />
-                                        {isPolish ? 'Eksportuj PPTX' : 'Export PPTX'}
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          handleExportWord(report.id, report.name);
-                                          setActiveRowMenu(null);
-                                        }}
-                                        className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
-                                      >
-                                        <FileText size={14} />
-                                        {isPolish ? 'Eksportuj Word' : 'Export Word'}
-                                      </button>
-                                    </>
-                                  )}
-
-                                  {['GENERATED', 'IN_REVIEW', 'APPROVED', 'UTILIZED'].includes(
-                                    report.status
-                                  ) && (
-                                    <button
-                                      onClick={() => {
-                                        handleCreateShareLink(report.id);
-                                        setActiveRowMenu(null);
-                                      }}
-                                      className="w-full text-left px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 flex items-center gap-2"
-                                    >
-                                      <Link2 size={14} />
-                                      {isPolish
-                                        ? 'Utwórz link (kopiuj)'
-                                        : 'Create share link (copy)'}
-                                    </button>
-                                  )}
-
-                                  {report.canGenerateInitiatives &&
-                                    !report.initiativesGenerated && (
-                                      <>
-                                        <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
-                                        <button
-                                          onClick={() => {
-                                            onCreateInitiatives(report.id);
-                                            setActiveRowMenu(null);
-                                          }}
-                                          className="w-full text-left px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/10 flex items-center gap-2"
-                                        >
-                                          <Lightbulb size={14} />
-                                          {isPolish ? 'Generuj inicjatywy' : 'Generate Initiatives'}
-                                        </button>
-                                      </>
-                                    )}
-                                </div>
-                              </>
-                            )}
-                          </div>
+                              if (report.status === 'SENT_INTERNAL') {
+                                actions.push({ id: 'send-ext', label: isPolish ? 'Wyślij zewn.' : 'Send External', icon: ArrowRight, divider: true, onClick: () => handleMarkSentExternal(report.id) });
+                              }
+                              const exportable = ['GENERATED','IN_REVIEW','APPROVED','SENT_INTERNAL','SENT_EXTERNAL','UTILIZED'];
+                              if (exportable.includes(report.status)) {
+                                actions.push(
+                                  { id: 'pdf', label: isPolish ? 'Eksportuj PDF' : 'Export PDF', icon: FileText, divider: true, onClick: () => handleExportPDF(report.id, report.name) },
+                                  { id: 'pptx', label: isPolish ? 'Eksportuj PPTX' : 'Export PPTX', icon: FileText, onClick: () => handleExportPPTX(report.id, report.name) },
+                                  { id: 'word', label: isPolish ? 'Eksportuj Word' : 'Export Word', icon: FileText, onClick: () => handleExportWord(report.id, report.name) },
+                                );
+                              }
+                              if (['GENERATED','IN_REVIEW','APPROVED','UTILIZED'].includes(report.status)) {
+                                actions.push({ id: 'share', label: isPolish ? 'Utwórz link' : 'Share link', icon: Link2, onClick: () => handleCreateShareLink(report.id) });
+                              }
+                              if (report.canGenerateInitiatives && !report.initiativesGenerated) {
+                                actions.push({ id: 'initiatives', label: isPolish ? 'Generuj inicjatywy' : 'Generate Initiatives', icon: Lightbulb, divider: true, onClick: () => onCreateInitiatives(report.id) });
+                              }
+                              return actions;
+                            })()}
+                          />
                         </div>
                       </td>
                     </tr>

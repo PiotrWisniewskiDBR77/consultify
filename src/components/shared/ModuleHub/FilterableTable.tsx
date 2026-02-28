@@ -30,6 +30,7 @@ interface FilterableTableProps {
   columns: TableColumn[];
   data: TableRow[];
   onRowClick?: (row: TableRow) => void;
+  onRowDoubleClick?: (row: TableRow) => void;
   onRowAction?: (action: string, row: TableRow) => void;
   activeFilters: FilterChip[];
   onFilterChange: (filters: FilterChip[]) => void;
@@ -203,6 +204,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   columns,
   data,
   onRowClick,
+  onRowDoubleClick,
   onRowAction,
   activeFilters,
   onFilterChange,
@@ -317,6 +319,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                 <tr
                   key={row.id}
                   onClick={() => onRowClick?.(row)}
+                  onDoubleClick={() => onRowDoubleClick?.(row)}
                   className="group hover:bg-slate-100 dark:hover:bg-navy-800/50 cursor-pointer transition-colors"
                 >
                   {columns.map((column) => (

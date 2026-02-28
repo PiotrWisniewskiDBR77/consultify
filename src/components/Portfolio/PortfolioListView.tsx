@@ -12,10 +12,12 @@
  * - monochromatic chrome, color only for semantic data
  */
 
-import { ChevronDown, ChevronUp, Eye, MoreVertical, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronUp, Eye, Maximize2, Sparkles } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 
 import { getPriorityStyle, getStatusStyle } from '../../constants/statusColors';
 import { STATUS_METADATA } from '../../services/initiativeLifecycle';
@@ -31,6 +33,7 @@ import { PortfolioAiPanel } from './PortfolioAiPanel';
 interface PortfolioListViewProps {
   initiatives: PortfolioInitiative[];
   onInitiativeClick: (initiative: PortfolioInitiative) => void;
+  onOpenFull?: (initiative: PortfolioInitiative) => void;
   onStatusChange: (id: string, status: InitiativeStatus) => void;
   onQuickUpdate: (id: string, updates: Partial<PortfolioInitiative>) => void;
   onSelectionChange?: (ids: Set<string>) => void;
@@ -83,6 +86,7 @@ const LEVEL_ORDER: Record<string, number> = STATUS_ORDER;
 export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
   initiatives,
   onInitiativeClick,
+  onOpenFull,
   onStatusChange,
   onQuickUpdate,
   onSelectionChange,
@@ -93,7 +97,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
     direction: 'asc',
   });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [_activeMenu, _setActiveMenu] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
 
   const isDowngrade = (currentStatus: string, newStatus: string): boolean => {
@@ -282,6 +286,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                   key={initiative.id}
                   className={`group cursor-pointer transition-colors hover:bg-slate-50/70 dark:hover:bg-white/[0.03] ${terminal ? 'opacity-50' : ''}`}
                   onClick={() => onInitiativeClick(initiative)}
+                  onDoubleClick={() => onOpenFull?.(initiative)}
                 >
                   {/* Checkbox */}
                   <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
@@ -416,37 +421,24 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
 
                   {/* Actions */}
                   <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                    <div className="relative">
-                      <button
-                        onClick={() =>
-                          setActiveMenu(activeMenu === initiative.id ? null : initiative.id)
-                        }
-                        className="p-1.5 rounded text-slate-400 dark:text-slate-500 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.05] opacity-0 group-hover:opacity-100 focus:opacity-100"
-                        aria-label={t('common.actions', 'Actions')}
-                      >
-                        <MoreVertical size={16} />
-                      </button>
-                      {activeMenu === initiative.id && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-10"
-                            onClick={() => setActiveMenu(null)}
-                            aria-hidden="true"
-                          />
-                          <div className="absolute right-0 top-full mt-2 w-44 bg-white dark:bg-navy-800 rounded-xl shadow-hig-xl dark:shadow-hig-dark-xl py-1 z-20 overflow-hidden">
-                            <button
-                              onClick={() => {
-                                onInitiativeClick(initiative);
-                                setActiveMenu(null);
-                              }}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] transition-colors"
-                            >
-                              <Eye size={14} /> View Details
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                    <RowActionsMenu
+                      iconVariant="vertical"
+                      actions={[
+                        {
+                          id: 'preview',
+                          label: t('common.preview', 'Preview'),
+                          icon: Eye,
+                          onClick: () => onInitiativeClick(initiative),
+                        },
+                        {
+                          id: 'open',
+                          label: t('common.openFull', 'Open Full'),
+                          icon: Maximize2,
+                          variant: 'primary',
+                          onClick: () => onOpenFull?.(initiative),
+                        },
+                      ] as RowAction[]}
+                    />
                   </td>
                 </tr>
               );

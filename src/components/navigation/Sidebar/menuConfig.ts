@@ -22,6 +22,7 @@ import {
   Map,
   MessageSquare,
   Package,
+  Presentation,
   Rocket,
   Settings,
   Shield,
@@ -107,6 +108,13 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       label: t('sidebar.reports', 'Reports'),
       icon: React.createElement(BookOpen, { size: 20 }),
       viewId: AppView.FULL_STEP6_REPORTS,
+    },
+    // 10. Prezentacje
+    {
+      id: 'MODULE_PRESENTATIONS',
+      label: t('sidebar.presentations', 'Presentations'),
+      icon: React.createElement(Presentation, { size: 20 }),
+      viewId: AppView.PRESENTATIONS,
     },
     {
       id: 'MCP_IRIS',

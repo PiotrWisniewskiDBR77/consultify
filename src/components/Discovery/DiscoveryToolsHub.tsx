@@ -50,6 +50,7 @@ import { listStrategyToolSlugs } from '@/toolCatalog/strategy/catalog';
 import { ToolDocumentView, ToolWorkspace } from '../DiscoveryTools';
 import { GenericToolDocumentView } from '../DiscoveryTools/GenericToolDocumentView';
 import { KnownToolDetailView } from '../DiscoveryTools/KnownToolDetailView';
+import { ToolSessionPreview } from '../DiscoveryTools/ToolSessionPreview';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import {
   CategoryButton,
@@ -533,6 +534,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
+  const [previewItemId, setPreviewItemId] = useState<string | null>(null);
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId, hydrated } =
     useModuleOpenDocuments('tools');
   const [selectedCategory, setSelectedCategory] = useState<ToolCategory | null>(null);
@@ -1274,9 +1276,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
 
   const handleRowAction = useCallback(
     (action: string, row: any) => {
-      console.log('Row action:', action, row);
       if (action === 'view' || action === 'edit') {
         handleOpenDocument(row);
+      } else if (action === 'preview') {
+        setPreviewItemId(row.id);
       }
     },
     [handleOpenDocument]
@@ -1966,7 +1969,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       <FilterableTable
         columns={columns}
         data={currentData}
-        onRowClick={handleOpenDocument}
+        onRowClick={(row) => setPreviewItemId(row.id)}
+        onRowDoubleClick={handleOpenDocument}
         onRowAction={handleRowAction}
         activeFilters={activeFilters}
         onFilterChange={setActiveFilters}
@@ -2067,6 +2071,30 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       >
         {renderContent()}
       </ModuleHub>
+
+      {/* Preview Pane (V3 PreviewPaneShell standard) */}
+      {previewItemId && (() => {
+        const item = currentData.find((d: any) => d.id === previewItemId);
+        if (!item) return null;
+        return (
+          <div className="fixed right-0 top-0 bottom-0 w-[380px] z-40 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl overflow-y-auto">
+            <ToolSessionPreview
+              session={{
+                id: item.id,
+                name: item.name || '—',
+                toolType: item.toolType || item.apiToolType || '',
+                status: item.status,
+                progress: item.progress,
+                createdAt: (item as any).createdAt ? String((item as any).createdAt) : undefined,
+                updatedAt: (item as any).updatedAt ? String((item as any).updatedAt) : undefined,
+              }}
+              onOpen={() => { handleOpenDocument(item); setPreviewItemId(null); }}
+              onResume={() => { handleOpenDocument(item); setPreviewItemId(null); }}
+              onClose={() => setPreviewItemId(null)}
+            />
+          </div>
+        );
+      })()}
 
       {/* Tool Selection Modal */}
       {selectedCategory && activeTab !== 'library' && (
