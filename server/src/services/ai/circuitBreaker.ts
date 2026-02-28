@@ -20,8 +20,45 @@ const LLM_CONFIG = {
   persistenceEnabled: true,
 };
 
+function getProviderOverrides(providerId: string): Partial<typeof LLM_CONFIG> {
+  const id = String(providerId || '').toLowerCase();
+  // OpenRouter is an aggregator and can have transient upstream/model failures.
+  // Keep it "available" longer and retry sooner before blocking traffic.
+  if (id === 'openrouter') {
+    return {
+      failureThreshold: 12,
+      resetTimeout: 10_000,
+      retryAttempts: 1,
+    };
+  }
+  return {};
+}
+
+function getBreakerConfig(providerId: string, options: Record<string, unknown> = {}) {
+  return {
+    ...LLM_CONFIG,
+    ...getProviderOverrides(providerId),
+    ...options,
+  };
+}
+
+function shouldIgnoreFailure(providerId: string, error: Error): boolean {
+  const id = String(providerId || '').toLowerCase();
+  const msg = String(error?.message || '').toLowerCase();
+  // For OpenRouter we do NOT want to "brick" the provider by opening the circuit
+  // on auth/account errors. Calls will still fail, but the provider remains selectable
+  // and can recover immediately after key/account fixes without waiting for cooldown.
+  if (id === 'openrouter') {
+    if (msg.includes('user not found')) return true;
+    if (msg.includes('unauthorized') || msg.includes('forbidden')) return true;
+    if (msg.includes('invalid api key') || msg.includes('key invalid') || msg.includes('auth')) return true;
+    if (msg.includes('http 401') || msg.includes('http 403')) return true;
+  }
+  return false;
+}
+
 export function canExecute(providerId: string) {
-  const breaker = CircuitBreakerService.getBreaker(providerId, LLM_CONFIG);
+  const breaker = CircuitBreakerService.getBreaker(providerId, getBreakerConfig(providerId));
   return breaker.canExecute();
 }
 
@@ -30,6 +67,13 @@ export async function recordSuccess(providerId: string): Promise<void> {
 }
 
 export async function recordFailure(providerId: string, error: Error): Promise<void> {
+  if (shouldIgnoreFailure(providerId, error)) {
+    aiLogger.warn(
+      'CircuitBreaker',
+      `Ignoring failure for [${String(providerId)}]: ${String(error?.message || '').slice(0, 200)}`
+    );
+    return;
+  }
   await CircuitBreakerService.recordFailure(providerId, error);
 }
 
@@ -49,10 +93,7 @@ export async function execute<T>(
   fn: () => Promise<T>,
   options: Record<string, unknown> = {}
 ): Promise<T> {
-  const breaker = CircuitBreakerService.getBreaker(providerId, {
-    ...LLM_CONFIG,
-    ...options,
-  });
+  const breaker = CircuitBreakerService.getBreaker(providerId, getBreakerConfig(providerId, options));
   return breaker.execute(fn, options);
 }
 
@@ -113,6 +154,33 @@ function registerProviderHealthChecks(): void {
       if (!res.ok) throw new Error(`OpenAI health check failed: ${res.status}`);
     });
     aiLogger.info('CircuitBreaker', 'Health check registered for [openai]');
+  }
+
+  // OpenRouter health probe: list models
+  const openrouterKey = process.env.OPENROUTER_API_KEY;
+  if (openrouterKey && openrouterKey.trim().length > 0) {
+    CircuitBreakerService.setHealthCheck('openrouter', async () => {
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${openrouterKey}`,
+      };
+      // Optional OpenRouter attribution headers (recommended; some deployments enforce them).
+      const referer =
+        process.env.OPENROUTER_SITE_URL ||
+        process.env.SITE_URL ||
+        process.env.PUBLIC_URL ||
+        process.env.APP_URL;
+      const title = process.env.OPENROUTER_APP_NAME || process.env.APP_NAME || process.env.npm_package_name;
+      if (referer) headers['HTTP-Referer'] = String(referer);
+      if (title) headers['X-Title'] = String(title);
+
+      const res = await fetch('https://openrouter.ai/api/v1/models', {
+        method: 'GET',
+        headers,
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) throw new Error(`OpenRouter health check failed: ${res.status}`);
+    });
+    aiLogger.info('CircuitBreaker', 'Health check registered for [openrouter]');
   }
 
   // Google/Gemini health probe: list models

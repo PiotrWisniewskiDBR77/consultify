@@ -25,8 +25,8 @@ export interface ToolSession {
   progress?: number;
   currentStep?: number;
   steps?: { id: string; name?: string }[];
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 }
 
 export interface ToolSessionPreviewProps {
@@ -49,7 +49,7 @@ const TOOL_TYPE_LABELS: Record<string, { en: string; pl: string }> = {
   'a3-problem-solving': { en: 'A3 Problem Solving', pl: 'Rozwiązywanie Problemów A3' },
 };
 
-const getToolCategoryLabel = (toolType: string, isPolish: boolean): string => {
+export const getToolCategoryLabel = (toolType: string, isPolish: boolean): string => {
   const normalized = String(toolType || '')
     .toLowerCase()
     .trim();
@@ -59,6 +59,57 @@ const getToolCategoryLabel = (toolType: string, isPolish: boolean): string => {
     .split('-')
     .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
     .join(' ');
+};
+
+const formatDate = (value: string | Date | undefined): string => {
+  if (!value) return '—';
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+export const ToolSessionPreviewBody: React.FC<{ session: ToolSession }> = ({ session }) => {
+  const { t } = useTranslation();
+
+  const createdStr = formatDate(session.createdAt);
+  const updatedStr = formatDate(session.updatedAt);
+  const stepLabel =
+    session.steps?.[session.currentStep ?? 0]?.name ??
+    (session.currentStep != null
+      ? `${t('preview.step', 'Step')} ${(session.currentStep ?? 0) + 1}`
+      : '—');
+  const progress = session.progress ?? 0;
+
+  return (
+    <div className="space-y-3 text-sm">
+      <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+        <span className="text-slate-500 dark:text-slate-400">{t('preview.status', 'Status')}</span>
+        <span className="text-slate-900 dark:text-white">
+          {session.status ? String(session.status).replace(/_/g, ' ') : '—'}
+        </span>
+
+        <span className="text-slate-500 dark:text-slate-400">
+          {t('preview.created', 'Created')}
+        </span>
+        <span className="text-slate-900 dark:text-white">{createdStr}</span>
+
+        <span className="text-slate-500 dark:text-slate-400">
+          {t('preview.lastModified', 'Last modified')}
+        </span>
+        <span className="text-slate-900 dark:text-white">{updatedStr}</span>
+
+        <span className="text-slate-500 dark:text-slate-400">
+          {t('preview.currentStep', 'Current step')}
+        </span>
+        <span className="text-slate-900 dark:text-white">{stepLabel}</span>
+
+        <span className="text-slate-500 dark:text-slate-400">
+          {t('preview.progress', 'Progress')}
+        </span>
+        <span className="text-slate-900 dark:text-white">{progress}%</span>
+      </div>
+    </div>
+  );
 };
 
 export const ToolSessionPreview: React.FC<ToolSessionPreviewProps> = ({
@@ -72,26 +123,6 @@ export const ToolSessionPreview: React.FC<ToolSessionPreviewProps> = ({
   const isPolish = i18n.language === 'pl';
 
   const kicker = getToolCategoryLabel(session.toolType, isPolish);
-  const createdStr = session.createdAt
-    ? new Date(session.createdAt).toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      })
-    : '—';
-  const updatedStr = session.updatedAt
-    ? new Date(session.updatedAt).toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      })
-    : '—';
-  const stepLabel =
-    session.steps?.[session.currentStep ?? 0]?.name ??
-    (session.currentStep != null
-      ? `${t('preview.step', 'Step')} ${(session.currentStep ?? 0) + 1}`
-      : '—');
-  const progress = session.progress ?? 0;
 
   return (
     <PreviewPaneShell
@@ -101,24 +132,25 @@ export const ToolSessionPreview: React.FC<ToolSessionPreviewProps> = ({
       actions={
         <button
           onClick={onOpen}
-          className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-navy-800/60 transition-colors"
+          className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
           title={t('preview.openSession', 'Open session')}
         >
           <ExternalLink size={14} />
+          <span>{t('preview.open', 'Open')}</span>
         </button>
       }
       footer={
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={onOpen}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-primary-500/15 text-primary-600 dark:text-primary-400 hover:bg-primary-500/25 transition-colors"
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-full border border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-300 hover:bg-primary-500/15 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
           >
             <ExternalLink size={14} />
             {t('preview.openSession', 'Open session')}
           </button>
           <button
             onClick={onResume}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
           >
             <Play size={14} />
             {t('preview.resumeWizard', 'Resume wizard')}
@@ -126,7 +158,7 @@ export const ToolSessionPreview: React.FC<ToolSessionPreviewProps> = ({
           {onExport && (
             <button
               onClick={onExport}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+              className="inline-flex items-center gap-2 h-9 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
             >
               <Download size={14} />
               {t('preview.export', 'Export')}
@@ -135,36 +167,7 @@ export const ToolSessionPreview: React.FC<ToolSessionPreviewProps> = ({
         </div>
       }
     >
-      <div className="space-y-3 text-sm">
-        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-          <span className="text-slate-500 dark:text-slate-400">
-            {t('preview.status', 'Status')}
-          </span>
-          <span className="text-slate-900 dark:text-white">
-            {session.status ? String(session.status).replace(/_/g, ' ') : '—'}
-          </span>
-
-          <span className="text-slate-500 dark:text-slate-400">
-            {t('preview.created', 'Created')}
-          </span>
-          <span className="text-slate-300 dark:text-slate-300">{createdStr}</span>
-
-          <span className="text-slate-500 dark:text-slate-400">
-            {t('preview.lastModified', 'Last modified')}
-          </span>
-          <span className="text-slate-300 dark:text-slate-300">{updatedStr}</span>
-
-          <span className="text-slate-500 dark:text-slate-400">
-            {t('preview.currentStep', 'Current step')}
-          </span>
-          <span className="text-slate-300 dark:text-slate-300">{stepLabel}</span>
-
-          <span className="text-slate-500 dark:text-slate-400">
-            {t('preview.progress', 'Progress')}
-          </span>
-          <span className="text-slate-300 dark:text-slate-300">{progress}%</span>
-        </div>
-      </div>
+      <ToolSessionPreviewBody session={session} />
     </PreviewPaneShell>
   );
 };

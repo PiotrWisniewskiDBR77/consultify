@@ -37,6 +37,8 @@ interface PortfolioListViewProps {
   onStatusChange: (id: string, status: InitiativeStatus) => void;
   onQuickUpdate: (id: string, updates: Partial<PortfolioInitiative>) => void;
   onSelectionChange?: (ids: Set<string>) => void;
+  /** Table canvas padding (V3 standard: pl-4 pr-1.5 pt-3 pb-4) */
+  canvasClassName?: string;
 }
 
 type SortField = 'name' | 'status' | 'priority' | 'plannedEndDate' | 'updatedAt';
@@ -90,6 +92,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
   onStatusChange,
   onQuickUpdate,
   onSelectionChange,
+  canvasClassName = 'pl-4 pr-1.5 pt-3 pb-4',
 }) => {
   const { t } = useTranslation();
   const [sortConfig, setSortConfig] = useState<{ field: SortField; direction: 'asc' | 'desc' }>({
@@ -222,7 +225,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
   );
 
   return (
-    <div className="h-full overflow-auto p-4">
+    <div className={canvasClassName}>
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="text-xs text-slate-500 dark:text-slate-400">
           {t('portfolio.ai.selectionCount', '{{count}} selected', {
@@ -240,7 +243,8 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
       </div>
 
       <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-hidden">
-        <table className="w-full table-fixed" style={{ minWidth: 1080 }}>
+        <div className="overflow-x-auto">
+          <table className="w-full table-fixed" style={{ minWidth: 1080 }}>
           <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig">
             <tr>
               <th className="w-10 px-4 py-2">
@@ -445,6 +449,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       {sortedInitiatives.length === 0 && (

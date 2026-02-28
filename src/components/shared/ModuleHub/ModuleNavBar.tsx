@@ -22,8 +22,10 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import { ActiveFilters, type FilterChip } from './ActiveFilters';
+import { DynamicTabs } from './DynamicTabs';
 import { StatusDropdown } from './StatusDropdown';
-import { CategoryButton, ModuleTab, TabConfig, ViewMode } from './types';
+import { CategoryButton, ModuleTab, type OpenDocument, TabConfig, ViewMode } from './types';
 
 // Debounce hook for search
 function useDebounce<T>(value: T, delay: number): T {
@@ -57,9 +59,20 @@ interface ModuleNavBarProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   onSearch: (query: string) => void;
+  // Command Row inputs (V3: one row; modes swap in place)
+  openDocuments: OpenDocument[];
+  activeDocumentId: string | null;
+  onSelectDocument: (id: string) => void;
+  onCloseDocument: (id: string) => void;
+  onShowList: () => void;
+  activeFilters: FilterChip[];
+  onRemoveFilter: (id: string) => void;
+  onClearFilters: () => void;
   // For Assessment: single "New Assessment" button
   onNewItem?: () => void;
   newItemLabel?: string;
+  // Optional: custom Primary CTA node (keeps canonical slot in topbar)
+  primaryCta?: React.ReactNode;
   // For Discovery Tools: 4 category buttons
   categoryButtons?: CategoryButton[];
   // Status filters (left side) - for Initiatives module
@@ -129,8 +142,17 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   viewMode,
   onViewModeChange,
   onSearch,
+  openDocuments,
+  activeDocumentId,
+  onSelectDocument,
+  onCloseDocument,
+  onShowList,
+  activeFilters,
+  onRemoveFilter,
+  onClearFilters,
   onNewItem,
   newItemLabel = 'New Item',
+  primaryCta,
   categoryButtons,
   statusFilters,
   activeStatusFilter,
@@ -187,6 +209,51 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
     // onSearch('') will be called via debounced effect
   }, []);
 
+  // V3: Single Command Row under the topbar (module-hub-standard.md)
+  // Modes swap in place: search ↔ dynamic tabs ↔ active filters (counters/bulk live in module screens).
+  const commandRow = showSearch ? (
+    <div className="px-4 pb-3">
+      <div className="relative">
+        <Search
+          size={16}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+        />
+        <input
+          ref={searchInputRef}
+          type="text"
+          value={searchQuery}
+          onChange={handleSearchChange}
+          placeholder="Search..."
+          className="
+            w-full pl-10 pr-10 py-2 rounded-lg
+            bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600
+            text-slate-900 dark:text-white placeholder-slate-500
+            focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50
+            transition-all
+          "
+        />
+        {searchQuery && (
+          <button
+            onClick={handleCloseSearch}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          >
+            <X size={16} />
+          </button>
+        )}
+      </div>
+    </div>
+  ) : openDocuments.length > 0 ? (
+    <DynamicTabs
+      documents={openDocuments}
+      activeDocumentId={activeDocumentId}
+      onSelectDocument={onSelectDocument}
+      onCloseDocument={onCloseDocument}
+      onShowList={onShowList}
+    />
+  ) : activeFilters.length > 0 ? (
+    <ActiveFilters filters={activeFilters} onRemoveFilter={onRemoveFilter} onClearAll={onClearFilters} />
+  ) : null;
+
   return (
     <div className="bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/5">
       {/* Main Navigation Row */}
@@ -196,10 +263,10 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
           {/* Search Toggle */}
           <button
             onClick={() => setShowSearch(!showSearch)}
-            className={`h-9 w-9 inline-flex items-center justify-center rounded-lg transition-colors duration-150 ${
+            className={`h-9 w-9 inline-flex items-center justify-center rounded-full transition-colors duration-150 border ${
               showSearch
-                ? 'bg-white/70 dark:bg-white/[0.06] text-slate-900 dark:text-slate-100'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+                ? 'bg-white/70 dark:bg-white/[0.06] text-slate-900 dark:text-slate-100 border-primary-500/40'
+                : 'text-slate-500 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
             }`}
             title="Search"
           >
@@ -288,36 +355,12 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
           )}
         </div>
 
-        {/* Right: View Toggle + Actions */}
+        {/* Right: Actions → View → Filters (KANON v3) */}
         <div className="flex items-center gap-3">
-          {rightControls}
-          {/* View Mode Toggle — V3-A03: canonical order */}
-          {orderedViewModes.length > 1 && (
-            <div className="flex items-center bg-slate-50 dark:bg-navy-950/70 border border-slate-200/60 dark:border-white/5 rounded-full p-1 h-9">
-              {orderedViewModes.map((mode) => {
-                const config = viewModeConfig[mode];
-                const isActive = viewMode === mode;
-                return (
-                  <button
-                    key={mode}
-                    onClick={() => onViewModeChange(mode)}
-                    data-testid={`view-mode-${mode}`}
-                    className={`p-1.5 rounded transition-colors ${
-                      isActive
-                        ? 'bg-white/70 dark:bg-white/[0.06] text-slate-900 dark:text-slate-100'
-                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
-                    }`}
-                    title={config.label}
-                  >
-                    {config.icon}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
           {/* Action Buttons */}
-          {categoryButtons && categoryButtons.length > 0 ? (
+          {primaryCta ? (
+            primaryCta
+          ) : categoryButtons && categoryButtons.length > 0 ? (
             // Discovery Tools: 4 category buttons - same style as tabs
             <div className="flex items-center gap-2">
               {categoryButtons.map((btn) => (
@@ -349,42 +392,39 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
               <span>{newItemLabel}</span>
             </button>
           ) : null}
+
+          {/* View Mode Toggle — V3-A03: canonical order */}
+          {orderedViewModes.length > 1 && (
+            <div className="flex items-center bg-slate-50 dark:bg-navy-950/70 border border-slate-200/60 dark:border-white/5 rounded-full p-1 h-9">
+              {orderedViewModes.map((mode) => {
+                const config = viewModeConfig[mode];
+                const isActive = viewMode === mode;
+                return (
+                  <button
+                    key={mode}
+                    onClick={() => onViewModeChange(mode)}
+                    data-testid={`view-mode-${mode}`}
+                    className={`p-1.5 rounded transition-colors ${
+                      isActive
+                        ? 'bg-white/70 dark:bg-white/[0.06] text-slate-900 dark:text-slate-100'
+                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+                    }`}
+                    title={config.label}
+                  >
+                    {config.icon}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Filters / compact controls (should be closest to right edge) */}
+          {rightControls}
         </div>
       </div>
 
-      {/* Search Bar (expandable) */}
-      {showSearch && (
-        <div className="px-4 pb-3">
-          <div className="relative">
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
-            />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              placeholder="Search..."
-              className="
-                w-full pl-10 pr-10 py-2 rounded-lg
-                bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600
-                text-slate-900 dark:text-white placeholder-slate-500
-                focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50
-                transition-all
-              "
-            />
-            {searchQuery && (
-              <button
-                onClick={handleCloseSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              >
-                <X size={16} />
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Command Row (ONE LINE; modes swap in place) */}
+      {commandRow}
     </div>
   );
 };

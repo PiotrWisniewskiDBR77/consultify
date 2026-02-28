@@ -17,14 +17,19 @@ import {
   Clock,
   Cpu,
   DollarSign,
+  ExternalLink,
+  Eye,
   FileText,
   Filter,
   Flag,
   FolderOutput,
+  Grid3X3,
   Library,
   Lightbulb,
+  List,
   ListTodo,
   Loader2,
+  MessageSquare,
   Play,
   Plus,
   Settings,
@@ -33,27 +38,36 @@ import {
   TrendingUp,
   User,
   Users,
+  X,
   Zap,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
+import { useConversationStore } from '@/store/useConversationStore';
 import { ToolType as StoreToolType } from '@/store/useToolStore';
 import { listStrategyToolSlugs } from '@/toolCatalog/strategy/catalog';
 
 import { ToolDocumentView, ToolWorkspace } from '../DiscoveryTools';
+import { GenerateInitiativesModal } from '../DiscoveryTools/GenerateInitiativesModal';
 import { GenericToolDocumentView } from '../DiscoveryTools/GenericToolDocumentView';
 import { KnownToolDetailView } from '../DiscoveryTools/KnownToolDetailView';
-import { ToolSessionPreview } from '../DiscoveryTools/ToolSessionPreview';
-import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
+import { getToolCategoryLabel } from '../DiscoveryTools/ToolSessionPreview';
 import {
-  CategoryButton,
+  ToolSessionPreviewV3Body,
+  ToolSessionPreviewV3Footer,
+  type ToolSessionPreviewDetails,
+} from '../DiscoveryTools/ToolSessionPreviewV3';
+import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
+import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
+import {
   FilterableTable,
   FilterChip,
   GridItem,
@@ -66,6 +80,7 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 
 // Tool category types (V3: includes licensed assessments)
 type ToolCategory = 'strategic' | 'operational' | 'digital' | 'automation' | 'licensed';
@@ -474,7 +489,12 @@ interface DisplayItem {
   category: ToolCategory;
   status: ItemStatus;
   progress: number;
+  createdAt?: Date;
   updatedAt: Date;
+  projectId?: string;
+  createdBy?: string;
+  reviewRequestedAt?: Date;
+  approvedAt?: Date;
   apiToolType: string; // Original tool type from API
   _fullData?: any; // Full initiative data for detail view
 }
@@ -526,8 +546,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentProjectId } = useAppStore();
+  const openChatWithContext = useOpenChatWithContext();
+  const addChatMessage = useConversationStore((s) => s.addMessage);
   const { i18n, t } = useTranslation();
   const lang = i18n.language === 'pl' ? 'pl' : 'en';
+  const isPolish = lang === 'pl';
 
   // UI State
   const [activeTab, setActiveTab] = useState<ModuleTab>(normalizedInitialTab);
@@ -535,12 +558,27 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [previewItemId, setPreviewItemId] = useState<string | null>(null);
+  const [previewFullSession, setPreviewFullSession] = useState<any | null>(null);
+  const [previewFullLoading, setPreviewFullLoading] = useState(false);
+  const [autoExportPdfForId, setAutoExportPdfForId] = useState<string | null>(null);
+  const [generateInitiativesForId, setGenerateInitiativesForId] = useState<string | null>(null);
+  const [generationDefaults, setGenerationDefaults] = useState({
+    methodologyId: 'impact-feasibility',
+    count: 3,
+    includeChatContext: true,
+  });
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId, hydrated } =
     useModuleOpenDocuments('tools');
-  const [selectedCategory, setSelectedCategory] = useState<ToolCategory | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const statusDropdownRef = React.useRef<HTMLDivElement>(null);
+  const [isViewDropdownOpen, setIsViewDropdownOpen] = useState(false);
+  const viewDropdownRef = React.useRef<HTMLDivElement>(null);
+  const [initiativeDetailsExpanded, setInitiativeDetailsExpanded] = useState(false);
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+  const [addMenuCategory, setAddMenuCategory] = useState<ToolCategory | 'all'>('all');
+  const [addMenuQuery, setAddMenuQuery] = useState('');
+  const addMenuRef = useRef<HTMLDivElement>(null);
 
   // Docs-driven strategy catalog (wdrozenia/modules/tools/catalog/strategy/*.md)
   const strategyCatalogSlugs = useMemo(() => listStrategyToolSlugs(), []);
@@ -599,7 +637,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       category: mapping.category,
       status: statusMap[session.status?.toUpperCase()] || 'DRAFT',
       progress: session.progress || 0,
+      createdAt: session.createdAt ? new Date(session.createdAt) : undefined,
       updatedAt: session.updatedAt ? new Date(session.updatedAt) : new Date(),
+      projectId: session.projectId,
+      createdBy: session.createdBy,
+      reviewRequestedAt: session.reviewRequestedAt ? new Date(session.reviewRequestedAt) : undefined,
+      approvedAt: session.approvedAt ? new Date(session.approvedAt) : undefined,
       apiToolType: session.toolType,
     };
   }, []);
@@ -653,7 +696,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                 : i.axis === 'digital'
                   ? 'digital'
                   : 'strategic') as ToolCategory,
-            status: 'draft' as ItemStatus,
+            status: mapStatusToUppercase(String(i.status || 'DRAFT')),
             progress: i.progress || 0,
             updatedAt: i.updatedAt ? new Date(i.updatedAt) : new Date(),
             apiToolType: 'initiative',
@@ -699,16 +742,153 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     trackFunnelEvent('tools_hub_opened', { module: 'tools' });
   }, []);
 
+  // Fetch initiative details with tasks (used by preview + full open)
+  const fetchInitiativeDetails = useCallback(async (initiativeId: string) => {
+    setIsLoadingInitiative(true);
+    try {
+      // Fetch initiative details
+      const initiative = await Api.getInitiativeById(initiativeId);
+      setSelectedInitiative({
+        id: initiative.id,
+        name: initiative.name || initiative.title || 'Untitled',
+        title: initiative.title,
+        description: initiative.description,
+        summary: initiative.summary,
+        status: initiative.status,
+        priority: initiative.priority,
+        axis: initiative.axis,
+        costCapex: initiative.costCapex || initiative.cost_capex,
+        costOpex: initiative.costOpex || initiative.cost_opex,
+        expectedRoi: initiative.expectedRoi || initiative.expected_roi,
+        ownerBusinessId: initiative.ownerBusinessId || initiative.owner_business_id,
+        ownerExecutionId: initiative.ownerExecutionId || initiative.owner_execution_id,
+        ownerBusiness: initiative.ownerBusiness,
+        ownerExecution: initiative.ownerExecution,
+        plannedStartDate: initiative.plannedStartDate || initiative.planned_start_date,
+        plannedEndDate: initiative.plannedEndDate || initiative.planned_end_date,
+        tasks: initiative.tasks || [],
+        sourceType: initiative.sourceType || initiative.source_type,
+        sourceId: initiative.sourceId || initiative.source_id,
+      });
+
+      // Fetch tasks for this initiative
+      try {
+        const tasks = await Api.getInitiativeTasks(initiativeId);
+        setInitiativeTasks(
+          tasks.map((t: any) => ({
+            id: t.id,
+            title: t.title || t.name,
+            status: t.status || 'TODO',
+            priority: t.priority || 'MEDIUM',
+            assigneeId: t.assigneeId || t.assignee_id,
+            assigneeName: t.assignee?.firstName
+              ? `${t.assignee.firstName} ${t.assignee.lastName}`
+              : undefined,
+            dueDate: t.dueDate || t.due_date,
+            estimatedHours: t.estimatedHours || t.estimated_hours,
+          }))
+        );
+      } catch {
+        setInitiativeTasks([]);
+      }
+    } catch (error) {
+      console.error('[DiscoveryToolsHub] Failed to fetch initiative details:', error);
+      toast.error('Failed to load initiative details');
+    } finally {
+      setIsLoadingInitiative(false);
+    }
+  }, []);
+
+  const submitInitiativeForReviewById = useCallback(
+    async (initiativeId: string) => {
+      const id = String(initiativeId || '').trim();
+      if (!id) return;
+      try {
+        await Api.patch(`/initiatives/${id}/status`, { status: 'REVIEW' });
+        toast.success(isPolish ? 'Wysłano inicjatywę do review' : 'Initiative submitted for review', {
+          duration: 2000,
+        });
+        await fetchData(true);
+        await fetchInitiativeDetails(id);
+      } catch (error: any) {
+        toast.error(
+          error?.response?.data?.error ||
+            (isPolish ? 'Nie udało się wysłać do review' : 'Failed to submit for review')
+        );
+      }
+    },
+    [fetchData, fetchInitiativeDetails, isPolish]
+  );
+
   // Reset status filter when tab changes
   useEffect(() => {
     setStatusFilter('all');
+    setPreviewItemId(null);
+    setPreviewFullSession(null);
+    setPreviewFullLoading(false);
+    setInitiativeDetailsExpanded(false);
+    setIsAddMenuOpen(false);
+    setAddMenuCategory('all');
+    setAddMenuQuery('');
   }, [activeTab]);
+
+  // KANON: entering full view or switching away from table should close preview.
+  useEffect(() => {
+    if (activeDocumentId) setPreviewItemId(null);
+  }, [activeDocumentId]);
+
+  useEffect(() => {
+    if (viewMode !== 'table') setPreviewItemId(null);
+  }, [viewMode]);
+
+  // Tools → Initiatives: preview needs richer data (owners/tasks), so fetch on selection.
+  useEffect(() => {
+    if (activeTab !== 'initiatives') return;
+    if (!previewItemId) return;
+    setInitiativeDetailsExpanded(false);
+    void fetchInitiativeDetails(previewItemId);
+  }, [activeTab, fetchInitiativeDetails, previewItemId]);
+
+  // Tools → Sessions/Outputs: fetch full tool session for canonical preview.
+  useEffect(() => {
+    const shouldFetch =
+      Boolean(previewItemId) && (activeTab === 'sessions' || activeTab === 'outputs' || activeTab === 'reports');
+    if (!shouldFetch) {
+      setPreviewFullSession(null);
+      setPreviewFullLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setPreviewFullSession(null);
+    setPreviewFullLoading(true);
+    Api.getToolSession(String(previewItemId))
+      .then((res) => {
+        if (cancelled) return;
+        setPreviewFullSession(res || null);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setPreviewFullSession(null);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setPreviewFullLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, previewItemId]);
 
   // Close status dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
         setIsStatusDropdownOpen(false);
+      }
+      if (viewDropdownRef.current && !viewDropdownRef.current.contains(event.target as Node)) {
+        setIsViewDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -767,22 +947,6 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     [discoveries.length, reports.length, initiatives.length, knownTools.length, t]
   );
 
-  // Category buttons
-  const categoryButtons: CategoryButton[] = useMemo(() => {
-    return Object.entries(CATEGORY_META).map(([key, meta]) => ({
-      id: key,
-      label: meta.name,
-      icon: meta.icon,
-      count: meta.count,
-      onClick: () => {
-        console.log('Open category:', key);
-        setSelectedCategory((prev) =>
-          prev === (key as ToolCategory) ? null : (key as ToolCategory)
-        );
-      },
-    }));
-  }, []);
-
   // Table columns
   const discoveryColumns: TableColumn[] = useMemo(
     () => [
@@ -812,7 +976,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         id: 'name',
         label: 'Name',
         render: (row) => (
-          <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>
+          <div className="min-w-0">
+            <span className="block text-sm text-slate-900 dark:text-white font-medium truncate">
+              {row.name}
+            </span>
+          </div>
         ),
       },
       {
@@ -864,21 +1032,28 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     () => [
       {
         id: 'name',
-        label: 'Tool',
+        label: t('tools.hub.table.tool', 'Tool'),
         render: (row) => (
           <div className="min-w-0">
-            <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
-              {row.name}
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-              {row.description}
+            <div className="flex items-center gap-2 min-w-0">
+              <div
+                className="text-sm font-medium text-slate-900 dark:text-white truncate"
+                title={row.name}
+              >
+                {row.name}
+              </div>
+              {row.isComingSoon ? (
+                <span className="shrink-0 inline-flex items-center h-6 px-2 rounded-full text-[11px] border border-slate-200/70 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300">
+                  {t('common.comingSoon', 'Coming soon')}
+                </span>
+              ) : null}
             </div>
           </div>
         ),
       },
       {
         id: 'libraryCategory',
-        label: 'Category',
+        label: t('tools.hub.table.category', 'Category'),
         width: '140px',
         filterable: true,
         filterOptions: Object.entries(CATEGORY_META).map(([key, meta]) => ({
@@ -897,7 +1072,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       },
       {
         id: 'tags',
-        label: 'Tags',
+        label: t('tools.hub.table.tags', 'Tags'),
         render: (row) => (
           <div className="flex flex-wrap gap-1">
             {(row.tags || []).slice(0, 4).map((tag: string) => (
@@ -916,12 +1091,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       },
       {
         id: 'license',
-        label: 'License',
+        label: t('tools.hub.table.license', 'License'),
         width: '110px',
         filterable: true,
         filterOptions: [
-          { value: 'licensed', label: 'Licensed' },
-          { value: 'free', label: 'Free' },
+          { value: 'licensed', label: t('tools.hub.license.licensed', 'Licensed') },
+          { value: 'free', label: t('tools.hub.license.free', 'Free') },
         ],
         render: (row) => (
           <span
@@ -929,12 +1104,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
               row.isLicensed ? 'text-amber-500' : 'text-emerald-500'
             }`}
           >
-            {row.isLicensed ? 'Licensed' : 'Free'}
+            {row.isLicensed
+              ? t('tools.hub.license.licensed', 'Licensed')
+              : t('tools.hub.license.free', 'Free')}
           </span>
         ),
       },
     ],
-    []
+    [t]
   );
 
   // Columns for Initiatives tab
@@ -942,27 +1119,24 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     () => [
       {
         id: 'name',
-        label: 'Initiative',
+        label: t('tools.hub.initiatives.columns.initiative', 'Initiative'),
         render: (row) => (
-          <div>
-            <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>
-            {row._fullData?.description && (
-              <p className="text-xs text-slate-500 truncate max-w-xs">
-                {row._fullData.description}
-              </p>
-            )}
+          <div className="min-w-0">
+            <span className="block text-sm text-slate-900 dark:text-white font-medium truncate">
+              {row.name}
+            </span>
           </div>
         ),
       },
       {
         id: 'category',
-        label: 'Axis',
+        label: t('tools.hub.initiatives.columns.axis', 'Axis'),
         width: '120px',
         filterable: true,
         filterOptions: [
-          { value: 'strategic', label: 'Strategic' },
-          { value: 'operational', label: 'Operational' },
-          { value: 'digital', label: 'Digital' },
+          { value: 'strategic', label: t('tools.axis.strategic', 'Strategic') },
+          { value: 'operational', label: t('tools.axis.operational', 'Operational') },
+          { value: 'digital', label: t('tools.axis.digital', 'Digital') },
         ],
         render: (row) => {
           const axisColors: Record<string, string> = {
@@ -981,7 +1155,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       },
       {
         id: 'priority',
-        label: 'Priority',
+        label: t('tools.hub.initiatives.columns.priority', 'Priority'),
         width: '100px',
         render: (row) => {
           const priority = row._fullData?.priority || 'MEDIUM';
@@ -993,7 +1167,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
           };
           return (
             <span
-              className={`px-2 py-0.5 text-xs font-medium rounded ${priorityColors[priority] || priorityColors.MEDIUM}`}
+              className={`px-2 py-0.5 text-[11px] font-medium rounded-full ${
+                priorityColors[priority] || priorityColors.MEDIUM
+              }`}
             >
               {priority}
             </span>
@@ -1002,13 +1178,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       },
       {
         id: 'status',
-        label: 'Status',
+        label: t('tools.hub.initiatives.columns.status', 'Status'),
         width: '100px',
-        render: () => (
-          <span className="px-2 py-0.5 text-xs font-medium rounded bg-slate-500/20 text-slate-400">
-            DRAFT
-          </span>
-        ),
       },
       {
         id: 'roi',
@@ -1025,7 +1196,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       },
       {
         id: 'tasks',
-        label: 'Tasks',
+        label: t('tools.hub.initiatives.columns.tasks', 'Tasks'),
         width: '80px',
         render: (row) => {
           const taskCount = row._fullData?.tasks?.length || 0;
@@ -1039,70 +1210,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       },
       {
         id: 'updatedAt',
-        label: 'Updated',
+        label: t('tools.hub.initiatives.columns.updated', 'Updated'),
         width: '120px',
         sortable: true,
       },
     ],
-    []
+    [t]
   );
-
-  // Fetch initiative details with tasks
-  const fetchInitiativeDetails = useCallback(async (initiativeId: string) => {
-    setIsLoadingInitiative(true);
-    try {
-      // Fetch initiative details
-      const initiative = await Api.getInitiativeById(initiativeId);
-      setSelectedInitiative({
-        id: initiative.id,
-        name: initiative.name || initiative.title || 'Untitled',
-        title: initiative.title,
-        description: initiative.description,
-        summary: initiative.summary,
-        status: initiative.status,
-        priority: initiative.priority,
-        axis: initiative.axis,
-        costCapex: initiative.costCapex || initiative.cost_capex,
-        costOpex: initiative.costOpex || initiative.cost_opex,
-        expectedRoi: initiative.expectedRoi || initiative.expected_roi,
-        ownerBusinessId: initiative.ownerBusinessId || initiative.owner_business_id,
-        ownerExecutionId: initiative.ownerExecutionId || initiative.owner_execution_id,
-        ownerBusiness: initiative.ownerBusiness,
-        ownerExecution: initiative.ownerExecution,
-        plannedStartDate: initiative.plannedStartDate || initiative.planned_start_date,
-        plannedEndDate: initiative.plannedEndDate || initiative.planned_end_date,
-        tasks: initiative.tasks || [],
-        sourceType: initiative.sourceType || initiative.source_type,
-        sourceId: initiative.sourceId || initiative.source_id,
-      });
-
-      // Fetch tasks for this initiative
-      try {
-        const tasks = await Api.getInitiativeTasks(initiativeId);
-        setInitiativeTasks(
-          tasks.map((t: any) => ({
-            id: t.id,
-            title: t.title || t.name,
-            status: t.status || 'TODO',
-            priority: t.priority || 'MEDIUM',
-            assigneeId: t.assigneeId || t.assignee_id,
-            assigneeName: t.assignee?.firstName
-              ? `${t.assignee.firstName} ${t.assignee.lastName}`
-              : undefined,
-            dueDate: t.dueDate || t.due_date,
-            estimatedHours: t.estimatedHours || t.estimated_hours,
-          }))
-        );
-      } catch {
-        setInitiativeTasks([]);
-      }
-    } catch (error) {
-      console.error('[DiscoveryToolsHub] Failed to fetch initiative details:', error);
-      toast.error('Failed to load initiative details');
-    } finally {
-      setIsLoadingInitiative(false);
-    }
-  }, []);
 
   // Handlers
   const handleOpenDocument = useCallback(
@@ -1274,15 +1388,98 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     setActiveFilters([]);
   }, []);
 
+  const createAndOpenToolSession = useCallback(
+    async (params: { toolType: string; name?: string; source?: 'add_menu' | 'library' }) => {
+      const toolType = String(params.toolType || '').trim();
+      if (!toolType) return;
+      try {
+        const sessionName =
+          String(params.name || '').trim() ||
+          `${toolType} — ${isPolish ? 'Sesja' : 'Session'}`;
+        const created = await Api.createToolSession({
+          toolType,
+          name: sessionName,
+          projectId: currentProjectId ?? null,
+        });
+        handleOpenDocument({
+          id: created.id,
+          name: sessionName,
+          status: created.status || 'DRAFT',
+          apiToolType: toolType,
+          toolType,
+        });
+        trackFunnelEvent('tool_session_started_from_library', {
+          toolType,
+          source: params.source || 'add_menu',
+        });
+        await fetchData(true);
+        toast.success(t('tools.hub.toast.sessionCreated', 'Session created'));
+      } catch {
+        toast.error(t('tools.hub.toast.sessionCreateError', 'Failed to create tool session'));
+      }
+    },
+    [currentProjectId, fetchData, handleOpenDocument, isPolish, t]
+  );
+
   const handleRowAction = useCallback(
     (action: string, row: any) => {
       if (action === 'view' || action === 'edit') {
         handleOpenDocument(row);
       } else if (action === 'preview') {
         setPreviewItemId(row.id);
+      } else if (action === 'library_open_full') {
+        handleOpenKnownTool(row);
+      } else if (action === 'library_start_session') {
+        const toolType = String(row?.toolType || '').trim();
+        if (!toolType) return;
+        if (row?.isComingSoon) return;
+        void createAndOpenToolSession({
+          toolType,
+          name: `${row?.name || toolType} — ${isPolish ? 'Sesja' : 'Session'}`,
+          source: 'library',
+        });
+      } else if (action === 'library_chat') {
+        const toolType = String(row?.toolType || '').trim();
+        if (!toolType) return;
+        (async () => {
+          try {
+            const convId = await openChatWithContext({
+              entityType: 'tool',
+              entityId: toolType,
+              entityName: row?.name || toolType,
+              contextData: {
+                toolType,
+                category: row?.libraryCategory,
+                isLicensed: !!row?.isLicensed,
+                tags: row?.tags || [],
+                whatYouGet: row?.whatYouGet || [],
+                description: row?.description || '',
+              },
+            });
+            await addChatMessage({
+              conversationId: convId,
+              role: 'user',
+              content: isPolish
+                ? `Wyjaśnij, kiedy użyć tego narzędzia („${row?.name || toolType}”), jakie są typowe pułapki oraz jakie deliverables powinienem otrzymać.`
+                : `Explain when to use this tool (“${row?.name || toolType}”), typical pitfalls, and what deliverables I should expect.`,
+            } as any);
+            toast.success(t('tools.hub.toast.chatOpened', 'Chat opened'), { duration: 1500 });
+          } catch (e) {
+            toast.error(t('tools.hub.toast.chatOpenError', 'Failed to open chat'));
+          }
+        })();
       }
     },
-    [handleOpenDocument]
+    [
+      activeTab,
+      addChatMessage,
+      createAndOpenToolSession,
+      handleOpenDocument,
+      handleOpenKnownTool,
+      isPolish,
+      openChatWithContext,
+      t,
+    ]
   );
 
   // Get current data based on tab
@@ -1340,9 +1537,6 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
 
   const filteredKnownTools = useMemo(() => {
     let data = knownTools.slice();
-    if (selectedCategory) {
-      data = data.filter((t) => t.libraryCategory === selectedCategory);
-    }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       data = data.filter(
@@ -1354,7 +1548,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       );
     }
     return data;
-  }, [knownTools, searchQuery, selectedCategory]);
+  }, [knownTools, searchQuery]);
 
   const libraryGridItems: GridItem[] = useMemo(() => {
     return filteredKnownTools.map((tool) => ({
@@ -1878,6 +2072,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
             <ToolDocumentView
               toolType={toolType}
               sessionId={doc.id}
+              autoExportPdf={doc.id === autoExportPdfForId}
+              onAutoExportPdfConsumed={() => setAutoExportPdfForId(null)}
               onBack={handleShowList}
               onOpenInitiative={(initiativeId) => {
                 // Open initiative in the same hub
@@ -1930,15 +2126,45 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       }
 
       return (
-        <FilterableTable
-          columns={libraryColumns}
-          data={filteredKnownTools}
-          onRowClick={handleOpenKnownTool}
-          onRowAction={handleRowAction}
-          activeFilters={activeFilters}
-          onFilterChange={setActiveFilters}
-          emptyMessage={t('tools.hub.empty.library', 'No tools available.')}
-        />
+        <div className="h-full overflow-hidden">
+          <FilterableTable
+            columns={libraryColumns}
+            data={filteredKnownTools}
+            onRowClick={handleOpenKnownTool}
+            onRowDoubleClick={handleOpenKnownTool}
+            onRowAction={handleRowAction}
+            getRowActions={(row) =>
+              [
+                {
+                  id: 'open',
+                  label: t('common.open', 'Open'),
+                  icon: ExternalLink,
+                  variant: 'primary',
+                  onClick: () => handleRowAction('library_open_full', row),
+                },
+                {
+                  id: 'start',
+                  label: isPolish ? 'Rozpocznij sesję' : 'Start session',
+                  icon: Play,
+                  disabled: !!(row as any)?.isComingSoon,
+                  onClick: () => handleRowAction('library_start_session', row),
+                },
+                {
+                  id: 'chat',
+                  label: isPolish ? 'Czat' : 'Chat',
+                  icon: MessageSquare,
+                  divider: true,
+                  onClick: () => handleRowAction('library_chat', row),
+                },
+              ] as RowAction[]
+            }
+            activeFilters={activeFilters}
+            onFilterChange={setActiveFilters}
+            emptyMessage={t('tools.hub.empty.library', 'No tools available.')}
+            canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+            density="compact"
+          />
+        </div>
       );
     }
 
@@ -1965,38 +2191,812 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         ? 'No outputs yet. Finalize a tool session to generate reports and presentations.'
         : 'No active sessions. Start a tool from the Library to begin.';
 
+    type ToolsPreviewItem = DisplayItem & { title: string };
+
+    const selectedRow = previewItemId ? currentData.find((d: any) => d.id === previewItemId) : null;
+    const selectedItem: ToolsPreviewItem | null = selectedRow
+      ? ({ ...selectedRow, title: selectedRow.name } as ToolsPreviewItem)
+      : null;
+
+    const itemIds = currentData.map((d) => d.id);
+
     return (
-      <FilterableTable
-        columns={columns}
-        data={currentData}
-        onRowClick={(row) => setPreviewItemId(row.id)}
-        onRowDoubleClick={handleOpenDocument}
-        onRowAction={handleRowAction}
-        activeFilters={activeFilters}
-        onFilterChange={setActiveFilters}
-        emptyMessage={emptyMessage}
-      />
+      <div className="h-full overflow-hidden">
+        <TableWithPreviewLayout<ToolsPreviewItem>
+          selectedId={previewItemId}
+          selectedItem={selectedItem}
+          onSelect={setPreviewItemId}
+          itemIds={itemIds}
+          onOpenFull={(id) => {
+            const row = currentData.find((d) => d.id === id);
+            if (row) handleOpenDocument(row);
+          }}
+          renderKicker={(item) =>
+            isInitiativesTab
+              ? isPolish
+                ? 'Inicjatywa'
+                : 'Initiative'
+              : getToolCategoryLabel(String(item.apiToolType || ''), isPolish)
+          }
+          renderPreview={(item) => {
+            if (!isInitiativesTab) {
+              return (
+                <ToolSessionPreviewV3Body
+                  itemName={item.name}
+                  itemToolType={String(item.apiToolType || item.toolType || '')}
+                  status={String(item.status || '')}
+                  progress={item.progress}
+                  createdAt={item.createdAt}
+                  updatedAt={item.updatedAt}
+                  details={(previewFullSession as ToolSessionPreviewDetails | null) || null}
+                  detailsLoading={previewFullLoading}
+                />
+              );
+            }
+
+            const init =
+              selectedInitiative && selectedInitiative.id === item.id
+                ? selectedInitiative
+                : ((item as any)?._fullData as any) || {};
+
+            const status = String(init?.status || item.status || '').toUpperCase() || 'DRAFT';
+            const axis = String(init?.axis || (item as any)?.category || '').trim();
+            const priority = String(init?.priority || '').trim();
+            const progress = Number.isFinite(item.progress as any) ? (item.progress as any) : null;
+
+            const createdAt = init?.createdAt || init?.created_at || (item as any)?.createdAt;
+            const updatedAt = init?.updatedAt || init?.updated_at || item.updatedAt;
+            const fmtDate = (value: any) => {
+              if (!value) return '—';
+              const d = value instanceof Date ? value : new Date(value);
+              if (Number.isNaN(d.getTime())) return '—';
+              return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+            };
+
+            const detailsText = String(init?.summary || init?.description || '').trim();
+
+            const detailsMenu: RowAction[] = [
+              {
+                id: 'toggle',
+                label: initiativeDetailsExpanded
+                  ? isPolish
+                    ? 'Zwiń'
+                    : 'Collapse'
+                  : isPolish
+                    ? 'Rozwiń'
+                    : 'Expand',
+                onClick: () => setInitiativeDetailsExpanded((v) => !v),
+              },
+              {
+                id: 'summarize',
+                label: isPolish ? 'Podsumuj' : 'Summarize',
+                onClick: async () => {
+                  try {
+                    const convId = await openChatWithContext({
+                      entityType: 'initiative',
+                      entityId: item.id,
+                      entityName: item.name,
+                      contextData: init,
+                      pmoContext: { initiativeIds: [item.id] },
+                    });
+                    await addChatMessage({
+                      conversationId: convId,
+                      role: 'user',
+                      content: isPolish
+                        ? 'Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki.'
+                        : 'Summarize this initiative in 5 bullets and propose 3 next steps.',
+                    } as any);
+                    toast.success(t('tools.hub.toast.chatOpened', 'Chat opened'), { duration: 1500 });
+                  } catch {
+                    toast.error(t('tools.hub.toast.chatOpenError', 'Failed to open chat'));
+                  }
+                },
+              },
+              {
+                id: 'copy',
+                label: isPolish ? 'Kopiuj' : 'Copy',
+                divider: true,
+                onClick: async () => {
+                  try {
+                    await navigator.clipboard.writeText([item.name, '', detailsText].filter(Boolean).join('\n'));
+                    toast.success(isPolish ? 'Skopiowano' : 'Copied');
+                  } catch {
+                    toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+                  }
+                },
+              },
+            ];
+
+            const metaPill = (label: string, value: string) => (
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200">
+                <span className="text-slate-500 dark:text-slate-400">{label}</span>
+                <span className="text-slate-900 dark:text-white">{value}</span>
+              </span>
+            );
+
+            const statusPill = (value: string) => (
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-slate-200">
+                {value.replace(/_/g, ' ')}
+              </span>
+            );
+
+            return (
+              <div className="space-y-4">
+                {/* Brief/meta card — mirrors MyWork rhythm */}
+                <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-slate-200">
+                      {isPolish ? 'Inicjatywa' : 'Initiative'}
+                    </span>
+                    <div className="flex flex-wrap items-center justify-end gap-1.5">
+                      {statusPill(status)}
+                      {progress != null ? metaPill(isPolish ? 'Postęp' : 'Progress', `${progress}%`) : null}
+                      {axis ? metaPill(isPolish ? 'Oś' : 'Axis', axis) : null}
+                      {priority ? metaPill(isPolish ? 'Pilność' : 'Priority', priority) : null}
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <div className="text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Utworzono' : 'Created'}
+                      </div>
+                      <div className="text-slate-900 dark:text-white">{fmtDate(createdAt)}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Ostatnia zmiana' : 'Last modified'}
+                      </div>
+                      <div className="text-slate-900 dark:text-white">{fmtDate(updatedAt)}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {isPolish ? 'Szczegóły' : 'Details'}
+                    </div>
+                    <RowActionsMenu iconVariant="vertical" actions={detailsMenu} />
+                  </div>
+
+                  <div
+                    className={[
+                      'text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap',
+                      initiativeDetailsExpanded ? '' : 'line-clamp-6',
+                    ].join(' ')}
+                  >
+                    {detailsText || (isPolish ? 'Brak opisu.' : 'No description.')}
+                  </div>
+                </div>
+              </div>
+            );
+          }}
+          renderPreviewFooter={(item) => {
+            if (isInitiativesTab) {
+              const init =
+                selectedInitiative && selectedInitiative.id === item.id
+                  ? selectedInitiative
+                  : ((item as any)?._fullData as any) || {};
+
+              const status = String(init?.status || item.status || '').toUpperCase() || 'DRAFT';
+              const hintChipClass =
+                'inline-flex items-center h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-500 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors active:scale-[0.98]';
+              const footerPillBase =
+                'inline-flex items-center justify-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+              const pillNeutral =
+                `${footerPillBase} border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
+              const pillPrimary =
+                `${footerPillBase} border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-300 hover:bg-primary-500/15`;
+
+              const openChat = async (promptText: string) => {
+                try {
+                  const convId = await openChatWithContext({
+                    entityType: 'initiative',
+                    entityId: item.id,
+                    entityName: item.name,
+                    contextData: init,
+                    pmoContext: { initiativeIds: [item.id] },
+                  });
+                  await addChatMessage({ conversationId: convId, role: 'user', content: promptText } as any);
+                  toast.success(t('tools.hub.toast.chatOpened', 'Chat opened'), { duration: 1500 });
+                } catch {
+                  toast.error(t('tools.hub.toast.chatOpenError', 'Failed to open chat'));
+                }
+              };
+
+              const aiHints = isPolish
+                ? [
+                    { label: 'Kolejne kroki', prompt: 'Zaproponuj 3 kolejne kroki dla tej inicjatywy.' },
+                    { label: 'Ryzyka', prompt: 'Wypisz 5 ryzyk i propozycje mitigacji dla tej inicjatywy.' },
+                    { label: 'Zakres', prompt: 'Ułóż krótki zakres i kryteria sukcesu dla tej inicjatywy.' },
+                  ]
+                : [
+                    { label: 'Next steps', prompt: 'Propose 3 next steps for this initiative.' },
+                    { label: 'Risks', prompt: 'List 5 risks and mitigations for this initiative.' },
+                    { label: 'Scope', prompt: 'Draft a short scope and success criteria for this initiative.' },
+                  ];
+
+              const aiMenu: RowAction[] = [
+                {
+                  id: 'regenerate',
+                  label: isPolish ? 'Regeneruj' : 'Regenerate',
+                  onClick: () =>
+                    openChat(
+                      isPolish
+                        ? 'Wygeneruj 3 szybkie hinty (co zrobić / na co uważać / jak mierzyć).'
+                        : 'Generate 3 quick hints (what to do / risks / how to measure).'
+                    ),
+                },
+                {
+                  id: 'copy-link',
+                  label: isPolish ? 'Kopiuj link' : 'Copy link',
+                  divider: true,
+                  onClick: async () => {
+                    try {
+                      const url = `${window.location.origin}${ROUTES.INITIATIVES}?open=${encodeURIComponent(item.id)}&mode=doc`;
+                      await navigator.clipboard.writeText(url);
+                      toast.success(isPolish ? 'Skopiowano link' : 'Link copied');
+                    } catch {
+                      toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+                    }
+                  },
+                },
+                {
+                  id: 'clear',
+                  label: isPolish ? 'Wyczyść' : 'Clear',
+                  onClick: () => {
+                    setInitiativeDetailsExpanded(false);
+                    toast.success(isPolish ? 'Wyczyściłem stan podglądu' : 'Preview state cleared', {
+                      duration: 1200,
+                    });
+                  },
+                },
+              ];
+
+              const relationsPill = (label: string, value: string, onClick?: () => void) => (
+                <button
+                  type="button"
+                  onClick={onClick}
+                  disabled={!onClick}
+                  className={[
+                    'inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border',
+                    'border-slate-200/70 dark:border-white/[0.08]',
+                    'bg-transparent',
+                    onClick
+                      ? 'text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors'
+                      : 'text-slate-500 dark:text-slate-400 cursor-default',
+                  ].join(' ')}
+                >
+                  <span className="text-slate-500 dark:text-slate-400">{label}</span>
+                  <span className="truncate max-w-[220px]">{value}</span>
+                </button>
+              );
+
+              const sourceType = String(init?.sourceType || init?.source_type || '').trim();
+              const sourceId = String(init?.sourceId || init?.source_id || '').trim();
+              const sourceLabel = sourceType
+                ? sourceId
+                  ? `${sourceType} · ${sourceId.slice(0, 8)}…`
+                  : sourceType
+                : '—';
+
+              return (
+                <div className="space-y-0">
+                  {/* AI zone (raised + more room like MyWork) */}
+                  <div className="py-1">
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                        <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
+                      </div>
+                      <RowActionsMenu iconVariant="vertical" actions={aiMenu} />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {aiHints.map((h) => (
+                        <button
+                          key={h.label}
+                          type="button"
+                          onClick={() => openChat(h.prompt)}
+                          className={hintChipClass}
+                        >
+                          {h.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                      {isPolish
+                        ? 'Użyj AI hintów w stopce, aby wygenerować brief.'
+                        : 'Use AI hints in the footer to generate a brief.'}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+
+                  {/* Relations (room for 2 rows) */}
+                  <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
+                    {relationsPill(
+                      isPolish ? 'Źródło' : 'Source',
+                      sourceLabel,
+                      sourceId ? () => void openDocumentById(sourceId) : undefined
+                    )}
+                    {relationsPill(
+                      isPolish ? 'Inicjatywy' : 'Initiatives',
+                      isPolish ? 'Otwórz' : 'Open',
+                      () =>
+                        navigate(`${ROUTES.INITIATIVES}?open=${encodeURIComponent(item.id)}&mode=doc`)
+                    )}
+                    {initiativeTasks?.length ? (
+                      relationsPill(isPolish ? 'Zadania' : 'Tasks', String(initiativeTasks.length))
+                    ) : null}
+                  </div>
+
+                  <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+
+                  {/* Actions — more buttons (initiative is “in motion”) */}
+                  <div className="space-y-2.5 py-1">
+                    <div className="flex gap-2 flex-wrap">
+                      <button type="button" onClick={() => handleOpenDocument(item)} className={pillPrimary}>
+                        <ExternalLink size={14} />
+                        {isPolish ? 'Otwórz' : 'Open'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate(`${ROUTES.INITIATIVES}?open=${encodeURIComponent(item.id)}&mode=doc`)
+                        }
+                        className={pillNeutral}
+                      >
+                        <ChevronRight size={14} />
+                        {isPolish ? 'W module' : 'In module'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openChat(
+                            isPolish
+                              ? 'Pomóż mi dopracować tę inicjatywę: brakujące pola, ryzyka, KPI i następne kroki.'
+                              : 'Help me refine this initiative: missing fields, risks, KPIs, and next steps.'
+                          )
+                        }
+                        className={pillNeutral}
+                      >
+                        <MessageSquare size={14} />
+                        {isPolish ? 'Czat' : 'Chat'}
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => submitInitiativeForReviewById(item.id)}
+                        disabled={status !== 'DRAFT'}
+                        className={`${pillNeutral} ${status !== 'DRAFT' ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        title={
+                          status !== 'DRAFT'
+                            ? isPolish
+                              ? 'Dostępne tylko dla DRAFT'
+                              : 'Available only for DRAFT'
+                            : undefined
+                        }
+                      >
+                        <ArrowRight size={14} />
+                        {isPolish ? 'Do review' : 'Review'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const url = `${window.location.origin}${ROUTES.INITIATIVES}?open=${encodeURIComponent(item.id)}&mode=doc`;
+                            await navigator.clipboard.writeText(url);
+                            toast.success(isPolish ? 'Skopiowano link' : 'Link copied');
+                          } catch {
+                            toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+                          }
+                        }}
+                        className={pillNeutral}
+                      >
+                        {isPolish ? 'Link' : 'Link'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await fetchData(true);
+                          await fetchInitiativeDetails(item.id);
+                        }}
+                        className={pillNeutral}
+                      >
+                        {isPolish ? 'Odśwież' : 'Refresh'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            const canResume =
+              activeTab === 'sessions' &&
+              ['DRAFT', 'PENDING_REVIEW', 'REVIEW'].includes(String(item.status || '').toUpperCase());
+            const showOpen = isOutputsTab;
+
+            const refreshFull = async () => {
+              try {
+                const refreshed = await Api.getToolSession(String(item.id));
+                setPreviewFullSession(refreshed || null);
+              } catch {
+                setPreviewFullSession(null);
+              }
+            };
+
+            return (
+              <ToolSessionPreviewV3Footer
+                details={(previewFullSession as ToolSessionPreviewDetails | null) || null}
+                detailsLoading={previewFullLoading}
+                canResume={canResume}
+                showOpen={showOpen}
+                onOpenFull={() => handleOpenDocument(item)}
+                onResume={() => handleOpenDocument(item)}
+                onRequestReview={async () => {
+                  try {
+                    await Api.requestToolReview(item.id, {});
+                    toast.success(isPolish ? 'Wysłano do review' : 'Sent for review');
+                    await fetchData(true);
+                    await refreshFull();
+                  } catch (e: any) {
+                    toast.error(e?.message || (isPolish ? 'Nie udało się wysłać do review' : 'Request review failed'));
+                  }
+                }}
+                onApprove={async () => {
+                  try {
+                    await Api.approveTool(item.id, {});
+                    toast.success(isPolish ? 'Zatwierdzono' : 'Approved');
+                    await fetchData(true);
+                    await refreshFull();
+                  } catch (e: any) {
+                    toast.error(e?.message || (isPolish ? 'Nie udało się zatwierdzić' : 'Approve failed'));
+                  }
+                }}
+                onSendBack={async () => {
+                  const comment = prompt(isPolish ? 'Powód odesłania:' : 'Reason for sending back:');
+                  if (!comment) return;
+                  try {
+                    await Api.sendToolBackToDraft(item.id, comment);
+                    toast.success(isPolish ? 'Odesłano do draftu' : 'Sent back to draft');
+                    await fetchData(true);
+                    await refreshFull();
+                  } catch (e: any) {
+                    toast.error(e?.message || (isPolish ? 'Nie udało się odesłać' : 'Send back failed'));
+                  }
+                }}
+                onOpenGenerateModal={() => setGenerateInitiativesForId(item.id)}
+              />
+            );
+          }}
+        >
+          <FilterableTable
+            columns={columns}
+            data={currentData}
+            onRowClick={(row) => setPreviewItemId(row.id)}
+            onRowDoubleClick={handleOpenDocument}
+            onRowAction={handleRowAction}
+            getRowActions={
+              isInitiativesTab
+                ? (row) => {
+                    const id = String(row?.id || '').trim();
+                    return [
+                      {
+                        id: 'open',
+                        label: isPolish ? 'Otwórz' : 'Open',
+                        icon: ExternalLink,
+                        variant: 'primary',
+                        onClick: () => handleOpenDocument(row),
+                      },
+                      {
+                        id: 'preview',
+                        label: t('common.preview', 'Preview'),
+                        icon: Eye,
+                        onClick: () => setPreviewItemId(id),
+                      },
+                      {
+                        id: 'open-initiatives',
+                        label: isPolish ? 'Otwórz w Inicjatywach' : 'Open in Initiatives',
+                        icon: ChevronRight,
+                        onClick: () =>
+                          navigate(`${ROUTES.INITIATIVES}?open=${encodeURIComponent(id)}&mode=doc`),
+                      },
+                      {
+                        id: 'chat',
+                        label: isPolish ? 'Czat' : 'Chat',
+                        icon: MessageSquare,
+                        divider: true,
+                        onClick: async () => {
+                          const init = (row as any)?._fullData || {};
+                          const convId = await openChatWithContext({
+                            entityType: 'initiative',
+                            entityId: id,
+                            entityName: String(row?.name || row?.title || '') || id,
+                            contextData: init,
+                            pmoContext: { initiativeIds: [id] },
+                          });
+                          await addChatMessage({
+                            conversationId: convId,
+                            role: 'user',
+                            content: isPolish
+                              ? 'Pomóż mi dopracować tę inicjatywę: brakujące pola, ryzyka, KPI i następne kroki.'
+                              : 'Help me refine this initiative: missing fields, risks, KPIs, and next steps.',
+                          } as any);
+                        },
+                      },
+                    ] as RowAction[];
+                  }
+                : undefined
+            }
+            activeFilters={activeFilters}
+            onFilterChange={setActiveFilters}
+            emptyMessage={emptyMessage}
+            canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+            density="compact"
+          />
+        </TableWithPreviewLayout>
+      </div>
     );
   };
 
-  // Status Filter Dropdown Component
+  const getStatusOptionLabel = useCallback(
+    (id: string, fallback: string) => {
+      const key = String(id || '').toLowerCase();
+      const dict: Record<string, string> = {
+        all: t('common.all', 'All'),
+        draft: t('common.draft', 'Draft'),
+        pending_review: t('common.pendingReview', 'Pending Review'),
+        approved: t('common.approved', 'Approved'),
+        completed: t('common.completed', 'Completed'),
+        proposed: t('common.proposed', 'Proposed'),
+        planned: t('common.planned', 'Planned'),
+        in_progress: t('common.inProgress', 'In Progress'),
+        cancelled: t('common.cancelled', 'Cancelled'),
+      };
+      return dict[key] || fallback;
+    },
+    [t]
+  );
+
+  // View tool (pill dropdown) — shown in Tools hub to match Golden Standard.
+  const ViewToolDropdown = (
+    <div ref={viewDropdownRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsViewDropdownOpen((v) => !v)}
+        className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-white/70 dark:bg-white/[0.04] border border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+        aria-expanded={isViewDropdownOpen}
+      >
+        {viewMode === 'grid' ? <Grid3X3 size={16} /> : <List size={16} />}
+        <span>{viewMode === 'grid' ? t('common.grid', 'Grid') : t('common.table', 'Table')}</span>
+        <ChevronDown
+          size={16}
+          className={`text-slate-400 transition-transform duration-200 ${isViewDropdownOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {isViewDropdownOpen && (
+        <div className="absolute top-full right-0 mt-1 z-50 min-w-[180px] py-1 bg-white dark:bg-navy-800 border border-slate-200/70 dark:border-white/[0.08] rounded-xl shadow-xl shadow-black/30">
+          {[
+            { id: 'table' as const, label: t('common.table', 'Table'), icon: <List size={16} /> },
+            { id: 'grid' as const, label: t('common.grid', 'Grid'), icon: <Grid3X3 size={16} /> },
+          ].map((opt) => {
+            const selected = viewMode === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => {
+                  setViewMode(opt.id);
+                  setIsViewDropdownOpen(false);
+                }}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors ${
+                  selected
+                    ? 'bg-primary-500/10 text-slate-900 dark:text-white'
+                    : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+                }`}
+              >
+                <span className="text-slate-500 dark:text-slate-400">{opt.icon}</span>
+                <span className="text-sm">{opt.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
+  const toolPickerCategories = useMemo(() => {
+    const items: Array<{ id: ToolCategory | 'all'; label: string; count?: number; icon?: React.ReactNode }> = [
+      { id: 'all', label: t('common.all', 'All') },
+      ...Object.entries(CATEGORY_META).map(([key, meta]) => ({
+        id: key as ToolCategory,
+        label: meta.name,
+        count: meta.count,
+        icon: meta.icon,
+      })),
+    ];
+    return items;
+  }, [t]);
+
+  const toolPickerItems = useMemo(() => {
+    const q = String(addMenuQuery || '').trim().toLowerCase();
+
+    const base = Object.entries(TOOL_META).map(([shortCode, meta]) => {
+      const toolType = SHORT_TO_TOOL_TYPE[String(shortCode || '').trim()];
+      return {
+        id: String(toolType || shortCode),
+        toolType: String(toolType || shortCode),
+        shortCode: String(meta.shortName || shortCode),
+        name: meta.name,
+        description: meta.description,
+        category: meta.category,
+        kind: 'tool' as const,
+      };
+    });
+
+    const catalog =
+      strategyCatalogSlugs.length > 0
+        ? strategyCatalogSlugs.map((slug) => ({
+            id: `catalog:${slug}`,
+            toolType: slug,
+            shortCode: slug,
+            name: titleFromSlug(slug),
+            description: isPolish ? 'Framework (docs-driven)' : 'Framework (docs-driven)',
+            category: 'strategic' as ToolCategory,
+            kind: 'catalog' as const,
+          }))
+        : [];
+
+    const all = [...base, ...catalog].filter((x) => Boolean(x.toolType));
+
+    return all
+      .filter((x) => (addMenuCategory === 'all' ? true : x.category === addMenuCategory))
+      .filter((x) => {
+        if (!q) return true;
+        return (
+          x.name.toLowerCase().includes(q) ||
+          x.shortCode.toLowerCase().includes(q) ||
+          x.toolType.toLowerCase().includes(q) ||
+          String(x.description || '').toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [addMenuCategory, addMenuQuery, isPolish, strategyCatalogSlugs, titleFromSlug]);
+
+  const PrimaryCta = (
+    <div ref={addMenuRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsAddMenuOpen((v) => !v)}
+        className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-hig-primary text-white hover:bg-hig-primary-hover transition-colors duration-150"
+        aria-expanded={isAddMenuOpen}
+      >
+        <Plus size={16} />
+        <span>{isPolish ? 'Dodaj' : t('common.add', 'Add')}</span>
+        <ChevronDown
+          size={16}
+          className={`text-white/80 transition-transform duration-200 ${isAddMenuOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {isAddMenuOpen ? (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsAddMenuOpen(false)} />
+          <div className="absolute right-0 top-full mt-2 z-50 w-[520px] max-w-[calc(100vw-24px)] rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-xl shadow-black/20 overflow-hidden">
+            <div className="p-3 border-b border-slate-200/60 dark:border-white/[0.06]">
+              <div className="relative">
+                <input
+                  value={addMenuQuery}
+                  onChange={(e) => setAddMenuQuery(e.target.value)}
+                  placeholder={isPolish ? 'Szukaj narzędzia…' : 'Search tools…'}
+                  className="w-full h-9 rounded-full px-4 pr-10 text-sm bg-slate-50 dark:bg-navy-950/70 border border-slate-200/70 dark:border-white/[0.06] text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                />
+                {addMenuQuery ? (
+                  <button
+                    type="button"
+                    onClick={() => setAddMenuQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                    aria-label={isPolish ? 'Wyczyść' : 'Clear'}
+                  >
+                    <X size={16} />
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="mt-2 flex flex-wrap gap-2">
+                {toolPickerCategories.map((c) => {
+                  const active = addMenuCategory === c.id;
+                  return (
+                    <button
+                      key={String(c.id)}
+                      type="button"
+                      onClick={() => setAddMenuCategory(c.id)}
+                      className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border transition-colors ${
+                        active
+                          ? 'border-primary-500/40 bg-primary-500/10 text-slate-900 dark:text-white'
+                          : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
+                      }`}
+                    >
+                      {c.icon ? <span className="text-slate-500 dark:text-slate-400">{c.icon}</span> : null}
+                      <span>{c.label}</span>
+                      {c.count != null ? (
+                        <span className="ml-1 px-1.5 py-0.5 rounded-full text-[11px] bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300">
+                          {c.count}
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="max-h-[60vh] overflow-auto p-2">
+              {toolPickerItems.length === 0 ? (
+                <div className="p-4 text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Brak wyników.' : 'No results.'}
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {toolPickerItems.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setIsAddMenuOpen(false);
+                        void createAndOpenToolSession({
+                          toolType: item.toolType,
+                          name: `${item.name} — ${isPolish ? 'Sesja' : 'Session'}`,
+                          source: 'add_menu',
+                        });
+                      }}
+                      className="w-full flex items-start gap-3 px-3 py-2 rounded-xl text-left hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+                    >
+                      <span className="mt-0.5 font-mono text-xs font-bold text-slate-500 dark:text-slate-400 w-12 truncate">
+                        {item.kind === 'catalog' ? 'DOCS' : item.shortCode}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                          {item.name}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                          {item.description}
+                        </div>
+                      </div>
+                      <span className="mt-0.5 text-slate-400">
+                        <ArrowRight size={16} />
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+
+  // Status Filter Dropdown Component (Filters — last in right cluster)
   const StatusFilterDropdown = (
     <div ref={statusDropdownRef} className="relative">
       <button
         onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
         className={`
-          flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
+          inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium
           border transition-all duration-200
           ${
             isStatusDropdownOpen
               ? 'bg-primary-500/15 border-primary-500 text-primary-400'
-              : 'bg-slate-50 dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 hover:border-slate-500 hover:text-slate-900 dark:hover:text-white'
+              : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
           }
         `}
       >
         <Filter size={16} className="text-slate-400" />
         <span className={`w-2 h-2 rounded-full ${selectedStatusOption.bgColor}`} />
-        <span>{selectedStatusOption.label}</span>
+        <span>{getStatusOptionLabel(selectedStatusOption.id, selectedStatusOption.label)}</span>
         <ChevronDown
           size={16}
           className={`text-slate-400 transition-transform duration-200 ${isStatusDropdownOpen ? 'rotate-180' : ''}`}
@@ -2025,7 +3025,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                 `}
               >
                 <span className={`w-2.5 h-2.5 rounded-full ${option.bgColor}`} />
-                <span className="flex-1 text-sm">{option.label}</span>
+                <span className="flex-1 text-sm">{getStatusOptionLabel(option.id, option.label)}</span>
                 {isSelected && (
                   <svg
                     className="w-4 h-4 text-primary-400"
@@ -2066,161 +3066,44 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        categoryButtons={categoryButtons}
-        rightControls={activeTab === 'library' ? undefined : StatusFilterDropdown}
+        primaryCta={PrimaryCta}
+        availableViewModes={['table']}
+        rightControls={
+          <div className="flex items-center gap-2">
+            {ViewToolDropdown}
+            {activeTab === 'library' ? null : StatusFilterDropdown}
+          </div>
+        }
       >
         {renderContent()}
       </ModuleHub>
 
-      {/* Preview Pane (V3 PreviewPaneShell standard) */}
-      {previewItemId && (() => {
-        const item = currentData.find((d: any) => d.id === previewItemId);
-        if (!item) return null;
-        return (
-          <div className="fixed right-0 top-0 bottom-0 w-[380px] z-40 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl overflow-y-auto">
-            <ToolSessionPreview
-              session={{
-                id: item.id,
-                name: item.name || '—',
-                toolType: item.toolType || item.apiToolType || '',
-                status: item.status,
-                progress: item.progress,
-                createdAt: (item as any).createdAt ? String((item as any).createdAt) : undefined,
-                updatedAt: (item as any).updatedAt ? String((item as any).updatedAt) : undefined,
-              }}
-              onOpen={() => { handleOpenDocument(item); setPreviewItemId(null); }}
-              onResume={() => { handleOpenDocument(item); setPreviewItemId(null); }}
-              onClose={() => setPreviewItemId(null)}
-            />
-          </div>
-        );
-      })()}
-
-      {/* Tool Selection Modal */}
-      {selectedCategory && activeTab !== 'library' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-lg max-h-[80vh] overflow-auto">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-              {CATEGORY_META[selectedCategory].icon}
-              <span>{CATEGORY_META[selectedCategory].name} Tools</span>
-              <span className="text-slate-500 text-sm font-normal">
-                ({CATEGORY_META[selectedCategory].count})
-              </span>
-            </h2>
-            <div className="space-y-2">
-              {Object.entries(TOOL_META)
-                .filter(([_, meta]) => meta.category === selectedCategory)
-                .map(([key, meta]) => (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      const shortCode = String(key || '').trim();
-                      const toolType = SHORT_TO_TOOL_TYPE[shortCode];
-                      if (!toolType) {
-                        toast.error('Unknown tool type');
-                        return;
-                      }
-                      setSelectedCategory(null);
-                      (async () => {
-                        try {
-                          const created = await Api.createToolSession({
-                            toolType,
-                            name: `${meta.name} — Session`,
-                            projectId: currentProjectId ?? null,
-                          });
-                          handleOpenDocument({
-                            id: created.id,
-                            name: `${meta.name} — Session`,
-                            status: created.status || 'DRAFT',
-                            apiToolType: toolType,
-                          });
-                          trackFunnelEvent('tool_session_started_from_library', { toolType });
-                          fetchData(true);
-                        } catch (e) {
-                          toast.error('Failed to create tool session');
-                        }
-                      })();
-                    }}
-                    className={`
-                      flex items-center gap-3 w-full p-3 rounded-lg
-                      bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600
-                      hover:border-${CATEGORY_META[selectedCategory].color}-500/50 hover:bg-slate-100 dark:hover:bg-navy-700
-                      transition-all text-left
-                    `}
-                  >
-                    <span className="font-mono text-xs font-bold text-slate-500 dark:text-slate-400 w-8">
-                      {meta.shortName}
-                    </span>
-                    <div className="flex-1">
-                      <div className="text-slate-900 dark:text-white font-medium">{meta.name}</div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        {meta.description}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-
-              {/* Docs-driven frameworks catalog (Strategy only) */}
-              {selectedCategory === 'strategic' && strategyCatalogSlugs.length > 0 && (
-                <>
-                  <div className="my-4 border-t border-slate-200 dark:border-navy-700" />
-                  <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide px-1">
-                    Framework catalog (docs-driven)
-                  </div>
-                  <div className="text-xs text-slate-500 px-1 -mt-1">
-                    Starts a tool session with type = catalog slug, then opens a generic view with
-                    the full documentation.
-                  </div>
-                  {strategyCatalogSlugs.map((slug) => (
-                    <button
-                      key={slug}
-                      onClick={async () => {
-                        const name = titleFromSlug(slug);
-                        setSelectedCategory(null);
-                        try {
-                          const created = await Api.createToolSession({
-                            toolType: slug,
-                            name,
-                            projectId: currentProjectId ?? null,
-                          });
-                          handleOpenDocument({
-                            id: created.id,
-                            name,
-                            status: created.status || 'DRAFT',
-                            apiToolType: slug,
-                            toolType: slug,
-                          });
-                        } catch (e) {
-                          toast.error('Failed to create tool session');
-                        }
-                      }}
-                      className="flex items-center gap-3 w-full p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 hover:bg-slate-100 dark:hover:bg-navy-700 transition-all text-left"
-                    >
-                      <span className="font-mono text-xs font-bold text-slate-500 dark:text-slate-400 w-12 truncate">
-                        {slug}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-slate-900 dark:text-white font-medium truncate">
-                          {titleFromSlug(slug)}
-                        </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                          Catalog tool · `wdrozenia/.../strategy/{slug}.md`
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </>
-              )}
-            </div>
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className="mt-4 w-full py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      {generateInitiativesForId ? (
+        <GenerateInitiativesModal
+          isPolish={isPolish}
+          defaults={generationDefaults}
+          onClose={() => setGenerateInitiativesForId(null)}
+          onGenerate={async (payload) => {
+            const toolId = generateInitiativesForId;
+            try {
+              setGenerationDefaults(payload);
+              await Api.generateToolInitiatives(toolId, payload);
+              toast.success(isPolish ? 'Wygenerowano inicjatywy' : 'Initiatives generated');
+              setGenerateInitiativesForId(null);
+              await fetchData(true);
+              // Refresh preview details if preview is open for this session
+              if (previewItemId === toolId) {
+                const refreshed = await Api.getToolSession(toolId);
+                setPreviewFullSession(refreshed || null);
+              }
+            } catch (e: any) {
+              toast.error(
+                e?.message || (isPolish ? 'Nie udało się wygenerować inicjatyw' : 'Generation failed')
+              );
+            }
+          }}
+        />
+      ) : null}
     </>
   );
 };

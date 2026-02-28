@@ -7,8 +7,7 @@
 
 import React from 'react';
 
-import { ActiveFilters, FilterChip } from './ActiveFilters';
-import { DynamicTabs } from './DynamicTabs';
+import { FilterChip } from './ActiveFilters';
 import { ModuleNavBar, StatusFilter } from './ModuleNavBar';
 import { CategoryButton, ModuleTab, OpenDocument, TabConfig, ViewMode } from './types';
 
@@ -43,6 +42,8 @@ interface ModuleHubProps {
   // Actions - Assessment style (single button)
   onNewItem?: () => void;
   newItemLabel?: string;
+  // Optional: custom Primary CTA node (keeps canonical slot in topbar)
+  primaryCta?: React.ReactNode;
 
   // Actions - Discovery Tools style (4 category buttons)
   categoryButtons?: CategoryButton[];
@@ -94,6 +95,7 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
   onClearFilters,
   onNewItem,
   newItemLabel,
+  primaryCta,
   categoryButtons,
   statusFilters,
   activeStatusFilter,
@@ -109,25 +111,6 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
   void persistViewModeKey;
   void filterActions;
 
-  // V3: Single Command Row under the topbar (module-hub-standard.md)
-  // Priority: dynamic tabs > active filters. (Search row lives inside ModuleNavBar.)
-  const commandRow =
-    openDocuments.length > 0 ? (
-      <DynamicTabs
-        documents={openDocuments}
-        activeDocumentId={activeDocumentId}
-        onSelectDocument={onSelectDocument}
-        onCloseDocument={onCloseDocument}
-        onShowList={onShowList}
-      />
-    ) : activeFilters.length > 0 ? (
-      <ActiveFilters
-        filters={activeFilters}
-        onRemoveFilter={onRemoveFilter}
-        onClearAll={onClearFilters}
-      />
-    ) : null;
-
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white">
       {/* Navigation Bar */}
@@ -138,8 +121,17 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
         viewMode={viewMode}
         onViewModeChange={onViewModeChange}
         onSearch={onSearch}
+        openDocuments={openDocuments}
+        activeDocumentId={activeDocumentId}
+        onSelectDocument={onSelectDocument}
+        onCloseDocument={onCloseDocument}
+        onShowList={onShowList}
+        activeFilters={activeFilters}
+        onRemoveFilter={onRemoveFilter}
+        onClearFilters={onClearFilters}
         onNewItem={onNewItem}
         newItemLabel={newItemLabel}
+        primaryCta={primaryCta}
         categoryButtons={categoryButtons}
         statusFilters={statusFilters}
         activeStatusFilter={activeStatusFilter}
@@ -149,9 +141,6 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
         availableViewModes={availableViewModes}
         rightControls={rightControls}
       />
-
-      {/* Command Row (dynamic tabs | active filters) */}
-      {commandRow}
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-auto">{children}</div>

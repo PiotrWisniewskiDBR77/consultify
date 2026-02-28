@@ -17,8 +17,10 @@ import {
   Inbox,
   Loader2,
   Minus,
+  MoreVertical,
   Pause,
   Plus,
+  Settings2,
   Square,
   Trash2,
   User,
@@ -29,8 +31,9 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { Modal } from '@/components/ui/primitives/Modal';
 import {
-  BulkActionBar,
   type ColumnDef,
   ColumnResizer,
   type ColumnWidths,
@@ -70,6 +73,30 @@ interface MyTasksListContentProps {
   onCreateTask: () => void;
   onCountsChange: (counts: TaskCounts) => void;
   refreshTrigger?: number;
+  /** V3-A03: command row override mode (bulk selection) */
+  onBulkBarChange?: (payload: {
+    selectedCount: number;
+    selectAllVisible: () => void;
+    clearSelection: () => void;
+    complete: () => void;
+    changePriority: () => void;
+    changeDueDate: () => void;
+    deleteSelected: () => void;
+  } | null) => void;
+}
+
+const TASK_TABLE_VIEW_STORAGE_KEY = 'consultinity-tasks-table-view';
+const TASK_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
+
+function loadTasksHiddenColumns(): string[] {
+  try {
+    const raw = localStorage.getItem(TASK_TABLE_VIEW_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.map((x) => String(x)) : [];
+  } catch {
+    return [];
+  }
 }
 
 // Priority colors — 5-color semantic palette
@@ -312,11 +339,6 @@ const rowVariants = {
   initial: { opacity: 0, y: 4 },
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, x: -10 },
-  hover: {
-    y: -2,
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-    transition: { duration: 0.2 },
-  },
 };
 
 // Inline cell dropdown for status/priority editing
@@ -388,12 +410,14 @@ const TaskTableRow: React.FC<{
   task: Task;
   isSelected: boolean;
   isFocused: boolean;
+  isPreviewed: boolean;
   isNew?: boolean;
   onSelect: (taskId: string) => void;
   onToggleComplete: (taskId: string, completed: boolean) => void;
   onSetStatus: (taskId: string, status: 'todo' | 'in_progress' | 'blocked' | 'completed') => void;
   onDelete: (taskId: string) => void;
-  onClick: (taskId: string, taskData?: Task) => void;
+  onPreview: (taskId: string, taskData?: Task) => void;
+  onOpenFull: (taskId: string, taskData?: Task) => void;
   onInlineEdit?: (taskId: string, field: string, value: string) => void;
   onTriageAccept?: (taskId: string) => void;
   onTriageSnooze?: (taskId: string) => void;
@@ -405,12 +429,14 @@ const TaskTableRow: React.FC<{
   task,
   isSelected,
   isFocused,
+  isPreviewed,
   isNew,
   onSelect,
   onToggleComplete,
   onSetStatus,
   onDelete,
-  onClick,
+  onPreview,
+  onOpenFull,
   onInlineEdit,
   onTriageAccept,
   onTriageSnooze,
@@ -439,15 +465,16 @@ const TaskTableRow: React.FC<{
       initial="initial"
       animate="animate"
       exit="exit"
-      whileHover="hover"
-      onClick={() => onClick(task.id, task)}
+      onClick={() => onPreview(task.id, task)}
+      onDoubleClick={() => onOpenFull(task.id, task)}
       className={`
-        group cursor-pointer border-b border-slate-200 dark:border-navy-700/50
+        group cursor-pointer border-b border-slate-200/70 dark:border-white/[0.06]
         ${isCompleted ? 'opacity-60' : ''}
         ${isSelected ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
-        ${isFocused ? 'ring-2 ring-primary-500/50 ring-inset bg-primary-50/50 dark:bg-primary-500/5' : ''}
+        ${isPreviewed ? 'ring-2 ring-cyan-400/30 ring-inset bg-cyan-50/30 dark:bg-cyan-500/5' : ''}
+        ${isFocused ? 'ring-2 ring-primary-500/35 ring-inset' : ''}
         transition-colors duration-150
-        hover:bg-slate-50 dark:hover:bg-navy-800/50
+        hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
       `}
     >
       {/* Select Checkbox */}
@@ -481,11 +508,12 @@ const TaskTableRow: React.FC<{
       {/* Task Title */}
       <td className="px-3 py-2.5 w-full" style={{ minWidth: 300 }}>
         <div className="flex flex-col">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 min-w-0">
             <span
               className={`text-sm font-medium ${
                 isCompleted ? 'line-through text-slate-500' : 'text-slate-900 dark:text-white'
-              }`}
+              } truncate`}
+              title={task.title}
             >
               {task.title}
             </span>
@@ -500,7 +528,9 @@ const TaskTableRow: React.FC<{
             )}
           </div>
           {task.projectName && (
-            <span className="text-xs text-slate-500 mt-0.5">{task.projectName}</span>
+            <span className="text-xs text-slate-500 mt-0.5 truncate" title={task.projectName}>
+              {task.projectName}
+            </span>
           )}
         </div>
       </td>
@@ -639,7 +669,7 @@ const TaskTableRow: React.FC<{
         <td className="px-3 py-2.5" style={{ width: columnWidths.assignee }}>
           <div className="flex items-center gap-2">
             {assigneeInitial ? (
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-[10px] font-medium text-white">
+              <div className="w-6 h-6 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] flex items-center justify-center text-[10px] font-semibold text-slate-600 dark:text-slate-200">
                 {assigneeInitial}
               </div>
             ) : (
@@ -673,14 +703,14 @@ const TaskTableRow: React.FC<{
                   id: 'view',
                   label: t('common.view', 'View'),
                   icon: Eye,
-                  onClick: () => onClick(task.id, task),
+                  onClick: () => onOpenFull(task.id, task),
                   variant: 'primary',
                 },
                 {
                   id: 'edit',
                   label: t('common.edit', 'Edit'),
                   icon: Edit,
-                  onClick: () => onClick(task.id, task),
+                  onClick: () => onOpenFull(task.id, task),
                 },
                 {
                   id: 'complete',
@@ -757,12 +787,22 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   onCreateTask,
   onCountsChange,
   refreshTrigger,
+  onBulkBarChange,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = i18n.language?.startsWith('pl');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [quickAddTitle, setQuickAddTitle] = useState('');
-  const [quickAdding, setQuickAdding] = useState(false);
+  const [previewTaskId, setPreviewTaskId] = useState<string | null>(null);
+
+  // Preview — details kebab + AI zone (Inbox parity)
+  const [detailsMenuOpen, setDetailsMenuOpen] = useState(false);
+  const [detailsOverride, setDetailsOverride] = useState<string | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [aiMenuOpen, setAiMenuOpen] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiText, setAiText] = useState<string | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   // Focus state: entity_id → focus column (today / thisWeek / later)
   // TODO: Wire to /api/my-work/focus/state when endpoint is available
@@ -786,12 +826,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
   // Hidden columns (persisted)
   const [hiddenColumns, setHiddenColumns] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('consultinity-hidden-columns');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
+    return loadTasksHiddenColumns();
   });
 
   const toggleColumn = useCallback((columnId: string) => {
@@ -799,7 +834,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
       const next = prev.includes(columnId)
         ? prev.filter((c) => c !== columnId)
         : [...prev, columnId];
-      localStorage.setItem('consultinity-hidden-columns', JSON.stringify(next));
+      localStorage.setItem(TASK_TABLE_VIEW_STORAGE_KEY, JSON.stringify(next));
       return next;
     });
   }, []);
@@ -816,6 +851,8 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   );
 
   const hiddenSet = useMemo(() => new Set(hiddenColumns), [hiddenColumns]);
+
+  const [isViewSettingsOpen, setIsViewSettingsOpen] = useState(false);
 
   // Smart sort toggle (persisted)
   const [smartSort, setSmartSort] = useState<boolean>(() => {
@@ -1295,6 +1332,45 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     onArchive: handleBulkArchive,
   });
 
+  // V3-A03: bulk selection lives as a mode of the single command row (parent)
+  useEffect(() => {
+    if (!onBulkBarChange) return;
+    if (selectedIds.size === 0) {
+      onBulkBarChange(null);
+      return;
+    }
+
+    onBulkBarChange({
+      selectedCount: selectedIds.size,
+      selectAllVisible: () => handleSelectAll(true),
+      clearSelection: handleClearSelection,
+      complete: handleBulkComplete,
+      changePriority: () => setBulkPriorityOpen(true),
+      changeDueDate: () => setBulkDateOpen(true),
+      deleteSelected: () => {
+        // Reuse existing confirmation flow
+        void (async () => {
+          const confirmed = await showConfirm({
+            title: t('myWork.personalTasks.bulkDeleteTitle', 'Delete selected tasks?'),
+            description: `${selectedIds.size} task(s) will be permanently deleted.`,
+            confirmLabel: t('common.delete', 'Delete'),
+            variant: 'danger',
+          });
+          if (confirmed) await handleBulkDelete();
+        })();
+      },
+    });
+  }, [
+    onBulkBarChange,
+    selectedIds.size,
+    handleSelectAll,
+    handleClearSelection,
+    handleBulkComplete,
+    handleBulkDelete,
+    showConfirm,
+    t,
+  ]);
+
   // Flat list of all visible tasks for keyboard navigation
   const flatTaskList = useMemo(() => {
     return groupedTasks.all;
@@ -1306,7 +1382,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
   // Keyboard shortcuts
   const { showHelp, setShowHelp } = useKeyboardShortcuts({
-    enabled: !loading,
+    enabled: !loading && !previewTaskId,
     onNavigateUp: () => {
       setFocusedIndex((prev) => Math.max(0, prev - 1));
     },
@@ -1437,6 +1513,93 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     return result;
   }, [groupedTasks, tableFilters, smartSort]);
 
+  const orderedTaskIds = useMemo(() => allFilteredTasks.map((t) => t.id), [allFilteredTasks]);
+
+  const previewTask = useMemo(
+    () => allFilteredTasks.find((t) => t.id === previewTaskId) || null,
+    [allFilteredTasks, previewTaskId]
+  );
+
+  useEffect(() => {
+    if (previewTaskId && !previewTask) setPreviewTaskId(null);
+  }, [previewTaskId, previewTask]);
+
+  useEffect(() => {
+    setDetailsMenuOpen(false);
+    setAiMenuOpen(false);
+    setAiLoading(false);
+    setAiError(null);
+    setAiText(null);
+    setDetailsLoading(false);
+    setDetailsOverride(null);
+  }, [previewTaskId]);
+
+  const runTaskAi = useCallback(
+    async (
+      intent:
+        | 'why_urgent'
+        | 'plan'
+        | 'who_can_help'
+        | 'expand_details'
+        | 'summarize_details',
+      task: Task
+    ) => {
+      try {
+        setAiLoading(true);
+        setAiError(null);
+        const language = isPolish ? 'pl' : 'en';
+        const resp = await Api.post('/my-work/tasks/ai-text', {
+          language,
+          intent,
+          task: {
+            title: task.title,
+            description: task.description || '',
+            status: task.status || '',
+            priority: task.priority || '',
+            dueDate: task.dueDate || '',
+            projectName: task.projectName || '',
+            initiativeName: task.initiativeName || '',
+          },
+        });
+        const text = String((resp as any)?.result?.text || '').trim();
+        if (!text) throw new Error('empty');
+        setAiText(text);
+        return text;
+      } catch (e: any) {
+        setAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+        return null;
+      } finally {
+        setAiLoading(false);
+      }
+    },
+    [isPolish]
+  );
+
+  const handleDetailsAction = useCallback(
+    async (action: 'expand' | 'summarize' | 'copy', task: Task) => {
+      const base = String(detailsOverride ?? task.description ?? '').trim();
+      if (action === 'copy') {
+        try {
+          await navigator.clipboard.writeText(base || task.title);
+          toast.success(isPolish ? 'Skopiowano' : 'Copied');
+        } catch {
+          toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+        }
+        return;
+      }
+
+      try {
+        setDetailsLoading(true);
+        const intent = action === 'expand' ? 'expand_details' : 'summarize_details';
+        const text = await runTaskAi(intent, task);
+        if (text) setDetailsOverride(text);
+      } finally {
+        setDetailsLoading(false);
+      }
+    },
+    [detailsOverride, isPolish, runTaskAi]
+  );
+
   if (loading) {
     return (
       <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
@@ -1451,156 +1614,385 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
-      <div className="flex-1 overflow-y-auto p-4">
-        {/* Quick add */}
-        <div className="mb-3">
-          <input
-            value={quickAddTitle}
-            onChange={(e) => setQuickAddTitle(e.target.value)}
-            onKeyDown={async (e) => {
-              if (e.key !== 'Enter') return;
-              const title = quickAddTitle.trim();
-              if (!title || quickAdding) return;
-              try {
-                setQuickAdding(true);
-                const created = await Api.createPersonalTask({ title });
-                setTasks((prev) => [created as Task, ...prev]);
-                setQuickAddTitle('');
-                trackFunnelEvent('personal_task_created', {
-                  source: 'quick_add',
-                  taskId: (created as any)?.id,
-                });
-                toast.success(t('myWork.personalTasks.created', 'Task created'));
-              } catch (err) {
-                console.error('Quick add failed', err);
-                toast.error(t('myWork.errors.createFailed', 'Failed to create task'));
-              } finally {
-                setQuickAdding(false);
-              }
-            }}
-            placeholder={t(
-              'myWork.personalTasks.quickAddPlaceholder',
-              'Quick add a task and hit Enter…'
-            )}
-            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/40 disabled:opacity-60"
-            disabled={quickAdding}
-          />
-        </div>
+      <div className="flex-1 min-h-0">
+        <TableWithPreviewLayout<Task>
+          selectedId={previewTaskId}
+          selectedItem={previewTask}
+          onSelect={setPreviewTaskId}
+          previewOpen={Boolean(previewTaskId)}
+          autoOpenPreview={false}
+          onOpenFull={(id) => {
+            const full = tasks.find((x) => x.id === id);
+            onTaskClick(id, full);
+          }}
+          itemIds={orderedTaskIds}
+          kicker={isPolish ? 'Podgląd' : 'Preview'}
+          renderPreview={(task) => {
+            const isCompleted = ['done', 'completed', 'validated'].includes(
+              task.status?.toLowerCase() || ''
+            );
+            const statusCfg = getStatusConfig(task.status);
+            const priCfg = getPriorityConfig(task.priority);
+            const due = formatDueDate(task.dueDate as any);
+            const desc = String(task.description || '').trim();
+            const detailsText = detailsOverride ?? desc;
 
-        {/* Toolbar: Smart sort + Saved Views */}
-        <div className="mb-3 flex items-center gap-2">
-          <button
-            onClick={toggleSmartSort}
-            className={`
-              inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
-              ${
-                smartSort
-                  ? 'bg-primary-100 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-500/30'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-navy-700 hover:bg-slate-200 dark:hover:bg-navy-700'
-              }
-            `}
-            title={t(
-              'myWork.personalTasks.smartSortTooltip',
-              'Smart sort: Overdue → Today → High priority → by due date'
-            )}
-          >
-            <ArrowUpDown size={12} />
-            {t('myWork.personalTasks.smartSort', 'Smart sort')}
-          </button>
+            const metaPillBase =
+              'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium';
 
-          <ColumnConfigMenu
-            columns={configurableColumns}
-            hiddenColumns={hiddenColumns}
-            onToggleColumn={toggleColumn}
-          />
-
-          <SavedViewsMenu
-            currentState={{
-              columnWidths,
-              activeFilter,
-              tableFilters: tableFilters as Record<string, string[] | undefined>,
-              smartSort,
-              hiddenColumns: hiddenColumns ?? [],
-            }}
-            onApplyPreset={(preset: TaskViewPreset) => {
-              if (preset.columnWidths) setColumnWidths(preset.columnWidths as ColumnWidths);
-              if (preset.tableFilters) setTableFilters(preset.tableFilters as TableFilters);
-              if (typeof preset.smartSort === 'boolean') {
-                setSmartSort(preset.smartSort);
-                localStorage.setItem('consultinity-smart-sort', String(preset.smartSort));
-              }
-              if (preset.hiddenColumns) setHiddenColumns(preset.hiddenColumns);
-            }}
-          />
-        </div>
-
-        {/* Triage info strip */}
-        {activeFilter === 'new' && newUntriagedCount > 0 && (
-          <div className="mb-3 flex items-center gap-3 px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20">
-            <Inbox size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <span className="text-sm text-emerald-700 dark:text-emerald-300">
-              {t(
-                'myWork.triage.infoStrip',
-                `${newUntriagedCount} new task(s) to triage. Use row actions to Accept, Schedule, Snooze, or Archive.`
-              )}
-            </span>
-          </div>
-        )}
-
-        {tasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
-            <CheckCircle2 size={48} className="text-slate-600 mb-4" />
-            <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">
-              {t('myWork.personalTasks.empty.title', 'No tasks yet')}
-            </h3>
-            <p className="text-sm text-slate-500 mb-4">
-              {t('myWork.personalTasks.empty.description', 'Create your first task to get started')}
-            </p>
-            <button
-              onClick={onCreateTask}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-400 border border-blue-500/50 rounded-lg hover:bg-blue-500/10 transition-colors"
-            >
-              <Plus size={16} />
-              {t('myWork.personalTasks.create', 'Create task')}
-            </button>
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-            <table className="w-full table-fixed" style={{ minWidth: 900 }}>
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
-                  {/* Select All */}
-                  <th className="w-10 px-2 py-2">
-                    <button
-                      onClick={() => handleSelectAll(!allSelected)}
-                      className={`
-                      w-5 h-5 rounded border flex items-center justify-center transition-colors
-                      ${
-                        allSelected
-                          ? 'bg-primary-500 border-primary-500 text-white'
-                          : someSelected
-                            ? 'bg-primary-500/50 border-primary-500 text-white'
-                            : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-500 dark:text-slate-400'
-                      }
-                    `}
+            return (
+              <div className="space-y-4">
+                <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className={`${metaPillBase} ${statusCfg.bg} ${statusCfg.color}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
+                        {statusCfg.label}
+                      </span>
+                      <span className={`${metaPillBase} bg-slate-500/10 text-slate-600 dark:text-slate-300`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${priCfg.dot}`} />
+                        {priCfg.label}
+                      </span>
+                      {task.projectName ? (
+                        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                          {task.projectName}
+                        </span>
+                      ) : null}
+                    </div>
+                    <span
+                      className={`text-[11px] font-semibold ${
+                        due === 'No due date'
+                          ? 'text-slate-400 dark:text-slate-500 italic'
+                          : 'text-slate-600 dark:text-slate-300'
+                      }`}
                     >
-                      {allSelected ? (
-                        <CheckSquare size={14} />
-                      ) : someSelected ? (
-                        <Minus size={14} />
-                      ) : (
-                        <Square size={14} />
+                      {due}
+                    </span>
+                  </div>
+                  <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white leading-snug">
+                    {task.title}
+                    {isCompleted ? (
+                      <span className="ml-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                        ✓
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {isPolish ? 'Szczegóły' : 'Details'}
+                    </div>
+                    <div className="relative">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDetailsMenuOpen((v) => !v);
+                        }}
+                        className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                        aria-label={isPolish ? 'Opcje szczegółów' : 'Details options'}
+                        title={isPolish ? 'Opcje' : 'Options'}
+                      >
+                        <MoreVertical size={14} />
+                      </button>
+                      {detailsMenuOpen && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setDetailsMenuOpen(false)}
+                          />
+                          <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDetailsMenuOpen(false);
+                                void handleDetailsAction('expand', task);
+                              }}
+                              className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                            >
+                              {isPolish ? 'Rozwiń' : 'Expand'}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDetailsMenuOpen(false);
+                                void handleDetailsAction('summarize', task);
+                              }}
+                              className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                            >
+                              {isPolish ? 'Podsumuj' : 'Summarize'}
+                            </button>
+                            <div className="border-t border-slate-200/70 dark:border-white/[0.08]" />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDetailsMenuOpen(false);
+                                void handleDetailsAction('copy', task);
+                              }}
+                              className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                            >
+                              {isPolish ? 'Kopiuj' : 'Copy'}
+                            </button>
+                          </div>
+                        </>
                       )}
+                    </div>
+                  </div>
+                  <div className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
+                    {detailsLoading ? (
+                      <span className="text-slate-400 dark:text-slate-500">
+                        {isPolish ? 'Generowanie…' : 'Generating…'}
+                      </span>
+                    ) : detailsText ? (
+                      detailsText
+                    ) : (
+                      isPolish ? 'Brak opisu.' : 'No description.'
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          }}
+          renderPreviewFooter={(task) => {
+            const footerPillBase =
+              'inline-flex items-center justify-center gap-1.5 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+            const isCompleted = ['done', 'completed', 'validated'].includes(
+              task.status?.toLowerCase() || ''
+            );
+            const hintChip =
+              'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer active:scale-[0.98]';
+
+            const relations: Array<{ label: string; tone: string }> = [];
+            if (task.initiativeName) relations.push({ label: task.initiativeName, tone: 'text-blue-600 dark:text-blue-300' });
+            if (Array.isArray(task.dependencies) && task.dependencies.length > 0)
+              relations.push({
+                label: isPolish ? `Zależności: ${task.dependencies.length}` : `Dependencies: ${task.dependencies.length}`,
+                tone: 'text-amber-700 dark:text-amber-300',
+              });
+            if (Array.isArray(task.attachments) && task.attachments.length > 0)
+              relations.push({
+                label: isPolish ? `Załączniki: ${task.attachments.length}` : `Attachments: ${task.attachments.length}`,
+                tone: 'text-slate-700 dark:text-slate-200',
+              });
+
+            return (
+              <div className="space-y-0">
+                {/* AI hints */}
+                <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      AI
+                    </div>
+                    <div className="relative">
+                      <button
+                        onClick={() => setAiMenuOpen((v) => !v)}
+                        className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                        aria-label={isPolish ? 'Opcje AI' : 'AI options'}
+                        title={isPolish ? 'Opcje' : 'Options'}
+                      >
+                        <MoreVertical size={14} />
+                      </button>
+                      {aiMenuOpen && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setAiMenuOpen(false)} />
+                          <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
+                            <button
+                              onClick={async () => {
+                                setAiMenuOpen(false);
+                                if (!aiText) return;
+                                try {
+                                  await navigator.clipboard.writeText(aiText);
+                                  toast.success(isPolish ? 'Skopiowano' : 'Copied');
+                                } catch {
+                                  toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+                                }
+                              }}
+                              className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                            >
+                              {isPolish ? 'Kopiuj' : 'Copy'}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setAiMenuOpen(false);
+                                setAiText(null);
+                                setAiError(null);
+                              }}
+                              className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                            >
+                              {isPolish ? 'Wyczyść' : 'Clear'}
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      className={hintChip}
+                      onClick={() => runTaskAi('why_urgent', task)}
+                      disabled={aiLoading}
+                    >
+                      {isPolish ? 'Dlaczego pilne?' : 'Why urgent?'}
                     </button>
-                  </th>
-                  <th className="w-8 px-1 py-2"></th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-full">
-                    Task
-                  </th>
+                    <button
+                      className={hintChip}
+                      onClick={() => runTaskAi('plan', task)}
+                      disabled={aiLoading}
+                    >
+                      {isPolish ? 'Plan działania' : 'Action plan'}
+                    </button>
+                    <button
+                      className={hintChip}
+                      onClick={() => runTaskAi('who_can_help', task)}
+                      disabled={aiLoading}
+                    >
+                      {isPolish ? 'Kto może pomóc?' : 'Who can help?'}
+                    </button>
+                  </div>
+
+                  {aiLoading ? (
+                    <div className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'Analiza…' : 'Thinking…'}
+                    </div>
+                  ) : aiError ? (
+                    <div className="mt-2 text-xs text-red-600 dark:text-red-400">{aiError}</div>
+                  ) : aiText ? (
+                    <div className="mt-2 text-xs text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
+                      {aiText}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+
+                {/* Relations (2 rows) */}
+                <div className="min-h-[4.5rem]">
+                  <div className="flex flex-wrap gap-2 py-1">
+                    {relations.length > 0 ? (
+                      relations.map((r) => (
+                        <span
+                          key={r.label}
+                          className={`inline-flex items-center h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent ${r.tone}`}
+                          title={r.label}
+                        >
+                          {r.label}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xs text-slate-400 dark:text-slate-500">
+                        {isPolish ? 'Brak powiązań' : 'No relations'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+
+                {/* Actions */}
+                <div className="space-y-2.5 py-1">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleTriageAcceptToday(task.id)}
+                      className={`${footerPillBase} flex-1 border-emerald-300/40 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 hover:bg-emerald-100/70 dark:hover:bg-emerald-500/15`}
+                    >
+                      <Zap size={14} />
+                      {isPolish ? 'Dziś' : 'Today'}
+                    </button>
+                    <button
+                      onClick={() => handleTriageSnooze(task.id)}
+                      className={`${footerPillBase} flex-1 border-amber-300/40 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-500/15`}
+                    >
+                      <Pause size={14} />
+                      {isPolish ? 'Odłóż' : 'Snooze'}
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleToggleComplete(task.id, !isCompleted)}
+                      className={`${footerPillBase} flex-1 border-green-300/40 dark:border-green-500/30 bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-200 hover:bg-green-100/70 dark:hover:bg-green-500/15`}
+                    >
+                      <CheckCircle2 size={14} />
+                      {isCompleted
+                        ? isPolish
+                          ? 'Wznów'
+                          : 'Reopen'
+                        : isPolish
+                          ? 'Gotowe'
+                          : 'Done'}
+                    </button>
+                    <button
+                      onClick={() => onTaskClick(task.id, task)}
+                      className={`${footerPillBase} flex-1 border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
+                    >
+                      <Eye size={14} />
+                      {isPolish ? 'Otwórz' : 'Open'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          }}
+        >
+          <div className="pl-4 pr-1.5 pt-3 pb-4">
+            {tasks.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl">
+                <CheckCircle2 size={48} className="text-slate-400 mb-4" />
+                <h3 className="text-lg font-medium text-slate-700 dark:text-slate-200 mb-2">
+                  {t('myWork.personalTasks.empty.title', 'No tasks yet')}
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                  {t(
+                    'myWork.personalTasks.empty.description',
+                    'Create your first task to get started'
+                  )}
+                </p>
+                <button
+                  onClick={onCreateTask}
+                  className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                >
+                  <Plus size={16} />
+                  {t('myWork.personalTasks.create', 'Create task')}
+                </button>
+              </div>
+            ) : (
+              <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-hidden">
+                <table className="w-full table-fixed" style={{ minWidth: 900 }}>
+                  <thead>
+                    <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-white/60 dark:bg-navy-900/60 sticky top-0 z-10">
+                      {/* Select All */}
+                      <th className="w-10 px-2 py-2">
+                        <button
+                          onClick={() => handleSelectAll(!allSelected)}
+                          className={`
+                          w-5 h-5 rounded border flex items-center justify-center transition-colors
+                          ${
+                            allSelected
+                              ? 'bg-primary-500 border-primary-500 text-white'
+                              : someSelected
+                                ? 'bg-primary-500/50 border-primary-500 text-white'
+                                : 'border-slate-300 dark:border-white/[0.10] hover:border-primary-400 text-transparent hover:text-slate-500 dark:text-slate-400'
+                          }
+                        `}
+                        >
+                          {allSelected ? (
+                            <CheckSquare size={14} />
+                          ) : someSelected ? (
+                            <Minus size={14} />
+                          ) : (
+                            <Square size={14} />
+                          )}
+                        </button>
+                      </th>
+                      <th className="w-8 px-1 py-2" />
+                      <th className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-full">
+                        {isPolish ? 'Zadanie' : 'Task'}
+                      </th>
 
                   {!hiddenSet.has('status') && (
                     <th
-                      className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                      className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                       style={{ width: columnWidths.status }}
                     >
                       <div className="flex items-center gap-1">
@@ -1634,7 +2026,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
                   {!hiddenSet.has('priority') && (
                     <th
-                      className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                      className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                       style={{ width: columnWidths.priority }}
                     >
                       <div className="flex items-center gap-1">
@@ -1668,7 +2060,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
                   {!hiddenSet.has('date') && (
                     <th
-                      className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                      className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                       style={{ width: columnWidths.date }}
                     >
                       <span>Due Date</span>
@@ -1683,7 +2075,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                   )}
                   {!hiddenSet.has('assignee') && (
                     <th
-                      className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                      className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                       style={{ width: columnWidths.assignee }}
                     >
                       <span>Assignee</span>
@@ -1698,10 +2090,17 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                   )}
                   {!hiddenSet.has('actions') && (
                     <th
-                      className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
+                      className="px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                       style={{ width: columnWidths.actions }}
                     >
-                      Actions
+                      <button
+                        onClick={() => setIsViewSettingsOpen(true)}
+                        className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                        aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
+                        title={isPolish ? 'Ustawienia widoku' : 'View settings'}
+                      >
+                        <Settings2 size={14} />
+                      </button>
                     </th>
                   )}
                 </tr>
@@ -1714,6 +2113,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                       task={task}
                       isSelected={selectedIds.has(task.id)}
                       isFocused={focusedTask?.id === task.id}
+                      isPreviewed={previewTaskId === task.id}
                       isNew={isNewTask(task)}
                       onSelect={handleSelectTask}
                       onToggleComplete={handleToggleComplete}
@@ -1730,7 +2130,8 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                         });
                         if (confirmed) handleDelete(taskId);
                       }}
-                      onClick={onTaskClick}
+                      onPreview={(id, data) => setPreviewTaskId(id)}
+                      onOpenFull={(id, data) => onTaskClick(id, data)}
                       onInlineEdit={handleInlineEdit}
                       onTriageAccept={handleTriageAcceptToday}
                       onTriageSnooze={handleTriageSnooze}
@@ -1743,18 +2144,15 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                 </AnimatePresence>
               </tbody>
             </table>
+              </div>
+            )}
           </div>
-        )}
+        </TableWithPreviewLayout>
       </div>
 
-      {/* Bulk Action Bar + Popovers */}
-      {tasks.length > 0 && (
+      {/* Bulk edit popovers (triggered from Command Row bulk mode) */}
+      {tasks.length > 0 ? (
         <div className="relative">
-          <BulkActionBar
-            selectedCount={selectedIds.size}
-            onClearSelection={handleClearSelection}
-            actions={bulkActions}
-          />
           <BulkPriorityPicker
             isOpen={bulkPriorityOpen}
             onClose={() => setBulkPriorityOpen(false)}
@@ -1768,13 +2166,99 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
             selectedCount={selectedIds.size}
           />
         </div>
-      )}
+      ) : null}
 
       {/* Confirm Dialog */}
       {confirmDialog}
 
       {/* Keyboard Shortcuts Help Modal */}
       <KeyboardShortcutsHelp isOpen={showHelp} onClose={() => setShowHelp(false)} />
+
+      {/* Table View Settings (standard) */}
+      <Modal
+        open={isViewSettingsOpen}
+        onClose={() => setIsViewSettingsOpen(false)}
+        title={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
+        description={
+          isPolish
+            ? 'Wybierz, które kolumny są widoczne w tabeli.'
+            : 'Choose which columns are visible in the table.'
+        }
+        size="sm"
+        footer={
+          <>
+            <button
+              onClick={() => setHiddenColumns([...TASK_TABLE_DEFAULT_HIDDEN_COLUMNS])}
+              className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+            >
+              {isPolish ? 'Reset' : 'Reset'}
+            </button>
+            <button
+              onClick={() => setIsViewSettingsOpen(false)}
+              className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-primary-500/40 dark:border-primary-500/30 bg-primary-600 text-white hover:bg-primary-700 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+            >
+              {isPolish ? 'Gotowe' : 'Done'}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-2">
+          {TASK_COLUMNS.filter((c) => !['select', 'indicator'].includes(c.id)).map((col) => {
+            const alwaysVisible = col.id === 'title' || col.id === 'actions';
+            const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
+            return (
+              <label
+                key={col.id}
+                className={`flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 ${
+                  alwaysVisible ? 'opacity-60' : 'cursor-pointer'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  disabled={alwaysVisible}
+                  onChange={() => {
+                    if (alwaysVisible) return;
+                    setHiddenColumns((prev) => {
+                      const set = new Set(prev);
+                      if (set.has(col.id)) set.delete(col.id);
+                      else set.add(col.id);
+                      const next = Array.from(set);
+                      localStorage.setItem(TASK_TABLE_VIEW_STORAGE_KEY, JSON.stringify(next));
+                      return next;
+                    });
+                  }}
+                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                />
+                <span className="text-sm text-slate-800 dark:text-slate-200 flex-1">
+                  {col.id === 'status'
+                    ? isPolish
+                      ? 'Status'
+                      : 'Status'
+                    : col.id === 'priority'
+                      ? isPolish
+                        ? 'Pilność'
+                        : 'Priority'
+                      : col.id === 'date'
+                        ? isPolish
+                          ? 'Termin'
+                          : 'Due date'
+                        : col.id === 'assignee'
+                          ? isPolish
+                            ? 'Właściciel'
+                            : 'Assignee'
+                          : col.label}
+                </span>
+                {alwaysVisible ? (
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Wymagane' : 'Required'}
+                  </span>
+                ) : null}
+              </label>
+            );
+          })}
+        </div>
+      </Modal>
     </div>
   );
 };

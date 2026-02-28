@@ -8,7 +8,8 @@
  */
 
 import { MoreHorizontal, MoreVertical } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export interface RowAction {
   id: string;
@@ -38,25 +39,67 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   iconVariant = 'vertical',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+  const [panelPos, setPanelPos] = useState<{ top: number; left: number; placement: 'top' | 'bottom' } | null>(
+    null
+  );
 
   const handleToggle = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     setIsOpen((prev) => !prev);
   }, []);
 
-  // Close on click outside
+  // Capture anchor rect on open and keep updated on scroll/resize.
   useEffect(() => {
-    if (!isOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
+    if (!isOpen) {
+      setAnchorRect(null);
+      setPanelPos(null);
+      return;
+    }
+
+    const update = () => {
+      const rect = buttonRef.current?.getBoundingClientRect() || null;
+      setAnchorRect(rect);
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    update();
+
+    window.addEventListener('resize', update);
+    // Capture scroll from any scroll container
+    window.addEventListener('scroll', update, true);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+    };
   }, [isOpen]);
+
+  // Position panel (fixed) so it won't be clipped by overflow containers.
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    if (!anchorRect) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    const margin = 8;
+    const gap = 6; // matches mt-1 (~4px) + a bit of breathing room
+    const panelWidth = panel.offsetWidth || 160;
+    const panelHeight = panel.offsetHeight || 200;
+
+    const canOpenDown = anchorRect.bottom + gap + panelHeight <= window.innerHeight - margin;
+    const canOpenUp = anchorRect.top - gap - panelHeight >= margin;
+    const placement: 'top' | 'bottom' = !canOpenDown && canOpenUp ? 'top' : 'bottom';
+
+    const top =
+      placement === 'bottom'
+        ? Math.min(window.innerHeight - margin - panelHeight, anchorRect.bottom + gap)
+        : Math.max(margin, anchorRect.top - gap - panelHeight);
+
+    const desiredLeft = anchorRect.right - panelWidth;
+    const left = Math.max(margin, Math.min(desiredLeft, window.innerWidth - margin - panelWidth));
+
+    setPanelPos({ top, left, placement });
+  }, [isOpen, anchorRect]);
 
   // Close on Escape
   useEffect(() => {
@@ -68,7 +111,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
     return () => document.removeEventListener('keydown', handler);
   }, [isOpen]);
 
-  const visibleActions = actions.filter((a) => !a.disabled);
+  const visibleActions = useMemo(() => actions.filter((a) => !a.disabled), [actions]);
   if (visibleActions.length === 0) return null;
 
   const iconSize = size === 'sm' ? 14 : 16;
@@ -83,7 +126,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   };
 
   return (
-    <div ref={menuRef} className={`relative inline-block ${className}`}>
+    <div className={`inline-block ${className}`}>
       <button
         ref={buttonRef}
         onClick={handleToggle}
@@ -95,35 +138,57 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
         <MenuIcon size={iconSize} />
       </button>
 
-      {isOpen && (
-        <div
-          className="absolute right-0 top-full mt-1 z-50 min-w-[160px] rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 shadow-lg py-1 animate-in fade-in-0 zoom-in-95"
-          role="menu"
-        >
-          {visibleActions.map((action) => {
-            const Icon = action.icon;
-            return (
-              <React.Fragment key={action.id}>
-                {action.divider && (
-                  <div className="my-1 border-t border-slate-200 dark:border-navy-700" />
-                )}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    action.onClick();
-                    setIsOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium transition-colors ${variantStyles[action.variant || 'default']}`}
-                  role="menuitem"
-                >
-                  {Icon && <Icon size={14} />}
-                  {action.label}
-                </button>
-              </React.Fragment>
-            );
-          })}
-        </div>
-      )}
+      {isOpen &&
+        createPortal(
+          <>
+            <div
+              className="fixed inset-0 z-[9998]"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsOpen(false);
+              }}
+            />
+            <div
+              ref={panelRef}
+              className="fixed z-[9999] min-w-[160px] rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 shadow-lg py-1 animate-in fade-in-0 zoom-in-95"
+              role="menu"
+              style={
+                panelPos
+                  ? { top: panelPos.top, left: panelPos.left, transformOrigin: panelPos.placement === 'top' ? 'bottom right' : 'top right' }
+                  : { top: -9999, left: -9999 }
+              }
+              onClick={(e) => {
+                // Prevent row click/selection from firing behind the menu.
+                e.stopPropagation();
+              }}
+            >
+              {visibleActions.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <React.Fragment key={action.id}>
+                    {action.divider && (
+                      <div className="my-1 border-t border-slate-200 dark:border-navy-700" />
+                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        action.onClick();
+                        setIsOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium transition-colors ${variantStyles[action.variant || 'default']}`}
+                      role="menuitem"
+                    >
+                      {Icon && <Icon size={14} />}
+                      {action.label}
+                    </button>
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </>,
+          document.body
+        )}
     </div>
   );
 };

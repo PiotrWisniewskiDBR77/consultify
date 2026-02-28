@@ -53,7 +53,7 @@ import {
   Wand2,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -80,6 +80,10 @@ interface ToolDocumentViewProps {
   sessionId?: string;
   onBack: () => void;
   onOpenInitiative?: (initiativeId: string) => void;
+  /** If true, auto-triggers PDF export once content is ready. */
+  autoExportPdf?: boolean;
+  /** Called after auto-export was triggered (to clear one-shot flag). */
+  onAutoExportPdfConsumed?: () => void;
 }
 
 interface HistoryEvent {
@@ -414,6 +418,8 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   sessionId,
   onBack,
   onOpenInitiative,
+  autoExportPdf,
+  onAutoExportPdfConsumed,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -545,6 +551,23 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       setIsExportingPdf(false);
     }
   }, [isPolish, sessionName, toolMeta.name, toolType]);
+
+  // One-shot auto-export (triggered from Outputs preview).
+  const autoExportRanRef = useRef(false);
+  useEffect(() => {
+    if (!autoExportPdf) {
+      autoExportRanRef.current = false;
+      return;
+    }
+    if (loading) return;
+    if (isExportingPdf) return;
+    if (autoExportRanRef.current) return;
+
+    autoExportRanRef.current = true;
+    void handleExportPdf().finally(() => {
+      onAutoExportPdfConsumed?.();
+    });
+  }, [autoExportPdf, handleExportPdf, isExportingPdf, loading, onAutoExportPdfConsumed]);
 
   const statusConfig = STATUS_CONFIG[toolStatus] || STATUS_CONFIG.DRAFT;
 

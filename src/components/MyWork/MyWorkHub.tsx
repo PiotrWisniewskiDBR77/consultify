@@ -14,11 +14,15 @@ import {
   AlertCircle,
   Bell,
   Calendar,
+  CalendarClock,
   CalendarDays,
+  Check,
   CheckSquare,
   ChevronDown,
+  Clock,
   FileText,
   Flame,
+  Flag,
   Flower2,
   GanttChart,
   GitBranch,
@@ -36,10 +40,13 @@ import {
   Search,
   Sparkles,
   Target,
+  Trash2,
+  TrendingUp,
   User,
   X,
+  Zap,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -51,9 +58,9 @@ import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useUserCan } from '@/hooks/useUserCan';
 import { useAppStore } from '@/store/useAppStore';
 
-import { DecisionsPanelContent } from './DecisionsPanelContent';
+import { DecisionsPanelContent, type DecisionsBulkBarPayload } from './DecisionsPanelContent';
 import type { FocusItem } from './Focus/FocusView';
-import { InboxContent, type InboxCounts } from './InboxContent';
+import { InboxContent, type InboxBulkBarPayload, type InboxCounts } from './InboxContent';
 import type { MyIdea } from './MyIdeasListContent';
 import { MyIdeasListContent } from './MyIdeasListContent';
 import { MyTasksListContent } from './MyTasksListContent';
@@ -228,6 +235,12 @@ const BUTTON_ACTIVE = `
   text-primary-700 dark:text-primary-200
 `;
 
+// Topbar pills (filters / view tool) — keep consistent with BUTTON_* but smaller text.
+const TOPBAR_PILL_BASE =
+  'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+const TOPBAR_PILL_INACTIVE =
+  `${TOPBAR_PILL_BASE} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
+
 // Tab styles for dynamic tabs
 const TAB_BASE = `
   flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium
@@ -313,15 +326,25 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // Filter states
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
   const [tasksViewMode, setTasksViewMode] = useState<TasksViewMode>('table');
+  const [tasksViewMenuOpen, setTasksViewMenuOpen] = useState(false);
   const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('mindmap');
   const [ideasMenuOpen, setIdeasMenuOpen] = useState(false);
   const [ideaToolsOpen, setIdeaToolsOpen] = useState(false);
   const [decisionsViewMode, setDecisionsViewMode] = useState<DecisionsViewMode>('table');
+  const [decisionsViewMenuOpen, setDecisionsViewMenuOpen] = useState(false);
   const [inboxViewMode, setInboxViewMode] = useState<InboxViewMode>('flat');
   const [inboxStatusTab, setInboxStatusTab] = useState<'open' | 'done' | 'saved' | 'all'>('open');
   const [inboxSection, setInboxSection] = useState<'today' | 'this_week' | 'all'>('all');
   const [inboxActionRequiredOnly, setInboxActionRequiredOnly] = useState(false);
   const [inboxCounts, setInboxCounts] = useState<InboxCounts | null>(null);
+  const [inboxBulkUi, setInboxBulkUi] = useState<{
+    selectedCount: number;
+    allSelected: boolean;
+    someSelected: boolean;
+  } | null>(null);
+  const inboxBulkActionsRef = useRef<
+    Pick<InboxBulkBarPayload, 'selectAllVisible' | 'clearSelection' | 'triage'> | null
+  >(null);
   const [notebookLinkedIdeasOpen, setNotebookLinkedIdeasOpen] = useState(false);
   const [notebookTopicsOpen, setNotebookTopicsOpen] = useState(false);
   const [notebookChatOpen, setNotebookChatOpen] = useState(false);
@@ -353,10 +376,38 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     urgent: 0,
     newUntriaged: 0,
   });
+  const [tasksBulkUi, setTasksBulkUi] = useState<{ selectedCount: number } | null>(null);
+  const tasksBulkActionsRef = useRef<{
+    selectAllVisible: () => void;
+    clearSelection: () => void;
+    complete: () => void;
+    changePriority: () => void;
+    changeDueDate: () => void;
+    deleteSelected: () => void;
+  } | null>(null);
   const [decisionFilterCounts, setDecisionFilterCounts] = useState<DecisionFilterCounts>({
     my: 0,
     awaiting: 0,
   });
+  const [decisionsBulkUi, setDecisionsBulkUi] = useState<{
+    selectedCount: number;
+    allSelected: boolean;
+    someSelected: boolean;
+  } | null>(null);
+  const decisionsBulkActionsRef = useRef<
+    Pick<
+      NonNullable<DecisionsBulkBarPayload>,
+      | 'selectAllVisible'
+      | 'clearSelection'
+      | 'approve'
+      | 'reject'
+      | 'deleteSelected'
+      | 'changePriority'
+      | 'remind'
+      | 'escalate'
+      | 'snoozeTomorrow'
+    >
+  | null>(null);
   // V3-A02: Dynamic documents state with sessionStorage persistence
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>(() => {
     try {
@@ -945,6 +996,76 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     []
   );
 
+  const handleTasksBulkBarChange = useCallback(
+    (
+      payload:
+        | {
+            selectedCount: number;
+            selectAllVisible: () => void;
+            clearSelection: () => void;
+            complete: () => void;
+            changePriority: () => void;
+            changeDueDate: () => void;
+            deleteSelected: () => void;
+          }
+        | null
+    ) => {
+      if (!payload) {
+        setTasksBulkUi(null);
+        tasksBulkActionsRef.current = null;
+        return;
+      }
+      setTasksBulkUi({ selectedCount: payload.selectedCount });
+      tasksBulkActionsRef.current = {
+        selectAllVisible: payload.selectAllVisible,
+        clearSelection: payload.clearSelection,
+        complete: payload.complete,
+        changePriority: payload.changePriority,
+        changeDueDate: payload.changeDueDate,
+        deleteSelected: payload.deleteSelected,
+      };
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (activeTab !== 'tasks') {
+      setTasksBulkUi(null);
+      tasksBulkActionsRef.current = null;
+    }
+  }, [activeTab]);
+
+  const handleDecisionsBulkBarChange = useCallback((payload: DecisionsBulkBarPayload) => {
+    if (!payload) {
+      setDecisionsBulkUi(null);
+      decisionsBulkActionsRef.current = null;
+      return;
+    }
+    setDecisionsBulkUi({
+      selectedCount: payload.selectedCount,
+      allSelected: payload.allSelected,
+      someSelected: payload.someSelected,
+    });
+    decisionsBulkActionsRef.current = {
+      selectAllVisible: payload.selectAllVisible,
+      clearSelection: payload.clearSelection,
+      approve: payload.approve,
+      reject: payload.reject,
+      deleteSelected: payload.deleteSelected,
+      changePriority: payload.changePriority,
+      remind: payload.remind,
+      escalate: payload.escalate,
+      snoozeTomorrow: payload.snoozeTomorrow,
+    };
+  }, []);
+
+  useEffect(() => {
+    if (activeTab !== 'decisions') {
+      setDecisionsBulkUi(null);
+      decisionsBulkActionsRef.current = null;
+    }
+  }, [activeTab]);
+
   const handleDecisionCountsChange = useCallback(
     (counts: { total: number; my: number; awaiting: number }) => {
       setTabCounts((prev) => ({ ...prev, decisions: counts.total }));
@@ -968,6 +1089,31 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     setTabCounts((prev) => ({ ...prev, inbox: counts.total }));
     setInboxCounts(counts);
   }, []);
+
+  const handleInboxBulkBarChange = useCallback((payload: InboxBulkBarPayload | null) => {
+    if (!payload) {
+      setInboxBulkUi(null);
+      inboxBulkActionsRef.current = null;
+      return;
+    }
+    setInboxBulkUi({
+      selectedCount: payload.selectedCount,
+      allSelected: payload.allSelected,
+      someSelected: payload.someSelected,
+    });
+    inboxBulkActionsRef.current = {
+      selectAllVisible: payload.selectAllVisible,
+      clearSelection: payload.clearSelection,
+      triage: payload.triage,
+    };
+  }, []);
+
+  useEffect(() => {
+    if (activeTab !== 'inbox') {
+      setInboxBulkUi(null);
+      inboxBulkActionsRef.current = null;
+    }
+  }, [activeTab]);
 
   // Plan with AI — opens chat with morning brief context (replaces Morning Brief "Plan with AI" button)
   const handlePlanWithAI = useCallback(async () => {
@@ -1085,6 +1231,24 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         return 'all';
     }
   }, [activeTab, taskFilter, decisionFilter]);
+
+  const tasksViewLabel = useMemo(() => {
+    const map: Record<TasksViewMode, { en: string; pl: string; icon: React.ElementType }> = {
+      table: { en: 'List', pl: 'Lista', icon: LayoutList },
+      kanban: { en: 'Kanban', pl: 'Kanban', icon: Kanban },
+      calendar: { en: 'Calendar', pl: 'Kalendarz', icon: CalendarDays },
+    };
+    return map[tasksViewMode] || map.table;
+  }, [tasksViewMode]);
+
+  const decisionsViewLabel = useMemo(() => {
+    const map: Record<DecisionsViewMode, { en: string; pl: string; icon: React.ElementType }> = {
+      table: { en: 'List', pl: 'Lista', icon: LayoutList },
+      kanban: { en: 'Kanban', pl: 'Kanban', icon: Kanban },
+      timeline: { en: 'Timeline', pl: 'Timeline', icon: GanttChart },
+    };
+    return map[decisionsViewMode] || map.table;
+  }, [decisionsViewMode]);
 
   // Handle filter change
   const handleFilterChange = useCallback(
@@ -1226,6 +1390,106 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     // 3) Context counters row (list view default)
     if (activeDocumentId) return null;
 
+    // Tasks: filters as a single Command Row (no extra toolbars/strips).
+    if (activeTab === 'tasks') {
+      const chipBase =
+        'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+      const chipInactive =
+        'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
+      const chipActive =
+        'border-primary-200 dark:border-primary-500/30 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-200';
+
+      // V3-A03: bulk selection is a *mode* of the same command row (no extra line).
+      if (tasksBulkUi?.selectedCount) {
+        const bulk = tasksBulkActionsRef.current;
+        const bulkGhostPill =
+          'inline-flex items-center h-9 px-3 rounded-full text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+        const bulkPillBase =
+          'inline-flex items-center gap-2 h-9 px-3 rounded-full border text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+
+        return (
+          <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-between gap-3 overflow-x-auto whitespace-nowrap">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  {tasksBulkUi.selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+                </span>
+                <button onClick={() => bulk?.selectAllVisible()} className={bulkGhostPill}>
+                  {isPolish ? 'Zaznacz wszystkie' : 'Select all'}
+                </button>
+                <button onClick={() => bulk?.clearSelection()} className={bulkGhostPill}>
+                  {isPolish ? 'Odznacz' : 'Clear'}
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => bulk?.changePriority()}
+                  className={`${bulkPillBase} ${chipInactive}`}
+                >
+                  <Flag size={14} />
+                  {isPolish ? 'Priorytet' : 'Priority'}
+                </button>
+                <button
+                  onClick={() => bulk?.changeDueDate()}
+                  className={`${bulkPillBase} ${chipInactive}`}
+                >
+                  <Calendar size={14} />
+                  {isPolish ? 'Termin' : 'Due date'}
+                </button>
+                <button
+                  onClick={() => bulk?.complete()}
+                  className={`${bulkPillBase} border-green-300/40 dark:border-green-500/20 bg-white/70 dark:bg-white/[0.04] text-green-700 dark:text-green-300 hover:bg-green-50/60 dark:hover:bg-green-500/10`}
+                >
+                  <CheckSquare size={14} />
+                  {isPolish ? 'Gotowe' : 'Done'}
+                </button>
+                <button
+                  onClick={() => bulk?.deleteSelected()}
+                  className={`${bulkPillBase} border-red-300/40 dark:border-red-500/20 bg-white/70 dark:bg-white/[0.04] text-red-700 dark:text-red-300 hover:bg-red-50/60 dark:hover:bg-red-500/10`}
+                >
+                  <Trash2 size={14} />
+                  {isPolish ? 'Usuń' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
+          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
+            <div className="inline-flex items-center gap-1">
+              {taskFilters.map((f) => {
+                const isActive = taskFilter === f.id;
+                const count =
+                  f.id === 'all'
+                    ? tabCounts.tasks
+                    : typeof f.count === 'number'
+                      ? f.count
+                      : 0;
+                return (
+                  <button
+                    key={f.id}
+                    onClick={() => setTaskFilter(f.id)}
+                    className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
+                    title={f.label}
+                  >
+                    {f.icon}
+                    <span>{f.label}</span>
+                    <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-200">
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // Inbox: render all controls as a single Command Row (SSOT: module-hub + app-table).
     if (activeTab === 'inbox') {
       const c = inboxCounts;
@@ -1253,6 +1517,71 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
       const chipActive =
         'border-primary-200 dark:border-primary-500/30 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-200';
+
+      // V3-A03: bulk selection is a *mode* of the same command row (no extra line).
+      if (inboxBulkUi?.selectedCount) {
+        const bulkActions = inboxBulkActionsRef.current;
+        const bulkGhostPill =
+          'inline-flex items-center h-9 px-3 rounded-full text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+        const bulkPillBase =
+          'inline-flex items-center gap-2 h-9 px-3 rounded-full border text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+
+        return (
+          <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-between gap-3 overflow-x-auto whitespace-nowrap">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  {inboxBulkUi.selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+                </span>
+                <button onClick={() => bulkActions?.selectAllVisible()} className={bulkGhostPill}>
+                  {isPolish ? 'Zaznacz wszystkie' : 'Select all'}
+                </button>
+                <button onClick={() => bulkActions?.clearSelection()} className={bulkGhostPill}>
+                  {isPolish ? 'Odznacz' : 'Clear'}
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => bulkActions?.triage('accept_today')}
+                  className={`${bulkPillBase} border-emerald-300/40 dark:border-emerald-500/20 bg-white/70 dark:bg-white/[0.04] text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50/60 dark:hover:bg-emerald-500/10`}
+                >
+                  <Zap size={14} />
+                  {isPolish ? 'Focus: Dziś' : 'Focus: Today'}
+                </button>
+                <button
+                  onClick={() => bulkActions?.triage('accept_week')}
+                  className={`${bulkPillBase} border-blue-300/40 dark:border-blue-500/20 bg-white/70 dark:bg-white/[0.04] text-blue-700 dark:text-blue-300 hover:bg-blue-50/60 dark:hover:bg-blue-500/10`}
+                >
+                  <CalendarClock size={14} />
+                  {isPolish ? 'Ten tydz.' : 'This week'}
+                </button>
+                <button
+                  onClick={() => bulkActions?.triage('done')}
+                  className={`${bulkPillBase} border-green-300/40 dark:border-green-500/20 bg-white/70 dark:bg-white/[0.04] text-green-700 dark:text-green-300 hover:bg-green-50/60 dark:hover:bg-green-500/10`}
+                >
+                  <CheckSquare size={14} />
+                  {isPolish ? 'Gotowe' : 'Done'}
+                </button>
+                <button
+                  onClick={() => bulkActions?.triage('save')}
+                  className={`${bulkPillBase} border-amber-300/40 dark:border-amber-500/20 bg-white/70 dark:bg-white/[0.04] text-amber-800 dark:text-amber-300 hover:bg-amber-50/60 dark:hover:bg-amber-500/10`}
+                >
+                  <FileText size={14} />
+                  {isPolish ? 'Zapisz' : 'Save'}
+                </button>
+                <button
+                  onClick={() => bulkActions?.triage('dismiss')}
+                  className={`${bulkPillBase} ${chipInactive}`}
+                >
+                  <X size={14} />
+                  {isPolish ? 'Odłóż' : 'Dismiss'}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
 
       return (
         <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
@@ -1313,6 +1642,101 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   </span>
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Decisions: bulk selection is a *mode* of the same command row (no extra line).
+    if (activeTab === 'decisions' && decisionsBulkUi?.selectedCount) {
+      const bulk = decisionsBulkActionsRef.current;
+      const bulkGhostPill =
+        'inline-flex items-center h-9 px-3 rounded-full text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+      const bulkPillBase =
+        'inline-flex items-center gap-2 h-9 px-3 rounded-full border text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+      const chipInactive =
+        'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
+
+      return (
+        <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between gap-3 overflow-x-auto whitespace-nowrap">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                {decisionsBulkUi.selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+              </span>
+              <button onClick={() => bulk?.selectAllVisible()} className={bulkGhostPill}>
+                {isPolish ? 'Zaznacz wszystkie' : 'Select all'}
+              </button>
+              <button onClick={() => bulk?.clearSelection()} className={bulkGhostPill}>
+                {isPolish ? 'Odznacz' : 'Clear'}
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {bulk?.approve ? (
+                <button
+                  onClick={() => bulk?.approve?.()}
+                  className={`${bulkPillBase} border-emerald-300/40 dark:border-emerald-500/20 bg-white/70 dark:bg-white/[0.04] text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50/60 dark:hover:bg-emerald-500/10`}
+                >
+                  <Check size={14} />
+                  {isPolish ? 'Przyjęta' : 'Approve'}
+                </button>
+              ) : null}
+              {bulk?.reject ? (
+                <button
+                  onClick={() => bulk?.reject?.()}
+                  className={`${bulkPillBase} border-red-300/40 dark:border-red-500/20 bg-white/70 dark:bg-white/[0.04] text-red-700 dark:text-red-300 hover:bg-red-50/60 dark:hover:bg-red-500/10`}
+                >
+                  <X size={14} />
+                  {isPolish ? 'Odrzuć' : 'Reject'}
+                </button>
+              ) : null}
+              {bulk?.remind ? (
+                <button
+                  onClick={() => bulk?.remind?.()}
+                  className={`${bulkPillBase} ${chipInactive}`}
+                >
+                  <Bell size={14} />
+                  {isPolish ? 'Przypomnij' : 'Remind'}
+                </button>
+              ) : null}
+              {bulk?.escalate ? (
+                <button
+                  onClick={() => bulk?.escalate?.()}
+                  className={`${bulkPillBase} border-amber-300/40 dark:border-amber-500/20 bg-white/70 dark:bg-white/[0.04] text-amber-800 dark:text-amber-300 hover:bg-amber-50/60 dark:hover:bg-amber-500/10`}
+                >
+                  <TrendingUp size={14} />
+                  {isPolish ? 'Eskaluj' : 'Escalate'}
+                </button>
+              ) : null}
+              {bulk?.snoozeTomorrow ? (
+                <button
+                  onClick={() => bulk?.snoozeTomorrow?.()}
+                  className={`${bulkPillBase} ${chipInactive}`}
+                >
+                  <Clock size={14} />
+                  {isPolish ? 'Odłóż (jutro)' : 'Snooze (tomorrow)'}
+                </button>
+              ) : null}
+              {bulk?.changePriority ? (
+                <button
+                  onClick={() => bulk?.changePriority?.()}
+                  className={`${bulkPillBase} ${chipInactive}`}
+                >
+                  <Flag size={14} />
+                  {isPolish ? 'Priorytet' : 'Priority'}
+                </button>
+              ) : null}
+              {bulk?.deleteSelected ? (
+                <button
+                  onClick={() => bulk?.deleteSelected?.()}
+                  className={`${bulkPillBase} border-red-300/40 dark:border-red-500/20 bg-white/70 dark:bg-white/[0.04] text-red-700 dark:text-red-300 hover:bg-red-50/60 dark:hover:bg-red-500/10`}
+                >
+                  <Trash2 size={14} />
+                  {isPolish ? 'Usuń' : 'Delete'}
+                </button>
+              ) : null}
             </div>
           </div>
         </div>
@@ -1493,6 +1917,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             onOpenDecision={(id) => handleDecisionClick(id)}
             onOpenNotification={(id) => handleNotificationClick(id)}
             onCountsChange={handleInboxCountsChange}
+            onBulkBarChange={handleInboxBulkBarChange}
             refreshTrigger={refreshTrigger}
             viewMode={inboxViewMode}
             onViewModeChange={setInboxViewMode}
@@ -1553,6 +1978,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             onTaskClick={handleTaskClick}
             onCreateTask={handleCreateTask}
             onCountsChange={handleTaskCountsChange}
+            onBulkBarChange={handleTasksBulkBarChange}
             refreshTrigger={refreshTrigger}
           />
         );
@@ -1639,6 +2065,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             searchQuery={searchQuery}
             onDecisionClick={handleDecisionClick}
             onCountsChange={handleDecisionCountsChange}
+            onBulkBarChange={handleDecisionsBulkBarChange}
             refreshTrigger={refreshTrigger}
           />
         );
@@ -1675,7 +2102,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   }, [activeTab]);
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-navy-950">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950">
       {/* Navigation Bar (Golden Standard - same as InterviewHub) */}
       <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
         {/* Main Navigation Row */}
@@ -1729,110 +2156,192 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Right: View Toggle + Context Filters + Action Buttons */}
+          {/* Right: AI → Add/Primary CTA → Tools → View tool → Filters (KANON v3)
+              DOM order (left → right) is reversed to achieve right-aligned priority. */}
           <div className="flex items-center gap-3">
-            {/* Tasks View Mode Toggle (table / kanban) — only on Tasks tab */}
-            {activeTab === 'tasks' && !activeDocumentId && (
-              <div
-                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-950/50 p-0.5"
-                role="radiogroup"
-                aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
-              >
-                <button
-                  onClick={() => setTasksViewMode('table')}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    tasksViewMode === 'table'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Widok tabeli' : 'Table view'}
-                  role="radio"
-                  aria-checked={tasksViewMode === 'table'}
+            {/* Filters (furthest left in right cluster) */}
+            {/* Context-sensitive Filter Dropdown (only show when viewing list) */}
+            {currentFilters.length > 0 && (
+              <div className="relative">
+                <select
+                  value={currentFilterValue}
+                  onChange={(e) => handleFilterChange(e.target.value)}
+                  className="
+                    appearance-none h-9 pl-3 pr-9 rounded-full text-xs font-medium
+                    bg-white/70 dark:bg-white/[0.04]
+                    border border-slate-200/70 dark:border-white/[0.06]
+                    text-slate-700 dark:text-slate-200
+                    hover:bg-slate-100/70 dark:hover:bg-white/[0.06]
+                    focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
+                    transition-colors duration-150
+                    cursor-pointer min-w-[140px]
+                  "
                 >
-                  <LayoutList size={16} />
-                </button>
-                <button
-                  onClick={() => setTasksViewMode('kanban')}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    tasksViewMode === 'kanban'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Widok kanban' : 'Kanban view'}
-                  role="radio"
-                  aria-checked={tasksViewMode === 'kanban'}
-                >
-                  <Kanban size={16} />
-                </button>
-                <button
-                  onClick={() => setTasksViewMode('calendar')}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    tasksViewMode === 'calendar'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Widok kalendarza' : 'Calendar view'}
-                  role="radio"
-                  aria-checked={tasksViewMode === 'calendar'}
-                >
-                  <CalendarDays size={16} />
-                </button>
+                  {currentFilters.map((filter) => (
+                    <option key={filter.id} value={filter.id}>
+                      {filter.label}
+                      {filter.count !== undefined && filter.count > 0 ? ` (${filter.count})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none"
+                />
               </div>
             )}
 
-            {/* Decisions View Mode Toggle (table / kanban / timeline) — V3-C05: no queue view */}
+            {/* Decisions: Priority filter */}
             {activeTab === 'decisions' && !activeDocumentId && (
-              <div
-                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-950/50 p-0.5"
-                role="radiogroup"
-                aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
-              >
-                <button
-                  onClick={() => setDecisionsViewMode('table')}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    decisionsViewMode === 'table'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Widok tabeli' : 'Table view'}
-                  role="radio"
-                  aria-checked={decisionsViewMode === 'table'}
+              <div className="relative">
+                <select
+                  value={decisionPriorityFilter}
+                  onChange={(e) =>
+                    setDecisionPriorityFilter(e.target.value as DecisionPriorityFilter)
+                  }
+                  className="
+                    appearance-none h-9 pl-3 pr-9 rounded-full text-xs font-medium
+                    bg-white/70 dark:bg-white/[0.04]
+                    border border-slate-200/70 dark:border-white/[0.06]
+                    text-slate-700 dark:text-slate-200
+                    hover:bg-slate-100/70 dark:hover:bg-white/[0.06]
+                    focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
+                    transition-colors duration-150
+                    cursor-pointer min-w-[170px]
+                  "
+                  aria-label={isPolish ? 'Priorytet' : 'Priority'}
+                  title={isPolish ? 'Filtr priorytetu' : 'Priority filter'}
                 >
-                  <LayoutList size={16} />
-                </button>
-                <button
-                  onClick={() => setDecisionsViewMode('kanban')}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    decisionsViewMode === 'kanban'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Widok kanban' : 'Kanban view'}
-                  role="radio"
-                  aria-checked={decisionsViewMode === 'kanban'}
-                >
-                  <Kanban size={16} />
-                </button>
-                <button
-                  onClick={() => setDecisionsViewMode('timeline')}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    decisionsViewMode === 'timeline'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Widok osi czasu' : 'Timeline view'}
-                  role="radio"
-                  aria-checked={decisionsViewMode === 'timeline'}
-                >
-                  <GanttChart size={16} />
-                </button>
+                  <option value="all">{isPolish ? 'Priorytet: wszystkie' : 'Priority: all'}</option>
+                  <option value="CRITICAL">
+                    {isPolish ? 'Priorytet: krytyczne' : 'Priority: critical'}
+                  </option>
+                  <option value="HIGH">{isPolish ? 'Priorytet: wysoki' : 'Priority: high'}</option>
+                  <option value="MEDIUM">
+                    {isPolish ? 'Priorytet: średni' : 'Priority: medium'}
+                  </option>
+                  <option value="LOW">{isPolish ? 'Priorytet: niski' : 'Priority: low'}</option>
+                </select>
+                <ChevronDown
+                  size={16}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none"
+                />
               </div>
             )}
 
-            {/* Inbox View Mode Toggle (list / sections) — only on Inbox tab */}
+            {/* View tools */}
+            {/* Tasks View Tool (dropdown) — only on Tasks tab */}
+            {activeTab === 'tasks' && !activeDocumentId && (
+              <div className="relative">
+                <button
+                  onClick={() => setTasksViewMenuOpen((v) => !v)}
+                  className={TOPBAR_PILL_INACTIVE}
+                  title={isPolish ? 'Widok' : 'View'}
+                >
+                  <tasksViewLabel.icon size={14} />
+                  <span>{isPolish ? tasksViewLabel.pl : tasksViewLabel.en}</span>
+                  <ChevronDown
+                    size={12}
+                    className={`transition-transform ${tasksViewMenuOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {tasksViewMenuOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-30"
+                      onClick={() => setTasksViewMenuOpen(false)}
+                    />
+                    <div className="absolute right-0 top-full mt-1 z-40 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1">
+                      {(
+                        [
+                          { id: 'table' as TasksViewMode, icon: LayoutList, en: 'List', pl: 'Lista' },
+                          { id: 'kanban' as TasksViewMode, icon: Kanban, en: 'Kanban', pl: 'Kanban' },
+                          { id: 'calendar' as TasksViewMode, icon: CalendarDays, en: 'Calendar', pl: 'Kalendarz' },
+                        ] as const
+                      ).map(({ id, icon: Icon, en, pl }) => (
+                        <button
+                          key={id}
+                          onClick={() => {
+                            setTasksViewMode(id);
+                            setTasksViewMenuOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 text-xs transition-colors ${
+                            tasksViewMode === id
+                              ? 'text-primary-700 dark:text-primary-200 bg-primary-500/10 font-semibold'
+                              : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+                          }`}
+                        >
+                          <span className="flex items-center gap-2">
+                            <Icon size={14} />
+                            {isPolish ? pl : en}
+                          </span>
+                          {tasksViewMode === id ? <Check size={14} /> : null}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Decisions View Tool (dropdown) — match Inbox/Tasks format */}
+            {activeTab === 'decisions' && !activeDocumentId && (
+              <div className="relative">
+                <button
+                  onClick={() => setDecisionsViewMenuOpen((v) => !v)}
+                  className={TOPBAR_PILL_INACTIVE}
+                  title={isPolish ? 'Widok' : 'View'}
+                >
+                  <decisionsViewLabel.icon size={14} />
+                  <span>{isPolish ? decisionsViewLabel.pl : decisionsViewLabel.en}</span>
+                  <ChevronDown
+                    size={12}
+                    className={`transition-transform ${decisionsViewMenuOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {decisionsViewMenuOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-30"
+                      onClick={() => setDecisionsViewMenuOpen(false)}
+                    />
+                    <div className="absolute right-0 top-full mt-1 z-40 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1">
+                      {(
+                        [
+                          { id: 'table' as DecisionsViewMode, icon: LayoutList, en: 'List', pl: 'Lista' },
+                          { id: 'kanban' as DecisionsViewMode, icon: Kanban, en: 'Kanban', pl: 'Kanban' },
+                          { id: 'timeline' as DecisionsViewMode, icon: GanttChart, en: 'Timeline', pl: 'Timeline' },
+                        ] as const
+                      ).map(({ id, icon: Icon, en, pl }) => (
+                        <button
+                          key={id}
+                          onClick={() => {
+                            setDecisionsViewMode(id);
+                            setDecisionsViewMenuOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 text-xs transition-colors ${
+                            decisionsViewMode === id
+                              ? 'text-primary-700 dark:text-primary-200 bg-primary-500/10 font-semibold'
+                              : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+                          }`}
+                        >
+                          <span className="flex items-center gap-2">
+                            <Icon size={14} />
+                            {isPolish ? pl : en}
+                          </span>
+                          {decisionsViewMode === id ? <Check size={14} /> : null}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Inbox View Mode Toggle (list / cards) — match screenshot (pill container + dark bg) */}
             {activeTab === 'inbox' && !activeDocumentId && (
               <div
-                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-950/50 p-0.5"
+                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
                 role="radiogroup"
                 aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
               >
@@ -1840,10 +2349,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   onClick={() => setInboxViewMode('flat')}
                   className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                     inboxViewMode === 'flat'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
+                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
                   }`}
-                  title={isPolish ? 'Płaska lista' : 'Flat list'}
+                  title={isPolish ? 'Lista' : 'List'}
                   role="radio"
                   aria-checked={inboxViewMode === 'flat'}
                 >
@@ -1853,8 +2362,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   onClick={() => setInboxViewMode('sections')}
                   className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                     inboxViewMode === 'sections'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
+                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
                   }`}
                   title={isPolish ? 'Karty' : 'Cards'}
                   role="radio"
@@ -1865,6 +2374,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               </div>
             )}
 
+            {/* Tools */}
             {/* Ideas workspace tools toggle — when an idea document is open */}
             {activeTab === 'ideas' && activeDocumentId && (
               <div
@@ -1999,85 +2509,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               />
             )}
 
-            {/* Context-sensitive Filter Dropdown (only show when viewing list) */}
-            {currentFilters.length > 0 && (
-              <div className="relative">
-                <select
-                  value={currentFilterValue}
-                  onChange={(e) => handleFilterChange(e.target.value)}
-                  className="
-                    appearance-none h-9 pl-3 pr-9 rounded-lg text-sm font-medium
-                    bg-white dark:bg-navy-800
-                    border border-slate-200 dark:border-navy-600
-                    text-slate-700 dark:text-slate-200
-                    hover:bg-slate-50/70 dark:hover:bg-navy-800/80
-                    focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
-                    transition-colors duration-150
-                    cursor-pointer min-w-[140px]
-                  "
-                >
-                  {currentFilters.map((filter) => (
-                    <option key={filter.id} value={filter.id}>
-                      {filter.label}
-                      {filter.count !== undefined && filter.count > 0 ? ` (${filter.count})` : ''}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none"
-                />
-              </div>
-            )}
-
-            {/* Decisions: Priority filter */}
-            {activeTab === 'decisions' && !activeDocumentId && (
-              <div className="relative">
-                <select
-                  value={decisionPriorityFilter}
-                  onChange={(e) =>
-                    setDecisionPriorityFilter(e.target.value as DecisionPriorityFilter)
-                  }
-                  className="
-                    appearance-none h-9 pl-3 pr-9 rounded-lg text-sm font-medium
-                    bg-white dark:bg-navy-800
-                    border border-slate-200 dark:border-navy-600
-                    text-slate-700 dark:text-slate-200
-                    hover:bg-slate-50/70 dark:hover:bg-navy-800/80
-                    focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
-                    transition-colors duration-150
-                    cursor-pointer min-w-[170px]
-                  "
-                  aria-label={isPolish ? 'Priorytet' : 'Priority'}
-                  title={isPolish ? 'Filtr priorytetu' : 'Priority filter'}
-                >
-                  <option value="all">{isPolish ? 'Priorytet: wszystkie' : 'Priority: all'}</option>
-                  <option value="CRITICAL">
-                    {isPolish ? 'Priorytet: krytyczne' : 'Priority: critical'}
-                  </option>
-                  <option value="HIGH">{isPolish ? 'Priorytet: wysoki' : 'Priority: high'}</option>
-                  <option value="MEDIUM">
-                    {isPolish ? 'Priorytet: średni' : 'Priority: medium'}
-                  </option>
-                  <option value="LOW">{isPolish ? 'Priorytet: niski' : 'Priority: low'}</option>
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none"
-                />
-              </div>
-            )}
-
-            {/* Separator */}
-            {(currentFilters.length > 0 || actionButton) && (
-              <div className="w-px h-6 bg-slate-200 dark:bg-navy-600" />
-            )}
-
             {/* Primary Action Button (New Task/Decision/Notification) */}
             {actionButton && (
               <button
                 onClick={actionButton.onClick}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r ${actionButton.color} text-white border border-white/20 hover:brightness-110 shadow-lg shadow-primary-500/25 transition-all duration-200`}
+                className={`flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r ${actionButton.color} text-white border border-white/20 hover:brightness-110 shadow-lg shadow-primary-500/25 transition-all duration-200`}
                 data-testid="mywork-action-button"
               >
                 {actionButton.icon}
@@ -2085,11 +2521,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               </button>
             )}
 
-            {/* AI Button — Plan with AI (square, far right) */}
+            {/* AI (rightmost) */}
             <button
               onClick={handlePlanWithAI}
-              className="flex items-center justify-center w-9 h-9 rounded-full border border-purple-500 bg-purple-600 text-white hover:bg-purple-700 hover:border-purple-600 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 shadow-sm shadow-purple-500/25"
-              title={isPolish ? 'Zaplanuj z AI' : 'Plan with AI'}
+              className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-primary-600 dark:text-primary-300 hover:bg-primary-50/70 dark:hover:bg-primary-500/10 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+              title={isPolish ? 'Kontekst AI' : 'AI Context'}
               data-testid="mywork-ai-button"
             >
               <Sparkles size={18} />

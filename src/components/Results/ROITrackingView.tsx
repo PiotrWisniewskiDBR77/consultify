@@ -427,9 +427,7 @@ export const ROITrackingView: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[10%]">
                   {t('results.roi.columns.owner', 'Owner')}
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-16">
-                  {t('common.actions', 'Actions')}
-                </th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-16" />
               </tr>
             </thead>
             <tbody className="divide-y divide-navy-700/50">

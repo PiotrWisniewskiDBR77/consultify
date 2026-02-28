@@ -107,8 +107,8 @@ const InitiativesHub = React.lazy(() =>
 const ExecutionHub = React.lazy(() =>
   import('@/components/Execution/ExecutionHub').then((m) => ({ default: m.ExecutionHub }))
 );
-const BenefitsHub = React.lazy(() =>
-  import('@/components/Benefits/BenefitsHub').then((m) => ({ default: m.BenefitsHub }))
+const ResultsHub = React.lazy(() =>
+  import('@/components/Results/ResultsHub').then((m) => ({ default: m.default }))
 );
 
 // Legacy views (kept for backward compatibility)
@@ -1231,7 +1231,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>
               <RouteErrorBoundary>
-                <BenefitsHub />
+                <ResultsHub />
               </RouteErrorBoundary>
             </MainLayout>
           }

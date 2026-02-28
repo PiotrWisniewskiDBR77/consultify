@@ -18,10 +18,19 @@ export type ModuleTab =
   | 'raid'
   | 'decisions'
   | 'assignments'
+  // Finance (ECONOMICS module) — v3 functional areas
+  | 'models'
+  | 'analysis'
+  | 'prediction'
+  | 'valuation'
   // V3-J02 — Presentations Hub
   | 'all_decks'
   | 'recent'
   // V3-H01 — Results Hub
+  | 'summary'
+  | 'kpis'
+  | 'kpi_reports'
+  | 'roi'
   | 'all_kpis'
   | 'by_initiative'
   | 'global'

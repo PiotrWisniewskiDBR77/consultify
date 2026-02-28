@@ -21,8 +21,11 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
+import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
+import { useConversationStore } from '@/store/useConversationStore';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 import { ACTIVE_STATUSES, ALL_STATUSES } from '@/utils/initiativeHelpers';
 
@@ -48,9 +51,8 @@ import {
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { PortfolioAnalysisView } from './Analysis';
-// Compact side panel (replaces old 50% drawer)
-import { InitiativeCompactPanel } from './InitiativeCompactPanel';
-import { InitiativePreview } from './InitiativePreview';
+import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { InitiativePreviewV3Body, InitiativePreviewV3Footer, type InitiativePreviewV3Model } from './InitiativePreviewV3';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
 
@@ -121,7 +123,7 @@ interface InitiativesHubProps {
 }
 
 export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'list' }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { currentProjectId, currentUser } = useAppStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const [handledDeepLinkOpen, setHandledDeepLinkOpen] = useState(false);
@@ -135,6 +137,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // V3-A02: Persistent dynamic tabs via sessionStorage
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('initiatives');
+  const openChatWithContext = useOpenChatWithContext();
+  const addChatMessage = useConversationStore((s) => s.addMessage);
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
   /** Active/All scope toggle — used for Kanban columns and data filtering */
   const [scope, setScope] = useState<KanbanScope>('active');
@@ -163,9 +167,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [newSummary, setNewSummary] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
-  // Side panel state
-  const [selectedInitiative, setSelectedInitiative] = useState<PortfolioInitiative | null>(null);
-  const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
+  // Preview pane state (V3 Table+Preview)
+  const [previewInitiativeId, setPreviewInitiativeId] = useState<string | null>(null);
 
   // Filter state for API
   const [filters, setFilters] = useState<PortfolioFilters>({});
@@ -332,17 +335,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // HANDLERS
   // ============================================
 
-  // Open side panel when clicking on initiative (quick preview)
+  // Single click row/card → selection + preview (V3 Table+Preview)
   const handleInitiativeClick = useCallback((initiative: PortfolioInitiative) => {
-    setSelectedInitiative(initiative);
-    setIsSidePanelOpen(true);
+    setPreviewInitiativeId(initiative.id);
   }, []);
 
   // Open initiative as dynamic document (DynamicTabs)
   const handleOpenFullScreen = useCallback(
     (initiative: PortfolioInitiative) => {
-      // Close side panel first
-      setIsSidePanelOpen(false);
+      // Close preview first
+      setPreviewInitiativeId(null);
 
       // Add to open documents for tab display (if not already open)
       const existingDoc = openDocuments.find((d) => d.id === initiative.id);
@@ -359,7 +361,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       // Set as active document - this renders InitiativeDocumentView in ModuleHub
       setActiveDocumentId(initiative.id);
     },
-    [openDocuments]
+    [openDocuments, setActiveDocumentId, setOpenDocuments]
   );
 
   // Open decision as dynamic tab (called from InitiativeDocumentView → DecisionsSection)
@@ -496,11 +498,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     }
     setHandledDeepLinkNew(true);
   }, [handledDeepLinkNew, searchParams, setSearchParams]);
-
-  const handleCloseSidePanel = useCallback(() => {
-    setIsSidePanelOpen(false);
-    setTimeout(() => setSelectedInitiative(null), 300);
-  }, []);
 
   // D3.1: Status change with approval validation
   const handleStatusChange = useCallback(
@@ -789,15 +786,107 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
     switch (viewMode) {
       case 'table':
+        type PreviewItem = PortfolioInitiative & { title: string };
+
+        const selectedInit = previewInitiativeId
+          ? searchedInitiatives.find((i) => i.id === previewInitiativeId) || null
+          : null;
+        const selectedItem: PreviewItem | null = selectedInit
+          ? ({ ...selectedInit, title: selectedInit.name } as PreviewItem)
+          : null;
+        const itemIds = searchedInitiatives.map((i) => i.id);
+
+        const mapToPreviewModel = (i: PortfolioInitiative): InitiativePreviewV3Model => ({
+          id: i.id,
+          name: i.name,
+          status: i.status,
+          axis: (i as any).axis,
+          priority: (i as any).priority,
+          progress: (i as any).progress ?? null,
+          createdAt: (i as any).createdAt ?? null,
+          updatedAt: (i as any).updatedAt ?? null,
+          summary: (i as any).summary ?? null,
+          description: (i as any).description ?? null,
+          plannedStartDate: (i as any).plannedStartDate ?? null,
+          plannedEndDate: (i as any).plannedEndDate ?? null,
+          ownerBusiness: (i as any).ownerBusiness ?? null,
+          ownerExecution: (i as any).ownerExecution ?? null,
+          sourceType: (i as any).sourceType ?? (i as any).source_type ?? null,
+          sourceId: (i as any).sourceId ?? (i as any).source_id ?? null,
+        });
+
+        const openAiChat = async (initiative: PortfolioInitiative, promptText: string) => {
+          try {
+            const convId = await openChatWithContext({
+              entityType: 'initiative',
+              entityId: initiative.id,
+              entityName: initiative.name,
+              contextData: initiative as unknown as Record<string, unknown>,
+              pmoContext: { initiativeIds: [initiative.id] },
+            });
+            await addChatMessage({ conversationId: convId, role: 'user', content: promptText } as any);
+            toast.success(t('initiatives.toast.chatOpened', 'Chat opened'), { duration: 1500 });
+          } catch {
+            toast.error(t('initiatives.toast.chatOpenError', 'Failed to open chat'));
+          }
+        };
+
+        const copyInitiativeLink = async (id: string) => {
+          try {
+            const url = `${window.location.origin}${ROUTES.INITIATIVES}?open=${encodeURIComponent(id)}&mode=doc`;
+            await navigator.clipboard.writeText(url);
+            toast.success(i18n.language === 'pl' ? 'Skopiowano link' : 'Link copied');
+          } catch {
+            toast.error(i18n.language === 'pl' ? 'Nie udało się skopiować' : 'Copy failed');
+          }
+        };
+
         return (
-          <PortfolioListView
-            initiatives={searchedInitiatives}
-            onInitiativeClick={handleInitiativeClick}
-            onOpenFull={handleOpenFullScreen}
-            onStatusChange={handleStatusChange}
-            onQuickUpdate={handleQuickUpdate}
-            onSelectionChange={setSelectedIds}
-          />
+          <div className="h-full overflow-hidden">
+            <TableWithPreviewLayout<PreviewItem>
+              selectedId={previewInitiativeId}
+              selectedItem={selectedItem}
+              onSelect={setPreviewInitiativeId}
+              itemIds={itemIds}
+              onOpenFull={(id) => {
+                const init = searchedInitiatives.find((x) => x.id === id);
+                if (init) handleOpenFullScreen(init);
+              }}
+              renderKicker={(_item) => (i18n.language === 'pl' ? 'Inicjatywa' : 'Initiative')}
+              renderPreview={(item) => (
+                <InitiativePreviewV3Body
+                  initiative={mapToPreviewModel(item)}
+                  onSummarize={() =>
+                    openAiChat(
+                      item,
+                      i18n.language === 'pl'
+                        ? 'Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki.'
+                        : 'Summarize this initiative in 5 bullets and propose 3 next steps.'
+                    )
+                  }
+                />
+              )}
+              renderPreviewFooter={(item) => (
+                <InitiativePreviewV3Footer
+                  initiative={mapToPreviewModel(item)}
+                  tasksCount={Array.isArray((item as any).tasks) ? (item as any).tasks.length : undefined}
+                  onOpenFull={() => handleOpenFullScreen(item)}
+                  onOpenChat={(prompt) => openAiChat(item, prompt)}
+                  onCopyLink={() => copyInitiativeLink(item.id)}
+                />
+              )}
+            >
+              <PortfolioListView
+                initiatives={searchedInitiatives}
+                onInitiativeClick={handleInitiativeClick}
+                onOpenFull={handleOpenFullScreen}
+                onStatusChange={handleStatusChange}
+                onQuickUpdate={handleQuickUpdate}
+                onSelectionChange={setSelectedIds}
+                canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+              />
+            </TableWithPreviewLayout>
+          </div>
         );
       case 'grid':
         return (
@@ -933,17 +1022,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       >
         <div className="flex-1 overflow-hidden">{renderContent()}</div>
       </ModuleHub>
-
-      {/* Initiative Preview Pane (V3 PreviewPaneShell standard) */}
-      {isSidePanelOpen && selectedInitiative && (
-        <div className="fixed right-0 top-0 bottom-0 w-[380px] z-40 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl overflow-y-auto">
-          <InitiativePreview
-            initiative={selectedInitiative as any}
-            onOpen={() => handleOpenFullScreen(selectedInitiative)}
-            onClose={handleCloseSidePanel}
-          />
-        </div>
-      )}
 
       {/* New Initiative Modal — D1.1: includes type/level selector */}
       {showNewModal && (

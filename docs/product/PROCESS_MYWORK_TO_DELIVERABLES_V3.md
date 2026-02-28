@@ -14,6 +14,8 @@
 - **UI standards (komponenty/moduły)**: `docs/ui-standards/README.md`
   - App Table: `docs/ui-standards/03-modules/app-table-standard.md`
   - Table + Preview Pane: `docs/ui-standards/03-modules/table-preview-pane-standard.md`
+  - **Golden Standard v3 (Tables/Cards/Preview + audit checklist)**: `docs/ui-standards/03-modules/golden-standard-table-cards-preview-v3.md`
+  - **Golden Standard v3 — agent procedure (runbook, step-by-step)**: `docs/product/UI_UX_GOLDEN_STANDARD_V3_AGENT_PROCEDURE.md`
   - Workspace 3-tools strip: `docs/ui-standards/02-components/workspace-3-tools-strip.md`
   - Presentation modes D/N/C: `docs/ui-standards/01-shell-layout/presentation-modes.md`
 - **Tools (mental model + katalog)**:
@@ -272,6 +274,21 @@ Kanon: online jako primary artifact + eksporty.
 ### 12.20 [R2 / równolegle] Video & GFX enablement dla Tools
 
 - **Ref SSOT**: `docs/product/KNOWN_TOOLS_CONTENT_COMPLETENESS_AUDIT_V3.md`
+
+### 12.21 [F3 / BACKLOG KONCEPCYJNY] Execution — raportowanie i zarządzanie realizacją (metryki + timeline proposals + workout)
+
+> Ten punkt wymaga doprecyzowania (koncepcja + kontrakty danych + UX), bo dziś nie mamy “sensownego raportowania i zarządzania” dla realizacji.
+
+- **Cel**: w module **Execution/Wdrożenia** raportować postęp “w środku inicjatywy” oraz dać mechanizmy reagowania, gdy coś idzie na czerwono.
+- **Raportowanie (KANON)**:
+  - **Postępy**: taski dotknięte / on-time vs late (jeśli są daty), decyzje podjęte/pending, progres rezultatów (update KPI/ROI jeśli istnieje mapping).
+  - **Zasoby**: plan coverage (czy jest owner/zespół) + engagement; **plan vs actual** tylko jeśli mamy realne “actual”.
+  - **Zagrożenia**: blockers/risks + aging (jak długo bez update’u).
+  - **Missing baseline policy**: jeśli brak dat/zasobów → UI pokazuje “missing plan data” i nie udaje on-time/late ani plan-vs-actual.
+- **Zarządzanie (KANON)**:
+  - **Propozycje zmian w timeline**: propose→accept (z widocznością wpływu na zależności na poziomie reguł Initiatives/Tasks).
+  - **Workarounds / plan naprawczy**: checklista działań + możliwość utworzenia tasków/decyzji z planu (propose→accept).
+- **Ref SSOT**: `docs/product/EXECUTION_V3.md` (sekcja 6.2–6.3).
 
 ---
 
@@ -600,7 +617,12 @@ To jest reguła “nad wszystkim”: `docs/ui-standards/README.md`.
 
 ### 11.3 “Command Row” zamiast wielu pasków
 
-Pod Module Topbar jest **zawsze jeden** rząd (dynamic tabs / search / counters), bez dodatkowych bannerów.
+Pod Module Topbar jest **zawsze jeden** rząd (Command Row). To *ta sama linia*, która działa w trybach:
+
+- dynamic tabs (otwarte dokumenty)
+- search row (po włączeniu lupy)
+- counters / status summary (np. Open/Done/Saved/All, Krytyczne, Wymaga akcji, Nowe dziś/tydzień)
+- **context action bar** (np. bulk selection / triage) — **bez dokładania nowej linii**
 
 Źródło: `docs/ui-standards/UI_UX_CANON_V3.md`.
 
@@ -678,7 +700,7 @@ Wszystkie huby tabelaryczne muszą mieć:
 
 ### 12.11 [UX UNIFICATION] Unified look & feel — compliance sweep względem `docs/ui-standards/`
 
-- **Ref SSOT**: `docs/ui-standards/UI_UX_CANON_V3.md`, `docs/ui-standards/README.md`
+- **Ref SSOT**: `docs/ui-standards/UI_UX_CANON_V3.md`, `docs/ui-standards/README.md`, `docs/ui-standards/03-modules/golden-standard-table-cards-preview-v3.md` (audit checklist)
 - **Output**: lista ekranów → odchylenia od standardu → konkretne poprawki (bez tworzenia nowych komponentów).
 
 ### 12.12 [P0/R0] MyWork — cleanup UI/UX “żeby nie było chaosu” (zgodnie z kanonem v3)
@@ -690,9 +712,11 @@ Wszystkie huby tabelaryczne muszą mieć:
 - [ ] **MW-UX-02**: W każdym hubie tabelarycznym MyWork (Inbox/Tasks/Decisions/Notebook lists/Ideas lists) egzekwujemy **App Table Standard**: resizable columns, header filters (multi), actions kebab (⋮) pionowy, brak duplikacji toolbarów.  
   - **Ref SSOT**: `docs/ui-standards/03-modules/app-table-standard.md`
 - [ ] **MW-UX-03**: Preview pane w MyWork jako kanon: default OFF, selection→preview, `X` close, parity akcji, responsywność (clamp).  
-  - **Ref SSOT**: `docs/ui-standards/03-modules/table-preview-pane-standard.md`
-- [ ] **MW-UX-04**: “Command Row” w hubach MyWork (pod Module Topbar): **dynamic tabs / search / counters** (krytyczne/wymaga akcji/nowe) zamiast wielu pasków i środkowych bannerów. Klik w counter = ustawia filtr.  
-  - **Ref SSOT**: `docs/ui-standards/UI_UX_CANON_V3.md` (Command Row)
+  - MUST: **brak linii** między tabelą a preview (separacja = gap, nie border), width: `clamp(340px, 28%, 480px)`
+  - **Ref SSOT**: `docs/ui-standards/03-modules/golden-standard-table-cards-preview-v3.md`, `docs/ui-standards/03-modules/table-preview-pane-standard.md`
+- [ ] **MW-UX-04**: “Command Row” w hubach MyWork (pod Module Topbar): **jedna linia** w trybach: dynamic tabs / search / counters / **context action bar (bulk selection/triage)**. Klik w counter = ustawia filtr.  
+  - MUST: bulk selection nie dokłada osobnego paska; wchodzi jako tryb Command Row.
+  - **Ref SSOT**: `docs/ui-standards/03-modules/golden-standard-table-cards-preview-v3.md` (audit checklist), `docs/ui-standards/UI_UX_CANON_V3.md` (Command Row)
 - [ ] **MW-FOCUS-01**: Focus jako “lekki cockpit” (My list + Today + This Week), bez centralnego “AI Coach feed”; drag&drop między lane’ami + quick add.  
   - **Ref SSOT**: `docs/MYWORK_MODULE_SPECIFICATION.md` (Focus MUST), `docs/ui-standards/UI_UX_CANON_V3.md` (MyWork Focus)
 - [ ] **MW-TASKS-01**: Tasks view modes kanonicznie (bez “custom kolejek” jako view mode): `table → kanban → timeline → calendar → matrix → grid` (pokazujemy tylko dostępne).  
@@ -767,6 +791,14 @@ Wszystkie huby tabelaryczne muszą mieć:
 - [ ] **ASSETS-01**: Dla 31 toolTypes: preview graphic requirements → thumbnail asset + wpięcie do KB (`thumbnail_url`).  
 - [ ] **ASSETS-02**: Dla 31 toolTypes: 60s micro-video script → video produkcja + wpięcie do KB (`video_url`).  
   - **Ref SSOT**: `docs/product/KNOWN_TOOLS_CONTENT_COMPLETENESS_AUDIT_V3.md`
+
+### 12.21 [F3 / BACKLOG KONCEPCYJNY] Execution — raportowanie i zarządzanie realizacją (metryki + timeline proposals + workout)
+
+> Ten punkt wymaga doprecyzowania (koncepcja + kontrakty danych + UX), bo dziś nie mamy “sensownego raportowania i zarządzania” dla realizacji.
+
+- **Cel**: raportować postęp “w środku inicjatywy” (taski/decyzje/terminy/zasoby/ryzyka) oraz umożliwić reakcję: **propozycje zmian w timeline** + **workout**.
+- **Zasada**: jeśli brak baseline (dat/zasobów) → pokazujemy “missing plan data” i nie udajemy on-time/late ani plan-vs-actual.
+- **Ref SSOT**: `docs/product/EXECUTION_V3.md` (sekcja 6.2–6.3) + ledger: `V3-G02` w `docs/product/V3_IMPLEMENTATION_PROGRAM.md`.
 
 
 

@@ -33,9 +33,17 @@ interface FilterableTableProps {
   onRowClick?: (row: TableRow) => void;
   onRowDoubleClick?: (row: TableRow) => void;
   onRowAction?: (action: string, row: TableRow) => void;
+  /** Optional: override the row actions menu contents. */
+  getRowActions?: (row: TableRow) => RowAction[];
+  /** Optional: hide the row actions menu column. */
+  hideRowActions?: boolean;
   activeFilters: FilterChip[];
   onFilterChange: (filters: FilterChip[]) => void;
   emptyMessage?: string;
+  /** Outer padding of the table canvas (not the surface). */
+  canvasClassName?: string;
+  /** Controls row/header density. */
+  density?: 'comfortable' | 'compact';
 }
 
 // Status badge component — uses canonical color palette
@@ -207,12 +215,17 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   onRowClick,
   onRowDoubleClick,
   onRowAction,
+  getRowActions,
+  hideRowActions = false,
   activeFilters,
   onFilterChange,
   emptyMessage = 'No items found',
+  canvasClassName = 'p-4',
+  density = 'comfortable',
 }) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
+  const cellPadding = density === 'compact' ? 'px-3 py-2' : 'px-4 py-3';
 
   // Get active filter values for a column
   const getActiveFilterValues = useCallback(
@@ -283,7 +296,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   };
 
   return (
-    <div className="p-4">
+    <div className={canvasClassName}>
       <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-hidden">
         <table className="w-full">
           <thead>
@@ -291,7 +304,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
               {columns.map((column) => (
                 <th
                   key={column.id}
-                  className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className={`${cellPadding} text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider`}
                   style={{ width: column.width }}
                 >
                   <div className="flex items-center gap-1">
@@ -306,13 +319,20 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   </div>
                 </th>
               ))}
-              <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20" />
+              {!hideRowActions ? (
+                <th
+                  className={`${cellPadding} text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20`}
+                />
+              ) : null}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200/70 dark:divide-white/[0.06]">
             {filteredData.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + 1} className="px-4 py-12 text-center text-slate-500">
+                <td
+                  colSpan={columns.length + (hideRowActions ? 0 : 1)}
+                  className={`${density === 'compact' ? 'px-3' : 'px-4'} py-12 text-center text-slate-500`}
+                >
                   {emptyMessage}
                 </td>
               </tr>
@@ -325,7 +345,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   className="group hover:bg-slate-50/70 dark:hover:bg-white/[0.03] cursor-pointer transition-colors"
                 >
                   {columns.map((column) => (
-                    <td key={column.id} className="px-4 py-3">
+                    <td key={column.id} className={cellPadding}>
                       {column.render ? (
                         column.render(row)
                       ) : column.id === 'status' ? (
@@ -343,50 +363,55 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                       )}
                     </td>
                   ))}
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
-                      <RowActionsMenu
-                        iconVariant="vertical"
-                        actions={
-                          [
-                            {
-                              id: 'open',
-                              label: t('common.open', 'Open'),
-                              icon: Maximize2,
-                              variant: 'primary',
-                              onClick: () => onRowAction?.('edit', row),
-                            },
-                            {
-                              id: 'preview',
-                              label: t('common.preview', 'Preview'),
-                              icon: Eye,
-                              onClick: () => onRowAction?.('preview', row),
-                            },
-                            {
-                              id: 'duplicate',
-                              label: t('common.duplicate', 'Duplicate'),
-                              icon: Copy,
-                              onClick: () => onRowAction?.('duplicate', row),
-                            },
-                            {
-                              id: 'rename',
-                              label: t('common.edit', 'Edit'),
-                              icon: Edit,
-                              onClick: () => onRowAction?.('rename', row),
-                            },
-                            {
-                              id: 'delete',
-                              label: t('common.delete', 'Delete'),
-                              icon: Trash2,
-                              divider: true,
-                              variant: 'danger',
-                              onClick: () => onRowAction?.('delete', row),
-                            },
-                          ] as RowAction[]
-                        }
-                      />
-                    </div>
-                  </td>
+                  {!hideRowActions ? (
+                    <td className={`${cellPadding} text-right`}>
+                      <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+                        {(() => {
+                          const actions: RowAction[] =
+                            getRowActions?.(row) ??
+                            ([
+                              {
+                                id: 'open',
+                                label: t('common.open', 'Open'),
+                                icon: Maximize2,
+                                variant: 'primary',
+                                onClick: () => onRowAction?.('edit', row),
+                              },
+                              {
+                                id: 'preview',
+                                label: t('common.preview', 'Preview'),
+                                icon: Eye,
+                                onClick: () => onRowAction?.('preview', row),
+                              },
+                              {
+                                id: 'duplicate',
+                                label: t('common.duplicate', 'Duplicate'),
+                                icon: Copy,
+                                onClick: () => onRowAction?.('duplicate', row),
+                              },
+                              {
+                                id: 'rename',
+                                label: t('common.edit', 'Edit'),
+                                icon: Edit,
+                                onClick: () => onRowAction?.('rename', row),
+                              },
+                              {
+                                id: 'delete',
+                                label: t('common.delete', 'Delete'),
+                                icon: Trash2,
+                                divider: true,
+                                variant: 'danger',
+                                onClick: () => onRowAction?.('delete', row),
+                              },
+                            ] as RowAction[]);
+
+                          if (!actions.length) return null;
+
+                          return <RowActionsMenu iconVariant="vertical" actions={actions} />;
+                        })()}
+                      </div>
+                    </td>
+                  ) : null}
                 </tr>
               ))
             )}

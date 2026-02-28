@@ -1,4 +1,4 @@
-import { BarChart3, DollarSign, Globe, Layers, Target, TrendingUp } from 'lucide-react';
+import { BarChart3, ClipboardList, DollarSign, FileText, Target } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -11,11 +11,11 @@ import { ModuleTab, TabConfig, ViewMode } from '../shared/ModuleHub/types';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { KPICreateModal } from './KPICreateModal';
 import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
-import { OperationalAnalysisView } from './OperationalAnalysisView';
 import { ResultsGridView } from './ResultsKPITable';
-import { ResultsKPITable } from './ResultsKPITable';
-import { ROIAnalysisView } from './ROIAnalysisView';
+import { ResultsKpisTableV3 } from './ResultsKpisTableV3';
 import { ROITrackingView } from './ROITrackingView';
+import { ResultsKpiReportsView } from './ResultsKpiReportsView';
+import { ResultsSummaryView } from './ResultsSummaryView';
 
 export type KPIStatus = 'on-target' | 'below' | 'no-data';
 export type KPITrend = 'up' | 'down' | 'stable';
@@ -41,7 +41,7 @@ function deriveTrend(_kpi: InitiativeKPI): KPITrend {
 export const ResultsHub: React.FC = () => {
   const { t } = useTranslation();
 
-  const [activeTab, setActiveTab] = useState<ModuleTab>('all_kpis');
+  const [activeTab, setActiveTab] = useState<ModuleTab>('summary');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
@@ -83,38 +83,25 @@ export const ResultsHub: React.FC = () => {
   const tabs: TabConfig[] = useMemo(
     () => [
       {
-        id: 'all_kpis' as ModuleTab,
-        label: t('results.tabs.allKpis', 'All KPIs'),
-        icon: <Layers size={16} />,
-        count: kpis.length,
+        id: 'summary' as ModuleTab,
+        label: t('results.tabs.summary', 'Zestawienie'),
+        icon: <ClipboardList size={16} />,
       },
       {
-        id: 'by_initiative' as ModuleTab,
-        label: t('results.tabs.byInitiative', 'By Initiative'),
+        id: 'kpis' as ModuleTab,
+        label: t('results.tabs.kpis', 'KPI'),
         icon: <Target size={16} />,
-        count: kpis.filter((k) => k.initiativeId).length,
-      },
-      {
-        id: 'global' as ModuleTab,
-        label: t('results.tabs.global', 'Global'),
-        icon: <Globe size={16} />,
-        count: kpis.filter((k) => !k.initiativeId).length,
-      },
-      {
-        id: 'roi_tracking' as ModuleTab,
-        label: t('results.tabs.roiTracking', 'ROI Tracking'),
-        icon: <DollarSign size={16} />,
-      },
-      {
-        id: 'operational' as ModuleTab,
-        label: t('results.tabs.operational', 'Operational'),
-        icon: <BarChart3 size={16} />,
         count: kpis.length,
       },
       {
-        id: 'roi_analysis' as ModuleTab,
-        label: t('results.tabs.roiAnalysis', 'ROI Analysis'),
-        icon: <TrendingUp size={16} />,
+        id: 'kpi_reports' as ModuleTab,
+        label: t('results.tabs.kpiReports', 'Raporty KPI'),
+        icon: <FileText size={16} />,
+      },
+      {
+        id: 'roi' as ModuleTab,
+        label: t('results.tabs.roi', 'ROI'),
+        icon: <DollarSign size={16} />,
       },
     ],
     [t, kpis]
@@ -122,12 +109,6 @@ export const ResultsHub: React.FC = () => {
 
   const filteredKpis = useMemo(() => {
     let items = [...kpis];
-
-    if (activeTab === 'by_initiative') {
-      items = items.filter((k) => k.initiativeId);
-    } else if (activeTab === 'global') {
-      items = items.filter((k) => !k.initiativeId);
-    }
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -155,11 +136,7 @@ export const ResultsHub: React.FC = () => {
     }
 
     return items;
-  }, [kpis, activeTab, searchQuery, activeFilters]);
-
-  const handleRowClick = useCallback((kpi: ResultsKPI) => {
-    setDrawerKpiId(kpi.id);
-  }, []);
+  }, [kpis, searchQuery, activeFilters]);
 
   const handleRowAction = useCallback((action: string, kpi: ResultsKPI) => {
     switch (action) {
@@ -188,7 +165,12 @@ export const ResultsHub: React.FC = () => {
         persistViewModeKey="results"
         tabs={tabs}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          setSearchQuery('');
+          setActiveFilters([]);
+          setActiveDocumentId(null);
+        }}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
@@ -203,17 +185,20 @@ export const ResultsHub: React.FC = () => {
         activeFilters={activeFilters}
         onRemoveFilter={(id) => setActiveFilters((prev) => prev.filter((f) => f.id !== id))}
         onClearFilters={() => setActiveFilters([])}
-        onNewItem={() => setShowCreateModal(true)}
-        newItemLabel={t('results.addKpi', '+ Add KPI')}
-        statusDropdownContext="benefits"
-        availableViewModes={['table', 'grid']}
+        onNewItem={activeTab === 'kpis' ? () => setShowCreateModal(true) : undefined}
+        newItemLabel={activeTab === 'kpis' ? t('results.addKpi', '+ Add KPI') : undefined}
+        availableViewModes={activeTab === 'kpis' ? ['table', 'grid'] : ['table']}
       >
-        {activeTab === 'roi_tracking' ? (
+        {activeTab === 'summary' ? (
+          <ResultsSummaryView
+            searchQuery={searchQuery}
+            activeFilters={activeFilters}
+            onFilterChange={setActiveFilters}
+          />
+        ) : activeTab === 'kpi_reports' ? (
+          <ResultsKpiReportsView activeFilters={activeFilters} onFilterChange={setActiveFilters} />
+        ) : activeTab === 'roi' ? (
           <ROITrackingView />
-        ) : activeTab === 'operational' ? (
-          <OperationalAnalysisView />
-        ) : activeTab === 'roi_analysis' ? (
-          <ROIAnalysisView />
         ) : loading ? (
           <div className="flex items-center justify-center py-24">
             <div className="flex items-center gap-3 text-slate-400">
@@ -221,22 +206,21 @@ export const ResultsHub: React.FC = () => {
               <span className="text-sm">{t('common.loading', 'Loading...')}</span>
             </div>
           </div>
-        ) : viewMode === 'table' ? (
-          <ResultsKPITable
+        ) : activeTab === 'kpis' && viewMode === 'table' ? (
+          <ResultsKpisTableV3
             kpis={filteredKpis}
             activeFilters={activeFilters}
             onFilterChange={setActiveFilters}
-            onRowClick={handleRowClick}
-            onRowAction={handleRowAction}
+            onOpenKpi={(id) => setDrawerKpiId(id)}
           />
-        ) : (
+        ) : activeTab === 'kpis' ? (
           <ResultsGridView
             kpis={filteredKpis}
-            onItemClick={handleRowClick}
+            onItemClick={(kpi) => setDrawerKpiId(kpi.id)}
             onItemAction={handleRowAction}
             onNewItem={() => setShowCreateModal(true)}
           />
-        )}
+        ) : null}
       </ModuleHub>
 
       {showCreateModal && (

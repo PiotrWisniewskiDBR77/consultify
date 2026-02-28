@@ -283,17 +283,29 @@ class ProviderSentinel {
         if (!isActive((p as any).is_active)) continue;
         try {
           const r = await testProvider(p);
-          const available = r.status === 'healthy' || r.status === 'degraded';
+          const providerId = String(p.provider || '').toLowerCase();
           const cat = r.errorMessage ? classifyError(r.errorMessage, r.httpStatus || null) : null;
+
+          // Keep OpenRouter continuously selectable in routing even if it has auth/billing issues.
+          // Mark as degraded (not unhealthy) so modelRouter's health gating doesn't exclude it,
+          // but still record the error and report it as unavailable for diagnostics.
+          const statusToWrite: HealthStatus =
+            providerId === 'openrouter' && r.status === 'unhealthy' && (cat === 'auth' || cat === 'billing')
+              ? 'degraded'
+              : r.status;
+
+          const available =
+            (statusToWrite === 'healthy' || statusToWrite === 'degraded') &&
+            !(providerId === 'openrouter' && (cat === 'auth' || cat === 'billing') && r.status === 'unhealthy');
           const errorMsg = r.errorMessage
             ? `${cat ? `${cat.toUpperCase()}: ` : ''}${r.errorMessage}`
             : null;
 
-          await writeProviderStatus({ providerId: p.id, status: r.status, checkedAtIso });
+          await writeProviderStatus({ providerId: p.id, status: statusToWrite, checkedAtIso });
           await writeHealthEvent({
             provider: p.provider,
             model: p.model_id || null,
-            status: r.status,
+            status: statusToWrite,
             available,
             latencyMs: r.latencyMs || 0,
             errorMessage: available ? null : errorMsg,

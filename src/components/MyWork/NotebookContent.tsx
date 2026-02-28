@@ -1140,11 +1140,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   };
 
   return (
-    <div className="flex h-[calc(100vh-220px)] min-h-[520px]">
+    <div className="flex h-[calc(100vh-220px)] min-h-[520px] gap-1.5 p-3 overflow-hidden bg-white dark:bg-navy-950">
       <style>{EDITOR_STYLES}</style>
 
       {/* Sidebar */}
-      <div className="w-80 shrink-0 border-r border-slate-200/80 dark:border-navy-800/80 bg-gradient-to-b from-white via-white to-slate-50/50 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/30 flex flex-col">
+      <div className="w-80 shrink-0 rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-gradient-to-b from-white via-white to-slate-50/50 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/30 flex flex-col">
         {/* Sidebar header */}
         <div className="px-4 py-3 border-b border-slate-200/60 dark:border-navy-800/60">
           <div className="flex items-center justify-between mb-2">
@@ -1454,8 +1454,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       </div>
 
       {/* Editor + Ideas panel */}
-      <div className="flex-1 flex bg-gradient-to-br from-slate-50 via-white to-slate-50/50 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/20">
-        <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 flex min-w-0 gap-1.5 overflow-hidden">
+        <div className="flex-1 min-w-0 flex flex-col rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50/50 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/20">
           {!activePage ? (
             <div className="flex h-full items-center justify-center p-8">
               <div className="max-w-lg w-full">

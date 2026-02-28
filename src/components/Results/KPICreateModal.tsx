@@ -7,6 +7,7 @@ import { API_URL, getHeaders } from '@/services/api';
 interface KPICreateModalProps {
   onClose: () => void;
   onSuccess: () => void;
+  initialInitiativeId?: string;
 }
 
 interface Initiative {
@@ -17,7 +18,11 @@ interface Initiative {
 type Direction = 'increase' | 'decrease' | 'maintain';
 type Frequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
 
-export const KPICreateModal: React.FC<KPICreateModalProps> = ({ onClose, onSuccess }) => {
+export const KPICreateModal: React.FC<KPICreateModalProps> = ({
+  onClose,
+  onSuccess,
+  initialInitiativeId,
+}) => {
   const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
@@ -30,6 +35,12 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({ onClose, onSucce
   const [frequency, setFrequency] = useState<Frequency>('MONTHLY');
   const [direction, setDirection] = useState<Direction>('increase');
   const [initiativeId, setInitiativeId] = useState('');
+
+  useEffect(() => {
+    if (initialInitiativeId) {
+      setInitiativeId(initialInitiativeId);
+    }
+  }, [initialInitiativeId]);
 
   useEffect(() => {
     (async () => {

@@ -16,10 +16,10 @@
 
 import React from 'react';
 
-import { EconomicsHub } from '../components/Economics/EconomicsHub';
+import { FinanceHub } from '../components/Economics/FinanceHub';
 
 export const EconomicsView: React.FC = () => {
-  return <EconomicsHub />;
+  return <FinanceHub />;
 };
 
 export default EconomicsView;

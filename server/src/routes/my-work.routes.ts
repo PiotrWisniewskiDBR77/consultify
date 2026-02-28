@@ -6077,6 +6077,140 @@ Return ONLY a JSON object matching the schema. No markdown, no extra text.`;
   })
 );
 
+// ────────────────────────────────────────────────────────────────────────────
+// L4c: Tasks Preview AI Text (LLM) — details/actions hints
+// ────────────────────────────────────────────────────────────────────────────
+router.post(
+  '/tasks/ai-text',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+
+    const body = req.body || {};
+    const language = String(body.language || 'pl').toLowerCase().startsWith('pl') ? 'pl' : 'en';
+
+    const inputSchema = z.object({
+      language: z.string().optional(),
+      intent: z.enum(['why_urgent', 'plan', 'who_can_help', 'expand_details', 'summarize_details']),
+      task: z.object({
+        title: z.string().min(1).max(400),
+        description: z.string().max(8000).optional().nullable(),
+        status: z.string().max(64).optional().nullable(),
+        priority: z.string().max(64).optional().nullable(),
+        dueDate: z.string().max(64).optional().nullable(),
+        projectName: z.string().max(200).optional().nullable(),
+        initiativeName: z.string().max(200).optional().nullable(),
+      }),
+    });
+
+    const payload = inputSchema.safeParse({
+      language,
+      intent: body.intent,
+      task: body.task,
+    });
+    if (!payload.success) {
+      return res.status(400).json({ error: 'Invalid task payload' });
+    }
+
+    const { intent, task } = payload.data;
+
+    const outSchema = z.object({
+      text: z.string().min(1).max(1200),
+    });
+
+    const intentPrompt = (lang: 'pl' | 'en') => {
+      const baseContext =
+        lang === 'pl'
+          ? `Użytkownik ogląda zadanie w Preview (MyWork → Zadania).
+Nie powtarzaj tytułu. Odpowiedz zwięźle i konkretnie.
+
+Dane zadania:
+- title: ${JSON.stringify(task.title)}
+- status: ${JSON.stringify(task.status || '')}
+- priority: ${JSON.stringify(task.priority || '')}
+- dueDate: ${JSON.stringify(task.dueDate || '')}
+- projectName: ${JSON.stringify(task.projectName || '')}
+- initiativeName: ${JSON.stringify(task.initiativeName || '')}
+- description: ${JSON.stringify(String(task.description || '').slice(0, 2500))}
+`
+          : `The user is viewing a Task in the Preview pane (MyWork → Tasks).
+Do not repeat the title. Be concise and specific.
+
+Task data:
+- title: ${JSON.stringify(task.title)}
+- status: ${JSON.stringify(task.status || '')}
+- priority: ${JSON.stringify(task.priority || '')}
+- dueDate: ${JSON.stringify(task.dueDate || '')}
+- projectName: ${JSON.stringify(task.projectName || '')}
+- initiativeName: ${JSON.stringify(task.initiativeName || '')}
+- description: ${JSON.stringify(String(task.description || '').slice(0, 2500))}
+`;
+
+      const ask =
+        lang === 'pl'
+          ? intent === 'why_urgent'
+            ? `Zadanie: odpowiedz w 2–4 zdaniach dlaczego to zadanie może być pilne i jaki jest największy risk, jeśli nie zrobimy go teraz.`
+            : intent === 'plan'
+              ? `Zadanie: zaproponuj plan działania w 3–6 punktach (krótkie, wykonawcze kroki).`
+              : intent === 'who_can_help'
+                ? `Zadanie: wskaż 3–5 ról/osób, które mogą pomóc (np. DevOps, PM, Data Owner), oraz co dokładnie od nich potrzebujemy.`
+                : intent === 'expand_details'
+                  ? `Zadanie: rozwiń opis do jasnego brifu (max 10 zdań): kontekst, cel, definicja “done”, ryzyka, następny krok.`
+                  : `Zadanie: podsumuj opis do krótkiego brifu (max 3 zdania) + 3 bullet points "next steps".`
+          : intent === 'why_urgent'
+            ? `Task: in 2–4 sentences explain why this may be urgent and the biggest risk if we delay it.`
+            : intent === 'plan'
+              ? `Task: propose an action plan in 3–6 bullets (short, executable steps).`
+              : intent === 'who_can_help'
+                ? `Task: suggest 3–5 roles/people who can help and what we need from them.`
+                : intent === 'expand_details'
+                  ? `Task: expand into a clear brief (max 10 sentences): context, goal, definition of done, risks, next step.`
+                  : `Task: summarize into a short brief (max 3 sentences) + 3 "next steps" bullets.`;
+
+      return `${baseContext}\n${ask}\n\nZwróć TYLKO JSON {\"text\":\"...\"} bez markdown i bez dodatkowego tekstu.`;
+    };
+
+    try {
+      const { llmService } = await import('../services/ai/llmService.js');
+      const modelRouter = (await import('../services/ai/modelRouter.js')).default;
+      const modelCfg = await modelRouter.select({
+        capability: 'chat',
+        organizationId: orgId,
+        options: { tier: 'STANDARD' },
+      });
+
+      const prompt = intentPrompt(language);
+
+      const r = await llmService.call({
+        type: 'structured',
+        schema: outSchema,
+        modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
+        systemPrompt:
+          language === 'pl'
+            ? 'Jesteś asystentem wykonawczym. Odpowiadasz krótko i praktycznie. Zwracasz wyłącznie poprawny JSON.'
+            : 'You are an execution assistant. Be concise and practical. Return only valid JSON.',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.2,
+        maxTokens: 700,
+        timeoutMs: 12000,
+        breakerOptions: { retryAttempts: 1 },
+      });
+
+      const object = (r as any)?.object;
+      const parsed = outSchema.safeParse(object);
+      if (!parsed.success) {
+        return res.status(500).json({ error: 'AI response invalid' });
+      }
+
+      return res.json({ result: parsed.data });
+    } catch (err: any) {
+      logger.error('[TasksAIText] Failed:', err);
+      return res.status(503).json({ error: 'AI assist unavailable', message: err?.message });
+    }
+  })
+);
+
 // ============================================================================
 // L5: AI Delegation Advisor
 // ============================================================================

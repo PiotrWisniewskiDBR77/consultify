@@ -651,6 +651,27 @@ export class LLMConfigService {
       }
     }
 
+    // Ensure a single, deterministic default provider.
+    // This repo assumes OpenRouter as the platform default, and multiple defaults can lead
+    // to non-deterministic routing (SELECT ... LIMIT 1 without ORDER).
+    try {
+      const openrouterRow = await this.getProviderFromDb('openrouter');
+      const hasOpenrouterKey =
+        !!String(openrouterRow?.api_key || '').trim() || !!String(this.getApiKeyFromEnv('openrouter') || '').trim();
+      if (hasOpenrouterKey) {
+        await this.runAsync('UPDATE llm_providers SET is_default = ? WHERE provider != ?', [
+          false,
+          'openrouter',
+        ]);
+        await this.runAsync('UPDATE llm_providers SET is_default = ? WHERE provider = ?', [
+          true,
+          'openrouter',
+        ]);
+      }
+    } catch {
+      // Best-effort only (DB might be initializing).
+    }
+
     this.clearCache();
   }
 

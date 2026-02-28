@@ -122,13 +122,50 @@ Execution raportuje postęp na dwa sposoby:
 1) **Sygnały w kolekcji** (ciągły obraz “co jest czerwone”)
 2) **Status update w inicjatywie** (N-mode), które jest źródłem prawdy dla komentarzy i działań
 
-W v3 minimal nie budujemy osobnego “war room”.  
-Reporting odbywa się przez:
+### 6.1 Zestawienie (KANON: jak w Initiatives, ale “w realizacji”)
 
-- statusy inicjatywy,
-- ryzyka/blokery (RAID),
-- taski i decyzje powiązane,
-- (jeśli istnieje) milestone/plan dat.
+Execution hub ma “zestawienie” jako domyślny surface: lista inicjatyw w realizacji + signals + preview.
+
+**MUST:** działa w view-modes `table/kanban/timeline` oraz ma drill-down do inicjatywy (N-mode).
+
+### 6.2 Raportowanie (KANON: postępy / zasoby / zagrożenia)
+
+Raportowanie w Execution jest *warstwą agregacji* nad Initiatives + Tasks + Decisions + Results. Nie budujemy osobnego, równoległego “workflow”.
+
+#### 6.2.1 Postępy (progress inside initiative)
+
+Minimalny zestaw metryk raportowych (agregacje per inicjatywa + per okres czasu):
+
+- **Tasks touched**: liczba tasków powiązanych z inicjatywą, które zmieniły status / zostały zaktualizowane w wybranym okresie.
+- **Tasks on-time vs late**: jeśli taski mają daty (due/start/end) — raportujemy: `on_time`, `overdue`, `no_dates`.
+- **Decisions**: liczba decyzji podjętych w okresie + liczba decyzji oczekujących (pending) wpływających na realizację.
+- **Results progress**: liczba update’ów KPI/ROI przypiętych do inicjatywy (jeśli istnieje mapping).
+
+**MUST:** jeśli brak dat / brak baseline — UI pokazuje “missing plan data” i *nie udaje* raportowania on-time/late.
+
+#### 6.2.2 Zasoby (people / engagement)
+
+Zasoby w Execution są raportowane “uczciwie” (tylko tam, gdzie mamy dane):
+
+- **Plan coverage**: czy inicjatywa ma zdefiniowany zespół/role (np. owner + przypisania).
+- **Engagement**: ilu ludzi jest przypiętych do inicjatywy oraz ile tasków ma przypisanych ownerów.
+- **Plan vs actual**: dopiero jeśli istnieje “actual” (np. timesheet/effort log) — porównujemy. W przeciwnym razie pokazujemy tylko plan/coverage.
+
+#### 6.2.3 Zagrożenia (risks / blockers)
+
+- **Blockers now**: ile inicjatyw jest zablokowanych (blocker=true) + czas trwania blokady.
+- **Risks**: liczba ryzyk otwartych + krytyczne ryzyka.
+- **Aging**: “jak długo” elementy wiszą bez update’u (sygnał do zarządzania).
+
+### 6.3 Zarządzanie (KANON: propozycje zmian w timeline + workarounds)
+
+Zarządzanie w Execution to szybkie reakcje na “czerwone”:
+
+- **Propozycje zmian w timeline**: user widzi opóźnienia i może zaproponować przesunięcia (start/end/milestone) oraz od razu zobaczyć potencjalny wpływ na zależności (na poziomie reguł Initiatives/Tasks).  
+- **Workarounds / plan naprawczy**: lista działań korygujących (checklista) powiązana z inicjatywą; z niej tworzymy taski/decisions (propose→accept).
+
+**MVP (R0):** reporting = sygnały + status update + RAID + task/decision drill-down (bez “war room”).  
+**R1 (F3 / backlog koncepcyjny):** dokładne metryki “w środku inicjatywy” + surface “Raportowanie” + “Zarządzanie” (timeline proposals + workout) z jasną polityką “missing baseline”.
 
 ---
 

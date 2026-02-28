@@ -480,6 +480,7 @@ Cel: dopracowanie opisów narzędzi (known-tools), szablonów, micro‑video, he
 | V3-F01 | Initiatives: template-driven N-mode per InitiativeLevel | P0 | R0 | review | done | smoke_passed | Piotr | V3-K01 |
 | V3-F02 | Initiatives: Portfolio Analysis (Resources/Feasibility/Logic/Timeline/Completeness) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-F01 |
 | V3-G01 | Execution: minimal surfaces + spójne statusy | P2 | R2 | draft | done | done | Piotr | V3-F01 |
+| V3-G02 | Execution: raportowanie + zarządzanie realizacją (metryki + timeline proposals + workout) | P1 | R1 | draft | todo | not_tested | Piotr | V3-G01, V3-H01 |
 | V3-H01 | Results: KPI table core (agregacja+add+tracking) | P0 | R0 | review | done | smoke_passed | Piotr | — |
 | V3-H02 | Results: ROI plan vs realized (tracking po wdrożeniu) | P0 | R0 | review | done | smoke_passed | Piotr | V3-H01 |
 | V3-H03 | Results: Operational analysis + ROI analysis views | P1 | R1 | draft | done | smoke_passed | Piotr | V3-H01 |
@@ -2242,6 +2243,69 @@ Minimalny, spójny moduł do prowadzenia realizacji inicjatyw (bez rozbudowanego
 - `execution_hub_opened` (viewMode)
 - `execution_status_updated` (initiativeId, from, to)
 **Rollout plan:** R2 jako “operational add-on” po ustabilizowaniu Initiatives/Results.
+
+#### V3-G02 — [Execution] Raportowanie + zarządzanie realizacją (metryki + timeline proposals + workout)
+- Status spec: draft
+- Priorytet: P1
+- Target: R1
+- SSOT: `docs/product/EXECUTION_V3.md`
+**Business challenge (problem):**  
+Bez raportowania “w środku inicjatywy” (taski/decyzje/terminy/zasoby/ryzyka) i bez mechanizmu zarządzania zmianą Execution jest tylko listą — nie wspiera realnego prowadzenia realizacji, szczególnie w dużych projektach.
+
+**Cel (outcome):**  
+W Execution istnieją trzy spójne surfaces: **Zestawienie / Raportowanie / Zarządzanie**, które:
+
+- uczciwie pokazują postęp (albo braki baseline),
+- agregują metryki (postępy/zasoby/zagrożenia),
+- pozwalają reagować: propozycje zmian w timeline + workout/plan naprawczy (propose→accept).
+
+**Użytkownicy i scenariusze:**
+- PMO/Manager: tygodniowy status realizacji portfela (co czerwone, dlaczego, co robimy).
+- Owner: aktualizuje status, zamyka taski, dopina decyzje i ryzyka, uruchamia workout.
+
+**Zakres (IN/OUT):**
+- IN:
+  - metryki: tasks touched, on-time vs late (jeśli są daty), decyzje made/pending, progres rezultatów (KPI/ROI update count)
+  - zasoby: plan coverage + engagement; plan vs actual tylko jeśli istnieje “actual”
+  - zagrożenia: blockers/risks + aging
+  - policy “missing baseline”: brak dat/zasobów → “missing plan data” (bez udawania precyzji)
+  - zarządzanie: timeline proposals + workout checklist → tworzenie tasków/decyzji (propose→accept)
+- OUT:
+  - war-room z real-time collab (v4+)
+  - critical path i optymalizacja matematyczna harmonogramu (v4+)
+  - “actual resource consumption” bez integracji timesheet/effort log (v4+)
+
+**UX / UI notes:**
+- Execution Command Row: tabs **Zestawienie / Raportowanie / Zarządzanie** (bez dokładania dodatkowych pasków).
+- Raportowanie: agregacje per initiative + per time window (week/month/quarter) + drill-down do inicjatywy.
+- Zarządzanie: lista aktywnych problemów i otwartych propozycji zmian + CTA “Open initiative” / “Propose change” / “Start workout”.
+
+**Data / integrations:**
+- dane pochodzą z: Initiatives + Tasks + Decisions + RAID + Results mapping (bez duplikacji modeli)
+- propozycje zmian w timeline mogą być reprezentowane jako decyzje ze structured payload (propose→accept)
+
+**AI behavior (opcjonalnie):**
+- AI może proponować: “missing baseline fill”, workout items, propozycje przesunięć — zawsze propose→accept.
+
+**Definition of Done (DoD):**
+- Dla inicjatywy z datami: Raportowanie pokazuje on-time/late oraz task/decision counts.
+- Dla inicjatywy bez dat: Raportowanie pokazuje “missing plan data” i wyłącza on-time/late.
+- Zarządzanie: da się utworzyć propozycję zmiany timeline + workout items i powiązać je z taskami/decyzjami.
+
+**Acceptance / test plan:**
+- 2 inicjatywy w realizacji:
+  - A: ma daty + taski + decyzje + ryzyka → metryki i statusy liczą się poprawnie.
+  - B: brak dat/zasobów → UI pokazuje missing baseline i nie pokazuje on-time/late.
+- “Propose change” zapisuje propozycję (propose→accept) i jest widoczna w Zarządzanie.
+
+**Dependencies:** V3-G01, V3-H01 (Results mapping), V3-F01 (Initiatives lifecycle)  
+**Risks / go-live risk:** średnie — największe ryzyko to brak danych baseline; mitigacja: degraded but honest + completeness/coverage.  
+**Analytics (events/metrics):**
+- `execution_reporting_opened` (timeWindow)
+- `execution_management_opened`
+- `execution_timeline_change_proposed` (initiativeId, kind)
+- `execution_workout_started` (initiativeId)
+**Rollout plan:** R1: surfaces + minimal metryki + workout; R2: lepsze agregacje i heurystyki.
 
 ---
 

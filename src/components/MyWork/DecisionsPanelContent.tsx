@@ -13,6 +13,7 @@ import {
   CheckSquare,
   ChevronRight,
   Clock,
+  Copy,
   Edit,
   Eye,
   Flag,
@@ -21,6 +22,8 @@ import {
   Minus,
   MoreVertical,
   Scale,
+  Settings2,
+  Sparkles,
   Send,
   Square,
   TrendingUp,
@@ -33,11 +36,9 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import {
-  BulkActionBar,
   type ColumnDef,
   ColumnResizer,
   type ColumnWidths,
-  createDecisionBulkActions,
   DECISION_STATUS_FILTER_OPTIONS,
   PRIORITY_FILTER_OPTIONS,
   type TableFilters,
@@ -46,7 +47,19 @@ import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
-import { DecisionPreviewPanel } from './DecisionPreviewPanel';
+import { RowActionsMenu, type RowAction } from '@/components/shared/RowActionsMenu';
+import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { Modal } from '@/components/ui/primitives/Modal';
+
+import {
+  DecisionPreviewBody,
+  DecisionPreviewFooter,
+  type DecisionBrief,
+  type DecisionPreviewData,
+  type DecisionPreviewMode,
+  type DecisionSnoozePreset,
+} from './DecisionPreviewPanel';
+import { DelegationModal } from './shared/DelegationModal';
 
 type ViewMode = 'all' | 'my' | 'awaiting';
 type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
@@ -91,6 +104,24 @@ interface DecisionCounts {
   awaiting: number;
 }
 
+export type DecisionsBulkBarPayload =
+  | {
+      selectedCount: number;
+      allSelected: boolean;
+      someSelected: boolean;
+      selectAllVisible: () => void;
+      clearSelection: () => void;
+      // Context actions (rendered in Command Row)
+      approve?: () => void;
+      reject?: () => void;
+      deleteSelected?: () => void;
+      changePriority?: () => void;
+      remind?: () => void;
+      escalate?: () => void;
+      snoozeTomorrow?: () => void;
+    }
+  | null;
+
 interface DecisionsPanelContentProps {
   viewMode: ViewMode;
   priorityFilter?: DecisionPriorityFilter;
@@ -98,6 +129,8 @@ interface DecisionsPanelContentProps {
   onDecisionClick?: (id: string, decisionData?: Decision) => void;
   onCountsChange: (counts: DecisionCounts) => void;
   refreshTrigger?: number;
+  /** V3-A03: bulk selection lives in MyWorkHub command row */
+  onBulkBarChange?: (payload: DecisionsBulkBarPayload) => void;
 }
 
 // Priority config — 5-color semantic palette
@@ -228,11 +261,6 @@ const rowVariants = {
   initial: { opacity: 0, y: 4 },
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, x: -10 },
-  hover: {
-    y: -2,
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-    transition: { duration: 0.2 },
-  },
 };
 
 // Decision table column definitions
@@ -314,7 +342,7 @@ const DECISION_COLUMNS: ColumnDef[] = [
   },
   {
     id: 'actions',
-    label: 'Actions',
+    label: '',
     width: 140,
     minWidth: 100,
     maxWidth: 160,
@@ -323,6 +351,22 @@ const DECISION_COLUMNS: ColumnDef[] = [
     align: 'right',
   },
 ];
+
+const DECISIONS_TABLE_VIEW_STORAGE_KEY = 'consultinity-decisions-table-view';
+const DECISIONS_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
+
+function loadDecisionsHiddenColumns(): string[] {
+  try {
+    const raw = localStorage.getItem(DECISIONS_TABLE_VIEW_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    const next = Array.isArray(parsed) ? parsed.map((x) => String(x)) : [];
+    // Always keep title + actions visible (Golden Standard: required columns)
+    return next.filter((id) => id !== 'title' && id !== 'actions');
+  } catch {
+    return [];
+  }
+}
 
 // Default column widths
 const getDefaultColumnWidths = (): ColumnWidths =>
@@ -336,10 +380,22 @@ const DecisionTableRow: React.FC<{
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
   onClick?: (id: string, decisionData?: Decision) => void;
+  onOpenFull?: (id: string, decisionData?: Decision) => void;
   columnWidths: ColumnWidths;
-}> = ({ decision, isSelected, onSelect, onApprove, onReject, onClick, columnWidths }) => {
-  const [showMenu, setShowMenu] = useState(false);
-  const { t } = useTranslation();
+  hiddenColumns?: Set<string>;
+}> = ({
+  decision,
+  isSelected,
+  onSelect,
+  onApprove,
+  onReject,
+  onClick,
+  onOpenFull,
+  columnWidths,
+  hiddenColumns,
+}) => {
+  const { t, i18n } = useTranslation();
+  const isPolish = i18n.language?.startsWith('pl');
 
   const priorityConfig = getPriorityConfig(decision.priority);
   const statusConfig = getStatusConfig(decision.status);
@@ -349,19 +405,51 @@ const DecisionTableRow: React.FC<{
   const isPending = decision.status?.toUpperCase() === 'PENDING';
   const PriorityIcon = priorityConfig.icon;
 
+  const rowActions = useMemo(() => {
+    const actions: RowAction[] = [
+      {
+        id: 'open',
+        label: isPolish ? 'Otwórz' : t('common.open', 'Open'),
+        icon: Eye,
+        variant: 'primary',
+        onClick: () => onOpenFull?.(decision.id, decision) ?? onClick?.(decision.id, decision),
+      },
+    ];
+    if (isPending) {
+      actions.push(
+        {
+          id: 'approve',
+          label: isPolish ? 'Przyjęta' : 'Approve',
+          icon: Check,
+          divider: true,
+          onClick: () => onApprove(decision.id),
+          variant: 'primary',
+        },
+        {
+          id: 'reject',
+          label: isPolish ? 'Odrzucona' : 'Reject',
+          icon: X,
+          onClick: () => onReject(decision.id),
+          variant: 'danger',
+        }
+      );
+    }
+    return actions;
+  }, [decision, isPending, isPolish, onApprove, onClick, onOpenFull, onReject, t]);
+
   return (
     <motion.tr
       variants={rowVariants}
       initial="initial"
       animate="animate"
       exit="exit"
-      whileHover="hover"
       onClick={() => onClick?.(decision.id, decision)}
+      onDoubleClick={() => onOpenFull?.(decision.id, decision)}
       className={`
-        group cursor-pointer border-b border-slate-200 dark:border-navy-700/50
+        group cursor-pointer border-b border-slate-200/70 dark:border-white/[0.06]
         ${isSelected ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
         transition-colors duration-150
-        hover:bg-slate-50 dark:hover:bg-navy-800/50
+        hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
       `}
     >
       {/* Select Checkbox */}
@@ -385,12 +473,14 @@ const DecisionTableRow: React.FC<{
       </td>
 
       {/* Type Badge */}
-      <td className="px-3 py-2.5" style={{ width: columnWidths.type }}>
-        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300 text-xs font-medium">
-          <Scale size={12} />
-          {decision.decisionType || decision.type || 'General'}
-        </span>
-      </td>
+      {!hiddenColumns?.has('type') && (
+        <td className="px-3 py-2.5" style={{ width: columnWidths.type }}>
+          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300 text-xs font-medium">
+            <Scale size={12} />
+            {decision.decisionType || decision.type || (isPolish ? 'Ogólne' : 'General')}
+          </span>
+        </td>
+      )}
 
       {/* Priority Dot */}
       <td className="w-8 px-1 py-2.5" style={{ width: columnWidths.indicator }}>
@@ -415,181 +505,77 @@ const DecisionTableRow: React.FC<{
       </td>
 
       {/* Project */}
-      <td className="px-3 py-2.5" style={{ width: columnWidths.project }}>
-        {decision.projectName ? (
-          <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
-            <FolderKanban size={12} />
-            <span className="truncate max-w-[100px]">{decision.projectName}</span>
-          </div>
-        ) : (
-          <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-600">-</span>
-        )}
-      </td>
+      {!hiddenColumns?.has('project') && (
+        <td className="px-3 py-2.5" style={{ width: columnWidths.project }}>
+          {decision.projectName ? (
+            <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+              <FolderKanban size={12} />
+              <span className="truncate max-w-[100px]">{decision.projectName}</span>
+            </div>
+          ) : (
+            <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-600">-</span>
+          )}
+        </td>
+      )}
 
       {/* Status */}
-      <td className="px-3 py-2.5" style={{ width: columnWidths.status }}>
-        <span
-          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap leading-none ${statusConfig.bg} ${statusConfig.color}`}
-        >
-          <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dot}`} />
-          {statusConfig.label}
-        </span>
-      </td>
+      {!hiddenColumns?.has('status') && (
+        <td className="px-3 py-2.5" style={{ width: columnWidths.status }}>
+          <span
+            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap leading-none ${statusConfig.bg} ${statusConfig.color}`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dot}`} />
+            {statusConfig.label}
+          </span>
+        </td>
+      )}
 
       {/* Priority */}
-      <td className="px-3 py-2.5" style={{ width: columnWidths.priority }}>
-        <span
-          className={`inline-flex items-center gap-1 text-xs font-medium ${priorityConfig.color}`}
-        >
-          <PriorityIcon size={12} />
-          {priorityConfig.label}
-        </span>
-      </td>
+      {!hiddenColumns?.has('priority') && (
+        <td className="px-3 py-2.5" style={{ width: columnWidths.priority }}>
+          <span
+            className={`inline-flex items-center gap-1 text-xs font-medium ${priorityConfig.color}`}
+          >
+            <PriorityIcon size={12} />
+            {priorityConfig.label}
+          </span>
+        </td>
+      )}
 
       {/* Due Date / Waiting */}
-      <td className="px-3 py-2.5" style={{ width: columnWidths.date }}>
-        {dueDate ? (
-          <div
-            className={`flex items-center gap-1.5 text-xs ${
-              overdue
-                ? 'text-red-700 dark:text-red-400 font-medium'
-                : 'text-slate-500 dark:text-slate-400'
-            }`}
-          >
-            {overdue && <AlertTriangle size={12} className="text-red-600 dark:text-red-400" />}
-            <Calendar size={12} />
-            <span>{formatDate(dueDate)}</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-1.5 text-xs text-slate-500">
-            <Clock size={12} />
-            <span>{daysWaiting}d waiting</span>
-          </div>
-        )}
-      </td>
+      {!hiddenColumns?.has('date') && (
+        <td className="px-3 py-2.5" style={{ width: columnWidths.date }}>
+          {dueDate ? (
+            <div
+              className={`flex items-center gap-1.5 text-xs ${
+                overdue
+                  ? 'text-red-700 dark:text-red-400 font-medium'
+                  : 'text-slate-500 dark:text-slate-400'
+              }`}
+            >
+              {overdue && <AlertTriangle size={12} className="text-red-600 dark:text-red-400" />}
+              <Calendar size={12} />
+              <span>{formatDate(dueDate)}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <Clock size={12} />
+              <span>{daysWaiting}d waiting</span>
+            </div>
+          )}
+        </td>
+      )}
 
       {/* Actions */}
-      <td className="px-3 py-2.5" style={{ width: columnWidths.actions }}>
-        <div className="flex items-center gap-1">
-          {/* Quick Actions for Pending */}
-          {isPending && (
-            <>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onApprove(decision.id);
-                }}
-                className="p-1.5 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors"
-                title="Approve"
-              >
-                <Check size={14} />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onReject(decision.id);
-                }}
-                className="p-1.5 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
-                title="Reject"
-              >
-                <X size={14} />
-              </button>
-            </>
-          )}
-
-          {/* View/Edit/Menu */}
-          <div
-            className={`flex items-center gap-1 ${isPending ? 'ml-1' : ''} opacity-0 group-hover:opacity-100 transition-opacity`}
-          >
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onClick?.(decision.id);
-              }}
-              className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-              title="View"
-            >
-              <Eye size={14} />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onClick?.(decision.id);
-              }}
-              className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-              title="Edit"
-            >
-              <Edit size={14} />
-            </button>
-            <div className="relative">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowMenu(!showMenu);
-                }}
-                className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-              >
-                <MoreVertical size={14} />
-              </button>
-              {showMenu && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 w-40 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onClick?.(decision.id);
-                        setShowMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                    >
-                      <Eye size={14} />
-                      View Details
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                    >
-                      <Edit size={14} />
-                      Edit
-                    </button>
-                    {isPending && (
-                      <>
-                        <div className="border-t border-slate-200 dark:border-navy-600" />
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onApprove(decision.id);
-                            setShowMenu(false);
-                          }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-400 hover:bg-slate-50 dark:hover:bg-navy-700"
-                        >
-                          <Check size={14} />
-                          Approve
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onReject(decision.id);
-                            setShowMenu(false);
-                          }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-slate-50 dark:hover:bg-navy-700"
-                        >
-                          <X size={14} />
-                          Reject
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </td>
+      {!hiddenColumns?.has('actions') && (
+        <td
+          className="px-3 py-2.5 text-right"
+          style={{ width: columnWidths.actions }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <RowActionsMenu actions={rowActions} iconVariant="vertical" />
+        </td>
+      )}
     </motion.tr>
   );
 };
@@ -602,10 +588,22 @@ const AwaitingDecisionTableRow: React.FC<{
   onRemind: (id: string) => void;
   onEscalate: (id: string) => void;
   onClick?: (id: string, decisionData?: Decision) => void;
+  onOpenFull?: (id: string, decisionData?: Decision) => void;
   columnWidths: ColumnWidths;
-}> = ({ decision, isSelected, onSelect, onRemind, onEscalate, onClick, columnWidths }) => {
-  const [showMenu, setShowMenu] = useState(false);
-  const { t } = useTranslation();
+  hiddenColumns?: Set<string>;
+}> = ({
+  decision,
+  isSelected,
+  onSelect,
+  onRemind,
+  onEscalate,
+  onClick,
+  onOpenFull,
+  columnWidths,
+  hiddenColumns,
+}) => {
+  const { t, i18n } = useTranslation();
+  const isPolish = i18n.language?.startsWith('pl');
 
   const priorityConfig = getPriorityConfig(decision.priority);
   const statusConfig = getStatusConfig(decision.status);
@@ -619,7 +617,6 @@ const AwaitingDecisionTableRow: React.FC<{
   const isEscalated = decision.status?.toUpperCase() === 'ESCALATED';
   const PriorityIcon = priorityConfig.icon;
 
-  // Get owner initials for avatar
   const getInitials = (name?: string) => {
     if (!name) return '?';
     return name
@@ -630,36 +627,47 @@ const AwaitingDecisionTableRow: React.FC<{
       .slice(0, 2);
   };
 
-  // Get response badge config
-  const getResponseConfig = (answer?: string) => {
-    switch (answer?.toUpperCase()) {
-      case 'APPROVED':
-        return {
-          label: 'Approved',
-          color: 'text-emerald-700 dark:text-emerald-400',
-          bg: 'bg-emerald-100 dark:bg-emerald-500/20',
-          icon: Check,
-        };
-      case 'REJECTED':
-        return {
-          label: 'Rejected',
-          color: 'text-red-700 dark:text-red-400',
-          bg: 'bg-red-100 dark:bg-red-500/20',
-          icon: X,
-        };
-      case 'DEFERRED':
-        return {
-          label: 'Deferred',
-          color: 'text-amber-700 dark:text-amber-400',
-          bg: 'bg-amber-100 dark:bg-amber-500/20',
-          icon: Clock,
-        };
-      default:
-        return null;
-    }
-  };
+  const responseConfig = (() => {
+    const answer = String(decision.answer || decision.status || '').toUpperCase();
+    if (answer === 'APPROVED')
+      return { label: 'Approved', color: 'text-emerald-700 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-500/20', icon: Check };
+    if (answer === 'REJECTED')
+      return { label: 'Rejected', color: 'text-red-700 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-500/20', icon: X };
+    if (answer === 'DEFERRED')
+      return { label: 'Deferred', color: 'text-amber-700 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-500/20', icon: Clock };
+    return null;
+  })();
 
-  const responseConfig = getResponseConfig(decision.answer || decision.status);
+  const rowActions = useMemo(() => {
+    const actions: RowAction[] = [
+      {
+        id: 'open',
+        label: isPolish ? 'Otwórz' : t('common.open', 'Open'),
+        icon: Eye,
+        variant: 'primary',
+        onClick: () => onOpenFull?.(decision.id, decision) ?? onClick?.(decision.id, decision),
+      },
+    ];
+    if (isPending) {
+      actions.push(
+        {
+          id: 'remind',
+          label: isPolish ? 'Przypomnij' : 'Send reminder',
+          icon: Bell,
+          divider: true,
+          onClick: () => onRemind(decision.id),
+        },
+        {
+          id: 'escalate',
+          label: isPolish ? 'Eskaluj' : overdue ? 'Escalate (urgent)' : 'Escalate',
+          icon: TrendingUp,
+          onClick: () => onEscalate(decision.id),
+          variant: overdue ? 'danger' : 'default',
+        }
+      );
+    }
+    return actions;
+  }, [decision, isPending, isPolish, onClick, onEscalate, onOpenFull, onRemind, overdue, t]);
 
   return (
     <motion.tr
@@ -667,17 +675,16 @@ const AwaitingDecisionTableRow: React.FC<{
       initial="initial"
       animate="animate"
       exit="exit"
-      whileHover="hover"
       onClick={() => onClick?.(decision.id, decision)}
+      onDoubleClick={() => onOpenFull?.(decision.id, decision)}
       className={`
-        group cursor-pointer border-b border-slate-200 dark:border-navy-700/50
+        group cursor-pointer border-b border-slate-200/70 dark:border-white/[0.06]
         ${isSelected ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
         transition-colors duration-150
-        hover:bg-slate-50 dark:hover:bg-navy-800/50
+        hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
         ${overdue && !isSelected ? 'bg-red-50 dark:bg-red-500/5' : ''}
       `}
     >
-      {/* Select Checkbox */}
       <td className="w-10 px-2 py-2.5" style={{ width: columnWidths.select }}>
         <button
           onClick={(e) => {
@@ -697,28 +704,25 @@ const AwaitingDecisionTableRow: React.FC<{
         </button>
       </td>
 
-      {/* Type Badge */}
-      <td className="px-3 py-2.5" style={{ width: columnWidths.type }}>
-        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300 text-xs font-medium">
-          <Scale size={12} />
-          {decision.decisionType || decision.type || 'General'}
-        </span>
-      </td>
+      {!hiddenColumns?.has('type') && (
+        <td className="px-3 py-2.5" style={{ width: columnWidths.type }}>
+          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300 text-xs font-medium">
+            <Scale size={12} />
+            {decision.decisionType || decision.type || (isPolish ? 'Ogólne' : 'General')}
+          </span>
+        </td>
+      )}
 
-      {/* Priority/Overdue Indicator */}
       <td className="w-8 px-1 py-2.5" style={{ width: columnWidths.indicator }}>
         <div
           className={`w-2.5 h-2.5 rounded-full ${overdue ? 'bg-red-500 animate-pulse' : priorityConfig.dot}`}
-          title={overdue ? 'Overdue!' : priorityConfig.label}
+          title={overdue ? (isPolish ? 'Po terminie' : 'Overdue') : priorityConfig.label}
         />
       </td>
 
-      {/* Decision Title */}
       <td className="px-3 py-2.5 w-full" style={{ minWidth: 300 }}>
         <div className="flex flex-col">
-          <span className="text-sm font-medium text-slate-900 dark:text-white">
-            {decision.title}
-          </span>
+          <span className="text-sm font-medium text-slate-900 dark:text-white">{decision.title}</span>
           {decision.description && (
             <span className="text-xs text-slate-500 mt-0.5 truncate block max-w-[480px]">
               {decision.description}
@@ -727,191 +731,88 @@ const AwaitingDecisionTableRow: React.FC<{
         </div>
       </td>
 
-      {/* Owner (who needs to decide) */}
-      <td className="px-3 py-2.5" style={{ width: columnWidths.project }}>
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-xs font-medium text-white">
-            {getInitials(decision.ownerName)}
-          </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-xs text-slate-900 dark:text-white truncate">
-              {decision.ownerName || 'Unknown'}
-            </span>
-            {decision.ownerRole && (
-              <span className="text-[10px] text-slate-500 truncate">{decision.ownerRole}</span>
-            )}
-          </div>
-        </div>
-      </td>
-
-      {/* Status */}
-      <td className="px-3 py-2.5" style={{ width: columnWidths.status }}>
-        <span
-          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap leading-none ${statusConfig.bg} ${statusConfig.color}`}
-        >
-          <span
-            className={`w-1.5 h-1.5 rounded-full ${statusConfig.dot} ${isEscalated ? 'animate-pulse' : ''}`}
-          />
-          {statusConfig.label}
-        </span>
-      </td>
-
-      {/* Priority */}
-      <td className="px-3 py-2.5" style={{ width: columnWidths.priority }}>
-        <span
-          className={`inline-flex items-center gap-1 text-xs font-medium ${priorityConfig.color}`}
-        >
-          <PriorityIcon size={12} />
-          {priorityConfig.label}
-        </span>
-      </td>
-
-      {/* Due Date / Overdue */}
-      <td className="px-3 py-2.5" style={{ width: columnWidths.date }}>
-        {dueDate ? (
-          <div
-            className={`flex items-center gap-1.5 text-xs ${
-              overdue
-                ? 'text-red-700 dark:text-red-400 font-medium'
-                : 'text-slate-500 dark:text-slate-400'
-            }`}
-          >
-            {overdue && (
-              <AlertTriangle size={12} className="animate-pulse text-red-600 dark:text-red-400" />
-            )}
-            <Calendar size={12} />
-            <span>{formatDate(dueDate)}</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-1.5 text-xs text-slate-500">
-            <Clock size={12} />
-            <span>{daysWaiting}d waiting</span>
-          </div>
-        )}
-      </td>
-
-      {/* Response (for decided items) or Actions (for pending) */}
-      <td className="px-3 py-2.5" style={{ width: columnWidths.actions }}>
-        {isDecided && responseConfig ? (
-          // Show response for decided items
+      {!hiddenColumns?.has('project') && (
+        <td className="px-3 py-2.5" style={{ width: columnWidths.project }}>
           <div className="flex items-center gap-2">
-            <span
-              className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${responseConfig.bg} ${responseConfig.color}`}
-            >
-              <responseConfig.icon size={12} />
-              {responseConfig.label}
-            </span>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onClick?.(decision.id, decision);
-              }}
-              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-              title="View details"
-            >
-              <Eye size={14} />
-            </button>
-          </div>
-        ) : (
-          // Show Remind/Escalate actions for pending items
-          <div className="flex items-center gap-1">
-            {/* Remind Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemind(decision.id);
-              }}
-              className="p-1.5 rounded bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors"
-              title="Send reminder"
-            >
-              <Bell size={14} />
-            </button>
-
-            {/* Escalate Button - more prominent when overdue */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onEscalate(decision.id);
-              }}
-              className={`p-1.5 rounded transition-colors ${
-                overdue
-                  ? 'bg-red-500/30 text-red-400 hover:bg-red-500/40'
-                  : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
-              }`}
-              title={overdue ? 'Escalate (overdue!)' : 'Escalate'}
-            >
-              <TrendingUp size={14} />
-            </button>
-
-            {/* Menu */}
-            <div className="relative ml-1">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowMenu(!showMenu);
-                }}
-                className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors opacity-0 group-hover:opacity-100"
-              >
-                <MoreVertical size={14} />
-              </button>
-              {showMenu && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onClick?.(decision.id, decision);
-                        setShowMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                    >
-                      <Eye size={14} />
-                      View Details
-                    </button>
-                    <div className="border-t border-slate-200 dark:border-navy-600" />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onRemind(decision.id);
-                        setShowMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-700 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-navy-700"
-                    >
-                      <Bell size={14} />
-                      Send Reminder
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEscalate(decision.id);
-                        setShowMenu(false);
-                      }}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 ${
-                        overdue
-                          ? 'text-red-700 dark:text-red-400'
-                          : 'text-amber-700 dark:text-amber-400'
-                      }`}
-                    >
-                      <TrendingUp size={14} />
-                      {overdue ? 'Escalate (Urgent!)' : 'Escalate to Manager'}
-                    </button>
-                    {decision.reminderCount && decision.reminderCount > 0 && (
-                      <>
-                        <div className="border-t border-slate-200 dark:border-navy-600" />
-                        <div className="px-3 py-2 text-xs text-slate-500 dark:text-slate-500">
-                          {decision.reminderCount} reminder{decision.reminderCount > 1 ? 's' : ''}{' '}
-                          sent
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </>
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-xs font-medium text-white">
+              {getInitials(decision.ownerName)}
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs text-slate-900 dark:text-white truncate">
+                {decision.ownerName || (isPolish ? 'Nieznany' : 'Unknown')}
+              </span>
+              {decision.ownerRole && (
+                <span className="text-[10px] text-slate-500 truncate">{decision.ownerRole}</span>
               )}
             </div>
           </div>
-        )}
-      </td>
+        </td>
+      )}
+
+      {!hiddenColumns?.has('status') && (
+        <td className="px-3 py-2.5" style={{ width: columnWidths.status }}>
+          <span
+            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap leading-none ${statusConfig.bg} ${statusConfig.color}`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${statusConfig.dot} ${isEscalated ? 'animate-pulse' : ''}`}
+            />
+            {statusConfig.label}
+          </span>
+        </td>
+      )}
+
+      {!hiddenColumns?.has('priority') && (
+        <td className="px-3 py-2.5" style={{ width: columnWidths.priority }}>
+          <span className={`inline-flex items-center gap-1 text-xs font-medium ${priorityConfig.color}`}>
+            <PriorityIcon size={12} />
+            {priorityConfig.label}
+          </span>
+        </td>
+      )}
+
+      {!hiddenColumns?.has('date') && (
+        <td className="px-3 py-2.5" style={{ width: columnWidths.date }}>
+          {dueDate ? (
+            <div
+              className={`flex items-center gap-1.5 text-xs ${
+                overdue
+                  ? 'text-red-700 dark:text-red-400 font-medium'
+                  : 'text-slate-500 dark:text-slate-400'
+              }`}
+            >
+              {overdue ? <AlertTriangle size={12} className="animate-pulse text-red-600 dark:text-red-400" /> : null}
+              <Calendar size={12} />
+              <span>{formatDate(dueDate)}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <Clock size={12} />
+              <span>{daysWaiting}d waiting</span>
+            </div>
+          )}
+        </td>
+      )}
+
+      {!hiddenColumns?.has('actions') && (
+        <td
+          className="px-3 py-2.5 text-right"
+          style={{ width: columnWidths.actions }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-end gap-2">
+            {isDecided && responseConfig ? (
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${responseConfig.bg} ${responseConfig.color}`}
+              >
+                <responseConfig.icon size={12} />
+                {responseConfig.label}
+              </span>
+            ) : null}
+            <RowActionsMenu actions={rowActions} iconVariant="vertical" />
+          </div>
+        </td>
+      )}
     </motion.tr>
   );
 };
@@ -923,8 +824,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   onDecisionClick,
   onCountsChange,
   refreshTrigger,
+  onBulkBarChange,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = i18n.language?.startsWith('pl');
   const { currentUser } = useAppStore();
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
@@ -941,6 +844,31 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
   // Open filter dropdown state
   const [openFilterId, setOpenFilterId] = useState<string | null>(null);
+
+  // Hidden columns (persisted per-view)
+  const [hiddenColumns, setHiddenColumns] = useState<string[]>(() => loadDecisionsHiddenColumns());
+  const hiddenSet = useMemo(() => new Set(hiddenColumns), [hiddenColumns]);
+  const [isViewSettingsOpen, setIsViewSettingsOpen] = useState(false);
+
+  // Preview data (full details + brief)
+  const [previewDecision, setPreviewDecision] = useState<DecisionPreviewData | null>(null);
+  const [previewBrief, setPreviewBrief] = useState<DecisionBrief | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  // Preview — details kebab + AI strip (Inbox parity)
+  const [detailsMenuOpen, setDetailsMenuOpen] = useState(false);
+  const [detailsOverride, setDetailsOverride] = useState<string | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [aiMenuOpen, setAiMenuOpen] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiText, setAiText] = useState<string | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [snoozeOpen, setSnoozeOpen] = useState(false);
+
+  const [delegationOpen, setDelegationOpen] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState<
+    Array<{ id: string; name: string; email?: string; avatar?: string }>
+  >([]);
 
   // Fetch decisions
   const fetchDecisions = useCallback(async () => {
@@ -959,6 +887,69 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   useEffect(() => {
     fetchDecisions();
   }, [fetchDecisions, refreshTrigger]);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const users = await Api.getUsers();
+      const mapped = (Array.isArray(users) ? users : []).map((u: any) => ({
+        id: String(u.id),
+        name: String(
+          u.name ||
+            `${u.first_name || u.firstName || ''} ${u.last_name || u.lastName || ''}`.trim() ||
+            u.email ||
+            u.id
+        ),
+        email: u.email ? String(u.email) : undefined,
+        avatar: u.avatar_url || u.avatarUrl || undefined,
+      }));
+      setAvailableUsers(mapped);
+    } catch {
+      setAvailableUsers([]);
+    }
+  }, []);
+
+  const fetchPreview = useCallback(async (id: string) => {
+    setPreviewLoading(true);
+    try {
+      const d = (await Api.getDecision(id)) as any;
+      const normalized: DecisionPreviewData = {
+        ...d,
+        id: String(d?.id || id),
+        title: String(d?.title || 'Decision'),
+      };
+      setPreviewDecision(normalized);
+      try {
+        const b = (await Api.get(`/my-work/decisions/${id}/brief`)) as any;
+        setPreviewBrief(b && typeof b?.summary === 'string' ? (b as DecisionBrief) : null);
+      } catch {
+        setPreviewBrief(null);
+      }
+    } catch {
+      setPreviewDecision(null);
+      setPreviewBrief(null);
+    } finally {
+      setPreviewLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    setDetailsMenuOpen(false);
+    setAiMenuOpen(false);
+    setAiLoading(false);
+    setAiError(null);
+    setAiText(null);
+    setDetailsLoading(false);
+    setDetailsOverride(null);
+    setSnoozeOpen(false);
+    setDelegationOpen(false);
+
+    if (!previewDecisionId) {
+      setPreviewDecision(null);
+      setPreviewBrief(null);
+      return;
+    }
+    fetchPreview(previewDecisionId);
+  }, [previewDecisionId, fetchPreview]);
 
   // Filter decisions
   const filteredDecisions = useMemo(() => {
@@ -1128,13 +1119,157 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
     }
   };
 
-  // Selection helpers
-  const allVisibleDecisionIds = useMemo(() => {
-    return new Set(filteredDecisions.map((d) => d.id));
-  }, [filteredDecisions]);
+  const handlePreviewDetailsAction = useCallback(
+    async (action: 'expand' | 'summarize' | 'copy') => {
+      const d = previewDecision;
+      if (!d) return;
+      const base = String(detailsOverride ?? d.description ?? '').trim();
+      if (action === 'copy') {
+        try {
+          await navigator.clipboard.writeText(base || d.title || '');
+          toast.success(isPolish ? 'Skopiowano' : 'Copied');
+        } catch {
+          toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+        } finally {
+          setDetailsMenuOpen(false);
+        }
+        return;
+      }
 
-  const allSelected = selectedIds.size > 0 && selectedIds.size === allVisibleDecisionIds.size;
-  const someSelected = selectedIds.size > 0 && selectedIds.size < allVisibleDecisionIds.size;
+      try {
+        setDetailsLoading(true);
+        setDetailsMenuOpen(false);
+        const language = isPolish ? 'pl' : 'en';
+        const systemInstruction = [
+          `You are a senior PMO decision advisor.`,
+          `Output language MUST be ${language === 'pl' ? 'Polish' : 'English'}.`,
+          `Do NOT invent facts. Use only the provided decision text/context.`,
+          `Return plain text only (no markdown).`,
+        ].join('\n');
+
+        const mode = action === 'expand' ? 'expand' : 'shorten';
+        const resp = await Api.post('/ai/refine-text?timeoutMs=20000', {
+          text: base || d.title,
+          mode,
+          systemInstruction,
+          fieldLabel: 'Decision details (preview)',
+          artifactContext: {
+            id: d.id,
+            title: d.title,
+            type: 'decision',
+            status: d.status || 'pending',
+            priority: d.priority || 'medium',
+          },
+          language,
+        });
+        const text = String((resp as any)?.text || '').trim();
+        if (text) setDetailsOverride(text);
+      } catch {
+        toast.error(isPolish ? 'AI niedostępne' : 'AI unavailable');
+      } finally {
+        setDetailsLoading(false);
+      }
+    },
+    [detailsOverride, isPolish, previewDecision]
+  );
+
+  type DecisionAiIntent = 'summarize_context' | 'propose_options' | 'assess_risk';
+  const lastAiIntentRef = React.useRef<DecisionAiIntent>('summarize_context');
+
+  const runPreviewAi = useCallback(
+    async (intent: DecisionAiIntent) => {
+      const d = previewDecision;
+      if (!d) return;
+      lastAiIntentRef.current = intent;
+      try {
+        setAiLoading(true);
+        setAiError(null);
+        const language = isPolish ? 'pl' : 'en';
+        const systemInstruction = [
+          `You are a senior PMO decision advisor.`,
+          `Output language MUST be ${language === 'pl' ? 'Polish' : 'English'}.`,
+          `Do NOT invent facts. Use only provided decision fields.`,
+          `Return plain text. No markdown.`,
+          `Keep it concise (3–6 short sentences or bullets).`,
+          `Intent: ${intent}`,
+        ].join('\n');
+        const seed = [
+          `[GENERATE FROM SCRATCH]`,
+          `Decision: ${d.title || 'Decision'}`,
+          `Type: ${d.decisionType || d.type || ''}`,
+          `Project: ${d.projectName || ''}`,
+          `Status: ${d.status || ''}`,
+          `Priority: ${d.priority || ''}`,
+          `Due date: ${d.dueDate || ''}`,
+          `Description: ${String(d.description || '').trim()}`,
+        ]
+          .filter(Boolean)
+          .join('\n');
+
+        const resp = await Api.post('/ai/refine-text?timeoutMs=20000', {
+          text: seed,
+          mode: 'generate',
+          systemInstruction,
+          fieldLabel: 'Decision preview AI',
+          artifactContext: {
+            id: d.id,
+            title: d.title,
+            type: 'decision',
+            status: d.status || 'pending',
+            priority: d.priority || 'medium',
+          },
+          language,
+        });
+        const text = String((resp as any)?.text || '').trim();
+        if (!text) throw new Error('empty');
+        setAiText(text);
+      } catch {
+        setAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+      } finally {
+        setAiLoading(false);
+      }
+    },
+    [isPolish, previewDecision]
+  );
+
+  const handleCopyAi = useCallback(async () => {
+    if (!aiText) return;
+    try {
+      await navigator.clipboard.writeText(aiText);
+      toast.success(isPolish ? 'Skopiowano' : 'Copied');
+    } catch {
+      toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+    } finally {
+      setAiMenuOpen(false);
+    }
+  }, [aiText, isPolish]);
+
+  const handleClearAi = useCallback(() => {
+    setAiText(null);
+    setAiError(null);
+    setAiMenuOpen(false);
+  }, []);
+
+  const handleRegenerateAi = useCallback(() => {
+    setAiMenuOpen(false);
+    void runPreviewAi(lastAiIntentRef.current || 'summarize_context');
+  }, [runPreviewAi]);
+
+  const handlePreviewSnooze = useCallback(
+    async (preset: DecisionSnoozePreset) => {
+      const id = previewDecisionId;
+      if (!id) return;
+      try {
+        await Api.snoozeDecision(id, { preset });
+        toast.success(isPolish ? 'Odłożono' : 'Snoozed');
+        setPreviewDecisionId(null);
+        fetchDecisions();
+      } catch {
+        toast.error(isPolish ? 'Nie udało się odłożyć' : 'Failed to snooze');
+      }
+    },
+    [fetchDecisions, isPolish, previewDecisionId]
+  );
 
   // Selection handlers
   const handleSelectDecision = (decisionId: string) => {
@@ -1191,6 +1326,19 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
     }
   };
 
+  const handleBulkReject = async () => {
+    try {
+      await Promise.all(Array.from(selectedIds).map((id) => Api.decideDecision(id, 'rejected')));
+      setDecisions((prev) =>
+        prev.map((d) => (selectedIds.has(d.id) ? { ...d, status: 'REJECTED' } : d))
+      );
+      toast.success(`${selectedIds.size} decisions rejected`);
+      setSelectedIds(new Set());
+    } catch {
+      toast.error('Failed to reject decisions');
+    }
+  };
+
   const handleBulkDelete = async () => {
     try {
       await Promise.all(Array.from(selectedIds).map((id) => Api.delete(`/decisions/${id}`)));
@@ -1199,6 +1347,42 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
       setSelectedIds(new Set());
     } catch (error) {
       toast.error('Failed to delete decisions');
+    }
+  };
+
+  const handleBulkRemind = async () => {
+    try {
+      await Promise.all(Array.from(selectedIds).map((id) => Api.remindDecision(id)));
+      toast.success(`${selectedIds.size} reminders sent`);
+      setSelectedIds(new Set());
+    } catch {
+      toast.error('Failed to send reminders');
+    }
+  };
+
+  const handleBulkEscalate = async () => {
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((id) =>
+          Api.escalateDecision(id, 'Bulk escalation from decisions list')
+        )
+      );
+      toast.success(`${selectedIds.size} decisions escalated`);
+      setSelectedIds(new Set());
+      fetchDecisions();
+    } catch {
+      toast.error('Failed to escalate decisions');
+    }
+  };
+
+  const handleBulkSnoozeTomorrow = async () => {
+    try {
+      await Promise.all(Array.from(selectedIds).map((id) => Api.snoozeDecision(id, { preset: 'tomorrow' })));
+      toast.success(`${selectedIds.size} decisions snoozed`);
+      setSelectedIds(new Set());
+      fetchDecisions();
+    } catch {
+      toast.error('Failed to snooze decisions');
     }
   };
 
@@ -1227,12 +1411,6 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
     }
   };
 
-  const bulkActions = createDecisionBulkActions({
-    onApprove: handleBulkApprove,
-    onDelete: handleBulkDelete,
-    onChangePriority: handleBulkChangePriority,
-  });
-
   // Apply table filters to decisions
   const displayedDecisions = useMemo(() => {
     let result = filteredDecisions;
@@ -1250,6 +1428,62 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
     return result;
   }, [filteredDecisions, tableFilters]);
 
+  const orderedDecisionIds = useMemo(() => displayedDecisions.map((d) => d.id), [displayedDecisions]);
+
+  const allVisibleDecisionIds = useMemo(() => new Set(orderedDecisionIds), [orderedDecisionIds]);
+  const allSelected = selectedIds.size > 0 && selectedIds.size === allVisibleDecisionIds.size;
+  const someSelected = selectedIds.size > 0 && selectedIds.size < allVisibleDecisionIds.size;
+
+  // V3-A03: bulk selection lives as a mode of the single command row (parent)
+  useEffect(() => {
+    if (!onBulkBarChange) return;
+    if (selectedIds.size === 0) {
+      onBulkBarChange(null);
+      return;
+    }
+
+    const base = {
+      selectedCount: selectedIds.size,
+      allSelected,
+      someSelected,
+      selectAllVisible: () => handleSelectAll(true),
+      clearSelection: handleClearSelection,
+    } as const;
+
+    if (viewMode === 'awaiting') {
+      onBulkBarChange({
+        ...base,
+        remind: handleBulkRemind,
+        escalate: handleBulkEscalate,
+        snoozeTomorrow: handleBulkSnoozeTomorrow,
+      });
+      return;
+    }
+
+    onBulkBarChange({
+      ...base,
+      approve: handleBulkApprove,
+      reject: handleBulkReject,
+      deleteSelected: handleBulkDelete,
+      changePriority: handleBulkChangePriority,
+    });
+  }, [
+    onBulkBarChange,
+    selectedIds.size,
+    allSelected,
+    someSelected,
+    viewMode,
+    handleSelectAll,
+    handleClearSelection,
+    handleBulkApprove,
+    handleBulkReject,
+    handleBulkDelete,
+    handleBulkChangePriority,
+    handleBulkRemind,
+    handleBulkEscalate,
+    handleBulkSnoozeTomorrow,
+  ]);
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center h-64">
@@ -1258,7 +1492,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
     );
   }
 
-  if (filteredDecisions.length === 0) {
+  if (displayedDecisions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-8">
         <CheckCircle2 size={48} className="text-emerald-500 mb-4" />
@@ -1275,208 +1509,441 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   }
 
   return (
-    <div className="flex-1 flex h-full overflow-hidden bg-white dark:bg-navy-950">
-      <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-            <table className="w-full table-fixed" style={{ minWidth: 900 }}>
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
-                  {/* Select All */}
-                  <th className="w-10 px-2 py-2">
-                    <button
-                      onClick={() => handleSelectAll(!allSelected)}
-                      className={`
-                      w-5 h-5 rounded border flex items-center justify-center transition-colors
-                      ${
-                        allSelected
-                          ? 'bg-primary-500 border-primary-500 text-white'
-                          : someSelected
-                            ? 'bg-primary-500/50 border-primary-500 text-white'
-                            : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-500 dark:text-slate-400'
-                      }
-                    `}
-                    >
-                      {allSelected ? (
-                        <CheckSquare size={14} />
-                      ) : someSelected ? (
-                        <Minus size={14} />
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
+      <div className="flex-1 min-h-0">
+        <TableWithPreviewLayout<Decision>
+          selectedId={previewDecisionId}
+          selectedItem={
+            previewDecisionId
+              ? displayedDecisions.find((d) => d.id === previewDecisionId) || null
+              : null
+          }
+          onSelect={setPreviewDecisionId}
+          previewOpen={Boolean(previewDecisionId)}
+          autoOpenPreview={false}
+          onOpenFull={(id) => {
+            const full = decisions.find((d) => d.id === id);
+            onDecisionClick?.(id, full);
+            setPreviewDecisionId(null);
+          }}
+          itemIds={orderedDecisionIds}
+          kicker={isPolish ? 'Podgląd' : 'Preview'}
+          renderPreview={(item) => {
+            const decisionData = (previewDecision || (item as any)) as DecisionPreviewData;
+            if (previewLoading) {
+              return (
+                <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>{isPolish ? 'Ładowanie…' : 'Loading…'}</span>
+                </div>
+              );
+            }
+            return (
+              <DecisionPreviewBody
+                decision={decisionData}
+                brief={previewBrief}
+                isPolish={isPolish}
+                detailsOverride={detailsOverride}
+                detailsLoading={detailsLoading}
+                detailsMenuOpen={detailsMenuOpen}
+                onToggleDetailsMenu={() => setDetailsMenuOpen((v) => !v)}
+                onCloseDetailsMenu={() => setDetailsMenuOpen(false)}
+                onDetailsAction={(a) => void handlePreviewDetailsAction(a)}
+              />
+            );
+          }}
+          renderPreviewFooter={(item) => {
+            const decisionData = (previewDecision || (item as any)) as DecisionPreviewData;
+            const mode: DecisionPreviewMode =
+              viewMode === 'awaiting' ? 'requests_pending' : viewMode === 'my' ? 'my' : 'all';
+            const meId = currentUser?.id ? String(currentUser.id) : null;
+            const ownerId = decisionData?.decisionOwnerId ? String(decisionData.decisionOwnerId) : null;
+            const canAct = mode !== 'requests_pending' && Boolean(meId && ownerId && meId === ownerId);
+            return (
+              <DecisionPreviewFooter
+                decision={decisionData}
+                mode={mode}
+                canAct={canAct}
+                isPolish={isPolish}
+                aiText={aiText}
+                aiError={aiError}
+                aiLoading={aiLoading}
+                aiMenuOpen={aiMenuOpen}
+                onToggleAiMenu={() => setAiMenuOpen((v) => !v)}
+                onCloseAiMenu={() => setAiMenuOpen(false)}
+                onRunAi={(intent) => void runPreviewAi(intent as any)}
+                onCopyAi={() => void handleCopyAi()}
+                onClearAi={handleClearAi}
+                onRegenerateAi={handleRegenerateAi}
+                onApprove={async () => {
+                  if (!previewDecisionId) return;
+                  await handleApprove(previewDecisionId);
+                  await fetchPreview(previewDecisionId);
+                }}
+                onReject={async () => {
+                  if (!previewDecisionId) return;
+                  await handleReject(previewDecisionId);
+                  await fetchPreview(previewDecisionId);
+                }}
+                onDelegate={async () => {
+                  await fetchUsers();
+                  setDelegationOpen(true);
+                }}
+                onMoreInfo={() => {
+                  if (!previewDecisionId) return;
+                  onDecisionClick?.(previewDecisionId, decisions.find((d) => d.id === previewDecisionId));
+                  setPreviewDecisionId(null);
+                }}
+                onRemind={async () => {
+                  if (!previewDecisionId) return;
+                  await handleRemind(previewDecisionId);
+                  await fetchPreview(previewDecisionId);
+                }}
+                onEscalate={async () => {
+                  if (!previewDecisionId) return;
+                  await handleEscalate(previewDecisionId);
+                  await fetchPreview(previewDecisionId);
+                }}
+                snoozeOpen={snoozeOpen}
+                onToggleSnooze={() => setSnoozeOpen((v) => !v)}
+                onCloseSnooze={() => setSnoozeOpen(false)}
+                onSnooze={(preset) => {
+                  setSnoozeOpen(false);
+                  void handlePreviewSnooze(preset);
+                }}
+              />
+            );
+          }}
+        >
+          <div className="p-4 pt-3">
+            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-hidden">
+              <table className="w-full table-fixed" style={{ minWidth: 900 }}>
+                <thead>
+                  <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-white/60 dark:bg-navy-900/60 sticky top-0 z-10">
+                    {/* Select All */}
+                    <th className="w-10 px-2 py-2">
+                      <button
+                        onClick={() => handleSelectAll(!allSelected)}
+                        className={`
+                          w-5 h-5 rounded border flex items-center justify-center transition-colors
+                          ${
+                            allSelected
+                              ? 'bg-primary-500 border-primary-500 text-white'
+                              : someSelected
+                                ? 'bg-primary-500/50 border-primary-500 text-white'
+                                : 'border-slate-300 dark:border-white/[0.10] hover:border-primary-400 text-transparent hover:text-slate-500 dark:text-slate-400'
+                          }
+                        `}
+                      >
+                        {allSelected ? (
+                          <CheckSquare size={14} />
+                        ) : someSelected ? (
+                          <Minus size={14} />
+                        ) : (
+                          <Square size={14} />
+                        )}
+                      </button>
+                    </th>
+
+                    {!hiddenSet.has('type') && (
+                      <th
+                        className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                        style={{ width: columnWidths.type }}
+                      >
+                        <span>{isPolish ? 'Typ' : 'Type'}</span>
+                        <ColumnResizer
+                          columnId="type"
+                          currentWidth={columnWidths.type}
+                          minWidth={80}
+                          maxWidth={140}
+                          onResize={handleColumnResize}
+                        />
+                      </th>
+                    )}
+
+                    <th className="w-8 px-1 py-2" />
+                    <th className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-full">
+                      {isPolish ? 'Decyzja' : 'Decision'}
+                    </th>
+
+                    {!hiddenSet.has('project') && (
+                      <th
+                        className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                        style={{ width: columnWidths.project }}
+                      >
+                        <span>{viewMode === 'awaiting' ? (isPolish ? 'Właściciel' : 'Owner') : isPolish ? 'Projekt' : 'Project'}</span>
+                        <ColumnResizer
+                          columnId="project"
+                          currentWidth={columnWidths.project}
+                          minWidth={100}
+                          maxWidth={180}
+                          onResize={handleColumnResize}
+                        />
+                      </th>
+                    )}
+
+                    {!hiddenSet.has('status') && (
+                      <th
+                        className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                        style={{ width: columnWidths.status }}
+                      >
+                        <div className="flex items-center gap-1">
+                          <span
+                            className={(tableFilters.status as string[])?.length ? 'text-primary-500' : ''}
+                          >
+                            {isPolish ? 'Status' : 'Status'}
+                          </span>
+                          <FilterDropdown
+                            column={DECISION_COLUMNS.find((c) => c.id === 'status')!}
+                            value={tableFilters.status as string[]}
+                            onChange={(val) => handleFilterChange('status', val as string[])}
+                            isOpen={openFilterId === 'status'}
+                            onToggle={() => setOpenFilterId(openFilterId === 'status' ? null : 'status')}
+                            onClose={() => setOpenFilterId(null)}
+                          />
+                        </div>
+                        <ColumnResizer
+                          columnId="status"
+                          currentWidth={columnWidths.status}
+                          minWidth={90}
+                          maxWidth={140}
+                          onResize={handleColumnResize}
+                        />
+                      </th>
+                    )}
+
+                    {!hiddenSet.has('priority') && (
+                      <th
+                        className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                        style={{ width: columnWidths.priority }}
+                      >
+                        <div className="flex items-center gap-1">
+                          <span
+                            className={(tableFilters.priority as string[])?.length ? 'text-primary-500' : ''}
+                          >
+                            {isPolish ? 'Priorytet' : 'Priority'}
+                          </span>
+                          <FilterDropdown
+                            column={DECISION_COLUMNS.find((c) => c.id === 'priority')!}
+                            value={tableFilters.priority as string[]}
+                            onChange={(val) => handleFilterChange('priority', val as string[])}
+                            isOpen={openFilterId === 'priority'}
+                            onToggle={() => setOpenFilterId(openFilterId === 'priority' ? null : 'priority')}
+                            onClose={() => setOpenFilterId(null)}
+                          />
+                        </div>
+                        <ColumnResizer
+                          columnId="priority"
+                          currentWidth={columnWidths.priority}
+                          minWidth={80}
+                          maxWidth={130}
+                          onResize={handleColumnResize}
+                        />
+                      </th>
+                    )}
+
+                    {!hiddenSet.has('date') && (
+                      <th
+                        className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                        style={{ width: columnWidths.date }}
+                      >
+                        <span>{isPolish ? 'Termin' : 'Due date'}</span>
+                        <ColumnResizer
+                          columnId="date"
+                          currentWidth={columnWidths.date}
+                          minWidth={90}
+                          maxWidth={140}
+                          onResize={handleColumnResize}
+                        />
+                      </th>
+                    )}
+
+                    {!hiddenSet.has('actions') && (
+                      <th
+                        className="px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                        style={{ width: columnWidths.actions }}
+                      >
+                        <button
+                          onClick={() => setIsViewSettingsOpen(true)}
+                          className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                          aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
+                          title={isPolish ? 'Ustawienia widoku' : 'View settings'}
+                        >
+                          <Settings2 size={14} />
+                        </button>
+                      </th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  <AnimatePresence>
+                    {displayedDecisions.map((decision) =>
+                      viewMode === 'awaiting' ? (
+                        <AwaitingDecisionTableRow
+                          key={decision.id}
+                          decision={decision}
+                          isSelected={selectedIds.has(decision.id)}
+                          onSelect={handleSelectDecision}
+                          onRemind={handleRemind}
+                          onEscalate={handleEscalate}
+                          onClick={(id) => openPreview(id)}
+                          onOpenFull={(id, data) => {
+                            onDecisionClick?.(id, data);
+                            setPreviewDecisionId(null);
+                          }}
+                          columnWidths={columnWidths}
+                          hiddenColumns={hiddenSet}
+                        />
                       ) : (
-                        <Square size={14} />
-                      )}
-                    </button>
-                  </th>
-                  <th
-                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                    style={{ width: columnWidths.type }}
-                  >
-                    <span>Type</span>
-                    <ColumnResizer
-                      columnId="type"
-                      currentWidth={columnWidths.type}
-                      minWidth={80}
-                      maxWidth={140}
-                      onResize={handleColumnResize}
-                    />
-                  </th>
-                  <th className="w-8 px-1 py-2"></th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-full">
-                    Decision
-                  </th>
-                  {/* Show Owner column for awaiting mode, Project for my decisions */}
-                  <th
-                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                    style={{ width: columnWidths.project }}
-                  >
-                    <span>{viewMode === 'awaiting' ? 'Owner' : 'Project'}</span>
-                    <ColumnResizer
-                      columnId="project"
-                      currentWidth={columnWidths.project}
-                      minWidth={100}
-                      maxWidth={180}
-                      onResize={handleColumnResize}
-                    />
-                  </th>
-
-                  {/* Status with Filter */}
-                  <th
-                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                    style={{ width: columnWidths.status }}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span
-                        className={
-                          (tableFilters.status as string[])?.length ? 'text-primary-500' : ''
-                        }
-                      >
-                        Status
-                      </span>
-                      <FilterDropdown
-                        column={DECISION_COLUMNS.find((c) => c.id === 'status')!}
-                        value={tableFilters.status as string[]}
-                        onChange={(val) => handleFilterChange('status', val as string[])}
-                        isOpen={openFilterId === 'status'}
-                        onToggle={() =>
-                          setOpenFilterId(openFilterId === 'status' ? null : 'status')
-                        }
-                        onClose={() => setOpenFilterId(null)}
-                      />
-                    </div>
-                    <ColumnResizer
-                      columnId="status"
-                      currentWidth={columnWidths.status}
-                      minWidth={90}
-                      maxWidth={140}
-                      onResize={handleColumnResize}
-                    />
-                  </th>
-
-                  {/* Priority with Filter */}
-                  <th
-                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                    style={{ width: columnWidths.priority }}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span
-                        className={
-                          (tableFilters.priority as string[])?.length ? 'text-primary-500' : ''
-                        }
-                      >
-                        Priority
-                      </span>
-                      <FilterDropdown
-                        column={DECISION_COLUMNS.find((c) => c.id === 'priority')!}
-                        value={tableFilters.priority as string[]}
-                        onChange={(val) => handleFilterChange('priority', val as string[])}
-                        isOpen={openFilterId === 'priority'}
-                        onToggle={() =>
-                          setOpenFilterId(openFilterId === 'priority' ? null : 'priority')
-                        }
-                        onClose={() => setOpenFilterId(null)}
-                      />
-                    </div>
-                    <ColumnResizer
-                      columnId="priority"
-                      currentWidth={columnWidths.priority}
-                      minWidth={80}
-                      maxWidth={130}
-                      onResize={handleColumnResize}
-                    />
-                  </th>
-
-                  <th
-                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                    style={{ width: columnWidths.date }}
-                  >
-                    <span>Due Date</span>
-                    <ColumnResizer
-                      columnId="date"
-                      currentWidth={columnWidths.date}
-                      minWidth={90}
-                      maxWidth={140}
-                      onResize={handleColumnResize}
-                    />
-                  </th>
-                  <th
-                    className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
-                    style={{ width: columnWidths.actions }}
-                  >
-                    {viewMode === 'awaiting' ? 'Response / Actions' : 'Actions'}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {displayedDecisions.map((decision) =>
-                    viewMode === 'awaiting' ? (
-                      <AwaitingDecisionTableRow
-                        key={decision.id}
-                        decision={decision}
-                        isSelected={selectedIds.has(decision.id)}
-                        onSelect={handleSelectDecision}
-                        onRemind={handleRemind}
-                        onEscalate={handleEscalate}
-                        onClick={(id, d) => {
-                          openPreview(id);
-                        }}
-                        columnWidths={columnWidths}
-                      />
-                    ) : (
-                      <DecisionTableRow
-                        key={decision.id}
-                        decision={decision}
-                        isSelected={selectedIds.has(decision.id)}
-                        onSelect={handleSelectDecision}
-                        onApprove={handleApprove}
-                        onReject={handleReject}
-                        onClick={(id, d) => {
-                          openPreview(id);
-                        }}
-                        columnWidths={columnWidths}
-                      />
-                    )
-                  )}
-                </AnimatePresence>
-              </tbody>
-            </table>
+                        <DecisionTableRow
+                          key={decision.id}
+                          decision={decision}
+                          isSelected={selectedIds.has(decision.id)}
+                          onSelect={handleSelectDecision}
+                          onApprove={handleApprove}
+                          onReject={handleReject}
+                          onClick={(id) => openPreview(id)}
+                          onOpenFull={(id, data) => {
+                            onDecisionClick?.(id, data);
+                            setPreviewDecisionId(null);
+                          }}
+                          columnWidths={columnWidths}
+                          hiddenColumns={hiddenSet}
+                        />
+                      )
+                    )}
+                  </AnimatePresence>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        </TableWithPreviewLayout>
       </div>
 
-      {/* Bulk Action Bar */}
-      <BulkActionBar
-        selectedCount={selectedIds.size}
-        onClearSelection={handleClearSelection}
-        actions={bulkActions}
-      />
+      {/* Table View Settings (standard) */}
+      <Modal
+        open={isViewSettingsOpen}
+        onClose={() => setIsViewSettingsOpen(false)}
+        title={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
+        description={
+          isPolish
+            ? 'Wybierz, które kolumny są widoczne w tabeli.'
+            : 'Choose which columns are visible in the table.'
+        }
+        size="sm"
+        footer={
+          <>
+            <button
+              onClick={() => {
+                setHiddenColumns([...DECISIONS_TABLE_DEFAULT_HIDDEN_COLUMNS]);
+                try {
+                  localStorage.setItem(
+                    DECISIONS_TABLE_VIEW_STORAGE_KEY,
+                    JSON.stringify([...DECISIONS_TABLE_DEFAULT_HIDDEN_COLUMNS])
+                  );
+                } catch {
+                  /* ignore */
+                }
+              }}
+              className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+            >
+              {isPolish ? 'Reset' : 'Reset'}
+            </button>
+            <button
+              onClick={() => setIsViewSettingsOpen(false)}
+              className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-primary-500/40 dark:border-primary-500/30 bg-primary-600 text-white hover:bg-primary-700 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+            >
+              {isPolish ? 'Gotowe' : 'Done'}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-2">
+          {DECISION_COLUMNS.filter((c) => !['select', 'indicator'].includes(c.id)).map((col) => {
+            const alwaysVisible = col.id === 'title' || col.id === 'actions';
+            const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
+            const label =
+              col.id === 'type'
+                ? isPolish
+                  ? 'Typ'
+                  : 'Type'
+                : col.id === 'project'
+                  ? isPolish
+                    ? 'Projekt / Właściciel'
+                    : 'Project / Owner'
+                  : col.id === 'priority'
+                    ? isPolish
+                      ? 'Priorytet'
+                      : 'Priority'
+                    : col.id === 'date'
+                      ? isPolish
+                        ? 'Termin'
+                        : 'Due date'
+                      : col.id === 'status'
+                        ? isPolish
+                          ? 'Status'
+                          : 'Status'
+                        : col.id === 'actions'
+                          ? isPolish
+                            ? 'Akcje'
+                            : 'Actions'
+                          : col.label;
 
-      <DecisionPreviewPanel
-        decisionId={previewDecisionId}
-        mode={viewMode === 'awaiting' ? 'requests_pending' : viewMode === 'my' ? 'my' : 'all'}
-        onClose={() => setPreviewDecisionId(null)}
-        onDidMutate={() => fetchDecisions()}
-        onOpenFullDetail={(id, data) => onDecisionClick?.(id, data)}
-      />
+            return (
+              <label
+                key={col.id}
+                className={`flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 ${
+                  alwaysVisible ? 'opacity-60' : 'cursor-pointer'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  disabled={alwaysVisible}
+                  onChange={() => {
+                    if (alwaysVisible) return;
+                    setHiddenColumns((prev) => {
+                      const set = new Set(prev);
+                      if (set.has(col.id)) set.delete(col.id);
+                      else set.add(col.id);
+                      const next = Array.from(set);
+                      try {
+                        localStorage.setItem(DECISIONS_TABLE_VIEW_STORAGE_KEY, JSON.stringify(next));
+                      } catch {
+                        /* ignore */
+                      }
+                      return next;
+                    });
+                  }}
+                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                />
+                <span className="text-sm text-slate-800 dark:text-slate-200 flex-1">{label}</span>
+                {alwaysVisible ? (
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Wymagane' : 'Required'}
+                  </span>
+                ) : null}
+              </label>
+            );
+          })}
+        </div>
+      </Modal>
+
+      {/* Delegation modal (preview action) */}
+      {previewDecisionId && previewDecision ? (
+        <DelegationModal
+          isOpen={delegationOpen}
+          onClose={() => setDelegationOpen(false)}
+          decisionId={previewDecisionId}
+          decisionTitle={String(previewDecision?.title || '')}
+          availableUsers={availableUsers}
+          currentDeciderId={String((previewDecision as any)?.deciderId || previewDecision.decisionOwnerId || '')}
+          onDelegated={() => {
+            fetchDecisions();
+            void fetchPreview(previewDecisionId);
+          }}
+        />
+      ) : null}
     </div>
   );
 };

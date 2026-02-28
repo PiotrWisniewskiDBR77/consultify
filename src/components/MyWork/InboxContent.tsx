@@ -246,6 +246,16 @@ export interface InboxCounts {
   };
 }
 
+export type InboxBulkTriageAction = 'accept_today' | 'accept_week' | 'done' | 'save' | 'dismiss';
+export type InboxBulkBarPayload = {
+  selectedCount: number;
+  allSelected: boolean;
+  someSelected: boolean;
+  selectAllVisible: () => void;
+  clearSelection: () => void;
+  triage: (action: InboxBulkTriageAction) => void;
+};
+
 interface InboxContentProps {
   searchQuery: string;
   onOpenTask?: (taskId: string) => void;
@@ -266,6 +276,8 @@ interface InboxContentProps {
   /** Controlled: action-required filter */
   actionRequiredOnly?: boolean;
   onActionRequiredOnlyChange?: (next: boolean) => void;
+  /** V3-A03: command row override mode (bulk selection) */
+  onBulkBarChange?: (payload: InboxBulkBarPayload | null) => void;
 }
 
 // ── Deduplication: group items by _key ──
@@ -1191,6 +1203,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   onInboxSectionChange,
   actionRequiredOnly: controlledActionRequiredOnly,
   onActionRequiredOnlyChange,
+  onBulkBarChange,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
@@ -1596,6 +1609,36 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     if (selected) setSelectedIds(new Set(allVisibleIds));
     else setSelectedIds(new Set());
   };
+
+  const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
+
+  const selectAllVisible = useCallback(() => handleSelectAll(true), [allVisibleIds]);
+
+  // V3-A03: bulk selection lives as a mode of the single command row (parent)
+  useEffect(() => {
+    if (!onBulkBarChange) return;
+    if (selectedIds.size === 0) {
+      onBulkBarChange(null);
+      return;
+    }
+
+    onBulkBarChange({
+      selectedCount: selectedIds.size,
+      allSelected,
+      someSelected,
+      selectAllVisible,
+      clearSelection,
+      triage: (action) => bulkTriage(action),
+    });
+  }, [
+    onBulkBarChange,
+    selectedIds.size,
+    allSelected,
+    someSelected,
+    selectAllVisible,
+    clearSelection,
+    bulkTriage,
+  ]);
 
   const handleSelectSection = (section: InboxSection) => {
     const sectionIds = filteredItems.filter((i) => i.section === section).map((i) => i.id);
@@ -2431,71 +2474,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   // ═══════════════════════════════════════════════════════════════════════════
   return (
     <div
-      className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950"
+      className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-navy-950"
       ref={tableRef}
     >
-      {/* Bulk action bar */}
-      {selectedIds.size > 0 && (
-        <div className="px-4 py-2 bg-primary-50 dark:bg-primary-500/10 border-b border-primary-200 dark:border-primary-500/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
-                {selectedIds.size} {isPolish ? 'zaznaczonych' : 'selected'}
-              </span>
-              <button
-                onClick={() => handleSelectAll(true)}
-                className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
-              >
-                {isPolish ? 'Zaznacz wszystkie' : 'Select all'}
-              </button>
-              <button
-                onClick={() => setSelectedIds(new Set())}
-                className="text-xs text-slate-500 hover:underline"
-              >
-                {isPolish ? 'Odznacz' : 'Clear'}
-              </button>
-            </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => bulkTriage('accept_today')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/25 transition-colors"
-              >
-                <Zap size={13} /> {isPolish ? 'Focus: Dziś' : 'Focus: Today'}
-              </button>
-              <button
-                onClick={() => bulkTriage('accept_week')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-500/25 transition-colors"
-              >
-                <CalendarClock size={13} /> {isPolish ? 'Ten tydz.' : 'This week'}
-              </button>
-              <button
-                onClick={() => bulkTriage('done')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-500/25 transition-colors"
-              >
-                <CheckCircle2 size={13} /> {isPolish ? 'Gotowe' : 'Done'}
-              </button>
-              <button
-                onClick={() => bulkTriage('save')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors"
-              >
-                <Bookmark size={13} /> {isPolish ? 'Zapisz' : 'Save'}
-              </button>
-              <button
-                onClick={() => bulkTriage('dismiss')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 dark:bg-navy-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
-              >
-                <Archive size={13} /> {isPolish ? 'Odłóż' : 'Dismiss'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Main content + Preview pane */}
-      <div className="flex-1 flex min-h-0">
+      <div className="flex-1 flex min-h-0 gap-1.5">
         {/* Table content */}
         <div
-          className={`flex-1 overflow-y-auto p-4 pt-3 ${previewItem ? 'max-w-[65%] pr-2' : ''} transition-all duration-200`}
+          className="flex-1 min-w-0 overflow-y-auto pl-4 pr-1.5 pt-3 pb-4 transition-all duration-200"
         >
           {loading ? (
             <div className="flex items-center justify-center py-12 text-slate-600 dark:text-slate-300">
@@ -2545,7 +2531,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               )}
             </div>
           ) : (
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+            <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur overflow-hidden">
               {viewMode === 'sections' ? renderSectionsView() : renderFlatView()}
             </div>
           )}
@@ -2553,7 +2539,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Preview Pane (A3) */}
         {previewItem && (
-          <div className="w-[35%] min-w-[340px] overflow-y-auto p-4 pt-3 pl-2 bg-white dark:bg-navy-950">
+          <div
+            className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3"
+            style={{ width: 'clamp(340px, 28%, 480px)' }}
+          >
             <PreviewPane
               item={previewItem}
               isPolish={isPolish}

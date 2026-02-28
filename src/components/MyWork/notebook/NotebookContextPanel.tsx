@@ -390,8 +390,8 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
   );
 
   return (
-    <div className="w-80 shrink-0 border-l border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950 flex flex-col">
-      <div className="flex items-center justify-between px-3 py-3 border-b border-slate-200 dark:border-navy-800">
+    <div className="w-80 shrink-0 rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-white dark:bg-navy-950 flex flex-col">
+      <div className="flex items-center justify-between px-3 py-3 border-b border-slate-200/60 dark:border-white/[0.06]">
         <div className="flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-300">
           <Lightbulb size={16} />
           <span>{pl ? 'Kontekst notatki' : 'Note context'}</span>
