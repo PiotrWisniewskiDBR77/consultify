@@ -182,3 +182,17 @@ Po każdym sprincie (30–45 min):
 - **Implementation anchor:** (empty)
 - **Notes:** Nawigacja do narzędzi (`tool` sourceType) już naprawiona na deep-link w S1. Assessment i finance wymagają wsparcia po stronie tych hubów.
 
+---
+
+### BO-20260228-007 — Interview Hub: Insights/Templates tab-specific controls mogą wizualnie wyglądać jak dodatkowe paski
+
+- **Status:** open
+- **Source:** Sprint S1
+- **Reason:** polish
+- **Depends on / blocks:** —
+- **SSOT refs:** `docs/ui-standards/03-modules/module-hub-standard.md`
+- **Acceptance (app):**
+  - Kontrolki tab-specific (group-by, card view switcher) w Insights i "Nowy szablon" w Templates nie tworzą wizualnie dodatkowego rzędu
+- **Implementation anchor:** (empty)
+- **Notes:** Technicznie kontrolki są w nav bar (nie poniżej command row), ale mogą wrappować na wąskich ekranach. Rozważyć konsolidację do jednego rzędu lub przeniesienie do CommandRow.
+
