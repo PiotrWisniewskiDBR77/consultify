@@ -42,6 +42,7 @@ import {
   ManagementReportStatus,
   ManagementReportType,
 } from '../../../types';
+import { type RowAction, RowActionsMenu } from '../../shared/RowActionsMenu';
 import {
   FilterableTable,
   FilterChip,
@@ -368,44 +369,43 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         label: 'Actions',
         width: '120px',
         render: (row: ReportHistoryItem) => (
-          <div className="flex items-center gap-1">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleViewReport(row.id);
-              }}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-              title="View report"
-            >
-              <Eye size={16} className="text-slate-400" />
-            </button>
-            {row.pdfPath && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDownloadPDF(row.id);
-                }}
-                className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
-                title="Download PDF"
-              >
-                <FileText size={16} className="text-red-400" />
-              </button>
-            )}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleShare(row.id);
-              }}
-              className="p-2 hover:bg-violet-500/20 rounded-lg transition-colors"
-              title="Share"
-            >
-              <Share2 size={16} className="text-violet-400" />
-            </button>
+          <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+            <RowActionsMenu
+              iconVariant="vertical"
+              actions={
+                [
+                  {
+                    id: 'open',
+                    label: t('common.open', 'Open'),
+                    icon: Eye,
+                    variant: 'primary',
+                    onClick: () => handleViewReport(row.id),
+                  },
+                  ...(row.pdfPath
+                    ? ([
+                        {
+                          id: 'pdf',
+                          label: t('reports.actions.downloadPdf', 'Download PDF'),
+                          icon: FileText,
+                          onClick: () => handleDownloadPDF(row.id),
+                        },
+                      ] as RowAction[])
+                    : []),
+                  {
+                    id: 'share',
+                    label: t('reports.actions.share', 'Share link'),
+                    icon: Share2,
+                    divider: true,
+                    onClick: () => handleShare(row.id),
+                  },
+                ] as RowAction[]
+              }
+            />
           </div>
         ),
       },
     ],
-    []
+    [t]
   );
 
   // Table columns for Templates

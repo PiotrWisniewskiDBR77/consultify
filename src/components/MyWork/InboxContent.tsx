@@ -66,6 +66,7 @@ import {
 } from '@/components/ui/ResizableTable';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
+import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -1482,81 +1483,75 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           style={{ width: columnWidths.actions }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-end gap-0.5">
-            {/* Always visible: Open */}
-            <button
-              onClick={() => open(item)}
-              className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-              title={isPolish ? 'Otwórz' : 'Open'}
-            >
-              <Eye size={14} />
-            </button>
-
-            {/* Hover actions */}
-            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                onClick={() => triage(item, 'accept_today')}
-                className="p-1.5 rounded-md text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
-                title={isPolish ? 'Focus → Dziś (T)' : 'Focus → Today (T)'}
-              >
-                <Zap size={14} />
-              </button>
-              <button
-                onClick={() => triage(item, 'done')}
-                className="p-1.5 rounded-md text-slate-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
-                title={isPolish ? 'Gotowe (E)' : 'Done (E)'}
-              >
-                <CheckCircle2 size={14} />
-              </button>
-              <button
-                onClick={() => triage(item, 'save')}
-                className="p-1.5 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-                title={isPolish ? 'Zapisz (B)' : 'Save (B)'}
-              >
-                <Bookmark size={14} />
-              </button>
-              <button
-                onClick={() => triage(item, 'dismiss')}
-                className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-                title={isPolish ? 'Odłóż (A)' : 'Dismiss (A)'}
-              >
-                <Archive size={14} />
-              </button>
-              <button
-                onClick={() => handleSaveAsNote(item)}
-                className="p-1.5 rounded-md text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                title={isPolish ? 'Zapisz jako notatkę' : 'Save as note'}
-              >
-                <FileText size={14} />
-              </button>
-              {/* Snooze */}
-              <div className="relative">
-                <button
-                  onClick={() => setSnoozeOpenForId(snoozeOpenForId === item.id ? null : item.id)}
-                  className="p-1.5 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-                  title={isPolish ? 'Odłóż' : 'Snooze'}
-                >
-                  <Clock size={14} />
-                </button>
-                {snoozeOpenForId === item.id && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setSnoozeOpenForId(null)} />
-                    <div className="absolute right-0 top-full mt-1 z-50 py-1 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-navy-700 min-w-[140px]">
-                      {SNOOZE_PRESETS.map((preset) => (
-                        <button
-                          key={preset.id}
-                          onClick={() => handleSnooze(item, preset.id)}
-                          className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-                        >
-                          {isPolish ? preset.labelPl : preset.labelEn}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
+          {(() => {
+            const actions: RowAction[] = [
+              {
+                id: 'open',
+                label: isPolish ? 'Otwórz' : 'Open',
+                icon: Eye,
+                variant: 'primary',
+                onClick: () => open(item),
+              },
+              {
+                id: 'focus-today',
+                label: isPolish ? 'Focus → Dziś' : 'Focus → Today',
+                icon: Zap,
+                onClick: () => triage(item, 'accept_today'),
+              },
+              {
+                id: 'focus-week',
+                label: isPolish ? 'Focus → Ten tydz.' : 'Focus → This week',
+                icon: CalendarClock,
+                onClick: () => triage(item, 'accept_week'),
+              },
+              {
+                id: 'focus-later',
+                label: isPolish ? 'Focus → Później' : 'Focus → Later',
+                icon: Calendar,
+                onClick: () => triage(item, 'accept_later'),
+              },
+              {
+                id: 'done',
+                label: isPolish ? 'Gotowe' : 'Done',
+                icon: CheckCircle2,
+                divider: true,
+                onClick: () => triage(item, 'done'),
+              },
+              {
+                id: 'save',
+                label: isPolish ? 'Zapisz' : 'Save',
+                icon: Bookmark,
+                onClick: () => triage(item, 'save'),
+              },
+              {
+                id: 'save-note',
+                label: isPolish ? 'Zapisz jako notatkę' : 'Save as note',
+                icon: FileText,
+                onClick: () => handleSaveAsNote(item),
+              },
+              {
+                id: 'dismiss',
+                label: isPolish ? 'Odłóż' : 'Dismiss',
+                icon: Archive,
+                onClick: () => triage(item, 'dismiss'),
+              },
+              {
+                id: 'reject',
+                label: isPolish ? 'Odrzuć' : 'Reject',
+                icon: X,
+                variant: 'danger',
+                onClick: () => triage(item, 'reject'),
+              },
+              ...SNOOZE_PRESETS.map((p, idx) => ({
+                id: `snooze-${p.id}`,
+                label: `${isPolish ? 'Odłóż' : 'Snooze'}: ${isPolish ? p.labelPl : p.labelEn}`,
+                icon: Clock,
+                divider: idx === 0,
+                onClick: () => handleSnooze(item, p.id),
+              })),
+            ];
+            return <RowActionsMenu actions={actions} iconVariant="vertical" />;
+          })()}
         </td>
       </tr>
     );
@@ -1593,7 +1588,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         </th>
 
         {/* Filterable columns */}
-        {['status', 'urgency', 'type', 'section'].map((colId) => {
+        {['status', 'urgency', 'type', 'section', 'source'].map((colId) => {
           const col = INBOX_COLUMNS.find((c) => c.id === colId)!;
           return (
             <th

@@ -1,5 +1,5 @@
 /**
- * RowActionsMenu — Unified "⋯" actions menu for table rows
+ * RowActionsMenu — Unified "⋮" actions menu for table rows
  *
  * Used across Inbox, Tasks, Decisions, Notifications, Initiatives, Interview
  * to provide consistent row-level actions.
@@ -34,7 +34,8 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   actions,
   size = 'sm',
   className = '',
-  iconVariant = 'horizontal',
+  // App Table Standard (v3): always prefer vertical kebab (⋮)
+  iconVariant = 'vertical',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);

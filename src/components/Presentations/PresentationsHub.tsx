@@ -19,9 +19,11 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { ROUTES } from '@/routes/routeConfig';
 
 import {
   FilterableTable,
@@ -34,6 +36,7 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -141,6 +144,7 @@ const SOURCE_TYPE_META: Record<
 export const PresentationsHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language === 'pl' ? 'pl' : 'en';
+  const navigate = useNavigate();
 
   // UI state
   const [activeTab, setActiveTab] = useState<PresentationTab>('all_decks');
@@ -302,29 +306,44 @@ export const PresentationsHub: React.FC = () => {
         label: '',
         width: '100px',
         render: (row) => (
-          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRowAction('export', row);
-              }}
-              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-primary-400 transition-colors"
-              title={t('presentations.actions.export', 'Export')}
-            >
-              <Download size={14} />
-            </button>
-            {row.sourceId && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRowAction('open_source', row);
-                }}
-                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-primary-400 transition-colors"
-                title={t('presentations.actions.openSource', 'Open source')}
-              >
-                <ExternalLink size={14} />
-              </button>
-            )}
+          <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+            <RowActionsMenu
+              iconVariant="vertical"
+              actions={
+                [
+                  {
+                    id: 'open',
+                    label: t('common.open', 'Open'),
+                    icon: Presentation,
+                    variant: 'primary',
+                    onClick: () => handleOpenDocument(row as PresentationDeck),
+                  },
+                  {
+                    id: 'rename',
+                    label: t('presentations.actions.rename', 'Rename'),
+                    icon: Pencil,
+                    onClick: () => handleRowAction('rename', row as PresentationDeck),
+                  },
+                  {
+                    id: 'export',
+                    label: t('presentations.actions.export', 'Export'),
+                    icon: Download,
+                    divider: true,
+                    onClick: () => handleRowAction('export', row as PresentationDeck),
+                  },
+                  ...(row.sourceId
+                    ? ([
+                        {
+                          id: 'open_source',
+                          label: t('presentations.actions.openSource', 'Open source'),
+                          icon: ExternalLink,
+                          onClick: () => handleRowAction('open_source', row as PresentationDeck),
+                        },
+                      ] as RowAction[])
+                    : []),
+                ] as RowAction[]
+              }
+            />
           </div>
         ),
       },
@@ -392,18 +411,21 @@ export const PresentationsHub: React.FC = () => {
 
   const handleOpenSource = useCallback((deck: PresentationDeck) => {
     if (!deck.sourceId) return;
+    // Prefer opening via target hub deep-link so it lands in Dynamic Tabs (no orphan full pages).
+    if (deck.sourceType === 'tool') {
+      navigate(`${ROUTES.DISCOVERY_TOOLS.ROOT}?docId=${encodeURIComponent(deck.sourceId)}`);
+      return;
+    }
     const path =
-      deck.sourceType === 'tool'
-        ? `/tools/sessions/${deck.sourceId}`
-        : deck.sourceType === 'assessment'
-          ? `/assessments/${deck.sourceId}`
-          : deck.sourceType === 'finance'
-            ? `/finance/models/${deck.sourceId}`
-            : '#';
+      deck.sourceType === 'assessment'
+        ? `/assessments/${deck.sourceId}`
+        : deck.sourceType === 'finance'
+          ? `/finance/models/${deck.sourceId}`
+          : '#';
     if (path !== '#') {
       window.location.href = path;
     }
-  }, []);
+  }, [navigate]);
 
   const handleRenameSubmit = useCallback(async () => {
     if (!renameModalDeck || !renameValue.trim()) return;

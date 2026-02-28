@@ -1522,7 +1522,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => navigate(`/initiatives/${selectedInitiative.id}`)}
+                onClick={() => navigate(`/initiatives?open=${encodeURIComponent(selectedInitiative.id)}&mode=doc`)}
                 className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
               >
                 Open Full View

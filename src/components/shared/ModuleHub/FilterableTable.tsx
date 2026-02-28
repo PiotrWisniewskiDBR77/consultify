@@ -3,20 +3,11 @@
  * Table with filterable column headers and row actions
  */
 
-import {
-  ChevronDown,
-  Copy,
-  Edit,
-  Eye,
-  FileText,
-  Maximize2,
-  MoreVertical,
-  Trash2,
-} from 'lucide-react';
+import { ChevronDown, Copy, Edit, Eye, Maximize2, Trash2 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import { type RowAction, RowActionsMenu } from '../RowActionsMenu';
 import { FilterChip } from './ActiveFilters';
-import { ItemStatus } from './types';
 
 // Column definition
 export interface TableColumn {
@@ -217,8 +208,6 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   onFilterChange,
   emptyMessage = 'No items found',
 }) => {
-  const [actionMenuRow, setActionMenuRow] = useState<string | null>(null);
-
   // Get active filter values for a column
   const getActiveFilterValues = useCallback(
     (columnId: string) => {
@@ -350,95 +339,47 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                     </td>
                   ))}
                   <td className="px-4 py-3 text-right">
-                    <div className="relative">
-                      <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRowAction?.('preview', row);
-                          }}
-                          className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-blue-400 transition-colors"
-                          title="Quick preview"
-                        >
-                          <Eye size={14} />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRowAction?.('edit', row);
-                          }}
-                          className="p-1.5 rounded hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                          title="Open"
-                        >
-                          <Maximize2 size={14} />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActionMenuRow(actionMenuRow === row.id ? null : row.id);
-                          }}
-                          className="p-1.5 rounded hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                        >
-                          <MoreVertical size={14} />
-                        </button>
-                      </div>
-
-                      {/* Action Menu — Open / Duplicate / Edit / Delete */}
-                      {actionMenuRow === row.id && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-40"
-                            onClick={() => setActionMenuRow(null)}
-                          />
-                          <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onRowAction?.('edit', row);
-                                setActionMenuRow(null);
-                              }}
-                              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-                            >
-                              <Maximize2 size={14} />
-                              <span>Open</span>
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onRowAction?.('duplicate', row);
-                                setActionMenuRow(null);
-                              }}
-                              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-                            >
-                              <Copy size={14} />
-                              <span>Duplicate</span>
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onRowAction?.('rename', row);
-                                setActionMenuRow(null);
-                              }}
-                              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-                            >
-                              <Edit size={14} />
-                              <span>Edit</span>
-                            </button>
-                            <div className="border-t border-slate-300 dark:border-navy-600" />
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onRowAction?.('delete', row);
-                                setActionMenuRow(null);
-                              }}
-                              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-rose-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-                            >
-                              <Trash2 size={14} />
-                              <span>Delete</span>
-                            </button>
-                          </div>
-                        </>
-                      )}
+                    <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+                      <RowActionsMenu
+                        iconVariant="vertical"
+                        actions={
+                          [
+                            {
+                              id: 'open',
+                              label: 'Open',
+                              icon: Maximize2,
+                              variant: 'primary',
+                              onClick: () => onRowAction?.('edit', row),
+                            },
+                            {
+                              id: 'preview',
+                              label: 'Preview',
+                              icon: Eye,
+                              onClick: () => onRowAction?.('preview', row),
+                            },
+                            {
+                              id: 'duplicate',
+                              label: 'Duplicate',
+                              icon: Copy,
+                              onClick: () => onRowAction?.('duplicate', row),
+                            },
+                            {
+                              id: 'rename',
+                              label: 'Edit',
+                              icon: Edit,
+                              onClick: () => onRowAction?.('rename', row),
+                            },
+                            {
+                              id: 'delete',
+                              label: 'Delete',
+                              icon: Trash2,
+                              divider: true,
+                              variant: 'danger',
+                              onClick: () => onRowAction?.('delete', row),
+                            },
+                          ] as RowAction[]
+                        }
+                      />
                     </div>
                   </td>
                 </tr>

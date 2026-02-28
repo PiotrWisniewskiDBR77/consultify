@@ -109,6 +109,25 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
   void persistViewModeKey;
   void filterActions;
 
+  // V3: Single Command Row under the topbar (module-hub-standard.md)
+  // Priority: dynamic tabs > active filters. (Search row lives inside ModuleNavBar.)
+  const commandRow =
+    openDocuments.length > 0 ? (
+      <DynamicTabs
+        documents={openDocuments}
+        activeDocumentId={activeDocumentId}
+        onSelectDocument={onSelectDocument}
+        onCloseDocument={onCloseDocument}
+        onShowList={onShowList}
+      />
+    ) : activeFilters.length > 0 ? (
+      <ActiveFilters
+        filters={activeFilters}
+        onRemoveFilter={onRemoveFilter}
+        onClearAll={onClearFilters}
+      />
+    ) : null;
+
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white">
       {/* Navigation Bar */}
@@ -131,21 +150,8 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
         rightControls={rightControls}
       />
 
-      {/* Dynamic Tabs (open documents) */}
-      <DynamicTabs
-        documents={openDocuments}
-        activeDocumentId={activeDocumentId}
-        onSelectDocument={onSelectDocument}
-        onCloseDocument={onCloseDocument}
-        onShowList={onShowList}
-      />
-
-      {/* Active Filters */}
-      <ActiveFilters
-        filters={activeFilters}
-        onRemoveFilter={onRemoveFilter}
-        onClearAll={onClearFilters}
-      />
+      {/* Command Row (dynamic tabs | active filters) */}
+      {commandRow}
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-auto">{children}</div>
