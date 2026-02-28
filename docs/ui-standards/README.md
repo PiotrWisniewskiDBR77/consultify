@@ -54,6 +54,7 @@ docs/ui-standards/
 | **Moduł hub**            | [03-modules/module-hub-standard.md](03-modules/module-hub-standard.md)           | Struktura ekranu modułu                                                |
 | **Tabele**               | [03-modules/app-table-standard.md](03-modules/app-table-standard.md)             | Standard tabel aplikacyjnych                                           |
 | **Table + Preview**      | [03-modules/table-preview-pane-standard.md](03-modules/table-preview-pane-standard.md) | Kanon “tabela + preview pane” (Outlook style)                       |
+| **Golden Standard v3**   | [03-modules/golden-standard-table-cards-preview-v3.md](03-modules/golden-standard-table-cards-preview-v3.md) | SSOT: Table + Cards + Preview (Sprint 1) |
 | **Interactive boards (v3)** | [03-modules/interactive-board-standard.md](03-modules/interactive-board-standard.md) | Kanon tablic KPI/finanse: definicja kolumn + view modes             |
 
 ---

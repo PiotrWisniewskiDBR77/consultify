@@ -687,12 +687,14 @@
     "execution": "Execution",
     "benefits": "Benefits",
     "results": "Results",
-    "economics": "Economics",
+    "economics": "Finance",
     "reports": "Reports",
     "reportsBuilder": "Report Builder",
     "reportsManagement": "Management Reports",
     "presentations": "Presentations",
-    "partnerPortal": "Partner Portal"
+    "partnerPortal": "Partner Portal",
+    "tasks": "Tasks",
+    "toolsLibrary": "Library"
   },
   "widgets": {
     "help": {

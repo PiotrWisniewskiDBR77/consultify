@@ -5,6 +5,7 @@
 
 import { ChevronDown, Copy, Edit, Eye, Maximize2, Trash2 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { type RowAction, RowActionsMenu } from '../RowActionsMenu';
 import { FilterChip } from './ActiveFilters';
@@ -151,7 +152,7 @@ const FilterDropdown: React.FC<{
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-600 transition-colors ${
+        className={`p-1 rounded-md hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors ${
           activeValues.length > 0 ? 'text-primary-400' : 'text-slate-500'
         }`}
       >
@@ -161,12 +162,12 @@ const FilterDropdown: React.FC<{
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
+          <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-white/[0.08] rounded-xl shadow-xl overflow-hidden">
             <div className="max-h-[200px] overflow-y-auto p-2">
               {column.filterOptions.map((option) => (
                 <label
                   key={option.value}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 cursor-pointer"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer"
                 >
                   <input
                     type="checkbox"
@@ -175,20 +176,20 @@ const FilterDropdown: React.FC<{
                     className="rounded border-navy-600 bg-slate-200 dark:bg-navy-700 text-primary-500 focus:ring-primary-500"
                   />
                   {option.color && <span className={`w-2 h-2 rounded-full ${option.color}`} />}
-                  <span className="text-sm text-slate-700 dark:text-slate-300">{option.label}</span>
+                  <span className="text-sm text-slate-700 dark:text-slate-200">{option.label}</span>
                 </label>
               ))}
             </div>
-            <div className="flex items-center justify-between p-2 border-t border-slate-300 dark:border-navy-600">
+            <div className="flex items-center justify-between p-2 border-t border-slate-200/70 dark:border-white/[0.08]">
               <button
                 onClick={handleClear}
-                className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                className="text-xs font-medium text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white transition-colors"
               >
                 Clear
               </button>
               <button
                 onClick={handleApply}
-                className="px-3 py-1 text-xs font-medium bg-primary-500 text-white rounded hover:bg-primary-400 transition-colors"
+                className="px-3 py-1 text-xs font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-400 transition-colors"
               >
                 Apply
               </button>
@@ -210,6 +211,9 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   onFilterChange,
   emptyMessage = 'No items found',
 }) => {
+  const { i18n, t } = useTranslation();
+  const isPolish = i18n.language?.startsWith('pl');
+
   // Get active filter values for a column
   const getActiveFilterValues = useCallback(
     (columnId: string) => {
@@ -272,22 +276,22 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const days = Math.floor(hours / 24);
 
-    if (hours < 1) return 'Just now';
-    if (hours < 24) return `${hours}h ago`;
-    if (days < 7) return `${days}d ago`;
+    if (hours < 1) return isPolish ? 'Przed chwilą' : 'Just now';
+    if (hours < 24) return isPolish ? `${hours} h temu` : `${hours}h ago`;
+    if (days < 7) return isPolish ? `${days} dni temu` : `${days}d ago`;
     return d.toLocaleDateString();
   };
 
   return (
     <div className="p-4">
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+      <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="bg-slate-50 dark:bg-navy-900/50">
+            <tr className="bg-white/60 dark:bg-navy-900/60 border-b border-slate-200/70 dark:border-white/[0.06]">
               {columns.map((column) => (
                 <th
                   key={column.id}
-                  className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: column.width }}
                 >
                   <div className="flex items-center gap-1">
@@ -302,12 +306,10 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   </div>
                 </th>
               ))}
-              <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20">
-                Actions
-              </th>
+              <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-navy-700/50">
+          <tbody className="divide-y divide-slate-200/70 dark:divide-white/[0.06]">
             {filteredData.length === 0 ? (
               <tr>
                 <td colSpan={columns.length + 1} className="px-4 py-12 text-center text-slate-500">
@@ -320,7 +322,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   key={row.id}
                   onClick={() => onRowClick?.(row)}
                   onDoubleClick={() => onRowDoubleClick?.(row)}
-                  className="group hover:bg-slate-100 dark:hover:bg-navy-800/50 cursor-pointer transition-colors"
+                  className="group hover:bg-slate-50/70 dark:hover:bg-white/[0.03] cursor-pointer transition-colors"
                 >
                   {columns.map((column) => (
                     <td key={column.id} className="px-4 py-3">
@@ -335,7 +337,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                           {formatRelativeTime(row.updatedAt)}
                         </span>
                       ) : (
-                        <span className="text-sm text-slate-700 dark:text-slate-300">
+                        <span className="text-sm text-slate-700 dark:text-slate-200">
                           {row[column.id]}
                         </span>
                       )}
@@ -349,32 +351,32 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                           [
                             {
                               id: 'open',
-                              label: 'Open',
+                              label: t('common.open', 'Open'),
                               icon: Maximize2,
                               variant: 'primary',
                               onClick: () => onRowAction?.('edit', row),
                             },
                             {
                               id: 'preview',
-                              label: 'Preview',
+                              label: t('common.preview', 'Preview'),
                               icon: Eye,
                               onClick: () => onRowAction?.('preview', row),
                             },
                             {
                               id: 'duplicate',
-                              label: 'Duplicate',
+                              label: t('common.duplicate', 'Duplicate'),
                               icon: Copy,
                               onClick: () => onRowAction?.('duplicate', row),
                             },
                             {
                               id: 'rename',
-                              label: 'Edit',
+                              label: t('common.edit', 'Edit'),
                               icon: Edit,
                               onClick: () => onRowAction?.('rename', row),
                             },
                             {
                               id: 'delete',
-                              label: 'Delete',
+                              label: t('common.delete', 'Delete'),
                               icon: Trash2,
                               divider: true,
                               variant: 'danger',

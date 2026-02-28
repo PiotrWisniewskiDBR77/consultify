@@ -37,7 +37,14 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({ initiati
   return (
     <div
       onClick={onClick}
-      className="bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/5 rounded-xl p-4 cursor-pointer group transition-all hover:bg-slate-50/70 dark:hover:bg-white/[0.03]"
+      className={[
+        'group cursor-pointer rounded-xl overflow-hidden',
+        'border-l-[3px] border border-slate-200/60 dark:border-white/[0.06]',
+        'border-l-blue-500 dark:border-l-blue-400', // Initiative identity (blue)
+        'bg-slate-50/80 dark:bg-navy-800/60',
+        'hover:bg-white dark:hover:bg-navy-800/80 transition-colors duration-150',
+        'p-4',
+      ].join(' ')}
     >
       {/* Top row: Priority + Status + Health */}
       <div className="flex items-center justify-between mb-3">

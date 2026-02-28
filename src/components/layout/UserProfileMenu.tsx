@@ -76,13 +76,13 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
             <div className="text-xs font-semibold text-navy-900 dark:text-white">
               {currentUser.firstName} {currentUser.lastName}
             </div>
-            <div className="text-[10px] text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+            <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               {currentUser.companyName || currentUser.role}
             </div>
           </div>
         )}
 
-        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 flex items-center justify-center relative overflow-hidden">
+        <div className="w-8 h-8 rounded-full bg-transparent border border-slate-300 dark:border-navy-600 flex items-center justify-center relative overflow-hidden">
           {currentUser.avatarUrl ? (
             <img
               src={currentUser.avatarUrl}
@@ -90,7 +90,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
               className="w-full h-full rounded-full object-cover"
             />
           ) : initials ? (
-            <div className="w-full h-full rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-[11px] font-bold text-white">
+            <div className="w-full h-full rounded-full bg-transparent flex items-center justify-center text-[11px] font-medium text-slate-500 dark:text-slate-400">
               {initials}
             </div>
           ) : (
@@ -105,7 +105,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
           {/* Header with User Info */}
           <div className="px-4 py-4 border-b border-slate-100 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-slate-500 dark:text-slate-400 overflow-hidden shrink-0 border border-slate-200 dark:border-navy-700">
+              <div className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center text-slate-500 dark:text-slate-400 overflow-hidden shrink-0 border border-slate-300 dark:border-navy-600">
                 {currentUser.avatarUrl ? (
                   <img
                     src={currentUser.avatarUrl}
@@ -113,7 +113,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                     className="w-full h-full object-cover"
                   />
                 ) : initials ? (
-                  <div className="w-full h-full rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-sm font-bold text-white">
+                  <div className="w-full h-full rounded-full bg-transparent flex items-center justify-center text-sm font-medium text-slate-500 dark:text-slate-400">
                     {initials}
                   </div>
                 ) : (

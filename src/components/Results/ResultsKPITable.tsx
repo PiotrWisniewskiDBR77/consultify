@@ -337,15 +337,15 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
 
   return (
     <div className="p-4">
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+      <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-slate-50 dark:bg-navy-900/50">
+              <tr className="bg-white/60 dark:bg-navy-900/60 border-b border-slate-200/70 dark:border-white/[0.06]">
                 {columns.map((col) => (
                   <th
                     key={col.id}
-                    className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                    className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                     style={{ width: col.width }}
                   >
                     <div className="flex items-center gap-1">
@@ -372,12 +372,10 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
                     </div>
                   </th>
                 ))}
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider w-16">
-                  {t('common.actions', 'Actions')}
-                </th>
+                <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-16" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-navy-700/50">
+            <tbody className="divide-y divide-slate-200/70 dark:divide-white/[0.06]">
               {sorted.length === 0 ? (
                 <tr>
                   <td
@@ -396,7 +394,7 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
                     key={kpi.id}
                     onClick={() => onRowClick?.(kpi)}
                     onDoubleClick={() => onRowAction?.('open', kpi)}
-                    className="group hover:bg-white/5 cursor-pointer transition-colors"
+                    className="group hover:bg-slate-50/70 dark:hover:bg-white/[0.03] cursor-pointer transition-colors"
                   >
                     <td className="px-4 py-3">
                       <span className="text-sm font-medium text-slate-900 dark:text-white">
@@ -586,13 +584,25 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
       {kpis.map((kpi) => {
         const s = STATUS_STYLES[kpi.status] || STATUS_STYLES['no-data'];
         const { Icon: TIcon, color: tColor } = TREND_ICON[kpi.trend] || TREND_ICON.stable;
+        const statusAccent =
+          kpi.status === 'on-target'
+            ? 'border-l-emerald-500 dark:border-l-emerald-400'
+            : kpi.status === 'below'
+              ? 'border-l-red-500 dark:border-l-red-400'
+              : 'border-l-slate-400 dark:border-l-slate-500';
 
         return (
           <div
             key={kpi.id}
             onClick={() => onItemClick?.(kpi)}
             onDoubleClick={() => onItemAction?.('open', kpi)}
-            className="group relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden cursor-pointer hover:shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/30 transition-all duration-200"
+            className={[
+              'group relative cursor-pointer rounded-xl overflow-hidden',
+              'border-l-[3px] border border-slate-200/60 dark:border-white/[0.06]',
+              statusAccent,
+              'bg-slate-50/80 dark:bg-navy-800/60',
+              'hover:bg-white dark:hover:bg-navy-800/80 hover:shadow-sm transition-all duration-150',
+            ].join(' ')}
           >
             <div className="p-4">
               <div className="flex items-start justify-between mb-3">
@@ -605,12 +615,12 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
               {kpi.initiativeName && (
                 <p className="text-xs text-primary-400 mb-3 truncate">{kpi.initiativeName}</p>
               )}
-              <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-navy-700/50">
+              <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-200/70 dark:border-white/[0.06]">
                 <div>
                   <p className="text-[10px] uppercase text-slate-500 mb-0.5">
                     {t('results.columns.baseline', 'Baseline')}
                   </p>
-                  <p className="text-xs font-medium text-slate-300">
+                  <p className="text-xs font-medium text-slate-700 dark:text-slate-200">
                     {kpi.baselineValue != null ? kpi.baselineValue.toLocaleString() : '—'}
                   </p>
                 </div>
@@ -618,7 +628,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                   <p className="text-[10px] uppercase text-slate-500 mb-0.5">
                     {t('results.columns.target', 'Target')}
                   </p>
-                  <p className="text-xs font-medium text-slate-300">
+                  <p className="text-xs font-medium text-slate-700 dark:text-slate-200">
                     {kpi.targetValue != null ? kpi.targetValue.toLocaleString() : '—'}
                   </p>
                 </div>
@@ -629,10 +639,10 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                   <p
                     className={`text-xs font-medium ${
                       kpi.status === 'on-target'
-                        ? 'text-emerald-400'
+                        ? 'text-emerald-600 dark:text-emerald-400'
                         : kpi.status === 'below'
-                          ? 'text-red-400'
-                          : 'text-slate-300'
+                          ? 'text-red-600 dark:text-red-400'
+                          : 'text-slate-700 dark:text-slate-200'
                     }`}
                   >
                     {kpi.latestValue != null ? kpi.latestValue.toLocaleString() : '—'}
@@ -640,9 +650,9 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-between px-4 py-2.5 border-t border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50">
+            <div className="flex items-center justify-between px-4 py-2.5 border-t border-slate-200/70 dark:border-white/[0.06] bg-white/50 dark:bg-white/[0.02]">
               <FrequencyBadge freq={kpi.measurementFrequency} />
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
                 {formatRelativeTime(kpi.latestMeasurementDate || kpi.createdAt)}
               </span>
             </div>

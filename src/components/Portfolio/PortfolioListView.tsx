@@ -232,14 +232,14 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
         <button
           onClick={() => setAiOpen(true)}
           disabled={selectedInitiatives.length === 0}
-          className="inline-flex items-center gap-2 h-9 px-3 rounded-lg text-sm font-medium transition-colors bg-hig-primary text-white hover:bg-hig-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium transition-colors bg-hig-primary text-white hover:bg-hig-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Sparkles size={16} />
           {t('portfolio.ai.analyzeSelection', 'AI: Analyze selection')}
         </button>
       </div>
 
-      <div className="bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/5 rounded-xl overflow-hidden">
+      <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-hidden">
         <table className="w-full table-fixed" style={{ minWidth: 1080 }}>
           <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig">
             <tr>

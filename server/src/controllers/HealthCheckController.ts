@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { execSync } from 'node:child_process';
 
 import { getDatabase } from '../database/Database.js';
 
@@ -7,6 +8,47 @@ import { getDatabase } from '../database/Database.js';
  * Handles application health monitoring endpoints
  */
 export class HealthCheckController {
+  private static getGitMeta(): { gitSha?: string; gitBranch?: string; gitSource?: string } {
+    const gitShaFromEnv =
+      process.env.RAILWAY_GIT_COMMIT_SHA ||
+      process.env.GITHUB_SHA ||
+      process.env.GIT_SHA ||
+      undefined;
+
+    const gitBranchFromEnv =
+      process.env.RAILWAY_GIT_BRANCH ||
+      process.env.GITHUB_REF_NAME ||
+      process.env.GIT_BRANCH ||
+      undefined;
+
+    // Prefer env (works in Railway/GitHub Actions). For local dev, fall back to git CLI.
+    if (gitShaFromEnv || gitBranchFromEnv) {
+      return {
+        gitSha: gitShaFromEnv,
+        gitBranch: gitBranchFromEnv,
+        gitSource: 'env',
+      };
+    }
+
+    try {
+      const sha = String(execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }))
+        .trim()
+        .slice(0, 12);
+      const branch = String(
+        execSync('git rev-parse --abbrev-ref HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+      )
+        .trim()
+        .slice(0, 64);
+      return {
+        gitSha: sha || undefined,
+        gitBranch: branch || undefined,
+        gitSource: 'git',
+      };
+    } catch {
+      return {};
+    }
+  }
+
   /**
    * Simple ping endpoint (synchronous)
    * Used by load balancers for basic uptime check
@@ -28,6 +70,9 @@ export class HealthCheckController {
       redis?: string;
       version: string;
       environment: string;
+      gitSha?: string;
+      gitBranch?: string;
+      gitSource?: string;
     } = {
       status: 'ok',
       timestamp: new Date().toISOString(),
@@ -35,6 +80,11 @@ export class HealthCheckController {
       version: process.env.npm_package_version || '0.0.1',
       environment: process.env.NODE_ENV || 'development',
     };
+
+    const gitMeta = HealthCheckController.getGitMeta();
+    if (gitMeta.gitSha) health.gitSha = gitMeta.gitSha;
+    if (gitMeta.gitBranch) health.gitBranch = gitMeta.gitBranch;
+    if (gitMeta.gitSource) health.gitSource = gitMeta.gitSource;
 
     // Check Database connectivity (fast, bounded)
     // - We use a strict timeout to keep this endpoint responsive.

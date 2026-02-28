@@ -17,6 +17,12 @@ interface SystemMetrics {
 export const SystemHealth = () => {
   const { t } = useTranslation();
   const [status, setStatus] = useState<'online' | 'degraded' | 'offline' | 'loading'>('loading');
+  const [build, setBuild] = useState<{
+    version?: string;
+    environment?: string;
+    gitSha?: string;
+    gitBranch?: string;
+  }>({});
   const [metrics, setMetrics] = useState<SystemMetrics>({
     latency: 0,
     dbStatus: 'online',
@@ -41,6 +47,12 @@ export const SystemHealth = () => {
         const isDbConnected = dbRaw === 'connected';
 
         setStatus(isDbConnected ? 'online' : 'degraded');
+        setBuild({
+          version: (data as any)?.version,
+          environment: (data as any)?.environment,
+          gitSha: (data as any)?.gitSha,
+          gitBranch: (data as any)?.gitBranch,
+        });
         setMetrics((prev) => ({
           ...prev,
           latency: data.latency ?? measuredLatency,
@@ -58,6 +70,7 @@ export const SystemHealth = () => {
         if (statusCode === 401 || statusCode === 403) return;
 
         setStatus('offline');
+        setBuild({});
         setMetrics((prev) => ({ ...prev, dbStatus: 'offline' }));
       }
     };
@@ -83,7 +96,7 @@ export const SystemHealth = () => {
       <div className="relative" ref={dropdownRef}>
         <button
           disabled
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 bg-transparent border-slate-200 dark:border-navy-700 opacity-70 cursor-not-allowed"
+          className="inline-flex items-center gap-2 h-9 px-3 rounded-full border transition-colors duration-150 bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] opacity-70 cursor-not-allowed"
         >
           <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
           <span className="text-xs font-medium text-navy-900 dark:text-white">
@@ -97,17 +110,18 @@ export const SystemHealth = () => {
 
   const storagePercent = Math.round((metrics.storageUsed / metrics.storageLimit) * 100);
   const apiPercent = Math.round((metrics.apiCallsUsed / metrics.apiCallsLimit) * 100);
+  const shaShort = build.gitSha ? String(build.gitSha).slice(0, 8) : null;
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 ${
+        className={`inline-flex items-center gap-2 h-9 px-3 rounded-full border transition-colors duration-150 ${
           status === 'offline'
             ? 'bg-red-50/70 dark:bg-red-500/10 border-red-400/50 dark:border-red-500/40 hover:bg-red-100/70 dark:hover:bg-red-500/15'
             : status === 'degraded'
               ? 'bg-amber-50/70 dark:bg-amber-500/10 border-amber-400/50 dark:border-amber-500/40 hover:bg-amber-100/70 dark:hover:bg-amber-500/15'
-              : 'bg-transparent border-slate-200 dark:border-navy-700 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5'
+              : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
         }`}
       >
         <div
@@ -234,9 +248,22 @@ export const SystemHealth = () => {
 
           {/* Footer */}
           <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-t border-slate-200 dark:border-navy-700">
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">
-              {t('system.lastUpdate', 'Auto-refresh every 30s')}
-            </span>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                {t('system.lastUpdate', 'Auto-refresh every 30s')}
+              </span>
+              {build.version || build.environment || build.gitSha ? (
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                  {[
+                    build.environment ? String(build.environment) : null,
+                    build.version ? `v${String(build.version)}` : null,
+                    build.gitSha ? String(build.gitSha).slice(0, 12) : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+              ) : null}
+            </div>
           </div>
         </div>
       )}

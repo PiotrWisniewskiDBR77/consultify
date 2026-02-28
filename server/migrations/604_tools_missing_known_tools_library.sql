@@ -78,9 +78,9 @@ INSERT INTO tools (
       }
     }$$,
     'Target',
-    0,
-    1,
-    0,
+    FALSE,
+    TRUE,
+    FALSE,
     $$["strategy","targets","roadmap"]$$,
     108
   ),
@@ -121,9 +121,9 @@ INSERT INTO tools (
       }
     }$$,
     'GitBranch',
-    0,
-    1,
-    0,
+    FALSE,
+    TRUE,
+    FALSE,
     $$["strategy","tradeoffs","focus"]$$,
     109
   ),
@@ -164,9 +164,9 @@ INSERT INTO tools (
       }
     }$$,
     'FileText',
-    0,
-    1,
-    0,
+    FALSE,
+    TRUE,
+    FALSE,
     $$["strategy","narrative","alignment"]$$,
     110
   ),
@@ -207,9 +207,9 @@ INSERT INTO tools (
       }
     }$$,
     'Clock',
-    0,
-    1,
-    0,
+    FALSE,
+    TRUE,
+    FALSE,
     $$["operations","smed","setup"]$$,
     208
   ),
@@ -250,9 +250,9 @@ INSERT INTO tools (
       }
     }$$,
     'Radar',
-    0,
-    1,
-    0,
+    FALSE,
+    TRUE,
+    FALSE,
     $$["operations","cadence","kpi"]$$,
     209
   ),
@@ -293,9 +293,9 @@ INSERT INTO tools (
       }
     }$$,
     'Boxes',
-    0,
-    1,
-    0,
+    FALSE,
+    TRUE,
+    FALSE,
     $$["operations","inventory","policy"]$$,
     210
   )

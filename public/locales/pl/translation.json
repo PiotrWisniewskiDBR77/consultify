@@ -141,13 +141,15 @@
     "initiatives": "Inicjatywy",
     "execution": "Realizacja",
     "benefits": "Korzyści",
-    "results": "Rezultaty",
-    "economics": "Ekonomia",
+    "results": "Resultaty",
+    "economics": "Finanse",
     "reports": "Raporty",
     "reportsBuilder": "Kreator raportów",
     "reportsManagement": "Raporty zarządcze",
     "presentations": "Prezentacje",
-    "partnerPortal": "Portal Partnerski"
+    "partnerPortal": "Portal Partnerski",
+    "tasks": "Zadania",
+    "toolsLibrary": "Biblioteka"
   },
   "widgets": {
     "help": {

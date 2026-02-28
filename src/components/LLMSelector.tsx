@@ -170,12 +170,12 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
         onClick={() => setIsOpen(!isOpen)}
         data-testid="llm-tier-selector"
         title={isDisconnected ? 'AI currently unavailable' : 'AI providers available'}
-        className={`flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-lg border transition-all duration-200 ${
-          !isDisconnected
-            ? isOpen
-              ? 'bg-slate-100 dark:bg-white/10 border-brand/50'
-              : 'bg-transparent border-slate-200 dark:border-navy-700 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5'
-            : 'bg-red-50/70 dark:bg-red-500/10 border-red-400/50 dark:border-red-500/40 hover:bg-red-100/70 dark:hover:bg-red-500/15'
+        className={`inline-flex items-center gap-2 h-9 ${compact ? 'px-2' : 'px-3'} rounded-full border transition-colors duration-150 ${
+          isDisconnected
+            ? 'bg-red-50/70 dark:bg-red-500/10 border-red-400/50 dark:border-red-500/40 hover:bg-red-100/70 dark:hover:bg-red-500/15'
+            : isOpen
+              ? 'bg-slate-100/70 dark:bg-white/[0.06] border-slate-200/70 dark:border-white/[0.10]'
+              : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
         } text-xs font-medium text-navy-900 dark:text-white`}
       >
         {/* Status Dot / Icon */}

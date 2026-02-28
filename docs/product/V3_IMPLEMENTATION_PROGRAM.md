@@ -38,6 +38,7 @@ Last update: 2026-02-25
 - Tools knowledge bank (packs + RAG): `docs/product/TOOLS_KNOWLEDGE_BANK_V3.md`
 - Tools SSOT sources (KPI/SIRI/ADMA): `docs/product/TOOLS_SSOT_SOURCES_V3.md`
 - Video enablement: `docs/product/VIDEO_ENABLEMENT_V3.md`
+- Digest (LLM|Sync|Assessment+KPI|Tools): `docs/product/conversations/V3_DIGEST_LLM_SYNC_ASSESSMENT_KPI_TOOLS.md`
 
 UI/UX (canonical):
 - Index: `docs/ui-standards/README.md`
@@ -470,12 +471,21 @@ Cel: dopracowanie opisów narzędzi (known-tools), szablonów, micro‑video, he
 | V3-E05 | Tools: Process Automation tool (hybrid workspace+table wizard) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-E03 |
 | V3-E06 | Tools: Licensed methodologies parity (SIRI/ADMA) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-E01 |
 | V3-E07 | Tools Quality: Known Tools content completeness audit + fill plan | P1 | R2 | draft | done | smoke_passed | Piotr | V3-E04 |
+| V3-E08 | Tools: SIRI canon 16D (data contract + mapping + export) | P0 | R1 | draft | todo | not_tested | Piotr | V3-E06 |
+| V3-E09 | Tools: ADMA T1–T7 + FoF overlay in exports + initiatives binding | P0 | R1 | draft | todo | not_tested | Piotr | V3-E06, V3-J01 |
+| V3-E10 | Tools: Assessment Workbench unification hardening (evidence + coach) | P1 | R1 | draft | todo | not_tested | Piotr | V3-E06, V3-A03 |
+| V3-E11 | Tools: Tool-linked KB assets baseline (thumbnails MUST, micro‑video SHOULD) + quality gate | P2 | R2 | draft | todo | not_tested | Piotr | V3-E04, V3-A08 |
+| V3-E12 | Tools: Consulting Templates library (60) — registry + runtime integration (`framework_template`) | P1 | R2 | draft | todo | not_tested | Piotr | V3-E01, V3-A01 |
+| V3-E13 | Tools: Outputs scaffolding (tool/template/assessment → report sections + deck slides mapping) | P1 | R2 | draft | todo | not_tested | Piotr | V3-E12, V3-J01, V3-J02 |
 | V3-F01 | Initiatives: template-driven N-mode per InitiativeLevel | P0 | R0 | review | done | smoke_passed | Piotr | V3-K01 |
 | V3-F02 | Initiatives: Portfolio Analysis (Resources/Feasibility/Logic/Timeline/Completeness) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-F01 |
 | V3-G01 | Execution: minimal surfaces + spójne statusy | P2 | R2 | draft | done | done | Piotr | V3-F01 |
 | V3-H01 | Results: KPI table core (agregacja+add+tracking) | P0 | R0 | review | done | smoke_passed | Piotr | — |
 | V3-H02 | Results: ROI plan vs realized (tracking po wdrożeniu) | P0 | R0 | review | done | smoke_passed | Piotr | V3-H01 |
 | V3-H03 | Results: Operational analysis + ROI analysis views | P1 | R1 | draft | done | smoke_passed | Piotr | V3-H01 |
+| V3-H04 | Results: KPI Deviation Management (thresholds + cases + notifications) | P0 | R1 | draft | todo | not_tested | Piotr | V3-H01 |
+| V3-H05 | Results: KPI time-series contract alignment (API + FE/BE types) | P0 | R1 | draft | todo | not_tested | Piotr | V3-H01 |
+| V3-H06 | Results: KPI attribution policy (manual vs heuristic) + minimal finance mapping decision | P2 | R2 | draft | todo | not_tested | Piotr | V3-H01 |
 | V3-I01 | Finance: Exportuj → Report/Presentation (traceable) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-J01 |
 | V3-J01 | Reports: ujednolicenie report surfaces (user rozumie co jest czym) | P0 | R0 | review | done | smoke_passed | Piotr | V3-A04 |
 | V3-J02 | Presentations: biblioteka decków (hub table+cards) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-A02 |
@@ -498,6 +508,13 @@ Cel: dopracowanie opisów narzędzi (known-tools), szablonów, micro‑video, he
 | V3-N01 | ai_usage_logs v3 contract: cost + error_class + kind + migration (no silent drops) | P0 | R1 | draft | done | smoke_passed | Piotr | V3-A06 |
 | V3-N02 | AIPipeline: log error-path to ai_usage_logs (status=error) | P0 | R1 | draft | done | smoke_passed | Piotr | V3-N01 |
 | V3-N03 | Market Inbox: enforce status=approved before apply + audit entry | P0 | R1 | draft | done | smoke_passed | Piotr | V3-A06 |
+| V3-N04 | External RAG provider adapter + case knowledge capture pipeline | P1 | R2 | draft | todo | not_tested | Piotr | V3-M01, V3-A06 |
+| V3-N05 | Tool-scoped RAG: auto-pass context (toolSlug/packType/lang) | P1 | R1 | draft | todo | not_tested | Piotr | V3-E06, V3-B01 |
+| V3-N08 | Deep Research Evidence Ledger: Claim→EvidenceSnippet + Coverage + Contradictions + Research Viewer + quality metrics | P1 | R2 | draft | todo | not_tested | Piotr | V3-A06, V3-M10 |
+| V3-N09 | Chat intent classifier (cheap) + workflow router (chat vs deep research vs execution) + purpose mapping | P1 | R2 | draft | todo | not_tested | Piotr | V3-B01, V3-A06 |
+| V3-N10 | Coverage report per org: policy‑allowed + enabled_for_org + healthy coverage dla aktywnych purposes | P1 | R2 | draft | todo | not_tested | Piotr | V3-A06 |
+| V3-N11 | Smoke: `smoke:ai:research-ledger` contract (citation coverage + unsupported claim rate) | P1 | R2 | draft | todo | not_tested | Piotr | V3-N08 |
+| V3-M14 | Integrations: Sync scope labels (read‑only vs bidirectional) + UX expectation management | P2 | R2 | draft | todo | not_tested | Piotr | V3-M01 |
 
 ---
 
@@ -1907,6 +1924,168 @@ Mieć jedno źródło prawdy: tabela audytu tool → braki (whenToUse, inputs, s
 - `tools_audit_reviewed` (optional)
 **Rollout plan:** R1: audyt + plan P0/P1; R2: wykonanie planu (fill) + P2.
 
+#### V3-E08 — [Tools] SIRI canon 16D (data contract + mapping + export)
+- Status spec: draft
+- Priorytet: P0
+- Target: R1
+- Moduł: Tools (Licensed Assessments / SIRI)
+- SSOT:
+  - `docs/product/TOOLS_SSOT_SOURCES_V3.md`
+  - `docs/product/SIRI_ASSESSMENT_PACK_V3.md`
+  - `docs/product/ASSESSMENT_WORKBENCH_STANDARD_V3.md`
+  - `docs/product/TOOLS_GAP_ANALYSIS_V3.md`
+
+**Business challenge (problem):**  
+SIRI ma kanoniczny model 16D (Assessment Matrix). Obecny runtime zbiera 8D. Bez 16D tracimy zgodność metodologiczną i nie da się poprawnie raportować “kanonicznie”.
+
+**Cel (outcome):**  
+Zachować i eksportować kanoniczny model 16D, przy jednoczesnym utrzymaniu 8D UX jako nawigacji/summary (jeśli chcemy).
+
+**Zakres (IN/OUT):**
+- IN:
+  - data contract na 16D (as-is + target + evidence/rationale)
+  - jawne mapowanie 16D→8D (render-only)
+  - report/deck: appendix 16D + provenance do źródeł metodologicznych
+- OUT:
+  - pełna personalizacja scoringu per klient (v4+)
+
+**Definition of Done (DoD):**
+- 16D jest zapisywane i możliwe do eksportu (report/deck).
+- Mapowanie 16D→8D jest jawne i wersjonowane (SSOT).
+
+**Acceptance / test plan:**
+- session SIRI → wypełnienie 16D (lub import) → report pokazuje 16D + 8D summary.
+
+**Dependencies:** V3-E06  
+
+#### V3-E09 — [Tools] ADMA T1–T7 + FoF overlay in exports + initiatives binding
+- Status spec: draft
+- Priorytet: P0
+- Target: R1
+- Moduł: Tools (Licensed Assessments / ADMA)
+- SSOT:
+  - `docs/product/ADMA_ASSESSMENT_PACK_V3.md` (§1.4 wagi + FoF)
+  - `docs/product/TOOLS_GAP_ANALYSIS_V3.md`
+  - `knowledge/tool-kb/adma/initiatives/v1/*`
+
+**Business challenge (problem):**  
+ADMA w kanonicznych outputach raportuje T1–T7 i benchmark FoF. As-is report pokazuje tylko 5 pillarów/12 dims, więc wynik nie pasuje do materiałów ADMA i nie wspiera benchmarkingu.
+
+**Cel (outcome):**  
+Raport/deck ADMA pokazuje T1–T7 + FoF overlay + gap to FoF, oraz inicjatywy wynikają z “gap→patterns”.
+
+**Zakres (IN/OUT):**
+- IN:
+  - agregacja 12 dims → T1–T7 (wagi SSOT)
+  - FoF overlay w raporcie/decku
+  - generator inicjatyw korzysta z packa `adma/initiatives` (tool-scoped RAG)
+- OUT:
+  - pełny “Transformation Plan” generator 1:1 jak PDF sample (R2+ jeśli potrzeba)
+
+**Definition of Done (DoD):**
+- report/deck pokazuje T1–T7 i FoF.
+- inicjatywy ADMA mają ownera + KPI outcome+leading + waves.
+
+**Acceptance / test plan:**
+- ADMA session → export report → widoczna tabela T1–T7 + benchmark + gap.
+
+**Dependencies:** V3-E06, V3-J01  
+
+#### V3-E10 — [Tools] Assessment Workbench unification hardening (evidence + coach)
+- Status spec: draft
+- Priorytet: P1
+- Target: R1
+- Moduł: Tools (Licensed Assessments)
+- SSOT:
+  - `docs/product/ASSESSMENT_WORKBENCH_STANDARD_V3.md`
+  - `docs/product/ASSESSMENTS_UNIFICATION_IMPLEMENTATION_BACKLOG_V3.md`
+  - `docs/product/TOOLS_KNOWLEDGE_BANK_V3.md`
+
+**Cel (outcome):**  
+Ujednolicić “jak się pracuje” w DRD/SIRI/ADMA: evidence UI, statusy “needs evidence”, oraz chat coach oparty o tool packs (QBank/Help).
+
+**Definition of Done (DoD):**
+- evidence UI i statusy są spójne w 3 editorach
+- chat coach umie przejść: kickoff → scoring loop → consistency → initiatives → export (propose→accept)
+
+**Dependencies:** V3-E06, V3-A03  
+
+#### V3-E11 — [Tools] Tool-linked KB assets baseline (thumbnails MUST, micro‑video SHOULD) + quality gate
+- Status spec: draft
+- Priorytet: P2
+- Target: R2
+- Moduł: Tools (Library) + Help/KB + Video enablement
+- SSOT:
+  - `docs/product/CONSULTING_TOOLS_TOOL_SPECS_V3.md` (asset requirements per toolType)
+  - `docs/product/KNOWN_TOOLS_CONTENT_COMPLETENESS_AUDIT_V3.md`
+  - `docs/product/VIDEO_ENABLEMENT_V3.md`
+  - `docs/product/CONSULTING_TEMPLATES_LIBRARY_V3.md` (§7 help/model context, plus archetype visuals)
+
+**Cel (outcome):**  
+Ustawić minimalny, egzekwowalny standard assetów i „quality gate” dla Library: preview thumbnail jako MUST, micro‑video jako SHOULD (z planem produkcji).
+
+**Definition of Done (DoD):**
+- Każdy wpis w Library ma:
+  - thumbnail/preview image (MUST) albo jawny “placeholder policy” (np. default archetype visual) z trackingiem braków,
+  - powiązanie do KB “how-to” (slug / link),
+  - pole/odnośnik do micro‑video (SHOULD, jeśli dostępne).
+- Jest audyt/gate (skrypt lub check) raportujący braki per toolType/template.
+
+**Dependencies:** V3-E04, V3-A08  
+
+#### V3-E12 — [Tools] Consulting Templates library (60) — registry + runtime integration (`framework_template`)
+- Status spec: draft
+- Priorytet: P1
+- Target: R2
+- Moduł: Tools (Library + Workspace runtime)
+- SSOT:
+  - `docs/product/CONSULTING_TEMPLATES_LIBRARY_V3.md`
+  - `docs/product/CONSULTING_TOOLS_V3.md` (tool_class=framework_template + outputs contract)
+  - `docs/product/TOOLS_CATALOG_V3.md`
+
+**Business challenge (problem):**  
+Mamy SSOT kontrakt dla 60 template’ów, ale bez wpisów w Library i runtime binding użytkownik nie może ich uruchomić i nie ma traceability do outputów.
+
+**Cel (outcome):**  
+Template’y są widoczne w Tools Library jako `framework_template`, uruchamiane jako ToolSession (workspace-first), finalizowalne i generujące inicjatywy/raporty/decki z traceability.
+
+**Zakres (IN/OUT):**
+- IN:
+  - registry/seeding 60 template entries (ToolDefinition)
+  - runtime: start template → ToolSession → workspace artifact zgodny z archetypem + DoD gating
+  - outputs CTAs: initiatives/report/deck (po finalizacji)
+- OUT:
+  - marketplace import / commerce (V4)
+
+**Definition of Done (DoD):**
+- Min. 3 template’y (strategy+ops+digital) działają end‑to‑end: Library → Session → Finalize → Outputs.
+- Pozostałe template’y są zseedowane i uruchamialne (nawet jeśli mają minimalny help pack).
+
+**Dependencies:** V3-E01, V3-A01  
+
+#### V3-E13 — [Tools] Outputs scaffolding (tool/template/assessment → report sections + deck slides mapping)
+- Status spec: draft
+- Priorytet: P1
+- Target: R2
+- Moduł: Reports/Presentations generators + Tools
+- SSOT:
+  - `docs/product/REPORT_GENERATOR_V3.md`
+  - `docs/product/PRESENTATION_GENERATOR_V3.md`
+  - `docs/product/CONSULTING_TOOLS_V3.md` (Outputs contract)
+  - `docs/product/V3_TOOLS_COMPLETENESS_MATRIX.md` (gap: output mapping per tool)
+
+**Cel (outcome):**  
+Generator startuje z sensownym szkieletem (TOC + slajdy) wynikającym z typu źródła (toolType/template/assessment), zamiast losowego lub pustego układu.
+
+**Definition of Done (DoD):**
+- Istnieje kanoniczny mapping “source → report sections” i “source → deck slides” (min. scaffold).
+- Generator po kliknięciu “Create report/deck” z narzędzia:
+  - preselectuje źródło,
+  - buduje szkic zgodnie z mappingiem,
+  - zachowuje traceability per sekcja/slajd (best effort).
+
+**Dependencies:** V3-E12, V3-J01, V3-J02
+
 ---
 
 ### WS-F — Initiatives v3
@@ -2202,6 +2381,71 @@ Dwa jasne surfaces: `Operational` (KPI) i `ROI` (plan vs realized), oba z filtra
 **Risks / go-live risk:** średnie — nie blokuje R0.
 **Analytics:** `results_analysis_opened` (type=operational|roi)
 **Rollout plan:** R1: minimalne dashboardy + drill-down; potem eksport i narracje.
+
+#### V3-H04 — [Results] KPI Deviation Management (thresholds + cases + notifications)
+- Status spec: draft
+- Priorytet: P0
+- Target: R1
+- Moduł: Results (KPI)
+- SSOT:
+  - `docs/product/RESULTS_V3.md`
+  - `docs/product/RESULTS_KPI_DEVIATION_MANAGEMENT_V3.md`
+  - `docs/product/RESULTS_KPI_DEVIATION_IMPLEMENTATION_BACKLOG_V3.md`
+  - `docs/product/TOOLS_GAP_ANALYSIS_V3.md`
+
+**Business challenge (problem):**  
+KPI bez progu i action-loop jest sprawozdawcze. Potrzebujemy mechanizmu “wezwania ownera” i planu działań przy odchyleniu.
+
+**Cel (outcome):**  
+Automatyczna obsługa odchyleń KPI: progi Green/Amber/Red → Deviation Case → RCA → Action Plan → tracking → zamknięcie.
+
+**Definition of Done (DoD):**
+- deterministiczny evaluator statusu KPI (direction + target mode + threshold bands)
+- auto-create/open Deviation Case po AMBER/RED
+- UI KPI detail pokazuje aktywny case i CTA (acknowledge/explain/plan/close)
+- notyfikacja ownera + eskalacja dla RED (konfig)
+
+**Dependencies:** V3-H01  
+
+#### V3-H05 — [Results] KPI time-series contract alignment (API + FE/BE types)
+- Status spec: draft
+- Priorytet: P0
+- Target: R1
+- Moduł: Results (KPI)
+- SSOT:
+  - `docs/product/RESULTS_V3.md` (kontrakt okresów)
+  - `docs/product/TOOLS_GAP_ANALYSIS_V3.md` (API mismatch)
+
+**Problem:**  
+FE i BE mają rozjazd kontraktu time-series (pola + shape odpowiedzi). To blokuje stabilne “KPI action loop”.
+
+**DoD:**
+- jeden kanoniczny kontrakt API (period model + response shape)
+- typy FE i payloady BE są spójne i udokumentowane
+
+**Dependencies:** V3-H01  
+
+#### V3-H06 — [Results] KPI attribution policy (manual vs heuristic) + minimal finance mapping decision
+- Status spec: draft
+- Priorytet: P2
+- Target: R2
+- Moduł: Results (KPI/ROI) + Finance
+- SSOT:
+  - `docs/product/RESULTS_V3.md`
+  - `docs/product/ROI_TRACKING_CONTRACT_V3.md`
+
+**Problem:**  
+Bez jasnej polityki atrybucji (jak KPI/ROI przypisujemy do inicjatyw, i co jest manualne vs heurystyczne) wyniki będą “uznaniowe”, a raporty/finanse będą niespójne.
+
+**Cel (outcome):**  
+Wprowadzić kanoniczną politykę atrybucji w v3: manual jako prawda, heurystyka jako sugestia (propose→accept), minimalne reguły mapowania do finansów.
+
+**Definition of Done (DoD):**
+- Jest jawny model atrybucji: manual links initiative↔KPI + weight (opcjonalnie) + okres.
+- Heurystyka (jeśli użyta) jest oznaczona jako suggestion i wymaga akceptacji.
+- Minimalne mapowanie finance (baseline) jest opisane i wdrożone w UI/exports (best effort).
+
+**Dependencies:** V3-H01  
 
 ---
 
@@ -2848,6 +3092,127 @@ Error path nie jest “niewidzialny” — telemetry jest spójne z `LLMControll
 - audit entry `MARKET_INBOX_APPLY` jest zapisany best‑effort
 
 **Dependencies:** V3-A06  
+
+#### V3-N04 — [AI] External RAG provider adapter + case knowledge capture pipeline
+- Status spec: draft
+- Priorytet: P1
+- Target: R2
+- Moduł: AI Platform / Knowledge
+- SSOT:
+  - `docs/product/TOOLS_KNOWLEDGE_BANK_V3.md` (§9 external provider + §10 knowledge loop)
+  - `docs/product/TOOLS_KNOWLEDGE_BANK_IMPLEMENTATION_BACKLOG_V3.md`
+
+**Cel (outcome):**  
+Docelowo Knowledge Bank działa przez API do zewnętrznego providera (staging→prod), a wiedza z case’ów/klientów jest zbierana i publikowana w kontrolowanym workflow.
+
+**DoD:**
+- adapter “Knowledge Provider API” (upsert docs/chunks, delete by doc_key, search with filters)
+- rozdział global packs vs private case knowledge (organization_id)
+- minimalny workflow capture→review→publish (statusy + audit)
+
+**Dependencies:** V3-M01, V3-A06  
+
+#### V3-N05 — [AI] Tool-scoped RAG: auto-pass context (toolSlug/packType/lang)
+- Status spec: draft
+- Priorytet: P1
+- Target: R1
+- Moduł: AI Platform / Tools assistant
+- SSOT:
+  - `docs/product/TOOLS_KNOWLEDGE_BANK_V3.md` (tool-scoped retrieval contract)
+  - `docs/product/TOOLS_SSOT_SOURCES_V3.md` (§7 runtime binding)
+
+**Cel (outcome):**  
+Gdy user pracuje w DRD/SIRI/ADMA/KPI, system automatycznie ogranicza retrieval do właściwych packów (bez ręcznych instrukcji w promptach).
+
+**DoD:**
+- AI tool calls do `search_knowledge_base` zawsze przekazują `toolSlug=<current tool>` + `language=<locale>` (i opcjonalnie `packType`)
+- fallback global search jest tylko gdy brak kontekstu
+
+**Dependencies:** V3-E06, V3-B01  
+
+#### V3-N08 — [AI] Deep Research Evidence Ledger: Claim→EvidenceSnippet + Coverage + Contradictions + Research Viewer + quality metrics
+- Status spec: draft
+- Priorytet: P1
+- Target: R2
+- Moduł: AI / Intelligence / Reports
+- SSOT:
+  - `docs/product/modules/ai/AI_DEEP_RESEARCH_EVIDENCE_SYSTEM_V3.md`
+  - `docs/product/modules/ai/AI_AGENT_ORCHESTRATION_V3.md`
+  - `docs/product/modules/ai/AI_MODEL_PURPOSES_AND_REQUIREMENTS_V3.md`
+  - `docs/product/MODEL_REGISTRY_V3.md`
+
+**Cel (outcome):**  
+Deep research jest audytowalne: kluczowe stwierdzenia mają dowody (snippets), coverage report i sprzeczności, a user może to przeglądać w Viewer UI.
+
+**Definition of Done (DoD):**
+- ResearchRun (deep research) zapisuje:
+  - Evidence Ledger (claims + snippet refs),
+  - Coverage report,
+  - Contradictions list (best effort).
+- Viewer UI ma:
+  - report + TOC,
+  - panel sources,
+  - panel claims (supported/unsupported/assumptions) z kliknięciem do snippet.
+- Jakość jest mierzona (min: unsupported claim rate, citation coverage %) i widoczna w Admin/SuperAdmin (baseline).
+
+**Dependencies:** V3-A06, V3-M10  
+
+#### V3-N09 — [AI] Chat intent classifier (cheap) + workflow router (chat vs deep research vs execution) + purpose mapping
+- Status spec: draft
+- Priorytet: P1
+- Target: R2
+- Moduł: Chat / AI Platform
+- SSOT:
+  - `docs/product/modules/ai/AI_AGENT_ORCHESTRATION_V3.md`
+  - `docs/product/modules/ai/AI_MODEL_PURPOSES_AND_REQUIREMENTS_V3.md`
+  - `docs/product/V3_IMPLEMENTATION_PROGRAM.md` (propose→accept)
+
+**Cel (outcome):**  
+Chat potrafi tanio rozróżnić intencję i skierować usera do właściwego workflow (z odpowiednim budget/purpose), bez “zawsze deep” i bez niekontrolowanego kosztu.
+
+**Definition of Done (DoD):**
+- Klasyfikator/intencja działa w trybie low-cost (BUDGET) i zwraca: `chat|deep_research|tools|execution|reports`.
+- Router mapuje intencję na purpose + proponowaną akcję (NAVIGATE / START_RESEARCH / START_TOOL).
+- Propose→accept zachowane (brak automatycznych mutacji).
+
+**Dependencies:** V3-B01, V3-A06  
+
+#### V3-N10 — [AI] Coverage report per org: policy‑allowed + enabled_for_org + healthy coverage dla aktywnych purposes
+- Status spec: draft
+- Priorytet: P1
+- Target: R2
+- Moduł: AI Platform / SuperAdmin
+- SSOT:
+  - `docs/product/MODEL_REGISTRY_V3.md`
+  - `docs/product/modules/ai/AI_PROVIDER_RESIDENCY_POLICY_V3.md`
+  - `docs/product/modules/ai/AI_MODEL_PURPOSES_AND_REQUIREMENTS_V3.md`
+
+**Cel (outcome):**  
+SuperAdmin widzi “coverage” routingu: czy dla aktywnych purposes są zdrowe przypisania modeli zgodne z politykami (enabled_for_org + residency).
+
+**Definition of Done (DoD):**
+- Raport coverage per org/purpose pokazuje: assigned models, health, policy allow/deny, fallback readiness.
+- Braki coverage generują alerty/“to fix” listę.
+
+**Dependencies:** V3-A06  
+
+#### V3-N11 — [AI] Smoke: `smoke:ai:research-ledger` contract (citation coverage + unsupported claim rate)
+- Status spec: draft
+- Priorytet: P1
+- Target: R2
+- Moduł: AI Platform (QA)
+- SSOT: `docs/product/modules/ai/AI_DEEP_RESEARCH_EVIDENCE_SYSTEM_V3.md`
+
+**Cel (outcome):**  
+Mieć deterministyczny smoke/regresję dla Evidence Ledger (minimalne metryki jakości i shape kontraktów).
+
+**Definition of Done (DoD):**
+- Skrypt smoke uruchamia run (lub synthetic ledger build) i sprawdza:
+  - że unsupported claims są jawnie oznaczone,
+  - że citation coverage jest liczona,
+  - że viewer payload ma oczekiwany shape.
+
+**Dependencies:** V3-N08  
 
 ---
 

@@ -1,10 +1,18 @@
 /**
- * GridView
- * Card-based grid view as alternative to table
+ * GridView — Golden Standard (v3)
+ * Card-based grid view as alternative to table.
+ *
+ * SSOT: docs/ui-standards/03-modules/view-modes-standard.md (Cards/Grid)
+ * Goals:
+ * - readable at-a-glance (title + brief + signals)
+ * - artifact identity via subtle accent (border-left), not gradients
+ * - consistent actions: kebab (⋮), no giant hover CTAs
+ * - i18n-ready (PL/EN)
  */
 
-import { Copy, Edit, Eye, Maximize2, MoreVertical, Plus, Trash2 } from 'lucide-react';
-import React, { useState } from 'react';
+import { Copy, Edit, MoreVertical, Plus, Trash2 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface GridItem {
   id: string;
@@ -140,32 +148,68 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; lab
   },
 };
 
-// Type colors map
-const TYPE_COLORS: Record<string, string> = {
+// Accent map (identity) — border-left + type pill (subtle)
+const TYPE_ACCENTS: Record<string, { borderLeft: string; pill: string; text: string }> = {
   // Assessment frameworks
-  DRD: 'from-purple-500/20 to-purple-600/10 border-purple-500/30',
-  SIRI: 'from-blue-500/20 to-blue-600/10 border-blue-500/30',
-  ADMA: 'from-teal-500/20 to-teal-600/10 border-teal-500/30',
-  CMMI: 'from-orange-500/20 to-orange-600/10 border-orange-500/30',
-  LEAN: 'from-green-500/20 to-green-600/10 border-green-500/30',
+  DRD: {
+    borderLeft: 'border-l-purple-500 dark:border-l-purple-400',
+    pill: 'bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-300',
+    text: 'text-purple-600 dark:text-purple-300',
+  },
+  SIRI: {
+    borderLeft: 'border-l-blue-500 dark:border-l-blue-400',
+    pill: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300',
+    text: 'text-blue-600 dark:text-blue-300',
+  },
+  ADMA: {
+    borderLeft: 'border-l-teal-500 dark:border-l-teal-400',
+    pill: 'bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-300',
+    text: 'text-teal-600 dark:text-teal-300',
+  },
+  CMMI: {
+    borderLeft: 'border-l-orange-500 dark:border-l-orange-400',
+    pill: 'bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-300',
+    text: 'text-orange-600 dark:text-orange-300',
+  },
+  LEAN: {
+    borderLeft: 'border-l-emerald-500 dark:border-l-emerald-400',
+    pill: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300',
+    text: 'text-emerald-600 dark:text-emerald-300',
+  },
   // Tool categories
-  strategic: 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30',
-  operational: 'from-blue-500/20 to-blue-600/10 border-blue-500/30',
-  digital: 'from-purple-500/20 to-purple-600/10 border-purple-500/30',
-  automation: 'from-amber-500/20 to-amber-600/10 border-amber-500/30',
+  strategic: {
+    borderLeft: 'border-l-emerald-500 dark:border-l-emerald-400',
+    pill: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300',
+    text: 'text-emerald-600 dark:text-emerald-300',
+  },
+  operational: {
+    borderLeft: 'border-l-blue-500 dark:border-l-blue-400',
+    pill: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300',
+    text: 'text-blue-600 dark:text-blue-300',
+  },
+  digital: {
+    borderLeft: 'border-l-purple-500 dark:border-l-purple-400',
+    pill: 'bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-300',
+    text: 'text-purple-600 dark:text-purple-300',
+  },
+  automation: {
+    borderLeft: 'border-l-amber-500 dark:border-l-amber-400',
+    pill: 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300',
+    text: 'text-amber-700 dark:text-amber-300',
+  },
 };
 
 // Format relative time
-const formatRelativeTime = (date: Date | string) => {
+const formatRelativeTime = (date: Date | string, isPolish: boolean) => {
   const d = new Date(date);
   const now = new Date();
   const diff = now.getTime() - d.getTime();
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const days = Math.floor(hours / 24);
 
-  if (hours < 1) return 'Just now';
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
+  if (hours < 1) return isPolish ? 'Przed chwilą' : 'Just now';
+  if (hours < 24) return isPolish ? `${hours} h temu` : `${hours}h ago`;
+  if (days < 7) return isPolish ? `${days} dni temu` : `${days}d ago`;
   return d.toLocaleDateString();
 };
 
@@ -178,6 +222,8 @@ export const GridView: React.FC<GridViewProps> = ({
   emptyMessage = 'No items found',
   extraCardActions,
 }) => {
+  const { i18n, t } = useTranslation();
+  const isPolish = i18n.language?.startsWith('pl');
   const [menuItemId, setMenuItemId] = useState<string | null>(null);
 
   if (items.length === 0 && !onNewItem) {
@@ -186,39 +232,73 @@ export const GridView: React.FC<GridViewProps> = ({
     );
   }
 
+  const labels = useMemo(
+    () => ({
+      open: isPolish ? 'Otwórz' : 'Open',
+      duplicate: isPolish ? 'Duplikuj' : 'Duplicate',
+      edit: isPolish ? 'Edytuj' : 'Edit',
+      delete: isPolish ? 'Usuń' : 'Delete',
+      newItem: newItemLabel || (isPolish ? 'Nowy element' : 'New item'),
+      empty: emptyMessage || (isPolish ? 'Brak elementów' : 'No items found'),
+    }),
+    [isPolish, newItemLabel, emptyMessage]
+  );
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
       {/* Item Cards */}
       {items.map((item) => {
         const statusConfig = STATUS_CONFIG[item.status] || STATUS_CONFIG.DRAFT;
-        const typeColor =
-          TYPE_COLORS[item.type] ||
-          TYPE_COLORS[item.typeColor] ||
-          'from-slate-500/20 to-slate-600/10 border-slate-500/30';
+        const accent =
+          TYPE_ACCENTS[item.type] ||
+          TYPE_ACCENTS[item.typeColor] || {
+            borderLeft: 'border-l-slate-400 dark:border-l-slate-500',
+            pill: 'bg-slate-100 text-slate-700 dark:bg-white/[0.06] dark:text-slate-200',
+            text: 'text-slate-600 dark:text-slate-300',
+          };
+
+        const title = String(item.name ?? '');
+        const rawBrief = String(item.brief ?? item.summary ?? item.description ?? '').trim();
+        const firstLine = rawBrief.split('\n').find((l) => l.trim().length > 0)?.trim() || '';
+        const brief = firstLine.length > 140 ? `${firstLine.slice(0, 137)}…` : firstLine;
 
         return (
           <div
             key={item.id}
             onClick={() => onItemClick?.(item)}
-            className={`
-              group relative bg-gradient-to-br ${typeColor}
-              border rounded-xl overflow-hidden cursor-pointer
-              hover:shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/30
-              transition-all duration-200
-            `}
+            className={[
+              'group relative cursor-pointer rounded-xl overflow-hidden',
+              'border-l-[3px] border border-slate-200/60 dark:border-white/[0.06]',
+              accent.borderLeft,
+              'bg-slate-50/80 dark:bg-navy-800/60',
+              'hover:bg-white dark:hover:bg-navy-800/80',
+              'transition-colors duration-150',
+            ].join(' ')}
           >
             {/* Header */}
-            <div className="flex items-start justify-between p-4 pb-2">
-              <span className="font-mono text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                {item.type}
-              </span>
-              <div className="relative">
+            <div className="flex items-start justify-between gap-2 p-3 pb-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${accent.pill}`}
+                  title={String(item.type)}
+                >
+                  {String(item.type)}
+                </span>
+                <div className={`flex items-center gap-1.5 ${statusConfig.text}`}>
+                  <span className={`w-2 h-2 rounded-full ${statusConfig.dot}`} />
+                  <span className="text-[10px] font-medium">{statusConfig.label}</span>
+                </div>
+              </div>
+
+              <div className="relative shrink-0">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setMenuItemId(menuItemId === item.id ? null : item.id);
                   }}
-                  className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-slate-200 dark:hover:bg-navy-700/50 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"
+                  className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-slate-200/60 dark:hover:bg-white/[0.06] text-slate-500 dark:text-slate-400 transition-all"
+                  aria-label={t('common.actions', 'Actions')}
+                  title={t('common.actions', 'Actions')}
                 >
                   <MoreVertical size={16} />
                 </button>
@@ -233,17 +313,17 @@ export const GridView: React.FC<GridViewProps> = ({
                         setMenuItemId(null);
                       }}
                     />
-                    <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
+                    <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-white/[0.08] rounded-xl shadow-xl overflow-hidden">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          onItemAction?.('edit', item);
+                          onItemAction?.('open', item);
                           setMenuItemId(null);
                         }}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
+                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
                       >
-                        <Maximize2 size={14} />
-                        Open
+                        <Edit size={14} />
+                        {labels.open}
                       </button>
                       <button
                         onClick={(e) => {
@@ -251,10 +331,10 @@ export const GridView: React.FC<GridViewProps> = ({
                           onItemAction?.('duplicate', item);
                           setMenuItemId(null);
                         }}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
+                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
                       >
                         <Copy size={14} />
-                        Duplicate
+                        {labels.duplicate}
                       </button>
                       <button
                         onClick={(e) => {
@@ -262,22 +342,22 @@ export const GridView: React.FC<GridViewProps> = ({
                           onItemAction?.('rename', item);
                           setMenuItemId(null);
                         }}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
+                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
                       >
                         <Edit size={14} />
-                        Edit
+                        {labels.edit}
                       </button>
-                      <div className="border-t border-slate-300 dark:border-navy-600" />
+                      <div className="border-t border-slate-200/70 dark:border-white/[0.08]" />
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           onItemAction?.('delete', item);
                           setMenuItemId(null);
                         }}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-rose-400 hover:bg-slate-100 dark:hover:bg-navy-700"
+                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
                       >
                         <Trash2 size={14} />
-                        Delete
+                        {labels.delete}
                       </button>
                     </div>
                   </>
@@ -286,64 +366,43 @@ export const GridView: React.FC<GridViewProps> = ({
             </div>
 
             {/* Content */}
-            <div className="px-4 pb-2">
-              <h3 className="text-slate-900 dark:text-white font-medium leading-tight line-clamp-2">
-                {item.name}
+            <div className="px-3 pb-2">
+              <h3 className="text-slate-900 dark:text-white font-medium leading-snug line-clamp-2">
+                {title}
               </h3>
+              {brief ? (
+                <p className="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2">
+                  {brief}
+                </p>
+              ) : null}
             </div>
 
-            {/* Progress */}
-            <div className="px-4 py-2">
-              <div className="flex items-center gap-2">
-                <div className="flex-1 h-1 bg-slate-200 dark:bg-navy-700/50 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${
-                      item.progress === 100
-                        ? 'bg-emerald-500'
-                        : item.progress >= 75
-                          ? 'bg-blue-500'
-                          : item.progress >= 50
-                            ? 'bg-amber-500'
-                            : 'bg-slate-500'
-                    }`}
-                    style={{ width: `${item.progress}%` }}
-                  />
+            {/* Signals (optional progress) */}
+            {typeof item.progress === 'number' ? (
+              <div className="px-3 pb-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1 bg-slate-200/80 dark:bg-white/[0.06] rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-slate-500/70 dark:bg-white/[0.18]"
+                      style={{ width: `${Math.max(0, Math.min(100, item.progress))}%` }}
+                    />
+                  </div>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {Math.round(item.progress)}%
+                  </span>
                 </div>
-                <span className="text-xs text-slate-500 dark:text-slate-400">{item.progress}%</span>
               </div>
-            </div>
+            ) : null}
 
             {/* Footer */}
-            <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-navy-700/50">
+            <div className="flex items-center justify-between px-3 py-2.5 border-t border-slate-200/70 dark:border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <div className={`flex items-center gap-1.5 ${statusConfig.text}`}>
-                  <span className={`w-2 h-2 rounded-full ${statusConfig.dot}`} />
-                  <span className="text-xs font-medium">{statusConfig.label}</span>
-                </div>
                 {extraCardActions?.(item)}
               </div>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                {formatRelativeTime(item.updatedAt)}
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                {formatRelativeTime(item.updatedAt, isPolish)}
               </span>
             </div>
-
-            {/* Quick Preview Button (on hover) */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onItemAction?.('preview', item);
-              }}
-              className="
-                absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
-                p-3 rounded-full bg-primary-500 text-white
-                opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100
-                shadow-lg shadow-primary-500/25
-                transition-all duration-200
-              "
-              title="Quick Preview"
-            >
-              <Eye size={20} />
-            </button>
           </div>
         );
       })}
@@ -355,12 +414,12 @@ export const GridView: React.FC<GridViewProps> = ({
           className="
             flex flex-col items-center justify-center gap-2
             min-h-[180px] rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600
-            text-slate-500 hover:text-primary-400 hover:border-primary-500/50
+            text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-400 dark:hover:border-white/[0.18]
             transition-all
           "
         >
           <Plus size={24} />
-          <span className="text-sm font-medium">{newItemLabel}</span>
+          <span className="text-sm font-medium">{labels.newItem}</span>
         </button>
       )}
     </div>

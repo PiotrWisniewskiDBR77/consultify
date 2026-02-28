@@ -60,20 +60,7 @@
 **Observed gaps in repo (must fix for “final SSOT completeness”):**
 
 - The movie folder contains many duplicate files (`<name> 2.md`, `<name> 3.md`, etc.). The canonical set referenced by `movie/00-INDEX.md` requires **exact filenames** without suffixes.
-- As of now, the following canonical filenames referenced by `movie/00-INDEX.md` are missing (even if duplicates exist):
-  - `mece-issue-tree.md`
-  - `hypothesis-driven-strategy.md`
-  - `pestel.md`
-  - `market-sizing-tam-sam-som.md`
-  - `customer-segmentation.md`
-  - `jobs-to-be-done.md`
-  - `competitive-benchmarking.md`
-  - `strategic-positioning.md`
-  - `core-competencies.md`
-  - `blue-ocean-strategy.md`
-  - `errc-grid.md`
-  - `experience-curve.md`
-  - `balanced-scorecard.md`
+- ✅ **Resolved (SSOT hygiene):** all canonical filenames referenced by `movie/00-INDEX.md` now exist as exact matches (no missing targets).
 
 **Remaining gaps (system integration):**
 

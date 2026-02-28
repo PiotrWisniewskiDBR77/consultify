@@ -420,6 +420,21 @@ async function main() {
     await ensureColumn('status_reports', 'period', `period TEXT`);
   }
 
+  // --- Tools library compatibility (V3-E01 / Known Tools library) ---
+  // Some staging DBs have `tools` table without the V3 library columns (tool_type, tags, library content).
+  if (await tableExists('tools')) {
+    await ensureColumn('tools', 'tool_type', `tool_type TEXT`);
+    await ensureColumn('tools', 'library_category', `library_category TEXT`);
+    await ensureColumn('tools', 'library_content_translations', `library_content_translations TEXT`);
+    await ensureColumn('tools', 'tags_json', `tags_json TEXT DEFAULT '[]'`);
+  }
+
+  // --- Report builder templates compatibility (V3-J01/I01) ---
+  // Newer template migrations expect `is_active` flag.
+  if (await tableExists('report_builder_templates')) {
+    await ensureColumn('report_builder_templates', 'is_active', `is_active BOOLEAN DEFAULT TRUE`);
+  }
+
   // raid.routes.ts expects: project_id, severity, created_by
   if (await tableExists('raid_items')) {
     await ensureColumn('raid_items', 'project_id', `project_id TEXT`);

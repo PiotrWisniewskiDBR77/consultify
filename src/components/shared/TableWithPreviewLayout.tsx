@@ -145,7 +145,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
       {/* Preview pane — 20-33% width, min 340px, clamp() for responsiveness */}
       {isPreviewOpen && selectedItem && (
         <div
-          className="shrink-0 border-l border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950"
+          className="shrink-0 bg-slate-50 dark:bg-navy-950 border-l border-slate-200/70 dark:border-white/[0.06] p-3"
           style={{ width: 'clamp(340px, 28%, 480px)' }}
         >
           <PreviewPaneShell
@@ -158,7 +158,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
                 {onOpenFull && (
                   <button
                     onClick={() => onOpenFull(selectedItem.id)}
-                    className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-navy-800/60 transition-colors"
+                    className="p-1.5 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
                     title={t('common.openFull', 'Open full')}
                   >
                     <ExternalLink size={14} />

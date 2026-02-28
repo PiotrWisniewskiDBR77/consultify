@@ -60,19 +60,26 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       icon: React.createElement(ClipboardList, { size: 20 }),
       viewId: AppView.DISCOVERY_CONSULTANT,
     },
-    // 3. Narzędzia - 31 narzędzi Discovery Tools
+    // 3. Narzędzia (v3): jeden obszar Tools (Discovery + Assessments)
     {
-      id: 'DISCOVERY_TOOLS',
-      label: t('sidebar.discoveryTools', 'Tools'),
+      id: 'TOOLS',
+      label: t('sidebar.tools', 'Tools'),
       icon: React.createElement(Wrench, { size: 20 }),
       viewId: AppView.DISCOVERY_TOOLS,
-    },
-    // 4. Licensed Tools (Assessment module) - DRD/SIRI/ADMA/Lean
-    {
-      id: 'MODULE_ASSESSMENT',
-      label: t('sidebar.assessment', 'Assessment'),
-      icon: React.createElement(CheckCircle2, { size: 20 }),
-      viewId: AppView.ASSESSMENT_OVERVIEW,
+      subItems: [
+        {
+          id: 'TOOLS_LIBRARY',
+          label: t('sidebar.toolsLibrary', 'Library'),
+          icon: React.createElement(BookOpen, { size: 16 }),
+          viewId: AppView.DISCOVERY_TOOLS,
+        },
+        {
+          id: 'TOOLS_ASSESSMENT',
+          label: t('sidebar.assessment', 'Assessment'),
+          icon: React.createElement(CheckCircle2, { size: 16 }),
+          viewId: AppView.ASSESSMENT_OVERVIEW,
+        },
+      ],
     },
     // 5. Inicjatywy - zarządzanie inicjatywami
     {
@@ -88,17 +95,17 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       icon: React.createElement(Rocket, { size: 20 }),
       viewId: AppView.IMPLEMENTATION,
     },
-    // 7. Realizacja - śledzenie efektów zrealizowanych inicjatyw
+    // 7. Resultaty - śledzenie efektów (KPI/ROI) zrealizowanych inicjatyw
     {
       id: 'MODULE_BENEFITS',
-      label: t('sidebar.benefits', 'Benefits'),
+      label: t('sidebar.results', 'Results'),
       icon: React.createElement(TrendingUp, { size: 20 }),
       viewId: AppView.BENEFITS_REALIZATION,
     },
-    // 8. Ekonomia - analiza ekonomiczna i wartość biznesowa
+    // 8. Finanse - Financial Analysis v3
     {
       id: 'MODULE_ECONOMICS',
-      label: t('sidebar.economics', 'Economics'),
+      label: t('sidebar.economics', 'Finance'),
       icon: React.createElement(Calculator, { size: 20 }),
       viewId: AppView.ECONOMICS,
     },

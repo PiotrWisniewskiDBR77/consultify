@@ -74,32 +74,20 @@ export const ColumnResizer: React.FC<ColumnResizerProps> = ({
     <div
       onMouseDown={handleMouseDown}
       className={`
-        absolute right-0 top-0 h-full w-4 cursor-col-resize
-        flex items-center justify-center
+        absolute right-0 top-0 h-full w-5 cursor-col-resize
+        touch-none select-none
         group/resizer
         ${isDragging ? 'z-50' : 'z-10'}
       `}
     >
-      {/* Visual handle - two vertical lines */}
+      {/* Visual handle - single subtle line (SSOT: no double separators) */}
       <div
-        className={`
-          h-4 w-0.5 rounded-full transition-all duration-150
-          ${
-            isDragging
-              ? 'bg-primary-500 h-full w-1'
-              : 'bg-slate-300 dark:bg-navy-500 group-hover/resizer:bg-primary-400 group-hover/resizer:h-6'
-          }
-        `}
-      />
-      <div
-        className={`
-          h-4 w-0.5 rounded-full ml-0.5 transition-all duration-150
-          ${
-            isDragging
-              ? 'bg-primary-500 h-full w-1 opacity-0'
-              : 'bg-slate-300 dark:bg-navy-500 group-hover/resizer:bg-primary-400 group-hover/resizer:h-6'
-          }
-        `}
+        className={[
+          'absolute right-2 top-2 bottom-2 w-px rounded-full transition-colors duration-150',
+          isDragging
+            ? 'bg-primary-400 dark:bg-primary-400'
+            : 'bg-slate-200/80 dark:bg-white/[0.06] group-hover/resizer:bg-slate-300 dark:group-hover/resizer:bg-white/[0.10]',
+        ].join(' ')}
       />
     </div>
   );

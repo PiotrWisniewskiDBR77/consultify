@@ -1544,13 +1544,25 @@ export const useToolStore = create<ToolStoreState>()(
             | PorterData
             | GrowthPathsData
             | PortfolioPriorityData
-            | RiskUncertaintyData;
-          if ('goal' in data.context) {
-            return data.context.goal.length > 0 && data.context.scope.length > 0;
+            | RiskUncertaintyData
+            | undefined
+            | null;
+
+          const ctx = (data as any)?.context as any;
+          if (!ctx || typeof ctx !== 'object') return false;
+
+          // Most strategic tools share (goal, scope); Porter uses (industry, ...)
+          if ('goal' in ctx) {
+            const goal = typeof ctx.goal === 'string' ? ctx.goal : '';
+            const scope = typeof ctx.scope === 'string' ? ctx.scope : '';
+            return goal.length > 0 && scope.length > 0;
           }
-          if ('industry' in data.context) {
-            return data.context.industry.length > 0;
+          if ('industry' in ctx) {
+            const industry = typeof ctx.industry === 'string' ? ctx.industry : '';
+            return industry.length > 0;
           }
+
+          return false;
         }
 
         // SWOT quadrant steps: check if at least one item exists

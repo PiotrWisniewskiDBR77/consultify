@@ -1473,26 +1473,45 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             renderEmpty()
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {sortedIdeas.map((idea) => (
-                <div
-                  key={idea.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => onIdeaClick(idea.id, idea)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onIdeaClick(idea.id, idea);
-                    }
-                  }}
-                  className={`group relative text-left p-5 rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-amber-400/50 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 dark:hover:shadow-amber-500/10 transition-all duration-200 hover:-translate-y-0.5 ${
-                    selectedIds.has(idea.id)
-                      ? 'ring-2 ring-purple-500/40'
-                      : focusedIdea?.id === idea.id
-                        ? 'ring-2 ring-amber-500/30'
-                        : ''
-                  }`}
-                >
+              {sortedIdeas.map((idea) => {
+                const stage = (idea.stage || 'spark') as IdeaStage;
+                const stageAccent =
+                  stage === 'spark'
+                    ? 'border-l-amber-500 dark:border-l-amber-400'
+                    : stage === 'incubating'
+                      ? 'border-l-emerald-500 dark:border-l-emerald-400'
+                      : stage === 'shaping'
+                        ? 'border-l-blue-500 dark:border-l-blue-400'
+                        : stage === 'ready'
+                          ? 'border-l-purple-500 dark:border-l-purple-400'
+                          : 'border-l-rose-500 dark:border-l-rose-400';
+
+                return (
+                  <div
+                    key={idea.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onIdeaClick(idea.id, idea)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onIdeaClick(idea.id, idea);
+                      }
+                    }}
+                    className={[
+                      'group relative text-left overflow-hidden',
+                      'p-4 rounded-xl',
+                      'border-l-[3px] border border-slate-200/60 dark:border-white/[0.06]',
+                      stageAccent,
+                      'bg-slate-50/80 dark:bg-navy-800/60',
+                      'hover:bg-white dark:hover:bg-navy-800/80 hover:shadow-sm transition-all duration-150',
+                      selectedIds.has(idea.id)
+                        ? 'ring-2 ring-purple-500/40'
+                        : focusedIdea?.id === idea.id
+                          ? 'ring-2 ring-amber-500/30'
+                          : '',
+                    ].join(' ')}
+                  >
                   <div className="absolute top-4 right-4">
                     <input
                       type="checkbox"
@@ -1515,7 +1534,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                       </div>
                       <div className="flex items-center gap-1.5 flex-wrap mt-1">
                         {renderSourceBadge(idea.sourceType)}
-                        {renderStageBadge(idea.stage || 'spark')}
+                        {renderStageBadge(stage)}
                         {renderAreaBadge(idea.area)}
                         {renderBushBadge(idea.branch)}
                         {renderMapBadge(idea.id)}
@@ -1581,8 +1600,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                       className="shrink-0"
                     />
                   </div>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

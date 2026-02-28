@@ -53,7 +53,7 @@ import { useAppStore } from '@/store/useAppStore';
 
 import { DecisionsPanelContent } from './DecisionsPanelContent';
 import type { FocusItem } from './Focus/FocusView';
-import { InboxContent } from './InboxContent';
+import { InboxContent, type InboxCounts } from './InboxContent';
 import type { MyIdea } from './MyIdeasListContent';
 import { MyIdeasListContent } from './MyIdeasListContent';
 import { MyTasksListContent } from './MyTasksListContent';
@@ -203,26 +203,29 @@ interface OpenDocument {
   data?: any;
 }
 
-// Shared button styles (Golden Standard - same as InterviewHub)
+// Shared button styles (KANON v3): pill buttons, h-9, hover = bg-only.
+// SSOT: docs/ui-standards/00-foundation/visual-language.md (8.3) + UI_UX_CANON_V3.md (buttons).
 const BUTTON_BASE = `
-  flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
-  border transition-all duration-200
+  inline-flex items-center gap-2 h-9 px-3 rounded-full text-sm font-medium
+  border transition-colors duration-150
+  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1
+  ring-offset-white dark:ring-offset-navy-900
+  active:scale-[0.98]
 `;
 
 const BUTTON_INACTIVE = `
   ${BUTTON_BASE}
-  bg-slate-50 dark:bg-navy-800
-  border-slate-200 dark:border-navy-600
+  bg-white/70 dark:bg-white/[0.04]
+  border-slate-200/70 dark:border-white/[0.06]
   text-slate-700 dark:text-slate-300
-  hover:bg-slate-100 dark:hover:bg-navy-700
-  hover:border-slate-300 dark:hover:border-slate-500
-  hover:text-slate-900 dark:hover:text-white
+  hover:bg-slate-100 dark:hover:bg-white/[0.06]
 `;
 
 const BUTTON_ACTIVE = `
   ${BUTTON_BASE}
-  bg-primary-500/15 border-primary-500 text-primary-400
-  shadow-sm shadow-primary-500/10
+  bg-primary-50 dark:bg-primary-500/10
+  border-primary-200 dark:border-primary-500/30
+  text-primary-700 dark:text-primary-200
 `;
 
 // Tab styles for dynamic tabs
@@ -237,8 +240,6 @@ const TAB_INACTIVE = `
   border-slate-200 dark:border-navy-600
   text-slate-600 dark:text-slate-400
   hover:bg-slate-100 dark:hover:bg-navy-700
-  hover:border-slate-300 dark:hover:border-slate-500
-  hover:text-slate-900 dark:hover:text-white
 `;
 
 const TAB_ACTIVE = `
@@ -317,6 +318,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [ideaToolsOpen, setIdeaToolsOpen] = useState(false);
   const [decisionsViewMode, setDecisionsViewMode] = useState<DecisionsViewMode>('table');
   const [inboxViewMode, setInboxViewMode] = useState<InboxViewMode>('flat');
+  const [inboxStatusTab, setInboxStatusTab] = useState<'open' | 'done' | 'saved' | 'all'>('open');
+  const [inboxSection, setInboxSection] = useState<'today' | 'this_week' | 'all'>('all');
+  const [inboxActionRequiredOnly, setInboxActionRequiredOnly] = useState(false);
+  const [inboxCounts, setInboxCounts] = useState<InboxCounts | null>(null);
   const [notebookLinkedIdeasOpen, setNotebookLinkedIdeasOpen] = useState(false);
   const [notebookTopicsOpen, setNotebookTopicsOpen] = useState(false);
   const [notebookChatOpen, setNotebookChatOpen] = useState(false);
@@ -959,8 +964,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     setTabCounts((prev) => ({ ...prev, notebook: counts.total }));
   }, []);
 
-  const handleInboxCountsChange = useCallback((counts: { total: number; critical: number }) => {
+  const handleInboxCountsChange = useCallback((counts: InboxCounts) => {
     setTabCounts((prev) => ({ ...prev, inbox: counts.total }));
+    setInboxCounts(counts);
   }, []);
 
   // Plan with AI — opens chat with morning brief context (replaces Morning Brief "Plan with AI" button)
@@ -1149,7 +1155,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   e.stopPropagation();
                   handleCloseDocument(doc.id);
                 }}
-                className="p-0.5 rounded opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-navy-600 transition-all"
+                className="p-1 rounded-md opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06] transition-all"
               >
                 <X size={14} />
               </button>
@@ -1202,7 +1208,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {searchQuery && (
               <button
                 onClick={handleCloseSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06]"
               >
                 <X size={16} />
               </button>
@@ -1219,6 +1225,101 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
     // 3) Context counters row (list view default)
     if (activeDocumentId) return null;
+
+    // Inbox: render all controls as a single Command Row (SSOT: module-hub + app-table).
+    if (activeTab === 'inbox') {
+      const c = inboxCounts;
+      const statusButtons: Array<{ id: 'open' | 'done' | 'saved' | 'all'; label: string; count: number }> =
+        [
+          { id: 'open', label: isPolish ? 'Otwarte' : 'Open', count: c?.counts.open ?? 0 },
+          { id: 'done', label: isPolish ? 'Gotowe' : 'Done', count: c?.counts.done ?? 0 },
+          { id: 'saved', label: isPolish ? 'Zapisane' : 'Saved', count: c?.counts.saved ?? 0 },
+          { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: c?.total ?? tabCounts.inbox },
+        ];
+
+      // Time scope: only two chips. Clicking active chip again resets to "all".
+      const timeScopeButtons: Array<{ id: 'today' | 'this_week'; label: string; count: number }> = [
+        { id: 'today', label: isPolish ? 'Nowe dziś' : 'New today', count: c?.newToday ?? 0 },
+        {
+          id: 'this_week',
+          label: isPolish ? 'Nowe tydzień' : 'New this week',
+          count: c?.newThisWeek ?? 0,
+        },
+      ];
+
+      const chipBase =
+        'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+      const chipInactive =
+        'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
+      const chipActive =
+        'border-primary-200 dark:border-primary-500/30 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-200';
+
+      return (
+        <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
+          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
+            {/* Status */}
+            <div className="inline-flex items-center gap-1">
+              {statusButtons.map((b) => (
+                <button
+                  key={b.id}
+                  onClick={() => setInboxStatusTab(b.id)}
+                  className={`${chipBase} ${inboxStatusTab === b.id ? chipActive : chipInactive}`}
+                >
+                  <span>{b.label}</span>
+                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-200">
+                    {b.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="w-px h-6 bg-slate-200 dark:bg-navy-600 shrink-0" />
+
+            {/* Counters (keep only signal counters; remove "In queue" duplication) */}
+            {(c?.critical ?? 0) > 0 && (
+              <button className={`${chipBase} ${chipInactive}`} onClick={() => setInboxSection('all')}>
+                <span>{isPolish ? 'Krytyczne' : 'Critical'}</span>
+                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-200">
+                  {c?.critical ?? 0}
+                </span>
+              </button>
+            )}
+            {(c?.actionRequired ?? 0) > 0 && (
+              <button
+                onClick={() => setInboxActionRequiredOnly(!inboxActionRequiredOnly)}
+                className={`${chipBase} ${inboxActionRequiredOnly ? chipActive : chipInactive}`}
+                title={isPolish ? 'Pokaż tylko wymagające akcji' : 'Show only items needing my action'}
+              >
+                <span>{isPolish ? 'Wymaga akcji' : 'Action required'}</span>
+                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-200">
+                  {c?.actionRequired ?? 0}
+                </span>
+              </button>
+            )}
+
+            <div className="w-px h-6 bg-slate-200 dark:bg-navy-600 shrink-0" />
+
+            {/* Time scope */}
+            <div className="inline-flex items-center gap-1">
+              {timeScopeButtons.map((b) => (
+                <button
+                  key={b.id}
+                  onClick={() => setInboxSection(inboxSection === b.id ? 'all' : b.id)}
+                  className={`${chipBase} ${inboxSection === b.id ? chipActive : chipInactive}`}
+                >
+                  <span>{b.label}</span>
+                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-200">
+                    {b.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Default cross-tab alerts (tasks/decisions/inbox)
     const chips: Array<{ key: string; label: string; count: number; onClick: () => void }> = [
       {
         key: 'tasks-overdue',
@@ -1261,19 +1362,19 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       },
     ];
 
-    const visible = chips.filter((c) => c.count > 0).slice(0, 4);
+    const visible = chips.filter((c2) => c2.count > 0).slice(0, 4);
     return (
       <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
         {visible.length > 0 ? (
-          visible.map((c) => (
+          visible.map((c2) => (
             <button
-              key={c.key}
-              onClick={c.onClick}
+              key={c2.key}
+              onClick={c2.onClick}
               className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
             >
-              <span>{c.label}</span>
+              <span>{c2.label}</span>
               <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-200">
-                {c.count}
+                {c2.count}
               </span>
             </button>
           ))
@@ -1395,6 +1496,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             refreshTrigger={refreshTrigger}
             viewMode={inboxViewMode}
             onViewModeChange={setInboxViewMode}
+            statusTab={inboxStatusTab}
+            onStatusTabChange={setInboxStatusTab}
+            inboxSection={inboxSection}
+            onInboxSectionChange={setInboxSection}
+            actionRequiredOnly={inboxActionRequiredOnly}
+            onActionRequiredOnlyChange={setInboxActionRequiredOnly}
           />
         );
       case 'focus':
@@ -1578,10 +1685,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {/* Search Toggle */}
             <button
               onClick={() => setShowSearch(!showSearch)}
-              className={`p-2 rounded-lg border transition-all duration-200 ${
+              className={`h-9 w-9 inline-flex items-center justify-center rounded-full border transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                 showSearch
-                  ? 'bg-primary-500/15 border-primary-500 text-primary-400'
-                  : 'bg-slate-50 dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-500'
+                  ? 'bg-primary-50 dark:bg-primary-500/10 border-primary-200 dark:border-primary-500/30 text-primary-700 dark:text-primary-200'
+                  : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
               }`}
               title={isPolish ? 'Szukaj' : 'Search'}
             >
@@ -1627,16 +1734,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {/* Tasks View Mode Toggle (table / kanban) — only on Tasks tab */}
             {activeTab === 'tasks' && !activeDocumentId && (
               <div
-                className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
+                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-950/50 p-0.5"
                 role="radiogroup"
                 aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
               >
                 <button
                   onClick={() => setTasksViewMode('table')}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                     tasksViewMode === 'table'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
                   }`}
                   title={isPolish ? 'Widok tabeli' : 'Table view'}
                   role="radio"
@@ -1646,10 +1753,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 </button>
                 <button
                   onClick={() => setTasksViewMode('kanban')}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                     tasksViewMode === 'kanban'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
                   }`}
                   title={isPolish ? 'Widok kanban' : 'Kanban view'}
                   role="radio"
@@ -1659,10 +1766,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 </button>
                 <button
                   onClick={() => setTasksViewMode('calendar')}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                     tasksViewMode === 'calendar'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
                   }`}
                   title={isPolish ? 'Widok kalendarza' : 'Calendar view'}
                   role="radio"
@@ -1676,16 +1783,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {/* Decisions View Mode Toggle (table / kanban / timeline) — V3-C05: no queue view */}
             {activeTab === 'decisions' && !activeDocumentId && (
               <div
-                className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
+                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-950/50 p-0.5"
                 role="radiogroup"
                 aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
               >
                 <button
                   onClick={() => setDecisionsViewMode('table')}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                     decisionsViewMode === 'table'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
                   }`}
                   title={isPolish ? 'Widok tabeli' : 'Table view'}
                   role="radio"
@@ -1695,10 +1802,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 </button>
                 <button
                   onClick={() => setDecisionsViewMode('kanban')}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                     decisionsViewMode === 'kanban'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
                   }`}
                   title={isPolish ? 'Widok kanban' : 'Kanban view'}
                   role="radio"
@@ -1708,10 +1815,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 </button>
                 <button
                   onClick={() => setDecisionsViewMode('timeline')}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                     decisionsViewMode === 'timeline'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
                   }`}
                   title={isPolish ? 'Widok osi czasu' : 'Timeline view'}
                   role="radio"
@@ -1725,16 +1832,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {/* Inbox View Mode Toggle (list / sections) — only on Inbox tab */}
             {activeTab === 'inbox' && !activeDocumentId && (
               <div
-                className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
+                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-950/50 p-0.5"
                 role="radiogroup"
                 aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
               >
                 <button
                   onClick={() => setInboxViewMode('flat')}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                     inboxViewMode === 'flat'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
                   }`}
                   title={isPolish ? 'Płaska lista' : 'Flat list'}
                   role="radio"
@@ -1744,16 +1851,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 </button>
                 <button
                   onClick={() => setInboxViewMode('sections')}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                     inboxViewMode === 'sections'
-                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
                   }`}
-                  title={isPolish ? 'Grupowanie tematyczne' : 'Smart sections'}
+                  title={isPolish ? 'Karty' : 'Cards'}
                   role="radio"
                   aria-checked={inboxViewMode === 'sections'}
                 >
-                  <Layers size={16} />
+                  <LayoutGrid size={16} />
                 </button>
               </div>
             )}
@@ -1761,16 +1868,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {/* Ideas workspace tools toggle — when an idea document is open */}
             {activeTab === 'ideas' && activeDocumentId && (
               <div
-                className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
+                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-950/50 p-0.5"
                 role="group"
                 aria-label={isPolish ? 'Narzędzia workspace' : 'Workspace tools'}
               >
                 <button
                   onClick={() => setIdeaToolsOpen((v) => !v)}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                     ideaToolsOpen
                       ? 'bg-white dark:bg-navy-800 text-amber-600 dark:text-amber-300 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
                   }`}
                   title={isPolish ? 'Narzędzia workspace' : 'Workspace tools'}
                   aria-pressed={ideaToolsOpen}
@@ -1981,7 +2088,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {/* AI Button — Plan with AI (square, far right) */}
             <button
               onClick={handlePlanWithAI}
-              className="flex items-center justify-center w-9 h-9 rounded-lg border border-purple-500/40 bg-purple-500/15 text-purple-600 dark:text-purple-400 hover:bg-purple-500/25 hover:border-purple-500/60 transition-all"
+              className="flex items-center justify-center w-9 h-9 rounded-full border border-purple-500 bg-purple-600 text-white hover:bg-purple-700 hover:border-purple-600 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 shadow-sm shadow-purple-500/25"
               title={isPolish ? 'Zaplanuj z AI' : 'Plan with AI'}
               data-testid="mywork-ai-button"
             >

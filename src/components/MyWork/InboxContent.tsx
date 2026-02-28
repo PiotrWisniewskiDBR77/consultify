@@ -37,17 +37,20 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
+  Copy,
   Eye,
   FileText,
   HelpCircle,
   Inbox,
   Layers,
-  List,
+  Lightbulb,
+  MoreVertical,
   Loader2,
   MessageSquare,
   Minus,
   Pin,
   Scale,
+  Settings2,
   Sparkles,
   Square,
   Star,
@@ -58,6 +61,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Modal } from '@/components/ui/primitives/Modal';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -111,6 +115,77 @@ type InboxViewMode = 'flat' | 'sections';
 type InboxStatusTab = 'open' | 'done' | 'saved' | 'all';
 type SnoozePreset = '2h' | 'tomorrow' | '3d' | 'next_monday';
 
+type InboxEntityKind = 'task' | 'initiative' | 'survey' | 'decision' | 'notification';
+
+const ENTITY_KIND_CONFIG: Record<
+  InboxEntityKind,
+  { icon: React.ElementType; labelEn: string; labelPl: string; pill: string; borderLeft: string }
+> = {
+  task: {
+    icon: CheckSquare,
+    labelEn: 'Task',
+    labelPl: 'Zadanie',
+    pill: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300',
+    borderLeft: 'border-l-emerald-500 dark:border-l-emerald-400',
+  },
+  initiative: {
+    icon: Lightbulb,
+    labelEn: 'Initiative',
+    labelPl: 'Inicjatywa',
+    pill: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300',
+    borderLeft: 'border-l-blue-500 dark:border-l-blue-400',
+  },
+  survey: {
+    icon: CheckCircle2,
+    labelEn: 'Survey',
+    labelPl: 'Ankieta',
+    pill: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-300',
+    borderLeft: 'border-l-cyan-500 dark:border-l-cyan-400',
+  },
+  decision: {
+    icon: Scale,
+    labelEn: 'Decision',
+    labelPl: 'Decyzja',
+    pill: 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300',
+    borderLeft: 'border-l-amber-500 dark:border-l-amber-400',
+  },
+  notification: {
+    icon: Bell,
+    labelEn: 'Notification',
+    labelPl: 'Notyfikacja',
+    pill: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300',
+    borderLeft: 'border-l-red-500 dark:border-l-red-400',
+  },
+};
+
+const getEntityKind = (item: InboxItem): InboxEntityKind => {
+  const key = String(item._key || '');
+  if (key.startsWith('task:')) return 'task';
+  if (key.startsWith('decision:')) return 'decision';
+  if (key.startsWith('notification:')) return 'notification';
+
+  // Fallbacks for seeded / legacy item.type values
+  switch (item.type) {
+    case 'new_assignment':
+      return 'task';
+    case 'decision_request':
+      return 'decision';
+    case 'review_request':
+      return 'survey';
+    case 'project_update':
+      return 'initiative';
+    case 'mention':
+    case 'system_alert':
+    case 'billing_alert':
+    case 'ai_suggestion':
+      return 'notification';
+    case 'escalation':
+      return 'task';
+    default:
+      return 'notification';
+  }
+};
+
 interface InboxItem {
   id: string;
   type: InboxItemType;
@@ -158,17 +233,39 @@ interface InboxResponse {
   items: InboxItem[];
 }
 
+export interface InboxCounts {
+  total: number;
+  critical: number;
+  actionRequired: number;
+  newToday: number;
+  newThisWeek: number;
+  counts: {
+    open: number;
+    done: number;
+    saved: number;
+  };
+}
+
 interface InboxContentProps {
   searchQuery: string;
   onOpenTask?: (taskId: string) => void;
   onOpenDecision?: (decisionId: string) => void;
   onOpenNotification?: (notificationId: string) => void;
-  onCountsChange: (counts: { total: number; critical: number }) => void;
+  onCountsChange: (counts: InboxCounts) => void;
   refreshTrigger?: number;
   /** Controlled view mode (rendered by MyWork topbar in v3) */
   viewMode?: InboxViewMode;
   /** Controlled view mode change handler */
   onViewModeChange?: (mode: InboxViewMode) => void;
+  /** Controlled: status tab (Open/Done/Saved/All) */
+  statusTab?: InboxStatusTab;
+  onStatusTabChange?: (tab: InboxStatusTab) => void;
+  /** Controlled: received time scope filter */
+  inboxSection?: 'today' | 'this_week' | 'all';
+  onInboxSectionChange?: (section: 'today' | 'this_week' | 'all') => void;
+  /** Controlled: action-required filter */
+  actionRequiredOnly?: boolean;
+  onActionRequiredOnlyChange?: (next: boolean) => void;
 }
 
 // ── Deduplication: group items by _key ──
@@ -490,9 +587,9 @@ const INBOX_COLUMNS: ColumnDef[] = [
   {
     id: 'source',
     label: 'Source',
-    width: 90,
-    minWidth: 70,
-    maxWidth: 130,
+    width: 110,
+    minWidth: 90,
+    maxWidth: 170,
     resizable: true,
     filterable: true,
     filterType: 'multiselect',
@@ -519,9 +616,10 @@ const INBOX_COLUMNS: ColumnDef[] = [
   {
     id: 'actions',
     label: '',
-    width: 140,
-    minWidth: 100,
-    maxWidth: 180,
+    // App Table Standard: actions column is kebab-only (compact).
+    width: 64,
+    minWidth: 56,
+    maxWidth: 72,
     resizable: false,
     filterable: false,
     align: 'right',
@@ -531,8 +629,46 @@ const INBOX_COLUMNS: ColumnDef[] = [
 const getDefaultColumnWidths = (): ColumnWidths =>
   INBOX_COLUMNS.reduce((acc, col) => ({ ...acc, [col.id]: col.width }), {});
 
+const INBOX_TABLE_VIEW_STORAGE_KEY = 'consultinity-inbox-table-view';
+const INBOX_TABLE_DEFAULT_HIDDEN_COLUMNS = ['type', 'section', 'source'] as const;
+
+function loadInboxHiddenColumns(): string[] {
+  try {
+    const raw = localStorage.getItem(INBOX_TABLE_VIEW_STORAGE_KEY);
+    if (!raw) return [...INBOX_TABLE_DEFAULT_HIDDEN_COLUMNS];
+    const parsed = JSON.parse(raw) as { hiddenColumns?: unknown };
+    const arr = Array.isArray(parsed?.hiddenColumns) ? parsed.hiddenColumns : null;
+    if (!arr) return [...INBOX_TABLE_DEFAULT_HIDDEN_COLUMNS];
+    return arr.filter((x) => typeof x === 'string') as string[];
+  } catch {
+    return [...INBOX_TABLE_DEFAULT_HIDDEN_COLUMNS];
+  }
+}
+
+function saveInboxHiddenColumns(hiddenColumns: string[]) {
+  try {
+    localStorage.setItem(
+      INBOX_TABLE_VIEW_STORAGE_KEY,
+      JSON.stringify({ hiddenColumns: Array.from(new Set(hiddenColumns)).sort() })
+    );
+  } catch {
+    // ignore
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
-// Preview Pane (A3 — Split View)
+// Preview Pane (A3 — Canonical Anatomy)
+//
+// Sections (top → bottom, "above the fold = decision"):
+//   1. Shell header  — type pill + title + [Open] + [X]
+//   2. Meta row      — urgency · received (aging) · SLA
+//   3. Triage bar    — Focus (Today/Week/Later) · Done/Save/Dismiss
+//   4. AI suggest    — purple block + Apply  (only when suggestedAction)
+//   5. Why           — reason info block
+//   6. Description   — full text (scrollable)
+//   7. Key fields    — 2-col grid (due date, section)
+//   8. Relations     — linked task / decision
+//   9. Snooze        — collapsible secondary
 // ═══════════════════════════════════════════════════════════════════════════════
 const PreviewPane: React.FC<{
   item: InboxItem;
@@ -545,233 +681,495 @@ const PreviewPane: React.FC<{
 }> = ({ item, isPolish, onClose, onOpen, onTriage, onSnooze, onSaveAsNote }) => {
   const u = urgencyConfig[item.urgency] || urgencyConfig.normal;
   const UIcon = u.icon;
-  const TIcon = typeIcon[item.type] || Inbox;
   const sla = slaPill(item.sla);
   const { text: receivedText, agingLevel } = formatRelativeTime(item.receivedAt, isPolish);
   const sectionDef = SMART_SECTIONS.find((s) => s.id === item.section);
   const SectionIcon = sectionDef?.icon || Inbox;
-  const isNotification = String(item._key || '').startsWith('notification:');
+  const entityKind = getEntityKind(item);
+  const kindCfg = ENTITY_KIND_CONFIG[entityKind];
+  const KindIcon = kindCfg.icon;
+
+  const [snoozeOpen, setSnoozeOpen] = useState(false);
+  const [detailsMenuOpen, setDetailsMenuOpen] = useState(false);
+  const [detailsOverride, setDetailsOverride] = useState<string | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiResult, setAiResult] = useState<{
+    brief: string;
+    bullets: string[];
+    recommendedAction: TriageAction;
+    recommendedReason: string;
+  } | null>(null);
+
+  const runAi = useCallback(async () => {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const res = (await Api.post('/my-work/inbox/ai-assist', {
+        language: isPolish ? 'pl' : 'en',
+        item: {
+          title: item.title,
+          description: item.description,
+          type: item.type,
+          section: item.section,
+          urgency: item.urgency,
+          receivedAt: item.receivedAt,
+          dueDate: item.dueDate,
+          sla: item.sla,
+          reason: item.reason,
+          linkedTaskId: item.linkedTaskId,
+          linkedDecisionId: item.linkedDecisionId,
+          source: item.source ? { type: item.source.type, userName: item.source.userName } : undefined,
+        },
+      })) as any;
+      const r = res?.result;
+      if (!r?.brief || !r?.recommendedAction) throw new Error('Invalid AI response');
+      setAiResult({
+        brief: String(r.brief),
+        bullets: Array.isArray(r.bullets) ? r.bullets.map((x: any) => String(x)).filter(Boolean) : [],
+        recommendedAction: r.recommendedAction as TriageAction,
+        recommendedReason: String(r.recommendedReason || ''),
+      });
+    } catch (e: any) {
+      setAiError(e?.message || (isPolish ? 'AI niedostępne' : 'AI unavailable'));
+    } finally {
+      setAiLoading(false);
+    }
+  }, [isPolish, item]);
+
+  useEffect(() => {
+    setAiResult(null);
+    setAiError(null);
+    setDetailsOverride(null);
+    runAi();
+  }, [item._key]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const descriptionTrimmed = (item.description || '').trim();
+
+  const handleDetailsAction = useCallback(async (action: 'expand' | 'summarize' | 'copy') => {
+    if (action === 'copy') {
+      const textToCopy = detailsOverride || aiResult?.brief
+        ? [aiResult?.brief, ...(aiResult?.bullets || []).map((b) => `• ${b}`)].filter(Boolean).join('\n')
+        : descriptionTrimmed;
+      try {
+        await navigator.clipboard.writeText(textToCopy || '');
+        toast.success(isPolish ? 'Skopiowano' : 'Copied');
+      } catch {
+        toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+      }
+      return;
+    }
+    setDetailsLoading(true);
+    try {
+      const prompt = action === 'expand'
+        ? (isPolish
+          ? `Rozwiń poniższy opis narzędzia. Wyjaśnij kontekst, cel i co użytkownik powinien z tym zrobić. Pisz zwięźle, max 4-5 zdań.\n\nTytuł: ${item.title}\nOpis: ${descriptionTrimmed || 'Brak opisu'}`
+          : `Expand the following tool description. Explain context, purpose and what the user should do. Be concise, max 4-5 sentences.\n\nTitle: ${item.title}\nDescription: ${descriptionTrimmed || 'No description'}`)
+        : (isPolish
+          ? `Podsumuj poniższy element w 1-2 zdaniach. Co to jest i co z tym zrobić?\n\nTytuł: ${item.title}\nOpis: ${descriptionTrimmed || 'Brak opisu'}`
+          : `Summarize the following item in 1-2 sentences. What is it and what to do?\n\nTitle: ${item.title}\nDescription: ${descriptionTrimmed || 'No description'}`);
+
+      const res = (await Api.post('/my-work/inbox/ai-assist', {
+        language: isPolish ? 'pl' : 'en',
+        item: {
+          title: item.title,
+          description: prompt,
+          type: item.type,
+          section: item.section,
+          urgency: item.urgency,
+          receivedAt: item.receivedAt,
+          dueDate: item.dueDate,
+          sla: item.sla,
+          reason: item.reason,
+          linkedTaskId: item.linkedTaskId,
+          linkedDecisionId: item.linkedDecisionId,
+          source: item.source ? { type: item.source.type, userName: item.source.userName } : undefined,
+        },
+      })) as any;
+      const r = res?.result;
+      if (r?.brief) {
+        const full = [r.brief, ...(Array.isArray(r.bullets) ? r.bullets : []).map((b: string) => `• ${b}`)].filter(Boolean).join('\n');
+        setDetailsOverride(full);
+      }
+    } catch {
+      toast.error(isPolish ? 'AI niedostępne' : 'AI unavailable');
+    } finally {
+      setDetailsLoading(false);
+    }
+  }, [isPolish, item, descriptionTrimmed, detailsOverride, aiResult]);
+
+  const metaPillBase =
+    'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium';
+  const footerPillBase =
+    'inline-flex items-center justify-center gap-1.5 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 
   return (
     <PreviewPaneShell
-      kicker={isPolish ? 'Podgląd' : 'Preview'}
+      kicker={undefined}
       title={item.title || (isPolish ? 'Inbox item' : 'Inbox item')}
       onClose={onClose}
       actions={
         <button
           onClick={onOpen}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+          className="inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
         >
-          <Eye size={13} />
+          <Eye size={12} />
           {isPolish ? 'Otwórz' : 'Open'}
         </button>
       }
       footer={
-        <div className="space-y-3">
-          {/* N11: Route to Focus */}
-          <div>
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
-              {isPolish ? 'Dodaj do Focus:' : 'Add to Focus:'}
-            </span>
-            <div className="flex gap-1.5">
+        <div className="space-y-0">
+          {/* ── AI hint chips ── */}
+          <AIHintStrip item={item} isPolish={isPolish} loading={aiLoading} onRun={runAi} onApplyAction={onTriage} result={aiResult} onClear={() => { setAiResult(null); setAiError(null); }} />
+
+          <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+
+          {/* ── Linked documents (room for 2 rows) ── */}
+          <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
+            {item.linkedTaskId ? (
+              <span className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-emerald-600 dark:text-emerald-400">
+                <CheckSquare size={13} />
+                Task {item.linkedTaskId.slice(0, 8)}…
+              </span>
+            ) : null}
+            {item.linkedDecisionId ? (
+              <span className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-amber-600 dark:text-amber-400">
+                <Scale size={13} />
+                {isPolish ? 'Decyzja' : 'Decision'} {item.linkedDecisionId.slice(0, 8)}…
+              </span>
+            ) : null}
+            {!item.linkedTaskId && !item.linkedDecisionId ? (
+              <span className="text-xs text-slate-400 dark:text-slate-500 italic py-1.5">
+                {isPolish ? 'Brak powiązań' : 'No linked documents'}
+              </span>
+            ) : null}
+          </div>
+
+          <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+
+          {/* ── Action buttons ── */}
+          <div className="space-y-2.5 py-1">
+            <div className="flex gap-2">
               <button
                 onClick={() => onTriage('accept_today')}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/25 transition-colors"
+                className={`${footerPillBase} flex-1 border-emerald-300/40 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 hover:bg-emerald-100/70 dark:hover:bg-emerald-500/15`}
               >
-                <Zap size={13} />
+                <Zap size={14} />
                 {isPolish ? 'Dziś' : 'Today'}
               </button>
               <button
                 onClick={() => onTriage('accept_week')}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-500/25 transition-colors"
+                className={`${footerPillBase} flex-1 border-blue-300/40 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-200 hover:bg-blue-100/70 dark:hover:bg-blue-500/15`}
               >
-                <CalendarClock size={13} />
-                {isPolish ? 'Ten tydz.' : 'This week'}
+                <CalendarClock size={14} />
+                {isPolish ? 'Tydzień' : 'Week'}
               </button>
               <button
                 onClick={() => onTriage('accept_later')}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+                className={`${footerPillBase} flex-1 border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
               >
-                <Calendar size={13} />
+                <Calendar size={14} />
                 {isPolish ? 'Później' : 'Later'}
               </button>
             </div>
-          </div>
 
-          {/* N1/N8/N10: Status actions */}
-          <div className={`grid ${onSaveAsNote ? 'grid-cols-4' : 'grid-cols-3'} gap-1.5`}>
-            <button
-              onClick={() => onTriage('done')}
-              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors"
-            >
-              <CheckCircle2 size={13} />
-              {isPolish ? 'Gotowe' : 'Done'}
-            </button>
-            <button
-              onClick={() => onTriage('save')}
-              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors"
-            >
-              <Bookmark size={13} />
-              {isPolish ? 'Zapisz' : 'Save'}
-            </button>
-            {onSaveAsNote ? (
+            <div className={`grid ${onSaveAsNote ? 'grid-cols-4' : 'grid-cols-3'} gap-2`}>
               <button
-                onClick={() => onSaveAsNote(item)}
-                className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium bg-slate-50 text-slate-700 dark:bg-navy-800 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                onClick={() => onTriage('done')}
+                className={`${footerPillBase} border-green-300/40 dark:border-green-500/30 bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-200 hover:bg-green-100/70 dark:hover:bg-green-500/15`}
               >
-                <FileText size={13} />
-                {isPolish ? 'Notatka' : 'Note'}
+                <CheckCircle2 size={14} />
+                {isPolish ? 'Gotowe' : 'Done'}
               </button>
-            ) : null}
-            <button
-              onClick={() => onTriage('dismiss')}
-              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
-            >
-              <Archive size={13} />
-              {isPolish ? 'Odłóż' : 'Dismiss'}
-            </button>
+              <button
+                onClick={() => onTriage('save')}
+                className={`${footerPillBase} border-amber-300/40 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-500/15`}
+              >
+                <Bookmark size={14} />
+                {isPolish ? 'Zapisz' : 'Save'}
+              </button>
+              {onSaveAsNote ? (
+                <button
+                  onClick={() => onSaveAsNote(item)}
+                  className={`${footerPillBase} border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
+                >
+                  <FileText size={14} />
+                  {isPolish ? 'Notatka' : 'Note'}
+                </button>
+              ) : null}
+              <button
+                onClick={() => onTriage('dismiss')}
+                className={`${footerPillBase} border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
+              >
+                <Archive size={14} />
+                {isPolish ? 'Odłóż' : 'Dismiss'}
+              </button>
+            </div>
           </div>
 
-          {/* Snooze row */}
-          <div>
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">
-              {isPolish ? 'Odłóż na:' : 'Snooze for:'}
-            </span>
-            <div className="flex flex-wrap gap-1">
-              {SNOOZE_PRESETS.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => onSnooze(p.id)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors"
-                >
-                  <Clock size={11} />
-                  {isPolish ? p.labelPl : p.labelEn}
-                </button>
-              ))}
-            </div>
+          <div className="pt-1.5">
+            <button
+              onClick={() => setSnoozeOpen(!snoozeOpen)}
+              className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+            >
+              <Clock size={14} />
+              {isPolish ? 'Odłóż na…' : 'Snooze…'}
+              <ChevronDown size={12} className={`transition-transform ${snoozeOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {snoozeOpen ? (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {SNOOZE_PRESETS.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => onSnooze(p.id)}
+                    className={`${footerPillBase} h-8 px-3 border-amber-300/40 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-500/15`}
+                  >
+                    <Clock size={13} />
+                    {isPolish ? p.labelPl : p.labelEn}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
       }
     >
       <div className="space-y-4">
-        {/* Title */}
-        <div>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white leading-snug">
-            {item.title}
-          </h2>
-          {item.description && (
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
-              {item.description}
-            </p>
+        {/* Brief card — type pill + meta + short title context */}
+        <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${kindCfg.pill}`}>
+              <KindIcon size={11} />
+              {isPolish ? kindCfg.labelPl : kindCfg.labelEn}
+            </span>
+            <div className="flex flex-wrap items-center justify-end gap-1.5">
+              <span className={`${metaPillBase} ${u.pill}`}>
+                <UIcon size={11} />
+                {u.label}
+              </span>
+              <span className="text-slate-300 dark:text-navy-600">·</span>
+              <span className={`text-[11px] font-medium ${AGING_STYLES[agingLevel]}`}>{receivedText}</span>
+              {item.sla && sla.label !== '-' ? (
+                <>
+                  <span className="text-slate-300 dark:text-navy-600">·</span>
+                  <span className={`${metaPillBase} ${sla.className}`}>SLA {sla.label}</span>
+                </>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        {/* Details — AI contextual brief (auto-generated) with raw text as fallback */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              {isPolish ? 'Szczegóły' : 'Details'}
+            </div>
+
+            <div className="relative">
+              <button
+                onClick={() => setDetailsMenuOpen(!detailsMenuOpen)}
+                className="p-1 rounded-md text-slate-400 dark:text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/[0.06] transition-colors"
+              >
+                <MoreVertical size={13} />
+              </button>
+              {detailsMenuOpen ? (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setDetailsMenuOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-50 min-w-[170px] rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1">
+                    <button
+                      onClick={() => { setDetailsMenuOpen(false); handleDetailsAction('expand'); }}
+                      disabled={detailsLoading}
+                      className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors"
+                    >
+                      <ChevronDown size={12} className="text-purple-500" />
+                      {isPolish ? 'Rozwiń' : 'Expand'}
+                    </button>
+                    <button
+                      onClick={() => { setDetailsMenuOpen(false); handleDetailsAction('summarize'); }}
+                      disabled={detailsLoading}
+                      className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors"
+                    >
+                      <Sparkles size={12} className="text-purple-500" />
+                      {isPolish ? 'Podsumuj' : 'Summarize'}
+                    </button>
+                    <button
+                      onClick={() => { setDetailsMenuOpen(false); handleDetailsAction('copy'); }}
+                      className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+                    >
+                      <Copy size={12} />
+                      {isPolish ? 'Kopiuj' : 'Copy'}
+                    </button>
+                  </div>
+                </>
+              ) : null}
+            </div>
+          </div>
+
+          {detailsLoading ? (
+            <div className="space-y-2 animate-pulse">
+              <div className="h-3.5 w-full rounded bg-slate-200/60 dark:bg-white/[0.06]" />
+              <div className="h-3.5 w-5/6 rounded bg-slate-200/50 dark:bg-white/[0.05]" />
+              <div className="h-3 w-3/4 rounded bg-slate-200/40 dark:bg-white/[0.04]" />
+            </div>
+          ) : detailsOverride ? (
+            <div className="text-sm text-slate-800 dark:text-slate-100 leading-relaxed whitespace-pre-wrap">
+              {detailsOverride}
+            </div>
+          ) : aiLoading ? (
+            <div className="space-y-2 animate-pulse">
+              <div className="h-3.5 w-full rounded bg-slate-200/60 dark:bg-white/[0.06]" />
+              <div className="h-3.5 w-5/6 rounded bg-slate-200/50 dark:bg-white/[0.05]" />
+              <div className="h-3 w-3/4 rounded bg-slate-200/40 dark:bg-white/[0.04]" />
+              <div className="h-3 w-2/3 rounded bg-slate-200/30 dark:bg-white/[0.03]" />
+            </div>
+          ) : aiResult ? (
+            <div>
+              <p className="text-sm text-slate-800 dark:text-slate-100 leading-relaxed">
+                {aiResult.brief}
+              </p>
+              {aiResult.bullets?.length ? (
+                <ul className="mt-2 space-y-1.5 text-sm text-slate-700 dark:text-slate-200">
+                  {aiResult.bullets.slice(0, 4).map((b, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="mt-2 h-1 w-1 rounded-full bg-purple-400/50 shrink-0" />
+                      <span className="min-w-0 leading-relaxed">{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {aiResult.recommendedReason ? (
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {aiResult.recommendedReason}
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            <div className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
+              {descriptionTrimmed || (isPolish ? 'Brak opisu.' : 'No description.')}
+              {aiError ? (
+                <p className="mt-2 text-xs text-red-500 dark:text-red-400">{aiError}</p>
+              ) : null}
+            </div>
           )}
         </div>
-
-        {/* Meta badges */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${u.pill}`}
-          >
-            <UIcon size={12} />
-            {u.label}
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200">
-            <TIcon size={12} />
-            {typeLabel[item.type] || item.type.replace(/_/g, ' ')}
-          </span>
-          <span className={`text-xs font-medium ${AGING_STYLES[agingLevel]}`}>{receivedText}</span>
-        </div>
-
-        {/* Section */}
-        <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-navy-800/40 rounded-lg">
-          <SectionIcon size={14} className={sectionDef?.color || 'text-slate-400'} />
-          <span className="text-xs text-slate-600 dark:text-slate-300">
-            {sectionDef?.[isPolish ? 'labelPl' : 'labelEn'] || item.section}
-          </span>
-        </div>
-
-        {/* N7: "Why am I seeing this?" */}
-        {item.reason && (
-          <div className="flex items-start gap-2 px-3 py-2 bg-sky-50 dark:bg-sky-500/10 rounded-lg border border-sky-200/50 dark:border-sky-500/15">
-            <HelpCircle size={13} className="text-sky-500 mt-0.5 shrink-0" />
-            <div className="text-xs text-sky-700 dark:text-sky-300">
-              <span className="font-medium">
-                {isPolish ? 'Dlaczego to widzę:' : 'Why am I seeing this:'}
-              </span>{' '}
-              {item.reason}
-            </div>
-          </div>
-        )}
-
-        {/* SLA */}
-        {item.sla && sla.label !== '-' && (
-          <div className="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-navy-800/40 rounded-lg">
-            <span className="text-xs text-slate-500 dark:text-slate-400">SLA</span>
-            <span
-              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${sla.className}`}
-            >
-              {sla.label}
-            </span>
-          </div>
-        )}
-
-        {/* Due date */}
-        {item.dueDate && (
-          <div className="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-navy-800/40 rounded-lg">
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Termin' : 'Due date'}
-            </span>
-            <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
-              {new Date(item.dueDate).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}
-            </span>
-          </div>
-        )}
-
-        {/* AI Suggestion (C1) */}
-        {item.suggestedAction && (
-          <div className="flex items-start gap-2 px-3 py-2.5 bg-purple-50 dark:bg-purple-500/10 rounded-lg border border-purple-200/50 dark:border-purple-500/20">
-            <span className="text-purple-500 text-sm mt-0.5">✨</span>
-            <div>
-              <span className="text-xs font-medium text-purple-700 dark:text-purple-300">
-                {isPolish ? 'Sugestia AI' : 'AI Suggestion'}
-              </span>
-              <p className="text-xs text-purple-600 dark:text-purple-400 mt-0.5">
-                {item.suggestedReason || `Suggested: ${item.suggestedAction}`}
-              </p>
-              <button
-                onClick={() => onTriage(item.suggestedAction!)}
-                className="mt-1.5 inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-200 hover:bg-purple-200 dark:hover:bg-purple-500/30 transition-colors"
-              >
-                <Check size={11} />
-                {isPolish ? 'Zastosuj' : 'Apply'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Linked entities */}
-        {(item.linkedTaskId || item.linkedDecisionId) && (
-          <div className="space-y-1">
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              {isPolish ? 'Powiązania' : 'Linked'}
-            </span>
-            {item.linkedTaskId && (
-              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-500/10 rounded-lg text-xs text-blue-700 dark:text-blue-300">
-                <CheckSquare size={12} /> Task: {item.linkedTaskId.slice(0, 8)}…
-              </div>
-            )}
-            {item.linkedDecisionId && (
-              <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-500/10 rounded-lg text-xs text-purple-700 dark:text-purple-300">
-                <Scale size={12} /> Decision: {item.linkedDecisionId.slice(0, 8)}…
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </PreviewPaneShell>
+  );
+};
+
+const AI_HINT_CHIPCLASS =
+  'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer active:scale-[0.98]';
+
+const AIHintStrip: React.FC<{
+  item: InboxItem;
+  isPolish: boolean;
+  loading: boolean;
+  onRun: () => void;
+  onApplyAction: (action: TriageAction) => void;
+  result: { brief: string; bullets: string[]; recommendedAction: TriageAction; recommendedReason: string } | null;
+  onClear: () => void;
+}> = ({ item, isPolish, loading, onRun, onApplyAction, result, onClear }) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const hints = useMemo(() => {
+    const isCritical = item.urgency === 'critical' || item.urgency === 'high';
+    const isDecision = String(item._key || '').startsWith('decision:');
+    const isTask = String(item._key || '').startsWith('task:');
+
+    if (isPolish) {
+      if (isDecision) return ['Podsumuj kontekst', 'Zaproponuj opcje', 'Oceń ryzyko'];
+      if (isCritical) return ['Dlaczego pilne?', 'Plan działania', 'Kto może pomóc?'];
+      if (isTask) return ['Podsumuj zadanie', 'Next step', 'Oszacuj czas'];
+      return ['Podsumuj', 'Co robić?', 'Zaproponuj triage'];
+    }
+    if (isDecision) return ['Summarize context', 'Propose options', 'Assess risk'];
+    if (isCritical) return ['Why urgent?', 'Action plan', 'Who can help?'];
+    if (isTask) return ['Summarize task', 'Next step', 'Estimate effort'];
+    return ['Summarize', 'What to do?', 'Suggest triage'];
+  }, [isPolish, item]);
+
+  const actionLabel = (a: TriageAction): string => {
+    const map: Record<string, Record<TriageAction, string>> = {
+      pl: { accept_today: 'Dziś', accept_week: 'Tydzień', accept_later: 'Później', done: 'Gotowe', save: 'Zapisz', dismiss: 'Odłóż', archive: 'Archiwizuj', delegate: 'Deleguj', schedule: 'Zaplanuj', reject: 'Odrzuć', snooze: 'Odłóż' },
+      en: { accept_today: 'Today', accept_week: 'Week', accept_later: 'Later', done: 'Done', save: 'Save', dismiss: 'Dismiss', archive: 'Archive', delegate: 'Delegate', schedule: 'Schedule', reject: 'Reject', snooze: 'Snooze' },
+    };
+    return (isPolish ? map.pl : map.en)[a] || a;
+  };
+
+  return (
+    <div className="py-1">
+      <div className="flex items-center justify-between gap-2 mb-1.5">
+        <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+          <Sparkles size={12} />
+          <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
+        </div>
+
+        <div className="relative flex items-center gap-1">
+          {result ? (
+            <button
+              onClick={() => onApplyAction(result.recommendedAction)}
+              className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[11px] font-medium border border-purple-400/30 dark:border-purple-500/20 bg-transparent text-purple-600 dark:text-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-500/10 transition-colors"
+            >
+              <Check size={11} />
+              {actionLabel(result.recommendedAction)}
+            </button>
+          ) : null}
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="p-1 rounded-md text-slate-400 dark:text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/[0.06] transition-colors"
+          >
+            <MoreVertical size={13} />
+          </button>
+          {menuOpen ? (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+              <div className="absolute right-0 bottom-full mb-1 z-50 min-w-[170px] rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1">
+                <button
+                  onClick={() => { setMenuOpen(false); onRun(); }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+                >
+                  <Sparkles size={12} className="text-purple-500" />
+                  {isPolish ? 'Regeneruj' : 'Regenerate'}
+                </button>
+                <button
+                  onClick={() => { setMenuOpen(false); if (result) { navigator.clipboard.writeText([result.brief, ...(result.bullets || []).map((b) => `- ${b}`)].join('\n')).then(() => toast.success(isPolish ? 'Skopiowano' : 'Copied')); } }}
+                  disabled={!result}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors"
+                >
+                  <Copy size={12} />
+                  {isPolish ? 'Kopiuj' : 'Copy'}
+                </button>
+                <button
+                  onClick={() => { setMenuOpen(false); onClear(); }}
+                  disabled={!result}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors"
+                >
+                  <X size={12} />
+                  {isPolish ? 'Wyczyść' : 'Clear'}
+                </button>
+              </div>
+            </>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5">
+        {hints.map((hint, idx) => (
+          <button
+            key={idx}
+            onClick={onRun}
+            disabled={loading}
+            className={AI_HINT_CHIPCLASS}
+          >
+            <Sparkles size={10} className="text-purple-400/70 dark:text-purple-500/70" />
+            {hint}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 };
 
@@ -787,6 +1185,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   refreshTrigger,
   viewMode: controlledViewMode,
   onViewModeChange,
+  statusTab: controlledStatusTab,
+  onStatusTabChange,
+  inboxSection: controlledInboxSection,
+  onInboxSectionChange,
+  actionRequiredOnly: controlledActionRequiredOnly,
+  onActionRequiredOnlyChange,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
@@ -803,7 +1207,17 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     },
     [controlledViewMode, onViewModeChange]
   );
-  const [inboxSection, setInboxSection] = useState<'today' | 'this_week' | 'all'>('all');
+  const [uncontrolledInboxSection, setUncontrolledInboxSection] = useState<
+    'today' | 'this_week' | 'all'
+  >('all');
+  const inboxSection = controlledInboxSection ?? uncontrolledInboxSection;
+  const setInboxSection = useCallback(
+    (next: 'today' | 'this_week' | 'all') => {
+      onInboxSectionChange?.(next);
+      if (!controlledInboxSection) setUncontrolledInboxSection(next);
+    },
+    [controlledInboxSection, onInboxSectionChange]
+  );
 
   // Selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -814,6 +1228,15 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
   // Column widths
   const [columnWidths, setColumnWidths] = useState<ColumnWidths>(getDefaultColumnWidths());
+
+  // View settings (Columns) — persisted
+  const [isViewSettingsOpen, setIsViewSettingsOpen] = useState(false);
+  const [hiddenColumns, setHiddenColumns] = useState<string[]>(loadInboxHiddenColumns);
+  const hiddenSet = useMemo(() => new Set(hiddenColumns), [hiddenColumns]);
+
+  useEffect(() => {
+    saveInboxHiddenColumns(hiddenColumns);
+  }, [hiddenColumns]);
 
   // Filters
   const [tableFilters, setTableFilters] = useState<TableFilters>({});
@@ -833,10 +1256,26 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   const [previewItem, setPreviewItem] = useState<InboxItem | null>(null);
 
   // N1: Status tabs (Open / Done / Saved)
-  const [statusTab, setStatusTab] = useState<InboxStatusTab>('open');
+  const [uncontrolledStatusTab, setUncontrolledStatusTab] = useState<InboxStatusTab>('open');
+  const statusTab = controlledStatusTab ?? uncontrolledStatusTab;
+  const setStatusTab = useCallback(
+    (next: InboxStatusTab) => {
+      onStatusTabChange?.(next);
+      if (!controlledStatusTab) setUncontrolledStatusTab(next);
+    },
+    [controlledStatusTab, onStatusTabChange]
+  );
 
   // N2: Action Required filter
-  const [actionRequiredOnly, setActionRequiredOnly] = useState(false);
+  const [uncontrolledActionRequiredOnly, setUncontrolledActionRequiredOnly] = useState(false);
+  const actionRequiredOnly = controlledActionRequiredOnly ?? uncontrolledActionRequiredOnly;
+  const setActionRequiredOnly = useCallback(
+    (next: boolean) => {
+      onActionRequiredOnlyChange?.(next);
+      if (!controlledActionRequiredOnly) setUncontrolledActionRequiredOnly(next);
+    },
+    [controlledActionRequiredOnly, onActionRequiredOnlyChange]
+  );
 
   // L4: Auto-triage
   const [autoTriageSuggestions, setAutoTriageSuggestions] = useState<any[]>([]);
@@ -856,7 +1295,27 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               : 'open';
       const res = (await Api.get(`/my-work/inbox?limit=200&status=${status}`)) as InboxResponse;
       setData(res);
-      onCountsChange({ total: res?.summary?.total || 0, critical: res?.summary?.critical || 0 });
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekEnd = new Date(todayStart.getTime() + 7 * 86400000);
+      const items = res?.items || [];
+      const newToday = items.filter((i) => new Date(i.receivedAt || '') >= todayStart).length;
+      const newThisWeek = items.filter((i) => {
+        const d = new Date(i.receivedAt || '');
+        return d >= todayStart && d < weekEnd;
+      }).length;
+      onCountsChange({
+        total: res?.summary?.total || 0,
+        critical: res?.summary?.critical || 0,
+        actionRequired: res?.summary?.actionRequired || 0,
+        newToday: res?.summary?.newToday ?? newToday,
+        newThisWeek,
+        counts: {
+          open: res?.summary?.counts?.open || 0,
+          done: res?.summary?.counts?.done || 0,
+          saved: res?.summary?.counts?.saved || 0,
+        },
+      });
     } catch (e) {
       console.error('Failed to load inbox', e);
       toast.error(isPolish ? 'Nie udało się załadować Inbox' : 'Failed to load Inbox');
@@ -1152,6 +1611,24 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     setColumnWidths((prev) => ({ ...prev, [columnId]: newWidth }));
   };
 
+  const getColumnLabel = useCallback(
+    (columnId: string) => {
+      const dict: Record<string, { pl: string; en: string }> = {
+        title: { pl: 'Tytuł', en: 'Title' },
+        status: { pl: 'Status', en: 'Status' },
+        urgency: { pl: 'Pilność', en: 'Urgency' },
+        type: { pl: 'Typ', en: 'Type' },
+        section: { pl: 'Sekcja', en: 'Section' },
+        source: { pl: 'Źródło', en: 'Source' },
+        received: { pl: 'Otrzymano', en: 'Received' },
+        sla: { pl: 'SLA', en: 'SLA' },
+        actions: { pl: 'Widok', en: 'View' },
+      };
+      return isPolish ? dict[columnId]?.pl || columnId : dict[columnId]?.en || columnId;
+    },
+    [isPolish]
+  );
+
   // ── Filter change ──
   const handleFilterChange = (columnId: string, values: string[]) => {
     setTableFilters((prev) => ({ ...prev, [columnId]: values.length > 0 ? values : undefined }));
@@ -1260,7 +1737,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   const renderRow = (item: InboxItem, index: number, groupCount?: number, groupKey?: string) => {
     const u = urgencyConfig[item.urgency] || urgencyConfig.normal;
     const UIcon = u.icon;
-    const TIcon = typeIcon[item.type] || Inbox;
     const isSelected = selectedIds.has(item.id);
     const isFocused = index === focusedIndex;
     const isPreviewed = previewItem?.id === item.id;
@@ -1347,11 +1823,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               </button>
             )}
           </div>
-          {item.description && (
-            <span className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5 block">
-              {item.description}
-            </span>
-          )}
           {/* N7: reason chip — visible on hover */}
           {item.reason && (
             <span className="hidden group-hover:inline-flex items-center gap-1 text-[10px] text-sky-600 dark:text-sky-400 mt-0.5">
@@ -1362,120 +1833,134 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         </td>
 
         {/* Status */}
-        <td className="px-3 py-2" style={{ width: columnWidths.status }}>
-          {(() => {
-            const st = item.itemStatus || (item.triaged ? 'done' : 'open');
-            const cfg: Record<string, { color: string; dot: string; label: string }> = {
-              open: {
-                color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
-                dot: 'bg-amber-500',
-                label: isPolish ? 'Otwarte' : 'Open',
-              },
-              done: {
-                color: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300',
-                dot: 'bg-green-500',
-                label: isPolish ? 'Gotowe' : 'Done',
-              },
-              saved: {
-                color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
-                dot: 'bg-blue-500',
-                label: isPolish ? 'Zapisane' : 'Saved',
-              },
-              snoozed: {
-                color: 'bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300',
-                dot: 'bg-purple-500',
-                label: isPolish ? 'Odłożone' : 'Snoozed',
-              },
-              dismissed: {
-                color: 'bg-slate-100 text-slate-600 dark:bg-slate-500/15 dark:text-slate-300',
-                dot: 'bg-slate-400',
-                label: isPolish ? 'Odłożone' : 'Dismissed',
-              },
-            };
-            const c = cfg[st] || cfg.open;
-            return (
-              <span
-                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap leading-none ${c.color}`}
-              >
-                <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
-                {c.label}
-                {item.isActionable && <Zap size={10} className="text-amber-500" />}
-              </span>
-            );
-          })()}
-        </td>
+        {!hiddenSet.has('status') && (
+          <td className="px-3 py-2" style={{ width: columnWidths.status }}>
+            {(() => {
+              const st = item.itemStatus || (item.triaged ? 'done' : 'open');
+              const cfg: Record<string, { color: string; dot: string; label: string }> = {
+                open: {
+                  color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+                  dot: 'bg-amber-500',
+                  label: isPolish ? 'Otwarte' : 'Open',
+                },
+                done: {
+                  color: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300',
+                  dot: 'bg-green-500',
+                  label: isPolish ? 'Gotowe' : 'Done',
+                },
+                saved: {
+                  color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
+                  dot: 'bg-blue-500',
+                  label: isPolish ? 'Zapisane' : 'Saved',
+                },
+                snoozed: {
+                  color: 'bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300',
+                  dot: 'bg-purple-500',
+                  label: isPolish ? 'Odłożone' : 'Snoozed',
+                },
+                dismissed: {
+                  color: 'bg-slate-100 text-slate-600 dark:bg-slate-500/15 dark:text-slate-300',
+                  dot: 'bg-slate-400',
+                  label: isPolish ? 'Odłożone' : 'Dismissed',
+                },
+              };
+              const c = cfg[st] || cfg.open;
+              return (
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap leading-none ${c.color}`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
+                  {c.label}
+                  {item.isActionable && <Zap size={10} className="text-amber-500" />}
+                </span>
+              );
+            })()}
+          </td>
+        )}
 
         {/* Urgency */}
-        <td className="px-3 py-2" style={{ width: columnWidths.urgency }}>
-          <span
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${u.pill}`}
-          >
-            <UIcon size={11} />
-            {u.label}
-          </span>
-        </td>
+        {!hiddenSet.has('urgency') && (
+          <td className="px-3 py-2" style={{ width: columnWidths.urgency }}>
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${u.pill}`}
+            >
+              <UIcon size={11} />
+              {u.label}
+            </span>
+          </td>
+        )}
 
         {/* Type */}
-        <td className="px-3 py-2" style={{ width: columnWidths.type }}>
-          <span className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
-            <TIcon size={12} />
-            <span className="truncate">{typeLabel[item.type] || item.type.replace(/_/g, ' ')}</span>
-          </span>
-        </td>
+        {!hiddenSet.has('type') && (
+          <td className="px-3 py-2" style={{ width: columnWidths.type }}>
+            <span className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+              <span className="truncate">
+                {typeLabel[item.type] || item.type.replace(/_/g, ' ')}
+              </span>
+            </span>
+          </td>
+        )}
 
         {/* Section */}
-        <td className="px-3 py-2" style={{ width: columnWidths.section }}>
-          <span className="text-xs text-slate-600 dark:text-slate-400">
-            {SMART_SECTIONS.find((s) => s.id === item.section)?.[
-              isPolish ? 'labelPl' : 'labelEn'
-            ] || item.section}
-          </span>
-        </td>
+        {!hiddenSet.has('section') && (
+          <td className="px-3 py-2" style={{ width: columnWidths.section }}>
+            <span className="text-xs text-slate-600 dark:text-slate-400">
+              {SMART_SECTIONS.find((s) => s.id === item.section)?.[isPolish ? 'labelPl' : 'labelEn'] ||
+                item.section}
+            </span>
+          </td>
+        )}
 
-        {/* N13: Source */}
-        <td className="px-3 py-2" style={{ width: columnWidths.source }}>
-          {(() => {
-            const src = item.source?.type || 'system';
-            const cfg: Record<string, { icon: typeof Bell; color: string; label: string }> = {
-              system: { icon: Bell, color: 'text-slate-500', label: 'System' },
-              ai: { icon: Star, color: 'text-purple-500', label: 'AI' },
-              user: {
-                icon: MessageSquare,
-                color: 'text-blue-500',
-                label: item.source?.userName || 'User',
-              },
-            };
-            const c = cfg[src] || cfg.system;
-            const SrcIcon = c.icon;
-            return (
-              <span className={`inline-flex items-center gap-1 text-xs ${c.color}`}>
-                <SrcIcon size={11} />
-                {c.label}
-              </span>
-            );
-          })()}
-        </td>
+        {/* Source */}
+        {!hiddenSet.has('source') && (
+          <td className="px-3 py-2" style={{ width: columnWidths.source }}>
+            {(() => {
+              const src = item.source?.type || 'system';
+              const cfg: Record<string, { icon: typeof Bell; color: string; label: string }> = {
+                system: { icon: Bell, color: 'text-slate-500', label: isPolish ? 'System' : 'System' },
+                ai: { icon: Star, color: 'text-purple-500', label: 'AI' },
+                user: {
+                  icon: MessageSquare,
+                  color: 'text-blue-500',
+                  label: item.source?.userName || (isPolish ? 'Zespół' : 'Team'),
+                },
+              };
+              const c = cfg[src] || cfg.system;
+              const SrcIcon = c.icon;
+              return (
+                <span className={`inline-flex items-center gap-1 text-xs ${c.color}`}>
+                  <SrcIcon size={11} />
+                  <span className="truncate">{c.label}</span>
+                </span>
+              );
+            })()}
+          </td>
+        )}
 
         {/* Received (relative + aging) */}
-        <td className="px-3 py-2" style={{ width: columnWidths.received }}>
-          <span className={`text-xs font-medium whitespace-nowrap ${AGING_STYLES[agingLevel]}`}>
-            {receivedText}
-          </span>
-        </td>
+        {!hiddenSet.has('received') && (
+          <td className="px-3 py-2" style={{ width: columnWidths.received }}>
+            <span className={`text-xs font-medium whitespace-nowrap ${AGING_STYLES[agingLevel]}`}>
+              {receivedText}
+            </span>
+          </td>
+        )}
 
         {/* SLA */}
-        <td className="px-3 py-2" style={{ width: columnWidths.sla }}>
-          {sla.label === '-' ? (
-            <span className={sla.className}>{sla.label}</span>
-          ) : (
-            <span
-              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${sla.className}`}
-              title={sla.title}
-            >
-              {sla.label}
-            </span>
-          )}
-        </td>
+        {!hiddenSet.has('sla') && (
+          <td className="px-3 py-2" style={{ width: columnWidths.sla }}>
+            {sla.label === '-' ? (
+              <span className={sla.className}>{sla.label}</span>
+            ) : (
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${sla.className}`}
+                title={sla.title}
+              >
+                {sla.label}
+              </span>
+            )}
+          </td>
+        )}
 
         {/* Inline Actions */}
         <td
@@ -1587,9 +2072,13 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           {isPolish ? 'Tytuł' : 'Title'}
         </th>
 
-        {/* Filterable columns */}
-        {['status', 'urgency', 'type', 'section', 'source'].map((colId) => {
-          const col = INBOX_COLUMNS.find((c) => c.id === colId)!;
+        {INBOX_COLUMNS.filter(
+          (c) => !['select', 'title', 'actions'].includes(c.id) && !hiddenSet.has(c.id)
+        ).map((col) => {
+          const colId = col.id;
+          const isFilterable = Boolean(col.filterable);
+          const hasFilter = isFilterable && col.filterOptions?.length;
+          const isResizable = Boolean(col.resizable);
           return (
             <th
               key={colId}
@@ -1597,48 +2086,29 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               style={{ width: columnWidths[colId] }}
             >
               <div className="flex items-center gap-1">
-                <span
-                  className={(tableFilters[colId] as string[])?.length ? 'text-primary-500' : ''}
-                >
-                  {col.label}
+                <span className={(tableFilters[colId] as string[])?.length ? 'text-primary-500' : ''}>
+                  {getColumnLabel(colId)}
                 </span>
-                <FilterDropdown
-                  column={col}
-                  value={tableFilters[colId] as string[]}
-                  onChange={(val) => handleFilterChange(colId, val as string[])}
-                  isOpen={openFilterId === colId}
-                  onToggle={() => setOpenFilterId(openFilterId === colId ? null : colId)}
-                  onClose={() => setOpenFilterId(null)}
-                />
+                {hasFilter ? (
+                  <FilterDropdown
+                    column={col}
+                    value={tableFilters[colId] as string[]}
+                    onChange={(val) => handleFilterChange(colId, val as string[])}
+                    isOpen={openFilterId === colId}
+                    onToggle={() => setOpenFilterId(openFilterId === colId ? null : colId)}
+                    onClose={() => setOpenFilterId(null)}
+                  />
+                ) : null}
               </div>
-              <ColumnResizer
-                columnId={colId}
-                currentWidth={columnWidths[colId]}
-                minWidth={col.minWidth!}
-                maxWidth={col.maxWidth!}
-                onResize={handleColumnResize}
-              />
-            </th>
-          );
-        })}
-
-        {/* Non-filterable resizable columns */}
-        {['received', 'sla'].map((colId) => {
-          const col = INBOX_COLUMNS.find((c) => c.id === colId)!;
-          return (
-            <th
-              key={colId}
-              className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-              style={{ width: columnWidths[colId] }}
-            >
-              <span>{col.label}</span>
-              <ColumnResizer
-                columnId={colId}
-                currentWidth={columnWidths[colId]}
-                minWidth={col.minWidth!}
-                maxWidth={col.maxWidth!}
-                onResize={handleColumnResize}
-              />
+              {isResizable ? (
+                <ColumnResizer
+                  columnId={colId}
+                  currentWidth={columnWidths[colId]}
+                  minWidth={col.minWidth!}
+                  maxWidth={col.maxWidth!}
+                  onResize={handleColumnResize}
+                />
+              ) : null}
             </th>
           );
         })}
@@ -1647,7 +2117,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
           style={{ width: columnWidths.actions }}
         >
-          {isPolish ? 'Akcje' : 'Actions'}
+          <button
+            onClick={() => setIsViewSettingsOpen(true)}
+            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+            aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
+            title={isPolish ? 'Ustawienia widoku' : 'View settings'}
+          >
+            <Settings2 size={14} />
+          </button>
         </th>
       </tr>
     </thead>
@@ -1656,69 +2133,274 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   // ── Render smart sections ──
   const renderSectionsView = () => {
     if (!sectionGroups) return null;
-    let globalIndex = 0;
+    const renderStatusPill = (item: InboxItem) => {
+      const st = item.itemStatus || (item.triaged ? 'done' : 'open');
+      const cfg: Record<string, { color: string; dot: string; label: string }> = {
+        open: {
+          color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+          dot: 'bg-amber-500',
+          label: isPolish ? 'Otwarte' : 'Open',
+        },
+        done: {
+          color: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300',
+          dot: 'bg-green-500',
+          label: isPolish ? 'Gotowe' : 'Done',
+        },
+        saved: {
+          color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
+          dot: 'bg-blue-500',
+          label: isPolish ? 'Zapisane' : 'Saved',
+        },
+        snoozed: {
+          color: 'bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300',
+          dot: 'bg-purple-500',
+          label: isPolish ? 'Odłożone' : 'Snoozed',
+        },
+        dismissed: {
+          color: 'bg-slate-100 text-slate-600 dark:bg-slate-500/15 dark:text-slate-300',
+          dot: 'bg-slate-400',
+          label: isPolish ? 'Odłożone' : 'Dismissed',
+        },
+      };
+      const c = cfg[st] || cfg.open;
+      return (
+        <span
+          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap leading-none ${c.color}`}
+        >
+          <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
+          {c.label}
+          {item.isActionable && <Zap size={10} className="text-amber-500" />}
+        </span>
+      );
+    };
+
+    const renderCard = (item: InboxItem, groupCount?: number, groupKey?: string) => {
+      const u = urgencyConfig[item.urgency] || urgencyConfig.normal;
+      const UIcon = u.icon;
+      const isSelected = selectedIds.has(item.id);
+      const isPreviewed = previewItem?.id === item.id;
+      const { text: receivedText, agingLevel } = formatRelativeTime(item.receivedAt, isPolish);
+      const sla = slaPill(item.sla);
+      const showDupeCount = groupCount && groupCount > 1;
+      const isGroupExpanded = groupKey ? expandedGroups.has(groupKey) : false;
+      const entityKind = getEntityKind(item);
+      const kindCfg = ENTITY_KIND_CONFIG[entityKind];
+      const KindIcon = kindCfg.icon;
+
+      const descTrimmed = (item.description || '').trim();
+      const cardBrief = descTrimmed
+        ? descTrimmed.split('\n').find((l) => l.trim().length > 0)?.trim() || ''
+        : '';
+      const cardBriefText = cardBrief.length > 120 ? `${cardBrief.slice(0, 117)}…` : cardBrief;
+
+      return (
+        <div
+          key={item.id}
+          className={[
+            'group relative rounded-xl border-l-[3px] border border-slate-200/60 dark:border-white/[0.06] transition-all duration-150 overflow-hidden',
+            kindCfg.borderLeft,
+            'bg-slate-50/80 dark:bg-navy-800/60',
+            'hover:bg-white dark:hover:bg-navy-800/80 hover:shadow-sm',
+            isSelected ? 'ring-2 ring-primary-400/50' : '',
+            isPreviewed ? 'ring-2 ring-cyan-400/40' : '',
+          ].join(' ')}
+          onClick={() => preview(item)}
+          onDoubleClick={() => open(item)}
+        >
+          <div className="p-3 flex flex-col gap-2.5">
+            {/* Row 1: Title + actions */}
+            <div className="flex items-start gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSelectItem(item.id);
+                }}
+                className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0 ${
+                  isSelected
+                    ? 'bg-primary-500 border-primary-500 text-white'
+                    : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
+                }`}
+                aria-label={isSelected ? (isPolish ? 'Odznacz' : 'Deselect') : isPolish ? 'Zaznacz' : 'Select'}
+              >
+                {isSelected && <CheckSquare size={10} />}
+              </button>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-1.5">
+                  <h3
+                    className="text-[13px] font-semibold text-slate-900 dark:text-white leading-snug line-clamp-2"
+                    title={item.title}
+                  >
+                    {item.title}
+                  </h3>
+                  <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                    {(() => {
+                      const actions: RowAction[] = [
+                        { id: 'open', label: isPolish ? 'Otwórz' : 'Open', icon: Eye, variant: 'primary', onClick: () => open(item) },
+                        { id: 'focus-today', label: isPolish ? 'Focus → Dziś' : 'Focus → Today', icon: Zap, onClick: () => triage(item, 'accept_today') },
+                        { id: 'focus-week', label: isPolish ? 'Focus → Ten tydz.' : 'Focus → This week', icon: CalendarClock, onClick: () => triage(item, 'accept_week') },
+                        { id: 'focus-later', label: isPolish ? 'Focus → Później' : 'Focus → Later', icon: Calendar, onClick: () => triage(item, 'accept_later') },
+                        { id: 'done', label: isPolish ? 'Gotowe' : 'Done', icon: CheckCircle2, divider: true, onClick: () => triage(item, 'done') },
+                        { id: 'save', label: isPolish ? 'Zapisz' : 'Save', icon: Bookmark, onClick: () => triage(item, 'save') },
+                        { id: 'dismiss', label: isPolish ? 'Odłóż' : 'Dismiss', icon: Archive, onClick: () => triage(item, 'dismiss') },
+                        ...(handleSaveAsNote ? [{ id: 'save-as-note', label: isPolish ? 'Zapisz jako notatkę' : 'Save as note', icon: FileText, onClick: () => handleSaveAsNote(item), divider: true } satisfies RowAction] : []),
+                        ...SNOOZE_PRESETS.map((p, idx) => ({ id: `snooze-${p.id}`, label: `${isPolish ? 'Odłóż' : 'Snooze'}: ${isPolish ? p.labelPl : p.labelEn}`, icon: Clock, divider: idx === 0 && !handleSaveAsNote, onClick: () => handleSnooze(item, p.id) })),
+                      ];
+                      return <RowActionsMenu actions={actions} iconVariant="vertical" />;
+                    })()}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Row 2: Brief */}
+            {cardBriefText ? (
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2 -mt-0.5">
+                {cardBriefText}
+              </p>
+            ) : null}
+
+            {/* Row 3: Meta pills */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${kindCfg.pill}`}>
+                <KindIcon size={10} />
+                {isPolish ? kindCfg.labelPl : kindCfg.labelEn}
+              </span>
+              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${u.pill}`}>
+                <UIcon size={10} />
+                {u.label}
+              </span>
+              <span className={`text-[10px] font-medium whitespace-nowrap ${AGING_STYLES[agingLevel]}`}>
+                {receivedText}
+              </span>
+              {sla.label !== '-' ? (
+                <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${sla.className}`} title={sla.title}>
+                  {sla.label}
+                </span>
+              ) : null}
+              {showDupeCount && groupKey && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpandedGroups((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(groupKey)) next.delete(groupKey);
+                      else next.add(groupKey);
+                      return next;
+                    });
+                  }}
+                  className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-slate-200/60 dark:bg-white/[0.06] text-[10px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.08] transition-colors"
+                  title={isPolish ? `${groupCount} podobnych` : `${groupCount} similar`}
+                >
+                  <Layers size={10} />x{groupCount}
+                  {isGroupExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+                </button>
+              )}
+            </div>
+
+            {/* Row 4: Linked docs (if any) */}
+            {(item.linkedTaskId || item.linkedDecisionId) ? (
+              <div className="flex flex-wrap items-center gap-1.5 -mt-0.5">
+                {item.linkedTaskId ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                    <CheckSquare size={10} />
+                    Task {item.linkedTaskId.slice(0, 8)}…
+                  </span>
+                ) : null}
+                {item.linkedDecisionId ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                    <Scale size={10} />
+                    {isPolish ? 'Decyzja' : 'Decision'} {item.linkedDecisionId.slice(0, 8)}…
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+
+            {/* Row 5: Quick actions (visible on hover) */}
+            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity -mt-0.5">
+              {renderStatusPill(item)}
+              <button
+                onClick={(e) => { e.stopPropagation(); triage(item, 'accept_today'); }}
+                className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[10px] font-medium border border-emerald-300/40 dark:border-emerald-500/20 bg-transparent text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/10 transition-colors"
+              >
+                <Zap size={10} />
+                {isPolish ? 'Dziś' : 'Today'}
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); triage(item, 'done'); }}
+                className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[10px] font-medium border border-green-300/40 dark:border-green-500/20 bg-transparent text-green-700 dark:text-green-400 hover:bg-green-50/50 dark:hover:bg-green-500/10 transition-colors"
+              >
+                <CheckCircle2 size={10} />
+                {isPolish ? 'Gotowe' : 'Done'}
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); triage(item, 'dismiss'); }}
+                className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[10px] font-medium border border-slate-200/60 dark:border-white/[0.06] bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors"
+              >
+                <Archive size={10} />
+                {isPolish ? 'Odłóż' : 'Dismiss'}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    };
 
     return (
-      <table className="w-full table-fixed" style={{ minWidth: 900 }}>
-        {renderTableHeader()}
-        <tbody>
-          {SMART_SECTIONS.map((section) => {
-            const sectionData = sectionGroups.get(section.id) || [];
-            if (sectionData.length === 0) return null;
-            const isCollapsed = collapsedSections.has(section.id);
-            const SectionIcon = section.icon;
-            const totalCount = sectionData.reduce((sum, g) => sum + g.count, 0);
+      <div className="p-3">
+        {SMART_SECTIONS.map((section) => {
+          const sectionData = sectionGroups.get(section.id) || [];
+          if (sectionData.length === 0) return null;
+          const isCollapsed = collapsedSections.has(section.id);
+          const SectionIcon = section.icon;
+          const totalCount = sectionData.reduce((sum, g) => sum + g.count, 0);
 
-            return (
-              <React.Fragment key={section.id}>
-                {/* Section header row */}
-                <tr className="bg-slate-50/80 dark:bg-navy-800/40 border-b border-slate-200 dark:border-navy-700/50">
-                  <td colSpan={10} className="px-3 py-2 border-l-[3px] border-l-transparent">
-                    <div className="flex items-center justify-between">
-                      <button
-                        onClick={() =>
-                          setCollapsedSections((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(section.id)) next.delete(section.id);
-                            else next.add(section.id);
-                            return next;
-                          })
-                        }
-                        className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-colors"
-                      >
-                        {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
-                        <SectionIcon size={14} className={section.color} />
-                        {isPolish ? section.labelPl : section.labelEn}
-                        <span className="px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-navy-700 text-[10px] font-medium text-slate-600 dark:text-slate-300">
-                          {totalCount}
-                        </span>
-                      </button>
-                      <button
-                        onClick={() => handleSelectSection(section.id)}
-                        className="text-[10px] font-medium text-slate-500 dark:text-slate-400 hover:text-primary-500 transition-colors"
-                      >
-                        {isPolish ? 'Zaznacz wszystkie' : 'Select all'}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                {/* Section items */}
-                {!isCollapsed &&
-                  sectionData.map((group) => {
-                    const idx = globalIndex++;
-                    const rows = [renderRow(group.representative, idx, group.count, group.key)];
-                    if (group.count > 1 && expandedGroups.has(group.key)) {
-                      for (let i = 1; i < group.items.length; i++) {
-                        rows.push(renderRow(group.items[i], globalIndex++));
-                      }
-                    }
-                    return rows;
+          return (
+            <div key={section.id} className="mb-4 last:mb-0">
+              <div className="flex items-center justify-between px-2 py-2 rounded-lg bg-slate-50/80 dark:bg-navy-800/40 border border-slate-200 dark:border-navy-700/50">
+                <button
+                  onClick={() =>
+                    setCollapsedSections((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(section.id)) next.delete(section.id);
+                      else next.add(section.id);
+                      return next;
+                    })
+                  }
+                  className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-colors"
+                >
+                  {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+                  <SectionIcon size={14} className={section.color} />
+                  {isPolish ? section.labelPl : section.labelEn}
+                  <span className="px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-navy-700 text-[10px] font-medium text-slate-600 dark:text-slate-300">
+                    {totalCount}
+                  </span>
+                </button>
+                <button
+                  onClick={() => handleSelectSection(section.id)}
+                  className="text-[10px] font-medium text-slate-500 dark:text-slate-400 hover:text-primary-500 transition-colors"
+                >
+                  {isPolish ? 'Zaznacz wszystkie' : 'Select all'}
+                </button>
+              </div>
+
+              {!isCollapsed && (
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                  {sectionData.flatMap((group) => {
+                    const itemsToRender =
+                      group.count > 1 && expandedGroups.has(group.key)
+                        ? group.items
+                        : [group.representative];
+                    return itemsToRender.map((it, idx) =>
+                      renderCard(it, idx === 0 ? group.count : undefined, idx === 0 ? group.key : undefined)
+                    );
                   })}
-              </React.Fragment>
-            );
-          })}
-        </tbody>
-      </table>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     );
   };
 
@@ -1752,125 +2434,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950"
       ref={tableRef}
     >
-      {/* Header */}
-      <div className="px-4 pt-3 pb-0">
-        {/* N1: Status tabs */}
-        <div className="flex items-center gap-1 border-b border-slate-200 dark:border-navy-700">
-          {[
-            {
-              id: 'open' as InboxStatusTab,
-              icon: Inbox,
-              label: isPolish ? 'Otwarte' : 'Open',
-              count: data?.summary?.counts?.open,
-            },
-            {
-              id: 'done' as InboxStatusTab,
-              icon: CheckCircle2,
-              label: isPolish ? 'Gotowe' : 'Done',
-              count: data?.summary?.counts?.done,
-            },
-            {
-              id: 'saved' as InboxStatusTab,
-              icon: BookmarkCheck,
-              label: isPolish ? 'Zapisane' : 'Saved',
-              count: data?.summary?.counts?.saved,
-            },
-            {
-              id: 'all' as InboxStatusTab,
-              icon: List,
-              label: isPolish ? 'Wszystkie' : 'All',
-              count: undefined,
-            },
-          ].map((tab) => {
-            const TabIcon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setStatusTab(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                  statusTab === tab.id
-                    ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
-                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                }`}
-              >
-                <TabIcon size={14} />
-                {tab.label}
-                {tab.count != null && (
-                  <span className="text-xs opacity-60 ml-0.5">({tab.count})</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Summary pills + N2: Action Required toggle */}
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 text-sm text-slate-700 dark:text-slate-200">
-            <Inbox size={14} />
-            {isPolish ? 'W kolejce' : 'In queue'}: <b>{data?.summary?.total ?? 0}</b>
-          </span>
-          {(data?.summary?.critical ?? 0) > 0 && (
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-100 dark:bg-red-500/15 border border-red-200/70 dark:border-red-500/25 text-sm text-red-700 dark:text-red-200">
-              <AlertTriangle size={14} />
-              {isPolish ? 'Krytyczne' : 'Critical'}: <b>{data?.summary?.critical ?? 0}</b>
-            </span>
-          )}
-          {(data?.summary?.actionRequired ?? 0) > 0 && (
-            <button
-              onClick={() => setActionRequiredOnly(!actionRequiredOnly)}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                actionRequiredOnly
-                  ? 'bg-amber-500 text-white border-amber-500 dark:bg-amber-600'
-                  : 'bg-amber-50 dark:bg-amber-500/10 border-amber-200/70 dark:border-amber-500/25 text-amber-700 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-500/20'
-              }`}
-              title={
-                isPolish ? 'Pokaż tylko wymagające akcji' : 'Show only items needing my action'
-              }
-            >
-              <Zap size={14} />
-              {isPolish ? 'Wymaga akcji' : 'Action required'}:{' '}
-              <b>{data?.summary?.actionRequired ?? 0}</b>
-            </button>
-          )}
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-sm text-slate-600 dark:text-slate-300">
-            <Clock size={14} />
-            {isPolish ? 'Nowe dziś' : 'New today'}: <b>{data?.summary?.newToday ?? 0}</b>
-          </span>
-        </div>
-
-        {/* Time section tabs */}
-        <div className="mt-2 flex items-center gap-1 border-b border-slate-200 dark:border-navy-700">
-          {(['today', 'this_week', 'all'] as const).map((section) => {
-            const count = sectionCounts[section];
-            const label =
-              section === 'today'
-                ? isPolish
-                  ? 'Nowe dziś'
-                  : 'New today'
-                : section === 'this_week'
-                  ? isPolish
-                    ? 'Nowe w tym tygodniu'
-                    : 'New this week'
-                  : isPolish
-                    ? 'Wszystkie'
-                    : 'All';
-            return (
-              <button
-                key={section}
-                onClick={() => setInboxSection(section)}
-                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                  inboxSection === section
-                    ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
-                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                }`}
-              >
-                {label} <span className="text-xs opacity-60">({count})</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
         <div className="px-4 py-2 bg-primary-50 dark:bg-primary-500/10 border-b border-primary-200 dark:border-primary-500/20">
@@ -1932,7 +2495,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       <div className="flex-1 flex min-h-0">
         {/* Table content */}
         <div
-          className={`flex-1 overflow-y-auto p-4 pt-3 ${previewItem ? 'max-w-[65%]' : ''} transition-all duration-200`}
+          className={`flex-1 overflow-y-auto p-4 pt-3 ${previewItem ? 'max-w-[65%] pr-2' : ''} transition-all duration-200`}
         >
           {loading ? (
             <div className="flex items-center justify-center py-12 text-slate-600 dark:text-slate-300">
@@ -1990,7 +2553,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Preview Pane (A3) */}
         {previewItem && (
-          <div className="w-[35%] min-w-[340px] border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 overflow-y-auto">
+          <div className="w-[35%] min-w-[340px] overflow-y-auto p-4 pt-3 pl-2 bg-white dark:bg-navy-950">
             <PreviewPane
               item={previewItem}
               isPolish={isPolish}
@@ -2009,6 +2572,74 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           </div>
         )}
       </div>
+
+      {/* Table View Settings (standard) */}
+      <Modal
+        open={isViewSettingsOpen}
+        onClose={() => setIsViewSettingsOpen(false)}
+        title={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
+        description={
+          isPolish
+            ? 'Wybierz, które kolumny są widoczne w tabeli.'
+            : 'Choose which columns are visible in the table.'
+        }
+        size="sm"
+        footer={
+          <>
+            <button
+              onClick={() => setHiddenColumns([...INBOX_TABLE_DEFAULT_HIDDEN_COLUMNS])}
+              className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+            >
+              {isPolish ? 'Reset' : 'Reset'}
+            </button>
+            <button
+              onClick={() => setIsViewSettingsOpen(false)}
+              className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-primary-500/40 dark:border-primary-500/30 bg-primary-600 text-white hover:bg-primary-700 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+            >
+              {isPolish ? 'Gotowe' : 'Done'}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-2">
+          {INBOX_COLUMNS.filter((c) => c.id !== 'select').map((col) => {
+            const alwaysVisible = col.id === 'title' || col.id === 'actions';
+            const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
+            return (
+              <label
+                key={col.id}
+                className={`flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 ${
+                  alwaysVisible ? 'opacity-60' : 'cursor-pointer'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  disabled={alwaysVisible}
+                  onChange={() => {
+                    if (alwaysVisible) return;
+                    setHiddenColumns((prev) => {
+                      const set = new Set(prev);
+                      if (set.has(col.id)) set.delete(col.id);
+                      else set.add(col.id);
+                      return Array.from(set);
+                    });
+                  }}
+                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                />
+                <span className="text-sm text-slate-800 dark:text-slate-200 flex-1">
+                  {getColumnLabel(col.id)}
+                </span>
+                {alwaysVisible ? (
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Wymagane' : 'Required'}
+                  </span>
+                ) : null}
+              </label>
+            );
+          })}
+        </div>
+      </Modal>
     </div>
   );
 };
