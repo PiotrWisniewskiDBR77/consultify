@@ -56,7 +56,12 @@
     "Piotr_Tools/**",
     "config/tours/**",
     // Exclude duplicate/copy files like \"file 2.tsx\"
-    "**/* [0-9]*.*",
+    // NOTE: tsconfig patterns are not full glob/regex (no character classes like [0-9]).
+    // Keep explicit excludes for known editor copies that should never be part of the build.
+    "src/views/admin/AdminSettingsModule 4.tsx",
+    "src/views/admin/AdminSettingsModule 5.tsx",
+    "src/views/admin/AdminSettingsModule 6.tsx",
+    "src/views/settings/AppearanceModule 4.tsx",
     "**/* copy.*",
     // Extra safety: exclude common "name 2.tsx" editor copies in src/
     "src/components/layout/ChatPanel *.tsx",

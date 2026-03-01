@@ -208,6 +208,22 @@ function runTestLevel(level: (typeof testLevels)[0]): AuditResult {
 
     const output = result.stdout || '';
 
+    // Prefer parsing Vitest "Test Files" summary (stable and unambiguous).
+    // Examples:
+    // - "Test Files  363 passed | 11 skipped (374)"
+    // - "Test Files  1 failed | 21 passed (22)"
+    // - "Test Files  21 passed (21)"
+    const testFilesMatches = Array.from(
+      output.matchAll(
+        /Test Files\s+(?:(\d+)\s+failed\s*\|\s*)?(?:(\d+)\s+passed)?(?:\s*\|\s*(\d+)\s+skipped)?/gi
+      )
+    );
+    const testFilesMatch = testFilesMatches.at(-1);
+    if (testFilesMatch) {
+      failed = testFilesMatch[1] ? parseInt(testFilesMatch[1]) : 0;
+      passed = testFilesMatch[2] ? parseInt(testFilesMatch[2]) : 0;
+      skipped = testFilesMatch[3] ? parseInt(testFilesMatch[3]) : 0;
+    } else {
     // Parse vitest output patterns
     const passMatch = output.match(/(\d+)\s+pass/i);
     const failMatch = output.match(/(\d+)\s+fail/i);
@@ -223,6 +239,7 @@ function runTestLevel(level: (typeof testLevels)[0]): AuditResult {
       if (testsMatch) {
         passed = parseInt(testsMatch[1]);
       }
+    }
     }
 
     if (options.verbose) {
