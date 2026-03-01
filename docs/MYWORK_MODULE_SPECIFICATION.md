@@ -848,6 +848,12 @@ Taski w list view pokazują “Focus lane” badge (Today / This Week / (Later j
 
 `src/components/MyWork/IdeaDetailView.tsx`
 
+### SSOT (detailed) — Idea Workspace v3
+
+Szczegółowa specyfikacja (4 tryby pracy + generatory + DoD) jest tutaj:
+
+- `docs/product/IDEA_WORKSPACE_V3_SSOT.md`
+
 ### Nazwa w UI (PL)
 
 W UI ten moduł trzymamy jako **Pomysły**.
@@ -867,14 +873,15 @@ W prawym górnym rogu jest przełącznik (np. label “Mind Map”), który **ni
 Dostępne narzędzia canvasa (R1+ roadmap, Mind Map as-is):
 
 - **Mind Map** — graph z połączeniami i AI-suggested connections (`IdeasMindMap.tsx`)
-- **Process Flow** — schemat blokowy procesu (kroki, decyzje, działania)
-- **Table** — tabela robocza (np. do porządkowania hipotez/argumentów)
+- **Process Flow** — schemat blokowy procesu (kroki, decyzje, działania) + **swimlanes (MUST)** dla odpowiedzialności/roli/fazy
+- **Table** — **uniwersalna, dopasowywalna tabela robocza (MUST)**: kolumny/widoki są generowane (AI/heurystyki) i konfigurowalne
 - **Whiteboard** — freeform canvas (rysowanie, sticky notes, szkice)
 
 Zasady:
 
 - **MUST:** wybór narzędzia jest zapamiętywany per user/per workspace (persisted preference).
 - **MUST:** zmiana narzędzia nie może “gubić treści” — narzędzia korzystają ze wspólnego rdzenia danych (poniżej), a różnią się tylko reprezentacją.
+- **MUST:** AI działa w trybie **propose → accept** (zmiany jako propozycje), w tym **generatory**: lanes/flow (Process Flow) oraz columns/views/enrichment (Table).
 - **SHOULD:** AI w kontekście dopasowuje się do wybranego narzędzia (np. “narysuj przepływ”, “ułóż tabelę”, “połącz wątki”).
 
 ### Data contract (V3) — wspólny rdzeń danych dla narzędzi canvasa (MUST)

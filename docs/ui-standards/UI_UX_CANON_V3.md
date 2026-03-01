@@ -293,6 +293,11 @@ Docelowe narzędzia: Mind Map / Process Flow / Table / Whiteboard.
 **MUST:** narzędzia korzystają ze wspólnego rdzenia danych (core model) — przełączanie nie gubi treści.
 Core: `IdeaWorkspaceGraph` (nodes/edges + namespaced `extensions`) + per-tool view state.
 
+**MUST (quality parity):**
+- **Process Flow** ma **swimlanes** jako element bazowy (R1) — odpowiedzialność/rola/faza jest częścią modelu pracy, nie dodatkiem “kiedyś”.
+- **Table** jest **uniwersalna i dopasowywalna** (R1): kolumny i widoki są konfigurowalne oraz wspierane przez **generatory** (AI/heurystyki).
+- AI działa w trybie **propose → accept** (zmiany jako propozycje), w tym generatory: lanes/flow (Process Flow) oraz columns/views/enrichment (Table).
+
 SSOT: `docs/MYWORK_MODULE_SPECIFICATION.md` (sekcja Ideas)
 
 ---

@@ -45,11 +45,23 @@ Preview ma stałe strefy (patrz `MyWork Inbox` i `PreviewPaneShell`):
 - **Header**: tytuł (1 linia, truncate) + **Open** + **X**.
 - **Body (scroll)**: brief + details (czytelny tekst).
 - **Footer (sticky)**: strefy zawsze w tym porządku:
-  - **AI hints**: 3 chips + kebab (AI) — subtelne, bez “dużego CTA”.
+  - **AI hints**: 3 chips + **Overflow Menu (⋮)** — subtelne, bez “dużego CTA”.
   - **Relations**: **2 rzędy** powiązań (stała wysokość).
   - **Actions**: przyciski jako pills; układ zależny od kontekstu, ale wizualnie stabilny.
 
-Ważne: w preview są **dwa** kebaby (⋮): jeden przy **Details**, drugi przy **AI**.
+Ważne: w preview są **dwa** overflow menus (⋮): jeden przy **Details**, drugi przy **AI**.
+
+### 0.4a Preview footer (sticky) — TL;DR (MUST)
+
+Jeśli moduł ma preview, footer musi być „Inbox‑like” i zawsze trzymać tę samą kolejność stref:
+
+1) **AI** (3 hint chips + Overflow Menu (⋮))  
+2) divider  
+3) **Relations** (miejsce na **2 rzędy**; stała wysokość, żeby footer nie „skakał”)  
+4) divider  
+5) **Actions** (pill buttons `h-9 rounded-full`, 1–2 rzędy)
+
+Pełny opis kanoniczny (SSOT): **sekcja 6.10a**.
 
 ## 1) Zasady nadrzędne (MUST)
 
@@ -94,7 +106,7 @@ Ważne: w preview są **dwa** kebaby (⋮): jeden przy **Details**, drugi przy *
 Każda karta ma:
 
 - **Accent**: `border-l-[3px]` w kolorze typu/rodziny (tożsamość artefaktu)
-- **Header**: typ (pill) + status (dot+label) + kebab (⋮)
+- **Header**: typ (pill) + status (dot+label) + **Overflow Menu (⋮)**
 - **Title**: 1–2 linie
 - **Brief**: 1–2 linie (pierwsza sensowna linia `brief/summary/description`)
 - **Signals**: opcjonalnie progress / updatedAt
@@ -276,9 +288,200 @@ Ta referencja opisuje **jak to ma wyglądać w praktyce** (rytmy, kolejność, n
 
 ### 6.10 Preview — header (MUST)
 
-- 1 linia tytułu (truncate) + kebab (⋮) jeśli przewidziane + **Open** + **X**
+- 1 linia tytułu (truncate) + **Overflow Menu (⋮)** jeśli przewidziane + **Open** + **X**
 - “Open” zawsze jako tekst (nie ikonka), nie zwijamy go.
 - Wysokość headera preview wizualnie “pasuje” do rytmu headerów tabeli (symetria).
+
+### 6.10a Side Detail Panel — OFFICIAL UI STRUCTURE (KANON v3)
+
+To jest **oficjalna specyfikacja** struktury preview (Side Detail Panel) zgodna z wzorem `MyWork → Inbox`.  
+W kolejnych modułach nie opisujemy tego od nowa — piszemy tylko: **“Side Detail Panel zgodny z KANON v3 (Golden Standard → 6.10a)”**.
+
+**SSOT (kod referencji):**
+- `src/components/shared/TableWithPreviewLayout.tsx` (layout: gap, width clamp, interakcje)
+- `src/components/ui/ResizableTable/PreviewPaneShell.tsx` (shell: header/body/footer)
+- `src/components/MyWork/InboxContent.tsx` (referencja UI: strefy i rytm, 2 overflow menus)
+
+#### 0) Component (Global)
+
+- **Component name**: Side Detail Panel
+- **Type**: Contextual Overlay Panel (contextual preview)
+- **Behavior**: slide‑in from right (desktop: w kolumnie, nie fullscreen)
+- **Width (desktop)** (MUST): `clamp(340px, 28%, 480px)` (≈ 30–40% viewport)
+- **Width (mobile)**: 100% (fullscreen)
+- **Layering**: nad contentem tabeli; bez dodatkowych linii separatorów
+
+**Layout kontrakt (MUST):**
+- **Table↔Panel separation**: `gap-1.5`, **bez** `border-l` oraz doklejanych `ml-*`.
+- **Panel wrapper**: `bg-slate-50 dark:bg-navy-950` + `p-3`
+- **Panel shell**: `rounded-xl` + `border` + `bg-white/70 dark:bg-navy-900/70` + `backdrop-blur`
+
+---
+
+#### 1) Panel Header (Fixed Section)
+
+- **Position**: sticky (zawsze widoczny przy scrollu)
+- **Height**: ~64–80px (wynika z paddingu i typografii; nie ustawiamy „na sztywno” px)
+- **Background**: elevated surface (Level +1)
+
+##### 1.1 Primary Title
+
+- **Content**: *Entity name* (**bez subtitle/metadanych**)
+- **Weight**: semibold
+- **Max lines**: **1 linia (Inbox canonical)**  
+  *Dopuszczalne 2 linie tylko jako świadoma decyzja UX (wtedy trzeba udokumentować i dostosować shell).*
+- **Truncation**: ellipsis (truncate)
+
+##### 1.2 Header Actions (Right aligned)
+
+- **Primary action**: *Open in Full View* (ghost/outline pill)  
+  - ikonka: `Eye` lub `ExternalLink`
+- **Close control**: icon button `X` (dismiss panel)
+
+---
+
+#### 2) Entity Meta Bar (Status & Context Strip)
+
+To **nie jest content** — to metadane w skrócie.
+
+- **Background**: subtelnie tinted surface (Level +2)
+- **Padding**: 16–20px
+- **Radius**: 12–16px
+- **Margin‑top**: 12–16px
+
+##### 2.1 Status Badges Row (Inline Tag Collection)
+
+Przykłady badge:
+- Entity type (Task/Initiative/Report)
+- Priority (Critical/Normal)
+- Time status (Due soon/SLA 1h)
+- Timestamp (Created X minutes ago)
+
+Każdy badge:
+- pill shape
+- small text
+- semantyczne kolory (ale chrome pozostaje neutralne)
+
+---
+
+#### 3) Content Section (Details)
+
+##### 3.1 Section Header
+
+- **Section label**: “Details” (`overline / small caps`, `tracking` lekko zwiększony)
+- **Section menu**: **Overflow Menu** (⋮, vertical ellipsis)
+  - Nazwa (MUST): **Overflow Menu** (nie „burger”)
+  - Funkcje: Edit / Expand / Copy / Advanced
+
+##### 3.2 Primary Content Body
+
+- **Type**: rich text container
+- **Behavior**: scrollable
+- **Typography**: Body M, line‑height 1.6–1.8
+- **Padding**: 16–24px (w praktyce: `PreviewPaneShell` daje `p-4`)
+- **Empty state**: jeśli puste → pokazujemy Empty State + guidance
+
+**Overflow Menu #1 (MUST)**: w nagłówku Details (sekcja 3.1).
+
+---
+
+#### 4) AI Insight Section (Distinct functional zone)
+
+AI jest doradcze — **nie dominuje contentu**.
+
+- **Top divider**: 1px subtelny border
+- **Background**: bardzo subtelnie tinted (brand‑based) / neutral‑tinted
+
+##### 4.1 AI Section Header
+
+- **Label + icon**: “AI Insights” + Sparkles/Neural
+- **AI Overflow Menu** (⋮): regenerate / copy / clear / advanced
+
+##### 4.2 AI Suggestion Chips
+
+- Actionable chips / quick prompts (typowo **3** w kanonie Inbox)
+- Klik → rozwija AI output
+
+##### 4.3 AI Expansion Container
+
+- Expandable area (200ms ease)
+- Bullets: recommendation / plan / risk analysis
+
+**Overflow Menu #2 (MUST)**: w nagłówku sekcji AI (4.1).
+
+---
+
+#### 5) Relationship Section (References)
+
+Oficjalna nazwa: **Linked Entities Section**.
+
+- Header: “Linked Items” / “References”
+- Reference pills:
+  - interactive tag (klik → nawigacja)
+  - max visible 3–5, overflow: “+3 more”
+- **MUST**: rezerwujemy miejsce na **2 rzędy** (stała wysokość; np. `min-h-[4.5rem]`) żeby panel nie skakał
+
+---
+
+#### 6) Contextual Action Bar
+
+Oficjalna nazwa: **Contextual Action Group**.
+
+Przykłady: Mark done / Save / Add note / Defer / Schedule.
+
+- Medium buttons jako pills (`h-9 rounded-full`)
+- Spacing: 8–12px
+- Hierarchia: Primary (filled/strongest) → Secondary (outline) → Tertiary (ghost)
+
+---
+
+#### 7) Temporal Control Section
+
+Oficjalna nazwa: **Scheduling Controls**.
+
+- Quick time presets: Today / This week / Later  
+  - component: segmented control / toggle group
+- Advanced scheduling dropdown: “Defer to…” → date picker
+
+*Uwaga: jeśli moduł nie wspiera snooze/defer, ta sekcja może być pominięta — ale jej brak musi być decyzją UX, nie przypadkiem.*
+
+---
+
+#### 8) Visual hierarchy summary (MUST)
+
+Kolejność ważności (top→bottom):
+1) Title (Identity)
+2) Status Meta
+3) Core Content
+4) AI Intelligence
+5) Relationships
+6) Actions
+7) Scheduling
+
+---
+
+#### 9) Layout proportion (Desktop, rekomendacja)
+
+- Header: 8%
+- Meta Bar: 10%
+- Content Body: 40–50%
+- AI: 15–20%
+- Linked: 10%
+- Actions + Scheduling: 12–15%
+
+---
+
+#### 10) Design system naming (dev)
+
+Preferowane nazwy w kodzie/komponentach (bez „kreatywnych” aliasów):
+- `SideDetailPanel` (shell)
+- `PanelHeader` (1)
+- `EntityMetaBar` (2)
+- `DetailsSection` + `OverflowMenu` (3)
+- `AiInsightsSection` + `OverflowMenu` (4)
+- `LinkedEntitiesSection` (5)
+- `ContextualActionGroup` (6)
+- `SchedulingControls` (7)
 
 ### 6.11 Preview — brief/meta row (MUST)
 
@@ -341,4 +544,53 @@ Gdy widok ma cards:
 - PL/EN przez `useTranslation` (bez hardcode w UI)
 - brak “wymyślonych” komponentów: używamy shared/SSOT
 - jeśli komponent wspiera `locked?: boolean`, musi działać read-only
+
+### 6.18 Preview Pane — checklist zgodności (MUST)
+
+Ta checklista jest do użycia **dla każdego** widoku Table+Preview, zanim uznamy wdrożenie za „zgodne ze standardem”.
+
+#### Layout & zachowania
+
+- [ ] `TableWithPreviewLayout` użyty jako layout (lub zachowane 1:1 jego kontrakty).
+- [ ] **Width** preview = `clamp(340px, 28%, 480px)`.
+- [ ] **Separation** table↔preview = tylko `gap-1.5` (brak `border-l`, brak doklejanych `ml-*` separatorów).
+- [ ] **Single click** row → selection + preview.
+- [ ] **Double click / Enter** → open full.
+- [ ] **Esc** → close preview.
+
+#### Header (preview)
+
+- [ ] Header jest **sticky** i zawsze widoczny na scrollu.
+- [ ] Tytuł to **tylko nazwa encji** (bez subtitle/metadanych).
+- [ ] Tytuł jest **1 linią** (`truncate`) w kanonie Inbox (2 linie tylko jako świadoma decyzja UX + dostosowanie shell).
+- [ ] Po prawej są: **Open in Full View / Otwórz (ghost/outline)** + **Close (X)**.
+
+#### Body (preview)
+
+- [ ] Na górze jest **Entity Meta Bar / Brief** (type + priority + time + SLA jeśli dotyczy) jako **metadane**, nie content.
+- [ ] Sekcja **Details** ma nagłówek (overline/small caps, `tracking-wider`).
+- [ ] W nagłówku Details jest **Overflow Menu (⋮)** z akcjami (np. Expand, Summarize, Copy).
+- [ ] Treść Details jest czytelna (`whitespace-pre-wrap`) i nie dubluje informacji z meta.
+- [ ] Jeśli content jest pusty → jest **Empty State + guidance**.
+
+#### AI Insights (distinct zone)
+
+- [ ] AI jest wizualnie **oddzielone** (divider + subtelnie tinted background), nie dominuje contentu.
+- [ ] Są **AI suggestion chips** (kanonicznie **3**; outline/quick prompts).
+- [ ] W nagłówku AI jest **Overflow Menu (⋮)** (regenerate/copy/clear/advanced).
+
+#### Linked Entities (relations)
+
+- [ ] Jest sekcja **Linked Entities Section** (“Linked Items/References”).
+- [ ] Relacje mieszczą się w **2 rzędach** (stała wysokość; np. `min-h-[4.5rem]`), brak relacji ma subtelny empty state.
+- [ ] Relacje są linkami/tagami (max 3–5 + “+N more”).
+
+#### Actions + Scheduling
+
+- [ ] Jest **Contextual Action Group**: akcje jako pills (`h-9 rounded-full`), hierarchia Primary/Secondary/Tertiary.
+- [ ] Jeśli moduł wspiera defer/snooze → są **Scheduling Controls** (Today/This week/Later + “Defer to…”).
+
+#### Overflow menus (MUST)
+
+- [ ] Są **dokładnie 2 overflow menus (⋮)** i są w stałych miejscach: **Details** + **AI** (nazywamy je “Overflow Menu”, nie “burger”).
 
