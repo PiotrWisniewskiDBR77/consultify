@@ -331,6 +331,25 @@ function getProviderSync(modelConfig: ModelConfig) {
   }
 }
 
+// Providers that only support the Chat Completions API (not the Responses API).
+// @ai-sdk/openai v3 defaults to the Responses API when calling provider(modelId),
+// so we must use provider.chat(modelId) for these.
+const CHAT_COMPLETIONS_ONLY_PROVIDERS = new Set([
+  'deepseek', 'z_ai', 'zai', 'qwen', 'mistral', 'nvidia',
+  'cohere', 'openrouter', 'ollama',
+]);
+
+function getModel(modelConfig: ModelConfig) {
+  const provider = getProviderSync(modelConfig);
+  const modelId = modelConfig.id as string;
+  const providerName = String(modelConfig.provider || '').toLowerCase();
+
+  if (CHAT_COMPLETIONS_ONLY_PROVIDERS.has(providerName) && typeof provider.chat === 'function') {
+    return provider.chat(modelId);
+  }
+  return provider(modelId);
+}
+
 function getProvider(modelConfig: ModelConfig) {
   return getProviderSync(modelConfig);
 }
@@ -547,8 +566,7 @@ export class LLMService {
   ): Promise<Record<string, unknown>> {
     const { modelConfig, systemPrompt, messages } = params;
 
-    const provider = getProvider(modelConfig);
-    const model = provider(modelConfig.id as string);
+    const model = getModel(modelConfig);
     const providerId = String(modelConfig.provider || 'openai');
 
     const formattedMessages: LLMMessage[] = [];
@@ -610,8 +628,7 @@ export class LLMService {
   ): Promise<Record<string, unknown>> {
     const { modelConfig, systemPrompt, messages, tools, context, maxIterations = 3 } = params;
 
-    const provider = getProvider(modelConfig);
-    const model = provider(modelConfig.id as string);
+    const model = getModel(modelConfig);
     const providerId = String(modelConfig.provider || 'openai');
     const mcpModule = await import('./mcpServer.js');
     const mcpServer = (mcpModule.mcpServer || mcpModule.default) as McpServer;
@@ -678,8 +695,7 @@ export class LLMService {
   ): Promise<Record<string, unknown>> {
     const { modelConfig, systemPrompt, messages, tools, context, maxIterations = 3 } = params;
 
-    const provider = getProvider(modelConfig);
-    const model = provider(modelConfig.id as string);
+    const model = getModel(modelConfig);
     const providerId = String(modelConfig.provider || 'openai');
     const mcpModule = await import('./mcpServer.js');
     const mcpServer = (mcpModule.mcpServer || mcpModule.default) as McpServer;
@@ -741,8 +757,7 @@ export class LLMService {
   ): Promise<Record<string, unknown>> {
     const { modelConfig, systemPrompt, messages } = params;
 
-    const provider = getProvider(modelConfig);
-    const model = provider(modelConfig.id as string);
+    const model = getModel(modelConfig);
     const providerId = String(modelConfig.provider || 'openai');
     const timeoutMs =
       typeof params.timeoutMs === 'number' &&
@@ -787,8 +802,7 @@ export class LLMService {
   ): Promise<Record<string, unknown>> {
     const { modelConfig, systemPrompt, messages } = params;
 
-    const provider = getProvider(modelConfig);
-    const model = provider(modelConfig.id as string);
+    const model = getModel(modelConfig);
     const providerId = String(modelConfig.provider || 'openai');
 
     const formattedMessages: LLMMessage[] = [
@@ -875,8 +889,7 @@ export class LLMService {
   ): Promise<Record<string, unknown>> {
     const { modelConfig, systemPrompt, messages, schema } = params;
 
-    const provider = getProvider(modelConfig);
-    const model = provider(modelConfig.id as string);
+    const model = getModel(modelConfig);
     const providerId = String(modelConfig.provider || 'openai');
 
     let zodSchema: z.ZodSchema<unknown>;
@@ -1060,8 +1073,7 @@ export class LLMService {
         };
       }
 
-      const provider = getProvider(modelConfig);
-      const model = provider(modelConfig.id as string);
+      const model = getModel(modelConfig);
       const result = await generateText({
         model,
         messages: [{ role: 'user', content: 'Say "pong"' }] as any,
