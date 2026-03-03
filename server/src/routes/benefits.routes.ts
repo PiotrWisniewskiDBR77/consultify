@@ -400,7 +400,7 @@ router.post(
           run: (sql: string, params: any[]) => dbRun(sql, params),
         } as any,
         orgId,
-        kpiId,
+        kpiId: String(kpiId),
         value: Number(value),
         periodStart,
         periodEnd,

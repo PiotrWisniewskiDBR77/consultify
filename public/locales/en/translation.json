@@ -732,12 +732,25 @@
     "preview": "Preview",
     "openFull": "Open full",
     "copied": "Copied",
+    "copy": "Copy",
     "copyFailed": "Copy failed",
     "chatOpened": "Chat opened",
     "chatOpenError": "Failed to open chat",
     "create": "Create",
     "creating": "Creating...",
     "open": "Open",
+    "type": "Type",
+    "status": "Status",
+    "updated": "Updated",
+    "owner": "Owner",
+    "priority": "Priority",
+    "details": "Details",
+    "noDescription": "No description",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "summarize": "Summarize",
+    "risks": "Risks",
+    "nextSteps": "Next steps",
     "due": "Due",
     "loadFailed": "Load failed",
     "periodStart": "Period start",
@@ -3599,6 +3612,17 @@
       "timelineConstraints": "Timeline Constraints",
       "timelineConstraintsHint": "Key deadlines or time pressures affecting strategic decisions — e.g., regulatory deadlines, board milestones, contract renewals.",
       "timelineConstraintsPlaceholder": "e.g., DORA compliance by Q1 2027; ERP migration must finish before license renewal in Oct 2026"
+    },
+    "table": {
+      "columns": "Columns",
+      "editColumns": "Edit columns",
+      "searchColumns": "Search columns...",
+      "showAll": "Show all",
+      "hideOptional": "Required only",
+      "resetColumns": "Reset to default",
+      "required": "Required",
+      "noColumnsFound": "No columns match your search",
+      "columnsTip": "Drag to reorder, click eye to toggle visibility"
     }
   },
   "access": {
@@ -5741,12 +5765,32 @@
       }
     },
     "tabs": {
+      "summary": "Summary",
+      "kpis": "KPIs",
+      "kpiReports": "KPI Reports",
+      "roi": "ROI",
       "allKpis": "All KPIs",
       "byInitiative": "By Initiative",
       "global": "Global",
       "roiTracking": "ROI Tracking",
       "operational": "Operational",
       "roiAnalysis": "ROI Analysis"
+    },
+    "summary": {
+      "columns": {
+        "initiative": "Initiative",
+        "monitoring": "Monitoring",
+        "owner": "Owner"
+      },
+      "actions": {
+        "connectKpi": "Connect KPI",
+        "connectRoi": "Connect ROI",
+        "economics": "Economics"
+      },
+      "preview": {
+        "type": "Initiative",
+        "subtitle": "Completion summary and monitoring coverage"
+      }
     },
     "addKpi": "+ Add KPI",
     "kpiReports": {

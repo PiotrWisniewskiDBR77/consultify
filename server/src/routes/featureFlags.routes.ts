@@ -450,7 +450,7 @@ router.post(
     }
 
     if (parsed.flag_type === 'targeting') {
-      for (const rule of parsed.targeting_rules || []) {
+      for (const rule of (parsed.targeting_rules || []) as any[]) {
         if (!rule.enabled) continue;
         if (evaluateRule(rule, context || {})) {
           res.json({ enabled: true, reason: `Matched rule: ${rule.type}` });
@@ -468,9 +468,9 @@ router.post(
         return;
       }
       const hash = hashCode(userId + flag_key);
-      const totalWeight = parsed.variants.reduce((acc: number, v: any) => acc + (v.weight || 0), 0);
+      const totalWeight = (parsed.variants as any[]).reduce((acc: number, v: any) => acc + (v.weight || 0), 0);
       let bucket = Math.abs(hash % totalWeight);
-      for (const variant of parsed.variants) {
+      for (const variant of parsed.variants as any[]) {
         bucket -= variant.weight || 0;
         if (bucket < 0) {
           res.json({ enabled: true, variant: variant.name, reason: `A/B test variant: ${variant.name}` });
@@ -537,7 +537,7 @@ router.post(
     }
 
     if (flag.flag_type === 'targeting') {
-      const rules = flag.targeting_rules || [];
+      const rules = (flag.targeting_rules || []) as any[];
       for (const rule of rules) {
         if (!rule.enabled) continue;
         if (evaluateRule(rule, context || {})) {
@@ -551,7 +551,7 @@ router.post(
 
     if (flag.flag_type === 'ab_test') {
       const userId = context?.userId || context?.user_id;
-      const variants = flag.variants || [];
+      const variants = (flag.variants || []) as any[];
       if (!userId || variants.length === 0) {
         res.json({ enabled: false, reason: 'No user context or variants for A/B evaluation' });
         return;

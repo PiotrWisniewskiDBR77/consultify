@@ -92,7 +92,19 @@ export function evaluateKpiPoint(def: KpiDefinitionForEval, value: number | null
 }
 
 async function getKpiDefinition(db: IDatabase, orgId: string, kpiId: string): Promise<KpiDefinitionForEval | null> {
-  const row = await db.get(
+  const row = await db.get<{
+    id: string;
+    organization_id: string;
+    owner_user_id: string | null;
+    name: string;
+    target_value: number | null;
+    direction: KpiDirection | null;
+    threshold_mode: KpiThresholdMode | null;
+    amber_threshold_pct: number | null;
+    red_threshold_pct: number | null;
+    amber_threshold_abs: number | null;
+    red_threshold_abs: number | null;
+  }>(
     `
     SELECT
       k.id,
@@ -153,7 +165,7 @@ export async function handleTimeSeriesRecorded(input: HandleTimeSeriesRecordedIn
     return { eval: evalRes };
   }
 
-  const existing = await db.get(
+  const existing = await db.get<{ id: string; status: string }>(
     `
     SELECT id, status
     FROM kpi_deviation_cases
@@ -191,7 +203,7 @@ export async function handleTimeSeriesRecorded(input: HandleTimeSeriesRecordedIn
       [kpiId, orgId, periodStart, periodEnd || null, severity, ownerUserId, evalRes.summary]
     );
 
-    const created = await db.get(
+    const created = await db.get<{ id: string }>(
       `
       SELECT id
       FROM kpi_deviation_cases

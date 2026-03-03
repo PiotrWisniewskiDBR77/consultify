@@ -39,7 +39,7 @@ async function ensureEnterpriseSchema(): Promise<void> {
     try {
       // NOTE: We intentionally use SQL that is accepted by both SQLite and Postgres adapters.
       // JSON columns are stored as TEXT and JSON.stringify'ed by the API layer.
-      const stmts: Array<{ sql: string; params?: unknown[] }> = [
+      const stmts: Array<{ sql: string; params?: unknown[]; optional?: boolean }> = [
         // ai_purposes
         {
           sql: `CREATE TABLE IF NOT EXISTS ai_purposes (

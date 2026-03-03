@@ -511,7 +511,7 @@ export async function createStatement(params: {
   createdBy: string;
 }): Promise<string> {
   const id = uuidv4();
-  await dbRun(
+  const insertRes = await dbRun(
     `INSERT INTO financial_statements (id, organization_id, statement_type, period_start, period_end, period_label, currency, scaling, source_file_name, source_file_path, parse_method, overall_confidence, created_by)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
@@ -528,8 +528,12 @@ export async function createStatement(params: {
       params.parseMethod || 'text_extraction',
       params.overallConfidence || 0,
       params.createdBy,
-    ]
+    ],
+    { fallback: false }
   );
+  if (!insertRes?.success) {
+    throw new Error(`DB insert failed (financial_statements): ${insertRes?.error || 'unknown'}`);
+  }
   return id;
 }
 
@@ -545,7 +549,7 @@ export async function saveStatementValues(
   }>
 ): Promise<void> {
   for (const v of values) {
-    await dbRun(
+    const r = await dbRun(
       `INSERT INTO financial_statement_values (id, statement_id, canonical_line_id, original_label, value, confidence, source_row, mapping_status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
@@ -557,8 +561,12 @@ export async function saveStatementValues(
         v.confidence,
         v.sourceRow || null,
         v.mappingStatus || 'auto',
-      ]
+      ],
+      { fallback: false }
     );
+    if (!r?.success) {
+      throw new Error(`DB insert failed (financial_statement_values): ${r?.error || 'unknown'}`);
+    }
   }
 }
 
@@ -568,22 +576,30 @@ export async function updateStatementStatus(
   validationStatus?: string,
   validationMessages?: ValidationMessage[]
 ): Promise<void> {
-  await dbRun(
+  const r = await dbRun(
     `UPDATE financial_statements SET status = ?, validation_status = COALESCE(?, validation_status), validation_messages = COALESCE(?, validation_messages), updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
     [
       status,
       validationStatus || null,
       validationMessages ? JSON.stringify(validationMessages) : null,
       statementId,
-    ]
+    ],
+    { fallback: false }
   );
+  if (!r?.success) {
+    throw new Error(`DB update failed (financial_statements.status): ${r?.error || 'unknown'}`);
+  }
 }
 
 export async function confirmStatement(statementId: string, userId: string): Promise<void> {
-  await dbRun(
+  const r = await dbRun(
     `UPDATE financial_statements SET status = 'confirmed', confirmed_by = ?, confirmed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-    [userId, statementId]
+    [userId, statementId],
+    { fallback: false }
   );
+  if (!r?.success) {
+    throw new Error(`DB update failed (financial_statements.confirm): ${r?.error || 'unknown'}`);
+  }
 }
 
 logger.info('[FinancialStatementService] Loaded');

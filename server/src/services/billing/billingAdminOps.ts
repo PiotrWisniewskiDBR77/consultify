@@ -144,8 +144,7 @@ export async function getBillingOverview(organizationId: string): Promise<Record
 
   let dunningStatus = null;
   try {
-    const dunningModule = await import('../dunningService.js');
-    const dunningService = dunningModule.default || dunningModule;
+    const { default: dunningService } = await import('../dunningService.js');
     if (dunningService?.getDunningStatus) {
       dunningStatus = await dunningService.getDunningStatus(organizationId);
     }

@@ -923,16 +923,20 @@ async function generateSectionViaNarrativeEngine(
   context: GenerationContext
 ): Promise<NarrativeEngineOutput | null> {
   const sourceRefs: SourceRef[] = [];
-  if (section.sourceRefsJson) {
+  if (section.sourceRefs) {
     try {
-      const parsed = JSON.parse(section.sourceRefsJson as string);
-      if (Array.isArray(parsed)) sourceRefs.push(...parsed);
+      const refs = Array.isArray(section.sourceRefs)
+        ? section.sourceRefs
+        : JSON.parse(section.sourceRefs as unknown as string);
+      if (Array.isArray(refs)) sourceRefs.push(...refs);
     } catch { /* skip */ }
   }
-  if ((report as any).sourceRefsJson) {
+  if (report.sourceRefs) {
     try {
-      const parsed = JSON.parse((report as any).sourceRefsJson);
-      if (Array.isArray(parsed)) sourceRefs.push(...parsed);
+      const refs = Array.isArray(report.sourceRefs)
+        ? report.sourceRefs
+        : JSON.parse(report.sourceRefs as unknown as string);
+      if (Array.isArray(refs)) sourceRefs.push(...refs);
     } catch { /* skip */ }
   }
 

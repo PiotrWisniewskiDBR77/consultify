@@ -422,8 +422,7 @@ async function handleInvoicePaid(invoice: StripeTypes.Invoice): Promise<string |
 
   // T109: Exit dunning on successful payment
   try {
-    const dunningModule = await import('../../services/dunningService.js');
-    const dunningService = dunningModule.default || dunningModule;
+    const { default: dunningService } = await import('../../services/dunningService.js');
     if (dunningService?.handlePaymentSucceeded) {
       const paymentIntentId = invoice.payment_intent as string | undefined;
       if (paymentIntentId && process.env.STRIPE_SECRET_KEY) {
@@ -575,8 +574,7 @@ async function handleInvoicePaymentFailed(invoice: StripeTypes.Invoice): Promise
 
   // T109: Trigger dunning flow
   try {
-    const dunningModule = await import('../../services/dunningService.js');
-    const dunningService = dunningModule.default || dunningModule;
+    const { default: dunningService } = await import('../../services/dunningService.js');
     if (dunningService?.handlePaymentFailed) {
       const paymentIntentId = invoice.payment_intent as string | undefined;
       if (paymentIntentId && process.env.STRIPE_SECRET_KEY) {
@@ -693,8 +691,7 @@ async function handleCheckoutSessionCompleted(session: Record<string, unknown>):
   }
 
   try {
-    const tokenBillingModule = await import('../../services/tokenBillingService.js');
-    const tokenBillingService = tokenBillingModule.default || tokenBillingModule;
+    const { default: tokenBillingService } = await import('../../services/tokenBillingService.js');
     if (tokenBillingService?.creditTokens) {
       await tokenBillingService.creditTokens(userId, tokenCount, bonus, {
         packageId,

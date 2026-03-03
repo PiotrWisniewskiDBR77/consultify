@@ -44,7 +44,11 @@ const brandingUpload = multer({
     const ok = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml'].includes(
       file.mimetype
     );
-    cb(ok ? null : new Error('Unsupported file type'), ok);
+    if (ok) {
+      cb(null, true);
+    } else {
+      cb(new Error('Unsupported file type') as any, false);
+    }
   },
 });
 

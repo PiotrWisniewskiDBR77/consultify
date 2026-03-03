@@ -71,7 +71,8 @@ export type SlideVisualSlot =
   | 'side_illustration'
   | 'icon_strip'
   | 'diagram'
-  | 'background_texture';
+  | 'background_texture'
+  | 'decorative_accent';
 
 export interface SlideVisualAssetRef {
   /**

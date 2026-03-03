@@ -19,8 +19,10 @@ import { useAppStore } from '@/store/useAppStore';
 import { IdeaCanvasToolSelector, type CanvasToolType } from './IdeaCanvasToolSelector';
 import { IdeaAISuggestionsPanel } from './IdeaAISuggestionsPanel';
 import { IdeaContextPanel } from './IdeaContextPanel';
+import { IdeaProcessFlowTool } from './IdeaProcessFlowTool';
 import { IdeaRecommendationMap } from './IdeaRecommendationMap';
 import { IdeaTableTool } from './IdeaTableTool';
+import { IdeaWhiteboardTool } from './IdeaWhiteboardTool';
 import { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
 import type { MyIdea } from './MyIdeasListContent';
 import { buildAskAIMessage } from './shared/askAiHelper';
@@ -143,6 +145,20 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         setPriority(Number.isFinite(Number(idea?.priority)) ? Number(idea.priority) : 50);
         setDirty(false);
         setLastSavedAt(idea?.updatedAt ? new Date(idea.updatedAt).getTime() : null);
+
+        try {
+          const mapRes = await Api.getMyIdeaMap(String(idea?.id || ideaId), { language: i18n.language });
+          const savedPref = mapRes?.map?.preferredTool ? String(mapRes.map.preferredTool) : null;
+          if (
+            savedPref &&
+            ['mindmap', 'process_flow', 'table', 'whiteboard'].includes(savedPref) &&
+            !userSelectedToolRef.current
+          ) {
+            setActiveTool(savedPref as CanvasToolType);
+          }
+        } catch {
+          /* best-effort — default to mindmap */
+        }
       }
     } catch (err: any) {
       toast.error(err?.message || (isPolish ? 'Nie udało się wczytać' : 'Failed to load'));
@@ -269,14 +285,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     <div className="w-full h-full flex overflow-hidden bg-white dark:bg-navy-950">
       {/* Map fills all available space */}
       <div className="flex-1 min-w-0 h-full relative">
-        <div className="absolute top-3 right-3 z-30 flex items-center gap-2">
+        <div className="absolute top-3 right-3 z-[95] flex items-center gap-2">
           <IdeaCanvasToolSelector
             activeTool={activeTool}
             onToolChange={(next) => {
+              trackFunnelEvent('ideas_tool_switched', { from: activeTool, to: next, ideaId: realId });
               userSelectedToolRef.current = true;
               setActiveTool(next);
             }}
-            disabledTools={['process_flow', 'whiteboard']}
           />
           <WorkspacePanelStrip value={activePanel} onChange={handlePanelChange} />
         </div>
@@ -308,11 +324,23 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             refreshToken={mapRefreshToken}
             onSaved={() => setMapRefreshToken((v) => v + 1)}
           />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Narzędzie w przygotowaniu' : 'Tool coming soon'}
-          </div>
-        )}
+        ) : activeTool === 'process_flow' ? (
+          <IdeaProcessFlowTool
+            open
+            ideaId={realId}
+            locked={!isAccepted}
+            refreshToken={mapRefreshToken}
+            onSaved={() => setMapRefreshToken((v) => v + 1)}
+          />
+        ) : activeTool === 'whiteboard' ? (
+          <IdeaWhiteboardTool
+            open
+            ideaId={realId}
+            locked={!isAccepted}
+            refreshToken={mapRefreshToken}
+            onSaved={() => setMapRefreshToken((v) => v + 1)}
+          />
+        ) : null}
       </div>
 
       {/* Tools panel sidebar */}

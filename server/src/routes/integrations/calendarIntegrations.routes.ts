@@ -141,7 +141,7 @@ router.get(
     let connectedOutlook = false;
 
     if (hasProviderId) {
-      const rows = await dbAll<any[]>(
+      const rows = await dbAll<any>(
         `
         SELECT p.name as provider_name
         FROM integrations i
@@ -175,15 +175,13 @@ router.get(
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).send('Unauthorized');
 
-    const tasks = await dbAll<
-      Array<{
-        id: string;
-        title: string;
-        description: string | null;
-        due_date: string | null;
-        status: string | null;
-      }>
-    >(
+    const tasks = await dbAll<{
+      id: string;
+      title: string;
+      description: string | null;
+      due_date: string | null;
+      status: string | null;
+    }>(
       `SELECT id, title, description, due_date, status
        FROM tasks
        WHERE organization_id = ? AND due_date IS NOT NULL
@@ -201,17 +199,15 @@ router.get(
       (c) => String((c as any).name || '') === 'target_date'
     );
     const milestones = hasMilestones
-      ? await dbAll<
-          Array<{
-            id: string;
-            initiative_id: string;
-            name: string;
-            description: string | null;
-            target_date: string | null;
-            status: string | null;
-            is_gate: number | null;
-          }>
-        >(
+      ? await dbAll<{
+          id: string;
+          initiative_id: string;
+          name: string;
+          description: string | null;
+          target_date: string | null;
+          status: string | null;
+          is_gate: number | null;
+        }>(
           `SELECT id, initiative_id, name, description, target_date, status, is_gate
            FROM initiative_milestones
            WHERE organization_id = ? AND target_date IS NOT NULL

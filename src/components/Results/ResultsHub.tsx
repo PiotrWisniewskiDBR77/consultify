@@ -1,8 +1,10 @@
-import { BarChart3, ClipboardList, DollarSign, FileText, Target } from 'lucide-react';
+import { BarChart3, ClipboardList, DollarSign, FileText, Plus, Sparkles, Target } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
+import { useConversationStore } from '@/store/useConversationStore';
 import { InitiativeKPI } from '@/types/core';
 
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
@@ -18,6 +20,8 @@ import { ResultsKpiReportsView } from './ResultsKpiReportsView';
 import { ResultsSummaryView } from './ResultsSummaryView';
 import { OperationalAnalysisView } from './OperationalAnalysisView';
 import { ROIAnalysisView } from './ROIAnalysisView';
+import { ROIDetailDrawer } from './ROIDetailDrawer';
+import { ROIOpenModal } from './ROIOpenModal';
 
 export type KPIStatus = 'on-target' | 'below' | 'no-data';
 export type KPITrend = 'up' | 'down' | 'stable';
@@ -75,6 +79,8 @@ function deriveNeedsEntry(kpi: InitiativeKPI): boolean {
 
 export const ResultsHub: React.FC = () => {
   const { t } = useTranslation();
+  const openChatWithContext = useOpenChatWithContext();
+  const { isChatCollapsed, toggleChatCollapse } = useConversationStore();
 
   const [activeTab, setActiveTab] = useState<ModuleTab>('summary');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
@@ -83,6 +89,9 @@ export const ResultsHub: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [kpiReportCreateNonce, setKpiReportCreateNonce] = useState(0);
   const [drawerKpiId, setDrawerKpiId] = useState<string | null>(null);
+  const [roiOpenModal, setRoiOpenModal] = useState(false);
+  const [roiDrawer, setRoiDrawer] = useState<{ id: string; name: string } | null>(null);
+  const [roiRefreshNonce, setRoiRefreshNonce] = useState(0);
 
   const [kpis, setKpis] = useState<ResultsKPI[]>([]);
   const [loading, setLoading] = useState(true);
@@ -239,6 +248,291 @@ export const ResultsHub: React.FC = () => {
     fetchKPIs();
   }, [fetchKPIs]);
 
+  const handleOpenResultsAI = useCallback(async () => {
+    try {
+      await openChatWithContext({
+        entityType: 'results',
+        entityId: `results:${activeTab}`,
+        entityName: t('results.title', 'Results'),
+        contextData: {
+          activeTab,
+          viewMode,
+          searchQuery,
+          activeFilters,
+        },
+      });
+      if (isChatCollapsed) toggleChatCollapse();
+    } catch {
+      // silent
+    }
+  }, [activeFilters, activeTab, isChatCollapsed, openChatWithContext, searchQuery, t, toggleChatCollapse, viewMode]);
+
+  const aiControl = useMemo(
+    () => (
+      <button
+        type="button"
+        onClick={handleOpenResultsAI}
+        data-testid="results-ai-button"
+        className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-purple-500/30 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-500/20 hover:brightness-110 transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+        title={t('common.ai', 'AI')}
+      >
+        <Sparkles size={18} />
+      </button>
+    ),
+    [handleOpenResultsAI, t]
+  );
+
+  const openRoiPicker = useCallback(() => setRoiOpenModal(true), []);
+
+  const commandRowContent = useMemo(() => {
+    const chipBase =
+      'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
+    const badgeBase =
+      'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
+
+    if (activeTab === 'summary') {
+      return (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab('kpis')}
+            className={`${chipBase} bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50`}
+            title={t('results.tabs.kpis', 'KPI')}
+          >
+            <Target size={14} className="text-emerald-400" />
+            <span>{t('results.tabs.kpis', 'KPI')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('kpi_reports')}
+            className={`${chipBase} bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50`}
+            title={t('results.tabs.kpiReports', 'Raporty KPI')}
+          >
+            <FileText size={14} className="text-slate-400" />
+            <span>{t('results.tabs.kpiReports', 'Raporty KPI')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('roi')}
+            className={`${chipBase} bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50`}
+            title={t('results.tabs.roi', 'ROI')}
+          >
+            <DollarSign size={14} className="text-amber-400" />
+            <span>{t('results.tabs.roi', 'ROI')}</span>
+          </button>
+        </div>
+      );
+    }
+
+    if (activeTab === 'kpis') {
+      const base = (() => {
+        let items = [...kpis];
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          items = items.filter(
+            (k) =>
+              k.name.toLowerCase().includes(q) ||
+              k.initiativeName?.toLowerCase().includes(q) ||
+              (k.linkedInitiatives || []).some((i) => i.name.toLowerCase().includes(q)) ||
+              k.description?.toLowerCase().includes(q)
+          );
+        }
+        return items;
+      })();
+
+      const counts = base.reduce(
+        (acc, k) => {
+          acc.total += 1;
+          if (k.needsEntry) acc.needsEntry += 1;
+          acc.status[String(k.status)] = (acc.status[String(k.status)] || 0) + 1;
+          return acc;
+        },
+        {
+          total: 0,
+          needsEntry: 0,
+          status: {} as Record<string, number>,
+        }
+      );
+
+      const setFilter = (col: string, value: string, label: string) => {
+        setActiveFilters([{ id: `${col}:${value}`, column: col, value, label }]);
+      };
+
+      return (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveFilters([])}
+            className={`${chipBase} ${
+              activeFilters.length === 0
+                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+            }`}
+            title={t('common.all', 'All')}
+          >
+            <span>{t('common.all', 'All')}</span>
+            <span
+              className={`${badgeBase} ${
+                activeFilters.length === 0
+                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+              }`}
+            >
+              {counts.total}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setFilter('needsEntry', 'true', t('results.filters.needsEntry', 'Needs entry'))}
+            className={`${chipBase} ${
+              activeFilters.some((f) => f.column === 'needsEntry' && f.value === 'true')
+                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+            }`}
+            title={t('results.filters.needsEntry', 'Needs entry')}
+          >
+            <span>{t('results.filters.needsEntry', 'Needs entry')}</span>
+            <span
+              className={`${badgeBase} ${
+                activeFilters.some((f) => f.column === 'needsEntry' && f.value === 'true')
+                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+              }`}
+            >
+              {counts.needsEntry}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setFilter('status', 'below', t('results.filters.below', 'Below'))}
+            className={`${chipBase} ${
+              activeFilters.some((f) => f.column === 'status' && f.value === 'below')
+                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+            }`}
+            title={t('results.filters.below', 'Below')}
+          >
+            <span>{t('results.filters.below', 'Below')}</span>
+            <span
+              className={`${badgeBase} ${
+                activeFilters.some((f) => f.column === 'status' && f.value === 'below')
+                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+              }`}
+            >
+              {counts.status['below'] || 0}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setFilter('status', 'on-target', t('results.filters.onTarget', 'On target'))}
+            className={`${chipBase} ${
+              activeFilters.some((f) => f.column === 'status' && f.value === 'on-target')
+                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+            }`}
+            title={t('results.filters.onTarget', 'On target')}
+          >
+            <span>{t('results.filters.onTarget', 'On target')}</span>
+            <span
+              className={`${badgeBase} ${
+                activeFilters.some((f) => f.column === 'status' && f.value === 'on-target')
+                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+              }`}
+            >
+              {counts.status['on-target'] || 0}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setFilter('status', 'no-data', t('results.filters.noData', 'No data'))}
+            className={`${chipBase} ${
+              activeFilters.some((f) => f.column === 'status' && f.value === 'no-data')
+                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+            }`}
+            title={t('results.filters.noData', 'No data')}
+          >
+            <span>{t('results.filters.noData', 'No data')}</span>
+            <span
+              className={`${badgeBase} ${
+                activeFilters.some((f) => f.column === 'status' && f.value === 'no-data')
+                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+              }`}
+            >
+              {counts.status['no-data'] || 0}
+            </span>
+          </button>
+        </div>
+      );
+    }
+
+    if (activeTab === 'roi') {
+      return (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={openRoiPicker}
+            className={`${chipBase} bg-primary-500/15 text-primary-300 border-primary-500/30 hover:bg-primary-500/20`}
+            title={t('results.roi.actions.recordActual', 'Record actual')}
+          >
+            <Plus size={14} />
+            <span>{t('results.roi.actions.recordActual', 'Record actual')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('roi_analysis')}
+            className={`${chipBase} bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50`}
+            title={t('results.tabs.roiAnalysis', 'ROI Analysis')}
+          >
+            <DollarSign size={14} className="text-amber-400" />
+            <span>{t('results.tabs.roiAnalysis', 'ROI Analysis')}</span>
+          </button>
+        </div>
+      );
+    }
+
+    if (activeTab === 'roi_analysis') {
+      return (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab('roi')}
+            className={`${chipBase} bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50`}
+            title={t('results.tabs.roi', 'ROI')}
+          >
+            <DollarSign size={14} className="text-amber-400" />
+            <span>{t('results.tabs.roi', 'ROI')}</span>
+          </button>
+        </div>
+      );
+    }
+
+    if (activeTab === 'kpi_reports') {
+      return (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setKpiReportCreateNonce(Date.now())}
+            className={`${chipBase} bg-primary-500/15 text-primary-300 border-primary-500/30 hover:bg-primary-500/20`}
+            title={t('results.kpiReports.new', '+ New KPI report')}
+          >
+            <Plus size={14} />
+            <span>{t('results.kpiReports.new', '+ New KPI report')}</span>
+          </button>
+        </div>
+      );
+    }
+
+    return null;
+  }, [activeFilters, activeTab, kpis, openRoiPicker, searchQuery, setKpiReportCreateNonce, t]);
+
   return (
     <>
       <ModuleHub
@@ -270,6 +564,8 @@ export const ResultsHub: React.FC = () => {
             ? () => setShowCreateModal(true)
             : activeTab === 'kpi_reports'
               ? () => setKpiReportCreateNonce(Date.now())
+              : activeTab === 'roi'
+                ? () => setRoiOpenModal(true)
               : undefined
         }
         newItemLabel={
@@ -277,11 +573,15 @@ export const ResultsHub: React.FC = () => {
             ? t('results.addKpi', '+ Add KPI')
             : activeTab === 'kpi_reports'
               ? t('results.kpiReports.new', '+ New KPI report')
+              : activeTab === 'roi'
+                ? t('results.roi.add', '+ Record ROI')
               : undefined
         }
         // A03 canon: Results hub uses the canonical subset order (table→grid).
         // Non-KPI tabs can ignore viewMode; we keep the toggle consistent across the hub.
         availableViewModes={['table', 'grid']}
+        aiControl={aiControl}
+        commandRowContent={commandRowContent}
       >
         {activeTab === 'summary' ? (
           <ResultsSummaryView
@@ -300,7 +600,7 @@ export const ResultsHub: React.FC = () => {
             createNonce={kpiReportCreateNonce}
           />
         ) : activeTab === 'roi' ? (
-          <ROITrackingView />
+          <ROITrackingView refreshNonce={roiRefreshNonce} />
         ) : loading ? (
           <div className="flex items-center justify-center py-24">
             <div className="flex items-center gap-3 text-slate-400">
@@ -334,6 +634,28 @@ export const ResultsHub: React.FC = () => {
           kpiId={drawerKpiId}
           onClose={() => setDrawerKpiId(null)}
           onValueRecorded={fetchKPIs}
+        />
+      )}
+
+      {roiOpenModal && (
+        <ROIOpenModal
+          title={t('results.roi.add', '+ Record ROI')}
+          onClose={() => setRoiOpenModal(false)}
+          onSelect={(i) => {
+            setRoiOpenModal(false);
+            setRoiDrawer({ id: i.id, name: i.name });
+          }}
+        />
+      )}
+
+      {roiDrawer && (
+        <ROIDetailDrawer
+          initiativeId={roiDrawer.id}
+          initiativeName={roiDrawer.name}
+          onClose={() => setRoiDrawer(null)}
+          onSaved={() => {
+            setRoiRefreshNonce(Date.now());
+          }}
         />
       )}
     </>

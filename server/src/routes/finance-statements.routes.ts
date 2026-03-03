@@ -49,7 +49,21 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 interface AuthRequest extends Request {
-  user?: { id: string; organizationId: string };
+  // Set by auth middleware (authoritative)
+  organizationId?: string;
+  userId?: string;
+  // Also set by auth middleware; may not always include org for superadmin/impersonation flows
+  user?: { id: string; organizationId?: string };
+}
+
+function getOrgId(req: AuthRequest): string | undefined {
+  const raw = String(req.organizationId || req.user?.organizationId || '').trim();
+  return raw.length > 0 ? raw : undefined;
+}
+
+function getUserId(req: AuthRequest): string | undefined {
+  const raw = String(req.user?.id || req.userId || '').trim();
+  return raw.length > 0 ? raw : undefined;
 }
 
 const DB_ALLOWED_PARSE_METHODS = new Set(['text_extraction', 'ocr', 'manual']);
@@ -96,10 +110,11 @@ router.post(
   isAuthenticated,
   upload.single('file'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const orgId = req.user?.organizationId;
+    const userId = getUserId(req);
+    const orgId = getOrgId(req);
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'File required (PDF, XLSX, XLS, or CSV)' });
+    if (!userId || !orgId) return res.status(401).json({ error: 'Unauthorized' });
 
     let text: string;
     let parseMethod: string;
@@ -120,7 +135,7 @@ router.post(
     const detection = detectStatementType(text);
 
     const statementId = await createStatement({
-      organizationId: orgId!,
+      organizationId: orgId,
       statementType: detection.statementType === 'UNKNOWN' ? 'P&L' : detection.statementType,
       periodStart: detection.periodStart || new Date().getFullYear() + '-01-01',
       periodEnd: detection.periodEnd || new Date().getFullYear() + '-12-31',
@@ -131,13 +146,20 @@ router.post(
       sourceFilePath: file.path,
       parseMethod: effectiveParseMethod,
       overallConfidence: detection.confidence,
-      createdBy: userId!,
+      createdBy: userId,
     });
 
-    await dbRun(`UPDATE financial_statements SET notes = ? WHERE id = ?`, [
-      `${notesPrefix}${text.substring(0, 100000)}`,
-      statementId,
-    ]);
+    const notesRes = await dbRun(
+      `UPDATE financial_statements SET notes = ? WHERE id = ?`,
+      [`${notesPrefix}${text.substring(0, 100000)}`, statementId],
+      { fallback: false }
+    );
+    if (!notesRes?.success) {
+      return res.status(500).json({
+        error: 'Failed to persist extracted text',
+        detail: notesRes?.error || 'unknown',
+      });
+    }
 
     logger.info(
       `[FinanceStatements] Uploaded ${file.originalname} (${parseMethod}) → statement ${statementId} type=${detection.statementType}`
@@ -159,7 +181,7 @@ router.post(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, req.user?.organizationId, res);
+    const stmt = await getStatementOrFail(statementId, getOrgId(req), res);
     if (!stmt) return;
 
     const text = stmt.notes || '';
@@ -192,7 +214,7 @@ router.post(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, req.user?.organizationId, res);
+    const stmt = await getStatementOrFail(statementId, getOrgId(req), res);
     if (!stmt) return;
 
     const text = stmt.notes || '';
@@ -218,7 +240,7 @@ router.post(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, req.user?.organizationId, res);
+    const stmt = await getStatementOrFail(statementId, getOrgId(req), res);
     if (!stmt) return;
 
     const { lines } = req.body;
@@ -239,7 +261,7 @@ router.put(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, req.user?.organizationId, res);
+    const stmt = await getStatementOrFail(statementId, getOrgId(req), res);
     if (!stmt) return;
 
     const { values } = req.body;
@@ -278,7 +300,7 @@ router.post(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, req.user?.organizationId, res);
+    const stmt = await getStatementOrFail(statementId, getOrgId(req), res);
     if (!stmt) return;
 
     const valueRows = (await dbAll(
@@ -300,7 +322,7 @@ router.post(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, req.user?.organizationId, res);
+    const stmt = await getStatementOrFail(statementId, getOrgId(req), res);
     if (!stmt) return;
 
     await confirmStatement(statementId, req.user!.id);
@@ -315,7 +337,8 @@ router.get(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const orgId = req.user?.organizationId;
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const statements = await dbAll(
       `SELECT id, statement_type, period_start, period_end, period_label, currency, scaling, source_file_name, overall_confidence, validation_status, status, created_at, updated_at
      FROM financial_statements WHERE organization_id = ? ORDER BY period_end DESC, created_at DESC LIMIT 100`,
@@ -344,7 +367,7 @@ router.get(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, req.user?.organizationId, res);
+    const stmt = await getStatementOrFail(statementId, getOrgId(req), res);
     if (!stmt) return;
 
     const values = await dbAll(
@@ -371,7 +394,7 @@ router.delete(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, req.user?.organizationId, res);
+    const stmt = await getStatementOrFail(statementId, getOrgId(req), res);
     if (!stmt) return;
 
     if (stmt.status === 'confirmed') {
@@ -405,9 +428,10 @@ router.get(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const orgId = req.user?.organizationId;
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     try {
-      const result = await computeRatios(String(req.params.id), orgId!);
+      const result = await computeRatios(String(req.params.id), orgId);
       res.json(result);
     } catch (e: any) {
       return res.status(404).json({ error: e.message });
@@ -424,8 +448,9 @@ router.post(
     if (!currentStatementId || !previousStatementId) {
       return res.status(400).json({ error: 'currentStatementId and previousStatementId required' });
     }
-    const orgId = req.user?.organizationId;
-    const growthRatios = await computeGrowthRatios(currentStatementId, previousStatementId, orgId!);
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const growthRatios = await computeGrowthRatios(currentStatementId, previousStatementId, orgId);
     res.json(growthRatios);
   })
 );
@@ -435,8 +460,9 @@ router.get(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const orgId = req.user?.organizationId;
-    const benchmarks = await getBenchmarks(orgId!);
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const benchmarks = await getBenchmarks(orgId);
     res.json(benchmarks);
   })
 );
@@ -446,7 +472,8 @@ router.put(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const orgId = req.user?.organizationId;
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const {
       ratioCode,
       industry,
@@ -463,7 +490,7 @@ router.put(
     if (!ratioCode) return res.status(400).json({ error: 'ratioCode required' });
 
     const id = await upsertBenchmark({
-      organizationId: orgId!,
+      organizationId: orgId,
       ratioCode,
       industry,
       region,

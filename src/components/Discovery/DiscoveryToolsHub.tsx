@@ -4262,17 +4262,19 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => setLibraryCategoryFilter(opt.id)}
+                onClick={() => setLibraryCategoryFilter(isActive ? 'all' : opt.id)}
                 className={[
-                  'inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-sm font-medium border transition-colors',
+                  'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border transition-colors whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900',
                   isActive
-                    ? 'border-primary-500/40 bg-primary-500/10 text-slate-900 dark:text-slate-100'
+                    ? 'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200'
                     : 'border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]',
                 ].join(' ')}
               >
                 <span className={`w-2 h-2 rounded-full ${opt.dot}`} />
                 <span>{opt.label}</span>
-                <span className="text-slate-500 dark:text-slate-400 text-xs">{opt.count}</span>
+                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                  {opt.count}
+                </span>
               </button>
             );
           })}
@@ -4287,17 +4289,19 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => setStatusFilter(opt.id)}
+                onClick={() => setStatusFilter(isActive ? 'all' : opt.id)}
                 className={[
-                  'inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-sm font-medium border transition-colors',
+                  'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border transition-colors whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900',
                   isActive
-                    ? 'border-primary-500/40 bg-primary-500/10 text-slate-900 dark:text-slate-100'
+                    ? 'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200'
                     : 'border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]',
                 ].join(' ')}
               >
                 <span className={`w-2 h-2 rounded-full ${opt.bgColor}`} />
                 <span>{label}</span>
-                <span className="text-slate-500 dark:text-slate-400 text-xs">{count}</span>
+                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                  {count}
+                </span>
               </button>
             );
           })}

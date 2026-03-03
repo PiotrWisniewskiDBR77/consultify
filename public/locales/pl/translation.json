@@ -55,12 +55,25 @@
     "preview": "Podgląd",
     "openFull": "Otwórz pełny",
     "copied": "Skopiowano",
+    "copy": "Kopiuj",
     "copyFailed": "Nie udało się skopiować",
     "chatOpened": "Czat otwarty",
     "chatOpenError": "Nie udało się otworzyć czatu",
     "create": "Utwórz",
     "creating": "Tworzenie...",
     "open": "Otwórz",
+    "type": "Typ",
+    "status": "Status",
+    "updated": "Aktualizacja",
+    "owner": "Właściciel",
+    "priority": "Priorytet",
+    "details": "Szczegóły",
+    "noDescription": "Brak opisu",
+    "expand": "Rozwiń",
+    "collapse": "Zwiń",
+    "summarize": "Podsumuj",
+    "risks": "Ryzyka",
+    "nextSteps": "Następne kroki",
     "due": "Termin",
     "loadFailed": "Nie udało się wczytać",
     "periodStart": "Okres od",
@@ -3631,6 +3644,17 @@
       "timelineConstraints": "Ograniczenia czasowe",
       "timelineConstraintsHint": "Kluczowe terminy lub presja czasowa wpływająca na decyzje strategiczne — np. terminy regulacyjne, kamienie milowe zarządu, odnowienia umów.",
       "timelineConstraintsPlaceholder": "np. Zgodność z DORA do Q1 2027; migracja ERP przed odnowieniem licencji w paź. 2026"
+    },
+    "table": {
+      "columns": "Kolumny",
+      "editColumns": "Edycja kolumn",
+      "searchColumns": "Szukaj kolumn...",
+      "showAll": "Pokaż wszystko",
+      "hideOptional": "Tylko wymagane",
+      "resetColumns": "Przywróć domyślne",
+      "required": "Wymagane",
+      "noColumnsFound": "Brak kolumn pasujących do wyszukiwania",
+      "columnsTip": "Przeciągnij, aby zmienić kolejność; kliknij oko, aby pokazać/ukryć"
     }
   },
   "access": {
@@ -5741,12 +5765,32 @@
       }
     },
     "tabs": {
+      "summary": "Zestawienie",
+      "kpis": "KPI",
+      "kpiReports": "Raporty KPI",
+      "roi": "ROI",
       "allKpis": "Wszystkie KPI",
       "byInitiative": "Wg inicjatywy",
       "global": "Globalne",
       "roiTracking": "Śledzenie ROI",
       "operational": "Operacyjna",
       "roiAnalysis": "Analiza ROI"
+    },
+    "summary": {
+      "columns": {
+        "initiative": "Inicjatywa",
+        "monitoring": "Monitoring",
+        "owner": "Właściciel"
+      },
+      "actions": {
+        "connectKpi": "Połącz KPI",
+        "connectRoi": "Połącz ROI",
+        "economics": "Finanse"
+      },
+      "preview": {
+        "type": "Inicjatywa",
+        "subtitle": "Podsumowanie ukończenia i pokrycie monitoringu"
+      }
     },
     "addKpi": "+ Dodaj KPI",
     "kpiReports": {

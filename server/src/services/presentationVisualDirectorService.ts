@@ -10,6 +10,7 @@
  */
 import type {
   SlideIntent,
+  SlideVisualSlot,
   SlideVisualSpec,
   UnifiedReportMeta,
   UnifiedSlide,
@@ -52,7 +53,7 @@ function purposeForIntent(intent: SlideIntent): SlideVisualSpec['purpose'] {
 
 // G6: Smart Image Routing — 6-rule intent→visual matrix
 interface IntentVisualRule {
-  slot: string;
+  slot: SlideVisualSlot;
   densityThreshold: ImageDensity;
   promptBuilder: (ctx: {
     style: string;
@@ -64,7 +65,7 @@ interface IntentVisualRule {
     content: any;
   }) => string;
   styleHintOverride?: string;
-  aspect?: string;
+  aspect?: SlideVisualSpec['aspect'];
 }
 
 const INTENT_VISUAL_RULES: Partial<Record<SlideIntent, IntentVisualRule[]>> = {

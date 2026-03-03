@@ -91,13 +91,11 @@ router.post(
     }
 
     // Find mapping (external_id is Jira issue id; we also store key in metadata)
-    const mapping = await dbAll<
-      Array<{
-        local_id: string;
-        external_id: string;
-        metadata: string | null;
-      }>
-    >(
+    const mapping = await dbAll<{
+      local_id: string;
+      external_id: string;
+      metadata: string | null;
+    }>(
       `SELECT local_id, external_id, metadata
        FROM integration_sync_mappings
        WHERE integration_id = ?

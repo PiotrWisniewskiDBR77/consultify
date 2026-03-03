@@ -1872,7 +1872,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, [initiatives.length, statusCounts]);
 
   const scopeToggle = (
-    <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60">
+    <div
+      className="
+        flex items-center gap-1 p-0.5 rounded-full h-9
+        bg-slate-100 dark:bg-navy-800
+        border border-slate-200/60 dark:border-navy-700/60
+      "
+      role="radiogroup"
+      aria-label={t('execution.scope.aria', 'Scope')}
+    >
       {(
         [
           { id: 'active' as const, label: t('execution.scope.active', 'Active') },
@@ -1882,11 +1890,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         <button
           key={opt.id}
           type="button"
+          role="radio"
+          aria-checked={scope === opt.id}
           onClick={() => {
             setScope(opt.id);
             if (opt.id === 'active') setActiveStatusFilter(null);
           }}
-          className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-colors ${
+          className={`h-8 px-3 rounded-full text-[11px] font-semibold transition-colors ${
             scope === opt.id
               ? 'bg-white/80 dark:bg-navy-900/70 text-slate-700 dark:text-slate-200 shadow-sm'
               : 'text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-navy-900/50'
@@ -1933,27 +1943,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         </button>
       ) : null;
 
-    const demoToggle = (
-      <button
-        type="button"
-        onClick={() => setDemoMode((v) => !v)}
-        className={`h-9 px-3 rounded-lg flex items-center gap-2 border transition-colors ${
-          demoMode
-            ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30'
-            : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-        }`}
-        title={t('execution.demo.toggleHint', 'Toggle demo data for Execution Center (local only)')}
-      >
-        <span className="text-[10px] font-mono uppercase tracking-wide">
-          {t('execution.demo.label', 'Demo')}
-        </span>
-      </button>
-    );
-
     if (!showScope && !showHeatmapShortcut && !showHeatmapControls) {
       return (
         <div className="flex items-center gap-2">
-          {demoToggle}
           {execChip}
         </div>
       );
@@ -2062,7 +2054,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
     return (
       <div className="flex items-center gap-2">
-        {demoToggle}
         {execChip}
         {showScope ? scopeToggle : null}
         {showHeatmapShortcut ? heatmapShortcut : null}
@@ -2074,7 +2065,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     currentProjectId,
     execSnapshotSource,
     execTopline,
-    demoMode,
     scopeToggle,
     t,
     workloadMonthCount,
@@ -3533,6 +3523,129 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [t]
   );
 
+  const commandRowContent = useMemo(() => {
+    const chipBase =
+      'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
+    const badgeBase =
+      'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
+
+    const isAttentionActive = (attention: string) =>
+      activeFilters.some((f) => f.column === 'attention' && String(f.value) === attention);
+
+    const blockedCount = actionCenter.blocked.length;
+    const overdueDecisionsCount = actionCenter.overdueDecisions.length;
+    const missingDatesCount = actionCenter.missingDates.length;
+    const dueSoonTasksCount = actionCenter.dueSoonTasks.length;
+
+    return (
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => openInitiativesWithAttention('blocked')}
+          disabled={blockedCount === 0}
+          className={`${chipBase} ${
+            activeStatusFilter === InitiativeStatus.BLOCKED
+              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+              : blockedCount === 0
+                ? 'bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+          }`}
+          title={t('execution.attention.blocked', 'Blocked')}
+        >
+          <AlertTriangle size={14} className="text-rose-400" />
+          <span>{t('execution.attention.blocked', 'Blocked')}</span>
+          <span
+            className={`${badgeBase} ${
+              activeStatusFilter === InitiativeStatus.BLOCKED
+                ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+                : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+            }`}
+          >
+            {blockedCount}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => openInitiativesWithAttention('overdue_decisions')}
+          disabled={overdueDecisionsCount === 0}
+          className={`${chipBase} ${
+            isAttentionActive('overdue_decisions')
+              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+              : overdueDecisionsCount === 0
+                ? 'bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+          }`}
+          title={t('execution.attention.overdueDecisions', 'Overdue decisions')}
+        >
+          <Scale size={14} className="text-amber-400" />
+          <span>{t('execution.attention.overdueDecisions', 'Overdue decisions')}</span>
+          <span
+            className={`${badgeBase} ${
+              isAttentionActive('overdue_decisions')
+                ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+                : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+            }`}
+          >
+            {overdueDecisionsCount}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => openInitiativesWithAttention('missing_dates')}
+          disabled={missingDatesCount === 0}
+          className={`${chipBase} ${
+            isAttentionActive('missing_dates')
+              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+              : missingDatesCount === 0
+                ? 'bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+          }`}
+          title={t('execution.attention.missingDates', 'Missing dates')}
+        >
+          <Calendar size={14} className="text-yellow-400" />
+          <span>{t('execution.attention.missingDates', 'Missing dates')}</span>
+          <span
+            className={`${badgeBase} ${
+              isAttentionActive('missing_dates')
+                ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+                : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+            }`}
+          >
+            {missingDatesCount}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => openInitiativesWithAttention('due_soon_tasks')}
+          disabled={dueSoonTasksCount === 0}
+          className={`${chipBase} ${
+            isAttentionActive('due_soon_tasks')
+              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+              : dueSoonTasksCount === 0
+                ? 'bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+          }`}
+          title={t('execution.attention.dueSoonTasks', 'Due soon tasks')}
+        >
+          <Clock size={14} className="text-cyan-400" />
+          <span>{t('execution.attention.dueSoonTasks', 'Due soon tasks')}</span>
+          <span
+            className={`${badgeBase} ${
+              isAttentionActive('due_soon_tasks')
+                ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+                : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+            }`}
+          >
+            {dueSoonTasksCount}
+          </span>
+        </button>
+      </div>
+    );
+  }, [activeFilters, actionCenter, activeStatusFilter, openInitiativesWithAttention, t]);
+
   const renderActionCenter = () => (
     <div className="grid gap-4 lg:grid-cols-4" data-testid="execution-action-center">
       <button
@@ -4767,6 +4880,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         }
         rightControls={rightControls}
         availableViewModes={availableViewModes}
+        commandRowContent={commandRowContent}
       >
         {renderContent()}
       </ModuleHub>

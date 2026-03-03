@@ -997,7 +997,7 @@ router.get(
   '/templates/canonical/:reportType',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const reportType = req.params.reportType;
+      const reportType = String(req.params.reportType);
       const template = getCanonicalTemplate(reportType);
 
       if (!template) {
@@ -3538,21 +3538,26 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
           };
         });
 
-        buffer = await pipeline.generateFromLegacyReport({
-          report: {
-            id: rpt.id,
-            name: rpt.title || 'Report',
-            sourceType: rpt.sourceType || rpt.source_type || 'TOOL',
-            sourceFramework: rpt.sourceFramework || rpt.source_framework,
-            organizationName: rpt.organizationName || rpt.organization_name,
-            projectName: rpt.projectName || rpt.project_name,
-            createdAt: rpt.createdAt || rpt.created_at,
-            intentConfig: config?.intentConfig || config?.intent_config,
+        const pipelineResult = await pipeline.generateFromLegacyReport(
+          {
+            report: {
+              id: rpt.id,
+              name: rpt.title || 'Report',
+              sourceType: rpt.sourceType || rpt.source_type || 'TOOL',
+              sourceFramework: rpt.sourceFramework || rpt.source_framework,
+              createdAt: rpt.createdAt || rpt.created_at,
+              intentConfig: config?.intentConfig || config?.intent_config,
+              sections: v2Sections,
+              scoreSummary,
+            } as any,
             sections: v2Sections,
             scoreSummary,
-          } as any,
-          options: { confidentiality: req.body?.confidentiality || req.query?.confidentiality },
-        });
+            organizationName: rpt.organizationName || rpt.organization_name,
+            projectName: rpt.projectName || rpt.project_name,
+          },
+          { confidentiality: req.body?.confidentiality || req.query?.confidentiality } as any
+        );
+        buffer = pipelineResult.buffer;
       } else {
         const { PptxExportService } = await import('../services/report/PptxExportService.js');
         const pptx = new PptxExportService();
@@ -3562,8 +3567,8 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
             name: reportData.report.title || 'Report',
             sourceType: reportData.report.sourceType || 'TOOL',
             sourceFramework: reportData.report.sourceFramework,
-            organizationName: reportData.report.organizationName,
-            projectName: reportData.report.projectName,
+            organizationName: (reportData.report as any).organizationName,
+            projectName: (reportData.report as any).projectName,
             createdAt: reportData.report.createdAt,
             sections: (reportData.sections || []).map((s: any) => ({
               key: s.sectionKey,
@@ -3672,7 +3677,7 @@ router.post('/:id/publish/cloud/:cloudSourceId', async (req: Request, res: Respo
     await ReportBuilderService.createExportRecord({
       reportId: id,
       reportType: 'report_builder',
-      format: `cloud_${format}`,
+      format: `cloud_${format}` as any,
       filePath: uploaded.url || uploaded.fileId,
       fileSize: stats.size,
       language: 'en',

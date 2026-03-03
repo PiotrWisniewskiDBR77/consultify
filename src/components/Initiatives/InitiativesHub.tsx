@@ -952,7 +952,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // Active / All scope toggle (matches agreed UI spec)
   const scopeToggle = (
-    <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60">
+    <div
+      className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+      role="radiogroup"
+      aria-label={t('initiatives.scope.label', 'Scope')}
+    >
       {[
         { id: 'active' as const, label: t('initiatives.scope.active', 'Active') },
         { id: 'all' as const, label: t('initiatives.scope.all', 'All') },
@@ -964,10 +968,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             setScope(opt.id);
             if (opt.id === 'active') setActiveStatusFilter(null);
           }}
-          className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-colors ${
+          className={`inline-flex items-center justify-center h-8 px-3 rounded-full text-[11px] font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
             scope === opt.id
-              ? 'bg-white/80 dark:bg-navy-900/70 text-slate-700 dark:text-slate-200 shadow-sm'
-              : 'text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-navy-900/50'
+              ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+              : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
           }`}
           title={
             opt.id === 'active'
@@ -980,6 +984,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   'Full lifecycle including Draft, Executing, Blocked, Done, Archived...'
                 )
           }
+          role="radio"
+          aria-checked={scope === opt.id}
         >
           {opt.label}
         </button>
@@ -1047,12 +1053,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           }
         })();
       }}
-      className="inline-flex items-center gap-2 h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-primary-600 dark:text-primary-300 hover:bg-primary-50/70 dark:hover:bg-primary-500/10 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 text-sm font-medium"
+      className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-purple-500/30 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-500/20 hover:brightness-110 transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
       title={i18n.language?.startsWith('pl') ? 'Kontekst AI' : 'AI Context'}
       aria-label={i18n.language?.startsWith('pl') ? 'Kontekst AI' : 'AI Context'}
+      data-testid="initiatives-ai-button"
     >
-      <Sparkles size={16} />
-      <span>AI</span>
+      <Sparkles size={18} />
     </button>
   );
 
@@ -1062,15 +1068,17 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         type="button"
         onClick={() => setActiveStatusFilter(null)}
         className={[
-          'inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-sm font-medium border transition-colors',
+          'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900',
           !activeStatusFilter
-            ? 'border-primary-500/40 bg-primary-500/10 text-slate-900 dark:text-slate-100'
+            ? 'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200'
             : 'border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]',
         ].join(' ')}
       >
         <span className="w-2 h-2 rounded-full bg-slate-500" />
-        <span>{t('common.all', 'All')}</span>
-        <span className="text-slate-500 dark:text-slate-400 text-xs">{statusCounts.all ?? 0}</span>
+        <span>ALL</span>
+        <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+          {statusCounts.all ?? 0}
+        </span>
       </button>
       {ALLOWED_STATUSES.map((s) => {
         const meta = STATUS_METADATA[s];
@@ -1080,17 +1088,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           <button
             key={s}
             type="button"
-            onClick={() => setActiveStatusFilter(s)}
+            onClick={() => setActiveStatusFilter(isActive ? null : s)}
             className={[
-              'inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-sm font-medium border transition-colors',
+              'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900',
               isActive
-                ? 'border-primary-500/40 bg-primary-500/10 text-slate-900 dark:text-slate-100'
+                ? 'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200'
                 : 'border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]',
             ].join(' ')}
           >
             <span className={`w-2 h-2 rounded-full ${meta?.dotColor || 'bg-slate-400'}`} />
             <span>{meta?.label || s}</span>
-            <span className="text-slate-500 dark:text-slate-400 text-xs">{count}</span>
+            <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+              {count}
+            </span>
           </button>
         );
       })}

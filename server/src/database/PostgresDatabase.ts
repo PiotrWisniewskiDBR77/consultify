@@ -17,6 +17,7 @@ let readPool: Pool | null = null;
 let initDbPromise: Promise<void> | null = null;
 const SLOW_QUERY_THRESHOLD_MS = 1000;
 let ensuredMissingDatabaseOnce = false;
+let testDatabaseOverride: string | null = null;
 
 function getPrimaryDbName(): string | null {
   const cfg = databaseConfig.postgres as PoolConfig | undefined;
@@ -42,8 +43,21 @@ async function ensureDatabaseExistsForTests(err: any): Promise<boolean> {
     const exists = await client.query('SELECT 1 FROM pg_database WHERE datname = $1', [dbName]);
     if (!exists.rowCount) {
       const safeIdent = `"${dbName.replace(/"/g, '""')}"`;
-      await client.query(`CREATE DATABASE ${safeIdent}`);
-      logger.info('[Postgres] Created missing test database', { database: dbName });
+      try {
+        await client.query(`CREATE DATABASE ${safeIdent}`);
+        logger.info('[Postgres] Created missing test database', { database: dbName });
+      } catch (e: any) {
+        // Common in local dev: user can connect but cannot create DBs.
+        // Fall back to an existing DB so integration tests can still run.
+        if (String(e?.message || '').toLowerCase().includes('permission denied')) {
+          testDatabaseOverride = 'postgres';
+          logger.warn('[Postgres] No permission to create test DB; falling back to postgres database', {
+            requestedDatabase: dbName,
+          });
+          return true;
+        }
+        throw e;
+      }
     }
     return true;
   } catch (e: any) {
@@ -150,13 +164,17 @@ function getPool(): Pool {
     logger.info('[Postgres] Initializing connection pool...');
     // Ensure config is treated as valid PoolConfig or undefined
     const config = databaseConfig.postgres as PoolConfig | undefined;
+    const effectiveConfig =
+      config && process.env.NODE_ENV === 'test' && testDatabaseOverride
+        ? ({ ...(config as any), database: testDatabaseOverride } as PoolConfig)
+        : config;
 
     logger.info('[Postgres] Config:', {
-      host: config?.host,
-      database: config?.database,
-      max: config?.max,
+      host: effectiveConfig?.host,
+      database: effectiveConfig?.database,
+      max: effectiveConfig?.max,
     });
-    pool = new Pool(config);
+    pool = new Pool(effectiveConfig);
 
     pool.on('error', (err: Error, _client: PoolClient) => {
       logger.error('[Postgres] Unexpected error on idle client:', err.message);
@@ -172,7 +190,16 @@ function getPool(): Pool {
       process.env.DB_MANAGED_SCHEMA === '0' ||
       process.env.DB_MANAGED_SCHEMA === 'off';
 
-    if (process.env.NODE_ENV !== 'test' && !skipSchemaInit) {
+    const skipSchemaInitInTests =
+      process.env.POSTGRES_SKIP_INIT_IN_TEST === 'true' ||
+      process.env.POSTGRES_SKIP_INIT_IN_TEST === '1' ||
+      process.env.POSTGRES_SKIP_INIT_IN_TEST === 'yes' ||
+      process.env.POSTGRES_SKIP_INIT_IN_TEST === 'on';
+
+    const shouldInitSchema =
+      !skipSchemaInit && (process.env.NODE_ENV !== 'test' || !skipSchemaInitInTests);
+
+    if (shouldInitSchema) {
       initDbPromise = initDb()
         .then(() => {
           logger.info('[Postgres] Schema initialization completed successfully');
@@ -187,6 +214,8 @@ function getPool(): Pool {
     } else {
       if (skipSchemaInit) {
         logger.warn('[Postgres] DB_MANAGED_SCHEMA is disabled; skipping initDb()');
+      } else if (process.env.NODE_ENV === 'test') {
+        logger.warn('[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)');
       }
       initDbPromise = Promise.resolve();
     }
@@ -840,6 +869,21 @@ async function testConnection(retries = 3, delay = 2000): Promise<boolean> {
       logger.info('[Postgres] Connection test successful (PostgreSQL verified):', result.rows[0]);
       return true;
     } catch (err: any) {
+      // Test-only: recover from missing test DB by creating it (or falling back),
+      // then retry without consuming an attempt.
+      if (await ensureDatabaseExistsForTests(err)) {
+        try {
+          if (pool) await pool.end();
+        } catch {
+          // ignore
+        }
+        pool = null;
+        initDbPromise = null;
+        // Retry immediately (doesn't count as a failed attempt)
+        i -= 1;
+        continue;
+      }
+
       logger.error(
         `[Postgres] Connection test failed (attempt ${i + 1}/${retries}):`,
         (err as Error).message

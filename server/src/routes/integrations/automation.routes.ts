@@ -123,7 +123,7 @@ async function validateIntegrationKey(rawKey: string): Promise<{
   const prefix = body.slice(0, 8);
   if (!prefix) return null;
 
-  const rows = await dbAll<IntegrationApiKey[]>(
+  const rows = await dbAll<IntegrationApiKey>(
     `SELECT * FROM integration_api_keys WHERE key_prefix = ? AND is_active = 1 LIMIT 10`,
     [prefix]
   );
@@ -260,7 +260,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!(await tableExists('integration_api_keys'))) return serviceUnavailable(res);
     const orgId = req.user?.organizationId;
-    const rows = await dbAll<IntegrationApiKey[]>(
+    const rows = await dbAll<IntegrationApiKey>(
       `SELECT id, organization_id, name, key_prefix, permissions, allowed_events, allowed_actions,
               rate_limit_per_minute, rate_limit_per_day, request_count, last_used_at, expires_at, is_active, created_at, created_by
        FROM integration_api_keys

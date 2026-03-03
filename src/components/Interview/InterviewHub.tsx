@@ -1472,19 +1472,29 @@ export const InterviewHub: React.FC = () => {
       ).length;
 
       const chipBase =
-        'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+        'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
       const chipInactive =
         'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
       const chipActive =
-        'border-primary-200 dark:border-primary-500/30 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-200';
+        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
 
       const buttons: Array<{
-        id: 'my' | 'to-approve' | 'overdue';
+        id: 'all' | 'my' | 'to-approve' | 'overdue';
         label: string;
         count: number;
         disabled?: boolean;
         onClick: () => void;
       }> = [
+        {
+          id: 'all',
+          label: 'ALL',
+          count: myInboxCount,
+          onClick: () => {
+            setActiveTab('my-assignments');
+            setAssignmentStatusFilter('all');
+            setActiveDocumentId(null);
+          },
+        },
         {
           id: 'my',
           label: isPolish ? 'Inbox (moja)' : 'My inbox',
@@ -1522,8 +1532,8 @@ export const InterviewHub: React.FC = () => {
       ];
 
       const activeId: 'my' | 'to-approve' | 'overdue' | null =
-        activeTab === 'my-assignments'
-          ? 'my'
+        activeTab === 'my-assignments' && assignmentStatusFilter === 'all'
+          ? null
           : assignmentStatusFilter === 'overdue'
             ? 'overdue'
             : assignmentStatusFilter === 'submitted'
@@ -1539,12 +1549,14 @@ export const InterviewHub: React.FC = () => {
                   key={b.id}
                   onClick={b.onClick}
                   disabled={!!b.disabled}
-                  className={`${chipBase} ${activeId === b.id ? chipActive : chipInactive} ${
+                  className={`${chipBase} ${
+                    (b.id === 'all' ? activeId === null : activeId === b.id) ? chipActive : chipInactive
+                  } ${
                     b.disabled ? 'opacity-60 cursor-not-allowed' : ''
                   }`}
                 >
                   <span>{b.label}</span>
-                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-200">
+                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
                     {b.count}
                   </span>
                 </button>
@@ -1558,11 +1570,11 @@ export const InterviewHub: React.FC = () => {
     // Sessions counters/status chips — Command Row (single line)
     if (activeTab === 'sessions') {
       const chipBase =
-        'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+        'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
       const chipInactive =
         'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
       const chipActive =
-        'border-primary-200 dark:border-primary-500/30 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-200';
+        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
 
       const allCount = sessions.length;
       const inProgressCount = sessions.filter((s) => s.status === 'in_progress').length;
@@ -1619,7 +1631,7 @@ export const InterviewHub: React.FC = () => {
                   className={`${chipBase} ${activeId === b.id ? chipActive : chipInactive}`}
                 >
                   <span>{b.label}</span>
-                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-200">
+                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
                     {b.count}
                   </span>
                 </button>
@@ -1633,11 +1645,11 @@ export const InterviewHub: React.FC = () => {
     // Templates counters/status chips — Command Row (single line)
     if (activeTab === 'templates') {
       const chipBase =
-        'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+        'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
       const chipInactive =
         'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
       const chipActive =
-        'border-primary-200 dark:border-primary-500/30 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-200';
+        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
 
       const buttons: Array<{
         id: 'all' | 'default' | 'active';
@@ -1676,7 +1688,7 @@ export const InterviewHub: React.FC = () => {
                   className={`${chipBase} ${templateStatusFilter === b.id ? chipActive : chipInactive}`}
                 >
                   <span>{b.label}</span>
-                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-200">
+                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
                     {b.count}
                   </span>
                 </button>
@@ -5951,7 +5963,7 @@ Return ONLY the answer text (no markdown fences).`;
               <Search size={18} />
             </button>
 
-            {/* Main Tabs */}
+            {/* Main Tabs (KANON v3: NO counts/badges on main tabs) */}
             <div className="flex items-center gap-2">
               {tabs.map((tab: any) => {
                 const isActive = activeTab === tab.id;
@@ -5970,22 +5982,6 @@ Return ONLY the answer text (no markdown fences).`;
                   >
                     {tab.icon}
                     <span>{tab.label}</span>
-                    {tab.count !== undefined && tab.count > 0 && (
-                      <span
-                        className={`px-1.5 py-0.5 text-xs rounded-full ${
-                          tab.hasWarning
-                            ? 'bg-red-500/30 text-red-300'
-                            : isActive
-                              ? 'bg-primary-500/30 text-primary-300'
-                              : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
-                        }`}
-                      >
-                        {tab.count}
-                      </span>
-                    )}
-                    {tab.hasWarning && overdueAssignments.length > 0 && (
-                      <AlertTriangle size={14} className="text-red-400" />
-                    )}
                   </button>
                 );
               })}
@@ -6165,23 +6161,6 @@ Return ONLY the answer text (no markdown fences).`;
               </button>
             )}
 
-            {/* Assignments Primary CTA + View mode (canonical order for right cluster): AI → Plus → Widok */}
-            {(activeTab === 'my-assignments' || activeTab === 'managed') &&
-              !activeDocumentId &&
-              canAssign && (
-              <button
-                onClick={() => {
-                  setSelectedTemplateForAssign(null);
-                  setShowAssignModal(true);
-                }}
-                className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white border border-blue-400/30 hover:from-blue-400 hover:to-blue-500 shadow-lg shadow-blue-500/20 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                title={isPolish ? 'Wyślij prośbę (assignment)' : 'Send assignment request'}
-              >
-                <Plus size={16} />
-                <span>{isPolish ? 'Przydziel' : 'Assign'}</span>
-              </button>
-            )}
-
             {/* Assignments View Mode Toggle (list / cards) — match MyWork Inbox canonical */}
             {(activeTab === 'my-assignments' || activeTab === 'managed') && !activeDocumentId && (
               <div
@@ -6218,9 +6197,26 @@ Return ONLY the answer text (no markdown fences).`;
               </div>
             )}
 
-            {/* AI — rightmost in the topbar cluster (scan from right: AI → CTA → View) */}
+            {/* Assignments Primary CTA (Add) — SHOULD be next to right edge (before Area/AI) */}
+            {(activeTab === 'my-assignments' || activeTab === 'managed') &&
+              !activeDocumentId &&
+              canAssign && (
+              <button
+                onClick={() => {
+                  setSelectedTemplateForAssign(null);
+                  setShowAssignModal(true);
+                }}
+                className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white border border-blue-400/30 hover:from-blue-400 hover:to-blue-500 shadow-lg shadow-blue-500/20 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+                title={isPolish ? 'Wyślij prośbę (assignment)' : 'Send assignment request'}
+              >
+                <Plus size={16} />
+                <span>{isPolish ? 'Przydziel' : 'Assign'}</span>
+              </button>
+            )}
+
+            {/* Area/AI — rightmost in the topbar cluster */}
             <button
-              className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-primary-600 dark:text-primary-300 hover:bg-primary-50/70 dark:hover:bg-primary-500/10 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-purple-500/30 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-500/20 hover:brightness-110 transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
               title={isPolish ? 'Kontekst AI' : 'AI Context'}
             >
               <Sparkles size={18} />

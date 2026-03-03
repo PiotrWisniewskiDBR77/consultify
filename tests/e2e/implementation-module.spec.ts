@@ -9,6 +9,28 @@ import { expect, Page, test } from '@playwright/test';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 
+async function dismissTourModal(page: Page) {
+  const skipTour = page.getByRole('button', { name: /Skip tour|Pomiń/i }).first();
+  const consultantCard = page.getByRole('button', { name: /Consultant|Konsultant/i }).first();
+  const welcomeTitle = page.getByText(/Welcome to Consultinity|Witamy w Consultinity/i);
+
+  for (let i = 0; i < 12; i++) {
+    const hasSkip = await skipTour.isVisible().catch(() => false);
+    const hasWelcome = await welcomeTitle.isVisible().catch(() => false);
+
+    if (hasSkip) await skipTour.click({ timeout: 1500, force: true }).catch(() => {});
+    if (hasWelcome) await consultantCard.click({ timeout: 1500, force: true }).catch(() => {});
+
+    await page.keyboard.press('Escape').catch(() => {});
+
+    const stillVisible =
+      (await skipTour.isVisible().catch(() => false)) ||
+      (await welcomeTitle.isVisible().catch(() => false));
+    if (!stillVisible) return;
+    await page.waitForTimeout(200);
+  }
+}
+
 async function login(page: Page) {
   const response = await page.request.post(`${API_BASE_URL}/api/auth/demo-login`);
   if (!response.ok()) {
@@ -34,6 +56,7 @@ async function login(page: Page) {
 
   // Ensure we have a proper origin so localStorage is accessible in subsequent steps.
   await page.goto('/dashboard');
+  await dismissTourModal(page);
 }
 
 async function getAuthToken(page: Page) {
@@ -80,6 +103,7 @@ test.describe('Implementation Module (Execution Center)', () => {
 
   test('renders module and exposes view modes', async ({ page }) => {
     await page.goto('/implementation');
+    await dismissTourModal(page);
 
     await expect(page.locator('#root')).toBeAttached();
     // View mode toggle is shown when tab exposes >1 mode (Reporting tab).
@@ -117,6 +141,7 @@ test.describe('Implementation Module (Execution Center)', () => {
     }
 
     await page.goto('/implementation');
+    await dismissTourModal(page);
 
     // Open Timeline view
     await page.getByRole('button', { name: /Reporting|Raportowanie/i }).click();
@@ -131,7 +156,7 @@ test.describe('Implementation Module (Execution Center)', () => {
     await expect(page.getByText(rowText)).toBeVisible();
 
     // Remove dependency in UI
-    await page.getByRole('button', { name: /Remove/i }).first().click();
+    await page.getByRole('button', { name: /Remove/i }).first().click({ force: true });
     await expect(page.getByText(rowText)).not.toBeVisible();
 
     // Verify backend state updated (no dependency for this edge)

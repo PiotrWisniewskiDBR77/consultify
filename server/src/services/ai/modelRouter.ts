@@ -385,10 +385,11 @@ export class ModelRouter {
       const candidatesAfterRules = applied.candidates || [];
       const strategy = applied.selectionStrategy?.kind || 'round_robin';
 
-      const selectedModel =
+      const selectedModel = (
         strategy === 'weighted_random' && candidatesAfterRules.length > 0
           ? routingRulesService.pickWeightedRandom(candidatesAfterRules as any, applied.selectionStrategy?.weights)
-          : await this.selectWithRoundRobin(tier, organizationId, candidatesAfterRules as any);
+          : await this.selectWithRoundRobin(tier, organizationId, candidatesAfterRules as any)
+      ) as ProviderRow | null;
       if (selectedModel) {
         aiLogger.info(
           'ModelRouter',

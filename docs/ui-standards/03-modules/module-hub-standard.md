@@ -109,7 +109,11 @@ Pod Module Topbar zawsze istnieje **jeden stały rząd**, który pełni 1 z 3 r�
 **Reguły:**
 
 - **MUST:** na ekranie nie mogą istnieć 2–3 dodatkowe rzędy filtrów/toolbarów między topbarem a tabelą.
-- **MUST:** klik w “counter chip” ustawia filtr (i pokazuje stan aktywny).
+- **MUST:** “counter chips” to **presety filtrów**, nie “liczniki do patrzenia”.
+  - **MUST:** od lewej zawsze jest **`ALL`** — klik resetuje presety i oznacza, że **żaden preset nie filtruje**.
+  - **MUST:** pozostałe chipy po kliknięciu **filtrują kolekcję** do danej grupy (np. Overdue / Critical / This week / Saved / AI).
+  - **MUST:** tryb jest **single‑select** (aktywny jest maksymalnie 1 preset). Klik w aktywny preset wraca do `ALL`.
+  - **MUST:** aktywny preset jest **wyróżniony fioletem** (spójnie z innymi stanami “selected” w aplikacji).
 - **SHOULD:** jeśli otwarty jest czat lub inny panel, ten rząd nie rozpycha layoutu — content area ma priorytet.
 - **Priorytet trybów (MUST):** **Bulk actions** nadpisuje pozostałe tryby (to jest “szybkie wybieranie i działanie”). Search ma priorytet nad tabs/counters. Tabs mają priorytet nad counters.
 - **Hierarchia wizualna (MUST):** elementy w **Command Row** są **symbolicznie mniejsze** niż główne taby/topbar (żeby nie wyglądały jak ten sam poziom nawigacji).

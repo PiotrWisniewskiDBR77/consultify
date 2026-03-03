@@ -20,6 +20,8 @@ import {
   CheckSquare,
   ChevronDown,
   Clock,
+  Eye,
+  EyeOff,
   FileText,
   Flame,
   Flag,
@@ -58,7 +60,7 @@ import { useUserCan } from '@/hooks/useUserCan';
 import { useAppStore } from '@/store/useAppStore';
 
 import { DecisionsPanelContent, type DecisionsBulkBarPayload } from './DecisionsPanelContent';
-import type { FocusItem } from './Focus/FocusView';
+import type { FocusFilter, FocusItem, FocusSort } from './Focus/FocusView';
 import { InboxContent, type InboxBulkBarPayload, type InboxCounts } from './InboxContent';
 import type { MyIdea } from './MyIdeasListContent';
 import { MyIdeasListContent } from './MyIdeasListContent';
@@ -332,6 +334,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [inboxStatusTab, setInboxStatusTab] = useState<'open' | 'done' | 'saved' | 'all'>('open');
   const [inboxSection, setInboxSection] = useState<'today' | 'this_week' | 'all'>('all');
   const [inboxActionRequiredOnly, setInboxActionRequiredOnly] = useState(false);
+  type InboxPreset =
+    | 'all'
+    | 'overdue'
+    | 'saved'
+    | 'ai'
+    | 'critical'
+    | 'action_required'
+    | 'today'
+    | 'this_week';
+  const [inboxPreset, setInboxPreset] = useState<InboxPreset>('all');
   const [inboxCounts, setInboxCounts] = useState<InboxCounts | null>(null);
   const [inboxBulkUi, setInboxBulkUi] = useState<{
     selectedCount: number;
@@ -353,6 +365,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         ? 'ai_suggestions'
         : null;
   const [notebookCreateReqId, setNotebookCreateReqId] = useState(0);
+
+  // Focus (KANON v3): no extra toolbars inside content — controls live in Command Row / Tool slot
+  const [focusFilter, setFocusFilter] = useState<FocusFilter>('all');
+  const [focusHideCompleted, setFocusHideCompleted] = useState(false);
+  const [focusSort, setFocusSort] = useState<FocusSort>('manual');
+  const [focusShowAIPlan, setFocusShowAIPlan] = useState(false);
   const [decisionFilter, setDecisionFilter] = useState<DecisionFilter>('my');
   const [decisionPriorityFilter, setDecisionPriorityFilter] =
     useState<DecisionPriorityFilter>('all');
@@ -1091,6 +1109,17 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     setInboxCounts(counts);
   }, []);
 
+  const applyInboxPreset = useCallback(
+    (next: InboxPreset) => {
+      // Canon v3: "ALL" means no preset filters are active.
+      setInboxPreset(next);
+      setInboxStatusTab(next === 'saved' ? 'saved' : 'open');
+      setInboxSection(next === 'today' ? 'today' : next === 'this_week' ? 'this_week' : 'all');
+      setInboxActionRequiredOnly(next === 'action_required');
+    },
+    []
+  );
+
   const handleInboxBulkBarChange = useCallback((payload: InboxBulkBarPayload | null) => {
     if (!payload) {
       setInboxBulkUi(null);
@@ -1113,6 +1142,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     if (activeTab !== 'inbox') {
       setInboxBulkUi(null);
       inboxBulkActionsRef.current = null;
+      setInboxPreset('all');
+      setInboxStatusTab('open');
+      setInboxSection('all');
+      setInboxActionRequiredOnly(false);
     }
   }, [activeTab]);
 
@@ -1391,11 +1424,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     // Tasks: filters as a single Command Row (no extra toolbars/strips).
     if (activeTab === 'tasks') {
       const chipBase =
-        'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+        'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
       const chipInactive =
         'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
       const chipActive =
-        'border-primary-200 dark:border-primary-500/30 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-200';
+        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
 
       // V3-A03: bulk selection is a *mode* of the same command row (no extra line).
       if (tasksBulkUi?.selectedCount) {
@@ -1491,22 +1524,23 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     // Inbox: render all controls as a single Command Row (SSOT: module-hub + app-table).
     if (activeTab === 'inbox') {
       const c = inboxCounts;
-      const statusButtons: Array<{ id: 'open' | 'done' | 'saved' | 'all'; label: string; count: number }> =
-        [
-          { id: 'open', label: isPolish ? 'Otwarte' : 'Open', count: c?.counts.open ?? 0 },
-          { id: 'done', label: isPolish ? 'Gotowe' : 'Done', count: c?.counts.done ?? 0 },
-          { id: 'saved', label: isPolish ? 'Zapisane' : 'Saved', count: c?.counts.saved ?? 0 },
-          { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: c?.total ?? tabCounts.inbox },
-        ];
-
-      // Time scope: only two chips. Clicking active chip again resets to "all".
-      const timeScopeButtons: Array<{ id: 'today' | 'this_week'; label: string; count: number }> = [
-        { id: 'today', label: isPolish ? 'Nowe dziś' : 'New today', count: c?.newToday ?? 0 },
+      const presets: Array<{
+        id: InboxPreset;
+        label: string;
+        count: number;
+      }> = [
+        { id: 'all', label: isPolish ? 'Wszystkie' : 'ALL', count: c?.counts.open ?? tabCounts.inbox },
+        { id: 'overdue', label: isPolish ? 'Zaległe' : 'Overdue', count: c?.overdue ?? 0 },
+        { id: 'saved', label: isPolish ? 'Zapisane' : 'Saved', count: c?.counts.saved ?? 0 },
+        { id: 'ai', label: isPolish ? 'AI' : 'AI', count: c?.ai ?? 0 },
+        { id: 'critical', label: isPolish ? 'Krytyczne' : 'Critical', count: c?.critical ?? 0 },
         {
-          id: 'this_week',
-          label: isPolish ? 'Nowe tydzień' : 'New this week',
-          count: c?.newThisWeek ?? 0,
+          id: 'action_required',
+          label: isPolish ? 'Wymaga akcji' : 'Action required',
+          count: c?.actionRequired ?? 0,
         },
+        { id: 'today', label: isPolish ? 'Dziś' : 'Today', count: c?.newToday ?? 0 },
+        { id: 'this_week', label: isPolish ? 'Ten tydz.' : 'This week', count: c?.newThisWeek ?? 0 },
       ];
 
       const chipBase =
@@ -1514,7 +1548,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       const chipInactive =
         'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
       const chipActive =
-        'border-primary-200 dark:border-primary-500/30 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-200';
+        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
 
       // V3-A03: bulk selection is a *mode* of the same command row (no extra line).
       if (inboxBulkUi?.selectedCount) {
@@ -1584,63 +1618,26 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       return (
         <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
-            {/* Status */}
-            <div className="inline-flex items-center gap-1">
-              {statusButtons.map((b) => (
+            {presets.map((p) => {
+              const isActive = inboxPreset === p.id;
+              const disabled = p.id !== 'all' && p.count === 0;
+              return (
                 <button
-                  key={b.id}
-                  onClick={() => setInboxStatusTab(b.id)}
-                  className={`${chipBase} ${inboxStatusTab === b.id ? chipActive : chipInactive}`}
+                  key={p.id}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => applyInboxPreset(isActive ? 'all' : p.id)}
+                  className={`${chipBase} ${isActive ? chipActive : chipInactive} ${
+                    disabled ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
-                  <span>{b.label}</span>
+                  <span>{p.label}</span>
                   <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
-                    {b.count}
+                    {p.count}
                   </span>
                 </button>
-              ))}
-            </div>
-
-            <div className="w-px h-6 bg-slate-200 dark:bg-navy-600 shrink-0" />
-
-            {/* Counters (keep only signal counters; remove "In queue" duplication) */}
-            {(c?.critical ?? 0) > 0 && (
-              <button className={`${chipBase} ${chipInactive}`} onClick={() => setInboxSection('all')}>
-                <span>{isPolish ? 'Krytyczne' : 'Critical'}</span>
-                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
-                  {c?.critical ?? 0}
-                </span>
-              </button>
-            )}
-            {(c?.actionRequired ?? 0) > 0 && (
-              <button
-                onClick={() => setInboxActionRequiredOnly(!inboxActionRequiredOnly)}
-                className={`${chipBase} ${inboxActionRequiredOnly ? chipActive : chipInactive}`}
-                title={isPolish ? 'Pokaż tylko wymagające akcji' : 'Show only items needing my action'}
-              >
-                <span>{isPolish ? 'Wymaga akcji' : 'Action required'}</span>
-                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
-                  {c?.actionRequired ?? 0}
-                </span>
-              </button>
-            )}
-
-            <div className="w-px h-6 bg-slate-200 dark:bg-navy-600 shrink-0" />
-
-            {/* Time scope */}
-            <div className="inline-flex items-center gap-1">
-              {timeScopeButtons.map((b) => (
-                <button
-                  key={b.id}
-                  onClick={() => setInboxSection(inboxSection === b.id ? 'all' : b.id)}
-                  className={`${chipBase} ${inboxSection === b.id ? chipActive : chipInactive}`}
-                >
-                  <span>{b.label}</span>
-                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
-                    {b.count}
-                  </span>
-                </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
         </div>
       );
@@ -1653,7 +1650,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       const chipInactive =
         'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
       const chipActive =
-        'border-primary-200 dark:border-primary-500/30 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-200';
+        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
 
       return (
         <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
@@ -1784,6 +1781,83 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       );
     }
 
+    // Focus: board controls live in Command Row (no extra toolbar strips in content).
+    if (activeTab === 'focus' && !activeDocumentId) {
+      const chipBase =
+        'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+      const chipInactive =
+        'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
+      const chipActive =
+        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
+
+      const sortLabel =
+        focusSort === 'manual'
+          ? isPolish
+            ? 'Manual'
+            : 'Manual'
+          : focusSort === 'priority'
+            ? isPolish
+              ? 'Priority'
+              : 'Priority'
+            : isPolish
+              ? 'Due date'
+              : 'Due date';
+
+      return (
+        <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
+          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
+            {/* Type filter */}
+            <div className="inline-flex items-center gap-1">
+              {(
+                [
+                  { id: 'all' as const, labelPl: 'All', labelEn: 'All' },
+                  { id: 'tasks' as const, labelPl: 'Tasks', labelEn: 'Tasks' },
+                  { id: 'decisions' as const, labelPl: 'Decisions', labelEn: 'Decisions' },
+                ] as const
+              ).map((f) => {
+                const isActive = focusFilter === f.id;
+                return (
+                  <button
+                    key={f.id}
+                    onClick={() => setFocusFilter(f.id)}
+                    className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
+                  >
+                    <span>{isPolish ? f.labelPl : f.labelEn}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="w-px h-6 bg-slate-200 dark:bg-navy-600 shrink-0" />
+
+            {/* Hide completed */}
+            <button
+              onClick={() => setFocusHideCompleted((v) => !v)}
+              className={`${chipBase} ${focusHideCompleted ? chipActive : chipInactive}`}
+              title={isPolish ? 'Ukryj ukończone' : 'Hide completed'}
+            >
+              {focusHideCompleted ? <EyeOff size={14} /> : <Eye size={14} />}
+              <span>{isPolish ? 'Hide done' : 'Hide done'}</span>
+            </button>
+
+            {/* Sort (cycle) */}
+            <button
+              onClick={() =>
+                setFocusSort((prev) =>
+                  prev === 'manual' ? 'priority' : prev === 'priority' ? 'dueDate' : 'manual'
+                )
+              }
+              className={`${chipBase} ${chipInactive}`}
+              title={isPolish ? 'Sortowanie' : 'Sort'}
+            >
+              <List size={14} />
+              <span>{isPolish ? `Sort: ${sortLabel}` : `Sort: ${sortLabel}`}</span>
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     // Default cross-tab alerts (tasks/decisions/inbox)
     const chips: Array<{ key: string; label: string; count: number; onClick: () => void }> = [
       {
@@ -1835,10 +1909,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             <button
               key={c2.key}
               onClick={c2.onClick}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+              className="inline-flex items-center gap-1.5 h-8 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] px-2.5 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
             >
               <span>{c2.label}</span>
-              <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-200">
+              <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
                 {c2.count}
               </span>
             </button>
@@ -1968,6 +2042,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             onInboxSectionChange={setInboxSection}
             actionRequiredOnly={inboxActionRequiredOnly}
             onActionRequiredOnlyChange={setInboxActionRequiredOnly}
+            criticalOnly={inboxPreset === 'critical'}
+            overdueOnly={inboxPreset === 'overdue'}
+            aiOnly={inboxPreset === 'ai'}
           />
         );
       case 'focus':
@@ -1986,6 +2063,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               }}
               onNavigateToInbox={() => setActiveTab('inbox')}
               refreshTrigger={refreshTrigger}
+              controls={{
+                filter: focusFilter,
+                onFilterChange: setFocusFilter,
+                hideCompleted: focusHideCompleted,
+                onHideCompletedChange: setFocusHideCompleted,
+                sort: focusSort,
+                onSortChange: setFocusSort,
+                showAIPlan: focusShowAIPlan,
+                onShowAIPlanChange: setFocusShowAIPlan,
+              }}
             />
           </React.Suspense>
         );
@@ -2140,6 +2227,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       setNotebookLinkedIdeasOpen(false);
       setNotebookTopicsOpen(false);
       setNotebookChatOpen(false);
+    }
+  }, [activeTab]);
+
+  // Focus tools should not leak across tabs
+  useEffect(() => {
+    if (activeTab !== 'focus') {
+      setFocusShowAIPlan(false);
     }
   }, [activeTab]);
 
@@ -2379,6 +2473,24 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             )}
 
             {/* Tools */}
+            {/* Focus: AI Plan (Tool slot) — no extra toolbars inside content */}
+            {activeTab === 'focus' && !activeDocumentId && (
+              <button
+                onClick={() => setFocusShowAIPlan((v) => !v)}
+                className={`inline-flex items-center gap-2 h-9 px-3 rounded-full border text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                  focusShowAIPlan
+                    ? 'border-purple-400/40 dark:border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-200'
+                    : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-purple-50/70 dark:hover:bg-purple-500/10 hover:text-purple-700 dark:hover:text-purple-200'
+                }`}
+                title={isPolish ? 'Plan dnia (AI)' : 'AI Day Plan'}
+                aria-pressed={focusShowAIPlan}
+                data-testid="mywork-focus-ai-plan"
+              >
+                <Sparkles size={16} />
+                <span>{isPolish ? 'AI Plan' : 'AI Plan'}</span>
+              </button>
+            )}
+
             {/* Ideas workspace tools toggle — when an idea document is open */}
             {activeTab === 'ideas' && activeDocumentId && (
               <div
@@ -2528,7 +2640,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {/* AI (rightmost) */}
             <button
               onClick={handlePlanWithAI}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-purple-200/70 dark:border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-500/15 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-purple-500/30 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-500/20 hover:brightness-110 transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
               title={isPolish ? 'Kontekst AI' : 'AI Context'}
               data-testid="mywork-ai-button"
             >

@@ -39,6 +39,11 @@ export interface ROIInitiativeItem {
   ownerName?: string;
 }
 
+interface ROITrackingViewProps {
+  /** When changed, forces data refetch (used by topbar "Add" flow). */
+  refreshNonce?: number;
+}
+
 interface PortfolioSummary {
   items: ROIInitiativeItem[];
   summary: {
@@ -170,7 +175,7 @@ const StatusBadge: React.FC<{ status: ROIStatus }> = ({ status }) => {
   );
 };
 
-export const ROITrackingView: React.FC = () => {
+export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }) => {
   const { t } = useTranslation();
   const [items, setItems] = useState<ROIInitiativeItem[]>([]);
   const [summary, setSummary] = useState<PortfolioSummary['summary'] | null>(null);
@@ -199,7 +204,7 @@ export const ROITrackingView: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, refreshNonce]);
 
   const filteredItems = useMemo(() => {
     let list = [...items].map((i) => ({ ...i, roiStatus: deriveROIStatus(i) }));

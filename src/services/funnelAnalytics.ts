@@ -93,6 +93,7 @@ export type FunnelEventName =
   | 'notebook_convert_triggered'
   | 'mywork_convert_clicked'
   | 'mywork_convert_completed'
+  | 'ideas_tool_switched'
   // Notebook — extra UI actions used in My Work notebook
   | 'notebook_action_item_created'
   | 'notebook_action_items_bulk_created'

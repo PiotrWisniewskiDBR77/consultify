@@ -114,7 +114,7 @@ Return a JSON object:
             { type: 'text', text: systemPrompt },
             {
               type: 'image',
-              source: { type: 'url', url: input.imageUrl, media_type: 'image/png' },
+              source: { type: 'url', url: input.imageUrl },
             },
             { type: 'text', text: `Original prompt: "${input.originalPrompt}"` },
           ],

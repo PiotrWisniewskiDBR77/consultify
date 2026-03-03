@@ -508,7 +508,7 @@ router.post(
     const { checkDeckQualityGates } = await import(
       '../services/presentationQualityGatesService.js'
     );
-    const report = await checkDeckQualityGates(orgId, deckId);
+    const report = await checkDeckQualityGates(orgId, String(deckId));
     res.json({ success: true, data: report });
   })
 );

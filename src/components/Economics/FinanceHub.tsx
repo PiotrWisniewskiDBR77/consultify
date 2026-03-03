@@ -609,62 +609,72 @@ export const FinanceHub: React.FC = () => {
   // ---- Command Row ----
   const commandRowContent = useMemo(() => {
     const total = rowsForActiveTab.length;
-    const chips = [
+    const chips: Array<{
+      id: 'all' | 'DRAFT' | 'REVIEW' | 'APPROVED';
+      label: string;
+      count: number;
+      active: boolean;
+    }> = [
       {
+        id: 'all',
         label: t('finance.counters.all', 'Wszystkie'),
         count: total,
-        active: activeFilters.length === 0,
+        active: !activeFilters.some((f) => f.column === 'status'),
       },
       {
+        id: 'DRAFT',
         label: t('finance.counters.draft', 'Draft'),
         count: statusCounts.DRAFT,
-        active: activeFilters.some((f) => f.value === 'DRAFT'),
+        active: activeFilters.some((f) => f.column === 'status' && f.value === 'DRAFT'),
       },
       {
+        id: 'REVIEW',
         label: t('finance.counters.review', 'Review'),
         count: statusCounts.REVIEW,
-        active: activeFilters.some((f) => f.value === 'REVIEW'),
+        active: activeFilters.some((f) => f.column === 'status' && f.value === 'REVIEW'),
       },
       {
+        id: 'APPROVED',
         label: t('finance.counters.approved', 'Approved'),
         count: statusCounts.APPROVED,
-        active: activeFilters.some((f) => f.value === 'APPROVED'),
+        active: activeFilters.some((f) => f.column === 'status' && f.value === 'APPROVED'),
       },
     ];
     return (
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
         {chips.map((chip) => (
           <button
-            key={chip.label}
+            key={chip.id}
             onClick={() => {
-              if (chip.label === t('finance.counters.all', 'Wszystkie')) {
-                handleClearFilters();
+              if (chip.id === 'all') {
+                setActiveFilters((prev) => prev.filter((f) => f.column !== 'status'));
                 return;
               }
-              const statusValue =
-                chip.label === t('finance.counters.draft', 'Draft')
-                  ? 'DRAFT'
-                  : chip.label === t('finance.counters.review', 'Review')
-                    ? 'REVIEW'
-                    : 'APPROVED';
-              if (chip.active)
-                setActiveFilters((prev) => prev.filter((f) => f.value !== statusValue));
-              else
-                setActiveFilters((prev) => [
-                  ...prev.filter((f) => f.column !== 'status'),
-                  {
-                    id: `status-${statusValue}`,
-                    column: 'status',
-                    value: statusValue,
-                    label: chip.label,
-                  },
-                ]);
+              const statusValue = chip.id;
+              if (chip.active) {
+                setActiveFilters((prev) =>
+                  prev.filter((f) => !(f.column === 'status' && f.value === statusValue))
+                );
+                return;
+              }
+              setActiveFilters((prev) => [
+                ...prev.filter((f) => f.column !== 'status'),
+                { id: `status-${statusValue}`, column: 'status', value: statusValue, label: chip.label },
+              ]);
             }}
-            className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-sm font-medium transition-colors duration-150 ${chip.active ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border border-primary-500/40' : 'text-slate-600 dark:text-slate-400 border border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'}`}
+            className={`h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap ${
+              chip.active
+                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                : 'bg-slate-50 dark:bg-navy-950/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+            }`}
           >
             <span>{chip.label}</span>
             <span
-              className={`px-1.5 py-0.5 text-[11px] rounded-full ${chip.active ? 'bg-primary-500/30 text-primary-600 dark:text-primary-300' : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'}`}
+              className={`px-1.5 py-0.5 text-[10px] rounded-full font-semibold tabular-nums leading-none ${
+                chip.active
+                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
+              }`}
             >
               {chip.count}
             </span>
@@ -672,7 +682,7 @@ export const FinanceHub: React.FC = () => {
         ))}
       </div>
     );
-  }, [rowsForActiveTab.length, statusCounts, activeFilters, t, handleClearFilters]);
+  }, [rowsForActiveTab.length, statusCounts, activeFilters, t]);
 
   const emptyMessage = useMemo(() => {
     const messages: Record<FinanceKind, string> = {

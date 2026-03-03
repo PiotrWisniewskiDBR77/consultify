@@ -237,6 +237,10 @@ export interface InboxCounts {
   total: number;
   critical: number;
   actionRequired: number;
+  /** Items that are overdue / SLA-breached (derived client-side). */
+  overdue: number;
+  /** Items with AI origin / AI insights (derived client-side). */
+  ai: number;
   newToday: number;
   newThisWeek: number;
   counts: {
@@ -276,6 +280,15 @@ interface InboxContentProps {
   /** Controlled: action-required filter */
   actionRequiredOnly?: boolean;
   onActionRequiredOnlyChange?: (next: boolean) => void;
+  /** Controlled: critical-only preset (Command Row). */
+  criticalOnly?: boolean;
+  onCriticalOnlyChange?: (next: boolean) => void;
+  /** Controlled: overdue-only preset (Command Row). */
+  overdueOnly?: boolean;
+  onOverdueOnlyChange?: (next: boolean) => void;
+  /** Controlled: AI-only preset (Command Row). */
+  aiOnly?: boolean;
+  onAiOnlyChange?: (next: boolean) => void;
   /** V3-A03: command row override mode (bulk selection) */
   onBulkBarChange?: (payload: InboxBulkBarPayload | null) => void;
 }
@@ -1203,6 +1216,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   onInboxSectionChange,
   actionRequiredOnly: controlledActionRequiredOnly,
   onActionRequiredOnlyChange,
+  criticalOnly: controlledCriticalOnly,
+  onCriticalOnlyChange,
+  overdueOnly: controlledOverdueOnly,
+  onOverdueOnlyChange,
+  aiOnly: controlledAiOnly,
+  onAiOnlyChange,
   onBulkBarChange,
 }) => {
   const { i18n } = useTranslation();
@@ -1290,6 +1309,37 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     [controlledActionRequiredOnly, onActionRequiredOnlyChange]
   );
 
+  // N2+: Preset filters (Command Row)
+  const [uncontrolledCriticalOnly, setUncontrolledCriticalOnly] = useState(false);
+  const criticalOnly = controlledCriticalOnly ?? uncontrolledCriticalOnly;
+  const setCriticalOnly = useCallback(
+    (next: boolean) => {
+      onCriticalOnlyChange?.(next);
+      if (!controlledCriticalOnly) setUncontrolledCriticalOnly(next);
+    },
+    [controlledCriticalOnly, onCriticalOnlyChange]
+  );
+
+  const [uncontrolledOverdueOnly, setUncontrolledOverdueOnly] = useState(false);
+  const overdueOnly = controlledOverdueOnly ?? uncontrolledOverdueOnly;
+  const setOverdueOnly = useCallback(
+    (next: boolean) => {
+      onOverdueOnlyChange?.(next);
+      if (!controlledOverdueOnly) setUncontrolledOverdueOnly(next);
+    },
+    [controlledOverdueOnly, onOverdueOnlyChange]
+  );
+
+  const [uncontrolledAiOnly, setUncontrolledAiOnly] = useState(false);
+  const aiOnly = controlledAiOnly ?? uncontrolledAiOnly;
+  const setAiOnly = useCallback(
+    (next: boolean) => {
+      onAiOnlyChange?.(next);
+      if (!controlledAiOnly) setUncontrolledAiOnly(next);
+    },
+    [controlledAiOnly, onAiOnlyChange]
+  );
+
   // L4: Auto-triage
   const [autoTriageSuggestions, setAutoTriageSuggestions] = useState<any[]>([]);
   const [autoTriageLoading, setAutoTriageLoading] = useState(false);
@@ -1317,10 +1367,36 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         const d = new Date(i.receivedAt || '');
         return d >= todayStart && d < weekEnd;
       }).length;
+
+      const nowTs = Date.now();
+      const overdue = items.filter((i) => {
+        if (i.itemStatus !== 'open') return false;
+        if (i.sla?.isBreached) return true;
+        if (i.sla?.dueAt) {
+          const due = new Date(i.sla.dueAt).getTime();
+          return Number.isFinite(due) && due < nowTs;
+        }
+        if (i.dueDate) {
+          const due = new Date(i.dueDate).getTime();
+          return Number.isFinite(due) && due < nowTs;
+        }
+        return false;
+      }).length;
+
+      const ai = items.filter((i) => {
+        const src = i.source?.type || 'system';
+        if (src === 'ai') return true;
+        if (i.type === 'ai_suggestion') return true;
+        if (i.section === 'ai_insights') return true;
+        return false;
+      }).length;
+
       onCountsChange({
         total: res?.summary?.total || 0,
         critical: res?.summary?.critical || 0,
         actionRequired: res?.summary?.actionRequired || 0,
+        overdue,
+        ai,
         newToday: res?.summary?.newToday ?? newToday,
         newThisWeek,
         counts: {
@@ -1385,8 +1461,40 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       result = result.filter((item) => sourceFilter.includes(item.source?.type || 'system'));
     // N2: Action required filter
     if (actionRequiredOnly) result = result.filter((item) => item.isActionable);
+
+    if (criticalOnly)
+      result = result.filter(
+        (item) => item.urgency === 'critical' || item.severity === 'CRITICAL'
+      );
+
+    if (overdueOnly) {
+      const nowTs = Date.now();
+      result = result.filter((item) => {
+        if (item.itemStatus !== 'open') return false;
+        if (item.sla?.isBreached) return true;
+        if (item.sla?.dueAt) {
+          const due = new Date(item.sla.dueAt).getTime();
+          return Number.isFinite(due) && due < nowTs;
+        }
+        if (item.dueDate) {
+          const due = new Date(item.dueDate).getTime();
+          return Number.isFinite(due) && due < nowTs;
+        }
+        return false;
+      });
+    }
+
+    if (aiOnly)
+      result = result.filter((item) => {
+        const src = item.source?.type || 'system';
+        if (src === 'ai') return true;
+        if (item.type === 'ai_suggestion') return true;
+        if (item.section === 'ai_insights') return true;
+        return false;
+      });
+
     return result;
-  }, [items, tableFilters, actionRequiredOnly]);
+  }, [items, tableFilters, actionRequiredOnly, aiOnly, criticalOnly, overdueOnly]);
 
   // ── Deduplicated groups ──
   const groups = useMemo(() => groupItems(filteredItems), [filteredItems]);

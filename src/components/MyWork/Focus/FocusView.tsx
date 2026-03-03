@@ -45,9 +45,6 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
-  Eye,
-  EyeOff,
-  Filter,
   GripVertical,
   ListChecks,
   Loader2,
@@ -66,15 +63,14 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { PreviewPaneShell } from '@/components/ui/ResizableTable/PreviewPaneShell';
 import { Api } from '../../../services/api';
 import type { PMOCategory } from '../../../types/myWork';
 import { type RowAction, RowActionsMenu } from '../../shared/RowActionsMenu';
 import { DueDateIndicator } from '../shared/DueDateIndicator';
 import { EmptyState } from '../shared/EmptyState';
 import { getPMOCategory, PMOPriorityBadge } from '../shared/PMOPriorityBadge';
-import { AICoachPanel } from './AICoachPanel';
 import { AIPlanView } from './AIPlanView';
-import { NudgeStrip } from './NudgeStrip';
 
 // ============================================================================
 // TYPES
@@ -84,8 +80,8 @@ export type FocusColumn = 'today' | 'thisWeek' | 'later';
 
 export type FocusItemType = 'task' | 'decision';
 
-type FocusFilter = 'all' | 'tasks' | 'decisions';
-type FocusSort = 'manual' | 'priority' | 'dueDate';
+export type FocusFilter = 'all' | 'tasks' | 'decisions';
+export type FocusSort = 'manual' | 'priority' | 'dueDate';
 
 export interface FocusItem {
   id: string;
@@ -121,6 +117,16 @@ interface FocusViewProps {
   onItemClick?: (item: FocusItem) => void;
   onNavigateToInbox?: () => void;
   refreshTrigger?: number;
+  controls?: {
+    filter: FocusFilter;
+    onFilterChange: (f: FocusFilter) => void;
+    hideCompleted: boolean;
+    onHideCompletedChange: (v: boolean) => void;
+    sort: FocusSort;
+    onSortChange: (s: FocusSort) => void;
+    showAIPlan: boolean;
+    onShowAIPlanChange: (v: boolean) => void;
+  };
 }
 
 // ============================================================================
@@ -204,258 +210,6 @@ function scoreFocusItem(item: FocusItem, now: Date): number {
 }
 
 // ============================================================================
-// DAILY PROGRESS STRIP
-// ============================================================================
-
-const DailyProgressStrip: React.FC<{
-  todayItems: FocusItem[];
-  totalItems: number;
-}> = ({ todayItems, totalItems }) => {
-  const { t } = useTranslation();
-  const completedToday = todayItems.filter((i) => i.isCompleted).length;
-  const todayTotal = todayItems.length;
-  const allDone = todayTotal > 0 && completedToday === todayTotal;
-  const pct = todayTotal > 0 ? (completedToday / todayTotal) * 100 : 0;
-
-  return (
-    <div className="flex items-center gap-4 px-4 py-3 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700">
-      <div className="flex items-center gap-2 min-w-0">
-        {allDone ? (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-          >
-            <CheckCircle2 size={20} className="text-green-500" />
-          </motion.div>
-        ) : (
-          <Target size={20} className="text-brand" />
-        )}
-        <span className="text-sm font-semibold text-navy-900 dark:text-white whitespace-nowrap">
-          {allDone
-            ? t('myWork.focus.progress.allClear', 'All clear!')
-            : `${completedToday}/${todayTotal} ${t('myWork.focus.progress.done', 'done today')}`}
-        </span>
-      </div>
-
-      <div className="flex-1 h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
-        <motion.div
-          className={`h-full rounded-full ${allDone ? 'bg-green-500' : 'bg-brand'}`}
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-        />
-      </div>
-
-      <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
-        {totalItems} {t('myWork.focus.progress.total', 'total')}
-      </span>
-    </div>
-  );
-};
-
-// ============================================================================
-// FOCUS TOOLBAR (Filters)
-// ============================================================================
-
-const FocusToolbar: React.FC<{
-  filter: FocusFilter;
-  onFilterChange: (f: FocusFilter) => void;
-  hideCompleted: boolean;
-  onHideCompletedChange: (v: boolean) => void;
-  sort: FocusSort;
-  onSortChange: (s: FocusSort) => void;
-}> = ({ filter, onFilterChange, hideCompleted, onHideCompletedChange, sort, onSortChange }) => {
-  const { t } = useTranslation();
-
-  const filterOptions: { value: FocusFilter; label: string }[] = [
-    { value: 'all', label: t('myWork.focus.filters.all', 'All') },
-    { value: 'tasks', label: t('myWork.focus.filters.tasks', 'Tasks') },
-    { value: 'decisions', label: t('myWork.focus.filters.decisions', 'Decisions') },
-  ];
-
-  const sortOptions: { value: FocusSort; label: string }[] = [
-    { value: 'manual', label: t('myWork.focus.filters.sortManual', 'Manual') },
-    { value: 'priority', label: t('myWork.focus.filters.sortPriority', 'Priority') },
-    { value: 'dueDate', label: t('myWork.focus.filters.sortDueDate', 'Due date') },
-  ];
-
-  return (
-    <div className="flex items-center justify-between gap-3 px-1">
-      <div className="flex items-center gap-2">
-        <Filter size={14} className="text-slate-400" />
-        <div className="flex items-center gap-1 bg-slate-100 dark:bg-navy-800 rounded-lg p-0.5">
-          {filterOptions.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => onFilterChange(opt.value)}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
-                filter === opt.value
-                  ? 'bg-white dark:bg-navy-700 text-navy-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <select
-          value={sort}
-          onChange={(e) => onSortChange(e.target.value as FocusSort)}
-          className="text-xs bg-transparent border border-slate-200 dark:border-navy-700 rounded-lg px-2 py-1 text-slate-600 dark:text-slate-400 focus:outline-none focus:ring-1 focus:ring-brand"
-        >
-          {sortOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-
-        <button
-          onClick={() => onHideCompletedChange(!hideCompleted)}
-          className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs transition-colors ${
-            hideCompleted
-              ? 'bg-brand/10 text-brand'
-              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-          }`}
-          title={t('myWork.focus.filters.hideCompleted', 'Hide completed')}
-        >
-          {hideCompleted ? <EyeOff size={13} /> : <Eye size={13} />}
-          {t('myWork.focus.filters.hideCompleted', 'Hide completed')}
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ============================================================================
-// PLAN MY DAY PANEL
-// ============================================================================
-
-const PlanMyDayPanel: React.FC<{
-  suggestions: FocusItem[];
-  onAddToToday: (item: FocusItem) => void;
-  onSkip: (item: FocusItem) => void;
-  onDone: () => void;
-}> = ({ suggestions, onAddToToday, onSkip, onDone }) => {
-  const { t } = useTranslation();
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
-
-  const visibleSuggestions = suggestions.filter((s) => !dismissed.has(s.id));
-
-  const handleSkip = (item: FocusItem) => {
-    setDismissed((prev) => new Set(prev).add(item.id));
-    onSkip(item);
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 border border-amber-200 dark:border-amber-800/30 rounded-xl p-5"
-    >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-            <Sparkles size={18} className="text-amber-600 dark:text-amber-400" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-navy-900 dark:text-white">
-              {t('myWork.focus.planMyDay.title', 'Plan Your Day')}
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t(
-                'myWork.focus.planMyDay.subtitle',
-                'Pick items to focus on today. Sorted by priority and urgency.'
-              )}
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={onDone}
-          className="px-3 py-1.5 text-xs font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
-        >
-          {t('myWork.focus.planMyDay.done', 'Done planning')}
-        </button>
-      </div>
-
-      {visibleSuggestions.length > 0 ? (
-        <div className="space-y-2">
-          {visibleSuggestions.slice(0, 7).map((item) => (
-            <motion.div
-              key={item.id}
-              layout
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20, height: 0 }}
-              className="flex items-center gap-3 p-3 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700"
-            >
-              {item.type === 'decision' ? (
-                <Zap size={16} className="text-purple-500 shrink-0" />
-              ) : (
-                <div className="w-4 h-4 rounded-full border-2 border-slate-300 shrink-0" />
-              )}
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                      item.type === 'decision'
-                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-                        : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                    }`}
-                  >
-                    {item.type === 'decision' ? 'Decision' : 'Task'}
-                  </span>
-                  {item.priority && ['urgent', 'critical', 'high'].includes(item.priority) && (
-                    <span className="text-[10px] font-medium text-red-500">{item.priority}</span>
-                  )}
-                </div>
-                <p className="text-sm font-medium text-navy-900 dark:text-white truncate mt-0.5">
-                  {item.title}
-                </p>
-                <div className="flex items-center gap-2 mt-1">
-                  {item.dueDate && <DueDateIndicator dueDate={item.dueDate} size="sm" />}
-                  {item.initiativeName && (
-                    <span className="text-[10px] text-slate-400 truncate">
-                      {item.initiativeName}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  onClick={() => onAddToToday(item)}
-                  className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors"
-                >
-                  <Sun size={12} />
-                  {t('myWork.focus.planMyDay.addToday', 'Today')}
-                </button>
-                <button
-                  onClick={() => handleSkip(item)}
-                  className="px-2 py-1.5 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
-                >
-                  {t('myWork.focus.planMyDay.skip', 'Skip')}
-                </button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">
-          {t('myWork.focus.planMyDay.noSuggestions', 'No more items to suggest.')}
-        </p>
-      )}
-    </motion.div>
-  );
-};
-
-// ============================================================================
 // SMART SNOOZE POPOVER
 // ============================================================================
 
@@ -529,7 +283,8 @@ interface SortableFocusCardProps {
   onSnooze: (item: FocusItem, column: FocusColumn) => void;
   onDelegate: (item: FocusItem) => void;
   onRemove: (item: FocusItem) => void;
-  onClick: (item: FocusItem) => void;
+  onSelect: (item: FocusItem) => void;
+  onOpenFull: (item: FocusItem) => void;
   isDragging?: boolean;
 }
 
@@ -540,7 +295,8 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
   onSnooze,
   onDelegate,
   onRemove,
-  onClick,
+  onSelect,
+  onOpenFull,
   isDragging,
 }) => {
   const { t } = useTranslation();
@@ -579,6 +335,8 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -20, height: 0 }}
+      onClick={() => onSelect(item)}
+      onDoubleClick={() => onOpenFull(item)}
       className={`
         group relative bg-white dark:bg-navy-900 rounded-xl border border-l-[3px]
         ${borderLeft}
@@ -600,6 +358,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
         <div
           {...attributes}
           {...listeners}
+          onClick={(e) => e.stopPropagation()}
           className="shrink-0 pt-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
         >
           <GripVertical size={14} className="text-slate-400 dark:text-slate-600" />
@@ -623,7 +382,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
         </button>
 
         {/* Content */}
-        <div className="flex-1 min-w-0" onClick={() => onClick(item)}>
+        <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               {/* Type label + initiative */}
@@ -830,7 +589,8 @@ interface FocusColumnProps {
   onSnooze: (item: FocusItem, targetColumn: FocusColumn) => void;
   onDelegate: (item: FocusItem) => void;
   onRemove: (item: FocusItem) => void;
-  onItemClick: (item: FocusItem) => void;
+  onSelect: (item: FocusItem) => void;
+  onOpenFull: (item: FocusItem) => void;
 }
 
 const FocusColumnComponent: React.FC<FocusColumnProps> = ({
@@ -841,7 +601,8 @@ const FocusColumnComponent: React.FC<FocusColumnProps> = ({
   onSnooze,
   onDelegate,
   onRemove,
-  onItemClick,
+  onSelect,
+  onOpenFull,
 }) => {
   const { t } = useTranslation();
   const config = columnConfig[column];
@@ -883,7 +644,8 @@ const FocusColumnComponent: React.FC<FocusColumnProps> = ({
                 onSnooze={onSnooze}
                 onDelegate={onDelegate}
                 onRemove={onRemove}
-                onClick={onItemClick}
+                onSelect={onSelect}
+                onOpenFull={onOpenFull}
               />
             ))}
           </AnimatePresence>
@@ -1115,36 +877,6 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
 };
 
 // ============================================================================
-// KEYBOARD SHORTCUTS BAR
-// ============================================================================
-
-const KeyboardShortcutsBar: React.FC = () => {
-  const { t } = useTranslation();
-  const shortcuts = [
-    { key: 'j/k', label: t('myWork.focus.shortcuts.navigate', 'Navigate') },
-    { key: 'd', label: t('myWork.focus.shortcuts.done', 'Done') },
-    { key: 's', label: t('myWork.focus.shortcuts.snooze', 'Snooze') },
-    { key: 'r', label: t('myWork.focus.shortcuts.remove', 'Remove') },
-    { key: 't', label: t('myWork.focus.shortcuts.moveToday', 'Today') },
-    { key: 'w', label: t('myWork.focus.shortcuts.moveWeek', 'Week') },
-    { key: 'Enter', label: t('myWork.focus.shortcuts.open', 'Open') },
-  ];
-
-  return (
-    <div className="flex items-center justify-center gap-4 px-4 py-2 bg-slate-50 dark:bg-navy-800/50 rounded-lg border border-slate-200 dark:border-navy-700">
-      {shortcuts.map((s) => (
-        <div key={s.key} className="flex items-center gap-1.5">
-          <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded text-slate-600 dark:text-slate-300 shadow-sm">
-            {s.key}
-          </kbd>
-          <span className="text-[10px] text-slate-500 dark:text-slate-400">{s.label}</span>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-// ============================================================================
 // MAIN FOCUS VIEW COMPONENT
 // ============================================================================
 
@@ -1152,6 +884,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
   onItemClick,
   onNavigateToInbox,
   refreshTrigger,
+  controls,
 }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
@@ -1159,13 +892,27 @@ export const FocusView: React.FC<FocusViewProps> = ({
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [delegateItem, setDelegateItem] = useState<FocusItem | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const [showPlanMyDay, setShowPlanMyDay] = useState(false);
-  const [showAIPlan, setShowAIPlan] = useState(false);
+  const [internalShowAIPlan, setInternalShowAIPlan] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   // Filters
-  const [filter, setFilter] = useState<FocusFilter>('all');
-  const [hideCompleted, setHideCompleted] = useState(false);
-  const [sort, setSort] = useState<FocusSort>('manual');
+  const [internalFilter, setInternalFilter] = useState<FocusFilter>('all');
+  const [internalHideCompleted, setInternalHideCompleted] = useState(false);
+  const [internalSort, setInternalSort] = useState<FocusSort>('manual');
+
+  const filter = controls?.filter ?? internalFilter;
+  const setFilter = controls?.onFilterChange ?? setInternalFilter;
+  const hideCompleted = controls?.hideCompleted ?? internalHideCompleted;
+  const setHideCompleted = controls?.onHideCompletedChange ?? setInternalHideCompleted;
+  const sort = controls?.sort ?? internalSort;
+  const setSort = controls?.onSortChange ?? setInternalSort;
+  const showAIPlan = controls?.showAIPlan ?? internalShowAIPlan;
+  const setShowAIPlan = controls?.onShowAIPlanChange ?? setInternalShowAIPlan;
+
+  const selectedItem = useMemo(
+    () => (selectedItemId ? items.find((i) => i.id === selectedItemId) || null : null),
+    [selectedItemId, items]
+  );
 
   const parseKey = useCallback((key: string): { kind: 'task' | 'decision'; id: string } | null => {
     const [kind, id] = String(key || '').split(':');
@@ -1380,15 +1127,6 @@ export const FocusView: React.FC<FocusViewProps> = ({
       ];
 
       setItems(allItems);
-
-      // Show Plan My Day if Today still has few items and more are available
-      const todayFinal = byCol.today.filter((i) => !i.isCompleted).length;
-      const remainingItems = [...byCol.thisWeek, ...byCol.later].filter(
-        (i) => !i.isCompleted
-      ).length;
-      if (todayFinal <= 2 && remainingItems > 0) {
-        setShowPlanMyDay(true);
-      }
     } catch (error) {
       console.error('Failed to load focus data:', error);
       toast.error(t('myWork.focus.loadError', 'Failed to load focus items'));
@@ -1445,14 +1183,6 @@ export const FocusView: React.FC<FocusViewProps> = ({
     [itemsByColumn]
   );
 
-  // Plan My Day suggestions (scored)
-  const planSuggestions = useMemo(() => {
-    const now = new Date();
-    return [...itemsByColumn.thisWeek, ...itemsByColumn.later]
-      .filter((i) => !i.isCompleted)
-      .sort((a, b) => scoreFocusItem(b, now) - scoreFocusItem(a, now));
-  }, [itemsByColumn]);
-
   // Find item by ID
   const findItemById = useCallback(
     (id: UniqueIdentifier) => items.find((i) => i.id === id),
@@ -1479,13 +1209,19 @@ export const FocusView: React.FC<FocusViewProps> = ({
         case 'j': {
           e.preventDefault();
           const nextIdx = Math.min(currentIdx + 1, flatItems.length - 1);
-          if (flatItems[nextIdx]) setSelectedItemId(flatItems[nextIdx].id);
+          if (flatItems[nextIdx]) {
+            setSelectedItemId(flatItems[nextIdx].id);
+            setPreviewOpen(true);
+          }
           break;
         }
         case 'k': {
           e.preventDefault();
           const prevIdx = Math.max(currentIdx - 1, 0);
-          if (flatItems[prevIdx]) setSelectedItemId(flatItems[prevIdx].id);
+          if (flatItems[prevIdx]) {
+            setSelectedItemId(flatItems[prevIdx].id);
+            setPreviewOpen(true);
+          }
           break;
         }
         case 'd':
@@ -1536,6 +1272,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
           }
           break;
         case 'Escape':
+          setPreviewOpen(false);
           setSelectedItemId(null);
           break;
       }
@@ -1734,12 +1471,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
     }
   };
 
-  const handlePlanAddToToday = async (item: FocusItem) => {
-    await handleSnooze(item, 'today');
-  };
-
   const activeItem = activeId ? findItemById(activeId) : null;
-  const totalItems = items.filter((i) => !i.isCompleted).length;
 
   if (loading) {
     return (
@@ -1750,102 +1482,177 @@ export const FocusView: React.FC<FocusViewProps> = ({
   }
 
   return (
-    <div className="space-y-3 p-4">
-      {/* Daily Progress Strip */}
-      {items.length > 0 && (
-        <DailyProgressStrip todayItems={itemsByColumn.today} totalItems={totalItems} />
-      )}
-
-      {/* Plan My Day Panel */}
-      <AnimatePresence>
-        {showPlanMyDay && planSuggestions.length > 0 && (
-          <PlanMyDayPanel
-            suggestions={planSuggestions}
-            onAddToToday={handlePlanAddToToday}
-            onSkip={() => {}}
-            onDone={() => setShowPlanMyDay(false)}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Toolbar + AI Plan Button */}
-      {items.length > 0 && (
-        <div className="flex items-center gap-2">
-          <div className="flex-1">
-            <FocusToolbar
-              filter={filter}
-              onFilterChange={setFilter}
-              hideCompleted={hideCompleted}
-              onHideCompletedChange={setHideCompleted}
-              sort={sort}
-              onSortChange={setSort}
-            />
-          </div>
-          <button
-            onClick={() => setShowAIPlan((v) => !v)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors shrink-0 ${
-              showAIPlan
-                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400'
-            }`}
-          >
-            <Sparkles size={13} />
-            {t('myWork.focus.aiPlan', 'AI Plan')}
-          </button>
-        </div>
-      )}
-
-      {/* AI Priority Coach */}
-      <AICoachPanel />
-
-      {/* Proactive Nudges */}
-      <NudgeStrip />
-
-      {/* AI Day Plan Overlay */}
-      <AnimatePresence>
-        {showAIPlan && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-lg overflow-hidden"
-            style={{ minHeight: 320 }}
-          >
-            <AIPlanView onClose={() => setShowAIPlan(false)} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Kanban Board */}
+    <div className="p-4 h-full min-h-0">
+      {/* Kanban Board + Right panel (KANON v3: no extra toolbars in content) */}
       {items.length > 0 ? (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {(['today', 'thisWeek', 'later'] as FocusColumn[]).map((column) => (
-              <FocusColumnComponent
-                key={column}
-                column={column}
-                items={itemsByColumn[column]}
-                selectedItemId={selectedItemId}
-                onComplete={handleComplete}
-                onSnooze={handleSnooze}
-                onDelegate={(item) => setDelegateItem(item)}
-                onRemove={handleRemoveFromFocus}
-                onItemClick={(item) => {
-                  setSelectedItemId(item.id);
-                  onItemClick?.(item);
-                }}
-              />
-            ))}
+        <div className="flex gap-3 min-h-0 h-full">
+          <div className="flex-1 min-w-0">
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragEnd={handleDragEnd}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {(['today', 'thisWeek', 'later'] as FocusColumn[]).map((column) => (
+                  <FocusColumnComponent
+                    key={column}
+                    column={column}
+                    items={itemsByColumn[column]}
+                    selectedItemId={selectedItemId}
+                    onComplete={handleComplete}
+                    onSnooze={handleSnooze}
+                    onDelegate={(item) => setDelegateItem(item)}
+                    onRemove={handleRemoveFromFocus}
+                    onSelect={(item) => {
+                      setSelectedItemId(item.id);
+                      setPreviewOpen(true);
+                    }}
+                    onOpenFull={(item) => {
+                      onItemClick?.(item);
+                    }}
+                  />
+                ))}
+              </div>
+
+              <DragOverlay>{activeItem && <FocusCardOverlay item={activeItem} />}</DragOverlay>
+            </DndContext>
           </div>
 
-          <DragOverlay>{activeItem && <FocusCardOverlay item={activeItem} />}</DragOverlay>
-        </DndContext>
+          {showAIPlan ? (
+            <div
+              className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3"
+              style={{ width: 'clamp(340px, 28%, 480px)' }}
+            >
+              <PreviewPaneShell title={t('myWork.focus.aiPlan', 'AI Plan')} onClose={() => setShowAIPlan(false)}>
+                <AIPlanView embedded onClose={() => setShowAIPlan(false)} />
+              </PreviewPaneShell>
+            </div>
+          ) : previewOpen && selectedItem ? (
+            <div
+              className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3"
+              style={{ width: 'clamp(340px, 28%, 480px)' }}
+            >
+              <PreviewPaneShell
+                title={selectedItem.title}
+                onClose={() => {
+                  setPreviewOpen(false);
+                  setSelectedItemId(null);
+                }}
+                actions={
+                  <button
+                    onClick={() => onItemClick?.(selectedItem)}
+                    className="inline-flex items-center gap-2 h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-transparent text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 text-xs font-medium"
+                    title={t('common.open', 'Open')}
+                  >
+                    <ArrowRight size={14} />
+                    <span>{t('common.open', 'Open')}</span>
+                  </button>
+                }
+                footer={
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => handleComplete(selectedItem)}
+                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-green-300/40 dark:border-green-500/30 bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-200 hover:bg-green-100/70 dark:hover:bg-green-500/15 transition-colors text-xs font-medium"
+                    >
+                      <Check size={14} />
+                      {selectedItem.type === 'decision'
+                        ? t('myWork.focus.card.approve', 'Approve')
+                        : t('myWork.focus.actions.done', 'Done')}
+                    </button>
+                    <button
+                      onClick={() => {
+                        const next: Record<FocusColumn, FocusColumn> = {
+                          today: 'thisWeek',
+                          thisWeek: 'later',
+                          later: 'later',
+                        };
+                        if (selectedItem.column !== 'later') handleSnooze(selectedItem, next[selectedItem.column]);
+                      }}
+                      disabled={selectedItem.column === 'later'}
+                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                      title={t('myWork.focus.actions.snooze', 'Snooze')}
+                    >
+                      <Clock size={14} />
+                      {t('myWork.focus.actions.snooze', 'Snooze')}
+                    </button>
+                    <button
+                      onClick={() => setDelegateItem(selectedItem)}
+                      disabled={selectedItem.type !== 'task'}
+                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                      title={t('myWork.focus.actions.delegate', 'Delegate')}
+                    >
+                      <UserPlus size={14} />
+                      {t('myWork.focus.actions.delegate', 'Delegate')}
+                    </button>
+                    <button
+                      onClick={() => handleRemoveFromFocus(selectedItem)}
+                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-red-300/40 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-200 hover:bg-red-100/70 dark:hover:bg-red-500/15 transition-colors text-xs font-medium"
+                      title={t('myWork.focus.actions.remove', 'Remove from focus')}
+                    >
+                      <X size={14} />
+                      {t('myWork.focus.actions.remove', 'Remove from focus')}
+                    </button>
+                  </div>
+                }
+              >
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                          selectedItem.type === 'decision'
+                            ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                            : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                        }`}
+                      >
+                        {selectedItem.type === 'decision'
+                          ? t('myWork.focus.decision', 'Decision')
+                          : t('myWork.focus.task', 'Task')}
+                      </span>
+                      {selectedItem.priority ? (
+                        <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                          {selectedItem.priority}
+                        </span>
+                      ) : null}
+                      {selectedItem.dueDate ? (
+                        <div className="flex items-center gap-2">
+                          <DueDateIndicator
+                            dueDate={selectedItem.dueDate}
+                            dueTime={selectedItem.dueTime}
+                            isCompleted={selectedItem.isCompleted}
+                            size="sm"
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 italic">
+                          {t('myWork.focus.noDue', 'No due date')}
+                        </span>
+                      )}
+                    </div>
+                    {selectedItem.initiativeName ? (
+                      <div className="mt-2 text-xs text-slate-600 dark:text-slate-300 truncate">
+                        {selectedItem.initiativeName}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {selectedItem.description ? (
+                    <div className="space-y-2">
+                      <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        {t('common.details', 'Details')}
+                      </div>
+                      <div className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
+                        {selectedItem.description}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              </PreviewPaneShell>
+            </div>
+          ) : null}
+        </div>
       ) : (
         <EmptyState
           icon={<Target size={48} />}
@@ -1867,9 +1674,6 @@ export const FocusView: React.FC<FocusViewProps> = ({
           }
         />
       )}
-
-      {/* Keyboard Shortcuts Bar */}
-      {items.length > 0 && <KeyboardShortcutsBar />}
 
       {/* Delegate Modal */}
       <AnimatePresence>

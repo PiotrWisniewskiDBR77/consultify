@@ -186,7 +186,7 @@ class AdminSessionServiceClass {
 
   async getSessionStats(): Promise<any> {
     try {
-      const row = await this.db.get(`
+      const row = await this.db.get<{ total: number; active: number; mfaVerified: number; uniqueAdmins: number }>(`
         SELECT
           COUNT(*) as total,
           SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active,
@@ -201,7 +201,7 @@ class AdminSessionServiceClass {
         uniqueAdmins: row?.uniqueAdmins || 0,
       };
     } catch (_err) {
-      const row = await this.db.get(`
+      const row = await this.db.get<{ total: number; active: number; uniqueAdmins: number }>(`
         SELECT
           COUNT(*) as total,
           SUM(CASE WHEN expires_at > CURRENT_TIMESTAMP THEN 1 ELSE 0 END) as active,

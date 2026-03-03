@@ -193,7 +193,7 @@ router.get(
         ? 'ORDER BY display_name ASC'
         : 'ORDER BY name ASC';
 
-    const rows = await dbAll<IntegrationProviderRow[]>(
+    const rows = await dbAll<IntegrationProviderRow>(
       `SELECT ${select} FROM integration_providers ${orderBy}`
     );
 
@@ -298,23 +298,21 @@ router.get(
 
     // New integrations system schema (FLOW-INTEGRATION-001): provider_id/settings/status/etc.
     if (cols.has('provider_id') && cols.has('settings')) {
-      const rows = await dbAll<
-        {
-          id: string;
-          provider_id: string;
-          auth_type: string;
-          status: string;
-          settings: string | null;
-          notification_settings: string | null;
-          last_sync_at?: string | null;
-          last_error?: string | null;
-          error_count?: number | null;
-          connected_at: string | null;
-          updated_at: string | null;
-          provider_name?: string | null;
-          provider_display_name?: string | null;
-        }[]
-      >(
+      const rows = await dbAll<{
+        id: string;
+        provider_id: string;
+        auth_type: string;
+        status: string;
+        settings: string | null;
+        notification_settings: string | null;
+        last_sync_at?: string | null;
+        last_error?: string | null;
+        error_count?: number | null;
+        connected_at: string | null;
+        updated_at: string | null;
+        provider_name?: string | null;
+        provider_display_name?: string | null;
+      }>(
         `
         SELECT
           i.id,
@@ -356,7 +354,7 @@ router.get(
 
     // Legacy schema: name/provider/status/config/last_synced_at
     if (cols.has('provider') && cols.has('status') && cols.has('config')) {
-      const rows = await dbAll<any[]>(
+      const rows = await dbAll<any>(
         `
         SELECT id, name, provider, type, status, config, last_synced_at, created_at
         FROM integrations
@@ -369,16 +367,14 @@ router.get(
     }
 
     // Minimal schema (SQLite): (id, organization_id, type, config, is_active, created_at)
-    const rows = await dbAll<
-      {
-        id: string;
-        organization_id: string;
-        type: string;
-        config: string | null;
-        is_active: number;
-        created_at: string;
-      }[]
-    >(
+    const rows = await dbAll<{
+      id: string;
+      organization_id: string;
+      type: string;
+      config: string | null;
+      is_active: number;
+      created_at: string;
+    }>(
       `
         SELECT id, organization_id, type, config, is_active, created_at
         FROM integrations
@@ -412,7 +408,7 @@ router.get(
     // Prefer `/providers` which returns the canonical DB-backed providers list.
     const cols = await tryGetColumns('integration_providers');
     if (!cols.size) return res.json([]);
-    const rows = await dbAll<IntegrationProviderRow[]>(
+    const rows = await dbAll<IntegrationProviderRow>(
       `SELECT id, name, display_name, category, is_active FROM integration_providers ORDER BY sort_order, display_name`
     );
     return res.json(
@@ -632,7 +628,7 @@ router.get(
     if (!cols.size) return res.json({ logs: [] });
 
     const hasNewCols = cols.has('items_processed') || cols.has('trigger_type');
-    const rows = await dbAll<any[]>(
+    const rows = await dbAll<any>(
       hasNewCols
         ? `SELECT id, status, sync_type, direction, trigger_type, items_processed, items_created, items_updated, items_failed, error_summary, error_details, started_at, completed_at, duration_ms
            FROM integration_sync_log WHERE integration_id = ? ORDER BY started_at DESC LIMIT 50`
@@ -753,9 +749,7 @@ router.post(
           status = 'failed';
           errors.push('integration_sync_mappings table missing');
         } else {
-          const tasks = await dbAll<
-            Array<{ id: string; title: string; description: string | null; status: string | null }>
-          >(
+          const tasks = await dbAll<{ id: string; title: string; description: string | null; status: string | null }>(
             `SELECT id, title, description, status FROM tasks WHERE organization_id = ? ORDER BY created_at DESC LIMIT 200`,
             [orgId]
           );

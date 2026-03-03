@@ -2122,7 +2122,7 @@ For example: REMEMBER: preferred_language: Polish`;
       )}
 
       {/* Footer (overlay) - does NOT affect centering above */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col items-center gap-1.5 pointer-events-none select-none z-0">
+      <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col items-center gap-1 pointer-events-none select-none z-0">
         <img
           src="/assets/logos/logo-dark.svg"
           alt="Consultify"
@@ -2135,7 +2135,7 @@ For example: REMEMBER: preferred_language: Polish`;
           className="h-24 sm:h-28 md:h-32 w-auto opacity-35 dark:hidden translate-y-1"
           draggable={false}
         />
-        <p className="text-center text-[11px] text-slate-400 dark:text-slate-600 tracking-[0.25em] uppercase">
+        <p className="-mt-0.5 text-center text-[11px] text-slate-400 dark:text-slate-600 tracking-[0.25em] uppercase">
           <span className="text-primary-600 dark:text-primary-400">DBR77</span>{' '}
           <span>Industrial Intelligence</span>
         </p>

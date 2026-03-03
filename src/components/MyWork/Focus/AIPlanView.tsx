@@ -18,6 +18,8 @@ interface AIPlan {
 
 interface AIPlanViewProps {
   onClose: () => void;
+  /** When embedded in a parent shell, hide internal header. */
+  embedded?: boolean;
 }
 
 const BLOCK_COLORS: Record<string, string> = {
@@ -28,7 +30,7 @@ const BLOCK_COLORS: Record<string, string> = {
   plan: 'border-l-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20',
 };
 
-export const AIPlanView: React.FC<AIPlanViewProps> = ({ onClose }) => {
+export const AIPlanView: React.FC<AIPlanViewProps> = ({ onClose, embedded = false }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [plan, setPlan] = useState<AIPlan | null>(null);
@@ -53,19 +55,24 @@ export const AIPlanView: React.FC<AIPlanViewProps> = ({ onClose }) => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
-        <div className="flex items-center gap-2">
-          <Sparkles size={16} className="text-purple-500" />
-          <span className="text-sm font-semibold">{isPolish ? 'Plan dnia AI' : 'AI Day Plan'}</span>
+      {!embedded ? (
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
+          <div className="flex items-center gap-2">
+            <Sparkles size={16} className="text-purple-500" />
+            <span className="text-sm font-semibold">
+              {isPolish ? 'Plan dnia AI' : 'AI Day Plan'}
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
+          >
+            <X size={16} />
+          </button>
         </div>
-        <button
-          onClick={onClose}
-          className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
-        >
-          <X size={16} />
-        </button>
-      </div>
-      <div className="flex-1 overflow-auto p-4 space-y-3">
+      ) : null}
+
+      <div className={['flex-1 overflow-auto space-y-3', embedded ? 'p-0' : 'p-4'].join(' ')}>
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <Loader2 size={14} className="animate-spin" />

@@ -195,6 +195,12 @@ async function applySql(pool: Pool, m: Migration) {
   sql = sql.replace(/\bBOOLEAN\s+DEFAULT\s+1\b/gi, 'BOOLEAN DEFAULT TRUE');
   // Sometimes booleans are declared as INTEGER with default 0/1; keep as-is (app treats them as flags).
 
+  // SQLite `lower(hex(randomblob(16)))` → Postgres `gen_random_uuid()::text`
+  sql = sql.replace(/\(lower\(hex\(randomblob\(\d+\)\)\)\)/gi, 'gen_random_uuid()::text');
+
+  // SQLite `datetime('now')` → Postgres `CURRENT_TIMESTAMP`
+  sql = sql.replace(/\(datetime\('now'\)\)/gi, 'CURRENT_TIMESTAMP');
+
   // Make legacy column adds idempotent on Postgres
   sql = sql.replace(
     /\bALTER\s+TABLE\s+([a-zA-Z0-9_".]+)\s+ADD\s+COLUMN\s+(?!IF\s+NOT\s+EXISTS\b)/gi,

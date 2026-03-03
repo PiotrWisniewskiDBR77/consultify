@@ -9,8 +9,13 @@ import { Request } from 'express';
 import * as fs from 'fs';
 import multer from 'multer';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 
 import type { AuthRequest } from './auth.middleware.js';
+
+// ESM-safe __dirname (__dirname is not defined when "type": "module")
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ==========================================
 // TYPES
