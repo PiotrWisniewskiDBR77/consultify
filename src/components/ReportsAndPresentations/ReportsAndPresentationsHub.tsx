@@ -170,7 +170,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       setActiveFilters((prev) => {
         const without = prev.filter((f) => f.column !== column);
         if (!value) return without;
-        return [...without, { id: `${column}:${value}`, column, value, label || value, color }];
+        return [...without, { id: `${column}:${value}`, column, value, label: label || value, color }];
       });
     },
     []

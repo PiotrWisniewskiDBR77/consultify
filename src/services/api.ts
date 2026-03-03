@@ -2517,40 +2517,6 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch learning metrics');
   },
 
-  getSuperAdminLegalDocs: async (): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/superadmin/legal/all`, { headers: getHeaders() });
-    return handleResponse(res, 'Failed to fetch legal documents');
-  },
-
-  publishSuperAdminLegalDoc: async (payload: {
-    docType: string;
-    version: string;
-    title: string;
-    effectiveFrom: string;
-    contentMd: string;
-  }): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/superadmin/legal/publish`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(payload),
-    });
-    return handleResponse(res, 'Failed to publish legal document');
-  },
-
-  toggleSuperAdminLegalDocActive: async (docId: string, isActive: boolean): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/superadmin/legal/${docId}/toggle-active`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify({ isActive }),
-    });
-    return handleResponse(res, 'Failed to update legal document');
-  },
-
-  getSuperAdminLegalDocById: async (docId: string): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/superadmin/legal/${docId}`, { headers: getHeaders() });
-    return handleResponse(res, 'Failed to fetch legal document');
-  },
-
   // LLM Provider Health Check - check connectivity and status of all providers
   checkLLMProvidersHealth: async (): Promise<{
     success: boolean;
