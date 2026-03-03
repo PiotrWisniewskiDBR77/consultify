@@ -456,6 +456,23 @@ function adaptQuery(sql: string): string {
     return content.trim();
   });
 
+  // Replace strftime(format, column) with TO_CHAR(column, pg_format)
+  adapted = adapted.replace(
+    /strftime\s*\(\s*'([^']+)'\s*,\s*([^)]+)\)/gi,
+    (_match, fmt: string, col: string) => {
+      const pgFmt = fmt
+        .replace('%Y', 'YYYY')
+        .replace('%m', 'MM')
+        .replace('%d', 'DD')
+        .replace('%H', 'HH24')
+        .replace('%M', 'MI')
+        .replace('%S', 'SS')
+        .replace('%W', 'IW')
+        .replace(/-W/g, '-"W"');
+      return `TO_CHAR(${col.trim()}, '${pgFmt}')`;
+    }
+  );
+
   // Replace DATETIME column type with TIMESTAMP for PostgreSQL
   adapted = adapted.replace(/\bDATETIME\b/gi, 'TIMESTAMP');
 

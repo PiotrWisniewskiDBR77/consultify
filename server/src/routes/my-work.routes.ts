@@ -2446,11 +2446,11 @@ router.get(
         const pendingDecs = await queryHelpers.queryAll<{
           id: string;
           title: string;
-          due_date: string;
+          deadline: string;
         }>(
-          `SELECT id, title, due_date FROM decisions 
+          `SELECT id, title, deadline FROM decisions 
            WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? AND status = 'pending'
-           ORDER BY due_date ASC NULLS LAST LIMIT 3`,
+           ORDER BY deadline ASC NULLS LAST LIMIT 3`,
           [userId, userId, orgId]
         );
         summary.pendingDecisions = pendingDecs || [];
@@ -5760,9 +5760,9 @@ router.get(
       const decCols = await getTableColumns('decisions');
       if (decCols.has('decision_maker_id')) {
         const pending = await queryHelpers.queryAll<any>(
-          `SELECT id, title, due_date FROM decisions
+          `SELECT id, title, deadline FROM decisions
            WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? AND status = 'pending'
-           ORDER BY due_date ASC NULLS LAST LIMIT 5`,
+           ORDER BY deadline ASC NULLS LAST LIMIT 5`,
           [userId, userId, orgId]
         );
         brief.pendingDecisions = pending || [];
@@ -5889,14 +5889,14 @@ router.get(
     if (!decisionId) return res.status(400).json({ error: 'Missing decision id' });
 
     const decision = await queryHelpers.queryOne<any>(
-      `SELECT id, title, description, status, priority, category, created_at, due_date
+      `SELECT id, title, description, status, priority, category, created_at, deadline
        FROM decisions WHERE id = ? AND organization_id = ? LIMIT 1`,
       [decisionId, orgId]
     );
     if (!decision) return res.status(404).json({ error: 'Decision not found' });
 
     const urgency =
-      decision.due_date && new Date(decision.due_date) < new Date(Date.now() + 86400000 * 3)
+      decision.deadline && new Date(decision.deadline) < new Date(Date.now() + 86400000 * 3)
         ? 'urgent'
         : 'normal';
     const summary = `${decision.title}${decision.description ? '. ' + String(decision.description).slice(0, 200) : ''}`;
@@ -5910,7 +5910,7 @@ router.get(
       urgency,
       category: decision.category || null,
       createdAt: decision.created_at,
-      dueDate: decision.due_date,
+      dueDate: decision.deadline,
     });
   })
 );
@@ -6720,10 +6720,10 @@ router.post(
       );
 
       const decisions = await queryHelpers.queryAll<any>(
-        `SELECT id, title, priority, due_date
+        `SELECT id, title, priority, deadline
          FROM decisions
          WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? AND status = 'pending'
-         ORDER BY due_date ASC NULLS LAST
+         ORDER BY deadline ASC NULLS LAST
          LIMIT 5`,
         [userId, userId, orgId]
       );

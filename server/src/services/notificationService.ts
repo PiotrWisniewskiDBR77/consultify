@@ -717,7 +717,7 @@ class NotificationService {
 
       if (entityType === 'decision') {
         const decision = await db.get<Record<string, any>>(
-          `SELECT id, title, status, priority, assigned_to, due_date, description FROM decisions WHERE id = ?`,
+          `SELECT id, title, status, priority, assigned_to, deadline, description FROM decisions WHERE id = ?`,
           [entityId]
         );
         if (decision) {
@@ -728,7 +728,7 @@ class NotificationService {
             status: decision.status,
             priority: decision.priority,
             decider: decision.assigned_to,
-            dueDate: decision.due_date,
+            dueDate: decision.deadline,
             description: decision.description?.substring(0, 200),
           };
         }
@@ -1159,14 +1159,14 @@ class NotificationService {
 
       if (type === 'decision') {
         const decision = await db.get<Record<string, any>>(
-          `SELECT id, title, status, priority, assigned_to, due_date FROM decisions WHERE id = ?`,
+          `SELECT id, title, status, priority, assigned_to, deadline FROM decisions WHERE id = ?`,
           [entityId]
         );
         if (decision) {
           result.entityName = decision.title;
           result.entityStatus = decision.status;
           result.entityAssignee = decision.assigned_to;
-          result.entityDeadline = decision.due_date;
+          result.entityDeadline = decision.deadline;
           result.decision_title = decision.title;
 
           if (decision.due_date) {
