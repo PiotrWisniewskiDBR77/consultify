@@ -206,6 +206,7 @@ USER nodejs
 # Environment
 ENV NODE_ENV=production
 ENV PORT=3001
+ENV BUILD_TIMESTAMP=20260303T1950Z
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
