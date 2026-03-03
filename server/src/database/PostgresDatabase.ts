@@ -2874,21 +2874,27 @@ export async function initDb(): Promise<void> {
       [],
       'Skipping organization_id index on audit_log'
     );
-    await querySafe(
-      `CREATE INDEX IF NOT EXISTS idx_audit_log_user ON audit_log(user_id)`,
-      [],
-      'Skipping user_id index on audit_log'
-    );
-    await querySafe(
-      `CREATE INDEX IF NOT EXISTS idx_audit_log_action_type ON audit_log(action_type)`,
-      [],
-      'Skipping action_type index on audit_log'
-    );
-    await querySafe(
-      `CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at)`,
-      [],
-      'Skipping created_at index on audit_log'
-    );
+    if (await columnExists('audit_log', 'user_id')) {
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_audit_log_user ON audit_log(user_id)`,
+        [],
+        'Skipping user_id index on audit_log'
+      );
+    }
+    if (await columnExists('audit_log', 'action_type')) {
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_audit_log_action_type ON audit_log(action_type)`,
+        [],
+        'Skipping action_type index on audit_log'
+      );
+    }
+    if (await columnExists('audit_log', 'created_at')) {
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at)`,
+        [],
+        'Skipping created_at index on audit_log'
+      );
+    }
     await querySafe(
       `CREATE INDEX IF NOT EXISTS idx_audits_org ON audits(organization_id)`,
       [],
@@ -2924,11 +2930,13 @@ export async function initDb(): Promise<void> {
       [],
       'Skipping key_hash index on api_keys'
     );
-    await querySafe(
-      `CREATE INDEX IF NOT EXISTS idx_api_keys_status_expires ON api_keys(status, expires_at)`,
-      [],
-      'Skipping (status, expires_at) index on api_keys'
-    );
+    if (await columnExists('api_keys', 'status')) {
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_api_keys_status_expires ON api_keys(status, expires_at)`,
+        [],
+        'Skipping (status, expires_at) index on api_keys'
+      );
+    }
     await querySafe(
       `CREATE INDEX IF NOT EXISTS idx_error_logs_created_at ON error_logs(created_at)`,
       [],

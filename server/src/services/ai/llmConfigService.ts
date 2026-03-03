@@ -414,13 +414,13 @@ export class LLMConfigService {
 
     // Best-effort add enterprise columns for legacy DBs (SQLite dev / older schemas).
     const addCols = [
-      `ALTER TABLE llm_providers ADD COLUMN kind TEXT DEFAULT 'TEXT_LLM'`,
-      `ALTER TABLE llm_providers ADD COLUMN provider_type TEXT DEFAULT 'aggregator'`,
-      `ALTER TABLE llm_providers ADD COLUMN origin_vendor TEXT`,
-      `ALTER TABLE llm_providers ADD COLUMN execution_regions TEXT`,
-      `ALTER TABLE llm_providers ADD COLUMN allowed_data_classes TEXT`,
-      `ALTER TABLE llm_providers ADD COLUMN data_residency_attestation TEXT`,
-      `ALTER TABLE llm_providers ADD COLUMN subprocessors_ref TEXT`,
+      `ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS kind TEXT DEFAULT 'TEXT_LLM'`,
+      `ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS provider_type TEXT DEFAULT 'aggregator'`,
+      `ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS origin_vendor TEXT`,
+      `ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS execution_regions TEXT`,
+      `ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS allowed_data_classes TEXT`,
+      `ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS data_residency_attestation TEXT`,
+      `ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS subprocessors_ref TEXT`,
     ];
     for (const stmt of addCols) {
       try {

@@ -284,47 +284,53 @@ function getProviderSync(modelConfig: ModelConfig) {
       return createOpenAI({
         apiKey: envDeepSeek || effectiveApiKey,
         baseURL: normalizedBaseUrl || 'https://api.deepseek.com',
+        compatibility: 'compatible',
       });
     case 'z_ai':
     case 'zai':
-      // z.ai (Zhipu) is OpenAI-compatible, but uses a different base URL than DeepSeek.
       return createOpenAI({
         apiKey: envZai || effectiveApiKey,
         baseURL: normalizedBaseUrl || 'https://api.z.ai/api/paas/v4',
+        compatibility: 'compatible',
       });
     case 'qwen':
       return createOpenAI({
         apiKey: effectiveApiKey,
         baseURL: normalizedBaseUrl || 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
+        compatibility: 'compatible',
       });
     case 'mistral':
       return createOpenAI({
         apiKey: effectiveApiKey,
         baseURL: normalizedBaseUrl || 'https://api.mistral.ai/v1',
+        compatibility: 'compatible',
       });
     case 'nvidia':
       return createOpenAI({
         apiKey: effectiveApiKey,
         baseURL: normalizedBaseUrl || 'https://integrate.api.nvidia.com/v1',
+        compatibility: 'compatible',
       });
     case 'cohere':
       return createOpenAI({
         apiKey: effectiveApiKey,
         baseURL: normalizedBaseUrl || 'https://api.cohere.ai/v1',
+        compatibility: 'compatible',
       });
     case 'openrouter':
       if (!envOpenRouter && !effectiveApiKey) {
         throw new Error('No OpenRouter API key configured (set OPENROUTER_API_KEY).');
       }
       return createOpenAI({
-        // SuperAdmin-managed DB key should win when present; ENV is a bootstrap fallback.
         apiKey: effectiveApiKey || envOpenRouter,
         baseURL: normalizedBaseUrl || 'https://openrouter.ai/api/v1',
+        compatibility: 'compatible',
       });
     case 'ollama':
       return createOpenAI({
         apiKey: 'ollama',
         baseURL: normalizedBaseUrl || 'http://localhost:11434/v1',
+        compatibility: 'compatible',
       });
     default:
       return createOpenAI({
