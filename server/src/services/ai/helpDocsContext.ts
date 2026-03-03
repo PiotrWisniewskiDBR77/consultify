@@ -316,7 +316,7 @@ export async function buildHelpDocsContext(opts: {
     const systemInstructionAddon = [
       '',
       '## HELP / KNOWLEDGE BASE (product documentation)',
-      'Use the documentation snippets below to answer product/how-to questions about Consultinity/IRIS.',
+      'Use the documentation snippets below to answer product/how-to questions about Consultify/IRIS.',
       'Rules:',
       '- Prefer these docs over guesses when explaining UI behavior or workflows.',
       ...citationPolicy,

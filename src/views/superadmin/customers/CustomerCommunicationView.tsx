@@ -93,8 +93,14 @@ const CustomerCommunicationView: React.FC = () => {
 
   const getRecipientsLabel = (comm: Communication): string => {
     try {
-      const filter = comm.recipients_filter ? JSON.parse(comm.recipients_filter) : {};
-      return RECIPIENT_LABELS[filter.audience] || 'All Customers';
+      const raw = comm.recipients_filter;
+      const filter =
+        typeof raw === 'string'
+          ? JSON.parse(raw || '{}')
+          : raw && typeof raw === 'object'
+            ? (raw as any)
+            : {};
+      return RECIPIENT_LABELS[(filter as any).audience] || 'All Customers';
     } catch {
       return 'All Customers';
     }
@@ -113,8 +119,10 @@ const CustomerCommunicationView: React.FC = () => {
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
           <div>
-            <h2 className="text-2xl font-bold text-white">Communication Center</h2>
-            <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-1">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Communication Center
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 mt-1">
               Send announcements and messages to customers
             </p>
           </div>
@@ -132,7 +140,8 @@ const CustomerCommunicationView: React.FC = () => {
       {/* Quick Actions */}
       <div className="grid grid-cols-3 gap-4">
         <Card
-          className="bg-gray-800 p-4 cursor-pointer hover:bg-gray-700/80 transition-colors"
+          padding="sm"
+          className="cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
           onClick={() => {
             setNewMessage({ ...newMessage, type: 'email' });
             setShowComposeModal(true);
@@ -143,15 +152,16 @@ const CustomerCommunicationView: React.FC = () => {
               <Mail className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <p className="text-white font-medium">Send Email</p>
-              <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <p className="text-slate-900 dark:text-white font-medium">Send Email</p>
+              <span className="text-xs text-slate-600 dark:text-slate-400">
                 Direct email to customers
               </span>
             </div>
           </div>
         </Card>
         <Card
-          className="bg-gray-800 p-4 cursor-pointer hover:bg-gray-700/80 transition-colors"
+          padding="sm"
+          className="cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
           onClick={() => {
             setNewMessage({ ...newMessage, type: 'announcement' });
             setShowComposeModal(true);
@@ -162,15 +172,16 @@ const CustomerCommunicationView: React.FC = () => {
               <MessageSquare className="w-5 h-5 text-purple-400" />
             </div>
             <div>
-              <p className="text-white font-medium">Announcement</p>
-              <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <p className="text-slate-900 dark:text-white font-medium">Announcement</p>
+              <span className="text-xs text-slate-600 dark:text-slate-400">
                 In-app notification
               </span>
             </div>
           </div>
         </Card>
         <Card
-          className="bg-gray-800 p-4 cursor-pointer hover:bg-gray-700/80 transition-colors"
+          padding="sm"
+          className="cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
           onClick={() => {
             setNewMessage({ ...newMessage, type: 'broadcast' });
             setShowComposeModal(true);
@@ -181,8 +192,8 @@ const CustomerCommunicationView: React.FC = () => {
               <Users className="w-5 h-5 text-green-400" />
             </div>
             <div>
-              <p className="text-white font-medium">Broadcast</p>
-              <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <p className="text-slate-900 dark:text-white font-medium">Broadcast</p>
+              <span className="text-xs text-slate-600 dark:text-slate-400">
                 Multi-channel message
               </span>
             </div>
@@ -191,12 +202,14 @@ const CustomerCommunicationView: React.FC = () => {
       </div>
 
       {/* Recent Communications */}
-      <Card className="bg-gray-800 p-4">
-        <h3 className="text-lg font-semibold text-white mb-4">Recent Communications</h3>
+      <Card padding="sm">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+          Recent Communications
+        </h3>
         {communications.length === 0 ? (
           <div className="text-center py-8">
             <Mail className="w-12 h-12 text-gray-600 dark:text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
+            <p className="text-slate-600 dark:text-slate-400">
               No communications sent yet
             </p>
             <button
@@ -213,7 +226,7 @@ const CustomerCommunicationView: React.FC = () => {
               return (
                 <div
                   key={comm.id}
-                  className="p-4 bg-gray-700/50 rounded-lg border border-gray-600 hover:bg-gray-700/80 transition-colors"
+                  className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
@@ -233,11 +246,11 @@ const CustomerCommunicationView: React.FC = () => {
                         {comm.type === 'broadcast' && <Users className="w-4 h-4 text-green-400" />}
                       </div>
                       <div>
-                        <h4 className="text-white font-medium">{comm.subject}</h4>
-                        <p className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                        <h4 className="text-slate-900 dark:text-white font-medium">{comm.subject}</h4>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
                           {getRecipientsLabel(comm)}
                         </p>
-                        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-3 mt-2 text-xs text-slate-500 dark:text-slate-400">
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             {comm.sent_at ? new Date(comm.sent_at).toLocaleDateString() : 'Draft'}
@@ -247,7 +260,7 @@ const CustomerCommunicationView: React.FC = () => {
                               comm.status === 'sent'
                                 ? 'bg-green-500/20 text-green-400'
                                 : comm.status === 'draft'
-                                  ? 'bg-gray-50 dark:bg-navy-8000/20 text-gray-400'
+                                  ? 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300'
                                   : 'bg-yellow-500/20 text-yellow-400'
                             }`}
                           >
@@ -258,8 +271,8 @@ const CustomerCommunicationView: React.FC = () => {
                     </div>
                     {openRate !== null && (
                       <div className="text-right">
-                        <p className="text-lg font-bold text-white">{openRate}%</p>
-                        <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                        <p className="text-lg font-bold text-slate-900 dark:text-white">{openRate}%</p>
+                        <span className="text-xs text-slate-600 dark:text-slate-400">
                           Open Rate
                         </span>
                       </div>
@@ -275,19 +288,21 @@ const CustomerCommunicationView: React.FC = () => {
       {/* Compose Modal */}
       {showComposeModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-lg">
-            <h3 className="text-xl font-bold text-white mb-4">
+          <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-lg border border-slate-200 dark:border-navy-700">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
               {newMessage.type === 'email' && 'Compose Email'}
               {newMessage.type === 'announcement' && 'Create Announcement'}
               {newMessage.type === 'broadcast' && 'Send Broadcast'}
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Recipients</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Recipients
+                </label>
                 <select
                   value={newMessage.recipients}
                   onChange={(e) => setNewMessage({ ...newMessage, recipients: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
                 >
                   <option value="all">All Customers</option>
                   <option value="enterprise">Enterprise Only</option>
@@ -296,21 +311,25 @@ const CustomerCommunicationView: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Subject</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Subject
+                </label>
                 <input
                   type="text"
                   value={newMessage.subject}
                   onChange={(e) => setNewMessage({ ...newMessage, subject: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
                   placeholder="Message subject..."
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Content</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Content
+                </label>
                 <textarea
                   value={newMessage.content}
                   onChange={(e) => setNewMessage({ ...newMessage, content: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
                   rows={5}
                   placeholder="Write your message..."
                 />
@@ -319,7 +338,7 @@ const CustomerCommunicationView: React.FC = () => {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowComposeModal(false)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                className="px-4 py-2 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
               >
                 Cancel
               </button>

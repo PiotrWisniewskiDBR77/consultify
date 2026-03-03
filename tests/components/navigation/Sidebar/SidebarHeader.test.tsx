@@ -19,8 +19,8 @@ describe('SidebarHeader (L2)', () => {
     const onToggleCollapse = vi.fn();
     render(<SidebarHeader showFull theme="light" onToggleCollapse={onToggleCollapse} t={t} />);
 
-    const img = screen.getByAltText('Consultinity') as HTMLImageElement;
-    expect(img.src).toContain('/assets/logos/logo-light.png');
+    const img = screen.getByAltText('Consultify') as HTMLImageElement;
+    expect(img.src).toContain('/assets/logos/logo-light.svg');
 
     fireEvent.click(screen.getByRole('button', { name: /Collapse/i }));
     expect(onToggleCollapse).toHaveBeenCalledTimes(1);

@@ -1,6 +1,6 @@
 /**
  * Decision Service
- * FLOW-DECISION-001: Core decision management - "Heart of Consultinity"
+ * FLOW-DECISION-001: Core decision management - "Heart of Consultify"
  */
 
 import { v4 as uuidv4 } from 'uuid';

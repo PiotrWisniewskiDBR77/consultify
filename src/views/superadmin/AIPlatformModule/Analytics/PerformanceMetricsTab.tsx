@@ -22,6 +22,8 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { Api } from '@/services/api';
+
 interface PerformanceMetric {
   id: string;
   name: string;
@@ -56,9 +58,6 @@ export const PerformanceMetricsTab: React.FC = () => {
   const loadMetrics = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-
       const periodMap: Record<typeof dateRange, string> = {
         '1d': '24h',
         '7d': '7d',
@@ -67,21 +66,39 @@ export const PerformanceMetricsTab: React.FC = () => {
       };
       const period = periodMap[dateRange];
 
-      const [metricsRes, trendsRes, providersRes, llmHealthRes] = await Promise.all([
-        fetch(`/api/ai-operations/performance/metrics?period=${encodeURIComponent(period)}`, {
-          headers,
-        }),
-        fetch(`/api/ai-operations/performance/trends?period=${encodeURIComponent(period)}`, {
-          headers,
-        }),
-        fetch('/api/ai-operations/mission-control/providers', { headers }),
-        fetch('/api/llm/health/detailed', { headers }),
+      const settled = await Promise.allSettled([
+        Api.getAIOperationsPerformanceMetrics(period),
+        Api.getAIOperationsPerformanceTrends(period),
+        Api.getMissionControlProviders(),
+        Api.getLLMHealthDetailed(),
       ]);
 
-      const metricsPayload = await metricsRes.json().catch(() => ({}));
-      const trendsPayload = await trendsRes.json().catch(() => ({}));
-      const providersPayload = await providersRes.json().catch(() => ({}));
-      const llmHealthPayload = await llmHealthRes.json().catch(() => ({}));
+      const metricsResult = settled[0];
+      const trendsResult = settled[1];
+      const providersResult = settled[2];
+      const llmHealthResult = settled[3];
+
+      // Hard requirements: without these the view is meaningless.
+      if (metricsResult.status === 'rejected' || trendsResult.status === 'rejected') {
+        const err =
+          metricsResult.status === 'rejected'
+            ? metricsResult.reason
+            : trendsResult.status === 'rejected'
+              ? trendsResult.reason
+              : null;
+        throw err instanceof Error ? err : new Error('Failed to load performance metrics');
+      }
+
+      // Soft requirements: these are best-effort; the UI should still work without them.
+      const providersPayload =
+        providersResult.status === 'fulfilled' ? providersResult.value : ({ data: [] } as any);
+      const llmHealthPayload =
+        llmHealthResult.status === 'fulfilled'
+          ? llmHealthResult.value
+          : ({ providers: [], alerts: [] } as any);
+
+      const metricsPayload = metricsResult.value;
+      const trendsPayload = trendsResult.value;
 
       const cur = metricsPayload?.data || {};
       const trends: Array<{
@@ -186,18 +203,31 @@ export const PerformanceMetricsTab: React.FC = () => {
         healthProviders.map((p) => [String(p?.name || '').toLowerCase(), p] as const)
       );
 
-      const nextProviderMetrics: ProviderMetrics[] = providersRows.map((p) => {
-        const name = String(p?.name || 'Unknown');
-        const h = healthByName.get(name.toLowerCase());
-        const status = String(h?.status || '').toLowerCase();
-        const isUp = status === 'healthy' || status === 'degraded';
-        return {
-          provider: name,
-          avgLatency: Number(p?.avg_latency_ms || h?.responseTime || 0),
-          successRate: isUp ? 100 : 0,
-          errorRate: isUp ? 0 : 100,
-        };
-      });
+      const nextProviderMetrics: ProviderMetrics[] =
+        providersRows.length > 0
+          ? providersRows.map((p) => {
+              const name = String(p?.name || 'Unknown');
+              const h = healthByName.get(name.toLowerCase());
+              const status = String(h?.status || '').toLowerCase();
+              const isUp = status === 'healthy' || status === 'degraded';
+              return {
+                provider: name,
+                avgLatency: Number(p?.avg_latency_ms || h?.responseTime || 0),
+                successRate: isUp ? 100 : 0,
+                errorRate: isUp ? 0 : 100,
+              };
+            })
+          : healthProviders.map((h: any) => {
+              const name = String(h?.name || 'Unknown');
+              const status = String(h?.status || '').toLowerCase();
+              const isUp = status === 'healthy' || status === 'degraded';
+              return {
+                provider: name,
+                avgLatency: Number(h?.responseTime || 0),
+                successRate: isUp ? 100 : 0,
+                errorRate: isUp ? 0 : 100,
+              };
+            });
       setProviderMetrics(nextProviderMetrics);
 
       const nextAlerts: Array<{

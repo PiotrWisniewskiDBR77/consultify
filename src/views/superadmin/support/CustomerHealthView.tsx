@@ -33,6 +33,7 @@ export const CustomerHealthView: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to fetch organizations:', err);
+      toast.error('Failed to fetch organizations');
     }
   };
 
@@ -53,15 +54,15 @@ export const CustomerHealthView: React.FC = () => {
   const getHealthColor = (healthLevel: string) => {
     switch (healthLevel?.toLowerCase()) {
       case 'excellent':
-        return 'text-green-400';
+        return 'text-green-700 dark:text-green-400';
       case 'good':
-        return 'text-green-300';
+        return 'text-green-700 dark:text-green-300';
       case 'fair':
-        return 'text-yellow-400';
+        return 'text-yellow-800 dark:text-yellow-400';
       case 'poor':
-        return 'text-red-400';
+        return 'text-red-700 dark:text-red-400';
       default:
-        return 'text-slate-400 dark:text-slate-500';
+        return 'text-slate-700 dark:text-slate-400';
     }
   };
 
@@ -69,15 +70,15 @@ export const CustomerHealthView: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white">Customer Health</h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Customer Health</h2>
+          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
             Monitor customer health and engagement
           </p>
         </div>
         <select
           value={selectedOrgId}
           onChange={(e) => setSelectedOrgId(e.target.value)}
-          className="bg-navy-800 border border-slate-700 text-white px-4 py-2 rounded-lg"
+          className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
         >
           <option value="">Select Organization</option>
           {organizations.map((org) => (
@@ -89,46 +90,54 @@ export const CustomerHealthView: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="text-center py-12">Loading...</div>
+        <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
       ) : health ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-navy-800 rounded-xl border border-slate-700 p-6">
+          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-slate-400 dark:text-slate-500 text-sm">Overall Health</h3>
+              <h3 className="text-slate-500 dark:text-slate-400 text-sm">Overall Health</h3>
               <Activity className="text-violet-400" size={20} />
             </div>
             <div className={`text-3xl font-bold ${getHealthColor(health.overall_health)}`}>
-              {health.overall_health || 'N/A'}
+              {health.overall_health || health.overallHealth || 'N/A'}
             </div>
             {health.churn_risk && (
-              <div className="mt-2 text-sm text-slate-400 dark:text-slate-500">
-                Churn Risk: <span className="text-yellow-400">{health.churn_risk}</span>
+              <div className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                Churn Risk:{' '}
+                <span className="text-yellow-800 dark:text-yellow-400">{health.churn_risk}</span>
               </div>
             )}
           </div>
-          <div className="bg-navy-800 rounded-xl border border-slate-700 p-6">
+          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-slate-400 dark:text-slate-500 text-sm">Engagement</h3>
+              <h3 className="text-slate-500 dark:text-slate-400 text-sm">Engagement</h3>
               <TrendingUp className="text-green-400" size={20} />
             </div>
-            <div className="text-3xl font-bold text-white">{health.engagement_level || 'N/A'}</div>
-            {health.adoption_score !== null && (
-              <div className="mt-2 text-sm text-slate-400 dark:text-slate-500">
-                Adoption Score: <span className="text-green-400">{health.adoption_score}%</span>
+            <div className="text-3xl font-bold text-slate-900 dark:text-white">
+              {health.engagement_level || health.engagementLevel || health.engagement_score || 'N/A'}
+            </div>
+            {health.adoption_score !== null && health.adoption_score !== undefined && (
+              <div className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                Adoption Score:{' '}
+                <span className="text-green-700 dark:text-green-400">
+                  {health.adoption_score}%
+                </span>
               </div>
             )}
           </div>
-          <div className="bg-navy-800 rounded-xl border border-slate-700 p-6">
+          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-slate-400 dark:text-slate-500 text-sm">Support</h3>
+              <h3 className="text-slate-500 dark:text-slate-400 text-sm">Support</h3>
               <AlertTriangle className="text-yellow-400" size={20} />
             </div>
-            <div className="text-3xl font-bold text-white">{health.open_tickets_count || 0}</div>
-            <div className="mt-2 text-sm text-slate-400 dark:text-slate-500">Open Tickets</div>
+            <div className="text-3xl font-bold text-slate-900 dark:text-white">
+              {health.open_tickets_count || health.openTicketsCount || 0}
+            </div>
+            <div className="mt-2 text-sm text-slate-600 dark:text-slate-400">Open Tickets</div>
           </div>
         </div>
       ) : (
-        <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+        <div className="text-center py-12 text-slate-500 dark:text-slate-400">
           No health data available. Health checks are calculated automatically.
         </div>
       )}

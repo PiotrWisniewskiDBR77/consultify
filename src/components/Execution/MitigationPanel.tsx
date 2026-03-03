@@ -7,6 +7,7 @@
 
 import { Check, Shield } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
@@ -79,9 +80,16 @@ export const MitigationPanel: React.FC<MitigationPanelProps> = ({
         trackFunnelEvent('execution_risk_mitigation_updated', { raidItemId, strategy, status });
         onSaved?.();
         setTimeout(() => setSaved(false), 2000);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(
+          (err as any)?.error ||
+            (err as any)?.message ||
+            t('execution.toast.mitigationSaveFailed', 'Failed to save mitigation')
+        );
       }
     } catch {
-      // noop
+      toast.error(t('execution.toast.mitigationSaveFailed', 'Failed to save mitigation'));
     } finally {
       setSaving(false);
     }

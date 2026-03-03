@@ -11,11 +11,16 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { WorkspacePanelStrip, type WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 
+import { IdeaCanvasToolSelector, type CanvasToolType } from './IdeaCanvasToolSelector';
+import { IdeaAISuggestionsPanel } from './IdeaAISuggestionsPanel';
+import { IdeaContextPanel } from './IdeaContextPanel';
 import { IdeaRecommendationMap } from './IdeaRecommendationMap';
+import { IdeaTableTool } from './IdeaTableTool';
 import { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
 import type { MyIdea } from './MyIdeasListContent';
 import { buildAskAIMessage } from './shared/askAiHelper';
@@ -65,14 +70,31 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   const [mapOpen, setMapOpen] = useState(Boolean(initialOpenMap));
 
-  const toolsPanelOpen = toolsOpenProp ?? false;
-  const setToolsPanelOpen = useCallback(
-    (v: boolean | ((prev: boolean) => boolean)) => {
-      const next = typeof v === 'function' ? v(toolsPanelOpen) : v;
-      onToolsOpenChange?.(next);
+  const [activeTool, setActiveTool] = useState<CanvasToolType>('mindmap');
+  const [activePanel, setActivePanel] = useState<WorkspacePanelKey>(toolsOpenProp ? 'tools' : null);
+  const [mapRefreshToken, setMapRefreshToken] = useState(0);
+  const userSelectedToolRef = React.useRef(false);
+
+  useEffect(() => {
+    if (typeof toolsOpenProp !== 'boolean') return;
+    if (toolsOpenProp) {
+      setActivePanel('tools');
+      return;
+    }
+    setActivePanel((prev) => (prev === 'tools' ? null : prev));
+  }, [toolsOpenProp]);
+
+  const handlePanelChange = useCallback(
+    (next: WorkspacePanelKey) => {
+      setActivePanel(next);
+      onToolsOpenChange?.(next === 'tools');
     },
-    [onToolsOpenChange, toolsPanelOpen]
+    [onToolsOpenChange]
   );
+
+  const toolsPanelOpen = activePanel === 'tools';
+  const contextPanelOpen = activePanel === 'context';
+  const aiPanelOpen = activePanel === 'ai_suggestions';
 
   const isDraft = useMemo(() => isNewInitial && realId === ideaId, [ideaId, isNewInitial, realId]);
   const isAccepted = useMemo(() => {
@@ -246,23 +268,57 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   return (
     <div className="w-full h-full flex overflow-hidden bg-white dark:bg-navy-950">
       {/* Map fills all available space */}
-      <div className="flex-1 min-w-0 h-full">
-        <IdeaRecommendationMap
-          ideaId={realId}
-          ideaTitle={title || safeTitleFromSeed(seedText, isPolish)}
-          onClose={() => setMapOpen(false)}
-          onCenterEdit={() => setToolsPanelOpen(true)}
-          variant={mapOpen ? 'overlay' : 'embedded'}
-          showClose={mapOpen}
-          className={mapOpen ? '' : 'rounded-none'}
-          locked={!isAccepted}
-        />
+      <div className="flex-1 min-w-0 h-full relative">
+        <div className="absolute top-3 right-3 z-30 flex items-center gap-2">
+          <IdeaCanvasToolSelector
+            activeTool={activeTool}
+            onToolChange={(next) => {
+              userSelectedToolRef.current = true;
+              setActiveTool(next);
+            }}
+            disabledTools={['process_flow', 'whiteboard']}
+          />
+          <WorkspacePanelStrip value={activePanel} onChange={handlePanelChange} />
+        </div>
+
+        {activeTool === 'mindmap' ? (
+          <IdeaRecommendationMap
+            key={`${realId}:${mapRefreshToken}`}
+            ideaId={realId}
+            ideaTitle={title || safeTitleFromSeed(seedText, isPolish)}
+            onClose={() => setMapOpen(false)}
+            onCenterEdit={() => handlePanelChange('tools')}
+            preferredTool={activeTool}
+            extensions={{}}
+            onPreferredToolLoaded={(tool) => {
+              if (!tool) return;
+              if (userSelectedToolRef.current) return;
+              setActiveTool(tool);
+            }}
+            variant={mapOpen ? 'overlay' : 'embedded'}
+            showClose={mapOpen}
+            className={mapOpen ? '' : 'rounded-none'}
+            locked={!isAccepted}
+          />
+        ) : activeTool === 'table' ? (
+          <IdeaTableTool
+            open
+            ideaId={realId}
+            locked={!isAccepted}
+            refreshToken={mapRefreshToken}
+            onSaved={() => setMapRefreshToken((v) => v + 1)}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-sm text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Narzędzie w przygotowaniu' : 'Tool coming soon'}
+          </div>
+        )}
       </div>
 
       {/* Tools panel sidebar */}
       <IdeaWorkspaceTools
         open={toolsPanelOpen}
-        onClose={() => setToolsPanelOpen(false)}
+        onClose={() => handlePanelChange(null)}
         ideaId={realId}
         title={title}
         seedText={seedText}
@@ -298,6 +354,20 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         onAcceptChallenge={handleAcceptChallenge}
         onConvert={handleConvert}
         onOpenChat={openChat}
+      />
+
+      <IdeaContextPanel
+        open={contextPanelOpen}
+        onClose={() => handlePanelChange(null)}
+        ideaId={realId}
+        title={title || safeTitleFromSeed(seedText, isPolish)}
+      />
+
+      <IdeaAISuggestionsPanel
+        open={aiPanelOpen}
+        onClose={() => handlePanelChange(null)}
+        title={title || safeTitleFromSeed(seedText, isPolish)}
+        onSendToChat={openChat}
       />
     </div>
   );

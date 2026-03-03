@@ -243,7 +243,7 @@ router.get(
       const stats = (await dbGet(`
                 SELECT 
                     COUNT(*) as total,
-                    COALESCE(SUM(total_amount), 0) as totalRevenue,
+                    COALESCE(SUM(COALESCE(total_amount, revenue_amount, amount, 0)), 0) as totalRevenue,
                     COALESCE(SUM(recognized_amount), 0) as recognizedRevenue,
                     COALESCE(SUM(remaining_amount), 0) as remainingRevenue,
                     COUNT(CASE WHEN status = 'pending' THEN 1 END) as pendingItems,
@@ -252,14 +252,24 @@ router.get(
                 FROM revenue_recognition
             `)) as any;
 
+      const totalRev = Number(stats?.totalRevenue || 0);
+      const recognizedRev = Number(stats?.recognizedRevenue || 0);
+      const remainingRev = Number(stats?.remainingRevenue || 0);
+
       return res.json({
-        total: stats?.total || 0,
-        totalRevenue: stats?.totalRevenue || 0,
-        recognizedRevenue: stats?.recognizedRevenue || 0,
-        remainingRevenue: stats?.remainingRevenue || 0,
-        pendingItems: stats?.pendingItems || 0,
-        inProgressItems: stats?.inProgressItems || 0,
-        completedItems: stats?.completedItems || 0,
+        total: Number(stats?.total || 0),
+        totalRevenue: totalRev,
+        total_revenue: totalRev,
+        recognizedRevenue: recognizedRev,
+        recognized_revenue: recognizedRev,
+        remainingRevenue: remainingRev > 0 ? remainingRev : Math.max(0, totalRev - recognizedRev),
+        remaining_revenue: remainingRev > 0 ? remainingRev : Math.max(0, totalRev - recognizedRev),
+        pendingItems: Number(stats?.pendingItems || 0),
+        pending_items: Number(stats?.pendingItems || 0),
+        inProgressItems: Number(stats?.inProgressItems || 0),
+        in_progress_items: Number(stats?.inProgressItems || 0),
+        completedItems: Number(stats?.completedItems || 0),
+        completed_items: Number(stats?.completedItems || 0),
       });
     } catch (error: any) {
       logger.error('[Revenue] Get revenue recognition stats error:', error);
@@ -581,6 +591,60 @@ router.delete(
 // PAYMENT FAILURES (Dunning)
 // ==========================================
 
+// ==========================================
+// PAYMENT METHODS (SuperAdmin read access)
+// ==========================================
+
+// GET /revenue/payment-methods - list payment methods across orgs
+router.get(
+  '/payment-methods',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { organization_id } = req.query as { organization_id?: string };
+
+      let query = `
+        SELECT pm.*, o.name as organization_name
+        FROM payment_methods pm
+        LEFT JOIN organizations o ON pm.organization_id = o.id
+        WHERE 1=1
+      `;
+      const params: SQLParams = [];
+
+      if (organization_id) {
+        query += ' AND pm.organization_id = ?';
+        params.push(organization_id);
+      }
+
+      query += ' ORDER BY pm.is_default DESC, pm.created_at DESC';
+
+      const methods = await dbAll(query, params);
+      return res.json(methods);
+    } catch (error: any) {
+      logger.error('[Revenue] Get payment methods error:', error);
+      return res.status(500).json({ error: 'Failed to get payment methods' });
+    }
+  })
+);
+
+// DELETE /revenue/payment-methods/:id - delete payment method (DB row only)
+router.delete(
+  '/payment-methods/:id',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      await dbRun('DELETE FROM payment_methods WHERE id = ?', [id]);
+      return res.json({ success: true });
+    } catch (error: any) {
+      logger.error('[Revenue] Delete payment method error:', error);
+      return res.status(500).json({ error: 'Failed to delete payment method' });
+    }
+  })
+);
+
 // GET /revenue/payment-failures
 router.get(
   '/payment-failures',
@@ -785,6 +849,11 @@ router.get(
 // ANALYTICS (MRR, Churn, LTV)
 // ==========================================
 
+const toNumber = (value: any, fallback = 0): number => {
+  const n = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(n) ? n : fallback;
+};
+
 // GET /revenue/analytics/mrr
 router.get(
   '/analytics/mrr',
@@ -792,23 +861,120 @@ router.get(
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
-      const snapshots = await dbAll(`
-                SELECT * FROM mrr_snapshots
-                ORDER BY snapshot_date DESC
-                LIMIT 12
-            `);
+      const summary = (await dbGet(
+        `
+          SELECT 
+            COALESCE(SUM(sp.price_monthly), 0) as total_mrr,
+            COUNT(*) as active_subscriptions
+          FROM subscriptions s
+          LEFT JOIN subscription_plans sp ON s.plan_id = sp.id
+          WHERE s.status = 'active'
+        `
+      )) as any;
 
-      const latest = snapshots[0] as any;
+      const byPlan = await dbAll(
+        `
+          SELECT 
+            s.plan_id as plan_id,
+            sp.name as plan_name,
+            COALESCE(sp.price_monthly, 0) as price_monthly,
+            COUNT(*) as subscriber_count,
+            COALESCE(SUM(sp.price_monthly), 0) as plan_mrr
+          FROM subscriptions s
+          LEFT JOIN subscription_plans sp ON s.plan_id = sp.id
+          WHERE s.status = 'active'
+          GROUP BY s.plan_id, sp.name, sp.price_monthly
+          ORDER BY plan_mrr DESC
+        `
+      );
 
+      const totalMRR = toNumber(summary?.total_mrr, 0);
+      const activeSubscriptions = toNumber(summary?.active_subscriptions, 0);
+      const arr = totalMRR * 12;
+
+      // Backwards-compatible keys + SubscriptionAnalytics shape
       return res.json({
-        current: latest?.mrr || 0,
-        arr: (latest?.mrr || 0) * 12,
-        growth: latest?.growth_rate || 0,
-        history: snapshots.reverse(),
+        current: totalMRR,
+        arr,
+        growth: 0,
+        history: [],
+        mrr: {
+          totalMRR,
+          arr,
+          activeSubscriptions,
+          byPlan: (byPlan || []).map((p: any) => ({
+            plan_id: p.plan_id,
+            plan_name: p.plan_name,
+            price_monthly: toNumber(p.price_monthly, 0),
+            subscriber_count: toNumber(p.subscriber_count, 0),
+            plan_mrr: toNumber(p.plan_mrr, 0),
+          })),
+        },
       });
     } catch (error: any) {
       logger.error('[Revenue] Get MRR analytics error:', error);
       return res.status(500).json({ error: 'Failed to get MRR analytics' });
+    }
+  })
+);
+
+// GET /revenue/analytics/mrr/trend?days=30
+router.get(
+  '/analytics/mrr/trend',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { days = 30 } = req.query as { days?: string | number };
+      const daysNum = Math.max(1, toNumber(days, 30));
+
+      const rows = await dbAll(
+        `
+          SELECT 
+            snapshot_date,
+            COALESCE(mrr, total_mrr, 0) as mrr,
+            COALESCE(new_mrr, 0) as new_mrr,
+            COALESCE(expansion_mrr, 0) as expansion_mrr,
+            COALESCE(contraction_mrr, 0) as contraction_mrr,
+            COALESCE(churned_mrr, churn_mrr, 0) as churn_mrr,
+            COALESCE(growth_rate, 0) as growth_rate
+          FROM mrr_snapshots
+          WHERE snapshot_date >= datetime('now', '-' || ? || ' days')
+          ORDER BY snapshot_date ASC
+        `,
+        [daysNum]
+      );
+
+      const data = (rows || []).map((r: any) => ({
+        date: r.snapshot_date,
+        mrr: toNumber(r.mrr, 0),
+        new_mrr: toNumber(r.new_mrr, 0),
+        expansion_mrr: toNumber(r.expansion_mrr, 0),
+        churn_mrr: toNumber(r.churn_mrr, 0),
+        growth: toNumber(r.growth_rate, 0),
+      }));
+
+      const startMRR = data.length > 0 ? toNumber(data[0].mrr, 0) : 0;
+      const endMRR = data.length > 0 ? toNumber(data[data.length - 1].mrr, 0) : 0;
+      const totalGrowth =
+        startMRR > 0 ? (((endMRR - startMRR) / startMRR) * 100).toFixed(2) : '0.00';
+      const avgGrowth =
+        data.length > 1
+          ? (
+              data.reduce((acc: number, d: any) => acc + toNumber(d.growth, 0), 0) / data.length
+            ).toFixed(2)
+          : '0.00';
+
+      return res.json({
+        trend: {
+          period: { days: daysNum, granularity: 'day' },
+          data,
+          summary: { startMRR, endMRR, totalGrowth, avgGrowth },
+        },
+      });
+    } catch (error: any) {
+      logger.error('[Revenue] Get MRR trend analytics error:', error);
+      return res.status(500).json({ error: 'Failed to get MRR trend analytics' });
     }
   })
 );
@@ -832,10 +998,27 @@ router.get(
           ? Math.round((churnData?.monthly_churned / churnData?.active) * 100 * 100) / 100
           : 0;
 
+      // SubscriptionAnalytics-compatible shape (monthly series)
+      const now = new Date();
+      const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
       return res.json({
-        rate: churnRate,
-        monthlyChurned: churnData?.monthly_churned || 0,
-        activeSubscriptions: churnData?.active || 0,
+        churn: {
+          period: { months: 1 },
+          data: [
+            {
+              month: monthKey,
+              churnedCustomers: toNumber(churnData?.monthly_churned, 0),
+              churnedMRR: 0,
+              customerChurnRate: churnRate.toFixed(2),
+              mrrChurnRate: churnRate.toFixed(2),
+            },
+          ],
+          averages: {
+            customerChurnRate: churnRate.toFixed(2),
+            mrrChurnRate: churnRate.toFixed(2),
+          },
+        },
       });
     } catch (error: any) {
       logger.error('[Revenue] Get churn analytics error:', error);
@@ -865,15 +1048,58 @@ router.get(
                 )
             `)) as any;
 
+      const ltv = Math.round(toNumber(ltvData?.avg_ltv, 0));
+      // Keep the rest as safe defaults (can be enriched later)
       return res.json({
-        average: Math.round(ltvData?.avg_ltv || 0),
-        max: ltvData?.max_ltv || 0,
-        min: ltvData?.min_ltv || 0,
+        ltv: {
+          ltv,
+          arpa: 0,
+          avgLifespanMonths: 0,
+          avgRevenuePerCustomer: ltv,
+          monthlyChurnRate: '0.00',
+          ltvToCac: null,
+        },
+        average: ltv,
+        max: toNumber(ltvData?.max_ltv, 0),
+        min: toNumber(ltvData?.min_ltv, 0),
       });
     } catch (error: any) {
       logger.error('[Revenue] Get LTV analytics error:', error);
       return res.status(500).json({ error: 'Failed to get LTV analytics' });
     }
+  })
+);
+
+// GET /revenue/analytics/cohorts
+router.get(
+  '/analytics/cohorts',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    // Minimal, non-breaking payload for SubscriptionAnalytics
+    return res.json({
+      cohorts: {
+        period: { cohortMonths: 0, retentionMonths: 0 },
+        cohorts: [],
+      },
+    });
+  })
+);
+
+// GET /revenue/analytics/expansion
+router.get(
+  '/analytics/expansion',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    // Minimal, non-breaking payload for SubscriptionAnalytics
+    return res.json({
+      expansion: {
+        period: { months: 0 },
+        data: [],
+        totals: { totalExpansion: 0, totalContraction: 0, netTotal: 0 },
+      },
+    });
   })
 );
 

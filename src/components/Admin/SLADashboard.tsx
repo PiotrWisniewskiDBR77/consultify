@@ -288,7 +288,7 @@ export function SLADashboard() {
             <Shield size={24} className="text-emerald-400" />
             SLA Dashboard
           </h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">
+          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
             Service Level Agreement monitoring and compliance
           </p>
         </div>
@@ -301,8 +301,8 @@ export function SLADashboard() {
                 onClick={() => setTimeRange(range)}
                 className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                   timeRange === range
-                    ? 'bg-emerald-600 text-slate-900 dark:text-white'
-                    : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-emerald-600 text-white'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 {range}
@@ -343,8 +343,8 @@ export function SLADashboard() {
       <div
         className={`rounded-xl p-6 border ${
           metrics.slaCompliant
-            ? 'bg-emerald-900/20 border-emerald-500/30'
-            : 'bg-red-900/20 border-red-500/30'
+            ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-500/30'
+            : 'bg-rose-50 dark:bg-red-900/20 border-rose-200 dark:border-red-500/30'
         }`}
       >
         <div className="flex items-center justify-between">
@@ -362,7 +362,7 @@ export function SLADashboard() {
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {metrics.slaCompliant ? 'SLA Compliant' : 'SLA Breach Detected'}
               </h3>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 {metrics.slaCompliant
                   ? 'All service level objectives are being met'
                   : `${activeBreaches.length} active breach(es) require attention`}
@@ -373,7 +373,7 @@ export function SLADashboard() {
             <div className="text-3xl font-bold text-slate-900 dark:text-white">
               {metrics.uptimePercentage.toFixed(3)}%
             </div>
-            <div className="text-sm text-slate-400 dark:text-slate-500">
+            <div className="text-sm text-slate-600 dark:text-slate-400">
               Current Uptime (Target: {metrics.uptimeTarget}%)
             </div>
           </div>

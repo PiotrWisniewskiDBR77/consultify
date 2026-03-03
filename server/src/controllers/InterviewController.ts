@@ -330,19 +330,33 @@ async function assertSessionEditable(sessionId: string, organizationId: string):
   let session: any;
   try {
     session = await queryHelpers.queryOne(
-      `SELECT s.id, s.status, s.owner_id as owner_id
+      `SELECT
+         s.id,
+         s.status,
+         s.owner_id as owner_id
        FROM interview_sessions s
-       JOIN projects p ON p.id = s.project_id
-       WHERE s.id = ? AND p.organization_id = ?`,
-      [sessionId, organizationId]
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+      [sessionId, organizationId, organizationId]
     );
   } catch {
     session = await queryHelpers.queryOne(
-      `SELECT s.id, s.status, s.user_id as owner_id
+      `SELECT
+         s.id,
+         s.status,
+         s.user_id as owner_id
        FROM interview_sessions s
-       JOIN projects p ON p.id = s.project_id
-       WHERE s.id = ? AND p.organization_id = ?`,
-      [sessionId, organizationId]
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+      [sessionId, organizationId, organizationId]
     );
   }
   if (!session) throw new Error('Session not found');
@@ -350,31 +364,113 @@ async function assertSessionEditable(sessionId: string, organizationId: string):
   return session;
 }
 
+async function canUserAccessSession(params: {
+  sessionId: string;
+  organizationId: string;
+  userId: string;
+}): Promise<boolean> {
+  const { sessionId, organizationId, userId } = params;
+
+  let base: any = null;
+  try {
+    base = await queryHelpers.queryOne(
+      `SELECT
+         s.id,
+         s.assignment_id,
+         s.owner_id as owner_id
+       FROM interview_sessions s
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+      [sessionId, organizationId, organizationId]
+    );
+  } catch {
+    base = await queryHelpers.queryOne(
+      `SELECT
+         s.id,
+         s.assignment_id,
+         s.user_id as owner_id
+       FROM interview_sessions s
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+      [sessionId, organizationId, organizationId]
+    );
+  }
+
+  if (!base) return false;
+  if (String((base as any).owner_id) === String(userId)) return true;
+
+  const assignmentId = (base as any).assignment_id ? String((base as any).assignment_id) : '';
+  if (!assignmentId) return false;
+
+  // Primary assignee can always access
+  try {
+    const a = await queryHelpers.queryOne(
+      `SELECT assignee_user_id FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+      [assignmentId, organizationId]
+    );
+    if (String((a as any)?.assignee_user_id || '') === String(userId)) return true;
+  } catch {
+    // ignore
+  }
+
+  // Team member access (table may not exist in all envs)
+  try {
+    const member = await queryHelpers.queryOne(
+      `SELECT id FROM interview_assignment_members WHERE assignment_id = ? AND user_id = ?`,
+      [assignmentId, userId]
+    );
+    return Boolean(member?.id);
+  } catch {
+    return false;
+  }
+}
+
+async function assertSessionAccessibleOrThrow(params: {
+  sessionId: string;
+  organizationId: string;
+  userId: string;
+}): Promise<void> {
+  const { sessionId, organizationId, userId } = params;
+  const ok = await canUserAccessSession({ sessionId, organizationId, userId });
+  if (ok) return;
+
+  // Differentiate "not found" from "forbidden" for read endpoints.
+  let exists: any = null;
+  try {
+    exists = await queryHelpers.queryOne(
+      `SELECT s.id
+       FROM interview_sessions s
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+      [sessionId, organizationId, organizationId]
+    );
+  } catch {
+    exists = null;
+  }
+
+  if (!exists?.id) throw new Error('Session not found');
+  throw new Error('Forbidden');
+}
+
 async function assertSessionOwnedByUser(
   sessionId: string,
   organizationId: string,
   userId: string
 ): Promise<void> {
-  let session: any;
-  try {
-    session = await queryHelpers.queryOne(
-      `SELECT s.id, s.owner_id as owner_id
-       FROM interview_sessions s
-       JOIN projects p ON p.id = s.project_id
-       WHERE s.id = ? AND p.organization_id = ?`,
-      [sessionId, organizationId]
-    );
-  } catch {
-    session = await queryHelpers.queryOne(
-      `SELECT s.id, s.user_id as owner_id
-       FROM interview_sessions s
-       JOIN projects p ON p.id = s.project_id
-       WHERE s.id = ? AND p.organization_id = ?`,
-      [sessionId, organizationId]
-    );
-  }
-  if (!session) throw new Error('Session not found');
-  if (String((session as any).owner_id) !== String(userId)) throw new Error('Forbidden');
+  const ok = await canUserAccessSession({ sessionId, organizationId, userId });
+  if (!ok) throw new Error('Forbidden');
 }
 
 async function getAssignmentForSession(
@@ -691,8 +787,8 @@ export const InterviewController = {
     const user = requireUser(req);
     const { status, includeCompleted } = req.query as any;
 
-    const params: unknown[] = [user.organizationId, user.id];
-    let where = `WHERE a.organization_id = ? AND a.assignee_user_id = ?`;
+    const params: unknown[] = [user.organizationId, user.id, user.id];
+    let where = `WHERE a.organization_id = ? AND (a.assignee_user_id = ? OR m.user_id = ?)`;
 
     if (status) {
       where += ` AND a.status = ?`;
@@ -701,25 +797,58 @@ export const InterviewController = {
       where += ` AND a.status != 'completed'`;
     }
 
-    const rows = await queryHelpers.queryAll(
-      `SELECT
-         a.*,
-         t.name as template_name,
-         t.description as template_description,
-         t.category as template_category,
-         s.status as session_status,
-         s.answered_questions as answered_questions,
-         s.total_questions as total_questions
-       FROM interview_assignments a
-       LEFT JOIN interview_library_templates t ON t.id = a.template_id
-       LEFT JOIN interview_sessions s ON s.id = a.session_id
-       ${where}
-       ORDER BY
-         CASE a.status WHEN 'assigned' THEN 0 WHEN 'sent_back' THEN 1 WHEN 'in_progress' THEN 2 WHEN 'submitted' THEN 3 ELSE 4 END,
-         COALESCE(a.due_at, '9999-12-31') ASC,
-         a.created_at DESC`,
-      params
-    );
+    let rows: any[] = [];
+    try {
+      rows = await queryHelpers.queryAll(
+        `SELECT
+           a.*,
+           t.name as template_name,
+           t.description as template_description,
+           t.category as template_category,
+           s.status as session_status,
+           s.answered_questions as answered_questions,
+           s.total_questions as total_questions
+         FROM interview_assignments a
+         LEFT JOIN interview_assignment_members m ON m.assignment_id = a.id
+         LEFT JOIN interview_library_templates t ON t.id = a.template_id
+         LEFT JOIN interview_sessions s ON s.id = a.session_id
+         ${where}
+         ORDER BY
+           CASE a.status WHEN 'assigned' THEN 0 WHEN 'sent_back' THEN 1 WHEN 'in_progress' THEN 2 WHEN 'submitted' THEN 3 ELSE 4 END,
+           COALESCE(a.due_at, '9999-12-31') ASC,
+           a.created_at DESC`,
+        params
+      );
+    } catch {
+      // Back-compat: environments without `interview_assignment_members`.
+      const fallbackParams: unknown[] = [user.organizationId, user.id];
+      let fallbackWhere = `WHERE a.organization_id = ? AND a.assignee_user_id = ?`;
+      if (status) {
+        fallbackWhere += ` AND a.status = ?`;
+        fallbackParams.push(status);
+      } else if (!includeCompleted) {
+        fallbackWhere += ` AND a.status != 'completed'`;
+      }
+      rows = await queryHelpers.queryAll(
+        `SELECT
+           a.*,
+           t.name as template_name,
+           t.description as template_description,
+           t.category as template_category,
+           s.status as session_status,
+           s.answered_questions as answered_questions,
+           s.total_questions as total_questions
+         FROM interview_assignments a
+         LEFT JOIN interview_library_templates t ON t.id = a.template_id
+         LEFT JOIN interview_sessions s ON s.id = a.session_id
+         ${fallbackWhere}
+         ORDER BY
+           CASE a.status WHEN 'assigned' THEN 0 WHEN 'sent_back' THEN 1 WHEN 'in_progress' THEN 2 WHEN 'submitted' THEN 3 ELSE 4 END,
+           COALESCE(a.due_at, '9999-12-31') ASC,
+           a.created_at DESC`,
+        fallbackParams
+      );
+    }
 
     const mapped = (rows || []).map((r: any) => {
       const answered = Number(r.answered_questions || 0);
@@ -983,10 +1112,25 @@ export const InterviewController = {
     const { id } = req.params;
     const { projectId, name } = req.body || {};
 
-    const assignment = await queryHelpers.queryOne(
-      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ? AND assignee_user_id = ?`,
-      [id, user.organizationId, user.id]
-    );
+    // Allow team members to start the assignment too (team assignment support).
+    let assignment: any = null;
+    try {
+      assignment = await queryHelpers.queryOne(
+        `SELECT a.*
+         FROM interview_assignments a
+         LEFT JOIN interview_assignment_members m ON m.assignment_id = a.id
+         WHERE a.id = ?
+           AND a.organization_id = ?
+           AND (a.assignee_user_id = ? OR m.user_id = ?)`,
+        [id, user.organizationId, user.id, user.id]
+      );
+    } catch {
+      // Back-compat: environments without `interview_assignment_members`.
+      assignment = await queryHelpers.queryOne(
+        `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ? AND assignee_user_id = ?`,
+        [id, user.organizationId, user.id]
+      );
+    }
     if (!assignment) {
       res.status(404).json({ error: 'Assignment not found' });
       return;
@@ -1056,10 +1200,26 @@ export const InterviewController = {
     const user = requireUser(req);
     const { id } = req.params;
 
-    const assignment = await queryHelpers.queryOne(
-      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ? AND assignee_user_id = ?`,
-      [id, user.organizationId, user.id]
-    );
+    // Team submission is allowed only for the primary assignee OR team lead (member role=lead).
+    let assignment: any = null;
+    try {
+      assignment = await queryHelpers.queryOne(
+        `SELECT a.*
+         FROM interview_assignments a
+         LEFT JOIN interview_assignment_members m
+           ON m.assignment_id = a.id AND m.user_id = ? AND m.role = 'lead'
+         WHERE a.id = ?
+           AND a.organization_id = ?
+           AND (a.assignee_user_id = ? OR m.id IS NOT NULL)`,
+        [user.id, id, user.organizationId, user.id]
+      );
+    } catch {
+      // Back-compat: environments without `interview_assignment_members`.
+      assignment = await queryHelpers.queryOne(
+        `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ? AND assignee_user_id = ?`,
+        [id, user.organizationId, user.id]
+      );
+    }
     if (!assignment) {
       res.status(404).json({ error: 'Assignment not found' });
       return;
@@ -1296,12 +1456,24 @@ export const InterviewController = {
       [id]
     );
 
-    // Notify assignee that interview was sent back
+    // Notify assignee(s) that interview was sent back (team-aware).
     try {
-      const assigneeId = (assignment as any).assignee_user_id;
-      if (assigneeId) {
+      const recipients = new Set<string>();
+      if ((assignment as any).assignee_user_id) recipients.add(String((assignment as any).assignee_user_id));
+      try {
+        const memberRows = await queryHelpers.queryAll(
+          `SELECT user_id FROM interview_assignment_members WHERE assignment_id = ?`,
+          [id]
+        );
+        (memberRows || []).forEach((r: any) => {
+          if (r?.user_id) recipients.add(String(r.user_id));
+        });
+      } catch {
+        // ignore - members table may not exist
+      }
+      for (const userId of recipients) {
         await notificationService.send({
-          userId: assigneeId,
+          userId,
           organizationId: admin.organizationId,
           type: 'interview_sent_back',
           title: 'Interview sent back for revision',
@@ -1397,12 +1569,24 @@ export const InterviewController = {
       );
     }
 
-    // Notify assignee that interview is approved
+    // Notify assignee(s) that interview is approved (team-aware).
     try {
-      const assigneeId = (assignment as any).assignee_user_id;
-      if (assigneeId) {
+      const recipients = new Set<string>();
+      if ((assignment as any).assignee_user_id) recipients.add(String((assignment as any).assignee_user_id));
+      try {
+        const memberRows = await queryHelpers.queryAll(
+          `SELECT user_id FROM interview_assignment_members WHERE assignment_id = ?`,
+          [id]
+        );
+        (memberRows || []).forEach((r: any) => {
+          if (r?.user_id) recipients.add(String(r.user_id));
+        });
+      } catch {
+        // ignore - members table may not exist
+      }
+      for (const userId of recipients) {
         await notificationService.send({
-          userId: assigneeId,
+          userId,
           organizationId: reviewer.organizationId,
           type: 'interview_approved',
           title: 'Interview approved',
@@ -1596,15 +1780,26 @@ export const InterviewController = {
     const now = new Date().toISOString();
 
     // My assignments count (including team memberships)
-    const myResult = await queryHelpers.queryOne(
-      `SELECT COUNT(DISTINCT a.id) as count
-       FROM interview_assignments a
-       LEFT JOIN interview_assignment_members m ON m.assignment_id = a.id
-       WHERE a.organization_id = ?
-         AND (a.assignee_user_id = ? OR m.user_id = ?)
-         AND a.status NOT IN ('completed')`,
-      [user.organizationId, user.id, user.id]
-    );
+    let myResult: any = null;
+    try {
+      myResult = await queryHelpers.queryOne(
+        `SELECT COUNT(DISTINCT a.id) as count
+         FROM interview_assignments a
+         LEFT JOIN interview_assignment_members m ON m.assignment_id = a.id
+         WHERE a.organization_id = ?
+           AND (a.assignee_user_id = ? OR m.user_id = ?)
+           AND a.status NOT IN ('completed')`,
+        [user.organizationId, user.id, user.id]
+      );
+    } catch {
+      // Back-compat: environments without `interview_assignment_members`.
+      myResult = await queryHelpers.queryOne(
+        `SELECT COUNT(*) as count
+         FROM interview_assignments
+         WHERE organization_id = ? AND assignee_user_id = ? AND status NOT IN ('completed')`,
+        [user.organizationId, user.id]
+      );
+    }
 
     // Managed assignments count
     const managedResult = await queryHelpers.queryOne(
@@ -2668,6 +2863,22 @@ ${JSON.stringify(questions || [], null, 2)}
     const { sessionId } = req.params;
     const { category } = req.query;
 
+    try {
+      await assertSessionAccessibleOrThrow({
+        sessionId,
+        organizationId: user.organizationId,
+        userId: user.id,
+      });
+    } catch (e: any) {
+      const msg = String(e?.message || '');
+      if (msg.toLowerCase().includes('not found')) {
+        res.status(404).json({ error: 'Session not found' });
+        return;
+      }
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
     let query = `SELECT * FROM interview_questions WHERE session_id = ? AND organization_id = ?`;
     const params: unknown[] = [sessionId, user.organizationId];
 
@@ -2699,7 +2910,8 @@ ${JSON.stringify(questions || [], null, 2)}
       res.status(404).json({ error: 'Question not found' });
       return;
     }
-    if (String((qSession as any).owner_id) !== String(user.id)) {
+    const ownerId = String((qSession as any).owner_id || '').trim();
+    if (!ownerId || ownerId !== user.id) {
       res.status(403).json({ error: 'Forbidden' });
       return;
     }
@@ -2889,6 +3101,22 @@ ${JSON.stringify(questions || [], null, 2)}
     const user = requireUser(req);
     const { sessionId } = req.params;
 
+    try {
+      await assertSessionAccessibleOrThrow({
+        sessionId,
+        organizationId: user.organizationId,
+        userId: user.id,
+      });
+    } catch (e: any) {
+      const msg = String(e?.message || '');
+      if (msg.toLowerCase().includes('not found')) {
+        res.status(404).json({ error: 'Session not found' });
+        return;
+      }
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
     const rows = await queryHelpers.queryAll(
       `SELECT * FROM interview_notes WHERE session_id = ? AND organization_id = ? ORDER BY created_at DESC`,
       [sessionId, user.organizationId]
@@ -2959,26 +3187,25 @@ ${JSON.stringify(questions || [], null, 2)}
       `SELECT n.session_id as session_id, s.status as session_status
        FROM interview_notes n
        JOIN interview_sessions s ON s.id = n.session_id
-       JOIN projects p ON p.id = s.project_id
-       WHERE n.id = ? AND n.organization_id = ? AND p.organization_id = ?`,
-      [noteId, user.organizationId, user.organizationId]
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE n.id = ? AND n.organization_id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+      [noteId, user.organizationId, user.organizationId, user.organizationId]
     );
     if (!noteSession) {
       res.status(404).json({ error: 'Note not found' });
       return;
     }
-    if (
-      String(
-        (
-          (await queryHelpers.queryOne(
-            `SELECT s.user_id as owner_id FROM interview_sessions s
-       JOIN projects p ON p.id = s.project_id
-       WHERE s.id = ? AND p.organization_id = ?`,
-            [(noteSession as any).session_id, user.organizationId]
-          )) as any
-        )?.owner_id
-      ) !== String(user.id)
-    ) {
+    try {
+      await assertSessionOwnedByUser(
+        String((noteSession as any).session_id),
+        user.organizationId,
+        user.id
+      );
+    } catch {
       res.status(403).json({ error: 'Forbidden' });
       return;
     }
@@ -3028,26 +3255,25 @@ ${JSON.stringify(questions || [], null, 2)}
       `SELECT n.session_id as session_id, s.status as session_status
        FROM interview_notes n
        JOIN interview_sessions s ON s.id = n.session_id
-       JOIN projects p ON p.id = s.project_id
-       WHERE n.id = ? AND n.organization_id = ? AND p.organization_id = ?`,
-      [noteId, user.organizationId, user.organizationId]
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE n.id = ? AND n.organization_id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+      [noteId, user.organizationId, user.organizationId, user.organizationId]
     );
     if (!noteSession) {
       res.status(404).json({ error: 'Note not found' });
       return;
     }
-    if (
-      String(
-        (
-          (await queryHelpers.queryOne(
-            `SELECT s.user_id as owner_id FROM interview_sessions s
-       JOIN projects p ON p.id = s.project_id
-       WHERE s.id = ? AND p.organization_id = ?`,
-            [(noteSession as any).session_id, user.organizationId]
-          )) as any
-        )?.owner_id
-      ) !== String(user.id)
-    ) {
+    try {
+      await assertSessionOwnedByUser(
+        String((noteSession as any).session_id),
+        user.organizationId,
+        user.id
+      );
+    } catch {
       res.status(403).json({ error: 'Forbidden' });
       return;
     }
@@ -3072,6 +3298,22 @@ ${JSON.stringify(questions || [], null, 2)}
     const user = requireUser(req);
     const { sessionId } = req.params;
 
+    try {
+      await assertSessionAccessibleOrThrow({
+        sessionId,
+        organizationId: user.organizationId,
+        userId: user.id,
+      });
+    } catch (e: any) {
+      const msg = String(e?.message || '');
+      if (msg.toLowerCase().includes('not found')) {
+        res.status(404).json({ error: 'Session not found' });
+        return;
+      }
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
     const rows = await queryHelpers.queryAll(
       `SELECT * FROM interview_evidence WHERE session_id = ? AND organization_id = ? ORDER BY created_at DESC`,
       [sessionId, user.organizationId]
@@ -3082,8 +3324,18 @@ ${JSON.stringify(questions || [], null, 2)}
   createEvidence: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { sessionId } = req.params;
-    const { questionId, evidenceType, title, description, fileName, fileSize, fileType, url } =
-      req.body;
+    const {
+      questionId,
+      evidenceType,
+      title,
+      name, // frontend compatibility
+      description,
+      fileName,
+      fileSize,
+      fileType,
+      mimeType, // frontend compatibility
+      url,
+    } = req.body;
 
     try {
       await assertSessionEditable(sessionId, user.organizationId);
@@ -3105,10 +3357,29 @@ ${JSON.stringify(questions || [], null, 2)}
       throw e;
     }
 
-    if (!evidenceType || !title) {
+    const resolvedTitle =
+      typeof title === 'string' && title.trim()
+        ? title.trim()
+        : typeof name === 'string'
+          ? name.trim()
+          : String(name || '').trim();
+    if (!evidenceType || !resolvedTitle) {
       res.status(400).json({ error: 'evidenceType and title are required' });
       return;
     }
+
+    const resolvedFileName =
+      typeof fileName === 'string' && fileName.trim()
+        ? fileName.trim()
+        : typeof name === 'string'
+          ? name.trim()
+          : null;
+    const resolvedFileType =
+      typeof fileType === 'string' && fileType.trim()
+        ? fileType.trim()
+        : typeof mimeType === 'string'
+          ? mimeType.trim()
+          : null;
 
     const id = uuidv4();
     const now = new Date().toISOString();
@@ -3123,11 +3394,11 @@ ${JSON.stringify(questions || [], null, 2)}
         user.organizationId,
         questionId || null,
         evidenceType,
-        title,
+        resolvedTitle,
         description || null,
-        fileName || null,
+        resolvedFileName,
         fileSize || null,
-        fileType || null,
+        resolvedFileType,
         url || null,
         user.id,
         now,
@@ -3149,26 +3420,25 @@ ${JSON.stringify(questions || [], null, 2)}
       `SELECT e.session_id as session_id, s.status as session_status
        FROM interview_evidence e
        JOIN interview_sessions s ON s.id = e.session_id
-       JOIN projects p ON p.id = s.project_id
-       WHERE e.id = ? AND e.organization_id = ? AND p.organization_id = ?`,
-      [evidenceId, user.organizationId, user.organizationId]
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE e.id = ? AND e.organization_id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+      [evidenceId, user.organizationId, user.organizationId, user.organizationId]
     );
     if (!evSession) {
       res.status(404).json({ error: 'Evidence not found' });
       return;
     }
-    if (
-      String(
-        (
-          (await queryHelpers.queryOne(
-            `SELECT s.user_id as owner_id FROM interview_sessions s
-       JOIN projects p ON p.id = s.project_id
-       WHERE s.id = ? AND p.organization_id = ?`,
-            [(evSession as any).session_id, user.organizationId]
-          )) as any
-        )?.owner_id
-      ) !== String(user.id)
-    ) {
+    try {
+      await assertSessionOwnedByUser(
+        String((evSession as any).session_id),
+        user.organizationId,
+        user.id
+      );
+    } catch {
       res.status(403).json({ error: 'Forbidden' });
       return;
     }
@@ -3357,7 +3627,9 @@ ${JSON.stringify(questions || [], null, 2)}
       return;
     }
 
-    // Context gating: only allow when assignment is completed OR completeness>=50% after submit
+    // Export gating:
+    // - Assignments: only after reviewer approval (approved) or legacy completed.
+    // - Ad-hoc: only when session is completed.
     const sessionRow = await queryHelpers.queryOne(
       `SELECT id, status, assignment_id, answered_questions, total_questions FROM interview_sessions
        WHERE id = ? AND organization_id = ?`,
@@ -3367,19 +3639,21 @@ ${JSON.stringify(questions || [], null, 2)}
       res.status(404).json({ error: 'Session not found' });
       return;
     }
+    const sessionStatus = String((sessionRow as any).status || '').toLowerCase();
     if ((sessionRow as any).assignment_id) {
       const assignment = await queryHelpers.queryOne(
         `SELECT status FROM interview_assignments WHERE id = ? AND organization_id = ?`,
         [(sessionRow as any).assignment_id, user.organizationId]
       );
-      const answered = Number((sessionRow as any).answered_questions || 0);
-      const total = Number((sessionRow as any).total_questions || 0);
-      const ratio = calcCompletenessRatio(answered, total);
-      const allowed =
-        String((assignment as any)?.status || '').toLowerCase() === 'completed' ||
-        (String((assignment as any)?.status || '').toLowerCase() === 'submitted' && ratio >= 0.5);
+      const asgStatus = String((assignment as any)?.status || '').toLowerCase();
+      const allowed = asgStatus === 'approved' || asgStatus === 'completed';
       if (!allowed) {
-        res.status(409).json({ error: 'Interview not completed (>=50%) - cannot export yet' });
+        res.status(409).json({ error: 'Interview not approved - cannot export yet' });
+        return;
+      }
+    } else {
+      if (sessionStatus !== 'completed') {
+        res.status(409).json({ error: 'Interview not completed - cannot export yet' });
         return;
       }
     }
@@ -3420,7 +3694,9 @@ ${JSON.stringify(questions || [], null, 2)}
     const user = requireUser(req);
     const { sessionId } = req.params;
 
-    // Context gating: only allow when assignment is completed OR completeness>=50% after submit
+    // Summary gating (aligned with export gating):
+    // - Assignments: only after reviewer approval (approved) or legacy completed.
+    // - Ad-hoc: only when session is completed.
     const sessionRow = await queryHelpers.queryOne(
       `SELECT id, status, assignment_id, answered_questions, total_questions FROM interview_sessions
        WHERE id = ? AND organization_id = ?`,
@@ -3430,21 +3706,23 @@ ${JSON.stringify(questions || [], null, 2)}
       res.status(404).json({ error: 'Session not found' });
       return;
     }
+    const sessionStatus = String((sessionRow as any).status || '').toLowerCase();
     if ((sessionRow as any).assignment_id) {
       const assignment = await queryHelpers.queryOne(
         `SELECT status FROM interview_assignments WHERE id = ? AND organization_id = ?`,
         [(sessionRow as any).assignment_id, user.organizationId]
       );
-      const answered = Number((sessionRow as any).answered_questions || 0);
-      const total = Number((sessionRow as any).total_questions || 0);
-      const ratio = calcCompletenessRatio(answered, total);
-      const allowed =
-        String((assignment as any)?.status || '').toLowerCase() === 'completed' ||
-        (String((assignment as any)?.status || '').toLowerCase() === 'submitted' && ratio >= 0.5);
+      const asgStatus = String((assignment as any)?.status || '').toLowerCase();
+      const allowed = asgStatus === 'approved' || asgStatus === 'completed';
       if (!allowed) {
         res
           .status(409)
-          .json({ error: 'Interview not completed (>=50%) - cannot generate summary yet' });
+          .json({ error: 'Interview not approved - cannot generate summary yet' });
+        return;
+      }
+    } else {
+      if (sessionStatus !== 'completed') {
+        res.status(409).json({ error: 'Interview not completed - cannot generate summary yet' });
         return;
       }
     }
@@ -3757,7 +4035,9 @@ ${JSON.stringify(questions || [], null, 2)}
       }
     }
 
-    // Context gating (best-effort): only enforce when we can actually load the session + assignment.
+    // Export gating (best-effort): only enforce when we can actually load the session + assignment.
+    // - Assignments: require status approved (or legacy completed)
+    // - Ad-hoc: require session completed
     let sessionRow: any = null;
     if (sessionId) {
       sessionRow = await queryHelpers.queryOne(
@@ -3765,20 +4045,24 @@ ${JSON.stringify(questions || [], null, 2)}
          WHERE id = ? AND organization_id = ?`,
         [sessionId, user.organizationId]
       );
-      if (sessionRow && (sessionRow as any).assignment_id) {
-        const assignment = await queryHelpers.queryOne(
-          `SELECT status FROM interview_assignments WHERE id = ? AND organization_id = ?`,
-          [(sessionRow as any).assignment_id, user.organizationId]
-        );
-        const answered = Number((sessionRow as any).answered_questions || 0);
-        const total = Number((sessionRow as any).total_questions || 0);
-        const ratio = calcCompletenessRatio(answered, total);
-        const allowed =
-          String((assignment as any)?.status || '').toLowerCase() === 'completed' ||
-          (String((assignment as any)?.status || '').toLowerCase() === 'submitted' && ratio >= 0.5);
-        if (!allowed) {
-          res.status(409).json({ error: 'Interview not completed (>=50%) - cannot export yet' });
-          return;
+      if (sessionRow) {
+        const sessionStatus = String((sessionRow as any).status || '').toLowerCase();
+        if ((sessionRow as any).assignment_id) {
+          const assignment = await queryHelpers.queryOne(
+            `SELECT status FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+            [(sessionRow as any).assignment_id, user.organizationId]
+          );
+          const asgStatus = String((assignment as any)?.status || '').toLowerCase();
+          const allowed = asgStatus === 'approved' || asgStatus === 'completed';
+          if (!allowed) {
+            res.status(409).json({ error: 'Interview not approved - cannot export yet' });
+            return;
+          }
+        } else {
+          if (sessionStatus !== 'completed') {
+            res.status(409).json({ error: 'Interview not completed - cannot export yet' });
+            return;
+          }
         }
       }
     }

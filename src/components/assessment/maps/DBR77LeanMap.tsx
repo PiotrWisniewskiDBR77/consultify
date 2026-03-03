@@ -1034,7 +1034,7 @@ const DBR77LegalNotice: React.FC = () => (
     <Info className="w-5 h-5 text-cyan-600 dark:text-cyan-400 shrink-0 mt-0.5" />
     <div className="text-sm text-cyan-800 dark:text-cyan-200">
       <strong>Metoda DBR77 Lean 4.0</strong> (Pomierz-Zoptymalizuj-Automatyzuj) jest{' '}
-      <strong>autorską metodą Consultinity</strong>, łączącą klasyczne narzędzia Lean z oceną
+      <strong>autorską metodą Consultify</strong>, łączącą klasyczne narzędzia Lean z oceną
       potencjału automatyzacji i AI. Metoda pozwala na kompleksową analizę procesów i stanowisk
       pracy.
     </div>

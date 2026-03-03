@@ -36,11 +36,18 @@ export type ModuleTab =
   | 'global'
   // V3-H02 — ROI Tracking
   | 'roi_tracking'
+  // V3-J — Reports & Presentations unified hub
+  | 'templates'
+  | 'presentations'
   // V3-H03 — Results Operational + ROI Analysis
   | 'operational'
   | 'roi_analysis'
   // V3-F02 — Initiatives Portfolio Analysis
-  | 'analysis';
+  | 'analysis'
+  // V3-Phase10 — Unified Report Builder Hub
+  | 'my_reports'
+  | 'r1_r4'
+  | 'schedules';
 
 export type ViewMode = 'table' | 'grid' | 'kanban' | 'timeline' | 'calendar' | 'matrix';
 

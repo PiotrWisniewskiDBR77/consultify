@@ -32,7 +32,7 @@ export const DirectoryView: React.FC = () => {
             Company information
           </div>
           <p className="mt-2 text-lg font-semibold text-slate-900 dark:text-white">
-            Consultinity Partners Group
+            Consultify Partners Group
           </p>
           <p className="text-sm text-slate-400">
             Wsparcie dla firm chcących wdrożyć Meta-PMO, przygotować roadmaps i przeprowadzić shared

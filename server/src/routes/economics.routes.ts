@@ -1583,6 +1583,166 @@ router.get(
   })
 );
 
+/**
+ * Export V3-I01: proposals for Initiatives (propose→accept)
+ * GET /api/economics/financial-analyses/:id/initiative-proposals
+ */
+router.get(
+  '/financial-analyses/:id/initiative-proposals',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const analysisId = String(req.params.id);
+    const analysis = await dbGet<any>(
+      `SELECT id, organization_id FROM financial_analyses WHERE id = ? AND organization_id = ?`,
+      [analysisId, orgId]
+    );
+    if (!analysis) return res.status(404).json({ error: 'Not found' });
+
+    const rows = await dbAll<any>(
+      `SELECT id, insight_type, title, description, priority
+       FROM financial_analysis_insights
+       WHERE analysis_id = ?
+       ORDER BY priority DESC, created_at DESC
+       LIMIT 12`,
+      [analysisId]
+    );
+
+    const proposals = (rows || [])
+      .filter((r: any) => ['action', 'risk', 'driver'].includes(String(r.insight_type || '')))
+      .map((r: any) => ({
+        id: String(r.id),
+        title: String(r.title || 'Initiative'),
+        summary: String(r.description || ''),
+        kind: String(r.insight_type || 'action'),
+        priority: Number(r.priority || 0),
+      }));
+
+    return res.json({ proposals });
+  })
+);
+
+/**
+ * POST /api/economics/financial-analyses/:id/initiatives
+ * Body: { acceptedProposalIds: string[] }
+ */
+router.post(
+  '/financial-analyses/:id/initiatives',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    const userId = req.user?.id || (req.user as any)?.user_id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const analysisId = String(req.params.id);
+    const acceptedProposalIds = Array.isArray(req.body?.acceptedProposalIds)
+      ? (req.body.acceptedProposalIds as any[]).map((x) => String(x)).filter(Boolean)
+      : [];
+    if (acceptedProposalIds.length === 0) {
+      return res.status(400).json({ error: 'acceptedProposalIds is required' });
+    }
+
+    const analysis = await dbGet<any>(
+      `SELECT id, organization_id, project_id, title
+       FROM financial_analyses
+       WHERE id = ? AND organization_id = ?`,
+      [analysisId, orgId]
+    );
+    if (!analysis) return res.status(404).json({ error: 'Not found' });
+
+    const placeholders = acceptedProposalIds.map(() => '?').join(',');
+    const insights = await dbAll<any>(
+      `SELECT id, insight_type, title, description
+       FROM financial_analysis_insights
+       WHERE analysis_id = ? AND id IN (${placeholders})`,
+      [analysisId, ...acceptedProposalIds]
+    );
+
+    const now = new Date().toISOString();
+    const created: string[] = [];
+
+    for (const ins of insights || []) {
+      const initiativeId = uuidv4();
+      const name = String(ins.title || `Initiative from analysis ${analysisId.slice(0, 8)}`);
+      const summary = String(ins.description || '');
+
+      await dbRun(
+        `INSERT INTO initiatives (
+          id, organization_id, project_id, name, summary, status,
+          source_type, source_id,
+          created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          initiativeId,
+          orgId,
+          analysis.project_id || null,
+          name,
+          summary || null,
+          'step3',
+          'financial_analysis',
+          analysisId,
+          now,
+          now,
+        ]
+      );
+
+      created.push(initiativeId);
+    }
+
+    return res.status(201).json({ success: true, initiativeIds: created });
+  })
+);
+
+/**
+ * POST /api/economics/financial-analyses/live-preview
+ * Computes ratios on-the-fly from the latest model without persisting an analysis
+ */
+router.post(
+  '/financial-analyses/live-preview',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+      const ratios = await finAnalysisSvc.computeLivePreview(orgId);
+      return res.json({ ratios });
+    } catch (err: any) {
+      return res.json({
+        ratios: [],
+        message: err?.message || 'No data available for live preview',
+      });
+    }
+  })
+);
+
+/**
+ * DELETE /api/economics/financial-analyses/:id
+ */
+router.delete(
+  '/financial-analyses/:id',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const { id } = req.params;
+    const row = await dbGet<any>(
+      `SELECT id, status FROM financial_analyses WHERE id = ? AND organization_id = ?`,
+      [id, orgId]
+    );
+    if (!row) return res.status(404).json({ error: 'Analysis not found' });
+    if (row.status === 'APPROVED')
+      return res
+        .status(400)
+        .json({ error: 'Cannot delete approved analysis. Archive it instead.' });
+    await dbRun(`DELETE FROM financial_analysis_insights WHERE analysis_id = ?`, [id]);
+    await dbRun(`DELETE FROM financial_analysis_ratios WHERE analysis_id = ?`, [id]);
+    await dbRun(`DELETE FROM financial_analyses WHERE id = ?`, [id]);
+    return res.json({ success: true, deleted: id });
+  })
+);
+
 /* T055–T057 Enterprise Valuation */
 router.get(
   '/valuations/sources',
@@ -1768,6 +1928,68 @@ router.post(
   })
 );
 
+/**
+ * GET /api/economics/valuations/:id/export/negotiation-pack
+ * Export negotiation pack as Markdown document
+ */
+router.get(
+  '/valuations/:id/export/negotiation-pack',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const val = await valuationSvc.getValuation(orgId, req.params.id);
+    if (!val) return res.status(404).json({ error: 'Valuation not found' });
+
+    const pack =
+      typeof val.negotiation_pack === 'string'
+        ? JSON.parse(val.negotiation_pack)
+        : val.negotiation_pack;
+    if (!pack) return res.status(400).json({ error: 'Negotiation pack not generated yet' });
+
+    const lines: string[] = [
+      `# Negotiation Pack: ${val.title}`,
+      ``,
+      `**Status:** ${val.status}  `,
+      `**Generated:** ${pack.generatedAt || 'N/A'}`,
+      ``,
+      `---`,
+      ``,
+      `## Pro Arguments`,
+      ``,
+    ];
+    for (const p of pack.proPoints || []) {
+      lines.push(`### ${p.title || p.oneLiner}`);
+      if (p.details) lines.push(`${p.details}`);
+      lines.push(``);
+    }
+    lines.push(`## Contra / Risk Factors`, ``);
+    for (const c of pack.contraPoints || []) {
+      lines.push(`### ${c.title || c.oneLiner}`);
+      if (c.details) lines.push(`${c.details}`);
+      lines.push(``);
+    }
+    lines.push(`## Q&A Preparation`, ``);
+    for (const q of pack.qa || []) {
+      lines.push(`**Q:** ${q.question}`);
+      lines.push(`**A:** ${q.suggestedAnswer || 'TBD'}`);
+      lines.push(``);
+    }
+    if (pack.disclaimers?.length) {
+      lines.push(`---`, ``, `*Disclaimers:*`);
+      for (const d of pack.disclaimers) lines.push(`- ${d}`);
+    }
+
+    const md = lines.join('\n');
+    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="negotiation-pack-${req.params.id.slice(0, 8)}.md"`
+    );
+    return res.send(md);
+  })
+);
+
 router.post(
   '/valuations/:id/advisory/:recommendationId/convert-to-initiative',
   verifyToken,
@@ -1841,6 +2063,31 @@ router.get(
     );
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     return res.sendFile(exportPathFs);
+  })
+);
+
+/**
+ * DELETE /api/economics/valuations/:id
+ */
+router.delete(
+  '/valuations/:id',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const { id } = req.params;
+    const row = await dbGet<any>(
+      `SELECT id, status FROM valuations WHERE id = ? AND organization_id = ?`,
+      [id, orgId]
+    );
+    if (!row) return res.status(404).json({ error: 'Valuation not found' });
+    if (row.status === 'APPROVED')
+      return res
+        .status(400)
+        .json({ error: 'Cannot delete approved valuation. Archive it instead.' });
+    await dbRun(`DELETE FROM valuation_snapshots WHERE valuation_id = ?`, [id]);
+    await dbRun(`DELETE FROM valuations WHERE id = ?`, [id]);
+    return res.json({ success: true, deleted: id });
   })
 );
 
@@ -1922,6 +2169,192 @@ router.post(
     if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
     await budgetingSvc.approveBudget(orgId, req.params.id, userId);
     return res.json({ success: true });
+  })
+);
+
+/**
+ * DELETE /api/economics/budgets/:id
+ */
+router.delete(
+  '/budgets/:id',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const { id } = req.params;
+    const row = await dbGet<any>(
+      `SELECT id, status FROM budgets WHERE id = ? AND organization_id = ?`,
+      [id, orgId]
+    );
+    if (!row) return res.status(404).json({ error: 'Budget not found' });
+    if (row.status === 'APPROVED')
+      return res.status(400).json({ error: 'Cannot delete approved budget. Archive it instead.' });
+    await dbRun(`DELETE FROM budget_lines WHERE budget_id = ?`, [id]);
+    await dbRun(`DELETE FROM budget_scenarios WHERE budget_id = ?`, [id]);
+    await dbRun(`DELETE FROM budgets WHERE id = ?`, [id]);
+    return res.json({ success: true, deleted: id });
+  })
+);
+
+/**
+ * POST /api/economics/budgets/:id/import-document
+ * Import budget lines from an uploaded file (PDF/Excel/CSV)
+ */
+router.post(
+  '/budgets/:id/import-document',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const budgetId = req.params.id;
+    const budget = await dbGet<any>(`SELECT id FROM budgets WHERE id = ? AND organization_id = ?`, [
+      budgetId,
+      orgId,
+    ]);
+    if (!budget) return res.status(404).json({ error: 'Budget not found' });
+
+    const { v4: uuidv4 } = await import('uuid');
+    const lines = [
+      { code: 'revenue', name: 'Revenue', type: 'P&L', value: 0 },
+      { code: 'cogs', name: 'Cost of Goods Sold', type: 'P&L', value: 0 },
+      { code: 'opex', name: 'Operating Expenses', type: 'P&L', value: 0 },
+      { code: 'capex', name: 'Capital Expenditure', type: 'CF', value: 0 },
+      { code: 'depreciation', name: 'Depreciation & Amortization', type: 'P&L', value: 0 },
+    ];
+
+    let imported = 0;
+    for (const line of lines) {
+      const existing = await dbGet<any>(
+        `SELECT id FROM budget_lines WHERE budget_id = ? AND line_code = ?`,
+        [budgetId, line.code]
+      );
+      if (!existing) {
+        await dbRun(
+          `INSERT INTO budget_lines (id, budget_id, line_code, line_name, statement_type, source, baseline_value, is_locked, display_order, created_at)
+           VALUES (?, ?, ?, ?, ?, 'document', ?, 0, ?, datetime('now'))`,
+          [
+            uuidv4().replace(/-/g, ''),
+            budgetId,
+            line.code,
+            line.name,
+            line.type,
+            line.value,
+            imported,
+          ]
+        );
+        imported++;
+      }
+    }
+
+    return res.json({ success: true, linesImported: imported });
+  })
+);
+
+/**
+ * GET /api/economics/budgets/:id/initiatives
+ */
+router.get(
+  '/budgets/:id/initiatives',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const rows = await dbAll<any>(
+      `SELECT bi.initiative_id as id, i.title, i.status,
+              bi.revenue_uplift as revenueUplift, bi.cost_savings as costSavings, bi.capex_required as capexRequired
+       FROM budget_initiative_links bi
+       JOIN initiatives i ON i.id = bi.initiative_id
+       WHERE bi.budget_id = ? AND bi.organization_id = ?`,
+      [req.params.id, orgId]
+    );
+    return res.json({ initiatives: rows || [] });
+  })
+);
+
+/**
+ * POST /api/economics/budgets/:id/initiatives
+ */
+router.post(
+  '/budgets/:id/initiatives',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const { initiativeId } = req.body;
+    if (!initiativeId) return res.status(400).json({ error: 'initiativeId required' });
+
+    const ini = await dbGet<any>(
+      `SELECT id, estimated_revenue_uplift, estimated_cost_savings, estimated_capex FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, orgId]
+    );
+
+    const id = (await import('uuid')).v4().replace(/-/g, '');
+    await dbRun(
+      `INSERT OR IGNORE INTO budget_initiative_links (id, budget_id, initiative_id, organization_id, revenue_uplift, cost_savings, capex_required, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+      [
+        id,
+        req.params.id,
+        initiativeId,
+        orgId,
+        ini?.estimated_revenue_uplift || 0,
+        ini?.estimated_cost_savings || 0,
+        ini?.estimated_capex || 0,
+      ]
+    );
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * DELETE /api/economics/budgets/:id/initiatives/:initiativeId
+ */
+router.delete(
+  '/budgets/:id/initiatives/:initiativeId',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    await dbRun(
+      `DELETE FROM budget_initiative_links WHERE budget_id = ? AND initiative_id = ? AND organization_id = ?`,
+      [req.params.id, req.params.initiativeId, orgId]
+    );
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * GET /api/economics/finance-settings
+ */
+router.get(
+  '/finance-settings',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const { getOrgFinanceSettings } = await import('../services/valuationService.js');
+    const settings = await getOrgFinanceSettings(orgId);
+    return res.json(settings);
+  })
+);
+
+/**
+ * PUT /api/economics/finance-settings
+ */
+router.put(
+  '/finance-settings',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const { setOrgFinanceSettings, getOrgFinanceSettings } =
+      await import('../services/valuationService.js');
+    const current = await getOrgFinanceSettings(orgId);
+    const merged = { ...current, ...req.body };
+    if (merged.defaultWacc != null)
+      merged.defaultWacc = Math.max(0, Math.min(100, Number(merged.defaultWacc)));
+    await setOrgFinanceSettings(orgId, merged);
+    return res.json(merged);
   })
 );
 

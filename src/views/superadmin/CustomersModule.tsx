@@ -61,9 +61,10 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({ initialTab }) 
     const fetchFeedbackCount = async () => {
       try {
         const feedback = await Api.getFeedback();
-        const pending = feedback.filter(
-          (f: any) => f.status === 'new' || f.status === 'pending'
-        ).length;
+        const pending = feedback.filter((f: any) => {
+          const s = String(f?.status || '').toUpperCase();
+          return s === 'NEW' || s === 'PENDING' || s === 'IN_PROGRESS';
+        }).length;
         setPendingFeedbackCount(pending);
       } catch (err) {
         // Silently fail

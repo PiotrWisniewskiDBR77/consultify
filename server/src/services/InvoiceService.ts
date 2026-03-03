@@ -378,7 +378,7 @@ export class InvoiceServiceClass {
 
     await EmailService.send({
       to: admin.email,
-      subject: `Invoice ${invoice.invoice_number} from Consultinity`,
+      subject: `Invoice ${invoice.invoice_number} from Consultify`,
       template: 'invoice',
       data: {
         firstName: admin.first_name,
@@ -498,8 +498,8 @@ export class InvoiceServiceClass {
 
         // Header
         doc.fontSize(24).text('INVOICE', 50, 50);
-        doc.fontSize(10).text('Consultinity', 400, 50, { align: 'right' });
-        doc.text('DBR77 Consultinity Sp. z o.o.', 400, 65, { align: 'right' });
+        doc.fontSize(10).text('Consultify', 400, 50, { align: 'right' });
+        doc.text('DBR77 Consultify Sp. z o.o.', 400, 65, { align: 'right' });
         doc.text('ul. Przemysłowa 12/14', 400, 80, { align: 'right' });
         doc.text('00-450 Warsaw, Poland', 400, 95, { align: 'right' });
         doc.text('VAT: PL1234567890', 400, 110, { align: 'right' });

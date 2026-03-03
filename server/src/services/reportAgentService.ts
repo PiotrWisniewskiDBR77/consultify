@@ -54,13 +54,13 @@ export interface DiffChange {
 }
 
 interface SectionRow {
-  key: string;
-  type: string;
+  section_key: string;
+  section_type: string;
   title: string;
   order_index: number;
   enabled: boolean;
   length: string;
-  language_style: string;
+  language: string;
   custom_prompt: string | null;
 }
 
@@ -154,7 +154,7 @@ export async function processAgentMessage(
   await dbRun(
     `INSERT INTO report_agent_messages
        (id, organization_id, report_id, role, content, structured_action, diff_preview, applied)
-     VALUES (?, ?, ?, 'assistant', ?, ?::JSONB, ?::JSONB, FALSE)`,
+     VALUES (?, ?, ?, 'assistant', ?, ?, ?, FALSE)`,
     [
       msgId,
       organizationId,
@@ -195,12 +195,14 @@ export async function applyAgentAction(
   if (diff?.changes) {
     for (const change of diff.changes) {
       switch (change.type) {
-        case 'add':
+        case 'add': {
+          const sectionId = `sec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
           await dbRun(
             `INSERT INTO report_builder_sections
-               (id, report_id, key, type, title, order_index, enabled, created_at)
-             VALUES (gen_random_uuid()::TEXT, ?, ?, ?, ?, (SELECT COALESCE(MAX(order_index),0)+1 FROM report_builder_sections WHERE report_id = ?), TRUE, NOW())`,
+               (id, report_id, section_key, section_type, title, order_index, enabled, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, (SELECT COALESCE(MAX(order_index),0)+1 FROM report_builder_sections WHERE report_id = ?), TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
             [
+              sectionId,
               reportId,
               change.sectionKey,
               change.field || 'custom',
@@ -209,30 +211,31 @@ export async function applyAgentAction(
             ]
           );
           break;
+        }
         case 'remove':
           await dbRun(
-            `UPDATE report_builder_sections SET enabled = FALSE WHERE report_id = ? AND key = ?`,
+            `UPDATE report_builder_sections SET enabled = FALSE WHERE report_id = ? AND section_key = ?`,
             [reportId, change.sectionKey]
           );
           break;
         case 'modify':
           if (change.field === 'length') {
             await dbRun(
-              `UPDATE report_builder_sections SET length = ? WHERE report_id = ? AND key = ?`,
+              `UPDATE report_builder_sections SET length = ? WHERE report_id = ? AND section_key = ?`,
               [change.after, reportId, change.sectionKey]
             );
           }
           break;
         case 'move':
-          // Handled by bulk reorder
           break;
       }
     }
   }
 
-  await dbRun(`UPDATE report_agent_messages SET applied = TRUE, applied_at = NOW() WHERE id = ?`, [
-    messageId,
-  ]);
+  await dbRun(
+    `UPDATE report_agent_messages SET applied = TRUE, applied_at = CURRENT_TIMESTAMP WHERE id = ?`,
+    [messageId]
+  );
 
   return { success: true, message: 'Changes applied successfully' };
 }
@@ -274,7 +277,7 @@ export async function getAgentMessages(
 
 async function getReportSections(reportId: string): Promise<SectionRow[]> {
   return ((await dbAll(
-    `SELECT key, type, title, order_index, enabled, length, language_style, custom_prompt
+    `SELECT section_key, section_type, title, order_index, enabled, length, language, custom_prompt
      FROM report_builder_sections
      WHERE report_id = ? AND enabled = TRUE
      ORDER BY order_index ASC`,
@@ -315,7 +318,7 @@ function handleReorder(
       changes: [
         {
           type: 'move',
-          sectionKey: movingSection.key,
+          sectionKey: movingSection.section_key,
           before: `position ${sourceIdx + 1}`,
           after: `position ${targetPos + 1}`,
         },
@@ -377,7 +380,7 @@ function handleRemoveSection(
 ): { response: string; diffPreview: DiffPreview } {
   const lower = userMessage.toLowerCase();
   const found = sections.find(
-    (s) => lower.includes(s.title.toLowerCase()) || lower.includes(s.key.toLowerCase())
+    (s) => lower.includes(s.title.toLowerCase()) || lower.includes(s.section_key.toLowerCase())
   );
 
   if (!found) {
@@ -390,7 +393,7 @@ function handleRemoveSection(
   return {
     response: `I'll remove **"${found.title}"** from the report. Click "Apply" to confirm.`,
     diffPreview: {
-      changes: [{ type: 'remove', sectionKey: found.key, before: found.title }],
+      changes: [{ type: 'remove', sectionKey: found.section_key, before: found.title }],
       summary: `Remove "${found.title}" section`,
     },
   };
@@ -423,7 +426,7 @@ function handleUpdateSection(
       changes: [
         {
           type: 'modify',
-          sectionKey: found.key,
+          sectionKey: found.section_key,
           field: 'length',
           before: found.length,
           after: newLength,
@@ -435,7 +438,7 @@ function handleUpdateSection(
 }
 
 function suggestBestPractice(sections: SectionRow[]): string {
-  const currentKeys = new Set(sections.map((s) => s.type));
+  const currentKeys = new Set(sections.map((s) => s.section_type));
   const missing: string[] = [];
   if (!currentKeys.has('cover')) missing.push('Cover Page');
   if (!currentKeys.has('summary')) missing.push('Executive Summary');
@@ -457,18 +460,18 @@ async function performQualityCheck(reportId: string, sections: SectionRow[]): Pr
   if (enabled.length === 0) {
     issues.push('No enabled sections in report');
   }
-  if (!enabled.some((s) => s.type === 'summary')) {
+  if (!enabled.some((s) => s.section_type === 'summary')) {
     issues.push('Missing Executive Summary (recommended for all reports)');
   }
-  if (!enabled.some((s) => s.type === 'recommendations' || s.type === 'consulting_decisions')) {
+  if (!enabled.some((s) => s.section_type === 'recommendations' || s.section_type === 'consulting_decisions')) {
     issues.push('Missing Recommendations or Next Steps (required for actionable reports)');
   }
 
   const emptyContent = (await dbAll(
-    `SELECT key, title FROM report_builder_sections
-     WHERE report_id = ? AND enabled = TRUE AND (content IS NULL OR content = '')`,
+    `SELECT section_key, title FROM report_builder_sections
+     WHERE report_id = ? AND enabled = TRUE AND (COALESCE(edited_content, generated_content) IS NULL OR COALESCE(edited_content, generated_content) = '')`,
     [reportId]
-  )) as Array<{ key: string; title: string }> | null;
+  )) as Array<{ section_key: string; title: string }> | null;
 
   if (emptyContent?.length) {
     issues.push(

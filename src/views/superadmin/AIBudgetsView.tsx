@@ -12,20 +12,15 @@ import {
   Check,
   Clock,
   DollarSign,
-  Edit2,
   Plus,
   RefreshCw,
-  Settings,
   Target,
   Trash2,
   TrendingUp,
-  Users,
   X,
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-
 import { api } from '../../services/api';
 
 interface Budget {
@@ -96,7 +91,6 @@ const MODEL_PROVIDERS = [
 ];
 
 const AIBudgetsView: React.FC = () => {
-  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [loading, setLoading] = useState(false);
 
@@ -250,27 +244,27 @@ const AIBudgetsView: React.FC = () => {
               This Month
             </span>
           </div>
-          <div className="text-2xl font-bold text-white">
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">
             {formatCurrency(usageStats?.budgets.find((b) => b.type === 'cost')?.current || 0)}
           </div>
-          <div className="text-sm text-violet-300">Total AI Spending</div>
+          <div className="text-sm text-violet-800 dark:text-violet-300">Total AI Spending</div>
         </div>
 
         <div className="bg-gradient-to-br from-emerald-600/20 to-emerald-700/10 border border-emerald-500/30 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <Zap className="text-emerald-400" size={24} />
           </div>
-          <div className="text-2xl font-bold text-white">
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">
             {formatTokens(usageStats?.budgets.find((b) => b.type === 'tokens')?.current || 0)}
           </div>
-          <div className="text-sm text-emerald-300">Tokens Used</div>
+          <div className="text-sm text-emerald-800 dark:text-emerald-300">Tokens Used</div>
         </div>
 
         <div className="bg-gradient-to-br from-amber-600/20 to-amber-700/10 border border-amber-500/30 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <AlertTriangle className="text-amber-400" size={24} />
           </div>
-          <div className="text-2xl font-bold text-white">{usageStats?.alertCount || 0}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">{usageStats?.alertCount || 0}</div>
           <div className="text-sm text-amber-300">Active Alerts</div>
         </div>
 
@@ -278,22 +272,22 @@ const AIBudgetsView: React.FC = () => {
           <div className="flex items-center justify-between mb-2">
             <Target className="text-blue-400" size={24} />
           </div>
-          <div className="text-2xl font-bold text-white">{budgets.length}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">{budgets.length}</div>
           <div className="text-sm text-blue-300">Active Budgets</div>
         </div>
       </div>
 
       {/* Budget Progress */}
-      <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Budget Utilization</h3>
+      <div className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Budget Utilization</h3>
         <div className="space-y-4">
           {usageStats?.budgets.map((budget) => (
             <div key={budget.id}>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-300 capitalize">
+                <span className="text-slate-700 dark:text-gray-200 capitalize">
                   {budget.type} ({budget.period})
                 </span>
-                <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                <span className="text-slate-600 dark:text-gray-400">
                   {budget.type === 'cost'
                     ? formatCurrency(budget.current)
                     : formatTokens(budget.current)}{' '}
@@ -303,7 +297,7 @@ const AIBudgetsView: React.FC = () => {
                     : formatTokens(budget.limit)}
                 </span>
               </div>
-              <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
+              <div className="h-3 bg-slate-200 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${
                     budget.percentUsed >= 100
@@ -317,7 +311,7 @@ const AIBudgetsView: React.FC = () => {
               </div>
             </div>
           )) || (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+            <p className="text-slate-500 dark:text-gray-400 text-center py-4">
               No budgets configured
             </p>
           )}
@@ -326,8 +320,8 @@ const AIBudgetsView: React.FC = () => {
 
       {/* Recent Alerts */}
       {alerts.length > 0 && (
-        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Recent Alerts</h3>
+        <div className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Recent Alerts</h3>
           <div className="space-y-3">
             {alerts.slice(0, 3).map((alert) => (
               <div
@@ -352,15 +346,15 @@ const AIBudgetsView: React.FC = () => {
                     size={20}
                   />
                   <div>
-                    <div className="text-white font-medium">{alert.title}</div>
-                    <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                    <div className="text-slate-900 dark:text-white font-medium">{alert.title}</div>
+                    <div className="text-sm text-slate-600 dark:text-gray-400">
                       {alert.message}
                     </div>
                   </div>
                 </div>
                 <button
                   onClick={() => handleDismissAlert(alert.id)}
-                  className="text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-white p-1"
+                  className="text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white p-1"
                 >
                   <X size={18} />
                 </button>
@@ -371,15 +365,15 @@ const AIBudgetsView: React.FC = () => {
       )}
 
       {/* Model Costs Reference */}
-      <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Model Pricing (per 1K tokens)</h3>
+      <div className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Model Pricing (per 1K tokens)</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Object.entries(modelCosts)
             .slice(0, 8)
             .map(([model, costs]) => (
-              <div key={model} className="bg-gray-900/50 rounded-lg p-3">
-                <div className="text-sm font-medium text-white truncate">{model}</div>
-                <div className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-1">
+              <div key={model} className="bg-slate-50 dark:bg-gray-900/50 rounded-lg p-3 border border-slate-200/60 dark:border-transparent">
+                <div className="text-sm font-medium text-slate-900 dark:text-white truncate">{model}</div>
+                <div className="text-xs text-slate-600 dark:text-gray-400 mt-1">
                   In: ${costs.input.toFixed(4)} • Out: ${costs.output.toFixed(4)}
                 </div>
               </div>
@@ -393,8 +387,8 @@ const AIBudgetsView: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white">Spending Budgets</h3>
-          <p className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Spending Budgets</h3>
+          <p className="text-sm text-slate-600 dark:text-gray-400">
             Set limits on AI usage by cost, tokens, or requests
           </p>
         </div>
@@ -408,12 +402,12 @@ const AIBudgetsView: React.FC = () => {
       </div>
 
       {budgets.length === 0 ? (
-        <div className="text-center py-12 bg-gray-800/50 rounded-xl border border-gray-700">
-          <DollarSign className="mx-auto text-gray-500 dark:text-gray-400 mb-4" size={48} />
-          <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
+        <div className="text-center py-12 bg-white dark:bg-gray-800/50 rounded-xl border border-slate-200 dark:border-gray-700">
+          <DollarSign className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
+          <p className="text-slate-700 dark:text-gray-300">
             No budgets configured
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
             Create a budget to control AI spending
           </p>
         </div>
@@ -422,7 +416,7 @@ const AIBudgetsView: React.FC = () => {
           {budgets.map((budget) => {
             const percentUsed = (budget.currentUsage / budget.budgetLimit) * 100;
             return (
-              <div key={budget.id} className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
+              <div key={budget.id} className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div
@@ -443,15 +437,15 @@ const AIBudgetsView: React.FC = () => {
                       )}
                     </div>
                     <div>
-                      <h4 className="font-medium text-white capitalize">
+                      <h4 className="font-medium text-slate-900 dark:text-white capitalize">
                         {budget.budgetType} Budget
                         {budget.userEmail && (
-                          <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400 ml-2">
+                          <span className="text-slate-600 dark:text-gray-400 ml-2">
                             ({budget.userEmail})
                           </span>
                         )}
                       </h4>
-                      <p className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400 capitalize">
+                      <p className="text-sm text-slate-600 dark:text-gray-400 capitalize">
                         {budget.period}
                       </p>
                     </div>
@@ -472,20 +466,20 @@ const AIBudgetsView: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                    <span className="text-slate-600 dark:text-gray-400">
                       {budget.budgetType === 'cost'
                         ? formatCurrency(budget.currentUsage)
                         : formatTokens(budget.currentUsage)}{' '}
                       used
                     </span>
-                    <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                    <span className="text-slate-600 dark:text-gray-400">
                       Limit:{' '}
                       {budget.budgetType === 'cost'
                         ? formatCurrency(budget.budgetLimit)
                         : formatTokens(budget.budgetLimit)}
                     </span>
                   </div>
-                  <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-2 bg-slate-200 dark:bg-gray-700 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all ${
                         percentUsed >= 100
@@ -497,7 +491,7 @@ const AIBudgetsView: React.FC = () => {
                       style={{ width: `${Math.min(100, percentUsed)}%` }}
                     />
                   </div>
-                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                  <div className="flex justify-between text-xs text-slate-500 dark:text-gray-400">
                     <span>{percentUsed.toFixed(1)}% used</span>
                     <span>Warning at {budget.warningThreshold * 100}%</span>
                   </div>
@@ -511,11 +505,11 @@ const AIBudgetsView: React.FC = () => {
       {/* Budget Modal */}
       {showBudgetModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-white mb-4">Create Budget</h3>
+          <div className="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Create Budget</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-1">
+                <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">
                   Budget Type
                 </label>
                 <select
@@ -523,7 +517,7 @@ const AIBudgetsView: React.FC = () => {
                   onChange={(e) =>
                     setNewBudget({ ...newBudget, budgetType: e.target.value as any })
                   }
-                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-lg text-slate-900 dark:text-white"
                 >
                   <option value="cost">Cost ($)</option>
                   <option value="tokens">Tokens</option>
@@ -531,13 +525,13 @@ const AIBudgetsView: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-1">
+                <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">
                   Period
                 </label>
                 <select
                   value={newBudget.period}
                   onChange={(e) => setNewBudget({ ...newBudget, period: e.target.value as any })}
-                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-lg text-slate-900 dark:text-white"
                 >
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
@@ -546,7 +540,7 @@ const AIBudgetsView: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-1">
+                <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">
                   Limit ({newBudget.budgetType === 'cost' ? '$' : newBudget.budgetType})
                 </label>
                 <input
@@ -555,11 +549,11 @@ const AIBudgetsView: React.FC = () => {
                   onChange={(e) =>
                     setNewBudget({ ...newBudget, budgetLimit: parseFloat(e.target.value) })
                   }
-                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-lg text-slate-900 dark:text-white"
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-1">
+                <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">
                   Warning Threshold (%)
                 </label>
                 <input
@@ -573,7 +567,7 @@ const AIBudgetsView: React.FC = () => {
                   }
                   min={0}
                   max={100}
-                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-lg text-slate-900 dark:text-white"
                 />
               </div>
               <label className="flex items-center gap-2">
@@ -581,9 +575,9 @@ const AIBudgetsView: React.FC = () => {
                   type="checkbox"
                   checked={newBudget.hardLimit}
                   onChange={(e) => setNewBudget({ ...newBudget, hardLimit: e.target.checked })}
-                  className="rounded border-gray-600 bg-gray-900 text-violet-500"
+                  className="rounded border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-violet-600"
                 />
-                <span className="text-sm text-gray-300">
+                <span className="text-sm text-slate-700 dark:text-gray-200">
                   Hard limit (block requests when exceeded)
                 </span>
               </label>
@@ -591,7 +585,7 @@ const AIBudgetsView: React.FC = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowBudgetModal(false)}
-                className="flex-1 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white rounded-lg transition-colors"
               >
                 Cancel
               </button>
@@ -612,14 +606,14 @@ const AIBudgetsView: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white">Spending Alerts</h3>
-          <p className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Spending Alerts</h3>
+          <p className="text-sm text-slate-600 dark:text-gray-400">
             Notifications about budget thresholds and anomalies
           </p>
         </div>
         <button
           onClick={fetchData}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white rounded-lg transition-colors"
         >
           <RefreshCw size={18} />
           Refresh
@@ -627,10 +621,10 @@ const AIBudgetsView: React.FC = () => {
       </div>
 
       {alerts.length === 0 ? (
-        <div className="text-center py-12 bg-gray-800/50 rounded-xl border border-gray-700">
-          <Bell className="mx-auto text-gray-500 dark:text-gray-400 mb-4" size={48} />
-          <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400">No active alerts</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <div className="text-center py-12 bg-white dark:bg-gray-800/50 rounded-xl border border-slate-200 dark:border-gray-700">
+          <Bell className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
+          <p className="text-slate-700 dark:text-gray-300">No active alerts</p>
+          <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
             Alerts will appear when budgets are at risk
           </p>
         </div>
@@ -639,12 +633,12 @@ const AIBudgetsView: React.FC = () => {
           {alerts.map((alert) => (
             <div
               key={alert.id}
-              className={`bg-gray-800/50 border rounded-xl p-4 ${
+              className={`bg-white dark:bg-gray-800/50 border rounded-xl p-4 ${
                 alert.alertType === 'exceeded'
                   ? 'border-red-500/50'
                   : alert.alertType === 'warning'
                     ? 'border-amber-500/50'
-                    : 'border-gray-700'
+                    : 'border-slate-200 dark:border-gray-700'
               }`}
             >
               <div className="flex items-start justify-between">
@@ -670,11 +664,11 @@ const AIBudgetsView: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <h4 className="font-medium text-white">{alert.title}</h4>
-                    <p className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-1">
+                    <h4 className="font-medium text-slate-900 dark:text-white">{alert.title}</h4>
+                    <p className="text-sm text-slate-600 dark:text-gray-400 mt-1">
                       {alert.message}
                     </p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-4 mt-2 text-xs text-slate-500 dark:text-gray-400">
                       <span>{new Date(alert.createdAt).toLocaleString()}</span>
                       <span>{alert.percentage.toFixed(1)}% of limit</span>
                     </div>
@@ -684,7 +678,7 @@ const AIBudgetsView: React.FC = () => {
                   {alert.status === 'active' && (
                     <button
                       onClick={() => handleAcknowledgeAlert(alert.id)}
-                      className="flex items-center gap-1 px-3 py-1.5 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white rounded-lg transition-colors"
                     >
                       <Check size={14} />
                       Acknowledge
@@ -692,7 +686,7 @@ const AIBudgetsView: React.FC = () => {
                   )}
                   <button
                     onClick={() => handleDismissAlert(alert.id)}
-                    className="p-1.5 text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                    className="p-1.5 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                   >
                     <X size={18} />
                   </button>
@@ -709,8 +703,8 @@ const AIBudgetsView: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white">Model Access Control</h3>
-          <p className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Model Access Control</h3>
+          <p className="text-sm text-slate-600 dark:text-gray-400">
             Restrict which AI models users can access
           </p>
         </div>
@@ -724,48 +718,48 @@ const AIBudgetsView: React.FC = () => {
       </div>
 
       {modelPermissions.length === 0 ? (
-        <div className="text-center py-12 bg-gray-800/50 rounded-xl border border-gray-700">
-          <Bot className="mx-auto text-gray-500 dark:text-gray-400 mb-4" size={48} />
-          <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
+        <div className="text-center py-12 bg-white dark:bg-gray-800/50 rounded-xl border border-slate-200 dark:border-gray-700">
+          <Bot className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
+          <p className="text-slate-700 dark:text-gray-300">
             No model restrictions configured
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
             All models are accessible by default
           </p>
         </div>
       ) : (
-        <div className="bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden">
+        <div className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-900/50">
+            <thead className="bg-slate-50 dark:bg-gray-900/50">
               <tr>
-                <th className="text-left px-4 py-3 text-sm font-medium text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                <th className="text-left px-4 py-3 text-sm font-medium text-slate-700 dark:text-gray-300">
                   Model
                 </th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                <th className="text-left px-4 py-3 text-sm font-medium text-slate-700 dark:text-gray-300">
                   Scope
                 </th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                <th className="text-left px-4 py-3 text-sm font-medium text-slate-700 dark:text-gray-300">
                   Status
                 </th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                <th className="text-left px-4 py-3 text-sm font-medium text-slate-700 dark:text-gray-300">
                   Limits
                 </th>
-                <th className="text-right px-4 py-3 text-sm font-medium text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                <th className="text-right px-4 py-3 text-sm font-medium text-slate-700 dark:text-gray-300">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-700">
+            <tbody className="divide-y divide-slate-200 dark:divide-gray-700">
               {modelPermissions.map((perm) => (
-                <tr key={perm.id} className="hover:bg-gray-800/30">
+                <tr key={perm.id} className="hover:bg-slate-50 dark:hover:bg-gray-800/30">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-white">{perm.modelId}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                    <div className="font-medium text-slate-900 dark:text-white">{perm.modelId}</div>
+                    <div className="text-sm text-slate-500 dark:text-gray-400">
                       {perm.modelProvider}
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-sm text-gray-300 capitalize">{perm.scopeType}</span>
+                    <span className="text-sm text-slate-700 dark:text-gray-200 capitalize">{perm.scopeType}</span>
                   </td>
                   <td className="px-4 py-3">
                     <span
@@ -778,7 +772,7 @@ const AIBudgetsView: React.FC = () => {
                       {perm.isAllowed ? 'Allowed' : 'Blocked'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-gray-400">
                     {perm.maxTokensPerRequest &&
                       `Max: ${formatTokens(perm.maxTokensPerRequest)}/req`}
                     {perm.dailyTokenLimit && `, ${formatTokens(perm.dailyTokenLimit)}/day`}
@@ -802,11 +796,11 @@ const AIBudgetsView: React.FC = () => {
       {/* Model Permission Modal */}
       {showModelModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-white mb-4">Add Model Restriction</h3>
+          <div className="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Add Model Restriction</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-1">
+                <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">
                   Provider
                 </label>
                 <select
@@ -818,7 +812,7 @@ const AIBudgetsView: React.FC = () => {
                       modelId: '',
                     })
                   }
-                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-lg text-slate-900 dark:text-white"
                 >
                   {MODEL_PROVIDERS.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -828,7 +822,7 @@ const AIBudgetsView: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-1">
+                <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">
                   Model
                 </label>
                 <select
@@ -836,7 +830,7 @@ const AIBudgetsView: React.FC = () => {
                   onChange={(e) =>
                     setNewModelPermission({ ...newModelPermission, modelId: e.target.value })
                   }
-                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-lg text-slate-900 dark:text-white"
                 >
                   <option value="">Select a model</option>
                   {MODEL_PROVIDERS.find(
@@ -849,7 +843,7 @@ const AIBudgetsView: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-1">
+                <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">
                   Scope
                 </label>
                 <select
@@ -857,7 +851,7 @@ const AIBudgetsView: React.FC = () => {
                   onChange={(e) =>
                     setNewModelPermission({ ...newModelPermission, scopeType: e.target.value })
                   }
-                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-lg text-slate-900 dark:text-white"
                 >
                   <option value="organization">Organization</option>
                   <option value="role">Role</option>
@@ -871,15 +865,15 @@ const AIBudgetsView: React.FC = () => {
                   onChange={(e) =>
                     setNewModelPermission({ ...newModelPermission, isAllowed: e.target.checked })
                   }
-                  className="rounded border-gray-600 bg-gray-900 text-violet-500"
+                  className="rounded border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-violet-600"
                 />
-                <span className="text-sm text-gray-300">Allow access to this model</span>
+                <span className="text-sm text-slate-700 dark:text-gray-200">Allow access to this model</span>
               </label>
             </div>
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowModelModal(false)}
-                className="flex-1 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white rounded-lg transition-colors"
               >
                 Cancel
               </button>
@@ -902,15 +896,15 @@ const AIBudgetsView: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">AI Budget Controls</h2>
-          <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-1">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">AI Budget Controls</h2>
+          <p className="text-slate-600 dark:text-gray-400 mt-1">
             Manage AI spending limits and model access
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-700">
+      <div className="border-b border-slate-200 dark:border-gray-700">
         <div className="flex gap-6">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -920,8 +914,8 @@ const AIBudgetsView: React.FC = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 pb-3 border-b-2 transition-colors ${
                   activeTab === tab.id
-                    ? 'border-violet-500 text-white'
-                    : 'border-transparent text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-white'
+                    ? 'border-violet-600 text-slate-900 dark:text-white'
+                    : 'border-transparent text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <Icon size={18} />

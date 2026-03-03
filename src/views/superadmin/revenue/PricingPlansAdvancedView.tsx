@@ -182,8 +182,8 @@ export const PricingPlansAdvancedView: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-white">Advanced Pricing Plans</h2>
-          <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-1">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Advanced Pricing Plans</h2>
+          <p className="text-slate-600 dark:text-slate-400 mt-1">
             Manage pricing tiers and feature allocations
           </p>
         </div>
@@ -191,7 +191,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
           <button
             onClick={handleCompare}
             disabled={selectedPlans.length < 2}
-            className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 bg-slate-100 text-slate-900 rounded-lg hover:bg-slate-200 dark:bg-navy-800 dark:text-white dark:hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Compare Selected ({selectedPlans.length})
           </button>
@@ -221,7 +221,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
         {plans.map((plan) => (
           <Card
             key={plan.id}
-            className={`bg-gray-800 border-gray-700 relative ${selectedPlans.includes(plan.id) ? 'ring-2 ring-indigo-500' : ''}`}
+            className={`relative ${selectedPlans.includes(plan.id) ? 'ring-2 ring-indigo-500' : ''}`}
           >
             <CardHeader className="pb-2">
               <div className="flex items-start justify-between">
@@ -230,9 +230,9 @@ export const PricingPlansAdvancedView: React.FC = () => {
                     type="checkbox"
                     checked={selectedPlans.includes(plan.id)}
                     onChange={() => togglePlanSelection(plan.id)}
-                    className="w-4 h-4 rounded border-gray-600 text-indigo-600 focus:ring-indigo-500"
+                    className="w-4 h-4 rounded border-slate-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
                   />
-                  <CardTitle className="text-lg text-white">{plan.name}</CardTitle>
+                  <CardTitle className="text-lg">{plan.name}</CardTitle>
                 </div>
                 <div className="flex gap-1">
                   {plan.is_active ? (
@@ -240,26 +240,26 @@ export const PricingPlansAdvancedView: React.FC = () => {
                       Active
                     </span>
                   ) : (
-                    <span className="px-2 py-0.5 text-xs bg-gray-50 dark:bg-navy-8000/20 text-gray-400 rounded-full">
+                    <span className="px-2 py-0.5 text-xs bg-slate-200/60 dark:bg-navy-800/20 text-slate-700 dark:text-slate-300 rounded-full">
                       Inactive
                     </span>
                   )}
                 </div>
               </div>
-              <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-sm mt-1">
+              <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
                 {plan.description}
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Pricing */}
-              <div className="text-center py-4 bg-gray-900/50 rounded-lg">
-                <div className="text-3xl font-bold text-white">
+              <div className="text-center py-4 bg-slate-50 dark:bg-navy-950/20 border border-slate-200 dark:border-navy-700 rounded-lg">
+                <div className="text-3xl font-bold text-slate-900 dark:text-white">
                   {formatCurrency(plan.price_monthly, plan.currency)}
-                  <span className="text-sm font-normal text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                  <span className="text-sm font-normal text-slate-600 dark:text-slate-400">
                     /mo
                   </span>
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                   or {formatCurrency(plan.price_yearly, plan.currency)}/year
                 </div>
                 {plan.trial_days > 0 && (
@@ -272,34 +272,30 @@ export const PricingPlansAdvancedView: React.FC = () => {
               {/* Limits */}
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400">Users</span>
-                  <span className="text-white font-medium">
+                  <span className="text-slate-600 dark:text-slate-400">Users</span>
+                  <span className="text-slate-900 dark:text-white font-medium">
                     {plan.max_users === -1 ? 'Unlimited' : plan.max_users}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
-                    Projects
-                  </span>
-                  <span className="text-white font-medium">
+                  <span className="text-slate-600 dark:text-slate-400">Projects</span>
+                  <span className="text-slate-900 dark:text-white font-medium">
                     {plan.max_projects === -1 ? 'Unlimited' : plan.max_projects}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
-                    Storage
-                  </span>
-                  <span className="text-white font-medium">
+                  <span className="text-slate-600 dark:text-slate-400">Storage</span>
+                  <span className="text-slate-900 dark:text-white font-medium">
                     {plan.max_storage_gb === -1 ? 'Unlimited' : `${plan.max_storage_gb} GB`}
                   </span>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2 pt-2 border-t border-gray-700">
+              <div className="flex gap-2 pt-2 border-t border-slate-200 dark:border-navy-700">
                 <button
                   onClick={() => openEditModal(plan)}
-                  className="flex-1 px-3 py-2 text-sm bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
+                  className="flex-1 px-3 py-2 text-sm bg-slate-100 text-slate-900 rounded hover:bg-slate-200 dark:bg-navy-800 dark:text-white dark:hover:bg-navy-700 transition-colors"
                 >
                   Edit
                 </button>
@@ -317,10 +313,10 @@ export const PricingPlansAdvancedView: React.FC = () => {
 
       {plans.length === 0 && (
         <div className="text-center py-12">
-          <div className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-lg">
+          <div className="text-slate-600 dark:text-slate-400 text-lg">
             No pricing plans configured
           </div>
-          <p className="text-gray-500 dark:text-gray-400 mt-2">
+          <p className="text-slate-500 dark:text-gray-400 mt-2">
             Create your first pricing plan to get started
           </p>
         </div>
@@ -329,28 +325,32 @@ export const PricingPlansAdvancedView: React.FC = () => {
       {/* Create/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-white mb-4">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
               {editingPlan ? 'Edit Pricing Plan' : 'Create New Pricing Plan'}
             </h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Plan Name</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Plan Name
+                  </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Currency</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Currency
+                  </label>
                   <select
                     value={formData.currency}
                     onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                   >
                     <option value="USD">USD</option>
                     <option value="EUR">EUR</option>
@@ -361,18 +361,20 @@ export const PricingPlansAdvancedView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Description
+                </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                   rows={2}
                 />
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Monthly Price
                   </label>
                   <input
@@ -381,13 +383,13 @@ export const PricingPlansAdvancedView: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, price_monthly: parseFloat(e.target.value) })
                     }
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                     step="0.01"
                     min="0"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Yearly Price
                   </label>
                   <input
@@ -396,20 +398,22 @@ export const PricingPlansAdvancedView: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, price_yearly: parseFloat(e.target.value) })
                     }
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                     step="0.01"
                     min="0"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Trial Days</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Trial Days
+                  </label>
                   <input
                     type="number"
                     value={formData.trial_days}
                     onChange={(e) =>
                       setFormData({ ...formData, trial_days: parseInt(e.target.value) })
                     }
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                     min="0"
                   />
                 </div>
@@ -417,7 +421,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Max Users (-1 = unlimited)
                   </label>
                   <input
@@ -426,12 +430,12 @@ export const PricingPlansAdvancedView: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, max_users: parseInt(e.target.value) })
                     }
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                     min="-1"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Max Projects (-1 = unlimited)
                   </label>
                   <input
@@ -440,12 +444,12 @@ export const PricingPlansAdvancedView: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, max_projects: parseInt(e.target.value) })
                     }
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                     min="-1"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Max Storage GB (-1 = unlimited)
                   </label>
                   <input
@@ -454,38 +458,38 @@ export const PricingPlansAdvancedView: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, max_storage_gb: parseInt(e.target.value) })
                     }
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                     min="-1"
                   />
                 </div>
               </div>
 
               <div className="flex gap-6">
-                <label className="flex items-center gap-2 text-gray-300">
+                <label className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                   <input
                     type="checkbox"
                     checked={formData.is_active}
                     onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                    className="w-4 h-4 rounded border-gray-600"
+                    className="w-4 h-4 rounded border-slate-300 dark:border-gray-600"
                   />
                   Active
                 </label>
-                <label className="flex items-center gap-2 text-gray-300">
+                <label className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                   <input
                     type="checkbox"
                     checked={formData.is_public}
                     onChange={(e) => setFormData({ ...formData, is_public: e.target.checked })}
-                    className="w-4 h-4 rounded border-gray-600"
+                    className="w-4 h-4 rounded border-slate-300 dark:border-gray-600"
                   />
                   Public
                 </label>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-700">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-navy-700">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+                  className="px-4 py-2 bg-slate-100 text-slate-900 rounded-lg hover:bg-slate-200 dark:bg-navy-800 dark:text-white dark:hover:bg-navy-700"
                 >
                   Cancel
                 </button>
@@ -504,12 +508,12 @@ export const PricingPlansAdvancedView: React.FC = () => {
       {/* Comparison Modal */}
       {showCompare && comparisonData && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-xl">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white">Plan Comparison</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">Plan Comparison</h3>
               <button
                 onClick={() => setShowCompare(false)}
-                className="text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-white text-2xl"
+                className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white text-2xl"
               >
                 ×
               </button>
@@ -517,74 +521,74 @@ export const PricingPlansAdvancedView: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-700">
-                    <th className="text-left py-3 px-4 text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                  <tr className="border-b border-slate-200 dark:border-white/10">
+                    <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400">
                       Feature
                     </th>
                     {comparisonData.plans?.map((plan: any) => (
-                      <th key={plan.id} className="text-center py-3 px-4 text-white">
+                      <th key={plan.id} className="text-center py-3 px-4 text-slate-900 dark:text-white">
                         {plan.name}
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b border-gray-700/50">
-                    <td className="py-3 px-4 text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                  <tr className="border-b border-slate-200/70 dark:border-white/10">
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
                       Monthly Price
                     </td>
                     {comparisonData.plans?.map((plan: any) => (
-                      <td key={plan.id} className="text-center py-3 px-4 text-white">
+                      <td key={plan.id} className="text-center py-3 px-4 text-slate-900 dark:text-white">
                         {formatCurrency(plan.price_monthly, plan.currency)}
                       </td>
                     ))}
                   </tr>
-                  <tr className="border-b border-gray-700/50">
-                    <td className="py-3 px-4 text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                  <tr className="border-b border-slate-200/70 dark:border-white/10">
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
                       Yearly Price
                     </td>
                     {comparisonData.plans?.map((plan: any) => (
-                      <td key={plan.id} className="text-center py-3 px-4 text-white">
+                      <td key={plan.id} className="text-center py-3 px-4 text-slate-900 dark:text-white">
                         {formatCurrency(plan.price_yearly, plan.currency)}
                       </td>
                     ))}
                   </tr>
-                  <tr className="border-b border-gray-700/50">
-                    <td className="py-3 px-4 text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                  <tr className="border-b border-slate-200/70 dark:border-white/10">
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
                       Max Users
                     </td>
                     {comparisonData.plans?.map((plan: any) => (
-                      <td key={plan.id} className="text-center py-3 px-4 text-white">
+                      <td key={plan.id} className="text-center py-3 px-4 text-slate-900 dark:text-white">
                         {plan.max_users === -1 ? 'Unlimited' : plan.max_users}
                       </td>
                     ))}
                   </tr>
-                  <tr className="border-b border-gray-700/50">
-                    <td className="py-3 px-4 text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                  <tr className="border-b border-slate-200/70 dark:border-white/10">
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
                       Max Projects
                     </td>
                     {comparisonData.plans?.map((plan: any) => (
-                      <td key={plan.id} className="text-center py-3 px-4 text-white">
+                      <td key={plan.id} className="text-center py-3 px-4 text-slate-900 dark:text-white">
                         {plan.max_projects === -1 ? 'Unlimited' : plan.max_projects}
                       </td>
                     ))}
                   </tr>
-                  <tr className="border-b border-gray-700/50">
-                    <td className="py-3 px-4 text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                  <tr className="border-b border-slate-200/70 dark:border-white/10">
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
                       Storage
                     </td>
                     {comparisonData.plans?.map((plan: any) => (
-                      <td key={plan.id} className="text-center py-3 px-4 text-white">
+                      <td key={plan.id} className="text-center py-3 px-4 text-slate-900 dark:text-white">
                         {plan.max_storage_gb === -1 ? 'Unlimited' : `${plan.max_storage_gb} GB`}
                       </td>
                     ))}
                   </tr>
-                  <tr className="border-b border-gray-700/50">
-                    <td className="py-3 px-4 text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                  <tr className="border-b border-slate-200/70 dark:border-white/10">
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
                       Trial Days
                     </td>
                     {comparisonData.plans?.map((plan: any) => (
-                      <td key={plan.id} className="text-center py-3 px-4 text-white">
+                      <td key={plan.id} className="text-center py-3 px-4 text-slate-900 dark:text-white">
                         {plan.trial_days > 0 ? `${plan.trial_days} days` : 'No trial'}
                       </td>
                     ))}
@@ -595,7 +599,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
             <div className="flex justify-end mt-4">
               <button
                 onClick={() => setShowCompare(false)}
-                className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+                className="px-4 py-2 bg-slate-100 text-slate-900 rounded-lg hover:bg-slate-200 dark:bg-navy-800 dark:text-white dark:hover:bg-navy-700"
               >
                 Close
               </button>

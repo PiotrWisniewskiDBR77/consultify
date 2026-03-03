@@ -57,5 +57,5 @@ export class CacheService {
   }
 }
 
-export const appCache = new CacheService('consultinity:');
+export const appCache = new CacheService('consultify:');
 export const sessionCache = new CacheService('session:');

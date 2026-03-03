@@ -240,7 +240,7 @@ export const EnterpriseApiManagement: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">API Management</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">API Management</h2>
           <p className="text-slate-400 dark:text-slate-500 text-sm">
             Manage API keys, view usage analytics, and access documentation
           </p>
@@ -293,7 +293,7 @@ export const EnterpriseApiManagement: React.FC = () => {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-white/10 pb-1">
+      <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
         {[
           { id: 'keys', label: 'API Keys', icon: Key },
           { id: 'usage', label: 'Usage Analytics', icon: BarChart3 },
@@ -304,8 +304,8 @@ export const EnterpriseApiManagement: React.FC = () => {
             onClick={() => setActiveTab(id as any)}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeTab === id
-                ? 'bg-white/10 text-white border-b-2 border-purple-500'
-                : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-purple-500'
+                : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/20'
             }`}
           >
             <Icon className="w-4 h-4" />
@@ -328,7 +328,7 @@ export const EnterpriseApiManagement: React.FC = () => {
               placeholder="Search API keys..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
 
@@ -351,7 +351,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                   className={`p-4 rounded-xl border transition-colors ${
                     key.revoked_at
                       ? 'bg-red-500/5 border-red-500/20 opacity-60'
-                      : 'bg-white/5 border-white/10 hover:border-white/20'
+                      : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -367,7 +367,9 @@ export const EnterpriseApiManagement: React.FC = () => {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-white">{key.name}</span>
+                          <span className="font-medium text-slate-900 dark:text-slate-100">
+                            {key.name}
+                          </span>
                           <code className="px-2 py-0.5 text-xs bg-slate-800 text-slate-300 rounded font-mono">
                             {key.key_prefix}...
                           </code>
@@ -594,9 +596,9 @@ export const EnterpriseApiManagement: React.FC = () => {
       {activeTab === 'docs' && (
         <div className="space-y-6">
           <div className="p-6 bg-gradient-to-br from-purple-500/10 to-cyan-500/10 rounded-xl border border-purple-500/20">
-            <h3 className="text-xl font-bold text-white mb-2">Consultinity API</h3>
+            <h3 className="text-xl font-bold text-white mb-2">Consultify API</h3>
             <p className="text-slate-400 dark:text-slate-500 mb-4">
-              Build powerful integrations with the Consultinity REST API. Access projects,
+              Build powerful integrations with the Consultify REST API. Access projects,
               assessments, reports, and more.
             </p>
             <div className="flex items-center gap-4">

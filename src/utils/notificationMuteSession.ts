@@ -5,7 +5,7 @@
  * It only lives for the current browser session (sessionStorage).
  */
 
-const STORAGE_KEY = 'consultinity-muted-notification-types-session';
+const STORAGE_KEY = 'consultify-muted-notification-types-session';
 export const NOTIFICATION_MUTE_SESSION_CHANGED_EVENT = 'notification-mute-session-changed';
 
 const emitChanged = () => {

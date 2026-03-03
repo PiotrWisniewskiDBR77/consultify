@@ -23,7 +23,9 @@ export type ReportSourceType =
   | 'TOOL'
   | 'INITIATIVE'
   | 'UPLOAD_BUNDLE'
-  | 'FINANCIAL_ANALYSIS';
+  | 'FINANCIAL_ANALYSIS'
+  | 'VALUATION'
+  | 'RESULTS_KPI_REPORT';
 export type ReportStatus =
   | 'DRAFT'
   | 'CONFIGURING'
@@ -49,6 +51,21 @@ export type SectionType =
   | 'appendix'
   | 'custom';
 
+export type ReportTypeV3 = 'R1' | 'R2' | 'R3' | 'R4' | 'custom';
+export type CommunicationRegister = 'executive' | 'professional' | 'technical' | 'narrative';
+export type ReportDensity = 'concise' | 'standard' | 'detailed' | 'comprehensive';
+export type ReportForm = 'strategic' | 'operational' | 'technical' | 'investment';
+export type DataLevel = 'data-heavy' | 'balanced' | 'narrative-heavy';
+export type Confidentiality = 'confidential' | 'internal' | 'public';
+export type GoalV3 = 'inform' | 'decide' | 'sell' | 'align';
+export type RagStatus = 'green' | 'amber' | 'red';
+
+export interface SourceRef {
+  artifact_id: string;
+  artifact_type: string;
+  artifact_name: string;
+}
+
 export interface ReportRecord {
   id: string;
   organizationId: string;
@@ -73,6 +90,19 @@ export interface ReportRecord {
   approvedAt?: string;
   approvedBy?: string;
   version: number;
+  // V3 Report Definition Layer
+  reportTypeV3?: ReportTypeV3;
+  periodFrom?: string;
+  periodTo?: string;
+  communicationRegister?: CommunicationRegister;
+  density?: ReportDensity;
+  form?: ReportForm;
+  dataLevel?: DataLevel;
+  confidentiality?: Confidentiality;
+  themeId?: string;
+  contextPackSnapshot?: string;
+  goalV3?: GoalV3;
+  sourceRefs?: SourceRef[];
 }
 
 export interface SectionRecord {
@@ -105,6 +135,12 @@ export interface SectionRecord {
   repeatData?: string;
   chapterKey?: string;
   chapterTitle?: string;
+  // V3 fields
+  rag?: RagStatus;
+  summary?: string;
+  sourceRefs?: SourceRef[];
+  isRefreshable?: boolean;
+  lastDataTimestamp?: string;
 }
 
 export interface CreateReportParams {
@@ -121,6 +157,13 @@ export interface CreateReportParams {
   config?: Record<string, unknown>;
   createdBy: string;
   templateId?: string;
+  reportTypeV3?: ReportTypeV3;
+  goalV3?: GoalV3;
+  communicationRegister?: CommunicationRegister;
+  density?: ReportDensity;
+  periodFrom?: string;
+  periodTo?: string;
+  confidentiality?: string;
 }
 
 export interface GenerateFromTemplateOptions {
@@ -141,6 +184,8 @@ export interface UpdateSectionConfigParams {
   title?: string;
   chapterKey?: string | null;
   chapterTitle?: string | null;
+  isRefreshable?: boolean;
+  lastDataTimestamp?: string | null;
 }
 
 export interface GenerateSectionParams {
@@ -275,6 +320,117 @@ async function getAssessmentSourceData(sourceId: string): Promise<AssessmentSour
     context: JSON.parse(row.context_snapshot || '{}'),
     approvedAt: row.approved_at,
     createdByName: (row as any).created_by_name || 'Unknown',
+  };
+}
+
+// ==========================================
+// FINANCE SOURCE ADAPTERS (FINANCIAL_ANALYSIS + T054 model via config.sourceSubType)
+// ==========================================
+
+interface FinancialAnalysisSourceData {
+  id: string;
+  title: string;
+  status: string;
+  projectId?: string | null;
+  currency: string;
+  periods: string[];
+  sourceStatementIds: string[];
+  ratiosCount: number;
+  insightsCount: number;
+  updatedAt?: string | null;
+}
+
+async function getFinancialAnalysisSourceData(
+  organizationId: string,
+  sourceId: string
+): Promise<FinancialAnalysisSourceData | null> {
+  const row = await queryOne<any>(
+    `
+    SELECT id, organization_id, project_id, title, status, periods, currency, source_statement_ids, updated_at
+    FROM financial_analyses
+    WHERE id = ? AND organization_id = ?
+  `,
+    [sourceId, organizationId]
+  );
+  if (!row) return null;
+
+  const ratiosCountRow = await queryOne<{ c: number }>(
+    `SELECT COUNT(*) as c FROM financial_analysis_ratios WHERE analysis_id = ?`,
+    [sourceId]
+  );
+  const insightsCountRow = await queryOne<{ c: number }>(
+    `SELECT COUNT(*) as c FROM financial_analysis_insights WHERE analysis_id = ?`,
+    [sourceId]
+  );
+
+  return {
+    id: row.id,
+    title: row.title,
+    status: row.status,
+    projectId: row.project_id || null,
+    currency: row.currency || 'PLN',
+    periods: (() => {
+      try {
+        const p = JSON.parse(row.periods || '[]');
+        return Array.isArray(p) ? p : [];
+      } catch {
+        return [];
+      }
+    })(),
+    sourceStatementIds: (() => {
+      try {
+        const ids = JSON.parse(row.source_statement_ids || '[]');
+        return Array.isArray(ids) ? ids : [];
+      } catch {
+        return [];
+      }
+    })(),
+    ratiosCount: Number((ratiosCountRow as any)?.c || 0),
+    insightsCount: Number((insightsCountRow as any)?.c || 0),
+    updatedAt: row.updated_at || null,
+  };
+}
+
+interface FinancialModelSourceData {
+  id: string;
+  name: string;
+  status: string;
+  projectId?: string | null;
+  currency: string;
+  granularity: string;
+  scenario: string;
+  horizonMonths: number;
+  startDate: string;
+  version: number;
+  updatedAt?: string | null;
+}
+
+async function getFinancialModelSourceData(
+  organizationId: string,
+  modelId: string
+): Promise<FinancialModelSourceData | null> {
+  const row = await queryOne<any>(
+    `
+    SELECT id, organization_id, project_id, name, status, currency, granularity, scenario,
+           horizon_months, start_date, version, updated_at
+    FROM financial_models
+    WHERE id = ? AND organization_id = ?
+  `,
+    [modelId, organizationId]
+  );
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    status: row.status,
+    projectId: row.project_id || null,
+    currency: row.currency || 'PLN',
+    granularity: row.granularity || 'monthly',
+    scenario: row.scenario || 'base',
+    horizonMonths: Number(row.horizon_months || 0),
+    startDate: String(row.start_date || ''),
+    version: Number(row.version || 1),
+    updatedAt: row.updated_at || null,
   };
 }
 
@@ -435,6 +591,51 @@ export async function createReport(params: CreateReportParams): Promise<{
     };
   }
 
+  if (sourceType === 'FINANCIAL_ANALYSIS') {
+    // Support both: (a) true financial analysis artifact, (b) T054 model export routed through FINANCIAL_ANALYSIS
+    const subType = String((config as any)?.sourceSubType || '').toLowerCase();
+    if (subType === 'financial_model') {
+      const model = await getFinancialModelSourceData(organizationId, sourceId);
+      if (!model) throw new Error('Financial model not found');
+      sourceName = model.name;
+      projectId = model.projectId ? String(model.projectId) : null;
+      companyContext = {
+        financeSourceType: 'financial_model',
+        model: {
+          id: model.id,
+          name: model.name,
+          status: model.status,
+          currency: model.currency,
+          granularity: model.granularity,
+          scenario: model.scenario,
+          horizonMonths: model.horizonMonths,
+          startDate: model.startDate,
+          version: model.version,
+          updatedAt: model.updatedAt,
+        },
+      };
+    } else {
+      const fa = await getFinancialAnalysisSourceData(organizationId, sourceId);
+      if (!fa) throw new Error('Financial analysis not found');
+      sourceName = fa.title;
+      projectId = fa.projectId ? String(fa.projectId) : null;
+      companyContext = {
+        financeSourceType: 'financial_analysis',
+        analysis: {
+          id: fa.id,
+          title: fa.title,
+          status: fa.status,
+          currency: fa.currency,
+          periods: fa.periods,
+          sourceStatementIds: fa.sourceStatementIds,
+          ratiosCount: fa.ratiosCount,
+          insightsCount: fa.insightsCount,
+          updatedAt: fa.updatedAt,
+        },
+      };
+    }
+  }
+
   // Get template
   const derivedReportType = sourceFramework ? `${sourceType}_${sourceFramework}` : sourceType;
 
@@ -474,14 +675,15 @@ export async function createReport(params: CreateReportParams): Promise<{
   const reportType = derivedReportType;
   const now = new Date().toISOString();
 
-  // Create report
+  // Create report (with V3 fields when provided)
   await queryRun(
     `
     INSERT INTO report_builder_reports (
       id, organization_id, project_id, source_type, source_id, source_name, source_framework,
       title, description, report_type, template_id, config_json, company_context_json, status,
-      created_by, created_at, updated_at, version
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONFIGURING', ?, ?, ?, 1)
+      created_by, created_at, updated_at, version,
+      report_type_v3, goal_v3, communication_register, density, period_from, period_to, confidentiality
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONFIGURING', ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?)
   `,
     [
       reportId,
@@ -500,6 +702,13 @@ export async function createReport(params: CreateReportParams): Promise<{
       createdBy,
       now,
       now,
+      params.reportTypeV3 || null,
+      params.goalV3 || null,
+      params.communicationRegister || null,
+      params.density || null,
+      params.periodFrom || null,
+      params.periodTo || null,
+      params.confidentiality || null,
     ]
   );
 
@@ -738,6 +947,8 @@ export async function getReport(
       repeatData: s.repeat_data,
       chapterKey: (s as any).chapter_key || undefined,
       chapterTitle: (s as any).chapter_title || undefined,
+      isRefreshable: Boolean((s as any).is_refreshable),
+      lastDataTimestamp: (s as any).last_data_timestamp || undefined,
     })),
   };
 }
@@ -1041,6 +1252,14 @@ export async function updateSectionConfig(
       setClauses.push('chapter_title = ?');
       params.push(update.chapterTitle);
     }
+    if (update.isRefreshable !== undefined) {
+      setClauses.push('is_refreshable = ?');
+      params.push(update.isRefreshable ? 1 : 0);
+    }
+    if (update.lastDataTimestamp !== undefined) {
+      setClauses.push('last_data_timestamp = ?');
+      params.push(update.lastDataTimestamp);
+    }
 
     params.push(reportId, update.sectionKey);
 
@@ -1092,6 +1311,8 @@ export async function updateSectionConfig(
     repeatName: s.repeat_name,
     chapterKey: (s as any).chapter_key || undefined,
     chapterTitle: (s as any).chapter_title || undefined,
+    isRefreshable: Boolean((s as any).is_refreshable),
+    lastDataTimestamp: (s as any).last_data_timestamp || undefined,
   }));
 }
 
@@ -1158,14 +1379,21 @@ export async function addCustomSection(
   const sectionKey = `custom_${sectionId.slice(0, 8)}`;
   const now = new Date().toISOString();
 
+  const hasSourceData = Boolean(
+    blockConfig &&
+    ((blockConfig as any).dataSource ||
+      (blockConfig as any)._sourceContext ||
+      (blockConfig as any).sourceRefs)
+  );
+
   await queryRun(
     `
     INSERT INTO report_builder_sections (
       id, report_id, section_key, section_type, title, order_index,
       enabled, required, length, language, content_format,
       block_type_id, block_config_json, render_kind,
-      created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, 1, 0, ?, ?, 'markdown', ?, ?, ?, ?, ?)
+      is_refreshable, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, 1, 0, ?, ?, 'markdown', ?, ?, ?, ?, ?, ?)
   `,
     [
       sectionId,
@@ -1179,6 +1407,7 @@ export async function addCustomSection(
       blockTypeId || null,
       blockConfig ? JSON.stringify(blockConfig) : null,
       renderKind || null,
+      hasSourceData ? 1 : 0,
       now,
       now,
     ]
@@ -1199,6 +1428,7 @@ export async function addCustomSection(
     blockConfig: blockConfig || undefined,
     renderKind: renderKind || undefined,
     contentFormat: 'markdown',
+    isRefreshable: hasSourceData,
   };
 }
 
@@ -1692,7 +1922,7 @@ export interface PublicLinkRecord {
   passwordHash?: string;
   expiresAt?: string;
   showCompanyLogo: boolean;
-  showConsultinityBranding: boolean;
+  showConsultifyBranding: boolean;
   customMessage?: string;
   viewCount: number;
   lastViewedAt?: string;
@@ -1811,7 +2041,7 @@ export async function createPublicLink(params: {
   passwordHash?: string;
   expiresAt?: string;
   showCompanyLogo?: boolean;
-  showConsultinityBranding?: boolean;
+  showConsultifyBranding?: boolean;
   customMessage?: string;
 }): Promise<PublicLinkRecord> {
   const id = uuidv4();
@@ -1822,7 +2052,7 @@ export async function createPublicLink(params: {
     `
     INSERT INTO report_public_links (
       id, report_id, report_type, organization_id, link_token,
-      password_hash, expires_at, show_company_logo, show_consultinity_branding,
+      password_hash, expires_at, show_company_logo, show_consultify_branding,
       custom_message, view_count, created_by, created_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
   `,
@@ -1835,7 +2065,7 @@ export async function createPublicLink(params: {
       params.passwordHash || null,
       params.expiresAt || null,
       params.showCompanyLogo !== false ? 1 : 0,
-      params.showConsultinityBranding !== false ? 1 : 0,
+      params.showConsultifyBranding !== false ? 1 : 0,
       params.customMessage || null,
       params.createdBy,
       now,
@@ -1851,7 +2081,7 @@ export async function createPublicLink(params: {
     passwordHash: params.passwordHash,
     expiresAt: params.expiresAt,
     showCompanyLogo: params.showCompanyLogo !== false,
-    showConsultinityBranding: params.showConsultinityBranding !== false,
+    showConsultifyBranding: params.showConsultifyBranding !== false,
     customMessage: params.customMessage,
     viewCount: 0,
     createdBy: params.createdBy,
@@ -1884,7 +2114,7 @@ export async function getPublicLinks(
     passwordHash: r.password_hash,
     expiresAt: r.expires_at,
     showCompanyLogo: Boolean(r.show_company_logo),
-    showConsultinityBranding: Boolean(r.show_consultinity_branding),
+    showConsultifyBranding: Boolean(r.show_consultify_branding),
     customMessage: r.custom_message,
     viewCount: r.view_count,
     lastViewedAt: r.last_viewed_at,
@@ -1941,7 +2171,7 @@ export async function getPublicLinkByToken(linkToken: string): Promise<{
       passwordHash: linkRow.password_hash,
       expiresAt: linkRow.expires_at,
       showCompanyLogo: Boolean(linkRow.show_company_logo),
-      showConsultinityBranding: Boolean(linkRow.show_consultinity_branding),
+      showConsultifyBranding: Boolean(linkRow.show_consultify_branding),
       customMessage: linkRow.custom_message,
       viewCount: linkRow.view_count + 1,
       lastViewedAt: new Date().toISOString(),
@@ -2505,6 +2735,259 @@ export async function rollbackToVersion(
 }
 
 // ==========================================
+// REFRESHABLE BLOCKS
+// ==========================================
+
+/**
+ * Get a single section by report ID and section key
+ */
+export async function getSection(
+  reportId: string,
+  sectionKey: string
+): Promise<SectionRecord | null> {
+  const s = await queryOne<any>(
+    `SELECT * FROM report_builder_sections WHERE report_id = ? AND section_key = ?`,
+    [reportId, sectionKey]
+  );
+  if (!s) return null;
+  return {
+    id: s.id,
+    reportId: s.report_id,
+    sectionKey: s.section_key,
+    sectionType: s.section_type,
+    title: s.title,
+    orderIndex: s.order_index,
+    enabled: Boolean(s.enabled),
+    required: Boolean(s.required),
+    length: s.length,
+    language: s.language,
+    customPrompt: s.custom_prompt,
+    blockTypeId: s.block_type_id || undefined,
+    blockConfig: s.block_config_json ? JSON.parse(s.block_config_json) : undefined,
+    renderKind: s.render_kind || undefined,
+    generatedContent: s.generated_content,
+    editedContent: s.edited_content,
+    contentFormat: s.content_format,
+    tiptapContent: s.tiptap_content,
+    sourceDataSnapshot: s.source_data_snapshot,
+    generatedAt: s.generated_at,
+    tokensUsed: s.tokens_used,
+    editedAt: s.edited_at,
+    editedBy: s.edited_by,
+    repeatFor: s.repeat_for,
+    repeatKey: s.repeat_key,
+    repeatName: s.repeat_name,
+    repeatData: s.repeat_data,
+    chapterKey: s.chapter_key || undefined,
+    chapterTitle: s.chapter_title || undefined,
+    sourceRefs: s.source_refs_json ? JSON.parse(s.source_refs_json) : undefined,
+    isRefreshable: Boolean(s.is_refreshable),
+    lastDataTimestamp: s.last_data_timestamp || undefined,
+  };
+}
+
+/**
+ * Get all refreshable sections for a report
+ */
+export async function getRefreshableSections(reportId: string): Promise<SectionRecord[]> {
+  const rows = await queryAll<any>(
+    `SELECT * FROM report_builder_sections WHERE report_id = ? AND is_refreshable = 1 AND enabled = 1 ORDER BY order_index ASC`,
+    [reportId]
+  );
+  return rows.map((s) => ({
+    id: s.id,
+    reportId: s.report_id,
+    sectionKey: s.section_key,
+    sectionType: s.section_type,
+    title: s.title,
+    orderIndex: s.order_index,
+    enabled: Boolean(s.enabled),
+    required: Boolean(s.required),
+    length: s.length,
+    language: s.language,
+    customPrompt: s.custom_prompt,
+    blockTypeId: s.block_type_id || undefined,
+    blockConfig: s.block_config_json ? JSON.parse(s.block_config_json) : undefined,
+    renderKind: s.render_kind || undefined,
+    generatedContent: s.generated_content,
+    editedContent: s.edited_content,
+    contentFormat: s.content_format,
+    tiptapContent: s.tiptap_content,
+    generatedAt: s.generated_at,
+    tokensUsed: s.tokens_used,
+    isRefreshable: Boolean(s.is_refreshable),
+    lastDataTimestamp: s.last_data_timestamp || undefined,
+  }));
+}
+
+/**
+ * Accept a refresh proposal — overwrite edited_content and update last_data_timestamp
+ */
+export async function acceptRefreshContent(
+  reportId: string,
+  sectionKey: string,
+  newContent: string,
+  userId: string
+): Promise<void> {
+  const now = new Date().toISOString();
+  await queryRun(
+    `UPDATE report_builder_sections
+     SET edited_content = ?, last_data_timestamp = ?, edited_at = ?, edited_by = ?, updated_at = ?
+     WHERE report_id = ? AND section_key = ?`,
+    [newContent, now, now, userId, now, reportId, sectionKey]
+  );
+}
+
+// ==========================================
+// REPORT SESSIONS (Dynamic Menu)
+// ==========================================
+
+export interface ReportSessionRecord {
+  id: string;
+  reportId: string;
+  userId: string;
+  organizationId: string;
+  openedAt: string;
+  closedAt?: string | null;
+  lastActivityAt: string;
+  navigationState?: Record<string, unknown> | null;
+  report?: Pick<ReportRecord, 'id' | 'title' | 'status' | 'sourceType' | 'sourceFramework'>;
+}
+
+/**
+ * List open report sessions (dynamic menu) for a user.
+ * Hard limit: max 6 open sessions, newest first.
+ */
+export async function listOpenSessions(
+  organizationId: string,
+  userId: string
+): Promise<ReportSessionRecord[]> {
+  const rows = await queryAll<any>(
+    `
+    SELECT
+      s.*,
+      r.title as report_title,
+      r.status as report_status,
+      r.source_type as report_source_type,
+      r.source_framework as report_source_framework
+    FROM report_builder_sessions s
+    JOIN report_builder_reports r ON s.report_id = r.id
+    WHERE s.user_id = ? AND s.organization_id = ? AND s.closed_at IS NULL
+    ORDER BY s.last_activity_at DESC
+    LIMIT 6
+  `,
+    [userId, organizationId]
+  );
+
+  const safeParse = (v: string | null | undefined): any => {
+    if (!v) return null;
+    try {
+      return JSON.parse(v);
+    } catch {
+      return null;
+    }
+  };
+
+  return rows.map((row) => ({
+    id: row.id,
+    reportId: row.report_id,
+    userId: row.user_id,
+    organizationId: row.organization_id,
+    openedAt: row.opened_at,
+    closedAt: row.closed_at,
+    lastActivityAt: row.last_activity_at,
+    navigationState: safeParse(row.navigation_state),
+    report: {
+      id: row.report_id,
+      title: row.report_title,
+      status: row.report_status,
+      sourceType: row.report_source_type,
+      sourceFramework: row.report_source_framework,
+    },
+  }));
+}
+
+/**
+ * Open a report session (upsert). Enforces max 6 open sessions by auto-closing oldest.
+ */
+export async function openSession(params: {
+  organizationId: string;
+  userId: string;
+  reportId: string;
+  navigationState?: Record<string, unknown> | null;
+}): Promise<ReportSessionRecord> {
+  const id = uuidv4();
+  const now = new Date().toISOString();
+  const nav = params.navigationState ? JSON.stringify(params.navigationState) : null;
+
+  // Upsert on (report_id, user_id)
+  await queryRun(
+    `
+    INSERT INTO report_builder_sessions (
+      id, report_id, user_id, organization_id,
+      opened_at, closed_at, last_activity_at, navigation_state
+    ) VALUES (?, ?, ?, ?, ?, NULL, ?, ?)
+    ON CONFLICT(report_id, user_id) DO UPDATE SET
+      organization_id = excluded.organization_id,
+      opened_at = COALESCE(report_builder_sessions.opened_at, excluded.opened_at),
+      closed_at = NULL,
+      last_activity_at = excluded.last_activity_at,
+      navigation_state = excluded.navigation_state
+  `,
+    [id, params.reportId, params.userId, params.organizationId, now, now, nav]
+  );
+
+  // Enforce max 6: close anything beyond the newest 6
+  const openRows = await queryAll<{ id: string }>(
+    `
+    SELECT id
+    FROM report_builder_sessions
+    WHERE user_id = ? AND organization_id = ? AND closed_at IS NULL
+    ORDER BY last_activity_at DESC
+  `,
+    [params.userId, params.organizationId]
+  );
+
+  const toClose = openRows.slice(6).map((r) => r.id);
+  if (toClose.length > 0) {
+    await queryRun(
+      `UPDATE report_builder_sessions SET closed_at = ?, last_activity_at = ? WHERE id IN (${toClose
+        .map(() => '?')
+        .join(', ')})`,
+      [now, now, ...toClose]
+    );
+  }
+
+  const sessions = await listOpenSessions(params.organizationId, params.userId);
+  const match = sessions.find((s) => s.reportId === params.reportId);
+  if (!match) {
+    // Fallback: return first session (should not happen unless DB constraints differ)
+    return sessions[0] as ReportSessionRecord;
+  }
+  return match;
+}
+
+/**
+ * Close a report session for a user (no-op if already closed).
+ */
+export async function closeSession(params: {
+  organizationId: string;
+  userId: string;
+  reportId: string;
+}): Promise<boolean> {
+  const now = new Date().toISOString();
+  const result = await queryRun(
+    `
+    UPDATE report_builder_sessions
+    SET closed_at = ?, last_activity_at = ?
+    WHERE report_id = ? AND user_id = ? AND organization_id = ? AND closed_at IS NULL
+  `,
+    [now, now, params.reportId, params.userId, params.organizationId]
+  );
+  return result.changes > 0;
+}
+
+// ==========================================
 // EXPORTS
 // ==========================================
 
@@ -2551,6 +3034,14 @@ const ReportBuilderService = {
   getVersion,
   compareVersions,
   rollbackToVersion,
+  // Refreshable blocks
+  getSection,
+  getRefreshableSections,
+  acceptRefreshContent,
+  // Sessions (dynamic menu)
+  listOpenSessions,
+  openSession,
+  closeSession,
 };
 
 export default ReportBuilderService;

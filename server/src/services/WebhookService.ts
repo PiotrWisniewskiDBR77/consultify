@@ -578,9 +578,9 @@ export class WebhookService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Consultinity-Signature': signature,
-        'X-Consultinity-Event': eventType,
-        'User-Agent': 'Consultinity-Webhook/1.0',
+        'X-Consultify-Signature': signature,
+        'X-Consultify-Event': eventType,
+        'User-Agent': 'Consultify-Webhook/1.0',
         ...(webhook.headers || {}),
       },
       body: JSON.stringify(payload),

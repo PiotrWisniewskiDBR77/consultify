@@ -10,6 +10,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { materializePlannedVisual } from './ai/deckVisualsService.js';
+import { buildContextPack, saveContextPackSnapshot } from './contextPackBuilder.js';
+import { generateNarrative } from './narrativeEngine/index.js';
+import type { NarrativeEngineInput } from './narrativeEngine/types.js';
+import { recordDeckGeneration } from './organizationStyleProfileService.js';
+import { qaGatedImageGeneration } from './presentationVisionQAService.js';
 import { planDeckVisuals } from './presentationVisualDirectorService.js';
 import { PptxPipelineService } from './report/pptx/PptxPipelineService.js';
 import type {
@@ -60,6 +65,8 @@ export interface SourceArtifact {
     | 'assessment'
     | 'tool_session'
     | 'report'
+    | 'valuation'
+    | 'financial_analysis'
     | 'custom';
   id?: string;
   label: string;
@@ -484,10 +491,61 @@ async function loadArtifactData(
 // MAIN SERVICE
 // ============================================================
 
+function validateOutline(outline: OutlineItem[], setup: DeckSetup): string[] {
+  const warnings: string[] = [];
+  const isPl = setup.language === 'pl';
+  const enabled = outline.filter((o) => o.enabled);
+
+  if (enabled.length < 2) {
+    warnings.push(
+      isPl
+        ? 'Outline wymaga minimum 2 kart (cover + content).'
+        : 'Outline requires at least 2 cards (cover + content).'
+    );
+  }
+  if (enabled.length > 30) {
+    warnings.push(
+      isPl
+        ? `Outline ma ${enabled.length} kart (zalecane maks. 30). Rozważ podział na dwie prezentacje.`
+        : `Outline has ${enabled.length} cards (recommended max 30). Consider splitting into two presentations.`
+    );
+  }
+
+  const hasCover = enabled.some((o) => o.intent === 'cover');
+  if (!hasCover) {
+    warnings.push(
+      isPl
+        ? 'Brak karty tytułowej (cover). Dodaj ją dla profesjonalnego wyglądu.'
+        : 'Missing cover card. Add one for a professional look.'
+    );
+  }
+
+  const dataIntents: SlideIntent[] = [
+    'performance_overview',
+    'initiative_portfolio',
+    'risk_management',
+    'comparison',
+    'assessment',
+  ];
+  const hasDataCard = enabled.some((o) => dataIntents.includes(o.intent));
+  const hasDataSource = setup.sourceArtifacts.some((s) =>
+    ['kpi_roi', 'initiative_portfolio', 'assessment', 'raid'].includes(s.type)
+  );
+  if (hasDataCard && !hasDataSource) {
+    warnings.push(
+      isPl
+        ? 'Outline zawiera karty danych, ale nie wybrano źródeł danych. Dane mogą być niepełne.'
+        : 'Outline contains data cards but no data sources are selected. Data may be incomplete.'
+    );
+  }
+
+  return warnings;
+}
+
 export async function generateOutline(
   setup: DeckSetup,
   organizationId: string
-): Promise<{ outline: OutlineItem[]; deckId: string }> {
+): Promise<{ outline: OutlineItem[]; deckId: string; validationWarnings: string[] }> {
   let outline: OutlineItem[];
 
   if (setup.templateId) {
@@ -536,7 +594,16 @@ export async function generateOutline(
     ]
   );
 
-  return { outline, deckId };
+  const validationWarnings = validateOutline(outline, setup);
+  if (validationWarnings.length > 0) {
+    await dbRun(
+      `UPDATE presentation_decks SET validation_warnings = ? WHERE id = ?`,
+      [JSON.stringify(validationWarnings), deckId]
+    );
+    logger.info(`[PresentationGen] Outline validation: ${validationWarnings.length} warning(s) for deck ${deckId}`);
+  }
+
+  return { outline, deckId, validationWarnings };
 }
 
 export async function generateDeck(
@@ -551,7 +618,30 @@ export async function generateDeck(
   );
 
   try {
+    // Build structured ContextPack for AI consumption
+    const sourceRefs = setup.sourceArtifacts.map((sa) => ({
+      artifact_id: sa.id || '',
+      artifact_type: sa.type,
+      artifact_name: sa.label,
+    }));
+    const contextPack = await buildContextPack(organizationId, sourceRefs, setup.language);
+    await saveContextPackSnapshot(deckId, contextPack);
+    logger.info(`[PresentationGen] ContextPack built: ${contextPack.key_points.length} key points, ${contextPack.data_points.length} data points, confidence=${contextPack.metadata.confidence_score.toFixed(2)}`);
+
     const artifactData = await loadArtifactData(setup.sourceArtifacts, organizationId);
+    // Enrich artifact data with ContextPack extracted data
+    if (contextPack.key_points.length > 0 && !artifactData._keyFindings) {
+      artifactData._keyFindings = contextPack.key_points.slice(0, 5);
+    }
+    if (contextPack.data_points.length > 0 && !artifactData._kpis) {
+      artifactData._kpis = contextPack.data_points.slice(0, 4).map((dp) => ({
+        label: dp.label,
+        value: dp.value,
+        unit: dp.unit,
+        trend: dp.trend,
+      }));
+    }
+
     const enabledSlides = outline.filter((o) => o.enabled);
 
     const slides: UnifiedSlide[] = enabledSlides.map((item) =>
@@ -581,6 +671,50 @@ export async function generateDeck(
     const extraWarnings: string[] = [];
 
     // ------------------------------------------------------------
+    // G4: Narrative Engine enrichment for text-heavy slides
+    // ------------------------------------------------------------
+    const narrativeIntents: SlideIntent[] = [
+      'executive_summary',
+      'key_messages',
+      'next_steps',
+      'recommendation_portfolio',
+    ];
+    for (let i = 0; i < slides.length; i++) {
+      const slide = slides[i];
+      if (!narrativeIntents.includes(slide.intent)) continue;
+      try {
+        const engineInput: NarrativeEngineInput = {
+          context_pack: contextPack,
+          report_config: {
+            report_type_v3: 'presentation',
+            goal_v3: setup.goal,
+            communication_register: setup.audience === 'sponsor' || setup.audience === 'executive'
+              ? 'executive'
+              : 'professional',
+            density: 'concise',
+            form: 'presentation',
+            data_level: 'summary',
+            language: setup.language,
+          },
+          section_key: slide.intent,
+          section_type: slide.intent,
+          section_title: slide.key_message || slide.intent,
+        };
+        const narrativeOutput = await generateNarrative(engineInput);
+        if (narrativeOutput.post_check.passed && narrativeOutput.content) {
+          (slide as any)._narrative_enrichment = {
+            content: narrativeOutput.content,
+            facts_used: narrativeOutput.facts_used.length,
+            observations_used: narrativeOutput.observations_used.length,
+          };
+          logger.info(`[PresentationGen] Narrative Engine enriched slide ${i} (${slide.intent}): ${narrativeOutput.content.length} chars`);
+        }
+      } catch (err) {
+        logger.warn(`[PresentationGen] Narrative Engine skipped for slide ${i}: ${err}`);
+      }
+    }
+
+    // ------------------------------------------------------------
     // Gamma-like visuals (best-effort)
     // ------------------------------------------------------------
     const visualsEnabled = setup.visuals?.enabled !== false; // default ON if caller doesn't specify
@@ -608,7 +742,7 @@ export async function generateDeck(
       // Apply planned visuals back into the slides array (in-place by index)
       for (let i = 0; i < slides.length; i++) slides[i] = plannedSlides[i];
 
-      // 2) Materialize planned visuals up to maxImages
+      // 2) Materialize planned visuals up to maxImages (with VisionQA gate)
       let used = 0;
       for (let i = 0; i < slides.length && used < maxImages; i++) {
         const s = slides[i];
@@ -617,7 +751,6 @@ export async function generateDeck(
 
         for (let j = 0; j < planned.length && used < maxImages; j++) {
           const v = planned[j];
-          // Skip already materialized
           if (v?.asset?.path || v?.asset?.dataUri || v?.asset?.url) continue;
 
           const { visual, warning } = await materializePlannedVisual({
@@ -631,6 +764,38 @@ export async function generateDeck(
           });
           if (warning) extraWarnings.push(warning);
           if (visual) {
+            // Apply VisionQA gate on the generated image (best-effort)
+            if (visual.asset?.path && visualPriority === 'quality') {
+              try {
+                const brandColors = brandColor ? [brandColor] : [];
+                const qaResult = await qaGatedImageGeneration(
+                  async (prompt: string) => {
+                    const regen = await materializePlannedVisual({
+                      deckId,
+                      organizationId,
+                      meta,
+                      visual: { ...v, prompt },
+                      brandColor,
+                      priority: visualPriority,
+                      dataClass: 'no_pii',
+                    });
+                    return regen.visual?.asset?.path || visual.asset?.path || '';
+                  },
+                  {
+                    slideTitle: s.key_message || '',
+                    slideIntent: s.intent,
+                    brandPalette: brandColors,
+                    imageStylePreset: v.styleHint || 'corporate',
+                    originalPrompt: v.prompt || '',
+                  }
+                );
+                if (qaResult.wasRegenerated) {
+                  logger.info(`[PresentationGen] VisionQA improved image for slide ${i}, QA score: ${qaResult.qaScore.toFixed(2)}`);
+                }
+              } catch (qaErr) {
+                logger.warn(`[PresentationGen] VisionQA gate failed, using original image`, { qaErr });
+              }
+            }
             planned[j] = visual;
             used++;
           }
@@ -668,6 +833,23 @@ export async function generateDeck(
         deckId,
       ]
     );
+
+    // Record deck generation in OrganizationStyleProfile for learning
+    try {
+      const totalBlocks = enabledSlides.length * 3; // approximate
+      await recordDeckGeneration(organizationId, {
+        mode: setup.theme || 'show',
+        register: 'professional',
+        imageStyle: setup.visuals?.imageDensity || 'medium',
+        colorSet: setup.brandColor || 'default',
+        contentDepth: 'balanced',
+        cardCount: result.slideCount,
+        totalBlocks,
+      });
+      logger.info(`[PresentationGen] Recorded deck generation to style profile for org=${organizationId}`);
+    } catch (profileErr) {
+      logger.warn('[PresentationGen] Failed to record to style profile', { profileErr });
+    }
 
     return {
       deckId,

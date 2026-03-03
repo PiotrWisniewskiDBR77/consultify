@@ -12,6 +12,7 @@ import { z } from 'zod';
 import InitiativeControllerRaw from '../../controllers/InitiativeController.js';
 const InitiativeController = InitiativeControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
+import { requireOrgRole } from '../../middleware/rbac.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
@@ -65,13 +66,17 @@ router.get('/portfolio/dependencies', InitiativeController.getPortfolioDependenc
  * POST /api/initiatives/portfolio/dependencies
  * Create initiative dependency
  */
-router.post('/portfolio/dependencies', InitiativeController.createPortfolioDependency);
+router.post('/portfolio/dependencies', requireOrgRole('user'), InitiativeController.createPortfolioDependency);
 
 /**
  * DELETE /api/initiatives/portfolio/dependencies/:id
  * Remove initiative dependency
  */
-router.delete('/portfolio/dependencies/:id', InitiativeController.deletePortfolioDependency);
+router.delete(
+  '/portfolio/dependencies/:id',
+  requireOrgRole('user'),
+  InitiativeController.deletePortfolioDependency
+);
 
 /**
  * GET /api/initiatives

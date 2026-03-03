@@ -2,20 +2,26 @@
 
 ## Source of truth
 
-**The only source of truth for Consultinity logos is:**
+**Runtime logo assets (source of truth in this repo):**
 
-- `Logo consultinity/`
+- `public/assets/logos/logo-light.svg` (light UI backgrounds)
+- `public/assets/logos/logo-dark.svg` (dark UI backgrounds)
+- Optional brand accents:
+  - `public/assets/logos/logo-brand-92004f.svg`
+  - `public/assets/logos/logo-brand-1e0058.svg`
 
-Do **not** edit derived assets directly. If you need to change the logo, update the SVGs in `Logo consultinity/` and regenerate assets.
+> Note: there is also a generator script (`npm run branding:generate`) but the repo must contain the
+> expected `Logo consultinity/` source folder for it to work. If that folder is missing, treat the
+> `public/assets/logos/*.svg` files as the canonical runtime assets.
 
 ## Derived (generated) assets
 
-These files are generated from `Logo consultinity/` and are used by the runtime application:
+If you use the generator workflow, these files are generated and used by the runtime application:
 
 - **App/UI logos** (referenced by the frontend as static URLs):
-  - `public/assets/logos/logo-light.png`
-  - `public/assets/logos/logo-dark.png`
-  - `public/assets/logos/logo-icon.png`
+  - `public/assets/logos/logo-light.svg`
+  - `public/assets/logos/logo-dark.svg`
+  - `public/assets/logos/logo-icon.png` *(optional/future; used for square mark)*
 - **Favicons**:
   - `public/favicon.png` (32×32)
   - `public/favicon-16.png` (16×16)

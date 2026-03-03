@@ -3,7 +3,7 @@
  * Manages Multi-Factor Authentication for users
  */
 
-import { CheckCircle, Key, Shield } from 'lucide-react';
+import { Key } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -42,7 +42,10 @@ export const MFAView: React.FC = () => {
     setLoading(true);
     try {
       const methods = await Api.getMFAMethods(selectedUserId);
-      setMfaMethods(methods);
+      const normalized = Array.isArray(methods)
+        ? methods
+        : (methods as any)?.methods || (methods as any)?.items || [];
+      setMfaMethods(normalized);
     } catch (err) {
       toast.error('Failed to fetch MFA methods');
     } finally {
@@ -54,15 +57,17 @@ export const MFAView: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white">Multi-Factor Authentication</h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            Multi-Factor Authentication
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
             Manage MFA methods for users
           </p>
         </div>
         <select
           value={selectedUserId}
           onChange={(e) => setSelectedUserId(e.target.value)}
-          className="bg-navy-800 border border-slate-700 text-white px-4 py-2 rounded-lg"
+          className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
         >
           <option value="">Select User</option>
           {users.map((user) => (
@@ -74,11 +79,11 @@ export const MFAView: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="text-center py-12">Loading...</div>
+        <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
       ) : (
-        <div className="bg-navy-800 rounded-xl border border-slate-700 p-6">
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
           {mfaMethods.length === 0 ? (
-            <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+            <div className="text-center py-12 text-slate-500 dark:text-slate-400">
               No MFA methods configured
             </div>
           ) : (
@@ -86,33 +91,37 @@ export const MFAView: React.FC = () => {
               {mfaMethods.map((method) => (
                 <div
                   key={method.id}
-                  className="flex items-center justify-between p-4 bg-navy-900 rounded-lg border border-slate-700"
+                  className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-slate-700"
                 >
                   <div className="flex items-center gap-4">
                     <div
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center ${method.is_enabled ? 'bg-green-500/20' : 'bg-slate-50 dark:bg-navy-800/300/20'}`}
+                      className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        method.is_enabled
+                          ? 'bg-green-500/20'
+                          : 'bg-slate-100 dark:bg-white/10'
+                      }`}
                     >
                       <Key
                         size={20}
                         className={
                           method.is_enabled
                             ? 'text-green-400'
-                            : 'text-slate-400 dark:text-slate-500'
+                            : 'text-slate-600 dark:text-slate-400'
                         }
                       />
                     </div>
                     <div>
-                      <div className="text-white font-medium">
+                      <div className="text-slate-900 dark:text-white font-medium">
                         {method.method_type.toUpperCase()}
                       </div>
-                      <div className="text-sm text-slate-400 dark:text-slate-500">
+                      <div className="text-sm text-slate-600 dark:text-slate-400">
                         {method.is_enabled ? 'Enabled' : 'Disabled'}
                         {method.is_primary && ' • Primary'}
                       </div>
                     </div>
                   </div>
                   {method.last_used_at && (
-                    <div className="text-sm text-slate-400 dark:text-slate-500">
+                    <div className="text-sm text-slate-600 dark:text-slate-400">
                       Last used: {new Date(method.last_used_at).toLocaleDateString()}
                     </div>
                   )}

@@ -29,69 +29,6 @@ const authHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem('token')}`,
 });
 
-const DEMO_ENTRIES: ModelAuditEntry[] = [
-  {
-    id: '1',
-    action: 'created',
-    entityType: 'model',
-    entityId: 'openai/gpt-4o',
-    changedBy: 'admin@consultify.io',
-    changedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    changes: {
-      name: { from: null, to: 'GPT-4o' },
-      provider: { from: null, to: 'openrouter' },
-      kind: { from: null, to: 'TEXT_LLM' },
-    },
-  },
-  {
-    id: '2',
-    action: 'assignment_changed',
-    entityType: 'assignment',
-    entityId: 'chat_simple → GPT-4o',
-    changedBy: 'admin@consultify.io',
-    changedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    changes: {
-      priority: { from: 1, to: 0 },
-      purpose: { from: null, to: 'chat_simple' },
-    },
-  },
-  {
-    id: '3',
-    action: 'updated',
-    entityType: 'model',
-    entityId: 'dall-e-3',
-    changedBy: 'ops@consultify.io',
-    changedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-    changes: {
-      isActive: { from: true, to: false },
-      healthStatus: { from: 'healthy', to: 'degraded' },
-    },
-  },
-  {
-    id: '4',
-    action: 'deleted',
-    entityType: 'assignment',
-    entityId: 'image_cover → DALL-E 2',
-    changedBy: 'admin@consultify.io',
-    changedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-    changes: {
-      removed: { from: 'DALL-E 2', to: null },
-    },
-  },
-  {
-    id: '5',
-    action: 'updated',
-    entityType: 'policy',
-    entityId: 'org-residency-policy',
-    changedBy: 'security@consultify.io',
-    changedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    changes: {
-      dataResidency: { from: 'US', to: 'EU' },
-      allowedDataClasses: { from: ['no_pii'], to: ['no_pii', 'pii'] },
-    },
-  },
-];
-
 const ACTION_ICONS: Record<ModelAuditEntry['action'], React.ReactNode> = {
   created: <Plus size={14} className="text-emerald-400" />,
   updated: <Edit size={14} className="text-blue-400" />,
@@ -133,27 +70,26 @@ export const ModelAuditLog: React.FC = () => {
       if (res.ok) {
         const data = await res.json();
         const rows = Array.isArray(data?.entries) ? data.entries : [];
-        if (rows.length > 0) {
-          setEntries(
-            rows.map((r: any) => ({
-              id: String(r.id || ''),
-              action: r.action || 'updated',
-              entityType: r.entity_type || 'model',
-              entityId: String(r.entity_id || ''),
-              changedBy: String(r.changed_by || ''),
-              changedAt: String(r.changed_at || ''),
-              changes: r.changes || {},
-            }))
-          );
-        } else {
-          setEntries(DEMO_ENTRIES);
-        }
+        setEntries(
+          rows.map((r: any) => ({
+            id: String(r.id || ''),
+            action: r.action || 'updated',
+            entityType: r.entity_type || 'model',
+            entityId: String(r.entity_id || ''),
+            changedBy: String(r.changed_by || ''),
+            changedAt: String(r.changed_at || ''),
+            changes: r.changes || {},
+          }))
+        );
       } else {
-        setEntries(DEMO_ENTRIES);
+        const err = await res.json().catch(() => ({}));
+        toast.error(err?.error || 'Failed to load audit log');
+        setEntries([]);
       }
       trackFunnelEvent('model_audit_log_viewed' as any);
     } catch {
-      setEntries(DEMO_ENTRIES);
+      toast.error('Failed to load audit log');
+      setEntries([]);
     } finally {
       setLoading(false);
     }

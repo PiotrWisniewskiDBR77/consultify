@@ -242,11 +242,7 @@ export const WhitelabelStudioView: React.FC = () => {
     if (!selectedOrg) return;
     setUploadingLogo(type);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('type', type);
-
-      const result = await Api.upload(file);
+      const result = await Api.upload(file, { orgId: selectedOrg, type });
 
       // Update branding with new URL
       const urlField =
@@ -399,7 +395,7 @@ export const WhitelabelStudioView: React.FC = () => {
               className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600"
             />
             <span className="text-sm text-slate-700 dark:text-slate-300">
-              Hide "Powered by Consultinity" branding
+              Hide "Powered by Consultify" branding
             </span>
           </label>
           <div className="grid grid-cols-2 gap-4">
@@ -439,13 +435,13 @@ export const WhitelabelStudioView: React.FC = () => {
       <div className="flex items-center justify-end gap-2">
         <button
           onClick={() => setPreviewMode('light')}
-          className={`p-2 rounded-lg ${previewMode === 'light' ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-600' : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40'}`}
+          className={`p-2 rounded-lg ${previewMode === 'light' ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-600' : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/40'}`}
         >
           <Sun size={18} />
         </button>
         <button
           onClick={() => setPreviewMode('dark')}
-          className={`p-2 rounded-lg ${previewMode === 'dark' ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-600' : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40'}`}
+          className={`p-2 rounded-lg ${previewMode === 'dark' ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-600' : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/40'}`}
         >
           <Moon size={18} />
         </button>
@@ -731,7 +727,30 @@ export const WhitelabelStudioView: React.FC = () => {
                 placeholder="app.yourcompany.com"
                 className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
               />
-              <button className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium">
+              <button
+                onClick={async () => {
+                  if (!selectedOrg) return;
+                  if (!branding.customDomain?.trim()) return;
+                  try {
+                    const result = await Api.post(`/branding/${selectedOrg}/verify-domain`, {});
+                    const verified = Boolean((result as any)?.verified);
+                    updateField('customDomainVerified', verified);
+                    setMessage({
+                      type: verified ? 'success' : 'warning',
+                      text: verified
+                        ? 'Domain verified successfully.'
+                        : `Domain not verified yet. Expected CNAME → ${(result as any)?.expectedTarget || 'app.consultify.com'}`,
+                    });
+                  } catch (err: any) {
+                    setMessage({
+                      type: 'error',
+                      text: err?.message || 'Failed to verify domain',
+                    });
+                  }
+                }}
+                disabled={!selectedOrg || !branding.customDomain?.trim()}
+                className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium"
+              >
                 Verify Domain
               </button>
             </div>
@@ -761,12 +780,19 @@ export const WhitelabelStudioView: React.FC = () => {
                 <div className="bg-white dark:bg-navy-800 rounded p-3 font-mono text-xs">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-slate-500 dark:text-slate-400">CNAME Record:</span>
-                    <button className="text-violet-600 hover:text-violet-700">
+                    <button
+                      className="text-violet-600 hover:text-violet-700"
+                      onClick={() => {
+                        const text = `${branding.customDomain} → app.consultify.com`;
+                        navigator.clipboard?.writeText?.(text);
+                      }}
+                      type="button"
+                    >
                       <Copy size={12} />
                     </button>
                   </div>
                   <code className="text-slate-700 dark:text-slate-300">
-                    {branding.customDomain} → app.consultinity.com
+                    {branding.customDomain} → app.consultify.com
                   </code>
                 </div>
               </div>
@@ -848,7 +874,7 @@ export const WhitelabelStudioView: React.FC = () => {
                     )}
                     <button
                       onClick={() => handleSelectOrg(org.id)}
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
                     >
                       <ChevronRight
                         size={20}
@@ -866,7 +892,7 @@ export const WhitelabelStudioView: React.FC = () => {
                         Custom Branding
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-50 dark:bg-navy-800/300/10 text-slate-600 dark:text-slate-400">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-400">
                         Default Theme
                       </span>
                     )}
@@ -888,7 +914,7 @@ export const WhitelabelStudioView: React.FC = () => {
         <div className="flex items-center gap-4">
           <button
             onClick={() => setSelectedOrg(null)}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
           >
             <ChevronRight size={20} className="rotate-180 text-slate-400 dark:text-slate-500" />
           </button>
@@ -907,7 +933,7 @@ export const WhitelabelStudioView: React.FC = () => {
             showLabel
             label="Help"
           />
-          <button className="px-4 py-2 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-50 dark:hover:bg-navy-800/20 flex items-center gap-2">
+          <button className="px-4 py-2 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/20 flex items-center gap-2">
             <Eye size={16} />
             Preview
           </button>

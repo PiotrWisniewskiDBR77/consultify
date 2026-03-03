@@ -2323,8 +2323,38 @@ export class InitiativeController {
 
       const { projectId } = req.query as { projectId?: string };
       const params: Array<string> = [orgId];
+      // Schema compatibility:
+      // - legacy: from_initiative_id / to_initiative_id
+      // - newer: source_id / target_id
+      let cols: Set<string> = new Set();
+      try {
+        const colRows = (await queryHelpers.queryAll(
+          `SELECT LOWER(column_name) as column_name
+           FROM information_schema.columns
+           WHERE table_name = 'initiative_dependencies'`
+        )) as Array<{ column_name?: string }>;
+        cols = new Set((colRows || []).map((r) => String(r.column_name || '')).filter(Boolean));
+      } catch {
+        cols = new Set();
+      }
+
+      const fromExpr = cols.has('from_initiative_id')
+        ? 'from_initiative_id'
+        : cols.has('source_id')
+          ? 'source_id'
+          : 'NULL';
+      const toExpr = cols.has('to_initiative_id')
+        ? 'to_initiative_id'
+        : cols.has('target_id')
+          ? 'target_id'
+          : 'NULL';
+
       let sql = `
-            SELECT id, from_initiative_id, to_initiative_id, type, project_id
+            SELECT id,
+                   ${fromExpr} as from_initiative_id,
+                   ${toExpr} as to_initiative_id,
+                   type,
+                   project_id
             FROM initiative_dependencies
             WHERE organization_id = ?
         `;
@@ -2465,19 +2495,55 @@ export class InitiativeController {
       }
 
       const id = uuidv4();
+      // Schema compatibility: some environments require source_id/target_id (NOT NULL).
+      let cols: Set<string> = new Set();
+      try {
+        const colRows = (await queryHelpers.queryAll(
+          `SELECT LOWER(column_name) as column_name
+           FROM information_schema.columns
+           WHERE table_name = 'initiative_dependencies'`
+        )) as Array<{ column_name?: string }>;
+        cols = new Set((colRows || []).map((r) => String(r.column_name || '')).filter(Boolean));
+      } catch {
+        cols = new Set();
+      }
+
+      const insertCols: string[] = ['id', 'organization_id', 'project_id'];
+      const insertVals: any[] = [id, orgId, resolvedProjectId || null];
+
+      if (cols.has('from_initiative_id')) {
+        insertCols.push('from_initiative_id');
+        insertVals.push(fromInitiativeId);
+      }
+      if (cols.has('to_initiative_id')) {
+        insertCols.push('to_initiative_id');
+        insertVals.push(toInitiativeId);
+      }
+      if (cols.has('source_id')) {
+        insertCols.push('source_id');
+        insertVals.push(fromInitiativeId);
+      }
+      if (cols.has('target_id')) {
+        insertCols.push('target_id');
+        insertVals.push(toInitiativeId);
+      }
+      if (cols.has('type')) {
+        insertCols.push('type');
+        insertVals.push(type || 'FINISH_TO_START');
+      }
+      if (cols.has('created_at')) {
+        insertCols.push('created_at');
+        insertVals.push(new Date().toISOString());
+      }
+      if (cols.has('created_by')) {
+        insertCols.push('created_by');
+        insertVals.push(req.user?.id || null);
+      }
+
+      const placeholders = insertCols.map(() => '?').join(', ');
       await queryHelpers.queryRun(
-        `INSERT INTO initiative_dependencies (
-              id, organization_id, project_id, from_initiative_id, to_initiative_id, type, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-          id,
-          orgId,
-          resolvedProjectId || null,
-          fromInitiativeId,
-          toInitiativeId,
-          type || 'FINISH_TO_START',
-          new Date().toISOString(),
-        ]
+        `INSERT INTO initiative_dependencies (${insertCols.join(', ')}) VALUES (${placeholders})`,
+        insertVals
       );
 
       res.status(201).json({
@@ -4808,6 +4874,11 @@ export class InitiativeController {
           r.impact as severity,
           r.owner_id as ownerId,
           r.due_date as dueDate,
+          r.mitigation_plan,
+          r.response_strategy,
+          r.mitigation_owner_id,
+          r.mitigation_due_date,
+          r.mitigation_status,
           r.created_at as createdAt,
           r.updated_at as updatedAt
         FROM raid_items r

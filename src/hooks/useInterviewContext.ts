@@ -32,17 +32,23 @@ export interface OrganizationContext {
 
 export interface InterviewInsight {
   id: string;
-  sessionId: string;
-  category: string;
+  organizationId?: string;
   title: string;
+  promptType?: string;
+  sourceSessionIds?: string[];
+  content?: string;
+  status: string;
+
+  // Legacy fields (optional)
+  sessionId?: string;
+  category?: string;
   description?: string;
   sourceQuote?: string;
-  insightType: 'risk' | 'opportunity' | 'strength' | 'weakness' | 'general';
-  impactLevel: 'low' | 'medium' | 'high';
-  confidence: 'low' | 'medium' | 'high';
+  insightType?: string;
+  impactLevel?: string;
+  confidence?: string;
   pmoDomain?: string;
-  actionable: boolean;
-  status: string;
+  actionable?: boolean;
 }
 
 export interface UseInterviewContextResult {
@@ -73,12 +79,22 @@ export function useInterviewContext(): UseInterviewContextResult {
       const contextResponse = await Api.get('/interview/context');
       setContext(contextResponse as OrganizationContext);
 
-      // If there's a last interview, get its insights
+      // If there's a last interview, get insights related to that session.
       if ((contextResponse as OrganizationContext).lastInterviewId) {
-        const insightsResponse = await Api.get(
-          `/interview/sessions/${(contextResponse as OrganizationContext).lastInterviewId}/insights`
+        const lastId = String((contextResponse as OrganizationContext).lastInterviewId);
+        const insightsResponse = await Api.get(`/interview/insights?limit=100&offset=0`).catch(
+          () => []
         );
-        setInsights(Array.isArray(insightsResponse) ? insightsResponse : []);
+        const list = Array.isArray(insightsResponse) ? (insightsResponse as InterviewInsight[]) : [];
+        const filtered = list.filter((i) => {
+          const sessionId = String((i as any).sessionId || '');
+          if (sessionId && sessionId === lastId) return true;
+          const source = Array.isArray((i as any).sourceSessionIds)
+            ? ((i as any).sourceSessionIds as string[])
+            : [];
+          return source.map(String).includes(lastId);
+        });
+        setInsights(filtered);
       }
     } catch (err) {
       console.error('[useInterviewContext] Failed to fetch context:', err);
@@ -191,10 +207,13 @@ export function formatInsightsForAI(insights: InterviewInsight[]): string {
 
   return insights
     .map((insight) => {
+      const category = String(insight.category || insight.promptType || 'INSIGHT').toUpperCase();
       const parts = [
-        `[${insight.category.toUpperCase()}] ${insight.title}`,
+        `[${category}] ${insight.title}`,
         insight.description ? `Description: ${insight.description}` : '',
-        `Impact: ${insight.impactLevel}, Confidence: ${insight.confidence}`,
+        insight.impactLevel || insight.confidence
+          ? `Impact: ${insight.impactLevel || '-'}, Confidence: ${insight.confidence || '-'}`
+          : '',
       ].filter(Boolean);
       return parts.join(' | ');
     })

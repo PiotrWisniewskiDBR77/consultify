@@ -72,6 +72,7 @@ interface ChapterNavigationProps {
   isPl: boolean;
   isVisible: boolean;
   onToggle: () => void;
+  sectionRagMap?: Record<string, 'green' | 'amber' | 'red'>;
 }
 
 // ==========================================
@@ -180,9 +181,16 @@ interface SortableBlockItemProps {
   block: BlockConfig;
   isSelected: boolean;
   onSelect: () => void;
+  ragStatus?: 'green' | 'amber' | 'red';
 }
 
-const SortableBlockItem: React.FC<SortableBlockItemProps> = ({ block, isSelected, onSelect }) => {
+const RAG_DOT_CLASSES: Record<string, string> = {
+  green: 'bg-green-500',
+  amber: 'bg-amber-500',
+  red: 'bg-red-500',
+};
+
+const SortableBlockItem: React.FC<SortableBlockItemProps> = ({ block, isSelected, onSelect, ragStatus }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: block.id,
   });
@@ -220,7 +228,13 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({ block, isSelected
       >
         <span className="text-xs flex-shrink-0">{getBlockTypeIcon(block.type)}</span>
         <span className="text-[11px] truncate flex-1">{block.title}</span>
-        {block.isGenerated && (
+        {ragStatus && (
+          <span
+            className={`w-2 h-2 rounded-full ${RAG_DOT_CLASSES[ragStatus]} flex-shrink-0`}
+            title={`RAG: ${ragStatus.toUpperCase()}`}
+          />
+        )}
+        {block.isGenerated && !ragStatus && (
           <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
         )}
       </button>
@@ -256,6 +270,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
   isPl,
   isVisible,
   onToggle,
+  sectionRagMap,
 }) => {
   const [collapsedChapters, setCollapsedChapters] = useState<Set<string>>(new Set());
   const [editingChapter, setEditingChapter] = useState<string | null>(null);
@@ -565,6 +580,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                           block={block}
                           isSelected={selectedBlockId === block.id}
                           onSelect={() => onSelectBlock(block.id)}
+                          ragStatus={sectionRagMap?.[block.id]}
                         />
                       ))}
                     </div>

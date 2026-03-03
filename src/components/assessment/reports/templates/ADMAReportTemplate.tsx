@@ -28,6 +28,7 @@ import {
   ADMA_PILLARS,
   ADMAPillarConfig,
 } from '../../../../services/admaStructure';
+import { computeADMATransformationScores } from '../../../../services/admaTransformations';
 import { ADMAAssessmentData, ADMAPillarId } from '../../../../types';
 
 interface ADMAReportTemplateProps {
@@ -86,6 +87,19 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
 
   // Top priorities
   const topPriorities = dimensionsWithGaps.filter((d) => d.gap >= 1).slice(0, 5);
+
+  const transformationScores = computeADMATransformationScores({
+    dimensions: Object.fromEntries(
+      (ADMA_DIMENSIONS || []).map((d) => [
+        d.id,
+        {
+          current: data.dimensions?.[d.id]?.current ?? null,
+          target: data.dimensions?.[d.id]?.target ?? null,
+        },
+      ])
+    ),
+    fofBenchmark: 4.0,
+  });
 
   return (
     <div className="bg-white dark:bg-navy-950 min-h-full p-8 print:p-0">
@@ -253,6 +267,62 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
               </div>
             );
           })}
+        </div>
+      </section>
+
+      {/* 7 Transformation Areas (T1–T7) + FoF benchmark */}
+      <section className="mb-8">
+        <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+          <TrendingUp size={20} />
+          Transformations (T1–T7) + FoF benchmark
+        </h2>
+        <div className="bg-slate-50 dark:bg-navy-900/50 rounded-xl p-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-slate-500 dark:text-slate-400">
+                <th className="py-2 pr-4">Area</th>
+                <th className="py-2 pr-4">Company</th>
+                <th className="py-2 pr-4">Target</th>
+                <th className="py-2 pr-4">FoF</th>
+                <th className="py-2 pr-0">Gap to FoF</th>
+              </tr>
+            </thead>
+            <tbody>
+              {transformationScores.map((t) => (
+                <tr key={t.id} className="border-t border-slate-200/60 dark:border-navy-800">
+                  <td className="py-2 pr-4">
+                    <div className="font-semibold text-navy-900 dark:text-white">
+                      {t.id} {t.name}
+                    </div>
+                  </td>
+                  <td className="py-2 pr-4">
+                    <span className="font-semibold text-navy-900 dark:text-white">
+                      {t.current === null ? '—' : t.current.toFixed(1)}
+                    </span>
+                  </td>
+                  <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">
+                    {t.target === null ? '—' : t.target.toFixed(1)}
+                  </td>
+                  <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">
+                    {t.fofBenchmark.toFixed(1)}
+                  </td>
+                  <td className="py-2 pr-0">
+                    <span
+                      className={
+                        t.gapToFoF === null
+                          ? 'text-slate-400'
+                          : t.gapToFoF <= 0
+                            ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
+                            : 'text-amber-600 dark:text-amber-400 font-semibold'
+                      }
+                    >
+                      {t.gapToFoF === null ? '—' : t.gapToFoF.toFixed(1)}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 
@@ -595,7 +665,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
 
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-navy-700 pt-4 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-        <p>Raport wygenerowany przez Consultinity • {new Date().toLocaleDateString('pl-PL')}</p>
+        <p>Raport wygenerowany przez Consultify • {new Date().toLocaleDateString('pl-PL')}</p>
         <p className="mt-1">ADMA 2.0 Assessment • {organizationName}</p>
       </footer>
     </div>

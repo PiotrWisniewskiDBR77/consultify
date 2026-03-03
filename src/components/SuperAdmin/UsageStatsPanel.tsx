@@ -78,50 +78,50 @@ export const UsageStatsPanel: React.FC = () => {
     <div className="p-6 space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
           <div className="flex items-center gap-3 mb-2">
             <Building2 size={20} className="text-blue-400" />
-            <span className="text-sm text-slate-400 dark:text-slate-500">Organizations</span>
+            <span className="text-sm text-slate-600 dark:text-slate-500">Organizations</span>
           </div>
-          <div className="text-2xl font-bold text-white">{totals.totalOrgs}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">{totals.totalOrgs}</div>
         </div>
-        <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
           <div className="flex items-center gap-3 mb-2">
             <Users size={20} className="text-green-400" />
-            <span className="text-sm text-slate-400 dark:text-slate-500">Total Users</span>
+            <span className="text-sm text-slate-600 dark:text-slate-500">Total Users</span>
           </div>
-          <div className="text-2xl font-bold text-white">{totals.totalUsers}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">{totals.totalUsers}</div>
         </div>
-        <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
           <div className="flex items-center gap-3 mb-2">
             <Zap size={20} className="text-amber-400" />
-            <span className="text-sm text-slate-400 dark:text-slate-500">AI Calls</span>
+            <span className="text-sm text-slate-600 dark:text-slate-500">AI Calls</span>
           </div>
-          <div className="text-2xl font-bold text-white">
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">
             {totals.totalAiCalls.toLocaleString()}
           </div>
         </div>
-        <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
           <div className="flex items-center gap-3 mb-2">
             <TrendingUp size={20} className="text-purple-400" />
-            <span className="text-sm text-slate-400 dark:text-slate-500">Tokens Used</span>
+            <span className="text-sm text-slate-600 dark:text-slate-500">Tokens Used</span>
           </div>
-          <div className="text-2xl font-bold text-white">
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">
             {(totals.totalTokens / 1000000).toFixed(2)}M
           </div>
         </div>
       </div>
 
       {/* Usage Table */}
-      <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
-        <div className="p-4 border-b border-white/10 flex items-center justify-between">
+      <div className="bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
+        <div className="p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BarChart3 size={18} className="text-slate-400 dark:text-slate-500" />
-            <h3 className="font-medium text-white">Usage by Organization</h3>
+            <h3 className="font-medium text-slate-900 dark:text-white">Usage by Organization</h3>
           </div>
           <button
             onClick={fetchUsageData}
-            className="p-2 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+            className="p-2 text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
           >
             <RefreshCw size={16} />
           </button>
@@ -129,7 +129,7 @@ export const UsageStatsPanel: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/5">
+              <tr className="border-b border-slate-100 dark:border-white/5">
                 <th className="text-left p-4 text-xs text-slate-500 dark:text-slate-400 uppercase">
                   Organization
                 </th>
@@ -151,10 +151,10 @@ export const UsageStatsPanel: React.FC = () => {
               {orgUsage.map((org) => (
                 <tr
                   key={org.id}
-                  className="border-b border-white/5 hover:bg-slate-50 dark:hover:bg-navy-800/20"
+                  className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-navy-800/20"
                 >
                   <td className="p-4">
-                    <div className="font-medium text-white">{org.name}</div>
+                    <div className="font-medium text-slate-900 dark:text-white">{org.name}</div>
                   </td>
                   <td className="p-4">
                     <span
@@ -169,9 +169,13 @@ export const UsageStatsPanel: React.FC = () => {
                       {org.plan}
                     </span>
                   </td>
-                  <td className="p-4 text-right text-slate-300">{org.userCount}</td>
-                  <td className="p-4 text-right text-slate-300">{org.aiCalls.toLocaleString()}</td>
-                  <td className="p-4 text-right text-slate-300">
+                  <td className="p-4 text-right text-slate-700 dark:text-slate-300">
+                    {org.userCount}
+                  </td>
+                  <td className="p-4 text-right text-slate-700 dark:text-slate-300">
+                    {org.aiCalls.toLocaleString()}
+                  </td>
+                  <td className="p-4 text-right text-slate-700 dark:text-slate-300">
                     {(org.tokensUsed / 1000).toFixed(1)}k
                   </td>
                 </tr>

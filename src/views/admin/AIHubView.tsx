@@ -166,7 +166,7 @@ export const AIHubView: React.FC = () => {
 
   const getDefaultPrompt = (capabilityId: string): string => {
     const defaults: Record<string, string> = {
-      chat: `Jesteś profesjonalnym konsultantem AI dla platformy Consultinity.
+      chat: `Jesteś profesjonalnym konsultantem AI dla platformy Consultify.
 Twoja rola: Pomagać użytkownikom w zarządzaniu projektami transformacji cyfrowej.
 
 ZASADY:

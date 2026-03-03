@@ -3,7 +3,7 @@
  * Manages password policies for organizations
  */
 
-import { Lock, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -91,8 +91,8 @@ export const PasswordPolicyView: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white">Password Policy</h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Password Policy</h2>
+          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
             Configure password requirements for organizations
           </p>
         </div>
@@ -100,7 +100,7 @@ export const PasswordPolicyView: React.FC = () => {
           <select
             value={selectedOrgId}
             onChange={(e) => setSelectedOrgId(e.target.value)}
-            className="bg-navy-800 border border-slate-700 text-white px-4 py-2 rounded-lg"
+            className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
           >
             <option value="">Select Organization</option>
             {organizations.map((org) => (
@@ -120,23 +120,27 @@ export const PasswordPolicyView: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="text-center py-12">Loading...</div>
+        <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
       ) : (
-        <div className="bg-navy-800 rounded-xl border border-slate-700 p-6 space-y-6">
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 space-y-6">
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm text-slate-300 mb-2">Minimum Length</label>
+              <label className="block text-sm text-slate-700 dark:text-slate-300 mb-2">
+                Minimum Length
+              </label>
               <input
                 type="number"
                 value={policy.minLength}
                 onChange={(e) => setPolicy({ ...policy, minLength: parseInt(e.target.value) })}
-                className="w-full bg-navy-900 border border-slate-700 text-white px-4 py-2 rounded-lg"
+                className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
                 min="6"
                 max="128"
               />
             </div>
             <div>
-              <label className="block text-sm text-slate-300 mb-2">Max Age (days, optional)</label>
+              <label className="block text-sm text-slate-700 dark:text-slate-300 mb-2">
+                Max Age (days, optional)
+              </label>
               <input
                 type="number"
                 value={policy.maxAgeDays || ''}
@@ -146,64 +150,66 @@ export const PasswordPolicyView: React.FC = () => {
                     maxAgeDays: e.target.value ? parseInt(e.target.value) : null,
                   })
                 }
-                className="w-full bg-navy-900 border border-slate-700 text-white px-4 py-2 rounded-lg"
+                className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
                 placeholder="No expiration"
               />
             </div>
           </div>
 
           <div className="space-y-3">
-            <label className="block text-sm text-slate-300 mb-2">Requirements</label>
+            <label className="block text-sm text-slate-700 dark:text-slate-300 mb-2">
+              Requirements
+            </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={policy.requireUppercase}
                 onChange={(e) => setPolicy({ ...policy, requireUppercase: e.target.checked })}
-                className="w-4 h-4 rounded border-slate-700"
+                className="w-4 h-4 rounded border-slate-300 dark:border-slate-700"
               />
-              <span className="text-white">Require uppercase letters</span>
+              <span className="text-slate-900 dark:text-white">Require uppercase letters</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={policy.requireLowercase}
                 onChange={(e) => setPolicy({ ...policy, requireLowercase: e.target.checked })}
-                className="w-4 h-4 rounded border-slate-700"
+                className="w-4 h-4 rounded border-slate-300 dark:border-slate-700"
               />
-              <span className="text-white">Require lowercase letters</span>
+              <span className="text-slate-900 dark:text-white">Require lowercase letters</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={policy.requireNumbers}
                 onChange={(e) => setPolicy({ ...policy, requireNumbers: e.target.checked })}
-                className="w-4 h-4 rounded border-slate-700"
+                className="w-4 h-4 rounded border-slate-300 dark:border-slate-700"
               />
-              <span className="text-white">Require numbers</span>
+              <span className="text-slate-900 dark:text-white">Require numbers</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={policy.requireSpecialChars}
                 onChange={(e) => setPolicy({ ...policy, requireSpecialChars: e.target.checked })}
-                className="w-4 h-4 rounded border-slate-700"
+                className="w-4 h-4 rounded border-slate-300 dark:border-slate-700"
               />
-              <span className="text-white">Require special characters</span>
+              <span className="text-slate-900 dark:text-white">Require special characters</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={policy.requireMfa}
                 onChange={(e) => setPolicy({ ...policy, requireMfa: e.target.checked })}
-                className="w-4 h-4 rounded border-slate-700"
+                className="w-4 h-4 rounded border-slate-300 dark:border-slate-700"
               />
-              <span className="text-white">Require MFA</span>
+              <span className="text-slate-900 dark:text-white">Require MFA</span>
             </label>
           </div>
 
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm text-slate-300 mb-2">
+              <label className="block text-sm text-slate-700 dark:text-slate-300 mb-2">
                 Prevent Reuse (last N passwords)
               </label>
               <input
@@ -212,26 +218,28 @@ export const PasswordPolicyView: React.FC = () => {
                 onChange={(e) =>
                   setPolicy({ ...policy, preventReuseCount: parseInt(e.target.value) })
                 }
-                className="w-full bg-navy-900 border border-slate-700 text-white px-4 py-2 rounded-lg"
+                className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
                 min="0"
                 max="24"
               />
             </div>
             <div>
-              <label className="block text-sm text-slate-300 mb-2">Lockout Attempts</label>
+              <label className="block text-sm text-slate-700 dark:text-slate-300 mb-2">
+                Lockout Attempts
+              </label>
               <input
                 type="number"
                 value={policy.lockoutAttempts}
                 onChange={(e) =>
                   setPolicy({ ...policy, lockoutAttempts: parseInt(e.target.value) })
                 }
-                className="w-full bg-navy-900 border border-slate-700 text-white px-4 py-2 rounded-lg"
+                className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
                 min="3"
                 max="10"
               />
             </div>
             <div>
-              <label className="block text-sm text-slate-300 mb-2">
+              <label className="block text-sm text-slate-700 dark:text-slate-300 mb-2">
                 Lockout Duration (minutes)
               </label>
               <input
@@ -240,7 +248,7 @@ export const PasswordPolicyView: React.FC = () => {
                 onChange={(e) =>
                   setPolicy({ ...policy, lockoutDurationMinutes: parseInt(e.target.value) })
                 }
-                className="w-full bg-navy-900 border border-slate-700 text-white px-4 py-2 rounded-lg"
+                className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
                 min="5"
                 max="1440"
               />

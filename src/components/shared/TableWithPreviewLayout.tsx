@@ -14,7 +14,6 @@
  * SSOT: docs/ui-standards/03-modules/table-preview-pane-standard.md
  */
 
-import { ExternalLink } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -36,10 +35,6 @@ interface TableWithPreviewLayoutProps<T extends PreviewableItem> {
   onSelect: (id: string | null) => void;
   /** Called when full detail should open (double-click / Enter) */
   onOpenFull?: (id: string) => void;
-  /** Preview pane kicker text */
-  kicker?: string;
-  /** Render dynamic kicker per selected item (preferred over static kicker). */
-  renderKicker?: (item: T) => string;
   /** Render the preview body */
   renderPreview: (item: T) => React.ReactNode;
   /** Render preview footer quick actions */
@@ -60,8 +55,6 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   selectedItem,
   onSelect,
   onOpenFull,
-  kicker,
-  renderKicker,
   renderPreview,
   renderPreviewFooter,
   renderPreviewActions,
@@ -151,13 +144,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   return (
     <div ref={containerRef} className="flex h-full overflow-hidden gap-1.5" tabIndex={0}>
       {/* Table area */}
-      <div
-        className={`flex-1 min-w-0 overflow-auto transition-all duration-200 ${
-          isPreviewOpen && selectedItem ? '' : ''
-        }`}
-      >
-        {children}
-      </div>
+      <div className="flex-1 min-w-0 overflow-auto">{children}</div>
 
       {/* Preview pane — 20-33% width, min 340px, clamp() for responsiveness */}
       {isPreviewOpen && selectedItem && (
@@ -166,7 +153,6 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
           style={{ width: 'clamp(340px, 28%, 480px)' }}
         >
           <PreviewPaneShell
-            kicker={selectedItem ? renderKicker?.(selectedItem) ?? kicker ?? t('common.preview', 'Preview') : kicker}
             title={selectedItem.title}
             onClose={handleClose}
             actions={
@@ -175,10 +161,9 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
                 {onOpenFull && (
                   <button
                     onClick={() => onOpenFull(selectedItem.id)}
-                    className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+                    className="inline-flex items-center h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-transparent text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 text-xs font-medium"
                     title={t('common.open', 'Open')}
                   >
-                    <ExternalLink size={14} />
                     <span>{t('common.open', 'Open')}</span>
                   </button>
                 )}

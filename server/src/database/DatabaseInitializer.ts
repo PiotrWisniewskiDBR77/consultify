@@ -83,6 +83,8 @@ const CRITICAL_TABLES = [
   'report_builder_comment_activity',
   'report_exports',
   'report_public_links',
+  // Brand Voice governance (Report Builder V3 Phase 5)
+  'organization_brand_voice_profiles',
   // Scheduled reports (/api/scheduled-reports/*) must not 5xx on deploy.
   'report_schedules',
   'schedule_executions',
@@ -241,6 +243,27 @@ const REQUIRED_COLUMNS: Record<string, string[]> = {
     'default_timezone',
     'default_language',
     'updated_at',
+  ],
+  report_builder_reports: [
+    'report_type_v3',
+    'period_from',
+    'period_to',
+    'communication_register',
+    'density',
+    'form',
+    'data_level',
+    'confidentiality',
+    'theme_id',
+    'context_pack_snapshot',
+    'goal_v3',
+    'source_refs_json',
+  ],
+  report_builder_sections: [
+    'rag',
+    'summary',
+    'source_refs_json',
+    'is_refreshable',
+    'last_data_timestamp',
   ],
   report_builder_block_types: [
     // Used by ReportBuilderService.listBlockTypes() ordering + UI metadata.
@@ -1454,7 +1477,20 @@ async function ensureReportBuilderAndSchedulingTables(): Promise<void> {
         parent_report_id TEXT,
         pdf_path TEXT,
         pptx_path TEXT,
-        generation_metadata TEXT
+        generation_metadata TEXT,
+        -- V3 Report Definition Layer
+        report_type_v3 TEXT DEFAULT 'custom',
+        period_from TEXT,
+        period_to TEXT,
+        communication_register TEXT,
+        density TEXT DEFAULT 'standard',
+        form TEXT,
+        data_level TEXT DEFAULT 'balanced',
+        confidentiality TEXT DEFAULT 'internal',
+        theme_id TEXT,
+        context_pack_snapshot TEXT,
+        goal_v3 TEXT,
+        source_refs_json TEXT DEFAULT '[]'
       )
     `);
     await db.query(
@@ -1462,6 +1498,9 @@ async function ensureReportBuilderAndSchedulingTables(): Promise<void> {
     );
     await db.query(
       `CREATE INDEX IF NOT EXISTS idx_rb_reports_source ON report_builder_reports(source_type, source_id)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_rb_reports_type_v3 ON report_builder_reports(report_type_v3)`
     );
 
     await db.query(`
@@ -1496,6 +1535,12 @@ async function ensureReportBuilderAndSchedulingTables(): Promise<void> {
         render_kind TEXT,
         chapter_key TEXT,
         chapter_title TEXT,
+        -- V3 fields
+        rag TEXT,
+        summary TEXT,
+        source_refs_json TEXT DEFAULT '[]',
+        is_refreshable INTEGER DEFAULT 0,
+        last_data_timestamp TEXT,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_rb_sections_report FOREIGN KEY (report_id) REFERENCES report_builder_reports(id) ON DELETE CASCADE,
@@ -1697,7 +1742,7 @@ async function ensureReportBuilderAndSchedulingTables(): Promise<void> {
         password_hash TEXT,
         expires_at TIMESTAMP,
         show_company_logo BOOLEAN DEFAULT TRUE,
-        show_consultinity_branding BOOLEAN DEFAULT TRUE,
+        show_consultify_branding BOOLEAN DEFAULT TRUE,
         custom_message TEXT,
         view_count INTEGER DEFAULT 0,
         last_viewed_at TIMESTAMP,
@@ -1805,6 +1850,24 @@ async function ensureReportBuilderAndSchedulingTables(): Promise<void> {
         CONSTRAINT fk_trigger_fire_rule FOREIGN KEY (rule_id) REFERENCES schedule_trigger_rules(id) ON DELETE CASCADE
       )
     `);
+
+    // Brand Voice profiles (Report Builder V3 Phase 5)
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS organization_brand_voice_profiles (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL UNIQUE,
+        register_preferences TEXT DEFAULT '{}',
+        vocabulary_preferences TEXT DEFAULT '{}',
+        hedging_rules TEXT DEFAULT '{}',
+        compliance_mode BOOLEAN DEFAULT FALSE,
+        compliance_rules TEXT DEFAULT '{}',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_brand_voice_org ON organization_brand_voice_profiles(organization_id)`
+    );
 
     // Seed minimal system templates (one default + Final Transformation Report)
     const now = new Date().toISOString();
@@ -2174,7 +2237,7 @@ async function ensureReportBuilderAndSchedulingTables(): Promise<void> {
       password_hash TEXT,
       expires_at TEXT,
       show_company_logo INTEGER DEFAULT 1,
-      show_consultinity_branding INTEGER DEFAULT 1,
+      show_consultify_branding INTEGER DEFAULT 1,
       custom_message TEXT,
       view_count INTEGER DEFAULT 0,
       last_viewed_at TEXT,
@@ -2226,6 +2289,21 @@ async function ensureReportBuilderAndSchedulingTables(): Promise<void> {
       deliverable_type TEXT DEFAULT 'report',
       generated_presentation_id TEXT,
       created_at TEXT DEFAULT (datetime('now'))
+    )`
+  );
+
+  // Brand Voice profiles (Report Builder V3 Phase 5)
+  await run(
+    `CREATE TABLE IF NOT EXISTS organization_brand_voice_profiles (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL UNIQUE,
+      register_preferences TEXT DEFAULT '{}',
+      vocabulary_preferences TEXT DEFAULT '{}',
+      hedging_rules TEXT DEFAULT '{}',
+      compliance_mode INTEGER DEFAULT 0,
+      compliance_rules TEXT DEFAULT '{}',
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
     )`
   );
 

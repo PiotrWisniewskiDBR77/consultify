@@ -2,6 +2,8 @@ import { CheckCircle, RefreshCw, Save, Shield, ShieldAlert } from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { Api } from '@/services/api';
+
 type ContextCategory =
   | 'ORG_PROFILE'
   | 'ORG_TERMINOLOGY'
@@ -59,16 +61,10 @@ export const AIGovernanceTab: React.FC = () => {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [ctxRes, polRes] = await Promise.all([
-        fetch('/api/ai-governance/context-policy', { headers: authHeaders() }),
-        fetch('/api/ai-governance/policy', { headers: authHeaders() }),
+      const [ctxJson, polJson] = await Promise.all([
+        Api.getAIGovernanceContextPolicy(),
+        Api.getAIGovernancePolicy(),
       ]);
-
-      const ctxJson = await ctxRes.json();
-      const polJson = await polRes.json();
-
-      if (!ctxRes.ok) throw new Error(ctxJson?.error || 'Failed to load context policy');
-      if (!polRes.ok) throw new Error(polJson?.error || 'Failed to load AI policy');
 
       setContextPolicy(ctxJson?.data || null);
       setPolicySummary(polJson?.data?.summary || null);
@@ -83,9 +79,7 @@ export const AIGovernanceTab: React.FC = () => {
   const loadHealth = async () => {
     setRefreshingHealth(true);
     try {
-      const res = await fetch('/api/ai-governance/health', { headers: authHeaders() });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Failed to load health report');
+      const json = await Api.getAIGovernanceHealth();
       setSanityReport(json?.data || null);
     } catch (e: any) {
       toast.error(e?.message || 'Failed to load health report');
@@ -111,28 +105,14 @@ export const AIGovernanceTab: React.FC = () => {
     if (!contextPolicy || !policySummary) return;
     setSaving(true);
     try {
-      const [ctxRes, polRes] = await Promise.all([
-        fetch('/api/ai-governance/context-policy', {
-          method: 'PUT',
-          headers: authHeaders(),
-          body: JSON.stringify(contextPolicy),
-        }),
-        fetch('/api/ai-governance/policy', {
-          method: 'PUT',
-          headers: authHeaders(),
-          body: JSON.stringify({
-            internetEnabled: policySummary.internetEnabled,
-            auditRequired: policySummary.auditRequired,
-            policyLevel: policySummary.currentLevel,
-          }),
+      await Promise.all([
+        Api.updateAIGovernanceContextPolicy(contextPolicy),
+        Api.updateAIGovernancePolicy({
+          internetEnabled: policySummary.internetEnabled,
+          auditRequired: policySummary.auditRequired,
+          policyLevel: policySummary.currentLevel,
         }),
       ]);
-
-      const ctxJson = await ctxRes.json();
-      const polJson = await polRes.json();
-
-      if (!ctxRes.ok) throw new Error(ctxJson?.error || 'Failed to save context policy');
-      if (!polRes.ok) throw new Error(polJson?.error || 'Failed to save policy');
 
       toast.success('Governance settings saved');
       setHasChanges(false);

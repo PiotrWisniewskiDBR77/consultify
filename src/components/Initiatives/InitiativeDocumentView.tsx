@@ -551,7 +551,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const currentUser = useAppStore((s) => s.currentUser);
   const currentUserId = currentUser?.id || 'current-user';
   const nModeOrderStorageKey = `initiative:nmode:section-order:v2:${initiativeId}`;
-  const initiativeDefinitionDraftStorageKey = `consultinity-initiative-definition-draft:v1:${initiativeId}`;
+  const initiativeDefinitionDraftStorageKey = `consultify-initiative-definition-draft:v1:${initiativeId}`;
   const definitionDraftRestoredRef = useRef(false);
   const decodeHtmlEntities = useCallback((value: string): string => {
     return value

@@ -174,9 +174,7 @@ export const AIConfigurationView: React.FC = () => {
 
       // Load usage stats
       try {
-        const usage = await fetch('/api/llm/control/usage', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        }).then((r) => r.json());
+        const usage = await Api.getLLMControlUsage();
         setUsageStats(usage);
       } catch (e) {
         console.error('Usage load failed:', e);
@@ -184,9 +182,7 @@ export const AIConfigurationView: React.FC = () => {
 
       // Load costs
       try {
-        const costs = await fetch('/api/llm/costs', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        }).then((r) => r.json());
+        const costs = await Api.getLLMCosts();
         setCostStats(costs);
       } catch (e) {
         console.error('Costs load failed:', e);
@@ -194,7 +190,7 @@ export const AIConfigurationView: React.FC = () => {
 
       // Load health
       try {
-        const health = await fetch('/api/llm/diagnose').then((r) => r.json());
+        const health = await Api.diagnoseLLM();
         setHealthStatus(health);
       } catch (e) {
         console.error('Health load failed:', e);
@@ -202,9 +198,7 @@ export const AIConfigurationView: React.FC = () => {
 
       // Load global AI settings
       try {
-        const settings = await fetch('/api/ai-settings/superadmin', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        }).then((r) => r.json());
+        const settings = await Api.getSuperAdminAISettings();
         setGlobalSettings(settings);
       } catch (e) {
         console.error('Global settings load failed:', e);
@@ -225,14 +219,7 @@ export const AIConfigurationView: React.FC = () => {
     if (!globalSettings) return;
     setSavingSettings(true);
     try {
-      const updated = await fetch('/api/ai-settings/superadmin', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify(globalSettings),
-      }).then((r) => r.json());
+      const updated = await Api.updateSuperAdminAISettings(globalSettings);
       setGlobalSettings(updated);
       toast.success('Global settings saved');
     } catch (e) {
@@ -258,7 +245,7 @@ export const AIConfigurationView: React.FC = () => {
 
   const getDefaultPrompt = (capabilityId: string): string => {
     const defaults: Record<string, string> = {
-      chat: `You are a professional AI consultant for the Consultinity platform.
+      chat: `You are a professional AI consultant for the Consultify platform.
 Your role: Help users manage digital transformation projects.
 
 RULES:

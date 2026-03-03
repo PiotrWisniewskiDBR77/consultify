@@ -65,8 +65,50 @@ export const RevenueRecognitionView: React.FC = () => {
         Api.getRevenueRecognitions(),
         Api.getRevenueRecognitionStats(),
       ]);
-      setRecognitions(recognitionsRes || []);
-      setStats(statsRes as any);
+      const items = Array.isArray(recognitionsRes) ? recognitionsRes : (recognitionsRes as any)?.items || [];
+      setRecognitions(items);
+
+      const raw = statsRes as any;
+      const apiTotalRevenue = Number(raw?.totalRevenue || raw?.total_revenue || 0);
+      const apiRecognized = Number(raw?.recognizedRevenue || raw?.recognized_revenue || 0);
+      const apiRemaining = Number(raw?.remainingRevenue || raw?.remaining_revenue || 0);
+
+      const itemsTotalRevenue = items.reduce(
+        (s: number, r: any) => s + Number(r.revenue_amount || r.total_amount || r.amount || 0),
+        0
+      );
+      const itemsRecognized = items.reduce(
+        (s: number, r: any) => s + Number(r.recognized_amount || 0),
+        0
+      );
+      const itemsRemaining = items.reduce(
+        (s: number, r: any) => s + Number(r.remaining_amount || 0),
+        0
+      );
+
+      const totalRevenue = apiTotalRevenue > 0 ? apiTotalRevenue : itemsTotalRevenue;
+      const recognizedRevenue = apiRecognized > 0 ? apiRecognized : itemsRecognized;
+      const remainingRevenue =
+        apiRemaining > 0
+          ? apiRemaining
+          : itemsRemaining > 0
+            ? itemsRemaining
+            : Math.max(0, totalRevenue - recognizedRevenue);
+
+      setStats({
+        totalRevenue,
+        recognizedRevenue,
+        remainingRevenue,
+        pendingItems:
+          Number(raw?.pendingItems || raw?.pending_items || 0) ||
+          items.filter((r: any) => r.status === 'pending').length,
+        inProgressItems:
+          Number(raw?.inProgressItems || raw?.in_progress_items || 0) ||
+          items.filter((r: any) => r.status === 'in_progress').length,
+        completedItems:
+          Number(raw?.completedItems || raw?.completed_items || 0) ||
+          items.filter((r: any) => r.status === 'completed').length,
+      });
     } catch (err: any) {
       setError(err.message || 'Failed to load revenue recognition data');
     } finally {
@@ -175,8 +217,10 @@ export const RevenueRecognitionView: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-white">Revenue Recognition (ASC 606)</h2>
-          <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-1">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Revenue Recognition (ASC 606)
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 mt-1">
             Manage revenue recognition schedules and compliance
           </p>
         </div>
@@ -203,56 +247,56 @@ export const RevenueRecognitionView: React.FC = () => {
       {/* Stats */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
-              <div className="text-xl font-bold text-white">
+              <div className="text-xl font-bold text-slate-900 dark:text-white">
                 {formatCurrency(stats.totalRevenue)}
               </div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 Total Revenue
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-xl font-bold text-green-400">
                 {formatCurrency(stats.recognizedRevenue)}
               </div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 Recognized
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-xl font-bold text-yellow-400">
                 {formatCurrency(stats.remainingRevenue)}
               </div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 Remaining
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-yellow-400">{stats.pendingItems}</div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 Pending
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-blue-400">{stats.inProgressItems}</div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 In Progress
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-green-400">{stats.completedItems}</div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 Completed
               </div>
             </CardContent>
@@ -262,9 +306,9 @@ export const RevenueRecognitionView: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recognitions List */}
-        <Card className="bg-gray-800 border-gray-700">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-white">Revenue Recognition Items</CardTitle>
+            <CardTitle>Revenue Recognition Items</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4 max-h-[500px] overflow-y-auto">
@@ -274,24 +318,24 @@ export const RevenueRecognitionView: React.FC = () => {
                   onClick={() => handleViewSchedule(recognition)}
                   className={`p-4 rounded-lg border cursor-pointer transition-colors ${
                     selectedRecognition?.id === recognition.id
-                      ? 'bg-indigo-900/30 border-indigo-500'
-                      : 'bg-gray-900/50 border-gray-700 hover:border-gray-600'
+                      ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-500'
+                      : 'bg-slate-50 dark:bg-navy-950/20 border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-white font-medium">
+                        <span className="text-slate-900 dark:text-white font-medium">
                           {recognition.organization_name || recognition.organization_id}
                         </span>
                         {getStatusBadge(recognition.status)}
                       </div>
-                      <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-1">
+                      <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                         {getMethodLabel(recognition.recognition_method)}
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-white font-bold">
+                      <div className="text-slate-900 dark:text-white font-bold">
                         {formatCurrency(recognition.revenue_amount, recognition.currency)}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">Total</div>
@@ -300,7 +344,7 @@ export const RevenueRecognitionView: React.FC = () => {
 
                   {/* Progress Bar */}
                   <div className="mt-3">
-                    <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-1">
+                    <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400 mb-1">
                       <span>Progress</span>
                       <span>
                         {calculateProgress(
@@ -310,7 +354,7 @@ export const RevenueRecognitionView: React.FC = () => {
                         %
                       </span>
                     </div>
-                    <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div className="w-full bg-slate-200 dark:bg-gray-700 rounded-full h-2">
                       <div
                         className="bg-green-500 h-2 rounded-full transition-all duration-300"
                         style={{
@@ -342,9 +386,9 @@ export const RevenueRecognitionView: React.FC = () => {
         </Card>
 
         {/* Schedule Timeline */}
-        <Card className="bg-gray-800 border-gray-700">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-white">Recognition Schedule</CardTitle>
+            <CardTitle>Recognition Schedule</CardTitle>
             {selectedRecognition && selectedRecognition.status !== 'completed' && (
               <button
                 onClick={() => handleRecognize(selectedRecognition.id)}
@@ -357,14 +401,14 @@ export const RevenueRecognitionView: React.FC = () => {
           <CardContent>
             {selectedRecognition ? (
               <div className="space-y-4">
-                <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-4">
+                <div className="text-sm text-slate-600 dark:text-slate-400 mb-4">
                   Schedule for{' '}
                   {selectedRecognition.organization_name || selectedRecognition.organization_id}
                 </div>
 
                 <div className="relative">
                   {/* Timeline line */}
-                  <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-700" />
+                  <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-gray-700" />
 
                   <div className="space-y-4">
                     {schedule.map((item, index) => (
@@ -374,7 +418,7 @@ export const RevenueRecognitionView: React.FC = () => {
                           className={`absolute left-2 w-4 h-4 rounded-full border-2 ${
                             item.recognized
                               ? 'bg-green-500 border-green-500'
-                              : 'bg-gray-800 border-gray-600'
+                              : 'bg-white dark:bg-gray-800 border-slate-300 dark:border-gray-600'
                           }`}
                         />
 
@@ -382,13 +426,17 @@ export const RevenueRecognitionView: React.FC = () => {
                           className={`p-3 rounded-lg ${
                             item.recognized
                               ? 'bg-green-900/20 border border-green-800'
-                              : 'bg-gray-900/50 border border-gray-700'
+                              : 'bg-slate-50 dark:bg-navy-950/20 border border-slate-200 dark:border-navy-700'
                           }`}
                         >
                           <div className="flex justify-between items-center">
-                            <span className="text-white font-medium">{item.period}</span>
+                            <span className="text-slate-900 dark:text-white font-medium">
+                              {item.period}
+                            </span>
                             <span
-                              className={`font-bold ${item.recognized ? 'text-green-400' : 'text-gray-400 dark:text-gray-500 dark:text-gray-400'}`}
+                              className={`font-bold ${
+                                item.recognized ? 'text-green-400' : 'text-slate-600 dark:text-slate-400'
+                              }`}
                             >
                               {formatCurrency(item.amount, selectedRecognition.currency)}
                             </span>
@@ -405,13 +453,13 @@ export const RevenueRecognitionView: React.FC = () => {
                 </div>
 
                 {schedule.length === 0 && (
-                  <div className="text-center py-8 text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                  <div className="text-center py-8 text-slate-600 dark:text-slate-400">
                     No schedule available
                   </div>
                 )}
               </div>
             ) : (
-              <div className="text-center py-16 text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-center py-16 text-slate-600 dark:text-slate-400">
                 Select a recognition item to view schedule
               </div>
             )}
@@ -422,35 +470,37 @@ export const RevenueRecognitionView: React.FC = () => {
       {/* Create Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">Create Revenue Recognition</h3>
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-md shadow-xl">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+              Create Revenue Recognition
+            </h3>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Organization ID
                 </label>
                 <input
                   type="text"
                   value={formData.organization_id}
                   onChange={(e) => setFormData({ ...formData, organization_id: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Contract ID (Optional)
                 </label>
                 <input
                   type="text"
                   value={formData.contract_id}
                   onChange={(e) => setFormData({ ...formData, contract_id: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Revenue Amount
                   </label>
                   <input
@@ -459,18 +509,20 @@ export const RevenueRecognitionView: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, revenue_amount: parseFloat(e.target.value) })
                     }
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                     step="0.01"
                     min="0"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Currency</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Currency
+                  </label>
                   <select
                     value={formData.currency}
                     onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                   >
                     <option value="USD">USD</option>
                     <option value="EUR">EUR</option>
@@ -481,7 +533,7 @@ export const RevenueRecognitionView: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Recognition Method
                   </label>
                   <select
@@ -489,7 +541,7 @@ export const RevenueRecognitionView: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, recognition_method: e.target.value })
                     }
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                   >
                     <option value="straight_line">Straight Line</option>
                     <option value="milestone">Milestone</option>
@@ -498,7 +550,7 @@ export const RevenueRecognitionView: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Recognition Periods
                   </label>
                   <input
@@ -507,18 +559,18 @@ export const RevenueRecognitionView: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, periods: parseInt(e.target.value) })
                     }
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                     min="1"
                     max="60"
                     required
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-700">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-navy-700">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+                  className="px-4 py-2 bg-slate-100 text-slate-900 rounded-lg hover:bg-slate-200 dark:bg-navy-800 dark:text-white dark:hover:bg-navy-700"
                 >
                   Cancel
                 </button>

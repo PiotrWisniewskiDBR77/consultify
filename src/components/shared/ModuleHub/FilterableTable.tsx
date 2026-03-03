@@ -3,9 +3,12 @@
  * Table with filterable column headers and row actions
  */
 
-import { ChevronDown, Copy, Edit, Eye, Maximize2, Trash2 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import { ChevronDown, Columns, Copy, Edit, Eye, Maximize2, Trash2 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { ColumnSelector, type ColumnConfig } from '@/components/Admin/shared/ColumnSelector';
+import { ColumnResizer } from '@/components/ui/ResizableTable';
 
 import { type RowAction, RowActionsMenu } from '../RowActionsMenu';
 import { FilterChip } from './ActiveFilters';
@@ -30,6 +33,8 @@ export interface TableRow {
 interface FilterableTableProps {
   columns: TableColumn[];
   data: TableRow[];
+  /** Optional: highlight a selected row (for Table+Preview layouts). */
+  selectedRowId?: string | null;
   onRowClick?: (row: TableRow) => void;
   onRowDoubleClick?: (row: TableRow) => void;
   onRowAction?: (action: string, row: TableRow) => void;
@@ -44,6 +49,8 @@ interface FilterableTableProps {
   canvasClassName?: string;
   /** Controls row/header density. */
   density?: 'comfortable' | 'compact';
+  /** Show the table header settings (columns) button. */
+  enableColumnSettings?: boolean;
 }
 
 // Status badge component — uses canonical color palette
@@ -212,6 +219,7 @@ const FilterDropdown: React.FC<{
 export const FilterableTable: React.FC<FilterableTableProps> = ({
   columns,
   data,
+  selectedRowId,
   onRowClick,
   onRowDoubleClick,
   onRowAction,
@@ -222,10 +230,75 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   emptyMessage = 'No items found',
   canvasClassName = 'p-4',
   density = 'comfortable',
+  enableColumnSettings = true,
 }) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const cellPadding = density === 'compact' ? 'px-3 py-2' : 'px-4 py-3';
+
+  const parsePx = useCallback((value?: string, fallback = 140) => {
+    if (!value) return fallback;
+    const m = String(value).match(/(\d+)\s*px/i);
+    if (m?.[1]) return Number(m[1]);
+    const n = Number(String(value).replace(/[^\d.]/g, ''));
+    return Number.isFinite(n) && n > 0 ? n : fallback;
+  }, []);
+
+  const defaultColumnConfigs = useMemo<ColumnConfig[]>(() => {
+    return columns.map((c, idx) => ({
+      id: c.id,
+      label: c.label,
+      visible: true,
+      order: idx,
+      width: parsePx(c.width, c.id === 'title' || c.id === 'name' ? 260 : 140),
+      minWidth: c.id === 'title' || c.id === 'name' ? 200 : 90,
+      maxWidth: c.id === 'title' || c.id === 'name' ? 520 : 320,
+      required: c.id === 'title' || c.id === 'name',
+    }));
+  }, [columns, parsePx]);
+
+  const [columnConfigs, setColumnConfigs] = useState<ColumnConfig[]>(defaultColumnConfigs);
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
+    const widths: Record<string, number> = {};
+    for (const c of defaultColumnConfigs) widths[c.id] = c.width ?? 140;
+    return widths;
+  });
+
+  // Keep column settings in sync when columns change (e.g., tab switch).
+  useEffect(() => {
+    setColumnConfigs(defaultColumnConfigs);
+    setColumnWidths(() => {
+      const widths: Record<string, number> = {};
+      for (const c of defaultColumnConfigs) widths[c.id] = c.width ?? 140;
+      return widths;
+    });
+  }, [defaultColumnConfigs]);
+
+  const visibleColumns = useMemo(() => {
+    const byId = new Map(columnConfigs.map((c) => [c.id, c]));
+    return columns
+      .filter((c) => byId.get(c.id)?.visible !== false)
+      .sort((a, b) => (byId.get(a.id)?.order ?? 0) - (byId.get(b.id)?.order ?? 0));
+  }, [columns, columnConfigs]);
+
+  const handleColumnResize = useCallback(
+    (columnId: string, newWidth: number) => {
+      setColumnWidths((prev) => ({ ...prev, [columnId]: newWidth }));
+      setColumnConfigs((prev) =>
+        prev.map((c) => (c.id === columnId ? { ...c, width: newWidth } : c))
+      );
+    },
+    [setColumnWidths, setColumnConfigs]
+  );
+
+  const resetColumns = useCallback(() => {
+    setColumnConfigs(defaultColumnConfigs);
+    setColumnWidths(() => {
+      const widths: Record<string, number> = {};
+      for (const c of defaultColumnConfigs) widths[c.id] = c.width ?? 140;
+      return widths;
+    });
+  }, [defaultColumnConfigs]);
 
   // Get active filter values for a column
   const getActiveFilterValues = useCallback(
@@ -298,14 +371,25 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   return (
     <div className={canvasClassName}>
       <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-hidden">
-        <table className="w-full">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full table-fixed">
           <thead>
             <tr className="bg-white/60 dark:bg-navy-900/60 border-b border-slate-200/70 dark:border-white/[0.06]">
-              {columns.map((column) => (
+              {visibleColumns.map((column, idx) => {
+                const cfg = columnConfigs.find((c) => c.id === column.id);
+                const width = columnWidths[column.id] ?? parsePx(column.width, 140);
+                const minWidth = cfg?.minWidth ?? (column.id === 'title' || column.id === 'name' ? 200 : 90);
+                const maxWidth = cfg?.maxWidth ?? (column.id === 'title' || column.id === 'name' ? 520 : 320);
+                const isLastDataCol = idx === visibleColumns.length - 1;
+                return (
                 <th
                   key={column.id}
-                  className={`${cellPadding} text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider`}
-                  style={{ width: column.width }}
+                  className={`${cellPadding} relative text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider`}
+                  style={{
+                    width: `${width}px`,
+                    minWidth: `${minWidth}px`,
+                    maxWidth: `${maxWidth}px`,
+                  }}
                 >
                   <div className="flex items-center gap-1">
                     <span>{column.label}</span>
@@ -317,12 +401,42 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                       />
                     )}
                   </div>
+                  {!isLastDataCol ? (
+                    <ColumnResizer
+                      columnId={column.id}
+                      currentWidth={width}
+                      minWidth={minWidth}
+                      maxWidth={maxWidth}
+                      onResize={handleColumnResize}
+                    />
+                  ) : null}
                 </th>
-              ))}
+              );
+              })}
               {!hideRowActions ? (
                 <th
                   className={`${cellPadding} text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20`}
-                />
+                >
+                  {enableColumnSettings ? (
+                    <div className="flex justify-end">
+                      <ColumnSelector
+                        columns={columnConfigs}
+                        onChange={setColumnConfigs}
+                        onReset={resetColumns}
+                        trigger={
+                          <button
+                            type="button"
+                            className="inline-flex items-center justify-center h-7 w-7 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                            title={t('common.columns', isPolish ? 'Kolumny' : 'Columns')}
+                            aria-label={t('common.columns', isPolish ? 'Kolumny' : 'Columns')}
+                          >
+                            <Columns size={14} />
+                          </button>
+                        }
+                      />
+                    </div>
+                  ) : null}
+                </th>
               ) : null}
             </tr>
           </thead>
@@ -330,7 +444,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
             {filteredData.length === 0 ? (
               <tr>
                 <td
-                  colSpan={columns.length + (hideRowActions ? 0 : 1)}
+                  colSpan={visibleColumns.length + (hideRowActions ? 0 : 1)}
                   className={`${density === 'compact' ? 'px-3' : 'px-4'} py-12 text-center text-slate-500`}
                 >
                   {emptyMessage}
@@ -342,9 +456,14 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   key={row.id}
                   onClick={() => onRowClick?.(row)}
                   onDoubleClick={() => onRowDoubleClick?.(row)}
-                  className="group hover:bg-slate-50/70 dark:hover:bg-white/[0.03] cursor-pointer transition-colors"
+                  className={[
+                    'group cursor-pointer transition-colors',
+                    row.id === selectedRowId
+                      ? 'bg-primary-500/10'
+                      : 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]',
+                  ].join(' ')}
                 >
-                  {columns.map((column) => (
+                  {visibleColumns.map((column) => (
                     <td key={column.id} className={cellPadding}>
                       {column.render ? (
                         column.render(row)
@@ -357,9 +476,17 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                           {formatRelativeTime(row.updatedAt)}
                         </span>
                       ) : (
-                        <span className="text-sm text-slate-700 dark:text-slate-200">
-                          {row[column.id]}
-                        </span>
+                        <div className="min-w-0">
+                          <span
+                            className={[
+                              'text-sm text-slate-700 dark:text-slate-200',
+                              column.id === 'title' || column.id === 'name' ? 'block truncate' : '',
+                            ].join(' ')}
+                            title={typeof row[column.id] === 'string' ? row[column.id] : undefined}
+                          >
+                            {row[column.id]}
+                          </span>
+                        </div>
                       )}
                     </td>
                   ))}
@@ -416,7 +543,8 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
               ))
             )}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
     </div>
   );

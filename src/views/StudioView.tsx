@@ -1,5 +1,5 @@
 /**
- * StudioView - Main View for Consultinity Studio
+ * StudioView - Main View for Consultify Studio
  *
  * Split-panel layout with AI chat and React Flow canvas.
  */

@@ -299,7 +299,7 @@ export function AIPerformanceDashboard() {
       {/* Header - Clean minimal */}
       <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
-          <h2 className="text-lg font-medium text-white flex items-center gap-2">
+          <h2 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
             <Activity size={16} className="text-slate-500 dark:text-slate-400" />
             AI Performance Dashboard
           </h2>
@@ -309,15 +309,15 @@ export function AIPerformanceDashboard() {
         </div>
         <div className="flex items-center gap-2">
           {/* Time Range */}
-          <div className="flex bg-white/[0.03] rounded-lg p-0.5">
+          <div className="flex bg-slate-100 dark:bg-white/[0.03] rounded-lg p-0.5">
             {(['1h', '24h', '7d', '30d'] as TimeRange[]).map((range) => (
               <button
                 key={range}
                 onClick={() => setTimeRange(range)}
                 className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                   timeRange === range
-                    ? 'bg-white/10 text-white'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-white'
+                    ? 'bg-slate-900 text-white dark:bg-white/10'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-white/[0.04]'
                 }`}
               >
                 {range}
@@ -394,7 +394,7 @@ export function AIPerformanceDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Percentiles */}
         <div className="admin-card p-4">
-          <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+          <h3 className="text-sm font-medium text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <Gauge size={14} className="text-slate-500 dark:text-slate-400" />
             Response Time Percentiles
           </h3>
@@ -422,7 +422,7 @@ export function AIPerformanceDashboard() {
 
         {/* Response Time Trend */}
         <div className="lg:col-span-2 admin-card p-4">
-          <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+          <h3 className="text-sm font-medium text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <TrendingUp size={14} className="text-slate-500 dark:text-slate-400" />
             Response Time Trend
           </h3>
@@ -435,7 +435,7 @@ export function AIPerformanceDashboard() {
               {responseTimeTrend.map((point, idx) => (
                 <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">
                   <div
-                    className="w-full bg-slate-50 dark:bg-navy-800/300 hover:bg-slate-400 rounded-sm transition-all"
+                    className="w-full bg-slate-200/70 dark:bg-navy-800/30 hover:bg-slate-300 dark:hover:bg-white/[0.08] rounded-sm transition-all"
                     style={{ height: `${(point.value / maxTrendValue) * 100}%`, minHeight: '2px' }}
                     title={`${new Date(point.timestamp).toLocaleTimeString()}: ${point.value.toFixed(2)}s`}
                   />
@@ -450,7 +450,7 @@ export function AIPerformanceDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* By Capability */}
         <div className="admin-card p-4">
-          <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+          <h3 className="text-sm font-medium text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <BarChart3 size={14} className="text-slate-500 dark:text-slate-400" />
             Performance by Capability
           </h3>
@@ -458,16 +458,18 @@ export function AIPerformanceDashboard() {
             {capabilityMetrics.map((cap, idx) => (
               <div
                 key={idx}
-                className="flex items-center gap-4 p-3 bg-white/[0.02] rounded-lg hover:bg-white/[0.04] transition-colors"
+                className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-white/[0.02] rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm text-slate-300 capitalize">{cap.capability}</div>
+                  <div className="text-sm text-slate-900 dark:text-slate-200 capitalize">
+                    {cap.capability}
+                  </div>
                   <div className="text-xs text-slate-600 dark:text-slate-400">
                     {cap.requests.toLocaleString()} requests
                   </div>
                 </div>
                 <div className="text-right text-xs space-y-1">
-                  <div className="text-slate-400 dark:text-slate-500">
+                  <div className="text-slate-600 dark:text-slate-400">
                     {cap.avgResponseTime.toFixed(1)}s
                   </div>
                   <div className="text-slate-600 dark:text-slate-400">
@@ -486,7 +488,7 @@ export function AIPerformanceDashboard() {
 
         {/* By Model */}
         <div className="admin-card p-4">
-          <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+          <h3 className="text-sm font-medium text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <PieChart size={14} className="text-slate-500 dark:text-slate-400" />
             Performance by Model
           </h3>
@@ -494,10 +496,12 @@ export function AIPerformanceDashboard() {
             {modelMetrics.map((model, idx) => (
               <div
                 key={idx}
-                className="flex items-center gap-4 p-3 bg-white/[0.02] rounded-lg hover:bg-white/[0.04] transition-colors"
+                className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-white/[0.02] rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm text-white font-medium">{model.model}</div>
+                  <div className="text-sm text-slate-900 dark:text-white font-medium">
+                    {model.model}
+                  </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
                     {model.requests.toLocaleString()} requests
                   </div>
@@ -521,7 +525,7 @@ export function AIPerformanceDashboard() {
 
       {/* Health Status - Clean minimal */}
       <div className="admin-card p-4">
-        <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+        <h3 className="text-sm font-medium text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Activity size={14} className="text-slate-500 dark:text-slate-400" />
           System Health
         </h3>
@@ -600,13 +604,15 @@ const PercentileBar: React.FC<{ label: string; value: number; max: number; color
 }) => (
   <div className="flex items-center gap-3">
     <span className="text-xs text-slate-500 dark:text-slate-400 w-8">{label}</span>
-    <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+    <div className="flex-1 h-1.5 bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
       <div
-        className="h-full bg-slate-400 rounded-full transition-all"
+        className="h-full bg-slate-500 dark:bg-slate-400 rounded-full transition-all"
         style={{ width: `${Math.min((value / max) * 100, 100)}%` }}
       />
     </div>
-    <span className="text-xs text-slate-300 font-medium w-12 text-right">{value.toFixed(2)}s</span>
+    <span className="text-xs text-slate-700 dark:text-slate-300 font-medium w-12 text-right">
+      {value.toFixed(2)}s
+    </span>
   </div>
 );
 
@@ -614,7 +620,7 @@ const HealthIndicator: React.FC<{ label: string; status: 'healthy' | 'warning' |
   label,
   status,
 }) => (
-  <div className="flex items-center gap-3 p-3 bg-white/[0.02] rounded-lg">
+  <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/[0.02] rounded-lg">
     <span
       className={`admin-status ${
         status === 'healthy'
@@ -627,7 +633,7 @@ const HealthIndicator: React.FC<{ label: string; status: 'healthy' | 'warning' |
       <span className="admin-status-dot" />
     </span>
     <div className="flex-1">
-      <div className="text-sm text-slate-300">{label}</div>
+      <div className="text-sm text-slate-900 dark:text-slate-300">{label}</div>
       <div
         className={`text-xs capitalize ${
           status === 'healthy'

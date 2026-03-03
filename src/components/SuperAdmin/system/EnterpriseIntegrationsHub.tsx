@@ -241,6 +241,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
   );
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
+  const [connectorCatalog, setConnectorCatalog] = useState<ConnectorType[]>(CONNECTOR_CATALOG);
   const [loading, setLoading] = useState(true);
   const [showAddIntegration, setShowAddIntegration] = useState(false);
   const [showAddWebhook, setShowAddWebhook] = useState(false);
@@ -270,18 +271,29 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
     }
   }, []);
 
+  const fetchCatalog = useCallback(async () => {
+    try {
+      const data = await Api.get('/superadmin/integrations/catalog');
+      if (data?.connectors?.length) {
+        setConnectorCatalog(data.connectors);
+      }
+    } catch {
+      // Fall back to hardcoded catalog
+    }
+  }, []);
+
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      await Promise.all([fetchIntegrations(), fetchWebhooks()]);
+      await Promise.all([fetchIntegrations(), fetchWebhooks(), fetchCatalog()]);
       setLoading(false);
     };
     loadData();
   }, [fetchIntegrations, fetchWebhooks]);
 
-  const handleSync = async (id: string) => {
+  const handleSync = async (provider: string) => {
     try {
-      await Api.refreshSystemIntegration(id);
+      await Api.refreshSystemIntegration(provider);
       toast.success('Sync started');
       fetchIntegrations();
     } catch (error) {
@@ -289,10 +301,10 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
     }
   };
 
-  const handleDeleteIntegration = async (id: string) => {
+  const handleDeleteIntegration = async (provider: string) => {
     if (!confirm('Are you sure you want to disconnect this integration?')) return;
     try {
-      await Api.deleteSystemIntegration(id);
+      await Api.deleteSystemIntegration(provider);
       toast.success('Integration disconnected');
       fetchIntegrations();
     } catch (error) {
@@ -330,7 +342,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
     }
   };
 
-  const filteredCatalog = CONNECTOR_CATALOG.filter((c) => {
+  const filteredCatalog = connectorCatalog.filter((c) => {
     const matchesSearch =
       !searchTerm ||
       c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -339,16 +351,18 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const categories = [...new Set(CONNECTOR_CATALOG.map((c) => c.category))];
+  const categories = [...new Set(connectorCatalog.map((c) => c.category))];
 
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Integrations Hub</h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm">
-            Connect Consultinity with your existing tools and workflows
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+            Integrations Hub
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 text-sm">
+            Connect Consultify with your existing tools and workflows
           </p>
         </div>
       </div>
@@ -356,27 +370,27 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-          <div className="text-sm text-slate-400 dark:text-slate-500">Connected</div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">
+          <div className="text-sm text-slate-600 dark:text-slate-400">Connected</div>
+          <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
             {integrations.filter((i) => i.status === 'connected').length}
           </div>
         </div>
         <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
-          <div className="text-sm text-slate-400 dark:text-slate-500">Active Webhooks</div>
-          <div className="text-2xl font-bold text-emerald-400">
+          <div className="text-sm text-slate-600 dark:text-slate-400">Active Webhooks</div>
+          <div className="text-2xl font-semibold text-emerald-700 dark:text-emerald-400">
             {webhooks.filter((w) => w.is_active).length}
           </div>
         </div>
         <div className="p-4 bg-red-500/10 rounded-xl border border-red-500/30">
-          <div className="text-sm text-slate-400 dark:text-slate-500">Errors</div>
-          <div className="text-2xl font-bold text-red-400">
+          <div className="text-sm text-slate-600 dark:text-slate-400">Errors</div>
+          <div className="text-2xl font-semibold text-red-700 dark:text-red-400">
             {integrations.filter((i) => i.status === 'error').length}
           </div>
         </div>
-        <div className="p-4 bg-cyan-500/10 rounded-xl border border-cyan-500/30">
-          <div className="text-sm text-slate-400 dark:text-slate-500">Available</div>
-          <div className="text-2xl font-bold text-cyan-400">
-            {CONNECTOR_CATALOG.filter((c) => c.status === 'available').length}
+        <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+          <div className="text-sm text-slate-600 dark:text-slate-400">Available</div>
+          <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+            {connectorCatalog.filter((c) => c.status === 'available').length}
           </div>
         </div>
       </div>
@@ -386,15 +400,15 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
         {[
           { id: 'integrations', label: 'Connected', icon: Link, count: integrations.length },
           { id: 'webhooks', label: 'Webhooks', icon: Webhook, count: webhooks.length },
-          { id: 'catalog', label: 'Catalog', icon: Globe, count: CONNECTOR_CATALOG.length },
+          { id: 'catalog', label: 'Catalog', icon: Globe, count: connectorCatalog.length },
         ].map(({ id, label, icon: Icon, count }) => (
           <button
             key={id}
             onClick={() => setActiveTab(id as any)}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeTab === id
-                ? 'bg-slate-50 dark:bg-white/10 text-slate-900 dark:text-white border-b-2 border-cyan-500'
-                : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                ? 'bg-slate-50 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-primary-500'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/20'
             }`}
           >
             <Icon className="w-4 h-4" />
@@ -416,12 +430,12 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
           {activeTab === 'integrations' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-slate-900 dark:text-white">
+                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
                   Connected Integrations
                 </h3>
                 <button
                   onClick={() => setActiveTab('catalog')}
-                  className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Add Integration
@@ -439,19 +453,19 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                   {integrations.map((integration) => {
                     const statusConfig = STATUS_CONFIG[integration.status];
                     const StatusIcon = statusConfig.icon;
-                    const connector = CONNECTOR_CATALOG.find((c) => c.id === integration.type);
+                    const connector = connectorCatalog.find((c) => c.id === integration.type);
 
                     return (
                       <div
                         key={integration.id}
-                        className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-white/20 transition-colors"
+                        className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-colors"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             <div className="text-3xl">{connector?.icon || '🔗'}</div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-slate-900 dark:text-white">
+                                <span className="font-medium text-slate-900 dark:text-slate-100">
                                   {integration.name}
                                 </span>
                                 <span
@@ -462,11 +476,11 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                                 </span>
                               </div>
                               {integration.description && (
-                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                                   {integration.description}
                                 </p>
                               )}
-                              <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
+                              <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400 mt-1">
                                 {integration.last_sync_at && (
                                   <span>
                                     Last sync: {new Date(integration.last_sync_at).toLocaleString()}
@@ -486,7 +500,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                           </div>
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => handleSync(integration.id)}
+                              onClick={() => handleSync(integration.type)}
                               className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
                               title="Sync now"
                             >
@@ -500,7 +514,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                               <Settings className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                             </button>
                             <button
-                              onClick={() => handleDeleteIntegration(integration.id)}
+                              onClick={() => handleDeleteIntegration(integration.type)}
                               className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
                               title="Disconnect"
                             >
@@ -520,10 +534,10 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
           {activeTab === 'webhooks' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-slate-900 dark:text-white">Webhooks</h3>
+                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">Webhooks</h3>
                 <button
                   onClick={() => setShowAddWebhook(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Create Webhook
@@ -543,12 +557,12 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                   {webhooks.map((webhook) => (
                     <div
                       key={webhook.id}
-                      className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-white/20 transition-colors"
+                      className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-colors"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-slate-900 dark:text-white">
+                            <span className="font-medium text-slate-900 dark:text-slate-100">
                               {webhook.name}
                             </span>
                             {webhook.is_active ? (
@@ -557,7 +571,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                               <XCircle className="w-4 h-4 text-red-400" />
                             )}
                           </div>
-                          <div className="text-sm text-slate-500 dark:text-slate-400 mt-1 break-all">
+                          <div className="text-sm text-slate-600 dark:text-slate-400 mt-1 break-all">
                             {webhook.url}
                           </div>
                           <div className="flex flex-wrap gap-1 mt-2">
@@ -570,7 +584,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                               </span>
                             ))}
                           </div>
-                          <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mt-2">
+                          <div className="flex items-center gap-4 text-xs text-slate-600 dark:text-slate-400 mt-2">
                             <span className="text-emerald-400">✓ {webhook.success_count}</span>
                             <span className="text-red-400">✗ {webhook.failure_count}</span>
                             {webhook.last_triggered_at && (
@@ -625,13 +639,13 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                     placeholder="Search connectors..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                    className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
                   />
                 </div>
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+                  className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
                 >
                   <option value="all">All Categories</option>
                   {categories.map((cat) => (
@@ -651,7 +665,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                       className={`p-4 rounded-xl border transition-colors ${
                         isConnected
                           ? 'bg-emerald-500/10 border-emerald-500/30'
-                          : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-white/20'
+                          : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                       }`}
                     >
                       <div className="flex items-start justify-between mb-3">
@@ -659,7 +673,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                           <span className="text-3xl">{connector.icon}</span>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-slate-900 dark:text-white">
+                              <span className="font-medium text-slate-900 dark:text-slate-100">
                                 {connector.name}
                               </span>
                               {connector.status === 'beta' && (
@@ -680,7 +694,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                         </div>
                         {isConnected && <CheckCircle className="w-5 h-5 text-emerald-400" />}
                       </div>
-                      <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
                         {connector.description}
                       </p>
                       <div className="flex items-center justify-between">
@@ -699,7 +713,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                               isConnected
                                 ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                                : 'bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white'
+                                : 'bg-primary-600 hover:bg-primary-700 text-white'
                             }`}
                             disabled={isConnected}
                           >
@@ -761,7 +775,7 @@ const WebhookModal: React.FC<{
     e.preventDefault();
     setSaving(true);
     try {
-      await Api.createWebhook({ ...formData, organization_id: 'current', is_active: true });
+      await Api.createSystemWebhook({ ...formData, is_active: true });
       toast.success('Webhook created');
       onSave();
     } catch (error) {
@@ -830,7 +844,7 @@ const WebhookModal: React.FC<{
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               Events *
             </label>
-            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 bg-slate-800/50 rounded-lg">
+            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-transparent rounded-lg">
               {events.map((event) => (
                 <label key={event.id} className="flex items-center gap-2">
                   <input
@@ -846,7 +860,7 @@ const WebhookModal: React.FC<{
                         });
                       }
                     }}
-                    className="rounded border-slate-600 bg-slate-800 text-cyan-500"
+                    className="rounded border-slate-300 bg-white text-primary-600 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-400"
                   />
                   <span className="text-sm text-slate-700 dark:text-slate-300">{event.label}</span>
                 </label>
@@ -865,7 +879,7 @@ const WebhookModal: React.FC<{
             <button
               type="submit"
               disabled={saving || formData.events.length === 0}
-              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               Create

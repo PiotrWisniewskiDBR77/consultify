@@ -1,7 +1,6 @@
 import { AlertCircle, MessageSquare, PhoneIncoming, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
-import { useOnClickOutside } from '../../hooks/useOnClickOutside'; // Assuming we have this, or I'll implement a simple ref check
 import { Api } from '../../services/api';
 import { Notification } from '../../types';
 import { SignalNode } from './SignalNode';
@@ -34,30 +33,20 @@ export const SuperAdminSignalCenter: React.FC = () => {
   }, []);
 
   const fetchSignals = async () => {
+    setLoading(true);
     try {
-      // Use dedicated SuperAdmin signals endpoint
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/superadmin/signals', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const allSignals = await response.json();
+      const allSignals = await Api.getSuperAdminSignals();
 
       // Group by type
       const system = allSignals.filter((n: any) => n.type === 'SYSTEM_ALERT');
       const client = allSignals.filter((n: any) => n.type === 'CLIENT_TICKET');
       const feedback = allSignals.filter((n: any) => n.type === 'USER_FEEDBACK');
 
-      queueMicrotask(() => setNotifications({ system, client, feedback }));
+      setNotifications({ system, client, feedback });
     } catch (error) {
       console.error('Failed to fetch signals', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -65,20 +54,6 @@ export const SuperAdminSignalCenter: React.FC = () => {
     fetchSignals();
     const interval = setInterval(fetchSignals, 30000); // Poll every 30s
     return () => clearInterval(interval);
-  }, []);
-
-  // Temp: Seed data for demonstration if empty (to verify UI)
-  // REMOVE THIS IN PRODUCTION or if real data exists
-  useEffect(() => {
-    if (
-      notifications.system.length === 0 &&
-      notifications.client.length === 0 &&
-      notifications.feedback.length === 0
-    ) {
-      // Simulate for visual check (as per plan's manual verification step)
-      // In real code, we'd rely on the API.
-      // I will leave this commented out and rely on manual seeding or real api.
-    }
   }, []);
 
   const handleDismiss = async (id: string, type: keyof SignalGroup, e: React.MouseEvent) => {
@@ -172,7 +147,11 @@ export const SuperAdminSignalCenter: React.FC = () => {
           </div>
 
           <div className="max-h-64 overflow-y-auto">
-            {notifications[selectedType].length === 0 ? (
+            {loading ? (
+              <div className="p-6 text-center text-slate-500 dark:text-slate-400 text-xs">
+                Loading signals…
+              </div>
+            ) : notifications[selectedType].length === 0 ? (
               <div className="p-6 text-center text-slate-500 dark:text-slate-400 text-xs">
                 No active signals in this category.
               </div>

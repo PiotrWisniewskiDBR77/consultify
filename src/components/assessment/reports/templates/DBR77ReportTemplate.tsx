@@ -341,7 +341,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
           <Info className="w-5 h-5 text-cyan-600 dark:text-cyan-400 shrink-0 mt-0.5" />
           <div className="text-sm text-cyan-800 dark:text-cyan-200">
             <strong>Metoda DBR77 Lean 4.0</strong> (Pomierz-Zoptymalizuj-Automatyzuj) jest{' '}
-            <strong>autorską metodą Consultinity</strong>.
+            <strong>autorską metodą Consultify</strong>.
           </div>
         </div>
       </div>
@@ -620,7 +620,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
 
       {/* Footer */}
       <footer className="p-8 border-t border-slate-200 dark:border-navy-700 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-        <p>Raport wygenerowany przez Consultinity • {new Date().toLocaleDateString('pl-PL')}</p>
+        <p>Raport wygenerowany przez Consultify • {new Date().toLocaleDateString('pl-PL')}</p>
         <p className="mt-1">DBR77 Lean 4.0 Assessment • {organizationName}</p>
       </footer>
     </div>

@@ -114,7 +114,7 @@ export function transformToUnifiedJson(
       month: 'long',
       day: 'numeric',
     }),
-    author: report.createdBy || 'Consultinity',
+    author: report.createdBy || 'Consultify',
     confidentiality: options.confidentiality ?? 'confidential',
     framework: report.sourceFramework,
     sourceType: report.sourceType,

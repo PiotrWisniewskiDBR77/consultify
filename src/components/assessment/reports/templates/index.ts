@@ -6,7 +6,7 @@
  * - SIRI (Smart Industry Readiness Index) - Singapore EDB
  * - ADMA (Advanced Digital Maturity Assessment) - European Commission
  * - CMMI (Capability Maturity Model Integration) - ISACA
- * - DBR77 Lean 4.0 (Pomierz-Zoptymalizuj-Automatyzuj) - Consultinity proprietary
+ * - DBR77 Lean 4.0 (Pomierz-Zoptymalizuj-Automatyzuj) - Consultify proprietary
  */
 
 export { ADMAReportTemplate } from './ADMAReportTemplate';

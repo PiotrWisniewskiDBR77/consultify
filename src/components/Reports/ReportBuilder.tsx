@@ -54,6 +54,8 @@ interface FullReport {
   axisData: Record<string, { actual?: number; target?: number; justification?: string }>;
   sections: ReportSectionData[];
   templateId?: string;
+  sourceType?: string;
+  sourceId?: string;
   createdAt: string;
   updatedAt: string;
 }

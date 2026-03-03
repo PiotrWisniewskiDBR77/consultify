@@ -52,9 +52,43 @@ interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
 }
 
+const DB_ALLOWED_PARSE_METHODS = new Set(['text_extraction', 'ocr', 'manual']);
+
 // ════════════════════════════════════════════════
 // T050: Financial Statement Ingestion
 // ════════════════════════════════════════════════
+
+async function extractTextFromFile(
+  filePath: string,
+  originalName: string
+): Promise<{ text: string; parseMethod: string }> {
+  const ext = (originalName || '').toLowerCase().split('.').pop() || '';
+  if (ext === 'pdf') {
+    const text = await PDFParserService.extractText(filePath);
+    return { text, parseMethod: 'text_extraction' };
+  }
+  if (ext === 'csv') {
+    const fs = await import('fs');
+    const text = fs.readFileSync(filePath, 'utf-8');
+    return { text, parseMethod: 'csv_import' };
+  }
+  if (ext === 'xlsx' || ext === 'xls') {
+    try {
+      const XLSX = await import('xlsx');
+      const wb = XLSX.readFile(filePath);
+      const lines: string[] = [];
+      for (const sheetName of wb.SheetNames) {
+        const ws = wb.Sheets[sheetName];
+        const csv = XLSX.utils.sheet_to_csv(ws, { FS: '\t' });
+        lines.push(`=== Sheet: ${sheetName} ===`, csv);
+      }
+      return { text: lines.join('\n'), parseMethod: 'excel_import' };
+    } catch (e: any) {
+      throw new Error(`Excel parsing failed: ${e?.message}. Install xlsx package if missing.`);
+    }
+  }
+  throw new Error(`Unsupported file format: ${ext}`);
+}
 
 router.post(
   '/upload',
@@ -65,14 +99,23 @@ router.post(
     const userId = req.user?.id;
     const orgId = req.user?.organizationId;
     const file = req.file;
-    if (!file) return res.status(400).json({ error: 'PDF file required' });
+    if (!file) return res.status(400).json({ error: 'File required (PDF, XLSX, XLS, or CSV)' });
 
     let text: string;
+    let parseMethod: string;
     try {
-      text = await PDFParserService.extractText(file.path);
+      const result = await extractTextFromFile(file.path, file.originalname);
+      text = result.text;
+      parseMethod = result.parseMethod;
     } catch (e: any) {
-      return res.status(422).json({ error: 'PDF text extraction failed', detail: e?.message });
+      return res.status(422).json({ error: 'File extraction failed', detail: e?.message });
     }
+
+    // Backward-compatible DB constraint (older DBs allow only 3 values).
+    // Keep the real parse method inside notes for traceability.
+    const effectiveParseMethod = DB_ALLOWED_PARSE_METHODS.has(parseMethod) ? parseMethod : 'manual';
+    const notesPrefix =
+      parseMethod === effectiveParseMethod ? '' : `[parse_method:${parseMethod}]\n`;
 
     const detection = detectStatementType(text);
 
@@ -86,19 +129,18 @@ router.post(
       scaling: detection.scaling,
       sourceFileName: file.originalname,
       sourceFilePath: file.path,
-      parseMethod: 'text_extraction',
+      parseMethod: effectiveParseMethod,
       overallConfidence: detection.confidence,
       createdBy: userId!,
     });
 
-    // Store extracted text for subsequent steps
     await dbRun(`UPDATE financial_statements SET notes = ? WHERE id = ?`, [
-      text.substring(0, 100000),
+      `${notesPrefix}${text.substring(0, 100000)}`,
       statementId,
     ]);
 
     logger.info(
-      `[FinanceStatements] Uploaded ${file.originalname} → statement ${statementId} type=${detection.statementType}`
+      `[FinanceStatements] Uploaded ${file.originalname} (${parseMethod}) → statement ${statementId} type=${detection.statementType}`
     );
 
     res.status(201).json({
@@ -106,6 +148,7 @@ router.post(
       statementId,
       detection,
       textLength: text.length,
+      parseMethod,
     });
   })
 );
@@ -116,7 +159,7 @@ router.post(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, res);
+    const stmt = await getStatementOrFail(statementId, req.user?.organizationId, res);
     if (!stmt) return;
 
     const text = stmt.notes || '';
@@ -149,7 +192,7 @@ router.post(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, res);
+    const stmt = await getStatementOrFail(statementId, req.user?.organizationId, res);
     if (!stmt) return;
 
     const text = stmt.notes || '';
@@ -175,7 +218,7 @@ router.post(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, res);
+    const stmt = await getStatementOrFail(statementId, req.user?.organizationId, res);
     if (!stmt) return;
 
     const { lines } = req.body;
@@ -196,7 +239,7 @@ router.put(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, res);
+    const stmt = await getStatementOrFail(statementId, req.user?.organizationId, res);
     if (!stmt) return;
 
     const { values } = req.body;
@@ -235,7 +278,7 @@ router.post(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, res);
+    const stmt = await getStatementOrFail(statementId, req.user?.organizationId, res);
     if (!stmt) return;
 
     const valueRows = (await dbAll(
@@ -257,7 +300,7 @@ router.post(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, res);
+    const stmt = await getStatementOrFail(statementId, req.user?.organizationId, res);
     if (!stmt) return;
 
     await confirmStatement(statementId, req.user!.id);
@@ -301,7 +344,7 @@ router.get(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, res);
+    const stmt = await getStatementOrFail(statementId, req.user?.organizationId, res);
     if (!stmt) return;
 
     const values = await dbAll(
@@ -328,7 +371,7 @@ router.delete(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, res);
+    const stmt = await getStatementOrFail(statementId, req.user?.organizationId, res);
     if (!stmt) return;
 
     if (stmt.status === 'confirmed') {
@@ -443,8 +486,19 @@ router.put(
 // Helpers
 // ════════════════════════════════════════════════
 
-async function getStatementOrFail(id: string, res: Response): Promise<any | null> {
-  const rows = (await dbAll(`SELECT * FROM financial_statements WHERE id = ?`, [id])) as any[];
+async function getStatementOrFail(
+  id: string,
+  organizationId: string | undefined,
+  res: Response
+): Promise<any | null> {
+  if (!organizationId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return null;
+  }
+  const rows = (await dbAll(
+    `SELECT * FROM financial_statements WHERE id = ? AND organization_id = ?`,
+    [id, organizationId]
+  )) as any[];
   if (!rows?.length) {
     res.status(404).json({ error: 'Statement not found' });
     return null;

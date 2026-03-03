@@ -163,8 +163,8 @@ const OverviewTab: React.FC = () => {
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Plan Distribution */}
-        <div className="bg-navy-900 rounded-xl p-6 border border-white/10">
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2 mb-5">
+        <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-5">
             <PieChart className="w-5 h-5 text-blue-400" />
             Plan Distribution
           </h3>
@@ -186,12 +186,12 @@ const OverviewTab: React.FC = () => {
               return (
                 <div key={plan.name} className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-300">{plan.name}</span>
+                    <span className="text-slate-900 dark:text-slate-200">{plan.name}</span>
                     <span className="text-slate-500 dark:text-slate-400">
                       {plan.count} ({percentage}%)
                     </span>
                   </div>
-                  <div className="h-2 bg-navy-950 rounded-full overflow-hidden">
+                  <div className="h-2 bg-slate-100 dark:bg-navy-950 rounded-full overflow-hidden">
                     <div
                       className={`h-full ${colors[idx % colors.length]} transition-all duration-500`}
                       style={{ width: `${percentage}%` }}
@@ -210,38 +210,38 @@ const OverviewTab: React.FC = () => {
         </div>
 
         {/* Usage Overview */}
-        <div className="bg-navy-900 rounded-xl p-6 border border-white/10">
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2 mb-5">
+        <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-5">
             <Activity className="w-5 h-5 text-blue-400" />
             Usage Overview
           </h3>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-navy-950 rounded-lg p-4">
+            <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
               <p className="text-xs text-slate-500 dark:text-slate-400">Total Tokens</p>
-              <p className="text-2xl font-bold text-white mt-1">
+              <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
                 {formatNumber(usageStats?.totalTokensThisMonth || 0)}
               </p>
               <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">This month</p>
             </div>
 
-            <div className="bg-navy-950 rounded-lg p-4">
+            <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
               <p className="text-xs text-slate-500 dark:text-slate-400">Storage Used</p>
-              <p className="text-2xl font-bold text-white mt-1">
+              <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
                 {(usageStats?.totalStorageGB || 0).toFixed(2)} GB
               </p>
               <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">Across all orgs</p>
             </div>
 
-            <div className="bg-navy-950 rounded-lg p-4">
+            <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
               <p className="text-xs text-slate-500 dark:text-slate-400">Active Orgs</p>
-              <p className="text-2xl font-bold text-white mt-1">
+              <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
                 {usageStats?.activeOrganizations || 0}
               </p>
               <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">With usage</p>
             </div>
 
-            <div className="bg-navy-950 rounded-lg p-4">
+            <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
               <p className="text-xs text-slate-500 dark:text-slate-400">Gross Profit</p>
               <p
                 className={`text-2xl font-bold mt-1 ${grossProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
@@ -255,8 +255,8 @@ const OverviewTab: React.FC = () => {
       </div>
 
       {/* Revenue by Plan Table */}
-      <div className="bg-navy-900 rounded-xl p-6 border border-white/10">
-        <h3 className="text-lg font-semibold text-white flex items-center gap-2 mb-5">
+      <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-5">
           <DollarSign className="w-5 h-5 text-blue-400" />
           Revenue by Plan
         </h3>
@@ -264,16 +264,16 @@ const OverviewTab: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-white/10">
+              <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
                 <th className="pb-3 font-medium">Plan</th>
                 <th className="pb-3 font-medium">Price</th>
                 <th className="pb-3 font-medium">Subscribers</th>
                 <th className="pb-3 font-medium text-right">Monthly Revenue</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
               {revenueStats?.planDistribution.map((plan) => (
-                <tr key={plan.name} className="text-white">
+                <tr key={plan.name} className="text-slate-900 dark:text-white">
                   <td className="py-3 font-medium">{plan.name}</td>
                   <td className="py-3 text-slate-400 dark:text-slate-500">
                     {formatCurrency(plan.price_monthly)}/mo
@@ -297,8 +297,8 @@ const OverviewTab: React.FC = () => {
       </div>
 
       {/* Operational Costs */}
-      <div className="bg-navy-900 rounded-xl p-6 border border-white/10">
-        <h3 className="text-lg font-semibold text-white flex items-center gap-2 mb-5">
+      <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-white/10">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-5">
           <Server className="w-5 h-5 text-blue-400" />
           Operational Costs (Backend)
         </h3>
@@ -309,17 +309,19 @@ const OverviewTab: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-white/10">
+              <tr className="text-left text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
                 <th className="pb-3 font-medium">Provider</th>
                 <th className="pb-3 font-medium">Model</th>
                 <th className="pb-3 font-medium text-right">Tokens</th>
                 <th className="pb-3 font-medium text-right">Est. Cost</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
               {operationalCosts?.items.map((item: any, idx: number) => (
-                <tr key={idx} className="text-white">
-                  <td className="py-3 font-medium capitalize">{item.provider}</td>
+                <tr key={idx} className="text-slate-900 dark:text-white">
+                  <td className="py-3 font-medium capitalize text-slate-900 dark:text-white">
+                    {item.provider}
+                  </td>
                   <td className="py-3 text-slate-500 dark:text-slate-400 font-mono text-xs">
                     {item.model}
                   </td>
@@ -341,8 +343,8 @@ const OverviewTab: React.FC = () => {
             </tbody>
             {operationalCosts && operationalCosts.items.length > 0 && (
               <tfoot>
-                <tr className="border-t-2 border-white/10">
-                  <td colSpan={3} className="py-3 font-bold text-white">
+                <tr className="border-t-2 border-slate-200 dark:border-white/10">
+                  <td colSpan={3} className="py-3 font-bold text-slate-900 dark:text-white">
                     Total Operational Cost
                   </td>
                   <td className="py-3 text-right font-bold text-lg text-red-400">
@@ -512,7 +514,7 @@ const PlansTab: React.FC = () => {
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               planType === 'organization'
                 ? 'bg-blue-600 text-white'
-                : 'bg-navy-800 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-navy-700'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-navy-700'
             }`}
           >
             <Building2 size={16} />
@@ -526,7 +528,7 @@ const PlansTab: React.FC = () => {
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               planType === 'user'
                 ? 'bg-blue-600 text-white'
-                : 'bg-navy-800 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-navy-700'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-navy-700'
             }`}
           >
             <Users size={16} />
@@ -546,7 +548,7 @@ const PlansTab: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* New Form Card */}
         {showNewForm && (
-          <div className="bg-navy-800 rounded-xl p-6 border-2 border-dashed border-blue-500/50">
+          <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border-2 border-dashed border-blue-500/50">
             <PlanForm
               type={planType}
               formData={planType === 'organization' ? orgFormData : userFormData}
@@ -563,8 +565,10 @@ const PlansTab: React.FC = () => {
         {plans.map((plan: any) => (
           <div
             key={plan.id}
-            className={`relative bg-navy-900 rounded-xl p-6 border transition-all ${
-              plan.is_active ? 'border-white/10 hover:border-white/20' : 'border-white/5 opacity-60'
+            className={`relative bg-white dark:bg-navy-900 rounded-xl p-6 border transition-all ${
+              plan.is_active
+                ? 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                : 'border-slate-100 dark:border-white/5 opacity-60'
             }`}
           >
             {editingId === plan.id ? (
@@ -608,12 +612,12 @@ const PlanForm: React.FC<{
   isNew?: boolean;
 }> = ({ type, formData, setFormData, onSave, onCancel, saving, isNew }) => (
   <div className="space-y-4">
-    <h3 className="text-lg font-semibold text-white">
+    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
       {isNew ? `New ${type === 'organization' ? 'Plan' : 'License'}` : 'Edit'}
     </h3>
 
     <div>
-      <label className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-1 block">
+      <label className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1 block">
         Name
       </label>
       <input
@@ -625,7 +629,7 @@ const PlanForm: React.FC<{
     </div>
 
     <div>
-      <label className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-1 block">
+      <label className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1 block">
         Price ($/month)
       </label>
       <input
@@ -665,7 +669,7 @@ const PlanForm: React.FC<{
           </div>
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-1 block">
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1 block">
             Stripe Price ID
           </label>
           <input
@@ -680,7 +684,7 @@ const PlanForm: React.FC<{
     )}
 
     <div>
-      <label className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-1 block">
+      <label className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1 block">
         Features (JSON)
       </label>
       <textarea
@@ -710,7 +714,7 @@ const PlanForm: React.FC<{
       </button>
       <button
         onClick={onCancel}
-        className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded-lg text-sm"
+        className="px-4 py-2 text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/20 rounded-lg text-sm"
       >
         <X className="w-4 h-4" />
       </button>
@@ -737,7 +741,7 @@ const PlanCard: React.FC<{
       </span>
     </div>
 
-    <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+    <h3 className="text-xl font-bold text-slate-900 dark:text-white">{plan.name}</h3>
     <div className="mt-2 flex items-baseline gap-1">
       <span className="text-3xl font-bold text-blue-400">${plan.price_monthly}</span>
       <span className="text-slate-500 dark:text-slate-400">/mo</span>
@@ -767,7 +771,7 @@ const PlanCard: React.FC<{
     <div className="mt-4 flex gap-2">
       <button
         onClick={onEdit}
-        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm bg-slate-50/30 dark:bg-navy-950/20 text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors"
+        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm bg-slate-100 dark:bg-navy-950/20 text-slate-900 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-800/40 transition-colors"
       >
         <Edit2 className="w-4 h-4" /> Edit
       </button>
@@ -824,25 +828,25 @@ const TokenEconomyTab: React.FC = () => {
     <div className="space-y-6">
       {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-navy-900 border border-white/5 rounded-xl p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
           <div className="flex justify-between items-start mb-3">
             <span className="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase">
               Active AI Models
             </span>
             <Zap size={18} className="text-yellow-400" />
           </div>
-          <div className="text-2xl font-bold text-white">{stats.activeModels}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">{stats.activeModels}</div>
         </div>
-        <div className="bg-navy-900 border border-white/5 rounded-xl p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
           <div className="flex justify-between items-start mb-3">
             <span className="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase">
               Active Packages
             </span>
             <Package size={18} className="text-blue-400" />
           </div>
-          <div className="text-2xl font-bold text-white">{stats.activePackages}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">{stats.activePackages}</div>
         </div>
-        <div className="bg-navy-900 border border-white/5 rounded-xl p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
           <div className="flex justify-between items-start mb-3">
             <span className="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase">
               Platform Margin
@@ -851,14 +855,16 @@ const TokenEconomyTab: React.FC = () => {
           </div>
           <div className="text-2xl font-bold text-emerald-400">{stats.platformMargin}%</div>
         </div>
-        <div className="bg-navy-900 border border-white/5 rounded-xl p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
           <div className="flex justify-between items-start mb-3">
             <span className="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase">
               System Balance
             </span>
             <DollarSign size={18} className="text-purple-400" />
           </div>
-          <div className="text-2xl font-bold text-white">{(stats.balance / 1000).toFixed(1)}k</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">
+            {(stats.balance / 1000).toFixed(1)}k
+          </div>
         </div>
       </div>
 
@@ -931,7 +937,7 @@ const TransactionsTab: React.FC = () => {
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 filter === f
                   ? 'bg-blue-600 text-white'
-                  : 'bg-navy-800 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-navy-700'
+                  : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-navy-700'
               }`}
             >
               {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -941,7 +947,7 @@ const TransactionsTab: React.FC = () => {
         <button
           onClick={loadTransactions}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 text-white rounded-lg text-sm transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-navy-800 dark:text-white dark:hover:bg-navy-700 rounded-lg text-sm transition-colors"
         >
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           Refresh
@@ -949,10 +955,10 @@ const TransactionsTab: React.FC = () => {
       </div>
 
       {/* Transactions Table */}
-      <div className="bg-navy-900 rounded-xl border border-white/10 overflow-hidden">
+      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="bg-navy-950 text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+            <tr className="bg-slate-50 dark:bg-navy-950 text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               <th className="py-4 px-6 text-left font-medium">Date</th>
               <th className="py-4 px-6 text-left font-medium">Organization</th>
               <th className="py-4 px-6 text-left font-medium">Type</th>
@@ -961,7 +967,7 @@ const TransactionsTab: React.FC = () => {
               <th className="py-4 px-6 text-right font-medium">Tokens</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-slate-200 dark:divide-white/10">
             {loading ? (
               <tr>
                 <td colSpan={6} className="py-12 text-center text-slate-500 dark:text-slate-400">
@@ -984,7 +990,7 @@ const TransactionsTab: React.FC = () => {
                   <td className="py-4 px-6 text-slate-500 dark:text-slate-400 text-sm">
                     {tx.created_at ? new Date(tx.created_at).toLocaleString() : '-'}
                   </td>
-                  <td className="py-4 px-6 text-white font-medium text-sm">
+                  <td className="py-4 px-6 text-slate-900 dark:text-white font-medium text-sm">
                     {tx.organization_name || tx.organization_id?.slice(0, 8) || '-'}
                   </td>
                   <td className="py-4 px-6">
@@ -1035,18 +1041,18 @@ export const BillingCenterView: React.FC = () => {
   ];
 
   return (
-    <div className="h-full overflow-y-auto p-8 bg-navy-950 relative">
+    <div className="h-full overflow-y-auto p-8 bg-slate-50 dark:bg-navy-950 relative">
       <InfoButton cardId="superadmin-billing" position="top-right" />
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center">
-              <CreditCard size={20} className="text-white" />
+              <CreditCard size={20} className="text-slate-900 dark:text-white" />
             </div>
             Billing Center
           </h1>
-          <p className="text-slate-400 dark:text-slate-500 mt-2">
+          <p className="text-slate-600 dark:text-slate-400 mt-2">
             Manage subscriptions, token pricing, and revenue analytics
           </p>
         </div>
@@ -1060,7 +1066,7 @@ export const BillingCenterView: React.FC = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-1 mb-8 bg-navy-900/50 p-1 rounded-xl w-fit border border-white/5">
+      <div className="flex gap-1 mb-8 bg-white dark:bg-navy-900/50 p-1 rounded-xl w-fit border border-slate-200 dark:border-white/5">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -1068,7 +1074,7 @@ export const BillingCenterView: React.FC = () => {
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.id
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/20'
             }`}
           >
             {tab.icon}

@@ -641,7 +641,7 @@ const INBOX_COLUMNS: ColumnDef[] = [
 const getDefaultColumnWidths = (): ColumnWidths =>
   INBOX_COLUMNS.reduce((acc, col) => ({ ...acc, [col.id]: col.width }), {});
 
-const INBOX_TABLE_VIEW_STORAGE_KEY = 'consultinity-inbox-table-view';
+const INBOX_TABLE_VIEW_STORAGE_KEY = 'consultify-inbox-table-view';
 const INBOX_TABLE_DEFAULT_HIDDEN_COLUMNS = ['type', 'section', 'source'] as const;
 
 function loadInboxHiddenColumns(): string[] {

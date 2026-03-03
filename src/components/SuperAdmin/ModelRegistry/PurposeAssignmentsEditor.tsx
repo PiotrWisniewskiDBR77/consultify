@@ -211,29 +211,59 @@ export const PurposeAssignmentsEditor: React.FC<PurposeAssignmentsEditorProps> =
     setAssignments(updated);
 
     try {
-      for (let i = 0; i < updated.length; i++) {
-        await fetch('/api/llm/tiers/priority', {
-          method: 'PUT',
-          headers: authHeaders(),
-          body: JSON.stringify({
-            providerId: updated[i].modelId,
-            tier: selectedPurpose,
-            priority: i,
-          }),
-        });
-      }
+      if (!selectedPurpose) return;
+      await Promise.all(
+        updated.map((row, priority) =>
+          fetch(`/api/llm/purposes/${encodeURIComponent(selectedPurpose)}/assignments`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({
+              providerId: row.modelId,
+              priority,
+              is_active: row.isActive,
+            }),
+          }).then(async (res) => {
+            if (!res.ok) {
+              const json = await res.json().catch(() => ({}));
+              throw new Error(json?.error || 'Failed to update priorities');
+            }
+          })
+        )
+      );
     } catch {
       toast.error('Failed to update priorities');
+      if (selectedPurpose) {
+        await loadAssignments(selectedPurpose);
+      }
     }
   };
 
-  const handleSetFallback = (assignment: PurposeAssignment, fallbackId: string) => {
+  const handleSetFallback = async (assignment: PurposeAssignment, fallbackId: string) => {
     setAssignments((prev) =>
       prev.map((a) =>
         a.id === assignment.id ? { ...a, fallbackModelId: fallbackId || undefined } : a
       )
     );
-    toast.success('Fallback updated');
+    if (!selectedPurpose) return;
+    try {
+      const res = await fetch(
+        `/api/llm/purposes/${encodeURIComponent(selectedPurpose)}/assignments`,
+        {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({
+            providerId: assignment.modelId,
+            priority: assignment.priority,
+            is_active: assignment.isActive,
+            fallback_model_id: fallbackId || null,
+          }),
+        }
+      );
+      if (!res.ok) throw new Error('Failed');
+      toast.success('Fallback model updated');
+    } catch {
+      toast.error('Failed to save fallback');
+    }
   };
 
   const toggleCategory = (label: string) => {
@@ -395,6 +425,7 @@ export const PurposeAssignmentsEditor: React.FC<PurposeAssignmentsEditorProps> =
                               value={assignment.fallbackModelId || ''}
                               onChange={(e) => handleSetFallback(assignment, e.target.value)}
                               onClick={(e) => e.stopPropagation()}
+                              title="Select fallback model"
                               className="h-7 px-2 text-xs bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded text-slate-700 dark:text-slate-300"
                             >
                               <option value="">No fallback</option>

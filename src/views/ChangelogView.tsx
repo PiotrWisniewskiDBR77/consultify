@@ -66,8 +66,8 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
   const t = {
     title: { en: 'Changelog', pl: 'Historia Zmian' },
     subtitle: {
-      en: 'Track all updates and improvements to Consultinity',
-      pl: 'Śledź wszystkie aktualizacje i ulepszenia Consultinity',
+      en: 'Track all updates and improvements to Consultify',
+      pl: 'Śledź wszystkie aktualizacje i ulepszenia Consultify',
     },
     all: { en: 'All', pl: 'Wszystkie' },
     major: { en: 'Major', pl: 'Główne' },

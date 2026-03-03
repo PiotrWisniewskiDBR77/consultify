@@ -22,8 +22,10 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { FullInitiative, InitiativeStatus } from '../../types';
 
@@ -47,6 +49,7 @@ interface ExecutionTimelineViewProps {
   onInitiativeClick: (initiative: FullInitiative) => void;
   onUpdateInitiative?: (initiative: FullInitiative) => void;
   onTimelineUpdate?: (initiativeId: string, field: string, value: string, reason?: string) => void;
+  onDependenciesChanged?: () => void;
   projectId?: string;
   riskSignals?: RiskSignalItem[];
   delaySignals?: DelaySignalItem[];
@@ -68,6 +71,14 @@ interface TimelineFilters {
   priority: string;
   owner: string;
   search: string;
+}
+
+interface PortfolioDependency {
+  id: string;
+  fromInitiativeId: string;
+  toInitiativeId: string;
+  type: string;
+  projectId?: string | null;
 }
 
 // ============================================
@@ -690,6 +701,8 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
   onInitiativeClick,
   onUpdateInitiative,
   onTimelineUpdate,
+  onDependenciesChanged,
+  projectId,
   riskSignals,
   delaySignals,
 }) => {
@@ -710,6 +723,12 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
     return today;
   });
 
+  const [depsOpen, setDepsOpen] = useState(false);
+  const [depsLoading, setDepsLoading] = useState(false);
+  const [deps, setDeps] = useState<PortfolioDependency[]>([]);
+  const [newDepFrom, setNewDepFrom] = useState('');
+  const [newDepTo, setNewDepTo] = useState('');
+
   const trackedRef = useRef(false);
   useEffect(() => {
     if (!trackedRef.current) {
@@ -717,6 +736,64 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
       trackedRef.current = true;
     }
   }, []);
+
+  const loadDependencies = useCallback(async () => {
+    setDepsLoading(true);
+    try {
+      const qs = new URLSearchParams();
+      if (projectId) qs.set('projectId', projectId);
+      const data = await Api.get(`/initiatives/portfolio/dependencies?${qs.toString()}`);
+      setDeps((data as any)?.dependencies || []);
+    } catch {
+      // non-blocking
+    } finally {
+      setDepsLoading(false);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    if (!depsOpen) return;
+    loadDependencies();
+  }, [depsOpen, loadDependencies]);
+
+  const handleCreateDependency = useCallback(async () => {
+    if (!newDepFrom || !newDepTo) return;
+    if (newDepFrom === newDepTo) {
+      toast.error(t('execution.timeline.deps.self', 'Cannot create self-dependency'));
+      return;
+    }
+    try {
+      await Api.post('/initiatives/portfolio/dependencies', {
+        fromInitiativeId: newDepFrom,
+        toInitiativeId: newDepTo,
+        type: 'FINISH_TO_START',
+        projectId: projectId || null,
+      });
+      toast.success(t('execution.timeline.deps.created', 'Dependency created'));
+      trackFunnelEvent('execution_dependency_created', { from: newDepFrom, to: newDepTo });
+      setNewDepFrom('');
+      setNewDepTo('');
+      await loadDependencies();
+      onDependenciesChanged?.();
+    } catch (e: any) {
+      toast.error(e?.message || t('execution.timeline.deps.createFailed', 'Failed to create'));
+    }
+  }, [newDepFrom, newDepTo, projectId, t, loadDependencies, onDependenciesChanged]);
+
+  const handleDeleteDependency = useCallback(
+    async (id: string) => {
+      try {
+        await Api.delete(`/initiatives/portfolio/dependencies/${id}`);
+        toast.success(t('execution.timeline.deps.deleted', 'Dependency removed'));
+        trackFunnelEvent('execution_dependency_deleted', { id });
+        await loadDependencies();
+        onDependenciesChanged?.();
+      } catch (e: any) {
+        toast.error(e?.message || t('execution.timeline.deps.deleteFailed', 'Failed to delete'));
+      }
+    },
+    [t, loadDependencies, onDependenciesChanged]
+  );
 
   const filteredInitiatives = useMemo(() => {
     let result = initiatives;
@@ -1010,9 +1087,21 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
         </div>
         <div className="flex items-center gap-3">
           <button
+            onClick={() => setDepsOpen(true)}
+            className="p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10"
+            title={t('execution.timeline.deps.manage', 'Manage dependencies')}
+            data-testid="timeline-deps-button"
+          >
+            <GripHorizontal size={16} />
+          </button>
+          <button
             onClick={() => setShowFilters((v) => !v)}
             className={`p-1.5 rounded-lg transition-colors ${showFilters || activeFilters ? 'bg-cyan-900/30 text-cyan-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10'}`}
-            title={showFilters ? 'Hide filters' : 'Show filters'}
+            title={
+              showFilters
+                ? t('execution.timeline.filters.hide', 'Hide filters')
+                : t('execution.timeline.filters.show', 'Show filters')
+            }
           >
             <Filter size={16} />
           </button>
@@ -1052,6 +1141,136 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
             transition={{ duration: 0.15 }}
           >
             <FilterBar filters={filters} onChange={handleFilterChange} initiatives={initiatives} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Dependencies Manager */}
+      <AnimatePresence>
+        {depsOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            onClick={() => setDepsOpen(false)}
+            data-testid="timeline-deps-modal"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.12 }}
+              className="w-full max-w-2xl rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
+                <div className="flex items-center gap-2">
+                  <Route size={16} className="text-cyan-500" />
+                  <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {t('execution.timeline.deps.title', 'Dependencies')}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setDepsOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="p-4 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2 items-end">
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                      {t('execution.timeline.deps.predecessor', 'Predecessor')}
+                    </label>
+                    <select
+                      value={newDepFrom}
+                      onChange={(e) => setNewDepFrom(e.target.value)}
+                      className="w-full text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded px-2 py-2 text-slate-700 dark:text-slate-200"
+                      data-testid="timeline-deps-from"
+                    >
+                      <option value="">{t('execution.timeline.deps.select', 'Select')}</option>
+                      {initiatives.map((i) => (
+                        <option key={i.id} value={i.id}>
+                          {i.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                      {t('execution.timeline.deps.successor', 'Successor')}
+                    </label>
+                    <select
+                      value={newDepTo}
+                      onChange={(e) => setNewDepTo(e.target.value)}
+                      className="w-full text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded px-2 py-2 text-slate-700 dark:text-slate-200"
+                      data-testid="timeline-deps-to"
+                    >
+                      <option value="">{t('execution.timeline.deps.select', 'Select')}</option>
+                      {initiatives.map((i) => (
+                        <option key={i.id} value={i.id}>
+                          {i.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    onClick={handleCreateDependency}
+                    disabled={!newDepFrom || !newDepTo}
+                    className="h-9 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-xs font-semibold"
+                    data-testid="timeline-deps-add"
+                  >
+                    {t('execution.timeline.deps.add', 'Add')}
+                  </button>
+                </div>
+
+                <div className="rounded-lg border border-slate-200 dark:border-navy-700 overflow-hidden">
+                  <div className="px-3 py-2 bg-slate-50 dark:bg-navy-800 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                    {t('execution.timeline.deps.current', 'Current dependencies')}
+                  </div>
+                  <div className="divide-y divide-slate-200 dark:divide-navy-700">
+                    {depsLoading ? (
+                      <div className="p-3 text-sm text-slate-500 dark:text-slate-400">
+                        {t('execution.timeline.deps.loading', 'Loading...')}
+                      </div>
+                    ) : deps.length === 0 ? (
+                      <div className="p-3 text-sm text-slate-500 dark:text-slate-400">
+                        {t('execution.timeline.deps.empty', 'No dependencies')}
+                      </div>
+                    ) : (
+                      deps.map((d) => {
+                        const from = initiatives.find((i) => i.id === d.fromInitiativeId)?.name;
+                        const to = initiatives.find((i) => i.id === d.toInitiativeId)?.name;
+                        return (
+                          <div
+                            key={d.id}
+                            className="flex items-center justify-between gap-3 px-3 py-2"
+                          >
+                            <div className="min-w-0">
+                              <div className="text-xs text-slate-800 dark:text-slate-100 truncate">
+                                {from || d.fromInitiativeId} → {to || d.toInitiativeId}
+                              </div>
+                              <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                                {d.type}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleDeleteDependency(d.id)}
+                              className="px-2 py-1 rounded-md text-xs text-rose-500 hover:bg-rose-500/10"
+                            >
+                              {t('execution.timeline.deps.remove', 'Remove')}
+                            </button>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -29,7 +29,9 @@ import {
   XCircle,
 } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
+import { toast } from 'react-hot-toast';
 
+import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 
 interface ImportResult {
@@ -68,6 +70,19 @@ export const BulkOperationsView: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Mass email
+  const [emailForm, setEmailForm] = useState({
+    recipientType: 'all' as 'all' | 'admins',
+    template: '',
+    subject: '',
+    message: '',
+  });
+  const [emailPreviewOpen, setEmailPreviewOpen] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+
+  // Export
+  const [exportingKey, setExportingKey] = useState<string | null>(null);
 
   const REQUIRED_FIELDS = ['email'];
   const OPTIONAL_FIELDS = ['firstName', 'lastName', 'role'];
@@ -200,6 +215,84 @@ export const BulkOperationsView: React.FC = () => {
       fetchUsers();
     } catch (error) {
       console.error('Failed to update roles:', error);
+    }
+  };
+
+  const parseContentDispositionFilename = (headerValue: string | null): string | null => {
+    if (!headerValue) return null;
+    const match =
+      /filename\*=UTF-8''([^;]+)|filename="([^"]+)"|filename=([^;]+)/i.exec(headerValue);
+    const raw = decodeURIComponent(match?.[1] || match?.[2] || match?.[3] || '');
+    return raw ? raw.trim() : null;
+  };
+
+  const downloadWithAuth = async (url: string, fallbackName: string) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(url, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error((err as any)?.error || 'Export failed');
+    }
+
+    const blob = await res.blob();
+    const filename =
+      parseContentDispositionFilename(res.headers.get('content-disposition')) || fallbackName;
+    const objectUrl = URL.createObjectURL(blob);
+    try {
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = filename;
+      a.click();
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  };
+
+  const handleSendMassEmail = async () => {
+    if (!emailForm.subject.trim() || !emailForm.message.trim()) {
+      toast.error('Subject and message are required');
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      const result = await Api.post('/api/admin/users/bulk-email', {
+        recipientType: emailForm.recipientType,
+        subject: emailForm.subject.trim(),
+        message: emailForm.message.trim(),
+      });
+      toast.success(
+        typeof result?.queued === 'number'
+          ? `Emails queued: ${result.queued}`
+          : result?.message || 'Emails queued'
+      );
+      setEmailPreviewOpen(false);
+      setEmailForm({ recipientType: 'all', template: '', subject: '', message: '' });
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to send email');
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const handleExport = async (key: 'users' | 'activity' | 'audit' | 'settings') => {
+    setExportingKey(key);
+    try {
+      const ts = Date.now();
+      const fallbackName =
+        key === 'users'
+          ? `users_export_${ts}.csv`
+          : key === 'settings'
+            ? `settings_export_${ts}.json`
+            : `${key}_log_${ts}.json`;
+      await downloadWithAuth(`/api/admin/export/${key}`, fallbackName);
+      toast.success('Export downloaded');
+    } catch (err: any) {
+      toast.error(err?.message || 'Export failed');
+    } finally {
+      setExportingKey(null);
     }
   };
 
@@ -634,11 +727,18 @@ export const BulkOperationsView: React.FC = () => {
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               Recipients
             </label>
-            <select className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg">
-              <option value="all">All Users</option>
+            <select
+              value={emailForm.recipientType}
+              onChange={(e) =>
+                setEmailForm((prev) => ({
+                  ...prev,
+                  recipientType: e.target.value as 'all' | 'admins',
+                }))
+              }
+              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
+            >
+              <option value="all">All Active Users</option>
               <option value="admins">Admins Only</option>
-              <option value="active">Active Users</option>
-              <option value="inactive">Inactive Users</option>
             </select>
           </div>
 
@@ -646,7 +746,11 @@ export const BulkOperationsView: React.FC = () => {
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               Template
             </label>
-            <select className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg">
+            <select
+              value={emailForm.template}
+              onChange={(e) => setEmailForm((prev) => ({ ...prev, template: e.target.value }))}
+              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
+            >
               <option value="">Select a template...</option>
               <option value="welcome">Welcome Email</option>
               <option value="announcement">Announcement</option>
@@ -661,6 +765,8 @@ export const BulkOperationsView: React.FC = () => {
             <input
               type="text"
               placeholder="Email subject"
+              value={emailForm.subject}
+              onChange={(e) => setEmailForm((prev) => ({ ...prev, subject: e.target.value }))}
               className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
             />
           </div>
@@ -672,22 +778,88 @@ export const BulkOperationsView: React.FC = () => {
             <textarea
               rows={6}
               placeholder="Write your message..."
+              value={emailForm.message}
+              onChange={(e) => setEmailForm((prev) => ({ ...prev, message: e.target.value }))}
               className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
             />
           </div>
 
           <div className="flex justify-end gap-3">
-            <button className="px-4 py-2 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setEmailPreviewOpen(true)}
+              className="px-4 py-2 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 flex items-center gap-2"
+            >
               <Eye size={16} />
               Preview
             </button>
-            <button className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2">
-              <Send size={16} />
-              Send Email
+            <button
+              type="button"
+              disabled={sendingEmail}
+              onClick={handleSendMassEmail}
+              className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
+            >
+              {sendingEmail ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+              {sendingEmail ? 'Sending…' : 'Send Email'}
             </button>
           </div>
         </div>
       </div>
+
+      {emailPreviewOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-2xl border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Email preview</h3>
+              <button
+                type="button"
+                onClick={() => setEmailPreviewOpen(false)}
+                className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300"
+              >
+                Close
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
+                <span className="font-medium text-slate-900 dark:text-white">Recipients:</span>{' '}
+                {emailForm.recipientType === 'admins' ? 'Admins only' : 'All active users'}
+              </div>
+              <div className="border border-slate-200 dark:border-navy-700 rounded-lg p-4 bg-slate-50 dark:bg-navy-900">
+                <div className="text-sm text-slate-500 dark:text-slate-400">Subject</div>
+                <div className="font-semibold text-slate-900 dark:text-white">
+                  {emailForm.subject || '(no subject)'}
+                </div>
+                <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">Message</div>
+                <div className="whitespace-pre-wrap text-slate-900 dark:text-white">
+                  {emailForm.message || '(no message)'}
+                </div>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEmailPreviewOpen(false)}
+                  className="px-4 py-2 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300"
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  disabled={sendingEmail}
+                  onClick={handleSendMassEmail}
+                  className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
+                >
+                  {sendingEmail ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Send size={16} />
+                  )}
+                  Send
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -706,9 +878,14 @@ export const BulkOperationsView: React.FC = () => {
               </p>
             </div>
           </div>
-          <button className="w-full px-4 py-2 bg-slate-100 dark:bg-navy-700 hover:bg-slate-200 dark:hover:bg-navy-600 rounded-lg text-slate-700 dark:text-slate-300 flex items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => handleExport('users')}
+            disabled={exportingKey === 'users'}
+            className="w-full px-4 py-2 bg-slate-100 dark:bg-navy-700 hover:bg-slate-200 dark:hover:bg-navy-600 disabled:opacity-50 rounded-lg text-slate-700 dark:text-slate-300 flex items-center justify-center gap-2"
+          >
             <Download size={16} />
-            Export Users CSV
+            {exportingKey === 'users' ? 'Exporting…' : 'Export Users CSV'}
           </button>
         </div>
 
@@ -724,9 +901,14 @@ export const BulkOperationsView: React.FC = () => {
               </p>
             </div>
           </div>
-          <button className="w-full px-4 py-2 bg-slate-100 dark:bg-navy-700 hover:bg-slate-200 dark:hover:bg-navy-600 rounded-lg text-slate-700 dark:text-slate-300 flex items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => handleExport('activity')}
+            disabled={exportingKey === 'activity'}
+            className="w-full px-4 py-2 bg-slate-100 dark:bg-navy-700 hover:bg-slate-200 dark:hover:bg-navy-600 disabled:opacity-50 rounded-lg text-slate-700 dark:text-slate-300 flex items-center justify-center gap-2"
+          >
             <Download size={16} />
-            Export Activity Log
+            {exportingKey === 'activity' ? 'Exporting…' : 'Export Activity Log'}
           </button>
         </div>
 
@@ -742,9 +924,14 @@ export const BulkOperationsView: React.FC = () => {
               </p>
             </div>
           </div>
-          <button className="w-full px-4 py-2 bg-slate-100 dark:bg-navy-700 hover:bg-slate-200 dark:hover:bg-navy-600 rounded-lg text-slate-700 dark:text-slate-300 flex items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => handleExport('audit')}
+            disabled={exportingKey === 'audit'}
+            className="w-full px-4 py-2 bg-slate-100 dark:bg-navy-700 hover:bg-slate-200 dark:hover:bg-navy-600 disabled:opacity-50 rounded-lg text-slate-700 dark:text-slate-300 flex items-center justify-center gap-2"
+          >
             <Download size={16} />
-            Export Audit Log
+            {exportingKey === 'audit' ? 'Exporting…' : 'Export Audit Log'}
           </button>
         </div>
 
@@ -760,9 +947,14 @@ export const BulkOperationsView: React.FC = () => {
               </p>
             </div>
           </div>
-          <button className="w-full px-4 py-2 bg-slate-100 dark:bg-navy-700 hover:bg-slate-200 dark:hover:bg-navy-600 rounded-lg text-slate-700 dark:text-slate-300 flex items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => handleExport('settings')}
+            disabled={exportingKey === 'settings'}
+            className="w-full px-4 py-2 bg-slate-100 dark:bg-navy-700 hover:bg-slate-200 dark:hover:bg-navy-600 disabled:opacity-50 rounded-lg text-slate-700 dark:text-slate-300 flex items-center justify-center gap-2"
+          >
             <Download size={16} />
-            Export Settings JSON
+            {exportingKey === 'settings' ? 'Exporting…' : 'Export Settings JSON'}
           </button>
         </div>
       </div>
@@ -772,9 +964,12 @@ export const BulkOperationsView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Bulk Operations</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">Manage users and data in bulk</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Bulk Operations</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Manage users and data in bulk</p>
+        </div>
+        <InfoButton cardId="superadmin-bulk-ops" position="header-inline" size="md" />
       </div>
 
       {/* Tabs */}

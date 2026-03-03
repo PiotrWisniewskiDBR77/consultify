@@ -74,16 +74,25 @@ const MODEL_TYPES = [
   { id: 'custom', label: 'Custom Model', icon: Brain, description: 'Train custom ML model' },
 ];
 
+const ACCURACY_TEXT_CLASS: Record<string, string> = {
+  gray: 'text-slate-600 dark:text-slate-400',
+  green: 'text-emerald-600 dark:text-emerald-400',
+  yellow: 'text-yellow-600 dark:text-yellow-400',
+  red: 'text-red-600 dark:text-red-400',
+};
+
 const PredictiveAnalyticsView: React.FC = () => {
   const [models, setModels] = useState<PredictiveModel[]>([]);
   const [selectedModel, setSelectedModel] = useState<PredictiveModel | null>(null);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isTraining, setIsTraining] = useState(false);
   const [isPredicting, setIsPredicting] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPredictModal, setShowPredictModal] = useState(false);
   const [predictionResult, setPredictionResult] = useState<any>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const [newModel, setNewModel] = useState({
     name: '',
@@ -101,11 +110,13 @@ const PredictiveAnalyticsView: React.FC = () => {
 
   const fetchModels = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const data = await Api.getPredictiveModels();
       setModels(data || []);
-    } catch (error) {
-      console.error('Failed to fetch models:', error);
+    } catch (err: any) {
+      console.error('Failed to fetch models:', err);
+      setError(err.message || 'Failed to load predictive models. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -130,7 +141,14 @@ const PredictiveAnalyticsView: React.FC = () => {
     if (!newModel.name || !newModel.modelType) return;
 
     try {
-      await Api.createPredictiveModel(newModel);
+      await Api.createPredictiveModel({
+        name: newModel.name,
+        description: newModel.description,
+        model_type: newModel.modelType,
+        target_metric: null,
+        features: [],
+        model_parameters: newModel.modelConfig || {},
+      });
       setShowCreateModal(false);
       setNewModel({
         name: '',
@@ -139,9 +157,11 @@ const PredictiveAnalyticsView: React.FC = () => {
         trainingData: {},
         modelConfig: {},
       });
+      setNotice(null);
       fetchModels();
     } catch (error) {
       console.error('Failed to create model:', error);
+      setNotice('Failed to create model. Please try again.');
     }
   };
 
@@ -167,14 +187,17 @@ const PredictiveAnalyticsView: React.FC = () => {
     try {
       const result = await Api.trainPredictiveModel(selectedModel.id);
       fetchModels();
-      if (result.accuracyScore !== undefined) {
+      const score = (result as any)?.accuracyScore ?? (result as any)?.accuracy_score;
+      if (score !== undefined) {
         setSelectedModel({
           ...selectedModel,
-          accuracy_score: result.accuracyScore,
+          accuracy_score: score,
         });
       }
-    } catch (error) {
-      console.error('Failed to train model:', error);
+      setNotice(null);
+    } catch (err: any) {
+      console.error('Failed to train model:', err);
+      setNotice(err?.message || 'Training failed. Please try again.');
     } finally {
       setIsTraining(false);
     }
@@ -196,8 +219,10 @@ const PredictiveAnalyticsView: React.FC = () => {
       setPredictionResult(result);
       setShowPredictModal(false);
       fetchPredictions(selectedModel.id);
-    } catch (error) {
-      console.error('Failed to make prediction:', error);
+      setNotice(null);
+    } catch (err: any) {
+      console.error('Failed to make prediction:', err);
+      setNotice(err?.message || 'Prediction failed. Please try again.');
     } finally {
       setIsPredicting(false);
     }
@@ -209,8 +234,9 @@ const PredictiveAnalyticsView: React.FC = () => {
 
   const getAccuracyColor = (score?: number) => {
     if (!score) return 'gray';
-    if (score >= 0.9) return 'green';
-    if (score >= 0.7) return 'yellow';
+    const normalized = score > 1 ? score / 100 : score;
+    if (normalized >= 0.9) return 'green';
+    if (normalized >= 0.7) return 'yellow';
     return 'red';
   };
 
@@ -232,8 +258,10 @@ const PredictiveAnalyticsView: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-white">Predictive Analytics</h2>
-          <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-1">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Predictive Analytics
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 mt-1">
             ML-powered predictions and forecasting
           </p>
         </div>
@@ -246,19 +274,56 @@ const PredictiveAnalyticsView: React.FC = () => {
         </button>
       </div>
 
+      {/* Service Notice */}
+      <div className="flex items-center gap-3 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+        <LineChart className="w-5 h-5 text-blue-500 shrink-0" />
+        <div>
+          <p className="text-sm font-medium text-blue-700 dark:text-blue-400">Statistical models available</p>
+          <p className="text-xs text-blue-600 dark:text-blue-500 mt-0.5">Train models using live platform data (subscriptions, users, revenue). Predictions are based on basic statistical calculations.</p>
+        </div>
+      </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="flex items-center justify-between p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-400" />
+            <span className="text-sm text-red-700 dark:text-red-300">{error}</span>
+          </div>
+          <button
+            onClick={() => { setError(null); fetchModels(); }}
+            className="flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Retry
+          </button>
+        </div>
+      )}
+
+      {notice && (
+        <Card className="p-4 border border-yellow-300/60 dark:border-yellow-500/30 bg-yellow-50/60 dark:bg-yellow-500/10">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-yellow-700 dark:text-yellow-300 mt-0.5" />
+            <div className="text-sm text-yellow-900 dark:text-yellow-100">{notice}</div>
+          </div>
+        </Card>
+      )}
+
       <div className="grid grid-cols-12 gap-6">
         {/* Models List */}
         <div className="col-span-4">
-          <Card className="bg-gray-800 p-4">
-            <h3 className="text-lg font-semibold text-white mb-4">ML Models ({models.length})</h3>
+          <Card className="p-4">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+              ML Models ({models.length})
+            </h3>
             <div className="space-y-2 max-h-[500px] overflow-y-auto">
               {models.length === 0 ? (
                 <div className="text-center py-8">
-                  <Brain className="w-12 h-12 text-gray-600 dark:text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">No models yet</p>
+                  <Brain className="w-12 h-12 text-slate-400 dark:text-slate-400 mx-auto mb-3" />
+                  <p className="text-slate-600 dark:text-slate-400 text-sm">No models yet</p>
                   <button
                     onClick={() => setShowCreateModal(true)}
-                    className="text-blue-400 hover:text-blue-300 text-sm mt-2"
+                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm mt-2"
                   >
                     Create your first model
                   </button>
@@ -275,8 +340,8 @@ const PredictiveAnalyticsView: React.FC = () => {
                       onClick={() => handleSelectModel(model)}
                       className={`p-3 rounded-lg cursor-pointer transition-colors ${
                         selectedModel?.id === model.id
-                          ? 'bg-blue-600/20 border border-blue-500'
-                          : 'bg-gray-700/50 hover:bg-gray-700'
+                          ? 'bg-blue-600/10 border border-blue-400/60 dark:bg-blue-500/10 dark:border-blue-500/30'
+                          : 'bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-transparent'
                       }`}
                     >
                       <div className="flex items-start gap-3">
@@ -285,19 +350,25 @@ const PredictiveAnalyticsView: React.FC = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-white font-medium truncate">{model.name}</span>
+                            <span className="text-slate-900 dark:text-white font-medium truncate">
+                              {model.name}
+                            </span>
                             {model.is_active && (
                               <span className="w-2 h-2 bg-green-400 rounded-full" />
                             )}
                           </div>
-                          <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs mt-1">
+                          <p className="text-slate-600 dark:text-slate-400 text-xs mt-1">
                             {typeInfo.label}
                           </p>
                           {model.accuracy_score !== undefined && (
                             <div className="flex items-center gap-1 mt-2">
-                              <Target className="w-3 h-3 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
-                              <span className={`text-xs text-${accuracyColor}-400`}>
-                                {(model.accuracy_score * 100).toFixed(1)}% accuracy
+                              <Target className="w-3 h-3 text-slate-500 dark:text-slate-400" />
+                              <span
+                                className={`text-xs ${ACCURACY_TEXT_CLASS[accuracyColor] || ACCURACY_TEXT_CLASS.gray}`}
+                              >
+                                {model.accuracy_score > 1
+                                  ? `${model.accuracy_score.toFixed(1)}% accuracy`
+                                  : `${(model.accuracy_score * 100).toFixed(1)}% accuracy`}
                               </span>
                             </div>
                           )}
@@ -316,12 +387,14 @@ const PredictiveAnalyticsView: React.FC = () => {
           {selectedModel ? (
             <div className="space-y-4">
               {/* Model Header */}
-              <Card className="bg-gray-800 p-4">
+              <Card className="p-4">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-xl font-bold text-white">{selectedModel.name}</h3>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                      {selectedModel.name}
+                    </h3>
                     {selectedModel.description && (
-                      <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-sm mt-1">
+                      <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
                         {selectedModel.description}
                       </p>
                     )}
@@ -330,7 +403,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                     <button
                       onClick={handleTrainModel}
                       disabled={isTraining}
-                      className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm transition-colors"
+                      className="flex items-center gap-2 text-white px-3 py-2 rounded-lg text-sm transition-colors bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600"
                     >
                       {isTraining ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -342,7 +415,8 @@ const PredictiveAnalyticsView: React.FC = () => {
                     <button
                       onClick={() => setShowPredictModal(true)}
                       disabled={!selectedModel.accuracy_score}
-                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm transition-colors"
+                      title={!selectedModel.accuracy_score ? 'Train the model first' : undefined}
+                      className="flex items-center gap-2 text-white px-3 py-2 rounded-lg text-sm transition-colors bg-green-600 hover:bg-green-700 disabled:bg-gray-600"
                     >
                       <Play className="w-4 h-4" />
                       Predict
@@ -358,41 +432,42 @@ const PredictiveAnalyticsView: React.FC = () => {
 
                 {/* Model Stats */}
                 <div className="grid grid-cols-4 gap-4">
-                  <div className="bg-gray-700/50 rounded-lg p-3">
-                    <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs">
-                      Type
-                    </span>
-                    <p className="text-white font-medium mt-1">
+                  <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg p-3">
+                    <span className="text-slate-600 dark:text-slate-400 text-xs">Type</span>
+                    <p className="text-slate-900 dark:text-white font-medium mt-1">
                       {getModelTypeInfo(selectedModel.model_type).label}
                     </p>
                   </div>
-                  <div className="bg-gray-700/50 rounded-lg p-3">
-                    <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs">
-                      Accuracy
-                    </span>
+                  <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg p-3">
+                    <span className="text-slate-600 dark:text-slate-400 text-xs">Accuracy</span>
                     <p
-                      className={`font-bold text-lg mt-1 text-${getAccuracyColor(selectedModel.accuracy_score)}-400`}
+                      className={`font-bold text-lg mt-1 ${
+                        ACCURACY_TEXT_CLASS[getAccuracyColor(selectedModel.accuracy_score)] ||
+                        ACCURACY_TEXT_CLASS.gray
+                      }`}
                     >
                       {selectedModel.accuracy_score !== undefined
-                        ? `${(selectedModel.accuracy_score * 100).toFixed(1)}%`
+                        ? selectedModel.accuracy_score > 1
+                          ? `${selectedModel.accuracy_score.toFixed(1)}%`
+                          : `${(selectedModel.accuracy_score * 100).toFixed(1)}%`
                         : 'Not trained'}
                     </p>
                   </div>
-                  <div className="bg-gray-700/50 rounded-lg p-3">
-                    <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs">
-                      Status
-                    </span>
+                  <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg p-3">
+                    <span className="text-slate-600 dark:text-slate-400 text-xs">Status</span>
                     <p
-                      className={`font-medium mt-1 ${selectedModel.is_active ? 'text-green-400' : 'text-gray-400 dark:text-gray-500 dark:text-gray-400'}`}
+                      className={`font-medium mt-1 ${
+                        selectedModel.is_active
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-slate-600 dark:text-slate-400'
+                      }`}
                     >
                       {selectedModel.is_active ? 'Active' : 'Inactive'}
                     </p>
                   </div>
-                  <div className="bg-gray-700/50 rounded-lg p-3">
-                    <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs">
-                      Last Updated
-                    </span>
-                    <p className="text-white text-sm mt-1">
+                  <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg p-3">
+                    <span className="text-slate-600 dark:text-slate-400 text-xs">Last Updated</span>
+                    <p className="text-slate-900 dark:text-white text-sm mt-1">
                       {formatDate(selectedModel.updated_at)}
                     </p>
                   </div>
@@ -401,23 +476,23 @@ const PredictiveAnalyticsView: React.FC = () => {
 
               {/* Latest Prediction Result */}
               {predictionResult && (
-                <Card className="bg-gray-800 p-4">
-                  <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Card className="p-4">
+                  <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                     <CheckCircle2 className="w-5 h-5 text-green-400" />
                     Latest Prediction
                   </h4>
-                  <div className="bg-gray-700/50 rounded-lg p-4">
+                  <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs">
+                        <span className="text-slate-600 dark:text-slate-400 text-xs">
                           Predicted Value
                         </span>
-                        <p className="text-2xl font-bold text-white mt-1">
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
                           {predictionResult.predictedValue || predictionResult.result || '-'}
                         </p>
                       </div>
                       <div>
-                        <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs">
+                        <span className="text-slate-600 dark:text-slate-400 text-xs">
                           Confidence
                         </span>
                         <p className="text-2xl font-bold text-blue-400 mt-1">
@@ -429,7 +504,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                     </div>
                     {predictionResult.factors && (
                       <div className="mt-4">
-                        <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs">
+                        <span className="text-slate-600 dark:text-slate-400 text-xs">
                           Key Factors
                         </span>
                         <div className="flex flex-wrap gap-2 mt-2">
@@ -437,7 +512,7 @@ const PredictiveAnalyticsView: React.FC = () => {
                             ([key, value]: [string, any]) => (
                               <span
                                 key={key}
-                                className="px-2 py-1 bg-gray-600 rounded text-xs text-white"
+                                className="px-2 py-1 bg-slate-200 dark:bg-white/10 rounded text-xs text-slate-900 dark:text-white"
                               >
                                 {key}: {String(value)}
                               </span>
@@ -451,10 +526,12 @@ const PredictiveAnalyticsView: React.FC = () => {
               )}
 
               {/* Prediction History */}
-              <Card className="bg-gray-800 p-4">
-                <h4 className="text-lg font-semibold text-white mb-4">Prediction History</h4>
+              <Card className="p-4">
+                <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+                  Prediction History
+                </h4>
                 {predictions.length === 0 ? (
-                  <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
+                  <p className="text-slate-600 dark:text-slate-400 text-sm text-center py-4">
                     No predictions yet. Train the model and make predictions.
                   </p>
                 ) : (
@@ -462,7 +539,13 @@ const PredictiveAnalyticsView: React.FC = () => {
                     {predictions.map((pred) => {
                       let result;
                       try {
-                        result = JSON.parse(pred.prediction_result_json);
+                        const raw =
+                          (pred as any).prediction_result_json ??
+                          (pred as any).result_json ??
+                          (pred as any).prediction_result ??
+                          (pred as any).result ??
+                          '{}';
+                        result = typeof raw === 'string' ? JSON.parse(raw) : raw;
                       } catch {
                         result = {};
                       }
@@ -470,16 +553,20 @@ const PredictiveAnalyticsView: React.FC = () => {
                       return (
                         <div
                           key={pred.id}
-                          className="flex items-center justify-between p-2 bg-gray-700/30 rounded-lg"
+                          className="flex items-center justify-between p-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg"
                         >
                           <div className="flex items-center gap-3">
                             <BarChart3 className="w-4 h-4 text-purple-400" />
                             <div>
-                              <span className="text-white text-sm">
+                              <span className="text-slate-900 dark:text-white text-sm">
                                 {result.predictedValue || 'Prediction'}
                               </span>
-                              <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs">
-                                {formatDate(pred.created_at)}
+                              <p className="text-slate-600 dark:text-slate-400 text-xs">
+                                {formatDate(
+                                  (pred as any).created_at ||
+                                    (pred as any).predicted_at ||
+                                    (pred as any).predictedAt
+                                )}
                               </p>
                             </div>
                           </div>
@@ -496,11 +583,13 @@ const PredictiveAnalyticsView: React.FC = () => {
               </Card>
             </div>
           ) : (
-            <Card className="bg-gray-800 p-8">
+            <Card className="p-8">
               <div className="flex flex-col items-center justify-center h-64">
-                <Brain className="w-16 h-16 text-gray-600 dark:text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">Select a Model</h3>
-                <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-center">
+                <Brain className="w-16 h-16 text-slate-400 dark:text-slate-400 mb-4" />
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+                  Select a Model
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400 text-center">
                   Choose a model from the list or create a new one
                 </p>
               </div>
@@ -512,30 +601,38 @@ const PredictiveAnalyticsView: React.FC = () => {
       {/* Create Model Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-lg">
-            <h3 className="text-xl font-bold text-white mb-4">Create New Model</h3>
+          <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-lg border border-slate-200 dark:border-navy-700 shadow-xl">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+              Create New Model
+            </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Model Name</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                  Model Name
+                </label>
                 <input
                   type="text"
                   value={newModel.name}
                   onChange={(e) => setNewModel({ ...newModel, name: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
                   placeholder="Customer Churn Predictor"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                  Description
+                </label>
                 <textarea
                   value={newModel.description}
                   onChange={(e) => setNewModel({ ...newModel, description: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
                   rows={2}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Model Type</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+                  Model Type
+                </label>
                 <div className="grid grid-cols-2 gap-2">
                   {MODEL_TYPES.map((mt) => (
                     <button
@@ -544,14 +641,16 @@ const PredictiveAnalyticsView: React.FC = () => {
                       className={`p-3 rounded-lg text-left transition-colors ${
                         newModel.modelType === mt.id
                           ? 'bg-purple-600/20 border border-purple-500'
-                          : 'bg-gray-700 hover:bg-gray-600'
+                          : 'bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-transparent'
                       }`}
                     >
                       <div className="flex items-center gap-2">
                         <mt.icon className="w-4 h-4 text-purple-400" />
-                        <span className="text-sm font-medium text-white">{mt.label}</span>
+                        <span className="text-sm font-medium text-slate-900 dark:text-white">
+                          {mt.label}
+                        </span>
                       </div>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-1">
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                         {mt.description}
                       </p>
                     </button>
@@ -562,7 +661,7 @@ const PredictiveAnalyticsView: React.FC = () => {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-lg transition-colors dark:bg-navy-700 dark:hover:bg-navy-600 dark:text-white"
               >
                 Cancel
               </button>
@@ -581,17 +680,19 @@ const PredictiveAnalyticsView: React.FC = () => {
       {/* Predict Modal */}
       {showPredictModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">Make Prediction</h3>
+          <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-md border border-slate-200 dark:border-navy-700 shadow-xl">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+              Make Prediction
+            </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
                   Input Data (JSON)
                 </label>
                 <textarea
                   value={predictionInput}
                   onChange={(e) => setPredictionInput(e.target.value)}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white font-mono text-sm"
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono text-sm"
                   rows={6}
                   placeholder='{"feature1": "value1", "feature2": 123}'
                 />
@@ -600,7 +701,7 @@ const PredictiveAnalyticsView: React.FC = () => {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowPredictModal(false)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-lg transition-colors dark:bg-navy-700 dark:hover:bg-navy-600 dark:text-white"
               >
                 Cancel
               </button>

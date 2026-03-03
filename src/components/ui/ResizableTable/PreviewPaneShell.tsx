@@ -1,7 +1,12 @@
 import { X } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface PreviewPaneShellProps {
+  /**
+   * @deprecated KANON v3: header preview nie pokazuje kickera ("Preview/Podgląd").
+   * Jeśli potrzebujesz meta/etykiety — renderuj ją w body jako "Brief/Meta card".
+   */
   kicker?: string;
   title: string;
   onClose?: () => void;
@@ -13,7 +18,6 @@ export interface PreviewPaneShellProps {
 }
 
 export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
-  kicker,
   title,
   onClose,
   actions,
@@ -22,24 +26,25 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
   className = '',
   bodyClassName = '',
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div
       className={[
         'h-full flex flex-col overflow-hidden',
-        'rounded-xl border border-slate-200 dark:border-navy-700',
+        'rounded-xl border border-slate-200/70 dark:border-white/[0.06]',
         'bg-white/70 dark:bg-navy-900/70',
         'backdrop-blur',
         className,
       ].join(' ')}
     >
-      <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200/70 dark:border-navy-700/70 bg-white/60 dark:bg-navy-900/60 backdrop-blur">
+      {/* Panel Header (KANON v3 / Golden Standard §6.10a) */}
+      <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-3 min-h-[64px] border-b border-slate-200/70 dark:border-white/[0.06] bg-white/80 dark:bg-navy-900/80 backdrop-blur">
         <div className="min-w-0">
-          {kicker ? (
-            <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              {kicker}
-            </div>
-          ) : null}
-          <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+          <div
+            className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate"
+            title={title}
+          >
             {title}
           </div>
         </div>
@@ -48,11 +53,11 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
           {onClose ? (
             <button
               onClick={onClose}
-              className="p-1.5 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-              aria-label="Close preview"
-              title="Close"
+              className="inline-flex items-center justify-center h-9 w-9 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+              aria-label={t('common.close', 'Close')}
+              title={t('common.close', 'Close')}
             >
-              <X size={14} />
+              <X size={16} />
             </button>
           ) : null}
         </div>
@@ -61,7 +66,7 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
       <div className={['flex-1 overflow-y-auto p-4', bodyClassName].join(' ')}>{children}</div>
 
       {footer ? (
-        <div className="shrink-0 border-t border-slate-200/70 dark:border-navy-700/70 p-4 bg-white/40 dark:bg-navy-900/40">
+        <div className="shrink-0 border-t border-slate-200/70 dark:border-white/[0.06] p-4">
           {footer}
         </div>
       ) : null}

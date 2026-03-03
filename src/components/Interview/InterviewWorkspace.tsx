@@ -60,12 +60,9 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { buildArtifactCode } from '@/utils/artifactLinks';
 
 import {
-  type Attachment,
-  AttachmentsSection,
   type LinkedItem,
   LinkedItemsSection,
 } from '../MyWork/shared';
-import { AttachmentsLinksCanvas } from '../shared/NModeSections';
 import {
   CATEGORY_CONFIG,
   CATEGORY_ORDER,
@@ -150,7 +147,6 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     constraints: [],
     painPoints: [],
   });
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [linkedItems, setLinkedItems] = useState<LinkedItem[]>([]);
   const [assignmentStatus, setAssignmentStatus] = useState<string | null>(null);
   const [assignmentInfo, setAssignmentInfo] = useState<any>(null);
@@ -233,13 +229,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         )
       : 0;
 
-  // E2.3: Extended status config (drafting → review → accepted/rejected)
+  // Status display (aligned with backend assignment/session statuses)
   const STATUS_MAP: Record<
     string,
     { label: { en: string; pl: string }; color: string; textColor: string }
   > = {
-    drafting: {
-      label: { en: 'Drafting', pl: 'Szkic' },
+    assigned: {
+      label: { en: 'Assigned', pl: 'Przypisany' },
       color: 'bg-slate-400',
       textColor: 'text-slate-600 dark:text-slate-400',
     },
@@ -248,25 +244,20 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       color: 'bg-blue-500',
       textColor: 'text-blue-600 dark:text-blue-400',
     },
-    review: {
-      label: { en: 'In Review', pl: 'Do przeglądu' },
-      color: 'bg-amber-500',
-      textColor: 'text-amber-600 dark:text-amber-400',
-    },
     submitted: {
       label: { en: 'Submitted', pl: 'Wysłany' },
       color: 'bg-amber-500',
       textColor: 'text-amber-600 dark:text-amber-400',
     },
-    accepted: {
-      label: { en: 'Accepted', pl: 'Zaakceptowany' },
-      color: 'bg-emerald-500',
-      textColor: 'text-emerald-600 dark:text-emerald-400',
-    },
-    rejected: {
-      label: { en: 'Rejected', pl: 'Odrzucony' },
+    sent_back: {
+      label: { en: 'Sent back', pl: 'Do poprawy' },
       color: 'bg-red-500',
       textColor: 'text-red-600 dark:text-red-400',
+    },
+    approved: {
+      label: { en: 'Approved', pl: 'Zatwierdzony' },
+      color: 'bg-emerald-500',
+      textColor: 'text-emerald-600 dark:text-emerald-400',
     },
     completed: {
       label: { en: 'Completed', pl: 'Zakończony' },
@@ -275,77 +266,19 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     },
   };
 
-  const currentStatus = (session?.status || 'drafting').toLowerCase();
-  const statusConfig = STATUS_MAP[currentStatus] || STATUS_MAP.drafting;
-
-  // E2.3: Determine allowed status transitions based on current status and role
-  const isManager =
-    currentUser?.role === 'ADMIN' ||
-    currentUser?.role === 'OWNER' ||
-    currentUser?.role === 'SUPERADMIN' ||
-    currentUser?.role === 'PROJECT_MANAGER';
-
-  const allowedTransitions = useMemo(() => {
-    const transitions: Array<{ status: string; label: { en: string; pl: string }; color: string }> =
-      [];
-    const s = currentStatus;
-
-    // Drafting → Review (anyone who is editing)
-    if (s === 'drafting' || s === 'in_progress') {
-      transitions.push({
-        status: 'review',
-        label: { en: 'Submit for Review', pl: 'Wyślij do przeglądu' },
-        color: 'bg-amber-500 hover:bg-amber-600',
-      });
-    }
-    // Review → Accepted / Rejected (manager only)
-    if ((s === 'review' || s === 'submitted') && isManager) {
-      transitions.push({
-        status: 'accepted',
-        label: { en: 'Accept', pl: 'Zaakceptuj' },
-        color: 'bg-emerald-500 hover:bg-emerald-600',
-      });
-      transitions.push({
-        status: 'rejected',
-        label: { en: 'Reject', pl: 'Odrzuć' },
-        color: 'bg-red-500 hover:bg-red-600',
-      });
-    }
-    // Rejected → Drafting (back to editing)
-    if (s === 'rejected') {
-      transitions.push({
-        status: 'drafting',
-        label: { en: 'Reopen as Draft', pl: 'Otwórz ponownie' },
-        color: 'bg-blue-500 hover:bg-blue-600',
-      });
-    }
-    return transitions;
-  }, [currentStatus, isManager]);
-
-  // E2.3: Handle status transition
-  const handleStatusTransition = useCallback(
-    async (newStatus: string) => {
-      if (!session) return;
-      try {
-        const updated = await Api.patch(`/interview/sessions/${session.id}`, { status: newStatus });
-        if (updated && typeof updated === 'object') {
-          setSession(updated as InterviewSession);
-        } else {
-          setSession((prev) => (prev ? { ...prev, status: newStatus } : prev));
-        }
-        const label = STATUS_MAP[newStatus]?.label;
-        toast.success(
-          isPolish
-            ? `Status zmieniony na: ${label?.pl || newStatus}`
-            : `Status changed to: ${label?.en || newStatus}`
-        );
-      } catch (error) {
-        console.error('[InterviewWorkspace] Failed to change status:', error);
-        toast.error(isPolish ? 'Nie udało się zmienić statusu' : 'Failed to change status');
-      }
-    },
-    [session, isPolish]
-  );
+  const currentStatus = useMemo(() => {
+    const raw = String(assignmentStatus || session?.status || 'in_progress').toLowerCase();
+    if (raw === 'active') return 'in_progress';
+    if (raw === 'assigned') return 'assigned';
+    if (raw === 'in_progress') return 'in_progress';
+    if (raw === 'submitted') return 'submitted';
+    if (raw === 'sent_back') return 'sent_back';
+    if (raw === 'approved') return 'approved';
+    if (raw === 'completed') return 'completed';
+    if (raw === 'archived') return 'completed';
+    return 'in_progress';
+  }, [assignmentStatus, session?.status]);
+  const statusConfig = STATUS_MAP[currentStatus] || STATUS_MAP.in_progress;
 
   const handleRuntimeModeSelect = useCallback(
     (nextMode: RuntimeMode) => {
@@ -431,7 +364,6 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             contextRes,
             summaryRes,
             myAssignmentsRes,
-            attachmentsRes,
           ] = await Promise.all([
             Api.get(`/interview/sessions/${currentSession.id}/questions`),
             Api.get(`/interview/sessions/${currentSession.id}/notes`),
@@ -441,7 +373,6 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             currentSession.assignmentId
               ? Api.get(`/interview/assignments/my?includeCompleted=true`).catch(() => [])
               : Promise.resolve([]),
-            Api.get(`/interview/sessions/${currentSession.id}/attachments`).catch(() => []),
           ]);
 
           setQuestions(Array.isArray(questionsRes) ? questionsRes : []);
@@ -453,11 +384,6 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             const found = list.find((a: any) => a?.id === currentSession?.assignmentId);
             setAssignmentStatus(found?.status || null);
             setAssignmentInfo(found || null);
-          }
-
-          // E2.2: Load persisted attachments
-          if (Array.isArray(attachmentsRes) && attachmentsRes.length > 0) {
-            setAttachments(attachmentsRes as Attachment[]);
           }
 
           if (contextRes && typeof contextRes === 'object') {
@@ -619,9 +545,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       try {
         const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
           evidenceType: 'file',
-          name: file.name,
+          title: file.name,
+          fileName: file.name,
           fileSize: file.size,
-          mimeType: file.type,
+          fileType: file.type,
           category,
         });
         setEvidence((prev) => [...prev, created as InterviewEvidence]);
@@ -645,7 +572,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       try {
         const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
           evidenceType: 'link',
-          name,
+          title: name,
           url,
           description,
           category,
@@ -773,59 +700,6 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     if (!session) return;
     setActiveConversation(`interview-${session.id}`);
   }, [session, setActiveConversation]);
-
-  // Attachments handlers (E2.2 – persist via API)
-  const handleUploadAttachment = async (files: FileList) => {
-    if (!session) return;
-    try {
-      const uploaded: Attachment[] = [];
-      for (const file of Array.from(files)) {
-        // Try to upload via API; fall back to local if endpoint not ready
-        try {
-          const result = await Api.post(`/interview/sessions/${session.id}/attachments`, {
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            sessionId: session.id,
-          });
-          if (result && typeof result === 'object' && (result as any).id) {
-            uploaded.push(result as Attachment);
-            continue;
-          }
-        } catch {
-          // API endpoint may not exist yet – fall back to local blob
-        }
-        uploaded.push({
-          id: Math.random().toString(36).substr(2, 9),
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          url: URL.createObjectURL(file),
-          uploadedAt: new Date().toISOString(),
-          uploadedBy: currentUser?.displayName || currentUser?.firstName || 'User',
-        });
-      }
-      setAttachments((prev) => [...prev, ...uploaded]);
-      toast.success(isPolish ? 'Załączniki dodane' : 'Attachments added');
-    } catch (error) {
-      console.error('[InterviewWorkspace] Failed to upload attachments:', error);
-      toast.error(isPolish ? 'Nie udało się dodać załączników' : 'Failed to upload attachments');
-    }
-  };
-
-  const handleDeleteAttachment = async (id: string) => {
-    try {
-      // Try API delete; ignore errors if endpoint not ready
-      if (session) {
-        await Api.delete(`/interview/attachments/${id}`).catch(() => {});
-      }
-      setAttachments((prev) => prev.filter((a) => a.id !== id));
-      toast.success(isPolish ? 'Załącznik usunięty' : 'Attachment deleted');
-    } catch (error) {
-      console.error('[InterviewWorkspace] Failed to delete attachment:', error);
-      toast.error(isPolish ? 'Nie udało się usunąć załącznika' : 'Failed to delete attachment');
-    }
-  };
 
   // Linked items handlers
   const handleAddLinkedItem = async (item: LinkedItem) => {
@@ -1104,26 +978,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     const out: NModeAction[] = [];
 
     if (!isLocked) {
-      if (allowedTransitions.length > 0) {
-        for (const t of allowedTransitions) {
-          out.push({
-            id: `transition-${t.status}`,
-            label: t.label,
-            icon:
-              t.status === 'accepted'
-                ? Check
-                : t.status === 'rejected'
-                  ? X
-                  : t.status === 'review'
-                    ? Send
-                    : RefreshCw,
-            variant:
-              t.status === 'rejected' ? 'danger' : t.status === 'accepted' ? 'success' : 'neutral',
-            onClick: () => handleStatusTransition(t.status),
-            disabled: isSaving,
-          });
-        }
-      } else if (isAssignmentMode) {
+      if (isAssignmentMode) {
         out.push({
           id: 'submit',
           label: { en: 'Submit for review', pl: 'Wyślij do przeglądu' },
@@ -1445,21 +1300,6 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       </NModeSectionWrapper>
     );
 
-    const attachmentsLinksSection = (
-      <NModeSectionWrapper heading={{ en: 'Attachments & links', pl: 'Załączniki i linki' }}>
-        <AttachmentsLinksCanvas
-          attachments={attachments}
-          onUploadAttachments={handleUploadAttachment}
-          onDeleteAttachment={handleDeleteAttachment}
-          linkedItems={linkedItems}
-          onAddLinkedItem={handleAddLinkedItem}
-          onRemoveLinkedItem={(item) => handleRemoveLinkedItem(item.id)}
-          searchLinkedItems={(q) => searchLinkedItems(q) as any}
-          readOnly={isLocked}
-        />
-      </NModeSectionWrapper>
-    );
-
     const base: NModeSection[] = [
       {
         id: 'overview',
@@ -1507,12 +1347,6 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         label: { en: 'Open gaps', pl: 'Luki' },
         badge: openGaps.length,
         component: gapsSection,
-      },
-      {
-        id: 'attachments-links',
-        icon: Link2,
-        label: { en: 'Links', pl: 'Linki' },
-        component: attachmentsLinksSection,
       },
     ];
 
@@ -1625,26 +1459,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               <span>{isPolish ? 'Zapisz' : 'Save'}</span>
             </motion.button>
 
-            {/* E2.3: Status transition buttons */}
-            {allowedTransitions.map((transition) => (
-              <motion.button
-                key={transition.status}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleStatusTransition(transition.status)}
-                disabled={isSaving}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all shadow-sm disabled:opacity-60 ${transition.color}`}
-              >
-                {transition.status === 'accepted' && <Check size={16} />}
-                {transition.status === 'rejected' && <X size={16} />}
-                {transition.status === 'review' && <Send size={16} />}
-                {transition.status === 'drafting' && <RefreshCw size={16} />}
-                <span>{isPolish ? transition.label.pl : transition.label.en}</span>
-              </motion.button>
-            ))}
-
-            {/* Legacy submit button (for assignment mode) */}
-            {isAssignmentMode && !allowedTransitions.length && (
+            {/* Submit button (assignment mode) */}
+            {isAssignmentMode && (
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -2197,15 +2013,6 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 </motion.button>
               </div>
             )}
-
-            {/* 3. Attachments */}
-            <AttachmentsSection
-              attachments={attachments}
-              onUpload={handleUploadAttachment}
-              onDelete={handleDeleteAttachment}
-              expanded={expandedSections.has('attachments')}
-              onToggleExpand={() => toggleSection('attachments')}
-            />
 
             {/* 4. Progress Overview */}
             {renderCollapsibleSection(

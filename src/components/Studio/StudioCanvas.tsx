@@ -1,7 +1,7 @@
 /**
  * StudioCanvas - React Flow Canvas Component
  *
- * Main canvas component for Consultinity Studio.
+ * Main canvas component for Consultify Studio.
  * Handles diagram rendering, editing, and interactions.
  */
 

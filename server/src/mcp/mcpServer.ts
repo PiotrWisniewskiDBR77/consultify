@@ -3,7 +3,7 @@
  * MCP Server - Model Context Protocol Implementation
  *
  * User-scoped MCP server for AI integrations (Claude, Cursor, etc.)
- * Provides tools, resources, and prompts for Consultinity data.
+ * Provides tools, resources, and prompts for Consultify data.
  *
  * Based on Anthropic MCP Specification:
  * https://modelcontextprotocol.io/docs
@@ -22,8 +22,8 @@ const MCP_VERSION = '2024-11-05';
 // Available tools for MCP clients
 const TOOLS = {
   // Task Management
-  'consultinity.tasks.list': {
-    name: 'consultinity.tasks.list',
+  'consultify.tasks.list': {
+    name: 'consultify.tasks.list',
     description: 'List tasks assigned to the user or in their projects',
     inputSchema: {
       type: 'object',
@@ -35,8 +35,8 @@ const TOOLS = {
       },
     },
   },
-  'consultinity.tasks.create': {
-    name: 'consultinity.tasks.create',
+  'consultify.tasks.create': {
+    name: 'consultify.tasks.create',
     description: 'Create a new task',
     inputSchema: {
       type: 'object',
@@ -51,8 +51,8 @@ const TOOLS = {
       required: ['title'],
     },
   },
-  'consultinity.tasks.update': {
-    name: 'consultinity.tasks.update',
+  'consultify.tasks.update': {
+    name: 'consultify.tasks.update',
     description: 'Update an existing task',
     inputSchema: {
       type: 'object',
@@ -66,8 +66,8 @@ const TOOLS = {
       required: ['taskId'],
     },
   },
-  'consultinity.tasks.get': {
-    name: 'consultinity.tasks.get',
+  'consultify.tasks.get': {
+    name: 'consultify.tasks.get',
     description: 'Get details of a specific task',
     inputSchema: {
       type: 'object',
@@ -79,8 +79,8 @@ const TOOLS = {
   },
 
   // Initiatives
-  'consultinity.initiatives.list': {
-    name: 'consultinity.initiatives.list',
+  'consultify.initiatives.list': {
+    name: 'consultify.initiatives.list',
     description: 'List initiatives in the organization',
     inputSchema: {
       type: 'object',
@@ -90,8 +90,8 @@ const TOOLS = {
       },
     },
   },
-  'consultinity.initiatives.get': {
-    name: 'consultinity.initiatives.get',
+  'consultify.initiatives.get': {
+    name: 'consultify.initiatives.get',
     description: 'Get details of a specific initiative',
     inputSchema: {
       type: 'object',
@@ -103,8 +103,8 @@ const TOOLS = {
   },
 
   // Notifications
-  'consultinity.notifications.list': {
-    name: 'consultinity.notifications.list',
+  'consultify.notifications.list': {
+    name: 'consultify.notifications.list',
     description: 'List notifications for the user',
     inputSchema: {
       type: 'object',
@@ -114,8 +114,8 @@ const TOOLS = {
       },
     },
   },
-  'consultinity.notifications.send': {
-    name: 'consultinity.notifications.send',
+  'consultify.notifications.send': {
+    name: 'consultify.notifications.send',
     description: 'Send a notification to a user',
     inputSchema: {
       type: 'object',
@@ -130,8 +130,8 @@ const TOOLS = {
   },
 
   // Projects
-  'consultinity.projects.list': {
-    name: 'consultinity.projects.list',
+  'consultify.projects.list': {
+    name: 'consultify.projects.list',
     description: 'List projects the user has access to',
     inputSchema: {
       type: 'object',
@@ -143,8 +143,8 @@ const TOOLS = {
   },
 
   // Search
-  'consultinity.search': {
-    name: 'consultinity.search',
+  'consultify.search': {
+    name: 'consultify.search',
     description: 'Search across tasks, initiatives, and projects',
     inputSchema: {
       type: 'object',
@@ -164,32 +164,32 @@ const TOOLS = {
 
 // Available resources
 const RESOURCES = {
-  'consultinity://user/profile': {
-    uri: 'consultinity://user/profile',
+  'consultify://user/profile': {
+    uri: 'consultify://user/profile',
     name: 'User Profile',
     description: 'Current user profile information',
     mimeType: 'application/json',
   },
-  'consultinity://user/tasks/today': {
-    uri: 'consultinity://user/tasks/today',
+  'consultify://user/tasks/today': {
+    uri: 'consultify://user/tasks/today',
     name: "Today's Tasks",
     description: 'Tasks due today for the current user',
     mimeType: 'application/json',
   },
-  'consultinity://user/tasks/overdue': {
-    uri: 'consultinity://user/tasks/overdue',
+  'consultify://user/tasks/overdue': {
+    uri: 'consultify://user/tasks/overdue',
     name: 'Overdue Tasks',
     description: 'Overdue tasks for the current user',
     mimeType: 'application/json',
   },
-  'consultinity://user/notifications/unread': {
-    uri: 'consultinity://user/notifications/unread',
+  'consultify://user/notifications/unread': {
+    uri: 'consultify://user/notifications/unread',
     name: 'Unread Notifications',
     description: 'Unread notifications for the current user',
     mimeType: 'application/json',
   },
-  'consultinity://organization/initiatives': {
-    uri: 'consultinity://organization/initiatives',
+  'consultify://organization/initiatives': {
+    uri: 'consultify://organization/initiatives',
     name: 'Organization Initiatives',
     description: 'Active initiatives in the organization',
     mimeType: 'application/json',
@@ -198,8 +198,8 @@ const RESOURCES = {
 
 // Available prompts
 const PROMPTS = {
-  'consultinity.daily_standup': {
-    name: 'consultinity.daily_standup',
+  'consultify.daily_standup': {
+    name: 'consultify.daily_standup',
     description: 'Generate a daily standup summary',
     arguments: [
       {
@@ -209,13 +209,13 @@ const PROMPTS = {
       },
     ],
   },
-  'consultinity.task_breakdown': {
-    name: 'consultinity.task_breakdown',
+  'consultify.task_breakdown': {
+    name: 'consultify.task_breakdown',
     description: 'Break down a task into subtasks',
     arguments: [{ name: 'taskId', description: 'ID of the task to break down', required: true }],
   },
-  'consultinity.initiative_summary': {
-    name: 'consultinity.initiative_summary',
+  'consultify.initiative_summary': {
+    name: 'consultify.initiative_summary',
     description: 'Generate an executive summary for an initiative',
     arguments: [{ name: 'initiativeId', description: 'ID of the initiative', required: true }],
   },
@@ -246,7 +246,7 @@ const MCPServer = {
       logging: {},
     },
     serverInfo: {
-      name: 'consultinity-mcp',
+      name: 'consultify-mcp',
       version: '1.0.0',
     },
   }),
@@ -282,34 +282,34 @@ const MCPServer = {
       let result;
 
       switch (toolName) {
-        case 'consultinity.tasks.list':
+        case 'consultify.tasks.list':
           result = await MCPServer._getTasksList(userId, organizationId, args);
           break;
-        case 'consultinity.tasks.create':
+        case 'consultify.tasks.create':
           result = await MCPServer._createTask(userId, organizationId, args);
           break;
-        case 'consultinity.tasks.update':
+        case 'consultify.tasks.update':
           result = await MCPServer._updateTask(userId, organizationId, args);
           break;
-        case 'consultinity.tasks.get':
+        case 'consultify.tasks.get':
           result = await MCPServer._getTask(userId, organizationId, args);
           break;
-        case 'consultinity.initiatives.list':
+        case 'consultify.initiatives.list':
           result = await MCPServer._getInitiativesList(userId, organizationId, args);
           break;
-        case 'consultinity.initiatives.get':
+        case 'consultify.initiatives.get':
           result = await MCPServer._getInitiative(userId, organizationId, args);
           break;
-        case 'consultinity.notifications.list':
+        case 'consultify.notifications.list':
           result = await MCPServer._getNotificationsList(userId, args);
           break;
-        case 'consultinity.notifications.send':
+        case 'consultify.notifications.send':
           result = await MCPServer._sendNotification(userId, organizationId, args);
           break;
-        case 'consultinity.projects.list':
+        case 'consultify.projects.list':
           result = await MCPServer._getProjectsList(userId, organizationId, args);
           break;
-        case 'consultinity.search':
+        case 'consultify.search':
           result = await MCPServer._search(userId, organizationId, args);
           break;
         default:
@@ -363,19 +363,19 @@ const MCPServer = {
     let content;
 
     switch (uri) {
-      case 'consultinity://user/profile':
+      case 'consultify://user/profile':
         content = await MCPServer._getUserProfile(userId);
         break;
-      case 'consultinity://user/tasks/today':
+      case 'consultify://user/tasks/today':
         content = await MCPServer._getTodaysTasks(userId, organizationId);
         break;
-      case 'consultinity://user/tasks/overdue':
+      case 'consultify://user/tasks/overdue':
         content = await MCPServer._getOverdueTasks(userId, organizationId);
         break;
-      case 'consultinity://user/notifications/unread':
+      case 'consultify://user/notifications/unread':
         content = await MCPServer._getUnreadNotifications(userId);
         break;
-      case 'consultinity://organization/initiatives':
+      case 'consultify://organization/initiatives':
         content = await MCPServer._getOrgInitiatives(organizationId);
         break;
       default:
@@ -420,13 +420,13 @@ const MCPServer = {
     let messages;
 
     switch (promptName) {
-      case 'consultinity.daily_standup':
+      case 'consultify.daily_standup':
         messages = await MCPServer._buildStandupPrompt(userId, organizationId, args);
         break;
-      case 'consultinity.task_breakdown':
+      case 'consultify.task_breakdown':
         messages = await MCPServer._buildTaskBreakdownPrompt(userId, organizationId, args);
         break;
-      case 'consultinity.initiative_summary':
+      case 'consultify.initiative_summary':
         messages = await MCPServer._buildInitiativeSummaryPrompt(userId, organizationId, args);
         break;
       default:

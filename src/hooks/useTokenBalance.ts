@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { Api } from '../services/api';
-import type { TokenBalance } from '../types';
 
 const LOW_BALANCE_THRESHOLD = 1000;
 const ZERO_BALANCE_THRESHOLD = 100;
 
 export const useTokenBalance = () => {
-  const [data, setData] = useState<TokenBalance | null>(null);
+  const [data, setData] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -16,8 +15,9 @@ export const useTokenBalance = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const balance = (await Api.getTokenBalance()) as TokenBalance;
-      setData(balance);
+      const raw = await Api.getTokenBalance();
+      const n = typeof raw === 'number' ? raw : Number(raw);
+      setData(Number.isFinite(n) ? n : 0);
       setLastUpdated(new Date());
     } catch (err) {
       console.error('[useTokenBalance] Failed to load balance:', err);
@@ -32,7 +32,7 @@ export const useTokenBalance = () => {
     refreshBalance();
   }, [refreshBalance]);
 
-  const available = data?.available ?? 0;
+  const available = data ?? 0;
   const isZeroBalance = available <= ZERO_BALANCE_THRESHOLD;
   const isLowBalance = available > ZERO_BALANCE_THRESHOLD && available <= LOW_BALANCE_THRESHOLD;
   const shouldShowWarning = isLowBalance || isZeroBalance;

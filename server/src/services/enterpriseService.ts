@@ -51,7 +51,7 @@ export interface WhiteLabelConfig {
   customDomainVerified: boolean;
   emailFromName?: string;
   emailFromAddress?: string;
-  hideConsultinityBranding: boolean;
+  hideConsultifyBranding: boolean;
   isEnabled: boolean;
 }
 
@@ -303,7 +303,7 @@ class EnterpriseService {
       custom_domain_status: string;
       email_from_name: string;
       email_from_address: string;
-      hide_consultinity_branding: number;
+      hide_consultify_branding: number;
       is_enabled: number;
     }>(`SELECT * FROM white_label_config WHERE organization_id = ?`, [orgId]);
 
@@ -321,7 +321,7 @@ class EnterpriseService {
       customDomainVerified: row.custom_domain_status === 'verified',
       emailFromName: row.email_from_name,
       emailFromAddress: row.email_from_address,
-      hideConsultinityBranding: row.hide_consultinity_branding === 1,
+      hideConsultifyBranding: row.hide_consultify_branding === 1,
       isEnabled: row.is_enabled === 1,
     };
   }
@@ -359,9 +359,9 @@ class EnterpriseService {
         fields.push('custom_domain = ?');
         values.push(config.customDomain);
       }
-      if (config.hideConsultinityBranding !== undefined) {
-        fields.push('hide_consultinity_branding = ?');
-        values.push(config.hideConsultinityBranding ? 1 : 0);
+      if (config.hideConsultifyBranding !== undefined) {
+        fields.push('hide_consultify_branding = ?');
+        values.push(config.hideConsultifyBranding ? 1 : 0);
       }
       if (config.isEnabled !== undefined) {
         fields.push('is_enabled = ?');
@@ -380,7 +380,7 @@ class EnterpriseService {
         `INSERT INTO white_label_config (
                     id, organization_id, logo_light_url, logo_dark_url,
                     color_primary, color_secondary, custom_domain,
-                    hide_consultinity_branding, is_enabled, created_at
+                    hide_consultify_branding, is_enabled, created_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
@@ -390,7 +390,7 @@ class EnterpriseService {
           config.colorPrimary || null,
           config.colorSecondary || null,
           config.customDomain || null,
-          config.hideConsultinityBranding ? 1 : 0,
+          config.hideConsultifyBranding ? 1 : 0,
           config.isEnabled ? 1 : 0,
           now,
         ]

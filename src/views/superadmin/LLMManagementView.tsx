@@ -43,6 +43,71 @@ import { LLMProvider, LLMProviderConfig } from '../../types/domain/ai';
 
 type LLMConfigTab = 'providers' | 'routing' | 'usage' | 'health';
 
+const PROVIDER_MODELS: Record<string, { id: string; label: string; tier?: string }[]> = {
+  openrouter: [
+    { id: 'openai/gpt-4o', label: 'GPT-4o', tier: 'STANDARD' },
+    { id: 'openai/gpt-4o-mini', label: 'GPT-4o Mini', tier: 'BUDGET' },
+    { id: 'openai/o3-mini', label: 'o3-mini (Reasoning)', tier: 'REASONING' },
+    { id: 'anthropic/claude-3-5-sonnet', label: 'Claude 3.5 Sonnet', tier: 'PREMIUM' },
+    { id: 'anthropic/claude-3-5-haiku', label: 'Claude 3.5 Haiku', tier: 'STANDARD' },
+    { id: 'anthropic/claude-3-7-sonnet', label: 'Claude 3.7 Sonnet', tier: 'PREMIUM' },
+    { id: 'google/gemini-2.0-flash-001', label: 'Gemini 2.0 Flash', tier: 'BUDGET' },
+    { id: 'google/gemini-2.0-pro-exp-02-05', label: 'Gemini 2.0 Pro', tier: 'PREMIUM' },
+    { id: 'deepseek/deepseek-chat', label: 'DeepSeek Chat', tier: 'BUDGET' },
+    { id: 'deepseek/deepseek-r1', label: 'DeepSeek R1 (Reasoning)', tier: 'REASONING' },
+    { id: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3.3 70B', tier: 'STANDARD' },
+    { id: 'mistralai/mistral-large', label: 'Mistral Large', tier: 'STANDARD' },
+  ],
+  openai: [
+    { id: 'gpt-4o', label: 'GPT-4o', tier: 'STANDARD' },
+    { id: 'gpt-4o-mini', label: 'GPT-4o Mini', tier: 'BUDGET' },
+    { id: 'o3-mini', label: 'o3-mini (Reasoning)', tier: 'REASONING' },
+    { id: 'o1', label: 'o1 (Reasoning)', tier: 'REASONING' },
+    { id: 'gpt-4-turbo', label: 'GPT-4 Turbo', tier: 'PREMIUM' },
+  ],
+  anthropic: [
+    { id: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet', tier: 'PREMIUM' },
+    { id: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku', tier: 'STANDARD' },
+    { id: 'claude-3-7-sonnet-20250219', label: 'Claude 3.7 Sonnet', tier: 'PREMIUM' },
+    { id: 'claude-3-opus-20240229', label: 'Claude 3 Opus', tier: 'PREMIUM' },
+  ],
+  google: [
+    { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', tier: 'BUDGET' },
+    { id: 'gemini-2.0-pro-exp-02-05', label: 'Gemini 2.0 Pro', tier: 'PREMIUM' },
+    { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', tier: 'STANDARD' },
+    { id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', tier: 'BUDGET' },
+  ],
+  gemini: [
+    { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', tier: 'BUDGET' },
+    { id: 'gemini-2.0-pro-exp-02-05', label: 'Gemini 2.0 Pro', tier: 'PREMIUM' },
+    { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', tier: 'STANDARD' },
+    { id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', tier: 'BUDGET' },
+  ],
+  deepseek: [
+    { id: 'deepseek-chat', label: 'DeepSeek Chat', tier: 'BUDGET' },
+    { id: 'deepseek-reasoner', label: 'DeepSeek R1 (Reasoning)', tier: 'REASONING' },
+  ],
+  mistral: [
+    { id: 'mistral-large-latest', label: 'Mistral Large', tier: 'STANDARD' },
+    { id: 'mistral-small-latest', label: 'Mistral Small', tier: 'BUDGET' },
+    { id: 'codestral-latest', label: 'Codestral', tier: 'STANDARD' },
+  ],
+  groq: [
+    { id: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B', tier: 'STANDARD' },
+    { id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B (Fast)', tier: 'BUDGET' },
+    { id: 'mixtral-8x7b-32768', label: 'Mixtral 8x7B', tier: 'BUDGET' },
+  ],
+  replicate: [
+    { id: 'black-forest-labs/flux-1.1-pro', label: 'FLUX 1.1 Pro (Image)', tier: 'STANDARD' },
+    { id: 'black-forest-labs/flux-schnell', label: 'FLUX Schnell (Fast)', tier: 'BUDGET' },
+    { id: 'stability-ai/sdxl', label: 'Stable Diffusion XL', tier: 'BUDGET' },
+  ],
+  zai: [
+    { id: 'glm-4-plus', label: 'GLM-4 Plus', tier: 'STANDARD' },
+    { id: 'glm-4-flash', label: 'GLM-4 Flash', tier: 'BUDGET' },
+  ],
+};
+
 export const LLMManagementView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<LLMConfigTab>('providers');
   const [loading, setLoading] = useState(true);
@@ -77,6 +142,9 @@ export const LLMManagementView: React.FC = () => {
   });
   const [testingConnection, setTestingConnection] = useState(false);
   const [lastTestReport, setLastTestReport] = useState<string | null>(null);
+  const [testingAll, setTestingAll] = useState(false);
+  type ProviderTestResult = { status: 'testing' | 'ok' | 'error'; message: string; latency?: number };
+  const [providerTestResults, setProviderTestResults] = useState<Record<string, ProviderTestResult>>({});
   const canTestProviderForm = (() => {
     const isExistingRow =
       typeof (providerForm as any)?.id === 'string' && String((providerForm as any).id).trim();
@@ -124,25 +192,21 @@ export const LLMManagementView: React.FC = () => {
       setProviders(providersData);
 
       try {
-        const usage = await fetch('/api/llm/control/usage', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        }).then((r) => r.json());
+        const usage = await Api.getLLMControlUsage();
         setUsageStats(usage);
       } catch (e) {
         console.error('Usage load failed:', e);
       }
 
       try {
-        const costs = await fetch('/api/llm/costs', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        }).then((r) => r.json());
+        const costs = await Api.getLLMCosts();
         setCostStats(costs);
       } catch (e) {
         console.error('Costs load failed:', e);
       }
 
       try {
-        const health = await fetch('/api/llm/diagnose').then((r) => r.json());
+        const health = await Api.diagnoseLLM();
         setHealthStatus(health);
       } catch (e) {
         console.error('Health load failed:', e);
@@ -185,6 +249,7 @@ export const LLMManagementView: React.FC = () => {
           visibility: providerForm.visibility,
           is_active: !!providerForm.is_active,
           priority: providerForm.priority,
+          ...(providerForm.api_key ? { api_key: providerForm.api_key } : {}),
         });
         toast.success('Model cloned');
       } else if (editingProviderId) {
@@ -263,8 +328,10 @@ export const LLMManagementView: React.FC = () => {
   };
 
   const handleTestConnection = async (config: Partial<LLMProviderConfig>) => {
+    const pid = String((config as any)?.id || '');
     setTestingConnection(true);
     setLastTestReport('Testing connection…');
+    if (pid) setProviderTestResults((prev) => ({ ...prev, [pid]: { status: 'testing', message: 'Testing…' } }));
     try {
       const isExistingRow =
         typeof (config as any)?.id === 'string' && String((config as any).id).trim();
@@ -281,16 +348,49 @@ export const LLMManagementView: React.FC = () => {
       if (result.success) {
         toast.success(result.message);
         setLastTestReport(`OK: ${result.message}`);
+        if (pid) setProviderTestResults((prev) => ({ ...prev, [pid]: { status: 'ok', message: result.message, latency: (result as any).latency } }));
       } else {
         toast.error(`Connection Failed: ${result.message}`);
         setLastTestReport(`ERROR: ${result.message}`);
+        if (pid) setProviderTestResults((prev) => ({ ...prev, [pid]: { status: 'error', message: result.message } }));
       }
     } catch (err) {
       const msg = (err as any)?.message || 'Test failed to execute';
       toast.error(msg);
       setLastTestReport(`ERROR: ${msg}`);
+      if (pid) setProviderTestResults((prev) => ({ ...prev, [pid]: { status: 'error', message: msg } }));
     }
     setTestingConnection(false);
+  };
+
+  const handleTestAll = async () => {
+    const active = providers.filter((p) => p.is_active && (p as any).is_configured);
+    if (!active.length) return;
+    setTestingAll(true);
+    setProviderTestResults((prev) => {
+      const next = { ...prev };
+      active.forEach((p) => { next[p.id] = { status: 'testing', message: 'Testing…' }; });
+      return next;
+    });
+    await Promise.allSettled(
+      active.map(async (p) => {
+        try {
+          const result = await Api.testLLMConnection({ providerId: p.id, provider: p.provider, model_id: (p as any).model_id } as any);
+          setProviderTestResults((prev) => ({
+            ...prev,
+            [p.id]: result.success
+              ? { status: 'ok', message: result.message, latency: (result as any).latency }
+              : { status: 'error', message: result.message },
+          }));
+        } catch (err) {
+          setProviderTestResults((prev) => ({
+            ...prev,
+            [p.id]: { status: 'error', message: (err as any)?.message || 'Failed' },
+          }));
+        }
+      })
+    );
+    setTestingAll(false);
   };
 
   const tabs = [
@@ -305,18 +405,20 @@ export const LLMManagementView: React.FC = () => {
   const managedProviders = providers.filter((p) => p.provider !== 'ollama');
 
   return (
-    <div className="h-full flex flex-col bg-navy-950 overflow-hidden relative">
+    <div className="h-full flex flex-col bg-white dark:bg-navy-950 text-slate-900 dark:text-slate-100 overflow-hidden relative">
       <InfoButton cardId="superadmin-llm-management" position="top-right" />
 
       {/* Header */}
-      <div className="shrink-0 px-8 py-6 border-b border-white/[0.06] relative z-10">
+      <div className="shrink-0 px-8 py-6 border-b border-slate-200 dark:border-white/[0.06] relative z-10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center">
-            <Cpu size={20} className="text-slate-400 dark:text-slate-500" />
+          <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+            <Cpu size={20} className="text-slate-700 dark:text-slate-300" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-slate-50 tracking-tight">LLM Management</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-50 tracking-tight">
+              LLM Management
+            </h1>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               Configure AI providers, routing, and monitor usage
             </p>
           </div>
@@ -324,7 +426,7 @@ export const LLMManagementView: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="shrink-0 px-8 py-3 border-b border-white/[0.04] flex gap-1 relative z-10">
+      <div className="shrink-0 px-8 py-3 border-b border-slate-200 dark:border-white/[0.04] flex gap-1 relative z-10">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -332,7 +434,7 @@ export const LLMManagementView: React.FC = () => {
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.id
                 ? 'bg-blue-600 text-white'
-                : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-white/[0.04]'
+                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.04]'
             }`}
           >
             <tab.icon size={16} />
@@ -364,6 +466,15 @@ export const LLMManagementView: React.FC = () => {
                 </Button>
                 <Button
                   variant="ghost"
+                  onClick={handleTestAll}
+                  icon={testingAll ? Loader2 : Wifi}
+                  size="sm"
+                  disabled={testingAll}
+                >
+                  {testingAll ? 'Testing…' : 'Test All'}
+                </Button>
+                <Button
+                  variant="ghost"
                   onClick={() => setShowInactive(!showInactive)}
                   icon={showInactive ? Eye : EyeOff}
                   size="sm"
@@ -387,15 +498,15 @@ export const LLMManagementView: React.FC = () => {
 
             <Card variant="bordered" padding="none">
               {lastTestReport && (
-                <div className="px-4 py-3 text-xs border-b border-white/[0.04] text-slate-300">
-                  <span className="text-slate-500 dark:text-slate-400">Last test:</span>{' '}
+                <div className="px-4 py-3 text-xs border-b border-slate-200 dark:border-white/[0.04] text-slate-700 dark:text-slate-300">
+                  <span className="text-slate-600 dark:text-slate-400">Last test:</span>{' '}
                   <span className="font-medium">{lastTestReport}</span>
                 </div>
               )}
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
-                    <tr className="border-b border-white/[0.06]">
+                    <tr className="border-b border-slate-200 dark:border-white/[0.06]">
                       <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         Name
                       </th>
@@ -447,25 +558,25 @@ export const LLMManagementView: React.FC = () => {
                         .map((p) => (
                           <tr
                             key={p.id}
-                            className="border-b border-white/[0.04] last:border-b-0 hover:bg-white/[0.02] transition-colors"
+                            className="border-b border-slate-200/70 dark:border-white/[0.04] last:border-b-0 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
                           >
-                            <td className="px-4 py-3 text-sm font-medium text-slate-200">
+                            <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-slate-200">
                               {p.name}
                             </td>
-                            <td className="px-4 py-3 text-sm text-slate-400 dark:text-slate-500 capitalize">
+                            <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300 capitalize">
                               {p.provider}
                             </td>
                             <td className="px-4 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">
                               {p.model_id}
                             </td>
-                            <td className="px-4 py-3 text-xs text-slate-400 dark:text-slate-500">
+                            <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">
                               {String((p as any).kind || 'TEXT_LLM')}
                             </td>
                             <td className="px-4 py-3">
                               <select
                                 value={p.tier || 'STANDARD'}
                                 onChange={(e) => handleTierChange(p.id, e.target.value)}
-                                className="text-xs px-2 py-1 rounded bg-slate-800 border border-white/[0.06] text-slate-300 outline-none cursor-pointer"
+                                className="text-xs px-2 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-slate-200 outline-none cursor-pointer"
                               >
                                 <option value="BUDGET">Budget</option>
                                 <option value="STANDARD">Standard</option>
@@ -487,10 +598,62 @@ export const LLMManagementView: React.FC = () => {
                               />
                             </td>
                             <td className="px-4 py-3">
-                              <StatusBadge
-                                variant={p.is_active ? 'success' : 'neutral'}
-                                label={p.is_active ? 'Active' : 'Inactive'}
-                              />
+                              {!p.is_active ? (
+                                <StatusBadge variant="neutral" label="Inactive" />
+                              ) : (() => {
+                                const live = providerTestResults[p.id];
+                                const hs = (p as any).health_status as string | null | undefined;
+                                const lastCheck = (p as any).last_health_check as string | null | undefined;
+                                const checkedAgo = lastCheck
+                                  ? (() => {
+                                      const diff = Date.now() - new Date(lastCheck).getTime();
+                                      const mins = Math.floor(diff / 60000);
+                                      return mins < 1 ? 'just now' : `${mins}m ago`;
+                                    })()
+                                  : null;
+
+                                // Live test result takes priority
+                                if (live) {
+                                  const badge =
+                                    live.status === 'testing' ? (
+                                      <span className="flex items-center gap-1 text-xs text-slate-700 dark:text-slate-300">
+                                        <Loader2 size={11} className="animate-spin" /> Testing…
+                                      </span>
+                                    ) : live.status === 'ok' ? (
+                                      <StatusBadge variant="success" label={live.latency ? `OK · ${live.latency}ms` : 'OK'} />
+                                    ) : (
+                                      <StatusBadge variant="error" label="Failed" />
+                                    );
+                                  return (
+                                    <div className="flex flex-col gap-0.5">
+                                      {badge}
+                                      {live.status === 'error' && (
+                                        <span className="text-[10px] text-red-400 max-w-[140px] truncate" title={live.message}>{live.message}</span>
+                                      )}
+                                    </div>
+                                  );
+                                }
+
+                                // Fallback to sentinel health_status
+                                const badge =
+                                  hs === 'healthy' ? (
+                                    <StatusBadge variant="success" label="Healthy" />
+                                  ) : hs === 'degraded' ? (
+                                    <StatusBadge variant="warning" label="Degraded" />
+                                  ) : hs === 'unhealthy' ? (
+                                    <StatusBadge variant="error" label="Unhealthy" />
+                                  ) : (
+                                    <StatusBadge variant="neutral" label="Untested" />
+                                  );
+                                return (
+                                  <div className="flex flex-col gap-0.5">
+                                    {badge}
+                                    {checkedAgo && (
+                                      <span className="text-[10px] text-slate-500">{checkedAgo}</span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </td>
                             <td className="px-4 py-3">
                               <StatusBadge
@@ -569,10 +732,12 @@ export const LLMManagementView: React.FC = () => {
                   ].map((item) => (
                     <div
                       key={item.tier}
-                      className="flex items-center gap-4 p-4 border border-white/[0.04] rounded-lg hover:bg-white/[0.02] transition-colors"
+                      className="flex items-center gap-4 p-4 border border-slate-200 dark:border-white/[0.04] rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
                     >
                       <div className="flex-1">
-                        <div className="text-sm font-medium text-slate-200">{item.label}</div>
+                        <div className="text-sm font-medium text-slate-900 dark:text-slate-200">
+                          {item.label}
+                        </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                           {item.desc}
                         </div>
@@ -629,16 +794,16 @@ export const LLMManagementView: React.FC = () => {
                   {costStats.byModel.map((m: any) => (
                     <div
                       key={m.model}
-                      className="flex items-center gap-4 p-3 border border-white/[0.04] rounded-lg hover:bg-white/[0.02] transition-colors"
+                      className="flex items-center gap-4 p-3 border border-slate-200 dark:border-white/[0.04] rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
                     >
                       <div className="flex-1">
-                        <div className="text-sm text-slate-200">{m.model}</div>
+                        <div className="text-sm text-slate-900 dark:text-slate-200">{m.model}</div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
                           {m.requests} requests
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm text-slate-100 tabular-nums">
+                        <div className="text-sm text-slate-900 dark:text-slate-100 tabular-nums">
                           ${(m.cost || 0).toFixed(4)}
                         </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
@@ -664,22 +829,24 @@ export const LLMManagementView: React.FC = () => {
                 />
                 <div className="mt-4 space-y-2">
                   {incidentsLoading ? (
-                    <div className="text-sm text-slate-400 dark:text-slate-500">Loading…</div>
+                    <div className="text-sm text-slate-700 dark:text-slate-300">Loading…</div>
                   ) : incidentsData?.success ? (
                     <>
                       <div className="text-xs text-slate-500 dark:text-slate-400">
                         Uptime:{' '}
-                        <span className="font-medium text-slate-200">
+                        <span className="font-medium text-slate-900 dark:text-slate-200">
                           {incidentsData?.uptime?.uptimePct}%
                         </span>
                         {' · '}
                         Incidents:{' '}
-                        <span className="font-medium text-slate-200">
+                        <span className="font-medium text-slate-900 dark:text-slate-200">
                           {(incidentsData?.incidents || []).length}
                         </span>
                       </div>
                       {(incidentsData?.incidents || []).length === 0 ? (
-                        <div className="text-sm text-slate-300">No downtime detected.</div>
+                        <div className="text-sm text-slate-700 dark:text-slate-300">
+                          No downtime detected.
+                        </div>
                       ) : (
                         <div className="space-y-2">
                           {(incidentsData?.incidents || [])
@@ -696,12 +863,12 @@ export const LLMManagementView: React.FC = () => {
                               return (
                                 <div
                                   key={idx}
-                                  className="p-3 border border-white/[0.04] rounded-lg bg-white/[0.02]"
+                                  className="p-3 border border-slate-200 dark:border-white/[0.04] rounded-lg bg-slate-50 dark:bg-white/[0.02]"
                                 >
                                   <div className="flex items-center justify-between gap-3">
-                                    <div className="text-sm text-slate-200">
+                                    <div className="text-sm text-slate-700 dark:text-slate-200">
                                       <span className="font-medium">Down</span>{' '}
-                                      <span className="text-slate-400">
+                                      <span className="text-slate-600 dark:text-slate-400">
                                         ({durMin !== null ? `${durMin} min` : 'n/a'})
                                       </span>
                                     </div>
@@ -724,7 +891,7 @@ export const LLMManagementView: React.FC = () => {
                       )}
                     </>
                   ) : (
-                    <div className="text-sm text-slate-400 dark:text-slate-500">
+                    <div className="text-sm text-slate-700 dark:text-slate-300">
                       No incident data available yet (health events start accumulating after the
                       server runs for a while).
                     </div>
@@ -744,16 +911,16 @@ export const LLMManagementView: React.FC = () => {
                   {healthStatus?.checks?.map((check: any, idx: number) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0"
+                      className="flex items-center justify-between py-2 border-b border-slate-200/70 dark:border-white/[0.04] last:border-0"
                     >
-                      <span className="text-sm text-slate-300">{check.name}</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{check.name}</span>
                       <span
                         className={`text-sm ${
                           check.status === 'OK'
                             ? 'text-emerald-400'
                             : check.status === 'MISSING'
                               ? 'text-amber-400'
-                              : 'text-slate-400 dark:text-slate-500'
+                              : 'text-slate-700 dark:text-slate-300'
                         }`}
                       >
                         {check.status || check.value}
@@ -774,10 +941,10 @@ export const LLMManagementView: React.FC = () => {
                   ].map((cap) => (
                     <button
                       key={cap.id}
-                      className="flex items-center gap-3 p-4 border border-white/[0.04] rounded-lg hover:bg-white/[0.02] hover:border-white/[0.08] transition-colors"
+                      className="flex items-center gap-3 p-4 border border-slate-200 dark:border-white/[0.04] rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.02] dark:hover:border-white/[0.08] transition-colors"
                     >
-                      <cap.icon size={18} className="text-slate-400 dark:text-slate-500" />
-                      <span className="text-sm text-slate-300">{cap.label}</span>
+                      <cap.icon size={18} className="text-slate-700 dark:text-slate-300" />
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{cap.label}</span>
                     </button>
                   ))}
                 </div>
@@ -790,9 +957,9 @@ export const LLMManagementView: React.FC = () => {
       {/* Provider Modal */}
       {showProviderModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-white/[0.06] rounded-xl p-6 w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.06] rounded-xl p-6 w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold text-slate-100">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 {cloningFromProviderId
                   ? 'Clone Model'
                   : editingProviderId
@@ -801,7 +968,7 @@ export const LLMManagementView: React.FC = () => {
               </h2>
               <IconButton icon={X} onClick={() => setShowProviderModal(false)} label="Close" />
             </div>
-            <form onSubmit={handleProviderSubmit} className="space-y-4">
+            <form onSubmit={handleProviderSubmit} className="space-y-4" autoComplete="off">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
@@ -811,7 +978,7 @@ export const LLMManagementView: React.FC = () => {
                     required
                     value={providerForm.name}
                     onChange={(e) => setProviderForm({ ...providerForm, name: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                   />
                 </div>
                 <div>
@@ -820,10 +987,19 @@ export const LLMManagementView: React.FC = () => {
                   </label>
                   <select
                     value={providerForm.provider}
-                    onChange={(e) =>
-                      setProviderForm({ ...providerForm, provider: e.target.value as any })
-                    }
-                    className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
+                    onChange={(e) => {
+                      const newProvider = e.target.value as any;
+                      const defaultModel = PROVIDER_MODELS[newProvider]?.[0];
+                      setProviderForm({
+                        ...providerForm,
+                        provider: newProvider,
+                        ...(defaultModel && !providerForm.model_id ? {
+                          model_id: defaultModel.id,
+                          tier: defaultModel.tier || providerForm.tier,
+                        } : {}),
+                      });
+                    }}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                   >
                     <optgroup label="Major Providers">
                       <option value="openrouter">OpenRouter (Unified Gateway)</option>
@@ -858,7 +1034,7 @@ export const LLMManagementView: React.FC = () => {
                     onChange={(e) =>
                       setProviderForm({ ...providerForm, kind: e.target.value as any })
                     }
-                    className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                   >
                     <option value="TEXT_LLM">TEXT_LLM</option>
                     <option value="IMAGE_MODEL">IMAGE_MODEL</option>
@@ -874,7 +1050,7 @@ export const LLMManagementView: React.FC = () => {
                     onChange={(e) =>
                       setProviderForm({ ...providerForm, provider_type: e.target.value as any })
                     }
-                    className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                   >
                     <option value="direct">direct</option>
                     <option value="aggregator">aggregator</option>
@@ -895,7 +1071,7 @@ export const LLMManagementView: React.FC = () => {
                     onChange={(e) =>
                       setProviderForm({ ...providerForm, origin_vendor: e.target.value as any })
                     }
-                    className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                     placeholder="openai / anthropic / google / deepseek / zhipu / replicate / openrouter"
                   />
                 </div>
@@ -908,7 +1084,7 @@ export const LLMManagementView: React.FC = () => {
                     onChange={(e) =>
                       setProviderForm({ ...providerForm, execution_regions: e.target.value as any })
                     }
-                    className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                     placeholder='e.g. ["EU","US"] or EU,US'
                   />
                 </div>
@@ -922,13 +1098,13 @@ export const LLMManagementView: React.FC = () => {
                   type="password"
                   value={providerForm.api_key}
                   onChange={(e) => setProviderForm({ ...providerForm, api_key: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                   placeholder="sk-..."
-                  disabled={!!cloningFromProviderId}
+                  autoComplete="new-password"
                 />
                 {cloningFromProviderId ? (
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    API key is reused from the source provider (server-side).
+                    Leave empty to reuse the source provider key, or enter a new one.
                   </div>
                 ) : null}
               </div>
@@ -938,12 +1114,57 @@ export const LLMManagementView: React.FC = () => {
                   <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
                     Model ID
                   </label>
-                  <input
-                    required
-                    value={providerForm.model_id}
-                    onChange={(e) => setProviderForm({ ...providerForm, model_id: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
-                  />
+                  {PROVIDER_MODELS[providerForm.provider || '']?.length ? (
+                    <>
+                      <select
+                        value={
+                          PROVIDER_MODELS[providerForm.provider || '']?.find(
+                            (m) => m.id === providerForm.model_id
+                          )
+                            ? providerForm.model_id
+                            : '__custom__'
+                        }
+                        onChange={(e) => {
+                          if (e.target.value === '__custom__') return;
+                          const chosen = PROVIDER_MODELS[providerForm.provider || '']?.find(
+                            (m) => m.id === e.target.value
+                          );
+                          setProviderForm({
+                            ...providerForm,
+                            model_id: e.target.value,
+                            ...(chosen?.tier ? { tier: chosen.tier } : {}),
+                          });
+                        }}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:border-blue-500/50 mb-1.5"
+                      >
+                        {PROVIDER_MODELS[providerForm.provider || '']?.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {m.label} — {m.id}
+                          </option>
+                        ))}
+                        <option value="__custom__">↳ custom (wpisz poniżej)</option>
+                      </select>
+                      <input
+                        required
+                        value={providerForm.model_id}
+                        onChange={(e) =>
+                          setProviderForm({ ...providerForm, model_id: e.target.value })
+                        }
+                        className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
+                        placeholder="lub wpisz własne ID modelu"
+                      />
+                    </>
+                  ) : (
+                    <input
+                      required
+                      value={providerForm.model_id}
+                      onChange={(e) =>
+                        setProviderForm({ ...providerForm, model_id: e.target.value })
+                      }
+                      className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
+                      placeholder="np. gpt-4o, claude-3-5-sonnet-20241022"
+                    />
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
@@ -952,7 +1173,7 @@ export const LLMManagementView: React.FC = () => {
                   <select
                     value={providerForm.tier || 'STANDARD'}
                     onChange={(e) => setProviderForm({ ...providerForm, tier: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                   >
                     <option value="BUDGET">Budget</option>
                     <option value="STANDARD">Standard</option>
@@ -972,7 +1193,7 @@ export const LLMManagementView: React.FC = () => {
                     onChange={(e) =>
                       setProviderForm({ ...providerForm, visibility: e.target.value as any })
                     }
-                    className="w-full px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
                   >
                     <option value="admin">Admin Only</option>
                     <option value="beta">Beta Users</option>
@@ -987,9 +1208,9 @@ export const LLMManagementView: React.FC = () => {
                       onChange={(e) =>
                         setProviderForm({ ...providerForm, is_active: e.target.checked })
                       }
-                      className="w-4 h-4 rounded bg-slate-800 border-white/10"
+                      className="w-4 h-4 rounded bg-white dark:bg-slate-800 border-slate-300 dark:border-white/10"
                     />
-                    <span className="text-sm text-slate-300">Active</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Active</span>
                   </label>
                 </div>
               </div>

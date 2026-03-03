@@ -378,7 +378,7 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
           {t('partner.sidebar.title', 'Partner')}
         </h1>
         <p className="text-sm text-slate-400 dark:text-slate-500 mt-0.5">
-          {t('partner.sidebar.subtitle', 'Grow with Consultinity')}
+          {t('partner.sidebar.subtitle', 'Grow with Consultify')}
         </p>
       </div>
 

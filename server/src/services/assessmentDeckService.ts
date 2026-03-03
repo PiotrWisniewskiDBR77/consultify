@@ -20,6 +20,10 @@ export interface AssessmentDeckData {
   assessmentDate: string;
   overallScore: number;
   scaleMax: number;
+  /**
+   * SIRI appendix: prioritisation matrix (16 areas). Optional for legacy payloads.
+   */
+  prioritisationMatrix?: Record<string, number>;
   categories: Array<{
     id: string;
     name: string;
@@ -157,12 +161,12 @@ const LABELS: Record<LangKey, Record<'en' | 'pl', string>> = {
     pl: '1. Omówienie wyników z kluczowymi interesariuszami\n2. Walidacja priorytetów luk względem celów biznesowych\n3. Przypisanie właścicieli inicjatyw i zdefiniowanie budżetów\n4. Ustalenie kadencji zarządzania do śledzenia postępów\n5. Zaplanowanie ponownej oceny za 6-12 miesięcy',
   },
   contactLine: {
-    en: 'For questions or follow-up, please contact your Consultinity advisor.',
-    pl: 'W razie pytań lub dalszych kroków, prosimy o kontakt z Państwa doradcą Consultinity.',
+    en: 'For questions or follow-up, please contact your Consultify advisor.',
+    pl: 'W razie pytań lub dalszych kroków, prosimy o kontakt z Państwa doradcą Consultify.',
   },
   brandLine: {
-    en: 'Powered by Consultinity',
-    pl: 'Wspierane przez Consultinity',
+    en: 'Powered by Consultify',
+    pl: 'Wspierane przez Consultify',
   },
 };
 
@@ -234,6 +238,112 @@ function interpretScore(score: number, max: number): string {
   if (pct >= 0.4) return 'Developing';
   if (pct >= 0.2) return 'Emerging';
   return 'Initial';
+}
+
+// ---------------------------------------------------------------------------
+// ADMA: T1–T7 aggregation (SSOT mapping v1)
+// ---------------------------------------------------------------------------
+
+type ADMATransformationId = 'T1' | 'T2' | 'T3' | 'T4' | 'T5' | 'T6' | 'T7';
+
+const ADMA_T1T7_MAPPING_V1: Array<{
+  id: ADMATransformationId;
+  name: string;
+  weights: Record<string, number>;
+}> = [
+  { id: 'T1', name: 'Advanced Manufacturing Technologies', weights: { production_tech: 0.7, digital_investments: 0.3 } },
+  { id: 'T2', name: 'Digital Factory', weights: { production_it: 0.45, data_collection: 0.35, data_analytics: 0.2 } },
+  { id: 'T3', name: 'ECO Factory', weights: { data_collection: 0.4, data_analytics: 0.35, production_tech: 0.25 } },
+  { id: 'T4', name: 'End-to-end Customer Focused Engineering', weights: { product_data: 0.55, product_features: 0.3, digital_strategy: 0.15 } },
+  { id: 'T5', name: 'Human Centred Organisation', weights: { digital_culture: 0.7, digital_strategy: 0.3 } },
+  { id: 'T6', name: 'Smart Manufacturing', weights: { data_analytics: 0.45, production_it: 0.3, production_tech: 0.25 } },
+  { id: 'T7', name: 'Value Chain Oriented Open Factory', weights: { supply_visibility: 0.5, supply_integration: 0.35, digital_strategy: 0.15 } },
+];
+
+function buildDimensionIndex(data: AssessmentDeckData): Record<string, { current: number; target: number }> {
+  const out: Record<string, { current: number; target: number }> = {};
+  for (const c of data.categories || []) {
+    for (const d of c.dimensions || []) {
+      out[String(d.id)] = { current: Number(d.current || 0), target: Number(d.target || 0) };
+    }
+  }
+  return out;
+}
+
+function weightedAvg(
+  dimIndex: Record<string, { current: number; target: number }>,
+  weights: Record<string, number>,
+  field: 'current' | 'target'
+): number | null {
+  let sum = 0;
+  let wSum = 0;
+  for (const [dimId, w] of Object.entries(weights)) {
+    const v = dimIndex?.[dimId]?.[field];
+    if (!Number.isFinite(Number(v))) continue;
+    sum += Number(v) * w;
+    wSum += w;
+  }
+  if (wSum <= 0) return null;
+  return Math.round((sum / wSum) * 10) / 10;
+}
+
+function computeAdmaT1T7(data: AssessmentDeckData, fofBenchmark = 4.0) {
+  const dimIndex = buildDimensionIndex(data);
+  return ADMA_T1T7_MAPPING_V1.map((m) => {
+    const current = weightedAvg(dimIndex, m.weights, 'current');
+    const target = weightedAvg(dimIndex, m.weights, 'target');
+    const gapToFof = current === null ? null : Math.round((fofBenchmark - current) * 10) / 10;
+    return { ...m, current, target, fofBenchmark, gapToFof };
+  });
+}
+
+function addAdmaT1T7Slide(pptx: any, data: AssessmentDeckData, fwColor: string, lang: 'en' | 'pl', num: number): void {
+  const slide = pptx.addSlide();
+  slide.background = { color: BRAND.background };
+  headerBar(slide, fwColor);
+  sectionTitle(slide, lang === 'pl' ? 'Transformacje (T1–T7) + benchmark FoF' : 'Transformations (T1–T7) + FoF benchmark');
+
+  const rows = computeAdmaT1T7(data, 4.0);
+  const lines = [
+    lang === 'pl' ? 'Obszar | Firma | Cel | FoF | Luka do FoF' : 'Area | Company | Target | FoF | Gap to FoF',
+    ...rows.map((r) => {
+      const c = r.current === null ? '—' : r.current.toFixed(1);
+      const t = r.target === null ? '—' : r.target.toFixed(1);
+      const g = r.gapToFof === null ? '—' : r.gapToFof.toFixed(1);
+      return `${r.id} ${r.name} | ${c} | ${t} | ${r.fofBenchmark.toFixed(1)} | ${g}`;
+    }),
+  ].join('\n');
+
+  bodyText(slide, lines, { y: 1.2, fontSize: 13, h: 5.8 });
+  slideNumber(slide, num);
+}
+
+function addSiriPrioritisationSlide(pptx: any, data: AssessmentDeckData, fwColor: string, lang: 'en' | 'pl', num: number): void {
+  const matrix = data.prioritisationMatrix || {};
+  const entries = Object.entries(matrix)
+    .map(([k, v]) => ({ id: k, score: Number(v || 0) }))
+    .sort((a, b) => (b.score || 0) - (a.score || 0))
+    .slice(0, 12);
+
+  if (!entries.length) return;
+
+  const slide = pptx.addSlide();
+  slide.background = { color: BRAND.background };
+  headerBar(slide, fwColor);
+  sectionTitle(
+    slide,
+    lang === 'pl'
+      ? 'Macierz (16 obszarów) — priorytetyzacja'
+      : 'Assessment Matrix (16 areas) — prioritisation'
+  );
+
+  const lines = [
+    lang === 'pl' ? 'Top priorytety (score):' : 'Top priorities (score):',
+    ...entries.map((e) => `- ${String(e.id).replace(/_/g, ' ')}: ${e.score.toFixed(1)}`),
+  ].join('\n');
+
+  bodyText(slide, lines, { y: 1.2, fontSize: 14, h: 5.8 });
+  slideNumber(slide, num);
 }
 
 function gapColor(gap: number, max: number): string {
@@ -886,7 +996,7 @@ export async function generateAssessmentDeck(
 
   const pptx = new PptxGenJS();
   pptx.layout = 'LAYOUT_WIDE';
-  pptx.author = 'Consultinity';
+  pptx.author = 'Consultify';
   pptx.title = `${data.framework} Assessment — ${data.assessmentName}`;
   pptx.subject = `${data.framework} Maturity Assessment Deck`;
   pptx.company = data.organizationName;
@@ -906,6 +1016,15 @@ export async function generateAssessmentDeck(
   slideNum++;
 
   slideNum = addCategoryBreakdownSlides(pptx, data, fwColor, lang, slideNum);
+
+  if (data.framework === 'SIRI') {
+    addSiriPrioritisationSlide(pptx, data, fwColor, lang, slideNum);
+    slideNum++;
+  }
+  if (data.framework === 'ADMA') {
+    addAdmaT1T7Slide(pptx, data, fwColor, lang, slideNum);
+    slideNum++;
+  }
 
   addGapAnalysisSlide(pptx, data, fwColor, lang, slideNum);
   slideNum++;

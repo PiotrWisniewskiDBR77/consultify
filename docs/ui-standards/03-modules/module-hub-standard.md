@@ -8,7 +8,7 @@
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │  Module > Surface/Tool                      [System] [LLM] [AI] [User]          │
 ├─────────────────────────────────────────────────────────────────────────────────┤
-│  🔍 │ [Tab 1] [Tab 2] [Tab 3]      │ [AI] [+New] ≡ ⊞ │ [Filters…]              │
+│  🔍 │ [Tab 1] [Tab 2] [Tab 3]      │ [Filters…] [View] [Tool] [+New] [Area]     │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │  [≡ List] [Doc 1 ●] [Doc 2 ●] [Doc 3 ●]                    (dynamic tabs)       │
 ├─────────────────────────────────────────────────────────────────────────────────┤
@@ -42,6 +42,9 @@
 | **🔍 Lupa**     | Mała ikona, po kliknięciu rozwija panel wyszukiwania |
 | **Główne taby** | Przyciski nawigacji do rodzajów danych w module      |
 
+**KANON v3 (MUST):** główne taby **nie** pokazują liczników (badge z liczbą).  
+Liczniki i presety filtrów żyją w **Command Row** (linia 3) jako “counter chips”.
+
 **Przykłady tabów dla różnych modułów:**
 
 | Moduł               | Taby                                               |
@@ -56,17 +59,20 @@
 
 | Element              | Opis                                                           |
 | -------------------- | -------------------------------------------------------------- |
-| **AI context**       | Kanoniczny przycisk “AI w kontekście” — otwiera lewy panel czatu dla bieżącego kontekstu |
-| **Primary CTA**      | “+ New …” (kontekstowy)                                        |
-| **View Toggle**      | Przełącznik formatu: ≡ Table, ⊞ Grid, Kanban, Matrix, Timeline |
-| **Filters**          | Filtry kontekstowe (np. All/Read/Unread)                       |
+| **Area (toggle panelu lewego)** | Kanoniczny toggle lewego panelu “obszaru pracy” dla danego ekranu. **Domyślnie:** to jest split panel (AI/chat/kontekst), który można otworzyć i zamknąć. Nie dotyczy globalnego sidebara modułów. |
+| **Primary CTA (Add)** | “+ New …” / “Dodaj …” (kontekstowy). Jeśli ekran pozwala tworzyć/uruchamiać obiekt lub akcję startową — user zawsze szuka tego przycisku w tym slocie. **Kolor CTA:** kolor narzędzia/artefaktu, który tworzymy; jeśli ekran nie ma przypisanego koloru narzędzia → **purple** (fallback). |
+| **Tool (opcjonalny)** | Przycisk narzędzi specyficznych dla ekranu — tylko tam, gdzie istnieje dodatkowy panel narzędziowy (np. Notebook / IDE / prezentacje / report builder / workspace’y). |
+| **View Toggle**      | Przełącznik trybu prezentacji kolekcji (ikony). Zawsze ten sam porządek ikon (z `view-modes-standard.md`), pokazujemy tylko dostępne tryby. |
+| **Filters**          | Filtry kolekcji. **MUST:** w topbarze utrzymujemy **maksymalnie jedno** “okno wyboru” (dropdown/select), żeby nie robić bałaganu. Pozostałe presety/liczniki/filtry pokazujemy w **Command Row** jako chipy. Dla tabel: filtry i sortowanie w nagłówkach kolumn (KANON). Dla pozostałych view modes: “Filters…” może zawierać też sekcję **Sort** (bez dokładania osobnego przycisku w topbarze). |
 
 ### Kolejność elementów topbara (KANON v3)
 
 W module hub (w tym samym rzędzie), zawsze trzymamy kolejność:
 
 - **Lewa strona**: Search toggle → Main tabs (od lewej do prawej, zgodnie z Operating Model v3)
-- **Prawa strona (wyrównane do prawej)**: **AI context** → **Primary CTA (+New)** → **View modes** → **Filters**
+- **Prawa strona (wyrównane do prawej)**: **(od prawej)** **Area** → **Add** → **Tool** → **View** → **Filters**
+
+> Uwaga implementacyjna: ponieważ to jest klaster wyrównany do prawej, często renderujemy go w DOM od lewej do prawej jako: `Filters → View → Tool → Add → Area`. **Ale wizualna kolejność “od prawej” musi zgadzać się z kanonem.**
 
 **Przykłady category buttons:**
 
@@ -95,15 +101,18 @@ W module hub (w tym samym rzędzie), zawsze trzymamy kolejność:
 
 Pod Module Topbar zawsze istnieje **jeden stały rząd**, który pełni 1 z 3 ról (zawsze w tej samej wysokości i stylu):
 
-1) **Dynamic tabs row** — gdy są otwarte dokumenty (tabs).  
+1) **Bulk actions row (multi-select)** — gdy user zaznaczy checkboxy na liście i pracuje na wielu pozycjach naraz.  
 2) **Search row** — gdy user włączy lupę (expandable search bar).  
-3) **Context counters row** — gdy jesteśmy w list view i chcemy pokazać najważniejsze liczniki “na twarz” (np. Krytyczne, Overdue, Wymaga akcji).
+3) **Dynamic tabs row** — gdy są otwarte dokumenty (tabs).  
+4) **Context counters row** — gdy jesteśmy w list view i chcemy pokazać najważniejsze presety/liczniki “na twarz” (np. Overdue, This week, Wymaga akcji).
 
 **Reguły:**
 
 - **MUST:** na ekranie nie mogą istnieć 2–3 dodatkowe rzędy filtrów/toolbarów między topbarem a tabelą.
 - **MUST:** klik w “counter chip” ustawia filtr (i pokazuje stan aktywny).
 - **SHOULD:** jeśli otwarty jest czat lub inny panel, ten rząd nie rozpycha layoutu — content area ma priorytet.
+- **Priorytet trybów (MUST):** **Bulk actions** nadpisuje pozostałe tryby (to jest “szybkie wybieranie i działanie”). Search ma priorytet nad tabs/counters. Tabs mają priorytet nad counters.
+- **Hierarchia wizualna (MUST):** elementy w **Command Row** są **symbolicznie mniejsze** niż główne taby/topbar (żeby nie wyglądały jak ten sam poziom nawigacji).
 
 ---
 
@@ -203,6 +212,23 @@ Jeśli ekran jest “hubem tabelarycznym” (listy, zarządzanie, admin tools), 
 - **Desktop (>1024px):** Pełny layout
 - **Tablet (768-1024px):** Zwinięte category buttons, mniejsze odstępy
 - **Mobile (<768px):** Bottom navigation, uproszczone taby
+
+### 8.1 Overflow / kolaps klastrów po prawej (MUST)
+
+Jeśli z jakiegoś powodu brakuje miejsca w Module Topbar:
+
+- **MUST:** nie łamiemy topbara do 2 linii (poza Command Row).  
+- **MUST:** utrzymujemy czytelny “anchor” dla użytkownika:
+  - **Area** (toggle panelu) + **Add** zostają widoczne najdłużej.
+  - pozostałe elementy mogą trafić do overflow (`…`) zachowując kolejność logiczną.
+
+Rekomendowany porządek kolapsu (pierwsze idzie do overflow):
+
+1) **Filters** (jako menu/panel nadal dostępne z overflow)
+2) **View**
+3) **Tool**
+4) **Add**
+5) **Area** (ostatnie do schowania; najlepiej nigdy)
 
 ---
 

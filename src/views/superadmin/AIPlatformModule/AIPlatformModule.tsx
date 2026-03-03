@@ -289,7 +289,43 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
 
   // Get help card ID based on active tabs
   const getHelpCardId = () => {
-    return `superadmin-ai-${activeMainTab}-${activeSubTab || 'overview'}`;
+    const key = `${activeMainTab}/${activeSubTab || ''}`.replace(/\/$/, '');
+
+    const byKey: Record<string, string> = {
+      // Configuration (matches SuperAdmin IA + existing doc IDs)
+      'configuration/llm-providers': 'superadmin-llm-management',
+      'configuration/model-tiers': 'superadmin-ai-model-tiers',
+      'configuration/routing-rules': 'superadmin-ai-routing-rules',
+      'configuration/purposes-assignments': 'superadmin-ai-purposes-assignments',
+      'configuration/org-ai-policy': 'superadmin-ai-org-ai-policy',
+      'configuration/ai-governance': 'superadmin-ai-governance',
+      'configuration/global-settings': 'superadmin-ai-global-settings',
+
+      // Development
+      'development/prompts-library': 'superadmin-ai-prompts-library',
+      'development/prompt-builder': 'superadmin-ai-intelligence',
+      'development/experiments': 'superadmin-ai-ab-testing',
+      'development/model-registry': 'superadmin-ai-model-registry',
+
+      // Security (reuse existing Settings docs where applicable)
+      'security/api-keys': 'settings-api-keys',
+
+      // Knowledge
+      'knowledge/knowledge-base': 'admin-knowledge',
+      'knowledge/documents-rag': 'superadmin-ai-knowledge',
+      'knowledge/strategic-directions': 'superadmin-ai-knowledge',
+    };
+
+    const byMainTab: Record<string, string> = {
+      configuration: 'superadmin-ai-infrastructure',
+      development: 'superadmin-ai-development',
+      operations: 'superadmin-ai-operations',
+      analytics: 'superadmin-ai-operations',
+      security: 'superadmin-security',
+      knowledge: 'superadmin-ai-knowledge',
+    };
+
+    return byKey[key] || byMainTab[activeMainTab] || 'superadmin-ai-infrastructure';
   };
 
   return (
@@ -304,7 +340,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
               {currentMainTab?.description || 'Unified AI management and configuration'}
             </p>
           </div>
-          <InfoButton cardId={getHelpCardId()} />
+          <InfoButton cardId={getHelpCardId()} position="header-inline" size="md" />
         </div>
 
         {/* Main Tabs */}

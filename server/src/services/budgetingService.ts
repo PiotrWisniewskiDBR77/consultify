@@ -420,6 +420,18 @@ export async function approveBudget(
   const now = new Date().toISOString();
   const ls = await getBudgetLines(budgetId);
   const scs = await getScenarios(budgetId);
+
+  const hasCapex = ls.some(
+    (l) =>
+      l.lineCode?.toLowerCase().includes('capex') ||
+      l.lineName?.toLowerCase().includes('capex') ||
+      l.statementType?.toLowerCase() === 'capex'
+  );
+  if (!hasCapex) {
+    throw new Error(
+      'CAPEX line is required before approval. Add at least one CAPEX budget line.'
+    );
+  }
   await dbRun(
     `INSERT INTO budget_snapshots (id,budget_id,version,snapshot_data,approved_by,created_at) VALUES (?,?,?,?,?,?)`,
     [uuidv4(), budgetId, b.version, JSON.stringify({ lines: ls, scenarios: scs }), userId, now]

@@ -8,7 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { Api } from '@/services/api';
 
-const STORAGE_KEY = 'consultinity-snoozed-notifications';
+const STORAGE_KEY = 'consultify-snoozed-notifications';
 
 export interface SnoozedNotification {
   notificationId: string;

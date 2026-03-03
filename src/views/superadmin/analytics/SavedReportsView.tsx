@@ -1,5 +1,6 @@
 import {
   Activity,
+  AlertTriangle,
   Bot,
   Building2,
   Calendar,
@@ -14,6 +15,7 @@ import {
   Loader2,
   Play,
   Plus,
+  RefreshCw,
   Trash2,
   Users,
   XCircle,
@@ -66,12 +68,31 @@ const REPORT_TYPES = [
   { id: 'ai_usage', label: 'AI Usage Report', icon: Bot, description: 'AI model usage and costs' },
 ];
 
+const DEFAULT_REPORT_QUERIES: Record<string, string> = {
+  users: `SELECT id, email, role, created_at, last_login FROM users ORDER BY created_at DESC LIMIT 500`,
+  organizations: `SELECT id, name, status, plan, created_at FROM organizations ORDER BY created_at DESC LIMIT 500`,
+  revenue: `SELECT s.id, s.status, sp.name as plan_name, sp.price_monthly, s.created_at
+            FROM subscriptions s
+            JOIN subscription_plans sp ON s.plan_id = sp.id
+            ORDER BY s.created_at DESC
+            LIMIT 500`,
+  activity: `SELECT id, organization_id, user_id, action, entity_type, entity_id, created_at
+             FROM activity_logs
+             ORDER BY created_at DESC
+             LIMIT 500`,
+  ai_usage: `SELECT id, organization_id, user_id, model, tokens, cost, created_at
+             FROM ai_request_logs
+             ORDER BY created_at DESC
+             LIMIT 500`,
+};
+
 const SavedReportsView: React.FC = () => {
   const [reports, setReports] = useState<Report[]>([]);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [executions, setExecutions] = useState<Execution[]>([]);
   const [executionResult, setExecutionResult] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -97,11 +118,13 @@ const SavedReportsView: React.FC = () => {
 
   const fetchReports = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const data = await Api.getAnalyticsReports(filterType || undefined);
       setReports(data || []);
-    } catch (error) {
-      console.error('Failed to fetch reports:', error);
+    } catch (err: any) {
+      console.error('Failed to fetch reports:', err);
+      setError(err.message || 'Failed to load reports. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -126,7 +149,14 @@ const SavedReportsView: React.FC = () => {
     if (!newReport.name || !newReport.reportType) return;
 
     try {
-      await Api.createAnalyticsReport(newReport);
+      await Api.createAnalyticsReport({
+        name: newReport.name,
+        description: newReport.description,
+        report_type: newReport.reportType,
+        query_sql: DEFAULT_REPORT_QUERIES[newReport.reportType] || 'SELECT 1 as ok',
+        parameters: [],
+        visualization_type: 'table',
+      });
       setShowCreateModal(false);
       setNewReport({ name: '', description: '', reportType: 'users', filters: {}, columns: [] });
       fetchReports();
@@ -178,13 +208,13 @@ const SavedReportsView: React.FC = () => {
     }
   };
 
-  const exportToCSV = (data: any) => {
-    if (!data?.data || data.data.length === 0) return;
+  const exportToCSV = (rows: any[]) => {
+    if (!rows || rows.length === 0) return;
 
-    const headers = Object.keys(data.data[0]);
+    const headers = Object.keys(rows[0]);
     const csvContent = [
       headers.join(','),
-      ...data.data.map((row: any) =>
+      ...rows.map((row: any) =>
         headers
           .map((h) => {
             const val = row[h];
@@ -227,8 +257,8 @@ const SavedReportsView: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-white">Saved Reports</h2>
-          <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-1">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Saved Reports</h2>
+          <p className="text-slate-600 dark:text-slate-400 mt-1">
             Create, schedule, and export reports
           </p>
         </div>
@@ -238,7 +268,7 @@ const SavedReportsView: React.FC = () => {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm appearance-none pr-8"
+              className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm appearance-none pr-8"
             >
               <option value="">All Types</option>
               {REPORT_TYPES.map((rt) => (
@@ -247,7 +277,7 @@ const SavedReportsView: React.FC = () => {
                 </option>
               ))}
             </select>
-            <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-4 h-4 text-slate-500 dark:text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
@@ -259,14 +289,33 @@ const SavedReportsView: React.FC = () => {
         </div>
       </div>
 
+      {/* Error Banner */}
+      {error && (
+        <div className="flex items-center justify-between p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-400" />
+            <span className="text-sm text-red-700 dark:text-red-300">{error}</span>
+          </div>
+          <button
+            onClick={() => { setError(null); fetchReports(); }}
+            className="flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Retry
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-12 gap-6">
         {/* Reports List */}
         <div className="col-span-4">
-          <Card className="bg-gray-800 p-4">
-            <h3 className="text-lg font-semibold text-white mb-4">Reports ({reports.length})</h3>
+          <Card className="p-4">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+              Reports ({reports.length})
+            </h3>
             <div className="space-y-2 max-h-[600px] overflow-y-auto">
               {reports.length === 0 ? (
-                <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-8">
+                <p className="text-slate-600 dark:text-slate-400 text-sm text-center py-8">
                   No reports yet. Create one to get started.
                 </p>
               ) : (
@@ -279,27 +328,29 @@ const SavedReportsView: React.FC = () => {
                       onClick={() => handleSelectReport(report)}
                       className={`p-3 rounded-lg cursor-pointer transition-colors ${
                         selectedReport?.id === report.id
-                          ? 'bg-blue-600/20 border border-blue-500'
-                          : 'bg-gray-700/50 hover:bg-gray-700'
+                          ? 'bg-blue-600/10 border border-blue-400/60 dark:bg-blue-500/10 dark:border-blue-500/30'
+                          : 'bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-transparent'
                       }`}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="p-2 bg-gray-600 rounded-lg">
-                          <TypeIcon className="w-4 h-4 text-blue-400" />
+                        <div className="p-2 bg-slate-200 dark:bg-white/10 rounded-lg">
+                          <TypeIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-white font-medium truncate">{report.name}</span>
+                            <span className="text-slate-900 dark:text-white font-medium truncate">
+                              {report.name}
+                            </span>
                             {report.schedule_json && (
                               <span title="Scheduled">
                                 <Clock className="w-3 h-3 text-green-400" />
                               </span>
                             )}
                           </div>
-                          <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs mt-1">
+                          <p className="text-slate-600 dark:text-slate-400 text-xs mt-1">
                             {typeInfo.label}
                           </p>
-                          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                          <div className="flex items-center gap-2 mt-2 text-xs text-slate-600 dark:text-slate-400">
                             <span>{report.execution_count || 0} runs</span>
                             <span>•</span>
                             <span>Last: {formatDate(report.last_executed_at)}</span>
@@ -319,12 +370,14 @@ const SavedReportsView: React.FC = () => {
           {selectedReport ? (
             <div className="space-y-4">
               {/* Report Header */}
-              <Card className="bg-gray-800 p-4">
+              <Card className="p-4">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-xl font-bold text-white">{selectedReport.name}</h3>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                      {selectedReport.name}
+                    </h3>
                     {selectedReport.description && (
-                      <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-sm mt-1">
+                      <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
                         {selectedReport.description}
                       </p>
                     )}
@@ -377,14 +430,12 @@ const SavedReportsView: React.FC = () => {
                     </p>
                   </div>
                   <div className="bg-gray-700/50 rounded-lg p-3">
-                    <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
-                      Schedule
-                    </span>
-                    <p className="text-white font-medium mt-1">
+                    <span className="text-slate-600 dark:text-slate-400">Schedule</span>
+                    <p className="text-slate-900 dark:text-white font-medium mt-1">
                       {selectedReport.schedule_json ? (
                         <span className="text-green-400">Active</span>
                       ) : (
-                        <span className="text-gray-500 dark:text-gray-400">Not scheduled</span>
+                        <span className="text-slate-600 dark:text-slate-400">Not scheduled</span>
                       )}
                     </p>
                   </div>
@@ -393,12 +444,14 @@ const SavedReportsView: React.FC = () => {
 
               {/* Execution Result */}
               {executionResult && (
-                <Card className="bg-gray-800 p-4">
+                <Card className="p-4">
                   <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-lg font-semibold text-white">Results</h4>
+                    <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
+                      Results
+                    </h4>
                     <button
-                      onClick={() => exportToCSV(executionResult)}
-                      className="flex items-center gap-2 text-blue-400 hover:text-blue-300 text-sm"
+                      onClick={() => exportToCSV(executionResult.data || [])}
+                      className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm"
                     >
                       <Download className="w-4 h-4" />
                       Export CSV
@@ -407,40 +460,40 @@ const SavedReportsView: React.FC = () => {
 
                   {/* Stats */}
                   <div className="grid grid-cols-4 gap-3 mb-4">
-                    <div className="bg-gray-700/50 rounded-lg p-3 text-center">
-                      <p className="text-2xl font-bold text-white">
-                        {executionResult.total_count || 0}
+                    <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg p-3 text-center">
+                      <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                        {executionResult.rowCount ?? (executionResult.data?.length || 0)}
                       </p>
-                      <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                      <span className="text-xs text-slate-600 dark:text-slate-400">
                         Total Records
                       </span>
                     </div>
                     {executionResult.total_revenue !== undefined && (
-                      <div className="bg-gray-700/50 rounded-lg p-3 text-center">
+                      <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg p-3 text-center">
                         <p className="text-2xl font-bold text-green-400">
                           ${executionResult.total_revenue?.toLocaleString()}
                         </p>
-                        <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                        <span className="text-xs text-slate-600 dark:text-slate-400">
                           Total Revenue
                         </span>
                       </div>
                     )}
                     {executionResult.total_tokens !== undefined && (
-                      <div className="bg-gray-700/50 rounded-lg p-3 text-center">
+                      <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg p-3 text-center">
                         <p className="text-2xl font-bold text-blue-400">
                           {executionResult.total_tokens?.toLocaleString()}
                         </p>
-                        <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                        <span className="text-xs text-slate-600 dark:text-slate-400">
                           Total Tokens
                         </span>
                       </div>
                     )}
                     {executionResult.total_cost !== undefined && (
-                      <div className="bg-gray-700/50 rounded-lg p-3 text-center">
+                      <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg p-3 text-center">
                         <p className="text-2xl font-bold text-yellow-400">
                           ${executionResult.total_cost?.toFixed(2)}
                         </p>
-                        <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                        <span className="text-xs text-slate-600 dark:text-slate-400">
                           Total Cost
                         </span>
                       </div>
@@ -534,11 +587,13 @@ const SavedReportsView: React.FC = () => {
               </Card>
             </div>
           ) : (
-            <Card className="bg-gray-800 p-8">
+            <Card className="p-8">
               <div className="flex flex-col items-center justify-center h-64">
-                <FileText className="w-16 h-16 text-gray-600 dark:text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">Select a Report</h3>
-                <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-center">
+                <FileText className="w-16 h-16 text-slate-400 dark:text-slate-400 mb-4" />
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+                  Select a Report
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400 text-center">
                   Choose a report from the list or create a new one
                 </p>
               </div>
@@ -550,31 +605,39 @@ const SavedReportsView: React.FC = () => {
       {/* Create Report Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-lg">
-            <h3 className="text-xl font-bold text-white mb-4">Create New Report</h3>
+          <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-lg border border-slate-200 dark:border-navy-700 shadow-xl">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+              Create New Report
+            </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Report Name</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                  Report Name
+                </label>
                 <input
                   type="text"
                   value={newReport.name}
                   onChange={(e) => setNewReport({ ...newReport, name: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
                   placeholder="Monthly Users Report"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                  Description
+                </label>
                 <textarea
                   value={newReport.description}
                   onChange={(e) => setNewReport({ ...newReport, description: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
                   placeholder="Describe your report..."
                   rows={2}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Report Type</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+                  Report Type
+                </label>
                 <div className="grid grid-cols-2 gap-2">
                   {REPORT_TYPES.map((rt) => (
                     <button
@@ -582,12 +645,12 @@ const SavedReportsView: React.FC = () => {
                       onClick={() => setNewReport({ ...newReport, reportType: rt.id })}
                       className={`p-3 rounded-lg flex items-center gap-2 transition-colors ${
                         newReport.reportType === rt.id
-                          ? 'bg-blue-600/20 border border-blue-500'
-                          : 'bg-gray-700 hover:bg-gray-600'
+                          ? 'bg-blue-600/10 border border-blue-400/60 dark:bg-blue-500/10 dark:border-blue-500/30'
+                          : 'bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-transparent'
                       }`}
                     >
-                      <rt.icon className="w-4 h-4 text-blue-400" />
-                      <span className="text-sm text-white">{rt.label}</span>
+                      <rt.icon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <span className="text-sm text-slate-900 dark:text-white">{rt.label}</span>
                     </button>
                   ))}
                 </div>
@@ -596,7 +659,7 @@ const SavedReportsView: React.FC = () => {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-lg transition-colors dark:bg-navy-700 dark:hover:bg-navy-600 dark:text-white"
               >
                 Cancel
               </button>

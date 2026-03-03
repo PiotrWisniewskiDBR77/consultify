@@ -18,7 +18,6 @@ import {
   Copy,
   Download,
   ExternalLink,
-  Filter,
   Globe,
   Info,
   Key,
@@ -31,9 +30,9 @@ import {
   Shield,
   Upload,
   XCircle,
-  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
@@ -60,6 +59,7 @@ type TabType = 'overview' | 'google' | 'saml' | 'domains';
 export const SSOConfigurationView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [ssoConfigs, setSsoConfigs] = useState<SSOConfig[]>([]);
+  const [domainMappings, setDomainMappings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
@@ -99,6 +99,20 @@ export const SSOConfigurationView: React.FC = () => {
     clientSecret: '',
     allowedDomains: '',
   });
+
+  const [samlForm, setSamlForm] = useState({
+    organizationId: '',
+    metadataUrl: '',
+    entityId: '',
+    ssoUrl: '',
+    certificate: '',
+  });
+
+  const [showAddDomainModal, setShowAddDomainModal] = useState(false);
+  const [newDomain, setNewDomain] = useState({ domain: '', organizationId: '' });
+  const [savingSaml, setSavingSaml] = useState(false);
+  const [validatingSaml, setValidatingSaml] = useState(false);
+  const [savingDomain, setSavingDomain] = useState(false);
 
   // Organizations list for dropdowns
   const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
@@ -151,6 +165,70 @@ export const SSOConfigurationView: React.FC = () => {
     }
   };
 
+  const handleSaveSaml = async () => {
+    const samlConfig = {
+      organizationId: samlForm.organizationId,
+      metadataUrl: samlForm.metadataUrl,
+      entityId: samlForm.entityId,
+      ssoUrl: samlForm.ssoUrl,
+      certificate: samlForm.certificate,
+    };
+    setSavingSaml(true);
+    try {
+      await Api.post('/sso/saml/config', samlConfig);
+      toast.success('SAML configuration saved');
+      setSamlForm({ organizationId: '', metadataUrl: '', entityId: '', ssoUrl: '', certificate: '' });
+      fetchSSOConfigs();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || err?.message || 'Failed to save SAML configuration');
+    } finally {
+      setSavingSaml(false);
+    }
+  };
+
+  const handleValidateSaml = async () => {
+    const samlConfig = {
+      organizationId: samlForm.organizationId,
+      metadataUrl: samlForm.metadataUrl,
+      entityId: samlForm.entityId,
+      ssoUrl: samlForm.ssoUrl,
+      certificate: samlForm.certificate,
+    };
+    setValidatingSaml(true);
+    try {
+      const res = await Api.post('/sso/saml/validate', samlConfig);
+      const data = res?.data ?? res;
+      if (data?.valid || data?.success) {
+        toast.success(data?.message || 'Configuration is valid');
+      } else {
+        toast.error(data?.message || data?.error || 'Validation failed');
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || err?.message || 'Validation failed');
+    } finally {
+      setValidatingSaml(false);
+    }
+  };
+
+  const handleAddDomain = async () => {
+    if (!newDomain.domain || !newDomain.organizationId) {
+      toast.error('Domain and organization are required');
+      return;
+    }
+    setSavingDomain(true);
+    try {
+      await Api.post('/sso/domains', newDomain);
+      toast.success('Domain added');
+      setNewDomain({ domain: '', organizationId: '' });
+      setShowAddDomainModal(false);
+      fetchDomainMappings();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || err?.message || 'Failed to add domain');
+    } finally {
+      setSavingDomain(false);
+    }
+  };
+
   // Toggle SSO config active status
   const toggleSSOConfig = async (configId: string, isActive: boolean) => {
     try {
@@ -192,10 +270,22 @@ export const SSOConfigurationView: React.FC = () => {
     }
   }, []);
 
+  const fetchDomainMappings = useCallback(async () => {
+    try {
+      const res = await Api.get('/sso/domains');
+      const payload = res?.data ?? res;
+      setDomainMappings(payload?.mappings || []);
+    } catch (error) {
+      console.error('Failed to fetch domain mappings:', error);
+      setDomainMappings([]);
+    }
+  }, []);
+
   useEffect(() => {
     fetchSSOConfigs();
     fetchOrganizations();
-  }, [fetchSSOConfigs, fetchOrganizations]);
+    fetchDomainMappings();
+  }, [fetchSSOConfigs, fetchOrganizations, fetchDomainMappings]);
 
   const filteredConfigs = ssoConfigs.filter((config) => {
     const matchesSearch =
@@ -336,7 +426,7 @@ export const SSOConfigurationView: React.FC = () => {
             {filteredConfigs.map((config) => (
               <tr
                 key={config.id}
-                className="hover:bg-slate-50 dark:hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
+                className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
               >
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
@@ -380,7 +470,7 @@ export const SSOConfigurationView: React.FC = () => {
                         Active
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-50 dark:bg-navy-800/300/10 text-slate-600 dark:text-slate-400">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-400">
                         <XCircle size={12} />
                         Inactive
                       </span>
@@ -405,7 +495,7 @@ export const SSOConfigurationView: React.FC = () => {
                       </span>
                     )}
                     {config.allowPasswordLogin && (
-                      <span className="text-xs px-2 py-0.5 rounded bg-slate-50 dark:bg-navy-800/300/10 text-slate-600 dark:text-slate-400">
+                      <span className="text-xs px-2 py-0.5 rounded bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-400">
                         Password fallback
                       </span>
                     )}
@@ -434,7 +524,7 @@ export const SSOConfigurationView: React.FC = () => {
                     </button>
                     <button
                       onClick={() => setEditingConfig(config)}
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
                     >
                       <MoreVertical size={16} className="text-slate-400 dark:text-slate-500" />
                     </button>
@@ -475,6 +565,20 @@ export const SSOConfigurationView: React.FC = () => {
             <p className="text-slate-500 dark:text-slate-400 mt-1">
               Configure OAuth 2.0 / OpenID Connect for Google Workspace authentication
             </p>
+          </div>
+        </div>
+
+        <div className="bg-amber-50 dark:bg-amber-500/10 rounded-lg p-4 mb-6 border border-amber-200 dark:border-amber-500/20">
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={20} className="text-amber-600 dark:text-amber-400 mt-0.5" />
+            <div>
+              <h4 className="font-medium text-amber-900 dark:text-amber-300">
+                SSO login flow not enabled
+              </h4>
+              <p className="text-sm text-amber-800 dark:text-amber-400 mt-1">
+                This panel stores configuration in the database. OIDC callback processing is not implemented in this environment yet.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -604,6 +708,20 @@ export const SSOConfigurationView: React.FC = () => {
           </div>
         </div>
 
+        <div className="bg-amber-50 dark:bg-amber-500/10 rounded-lg p-4 mb-6 border border-amber-200 dark:border-amber-500/20">
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={20} className="text-amber-600 dark:text-amber-400 mt-0.5" />
+            <div>
+              <h4 className="font-medium text-amber-900 dark:text-amber-300">
+                SSO login flow not enabled
+              </h4>
+              <p className="text-sm text-amber-800 dark:text-amber-400 mt-1">
+                This panel stores configuration in the database. SAML callback processing is not implemented in this environment yet.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* SP Metadata */}
         <div className="bg-slate-50 dark:bg-navy-900 rounded-lg p-4 mb-6">
           <h4 className="font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
@@ -617,11 +735,13 @@ export const SSOConfigurationView: React.FC = () => {
               </label>
               <div className="flex items-center gap-2">
                 <code className="flex-1 text-sm bg-white dark:bg-navy-800 px-3 py-2 rounded border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 truncate">
-                  {`${window.location.origin}/sso/metadata/[ORG_ID]`}
+                  {`${window.location.origin}/sso/metadata/${samlForm.organizationId || '[ORG_ID]'}`}
                 </code>
                 <button
-                  onClick={() => copyToClipboard(`${window.location.origin}/sso/metadata/[ORG_ID]`)}
-                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded"
+                  onClick={() =>
+                    copyToClipboard(`${window.location.origin}/sso/metadata/${samlForm.organizationId || '[ORG_ID]'}`)
+                  }
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded"
                 >
                   <Copy size={14} className="text-slate-400 dark:text-slate-500" />
                 </button>
@@ -633,20 +753,32 @@ export const SSOConfigurationView: React.FC = () => {
               </label>
               <div className="flex items-center gap-2">
                 <code className="flex-1 text-sm bg-white dark:bg-navy-800 px-3 py-2 rounded border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 truncate">
-                  {`${window.location.origin}/api/sso/callback/[ORG_ID]`}
+                  {`${window.location.origin}/api/sso/callback/${samlForm.organizationId || '[ORG_ID]'}`}
                 </code>
                 <button
                   onClick={() =>
-                    copyToClipboard(`${window.location.origin}/api/sso/callback/[ORG_ID]`)
+                    copyToClipboard(`${window.location.origin}/api/sso/callback/${samlForm.organizationId || '[ORG_ID]'}`)
                   }
-                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded"
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded"
                 >
                   <Copy size={14} className="text-slate-400 dark:text-slate-500" />
                 </button>
               </div>
             </div>
           </div>
-          <button className="mt-3 px-3 py-1.5 text-sm text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 rounded-lg transition-colors flex items-center gap-2">
+          <button
+            onClick={() => {
+              const xml = `<EntityDescriptor entityID="${window.location.origin}/sso/saml/metadata">\n  <SPSSODescriptor>\n    <AssertionConsumerService Location="${window.location.origin}/api/sso/saml/callback" />\n  </SPSSODescriptor>\n</EntityDescriptor>`;
+              const blob = new Blob([xml], { type: 'application/xml' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'sp-metadata.xml';
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="mt-3 px-3 py-1.5 text-sm text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 rounded-lg transition-colors flex items-center gap-2"
+          >
             <Download size={14} />
             Download SP Metadata XML
           </button>
@@ -661,15 +793,48 @@ export const SSOConfigurationView: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Organization *
+            </label>
+            <select
+              value={samlForm.organizationId}
+              onChange={(e) => setSamlForm({ ...samlForm, organizationId: e.target.value })}
+              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+            >
+              <option value="">Select organization...</option>
+              {organizations.map((org) => (
+                <option key={org.id} value={org.id}>
+                  {org.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               IdP Metadata URL or XML
             </label>
             <div className="flex gap-2">
               <input
                 type="text"
                 placeholder="https://idp.example.com/metadata.xml"
+                value={samlForm.metadataUrl}
+                onChange={(e) => setSamlForm({ ...samlForm, metadataUrl: e.target.value })}
                 className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
               />
-              <button className="px-4 py-2.5 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors">
+              <button
+                onClick={async () => {
+                  if (!samlForm.metadataUrl) return;
+                  try {
+                    const res = await Api.post('/sso/saml/validate', { metadataUrl: samlForm.metadataUrl });
+                    const data = res?.data ?? res;
+                    if (data?.entityId) setSamlForm((prev: any) => ({ ...prev, entityId: data.entityId, ssoUrl: data.ssoUrl || prev.ssoUrl }));
+                    toast.success('Metadata fetched successfully');
+                  } catch (err: any) {
+                    toast.error(err?.response?.data?.error || 'Failed to fetch metadata');
+                  }
+                }}
+                className="px-4 py-2.5 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
+              >
                 Fetch
               </button>
             </div>
@@ -683,6 +848,8 @@ export const SSOConfigurationView: React.FC = () => {
               <input
                 type="text"
                 placeholder="urn:idp:example"
+                value={samlForm.entityId}
+                onChange={(e) => setSamlForm({ ...samlForm, entityId: e.target.value })}
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
               />
             </div>
@@ -693,6 +860,8 @@ export const SSOConfigurationView: React.FC = () => {
               <input
                 type="text"
                 placeholder="https://idp.example.com/sso"
+                value={samlForm.ssoUrl}
+                onChange={(e) => setSamlForm({ ...samlForm, ssoUrl: e.target.value })}
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
               />
             </div>
@@ -705,15 +874,27 @@ export const SSOConfigurationView: React.FC = () => {
             <textarea
               rows={4}
               placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
+              value={samlForm.certificate}
+              onChange={(e) => setSamlForm({ ...samlForm, certificate: e.target.value })}
               className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white font-mono text-sm"
             />
           </div>
 
           <div className="flex justify-end gap-3">
-            <button className="px-4 py-2.5 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors">
+            <button
+              onClick={handleValidateSaml}
+              disabled={validatingSaml}
+              className="px-4 py-2.5 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors flex items-center gap-2 disabled:opacity-50"
+            >
+              {validatingSaml && <Loader2 size={16} className="animate-spin" />}
               Validate Configuration
             </button>
-            <button className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium transition-colors">
+            <button
+              onClick={handleSaveSaml}
+              disabled={savingSaml || !samlForm.organizationId}
+              className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+            >
+              {savingSaml && <Loader2 size={16} className="animate-spin" />}
               Save SAML Configuration
             </button>
           </div>
@@ -735,11 +916,85 @@ export const SSOConfigurationView: React.FC = () => {
               Route users to the correct organization based on their email domain
             </p>
           </div>
-          <button className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2 transition-colors">
+          <button
+            onClick={() => setShowAddDomainModal(true)}
+            className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
+          >
             <Globe size={16} />
             Add Domain
           </button>
         </div>
+
+        {showAddDomainModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-white dark:bg-navy-800 rounded-xl p-6 shadow-xl w-full max-w-md border border-slate-200 dark:border-navy-700">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Add Domain</h3>
+                <button
+                  onClick={() => {
+                    setShowAddDomainModal(false);
+                    setNewDomain({ domain: '', organizationId: '' });
+                  }}
+                  className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded"
+                >
+                  <XCircle size={20} className="text-slate-500" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Domain *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="example.com"
+                    value={newDomain.domain}
+                    onChange={(e) => setNewDomain({ ...newDomain, domain: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Organization *
+                  </label>
+                  <select
+                    value={newDomain.organizationId}
+                    onChange={(e) =>
+                      setNewDomain({ ...newDomain, organizationId: e.target.value })
+                    }
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+                  >
+                    <option value="">Select organization...</option>
+                    {organizations.map((org) => (
+                      <option key={org.id} value={org.id}>
+                        {org.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    onClick={() => {
+                      setShowAddDomainModal(false);
+                      setNewDomain({ domain: '', organizationId: '' });
+                    }}
+                    className="px-4 py-2 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAddDomain}
+                    disabled={savingDomain || !newDomain.domain || !newDomain.organizationId}
+                    className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
+                  >
+                    {savingDomain && <Loader2 size={16} className="animate-spin" />}
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="bg-amber-50 dark:bg-amber-500/10 rounded-lg p-4 mb-6 border border-amber-200 dark:border-amber-500/20">
           <div className="flex items-start gap-3">
@@ -777,11 +1032,54 @@ export const SSOConfigurationView: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-            <tr>
-              <td colSpan={5} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
-                No domain mappings configured yet
-              </td>
-            </tr>
+            {domainMappings.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
+                  No domain mappings configured yet
+                </td>
+              </tr>
+            ) : (
+              domainMappings.map((m: any) => (
+                <tr key={m.id} className="hover:bg-slate-50 dark:hover:bg-navy-900/40">
+                  <td className="px-4 py-3 text-sm text-slate-900 dark:text-white font-mono">
+                    {m.domain || (Array.isArray(m.domains) ? m.domains[0] : '—')}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
+                    {m.organizationName || m.organizationId}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        m.status === 'active'
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                          : 'bg-slate-200/60 text-slate-600 dark:bg-navy-700/50 dark:text-slate-400'
+                      }`}
+                    >
+                      {m.status || 'active'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
+                    {m.createdAt ? new Date(m.createdAt).toLocaleDateString() : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      onClick={async () => {
+                        if (!window.confirm('Delete this domain mapping?')) return;
+                        try {
+                          await (Api as any).deleteSsoConfig(m.id);
+                          fetchDomainMappings();
+                        } catch {
+                          toast.error('Failed to delete domain mapping');
+                        }
+                      }}
+                      className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -809,7 +1107,7 @@ export const SSOConfigurationView: React.FC = () => {
           />
           <button
             onClick={fetchSSOConfigs}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
             title="Refresh"
           >
             <RefreshCw

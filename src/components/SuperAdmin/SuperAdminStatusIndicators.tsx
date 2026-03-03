@@ -27,6 +27,8 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
+import { Api } from '../../services/api';
+
 // Types
 interface PlatformStats {
   timestamp: string;
@@ -269,75 +271,59 @@ export const SuperAdminStatusIndicators: React.FC = () => {
   // Fetch all data
   useEffect(() => {
     const fetchData = async () => {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-
-      const [statsRes, dbRes, llmRes] = await Promise.allSettled([
-        fetch('/api/superadmin/platform-stats', { headers }),
-        fetch('/api/system-health', { headers }),
-        fetch('/api/llm/health/detailed', { headers }),
+      const [statsRes, sysRes, llmRes] = await Promise.allSettled([
+        Api.getSuperAdminPlatformStats(),
+        Api.getSystemHealth(),
+        Api.getLLMHealthDetailed(),
       ]);
 
       // Platform stats
-      if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
-        try {
-          const data = await statsRes.value.json();
-          setStats(data);
-        } catch {
-          /* ignore */
-        }
+      if (statsRes.status === 'fulfilled') {
+        setStats(statsRes.value as any);
       }
 
       // DB Health
-      if (dbRes.status === 'fulfilled' && dbRes.value.ok) {
-        try {
-          const data = await dbRes.value.json();
-          const connected =
-            typeof data?.database?.connected === 'boolean'
-              ? data.database.connected
-              : String(data?.database?.status || '').toLowerCase() === 'healthy';
+      if (sysRes.status === 'fulfilled') {
+        const data: any = sysRes.value;
+        const connected =
+          typeof data?.database?.connected === 'boolean'
+            ? data.database.connected
+            : String(data?.database?.status || '').toLowerCase() === 'healthy';
 
-          const latency =
-            data?.database?.latency ??
-            data?.database?.latencyMs ??
-            data?.database?.responseTime ??
-            data?.latency ??
-            undefined;
+        const latency =
+          data?.database?.latency ??
+          data?.database?.latencyMs ??
+          data?.database?.responseTime ??
+          data?.latency ??
+          undefined;
 
-          setDbHealth({
-            status: connected ? 'online' : 'offline',
-            latency: typeof latency === 'number' ? latency : undefined,
-          });
-        } catch {
-          setDbHealth({ status: 'offline' });
-        }
+        setDbHealth({
+          status: connected ? 'online' : 'offline',
+          latency: typeof latency === 'number' ? latency : undefined,
+        });
       } else {
         setDbHealth({ status: 'offline' });
       }
 
       // LLM Health
-      if (llmRes.status === 'fulfilled' && llmRes.value.ok) {
-        try {
-          const data = await llmRes.value.json();
-          const summary = data.summary || {};
-          const healthy = summary.healthy || 0;
-          const total = summary.total || 0;
-          setLlmHealth({
-            status:
-              total === 0
-                ? 'offline'
-                : healthy === total
-                  ? 'online'
-                  : healthy > 0
-                    ? 'degraded'
-                    : 'offline',
-            healthy,
-            total,
-            providers: data.providers,
-          });
-        } catch {
-          setLlmHealth({ status: 'offline', healthy: 0, total: 0 });
-        }
+      if (llmRes.status === 'fulfilled') {
+        const data: any = llmRes.value;
+        const summary = data?.summary || {};
+        const healthy = summary.healthy || 0;
+        const total = summary.total || 0;
+        setLlmHealth({
+          status:
+            total === 0
+              ? 'offline'
+              : healthy === total
+                ? 'online'
+                : healthy > 0
+                  ? 'degraded'
+                  : 'offline',
+          healthy,
+          total,
+          providers: data?.providers,
+        });
       }
 
       setLoading(false);
@@ -355,8 +341,12 @@ export const SuperAdminStatusIndicators: React.FC = () => {
   // Calculate statuses
   const getInfraStatus = (): 'ok' | 'warning' | 'critical' | 'loading' => {
     if (loading) return 'loading';
-    if (dbHealth.status === 'offline' || llmHealth.status === 'offline') return 'critical';
-    if (dbHealth.status === 'degraded' || llmHealth.status === 'degraded') return 'warning';
+    // DB offline is critical — it's the core infrastructure
+    if (dbHealth.status === 'offline') return 'critical';
+    if (dbHealth.status === 'degraded') return 'warning';
+    // LLM: only warning (not critical) — system can degrade gracefully
+    // If total=0 (no configured providers) → warning, not critical
+    if (llmHealth.total > 0 && llmHealth.healthy === 0) return 'warning';
     return 'ok';
   };
 

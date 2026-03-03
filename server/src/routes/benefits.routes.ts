@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { computeAttribution } from '../services/kpiAttributionService.js';
+import { handleTimeSeriesRecorded } from '../services/results/kpiDeviationService.js';
 import {
   callRemoteTool,
   makeIrisHeaders,
@@ -29,6 +30,268 @@ function getOrgId(req: any): string {
 }
 
 // ============================================================
+// V3-H01: KPI LIST + CREATE (global KPI)
+// ============================================================
+
+router.get(
+  '/kpis',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const rows = await dbAll<any>(
+      `
+      SELECT
+        k.*,
+        i.name AS initiative_name,
+        u.first_name AS owner_first_name,
+        u.last_name AS owner_last_name,
+        ts.value AS latest_value,
+        ts.period_start AS latest_period_start,
+        ts_prev.value AS prev_value,
+        ts_prev.period_start AS prev_period_start,
+        c.id AS open_case_id,
+        c.severity AS open_case_severity,
+        c.status AS open_case_status
+      FROM initiative_kpis k
+      LEFT JOIN initiatives i ON i.id = k.initiative_id
+      LEFT JOIN users u ON u.id = k.owner_user_id
+      LEFT JOIN LATERAL (
+        SELECT value, period_start
+        FROM kpi_time_series
+        WHERE kpi_id = k.id AND organization_id = ?
+        ORDER BY period_start DESC, created_at DESC
+        LIMIT 1
+      ) ts ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT value, period_start
+        FROM kpi_time_series
+        WHERE kpi_id = k.id AND organization_id = ?
+        ORDER BY period_start DESC, created_at DESC
+        OFFSET 1
+        LIMIT 1
+      ) ts_prev ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT id, severity, status
+        FROM kpi_deviation_cases
+        WHERE organization_id = ? AND kpi_id = k.id AND status IN ('OPEN','ACKNOWLEDGED','IN_PROGRESS','MITIGATING')
+        ORDER BY CASE WHEN severity = 'RED' THEN 0 ELSE 1 END, detected_at DESC
+        LIMIT 1
+      ) c ON TRUE
+      WHERE COALESCE(k.organization_id, i.organization_id) = ?
+      ORDER BY k.updated_at DESC NULLS LAST, k.created_at DESC
+      `,
+      [orgId, orgId, orgId, orgId]
+    );
+
+    const data = (rows || []).map((r: any) => {
+      const latestValue = r.latest_value ?? r.current_value ?? null;
+      const targetValue = r.target_value ?? null;
+      const direction = String(r.direction || 'HIGHER_IS_BETTER');
+      const isOnTarget =
+        latestValue == null || targetValue == null
+          ? false
+          : direction === 'LOWER_IS_BETTER'
+            ? Number(latestValue) <= Number(targetValue)
+            : Number(latestValue) >= Number(targetValue);
+
+      return {
+        id: r.id,
+        initiativeId: r.initiative_id || null,
+        initiativeName: r.initiative_name || null,
+        name: r.name,
+        description: r.description || null,
+        unit: r.unit || null,
+        baselineValue: r.baseline_value ?? null,
+        targetValue,
+        measurementFrequency: r.measurement_frequency || 'MONTHLY',
+        alertThreshold: r.alert_threshold ?? null,
+        alertDirection: r.alert_direction || 'BELOW',
+        direction,
+        thresholdMode: r.threshold_mode || 'PERCENT_FROM_TARGET',
+        amberThresholdPct: r.amber_threshold_pct ?? null,
+        redThresholdPct: r.red_threshold_pct ?? null,
+        amberThresholdAbs: r.amber_threshold_abs ?? null,
+        redThresholdAbs: r.red_threshold_abs ?? null,
+        ownerUserId: r.owner_user_id || null,
+        ownerName:
+          r.owner_first_name || r.owner_last_name
+            ? `${r.owner_first_name || ''} ${r.owner_last_name || ''}`.trim()
+            : null,
+        currentValue: r.current_value ?? null,
+        latestValue: latestValue,
+        latestMeasurementDate: r.latest_period_start ? String(r.latest_period_start) : null,
+        prevValue: r.prev_value != null ? Number(r.prev_value) : null,
+        prevMeasurementDate: r.prev_period_start ? String(r.prev_period_start) : null,
+        openDeviationCase: r.open_case_id
+          ? {
+              id: r.open_case_id,
+              severity: r.open_case_severity,
+              status: r.open_case_status,
+            }
+          : null,
+        isOnTarget,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      };
+    });
+
+    res.json({ success: true, data });
+  })
+);
+
+router.post(
+  '/kpis',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const {
+      name,
+      description,
+      unit,
+      baselineValue,
+      targetValue,
+      measurementFrequency,
+      alertThreshold,
+      alertDirection,
+      ownerUserId,
+      direction,
+      thresholdMode,
+      amberThresholdPct,
+      redThresholdPct,
+      amberThresholdAbs,
+      redThresholdAbs,
+    } = req.body || {};
+
+    const safeName = String(name || '').trim();
+    if (!safeName) return res.status(400).json({ success: false, error: 'name is required' });
+
+    const id = uuidv4().replace(/-/g, '');
+    await dbRun(
+      `
+      INSERT INTO initiative_kpis (
+        id, initiative_id, organization_id,
+        name, description, unit,
+        baseline_value, target_value, measurement_frequency,
+        alert_threshold, alert_direction,
+        owner_user_id, direction, threshold_mode,
+        amber_threshold_pct, red_threshold_pct,
+        amber_threshold_abs, red_threshold_abs,
+        created_at, updated_at
+      )
+      VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `,
+      [
+        id,
+        orgId,
+        safeName,
+        description ? String(description).trim() : null,
+        unit ? String(unit).trim() : null,
+        baselineValue != null && baselineValue !== '' ? Number(baselineValue) : null,
+        targetValue != null && targetValue !== '' ? Number(targetValue) : null,
+        measurementFrequency || 'MONTHLY',
+        alertThreshold != null && alertThreshold !== '' ? Number(alertThreshold) : null,
+        alertDirection || 'BELOW',
+        ownerUserId || null,
+        direction || 'HIGHER_IS_BETTER',
+        thresholdMode || 'PERCENT_FROM_TARGET',
+        amberThresholdPct != null && amberThresholdPct !== '' ? Number(amberThresholdPct) : null,
+        redThresholdPct != null && redThresholdPct !== '' ? Number(redThresholdPct) : null,
+        amberThresholdAbs != null && amberThresholdAbs !== '' ? Number(amberThresholdAbs) : null,
+        redThresholdAbs != null && redThresholdAbs !== '' ? Number(redThresholdAbs) : null,
+      ]
+    );
+
+    res.json({ success: true, data: { id } });
+  })
+);
+
+router.put(
+  '/kpis/:kpiId',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const { kpiId } = req.params;
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    if (!kpiId) return res.status(400).json({ success: false, error: 'kpiId is required' });
+
+    // Minimal R0 update contract (extend as needed).
+    const {
+      name,
+      description,
+      unit,
+      baselineValue,
+      targetValue,
+      measurementFrequency,
+      alertThreshold,
+      alertDirection,
+      ownerUserId,
+      direction,
+      thresholdMode,
+      amberThresholdPct,
+      redThresholdPct,
+      amberThresholdAbs,
+      redThresholdAbs,
+    } = req.body || {};
+
+    const row = await dbGet<any>(
+      `
+      SELECT k.id
+      FROM initiative_kpis k
+      LEFT JOIN initiatives i ON i.id = k.initiative_id
+      WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?
+      `,
+      [kpiId, orgId]
+    );
+    if (!row?.id) return res.status(404).json({ success: false, error: 'KPI not found' });
+
+    await dbRun(
+      `
+      UPDATE initiative_kpis
+      SET
+        name = COALESCE(?, name),
+        description = COALESCE(?, description),
+        unit = COALESCE(?, unit),
+        baseline_value = COALESCE(?, baseline_value),
+        target_value = COALESCE(?, target_value),
+        measurement_frequency = COALESCE(?, measurement_frequency),
+        alert_threshold = COALESCE(?, alert_threshold),
+        alert_direction = COALESCE(?, alert_direction),
+        owner_user_id = COALESCE(?, owner_user_id),
+        direction = COALESCE(?, direction),
+        threshold_mode = COALESCE(?, threshold_mode),
+        amber_threshold_pct = COALESCE(?, amber_threshold_pct),
+        red_threshold_pct = COALESCE(?, red_threshold_pct),
+        amber_threshold_abs = COALESCE(?, amber_threshold_abs),
+        red_threshold_abs = COALESCE(?, red_threshold_abs),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+      `,
+      [
+        name != null && String(name).trim() ? String(name).trim() : null,
+        description != null ? String(description).trim() : null,
+        unit != null ? String(unit).trim() : null,
+        baselineValue != null && baselineValue !== '' ? Number(baselineValue) : null,
+        targetValue != null && targetValue !== '' ? Number(targetValue) : null,
+        measurementFrequency || null,
+        alertThreshold != null && alertThreshold !== '' ? Number(alertThreshold) : null,
+        alertDirection || null,
+        ownerUserId || null,
+        direction || null,
+        thresholdMode || null,
+        amberThresholdPct != null && amberThresholdPct !== '' ? Number(amberThresholdPct) : null,
+        redThresholdPct != null && redThresholdPct !== '' ? Number(redThresholdPct) : null,
+        amberThresholdAbs != null && amberThresholdAbs !== '' ? Number(amberThresholdAbs) : null,
+        redThresholdAbs != null && redThresholdAbs !== '' ? Number(redThresholdAbs) : null,
+        kpiId,
+      ]
+    );
+
+    res.json({ success: true });
+  })
+);
+
+// ============================================================
 // T047: KPI TIME SERIES
 // ============================================================
 
@@ -37,11 +300,40 @@ router.get(
   asyncHandler(async (req, res) => {
     const { kpiId } = req.params;
     const orgId = getOrgId(req);
-    const rows = await dbAll(
-      `SELECT * FROM kpi_time_series WHERE kpi_id = ? AND organization_id = ? ORDER BY period_start DESC`,
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const rows = await dbAll<any>(
+      `
+      SELECT
+        ts.*,
+        u.id AS user_id,
+        u.first_name AS user_first_name,
+        u.last_name AS user_last_name
+      FROM kpi_time_series ts
+      LEFT JOIN users u ON u.id = ts.recorded_by
+      WHERE ts.kpi_id = ? AND ts.organization_id = ?
+      ORDER BY ts.period_start DESC, ts.created_at DESC
+      `,
       [kpiId, orgId]
     );
-    res.json({ success: true, data: rows || [] });
+
+    const data = (rows || []).map((r: any) => ({
+      id: r.id,
+      kpiId: r.kpi_id,
+      value: r.value,
+      measuredAt: r.period_start ? String(r.period_start) : null,
+      notes: r.notes || null,
+      createdAt: r.created_at,
+      createdBy: r.user_id
+        ? {
+            id: r.user_id,
+            firstName: r.user_first_name || '',
+            lastName: r.user_last_name || '',
+          }
+        : undefined,
+    }));
+
+    res.json({ success: true, data });
   })
 );
 
@@ -50,7 +342,26 @@ router.post(
   asyncHandler(async (req, res) => {
     const { kpiId } = req.params;
     const orgId = getOrgId(req);
-    const { value, periodStart, periodEnd, source, notes } = req.body;
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const body = req.body || {};
+    const value = body.value;
+    const periodStartRaw = body.periodStart || body.period_start || body.measuredAt || body.measured_at;
+    const periodEndRaw = body.periodEnd || body.period_end;
+    const source = body.source;
+    const notes = body.notes;
+
+    const periodStart = periodStartRaw ? String(periodStartRaw).slice(0, 10) : '';
+    const periodEnd = periodEndRaw ? String(periodEndRaw).slice(0, 10) : null;
+
+    if (!kpiId) return res.status(400).json({ success: false, error: 'kpiId is required' });
+    if (value == null || value === '' || !Number.isFinite(Number(value))) {
+      return res.status(400).json({ success: false, error: 'value is required' });
+    }
+    if (!periodStart) {
+      return res.status(400).json({ success: false, error: 'periodStart (or measuredAt) is required' });
+    }
+
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
       `INSERT INTO kpi_time_series (id, kpi_id, organization_id, value, period_start, period_end, source, notes, recorded_by)
@@ -59,24 +370,272 @@ router.post(
         id,
         kpiId,
         orgId,
-        value,
+        Number(value),
         periodStart,
-        periodEnd || null,
+        periodEnd,
         source || 'manual',
-        notes || null,
+        notes ? String(notes) : null,
         (req as any).user?.id,
       ]
     );
 
-    const kpi = await dbGet(`SELECT current_value FROM initiative_kpis WHERE id = ?`, [kpiId]);
-    if (kpi) {
+    // Best-effort: update current_value if column exists (older DBs may not have it).
+    const kpiCols = await dbAll<{ name: string }>('PRAGMA table_info(initiative_kpis)', []).catch(
+      () => []
+    );
+    const hasCurrentValue = (kpiCols || []).some((c) => c?.name === 'current_value');
+    if (hasCurrentValue) {
       await dbRun(
         `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        [value, kpiId]
-      );
+        [Number(value), kpiId]
+      ).catch(() => null);
     }
 
-    res.json({ success: true, data: { id, kpiId, value, periodStart } });
+    // R1 Deviation Management: evaluate + create/reopen case + notify owner
+    try {
+      await handleTimeSeriesRecorded({
+        db: {
+          get: (sql: string, params: any[]) => dbGet(sql, params),
+          all: (sql: string, params: any[]) => dbAll(sql, params),
+          run: (sql: string, params: any[]) => dbRun(sql, params),
+        } as any,
+        orgId,
+        kpiId,
+        value: Number(value),
+        periodStart,
+        periodEnd,
+        recordedByUserId: (req as any).user?.id || null,
+      });
+    } catch {
+      // do not fail write on deviation logic
+    }
+
+    res.json({
+      success: true,
+      data: { id, kpiId, value: Number(value), measuredAt: periodStart, periodStart, periodEnd },
+    });
+  })
+);
+
+// ============================================================
+// R1: KPI DEVIATION CASES + ACTION PLAN
+// ============================================================
+
+router.get(
+  '/kpis/:kpiId/deviation-cases',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const { kpiId } = req.params;
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    if (!kpiId) return res.status(400).json({ success: false, error: 'kpiId is required' });
+
+    const openOnly =
+      String((req.query as any)?.openOnly || '').trim() === '1' ||
+      String((req.query as any)?.openOnly || '').trim().toLowerCase() === 'true';
+
+    const cases = await dbAll<any>(
+      `
+      SELECT *
+      FROM kpi_deviation_cases
+      WHERE organization_id = ? AND kpi_id = ?
+      ${openOnly ? "AND status IN ('OPEN','ACKNOWLEDGED','IN_PROGRESS','MITIGATING')" : ''}
+      ORDER BY detected_at DESC, created_at DESC
+      `,
+      [orgId, kpiId]
+    );
+
+    const caseIds = (cases || []).map((c: any) => c.id);
+    const actions =
+      caseIds.length > 0
+        ? await dbAll<any>(
+            `
+            SELECT *
+            FROM kpi_deviation_actions
+            WHERE case_id IN (${caseIds.map(() => '?').join(',')})
+            ORDER BY created_at ASC
+            `,
+            caseIds
+          )
+        : [];
+
+    const actionsByCase: Record<string, any[]> = {};
+    (actions || []).forEach((a: any) => {
+      const cid = String(a.case_id);
+      if (!actionsByCase[cid]) actionsByCase[cid] = [];
+      actionsByCase[cid].push({
+        id: a.id,
+        title: a.title,
+        ownerUserId: a.owner_user_id || null,
+        dueDate: a.due_date ? String(a.due_date) : null,
+        status: a.status,
+        createdAt: a.created_at,
+        updatedAt: a.updated_at,
+      });
+    });
+
+    const data = (cases || []).map((c: any) => ({
+      id: c.id,
+      kpiId: c.kpi_id,
+      organizationId: c.organization_id,
+      periodStart: c.period_start ? String(c.period_start) : null,
+      periodEnd: c.period_end ? String(c.period_end) : null,
+      severity: c.severity,
+      status: c.status,
+      ownerUserId: c.owner_user_id || null,
+      deviationSummary: c.deviation_summary || null,
+      rcaText: c.rca_text || null,
+      detectedAt: c.detected_at,
+      acknowledgedAt: c.acknowledged_at,
+      resolvedAt: c.resolved_at,
+      closedAt: c.closed_at,
+      createdAt: c.created_at,
+      updatedAt: c.updated_at,
+      actions: actionsByCase[String(c.id)] || [],
+    }));
+
+    res.json({ success: true, data });
+  })
+);
+
+router.post(
+  '/deviation-cases/:caseId/acknowledge',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const { caseId } = req.params;
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    if (!caseId) return res.status(400).json({ success: false, error: 'caseId is required' });
+
+    await dbRun(
+      `
+      UPDATE kpi_deviation_cases
+      SET status = 'ACKNOWLEDGED', acknowledged_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND organization_id = ?
+      `,
+      [caseId, orgId]
+    );
+    res.json({ success: true });
+  })
+);
+
+router.put(
+  '/deviation-cases/:caseId/rca',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const { caseId } = req.params;
+    const { rcaText } = req.body || {};
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    if (!caseId) return res.status(400).json({ success: false, error: 'caseId is required' });
+
+    await dbRun(
+      `
+      UPDATE kpi_deviation_cases
+      SET rca_text = ?, status = CASE WHEN status = 'OPEN' THEN 'IN_PROGRESS' ELSE status END,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND organization_id = ?
+      `,
+      [rcaText != null ? String(rcaText) : null, caseId, orgId]
+    );
+    res.json({ success: true });
+  })
+);
+
+router.post(
+  '/deviation-cases/:caseId/actions',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const { caseId } = req.params;
+    const { title, ownerUserId, dueDate } = req.body || {};
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    if (!caseId) return res.status(400).json({ success: false, error: 'caseId is required' });
+    const safeTitle = String(title || '').trim();
+    if (!safeTitle) return res.status(400).json({ success: false, error: 'title is required' });
+
+    const id = uuidv4().replace(/-/g, '');
+    await dbRun(
+      `
+      INSERT INTO kpi_deviation_actions (id, case_id, title, owner_user_id, due_date)
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [id, caseId, safeTitle, ownerUserId || null, dueDate ? String(dueDate).slice(0, 10) : null]
+    );
+    res.json({ success: true, data: { id } });
+  })
+);
+
+router.put(
+  '/deviation-cases/:caseId/actions/:actionId',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const { caseId, actionId } = req.params;
+    const { title, ownerUserId, dueDate, status } = req.body || {};
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    if (!caseId || !actionId)
+      return res.status(400).json({ success: false, error: 'caseId and actionId are required' });
+
+    await dbRun(
+      `
+      UPDATE kpi_deviation_actions a
+      SET
+        title = COALESCE(?, a.title),
+        owner_user_id = COALESCE(?, a.owner_user_id),
+        due_date = COALESCE(?, a.due_date),
+        status = COALESCE(?, a.status),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE a.id = ? AND a.case_id = ? AND EXISTS (
+        SELECT 1 FROM kpi_deviation_cases c WHERE c.id = a.case_id AND c.organization_id = ?
+      )
+      `,
+      [
+        title != null ? String(title).trim() : null,
+        ownerUserId || null,
+        dueDate ? String(dueDate).slice(0, 10) : null,
+        status || null,
+        actionId,
+        caseId,
+        orgId,
+      ]
+    );
+    res.json({ success: true });
+  })
+);
+
+router.post(
+  '/deviation-cases/:caseId/resolve',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const { caseId } = req.params;
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    if (!caseId) return res.status(400).json({ success: false, error: 'caseId is required' });
+
+    await dbRun(
+      `
+      UPDATE kpi_deviation_cases
+      SET status = 'RESOLVED', resolved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND organization_id = ?
+      `,
+      [caseId, orgId]
+    );
+    res.json({ success: true });
+  })
+);
+
+router.post(
+  '/deviation-cases/:caseId/close',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const { caseId } = req.params;
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    if (!caseId) return res.status(400).json({ success: false, error: 'caseId is required' });
+
+    await dbRun(
+      `
+      UPDATE kpi_deviation_cases
+      SET status = 'CLOSED', closed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND organization_id = ?
+      `,
+      [caseId, orgId]
+    );
+    res.json({ success: true });
   })
 );
 

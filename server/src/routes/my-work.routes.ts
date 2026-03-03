@@ -344,6 +344,157 @@ const createMyWorkToolSession = async (params: {
   return toolSessionId;
 };
 
+type LinkGraphRelation = 'ref';
+
+const linkGraphAddEdge = async (params: {
+  orgId: string;
+  userId: string;
+  sourceType: string;
+  sourceId: string;
+  targetType: string;
+  targetId: string;
+  relation?: LinkGraphRelation;
+  containerType?: string | null;
+  containerId?: string | null;
+  blockId?: string | null;
+}): Promise<{ id: string } | null> => {
+  const cols = await getTableColumns('link_graph_edges');
+  if (!cols || cols.size === 0) return null;
+
+  const id = uuidv4();
+  const now = new Date().toISOString();
+  const relation = params.relation || 'ref';
+
+  const insertCols: string[] = ['id'];
+  const insertVals: string[] = ['?'];
+  const insertParams: any[] = [id];
+
+  const add = (col: string, val: any) => {
+    if (!cols.has(col)) return;
+    insertCols.push(col);
+    insertVals.push('?');
+    insertParams.push(val);
+  };
+
+  add('organization_id', params.orgId);
+  add('created_by', params.userId);
+  add('source_type', params.sourceType);
+  add('source_id', params.sourceId);
+  add('target_type', params.targetType);
+  add('target_id', params.targetId);
+  add('relation', relation);
+  add('container_type', params.containerType ?? null);
+  add('container_id', params.containerId ?? null);
+  add('block_id', params.blockId ?? null);
+  add('created_at', now);
+
+  try {
+    await queryHelpers.queryRun(
+      `INSERT INTO link_graph_edges (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+      insertParams
+    );
+    return { id };
+  } catch (e: any) {
+    // Best-effort idempotency: unique index may reject duplicates.
+    const msg = String(e?.message || '');
+    if (msg.toLowerCase().includes('unique') || msg.toLowerCase().includes('duplicate')) return null;
+    throw e;
+  }
+};
+
+/**
+ * Link Graph v3 — Backlinks (“Used in”)
+ * SSOT: docs/product/LINK_GRAPH_V3.md
+ */
+router.get(
+  '/link-graph/backlinks',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+
+    if (!(await requireTables(res, ['link_graph_edges']))) return;
+
+    const type = String(req.query.type || '').trim();
+    const id = String(req.query.id || '').trim();
+    if (!type || !id) {
+      res.status(400).json({ error: 'type and id are required' });
+      return;
+    }
+
+    const limit = Math.max(1, Math.min(200, Number(req.query.limit) || 50));
+
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `
+        SELECT
+          e.id,
+          e.source_type as "sourceType",
+          e.source_id as "sourceId",
+          e.relation,
+          e.container_type as "containerType",
+          e.container_id as "containerId",
+          e.block_id as "blockId",
+          e.created_at as "createdAt"
+        FROM link_graph_edges e
+        WHERE e.organization_id = ?
+          AND e.target_type = ?
+          AND e.target_id = ?
+        ORDER BY e.created_at DESC
+        LIMIT ?
+      `,
+        [orgId, type, id, limit]
+      )) || [];
+
+    res.json(rows);
+  })
+);
+
+router.post(
+  '/link-graph/edges',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    if (!(await requireTables(res, ['link_graph_edges']))) return;
+
+    const schema = z.object({
+      source: z.object({ type: z.string().min(1), id: z.string().min(1) }),
+      target: z.object({ type: z.string().min(1), id: z.string().min(1) }),
+      relation: z.literal('ref').optional(),
+      context: z
+        .object({
+          containerType: z.string().min(1).optional(),
+          containerId: z.string().min(1).optional(),
+          blockId: z.string().min(1).optional(),
+        })
+        .optional(),
+    });
+
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+
+    const created = await linkGraphAddEdge({
+      orgId,
+      userId,
+      sourceType: parsed.data.source.type,
+      sourceId: parsed.data.source.id,
+      targetType: parsed.data.target.type,
+      targetId: parsed.data.target.id,
+      relation: 'ref',
+      containerType: parsed.data.context?.containerType ?? null,
+      containerId: parsed.data.context?.containerId ?? null,
+      blockId: parsed.data.context?.blockId ?? null,
+    });
+
+    res.status(201).json({ ok: true, edgeId: created?.id || null });
+  })
+);
+
 /**
  * GET /api/my-work/tasks
  * Lightweight list for Focus + My Work aggregations
@@ -490,6 +641,11 @@ router.post(
     const priority = String(req.body?.priority || 'medium').trim() || 'medium';
     const dueDate = req.body?.dueDate ? String(req.body.dueDate).trim() : undefined;
     const tags = parseTagsArray(req.body?.tags);
+    const sourceTypeRaw = req.body?.sourceType ?? req.body?.source_type;
+    const sourceIdRaw = req.body?.sourceId ?? req.body?.source_id;
+    const sourceType =
+      typeof sourceTypeRaw === 'string' && sourceTypeRaw.trim() ? sourceTypeRaw.trim() : null;
+    const sourceId = typeof sourceIdRaw === 'string' && sourceIdRaw.trim() ? sourceIdRaw.trim() : null;
 
     const id = uuidv4();
     const cols = await getTableColumns('tasks');
@@ -515,6 +671,10 @@ router.post(
     if (dueDate) add('due_date', dueDate);
     add('tags', JSON.stringify(tags));
     add('task_type', 'personal');
+    if (sourceType && sourceId) {
+      add('source_type', sourceType);
+      add('source_id', sourceId);
+    }
 
     await queryHelpers.queryRun(
       `INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
@@ -533,7 +693,9 @@ router.post(
         t.tags,
         t.created_at as "createdAt",
         t.updated_at as "updatedAt",
-        t.completed_at as "completedAt"
+        t.completed_at as "completedAt",
+        ${cols.has('source_type') ? 't.source_type' : 'NULL'} as "sourceType",
+        ${cols.has('source_id') ? 't.source_id' : 'NULL'} as "sourceId"
       FROM tasks t
       WHERE t.id = ? AND t.organization_id = ? AND t.assignee_id = ?
         AND lower(coalesce(t.task_type,'')) = 'personal'
@@ -3156,9 +3318,17 @@ router.get(
     );
     if (!idea) return res.status(404).json({ error: 'Idea not found' });
 
+    const mapCols = await getTableColumns('my_idea_maps');
+    const preferredToolSelect = mapCols.has('preferred_tool')
+      ? `, preferred_tool as "preferredTool"`
+      : `, NULL as "preferredTool"`;
+    const extensionsSelect = mapCols.has('extensions_json')
+      ? `, extensions_json as "extensionsJson"`
+      : `, '{}' as "extensionsJson"`;
+
     const row = await queryHelpers.queryOne<any>(
       `
-      SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version, updated_at as "updatedAt"
+      SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version, updated_at as "updatedAt"${preferredToolSelect}${extensionsSelect}
       FROM my_idea_maps
       WHERE idea_id = ? AND user_id = ? AND organization_id = ?
       LIMIT 1
@@ -3168,11 +3338,15 @@ router.get(
 
     if (!row) {
       const def = buildDefaultIdeaMap({ id: ideaId, title: String(idea?.title || '') }, isPl);
-      return res.json({ map: def, isDefault: true });
+      return res.json({
+        map: { ...def, preferredTool: null, extensions: {} },
+        isDefault: true,
+      });
     }
 
     let nodes: any[] = [];
     let edges: any[] = [];
+    let extensions: any = {};
     try {
       nodes = JSON.parse(String(row.nodesJson || '[]'));
     } catch {
@@ -3183,9 +3357,20 @@ router.get(
     } catch {
       edges = [];
     }
+    try {
+      extensions = row?.extensionsJson ? JSON.parse(String(row.extensionsJson || '{}')) : {};
+    } catch {
+      extensions = {};
+    }
 
     res.json({
-      map: { nodes, edges, version: Number(row.version || 1) },
+      map: {
+        nodes,
+        edges,
+        version: Number(row.version || 1),
+        preferredTool: row?.preferredTool ? String(row.preferredTool) : null,
+        extensions: extensions && typeof extensions === 'object' ? extensions : {},
+      },
       isDefault: false,
       updatedAt: row.updatedAt,
     });
@@ -3290,6 +3475,15 @@ router.put(
     if (!nodes || !edges)
       return res.status(400).json({ error: 'nodes and edges are required arrays' });
 
+    const preferredToolRaw = req.body?.preferredTool ?? req.body?.preferred_tool ?? null;
+    const preferredTool =
+      typeof preferredToolRaw === 'string' && preferredToolRaw.trim() ? preferredToolRaw.trim() : null;
+    const extensionsRaw = req.body?.extensions ?? req.body?.extensions_json ?? null;
+    const extensions =
+      extensionsRaw && typeof extensionsRaw === 'object' && !Array.isArray(extensionsRaw)
+        ? extensionsRaw
+        : null;
+
     const ideaOk = await queryHelpers.queryOne<any>(
       `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
       [ideaId, userId, orgId]
@@ -3301,32 +3495,55 @@ router.put(
       [ideaId, userId, orgId]
     );
 
+    const mapCols = await getTableColumns('my_idea_maps');
     const now = new Date().toISOString();
     const nextVersion = existing ? Number(existing.version || 1) + 1 : 1;
 
     if (!existing) {
       const id = uuidv4();
+      const insertCols: string[] = ['id'];
+      const insertVals: string[] = ['?'];
+      const insertParams: any[] = [id];
+      const add = (col: string, val: any) => {
+        if (!mapCols.has(col)) return;
+        insertCols.push(col);
+        insertVals.push('?');
+        insertParams.push(val);
+      };
+      add('idea_id', ideaId);
+      add('user_id', userId);
+      add('organization_id', orgId);
+      add('nodes_json', JSON.stringify(nodes));
+      add('edges_json', JSON.stringify(edges));
+      add('version', nextVersion);
+      if (preferredTool) add('preferred_tool', preferredTool);
+      if (extensions) add('extensions_json', JSON.stringify(extensions));
+      add('created_at', now);
+      add('updated_at', now);
       await queryHelpers.queryRun(
-        `INSERT INTO my_idea_maps (id, idea_id, user_id, organization_id, nodes_json, edges_json, version, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          id,
-          ideaId,
-          userId,
-          orgId,
-          JSON.stringify(nodes),
-          JSON.stringify(edges),
-          nextVersion,
-          now,
-          now,
-        ]
+        `INSERT INTO my_idea_maps (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+        insertParams
       );
     } else {
+      const setParts: string[] = [];
+      const params: any[] = [];
+      const set = (col: string, val: any) => {
+        if (!mapCols.has(col)) return;
+        setParts.push(`${col} = ?`);
+        params.push(val);
+      };
+      set('nodes_json', JSON.stringify(nodes));
+      set('edges_json', JSON.stringify(edges));
+      set('version', nextVersion);
+      if (preferredTool !== null) set('preferred_tool', preferredTool);
+      if (extensions !== null) set('extensions_json', JSON.stringify(extensions));
+      set('updated_at', now);
+      params.push(ideaId, userId, orgId);
       await queryHelpers.queryRun(
         `UPDATE my_idea_maps
-         SET nodes_json = ?, edges_json = ?, version = ?, updated_at = ?
+         SET ${setParts.join(', ')}
          WHERE idea_id = ? AND user_id = ? AND organization_id = ?`,
-        [JSON.stringify(nodes), JSON.stringify(edges), nextVersion, now, ideaId, userId, orgId]
+        params
       );
     }
 
@@ -3668,6 +3885,18 @@ router.post(
 
       await promote('initiative', initiativeId);
 
+      await linkGraphAddEdge({
+        orgId,
+        userId,
+        sourceType: 'initiative',
+        sourceId: initiativeId,
+        targetType: 'idea',
+        targetId: ideaId,
+        relation: 'ref',
+        containerType: 'mywork_convert',
+        containerId: toolSessionId,
+      });
+
       return res.json({
         promotedTo: 'initiative',
         promotedEntityId: initiativeId,
@@ -3678,8 +3907,16 @@ router.post(
 
     // ----- Convert: Task set -----
     if (target === 'task_set') {
-      if (!(await requireTables(res, ['tasks']))) return;
+      if (!(await requireTables(res, ['tasks', 'tool_sessions']))) return;
       const cols = await getTableColumns('tasks');
+      const toolSessionId = await createMyWorkToolSession({
+        userId,
+        orgId,
+        sourceType: 'idea',
+        sourceId: ideaId,
+        title: safeTitle,
+        summary: safeExpansion || safeBody,
+      });
 
       const steps = nextSteps.length > 0 ? nextSteps.slice(0, 20) : [safeTitle];
       const taskIds: string[] = [];
@@ -3726,6 +3963,29 @@ router.post(
           `INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
           insertParams
         );
+
+        await linkGraphAddEdge({
+          orgId,
+          userId,
+          sourceType: 'task',
+          sourceId: taskId,
+          targetType: 'idea',
+          targetId: ideaId,
+          relation: 'ref',
+          containerType: 'mywork_convert',
+          containerId: toolSessionId,
+        });
+        await linkGraphAddEdge({
+          orgId,
+          userId,
+          sourceType: 'task',
+          sourceId: taskId,
+          targetType: 'tool_session',
+          targetId: toolSessionId,
+          relation: 'ref',
+          containerType: 'mywork_convert',
+          containerId: toolSessionId,
+        });
       }
 
       await promote('task_set', JSON.stringify(taskIds));
@@ -3734,13 +3994,22 @@ router.post(
         promotedTo: 'task_set',
         promotedEntityId: JSON.stringify(taskIds),
         created: { taskIds },
+        sourceSessionId: toolSessionId,
       });
     }
 
     // ----- Convert: Decision -----
     if (target === 'decision') {
-      if (!(await requireTables(res, ['decisions']))) return;
+      if (!(await requireTables(res, ['decisions', 'tool_sessions']))) return;
       const cols = await getTableColumns('decisions');
+      const toolSessionId = await createMyWorkToolSession({
+        userId,
+        orgId,
+        sourceType: 'idea',
+        sourceId: ideaId,
+        title: safeTitle,
+        summary: safeExpansion || safeBody,
+      });
 
       const decisionId = uuidv4();
       const insertCols: string[] = ['id'];
@@ -3782,10 +4051,34 @@ router.post(
 
       await promote('decision', decisionId);
 
+      await linkGraphAddEdge({
+        orgId,
+        userId,
+        sourceType: 'decision',
+        sourceId: decisionId,
+        targetType: 'idea',
+        targetId: ideaId,
+        relation: 'ref',
+        containerType: 'mywork_convert',
+        containerId: toolSessionId,
+      });
+      await linkGraphAddEdge({
+        orgId,
+        userId,
+        sourceType: 'decision',
+        sourceId: decisionId,
+        targetType: 'tool_session',
+        targetId: toolSessionId,
+        relation: 'ref',
+        containerType: 'mywork_convert',
+        containerId: toolSessionId,
+      });
+
       return res.json({
         promotedTo: 'decision',
         promotedEntityId: decisionId,
         created: { decisionId },
+        sourceSessionId: toolSessionId,
       });
     }
 
@@ -4822,6 +5115,18 @@ router.post(
         insertParams
       );
       createdEntity = { id: newId, type: 'task', title: entityTitle };
+
+      await linkGraphAddEdge({
+        orgId,
+        userId,
+        sourceType: 'task',
+        sourceId: newId,
+        targetType: 'notebook',
+        targetId: pageId,
+        relation: 'ref',
+        containerType: 'mywork_convert',
+        containerId: pageId,
+      });
     } else if (target === 'decision') {
       const cols = await getTableColumns('decisions');
       if (cols.size > 0) {
@@ -4849,6 +5154,18 @@ router.post(
         );
       }
       createdEntity = { id: newId, type: 'decision', title: entityTitle };
+
+      await linkGraphAddEdge({
+        orgId,
+        userId,
+        sourceType: 'decision',
+        sourceId: newId,
+        targetType: 'notebook',
+        targetId: pageId,
+        relation: 'ref',
+        containerType: 'mywork_convert',
+        containerId: pageId,
+      });
     } else if (target === 'initiative') {
       if (!(await requireTables(res, ['initiatives', 'tool_sessions']))) return;
       const cols = await getTableColumns('initiatives');
@@ -4899,6 +5216,29 @@ router.post(
         title: entityTitle,
         sourceSessionId: toolSessionId,
       };
+
+      await linkGraphAddEdge({
+        orgId,
+        userId,
+        sourceType: 'initiative',
+        sourceId: newId,
+        targetType: 'notebook',
+        targetId: pageId,
+        relation: 'ref',
+        containerType: 'mywork_convert',
+        containerId: toolSessionId,
+      });
+      await linkGraphAddEdge({
+        orgId,
+        userId,
+        sourceType: 'initiative',
+        sourceId: newId,
+        targetType: 'tool_session',
+        targetId: toolSessionId,
+        relation: 'ref',
+        containerType: 'mywork_convert',
+        containerId: toolSessionId,
+      });
     } else if (target === 'report') {
       if (!(await requireTables(res, ['tool_sessions']))) return;
       const toolSessionId = await createMyWorkToolSession({
@@ -4917,6 +5257,15 @@ router.post(
       }
 
       const reportBuilderService = await import('../services/reportBuilderService.js');
+      const v3Params: Record<string, any> = {};
+      if (req.body.reportTypeV3) v3Params.reportTypeV3 = req.body.reportTypeV3;
+      if (req.body.goalV3) v3Params.goalV3 = req.body.goalV3;
+      if (req.body.communicationRegister) v3Params.communicationRegister = req.body.communicationRegister;
+      if (req.body.density) v3Params.density = req.body.density;
+      if (req.body.periodFrom) v3Params.periodFrom = req.body.periodFrom;
+      if (req.body.periodTo) v3Params.periodTo = req.body.periodTo;
+      if (req.body.confidentiality) v3Params.confidentiality = req.body.confidentiality;
+
       const created = await reportBuilderService.createReport({
         organizationId: orgId,
         sourceType: 'TOOL',
@@ -4924,6 +5273,7 @@ router.post(
         title: entityTitle.slice(0, 255),
         description: entityDesc.slice(0, 2000),
         createdBy: userId,
+        ...v3Params,
       });
       createdEntity = {
         id: String(created.report.id),
@@ -4931,6 +5281,29 @@ router.post(
         title: String(created.report.title || entityTitle),
         sourceSessionId: toolSessionId,
       };
+
+      await linkGraphAddEdge({
+        orgId,
+        userId,
+        sourceType: 'report',
+        sourceId: String(created.report.id),
+        targetType: 'notebook',
+        targetId: pageId,
+        relation: 'ref',
+        containerType: 'mywork_convert',
+        containerId: toolSessionId,
+      });
+      await linkGraphAddEdge({
+        orgId,
+        userId,
+        sourceType: 'report',
+        sourceId: String(created.report.id),
+        targetType: 'tool_session',
+        targetId: toolSessionId,
+        relation: 'ref',
+        containerType: 'mywork_convert',
+        containerId: toolSessionId,
+      });
     } else {
       if (!(await requireTables(res, ['tool_sessions']))) return;
       const toolSessionId = await createMyWorkToolSession({
@@ -4980,6 +5353,29 @@ router.post(
         title: entityTitle,
         sourceSessionId: toolSessionId,
       };
+
+      await linkGraphAddEdge({
+        orgId,
+        userId,
+        sourceType: 'presentation',
+        sourceId: String(outline.deckId),
+        targetType: 'notebook',
+        targetId: pageId,
+        relation: 'ref',
+        containerType: 'mywork_convert',
+        containerId: toolSessionId,
+      });
+      await linkGraphAddEdge({
+        orgId,
+        userId,
+        sourceType: 'presentation',
+        sourceId: String(outline.deckId),
+        targetType: 'tool_session',
+        targetId: toolSessionId,
+        relation: 'ref',
+        containerType: 'mywork_convert',
+        containerId: toolSessionId,
+      });
     }
 
     // Update notebook page: track conversion + set status

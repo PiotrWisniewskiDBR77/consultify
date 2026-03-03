@@ -96,16 +96,20 @@ function main(): void {
 
   checks.push({
     name: 'A03 MyWork sub-hubs keep canonical subset toggles',
-    pass: includesAll(myWorkHub, [
-      "type TasksViewMode = 'table' | 'kanban' | 'calendar'",
-      "type DecisionsViewMode = 'table' | 'kanban' | 'timeline'",
-      "setTasksViewMode('table')",
-      "setTasksViewMode('kanban')",
-      "setTasksViewMode('calendar')",
-      "setDecisionsViewMode('table')",
-      "setDecisionsViewMode('kanban')",
-      "setDecisionsViewMode('timeline')",
-    ]),
+    pass:
+      // Allow both legacy explicit toggles (setX('table')) and the newer map-based toggles
+      // (setX(id)) as long as the canonical subsets exist.
+      includesAll(myWorkHub, [
+        "type TasksViewMode = 'table' | 'kanban' | 'calendar'",
+        "type DecisionsViewMode = 'table' | 'kanban' | 'timeline'",
+        "id: 'table' as TasksViewMode",
+        "id: 'kanban' as TasksViewMode",
+        "id: 'calendar' as TasksViewMode",
+        "id: 'table' as DecisionsViewMode",
+        "id: 'kanban' as DecisionsViewMode",
+        "id: 'timeline' as DecisionsViewMode",
+      ]) &&
+      includesAll(myWorkHub, ['setTasksViewMode(', 'setDecisionsViewMode(']),
   });
 
   const failed = checks.filter((check) => !check.pass);

@@ -121,7 +121,7 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
     from:
       settings['smtp_from'] ||
       process.env.SMTP_FROM ||
-      '"Consultinity System" <system@consultinity.com>',
+      '"Consultify System" <system@consultify.com>',
   };
 
   // For logging and debugging

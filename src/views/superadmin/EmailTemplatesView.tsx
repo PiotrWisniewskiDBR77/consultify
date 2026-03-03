@@ -19,8 +19,10 @@ import {
   Trash2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { EmailTemplateEditor } from '../../components/SuperAdmin/EmailTemplateEditor';
+import { Api } from '../../services/api';
 import type { ContentCategory, ContentTag, EmailTemplate, EmailTemplateStatus } from '../../types';
 
 interface EmailTemplatesViewProps {
@@ -28,8 +30,7 @@ interface EmailTemplatesViewProps {
 }
 
 export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }) => {
-  const token = localStorage.getItem('token');
-
+  const { t } = useTranslation();
   // State
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [categories, setCategories] = useState<ContentCategory[]>([]);
@@ -62,47 +63,30 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
       if (statusFilter) params.append('status', statusFilter);
       if (categoryFilter) params.append('categoryId', categoryFilter);
 
-      const res = await fetch(`/api/content/emails/templates?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error('Failed to load templates');
-
-      const data = await res.json();
-      setTemplates(data.templates || []);
+      const data = await Api.get(`/content/emails/templates?${params.toString()}`);
+      setTemplates((data as any)?.templates || []);
     } catch (err: any) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load templates';
+      const errorMessage = err instanceof Error ? err.message : t('superadmin.emailTemplates.toast.loadFailed');
       setError(errorMessage);
     } finally {
       setLoading(false);
     }
-  }, [token, searchQuery, statusFilter, categoryFilter]);
+  }, [searchQuery, statusFilter, categoryFilter]);
 
   // Load categories and tags
   const loadMetadata = useCallback(async () => {
     try {
-      const [catRes, tagRes] = await Promise.all([
-        fetch('/api/content/categories?contentType=EMAIL', {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch('/api/content/tags?contentType=EMAIL', {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+      const [catData, tagData] = await Promise.all([
+        Api.get('/content/categories?contentType=EMAIL'),
+        Api.get('/content/tags?contentType=EMAIL'),
       ]);
 
-      if (catRes.ok) {
-        const catData = await catRes.json();
-        setCategories(catData.categories || []);
-      }
-
-      if (tagRes.ok) {
-        const tagData = await tagRes.json();
-        setTags(tagData.tags || []);
-      }
+      setCategories((catData as any)?.categories || []);
+      setTags((tagData as any)?.tags || []);
     } catch (err) {
       console.error('Failed to load metadata:', err);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     loadTemplates();
@@ -113,13 +97,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
   const handlePublish = async (templateId: string) => {
     setActionLoading(templateId);
     try {
-      const res = await fetch(`/api/content/emails/templates/${templateId}/publish`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error('Failed to publish template');
-
+      await Api.post(`/content/emails/templates/${templateId}/publish`, {});
       await loadTemplates();
     } catch (err) {
       console.error('Publish error:', err);
@@ -132,13 +110,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
   const handleDeprecate = async (templateId: string) => {
     setActionLoading(templateId);
     try {
-      const res = await fetch(`/api/content/emails/templates/${templateId}/deprecate`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error('Failed to deprecate template');
-
+      await Api.post(`/content/emails/templates/${templateId}/deprecate`, {});
       await loadTemplates();
     } catch (err) {
       console.error('Deprecate error:', err);
@@ -151,17 +123,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
   const handleClone = async (templateId: string) => {
     setActionLoading(templateId);
     try {
-      const res = await fetch(`/api/content/emails/templates/${templateId}/clone`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({}),
-      });
-
-      if (!res.ok) throw new Error('Failed to clone template');
-
+      await Api.post(`/content/emails/templates/${templateId}/clone`, {});
       await loadTemplates();
     } catch (err) {
       console.error('Clone error:', err);
@@ -172,17 +134,11 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
   };
 
   const handleDelete = async (templateId: string) => {
-    if (!confirm('Are you sure you want to delete this template?')) return;
+    if (!confirm(t('superadmin.emailTemplates.toast.confirmDelete'))) return;
 
     setActionLoading(templateId);
     try {
-      const res = await fetch(`/api/content/emails/templates/${templateId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error('Failed to delete template');
-
+      await Api.delete(`/content/emails/templates/${templateId}`);
       await loadTemplates();
     } catch (err) {
       console.error('Delete error:', err);
@@ -214,23 +170,23 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
     switch (status) {
       case 'PUBLISHED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
             <CheckCircle2 size={12} />
-            Published
+            {t('superadmin.emailTemplates.status.published')}
           </span>
         );
       case 'DRAFT':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
             <Edit size={12} />
-            Draft
+            {t('superadmin.emailTemplates.status.draft')}
           </span>
         );
       case 'DEPRECATED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-50 dark:bg-navy-800/300/10 text-slate-400 dark:text-slate-500 border border-slate-500/20">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-400 border border-slate-200 dark:border-white/10">
             <Archive size={12} />
-            Deprecated
+            {t('superadmin.emailTemplates.status.deprecated')}
           </span>
         );
       default:
@@ -252,44 +208,44 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="h-full p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-pink-500/20 to-rose-600/20 border border-pink-500/20">
-              <Mail className="w-6 h-6 text-pink-400" />
+            <div className="p-3 rounded-xl bg-primary-600/10 border border-primary-500/20">
+              <Mail className="w-6 h-6 text-primary-600 dark:text-primary-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Email Templates</h1>
-              <p className="text-slate-400 dark:text-slate-500 text-sm">
-                Manage email templates for notifications and communications
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('superadmin.emailTemplates.title')}</h1>
+              <p className="text-slate-600 dark:text-slate-400 text-sm">
+                {t('superadmin.emailTemplates.subtitle')}
               </p>
             </div>
           </div>
           <button
             onClick={handleCreateNew}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-lg font-medium hover:from-pink-600 hover:to-rose-700 transition-all duration-200 shadow-lg shadow-pink-500/25"
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
           >
             <Plus size={18} />
-            New Template
+            {t('superadmin.emailTemplates.newTemplate')}
           </button>
         </div>
 
         {/* Filters */}
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 mb-6">
+        <div className="bg-white dark:bg-navy-900/20 border border-slate-200 dark:border-navy-800 rounded-xl p-4">
           <div className="flex items-center gap-4 flex-wrap">
             {/* Search */}
             <div className="flex-1 min-w-[280px]">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 dark:text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search templates..."
+                  placeholder={t('superadmin.emailTemplates.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   aria-label="Search templates"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-navy-800 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/40"
                 />
               </div>
             </div>
@@ -299,12 +255,12 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as EmailTemplateStatus | '')}
               aria-label="Filter by status"
-              className="px-4 py-2.5 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+              className="px-4 py-2.5 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-navy-800 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30"
             >
-              <option value="">All Statuses</option>
-              <option value="DRAFT">Draft</option>
-              <option value="PUBLISHED">Published</option>
-              <option value="DEPRECATED">Deprecated</option>
+              <option value="">{t('superadmin.emailTemplates.filters.allStatuses')}</option>
+              <option value="DRAFT">{t('superadmin.emailTemplates.status.draft')}</option>
+              <option value="PUBLISHED">{t('superadmin.emailTemplates.status.published')}</option>
+              <option value="DEPRECATED">{t('superadmin.emailTemplates.status.deprecated')}</option>
             </select>
 
             {/* Category Filter */}
@@ -312,9 +268,9 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
               aria-label="Filter by category"
-              className="px-4 py-2.5 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+              className="px-4 py-2.5 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-navy-800 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30"
             >
-              <option value="">All Categories</option>
+              <option value="">{t('superadmin.emailTemplates.filters.allCategories')}</option>
               {categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.name}
@@ -327,12 +283,12 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-2 px-4 py-2.5 border rounded-lg transition-colors ${
                 showFilters
-                  ? 'bg-pink-500/10 border-pink-500/30 text-pink-400'
-                  : 'bg-slate-900/50 border-slate-700 text-slate-400 dark:text-slate-500 hover:text-white'
+                  ? 'bg-primary-500/10 border-primary-500/30 text-primary-700 dark:text-primary-300'
+                  : 'bg-white dark:bg-navy-950/20 border-slate-200 dark:border-navy-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Filter size={18} />
-              Filters
+              {t('superadmin.emailTemplates.filters.filtersLabel')}
             </button>
 
             {/* Refresh */}
@@ -340,7 +296,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
               onClick={loadTemplates}
               disabled={loading}
               aria-label="Refresh templates"
-              className="p-2.5 bg-slate-900/50 border border-slate-700 rounded-lg text-slate-400 dark:text-slate-500 hover:text-white transition-colors disabled:opacity-50"
+              className="p-2.5 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-navy-800 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-50"
             >
               <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
             </button>
@@ -356,58 +312,63 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
         )}
 
         {/* Templates List */}
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden">
+        <div className="bg-white dark:bg-navy-900/20 border border-slate-200 dark:border-navy-800 rounded-xl overflow-hidden">
           {loading ? (
             <div className="p-12 text-center">
-              <RefreshCw className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin mx-auto mb-4" />
-              <p className="text-slate-400 dark:text-slate-500">Loading templates...</p>
+              <RefreshCw className="w-8 h-8 text-slate-500 dark:text-slate-400 animate-spin mx-auto mb-4" />
+              <p className="text-slate-600 dark:text-slate-400">{t('superadmin.emailTemplates.loading')}</p>
             </div>
           ) : templates.length === 0 ? (
             <div className="p-12 text-center">
               <Mail className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">No templates found</h3>
-              <p className="text-slate-400 dark:text-slate-500 mb-6">
+              <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
+                {t('superadmin.emailTemplates.empty.title')}
+              </h3>
+              <p className="text-slate-600 dark:text-slate-400 mb-6">
                 {searchQuery || statusFilter || categoryFilter
-                  ? 'Try adjusting your filters'
-                  : 'Get started by creating your first email template'}
+                  ? t('superadmin.emailTemplates.empty.withFilters')
+                  : t('superadmin.emailTemplates.empty.noFilters')}
               </p>
               {!searchQuery && !statusFilter && !categoryFilter && (
                 <button
                   onClick={handleCreateNew}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-pink-500/10 border border-pink-500/30 text-pink-400 rounded-lg hover:bg-pink-500/20 transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600/10 border border-primary-500/30 text-primary-700 dark:text-primary-300 rounded-lg hover:bg-primary-600/15 transition-colors"
                 >
                   <Plus size={18} />
-                  Create Template
+                  {t('superadmin.emailTemplates.empty.cta')}
                 </button>
               )}
             </div>
           ) : (
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-700/50">
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                    Template
+                <tr className="border-b border-slate-200 dark:border-navy-800 bg-slate-50/70 dark:bg-white/5">
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                    {t('superadmin.emailTemplates.table.template')}
                   </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                    Category
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                    {t('superadmin.emailTemplates.table.category')}
                   </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                    Status
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                    {t('superadmin.emailTemplates.table.status')}
                   </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                    Version
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                    {t('superadmin.emailTemplates.table.version')}
                   </th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                    Usage
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                    {t('superadmin.emailTemplates.table.usage')}
                   </th>
-                  <th className="text-right px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                    Actions
+                  <th className="text-right px-6 py-4 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                    {t('superadmin.emailTemplates.table.actions')}
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700/30">
+              <tbody className="divide-y divide-slate-200 dark:divide-navy-800">
                 {templates.map((template) => (
-                  <tr key={template.id} className="hover:bg-slate-700/20 transition-colors">
+                  <tr
+                    key={template.id}
+                    className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
+                  >
                     <td className="px-6 py-4">
                       <div className="flex items-start gap-3">
                         <div
@@ -426,8 +387,10 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
                           />
                         </div>
                         <div>
-                          <div className="font-medium text-white">{template.name}</div>
-                          <div className="text-sm text-slate-400 dark:text-slate-500 font-mono">
+                          <div className="font-medium text-slate-900 dark:text-white">
+                            {template.name}
+                          </div>
+                          <div className="text-sm text-slate-600 dark:text-slate-400 font-mono">
                             {template.templateKey}
                           </div>
                           {template.description && (
@@ -458,18 +421,22 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
                     </td>
                     <td className="px-6 py-4">{getStatusBadge(template.status)}</td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-slate-300">v{template.version}</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                        v{template.version}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-slate-300">{template.usageCount || 0}</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                        {template.usageCount || 0}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         {/* Quick actions */}
                         <button
                           onClick={() => handleEdit(template)}
-                          className="p-2 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
-                          title="Edit"
+                          className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                          title={t('superadmin.emailTemplates.actions.edit')}
                         >
                           <Edit size={16} />
                         </button>
@@ -481,66 +448,66 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
                               setActionMenuOpen(actionMenuOpen === template.id ? null : template.id)
                             }
                             aria-label="More actions"
-                            className="p-2 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
+                            className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
                           >
                             <MoreVertical size={16} />
                           </button>
 
                           {actionMenuOpen === template.id && (
-                            <div className="absolute right-0 top-full mt-1 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-10 py-1">
+                            <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 rounded-lg shadow-xl z-10 py-1">
                               <button
                                 onClick={() => handleEdit(template)}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white"
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5"
                               >
                                 <Edit size={14} />
-                                Edit
+                                {t('superadmin.emailTemplates.actions.edit')}
                               </button>
                               <button
                                 onClick={() => handleClone(template.id)}
                                 disabled={actionLoading === template.id}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white disabled:opacity-50"
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50"
                               >
                                 <Copy size={14} />
-                                Clone
+                                {t('superadmin.emailTemplates.actions.clone')}
                               </button>
                               <a
                                 href={`/api/content/emails/templates/${template.id}/preview`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white"
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5"
                               >
                                 <Eye size={14} />
-                                Preview
+                                {t('superadmin.emailTemplates.actions.preview')}
                               </a>
-                              <div className="border-t border-slate-700 my-1" />
+                              <div className="border-t border-slate-200 dark:border-navy-800 my-1" />
                               {template.status === 'DRAFT' && (
                                 <button
                                   onClick={() => handlePublish(template.id)}
                                   disabled={actionLoading === template.id}
-                                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-50"
+                                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-50"
                                 >
                                   <CheckCircle2 size={14} />
-                                  Publish
+                                  {t('superadmin.emailTemplates.actions.publish')}
                                 </button>
                               )}
                               {template.status === 'PUBLISHED' && (
                                 <button
                                   onClick={() => handleDeprecate(template.id)}
                                   disabled={actionLoading === template.id}
-                                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-amber-400 hover:bg-amber-500/10 disabled:opacity-50"
+                                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 disabled:opacity-50"
                                 >
                                   <Archive size={14} />
-                                  Deprecate
+                                  {t('superadmin.emailTemplates.actions.deprecate')}
                                 </button>
                               )}
-                              <div className="border-t border-slate-700 my-1" />
+                              <div className="border-t border-slate-200 dark:border-navy-800 my-1" />
                               <button
                                 onClick={() => handleDelete(template.id)}
                                 disabled={actionLoading === template.id}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-500/10 disabled:opacity-50"
                               >
                                 <Trash2 size={14} />
-                                Delete
+                                {t('superadmin.emailTemplates.actions.delete')}
                               </button>
                             </div>
                           )}
@@ -556,27 +523,27 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
 
         {/* Stats Bar */}
         <div className="mt-6 grid grid-cols-4 gap-4">
-          <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
-            <div className="text-2xl font-bold text-white">{templates.length}</div>
-            <div className="text-sm text-slate-400 dark:text-slate-500">Total Templates</div>
+          <div className="bg-white dark:bg-navy-900/20 border border-slate-200 dark:border-navy-800 rounded-xl p-4">
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">{templates.length}</div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">{t('superadmin.emailTemplates.stats.total')}</div>
           </div>
-          <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
-            <div className="text-2xl font-bold text-emerald-400">
-              {templates.filter((t) => t.status === 'PUBLISHED').length}
+          <div className="bg-white dark:bg-navy-900/20 border border-slate-200 dark:border-navy-800 rounded-xl p-4">
+            <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
+              {templates.filter((tmpl) => tmpl.status === 'PUBLISHED').length}
             </div>
-            <div className="text-sm text-slate-400 dark:text-slate-500">Published</div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">{t('superadmin.emailTemplates.stats.published')}</div>
           </div>
-          <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
-            <div className="text-2xl font-bold text-amber-400">
-              {templates.filter((t) => t.status === 'DRAFT').length}
+          <div className="bg-white dark:bg-navy-900/20 border border-slate-200 dark:border-navy-800 rounded-xl p-4">
+            <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">
+              {templates.filter((tmpl) => tmpl.status === 'DRAFT').length}
             </div>
-            <div className="text-sm text-slate-400 dark:text-slate-500">Drafts</div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">{t('superadmin.emailTemplates.stats.drafts')}</div>
           </div>
-          <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
-            <div className="text-2xl font-bold text-slate-400 dark:text-slate-500">
-              {templates.reduce((sum, t) => sum + (t.usageCount || 0), 0)}
+          <div className="bg-white dark:bg-navy-900/20 border border-slate-200 dark:border-navy-800 rounded-xl p-4">
+            <div className="text-2xl font-bold text-slate-900 dark:text-slate-200">
+              {templates.reduce((sum, tmpl) => sum + (tmpl.usageCount || 0), 0)}
             </div>
-            <div className="text-sm text-slate-400 dark:text-slate-500">Total Sends</div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">{t('superadmin.emailTemplates.stats.totalSends')}</div>
           </div>
         </div>
       </div>

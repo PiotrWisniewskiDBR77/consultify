@@ -41,8 +41,8 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
     localStorage.removeItem('user');
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-    localStorage.removeItem('consultinity-storage');
-    localStorage.removeItem('consultinity_demo_session');
+    localStorage.removeItem('consultify-storage');
+    localStorage.removeItem('consultify_demo_session');
     localStorage.removeItem('demo_events');
 
     try {

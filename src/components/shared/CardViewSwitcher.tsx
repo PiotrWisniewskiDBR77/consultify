@@ -29,7 +29,7 @@ interface CardViewSwitcherProps {
   compact?: boolean;
 }
 
-const STORAGE_KEY_PREFIX = 'consultinity-card-view-';
+const STORAGE_KEY_PREFIX = 'consultify-card-view-';
 
 export const CardViewSwitcher: React.FC<CardViewSwitcherProps> = ({
   moduleId,

@@ -113,7 +113,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
           change: analyticsData.metrics?.api?.change || 0,
           changeLabel: 'vs last period',
           icon: Globe,
-          color: 'cyan',
+          color: 'primary',
         },
         {
           id: 'ai_requests',
@@ -267,10 +267,10 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
             Analytics & Reporting
           </h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm">
+          <p className="text-slate-600 dark:text-slate-400 text-sm">
             Monitor system performance and generate insights
           </p>
         </div>
@@ -278,7 +278,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-2 px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 text-slate-700 dark:text-slate-300 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-navy-950/20 hover:bg-slate-50 dark:hover:bg-navy-800/40 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-lg transition-colors"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -287,7 +287,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
-              className="appearance-none pl-3 pr-8 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+              className="appearance-none pl-3 pr-8 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
             >
               {TIME_RANGES.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -312,8 +312,8 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
             onClick={() => setActiveTab(id as any)}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeTab === id
-                ? 'bg-slate-50 dark:bg-white/10 text-slate-900 dark:text-white border-b-2 border-cyan-500'
-                : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-primary-500'
+                : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/20'
             }`}
           >
             <Icon className="w-4 h-4" />
@@ -370,13 +370,13 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                 {/* API Chart */}
                 <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium text-slate-900 dark:text-white flex items-center gap-2">
-                      <Globe className="w-5 h-5 text-cyan-400" />
+                    <h3 className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                      <Globe className="w-5 h-5 text-primary-500 dark:text-primary-400" />
                       API Traffic
                     </h3>
                     <button
                       onClick={() => handleExport('csv')}
-                      className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-1"
+                      className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1"
                     >
                       <Download className="w-3 h-3" />
                       Export
@@ -388,13 +388,13 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                 {/* AI Chart */}
                 <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                    <h3 className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
                       <Zap className="w-5 h-5 text-purple-400" />
                       AI Usage
                     </h3>
                     <button
                       onClick={() => handleExport('csv')}
-                      className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-1"
+                      className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1"
                     >
                       <Download className="w-3 h-3" />
                       Export
@@ -406,7 +406,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
 
               {/* Performance Breakdown */}
               <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                <h3 className="font-medium text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
                   <Activity className="w-5 h-5 text-emerald-400" />
                   Performance Breakdown
                 </h3>
@@ -492,23 +492,23 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                   return (
                     <div
                       key={report.id}
-                      className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-cyan-500/50 transition-colors cursor-pointer"
+                      className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-primary-500/50 transition-colors cursor-pointer"
                       onClick={() => handleExport('pdf')}
                     >
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
-                          <Icon className="w-5 h-5 text-cyan-400" />
+                        <div className="w-10 h-10 rounded-lg bg-primary-600/10 flex items-center justify-center">
+                          <Icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                         </div>
-                        <h3 className="font-medium text-slate-900 dark:text-white">
+                        <h3 className="font-medium text-slate-900 dark:text-slate-100">
                           {report.label}
                         </h3>
                       </div>
-                      <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
                         Generate a comprehensive {report.label.toLowerCase()} report for the
                         selected time period.
                       </p>
                       <div className="flex items-center gap-2">
-                        <button className="px-3 py-1.5 text-xs bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white rounded-lg">
+                        <button className="px-3 py-1.5 text-xs bg-primary-600 hover:bg-primary-700 text-white rounded-lg">
                           PDF
                         </button>
                         <button className="px-3 py-1.5 text-xs bg-slate-50/50 dark:bg-navy-950/30 hover:bg-white/20 text-slate-900 dark:text-white rounded-lg">
@@ -524,13 +524,13 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
               </div>
 
               <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                <h3 className="font-medium text-slate-900 dark:text-white mb-4">
+                <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-4">
                   Custom Report Builder
                 </h3>
-                <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
                   Create custom reports by selecting metrics, filters, and visualization options.
                 </p>
-                <button className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white rounded-lg">
+                <button className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg">
                   <Plus className="w-4 h-4" />
                   Create Custom Report
                 </button>
@@ -542,12 +542,12 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
           {activeTab === 'scheduled' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-slate-900 dark:text-white">
+                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
                   Scheduled Reports
                 </h3>
                 <button
                   onClick={() => setShowCreateReport(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white rounded-lg"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
                 >
                   <Plus className="w-4 h-4" />
                   Schedule Report
@@ -784,7 +784,7 @@ const CreateScheduledReportModal: React.FC<{
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               Schedule

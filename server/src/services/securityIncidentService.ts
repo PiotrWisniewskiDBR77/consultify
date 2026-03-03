@@ -29,75 +29,126 @@ class SecurityIncidentServiceClass {
   async getIncidents(filters: any = {}): Promise<any[]> {
     const { status, severity, incidentType, limit = 10, offset = 0 } = filters;
 
-    let query = `
-            SELECT 
-                si.*,
-                u.id as user_id,
-                u.email as user_email,
-                u.first_name as user_first_name,
-                u.last_name as user_last_name
-            FROM security_incidents si
-            LEFT JOIN users u ON si.resolved_by = u.id
-            WHERE 1=1
-        `;
-    const params: any[] = [];
+    const safeJson = (raw: any, fallback: any) => {
+      if (!raw) return fallback;
+      try {
+        return typeof raw === 'string' ? JSON.parse(raw) : raw;
+      } catch {
+        return fallback;
+      }
+    };
 
-    if (status) {
-      query += ' AND si.status = ?';
-      params.push(status);
+    const mapRow = (row: any) => {
+      const affectedFromColumn = safeJson(row.affected_resources, null);
+      const meta = safeJson(row.metadata_json, {});
+      const affectedResources =
+        Array.isArray(affectedFromColumn) ? affectedFromColumn : meta?.affectedResources || [];
+
+      return {
+        id: row.id,
+        incidentType: row.incident_type || row.type,
+        severity: row.severity,
+        status: row.status,
+        description: row.description,
+        affectedResources,
+        detectedAt: row.detected_at || row.created_at,
+        resolvedAt: row.resolved_at,
+        resolutionNotes: row.resolution_notes,
+        createdAt: row.created_at,
+        resolvedBy: row.user_id
+          ? {
+              id: row.user_id,
+              email: row.user_email,
+              firstName: row.user_first_name,
+              lastName: row.user_last_name,
+            }
+          : null,
+      };
+    };
+
+    // Prefer extended schema (incident_type, affected_resources, detected_at)
+    try {
+      let query = `
+        SELECT 
+          si.*,
+          u.id as user_id,
+          u.email as user_email,
+          u.first_name as user_first_name,
+          u.last_name as user_last_name
+        FROM security_incidents si
+        LEFT JOIN users u ON si.resolved_by = u.id
+        WHERE 1=1
+      `;
+      const params: any[] = [];
+
+      if (status) {
+        query += ' AND si.status = ?';
+        params.push(status);
+      }
+      if (severity) {
+        query += ' AND si.severity = ?';
+        params.push(severity);
+      }
+      if (incidentType) {
+        query += ' AND si.incident_type = ?';
+        params.push(incidentType);
+      }
+
+      query += ' ORDER BY COALESCE(si.detected_at, si.created_at) DESC LIMIT ? OFFSET ?';
+      params.push(limit, offset);
+
+      const rows = await this.db.all(query, params);
+      return (rows || []).map(mapRow);
+    } catch (_err) {
+      // Fallback legacy schema (type, metadata_json)
+      let query = `
+        SELECT 
+          si.*,
+          u.id as user_id,
+          u.email as user_email,
+          u.first_name as user_first_name,
+          u.last_name as user_last_name
+        FROM security_incidents si
+        LEFT JOIN users u ON si.resolved_by = u.id
+        WHERE 1=1
+      `;
+      const params: any[] = [];
+
+      if (status) {
+        query += ' AND si.status = ?';
+        params.push(status);
+      }
+      if (severity) {
+        query += ' AND si.severity = ?';
+        params.push(severity);
+      }
+      if (incidentType) {
+        query += ' AND si.type = ?';
+        params.push(incidentType);
+      }
+
+      query += ' ORDER BY si.created_at DESC LIMIT ? OFFSET ?';
+      params.push(limit, offset);
+
+      const rows = await this.db.all(query, params);
+      return (rows || []).map(mapRow);
     }
-    if (severity) {
-      query += ' AND si.severity = ?';
-      params.push(severity);
-    }
-    if (incidentType) {
-      query += ' AND si.type = ?';
-      params.push(incidentType);
-    }
-
-    query += ' ORDER BY si.created_at DESC LIMIT ? OFFSET ?';
-    params.push(limit, offset);
-
-    const rows = await this.db.all(query, params);
-
-    return rows.map((row: any) => ({
-      id: row.id,
-      incidentType: row.type,
-      severity: row.severity,
-      status: row.status,
-      description: row.description,
-      affectedResources: row.metadata_json
-        ? JSON.parse(row.metadata_json).affectedResources || []
-        : [],
-      detectedAt: row.created_at,
-      resolvedAt: row.resolved_at,
-      resolutionNotes: row.resolution_notes,
-      createdAt: row.created_at,
-      resolvedBy: row.user_id
-        ? {
-            id: row.user_id,
-            email: row.user_email,
-            firstName: row.user_first_name,
-            lastName: row.user_last_name,
-          }
-        : null,
-    }));
   }
 
   async getStats(): Promise<any> {
     const row = (await this.db.get(`
-            SELECT 
-                COUNT(*) as total,
-                SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) as open_count,
-                SUM(CASE WHEN status = 'in-progress' THEN 1 ELSE 0 END) as in_progress_count,
-                SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved_count,
-                SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) as closed_count,
-                SUM(CASE WHEN severity = 'critical' THEN 1 ELSE 0 END) as critical_count,
-                SUM(CASE WHEN severity = 'high' THEN 1 ELSE 0 END) as high_count,
-                SUM(CASE WHEN severity = 'medium' THEN 1 ELSE 0 END) as medium_count,
-                SUM(CASE WHEN severity = 'low' THEN 1 ELSE 0 END) as low_count
-            FROM security_incidents
-        `)) as {
+      SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) as open_count,
+        SUM(CASE WHEN status IN ('in_progress','in-progress') THEN 1 ELSE 0 END) as in_progress_count,
+        SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved_count,
+        SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) as closed_count,
+        SUM(CASE WHEN UPPER(severity) = 'CRITICAL' THEN 1 ELSE 0 END) as critical_count,
+        SUM(CASE WHEN UPPER(severity) = 'HIGH' THEN 1 ELSE 0 END) as high_count,
+        SUM(CASE WHEN UPPER(severity) = 'MEDIUM' THEN 1 ELSE 0 END) as medium_count,
+        SUM(CASE WHEN UPPER(severity) = 'LOW' THEN 1 ELSE 0 END) as low_count
+      FROM security_incidents
+    `)) as {
       total?: number;
       open_count?: number;
       in_progress_count?: number;
@@ -132,12 +183,43 @@ class SecurityIncidentServiceClass {
 
   async createIncident(data: any): Promise<any> {
     const id = this.uuidv4();
-    const { title, description, severity, type, metadata = {} } = data;
+    const {
+      title,
+      description,
+      severity = 'MEDIUM',
+      type,
+      incidentType,
+      affectedResources,
+      metadata = {},
+    } = data || {};
 
-    await this.db.run(
-      'INSERT INTO security_incidents (id, title, description, severity, type, status, metadata_json) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, title, description, severity, type, 'open', JSON.stringify(metadata)]
-    );
+    const normalizedType = incidentType || type;
+    const nextMetadata = { ...(metadata || {}), affectedResources: affectedResources || metadata?.affectedResources };
+    const affectedJson = Array.isArray(affectedResources) ? JSON.stringify(affectedResources) : null;
+
+    // Prefer extended schema insert (incident_type + affected_resources)
+    try {
+      await this.db.run(
+        `INSERT INTO security_incidents
+          (id, incident_type, title, description, severity, status, affected_resources, metadata_json, detected_at, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, 'open', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [
+          id,
+          normalizedType,
+          title || null,
+          description,
+          severity,
+          affectedJson,
+          JSON.stringify(nextMetadata || {}),
+        ]
+      );
+    } catch (_err) {
+      // Fallback legacy schema (type + metadata_json)
+      await this.db.run(
+        'INSERT INTO security_incidents (id, title, description, severity, type, status, metadata_json) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [id, title, description, severity, normalizedType, 'open', JSON.stringify(nextMetadata || {})]
+      );
+    }
 
     return await this.getIncidentById(id);
   }

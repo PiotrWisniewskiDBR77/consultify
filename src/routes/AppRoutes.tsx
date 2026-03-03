@@ -43,17 +43,6 @@ const ContextBuilderView = React.lazy(() =>
     default: m.ContextBuilderView,
   }))
 );
-const AssessmentModuleHub = React.lazy(() =>
-  import('@/components/assessment/AssessmentModuleHub').then((m) => ({
-    default: m.AssessmentModuleHub,
-  }))
-);
-const AssessmentHubDashboard = React.lazy(() =>
-  import('@/components/assessment/AssessmentHubDashboard').then((m) => ({
-    default: m.AssessmentHubDashboard,
-  }))
-);
-
 // Discovery Tools Module - New Hub
 const DiscoveryToolsHub = React.lazy(() =>
   import('@/components/Discovery/DiscoveryToolsHub').then((m) => ({ default: m.DiscoveryToolsHub }))
@@ -159,16 +148,23 @@ const PresentationsHub = React.lazy(() =>
     default: m.PresentationsHub,
   }))
 );
-const ReportsEntryRouter = React.lazy(() =>
-  import('@/components/Reports/ReportsEntryRouter').then((m) => ({
-    default: m.ReportsEntryRouter,
+const ReportsAndPresentationsHub = React.lazy(() =>
+  import('@/components/ReportsAndPresentations/ReportsAndPresentationsHub').then((m) => ({
+    default: m.ReportsAndPresentationsHub,
   }))
 );
-const ReportsHub = React.lazy(() =>
-  import('@/components/Reports/Management/ReportsHub').then((m) => ({
-    default: m.ReportsHub,
+const DeckBuilder = React.lazy(() =>
+  import('@/components/Presentations/DeckBuilder/DeckBuilder').then((m) => ({
+    default: m.DeckBuilder,
   }))
 );
+const PresentationWizard = React.lazy(() =>
+  import('@/components/Presentations/PresentationWizard').then((m) => ({
+    default: m.PresentationWizard,
+  }))
+);
+// NOTE: Legacy Management Reports UI has been deprecated in favor of the unified
+// Reports & Presentations hub under /presentations (tab=reports).
 
 // Settings
 const SettingsView = React.lazy(() =>
@@ -220,7 +216,7 @@ const ActionProposalView = React.lazy(() =>
   import('@/views/ActionProposalView').then((m) => ({ default: m.ActionProposalView }))
 );
 
-// Partner Portal - New DBR77 Consultinity Partner Portal
+// Partner Portal - New DBR77 Consultify Partner Portal
 const PartnerPortalViewNew = React.lazy(() =>
   import('@/views/partner/PartnerPortalView').then((m) => ({ default: m.PartnerPortalViewNew }))
 );
@@ -360,6 +356,28 @@ const ToolsShowcasePage = React.lazy(() =>
 );
 const AuditsShowcasePage = React.lazy(() =>
   import('@/views/AuditsShowcasePage').then((m) => ({ default: m.AuditsShowcasePage }))
+);
+const ResourcesPage = React.lazy(() =>
+  import('@/views/ResourcesPage').then((m) => ({ default: m.ResourcesPage }))
+);
+const HowItWorksPage = React.lazy(() =>
+  import('@/views/HowItWorksPage').then((m) => ({ default: m.HowItWorksPage }))
+);
+
+const ForWhomPage = React.lazy(() =>
+  import('@/views/ForWhomPage').then((m) => ({ default: m.ForWhomPage }))
+);
+
+const PricingLandingPage = React.lazy(() =>
+  import('@/views/PricingLandingPage').then((m) => ({ default: m.PricingLandingPage }))
+);
+
+const EnterprisePage = React.lazy(() =>
+  import('@/views/EnterprisePage').then((m) => ({ default: m.EnterprisePage }))
+);
+
+const OurStoryPage = React.lazy(() =>
+  import('@/views/OurStoryPage').then((m) => ({ default: m.OurStoryPage }))
 );
 
 const RedirectWithTracking: React.FC<{ from: string; to: string; reason: string }> = ({
@@ -514,7 +532,7 @@ export const AppRoutes: React.FC = () => {
         sessionStorage.setItem('isDemo', 'true');
       } else {
         sessionStorage.removeItem('isDemo');
-        localStorage.removeItem('consultinity_demo_session');
+        localStorage.removeItem('consultify_demo_session');
         localStorage.removeItem('demo_events');
         // Ensure "demo org overlay" mode is OFF for normal users
         setDemoMode(false);
@@ -528,7 +546,7 @@ export const AppRoutes: React.FC = () => {
     if (validUser.email === FORCE_DEMO_OFF_EMAIL) {
       try {
         sessionStorage.removeItem('isDemo');
-        localStorage.removeItem('consultinity_demo_session');
+        localStorage.removeItem('consultify_demo_session');
         localStorage.removeItem('demo_events');
       } catch {
         // ignore
@@ -634,6 +652,70 @@ export const AppRoutes: React.FC = () => {
                 <ToolsShowcasePage />
               </Suspense>
             </AuthLayout>
+          }
+        />
+
+        {/* Resources - Public video teasers (Public) */}
+        <Route
+          path="/resources"
+          element={
+            <AuthLayout>
+              <Suspense fallback={<LoadingScreen message="Loading resources..." />}>
+                <ResourcesPage />
+              </Suspense>
+            </AuthLayout>
+          }
+        />
+
+        {/* How it works - Video teasers (Public) */}
+        <Route
+          path="/how-it-works"
+          element={
+            <AuthLayout>
+              <Suspense fallback={<LoadingScreen message="Loading how it works..." />}>
+                <HowItWorksPage />
+              </Suspense>
+            </AuthLayout>
+          }
+        />
+
+        {/* For whom (Public) */}
+        <Route
+          path="/for-whom"
+          element={
+            <Suspense fallback={<LoadingScreen message="Loading..." />}>
+              <ForWhomPage />
+            </Suspense>
+          }
+        />
+
+        {/* Pricing marketing page (Public) */}
+        <Route
+          path="/pricing"
+          element={
+            <Suspense fallback={<LoadingScreen message="Loading pricing..." />}>
+              <PricingLandingPage />
+            </Suspense>
+          }
+        />
+
+        {/* Enterprise (Public) */}
+        <Route
+          path="/enterprise"
+          element={
+            <Suspense fallback={<LoadingScreen message="Loading..." />}>
+              <EnterprisePage />
+            </Suspense>
+          }
+        />
+
+        {/* Our Story (Public) */}
+        <Route
+          path="/our-story"
+          element={
+            <Suspense fallback={<LoadingScreen message="Loading..." />}>
+              <OurStoryPage />
+            </Suspense>
           }
         />
 
@@ -1097,6 +1179,18 @@ export const AppRoutes: React.FC = () => {
           }
         />
         <Route
+          path={ROUTES.FINANCE}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Finance']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <EconomicsView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        <Route
           path={ROUTES.EXECUTION}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Execution']} noPadding>
@@ -1130,17 +1224,15 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
-        {/* Reports entry — smart selector (V3-A04 / V3-J01) */}
+        {/* Reports & Presentations — unified V3 hub (V3-J01) */}
         <Route
           path={ROUTES.REPORTS.ROOT}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.reports', 'Reports')]}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <ReportsEntryRouter />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
+            <RedirectWithTracking
+              from={ROUTES.REPORTS.ROOT}
+              to={`${ROUTES.PRESENTATIONS}?tab=reports`}
+              reason="reports_ui_moved_to_presentations"
+            />
           }
         />
         <Route path="/assessment-reports/:reportId" element={<LegacyAssessmentReportRedirect />} />
@@ -1151,7 +1243,7 @@ export const AppRoutes: React.FC = () => {
             <MainLayout
               breadcrumbs={
                 breadcrumbs || [
-                  t('sidebar.reports', 'Reports'),
+                  t('sidebar.presentations', 'Presentations'),
                   t('sidebar.reportsBuilder', 'Report Builder'),
                 ]
               }
@@ -1170,7 +1262,7 @@ export const AppRoutes: React.FC = () => {
             <MainLayout
               breadcrumbs={
                 breadcrumbs || [
-                  t('sidebar.reports', 'Reports'),
+                  t('sidebar.presentations', 'Presentations'),
                   t('sidebar.reportsBuilder', 'Report Builder'),
                   t('common.edit', 'Edit'),
                 ]
@@ -1184,23 +1276,15 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
-        {/* Management Reports — PMO */}
+        {/* Management Reports — legacy (deprecated) */}
         <Route
           path={ROUTES.REPORTS.MANAGEMENT}
           element={
-            <MainLayout
-              breadcrumbs={
-                breadcrumbs || [
-                  t('sidebar.reports', 'Reports'),
-                  t('sidebar.reportsManagement', 'Management Reports'),
-                ]
-              }
-              noPadding
-            >
-              <RouteErrorBoundary>
-                <ReportsHub />
-              </RouteErrorBoundary>
-            </MainLayout>
+            <RedirectWithTracking
+              from={ROUTES.REPORTS.MANAGEMENT}
+              to={`${ROUTES.PRESENTATIONS}?tab=reports`}
+              reason="reports_management_deprecated"
+            />
           }
         />
         <Route
@@ -1221,9 +1305,30 @@ export const AppRoutes: React.FC = () => {
               noPadding
             >
               <RouteErrorBoundary>
-                <PresentationsHub />
+                <ReportsAndPresentationsHub />
               </RouteErrorBoundary>
             </MainLayout>
+          }
+        />
+        <Route
+          path="/presentations/wizard"
+          element={
+            <MainLayout
+              breadcrumbs={breadcrumbs || [t('sidebar.presentations', 'Presentations')]}
+              noPadding
+            >
+              <RouteErrorBoundary>
+                <PresentationWizard />
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/presentations/builder/:deckId"
+          element={
+            <RouteErrorBoundary>
+              <DeckBuilder />
+            </RouteErrorBoundary>
           }
         />
         <Route
@@ -1337,7 +1442,7 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Partner Portal - New DBR77 Consultinity Partner Portal */}
+        {/* Partner Portal - New DBR77 Consultify Partner Portal */}
         <Route
           path={`${ROUTES.PARTNER.LANDING}/*`}
           element={

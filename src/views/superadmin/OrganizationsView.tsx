@@ -59,6 +59,7 @@ export const OrganizationsView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [nonBlockingLoadErrors, setNonBlockingLoadErrors] = useState<string[]>([]);
 
   // Modal States
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
@@ -84,15 +85,36 @@ export const OrganizationsView: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setNonBlockingLoadErrors([]);
     try {
-      const [orgsData, reqsData, codesData] = await Promise.all([
+      const [orgsRes, reqsRes, codesRes] = await Promise.allSettled([
         Api.getOrganizations(),
-        Api.getAccessRequests().catch(() => []),
-        Api.getAccessCodes().catch(() => []),
+        Api.getAccessRequests(),
+        Api.getAccessCodes(),
       ]);
-      setOrganizations(orgsData);
-      setRequests(reqsData);
-      setCodes(codesData);
+
+      if (orgsRes.status === 'rejected') throw orgsRes.reason;
+      setOrganizations(orgsRes.value);
+
+      const errors: string[] = [];
+      if (reqsRes.status === 'fulfilled') {
+        setRequests(reqsRes.value);
+      } else {
+        setRequests([]);
+        errors.push('Access requests failed to load.');
+      }
+
+      if (codesRes.status === 'fulfilled') {
+        setCodes(codesRes.value);
+      } else {
+        setCodes([]);
+        errors.push('Access codes failed to load.');
+      }
+
+      if (errors.length) {
+        setNonBlockingLoadErrors(errors);
+        toast.error(errors.join(' '));
+      }
     } catch (err) {
       console.error(err);
       toast.error('Failed to load data');
@@ -196,6 +218,21 @@ export const OrganizationsView: React.FC = () => {
     }
   };
 
+  const handleDeactivateCode = async (codeId: string) => {
+    if (!confirm('Deactivate this access code? Users will no longer be able to register with it.'))
+      return;
+    setProcessingId(codeId);
+    try {
+      await Api.deactivateAccessCode(codeId);
+      toast.success('Access code deactivated');
+      fetchData();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to deactivate access code');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     toast.success('Code copied to clipboard');
@@ -212,26 +249,26 @@ export const OrganizationsView: React.FC = () => {
   const getPlanColor = (plan: string) => {
     switch (plan) {
       case 'enterprise':
-        return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+        return 'bg-purple-500/10 text-purple-700 border-purple-500/20 dark:bg-purple-500/20 dark:text-purple-400 dark:border-purple-500/30';
       case 'pro':
-        return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+        return 'bg-blue-500/10 text-blue-700 border-blue-500/20 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30';
       case 'trial':
-        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+        return 'bg-amber-500/10 text-amber-800 border-amber-500/20 dark:bg-yellow-500/20 dark:text-yellow-400 dark:border-yellow-500/30';
       default:
-        return 'bg-slate-700/50 text-slate-300 border-white/10';
+        return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700/50 dark:text-slate-300 dark:border-white/10';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'text-emerald-400';
+        return 'text-emerald-700 dark:text-emerald-400';
       case 'blocked':
-        return 'text-red-400';
+        return 'text-red-700 dark:text-red-400';
       case 'pending':
-        return 'text-yellow-400';
+        return 'text-amber-700 dark:text-yellow-400';
       default:
-        return 'text-slate-400 dark:text-slate-500';
+        return 'text-slate-600 dark:text-slate-500';
     }
   };
 
@@ -243,13 +280,13 @@ export const OrganizationsView: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
               <Building2 size={20} className="text-white" />
             </div>
             Organizations
           </h1>
-          <p className="text-slate-400 dark:text-slate-500 mt-1 text-sm">
+          <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm">
             Manage organizations, subscriptions, and access requests
           </p>
         </div>
@@ -264,13 +301,19 @@ export const OrganizationsView: React.FC = () => {
           <button
             onClick={fetchData}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 text-white rounded-lg text-sm transition-colors border border-white/10"
+            className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-900 rounded-lg text-sm transition-colors border border-slate-200 dark:bg-navy-800 dark:hover:bg-navy-700 dark:text-white dark:border-white/10 disabled:opacity-60"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
             Refresh
           </button>
         </div>
       </div>
+
+      {nonBlockingLoadErrors.length > 0 && (
+        <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 text-amber-800 dark:text-amber-200 rounded-xl px-4 py-3 text-sm">
+          {nonBlockingLoadErrors.join(' ')}
+        </div>
+      )}
 
       {/* Tab Navigation */}
       <div className="flex gap-2 mb-6">
@@ -279,7 +322,7 @@ export const OrganizationsView: React.FC = () => {
           className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
             activeTab === 'organizations'
               ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-              : 'bg-navy-800 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-navy-700'
+              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 dark:bg-navy-800 dark:text-slate-400 dark:border-white/10 dark:hover:text-white dark:hover:bg-navy-700'
           }`}
         >
           <Building2 size={16} />
@@ -293,7 +336,7 @@ export const OrganizationsView: React.FC = () => {
           className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
             activeTab === 'pending'
               ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-              : 'bg-navy-800 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-navy-700'
+              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 dark:bg-navy-800 dark:text-slate-400 dark:border-white/10 dark:hover:text-white dark:hover:bg-navy-700'
           }`}
         >
           <Clock size={16} />
@@ -309,7 +352,7 @@ export const OrganizationsView: React.FC = () => {
           className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
             activeTab === 'codes'
               ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-              : 'bg-navy-800 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-navy-700'
+              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 dark:bg-navy-800 dark:text-slate-400 dark:border-white/10 dark:hover:text-white dark:hover:bg-navy-700'
           }`}
         >
           <Key size={16} />
@@ -332,16 +375,16 @@ export const OrganizationsView: React.FC = () => {
                 placeholder="Search organizations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-navy-900 border border-white/10 rounded-lg text-sm text-white focus:border-blue-500 outline-none"
+                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-blue-500 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
               />
             </div>
           </div>
 
           {/* Organizations Table */}
-          <div className="bg-navy-900 border border-white/10 rounded-xl overflow-hidden">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-navy-950 text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wider">
+                <tr className="bg-slate-50 dark:bg-navy-950 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">
                   <th className="p-4 font-medium">Organization</th>
                   <th className="p-4 font-medium">Users</th>
                   <th className="p-4 font-medium">Plan</th>
@@ -351,7 +394,7 @@ export const OrganizationsView: React.FC = () => {
                   <th className="p-4 font-medium text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-sm">
+              <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-sm">
                 {loading ? (
                   <tr>
                     <td colSpan={7} className="p-8 text-center text-slate-500 dark:text-slate-400">
@@ -374,18 +417,20 @@ export const OrganizationsView: React.FC = () => {
                         className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors group"
                       >
                         <td className="p-4">
-                          <div className="font-medium text-white">{getOrgName(org)}</div>
+                          <div className="font-medium text-slate-900 dark:text-white">
+                            {getOrgName(org)}
+                          </div>
                           <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                             {org.id.slice(0, 8)}...
                           </div>
                         </td>
-                        <td className="p-4 text-slate-300">{org.user_count}</td>
+                        <td className="p-4 text-slate-700 dark:text-slate-300">{org.user_count}</td>
                         <td className="p-4">
                           {isEditing ? (
                             <select
                               value={editForm.plan}
                               onChange={(e) => setEditForm({ ...editForm, plan: e.target.value })}
-                              className="bg-navy-950 border border-blue-500/50 rounded px-2 py-1 text-white text-xs focus:outline-none"
+                              className="bg-white dark:bg-navy-950 border border-slate-300 dark:border-blue-500/50 rounded px-2 py-1 text-slate-900 dark:text-white text-xs focus:outline-none"
                             >
                               <option value="free">Free</option>
                               <option value="trial">Trial</option>
@@ -405,7 +450,7 @@ export const OrganizationsView: React.FC = () => {
                             <select
                               value={editForm.status}
                               onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                              className="bg-navy-950 border border-blue-500/50 rounded px-2 py-1 text-white text-xs focus:outline-none"
+                              className="bg-white dark:bg-navy-950 border border-slate-300 dark:border-blue-500/50 rounded px-2 py-1 text-slate-900 dark:text-white text-xs focus:outline-none"
                             >
                               <option value="active">Active</option>
                               <option value="pending">Pending</option>
@@ -438,12 +483,12 @@ export const OrganizationsView: React.FC = () => {
                                     discount_percent: parseInt(e.target.value) || 0,
                                   })
                                 }
-                                className="w-16 bg-navy-950 border border-blue-500/50 rounded px-2 py-1 text-white text-xs focus:outline-none"
+                                className="w-16 bg-white dark:bg-navy-950 border border-slate-300 dark:border-blue-500/50 rounded px-2 py-1 text-slate-900 dark:text-white text-xs focus:outline-none"
                               />
                               <span className="text-slate-500 dark:text-slate-400 text-xs">%</span>
                             </div>
                           ) : org.discount_percent ? (
-                            <span className="text-emerald-400 font-bold">
+                            <span className="text-emerald-700 dark:text-emerald-400 font-bold">
                               -{org.discount_percent}%
                             </span>
                           ) : (
@@ -509,13 +554,15 @@ export const OrganizationsView: React.FC = () => {
 
       {/* Pending Requests Tab */}
       {activeTab === 'pending' && (
-        <div className="bg-navy-900 border border-white/10 rounded-xl overflow-hidden">
-          <div className="p-4 border-b border-white/5 flex justify-between items-center">
-            <h3 className="font-semibold text-white">Pending Organization Requests</h3>
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
+          <div className="p-4 border-b border-slate-100 dark:border-white/5 flex justify-between items-center">
+            <h3 className="font-semibold text-slate-900 dark:text-white">
+              Pending Organization Requests
+            </h3>
           </div>
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-navy-950 text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wider">
+              <tr className="bg-slate-50 dark:bg-navy-950 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">
                 <th className="p-4 font-medium">Date</th>
                 <th className="p-4 font-medium">Organization</th>
                 <th className="p-4 font-medium">Contact</th>
@@ -523,7 +570,7 @@ export const OrganizationsView: React.FC = () => {
                 <th className="p-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 text-sm">
+            <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-sm">
               {loading ? (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-slate-500 dark:text-slate-400">
@@ -545,9 +592,11 @@ export const OrganizationsView: React.FC = () => {
                     <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
                       {new Date(req.requested_at).toLocaleString()}
                     </td>
-                    <td className="p-4 text-white font-medium">{req.organization_name}</td>
+                    <td className="p-4 text-slate-900 dark:text-white font-medium">
+                      {req.organization_name}
+                    </td>
                     <td className="p-4">
-                      <div className="text-white">
+                      <div className="text-slate-900 dark:text-white">
                         {req.first_name} {req.last_name}
                       </div>
                       <div className="text-slate-500 dark:text-slate-400 text-xs">{req.email}</div>
@@ -612,10 +661,10 @@ export const OrganizationsView: React.FC = () => {
             </button>
           </div>
 
-          <div className="bg-navy-900 border border-white/10 rounded-xl overflow-hidden">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-navy-950 text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wider">
+                <tr className="bg-slate-50 dark:bg-navy-950 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">
                   <th className="p-4 font-medium">Code</th>
                   <th className="p-4 font-medium">Role</th>
                   <th className="p-4 font-medium">Usage</th>
@@ -624,7 +673,7 @@ export const OrganizationsView: React.FC = () => {
                   <th className="p-4 font-medium text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-sm">
+              <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-sm">
                 {loading ? (
                   <tr>
                     <td colSpan={6} className="p-8 text-center text-slate-500 dark:text-slate-400">
@@ -645,21 +694,23 @@ export const OrganizationsView: React.FC = () => {
                     >
                       <td className="p-4">
                         <div className="flex items-center gap-2">
-                          <code className="bg-navy-950 px-2 py-1 rounded text-blue-400 font-mono text-xs border border-blue-500/20">
+                          <code className="bg-slate-50 dark:bg-navy-950 px-2 py-1 rounded text-blue-700 dark:text-blue-400 font-mono text-xs border border-slate-200 dark:border-blue-500/20">
                             {code.code}
                           </code>
                           <button
                             onClick={() => copyCode(code.code)}
-                            className="text-slate-500 dark:text-slate-400 hover:text-white transition-colors"
+                            className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                           >
                             <Copy size={12} />
                           </button>
                         </div>
                       </td>
-                      <td className="p-4 text-slate-300 font-medium text-xs">{code.role}</td>
+                      <td className="p-4 text-slate-700 dark:text-slate-300 font-medium text-xs">
+                        {code.role}
+                      </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-20 h-1.5 bg-navy-950 rounded-full overflow-hidden">
+                          <div className="w-20 h-1.5 bg-slate-100 dark:bg-navy-950 rounded-full overflow-hidden">
                             <div
                               className="h-full bg-blue-500"
                               style={{
@@ -667,7 +718,7 @@ export const OrganizationsView: React.FC = () => {
                               }}
                             />
                           </div>
-                          <span className="text-xs text-slate-400 dark:text-slate-500">
+                          <span className="text-xs text-slate-600 dark:text-slate-500">
                             {code.current_uses}/{code.max_uses}
                           </span>
                         </div>
@@ -679,7 +730,12 @@ export const OrganizationsView: React.FC = () => {
                         {code.created_by_email || 'Super Admin'}
                       </td>
                       <td className="p-4 text-right">
-                        <button className="text-slate-500 dark:text-slate-400 hover:text-red-400 transition-colors">
+                        <button
+                          onClick={() => handleDeactivateCode(code.id)}
+                          disabled={processingId === code.id}
+                          className="text-slate-500 dark:text-slate-400 hover:text-red-400 transition-colors disabled:opacity-50"
+                          title="Deactivate code"
+                        >
                           <XCircle size={16} />
                         </button>
                       </td>
@@ -707,14 +763,14 @@ export const OrganizationsView: React.FC = () => {
       {/* Generate Code Modal */}
       {showCodeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-navy-900 border border-white/10 rounded-xl p-6 w-full max-w-md shadow-2xl">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 w-full max-w-md shadow-2xl">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Key size={20} className="text-purple-500" /> Generate Access Code
               </h3>
               <button
                 onClick={() => setShowCodeModal(false)}
-                className="text-slate-400 dark:text-slate-500 hover:text-white"
+                className="text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
               >
                 <XCircle size={20} />
               </button>
@@ -732,7 +788,7 @@ export const OrganizationsView: React.FC = () => {
                     setNewCodeData({ ...newCodeData, code: e.target.value.toUpperCase() })
                   }
                   placeholder="Leave empty for random"
-                  className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-purple-500 outline-none text-sm placeholder:text-slate-600 dark:text-slate-400"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-purple-500 outline-none text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
 
@@ -748,7 +804,7 @@ export const OrganizationsView: React.FC = () => {
                     onChange={(e) =>
                       setNewCodeData({ ...newCodeData, maxUses: parseInt(e.target.value) })
                     }
-                    className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-purple-500 outline-none text-sm"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-purple-500 outline-none text-sm"
                   />
                 </div>
                 <div>
@@ -758,7 +814,7 @@ export const OrganizationsView: React.FC = () => {
                   <select
                     value={newCodeData.role}
                     onChange={(e) => setNewCodeData({ ...newCodeData, role: e.target.value })}
-                    className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-purple-500 outline-none text-sm"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-purple-500 outline-none text-sm"
                   >
                     <option value="USER">User</option>
                     <option value="ADMIN">Admin</option>
@@ -775,7 +831,7 @@ export const OrganizationsView: React.FC = () => {
                   type="date"
                   value={newCodeData.expiresAt}
                   onChange={(e) => setNewCodeData({ ...newCodeData, expiresAt: e.target.value })}
-                  className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-purple-500 outline-none text-sm"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-purple-500 outline-none text-sm"
                 />
               </div>
 
@@ -783,7 +839,7 @@ export const OrganizationsView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowCodeModal(false)}
-                  className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded text-slate-300 text-sm font-medium transition-colors"
+                  className="flex-1 py-2 bg-transparent border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded text-slate-700 dark:text-slate-300 text-sm font-medium transition-colors"
                 >
                   Cancel
                 </button>

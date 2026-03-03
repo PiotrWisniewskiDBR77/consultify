@@ -193,7 +193,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
                     <Sparkles size={32} className="text-white" />
                   </div>
                   <h2 className="text-2xl font-bold text-white mb-2">
-                    {t('tour.welcome.title', 'Welcome to Consultinity')}
+                    {t('tour.welcome.title', 'Welcome to Consultify')}
                   </h2>
                   <p className="text-white/60">
                     {t('tour.welcome.subtitle', 'What brings you here today?')}

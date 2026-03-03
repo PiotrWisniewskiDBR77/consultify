@@ -15,6 +15,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { LegalDocType, LegalDocument } from '../../types';
+import { Api } from '../../services/api';
 
 type SuperAdminLegalViewProps = Record<string, never>;
 
@@ -51,13 +52,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/superadmin/legal/all', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error('Failed to fetch documents');
-      const data = await res.json();
+      const data = await Api.getSuperAdminLegalDocs();
       setDocuments(data);
     } catch (err: any) {
       setError(err.message);
@@ -72,26 +67,13 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
     setError(null);
 
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/superadmin/legal/publish', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          docType: formDocType,
-          version: formVersion,
-          title: formTitle,
-          effectiveFrom: formEffectiveFrom,
-          contentMd: formContent,
-        }),
+      await Api.publishSuperAdminLegalDoc({
+        docType: formDocType,
+        version: formVersion,
+        title: formTitle,
+        effectiveFrom: formEffectiveFrom,
+        contentMd: formContent,
       });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || 'Failed to publish');
-      }
 
       // Reset form and refresh
       setShowPublishForm(false);
@@ -110,15 +92,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
 
   const toggleActive = async (docId: string, isActive: boolean) => {
     try {
-      const token = localStorage.getItem('token');
-      await fetch(`/api/superadmin/legal/${docId}/toggle-active`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ isActive }),
-      });
+      await Api.toggleSuperAdminLegalDocActive(docId, isActive);
       fetchDocuments();
     } catch (err) {
       console.error('Failed to toggle:', err);
@@ -127,14 +101,8 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
 
   const viewDocument = async (docId: string) => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/api/superadmin/legal/${docId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const doc = await res.json();
-        setSelectedDoc(doc);
-      }
+      const doc = await Api.getSuperAdminLegalDocById(docId);
+      setSelectedDoc(doc);
     } catch (err) {
       console.error('Failed to fetch document:', err);
     }
@@ -186,7 +154,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={fetchDocuments}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40"
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800/40"
           >
             <RefreshCw size={18} />
           </button>
@@ -304,7 +272,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
               <button
                 type="button"
                 onClick={() => setShowPublishForm(false)}
-                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-50 dark:hover:bg-navy-800/20 text-sm"
+                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-navy-800/20 text-sm"
               >
                 Cancel
               </button>
@@ -342,7 +310,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
             {documents.map((doc) => (
               <tr
                 key={doc.id}
-                className="hover:bg-slate-50 dark:hover:bg-slate-50 dark:hover:bg-navy-800/20"
+                className="hover:bg-slate-50 dark:hover:bg-navy-800/20"
               >
                 <td className="px-4 py-3">
                   <span className="text-sm font-medium text-slate-900 dark:text-white">
@@ -376,7 +344,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
                   <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={() => viewDocument(doc.id)}
-                      className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40"
+                      className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800/40"
                       title="View"
                     >
                       <Eye size={16} className="text-slate-500 dark:text-slate-400" />
@@ -431,7 +399,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
               </div>
               <button
                 onClick={() => setSelectedDoc(null)}
-                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40"
+                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800/40"
               >
                 <X size={20} />
               </button>

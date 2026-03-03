@@ -13,7 +13,7 @@ export type AppState = AuthSlice & UISlice & ChatSlice & ProjectSlice & DemoSlic
 // Perf: this store updates very frequently (chat streaming, UI state, etc.).
 // Persisting large blobs on every update can freeze the UI (localStorage + JSON stringify are sync).
 // We (a) persist only the minimal state needed across reloads and (b) debounce/skip redundant writes.
-const APP_STORE_KEY = 'consultinity-storage';
+const APP_STORE_KEY = 'consultify-storage';
 const appStoreStorage = createJSONStorage(() => {
   const pending = new Map<string, string>();
   const timers = new Map<string, number>();

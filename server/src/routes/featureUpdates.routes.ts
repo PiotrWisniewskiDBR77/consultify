@@ -516,11 +516,11 @@ router.post(
     const shouldEmail =
       emailConfigured && recentCount < MAX_EMAIL_PER_WEEK && update.importance !== 'low';
     if (shouldEmail) {
-      const subject = `[Consultinity] ${update.title}`;
+      const subject = `[Consultify] ${update.title}`;
       const html =
         `<h2 style="margin:0 0 8px 0;">${escapeHtml(update.title)}</h2>` +
         `<div style="color:#475569; font-size:14px; line-height:1.5; white-space:pre-wrap;">${escapeHtml(update.body_md)}</div>` +
-        `<p style="color:#64748b; font-size:12px; margin-top:16px;">Open Consultinity to try it now.</p>`;
+        `<p style="color:#64748b; font-size:12px; margin-top:16px;">Open Consultify to try it now.</p>`;
 
       for (const u of users) {
         if (!u.email) continue;

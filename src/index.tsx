@@ -12,7 +12,7 @@ function initThemeClass(): void {
   // Initialize theme synchronously before React renders to prevent flicker
   // This reads from localStorage before React hydration
   try {
-    const stored = localStorage.getItem('consultinity-storage');
+    const stored = localStorage.getItem('consultify-storage');
     if (!stored) return;
 
     const parsed = JSON.parse(stored);

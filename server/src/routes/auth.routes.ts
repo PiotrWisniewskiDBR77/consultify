@@ -1352,7 +1352,7 @@ router.get(
       }
 
       // Redirect to frontend with success
-      const redirectUrl = `${process.env.FRONTEND_URL || 'https://app.consultinity.com'}/email-verified?success=true`;
+      const redirectUrl = `${process.env.FRONTEND_URL || 'https://app.consultify.com'}/email-verified?success=true`;
       return res.redirect(redirectUrl);
     } catch (error: unknown) {
       logger.error('Email verification error:', error);

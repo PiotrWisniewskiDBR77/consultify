@@ -27,6 +27,22 @@ export type ReportStatus =
 export type SectionLength = 'short' | 'medium' | 'long';
 export type SectionLanguage = 'technical' | 'business' | 'general';
 
+// V3 types
+export type ReportTypeV3 = 'R1' | 'R2' | 'R3' | 'R4' | 'custom';
+export type CommunicationRegister = 'executive' | 'professional' | 'technical' | 'narrative';
+export type ReportDensity = 'concise' | 'standard' | 'detailed' | 'comprehensive';
+export type ReportForm = 'strategic' | 'operational' | 'technical' | 'investment';
+export type DataLevel = 'data-heavy' | 'balanced' | 'narrative-heavy';
+export type Confidentiality = 'confidential' | 'internal' | 'public';
+export type GoalV3 = 'inform' | 'decide' | 'sell' | 'align';
+export type RagStatus = 'green' | 'amber' | 'red';
+
+export interface SourceRef {
+  artifact_id: string;
+  artifact_type: string;
+  artifact_name: string;
+}
+
 export interface SourceOption {
   id: string;
   name: string;
@@ -70,6 +86,12 @@ export interface ReportSection {
   generatedAt?: string;
   repeatFor?: string;
   repeatKey?: string;
+  // V3 fields
+  rag?: RagStatus;
+  summary?: string;
+  sourceRefs?: SourceRef[];
+  isRefreshable?: boolean;
+  lastDataTimestamp?: string;
 }
 
 export interface Report {
@@ -93,6 +115,18 @@ export interface Report {
   generatedAt?: string;
   approvedAt?: string;
   version: number;
+  // V3 Report Definition Layer
+  reportTypeV3?: ReportTypeV3;
+  periodFrom?: string;
+  periodTo?: string;
+  communicationRegister?: CommunicationRegister;
+  density?: ReportDensity;
+  form?: ReportForm;
+  dataLevel?: DataLevel;
+  confidentiality?: Confidentiality;
+  themeId?: string;
+  goalV3?: GoalV3;
+  sourceRefs?: SourceRef[];
 }
 
 // ==========================================
@@ -710,7 +744,7 @@ export function useReportBuilder() {
         password?: string;
         expiresInDays?: number;
         showCompanyLogo?: boolean;
-        showConsultinityBranding?: boolean;
+        showConsultifyBranding?: boolean;
         customMessage?: string;
       }
     ): Promise<{

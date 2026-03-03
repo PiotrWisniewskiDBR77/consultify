@@ -9,14 +9,50 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest } from '../middleware/auth.middleware.js';
 import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
+import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
 
+let alertsTableReady = false;
+
+async function ensureAlertsTable(): Promise<void> {
+  if (alertsTableReady) return;
+  const { run: dbRun } = await import('../utils/DbPromise.js');
+  await dbRun(
+    `CREATE TABLE IF NOT EXISTS system_health_alerts (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      metric TEXT NOT NULL,
+      threshold REAL NOT NULL,
+      operator TEXT NOT NULL DEFAULT 'gt',
+      enabled INTEGER NOT NULL DEFAULT 1,
+      channels TEXT NOT NULL DEFAULT '[]',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )`,
+    [],
+    { fallback: false }
+  );
+  alertsTableReady = true;
+}
+
+function alertRowToJson(row: any) {
+  return {
+    id: row.id,
+    name: row.name,
+    metric: row.metric,
+    threshold: row.threshold,
+    operator: row.operator,
+    enabled: row.enabled === 1,
+    channels: JSON.parse(row.channels || '[]'),
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
 // Apply rate limiting
 router.use(defaultRateLimiter);
-
-import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import SystemHealthService from '../services/systemHealthService.js';
 import logger from '../utils/Logger.js';
 
@@ -139,6 +175,115 @@ router.post(
       logger.error('[SystemHealth] Error refreshing:', error);
       return res.status(500).json({ error: 'Failed to refresh health data' });
     }
+  })
+);
+
+// ── Health Alerts CRUD ──
+
+router.get(
+  '/alerts',
+  verifySuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    await ensureAlertsTable();
+    const { all: dbAll } = await import('../utils/DbPromise.js');
+    const rows = await dbAll('SELECT * FROM system_health_alerts ORDER BY created_at DESC', [], { fallback: true });
+    res.json(rows.map(alertRowToJson));
+  })
+);
+
+router.post(
+  '/alerts',
+  verifySuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureAlertsTable();
+    const { run: dbRun, get: dbGet } = await import('../utils/DbPromise.js');
+    const { randomUUID } = await import('crypto');
+
+    const { name, metric, threshold, operator, channels } = req.body;
+    if (!name || !metric || threshold === undefined || !operator) {
+      return res.status(400).json({ error: 'name, metric, threshold and operator are required' });
+    }
+
+    const id = randomUUID();
+    const now = new Date().toISOString();
+
+    await dbRun(
+      `INSERT INTO system_health_alerts (id, name, metric, threshold, operator, enabled, channels, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)`,
+      [id, name, metric, threshold, operator, JSON.stringify(channels || []), now, now],
+      { fallback: false }
+    );
+
+    const created = await dbGet('SELECT * FROM system_health_alerts WHERE id = ?', [id]);
+    res.status(201).json(created ? alertRowToJson(created) : { id });
+  })
+);
+
+router.put(
+  '/alerts/:id',
+  verifySuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureAlertsTable();
+    const { run: dbRun, get: dbGet } = await import('../utils/DbPromise.js');
+
+    const existing = await dbGet('SELECT * FROM system_health_alerts WHERE id = ?', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'Alert not found' });
+
+    const { name, metric, threshold, operator, enabled, channels } = req.body;
+    const now = new Date().toISOString();
+
+    await dbRun(
+      `UPDATE system_health_alerts SET name = ?, metric = ?, threshold = ?, operator = ?, enabled = ?, channels = ?, updated_at = ? WHERE id = ?`,
+      [
+        name ?? (existing as any).name,
+        metric ?? (existing as any).metric,
+        threshold !== undefined ? threshold : (existing as any).threshold,
+        operator ?? (existing as any).operator,
+        enabled !== undefined ? (enabled ? 1 : 0) : (existing as any).enabled,
+        channels !== undefined ? JSON.stringify(channels) : (existing as any).channels,
+        now,
+        req.params.id,
+      ],
+      { fallback: false }
+    );
+
+    const updated = await dbGet('SELECT * FROM system_health_alerts WHERE id = ?', [req.params.id]);
+    res.json(updated ? alertRowToJson(updated) : { id: req.params.id });
+  })
+);
+
+router.put(
+  '/alerts/:id/toggle',
+  verifySuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureAlertsTable();
+    const { run: dbRun, get: dbGet } = await import('../utils/DbPromise.js');
+
+    const existing = await dbGet<any>('SELECT * FROM system_health_alerts WHERE id = ?', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'Alert not found' });
+
+    const newEnabled = existing.enabled === 1 ? 0 : 1;
+    const now = new Date().toISOString();
+
+    await dbRun('UPDATE system_health_alerts SET enabled = ?, updated_at = ? WHERE id = ?', [newEnabled, now, req.params.id], { fallback: false });
+
+    const updated = await dbGet('SELECT * FROM system_health_alerts WHERE id = ?', [req.params.id]);
+    res.json(updated ? alertRowToJson(updated) : { id: req.params.id, enabled: newEnabled === 1 });
+  })
+);
+
+router.delete(
+  '/alerts/:id',
+  verifySuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureAlertsTable();
+    const { run: dbRun, get: dbGet } = await import('../utils/DbPromise.js');
+
+    const existing = await dbGet('SELECT * FROM system_health_alerts WHERE id = ?', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'Alert not found' });
+
+    await dbRun('DELETE FROM system_health_alerts WHERE id = ?', [req.params.id], { fallback: false });
+    res.json({ success: true });
   })
 );
 

@@ -352,7 +352,7 @@ const DECISION_COLUMNS: ColumnDef[] = [
   },
 ];
 
-const DECISIONS_TABLE_VIEW_STORAGE_KEY = 'consultinity-decisions-table-view';
+const DECISIONS_TABLE_VIEW_STORAGE_KEY = 'consultify-decisions-table-view';
 const DECISIONS_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
 
 function loadDecisionsHiddenColumns(): string[] {
@@ -1527,7 +1527,6 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
             setPreviewDecisionId(null);
           }}
           itemIds={orderedDecisionIds}
-          kicker={isPolish ? 'Podgląd' : 'Preview'}
           renderPreview={(item) => {
             const decisionData = (previewDecision || (item as any)) as DecisionPreviewData;
             if (previewLoading) {

@@ -26,7 +26,7 @@ import { KnowledgePreviewSection } from '../components/Landing/KnowledgePreviewS
 export const PublicLandingPage: React.FC = () => {
   const navigate = useNavigate();
   const brandLogoSrc = new URL(
-    '../../Logo consultinity/Consultinity_logo_dark_medium.svg',
+    '../../Logo consultify/Consultify_logo_dark_medium.svg',
     import.meta.url
   ).href;
 
@@ -52,7 +52,7 @@ export const PublicLandingPage: React.FC = () => {
           <div className="flex items-center gap-3 group cursor-default select-none">
             <img
               src={brandLogoSrc}
-              alt="Consultinity"
+              alt="Consultify"
               className="h-7 md:h-8 w-auto drop-shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
             />
           </div>
@@ -113,7 +113,7 @@ export const PublicLandingPage: React.FC = () => {
               <div className="mt-8 flex flex-col h-full justify-center">
                 <h3 className="text-3xl md:text-4xl font-bold mb-4">Start Free Trial</h3>
                 <p className="text-white/60 leading-relaxed mb-6">
-                  Use Consultinity on your real organization data and build your transformation
+                  Use Consultify on your real organization data and build your transformation
                   roadmap.
                 </p>
                 <ArrowRight
@@ -245,7 +245,7 @@ export const PublicLandingPage: React.FC = () => {
                         "
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-            <span>Poznaj Metodę Consultinity</span>
+            <span>Poznaj Metodę Consultify</span>
             <ArrowRight
               className="group-hover:translate-x-2 transition-transform duration-500"
               size={24}
@@ -265,7 +265,7 @@ export const PublicLandingPage: React.FC = () => {
             <div className="h-6 px-2 rounded bg-brand-600 flex items-center justify-center">
               <span className="text-white font-bold text-[10px] tracking-tight">C</span>
             </div>
-            <span className="text-sm font-bold tracking-[0.2em] text-white">CONSULTINITY</span>
+            <span className="text-sm font-bold tracking-[0.2em] text-white">CONSULTIFY</span>
           </div>
 
           <div className="flex items-center gap-8 text-xs font-semibold text-white/30 tracking-widest uppercase">

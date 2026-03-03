@@ -241,13 +241,13 @@ const SecurityIncidentsView: React.FC = () => {
         );
       case 'closed':
         return (
-          <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/300/10 text-slate-400 dark:text-slate-500 rounded text-xs">
+          <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-400 dark:text-slate-500 rounded text-xs">
             Closed
           </span>
         );
       default:
         return (
-          <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/300/10 text-slate-400 dark:text-slate-500 rounded text-xs">
+          <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-400 dark:text-slate-500 rounded text-xs">
             {status}
           </span>
         );
@@ -276,7 +276,7 @@ const SecurityIncidentsView: React.FC = () => {
               <Shield className="w-5 h-5 text-indigo-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Total Incidents</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Total Incidents</p>
               <p className="text-xl font-semibold">{stats?.totalIncidents || 0}</p>
             </div>
           </div>
@@ -288,7 +288,7 @@ const SecurityIncidentsView: React.FC = () => {
               <AlertCircle className="w-5 h-5 text-red-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Open</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Open</p>
               <p className="text-xl font-semibold">{stats?.byStatus.open || 0}</p>
             </div>
           </div>
@@ -300,7 +300,7 @@ const SecurityIncidentsView: React.FC = () => {
               <AlertCircle className="w-5 h-5 text-red-600" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Critical</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Critical</p>
               <p className="text-xl font-semibold">{stats?.bySeverity.critical || 0}</p>
             </div>
           </div>
@@ -312,7 +312,7 @@ const SecurityIncidentsView: React.FC = () => {
               <AlertTriangle className="w-5 h-5 text-orange-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">High</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">High</p>
               <p className="text-xl font-semibold">{stats?.bySeverity.high || 0}</p>
             </div>
           </div>
@@ -324,7 +324,7 @@ const SecurityIncidentsView: React.FC = () => {
               <CheckCircle className="w-5 h-5 text-emerald-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Resolved</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Resolved</p>
               <p className="text-xl font-semibold">{stats?.byStatus.resolved || 0}</p>
             </div>
           </div>
@@ -353,7 +353,9 @@ const SecurityIncidentsView: React.FC = () => {
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
-              showFilters ? 'bg-indigo-500/20 text-indigo-400' : 'bg-slate-700 hover:bg-slate-600'
+              showFilters
+                ? 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200'
             }`}
           >
             <Filter className="w-4 h-4" />
@@ -362,7 +364,7 @@ const SecurityIncidentsView: React.FC = () => {
           <button
             onClick={loadData}
             disabled={loading}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded-lg transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -382,13 +384,13 @@ const SecurityIncidentsView: React.FC = () => {
         <Card variant="bordered" className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
                 Severity
               </label>
               <select
                 value={filters.severity}
                 onChange={(e) => setFilters({ ...filters, severity: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               >
                 <option value="">All Severities</option>
                 {SEVERITY_OPTIONS.map((s) => (
@@ -399,13 +401,13 @@ const SecurityIncidentsView: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
                 Status
               </label>
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               >
                 <option value="">All Statuses</option>
                 {STATUS_OPTIONS.map((s) => (
@@ -416,13 +418,13 @@ const SecurityIncidentsView: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
                 Incident Type
               </label>
               <select
                 value={filters.incidentType}
                 onChange={(e) => setFilters({ ...filters, incidentType: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               >
                 <option value="">All Types</option>
                 {INCIDENT_TYPES.map((t) => (
@@ -441,23 +443,23 @@ const SecurityIncidentsView: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+              <tr className="border-b border-slate-200 dark:border-slate-700">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   Type
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   Description
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   Severity
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   Status
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   Detected
                 </th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   Actions
                 </th>
               </tr>
@@ -465,7 +467,7 @@ const SecurityIncidentsView: React.FC = () => {
             <tbody>
               {incidents.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-slate-400 dark:text-slate-500">
+                  <td colSpan={6} className="text-center py-8 text-slate-600 dark:text-slate-400">
                     No security incidents found
                   </td>
                 </tr>
@@ -473,7 +475,7 @@ const SecurityIncidentsView: React.FC = () => {
                 incidents.map((incident) => (
                   <tr
                     key={incident.id}
-                    className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors"
+                    className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                   >
                     <td className="py-3 px-4">
                       <span className="px-2 py-1 bg-slate-700 rounded text-xs font-mono">
@@ -487,7 +489,7 @@ const SecurityIncidentsView: React.FC = () => {
                     <td className="py-3 px-4">{getStatusBadge(incident.status)}</td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-1 text-sm text-slate-300">
-                        <Clock className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                        <Clock className="w-4 h-4 text-slate-500 dark:text-slate-500" />
                         {new Date(incident.detectedAt).toLocaleString()}
                       </div>
                     </td>
@@ -495,7 +497,7 @@ const SecurityIncidentsView: React.FC = () => {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => setShowDetailModal(incident)}
-                          className="p-2 text-slate-400 dark:text-slate-500 hover:bg-slate-700 rounded-lg transition-colors"
+                          className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                           title="View Details"
                         >
                           <Eye className="w-4 h-4" />
@@ -694,7 +696,7 @@ const SecurityIncidentsView: React.FC = () => {
               </div>
               <div>
                 <p className="text-sm text-slate-400 dark:text-slate-500">Description</p>
-                <p className="mt-1 text-slate-200">{showDetailModal.description}</p>
+                <p className="mt-1 text-slate-900 dark:text-slate-200">{showDetailModal.description}</p>
               </div>
               {showDetailModal.affectedResources &&
                 showDetailModal.affectedResources.length > 0 && (

@@ -50,6 +50,84 @@ function purposeForIntent(intent: SlideIntent): SlideVisualSpec['purpose'] {
   return 'image_slide_asset';
 }
 
+// G6: Smart Image Routing — 6-rule intent→visual matrix
+interface IntentVisualRule {
+  slot: string;
+  densityThreshold: ImageDensity;
+  promptBuilder: (ctx: {
+    style: string;
+    noText: string;
+    deckTitle: string;
+    audience: string;
+    goal: string;
+    brandColor?: string;
+    content: any;
+  }) => string;
+  styleHintOverride?: string;
+  aspect?: string;
+}
+
+const INTENT_VISUAL_RULES: Partial<Record<SlideIntent, IntentVisualRule[]>> = {
+  cover: [
+    {
+      slot: 'cover_bg',
+      densityThreshold: 'low',
+      aspect: '16:9',
+      promptBuilder: (ctx) =>
+        `${ctx.style}. Premium 16:9 hero cover for a consulting deck. Topic: "${ctx.deckTitle}". Audience: ${ctx.audience}. Goal: ${ctx.goal}. ${ctx.brandColor ? `Palette: #${ctx.brandColor.replace('#', '')}.` : ''} Confident, sharp, high-end. ${ctx.noText} No logos, no watermarks.`,
+    },
+  ],
+  executive_summary: [
+    {
+      slot: 'side_illustration',
+      densityThreshold: 'high',
+      promptBuilder: (ctx) =>
+        `${ctx.style}. Subtle editorial illustration for an executive summary. Topic: "${ctx.deckTitle}". ${ctx.brandColor ? `Palette: #${ctx.brandColor.replace('#', '')}.` : ''} Understated, slide-friendly. ${ctx.noText} No logos.`,
+    },
+  ],
+  section_intro: [
+    {
+      slot: 'background_texture',
+      densityThreshold: 'medium',
+      promptBuilder: (ctx) =>
+        `${ctx.style}. Subtle 16:9 background for a section intro slide. Deck: "${ctx.deckTitle}". Low visual noise, high readability. ${ctx.brandColor ? `Palette: #${ctx.brandColor.replace('#', '')}.` : ''} ${ctx.noText}`,
+    },
+  ],
+  key_messages: [
+    {
+      slot: 'background_texture',
+      densityThreshold: 'medium',
+      promptBuilder: (ctx) =>
+        `${ctx.style}. Subtle background for a key messages slide. Deck: "${ctx.deckTitle}". Low noise. ${ctx.brandColor ? `Palette: #${ctx.brandColor.replace('#', '')}.` : ''} ${ctx.noText}`,
+    },
+  ],
+  performance_overview: [
+    {
+      slot: 'decorative_accent',
+      densityThreshold: 'high',
+      promptBuilder: (ctx) =>
+        `${ctx.style}. Small decorative accent for a KPI dashboard slide. Abstract data visualization motif. ${ctx.brandColor ? `Palette: #${ctx.brandColor.replace('#', '')}.` : ''} ${ctx.noText} No logos.`,
+      styleHintOverride: 'abstract geometric, data-inspired',
+      aspect: '4:3',
+    },
+  ],
+  roadmap: [
+    {
+      slot: 'decorative_accent',
+      densityThreshold: 'high',
+      promptBuilder: (ctx) =>
+        `${ctx.style}. Subtle decorative accent for a roadmap/timeline slide. Forward-looking, progress motif. ${ctx.brandColor ? `Palette: #${ctx.brandColor.replace('#', '')}.` : ''} ${ctx.noText}`,
+      aspect: '4:3',
+    },
+  ],
+};
+
+const DENSITY_ORDER: ImageDensity[] = ['low', 'medium', 'high'];
+
+function meetsThreshold(current: ImageDensity, required: ImageDensity): boolean {
+  return DENSITY_ORDER.indexOf(current) >= DENSITY_ORDER.indexOf(required);
+}
+
 export function planSlideVisuals(params: {
   slide: UnifiedSlide;
   meta: UnifiedReportMeta;
@@ -67,94 +145,44 @@ export function planSlideVisuals(params: {
   const style = baseStyle(meta);
   const noText = langNoText(meta);
 
-  // Cost mode => only cover (everything else is "none")
   if (priority === 'cost' && slide.intent !== 'cover') return [];
-
-  // Low density => only cover visuals
-  if (density === 'low' && slide.intent !== 'cover') return [];
 
   const visuals: SlideVisualSpec[] = [];
 
-  // COVER
-  if (slide.intent === 'cover') {
-    visuals.push({
-      slot: 'cover_bg',
-      purpose: 'image_cover',
-      label: 'Planned cover hero',
-      styleHint: style,
-      palette: brandColor ? { primary: brandColor.replace('#', '') } : undefined,
-      aspect: '16:9',
-      prompt: [
-        `${style}.`,
-        `A premium 16:9 hero cover image for a consulting PowerPoint deck.`,
-        `Topic: "${deckTitle}".`,
-        `Audience: ${audience}. Goal: ${goal}.`,
-        brandColor ? `Color palette anchored on #${brandColor.replace('#', '')}.` : '',
-        `Feel: confident, sharp, business, high-end.`,
-        noText,
-        `No logos, no watermarks.`,
-      ]
-        .filter(Boolean)
-        .join(' '),
-    });
-    return visuals;
+  // G6: Use the full rule matrix for intent→visual mapping
+  const rules = INTENT_VISUAL_RULES[slide.intent];
+  if (rules) {
+    const ctx = { style, noText, deckTitle, audience, goal, brandColor, content: slide.content };
+    for (const rule of rules) {
+      if (!meetsThreshold(density, rule.densityThreshold)) continue;
+      if (priority !== 'quality' && rule.densityThreshold !== 'low') continue;
+
+      visuals.push({
+        slot: rule.slot,
+        purpose: purposeForIntent(slide.intent),
+        label: `Planned ${rule.slot} (${slide.intent})`,
+        styleHint: rule.styleHintOverride || style,
+        palette: brandColor ? { primary: brandColor.replace('#', '') } : undefined,
+        aspect: rule.aspect || '16:9',
+        prompt: rule.promptBuilder(ctx),
+      });
+    }
+    if (visuals.length > 0) return visuals;
   }
 
-  // SECTION INTRO + KEY MESSAGES => subtle texture background in quality mode
-  if (
-    priority === 'quality' &&
-    (slide.intent === 'section_intro' || slide.intent === 'key_messages')
-  ) {
-    visuals.push({
-      slot: 'background_texture',
-      purpose: purposeForIntent(slide.intent),
-      label: `Planned background texture (${slide.intent})`,
-      styleHint:
-        meta.template === 'minimal'
-          ? 'minimal, clean, subtle paper grain texture, soft gradients'
-          : meta.template === 'modern'
-            ? 'modern, vibrant, abstract soft shapes, premium SaaS background'
-            : 'corporate, understated, subtle geometric texture, BCG-grade background',
-      palette: brandColor ? { primary: brandColor.replace('#', '') } : undefined,
-      aspect: '16:9',
-      prompt: [
-        `${style}.`,
-        `A subtle 16:9 background image for a consulting PowerPoint slide.`,
-        `Deck topic: "${deckTitle}".`,
-        `Slide intent: ${slide.intent}.`,
-        brandColor ? `Color palette anchored on #${brandColor.replace('#', '')}.` : '',
-        `Very low visual noise, high readability for overlay text and cards.`,
-        `No logos, no watermarks.`,
-        noText,
-      ]
-        .filter(Boolean)
-        .join(' '),
-    });
-  }
-
-  // EXEC SUMMARY => add a side illustration only on HIGH density (premium feel)
-  if (priority === 'quality' && density === 'high' && slide.intent === 'executive_summary') {
-    const headline = (slide.content as any)?.headline;
-    visuals.push({
-      slot: 'side_illustration',
-      purpose: 'image_slide_asset',
-      label: 'Planned side illustration (exec summary)',
-      styleHint: `${style}, subtle editorial illustration`,
-      palette: brandColor ? { primary: brandColor.replace('#', '') } : undefined,
-      aspect: '16:9',
-      prompt: [
-        `${style}.`,
-        `A subtle right-side illustration for an executive summary slide in a consulting PowerPoint deck.`,
-        `Deck topic: "${deckTitle}".`,
-        headline ? `Executive summary headline: "${headline}".` : '',
-        brandColor ? `Color palette anchored on #${brandColor.replace('#', '')}.` : '',
-        `Keep it understated and slide-friendly (low noise).`,
-        noText,
-        `No logos, no watermarks.`,
-      ]
-        .filter(Boolean)
-        .join(' '),
-    });
+  // Fallback: section_intro-like intents without explicit rules
+  if (priority === 'quality' && meetsThreshold(density, 'medium')) {
+    if (['comparison', 'assessment', 'recommendation_portfolio', 'prioritization_matrix'].includes(slide.intent)) {
+      visuals.push({
+        slot: 'background_texture',
+        purpose: purposeForIntent(slide.intent),
+        label: `Planned background texture (${slide.intent})`,
+        styleHint: style,
+        palette: brandColor ? { primary: brandColor.replace('#', '') } : undefined,
+        aspect: '16:9',
+        prompt: `${style}. Subtle 16:9 background for a ${slide.intent.replace(/_/g, ' ')} slide. Deck: "${deckTitle}". Low noise, high readability. ${brandColor ? `Palette: #${brandColor.replace('#', '')}.` : ''} ${noText}`,
+      });
+    }
   }
 
   return visuals;

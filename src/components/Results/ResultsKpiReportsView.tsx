@@ -1,24 +1,79 @@
-import React, { useMemo } from 'react';
+import { FileText, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+
+import { Api } from '@/services/api';
 
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
-import { FilterableTable, type TableColumn, type TableRow } from '../shared/ModuleHub/FilterableTable';
+import {
+  FilterableTable,
+  type TableColumn,
+  type TableRow,
+} from '../shared/ModuleHub/FilterableTable';
+import { type RowAction } from '../shared/RowActionsMenu';
 
 export interface ResultsKpiReportsViewProps {
   activeFilters: FilterChip[];
   onFilterChange: (filters: FilterChip[]) => void;
+  createNonce?: number;
 }
 
 export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
   activeFilters,
   onFilterChange,
+  createNonce,
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+
+  type ActionItem = {
+    key: string;
+    title: string;
+    kpiId: string;
+    kpiName?: string;
+    severity: 'AMBER' | 'RED';
+    dueDate?: string | null;
+    status?: string;
+    selected: boolean;
+    ownerUserId?: string | null;
+  };
+
+  const [rows, setRows] = useState<TableRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  const [availableKpis, setAvailableKpis] = useState<Array<{ id: string; name: string; initiativeName?: string | null }>>(
+    []
+  );
+  const [kpisLoading, setKpisLoading] = useState(false);
+  const [kpiSearch, setKpiSearch] = useState('');
+  const [selectedKpiIds, setSelectedKpiIds] = useState<string[]>([]);
+
+  const [tasksModalOpen, setTasksModalOpen] = useState(false);
+  const [tasksLoading, setTasksLoading] = useState(false);
+  const [tasksCreating, setTasksCreating] = useState(false);
+  const [tasksReportRow, setTasksReportRow] = useState<TableRow | null>(null);
+  const [actionItems, setActionItems] = useState<ActionItem[]>([]);
+
+  const [periodStart, setPeriodStart] = useState(() => {
+    const d = new Date();
+    const start = new Date(d.getFullYear(), d.getMonth(), 1);
+    return start.toISOString().slice(0, 10);
+  });
+  const [periodEnd, setPeriodEnd] = useState(() => {
+    const d = new Date();
+    const end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+    return end.toISOString().slice(0, 10);
+  });
+  const [title, setTitle] = useState('');
 
   const columns: TableColumn[] = useMemo(
     () => [
-      { id: 'type', label: t('common.type', 'Type'), width: '10%' },
-      { id: 'name', label: t('common.name', 'Name'), width: '40%' },
+      { id: 'type', label: t('common.type', 'Type'), width: '12%' },
+      { id: 'name', label: t('common.name', 'Name'), width: '44%' },
       { id: 'period', label: t('common.period', 'Period'), width: '16%' },
       { id: 'status', label: t('common.status', 'Status'), width: '16%' },
       { id: 'updatedAt', label: t('common.updated', 'Updated'), width: '18%' },
@@ -26,27 +81,460 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
     [t]
   );
 
-  const rows: TableRow[] = useMemo(() => {
-    // KPI Reports (R1) — backend contract not implemented yet. Table is ready for real data.
-    return [];
+  const fetchReports = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res: any = await Api.get('/results/kpi-reports');
+      const list = (res?.data || []) as any[];
+      setRows(
+        (list || []).map((r: any) => ({
+          id: r.reportId || r.id,
+          reportId: r.reportId || r.id,
+          snapshotId: r.snapshotId,
+          type: 'KPI',
+          name: r.title,
+          period:
+            r.periodStart && r.periodEnd
+              ? `${r.periodStart} → ${r.periodEnd}`
+              : r.periodStart || '—',
+          status: r.status || 'DRAFT',
+          updatedAt: r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : '—',
+        }))
+      );
+    } catch {
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    fetchReports();
+  }, [fetchReports]);
+
+  useEffect(() => {
+    if (!createNonce) return;
+    setCreateOpen(true);
+  }, [createNonce]);
+
+  useEffect(() => {
+    if (!createOpen) return;
+    let cancelled = false;
+    (async () => {
+      setKpisLoading(true);
+      try {
+        const res: any = await Api.get('/benefits/kpis');
+        const list = (res?.data || []) as any[];
+        const items = (list || [])
+          .map((k: any) => ({
+            id: String(k.id || '').trim(),
+            name: String(k.name || '').trim(),
+            initiativeName: (k.initiativeName || k.initiative_name || null) as string | null,
+          }))
+          .filter((k) => k.id && k.name)
+          .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+        if (cancelled) return;
+        setAvailableKpis(items);
+        setSelectedKpiIds(items.map((k) => k.id));
+      } catch {
+        if (cancelled) return;
+        setAvailableKpis([]);
+        setSelectedKpiIds([]);
+      } finally {
+        if (!cancelled) setKpisLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [createOpen]);
+
+  const filteredKpis = useMemo(() => {
+    const q = kpiSearch.trim().toLowerCase();
+    if (!q) return availableKpis;
+    return availableKpis.filter((k) => {
+      const a = (k.name || '').toLowerCase();
+      const b = (k.initiativeName || '').toLowerCase();
+      return a.includes(q) || b.includes(q);
+    });
+  }, [availableKpis, kpiSearch]);
+
+  const handleCreate = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!periodStart) return;
+      setCreating(true);
+      try {
+        const res: any = await Api.post('/results/kpi-reports', {
+          periodStart,
+          periodEnd: periodEnd || null,
+          title: title.trim() || undefined,
+          kpiIds: selectedKpiIds.length ? selectedKpiIds : undefined,
+        });
+        const reportId = res?.data?.reportId;
+        setCreateOpen(false);
+        setTitle('');
+        setKpiSearch('');
+        await fetchReports();
+        if (reportId) navigate(`/reports/builder/${reportId}`);
+      } finally {
+        setCreating(false);
+      }
+    },
+    [periodStart, periodEnd, title, selectedKpiIds, fetchReports, navigate]
+  );
+
+  const inputCls =
+    'w-full h-9 px-3 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors';
+  const labelCls = 'block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1';
+
+  const loadActionsForRow = useCallback(
+    async (row: TableRow) => {
+      if (!row?.snapshotId) {
+        toast.error(
+          t('results.kpiReports.tasks.noSnapshot', 'This report has no snapshot linked.')
+        );
+        return;
+      }
+      setTasksReportRow(row);
+      setTasksModalOpen(true);
+      setTasksLoading(true);
+      try {
+        const res: any = await Api.get(`/results/kpi-reports/${row.snapshotId}`);
+        const snap = res?.data?.snapshot;
+        const plan = (snap?.actionPlan || []) as any[];
+        const items: ActionItem[] = plan.map((a: any): ActionItem => {
+          const due = a.dueDate ? String(a.dueDate).slice(0, 10) : null;
+          const done = String(a.status || '').toUpperCase() === 'DONE';
+          const kpiId = String(a.kpiId || a.relatedObjectId || '');
+          return {
+            key: `${a.id || a.title}-${kpiId}`,
+            title: String(a.title || '').trim() || '(untitled)',
+            kpiId,
+            kpiName: a.kpiName || undefined,
+            severity: a.severity === 'RED' ? 'RED' : 'AMBER',
+            dueDate: due,
+            status: a.status,
+            selected: !done,
+            ownerUserId: a.ownerUserId ?? null,
+          };
+        });
+        setActionItems(items);
+      } catch {
+        toast.error(t('common.loadFailed', 'Load failed'));
+        setActionItems([]);
+      } finally {
+        setTasksLoading(false);
+      }
+    },
+    [t]
+  );
+
+  const createTasksFromSelected = useCallback(async () => {
+    const selected = actionItems.filter((a) => a.selected);
+    if (selected.length === 0) return;
+    setTasksCreating(true);
+    try {
+      for (const a of selected) {
+        const dueIso = a.dueDate ? new Date(`${a.dueDate}T00:00:00.000Z`).toISOString() : undefined;
+        await Api.post('/tasks', {
+          title: `[KPI] ${a.title}`,
+          description: tasksReportRow?.reportId
+            ? `Created from KPI report: /reports/builder/${tasksReportRow.reportId}`
+            : 'Created from KPI report',
+          dueDate: dueIso,
+          priority: a.severity === 'RED' ? 'high' : 'medium',
+          taskType: 'execution',
+          source: 'manual',
+          assigneeId: a.ownerUserId || undefined,
+          kpiId: a.kpiId || undefined,
+          why: 'Deviation action plan materialization',
+        });
+      }
+      toast.success(t('results.kpiReports.tasks.created', 'Tasks created'), { duration: 2500 });
+      setTasksModalOpen(false);
+      setActionItems([]);
+      setTasksReportRow(null);
+    } catch {
+      toast.error(t('results.kpiReports.tasks.createFailed', 'Failed to create tasks'));
+    } finally {
+      setTasksCreating(false);
+    }
+  }, [actionItems, tasksReportRow, t]);
+
+  const getRowActions = useCallback(
+    (row: TableRow): RowAction[] => [
+      {
+        id: 'open',
+        label: t('common.open', 'Open'),
+        onClick: () => navigate(`/reports/builder/${row.reportId}`),
+      },
+      {
+        id: 'tasks',
+        label: t('results.kpiReports.tasks.create', 'Create tasks from action plan'),
+        onClick: () => void loadActionsForRow(row),
+        divider: true,
+      },
+    ],
+    [navigate, t, loadActionsForRow]
+  );
+
   return (
-    <FilterableTable
-      columns={columns}
-      data={rows}
-      activeFilters={activeFilters}
-      onFilterChange={onFilterChange}
-      density="compact"
-      canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-      hideRowActions
-      emptyMessage={t(
-        'results.kpiReports.empty',
-        'No KPI reports yet. Create a report to review performance and corrective actions.'
+    <>
+      <FilterableTable
+        columns={columns}
+        data={rows}
+        activeFilters={activeFilters}
+        onFilterChange={onFilterChange}
+        density="compact"
+        canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+        getRowActions={getRowActions}
+        onRowClick={(row) => navigate(`/reports/builder/${row.reportId}`)}
+        emptyMessage={
+          loading
+            ? t('common.loading', 'Loading...')
+            : t(
+                'results.kpiReports.empty',
+                'No KPI reports yet. Create a report to review performance and corrective actions.'
+              )
+        }
+      />
+
+      {createOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-navy-950/60 backdrop-blur-sm"
+            onClick={() => setCreateOpen(false)}
+          />
+          <div className="relative w-full max-w-lg mx-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-2xl shadow-2xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-primary-500/10">
+                  <FileText size={16} className="text-primary-400" />
+                </div>
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  {t('results.kpiReports.create.title', 'New KPI report')}
+                </h2>
+              </div>
+              <button
+                onClick={() => setCreateOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreate} className="p-6 space-y-4">
+              <div>
+                <label className={labelCls}>{t('common.name', 'Name')}</label>
+                <input
+                  className={inputCls}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder={t(
+                    'results.kpiReports.create.titlePlaceholder',
+                    'e.g. Monthly KPI Review'
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>{t('common.periodStart', 'Period start')}</label>
+                  <input
+                    className={inputCls}
+                    type="date"
+                    value={periodStart}
+                    onChange={(e) => setPeriodStart(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>{t('common.periodEnd', 'Period end')}</label>
+                  <input
+                    className={inputCls}
+                    type="date"
+                    value={periodEnd}
+                    onChange={(e) => setPeriodEnd(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-1">
+                <div className="flex items-center justify-between mb-1">
+                  <label className={labelCls}>{t('results.kpiReports.create.kpis', 'KPIs')}</label>
+                  <div className="flex items-center gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedKpiIds(availableKpis.map((k) => k.id))}
+                      className="text-primary-500 hover:text-primary-400 transition-colors"
+                      disabled={kpisLoading || availableKpis.length === 0}
+                    >
+                      {t('common.selectAll', 'Select all')}
+                    </button>
+                    <span className="text-slate-300 dark:text-navy-600">|</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedKpiIds([])}
+                      className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                      disabled={kpisLoading || availableKpis.length === 0}
+                    >
+                      {t('common.clear', 'Clear')}
+                    </button>
+                  </div>
+                </div>
+
+                <input
+                  className={inputCls}
+                  value={kpiSearch}
+                  onChange={(e) => setKpiSearch(e.target.value)}
+                  placeholder={t('common.search', 'Search')}
+                />
+
+                <div className="mt-2 max-h-56 overflow-auto rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/40 dark:bg-navy-800/40">
+                  {kpisLoading ? (
+                    <div className="p-3 text-sm text-slate-500">{t('common.loading', 'Loading...')}</div>
+                  ) : filteredKpis.length === 0 ? (
+                    <div className="p-3 text-sm text-slate-500">
+                      {t('results.kpiReports.create.noKpis', 'No KPIs found.')}
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-200 dark:divide-navy-700">
+                      {filteredKpis.map((k) => {
+                        const checked = selectedKpiIds.includes(k.id);
+                        return (
+                          <label
+                            key={k.id}
+                            className="flex items-start gap-2 p-3 cursor-pointer hover:bg-white/60 dark:hover:bg-navy-800/70 transition-colors"
+                          >
+                            <input
+                              type="checkbox"
+                              className="mt-0.5"
+                              checked={checked}
+                              onChange={(e) => {
+                                const next = e.target.checked;
+                                setSelectedKpiIds((prev) =>
+                                  next ? Array.from(new Set([...prev, k.id])) : prev.filter((id) => id !== k.id)
+                                );
+                              }}
+                            />
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                                {k.name}
+                              </div>
+                              {k.initiativeName ? (
+                                <div className="text-xs text-slate-500 truncate">{k.initiativeName}</div>
+                              ) : null}
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-1 text-xs text-slate-500">
+                  {t('results.kpiReports.create.selectedCount', 'Selected')}: {selectedKpiIds.length}/
+                  {availableKpis.length}
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={!periodStart || creating || selectedKpiIds.length === 0}
+                className="w-full h-9 text-sm font-medium rounded-full bg-primary-500 text-white hover:bg-primary-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {creating ? t('common.creating', 'Creating...') : t('common.create', 'Create')}
+              </button>
+            </form>
+          </div>
+        </div>
       )}
-    />
+
+      {tasksModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-navy-950/60 backdrop-blur-sm"
+            onClick={() => (tasksCreating ? null : setTasksModalOpen(false))}
+          />
+          <div className="relative w-full max-w-2xl mx-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-2xl shadow-2xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {t('results.kpiReports.tasks.title', 'Create tasks from action plan')}
+              </h2>
+              <button
+                onClick={() => (tasksCreating ? null : setTasksModalOpen(false))}
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {tasksLoading ? (
+                <div className="text-sm text-slate-500">{t('common.loading', 'Loading...')}</div>
+              ) : actionItems.length === 0 ? (
+                <div className="text-sm text-slate-500">
+                  {t('results.kpiReports.tasks.empty', 'No actions found in this report snapshot.')}
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                  {actionItems.map((a) => (
+                    <label
+                      key={a.key}
+                      className="flex items-start gap-3 p-3 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] hover:bg-slate-50 dark:hover:bg-white/[0.06] cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={a.selected}
+                        onChange={() =>
+                          setActionItems((prev) =>
+                            prev.map((x) => (x.key === a.key ? { ...x, selected: !x.selected } : x))
+                          )
+                        }
+                        className="mt-1 rounded border-navy-600 bg-slate-200 dark:bg-navy-700 text-primary-500 focus:ring-primary-500"
+                      />
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                          {a.title}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          {a.kpiName || a.kpiId}
+                          {a.dueDate ? ` · ${t('common.due', 'Due')}: ${a.dueDate}` : ''}
+                          {a.severity ? ` · ${a.severity}` : ''}
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  disabled={tasksCreating}
+                  onClick={() => setTasksModalOpen(false)}
+                  className="h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-white/[0.05] transition-colors disabled:opacity-60"
+                >
+                  {t('common.cancel', 'Cancel')}
+                </button>
+                <button
+                  type="button"
+                  disabled={tasksCreating || actionItems.filter((a) => a.selected).length === 0}
+                  onClick={() => void createTasksFromSelected()}
+                  className="h-9 px-4 rounded-full text-sm font-medium bg-primary-500 text-white hover:bg-primary-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {tasksCreating
+                    ? t('common.creating', 'Creating...')
+                    : t('results.kpiReports.tasks.createCta', 'Create tasks')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
 export default ResultsKpiReportsView;
-

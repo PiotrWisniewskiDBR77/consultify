@@ -100,15 +100,19 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
     const fetchAssessments = async () => {
       setLoading(true);
       try {
-        const response = await Api.get('/assessments/my-assessments');
-        const list = Array.isArray(response?.assessments) ? response.assessments : [];
+        const response = await Api.listAssessments({ limit: 200, offset: 0 });
+        const list = Array.isArray((response as any)?.items)
+          ? (response as any).items
+          : Array.isArray((response as any)?.assessments)
+            ? (response as any).assessments
+            : [];
         setAssessments(
           list.map((a: any) => ({
             id: a.id,
             name: a.name,
-            type: a.type,
-            status: a.status,
-            projectName: a.projectName,
+            type: a.assessmentType || a.assessment_type || a.type,
+            status: a.status || a.backendStatus,
+            projectName: a.projectName || a.project_name || '',
           }))
         );
       } catch (err) {

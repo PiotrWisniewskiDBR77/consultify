@@ -525,12 +525,22 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
   const handleSaveUser = async (formData: any) => {
     try {
       if (editingUser) {
-        await Api.updateUser(editingUser.id, formData);
+        if (mode === 'platform') {
+          await Api.updateSuperAdminUser(editingUser.id, formData);
+        } else {
+          await Api.updateUser(editingUser.id, formData);
+        }
         toast.success('User updated');
       } else {
-        // NOTE: Intentionally NOT a real secret. Also keeps pre-commit secret scanning happy.
-        await Api.addUser({ ...formData, password: '123456' });
-        toast.success('User created');
+        if (mode === 'platform') {
+          await Api.createSuperAdminUser(formData);
+          toast.success('User created');
+        } else {
+          // Org-admin user creation endpoint is not guaranteed in every deployment.
+          // Prefer invitation flow where available.
+          toast.error('User creation is not available here. Use Invite User instead.');
+          return;
+        }
       }
       setShowUserModal(false);
       setEditingUser(null);

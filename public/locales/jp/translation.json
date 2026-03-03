@@ -956,7 +956,7 @@
       },
       "fullDocs": "Full documentation",
       "overview": {
-        "title": "Welcome to Consultinity",
+        "title": "Welcome to Consultify",
         "intro": "Your complete PMO platform for digital transformation. Assess, plan, and track your organization's journey to digital excellence with AI-powered insights and proven methodologies.",
         "watchVideo": "Watch introduction video",
         "videoDuration": "3 min overview",
@@ -1111,7 +1111,7 @@
       "cards": {
         "demo": {
           "title": "Interactive Demo",
-          "description": "Explore Consultinity with AI-guided walkthrough. No signup required.",
+          "description": "Explore Consultify with AI-guided walkthrough. No signup required.",
           "meta": "GUIDED EXPERIENCE",
           "cta": "Start Demo"
         },
@@ -1123,7 +1123,7 @@
         },
         "video": {
           "title": "Watch How It Works",
-          "description": "See Consultinity in action with real enterprise transformation examples.",
+          "description": "See Consultify in action with real enterprise transformation examples.",
           "meta": "3 MIN VIDEO",
           "cta": "Play Video"
         },
@@ -1188,7 +1188,7 @@
         "badge": "Industrial Excellence",
         "title1": "BASELINE YOUR",
         "title2": "DIGITAL MATURITY",
-        "subtitle": "Consultinity integrates world-class audit methodologies used by Harvard experts to drive data-driven change across global industries."
+        "subtitle": "Consultify integrates world-class audit methodologies used by Harvard experts to drive data-driven change across global industries."
       },
       "cta": {
         "header": "TAKE THE NEXT STEP IN",

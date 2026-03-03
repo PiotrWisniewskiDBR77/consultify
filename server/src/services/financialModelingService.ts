@@ -174,30 +174,103 @@ const LINE_NAMES: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Period generation
+// Period generation (SSOT: internal compute resolution = monthly)
 // ---------------------------------------------------------------------------
 
-function generatePeriods(
+function generateMonthlyPeriods(
   startDate: string,
-  horizonMonths: number,
-  granularity: string
+  horizonMonths: number
 ): Array<{ date: string; label: string }> {
   const periods: Array<{ date: string; label: string }> = [];
-  const start = new Date(startDate);
-  const stepMonths = granularity === 'annual' ? 12 : granularity === 'quarterly' ? 3 : 1;
+  // IMPORTANT:
+  // Finance periods must be deterministic and timezone-safe.
+  // Using `new Date(y, m, d).toISOString()` can shift the day in non-UTC timezones.
+  const start = new Date(`${startDate}T00:00:00.000Z`);
 
-  for (let m = 0; m < horizonMonths; m += stepMonths) {
-    const d = new Date(start.getFullYear(), start.getMonth() + m, 1);
-    const dateStr = d.toISOString().slice(0, 10);
-    const label =
-      granularity === 'annual'
-        ? `FY${d.getFullYear()}`
-        : granularity === 'quarterly'
-          ? `Q${Math.floor(d.getMonth() / 3) + 1} ${d.getFullYear()}`
-          : `${d.toLocaleString('en', { month: 'short' })} ${d.getFullYear()}`;
+  for (let m = 0; m < horizonMonths; m += 1) {
+    const year = start.getUTCFullYear();
+    const monthIndex = start.getUTCMonth() + m; // 0-based
+    const d = new Date(Date.UTC(year, monthIndex, 1));
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dateStr = `${yyyy}-${mm}-01`;
+    const label = `${d.toLocaleString('en', { month: 'short', timeZone: 'UTC' })} ${d.getUTCFullYear()}`;
     periods.push({ date: dateStr, label });
   }
   return periods;
+}
+
+function monthDiffUtc(fromDate: string, toDate: string): number {
+  // Dates are normalized as YYYY-MM-01
+  const f = new Date(`${fromDate}T00:00:00.000Z`);
+  const t = new Date(`${toDate}T00:00:00.000Z`);
+  return (t.getUTCFullYear() - f.getUTCFullYear()) * 12 + (t.getUTCMonth() - f.getUTCMonth());
+}
+
+function labelForPeriodEnd(granularity: string, periodEndDate: string): string {
+  const d = new Date(`${periodEndDate}T00:00:00.000Z`);
+  if (granularity === 'annual') return `FY${d.getUTCFullYear()}`;
+  if (granularity === 'quarterly')
+    return `Q${Math.floor(d.getUTCMonth() / 3) + 1} ${d.getUTCFullYear()}`;
+  return `${d.toLocaleString('en', { month: 'short', timeZone: 'UTC' })} ${d.getUTCFullYear()}`;
+}
+
+function aggregateMonthlyOutputs(monthly: PeriodOutput[], granularity: string): PeriodOutput[] {
+  if (granularity === 'monthly') return monthly;
+  const stepMonths = granularity === 'annual' ? 12 : 3;
+
+  const buckets: Array<{ startIdx: number; endIdx: number }> = [];
+  for (let i = 0; i < monthly.length; i += stepMonths) {
+    buckets.push({ startIdx: i, endIdx: Math.min(i + stepMonths - 1, monthly.length - 1) });
+  }
+
+  const flowCfLines = new Set<string>([
+    'NET_INCOME_CF',
+    'DEPRECIATION_ADDBACK',
+    'WC_CHANGES',
+    'OPERATING_CF',
+    'CAPEX_CF',
+    'INVESTING_CF',
+    'DEBT_DRAWDOWN_CF',
+    'DEBT_REPAYMENT_CF',
+    'EQUITY_CF',
+    'DIVIDEND_CF',
+    'FINANCING_CF',
+    'NET_CHANGE_CASH',
+  ]);
+
+  const res: PeriodOutput[] = [];
+  for (const b of buckets) {
+    const first = monthly[b.startIdx];
+    const last = monthly[b.endIdx];
+    const agg: PeriodOutput = {
+      date: last.date,
+      label: labelForPeriodEnd(granularity, last.date),
+      pl: Object.fromEntries(PL_LINES.map((l) => [l, 0])),
+      bs: Object.fromEntries(BS_LINES.map((l) => [l, 0])),
+      cf: Object.fromEntries(CF_LINES.map((l) => [l, 0])),
+    };
+
+    // Sum flows (P&L + CF flows)
+    for (let i = b.startIdx; i <= b.endIdx; i++) {
+      const m = monthly[i];
+      for (const l of PL_LINES) agg.pl[l] += m.pl[l] || 0;
+      for (const l of CF_LINES) {
+        if (flowCfLines.has(l)) agg.cf[l] += m.cf[l] || 0;
+      }
+    }
+
+    // BS is a snapshot at end of period
+    for (const l of BS_LINES) agg.bs[l] = last.bs[l] || 0;
+
+    // CF opening/closing cash are snapshots
+    agg.cf.OPENING_CASH = first.cf.OPENING_CASH || 0;
+    agg.cf.CLOSING_CASH = last.cf.CLOSING_CASH || 0;
+
+    res.push(agg);
+  }
+
+  return res;
 }
 
 // ---------------------------------------------------------------------------
@@ -211,28 +284,47 @@ function expandEventToAmounts(
   const amounts = new Map<string, number>();
   if (!event.is_active) return amounts;
 
-  const startMs = new Date(event.period_start).getTime();
-  const endMs = event.period_end ? new Date(event.period_end).getTime() : Infinity;
+  const startMs = new Date(`${event.period_start}T00:00:00.000Z`).getTime();
+  const endMs = event.period_end
+    ? new Date(`${event.period_end}T00:00:00.000Z`).getTime()
+    : Infinity;
+
+  // Periods are anchored to YYYY-MM-01. If the event starts mid-month, the first applicable
+  // period is the first period.date >= period_start. Recurrence and growth are anchored to
+  // that first applicable period (not the raw day-level start date).
+  let firstApplicablePeriodDate: string | null = null;
+  for (const period of periods) {
+    const pMs = new Date(`${period.date}T00:00:00.000Z`).getTime();
+    if (pMs >= startMs && pMs <= endMs) {
+      firstApplicablePeriodDate = period.date;
+      break;
+    }
+  }
+  if (!firstApplicablePeriodDate) return amounts;
 
   for (const period of periods) {
-    const pMs = new Date(period.date).getTime();
+    const pMs = new Date(`${period.date}T00:00:00.000Z`).getTime();
     if (pMs < startMs || pMs > endMs) continue;
 
+    const monthsElapsed = Math.max(0, monthDiffUtc(firstApplicablePeriodDate, period.date));
+    const isActiveForRecurrence =
+      event.recurrence === 'one_time'
+        ? monthsElapsed === 0
+        : event.recurrence === 'monthly'
+          ? true
+          : event.recurrence === 'quarterly'
+            ? monthsElapsed % 3 === 0
+            : event.recurrence === 'annual'
+              ? monthsElapsed % 12 === 0
+              : true;
+    if (!isActiveForRecurrence) continue;
+
     // Growth: compound from start
-    const monthsElapsed = Math.max(0, Math.round((pMs - startMs) / (30.44 * 24 * 60 * 60 * 1000)));
     const growthFactor =
       event.growth_rate !== 0 ? Math.pow(1 + event.growth_rate / 100, monthsElapsed / 12) : 1;
 
     const periodAmount = event.amount * growthFactor;
-
-    if (event.recurrence === 'one_time') {
-      // Only applies to the start period
-      if (period.date === periods.find((p) => new Date(p.date).getTime() >= startMs)?.date) {
-        amounts.set(period.date, periodAmount);
-      }
-    } else {
-      amounts.set(period.date, periodAmount);
-    }
+    amounts.set(period.date, periodAmount);
   }
   return amounts;
 }
@@ -257,14 +349,15 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
     parameters: typeof e.parameters === 'string' ? JSON.parse(e.parameters) : e.parameters || {},
   })) as ModelEvent[];
 
-  const periods = generatePeriods(model.start_date, model.horizon_months, model.granularity);
+  // SSOT: internal compute is monthly; rollups happen after compute.
+  const monthlyPeriods = generateMonthlyPeriods(model.start_date, model.horizon_months);
   const assumptions =
     typeof model.assumptions_json === 'string'
       ? JSON.parse(model.assumptions_json)
       : model.assumptions_json || {};
 
   // Initialize period outputs
-  const outputs: PeriodOutput[] = periods.map((p) => ({
+  const monthlyOutputs: PeriodOutput[] = monthlyPeriods.map((p) => ({
     date: p.date,
     label: p.label,
     pl: Object.fromEntries(PL_LINES.map((l) => [l, 0])),
@@ -292,15 +385,32 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
   let runningInventory = initialInventory;
   let runningAP = initialAP;
 
+  // Zero-change baseline: if no events but baseline P&L ratios are in assumptions,
+  // extrapolate each period using % of revenue structure from the base period.
+  const baseline = assumptions.baseline || null;
+  const baselineRevenue = baseline?.revenue ?? 0;
+  const baselineRatios: Record<string, number> = {};
+  if (baseline && baselineRevenue > 0) {
+    baselineRatios.cogs = (baseline.cogs ?? 0) / baselineRevenue;
+    baselineRatios.opex = (baseline.opex ?? 0) / baselineRevenue;
+    baselineRatios.depreciation = (baseline.depreciation ?? 0) / baselineRevenue;
+    baselineRatios.interest = (baseline.interest ?? 0) / baselineRevenue;
+    baselineRatios.tax = (baseline.tax ?? 0) / baselineRevenue;
+    baselineRatios.capex = (baseline.capex ?? 0) / baselineRevenue;
+  }
+  const useZeroChangeBaseline = events.length === 0 && baselineRevenue > 0;
+  // Monthly compute resolution (always 12 periods/year internally)
+  const baselinePerPeriod = baselineRevenue / 12;
+
   // Expand all events
   const eventAmounts = new Map<string, Map<string, number>>();
   for (const event of events) {
-    eventAmounts.set(event.id, expandEventToAmounts(event, periods));
+    eventAmounts.set(event.id, expandEventToAmounts(event, monthlyPeriods));
   }
 
   // Process each period
-  for (let pi = 0; pi < outputs.length; pi++) {
-    const out = outputs[pi];
+  for (let pi = 0; pi < monthlyOutputs.length; pi++) {
+    const out = monthlyOutputs[pi];
     const periodDate = out.date;
 
     // Accumulate P&L items from events
@@ -316,6 +426,16 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
     let totalWCChange = 0,
       totalEquityInjection = 0,
       totalDividend = 0;
+
+    if (useZeroChangeBaseline) {
+      totalRevenue = baselinePerPeriod;
+      totalCOGS = baselinePerPeriod * (baselineRatios.cogs || 0);
+      totalOPEX = baselinePerPeriod * (baselineRatios.opex || 0);
+      totalDepr = baselinePerPeriod * (baselineRatios.depreciation || 0);
+      totalInterest = baselinePerPeriod * (baselineRatios.interest || 0);
+      totalTax = baselinePerPeriod * (baselineRatios.tax || 0);
+      totalCapex = baselinePerPeriod * (baselineRatios.capex || 0);
+    }
 
     for (const event of events) {
       const amt = eventAmounts.get(event.id)?.get(periodDate) ?? 0;
@@ -426,6 +546,9 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
     out.bs.TOTAL_LIABILITIES_EQUITY = out.bs.TOTAL_LIABILITIES + out.bs.TOTAL_EQUITY;
   }
 
+  // Roll up to configured granularity (UI/view), keeping monthly as internal SSOT compute.
+  const outputs = aggregateMonthlyOutputs(monthlyOutputs, model.granularity || 'monthly');
+
   // ── Validations ──
   const validations: ValidationResult[] = [];
 
@@ -513,21 +636,40 @@ export async function persistComputeResult(
       ['BS', period.bs],
       ['CF', period.cf],
     ] as const) {
+      const isEstimated = type === 'CF';
       for (const [code, value] of Object.entries(lines)) {
-        await dbRun(
-          `INSERT INTO financial_model_outputs (id, model_id, period_date, period_label, statement_type, line_code, line_name, value, scenario) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            uuidv4(),
-            modelId,
-            period.date,
-            period.label,
-            type,
-            code,
-            LINE_NAMES[code] || code,
-            round2(value as number),
-            scenario,
-          ]
-        );
+        try {
+          await dbRun(
+            `INSERT INTO financial_model_outputs (id, model_id, period_date, period_label, statement_type, line_code, line_name, value, scenario, is_estimated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              uuidv4(),
+              modelId,
+              period.date,
+              period.label,
+              type,
+              code,
+              LINE_NAMES[code] || code,
+              round2(value as number),
+              scenario,
+              isEstimated,
+            ]
+          );
+        } catch {
+          await dbRun(
+            `INSERT INTO financial_model_outputs (id, model_id, period_date, period_label, statement_type, line_code, line_name, value, scenario) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              uuidv4(),
+              modelId,
+              period.date,
+              period.label,
+              type,
+              code,
+              LINE_NAMES[code] || code,
+              round2(value as number),
+              scenario,
+            ]
+          );
+        }
       }
     }
   }
@@ -577,26 +719,49 @@ export async function createModel(params: {
   scenario?: string;
   assumptions?: Record<string, any>;
   createdBy: string;
+  sourceStatementId?: string;
 }): Promise<string> {
   const id = uuidv4();
-  await dbRun(
-    `INSERT INTO financial_models (id, organization_id, project_id, initiative_id, name, description, currency, horizon_months, start_date, granularity, scenario, assumptions_json, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      id,
-      params.organizationId,
-      params.projectId || null,
-      params.initiativeId || null,
-      params.name,
-      params.description || null,
-      params.currency || 'PLN',
-      params.horizonMonths || 60,
-      params.startDate,
-      params.granularity || 'monthly',
-      params.scenario || 'base',
-      JSON.stringify(params.assumptions || {}),
-      params.createdBy,
-    ]
-  );
+  try {
+    await dbRun(
+      `INSERT INTO financial_models (id, organization_id, project_id, initiative_id, name, description, currency, horizon_months, start_date, granularity, scenario, assumptions_json, created_by, source_statement_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        params.organizationId,
+        params.projectId || null,
+        params.initiativeId || null,
+        params.name,
+        params.description || null,
+        params.currency || 'PLN',
+        params.horizonMonths || 60,
+        params.startDate,
+        params.granularity || 'monthly',
+        params.scenario || 'base',
+        JSON.stringify(params.assumptions || {}),
+        params.createdBy,
+        params.sourceStatementId || null,
+      ]
+    );
+  } catch {
+    await dbRun(
+      `INSERT INTO financial_models (id, organization_id, project_id, initiative_id, name, description, currency, horizon_months, start_date, granularity, scenario, assumptions_json, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        params.organizationId,
+        params.projectId || null,
+        params.initiativeId || null,
+        params.name,
+        params.description || null,
+        params.currency || 'PLN',
+        params.horizonMonths || 60,
+        params.startDate,
+        params.granularity || 'monthly',
+        params.scenario || 'base',
+        JSON.stringify(params.assumptions || {}),
+        params.createdBy,
+      ]
+    );
+  }
   return id;
 }
 
@@ -667,10 +832,20 @@ export async function approveModel(
     validations: result.validations,
     computedAt: new Date().toISOString(),
   });
+  const nextVersion = (model.version || 1) + 1;
   await dbRun(
-    `UPDATE financial_models SET status = 'approved', approved_by = ?, approved_at = CURRENT_TIMESTAMP, approved_snapshot = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-    [userId, snapshot, modelId]
+    `UPDATE financial_models SET status = 'approved', approved_by = ?, approved_at = CURRENT_TIMESTAMP, approved_snapshot = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+    [userId, snapshot, nextVersion, modelId]
   );
+
+  try {
+    await dbRun(
+      `INSERT INTO financial_model_versions (id, model_id, version, snapshot_data, approved_by, created_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      [uuidv4(), modelId, nextVersion, snapshot, userId]
+    );
+  } catch {
+    // Table may not exist yet if migration not applied
+  }
 
   return { success: true };
 }

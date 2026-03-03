@@ -304,7 +304,7 @@ export const useChatProjectStore = create<ChatProjectState>()(
       },
     }),
     {
-      name: 'consultinity-chat-projects',
+      name: 'consultify-chat-projects',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         activeProjectId: state.activeProjectId,

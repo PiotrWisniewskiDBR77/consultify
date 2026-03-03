@@ -69,6 +69,25 @@ interface ModuleHubProps {
   // Extra controls rendered on the right, just before view mode buttons
   rightControls?: React.ReactNode;
 
+  // Optional “Tool” control (3rd from the right in the right cluster)
+  toolControl?: React.ReactNode;
+
+  // Optional AI control (rightmost in the topbar cluster)
+  aiControl?: React.ReactNode;
+
+  // Command Row content (V3: one line under module topbar)
+  // Used for status counters / bulk actions / dynamic chips when search & docs tabs are not active.
+  commandRowContent?: React.ReactNode;
+
+  /**
+   * If true, `commandRowContent` overrides Search/DynamicTabs (used for multi-select bulk mode).
+   * KANON v3: bulk actions row is the highest priority mode of Command Row.
+   */
+  forceCommandRow?: boolean;
+
+  /** Default: false (KANON v3: no counts on main tabs) */
+  showTabCounts?: boolean;
+
   // Optional: module-specific actions shown alongside filters (consumed by some hubs)
   // Note: ModuleHub does not render these directly yet; kept for compatibility.
   filterActions?: any;
@@ -104,6 +123,11 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
   statusCounts,
   availableViewModes,
   rightControls,
+  toolControl,
+  aiControl,
+  commandRowContent,
+  forceCommandRow,
+  showTabCounts,
   filterActions,
   children,
 }) => {
@@ -118,6 +142,7 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={onTabChange}
+        showTabCounts={showTabCounts}
         viewMode={viewMode}
         onViewModeChange={onViewModeChange}
         onSearch={onSearch}
@@ -140,10 +165,14 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
         statusCounts={statusCounts}
         availableViewModes={availableViewModes}
         rightControls={rightControls}
+        toolControl={toolControl}
+        aiControl={aiControl}
+        commandRowContent={commandRowContent}
+        forceCommandRow={forceCommandRow}
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-auto">{children}</div>
+      <div className="flex-1 min-h-0 overflow-auto">{children}</div>
     </div>
   );
 };

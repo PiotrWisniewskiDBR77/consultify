@@ -9,11 +9,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { InfoButton } from '../../components/shared/InfoButton';
-import { SuperAdminSignalCenter } from '../../components/SuperAdmin/SuperAdminSignalCenter';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { Api } from '../../services/api';
 import { SuperAdminDashboard } from './SuperAdminDashboard';
 import { SuperAdminMetricsView } from './SuperAdminMetricsView';
+import { SuperAdminSignalsView } from './SuperAdminSignalsView';
 
 interface OverviewModuleProps {
   onNavigateToSection?: (section: string) => void;
@@ -101,11 +101,7 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateToSect
       case 'metrics':
         return <SuperAdminMetricsView />;
       case 'signals':
-        return (
-          <div className="p-6">
-            <SuperAdminSignalCenter />
-          </div>
-        );
+        return <SuperAdminSignalsView />;
       default:
         return null;
     }

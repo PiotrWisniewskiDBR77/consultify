@@ -1,0 +1,231 @@
+/**
+ * ShareModal — Share, Collaborate, Export, Embed for a deck.
+ */
+
+import {
+  Check,
+  Copy,
+  Download,
+  Eye,
+  FileText,
+  Image,
+  Link,
+  Mail,
+  MessageCircle,
+  X,
+} from 'lucide-react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+type ShareTab = 'collaborate' | 'share' | 'export' | 'embed';
+
+interface ShareModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  deckTitle: string;
+  onExport?: (format: 'pdf' | 'pptx' | 'png') => void;
+}
+
+export const ShareModal: React.FC<ShareModalProps> = ({
+  isOpen,
+  onClose,
+  deckTitle,
+  onExport,
+}) => {
+  const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState<ShareTab>('share');
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [publicLink, setPublicLink] = useState(false);
+
+  if (!isOpen) return null;
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(`${window.location.origin}/presentations/shared/demo-share-id`);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
+
+  const tabs: { id: ShareTab; labelKey: string }[] = [
+    { id: 'collaborate', labelKey: 'presentations.builder.share.collaborate' },
+    { id: 'share', labelKey: 'presentations.builder.share.shareLink' },
+    { id: 'export', labelKey: 'presentations.builder.share.export' },
+    { id: 'embed', labelKey: 'presentations.builder.share.embed' },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+
+      <div className="relative w-[480px] bg-white dark:bg-navy-900 rounded-2xl shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{deckTitle}</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-slate-200 dark:border-navy-700">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+                activeTab === tab.id
+                  ? 'text-purple-600 border-b-2 border-purple-500'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              {t(tab.labelKey, tab.id)}
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
+        <div className="p-5 min-h-[240px]">
+          {activeTab === 'collaborate' && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t('presentations.builder.share.inviteByEmail', 'Invite by email')}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    placeholder="email@example.com"
+                    className="flex-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm"
+                  />
+                  <button className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:bg-purple-500">
+                    <Mail size={14} />
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-slate-500 uppercase">Permissions</p>
+                {[
+                  { icon: Eye, label: 'View', desc: 'Can view the deck' },
+                  { icon: MessageCircle, label: 'Comment', desc: 'Can view and comment' },
+                ].map((perm) => (
+                  <button
+                    key={perm.label}
+                    className="w-full flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-400 text-left"
+                  >
+                    <perm.icon size={16} className="text-slate-400" />
+                    <div>
+                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{perm.label}</p>
+                      <p className="text-[10px] text-slate-400">{perm.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'share' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-navy-800">
+                <div className="flex items-center gap-2">
+                  <Link size={16} className="text-slate-400" />
+                  <span className="text-sm text-slate-700 dark:text-slate-300">
+                    {t('presentations.builder.share.publicLink', 'Public link')}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setPublicLink(!publicLink)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    publicLink
+                      ? 'bg-green-500/20 text-green-600'
+                      : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
+                  }`}
+                >
+                  {publicLink ? 'ON' : 'OFF'}
+                </button>
+              </div>
+
+              {publicLink && (
+                <>
+                  <div className="flex gap-2">
+                    <input
+                      readOnly
+                      value={`${window.location.origin}/presentations/shared/demo-share-id`}
+                      className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-xs text-slate-500 truncate"
+                    />
+                    <button
+                      onClick={handleCopyLink}
+                      className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 text-sm hover:bg-slate-50 dark:hover:bg-navy-800 flex items-center gap-1"
+                    >
+                      {linkCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} className="text-slate-500" />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    {t('presentations.builder.share.anyoneCanView', 'Anyone with the link can view')}
+                  </p>
+                </>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'export' && (
+            <div className="space-y-3">
+              {[
+                { format: 'pdf' as const, label: t('presentations.builder.export.pdf', 'PDF'), icon: FileText, desc: 'Consulting-grade, fonts embedded' },
+                { format: 'pptx' as const, label: t('presentations.builder.export.pptx', 'PowerPoint (PPTX)'), icon: FileText, desc: 'Native formatting, editable charts' },
+                { format: 'png' as const, label: t('presentations.builder.export.png', 'PNGs (per slide)'), icon: Image, desc: 'High-res per card (2x retina)' },
+              ].map((exp) => (
+                <button
+                  key={exp.format}
+                  onClick={() => onExport?.(exp.format)}
+                  className="w-full flex items-center gap-3 p-4 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/5 text-left transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                    <exp.icon size={20} className="text-purple-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      {exp.label}
+                    </p>
+                    <p className="text-[11px] text-slate-400">{exp.desc}</p>
+                  </div>
+                  <Download size={16} className="ml-auto text-slate-400" />
+                </button>
+              ))}
+              <p className="text-[10px] text-slate-400 mt-2">
+                {t(
+                  'presentations.builder.export.staticNote',
+                  'Animated elements will be static in PDF and PowerPoint'
+                )}
+              </p>
+            </div>
+          )}
+
+          {activeTab === 'embed' && (
+            <div className="space-y-3">
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Embed this deck on external websites:
+              </p>
+              <div className="relative">
+                <textarea
+                  readOnly
+                  value={`<iframe src="${window.location.origin}/presentations/embed/demo-share-id" width="100%" height="480" frameborder="0" allowfullscreen></iframe>`}
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-xs text-slate-500 font-mono resize-none"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(
+                    `<iframe src="${window.location.origin}/presentations/embed/demo-share-id" width="100%" height="480" frameborder="0" allowfullscreen></iframe>`
+                  );
+                }}
+                className="flex items-center gap-1.5 text-xs text-purple-600 hover:text-purple-500"
+              >
+                <Copy size={12} /> Copy embed code
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};

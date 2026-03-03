@@ -131,12 +131,23 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     setError(null);
   };
 
+  const ACCEPTED_TYPES = new Set([
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+    'text/csv',
+  ]);
+  const ACCEPTED_EXTS = ['.pdf', '.xlsx', '.xls', '.csv'];
+
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       const f = e.dataTransfer.files[0];
-      if (f && f.type === 'application/pdf') setFile(f);
-      else setError(t('finance.importWizard.pdfOnly', 'Only PDF files are supported'));
+      if (f && (ACCEPTED_TYPES.has(f.type) || ACCEPTED_EXTS.some((ext) => f.name.toLowerCase().endsWith(ext)))) {
+        setFile(f);
+      } else {
+        setError(t('finance.importWizard.unsupportedFormat', 'Supported formats: PDF, XLSX, XLS, CSV'));
+      }
     },
     [t]
   );
@@ -362,18 +373,18 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
           >
             <Upload size={48} className="mx-auto text-slate-400 mb-4" />
             <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {t('finance.importWizard.dropOrClick', 'Drop PDF here or click to browse')}
+              {t('finance.importWizard.dropOrClick', 'Drop file here or click to browse')}
             </p>
             <p className="text-sm text-slate-400">
               {t(
                 'finance.importWizard.supportedFormats',
-                'Supported: PDF financial statements (Balance Sheet, P&L, Cash Flow)'
+                'Supported: PDF, Excel (XLSX/XLS), CSV financial statements'
               )}
             </p>
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf"
+              accept=".pdf,.xlsx,.xls,.csv"
               onChange={handleFileSelect}
               className="hidden"
             />
@@ -381,7 +392,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
 
           {file && (
             <div className="mt-6 p-4 bg-slate-50 dark:bg-navy-900 rounded-xl flex items-center gap-3">
-              <FileText size={20} className="text-blue-500" />
+              <FileText size={20} className={file.name.endsWith('.pdf') ? 'text-red-500' : 'text-green-500'} />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
                   {file.name}

@@ -10,10 +10,11 @@
  *  - Delay detection & schedule control — T041
  *  - Budget planning & financial control — T042
  */
-import { Request, Response, Router } from 'express';
+import { Response, Router } from 'express';
 import { z } from 'zod';
 
-import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
+import { type AuthRequest, isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
+import { requireOrgRole } from '../middleware/rbac.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import {
   detectDelaySignals,
@@ -34,10 +35,6 @@ import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 
 const router = Router();
 
-interface AuthRequest extends Request {
-  user?: { id: string; organizationId: string };
-}
-
 // ================================================================
 // T040: Risk Signals
 // ================================================================
@@ -46,6 +43,7 @@ router.get(
   '/risk-signals',
   verifyToken,
   isAuthenticated,
+  requireOrgRole('user'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -67,6 +65,7 @@ router.post(
   '/risk-signals/dismiss',
   verifyToken,
   isAuthenticated,
+  requireOrgRole('admin'),
   validateBody(DismissAlertSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
@@ -92,6 +91,7 @@ router.get(
   '/audit-log',
   verifyToken,
   isAuthenticated,
+  requireOrgRole('user'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -141,6 +141,7 @@ router.post(
   '/timeline-update',
   verifyToken,
   isAuthenticated,
+  requireOrgRole('admin'),
   validateBody(TimelineUpdateSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
@@ -160,10 +161,11 @@ router.post(
 
     const oldValue = existing[0].current_value;
 
-    await dbRun(`UPDATE initiatives SET ${field} = ?, updated_at = NOW() WHERE id = ?`, [
-      value,
-      initiativeId,
-    ]);
+    // Always scope updates by organization_id to avoid cross-tenant writes.
+    await dbRun(
+      `UPDATE initiatives SET ${field} = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+      [value, initiativeId, orgId]
+    );
 
     await dbRun(
       `INSERT INTO execution_audit_log (id, organization_id, initiative_id, field_changed, old_value, new_value, change_reason, changed_by)
@@ -183,6 +185,7 @@ router.get(
   '/warnings',
   verifyToken,
   isAuthenticated,
+  requireOrgRole('user'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -262,6 +265,7 @@ router.patch(
   '/raid/:id/mitigation',
   verifyToken,
   isAuthenticated,
+  requireOrgRole('admin'),
   validateBody(MitigationUpdateSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
@@ -315,6 +319,7 @@ router.get(
   '/delay-signals',
   verifyToken,
   isAuthenticated,
+  requireOrgRole('user'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -355,19 +360,61 @@ router.post(
   '/delay-signals/dismiss',
   verifyToken,
   isAuthenticated,
+  requireOrgRole('admin'),
   validateBody(DismissDelaySchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { signalId } = req.body;
-    await dbRun(
+    const { signalId, entityType, entityId, deviationType } = req.body;
+    const updateRes = await dbRun(
       `UPDATE delay_signals
        SET is_dismissed = TRUE, dismissed_by = ?, dismissed_at = NOW()
        WHERE id = ? AND organization_id = ?`,
       [userId, signalId, orgId]
     );
+
+    // If the signal was never persisted, create a minimal dismissed row so
+    // live detection can still respect the dismissal (by id).
+    if ((updateRes?.changes || 0) === 0) {
+      let entityName = String(signalId);
+      try {
+        if (entityType === 'INITIATIVE') {
+          const rows = (await dbAll(
+            `SELECT COALESCE(name, title) as entity_name
+             FROM initiatives
+             WHERE id = ? AND organization_id = ?
+             LIMIT 1`,
+            [entityId, orgId]
+          )) as Array<{ entity_name?: string | null }>;
+          const n = rows?.[0]?.entity_name;
+          if (n) entityName = String(n);
+        } else if (entityType === 'TASK') {
+          const rows = (await dbAll(
+            `SELECT title as entity_name
+             FROM tasks
+             WHERE id = ? AND organization_id = ?
+             LIMIT 1`,
+            [entityId, orgId]
+          )) as Array<{ entity_name?: string | null }>;
+          const n = rows?.[0]?.entity_name;
+          if (n) entityName = String(n);
+        }
+      } catch {
+        // non-blocking
+      }
+
+      await dbRun(
+        `INSERT INTO delay_signals
+           (id, organization_id, entity_type, entity_id, entity_name, deviation_type, severity, days_deviation,
+            is_dismissed, dismissed_by, dismissed_at, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'WARNING', 0, TRUE, ?, NOW(), NOW(), NOW())
+         ON CONFLICT (id)
+         DO UPDATE SET is_dismissed = TRUE, dismissed_by = EXCLUDED.dismissed_by, dismissed_at = NOW(), updated_at = NOW()`,
+        [signalId, orgId, entityType, entityId, entityName, deviationType, userId]
+      );
+    }
     return res.json({ success: true });
   })
 );
@@ -380,6 +427,7 @@ router.post(
   '/delay-signals/detect',
   verifyToken,
   isAuthenticated,
+  requireOrgRole('admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -404,6 +452,7 @@ router.get(
   '/budget/entries/:initiativeId',
   verifyToken,
   isAuthenticated,
+  requireOrgRole('user'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -435,6 +484,7 @@ router.post(
   '/budget/entries',
   verifyToken,
   isAuthenticated,
+  requireOrgRole('admin'),
   validateBody(CreateBudgetEntrySchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
@@ -454,6 +504,7 @@ router.delete(
   '/budget/entries/:entryId',
   verifyToken,
   isAuthenticated,
+  requireOrgRole('admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -474,6 +525,7 @@ router.get(
   '/budget/initiative/:initiativeId',
   verifyToken,
   isAuthenticated,
+  requireOrgRole('user'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -492,6 +544,7 @@ router.get(
   '/budget/portfolio',
   verifyToken,
   isAuthenticated,
+  requireOrgRole('user'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -510,6 +563,7 @@ router.get(
   '/budget/overspend-signals',
   verifyToken,
   isAuthenticated,
+  requireOrgRole('user'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });

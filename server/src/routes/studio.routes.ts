@@ -2,7 +2,7 @@
 /**
  * Studio Routes
  *
- * REST API for Consultinity Studio visual workspace
+ * REST API for Consultify Studio visual workspace
  */
 
 import { Response, Router } from 'express';

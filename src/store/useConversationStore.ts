@@ -976,7 +976,7 @@ export const useConversationStore = create<ConversationState>()(
       migrateFromLocalStorage: async () => {
         try {
           // Get old chat messages from useAppStore
-          const storageData = localStorage.getItem('consultinity-storage');
+          const storageData = localStorage.getItem('consultify-storage');
           if (!storageData) return;
 
           const parsed = JSON.parse(storageData);
@@ -1107,7 +1107,7 @@ export const useConversationStore = create<ConversationState>()(
       },
     }),
     {
-      name: 'consultinity-conversations',
+      name: 'consultify-conversations',
       storage: createJSONStorage(() => localStorage),
       // Version 2: migrates default language from 'en' to 'pl' for Polish product
       version: 2,
@@ -1127,7 +1127,7 @@ export const useConversationStore = create<ConversationState>()(
           }
           // Set the explicit user preference so chatLanguage resolution picks it up
           try {
-            localStorage.setItem('consultinity-preferred-chat-lang', 'pl');
+            localStorage.setItem('consultify-preferred-chat-lang', 'pl');
           } catch {
             // ignore storage errors
           }

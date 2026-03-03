@@ -976,7 +976,7 @@ class InterviewAssignmentService {
         <p>This is a reminder that your interview <strong>"${data.templateName}"</strong> is due on <strong>${dueDate}</strong>.</p>
         <p>Please complete it as soon as possible.</p>
         <p><a href="${process.env.APP_URL || 'http://localhost:3000'}/discovery?assignmentId=${data.assignmentId}">Click here to continue the interview</a></p>
-        <p>Best regards,<br>The Consultinity Team</p>
+        <p>Best regards,<br>The Consultify Team</p>
       `,
     });
   }
@@ -998,7 +998,7 @@ class InterviewAssignmentService {
         <p>The interview <strong>"${data.templateName}"</strong> assigned to <strong>${data.assigneeName}</strong> is overdue by <strong>${data.overdueDays} day(s)</strong>.</p>
         <p>Please follow up with the assignee or reassign the task.</p>
         <p><a href="${process.env.APP_URL || 'http://localhost:3000'}/discovery?assignmentId=${data.assignmentId}&scope=managed">View Assignment</a></p>
-        <p>Best regards,<br>The Consultinity Team</p>
+        <p>Best regards,<br>The Consultify Team</p>
       `,
     });
   }

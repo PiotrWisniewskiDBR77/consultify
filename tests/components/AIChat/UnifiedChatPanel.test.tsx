@@ -1,6 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 
 import toast from 'react-hot-toast';
 
@@ -31,6 +32,10 @@ vi.mock('../../../src/services/funnelAnalytics', () => ({
 vi.mock('../../../src/services/api', () => ({
   Api: h.apiMock,
 }));
+
+function renderWithRouter(ui: React.ReactElement) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>);
+}
 
 const addChatMessageMock = vi.fn();
 const deleteChatMessageMock = vi.fn();
@@ -428,12 +433,12 @@ describe('UnifiedChatPanel (L2)', () => {
     localStorage.setItem('consultinity-preferred-chat-lang', 'de-DE');
     conversationStoreState.draftChatLanguage = 'fr';
 
-    render(<UnifiedChatPanel />);
+    renderWithRouter(<UnifiedChatPanel />);
     expect(screen.getByTestId('chat-lang')).toHaveTextContent('de');
   });
 
   it('renders welcome state, skip link, and key header actions', () => {
-    render(<UnifiedChatPanel />);
+    renderWithRouter(<UnifiedChatPanel />);
 
     expect(screen.getByText('Skip to chat input')).toHaveClass('sr-only');
     expect(screen.getByText('Start a conversation')).toBeInTheDocument();
@@ -443,7 +448,7 @@ describe('UnifiedChatPanel (L2)', () => {
 
   it('new chat clears state and creates/selects a conversation', async () => {
     createConversationMock.mockResolvedValue({ id: 'conv-1' });
-    render(<UnifiedChatPanel />);
+    renderWithRouter(<UnifiedChatPanel />);
 
     fireEvent.click(screen.getByTestId('chat-new-button'));
     await waitFor(() => expect(clearActiveChatMock).toHaveBeenCalled());
@@ -453,7 +458,7 @@ describe('UnifiedChatPanel (L2)', () => {
 
   it('sends a message (creates conversation if needed) and starts stream', async () => {
     createConversationMock.mockResolvedValue({ id: 'conv-1' });
-    render(<UnifiedChatPanel onMessageSent={vi.fn()} />);
+    renderWithRouter(<UnifiedChatPanel onMessageSent={vi.fn()} />);
 
     fireEvent.click(screen.getByTestId('send-button'));
 
@@ -468,7 +473,7 @@ describe('UnifiedChatPanel (L2)', () => {
 
   it('uploads supported attachments and shows analysis status; skips unsupported types', async () => {
     createConversationMock.mockResolvedValue({ id: 'conv-1' });
-    render(<UnifiedChatPanel />);
+    renderWithRouter(<UnifiedChatPanel />);
 
     fireEvent.click(screen.getByTestId('send-pdf'));
     await waitFor(() => expect(h.apiMock.uploadChatAttachment).toHaveBeenCalled());
@@ -493,7 +498,7 @@ describe('UnifiedChatPanel (L2)', () => {
 
   it('renders error retry UI when lastError is set and wires actions', () => {
     aiStreamState.lastError = new Error('boom');
-    render(<UnifiedChatPanel />);
+    renderWithRouter(<UnifiedChatPanel />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(retryLastStreamMock).toHaveBeenCalled();
@@ -504,7 +509,7 @@ describe('UnifiedChatPanel (L2)', () => {
   it('business button tracks funnel and navigates; badge caps at 9+', () => {
     pendingActionsCountState = 12;
     const onNavigateToActions = vi.fn();
-    render(<UnifiedChatPanel onNavigateToActions={onNavigateToActions} />);
+    renderWithRouter(<UnifiedChatPanel onNavigateToActions={onNavigateToActions} />);
 
     expect(screen.getByText('9+')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('chat-business-button'));
@@ -519,7 +524,7 @@ describe('UnifiedChatPanel (L2)', () => {
     appStoreState.aiConfig = { ...appStoreState.aiConfig, textToSpeech: true };
     voiceStateState = { isSpeaking: true, isListening: false };
 
-    render(<UnifiedChatPanel />);
+    renderWithRouter(<UnifiedChatPanel />);
     fireEvent.click(screen.getByTestId('chat-autoread-button'));
 
     expect(stopSpeakingMock).toHaveBeenCalled();
@@ -530,7 +535,7 @@ describe('UnifiedChatPanel (L2)', () => {
     conversationStoreState.activeConversationId = 'conv-1';
     appStoreState.aiConfig = { ...appStoreState.aiConfig, textToSpeech: true };
 
-    render(<UnifiedChatPanel />);
+    renderWithRouter(<UnifiedChatPanel />);
     expect(aiStreamOptionsCaptured?.onStreamDone).toBeTypeOf('function');
 
     await aiStreamOptionsCaptured.onStreamDone('', [], [{ id: 'ar1', type: 'md', title: 'T', content: 'C' }], {
@@ -563,7 +568,7 @@ describe('UnifiedChatPanel (L2)', () => {
       { id: 'm1', role: 'user', content: 'hello', createdAt: new Date(), metadata: {} },
     ];
 
-    render(
+    renderWithRouter(
       <UnifiedChatPanel
         customMessages={[
           { id: 'm1', role: 'user', content: 'hello', timestamp: new Date() } as any,
@@ -589,7 +594,7 @@ describe('UnifiedChatPanel (L2)', () => {
 
   it('agent audit accept handler persists acknowledgement and updates stores', async () => {
     conversationStoreState.activeConversationId = 'conv-1';
-    render(
+    renderWithRouter(
       <UnifiedChatPanel
         customMessages={[{ id: 'm1', role: 'user', content: 'x', timestamp: new Date() } as any]}
       />
@@ -611,7 +616,7 @@ describe('UnifiedChatPanel (L2)', () => {
       { id: 'm2', role: 'ai', content: 'x', createdAt: new Date(), metadata: {} },
     ];
 
-    render(
+    renderWithRouter(
       <UnifiedChatPanel
         customMessages={[
           { id: 'm1', role: 'user', content: 'old', timestamp: new Date() } as any,
@@ -630,7 +635,7 @@ describe('UnifiedChatPanel (L2)', () => {
 
   it('multi-select confirm calls onMultiSelectSubmit (or falls back to onOptionSelect)', async () => {
     const onMultiSelectSubmit = vi.fn();
-    render(
+    renderWithRouter(
       <UnifiedChatPanel
         onMultiSelectSubmit={onMultiSelectSubmit}
         customMessages={[{ id: 'm1', role: 'user', content: 'x', timestamp: new Date() } as any]}

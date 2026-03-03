@@ -10,10 +10,7 @@ import { Check, RefreshCw, Server, X, Zap } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-const authHeaders = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${localStorage.getItem('token')}`,
-});
+import { Api } from '@/services/api';
 
 type InboxRow = {
   id: string;
@@ -43,10 +40,8 @@ export const MarketInboxTab: React.FC = () => {
       const qs = new URLSearchParams();
       if (statusFilter) qs.set('status', statusFilter);
       qs.set('source', 'openrouter');
-      const res = await fetch(`/api/llm/market/inbox?${qs.toString()}`, { headers: authHeaders() });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Failed to load inbox');
-      setRows(Array.isArray(json?.inbox) ? json.inbox : []);
+      const json = await Api.getLLMMarketInbox({ status: statusFilter, source: 'openrouter' });
+      setRows(Array.isArray((json as any)?.inbox) ? (json as any).inbox : []);
     } catch (e: any) {
       toast.error(e?.message || 'Load failed');
       setRows([]);
@@ -58,12 +53,7 @@ export const MarketInboxTab: React.FC = () => {
   const sync = async () => {
     setSyncing(true);
     try {
-      const res = await fetch('/api/llm/market/openrouter/sync', {
-        method: 'POST',
-        headers: authHeaders(),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Sync failed');
+      await Api.syncOpenRouterMarket();
       toast.success('Market sync completed');
       await load();
     } catch (e: any) {
@@ -76,13 +66,7 @@ export const MarketInboxTab: React.FC = () => {
   const setStatus = async (id: string, status: string) => {
     setUpdating(true);
     try {
-      const res = await fetch(`/api/llm/market/inbox/${encodeURIComponent(id)}`, {
-        method: 'PUT',
-        headers: authHeaders(),
-        body: JSON.stringify({ status }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Update failed');
+      await Api.updateMarketInboxItem(id, { status });
       setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
     } catch (e: any) {
       toast.error(e?.message || 'Update failed');
@@ -94,13 +78,7 @@ export const MarketInboxTab: React.FC = () => {
   const applyItem = async (id: string) => {
     setUpdating(true);
     try {
-      const res = await fetch(`/api/llm/market/inbox/${encodeURIComponent(id)}/apply`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({}),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Apply failed');
+      await Api.applyMarketInboxItem(id);
       toast.success('Applied');
       await load();
     } catch (e: any) {

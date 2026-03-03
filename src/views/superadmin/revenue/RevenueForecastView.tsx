@@ -50,8 +50,20 @@ export const RevenueForecastView: React.FC = () => {
         Api.getRevenueForecasts(),
         Api.getRevenueForecastStats(),
       ]);
-      setForecasts(forecastsRes || []);
-      setStats(statsRes as any);
+      const forecastsList = Array.isArray(forecastsRes) ? forecastsRes : (forecastsRes as any)?.forecasts || [];
+      setForecasts(forecastsList);
+      const raw = statsRes as any;
+      const quarterlyForecasts = forecastsList.filter((f: any) => f.forecast_type === 'quarterly');
+      const yearlyForecasts = forecastsList.filter((f: any) => f.forecast_type === 'yearly' || f.forecast_type === 'mrr');
+      setStats({
+        totalForecasts: raw?.total || forecastsList.length,
+        averageConfidence: raw?.accuracy || (forecastsList.length > 0
+          ? forecastsList.reduce((sum: number, f: any) => sum + (f.confidence || 0), 0) / forecastsList.length
+          : 0),
+        nextQuarterForecast: quarterlyForecasts[0]?.forecast_amount || 0,
+        yearlyForecast: yearlyForecasts[0]?.forecast_amount || 0,
+        forecastMethods: [],
+      });
     } catch (err: any) {
       setError(err.message || 'Failed to load revenue forecasts');
     } finally {
@@ -63,8 +75,9 @@ export const RevenueForecastView: React.FC = () => {
     try {
       setGenerating(true);
       await Api.generateRevenueForecast({
-        forecastType: generateParams.forecast_type,
-        periodMonths: generateParams.periods,
+        forecast_type: generateParams.forecast_type,
+        period_months: generateParams.periods,
+        method: generateParams.method,
       });
       await fetchData();
       setShowGenerateModal(false);
@@ -97,7 +110,7 @@ export const RevenueForecastView: React.FC = () => {
       linear: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'Linear' },
       exponential: { bg: 'bg-purple-500/20', text: 'text-purple-400', label: 'Exponential' },
       moving_average: { bg: 'bg-green-500/20', text: 'text-green-400', label: 'Moving Average' },
-      ml_based: { bg: 'bg-indigo-500/20', text: 'text-indigo-400', label: 'ML-Based' },
+      ml_based: { bg: 'bg-indigo-500/20', text: 'text-indigo-400', label: 'Statistical Estimate' },
     };
     const badge = badges[method] || {
       bg: 'bg-gray-50 dark:bg-navy-8000/20',
@@ -144,8 +157,8 @@ export const RevenueForecastView: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-white">Revenue Forecasting</h2>
-          <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-1">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Revenue Forecasting</h2>
+          <p className="text-slate-600 dark:text-slate-400 mt-1">
             Generate and analyze revenue predictions using multiple methods
           </p>
         </div>
@@ -172,42 +185,44 @@ export const RevenueForecastView: React.FC = () => {
       {/* Stats */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-white">{stats.totalForecasts}</div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                {stats.totalForecasts}
+              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 Total Forecasts
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-xl font-bold text-green-400">
                 {formatCurrency(stats.nextQuarterForecast || 0)}
               </div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 Next Quarter
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-xl font-bold text-blue-400">
                 {formatCurrency(stats.yearlyForecast || 0)}
               </div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 Yearly Forecast
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
               <div
                 className={`text-2xl font-bold ${getConfidenceColor(stats.averageConfidence || 0)}`}
               >
                 {Math.round((stats.averageConfidence || 0) * 100)}%
               </div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 Avg. Confidence
               </div>
             </CardContent>
@@ -216,12 +231,12 @@ export const RevenueForecastView: React.FC = () => {
       )}
 
       {/* Forecast Chart Placeholder */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-white">Revenue Forecast Trend</CardTitle>
+          <CardTitle>Revenue Forecast Trend</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64 flex items-center justify-center bg-gray-900/50 rounded-lg">
+          <div className="h-64 flex items-center justify-center bg-slate-50 dark:bg-navy-950/20 rounded-lg border border-slate-200 dark:border-navy-700">
             {/* Chart visualization would go here */}
             <div className="flex flex-col items-center gap-4">
               <div className="flex items-end gap-2 h-32">
@@ -237,7 +252,7 @@ export const RevenueForecastView: React.FC = () => {
                   />
                 ))}
               </div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 {forecasts.length > 0
                   ? 'Revenue forecast trend by period'
                   : 'No forecast data available'}
@@ -248,34 +263,34 @@ export const RevenueForecastView: React.FC = () => {
       </Card>
 
       {/* Forecasts Table */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-white">Forecast History</CardTitle>
+          <CardTitle>Forecast History</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-700">
-                  <th className="text-left py-3 px-4 text-gray-400 dark:text-gray-500 dark:text-gray-400 font-medium">
+                <tr className="border-b border-slate-200 dark:border-white/10">
+                  <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">
                     Period
                   </th>
-                  <th className="text-left py-3 px-4 text-gray-400 dark:text-gray-500 dark:text-gray-400 font-medium">
+                  <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">
                     Type
                   </th>
-                  <th className="text-left py-3 px-4 text-gray-400 dark:text-gray-500 dark:text-gray-400 font-medium">
+                  <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">
                     Method
                   </th>
-                  <th className="text-right py-3 px-4 text-gray-400 dark:text-gray-500 dark:text-gray-400 font-medium">
+                  <th className="text-right py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">
                     Forecast
                   </th>
-                  <th className="text-center py-3 px-4 text-gray-400 dark:text-gray-500 dark:text-gray-400 font-medium">
+                  <th className="text-center py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">
                     Confidence
                   </th>
-                  <th className="text-left py-3 px-4 text-gray-400 dark:text-gray-500 dark:text-gray-400 font-medium">
+                  <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">
                     Created
                   </th>
-                  <th className="text-center py-3 px-4 text-gray-400 dark:text-gray-500 dark:text-gray-400 font-medium">
+                  <th className="text-center py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">
                     Actions
                   </th>
                 </tr>
@@ -284,10 +299,10 @@ export const RevenueForecastView: React.FC = () => {
                 {forecasts.map((forecast) => (
                   <tr
                     key={forecast.id}
-                    className="border-b border-gray-700/50 hover:bg-gray-700/30"
+                    className="border-b border-slate-200/70 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
                   >
                     <td className="py-3 px-4">
-                      <span className="text-white">
+                      <span className="text-slate-900 dark:text-white">
                         {new Date(forecast.period_start).toLocaleDateString()} -{' '}
                         {new Date(forecast.period_end).toLocaleDateString()}
                       </span>
@@ -295,13 +310,13 @@ export const RevenueForecastView: React.FC = () => {
                     <td className="py-3 px-4">{getTypeBadge(forecast.forecast_type)}</td>
                     <td className="py-3 px-4">{getMethodBadge(forecast.method)}</td>
                     <td className="py-3 px-4 text-right">
-                      <span className="text-white font-medium">
+                      <span className="text-slate-900 dark:text-white font-medium">
                         {formatCurrency(forecast.forecasted_amount, forecast.currency)}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <div className="w-16 bg-gray-700 rounded-full h-2">
+                        <div className="w-16 bg-slate-200 dark:bg-gray-700 rounded-full h-2">
                           <div
                             className={`h-2 rounded-full ${
                               forecast.confidence_level >= 0.8
@@ -320,7 +335,7 @@ export const RevenueForecastView: React.FC = () => {
                         </span>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-gray-400 dark:text-gray-500 dark:text-gray-400 text-sm">
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-sm">
                       {new Date(forecast.created_at).toLocaleDateString()}
                     </td>
                     <td className="py-3 px-4 text-center">
@@ -338,7 +353,7 @@ export const RevenueForecastView: React.FC = () => {
           </div>
 
           {forecasts.length === 0 && (
-            <div className="text-center py-8 text-gray-400 dark:text-gray-500 dark:text-gray-400">
+            <div className="text-center py-8 text-slate-600 dark:text-slate-400">
               No forecasts generated yet. Click "Generate Forecast" to create your first prediction.
             </div>
           )}
@@ -348,11 +363,13 @@ export const RevenueForecastView: React.FC = () => {
       {/* Generate Modal */}
       {showGenerateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">Generate Revenue Forecast</h3>
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-md shadow-xl">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+              Generate Revenue Forecast
+            </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Forecast Type
                 </label>
                 <select
@@ -360,7 +377,7 @@ export const RevenueForecastView: React.FC = () => {
                   onChange={(e) =>
                     setGenerateParams({ ...generateParams, forecast_type: e.target.value })
                   }
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                 >
                   <option value="monthly">Monthly</option>
                   <option value="quarterly">Quarterly</option>
@@ -368,22 +385,22 @@ export const RevenueForecastView: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Forecast Method
                 </label>
                 <select
                   value={generateParams.method}
                   onChange={(e) => setGenerateParams({ ...generateParams, method: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                 >
                   <option value="linear">Linear Regression</option>
                   <option value="exponential">Exponential Smoothing</option>
                   <option value="moving_average">Moving Average</option>
-                  <option value="ml_based">Machine Learning</option>
+                  <option value="ml_based">Statistical Estimate (Weighted Trend)</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Periods to Forecast
                 </label>
                 <input
@@ -392,14 +409,14 @@ export const RevenueForecastView: React.FC = () => {
                   onChange={(e) =>
                     setGenerateParams({ ...generateParams, periods: parseInt(e.target.value) })
                   }
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                   min="1"
                   max="24"
                 />
               </div>
 
               {/* Method Description */}
-              <div className="p-3 bg-gray-900/50 rounded-lg text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="p-3 bg-slate-50 dark:bg-navy-950/20 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-600 dark:text-slate-400">
                 {generateParams.method === 'linear' && (
                   <p>
                     Linear regression fits a straight line to historical data, best for stable
@@ -416,17 +433,17 @@ export const RevenueForecastView: React.FC = () => {
                 )}
                 {generateParams.method === 'ml_based' && (
                   <p>
-                    Machine learning uses advanced algorithms for complex patterns and multiple
-                    variables.
+                    Uses weighted trend analysis on historical data. Not a full ML pipeline
+                    — applies statistical heuristics to estimate future revenue.
                   </p>
                 )}
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-700">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-navy-700">
                 <button
                   type="button"
                   onClick={() => setShowGenerateModal(false)}
-                  className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+                  className="px-4 py-2 bg-slate-100 text-slate-900 rounded-lg hover:bg-slate-200 dark:bg-navy-800 dark:text-white dark:hover:bg-navy-700"
                   disabled={generating}
                 >
                   Cancel

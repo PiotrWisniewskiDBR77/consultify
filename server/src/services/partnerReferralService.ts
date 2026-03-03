@@ -228,7 +228,7 @@ interface ClickRow {
 
 let db: IDatabase = getDatabase();
 
-const BASE_URL = process.env.APP_URL || 'https://app.consultinity.com';
+const BASE_URL = process.env.APP_URL || 'https://app.consultify.com';
 
 /**
  * Set database instance (for testing)

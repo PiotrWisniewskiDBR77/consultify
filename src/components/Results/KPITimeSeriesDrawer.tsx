@@ -2,7 +2,7 @@ import { Calendar, Target, TrendingUp, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { API_URL, getHeaders } from '@/services/api';
+import { Api, API_URL, getHeaders } from '@/services/api';
 import { InitiativeKPI, KPIMeasurement } from '@/types/core';
 
 interface KPITimeSeriesDrawerProps {
@@ -12,6 +12,26 @@ interface KPITimeSeriesDrawerProps {
 }
 
 type QuickStat = { label: string; value: string; color?: string };
+
+type DeviationAction = {
+  id: string;
+  title: string;
+  ownerUserId?: string | null;
+  dueDate?: string | null;
+  status: 'OPEN' | 'DONE' | 'CANCELLED';
+};
+
+type DeviationCase = {
+  id: string;
+  kpiId: string;
+  severity: 'AMBER' | 'RED';
+  status: string;
+  periodStart?: string | null;
+  periodEnd?: string | null;
+  deviationSummary?: string | null;
+  rcaText?: string | null;
+  actions?: DeviationAction[];
+};
 
 export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   kpiId,
@@ -23,6 +43,12 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   const [measurements, setMeasurements] = useState<KPIMeasurement[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [openCase, setOpenCase] = useState<DeviationCase | null>(null);
+  const [rcaDraft, setRcaDraft] = useState('');
+  const [newActionTitle, setNewActionTitle] = useState('');
+  const [newActionDue, setNewActionDue] = useState('');
+  const [caseBusy, setCaseBusy] = useState(false);
+
   const [newValue, setNewValue] = useState('');
   const [newDate, setNewDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [newNotes, setNewNotes] = useState('');
@@ -31,24 +57,38 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [kpiRes, tsRes] = await Promise.all([
-        fetch(`${API_URL}/benefits/kpi-mappings`, { headers: getHeaders() }),
+      const [kpiRes, tsRes, casesRes] = await Promise.all([
+        fetch(`${API_URL}/benefits/kpis`, { headers: getHeaders() }),
         fetch(`${API_URL}/benefits/kpis/${kpiId}/time-series`, { headers: getHeaders() }),
+        fetch(`${API_URL}/benefits/kpis/${kpiId}/deviation-cases?openOnly=1`, { headers: getHeaders() }),
       ]);
 
       if (kpiRes.ok) {
-        const all = await kpiRes.json();
+        const json = await kpiRes.json();
+        const all = json?.data || json || [];
         const found = (all || []).find((k: any) => k.id === kpiId);
         if (found) setKpi(found);
       }
       if (tsRes.ok) {
-        const ts = await tsRes.json();
+        const json = await tsRes.json();
+        const ts = json?.data || json || [];
         setMeasurements(
           (ts || []).sort(
             (a: KPIMeasurement, b: KPIMeasurement) =>
               new Date(b.measuredAt).getTime() - new Date(a.measuredAt).getTime()
           )
         );
+      }
+
+      if (casesRes.ok) {
+        const json = await casesRes.json();
+        const list = json?.data || [];
+        const first = Array.isArray(list) && list.length > 0 ? (list[0] as DeviationCase) : null;
+        setOpenCase(first);
+        setRcaDraft(first?.rcaText || '');
+      } else {
+        setOpenCase(null);
+        setRcaDraft('');
       }
     } catch {
       // silent
@@ -67,21 +107,15 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       if (!newValue) return;
       setSubmitting(true);
       try {
-        const res = await fetch(`${API_URL}/benefits/kpis/${kpiId}/time-series`, {
-          method: 'POST',
-          headers: getHeaders(),
-          body: JSON.stringify({
-            value: Number(newValue),
-            measuredAt: new Date(newDate).toISOString(),
-            notes: newNotes.trim() || undefined,
-          }),
+        await Api.post(`/benefits/kpis/${kpiId}/time-series`, {
+          value: Number(newValue),
+          periodStart: String(newDate).slice(0, 10),
+          notes: newNotes.trim() || undefined,
         });
-        if (res.ok) {
-          setNewValue('');
-          setNewNotes('');
-          fetchData();
-          onValueRecorded?.();
-        }
+        setNewValue('');
+        setNewNotes('');
+        fetchData();
+        onValueRecorded?.();
       } catch {
         // silent
       } finally {
@@ -96,7 +130,13 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     const gap =
       kpi.targetValue != null && kpi.latestValue != null ? kpi.targetValue - kpi.latestValue : null;
     return [
-      { label: t('results.drawer.baseline', 'Baseline'), value: '—' },
+      {
+        label: t('results.drawer.baseline', 'Baseline'),
+        value:
+          (kpi as any).baselineValue != null
+            ? `${(kpi as any).baselineValue}${kpi.unit ? ' ' + kpi.unit : ''}`
+            : '—',
+      },
       {
         label: t('results.columns.target', 'Target'),
         value:
@@ -127,6 +167,73 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
 
   const inputCls =
     'w-full h-9 px-3 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors';
+
+  const caseBadgeCls =
+    openCase?.severity === 'RED'
+      ? 'bg-red-500/10 text-red-400 border-red-500/30'
+      : openCase?.severity === 'AMBER'
+        ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+        : 'bg-slate-500/10 text-slate-400 border-slate-500/30';
+
+  const handleAcknowledge = useCallback(async () => {
+    if (!openCase?.id) return;
+    setCaseBusy(true);
+    try {
+      await Api.post(`/benefits/deviation-cases/${openCase.id}/acknowledge`, {});
+      fetchData();
+    } finally {
+      setCaseBusy(false);
+    }
+  }, [openCase?.id, fetchData]);
+
+  const handleSaveRca = useCallback(async () => {
+    if (!openCase?.id) return;
+    setCaseBusy(true);
+    try {
+      await Api.put(`/benefits/deviation-cases/${openCase.id}/rca`, { rcaText: rcaDraft });
+      fetchData();
+    } finally {
+      setCaseBusy(false);
+    }
+  }, [openCase?.id, rcaDraft, fetchData]);
+
+  const handleAddAction = useCallback(async () => {
+    if (!openCase?.id || !newActionTitle.trim()) return;
+    setCaseBusy(true);
+    try {
+      await Api.post(`/benefits/deviation-cases/${openCase.id}/actions`, {
+        title: newActionTitle.trim(),
+        dueDate: newActionDue ? String(newActionDue).slice(0, 10) : undefined,
+      });
+      setNewActionTitle('');
+      setNewActionDue('');
+      fetchData();
+    } finally {
+      setCaseBusy(false);
+    }
+  }, [openCase?.id, newActionTitle, newActionDue, fetchData]);
+
+  const handleResolve = useCallback(async () => {
+    if (!openCase?.id) return;
+    setCaseBusy(true);
+    try {
+      await Api.post(`/benefits/deviation-cases/${openCase.id}/resolve`, {});
+      fetchData();
+    } finally {
+      setCaseBusy(false);
+    }
+  }, [openCase?.id, fetchData]);
+
+  const handleClose = useCallback(async () => {
+    if (!openCase?.id) return;
+    setCaseBusy(true);
+    try {
+      await Api.post(`/benefits/deviation-cases/${openCase.id}/close`, {});
+      fetchData();
+    } finally {
+      setCaseBusy(false);
+    }
+  }, [openCase?.id, fetchData]);
 
   return (
     <>
@@ -201,6 +308,120 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                   </div>
                 ))}
               </div>
+
+              {/* Deviation case (R1) */}
+              {openCase ? (
+                <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {t('results.deviation.title', 'Deviation case')}
+                    </div>
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border ${caseBadgeCls}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${openCase.severity === 'RED' ? 'bg-red-500' : 'bg-amber-500'}`} />
+                      {openCase.severity} · {openCase.status}
+                    </span>
+                  </div>
+
+                  {openCase.deviationSummary ? (
+                    <div className="text-sm text-slate-700 dark:text-slate-200">{openCase.deviationSummary}</div>
+                  ) : null}
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {openCase.status === 'OPEN' ? (
+                      <button
+                        type="button"
+                        disabled={caseBusy}
+                        onClick={() => void handleAcknowledge()}
+                        className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-60"
+                      >
+                        {t('results.deviation.ack', 'Acknowledge')}
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      disabled={caseBusy}
+                      onClick={() => void handleResolve()}
+                      className="h-8 px-3 rounded-full text-xs font-medium border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/15 transition-colors disabled:opacity-60"
+                    >
+                      {t('results.deviation.resolve', 'Resolve')}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={caseBusy}
+                      onClick={() => void handleClose()}
+                      className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-500 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors disabled:opacity-60"
+                    >
+                      {t('results.deviation.close', 'Close')}
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {t('results.deviation.rca', 'Root cause analysis')}
+                    </div>
+                    <textarea
+                      className={`w-full min-h-[90px] px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/40 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30`}
+                      value={rcaDraft}
+                      onChange={(e) => setRcaDraft(e.target.value)}
+                      placeholder={t('results.deviation.rcaPlaceholder', 'Explain the root cause...')}
+                    />
+                    <button
+                      type="button"
+                      disabled={caseBusy}
+                      onClick={() => void handleSaveRca()}
+                      className="h-8 px-3 rounded-full text-xs font-medium border border-primary-500/30 bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/15 transition-colors disabled:opacity-60"
+                    >
+                      {t('common.save', 'Save')}
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {t('results.deviation.actions', 'Action plan')}
+                    </div>
+                    {(openCase.actions || []).length > 0 ? (
+                      <div className="space-y-1">
+                        {(openCase.actions || []).map((a) => (
+                          <div key={a.id} className="flex items-center justify-between gap-2 text-sm">
+                            <span className="text-slate-700 dark:text-slate-200 truncate">{a.title}</span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 shrink-0">
+                              {a.status}
+                              {a.dueDate ? ` · ${a.dueDate}` : ''}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-slate-500 dark:text-slate-400">
+                        {t('results.deviation.noActions', 'No actions yet')}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        className={inputCls}
+                        value={newActionTitle}
+                        onChange={(e) => setNewActionTitle(e.target.value)}
+                        placeholder={t('results.deviation.actionPlaceholder', 'New action')}
+                      />
+                      <input
+                        className={inputCls}
+                        type="date"
+                        value={newActionDue}
+                        onChange={(e) => setNewActionDue(e.target.value)}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      disabled={caseBusy || !newActionTitle.trim()}
+                      onClick={() => void handleAddAction()}
+                      className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-60"
+                    >
+                      {t('results.deviation.addAction', 'Add action')}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
 
               {/* Simple bar chart */}
               <div>

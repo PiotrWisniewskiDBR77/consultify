@@ -20,22 +20,28 @@ import {
   CreditCard,
   DollarSign,
   Download,
+  Edit3,
   Eye,
   FileText,
   Filter,
   Loader2,
   MoreVertical,
+  Pencil,
   Plus,
   Printer,
   Receipt,
   RefreshCw,
+  Save,
   Search,
   Send,
+  Trash2,
   TrendingDown,
   TrendingUp,
+  X,
   XCircle,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import {
   CreditNotesPanel,
@@ -76,6 +82,20 @@ interface BillingStats {
   monthlyGrowth: number;
 }
 
+interface UsagePricingTier {
+  id: string;
+  name: string;
+  unit: string;
+  pricePerUnit: number;
+  currency: string;
+  tierType: string;
+  minQuantity: number;
+  maxQuantity: number | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 type TabType = 'invoices' | 'credits' | 'tax' | 'usage' | 'templates';
 type DateFilter = '7d' | '30d' | '90d' | '1y' | 'all';
 
@@ -88,6 +108,32 @@ export const InvoiceCenterView: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<DateFilter>('30d');
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [showCreateInvoice, setShowCreateInvoice] = useState(false);
+  const [creatingInvoice, setCreatingInvoice] = useState(false);
+  const [newInvoice, setNewInvoice] = useState({
+    organizationId: '',
+    description: '',
+    amount: 0,
+    currency: 'USD',
+    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+  });
+
+  // Usage Pricing Tiers state
+  const [usageTiers, setUsageTiers] = useState<UsagePricingTier[]>([]);
+  const [usageTiersLoading, setUsageTiersLoading] = useState(false);
+  const [editingTier, setEditingTier] = useState<UsagePricingTier | null>(null);
+  const [showCreateTier, setShowCreateTier] = useState(false);
+  const [tierFormData, setTierFormData] = useState({
+    name: '',
+    unit: '',
+    pricePerUnit: 0,
+    currency: 'USD',
+    tierType: 'standard',
+    minQuantity: 0,
+    maxQuantity: null as number | null,
+    isActive: true,
+  });
+  const [savingTier, setSavingTier] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -124,9 +170,108 @@ export const InvoiceCenterView: React.FC = () => {
     }
   }, [dateFilter]);
 
+  const fetchUsageTiers = useCallback(async () => {
+    setUsageTiersLoading(true);
+    try {
+      const result = await Api.getUsagePricingTiers();
+      setUsageTiers((result as any)?.tiers || []);
+    } catch (error) {
+      console.error('Failed to fetch usage pricing tiers:', error);
+      setUsageTiers([]);
+    } finally {
+      setUsageTiersLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    if (activeTab === 'usage') {
+      fetchUsageTiers();
+    }
+  }, [activeTab, fetchUsageTiers]);
+
+  const resetTierForm = () => {
+    setTierFormData({
+      name: '',
+      unit: '',
+      pricePerUnit: 0,
+      currency: 'USD',
+      tierType: 'standard',
+      minQuantity: 0,
+      maxQuantity: null,
+      isActive: true,
+    });
+  };
+
+  const openEditTier = (tier: UsagePricingTier) => {
+    setEditingTier(tier);
+    setTierFormData({
+      name: tier.name,
+      unit: tier.unit,
+      pricePerUnit: tier.pricePerUnit,
+      currency: tier.currency,
+      tierType: tier.tierType,
+      minQuantity: tier.minQuantity,
+      maxQuantity: tier.maxQuantity,
+      isActive: tier.isActive,
+    });
+    setShowCreateTier(false);
+  };
+
+  const openCreateTier = () => {
+    setEditingTier(null);
+    resetTierForm();
+    setShowCreateTier(true);
+  };
+
+  const handleSaveTier = async () => {
+    if (!tierFormData.name.trim() || !tierFormData.unit.trim()) {
+      toast.error('Name and unit are required');
+      return;
+    }
+    setSavingTier(true);
+    try {
+      if (editingTier) {
+        await Api.updateUsagePricingTier(editingTier.id, tierFormData);
+        toast.success('Pricing tier updated');
+      } else {
+        await Api.createUsagePricingTier(tierFormData);
+        toast.success('Pricing tier created');
+      }
+      setEditingTier(null);
+      setShowCreateTier(false);
+      resetTierForm();
+      fetchUsageTiers();
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to save pricing tier');
+    } finally {
+      setSavingTier(false);
+    }
+  };
+
+  const handleDeleteTier = async (id: string) => {
+    if (!confirm('Delete this pricing tier?')) return;
+    try {
+      await Api.deleteUsagePricingTier(id);
+      toast.success('Pricing tier deleted');
+      fetchUsageTiers();
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to delete pricing tier');
+    }
+  };
+
+  const handleToggleTierActive = async (tier: UsagePricingTier) => {
+    try {
+      await Api.updateUsagePricingTier(tier.id, { isActive: !tier.isActive });
+      toast.success(tier.isActive ? 'Tier deactivated' : 'Tier activated');
+      fetchUsageTiers();
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to toggle tier');
+    }
+  };
 
   const filteredInvoices = invoices.filter((invoice) => {
     const matchesSearch =
@@ -156,11 +301,62 @@ export const InvoiceCenterView: React.FC = () => {
 
   const handleDownloadPdf = async (invoiceId: string) => {
     try {
-      // Api.get only takes 1 argument now. If we need blob, we might need a custom route or update Api.get
-      const response = await Api.get(`/api/superadmin/invoices/${invoiceId}/pdf`);
-      // Download logic
-    } catch (error) {
+      const response = await fetch(`/api/superadmin/invoices/${invoiceId}/pdf`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${invoiceId}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Invoice downloaded');
+    } catch (error: any) {
+      toast.error('Failed to download invoice');
       console.error('Failed to download PDF:', error);
+    }
+  };
+
+  const handleCreateInvoice = async () => {
+    if (!newInvoice.organizationId?.trim() || !newInvoice.description?.trim() || newInvoice.amount <= 0) {
+      toast.error('Organization, description, and amount are required');
+      return;
+    }
+    setCreatingInvoice(true);
+    try {
+      const dueDate = newInvoice.dueDate
+        ? `${newInvoice.dueDate}T00:00:00.000Z`
+        : undefined;
+      await Api.post('/billing/invoices', {
+        organizationId: newInvoice.organizationId.trim(),
+        lineItems: [
+          {
+            description: newInvoice.description.trim(),
+            amount: Math.round(newInvoice.amount * 100),
+            quantity: 1,
+          },
+        ],
+        currency: newInvoice.currency,
+        dueDate,
+      });
+      toast.success('Invoice created');
+      setNewInvoice({
+        organizationId: '',
+        description: '',
+        amount: 0,
+        currency: 'USD',
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      });
+      setShowCreateInvoice(false);
+      fetchData();
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to create invoice');
+    } finally {
+      setCreatingInvoice(false);
     }
   };
 
@@ -300,7 +496,10 @@ export const InvoiceCenterView: React.FC = () => {
           <option value="1y">Last year</option>
           <option value="all">All time</option>
         </select>
-        <button className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2">
+        <button
+          onClick={() => setShowCreateInvoice(true)}
+          className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2"
+        >
           <Plus size={18} />
           Create Invoice
         </button>
@@ -338,7 +537,7 @@ export const InvoiceCenterView: React.FC = () => {
             {filteredInvoices.map((invoice) => (
               <tr
                 key={invoice.id}
-                className="hover:bg-slate-50 dark:hover:bg-slate-50 dark:hover:bg-navy-800/20"
+                className="hover:bg-slate-50 dark:hover:bg-navy-800/20"
               >
                 <td className="px-6 py-4">
                   <div className="font-medium text-slate-900 dark:text-white font-mono">
@@ -384,22 +583,22 @@ export const InvoiceCenterView: React.FC = () => {
                   <div className="flex items-center justify-end gap-1">
                     <button
                       onClick={() => setSelectedInvoice(invoice)}
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
                       title="View"
                     >
                       <Eye size={16} className="text-slate-400 dark:text-slate-500" />
                     </button>
                     <button
                       onClick={() => handleDownloadPdf(invoice.id)}
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
-                      title="Download PDF"
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+                      title="Download Invoice"
                     >
                       <Download size={16} className="text-slate-400 dark:text-slate-500" />
                     </button>
                     {(invoice.status === 'pending' || invoice.status === 'overdue') && (
                       <button
                         onClick={() => handleSendReminder(invoice.id)}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
                         title="Send Reminder"
                       >
                         <Send size={16} className="text-slate-400 dark:text-slate-500" />
@@ -425,6 +624,126 @@ export const InvoiceCenterView: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {showCreateInvoice && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                Create Invoice
+              </h2>
+              <button
+                onClick={() => setShowCreateInvoice(false)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg"
+              >
+                <X size={20} className="text-slate-500" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Organization ID
+                </label>
+                <input
+                  type="text"
+                  value={newInvoice.organizationId}
+                  onChange={(e) =>
+                    setNewInvoice((prev) => ({ ...prev, organizationId: e.target.value }))
+                  }
+                  placeholder="UUID"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Description
+                </label>
+                <input
+                  type="text"
+                  value={newInvoice.description}
+                  onChange={(e) =>
+                    setNewInvoice((prev) => ({ ...prev, description: e.target.value }))
+                  }
+                  placeholder="Invoice line description"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Amount
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={newInvoice.amount || ''}
+                  onChange={(e) =>
+                    setNewInvoice((prev) => ({
+                      ...prev,
+                      amount: parseFloat(e.target.value) || 0,
+                    }))
+                  }
+                  placeholder="0.00"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Currency
+                </label>
+                <select
+                  value={newInvoice.currency}
+                  onChange={(e) =>
+                    setNewInvoice((prev) => ({ ...prev, currency: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                >
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="PLN">PLN</option>
+                  <option value="GBP">GBP</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Due Date
+                </label>
+                <input
+                  type="date"
+                  value={newInvoice.dueDate}
+                  onChange={(e) =>
+                    setNewInvoice((prev) => ({ ...prev, dueDate: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setShowCreateInvoice(false)}
+                className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateInvoice}
+                disabled={creatingInvoice}
+                className="flex-1 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center justify-center gap-2"
+              >
+                {creatingInvoice ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <>
+                    <Plus size={18} />
+                    Create
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -434,76 +753,222 @@ export const InvoiceCenterView: React.FC = () => {
 
   const renderTemplatesTab = () => <InvoiceTemplateEditor />;
 
+  const renderTierModal = () => {
+    if (!editingTier && !showCreateTier) return null;
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl max-w-md w-full p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              {editingTier ? 'Edit Pricing Tier' : 'Create Pricing Tier'}
+            </h2>
+            <button
+              onClick={() => { setEditingTier(null); setShowCreateTier(false); resetTierForm(); }}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg"
+            >
+              <X size={20} className="text-slate-500" />
+            </button>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
+              <input
+                type="text"
+                value={tierFormData.name}
+                onChange={(e) => setTierFormData((p) => ({ ...p, name: e.target.value }))}
+                placeholder="e.g. Token Overage Rate"
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Unit</label>
+              <input
+                type="text"
+                value={tierFormData.unit}
+                onChange={(e) => setTierFormData((p) => ({ ...p, unit: e.target.value }))}
+                placeholder="e.g. per 1,000 tokens"
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Price per Unit</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.001"
+                  value={tierFormData.pricePerUnit || ''}
+                  onChange={(e) => setTierFormData((p) => ({ ...p, pricePerUnit: parseFloat(e.target.value) || 0 }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Currency</label>
+                <select
+                  value={tierFormData.currency}
+                  onChange={(e) => setTierFormData((p) => ({ ...p, currency: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                >
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="PLN">PLN</option>
+                  <option value="GBP">GBP</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tier Type</label>
+              <select
+                value={tierFormData.tierType}
+                onChange={(e) => setTierFormData((p) => ({ ...p, tierType: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+              >
+                <option value="standard">Standard</option>
+                <option value="overage">Overage</option>
+                <option value="volume">Volume</option>
+              </select>
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={tierFormData.isActive}
+                onChange={(e) => setTierFormData((p) => ({ ...p, isActive: e.target.checked }))}
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700"
+              />
+              <span className="text-sm text-slate-700 dark:text-slate-300">Active</span>
+            </label>
+          </div>
+          <div className="flex gap-3 mt-6">
+            <button
+              type="button"
+              onClick={() => { setEditingTier(null); setShowCreateTier(false); resetTierForm(); }}
+              className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveTier}
+              disabled={savingTier}
+              className="flex-1 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center justify-center gap-2"
+            >
+              {savingTier ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <>
+                  <Save size={18} />
+                  {editingTier ? 'Update' : 'Create'}
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderUsageTab = () => (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-6">
-          Usage-Based Billing
-        </h3>
-
-        <div className="bg-blue-50 dark:bg-blue-500/10 rounded-lg p-4 mb-6">
-          <p className="text-sm text-blue-800 dark:text-blue-400">
-            Usage-based billing reconciliation runs automatically at the end of each billing period.
-            Overages are calculated based on token consumption above the plan limits.
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            Usage-Based Pricing Tiers
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Configure per-unit rates for overage billing, storage, tokens, and more.
           </p>
         </div>
-
-        <div className="space-y-4">
-          <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-navy-700">
-            <div>
-              <div className="font-medium text-slate-900 dark:text-white">Token Overage Rate</div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">
-                Cost per 1,000 tokens above plan limit
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-semibold text-slate-900 dark:text-white">$0.002</span>
-              <button className="text-violet-600 hover:text-violet-700 text-sm">Edit</button>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-navy-700">
-            <div>
-              <div className="font-medium text-slate-900 dark:text-white">Storage Overage Rate</div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">
-                Cost per GB above plan limit
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-semibold text-slate-900 dark:text-white">$0.10</span>
-              <button className="text-violet-600 hover:text-violet-700 text-sm">Edit</button>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between py-3">
-            <div>
-              <div className="font-medium text-slate-900 dark:text-white">User Overage Rate</div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">
-                Cost per additional user above plan limit
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-semibold text-slate-900 dark:text-white">$5.00</span>
-              <button className="text-violet-600 hover:text-violet-700 text-sm">Edit</button>
-            </div>
-          </div>
-        </div>
+        <button
+          onClick={openCreateTier}
+          className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2"
+        >
+          <Plus size={18} />
+          Add Tier
+        </button>
       </div>
 
-      <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Usage Alerts</h3>
-
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            defaultChecked
-            className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600"
-          />
-          <span className="text-sm text-slate-700 dark:text-slate-300">
-            Send email alerts when organizations reach 80% of their usage limits
-          </span>
-        </label>
+      {/* Tiers Table */}
+      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        {usageTiersLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 size={28} className="animate-spin text-violet-500" />
+          </div>
+        ) : usageTiers.length === 0 ? (
+          <div className="px-6 py-12 text-center">
+            <DollarSign size={40} className="mx-auto mb-3 text-slate-300" />
+            <p className="text-slate-500 dark:text-slate-400 font-medium">No pricing tiers configured</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+              Add a tier to start configuring usage-based billing rates.
+            </p>
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-navy-700">
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Name</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Unit</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Price</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Type</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Status</th>
+                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+              {usageTiers.map((tier) => (
+                <tr key={tier.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
+                  <td className="px-6 py-4">
+                    <div className="font-medium text-slate-900 dark:text-white">{tier.name}</div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{tier.unit}</td>
+                  <td className="px-6 py-4">
+                    <span className="text-lg font-semibold text-slate-900 dark:text-white">
+                      {formatCurrency(tier.pricePerUnit, tier.currency)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300">
+                      {tier.tierType}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <button
+                      onClick={() => handleToggleTierActive(tier)}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors ${
+                        tier.isActive
+                          ? 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20'
+                          : 'bg-slate-500/10 text-slate-500 hover:bg-slate-500/20'
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${tier.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                      {tier.isActive ? 'Active' : 'Inactive'}
+                    </button>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => openEditTier(tier)}
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+                        title="Edit"
+                      >
+                        <Pencil size={16} className="text-violet-500" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteTier(tier.id)}
+                        className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg"
+                        title="Delete"
+                      >
+                        <Trash2 size={16} className="text-red-400" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
+
+      {renderTierModal()}
     </div>
   );
 
@@ -524,15 +989,23 @@ export const InvoiceCenterView: React.FC = () => {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg">
+              <button
+                onClick={() => handleDownloadPdf(selectedInvoice.id)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+                title="Print Invoice"
+              >
                 <Printer size={20} className="text-slate-400 dark:text-slate-500" />
               </button>
-              <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg">
+              <button
+                onClick={() => handleDownloadPdf(selectedInvoice.id)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+                title="Download Invoice"
+              >
                 <Download size={20} className="text-slate-400 dark:text-slate-500" />
               </button>
               <button
                 onClick={() => setSelectedInvoice(null)}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
               >
                 <XCircle size={20} className="text-slate-400 dark:text-slate-500" />
               </button>
@@ -614,7 +1087,7 @@ export const InvoiceCenterView: React.FC = () => {
             <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3">
               <button
                 onClick={() => handleSendReminder(selectedInvoice.id)}
-                className="px-4 py-2 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-50 dark:hover:bg-navy-800/20 flex items-center gap-2"
+                className="px-4 py-2 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/20 flex items-center gap-2"
               >
                 <Send size={16} />
                 Send Reminder
@@ -655,7 +1128,7 @@ export const InvoiceCenterView: React.FC = () => {
           />
           <button
             onClick={fetchData}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
           >
             <RefreshCw
               size={18}
@@ -668,23 +1141,28 @@ export const InvoiceCenterView: React.FC = () => {
       {/* Tabs */}
       <div className="flex items-center gap-1 bg-slate-100 dark:bg-navy-900 p-1 rounded-lg w-fit overflow-x-auto">
         {[
-          { id: 'invoices', label: 'Invoices', icon: <Receipt size={16} /> },
-          { id: 'credits', label: 'Credit Notes', icon: <CreditCard size={16} /> },
-          { id: 'tax', label: 'Tax Settings', icon: <FileText size={16} /> },
-          { id: 'usage', label: 'Usage Billing', icon: <TrendingUp size={16} /> },
-          { id: 'templates', label: 'Templates', icon: <FileText size={16} /> },
+          { id: 'invoices', label: 'Invoices', icon: <Receipt size={16} />, disabled: false },
+          { id: 'credits', label: 'Credit Notes', icon: <CreditCard size={16} />, disabled: false },
+          { id: 'tax', label: 'Tax Settings', icon: <FileText size={16} />, disabled: false },
+          { id: 'usage', label: 'Usage Billing', icon: <TrendingUp size={16} />, disabled: false },
+          { id: 'templates', label: 'Templates', icon: <FileText size={16} />, disabled: false },
         ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as TabType)}
+            onClick={() => !tab.disabled && setActiveTab(tab.id as TabType)}
+            disabled={tab.disabled}
+            title={tab.disabled ? 'Coming soon' : undefined}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeTab === tab.id
-                ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              tab.disabled
+                ? 'text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-50'
+                : activeTab === tab.id
+                  ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             {tab.icon}
             {tab.label}
+            {tab.disabled && <span className="text-[10px] bg-slate-200 dark:bg-navy-700 px-1.5 py-0.5 rounded-full">Soon</span>}
           </button>
         ))}
       </div>

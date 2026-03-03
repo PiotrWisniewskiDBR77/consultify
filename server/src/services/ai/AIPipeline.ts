@@ -241,6 +241,52 @@ export class AIPipeline {
         model: modelConfig?.model || null,
       };
 
+      // 6b. Enforce AI Budgets + Model Permissions (SuperAdmin)
+      const budgetsEnabled =
+        String(process.env.AI_BUDGETS_ENABLED || '').trim().toLowerCase() !== 'false';
+      const orgId = request.organizationId;
+      const userId = request.userId;
+      const normalizeModelId = (m: string) => String(m || '').split('/').pop() || String(m || '');
+
+      let aiBudgetService: any = null;
+      const getAiBudgetService = async () => {
+        if (aiBudgetService) return aiBudgetService;
+        const mod = (await import('../aiBudgetService.js')) as any;
+        aiBudgetService = mod.default || mod.aiBudgetService || mod;
+        return aiBudgetService;
+      };
+
+      const enforceBudgetsAndPerms = async (provider: string, modelId: string) => {
+        if (!budgetsEnabled || !orgId || !userId) return { allowed: true, warnings: [] as string[] };
+        const svc = await getAiBudgetService();
+
+        // Explicit deny rules (we treat permissions as "deny list" by default)
+        try {
+          const perms = await svc.getModelPermissions(String(orgId), 'organization', String(orgId));
+          const normalized = normalizeModelId(modelId);
+          const hit = (perms || []).find((p: any) => p?.modelId === modelId || p?.modelId === normalized);
+          if (hit && hit.isAllowed === false) {
+            throw new Error(`Model not allowed by policy: ${modelId}`);
+          }
+          if (hit?.maxTokensPerRequest && Number(hit.maxTokensPerRequest) > 0) {
+            modelConfig.maxTokens = Math.min(modelConfig.maxTokens, Number(hit.maxTokensPerRequest));
+          }
+        } catch (permErr: any) {
+          // If permissions table is not available, don't break AI (best-effort).
+          // But if we explicitly detected a deny, rethrow.
+          const msg = String(permErr?.message || '');
+          if (msg.includes('not allowed by policy')) throw permErr;
+          logger.warn('[AIPipeline] Model permissions enforcement skipped:', msg.slice(0, 200));
+        }
+
+        // Hard-limit: block if already exceeded (projected usage + 0 still exceeds)
+        const check = await svc.checkBudget(String(orgId), String(userId), { tokens: 0, cost: 0 });
+        if (!check.allowed) {
+          throw new Error(`AI budget exceeded: ${(check.warnings || []).join(', ') || 'blocked'}`);
+        }
+        return check;
+      };
+
       // Check if streaming is requested
       if ((request as any).stream) {
         const systemPromptStr = prompt.find((m) => m.role === 'system')?.content || '';
@@ -284,6 +330,8 @@ export class AIPipeline {
               continue;
             }
 
+            await enforceBudgetsAndPerms(providerId, modelId);
+
             logger.info(`[AIPipeline] Starting stream with ${providerId}/${modelId}`);
             streamResponse = await llmService.callStream({
               type: 'chat',
@@ -319,6 +367,30 @@ export class AIPipeline {
           throw lastError || new Error('All streaming providers failed');
         }
 
+        // Best-effort budget usage record for streaming (requestCount only).
+        try {
+          if (budgetsEnabled && orgId && userId) {
+            const svc = await getAiBudgetService();
+            const streamIt = (streamResponse as { stream?: AsyncIterable<string> }).stream;
+            if (streamIt) {
+              const usedModelNorm = normalizeModelId(String(usedModel || ''));
+              const wrapped = (async function* () {
+                try {
+                  for await (const chunk of streamIt) yield chunk;
+                } finally {
+                  await svc.recordUsage(String(orgId), String(userId), {
+                    model: usedModelNorm,
+                    requestCount: 1,
+                  });
+                }
+              })();
+              (streamResponse as any).stream = wrapped;
+            }
+          }
+        } catch (e: any) {
+          logger.warn('[AIPipeline] Streaming budget record failed:', String(e?.message || e || '').slice(0, 200));
+        }
+
         return {
           success: true,
           content: '',
@@ -335,10 +407,28 @@ export class AIPipeline {
       }
 
       // 7. Execute with provider (non-streaming)
+      await enforceBudgetsAndPerms(modelConfig.provider, modelConfig.model);
       const response = await this.executeWithProvider(prompt, modelConfig, request.options);
 
       // 8. Post-process response
       const processedResponse = await this.postProcess(response, capability);
+
+      // 8b. Record budget usage (best-effort)
+      try {
+        if (budgetsEnabled && orgId && userId) {
+          const svc = await getAiBudgetService();
+          const usage = (processedResponse as any)?.usage;
+          const usedModelNorm = normalizeModelId(String(modelConfig.model || ''));
+          await svc.recordUsage(String(orgId), String(userId), {
+            model: usedModelNorm,
+            inputTokens: Number(usage?.promptTokens || 0) || 0,
+            outputTokens: Number(usage?.completionTokens || 0) || 0,
+            requestCount: 1,
+          });
+        }
+      } catch (e: any) {
+        logger.warn('[AIPipeline] Budget record failed:', String(e?.message || e || '').slice(0, 200));
+      }
 
       // 9. Log and track
       await this.logRequest(request, processedResponse, Date.now() - startTime, traceId);
@@ -1607,7 +1697,7 @@ export class AIPipeline {
 
     // C8.2: Documentation/help awareness — AI knows the platform and can guide users
     instructions.push(
-      '14. POMOC I DOKUMENTACJA: Znasz strukturę platformy Consultinity i jej moduły:\n' +
+      '14. POMOC I DOKUMENTACJA: Znasz strukturę platformy Consultify i jej moduły:\n' +
         '   - Assessment (DRD, SIRI, ADMA, CMMI, Lean) — ocena dojrzałości organizacji\n' +
         '   - Initiatives — zarządzanie inicjatywami transformacyjnymi\n' +
         '   - Execution — realizacja zadań, KPI, timeline\n' +

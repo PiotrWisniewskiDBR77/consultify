@@ -112,16 +112,20 @@ export function InitiativesGenerationWizardModal(props: {
     }
     let cancelled = false;
     setLoadingAssessments(true);
-    Api.get('/assessments/my-assessments')
+    Api.listAssessments({ limit: 200, offset: 0 })
       .then((resp: any) => {
         if (cancelled) return;
-        const list = Array.isArray(resp?.assessments) ? resp.assessments : [];
+        const list = Array.isArray(resp?.items)
+          ? resp.items
+          : Array.isArray(resp?.assessments)
+            ? resp.assessments
+            : [];
         setAssessments(
           list.map((a: any) => ({
-            id: a.id,
-            name: a.name,
-            type: a.type,
-            status: a.status,
+            id: String(a?.id || ''),
+            name: String(a?.name || a?.title || ''),
+            type: a?.assessmentType || a?.assessment_type || a?.type,
+            status: a?.status || a?.backendStatus,
           }))
         );
       })

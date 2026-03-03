@@ -2,7 +2,7 @@ import type { NotebookPage, NotebookVisibility } from '@/types/myWork';
 
 export type { NotebookPage, NotebookVisibility };
 
-const STORAGE_PREFIX = 'consultinity-notebook-pages-v1:';
+const STORAGE_PREFIX = 'consultify-notebook-pages-v1:';
 
 const keyForUser = (userId: string) => `${STORAGE_PREFIX}${userId}`;
 

@@ -68,7 +68,7 @@ const DOCUMENT_INFO: Record<
 > = {
   TOS: {
     title: 'Terms of Service',
-    description: 'Main agreement governing your use of Consultinity',
+    description: 'Main agreement governing your use of Consultify',
     icon: Scale,
     color: 'from-purple-500 to-indigo-600',
   },

@@ -104,32 +104,8 @@ export const DocumentsRAGTab: React.FC = () => {
           category: editDocCategory || undefined,
           tags: tagsArray.length > 0 ? tagsArray : undefined,
         }),
-        fetch(`/api/ai-governance/documents/${docId}/ai-visibility`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: JSON.stringify({ visibility: editDocVisibility }),
-        }).then(async (res) => {
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(data?.error || 'Failed to update AI visibility');
-          }
-        }),
-        fetch(`/api/ai-governance/documents/${docId}/sensitivity`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: JSON.stringify({ sensitivity: editDocSensitivity }),
-        }).then(async (res) => {
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(data?.error || 'Failed to update sensitivity');
-          }
-        }),
+        Api.updateAIGovernanceDocumentVisibility(docId, editDocVisibility),
+        Api.updateAIGovernanceDocumentSensitivity(docId, editDocSensitivity),
       ]);
       toast.success('Document updated');
       setEditingDoc(null);
@@ -161,7 +137,7 @@ export const DocumentsRAGTab: React.FC = () => {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
+    <div className="p-6 space-y-6 max-w-5xl mx-auto text-slate-900 dark:text-slate-100">
       {/* Header */}
       <div>
         <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -192,9 +168,9 @@ export const DocumentsRAGTab: React.FC = () => {
                 onChange={(e) => setUploadFile(e.target.files ? e.target.files[0] : null)}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               />
-              <div className="bg-slate-50 dark:bg-navy-900 border border-dashed border-slate-300 dark:border-navy-600 rounded-lg p-4 text-center transition-colors hover:bg-slate-100 dark:hover:bg-navy-800 hover:border-indigo-500">
+              <div className="bg-slate-50 dark:bg-navy-900/50 border border-dashed border-slate-300 dark:border-navy-700 rounded-lg p-4 text-center transition-colors hover:bg-slate-100 dark:hover:bg-navy-900 hover:border-indigo-500">
                 {uploadFile ? (
-                  <span className="text-indigo-600 dark:text-indigo-400 font-medium flex justify-center items-center gap-2">
+                  <span className="text-indigo-600 dark:text-indigo-300 font-medium flex justify-center items-center gap-2">
                     <FileText size={16} /> {uploadFile.name}
                   </span>
                 ) : (
@@ -241,7 +217,7 @@ export const DocumentsRAGTab: React.FC = () => {
                 value={uploadTags}
                 onChange={(e) => setUploadTags(e.target.value)}
                 placeholder="tag1, tag2, tag3"
-                className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 outline-none"
               />
             </div>
           </div>
@@ -260,13 +236,13 @@ export const DocumentsRAGTab: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search documents..."
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400"
+            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
           />
         </div>
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+          className="px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
         >
           <option value="">All Categories</option>
           {DOCUMENT_CATEGORIES.map((cat) => (
@@ -284,7 +260,7 @@ export const DocumentsRAGTab: React.FC = () => {
         </h3>
 
         {filteredDocuments.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-dashed border-slate-200 dark:border-navy-700">
+          <div className="text-center py-12 text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-dashed border-slate-200 dark:border-navy-700">
             {searchTerm || categoryFilter
               ? 'No matching documents found.'
               : 'No documents indexed yet.'}
@@ -294,22 +270,20 @@ export const DocumentsRAGTab: React.FC = () => {
             {filteredDocuments.map((doc) => (
               <div
                 key={doc.id}
-                className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:shadow-md transition-shadow"
+                className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4 transition-colors hover:bg-slate-50 dark:hover:bg-navy-700/40"
               >
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3 overflow-hidden flex-1">
-                    <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg shrink-0">
+                    <div className="p-2 bg-indigo-50 rounded-lg shrink-0">
                       <FileText className="text-indigo-500" size={20} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h4 className="text-slate-900 dark:text-white font-medium truncate">
-                        {doc.filename}
-                      </h4>
+                      <h4 className="text-slate-900 dark:text-white font-medium truncate">{doc.filename}</h4>
                       <p className="text-slate-500 dark:text-slate-400 text-xs">
                         {new Date(doc.created_at).toLocaleDateString()}
                       </p>
                       {doc.category && (
-                        <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded">
+                        <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-purple-100 text-purple-700 dark:bg-purple-500/10 dark:text-purple-300 rounded">
                           {doc.category}
                         </span>
                       )}
@@ -318,7 +292,7 @@ export const DocumentsRAGTab: React.FC = () => {
                           {doc.tags.map((tag, idx) => (
                             <span
                               key={idx}
-                              className="text-xs px-1.5 py-0.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded flex items-center gap-1"
+                              className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300 rounded flex items-center gap-1"
                             >
                               <Tag size={10} /> {tag}
                             </span>
@@ -331,8 +305,8 @@ export const DocumentsRAGTab: React.FC = () => {
                     <span
                       className={`text-xs px-2 py-0.5 rounded uppercase font-bold tracking-wide ${
                         doc.status === 'indexed'
-                          ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                          : 'bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-500'
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                          : 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
                       }`}
                     >
                       {doc.status}
@@ -376,7 +350,7 @@ export const DocumentsRAGTab: React.FC = () => {
                   setEditDocCategory('');
                   setEditDocTags('');
                 }}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <X size={20} />
               </button>
@@ -408,7 +382,7 @@ export const DocumentsRAGTab: React.FC = () => {
                   value={editDocTags}
                   onChange={(e) => setEditDocTags(e.target.value)}
                   placeholder="tag1, tag2, tag3"
-                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 outline-none"
                 />
               </div>
 
@@ -456,7 +430,7 @@ export const DocumentsRAGTab: React.FC = () => {
                     setEditDocVisibility('allowed');
                     setEditDocSensitivity('internal');
                   }}
-                  className="flex-1 py-2 bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium hover:bg-slate-200 dark:hover:bg-navy-600"
+                  className="flex-1 py-2 bg-slate-100 dark:bg-navy-900 text-slate-700 dark:text-slate-200 rounded-lg font-medium hover:bg-slate-200 dark:hover:bg-navy-700/60"
                 >
                   Cancel
                 </button>

@@ -137,7 +137,7 @@ export const ContactView: React.FC = () => {
             </h1>
 
             <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-              Have questions about Consultinity? Want to schedule a demo? We'd love to hear from
+              Have questions about Consultify? Want to schedule a demo? We'd love to hear from
               you.
             </p>
           </motion.div>

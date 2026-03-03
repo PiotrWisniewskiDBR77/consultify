@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
@@ -219,7 +220,18 @@ const mapInitiativeApiStatus = (status: string): InitiativeStatusType => {
 };
 
 const isAssessmentModuleInitiative = (row: any): boolean => {
-  return !!(row?.id && (row?.source_type || row?.sourceType || row?.source_id || row?.sourceId));
+  if (!row?.id) return false;
+  const st = String(row?.source_type || row?.sourceType || '').toLowerCase();
+  const sid = String(row?.source_id || row?.sourceId || '').trim();
+  if (!sid) return false;
+  // Include assessment-derived initiatives only (avoid mixing manual / other sources).
+  return (
+    st === 'assessment' ||
+    st === 'assessment_report' ||
+    st === 'assessment_drd' ||
+    st === 'assessment_siri' ||
+    st === 'assessment_adma'
+  );
 };
 
 // Map API type to AssessmentFramework
@@ -237,6 +249,7 @@ interface AssessmentHubProps {
 }
 
 export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list' }) => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { isEnabled } = useFeatureFlags();
@@ -340,14 +353,13 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
           try {
             // Fetch assessments (required)
-            const assessmentResponse = await Api.get('/assessments/my-assessments');
-            const assessmentData = assessmentResponse?.assessments || [];
+            const assessmentResponse = await Api.listAssessments({ limit: 200, offset: 0 });
+            const assessmentData = (assessmentResponse as any)?.items || [];
             setAssessments(Array.isArray(assessmentData) ? assessmentData : []);
 
             // Fetch ALL reports linked to user's assessments (all statuses).
             // Status filtering is done client-side via the status dropdown.
-            const reportsResponse = await Api.get('/assessment-reports').catch(() => null);
-            const reportData = reportsResponse?.reports || [];
+            const reportData = await Api.getAssessmentReports(undefined).catch(() => []);
             setReports(Array.isArray(reportData) ? reportData : []);
 
             // Fetch initiatives derived from assessments
@@ -377,7 +389,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
         if (lastErr) throw lastErr;
       } catch (err: any) {
-        const message = err?.message || 'Failed to load assessments';
+        const message = err?.message || t('assessment.hub.errors.load', 'Failed to load assessments');
         setError(message);
         console.error('[AssessmentHub] Load error:', err);
         toast.error(message);
@@ -395,23 +407,23 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     setError(null);
     try {
       const [assessmentsRes, reportsRes, initiativesRes, importsRes] = await Promise.all([
-        Api.get('/assessments/my-assessments').catch(() => null),
-        Api.get('/assessment-reports').catch(() => null),
+        Api.listAssessments({ limit: 200, offset: 0 }).catch(() => null),
+        Api.getAssessmentReports(undefined).catch(() => []),
         Api.get('/initiatives?source=assessment').catch(() => []),
         Api.listReportImports().catch(() => null),
       ]);
 
-      setAssessments(assessmentsRes?.assessments || []);
-      setReports(reportsRes?.reports || []);
+      setAssessments((assessmentsRes as any)?.items || []);
+      setReports(Array.isArray(reportsRes) ? (reportsRes as any) : []);
       const rawInits = Array.isArray(initiativesRes) ? initiativesRes : [];
       setInitiatives(rawInits.filter(isAssessmentModuleInitiative));
       setImportedReports(importsRes?.data || []);
     } catch (err: any) {
-      toast.error('Failed to refresh');
+      toast.error(t('common.refreshFailed', 'Failed to refresh'));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // Get status dropdown context based on active tab
   // Each tab uses its own status family

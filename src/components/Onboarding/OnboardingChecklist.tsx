@@ -42,7 +42,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     targetView: AppView.AI_CHAT,
     checkFn: () => {
       // Check if user has sent at least one message
-      const hasChats = localStorage.getItem('consultinity_first_chat_done') === 'true';
+      const hasChats = localStorage.getItem('consultify_first_chat_done') === 'true';
       return hasChats;
     },
     priority: 2,
@@ -75,7 +75,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     descriptionKey: 'onboarding.checklist.roadmap.description',
     targetView: AppView.PORTFOLIO_ROADMAP,
     checkFn: () => {
-      return localStorage.getItem('consultinity_roadmap_visited') === 'true';
+      return localStorage.getItem('consultify_roadmap_visited') === 'true';
     },
     priority: 5,
   },
@@ -89,7 +89,7 @@ const ADMIN_ONBOARDING_STEPS: OnboardingStep[] = [
     descriptionKey: 'onboarding.checklist.inviteTeam.description',
     targetView: AppView.ADMIN_TEAMS,
     checkFn: () => {
-      return localStorage.getItem('consultinity_team_invited') === 'true';
+      return localStorage.getItem('consultify_team_invited') === 'true';
     },
     priority: 2,
   },
@@ -99,7 +99,7 @@ const ADMIN_ONBOARDING_STEPS: OnboardingStep[] = [
     descriptionKey: 'onboarding.checklist.billing.description',
     targetView: AppView.SETTINGS_BILLING,
     checkFn: () => {
-      return localStorage.getItem('consultinity_billing_setup') === 'true';
+      return localStorage.getItem('consultify_billing_setup') === 'true';
     },
     priority: 3,
   },
@@ -140,7 +140,7 @@ export const OnboardingChecklist: React.FC = () => {
 
   // Check if dismissed
   useEffect(() => {
-    const dismissed = localStorage.getItem('consultinity_onboarding_dismissed') === 'true';
+    const dismissed = localStorage.getItem('consultify_onboarding_dismissed') === 'true';
     setIsDismissed(dismissed);
   }, []);
 
@@ -163,7 +163,7 @@ export const OnboardingChecklist: React.FC = () => {
   };
 
   const handleDismiss = () => {
-    localStorage.setItem('consultinity_onboarding_dismissed', 'true');
+    localStorage.setItem('consultify_onboarding_dismissed', 'true');
     setIsDismissed(true);
   };
 

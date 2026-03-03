@@ -20,7 +20,7 @@ import type { CloudProviderId } from '../../hooks/useCloudIntegrations';
 
 type RecentAttachment = { name: string; addedAt: number };
 
-const RECENT_KEY = 'consultinity-recent-attachments';
+const RECENT_KEY = 'consultify-recent-attachments';
 
 function readRecent(): RecentAttachment[] {
   try {

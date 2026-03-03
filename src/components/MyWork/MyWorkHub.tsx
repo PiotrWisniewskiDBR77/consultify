@@ -54,7 +54,6 @@ import {
   type WorkspacePanelKey,
   WorkspacePanelStrip,
 } from '@/components/shared/WorkspacePanelStrip';
-import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useUserCan } from '@/hooks/useUserCan';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -243,7 +242,7 @@ const TOPBAR_PILL_INACTIVE =
 
 // Tab styles for dynamic tabs
 const TAB_BASE = `
-  flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium
+  flex items-center gap-2 px-2.5 py-1 rounded-lg text-[11px] font-medium
   border border-l-2 transition-all duration-200 cursor-pointer
 `;
 
@@ -263,10 +262,11 @@ const TAB_ACTIVE = `
 
 // Type colors for dynamic tabs
 const TYPE_COLORS = {
-  task: 'border-l-blue-500',
-  idea: 'border-l-amber-500',
-  decision: 'border-l-purple-500',
-  notification: 'border-l-amber-500',
+  // v3 identity map (docs/ui-standards/00-foundation/artifact-identity-map.md)
+  task: 'border-l-emerald-500',
+  idea: 'border-l-violet-500',
+  decision: 'border-l-amber-500',
+  notification: 'border-l-red-500',
 };
 
 const STATUS_COLORS: Record<ItemStatus, string> = {
@@ -302,8 +302,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     isChatCollapsed,
     toggleChatCollapse,
   } = useAppStore();
-  const { isEnabled } = useFeatureFlagsContext();
-  const notebookEnabled = isEnabled('myWorkNotebookV2');
 
   const lazyFallback = (
     <div className="flex h-[60vh] items-center justify-center">
@@ -326,12 +324,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // Filter states
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
   const [tasksViewMode, setTasksViewMode] = useState<TasksViewMode>('table');
-  const [tasksViewMenuOpen, setTasksViewMenuOpen] = useState(false);
   const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('mindmap');
   const [ideasMenuOpen, setIdeasMenuOpen] = useState(false);
   const [ideaToolsOpen, setIdeaToolsOpen] = useState(false);
   const [decisionsViewMode, setDecisionsViewMode] = useState<DecisionsViewMode>('table');
-  const [decisionsViewMenuOpen, setDecisionsViewMenuOpen] = useState(false);
   const [inboxViewMode, setInboxViewMode] = useState<InboxViewMode>('flat');
   const [inboxStatusTab, setInboxStatusTab] = useState<'open' | 'done' | 'saved' | 'all'>('open');
   const [inboxSection, setInboxSection] = useState<'today' | 'this_week' | 'all'>('all');
@@ -348,6 +344,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [notebookLinkedIdeasOpen, setNotebookLinkedIdeasOpen] = useState(false);
   const [notebookTopicsOpen, setNotebookTopicsOpen] = useState(false);
   const [notebookChatOpen, setNotebookChatOpen] = useState(false);
+  const [notebookOpenPageId, setNotebookOpenPageId] = useState<string | null>(null);
   const notebookActivePanel: WorkspacePanelKey = notebookChatOpen
     ? 'tools'
     : notebookLinkedIdeasOpen
@@ -530,10 +527,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         clearMyWorkIntent();
         return;
       }
-      if (targetTab === 'notebook' && !notebookEnabled) {
-        clearMyWorkIntent();
-        return;
-      }
       setActiveTab(targetTab);
     }
     setActiveDocumentId(null);
@@ -608,6 +601,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         navigate(`/initiatives?open=${encodeURIComponent(id)}&mode=doc`);
         return;
       }
+      if (type === 'report') {
+        navigate(`/reports/builder/${encodeURIComponent(id)}`);
+        return;
+      }
+      if (type === 'presentation') {
+        navigate(`/presentations/builder/${encodeURIComponent(id)}`);
+        return;
+      }
       const tabMap: Record<string, ModuleTab> = {
         task: 'tasks',
         decision: 'decisions',
@@ -616,6 +617,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         notebook: 'notebook',
       };
       if (tabMap[type]) setActiveTab(tabMap[type]);
+      if (type === 'notebook') {
+        setNotebookOpenPageId(String(id));
+        return;
+      }
       if (type !== 'notebook') {
         handleOpenDocument({
           id,
@@ -719,18 +724,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         color: 'bg-purple-500',
         requiresExecutiveAccess: false,
       },
-      ...(notebookEnabled
-        ? [
-            {
-              id: 'notebook' as ModuleTab,
-              label: isPolish ? 'Notatnik' : 'Notebook',
-              icon: <FileText size={16} />,
-              count: tabCounts.notebook,
-              color: 'bg-slate-500',
-              requiresExecutiveAccess: false,
-            },
-          ]
-        : []),
+      {
+        id: 'notebook' as ModuleTab,
+        label: isPolish ? 'Notatnik' : 'Notebook',
+        icon: <FileText size={16} />,
+        count: tabCounts.notebook,
+        color: 'bg-slate-500',
+        requiresExecutiveAccess: false,
+      },
       {
         id: 'ideas' as ModuleTab,
         label: isPolish ? 'Pomysły' : 'Ideas',
@@ -743,7 +744,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
     // A1.2: Filter out Executive tab for users without admin/manager role
     return allTabs.filter((tab) => !tab.requiresExecutiveAccess || canViewExecutive);
-  }, [isPolish, tabCounts, canViewExecutive, notebookEnabled]);
+  }, [isPolish, tabCounts, canViewExecutive]);
 
   // Task filters configuration
   const taskFilters = useMemo(
@@ -1164,7 +1165,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           label: isPolish ? 'Nowe zadanie' : 'New Task',
           icon: <Plus size={16} />,
           onClick: handleCreateTask,
-          color: 'from-blue-500 to-blue-600',
+          // v3 identity map: Task = emerald
+          color: 'from-emerald-500 to-emerald-600',
           variant: 'primary' as const,
         };
       case 'ideas':
@@ -1172,7 +1174,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           label: isPolish ? 'Nowy pomysł' : 'New Idea',
           icon: <Plus size={16} />,
           onClick: handleCreateIdea,
-          color: 'from-amber-500 to-amber-600',
+          // v3 identity map: Idea = violet
+          color: 'from-violet-500 to-violet-600',
           variant: 'primary' as const,
         };
       case 'decisions':
@@ -1180,7 +1183,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           label: isPolish ? 'Nowa decyzja' : 'New Decision',
           icon: <Plus size={16} />,
           onClick: handleCreateDecision,
-          color: 'from-purple-500 to-purple-600',
+          // v3 identity map: Decision = amber
+          color: 'from-amber-500 to-amber-600',
           variant: 'primary' as const,
         };
       case 'notebook':
@@ -1188,7 +1192,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           label: isPolish ? 'Nowa notatka' : 'New note',
           icon: <Plus size={16} />,
           onClick: () => setNotebookCreateReqId((v) => v + 1),
-          color: 'from-slate-600 to-slate-700',
+          // v3 identity map: Notebook page = indigo
+          color: 'from-indigo-500 to-indigo-600',
           variant: 'primary' as const,
         };
       default:
@@ -1205,20 +1210,22 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   ]);
 
   // Get current filters based on active tab
-  const currentFilters = useMemo(() => {
+  const currentFilters = useMemo((): Array<{ id: string; label: string; count?: number }> => {
     if (activeDocumentId) return []; // Hide filters when viewing document
     switch (activeTab) {
       case 'tasks':
-        return taskFilters;
+        // KANON v3 (MyWork): filters live in Command Row (chips), not as extra dropdown in topbar.
+        return [];
       case 'decisions':
-        return decisionFilters;
+        // KANON v3 (MyWork): decision "All/My/Awaiting" lives in Command Row; topbar keeps only ONE select (priority).
+        return [];
       case 'executive':
       case 'focus':
       case 'inbox':
       default:
         return [];
     }
-  }, [activeTab, taskFilters, decisionFilters, activeDocumentId]);
+  }, [activeTab, activeDocumentId]);
 
   // Get current filter value
   const currentFilterValue = useMemo(() => {
@@ -1232,23 +1239,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     }
   }, [activeTab, taskFilter, decisionFilter]);
 
-  const tasksViewLabel = useMemo(() => {
-    const map: Record<TasksViewMode, { en: string; pl: string; icon: React.ElementType }> = {
-      table: { en: 'List', pl: 'Lista', icon: LayoutList },
-      kanban: { en: 'Kanban', pl: 'Kanban', icon: Kanban },
-      calendar: { en: 'Calendar', pl: 'Kalendarz', icon: CalendarDays },
-    };
-    return map[tasksViewMode] || map.table;
-  }, [tasksViewMode]);
-
-  const decisionsViewLabel = useMemo(() => {
-    const map: Record<DecisionsViewMode, { en: string; pl: string; icon: React.ElementType }> = {
-      table: { en: 'List', pl: 'Lista', icon: LayoutList },
-      kanban: { en: 'Kanban', pl: 'Kanban', icon: Kanban },
-      timeline: { en: 'Timeline', pl: 'Timeline', icon: GanttChart },
-    };
-    return map[decisionsViewMode] || map.table;
-  }, [decisionsViewMode]);
+  // KANON v3: view modes are icon toggles (no dropdown lists), so we don't need label resolvers.
 
   // Handle filter change
   const handleFilterChange = useCallback(
@@ -1332,8 +1323,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   const renderCommandRow = () => {
     // V3-A03 MUST: single command row under topbar
+    // Priority (MUST): Bulk (multi-select) > Search > Dynamic Tabs > Counters
+    const hasBulkMode =
+      !activeDocumentId &&
+      ((activeTab === 'tasks' && !!tasksBulkUi?.selectedCount) ||
+        (activeTab === 'inbox' && !!inboxBulkUi?.selectedCount) ||
+        (activeTab === 'decisions' && !!decisionsBulkUi?.selectedCount));
+
     // 1) Search row (when enabled)
-    if (showSearch && !activeDocumentId) {
+    if (!hasBulkMode && showSearch && !activeDocumentId) {
       return (
         <div className="px-4 pb-3">
           <div className="relative">
@@ -1383,7 +1381,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     }
 
     // 2) Dynamic tabs row (when documents open)
-    if (openDocuments.length > 0) {
+    if (!hasBulkMode && openDocuments.length > 0) {
       return renderDynamicTabs();
     }
 
@@ -1393,7 +1391,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     // Tasks: filters as a single Command Row (no extra toolbars/strips).
     if (activeTab === 'tasks') {
       const chipBase =
-        'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+        'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
       const chipInactive =
         'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
       const chipActive =
@@ -1403,9 +1401,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       if (tasksBulkUi?.selectedCount) {
         const bulk = tasksBulkActionsRef.current;
         const bulkGhostPill =
-          'inline-flex items-center h-9 px-3 rounded-full text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+          'inline-flex items-center h-8 px-2.5 rounded-full text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
         const bulkPillBase =
-          'inline-flex items-center gap-2 h-9 px-3 rounded-full border text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+          'inline-flex items-center gap-2 h-8 px-2.5 rounded-full border text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 
         return (
           <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
@@ -1512,7 +1510,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       ];
 
       const chipBase =
-        'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+        'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
       const chipInactive =
         'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
       const chipActive =
@@ -1522,9 +1520,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       if (inboxBulkUi?.selectedCount) {
         const bulkActions = inboxBulkActionsRef.current;
         const bulkGhostPill =
-          'inline-flex items-center h-9 px-3 rounded-full text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+          'inline-flex items-center h-8 px-2.5 rounded-full text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
         const bulkPillBase =
-          'inline-flex items-center gap-2 h-9 px-3 rounded-full border text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+          'inline-flex items-center gap-2 h-8 px-2.5 rounded-full border text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 
         return (
           <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
@@ -1595,7 +1593,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   className={`${chipBase} ${inboxStatusTab === b.id ? chipActive : chipInactive}`}
                 >
                   <span>{b.label}</span>
-                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-200">
+                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
                     {b.count}
                   </span>
                 </button>
@@ -1608,7 +1606,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {(c?.critical ?? 0) > 0 && (
               <button className={`${chipBase} ${chipInactive}`} onClick={() => setInboxSection('all')}>
                 <span>{isPolish ? 'Krytyczne' : 'Critical'}</span>
-                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-200">
+                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
                   {c?.critical ?? 0}
                 </span>
               </button>
@@ -1620,7 +1618,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 title={isPolish ? 'Pokaż tylko wymagające akcji' : 'Show only items needing my action'}
               >
                 <span>{isPolish ? 'Wymaga akcji' : 'Action required'}</span>
-                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-200">
+                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
                   {c?.actionRequired ?? 0}
                 </span>
               </button>
@@ -1637,7 +1635,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   className={`${chipBase} ${inboxSection === b.id ? chipActive : chipInactive}`}
                 >
                   <span>{b.label}</span>
-                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-200">
+                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
                     {b.count}
                   </span>
                 </button>
@@ -1648,13 +1646,56 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       );
     }
 
+    // Decisions: filters live in Command Row (chips). Topbar keeps only ONE select (priority).
+    if (activeTab === 'decisions' && !activeDocumentId && !decisionsBulkUi?.selectedCount) {
+      const chipBase =
+        'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+      const chipInactive =
+        'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
+      const chipActive =
+        'border-primary-200 dark:border-primary-500/30 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-200';
+
+      return (
+        <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
+          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
+            <div className="inline-flex items-center gap-1">
+              {decisionFilters.map((f) => {
+                const isActive = decisionFilter === f.id;
+                const count =
+                  f.id === 'all'
+                    ? tabCounts.decisions
+                    : typeof f.count === 'number'
+                      ? f.count
+                      : 0;
+                return (
+                  <button
+                    key={f.id}
+                    onClick={() => setDecisionFilter(f.id as DecisionFilter)}
+                    className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
+                    title={f.label}
+                    data-testid={`mywork-decisions-filter-${f.id}`}
+                  >
+                    {f.icon}
+                    <span>{f.label}</span>
+                    <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // Decisions: bulk selection is a *mode* of the same command row (no extra line).
     if (activeTab === 'decisions' && decisionsBulkUi?.selectedCount) {
       const bulk = decisionsBulkActionsRef.current;
       const bulkGhostPill =
-        'inline-flex items-center h-9 px-3 rounded-full text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+        'inline-flex items-center h-8 px-2.5 rounded-full text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
       const bulkPillBase =
-        'inline-flex items-center gap-2 h-9 px-3 rounded-full border text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+        'inline-flex items-center gap-2 h-8 px-2.5 rounded-full border text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
       const chipInactive =
         'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
 
@@ -1999,6 +2040,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             <NotebookContent
               projectId={null}
               searchQuery={searchQuery}
+              openPageId={notebookOpenPageId}
               linkedIdeasOpen={notebookLinkedIdeasOpen}
               onLinkedIdeasOpenChange={(v) => {
                 setNotebookLinkedIdeasOpen(v);
@@ -2139,25 +2181,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   >
                     {tab.icon}
                     <span>{tab.label}</span>
-                    {tab.count !== undefined && tab.count > 0 && (
-                      <span
-                        className={`px-1.5 py-0.5 text-xs rounded-full ${
-                          isActive
-                            ? 'bg-primary-500/30 text-primary-300'
-                            : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
-                        }`}
-                      >
-                        {tab.count}
-                      </span>
-                    )}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Right: AI → Add/Primary CTA → Tools → View tool → Filters (KANON v3)
-              DOM order (left → right) is reversed to achieve right-aligned priority. */}
+          {/* Right cluster (KANON v3, left→right): Filters → View → Tool → Add → Area */}
           <div className="flex items-center gap-3">
             {/* Filters (furthest left in right cluster) */}
             {/* Context-sensitive Filter Dropdown (only show when viewing list) */}
@@ -2230,111 +2260,85 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             )}
 
             {/* View tools */}
-            {/* Tasks View Tool (dropdown) — only on Tasks tab */}
+            {/* Tasks View Mode Toggle (icons; no dropdown) */}
             {activeTab === 'tasks' && !activeDocumentId && (
-              <div className="relative">
-                <button
-                  onClick={() => setTasksViewMenuOpen((v) => !v)}
-                  className={TOPBAR_PILL_INACTIVE}
-                  title={isPolish ? 'Widok' : 'View'}
-                >
-                  <tasksViewLabel.icon size={14} />
-                  <span>{isPolish ? tasksViewLabel.pl : tasksViewLabel.en}</span>
-                  <ChevronDown
-                    size={12}
-                    className={`transition-transform ${tasksViewMenuOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
-                {tasksViewMenuOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-30"
-                      onClick={() => setTasksViewMenuOpen(false)}
-                    />
-                    <div className="absolute right-0 top-full mt-1 z-40 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1">
-                      {(
-                        [
-                          { id: 'table' as TasksViewMode, icon: LayoutList, en: 'List', pl: 'Lista' },
-                          { id: 'kanban' as TasksViewMode, icon: Kanban, en: 'Kanban', pl: 'Kanban' },
-                          { id: 'calendar' as TasksViewMode, icon: CalendarDays, en: 'Calendar', pl: 'Kalendarz' },
-                        ] as const
-                      ).map(({ id, icon: Icon, en, pl }) => (
-                        <button
-                          key={id}
-                          onClick={() => {
-                            setTasksViewMode(id);
-                            setTasksViewMenuOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 text-xs transition-colors ${
-                            tasksViewMode === id
-                              ? 'text-primary-700 dark:text-primary-200 bg-primary-500/10 font-semibold'
-                              : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
-                          }`}
-                        >
-                          <span className="flex items-center gap-2">
-                            <Icon size={14} />
-                            {isPolish ? pl : en}
-                          </span>
-                          {tasksViewMode === id ? <Check size={14} /> : null}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
+              <div
+                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+                role="radiogroup"
+                aria-label={isPolish ? 'Tryb widoku zadań' : 'Tasks view mode'}
+              >
+                {(
+                  [
+                    { id: 'table' as TasksViewMode, icon: LayoutList, titlePl: 'Lista', titleEn: 'List' },
+                    { id: 'kanban' as TasksViewMode, icon: Kanban, titlePl: 'Kanban', titleEn: 'Kanban' },
+                    {
+                      id: 'calendar' as TasksViewMode,
+                      icon: CalendarDays,
+                      titlePl: 'Kalendarz',
+                      titleEn: 'Calendar',
+                    },
+                  ] as const
+                ).map(({ id, icon: Icon, titlePl, titleEn }) => {
+                  const isActive = tasksViewMode === id;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => setTasksViewMode(id)}
+                      className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                        isActive
+                          ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                          : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                      }`}
+                      title={isPolish ? titlePl : titleEn}
+                      role="radio"
+                      aria-checked={isActive}
+                      data-testid={`mywork-tasks-view-${id}`}
+                    >
+                      <Icon size={16} />
+                    </button>
+                  );
+                })}
               </div>
             )}
 
-            {/* Decisions View Tool (dropdown) — match Inbox/Tasks format */}
+            {/* Decisions View Mode Toggle (icons; no dropdown) */}
             {activeTab === 'decisions' && !activeDocumentId && (
-              <div className="relative">
-                <button
-                  onClick={() => setDecisionsViewMenuOpen((v) => !v)}
-                  className={TOPBAR_PILL_INACTIVE}
-                  title={isPolish ? 'Widok' : 'View'}
-                >
-                  <decisionsViewLabel.icon size={14} />
-                  <span>{isPolish ? decisionsViewLabel.pl : decisionsViewLabel.en}</span>
-                  <ChevronDown
-                    size={12}
-                    className={`transition-transform ${decisionsViewMenuOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
-                {decisionsViewMenuOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-30"
-                      onClick={() => setDecisionsViewMenuOpen(false)}
-                    />
-                    <div className="absolute right-0 top-full mt-1 z-40 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1">
-                      {(
-                        [
-                          { id: 'table' as DecisionsViewMode, icon: LayoutList, en: 'List', pl: 'Lista' },
-                          { id: 'kanban' as DecisionsViewMode, icon: Kanban, en: 'Kanban', pl: 'Kanban' },
-                          { id: 'timeline' as DecisionsViewMode, icon: GanttChart, en: 'Timeline', pl: 'Timeline' },
-                        ] as const
-                      ).map(({ id, icon: Icon, en, pl }) => (
-                        <button
-                          key={id}
-                          onClick={() => {
-                            setDecisionsViewMode(id);
-                            setDecisionsViewMenuOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 text-xs transition-colors ${
-                            decisionsViewMode === id
-                              ? 'text-primary-700 dark:text-primary-200 bg-primary-500/10 font-semibold'
-                              : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
-                          }`}
-                        >
-                          <span className="flex items-center gap-2">
-                            <Icon size={14} />
-                            {isPolish ? pl : en}
-                          </span>
-                          {decisionsViewMode === id ? <Check size={14} /> : null}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
+              <div
+                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+                role="radiogroup"
+                aria-label={isPolish ? 'Tryb widoku decyzji' : 'Decisions view mode'}
+              >
+                {(
+                  [
+                    { id: 'table' as DecisionsViewMode, icon: LayoutList, titlePl: 'Lista', titleEn: 'List' },
+                    { id: 'kanban' as DecisionsViewMode, icon: Kanban, titlePl: 'Kanban', titleEn: 'Kanban' },
+                    {
+                      id: 'timeline' as DecisionsViewMode,
+                      icon: GanttChart,
+                      titlePl: 'Timeline',
+                      titleEn: 'Timeline',
+                    },
+                  ] as const
+                ).map(({ id, icon: Icon, titlePl, titleEn }) => {
+                  const isActive = decisionsViewMode === id;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => setDecisionsViewMode(id)}
+                      className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                        isActive
+                          ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                          : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                      }`}
+                      title={isPolish ? titlePl : titleEn}
+                      role="radio"
+                      aria-checked={isActive}
+                      data-testid={`mywork-decisions-view-${id}`}
+                    >
+                      <Icon size={16} />
+                    </button>
+                  );
+                })}
               </div>
             )}
 
@@ -2513,7 +2517,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {actionButton && (
               <button
                 onClick={actionButton.onClick}
-                className={`flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r ${actionButton.color} text-white border border-white/20 hover:brightness-110 shadow-lg shadow-primary-500/25 transition-all duration-200`}
+                className={`flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r ${actionButton.color} text-white border border-white/20 hover:brightness-110 shadow-lg shadow-black/10 dark:shadow-black/30 transition-all duration-200`}
                 data-testid="mywork-action-button"
               >
                 {actionButton.icon}
@@ -2524,7 +2528,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {/* AI (rightmost) */}
             <button
               onClick={handlePlanWithAI}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-primary-600 dark:text-primary-300 hover:bg-primary-50/70 dark:hover:bg-primary-500/10 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-purple-200/70 dark:border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-500/15 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
               title={isPolish ? 'Kontekst AI' : 'AI Context'}
               data-testid="mywork-ai-button"
             >

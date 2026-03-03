@@ -118,7 +118,7 @@ router.get(
       const pptx = new PptxGenJS();
 
       pptx.layout = 'LAYOUT_16x9';
-      pptx.author = 'Consultinity';
+      pptx.author = 'Consultify';
       pptx.title = reportData.title;
 
       const BRAND = {
@@ -236,7 +236,7 @@ router.get(
         bold: true,
         align: 'center',
       });
-      thankSlide.addText('Powered by Consultinity', {
+      thankSlide.addText('Powered by Consultify', {
         x: 0.8,
         y: 4.0,
         w: 8.4,

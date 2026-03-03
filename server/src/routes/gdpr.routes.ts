@@ -426,7 +426,7 @@ router.get(
       res.setHeader('Content-Type', 'application/json');
       res.setHeader(
         'Content-Disposition',
-        `attachment; filename=consultinity-data-export-${new Date().toISOString().split('T')[0]}.json`
+        `attachment; filename=consultify-data-export-${new Date().toISOString().split('T')[0]}.json`
       );
       return res.send(JSON.stringify(userData, null, 2));
     } catch (err: any) {

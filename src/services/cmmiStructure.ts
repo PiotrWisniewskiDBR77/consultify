@@ -3,7 +3,7 @@
  *
  * CMMI jest znakiem towarowym ISACA (dawniej CMMI Institute).
  * Oficjalna certyfikacja CMMI wymaga akredytowanego Lead Appraiser.
- * Implementacja w Consultinity służy celom edukacyjnym.
+ * Implementacja w Consultify służy celom edukacyjnym.
  *
  * Structure:
  * - 5 Maturity Levels (Initial → Optimizing)

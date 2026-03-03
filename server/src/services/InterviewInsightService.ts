@@ -403,14 +403,23 @@ class InterviewInsightService {
       // Call LLM (through the unified router) with a stable model selection.
       // NOTE: `llmService.callText()` requires a `modelConfig` and messages; using `generateResponse()`
       // keeps this service compatible with the app-wide LLM fallback chain.
+      const actionablePromptTypes: Set<InsightPromptType> = new Set([
+        'recommendations',
+        'opportunity_scan',
+        'risk_assessment',
+        'maturity',
+        'stakeholder_map',
+      ]);
+      const systemPrompt = actionablePromptTypes.has(promptType)
+        ? 'You are a senior management consultant. Write in clear, structured markdown. Be specific and actionable.'
+        : 'You are a senior management consultant. Write in clear, structured markdown. Use only facts grounded in the provided interview data. Do NOT provide recommendations, action plans, next steps, roadmaps, timelines, or mitigation plans.';
       const response = await llmService.generateResponse({
         prompt,
         temperature: 0.3,
         maxTokens: 4000,
         // "standard" resolves via LLMConfigService fallback chain.
         model: 'standard',
-        systemPrompt:
-          'You are a senior management consultant. Write in clear, structured markdown. Be specific and actionable.',
+        systemPrompt,
       });
 
       const content = String((response as any)?.content || (response as any)?.text || '');

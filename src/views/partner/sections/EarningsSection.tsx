@@ -477,7 +477,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
                 {t(
                   'partner.earnings.paymentHistoryDesc',
-                  'A list of payments made from Consultinity to your organization.'
+                  'A list of payments made from Consultify to your organization.'
                 )}
               </p>
             </div>

@@ -81,7 +81,7 @@ interface PublicReportData {
   sections: PublicReportSection[];
   branding: {
     showCompanyLogo: boolean;
-    showConsultinityBranding: boolean;
+    showConsultifyBranding: boolean;
     customMessage?: string;
   };
 }
@@ -759,9 +759,9 @@ export const PublicReportBuilderView: React.FC = () => {
               </span>
             </div>
 
-            {data.branding.showConsultinityBranding && (
+            {data.branding.showConsultifyBranding && (
               <p className="text-xs font-medium tracking-wide">
-                Powered by <span className="text-blue-500">Consultinity</span>
+                Powered by <span className="text-blue-500">Consultify</span>
               </p>
             )}
           </div>

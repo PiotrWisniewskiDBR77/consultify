@@ -60,6 +60,8 @@ export const SystemSettings: React.FC = () => {
   // Audit Logs State
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [auditFilter, setAuditFilter] = useState<'all' | 'user' | 'system' | 'security'>('all');
+  const [auditLimit, setAuditLimit] = useState(100);
+  const [auditHasMore, setAuditHasMore] = useState(true);
 
   // Database State (Advanced)
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -80,9 +82,10 @@ export const SystemSettings: React.FC = () => {
     setLoading(true);
     try {
       const data = await Api.getSystemSettings();
-      setSettings(data);
+      setSettings(data || {});
     } catch (err) {
-      console.error(err);
+      console.error('[SystemSettings] fetchSettings error:', err);
+      if (activeTab === 'ADVANCED') return;
       toast.error('Failed to load settings');
     } finally {
       setLoading(false);
@@ -92,7 +95,7 @@ export const SystemSettings: React.FC = () => {
   const fetchAdmins = async () => {
     try {
       const users = await Api.getSuperAdminUsers();
-      setAdmins(users.filter((u) => u.role === 'SUPERADMIN'));
+      setAdmins(users.filter((u) => u.role === 'SUPERADMIN' && u.status === 'active'));
     } catch (_) {
       toast.error('Failed to load admins');
     }
@@ -107,10 +110,11 @@ export const SystemSettings: React.FC = () => {
     }
   };
 
-  const fetchAuditLogs = async () => {
+  const fetchAuditLogs = async (limit = auditLimit) => {
     try {
-      const data = await Api.getActivities(100);
+      const data = await Api.getActivities(limit);
       setAuditLogs(data);
+      setAuditHasMore(data.length >= limit);
     } catch (err) {
       toast.error('Failed to load audit logs');
     }
@@ -176,9 +180,11 @@ export const SystemSettings: React.FC = () => {
   };
 
   const handleDeleteAdmin = async (id: string) => {
-    if (!confirm('Are you sure you want to remove this Super Admin?')) return;
+    const admin = admins.find((a) => a.id === id);
+    const name = admin ? `${admin.firstName} ${admin.lastName} (${admin.email})` : id;
+    if (!window.confirm(`Are you sure you want to permanently remove Super Admin ${name}? This action cannot be undone.`)) return;
     try {
-      await Api.deleteUser(id);
+      await Api.deleteSuperAdminUser(id);
       toast.success('Admin removed');
       fetchAdmins();
     } catch (_) {
@@ -187,52 +193,84 @@ export const SystemSettings: React.FC = () => {
   };
 
   const renderTabs = () => (
-    <div className="flex items-center gap-1 mb-8 overflow-x-auto pb-2 border-b border-white/[0.04]">
+    <div className="flex items-center gap-1 mb-8 overflow-x-auto pb-2 border-b border-slate-200 dark:border-white/[0.04]">
       <button
         onClick={() => setActiveTab('GENERAL')}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'GENERAL' ? 'bg-blue-600 text-white' : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-white/[0.04]'}`}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+          activeTab === 'GENERAL'
+            ? 'bg-primary-600 text-white'
+            : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+        }`}
       >
         <Settings size={16} /> General
       </button>
       <button
         onClick={() => setActiveTab('SECURITY')}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'SECURITY' ? 'bg-blue-600 text-white' : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-white/[0.04]'}`}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+          activeTab === 'SECURITY'
+            ? 'bg-primary-600 text-white'
+            : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+        }`}
       >
         <Shield size={16} /> Security
       </button>
       <button
         onClick={() => setActiveTab('EMAIL')}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'EMAIL' ? 'bg-blue-600 text-white' : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-white/[0.04]'}`}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+          activeTab === 'EMAIL'
+            ? 'bg-primary-600 text-white'
+            : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+        }`}
       >
         <Mail size={16} /> Email
       </button>
       <button
         onClick={() => setActiveTab('LEGAL')}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'LEGAL' ? 'bg-blue-600 text-white' : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-white/[0.04]'}`}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+          activeTab === 'LEGAL'
+            ? 'bg-primary-600 text-white'
+            : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+        }`}
       >
         <FileText size={16} /> Legal
       </button>
       <button
         onClick={() => setActiveTab('ADMINS')}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'ADMINS' ? 'bg-blue-600 text-white' : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-white/[0.04]'}`}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+          activeTab === 'ADMINS'
+            ? 'bg-primary-600 text-white'
+            : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+        }`}
       >
         <Users size={16} /> Admins
       </button>
       <button
         onClick={() => setActiveTab('STORAGE')}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'STORAGE' ? 'bg-blue-600 text-white' : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-white/[0.04]'}`}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+          activeTab === 'STORAGE'
+            ? 'bg-primary-600 text-white'
+            : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+        }`}
       >
         <HardDrive size={16} /> Storage
       </button>
       <button
         onClick={() => setActiveTab('AUDIT')}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'AUDIT' ? 'bg-blue-600 text-white' : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-white/[0.04]'}`}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+          activeTab === 'AUDIT'
+            ? 'bg-primary-600 text-white'
+            : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+        }`}
       >
         <Clock size={16} /> Audit
       </button>
       <button
         onClick={() => setActiveTab('ADVANCED')}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'ADVANCED' ? 'bg-red-600/80 text-white' : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-white/[0.04]'}`}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+          activeTab === 'ADVANCED'
+            ? 'bg-red-600/80 text-white'
+            : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+        }`}
       >
         <Database size={16} /> Advanced
       </button>
@@ -241,11 +279,13 @@ export const SystemSettings: React.FC = () => {
 
   const renderGeneral = () => (
     <div className="space-y-6 max-w-2xl">
-      <div className="border border-white/[0.06] rounded-xl p-4">
-        <h3 className="text-base font-medium mb-4 text-slate-100">Application Identity</h3>
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/[0.06] rounded-xl p-4">
+        <h3 className="text-base font-medium mb-4 text-slate-900 dark:text-slate-100">
+          Application Identity
+        </h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
               Application Name
             </label>
             <div className="flex gap-2">
@@ -253,26 +293,26 @@ export const SystemSettings: React.FC = () => {
                 type="text"
                 value={settings['app_name'] || ''}
                 onChange={(e) => setSettings((prev) => ({ ...prev, app_name: e.target.value }))}
-                className="flex-1 px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:border-blue-500/50 focus:outline-none"
-                placeholder="Consultinity"
+                className="flex-1 px-3.5 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:border-primary-500/50 focus:outline-none"
+                placeholder="Consultify"
               />
               <button
                 onClick={() => handleSaveSetting('app_name', settings['app_name'])}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
               >
                 <Save size={16} />
               </button>
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
               Default Language
             </label>
             <div className="flex gap-2">
               <select
                 value={settings['default_language'] || 'EN'}
                 onChange={(e) => handleSaveSetting('default_language', e.target.value)}
-                className="flex-1 px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:border-blue-500/50 focus:outline-none"
+                className="flex-1 px-3.5 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:border-primary-500/50 focus:outline-none"
               >
                 <option value="EN">English</option>
                 <option value="PL">Polish</option>
@@ -283,12 +323,14 @@ export const SystemSettings: React.FC = () => {
         </div>
       </div>
 
-      <div className="border border-white/[0.06] rounded-xl p-4">
-        <h3 className="text-base font-medium mb-4 text-slate-100">System Status</h3>
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/[0.06] rounded-xl p-4">
+        <h3 className="text-base font-medium mb-4 text-slate-900 dark:text-slate-100">
+          System Status
+        </h3>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-white font-medium">Maintenance Mode</p>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-slate-900 dark:text-slate-100 font-medium">Maintenance Mode</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               Blocks access for non-admin users
             </p>
           </div>
@@ -299,15 +341,15 @@ export const SystemSettings: React.FC = () => {
               checked={settings['maintenance_mode'] === 'true'}
               onChange={(e) => handleSaveSetting('maintenance_mode', String(e.target.checked))}
             />
-            <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:bg-navy-900 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            <div className="w-11 h-6 bg-slate-200 dark:bg-navy-900 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
           </label>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-white/5">
+        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white font-medium">System Announcement</p>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-slate-900 dark:text-slate-100 font-medium">System Announcement</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Banner message for all users
               </p>
             </div>
@@ -319,14 +361,14 @@ export const SystemSettings: React.FC = () => {
               onChange={(e) =>
                 setSettings((prev) => ({ ...prev, system_announcement: e.target.value }))
               }
-              className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 outline-none"
+              className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
               placeholder="e.g. Scheduled maintenance at 22:00"
             />
             <button
               onClick={() =>
                 handleSaveSetting('system_announcement', settings['system_announcement'])
               }
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
             >
               <Save size={18} />
             </button>
@@ -338,13 +380,15 @@ export const SystemSettings: React.FC = () => {
 
   const renderSecurity = () => (
     <div className="space-y-6 max-w-2xl">
-      <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-        <h3 className="text-lg font-semibold mb-4 text-white">Access Control</h3>
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+        <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-100">
+          Access Control
+        </h3>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white font-medium">Enforce MFA</p>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-slate-900 dark:text-slate-100 font-medium">Enforce MFA</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Require Multi-Factor Authentication for all users
               </p>
             </div>
@@ -355,12 +399,12 @@ export const SystemSettings: React.FC = () => {
                 checked={settings['enforce_mfa'] === 'true'}
                 onChange={(e) => handleSaveSetting('enforce_mfa', String(e.target.checked))}
               />
-              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:bg-navy-900 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            <div className="w-11 h-6 bg-slate-200 dark:bg-navy-900 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
             </label>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-2">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-400 mb-2">
               Session Timeout (minutes)
             </label>
             <div className="flex gap-2">
@@ -370,13 +414,13 @@ export const SystemSettings: React.FC = () => {
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, session_timeout_mins: e.target.value }))
                 }
-                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 outline-none"
+                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
               />
               <button
                 onClick={() =>
                   handleSaveSetting('session_timeout_mins', settings['session_timeout_mins'])
                 }
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
               >
                 <Save size={18} />
               </button>
@@ -389,11 +433,13 @@ export const SystemSettings: React.FC = () => {
 
   const renderEmail = () => (
     <div className="space-y-6 max-w-2xl">
-      <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-        <h3 className="text-lg font-semibold mb-4 text-white">SMTP Configuration</h3>
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+        <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-100">
+          SMTP Configuration
+        </h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-2">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-400 mb-2">
               SMTP Host
             </label>
             <div className="flex gap-2">
@@ -401,12 +447,12 @@ export const SystemSettings: React.FC = () => {
                 type="text"
                 value={settings['smtp_host'] || ''}
                 onChange={(e) => setSettings((prev) => ({ ...prev, smtp_host: e.target.value }))}
-                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 outline-none"
+                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
                 placeholder="smtp.example.com"
               />
               <button
                 onClick={() => handleSaveSetting('smtp_host', settings['smtp_host'])}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
               >
                 <Save size={18} />
               </button>
@@ -414,7 +460,7 @@ export const SystemSettings: React.FC = () => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-400 mb-2">
                 SMTP Port
               </label>
               <div className="flex gap-2">
@@ -422,19 +468,19 @@ export const SystemSettings: React.FC = () => {
                   type="text"
                   value={settings['smtp_port'] || ''}
                   onChange={(e) => setSettings((prev) => ({ ...prev, smtp_port: e.target.value }))}
-                  className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 outline-none"
+                  className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
                   placeholder="587"
                 />
                 <button
                   onClick={() => handleSaveSetting('smtp_port', settings['smtp_port'])}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
                 >
                   <Save size={18} />
                 </button>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-400 mb-2">
                 From Email
               </label>
               <div className="flex gap-2">
@@ -442,12 +488,12 @@ export const SystemSettings: React.FC = () => {
                   type="text"
                   value={settings['smtp_from'] || ''}
                   onChange={(e) => setSettings((prev) => ({ ...prev, smtp_from: e.target.value }))}
-                  className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 outline-none"
-                  placeholder="noreply@consultinity.com"
+                  className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
+                  placeholder="noreply@consultify.com"
                 />
                 <button
                   onClick={() => handleSaveSetting('smtp_from', settings['smtp_from'])}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
                 >
                   <Save size={18} />
                 </button>
@@ -461,11 +507,13 @@ export const SystemSettings: React.FC = () => {
 
   const renderLegal = () => (
     <div className="space-y-6 max-w-2xl">
-      <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-        <h3 className="text-lg font-semibold mb-4 text-white">Legal Documents</h3>
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+        <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-100">
+          Legal Documents
+        </h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-2">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-400 mb-2">
               Terms of Service URL
             </label>
             <div className="flex gap-2">
@@ -475,19 +523,19 @@ export const SystemSettings: React.FC = () => {
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, legal_tos_url: e.target.value }))
                 }
-                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 outline-none"
+                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
                 placeholder="https://..."
               />
               <button
                 onClick={() => handleSaveSetting('legal_tos_url', settings['legal_tos_url'])}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
               >
                 <Save size={18} />
               </button>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-2">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-400 mb-2">
               Privacy Policy URL
             </label>
             <div className="flex gap-2">
@@ -497,14 +545,14 @@ export const SystemSettings: React.FC = () => {
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, legal_privacy_url: e.target.value }))
                 }
-                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 outline-none"
+                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none"
                 placeholder="https://..."
               />
               <button
                 onClick={() =>
                   handleSaveSetting('legal_privacy_url', settings['legal_privacy_url'])
                 }
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
               >
                 <Save size={18} />
               </button>
@@ -518,19 +566,21 @@ export const SystemSettings: React.FC = () => {
   const renderAdmins = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-white">Super Administrators</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+          Super Administrators
+        </h3>
         <button
           onClick={() => setShowAddAdmin(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
         >
           <Plus size={16} /> Add Super Admin
         </button>
       </div>
 
-      <div className="bg-navy-900 border border-white/10 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-navy-950 text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wider">
+            <tr className="bg-slate-50 dark:bg-navy-950 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">
               <th className="p-4 font-medium">Name</th>
               <th className="p-4 font-medium">Email</th>
               <th className="p-4 font-medium">Status</th>
@@ -538,19 +588,23 @@ export const SystemSettings: React.FC = () => {
               <th className="p-4 font-medium text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5 text-sm">
+          <tbody className="divide-y divide-slate-200 dark:divide-white/5 text-sm">
             {admins.map((admin) => (
               <tr
                 key={admin.id}
                 className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
               >
-                <td className="p-4 font-medium text-white">
+                <td className="p-4 font-medium text-slate-900 dark:text-slate-100">
                   {admin.firstName} {admin.lastName}
                 </td>
-                <td className="p-4 text-slate-300">{admin.email}</td>
+                <td className="p-4 text-slate-700 dark:text-slate-300">{admin.email}</td>
                 <td className="p-4">
                   <span
-                    className={`flex items-center gap-1.5 ${admin.status === 'active' ? 'text-green-400' : 'text-red-400'}`}
+                    className={`flex items-center gap-1.5 ${
+                      admin.status === 'active'
+                        ? 'text-emerald-700 dark:text-emerald-400'
+                        : 'text-red-700 dark:text-red-400'
+                    }`}
                   >
                     {admin.status === 'active' ? <Check size={14} /> : <AlertCircle size={14} />}
                     {admin.status}
@@ -653,8 +707,10 @@ export const SystemSettings: React.FC = () => {
   const renderStorage = () => (
     <div className="space-y-6">
       {/* Total Usage Card */}
-      <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-white mb-2">Total System Storage</h2>
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+          Total System Storage
+        </h2>
         <div className="flex items-end gap-3">
           <span className="text-4xl font-bold text-pink-500">
             {storageStats ? formatBytes(storageStats.totalSize) : '0 Bytes'}
@@ -664,12 +720,14 @@ export const SystemSettings: React.FC = () => {
       </div>
 
       {/* Breakdown Table */}
-      <div className="bg-navy-900 border border-white/10 rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
-          <h3 className="font-semibold text-white">Usage by Organization</h3>
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+            Usage by Organization
+          </h3>
           <button
             onClick={fetchStorageStats}
-            className="p-2 bg-navy-800 hover:bg-navy-700 rounded-lg text-slate-300 transition-colors"
+            className="p-2 bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 rounded-lg text-slate-700 dark:text-slate-300 transition-colors"
           >
             <RefreshCw size={16} />
           </button>
@@ -702,16 +760,18 @@ export const SystemSettings: React.FC = () => {
                       onClick={() => setSelectedOrg({ id: item.name, name: item.displayName })}
                     >
                       <td className="px-6 py-4">
-                        <div className="font-medium text-white">{item.displayName}</div>
+                        <div className="font-medium text-slate-900 dark:text-slate-100">
+                          {item.displayName}
+                        </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                           {item.name}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-right text-slate-300 font-mono">
+                      <td className="px-6 py-4 text-right text-slate-700 dark:text-slate-300 font-mono">
                         {formatBytes(item.size)}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="w-full h-2 bg-navy-950 rounded-full overflow-hidden">
+                        <div className="w-full h-2 bg-slate-200 dark:bg-navy-950 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-pink-500 rounded-full"
                             style={{ width: `${Math.max(percent, 1)}%` }}
@@ -762,8 +822,8 @@ export const SystemSettings: React.FC = () => {
                 onClick={() => setAuditFilter(f)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   auditFilter === f
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-navy-800 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-navy-700'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
                 }`}
               >
                 {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -771,15 +831,15 @@ export const SystemSettings: React.FC = () => {
             ))}
           </div>
           <button
-            onClick={fetchAuditLogs}
-            className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 text-white rounded-lg text-sm transition-colors"
+            onClick={() => fetchAuditLogs()}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-white/10 rounded-lg text-sm transition-colors"
           >
             <RefreshCw size={16} /> Refresh
           </button>
         </div>
 
         {/* Logs Table */}
-        <div className="bg-navy-900 border border-white/10 rounded-xl overflow-hidden">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
           <table className="w-full text-left">
             <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 text-xs uppercase">
               <tr>
@@ -798,7 +858,7 @@ export const SystemSettings: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredLogs.slice(0, 50).map((log: any, idx: number) => (
+                filteredLogs.map((log: any, idx: number) => (
                   <tr
                     key={log.id || idx}
                     className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
@@ -806,7 +866,7 @@ export const SystemSettings: React.FC = () => {
                     <td className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs">
                       {log.created_at ? new Date(log.created_at).toLocaleString() : '-'}
                     </td>
-                    <td className="px-6 py-4 text-white">
+                    <td className="px-6 py-4 text-slate-900 dark:text-slate-100">
                       {log.user_name || log.user_email || 'System'}
                     </td>
                     <td className="px-6 py-4">
@@ -824,7 +884,7 @@ export const SystemSettings: React.FC = () => {
                         {log.action}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-slate-300">{log.entity_type}</td>
+                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">{log.entity_type}</td>
                     <td className="px-6 py-4 text-slate-500 dark:text-slate-400 max-w-xs truncate">
                       {log.entity_name || log.entity_id?.slice(0, 8) || '-'}
                     </td>
@@ -833,6 +893,24 @@ export const SystemSettings: React.FC = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        <div className="flex items-center justify-between pt-2">
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            Showing {filteredLogs.length} of {auditLogs.length} loaded entries (limit: {auditLimit})
+          </span>
+          {auditHasMore && (
+            <button
+              onClick={() => {
+                const newLimit = auditLimit + 100;
+                setAuditLimit(newLimit);
+                fetchAuditLogs(newLimit);
+              }}
+              className="px-4 py-2 bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 rounded-lg text-sm transition-colors"
+            >
+              Load More
+            </button>
+          )}
         </div>
       </div>
     );
@@ -860,8 +938,8 @@ export const SystemSettings: React.FC = () => {
 
         <div className="grid grid-cols-12 gap-6">
           {/* Sidebar: Table List */}
-          <div className="col-span-3 bg-navy-900 border border-white/10 rounded-xl p-4 max-h-[60vh] overflow-y-auto">
-            <h2 className="text-sm font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+          <div className="col-span-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 max-h-[60vh] overflow-y-auto">
+            <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
               <Table size={16} /> Tables ({tables.length})
             </h2>
             <div className="space-y-1">
@@ -871,8 +949,8 @@ export const SystemSettings: React.FC = () => {
                   onClick={() => setSelectedTable(table)}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     selectedTable === table
-                      ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
-                      : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                      ? 'bg-primary-600/10 text-primary-700 dark:text-primary-300 border border-primary-500/30'
+                      : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/20'
                   }`}
                 >
                   {table}
@@ -883,18 +961,18 @@ export const SystemSettings: React.FC = () => {
 
           {/* Main Content: Data Table */}
           <div className="col-span-9 space-y-4">
-            <div className="flex items-center gap-4 bg-navy-900 border border-white/10 p-2 rounded-lg">
+            <div className="flex items-center gap-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 p-2 rounded-lg">
               <Search className="text-slate-500 dark:text-slate-400 ml-2" size={20} />
               <input
                 type="text"
                 placeholder="Search in current table..."
                 value={dbSearchTerm}
                 onChange={(e) => setDbSearchTerm(e.target.value)}
-                className="bg-transparent border-none text-white focus:ring-0 flex-1 placeholder:text-slate-600 dark:text-slate-400 outline-none"
+                className="bg-transparent border-none text-slate-900 dark:text-slate-100 focus:ring-0 flex-1 placeholder:text-slate-500 dark:placeholder:text-slate-500 outline-none"
               />
             </div>
 
-            <div className="bg-navy-900 border border-white/10 rounded-xl overflow-hidden">
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
               {tableRows.length === 0 ? (
                 <div className="p-12 text-center text-slate-400 dark:text-slate-500">
                   {selectedTable
@@ -922,7 +1000,7 @@ export const SystemSettings: React.FC = () => {
                           {columns.map((col) => (
                             <td
                               key={`${i}-${col}`}
-                              className="px-6 py-4 text-slate-300 whitespace-nowrap max-w-xs truncate"
+                              className="px-6 py-4 text-slate-700 dark:text-slate-300 whitespace-nowrap max-w-xs truncate"
                             >
                               {typeof row[col] === 'object'
                                 ? JSON.stringify(row[col])
@@ -935,7 +1013,7 @@ export const SystemSettings: React.FC = () => {
                   </table>
                 </div>
               )}
-              <div className="p-4 border-t border-white/10 text-xs text-slate-500 dark:text-slate-400 text-right">
+              <div className="p-4 border-t border-slate-200 dark:border-white/10 text-xs text-slate-600 dark:text-slate-400 text-right">
                 Showing {filteredRows.length} rows
               </div>
             </div>
@@ -949,7 +1027,9 @@ export const SystemSettings: React.FC = () => {
     <div className="p-8 overflow-y-auto relative">
       <InfoButton cardId="superadmin-settings" position="top-right" />
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-white">System Settings</h1>
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+          System Settings
+        </h1>
         <div className="flex items-center gap-2">
           <InfoButton
             cardId="superadmin-settings"
@@ -960,7 +1040,7 @@ export const SystemSettings: React.FC = () => {
           />
           <button
             onClick={fetchSettings}
-            className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded-lg text-sm transition-colors text-white"
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 border border-slate-200 dark:border-white/10 rounded-lg text-sm transition-colors text-slate-900 dark:text-slate-100"
           >
             <RefreshCw size={16} /> Refresh
           </button>

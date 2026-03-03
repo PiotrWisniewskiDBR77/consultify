@@ -44,7 +44,7 @@ interface TourContextValue {
 
 const TourContext = createContext<TourContextValue | null>(null);
 
-const STORAGE_KEY = 'consultinity_completed_tours';
+const STORAGE_KEY = 'consultify_completed_tours';
 
 const getCompletedTours = (): string[] => {
   try {

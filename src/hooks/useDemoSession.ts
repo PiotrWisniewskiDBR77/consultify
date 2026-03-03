@@ -90,7 +90,7 @@ export interface DemoAnalytics {
 const DEMO_SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 const SESSION_WARNING_THRESHOLD_MS = 60 * 60 * 1000; // 1 hour before expiry
 const DEMO_AI_INTERACTIONS_LIMIT = 25; // hard session quota for demo (AI messages / interactions)
-const STORAGE_KEY = 'consultinity_demo_session';
+const STORAGE_KEY = 'consultify_demo_session';
 
 // ============================================================
 // STORAGE HELPERS

@@ -10,11 +10,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
-
-const authHeaders = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${localStorage.getItem('token')}`,
-});
+import { Api } from '@/services/api';
 
 type PurposeRow = {
   purpose: string;
@@ -84,14 +80,7 @@ export const PurposeAssignmentsTab: React.FC = () => {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [purpRes, provRes] = await Promise.all([
-        fetch('/api/llm/purposes', { headers: authHeaders() }),
-        fetch('/api/llm/providers', { headers: authHeaders() }),
-      ]);
-      const purpJson = await purpRes.json();
-      const provJson = await provRes.json();
-      if (!purpRes.ok) throw new Error(purpJson?.error || 'Failed to load purposes');
-      if (!provRes.ok) throw new Error(provJson?.error || 'Failed to load providers');
+      const [purpJson, provJson] = await Promise.all([Api.getLLMPurposes(), Api.getLLMProviders()]);
 
       const nextPurposes: PurposeRow[] = Array.isArray(purpJson?.purposes) ? purpJson.purposes : [];
       const nextProviders: ProviderRow[] = Array.isArray(provJson) ? provJson : [];
@@ -115,16 +104,7 @@ export const PurposeAssignmentsTab: React.FC = () => {
     const p = String(selectedPurpose || '').trim();
     if (!p) return;
     try {
-      const qs = new URLSearchParams();
-      if (orgIdFilter.trim()) qs.set('organizationId', orgIdFilter.trim());
-      const res = await fetch(
-        `/api/llm/purposes/${encodeURIComponent(p)}/assignments?${qs.toString()}`,
-        {
-          headers: authHeaders(),
-        }
-      );
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Failed to load assignments');
+      const json = await Api.getLLMPurposeAssignments(p, orgIdFilter.trim() || undefined);
       const rows: AssignmentRow[] = Array.isArray(json?.assignments) ? json.assignments : [];
       setAssignments(rows);
     } catch (e: any) {
@@ -218,19 +198,13 @@ export const PurposeAssignmentsTab: React.FC = () => {
 
         // Priority: higher is better in backend ordering
         const priority = 100 - priorityOrder.indexOf(providerKey) * 10;
-        const res = await fetch(`/api/llm/purposes/${encodeURIComponent(purpose)}/assignments`, {
-          method: 'POST',
-          headers: authHeaders(),
-          body: JSON.stringify({
-            providerId: match.id,
-            priority,
-            organizationId: scopeOrg,
-            modelId: null,
-            is_active: true,
-          }),
+        await Api.addLLMPurposeAssignment(purpose, {
+          providerId: match.id,
+          priority,
+          organizationId: scopeOrg,
+          modelId: null,
+          is_active: true,
         });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json?.error || 'Preset apply failed');
       }
 
       toast.success('Starter preset applied');
@@ -251,20 +225,14 @@ export const PurposeAssignmentsTab: React.FC = () => {
     }
     setSaving(true);
     try {
-      const res = await fetch('/api/llm/purposes', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          purpose,
-          kind,
-          default_tier: newPurpose.default_tier || null,
-          requirements: newPurpose.requirements || null,
-          description: newPurpose.description || null,
-          is_active: true,
-        }),
+      await Api.upsertLLMPurpose({
+        purpose,
+        kind,
+        default_tier: newPurpose.default_tier || null,
+        requirements: newPurpose.requirements || null,
+        description: newPurpose.description || null,
+        is_active: true,
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Upsert failed');
       toast.success('Purpose saved');
       trackFunnelEvent('model_assignment_changed', { kind, purpose });
       setNewPurpose({ purpose: '', kind: 'TEXT_LLM', default_tier: 'STANDARD', description: '' });
@@ -285,19 +253,13 @@ export const PurposeAssignmentsTab: React.FC = () => {
     }
     setSaving(true);
     try {
-      const res = await fetch(`/api/llm/purposes/${encodeURIComponent(purpose)}/assignments`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          providerId,
-          priority: Number(assignmentForm.priority || 0),
-          organizationId: assignmentForm.organizationId?.trim() || null,
-          modelId: assignmentForm.modelId?.trim() || null,
-          is_active: true,
-        }),
+      await Api.addLLMPurposeAssignment(purpose, {
+        providerId,
+        priority: Number(assignmentForm.priority || 0),
+        organizationId: assignmentForm.organizationId?.trim() || null,
+        modelId: assignmentForm.modelId?.trim() || null,
+        is_active: true,
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Assignment failed');
       toast.success('Assignment saved');
       trackFunnelEvent('model_assignment_changed', {
         kind: String(activePurpose?.kind || 'TEXT_LLM'),
@@ -317,17 +279,11 @@ export const PurposeAssignmentsTab: React.FC = () => {
     if (!purpose) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/llm/purposes/${encodeURIComponent(purpose)}/assignments`, {
-        method: 'DELETE',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          providerId: row.provider_id,
-          organizationId: row.organization_id || null,
-          modelId: row.model_id || null,
-        }),
+      await Api.deleteLLMPurposeAssignment(purpose, {
+        providerId: row.provider_id,
+        organizationId: row.organization_id || null,
+        modelId: row.model_id || null,
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Delete failed');
       toast.success('Assignment removed');
       await loadAssignments();
     } catch (e: any) {

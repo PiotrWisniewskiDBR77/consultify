@@ -118,14 +118,6 @@ export const AIChatWelcomeView: React.FC = () => {
     setChatKickoffMessage,
   } = useAppStore();
   const { projectName } = usePMOStore();
-  const brandLogoDarkSrc = new URL(
-    '../../Logo consultinity/Consultinity_logo_dark_medium.svg',
-    import.meta.url
-  ).href;
-  const brandLogoLightSrc = new URL(
-    '../../Logo consultinity/Consultinity_logo_light_transparent.svg',
-    import.meta.url
-  ).href;
 
   // Derived state for compatibility
   const selectedProject = useMemo(
@@ -168,7 +160,7 @@ export const AIChatWelcomeView: React.FC = () => {
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
     // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
-    const explicitPref = localStorage.getItem('consultinity-preferred-chat-lang');
+    const explicitPref = localStorage.getItem('consultify-preferred-chat-lang');
     // 2. Conversation-specific language (from DB/store)
     const activeLang = activeConversationId
       ? chatLanguageByConversationId[activeConversationId]
@@ -2132,15 +2124,15 @@ For example: REMEMBER: preferred_language: Polish`;
       {/* Footer (overlay) - does NOT affect centering above */}
       <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col items-center gap-1.5 pointer-events-none select-none z-0">
         <img
-          src={brandLogoDarkSrc}
-          alt="Consultinity"
-          className="h-24 sm:h-28 md:h-32 w-auto opacity-100 hidden dark:block drop-shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
+          src="/assets/logos/logo-dark.svg"
+          alt="Consultify"
+          className="h-24 sm:h-28 md:h-32 w-auto opacity-100 hidden dark:block translate-y-1 drop-shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
           draggable={false}
         />
         <img
-          src={brandLogoLightSrc}
-          alt="Consultinity"
-          className="h-24 sm:h-28 md:h-32 w-auto opacity-35 dark:hidden"
+          src="/assets/logos/logo-light.svg"
+          alt="Consultify"
+          className="h-24 sm:h-28 md:h-32 w-auto opacity-35 dark:hidden translate-y-1"
           draggable={false}
         />
         <p className="text-center text-[11px] text-slate-400 dark:text-slate-600 tracking-[0.25em] uppercase">

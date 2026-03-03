@@ -52,11 +52,13 @@ export const RevenueModuleView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Module Header */}
-      <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-6 border border-green-800/50">
+      <div className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-green-900/30 dark:to-emerald-900/30 rounded-xl p-6 border border-emerald-200 dark:border-green-800/50">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white">Revenue & Billing Module</h1>
-            <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-2">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+              Revenue & Billing Module
+            </h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-2">
               Comprehensive revenue management including pricing, subscriptions, recognition,
               forecasting, and payments
             </p>
@@ -66,7 +68,7 @@ export const RevenueModuleView: React.FC = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex flex-wrap gap-2 bg-gray-800/50 p-2 rounded-xl">
+      <div className="flex flex-wrap gap-2 bg-white dark:bg-navy-900/50 p-2 rounded-xl border border-slate-200 dark:border-white/5">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -74,7 +76,7 @@ export const RevenueModuleView: React.FC = () => {
             className={`flex-1 min-w-[180px] px-4 py-3 rounded-lg transition-all duration-200 ${
               activeTab === tab.id
                 ? 'bg-green-600 text-white shadow-lg'
-                : 'bg-gray-700/50 text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:bg-gray-700 hover:text-white'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 dark:bg-navy-800/60 dark:text-slate-400 dark:hover:bg-navy-700 dark:hover:text-white'
             }`}
           >
             <div className="font-medium">{tab.label}</div>

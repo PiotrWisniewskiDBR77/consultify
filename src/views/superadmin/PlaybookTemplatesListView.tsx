@@ -11,11 +11,15 @@ import {
   Plus,
   Search,
   Upload,
+  X,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { AppView, PlaybookTemplateVersion, TemplateStatus } from '../../types';
+import { Api } from '../../services/api';
+import { PlaybookEditorView } from './PlaybookEditorView';
 
 /**
  * PlaybookTemplatesListView
@@ -25,32 +29,17 @@ import { AppView, PlaybookTemplateVersion, TemplateStatus } from '../../types';
  * Lists all templates with status badges and action buttons.
  */
 export const PlaybookTemplatesListView: React.FC = () => {
-  const token = localStorage.getItem('token');
+  const { t } = useTranslation();
   const [templates, setTemplates] = useState<PlaybookTemplateVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [validating, setValidating] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newTemplate, setNewTemplate] = useState({ title: '', key: '', triggerSignal: '', description: '' });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const fallbackTemplates: PlaybookTemplateVersion[] = [
-    {
-      id: 'tmpl-1',
-      title: 'Test Playbook Template',
-      key: 'test_template',
-      triggerSignal: 'project_risk_high',
-      version: 1,
-      status: TemplateStatus.PUBLISHED,
-    },
-    {
-      id: 'tmpl-2',
-      title: 'Draft Playbook Template',
-      key: 'draft_template',
-      triggerSignal: 'project_risk_low',
-      version: 1,
-      status: TemplateStatus.DRAFT,
-    },
-  ];
+  const [editorTemplateId, setEditorTemplateId] = useState<string | null>(null);
 
   useEffect(() => {
     loadTemplates();
@@ -59,22 +48,13 @@ export const PlaybookTemplatesListView: React.FC = () => {
   const loadTemplates = async () => {
     try {
       setLoading(true);
-      const url = statusFilter
-        ? `/api/ai/playbooks/templates?status=${statusFilter}`
-        : '/api/ai/playbooks/templates';
-
-      const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error('Failed to load templates');
-
-      const data = await res.json();
-      setTemplates(data);
+      const url = statusFilter ? `/ai/playbooks/templates?status=${statusFilter}` : '/ai/playbooks/templates';
+      const data = await Api.get(url);
+      setTemplates(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error loading templates:', err);
-      toast.error('Failed to load templates, showing sample data');
-      setTemplates(fallbackTemplates);
+      toast.error(t('superadmin.playbookTemplates.toast.loadFailed'));
+      setTemplates([]);
     } finally {
       setLoading(false);
     }
@@ -83,20 +63,15 @@ export const PlaybookTemplatesListView: React.FC = () => {
   const handleValidate = async (templateId: string) => {
     try {
       setValidating(templateId);
-      const res = await fetch(`/api/ai/playbooks/templates/${templateId}/validate`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const data = await res.json();
+      const data = await Api.post(`/ai/playbooks/templates/${templateId}/validate`, {});
 
       if (data.ok) {
-        toast.success('Template is valid ✓');
+        toast.success(t('superadmin.playbookTemplates.toast.valid'));
       } else {
-        toast.error(`Validation failed: ${data.errors.length} error(s)`);
+        toast.error(`${t('superadmin.playbookTemplates.toast.validationFailed')}: ${data.errors.length} error(s)`);
       }
     } catch (err) {
-      toast.error('Validation failed');
+      toast.error(t('superadmin.playbookTemplates.toast.validationFailed'));
     } finally {
       setValidating(null);
     }
@@ -104,55 +79,29 @@ export const PlaybookTemplatesListView: React.FC = () => {
 
   const handlePublish = async (templateId: string) => {
     try {
-      const res = await fetch(`/api/ai/playbooks/templates/${templateId}/publish`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        if (data.validationErrors) {
-          toast.error(`Cannot publish: ${data.validationErrors.length} validation error(s)`);
-        } else {
-          throw new Error(data.error);
-        }
-        return;
-      }
-
-      toast.success('Template published successfully');
+      await Api.post(`/ai/playbooks/templates/${templateId}/publish`, {});
+      toast.success(t('superadmin.playbookTemplates.toast.published'));
       loadTemplates();
     } catch (err) {
-      toast.error('Failed to publish template');
+      toast.error(t('superadmin.playbookTemplates.toast.publishFailed'));
     }
   };
 
   const handleDeprecate = async (templateId: string) => {
-    if (!confirm('Are you sure you want to deprecate this template?')) return;
+    if (!confirm(t('superadmin.playbookTemplates.actions.deprecate') + '?')) return;
 
     try {
-      const res = await fetch(`/api/ai/playbooks/templates/${templateId}/deprecate`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error('Failed to deprecate');
-
-      toast.success('Template deprecated');
+      await Api.post(`/ai/playbooks/templates/${templateId}/deprecate`, {});
+      toast.success(t('superadmin.playbookTemplates.toast.deprecated'));
       loadTemplates();
     } catch (err) {
-      toast.error('Failed to deprecate template');
+      toast.error(t('superadmin.playbookTemplates.toast.deprecateFailed'));
     }
   };
 
   const handleExport = async (templateId: string) => {
     try {
-      const res = await fetch(`/api/ai/playbooks/templates/${templateId}/export`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error('Export failed');
-
-      const data = await res.json();
+      const data = await Api.get(`/ai/playbooks/templates/${templateId}/export`);
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -161,45 +110,83 @@ export const PlaybookTemplatesListView: React.FC = () => {
       a.click();
       URL.revokeObjectURL(url);
 
-      toast.success('Template exported');
+      toast.success(t('superadmin.playbookTemplates.toast.exported'));
     } catch (err) {
-      toast.error('Export failed');
+      toast.error(t('superadmin.playbookTemplates.toast.exportFailed'));
     }
   };
 
-  const handleDuplicate = (templateId: string) => {
-    const original = templates.find((t) => t.id === templateId);
-    if (!original) return;
-    const clone: PlaybookTemplateVersion = {
-      ...original,
-      id: `${templateId}-copy-${Date.now()}`,
-      title: `${original.title} (Copy)`,
-      status: TemplateStatus.DRAFT,
-      version: (original.version || 1) + 1,
-    };
-    setTemplates([clone, ...templates]);
-    toast.success('Template duplicated as draft');
+  const handleCreateTemplate = async () => {
+    if (!newTemplate.title.trim() || !newTemplate.key.trim() || !newTemplate.triggerSignal.trim()) {
+      toast.error(t('superadmin.playbookTemplates.toast.fieldsRequired'));
+      return;
+    }
+    try {
+      setCreating(true);
+      await Api.post('/ai/playbooks/templates', {
+        title: newTemplate.title,
+        key: newTemplate.key,
+        triggerSignal: newTemplate.triggerSignal,
+        description: newTemplate.description || undefined,
+      });
+      toast.success(t('superadmin.playbookTemplates.toast.created'));
+      setShowCreateModal(false);
+      setNewTemplate({ title: '', key: '', triggerSignal: '', description: '' });
+      loadTemplates();
+    } catch (err) {
+      toast.error(t('superadmin.playbookTemplates.toast.createFailed'));
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDuplicate = async (templateId: string) => {
+    try {
+      const exportData = await Api.get(`/ai/playbooks/templates/${templateId}/export`);
+      const baseKey = String(exportData?.key || `tpl_${Date.now()}`)
+        .replace(/[^a-zA-Z0-9_-]/g, '_')
+        .slice(0, 40);
+      const newKey = `${baseKey}_copy_${Date.now()}`.slice(0, 80);
+      const newTitle = `${exportData?.title || 'Template'} (Copy)`;
+
+      await Api.post('/ai/playbooks/templates', {
+        key: newKey,
+        title: newTitle,
+        triggerSignal: exportData?.triggerSignal || exportData?.trigger_signal || 'unknown',
+        description: exportData?.description || '',
+        templateGraph: exportData?.templateGraph || null,
+        estimatedDurationMins: exportData?.estimatedDurationMins || null,
+      });
+
+      toast.success(t('superadmin.playbookTemplates.toast.duplicated'));
+      loadTemplates();
+    } catch (err) {
+      console.error('Duplicate failed:', err);
+      toast.error(t('superadmin.playbookTemplates.toast.createFailed'));
+    }
   };
 
   const handleImport = (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const file = files[0];
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const json = JSON.parse(String(e.target?.result || '{}'));
-        const imported: PlaybookTemplateVersion = {
-          id: json.id || `import-${Date.now()}`,
+        const rawKey = String(json.key || `import_${Date.now()}`).replace(/[^a-zA-Z0-9_-]/g, '_');
+        const key = `${rawKey}`.slice(0, 80);
+        await Api.post('/ai/playbooks/templates', {
+          key,
           title: json.title || 'Imported Template',
-          key: json.key || `import_${Date.now()}`,
           triggerSignal: json.triggerSignal || json.trigger || 'unknown',
-          version: json.version || 1,
-          status: json.status || TemplateStatus.DRAFT,
-        };
-        setTemplates([imported, ...templates]);
-        toast.success('Template imported');
+          description: json.description || '',
+          templateGraph: json.templateGraph || null,
+          estimatedDurationMins: json.estimatedDurationMins || null,
+        });
+        toast.success(t('superadmin.playbookTemplates.toast.imported'));
+        loadTemplates();
       } catch {
-        toast.error('Invalid template JSON');
+        toast.error(t('superadmin.playbookTemplates.toast.importInvalid'));
       }
     };
     reader.readAsText(file);
@@ -232,23 +219,35 @@ export const PlaybookTemplatesListView: React.FC = () => {
     );
   };
 
+  if (editorTemplateId) {
+    return (
+      <PlaybookEditorView
+        templateId={editorTemplateId}
+        onBack={() => {
+          setEditorTemplateId(null);
+          loadTemplates();
+        }}
+      />
+    );
+  }
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Playbook Templates</h1>
-          <p className="text-slate-400 dark:text-slate-500 mt-1">
-            Create and manage AI playbook templates
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('superadmin.playbookTemplates.title')}</h1>
+          <p className="text-slate-600 dark:text-slate-400 mt-1">
+            {t('superadmin.playbookTemplates.subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-3 py-2 bg-white/10 dark:bg-navy-900/30 border border-white/20 text-slate-200 rounded-lg hover:bg-white/20 transition"
+            className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-white/10 transition"
           >
             <Upload size={16} />
-            Import JSON
+            {t('superadmin.playbookTemplates.importJson')}
           </button>
           <input
             ref={fileInputRef}
@@ -258,49 +257,49 @@ export const PlaybookTemplatesListView: React.FC = () => {
             onChange={(e) => handleImport(e.target.files)}
           />
           <button
-            onClick={() => toast('Template creation is available through the API.', { icon: 'ℹ️' })}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
           >
             <Plus size={18} />
-            New Template
+            {t('superadmin.playbookTemplates.newTemplate')}
           </button>
         </div>
       </div>
 
       {/* Filters */}
       <div className="flex gap-2 mb-4 items-center">
-        <div className="flex items-center px-3 py-1.5 bg-white/10 dark:bg-navy-900/30 border border-white/20 rounded-lg w-64">
-          <Search size={14} className="text-slate-400 dark:text-slate-500 mr-2" />
+        <div className="flex items-center px-3 py-1.5 bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/10 rounded-lg w-64">
+          <Search size={14} className="text-slate-500 dark:text-slate-400 mr-2" />
           <input
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search templates..."
-            className="w-full text-sm outline-none bg-transparent text-white placeholder:text-slate-500 dark:text-slate-400"
+            placeholder={t('superadmin.playbookTemplates.searchPlaceholder')}
+            className="w-full text-sm outline-none bg-transparent text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
           />
         </div>
         <button
           onClick={() => setStatusFilter('')}
-          className={`px-3 py-1.5 text-sm rounded-lg border transition ${!statusFilter ? 'bg-indigo-600/30 text-indigo-300 border-indigo-500/50' : 'bg-white/5 text-slate-400 dark:text-slate-500 border-white/10 hover:bg-slate-100 dark:hover:bg-navy-800/40'}`}
+          className={`px-3 py-1.5 text-sm rounded-lg border transition ${!statusFilter ? 'bg-primary-600/10 text-primary-700 dark:text-primary-300 border-primary-500/30' : 'bg-white text-slate-600 dark:bg-white/5 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'}`}
         >
-          All
+          {t('superadmin.playbookTemplates.filters.all')}
         </button>
         <button
           onClick={() => setStatusFilter('DRAFT')}
-          className={`px-3 py-1.5 text-sm rounded-lg border transition ${statusFilter === 'DRAFT' ? 'bg-yellow-600/30 text-yellow-300 border-yellow-500/50' : 'bg-white/5 text-slate-400 dark:text-slate-500 border-white/10 hover:bg-slate-100 dark:hover:bg-navy-800/40'}`}
+          className={`px-3 py-1.5 text-sm rounded-lg border transition ${statusFilter === 'DRAFT' ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30' : 'bg-white text-slate-600 dark:bg-white/5 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'}`}
         >
-          Drafts
+          {t('superadmin.playbookTemplates.filters.drafts')}
         </button>
         <button
           onClick={() => setStatusFilter('PUBLISHED')}
-          className={`px-3 py-1.5 text-sm rounded-lg border transition ${statusFilter === 'PUBLISHED' ? 'bg-green-600/30 text-green-300 border-green-500/50' : 'bg-white/5 text-slate-400 dark:text-slate-500 border-white/10 hover:bg-slate-100 dark:hover:bg-navy-800/40'}`}
+          className={`px-3 py-1.5 text-sm rounded-lg border transition ${statusFilter === 'PUBLISHED' ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30' : 'bg-white text-slate-600 dark:bg-white/5 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'}`}
         >
-          Published
+          {t('superadmin.playbookTemplates.filters.published')}
         </button>
         <button
           onClick={() => setStatusFilter('DEPRECATED')}
-          className={`px-3 py-1.5 text-sm rounded-lg border transition ${statusFilter === 'DEPRECATED' ? 'bg-slate-600/30 text-slate-300 border-slate-500/50' : 'bg-white/5 text-slate-400 dark:text-slate-500 border-white/10 hover:bg-slate-100 dark:hover:bg-navy-800/40'}`}
+          className={`px-3 py-1.5 text-sm rounded-lg border transition ${statusFilter === 'DEPRECATED' ? 'bg-slate-200 text-slate-800 dark:bg-slate-600/30 dark:text-slate-200 border-slate-300 dark:border-slate-500/50' : 'bg-white text-slate-600 dark:bg-white/5 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'}`}
         >
-          Deprecated
+          {t('superadmin.playbookTemplates.filters.deprecated')}
         </button>
       </div>
 
@@ -310,43 +309,43 @@ export const PlaybookTemplatesListView: React.FC = () => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-400"></div>
         </div>
       ) : filteredTemplates.length === 0 ? (
-        <div className="bg-white/5 dark:bg-navy-900/20 rounded-lg border border-white/10 p-12 text-center">
-          <FileText className="mx-auto h-12 w-12 text-slate-500 dark:text-slate-400 mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No templates found</h3>
-          <p className="text-slate-400 dark:text-slate-500 mb-4">
-            Get started by creating your first playbook template.
+        <div className="bg-white dark:bg-navy-900/20 rounded-lg border border-slate-200 dark:border-white/10 p-12 text-center">
+          <FileText className="mx-auto h-12 w-12 text-slate-400 dark:text-slate-400 mb-4" />
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">{t('superadmin.playbookTemplates.empty.title')}</h3>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
+            {t('superadmin.playbookTemplates.empty.description')}
           </p>
           <button
-            onClick={() => toast('Template creation is available through the API.', { icon: 'ℹ️' })}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            onClick={() => setShowCreateModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
           >
             <Plus size={18} />
-            Create Template
+            {t('superadmin.playbookTemplates.empty.cta')}
           </button>
         </div>
       ) : (
-        <div className="bg-white/5 dark:bg-navy-900/20 rounded-lg border border-white/10 overflow-hidden">
-          <table className="min-w-full divide-y divide-white/10">
-            <thead className="bg-white/5 dark:bg-navy-900/20">
+        <div className="bg-white dark:bg-navy-900/20 rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
+          <table className="min-w-full divide-y divide-slate-200 dark:divide-white/10">
+            <thead className="bg-slate-50 dark:bg-navy-900/20">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                  Template
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                  {t('superadmin.playbookTemplates.table.template')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                  Trigger
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                  {t('superadmin.playbookTemplates.table.trigger')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                  Version
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                  {t('superadmin.playbookTemplates.table.version')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                  Status
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                  {t('superadmin.playbookTemplates.table.status')}
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                  Actions
+                <th className="px-6 py-3 text-right text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                  {t('superadmin.playbookTemplates.table.actions')}
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10">
+            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
               {filteredTemplates.map((template) => (
                 <tr
                   key={template.id}
@@ -356,7 +355,9 @@ export const PlaybookTemplatesListView: React.FC = () => {
                     <div className="flex items-center">
                       <FileText className="h-5 w-5 text-slate-500 dark:text-slate-400 mr-3" />
                       <div>
-                        <div className="text-sm font-medium text-white">{template.title}</div>
+                        <div className="text-sm font-medium text-slate-900 dark:text-white">
+                          {template.title}
+                        </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                           {template.key}
                         </div>
@@ -364,12 +365,14 @@ export const PlaybookTemplatesListView: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm text-slate-300 font-mono">
+                    <span className="text-sm text-slate-700 dark:text-slate-300 font-mono">
                       {template.triggerSignal || '—'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm text-slate-300">v{template.version}</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300">
+                      v{template.version}
+                    </span>
                   </td>
                   <td className="px-6 py-4">{getStatusBadge(template.status)}</td>
                   <td className="px-6 py-4 text-right">
@@ -377,21 +380,17 @@ export const PlaybookTemplatesListView: React.FC = () => {
                       {/* View/Edit */}
                       {template.status === TemplateStatus.DRAFT ? (
                         <button
-                          onClick={() =>
-                            toast('Edit this template through the API.', { icon: 'ℹ️' })
-                          }
-                          title="Edit"
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/20 rounded transition"
+                          onClick={() => setEditorTemplateId(template.id)}
+                          title={t('superadmin.playbookTemplates.actions.edit')}
+                          className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-primary-600 hover:bg-primary-500/10 rounded transition"
                         >
                           <Edit3 size={16} />
                         </button>
                       ) : (
                         <button
-                          onClick={() =>
-                            toast('Preview is available after generating a report.', { icon: 'ℹ️' })
-                          }
-                          title="View"
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/20 rounded transition"
+                          onClick={() => setEditorTemplateId(template.id)}
+                          title={t('superadmin.playbookTemplates.actions.view')}
+                          className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-primary-600 hover:bg-primary-500/10 rounded transition"
                         >
                           <Eye size={16} />
                         </button>
@@ -401,8 +400,8 @@ export const PlaybookTemplatesListView: React.FC = () => {
                       <button
                         onClick={() => handleValidate(template.id)}
                         disabled={validating === template.id}
-                        title="Validate"
-                        className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-400 hover:bg-blue-500/20 rounded transition disabled:opacity-50"
+                        title={t('superadmin.playbookTemplates.actions.validate')}
+                        className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-500/10 rounded transition disabled:opacity-50"
                       >
                         <AlertCircle size={16} />
                       </button>
@@ -411,8 +410,8 @@ export const PlaybookTemplatesListView: React.FC = () => {
                       {template.status === TemplateStatus.DRAFT && (
                         <button
                           onClick={() => handlePublish(template.id)}
-                          title="Publish"
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-green-400 hover:bg-green-500/20 rounded transition"
+                          title={t('superadmin.playbookTemplates.actions.publish')}
+                          className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-500/10 rounded transition"
                         >
                           <Check size={16} />
                         </button>
@@ -421,8 +420,8 @@ export const PlaybookTemplatesListView: React.FC = () => {
                       {/* Duplicate */}
                       <button
                         onClick={() => handleDuplicate(template.id)}
-                        title="Duplicate"
-                        className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/20 rounded transition"
+                        title={t('superadmin.playbookTemplates.actions.duplicate')}
+                        className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-primary-600 hover:bg-primary-500/10 rounded transition"
                       >
                         <Copy size={16} />
                       </button>
@@ -430,8 +429,8 @@ export const PlaybookTemplatesListView: React.FC = () => {
                       {/* Export */}
                       <button
                         onClick={() => handleExport(template.id)}
-                        title="Export JSON"
-                        className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded transition"
+                        title={t('superadmin.playbookTemplates.actions.export')}
+                        className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded transition"
                       >
                         <Download size={16} />
                       </button>
@@ -440,8 +439,8 @@ export const PlaybookTemplatesListView: React.FC = () => {
                       {template.status === TemplateStatus.PUBLISHED && (
                         <button
                           onClick={() => handleDeprecate(template.id)}
-                          title="Deprecate"
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-orange-400 hover:bg-orange-500/20 rounded transition"
+                          title={t('superadmin.playbookTemplates.actions.deprecate')}
+                          className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-amber-600 hover:bg-amber-500/10 rounded transition"
                         >
                           <Archive size={16} />
                         </button>
@@ -452,6 +451,75 @@ export const PlaybookTemplatesListView: React.FC = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-lg">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('superadmin.playbookTemplates.modal.title')}</h3>
+              <button onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('superadmin.playbookTemplates.modal.titleField')} *</label>
+                <input
+                  type="text"
+                  value={newTemplate.title}
+                  onChange={(e) => setNewTemplate({ ...newTemplate, title: e.target.value })}
+                  placeholder="e.g. Weekly Summary Report"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('superadmin.playbookTemplates.modal.keyField')} *</label>
+                <input
+                  type="text"
+                  value={newTemplate.key}
+                  onChange={(e) => setNewTemplate({ ...newTemplate, key: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '_') })}
+                  placeholder="e.g. weekly_summary"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('superadmin.playbookTemplates.modal.triggerField')} *</label>
+                <input
+                  type="text"
+                  value={newTemplate.triggerSignal}
+                  onChange={(e) => setNewTemplate({ ...newTemplate, triggerSignal: e.target.value })}
+                  placeholder="e.g. deadline_approaching"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('superadmin.playbookTemplates.modal.descriptionField')}</label>
+                <textarea
+                  value={newTemplate.description}
+                  onChange={(e) => setNewTemplate({ ...newTemplate, description: e.target.value })}
+                  placeholder="Brief description of this playbook template..."
+                  rows={3}
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 resize-none"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-200 dark:border-white/10">
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              >
+                {t('superadmin.playbookTemplates.modal.cancel')}
+              </button>
+              <button
+                onClick={handleCreateTemplate}
+                disabled={creating || !newTemplate.title.trim() || !newTemplate.key.trim() || !newTemplate.triggerSignal.trim()}
+                className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                {creating ? t('superadmin.playbookTemplates.modal.creating') : t('superadmin.playbookTemplates.modal.create')}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

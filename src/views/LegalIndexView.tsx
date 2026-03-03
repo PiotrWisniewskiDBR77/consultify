@@ -38,7 +38,7 @@ const LEGAL_DOCUMENTS: LegalDocumentCard[] = [
   {
     slug: 'terms',
     title: 'Terms of Service',
-    description: 'The main agreement governing your use of the Consultinity platform.',
+    description: 'The main agreement governing your use of the Consultify platform.',
     icon: <Scale className="w-5 h-5" />,
     iconBg: 'from-purple-500 to-indigo-600',
     required: true,
@@ -219,8 +219,8 @@ export const LegalIndexView: React.FC = () => {
               <span className="text-sm font-medium">Back to Home</span>
             </Link>
             <Link to="/" className="flex items-center gap-2 text-white">
-              <img src="/assets/logos/logo-dark.png" alt="Consultinity" className="h-6" />
-              <span className="font-bold">Consultinity</span>
+              <img src="/assets/logos/logo-dark.svg" alt="Consultify" className="h-6" />
+              <span className="font-bold">Consultify</span>
             </Link>
           </div>
         </div>
@@ -246,12 +246,12 @@ export const LegalIndexView: React.FC = () => {
             </div>
             <div>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">Legal Center</h1>
-              <p className="text-purple-200 text-lg mt-1">Consultinity by DBR77 Robotics</p>
+              <p className="text-purple-200 text-lg mt-1">Consultify by DBR77 Robotics</p>
             </div>
           </div>
           <p className="text-lg sm:text-xl text-slate-300 max-w-2xl leading-relaxed">
             Transparency is fundamental to our relationship with you. Here you'll find all the legal
-            documents that govern the use of Consultinity and how we handle your data.
+            documents that govern the use of Consultify and how we handle your data.
           </p>
 
           {/* Company Info Badges */}
@@ -282,7 +282,7 @@ export const LegalIndexView: React.FC = () => {
         <section className="mb-16">
           <SectionHeader
             title="Core Agreements"
-            description="Fundamental documents for all users of Consultinity."
+            description="Fundamental documents for all users of Consultify."
             icon={<FileText className="w-6 h-6" />}
             gradient="from-purple-500 to-indigo-600"
           />

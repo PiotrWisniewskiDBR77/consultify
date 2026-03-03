@@ -179,7 +179,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `consultinity-data-export-${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `consultify-data-export-${new Date().toISOString().split('T')[0]}.json`;
         a.click();
         URL.revokeObjectURL(url);
         toast.success(t('settings.data.exportSuccess', 'Data exported successfully'));

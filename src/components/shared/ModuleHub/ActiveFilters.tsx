@@ -31,14 +31,14 @@ export const ActiveFilters: React.FC<ActiveFiltersProps> = ({
 
   return (
     <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
-      <span className="text-xs text-slate-500 uppercase tracking-wider">Filters:</span>
+      <span className="text-[10px] text-slate-500 uppercase tracking-wider">Filters:</span>
 
       <div className="flex items-center gap-2 flex-wrap">
         {filters.map((filter) => (
           <div
             key={filter.id}
             className={`
-              flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium
+              flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium
               bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300
               ${filter.color ? `border-l-2 ${filter.color}` : ''}
             `}
@@ -57,7 +57,7 @@ export const ActiveFilters: React.FC<ActiveFiltersProps> = ({
 
       <button
         onClick={onClearAll}
-        className="text-xs text-slate-500 hover:text-primary-400 transition-colors ml-auto"
+        className="text-[11px] text-slate-500 hover:text-primary-400 transition-colors ml-auto"
       >
         Clear all
       </button>

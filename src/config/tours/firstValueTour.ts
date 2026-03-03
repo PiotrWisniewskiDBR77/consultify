@@ -16,8 +16,8 @@ export interface TourStep {
 export const FIRST_VALUE_TOUR: TourStep[] = [
   {
     target: '[data-tour="dashboard"]',
-    title: 'Welcome to Consultinity',
-    titlePl: 'Witamy w Consultinity',
+    title: 'Welcome to Consultify',
+    titlePl: 'Witamy w Consultify',
     content: 'This is your dashboard where you can see all your projects and tasks.',
     contentPl: 'To jest Twój dashboard, gdzie możesz zobaczyć wszystkie projekty i zadania.',
     placement: 'bottom',

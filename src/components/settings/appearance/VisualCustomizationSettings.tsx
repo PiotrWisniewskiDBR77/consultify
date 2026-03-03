@@ -172,7 +172,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
             {t('settings.appearance.visual.title', 'Visual Customization')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Personalize how Consultinity looks
+            Personalize how Consultify looks
           </p>
         </div>
         <div className="flex gap-2">

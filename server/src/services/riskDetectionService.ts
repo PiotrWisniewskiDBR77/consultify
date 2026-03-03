@@ -80,6 +80,13 @@ export async function detectRiskSignals(
   const now = new Date();
 
   try {
+    // Respect dismissals so signals do not re-appear after refresh.
+    const dismissedRows = ((await dbAll(
+      `SELECT id FROM risk_signal_alerts WHERE organization_id = ? AND is_dismissed = TRUE`,
+      [organizationId]
+    )) || []) as Array<{ id: string }>;
+    const dismissedIds = new Set(dismissedRows.map((r) => String(r.id)));
+
     let initQuery = `
       SELECT id, name, status, priority, planned_end_date, planned_start_date,
              start_date, sla_deadline, blocked_reason, blocked_at, progress,
@@ -279,7 +286,7 @@ export async function detectRiskSignals(
       return (sev[b.severity] || 0) - (sev[a.severity] || 0);
     });
 
-    return signals.slice(0, 50);
+    return signals.filter((s) => !dismissedIds.has(String(s.id))).slice(0, 50);
   } catch (err) {
     logger.error('Risk detection failed', err);
     return [];

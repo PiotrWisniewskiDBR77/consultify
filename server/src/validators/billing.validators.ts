@@ -182,7 +182,30 @@ export const SpendingAlertIdParamSchema = z.object({
   id: z.string().uuid(),
 });
 
+// ==========================================
+// USAGE PRICING TIERS
+// ==========================================
+
+export const CreateUsagePricingTierSchema = z.object({
+  name: z.string().min(1),
+  unit: z.string().min(1),
+  pricePerUnit: z.number().nonnegative(),
+  currency: z.string().default('USD'),
+  tierType: z.string().default('standard'),
+  minQuantity: z.number().int().nonnegative().default(0),
+  maxQuantity: z.number().int().positive().nullable().optional(),
+  isActive: z.boolean().default(true),
+});
+
+export const UpdateUsagePricingTierSchema = CreateUsagePricingTierSchema.partial();
+
+export const UsagePricingTierIdParamSchema = z.object({
+  id: z.string().min(1),
+});
+
 // Type exports
+export type CreateUsagePricingTierRequest = z.infer<typeof CreateUsagePricingTierSchema>;
+export type UpdateUsagePricingTierRequest = z.infer<typeof UpdateUsagePricingTierSchema>;
 export type CreateInvoiceRequest = z.infer<typeof CreateInvoiceRequestSchema>;
 export type UpdateInvoiceRequest = z.infer<typeof UpdateInvoiceRequestSchema>;
 export type CreateSubscriptionRequest = z.infer<typeof CreateSubscriptionRequestSchema>;

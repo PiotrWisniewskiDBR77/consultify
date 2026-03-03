@@ -402,6 +402,7 @@ export class LLMController {
         'is_active',
         'is_default',
         'cost_per_1k',
+        'markup_multiplier',
         'context_window',
       ];
       const setClauses: string[] = [];

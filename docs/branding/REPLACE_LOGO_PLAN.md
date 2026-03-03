@@ -6,7 +6,7 @@ in `Logo consultinity/`.
 
 ## What is already covered (auto-updated via generated assets)
 
-These components reference `/assets/logos/logo-{light,dark}.png` and will automatically show the new
+These components reference `/assets/logos/logo-{light,dark}.svg` and will automatically show the new
 Consultinity logo after regeneration:
 
 - `src/components/navigation/Sidebar/SidebarHeader.tsx`

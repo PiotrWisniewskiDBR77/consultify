@@ -160,7 +160,7 @@ export const PublicReportView: React.FC = () => {
           <p className="flex items-center justify-center gap-2">
             <Lock className="w-4 h-4" />
             {t('reports.sharedSnapshotFooter', 'This is a read-only shared snapshot')} •
-            Consultinity
+            Consultify
           </p>
           <p className="text-xs mt-1 text-gray-400 dark:text-gray-500 dark:text-gray-400">
             {t('reports.snapshotGeneratedAt', 'Generated')}:{' '}

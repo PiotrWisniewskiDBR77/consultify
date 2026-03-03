@@ -70,6 +70,7 @@ router.post(
       assumptions,
       projectId,
       initiativeId,
+      sourceStatementId,
     } = req.body;
     if (!name || !startDate) return res.status(400).json({ error: 'name and startDate required' });
 
@@ -86,6 +87,7 @@ router.post(
       scenario,
       assumptions,
       createdBy: userId,
+      sourceStatementId,
     });
 
     logger.info(`[FinancialModeling] Model created: ${id} by ${userId}`);

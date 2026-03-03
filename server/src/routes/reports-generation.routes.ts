@@ -110,7 +110,7 @@ router.post(
       password,
       expiresInDays,
       showCompanyLogo,
-      showConsultinityBranding,
+      showConsultifyBranding,
       customMessage,
     } = req.body;
 
@@ -122,7 +122,7 @@ router.post(
       password,
       expiresInDays,
       showCompanyLogo,
-      showConsultinityBranding,
+      showConsultifyBranding,
       customMessage,
     });
 

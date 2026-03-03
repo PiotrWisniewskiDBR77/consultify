@@ -20,7 +20,7 @@ import { useNavigate } from 'react-router-dom';
 /**
  * BecomePartnerView — Partner Recruitment Landing Page
  *
- * Public-facing page inviting potential partners to join the Consultinity
+ * Public-facing page inviting potential partners to join the Consultify
  * PMO + AI ecosystem. Links back to main landing page and partner portal.
  */
 
@@ -121,7 +121,7 @@ export const BecomePartnerView: React.FC = () => {
               <span className="text-white font-bold text-sm tracking-tight">C</span>
             </div>
             <span className="text-xl font-bold tracking-[0.1em] text-white/90 group-hover:text-white transition-colors duration-500">
-              CONSULTINITY
+              CONSULTIFY
             </span>
           </button>
 
@@ -150,7 +150,7 @@ export const BecomePartnerView: React.FC = () => {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-600/10 border border-violet-500/20 mb-8">
             <Sparkles size={16} className="text-violet-400" />
             <span className="text-sm font-medium text-violet-300">
-              Program Partnerski Consultinity
+              Program Partnerski Consultify
             </span>
           </div>
 
@@ -163,7 +163,7 @@ export const BecomePartnerView: React.FC = () => {
           </h1>
 
           <p className="text-xl md:text-2xl text-white/60 font-light max-w-3xl mx-auto mb-12 leading-relaxed">
-            Dołącz do sieci partnerów wykorzystujących Consultinity do transformacji cyfrowej
+            Dołącz do sieci partnerów wykorzystujących Consultify do transformacji cyfrowej
             organizacji. Profesjonalne standardy PMO połączone z mocą sztucznej inteligencji.
           </p>
 
@@ -185,7 +185,7 @@ export const BecomePartnerView: React.FC = () => {
               onClick={handleLearnMoreClick}
               className="inline-flex items-center gap-2 text-white/60 hover:text-white font-medium text-lg px-6 py-4 rounded-xl hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-all duration-300"
             >
-              Poznaj Consultinity
+              Poznaj Consultify
               <ArrowRight size={18} />
             </button>
           </div>
@@ -196,7 +196,7 @@ export const BecomePartnerView: React.FC = () => {
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Co Zyskujesz jako Partner</h2>
             <p className="text-white/50 text-lg max-w-2xl mx-auto">
-              Współpraca z Consultinity otwiera nowe możliwości rozwoju Twojej praktyki doradczej.
+              Współpraca z Consultify otwiera nowe możliwości rozwoju Twojej praktyki doradczej.
             </p>
           </div>
 
@@ -315,7 +315,7 @@ export const BecomePartnerView: React.FC = () => {
           <BadgeCheck size={48} className="text-violet-400 mx-auto mb-6" />
           <h2 className="text-3xl md:text-4xl font-bold mb-6">Gotowy na Współpracę?</h2>
           <p className="text-white/60 text-lg mb-8 max-w-xl mx-auto">
-            Dołącz do grona partnerów Consultinity i wspólnie dostarczajmy profesjonalne rozwiązania
+            Dołącz do grona partnerów Consultify i wspólnie dostarczajmy profesjonalne rozwiązania
             PMO + AI dla organizacji w transformacji.
           </p>
           <button
@@ -343,7 +343,7 @@ export const BecomePartnerView: React.FC = () => {
             <div className="h-6 px-2 rounded bg-violet-600 flex items-center justify-center">
               <span className="text-white font-bold text-[10px] tracking-tight">C</span>
             </div>
-            <span className="text-sm font-bold tracking-[0.1em] text-white">CONSULTINITY</span>
+            <span className="text-sm font-bold tracking-[0.1em] text-white">CONSULTIFY</span>
           </button>
 
           <div className="flex items-center gap-8 text-xs font-semibold text-white/30 tracking-widest uppercase">

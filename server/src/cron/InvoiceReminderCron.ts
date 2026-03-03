@@ -283,7 +283,7 @@ function generateReminderEmailHtml(data: {
             }
             
             <p>
-                <a href="${process.env.FRONTEND_URL || 'https://app.consultinity.com'}/settings/billing" 
+                <a href="${process.env.FRONTEND_URL || 'https://app.consultify.com'}/settings/billing" 
                    style="display: inline-block; background: ${color}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
                     Pay Now
                 </a>
@@ -291,10 +291,10 @@ function generateReminderEmailHtml(data: {
             
             <p>If you have already made this payment, please disregard this reminder.</p>
             
-            <p>Best regards,<br>The Consultinity Team</p>
+            <p>Best regards,<br>The Consultify Team</p>
         </div>
         <div class="footer">
-            <p>© ${new Date().getFullYear()} Consultinity. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} Consultify. All rights reserved.</p>
         </div>
     </div>
 </body>

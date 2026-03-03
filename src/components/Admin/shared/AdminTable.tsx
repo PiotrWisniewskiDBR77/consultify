@@ -46,7 +46,9 @@ export function AdminTable<T extends Record<string, any>>({
 
   if (loading) {
     return (
-      <div className={`border border-white/[0.06] rounded-xl overflow-hidden ${className}`}>
+      <div
+        className={`border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-transparent rounded-xl overflow-hidden ${className}`}
+      >
         <div className="p-8 flex items-center justify-center">
           <Loader2 className="w-5 h-5 text-slate-500 dark:text-slate-400 animate-spin" />
         </div>
@@ -56,7 +58,9 @@ export function AdminTable<T extends Record<string, any>>({
 
   if (data.length === 0) {
     return (
-      <div className={`border border-white/[0.06] rounded-xl overflow-hidden ${className}`}>
+      <div
+        className={`border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-transparent rounded-xl overflow-hidden ${className}`}
+      >
         <div className="p-8 text-center text-slate-500 dark:text-slate-400 text-sm">
           {emptyMessage}
         </div>
@@ -65,17 +69,19 @@ export function AdminTable<T extends Record<string, any>>({
   }
 
   return (
-    <div className={`border border-white/[0.06] rounded-xl overflow-hidden ${className}`}>
+    <div
+      className={`border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-transparent rounded-xl overflow-hidden ${className}`}
+    >
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
-            <tr className="border-b border-white/[0.06]">
+            <tr className="border-b border-slate-200 dark:border-white/[0.06]">
               {columns.map((col) => (
                 <th
                   key={String(col.key)}
                   style={{ width: col.width }}
                   className={`
-                                        ${paddingClass} text-xs font-medium text-slate-500 dark:text-slate-400 
+                                        ${paddingClass} text-xs font-medium text-slate-600 dark:text-slate-400 
                                         uppercase tracking-wider
                                         ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'}
                                         ${col.className || ''}
@@ -92,8 +98,8 @@ export function AdminTable<T extends Record<string, any>>({
                 key={String(item[keyField]) || rowIndex}
                 onClick={() => onRowClick?.(item)}
                 className={`
-                                    border-b border-white/[0.04] last:border-b-0
-                                    hover:bg-white/[0.02] transition-colors
+                                    border-b border-slate-100 dark:border-white/[0.04] last:border-b-0
+                                    hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors
                                     ${onRowClick ? 'cursor-pointer' : ''}
                                 `}
               >
@@ -101,7 +107,7 @@ export function AdminTable<T extends Record<string, any>>({
                   <td
                     key={String(col.key)}
                     className={`
-                                            ${paddingClass} text-sm text-slate-300
+                                            ${paddingClass} text-sm text-slate-700 dark:text-slate-300
                                             ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'}
                                             ${col.className || ''}
                                         `.trim()}
@@ -206,8 +212,8 @@ export const TableAction: React.FC<TableActionProps> = ({
       }}
       className={`p-1.5 rounded-lg transition-colors ${
         variant === 'danger'
-          ? 'text-slate-400 dark:text-slate-500 hover:text-red-400 hover:bg-red-500/10'
-          : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-white/[0.04]'
+          ? 'text-slate-600 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10'
+          : 'text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04]'
       }`}
       title={label}
     >

@@ -8,6 +8,7 @@
  */
 
 import {
+  Activity,
   AlertTriangle,
   ArrowRight,
   Calendar,
@@ -16,6 +17,7 @@ import {
   ChevronRight,
   Clock,
   Cpu,
+  Database,
   DollarSign,
   ExternalLink,
   Eye,
@@ -26,6 +28,7 @@ import {
   Grid3X3,
   Library,
   Lightbulb,
+  Layers,
   List,
   ListTodo,
   Loader2,
@@ -34,10 +37,12 @@ import {
   Plus,
   Settings,
   Shield,
+  Sparkles,
   Target,
   TrendingUp,
   User,
   Users,
+  Workflow,
   X,
   Zap,
 } from 'lucide-react';
@@ -65,7 +70,27 @@ import {
   ToolSessionPreviewV3Footer,
   type ToolSessionPreviewDetails,
 } from '../DiscoveryTools/ToolSessionPreviewV3';
+import {
+  KnownToolPreviewV3Body,
+  KnownToolPreviewV3Footer,
+  type KnownToolFull,
+} from '../DiscoveryTools/KnownToolPreviewV3';
+import {
+  AssessmentSessionPreviewV3Body,
+  AssessmentSessionPreviewV3Footer,
+  type AssessmentSessionPreviewDetails,
+} from '../assessment/AssessmentSessionPreviewV3';
+import {
+  AssessmentFrameworkPreviewV3Body,
+  AssessmentFrameworkPreviewV3Footer,
+  type AssessmentFrameworkPreviewModel,
+} from '../assessment/AssessmentFrameworkPreviewV3';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
+import {
+  InitiativePreviewV3Body,
+  InitiativePreviewV3Footer,
+  type InitiativePreviewV3Model,
+} from '../Initiatives/InitiativePreviewV3';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import {
   FilterableTable,
@@ -123,6 +148,12 @@ const DISCOVERY_STATUSES: StatusFilterOption[] = [
     label: 'Pending Review',
     color: 'text-orange-400',
     bgColor: 'bg-orange-500',
+  },
+  {
+    id: 'executing',
+    label: 'In Progress',
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500',
   },
 ];
 
@@ -188,40 +219,103 @@ const CATEGORY_META: Record<
   {
     name: string;
     icon: React.ReactNode;
-    color: string;
+    textClass: string;
     count: number;
   }
 > = {
   strategic: {
     name: 'Strategy',
     icon: <Target size={16} />,
-    color: 'emerald',
+    textClass: 'text-emerald-400',
     count: 10,
   },
   operational: {
     name: 'Operations',
     icon: <Settings size={16} />,
-    color: 'blue',
+    textClass: 'text-blue-400',
     count: 10,
   },
   digital: {
     name: 'Digital',
     icon: <Cpu size={16} />,
-    color: 'purple',
+    textClass: 'text-purple-400',
     count: 10,
   },
   automation: {
     name: 'Process Auto',
     icon: <Zap size={16} />,
-    color: 'amber',
+    textClass: 'text-amber-400',
     count: 1,
   },
   licensed: {
-    name: 'Licensed',
+    name: 'Assessments',
     icon: <Shield size={16} />,
-    color: 'rose',
-    count: 3,
+    textClass: 'text-rose-400',
+    count: 5,
   },
+};
+
+type AssessmentFramework = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
+
+const ASSESSMENT_FRAMEWORK_META: Record<
+  AssessmentFramework,
+  {
+    name: string;
+    shortName: string;
+    icon: React.ReactNode;
+    tags: string[];
+  }
+> = {
+  DRD: {
+    name: 'Digital Readiness Diagnosis',
+    shortName: 'DRD',
+    icon: <Activity size={16} className="text-rose-400" />,
+    tags: ['assessment', 'digital', 'readiness'],
+  },
+  SIRI: {
+    name: 'Smart Industry Readiness Index',
+    shortName: 'SIRI',
+    icon: <Cpu size={16} className="text-rose-400" />,
+    tags: ['assessment', 'industry-4.0', 'readiness'],
+  },
+  ADMA: {
+    name: 'Advanced Digital Maturity Assessment',
+    shortName: 'ADMA',
+    icon: <Database size={16} className="text-rose-400" />,
+    tags: ['assessment', 'maturity', 'digital'],
+  },
+  CMMI: {
+    name: 'Capability Maturity Model Integration',
+    shortName: 'CMMI',
+    icon: <Layers size={16} className="text-rose-400" />,
+    tags: ['assessment', 'process', 'maturity'],
+  },
+  LEAN: {
+    name: 'Lean 4.0',
+    shortName: 'LEAN',
+    icon: <Workflow size={16} className="text-rose-400" />,
+    tags: ['assessment', 'lean', 'operations'],
+  },
+};
+
+type LibraryItemKind = 'tool' | 'assessment';
+
+type UnifiedLibraryItem = {
+  kind: LibraryItemKind;
+  id: string;
+  toolType: string;
+  name: string;
+  libraryCategory: ToolCategory;
+  description: string;
+  whatYouGet: string[];
+  tags: string[];
+  icon: string | null;
+  isLicensed: boolean;
+  isComingSoon: boolean;
+  sortOrder: number;
+  createdAt: string | null;
+  /** Normalized field for table filtering */
+  license: 'licensed' | 'free';
 };
 
 // Tool metadata
@@ -499,6 +593,26 @@ interface DisplayItem {
   _fullData?: any; // Full initiative data for detail view
 }
 
+type OutputKind = 'assessment_report' | 'report_builder' | 'presentation_deck';
+
+interface OutputItem {
+  kind: 'output';
+  outputKind: OutputKind;
+  id: string;
+  name: string;
+  status: ItemStatus;
+  updatedAt: Date;
+  createdAt?: Date;
+  projectId?: string;
+  /**
+   * For traceability / filtering (best-effort)
+   * Example: tool_session / assessment / upload_bundle
+   */
+  sourceType?: string | null;
+  sourceId?: string | null;
+  _fullData?: any;
+}
+
 // Task interface for initiatives
 interface InitiativeTask {
   id: string;
@@ -560,6 +674,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   const [previewItemId, setPreviewItemId] = useState<string | null>(null);
   const [previewFullSession, setPreviewFullSession] = useState<any | null>(null);
   const [previewFullLoading, setPreviewFullLoading] = useState(false);
+  const [previewFullAssessment, setPreviewFullAssessment] = useState<any | null>(null);
+  const [previewFullAssessmentLoading, setPreviewFullAssessmentLoading] = useState(false);
+  const [previewKnownTool, setPreviewKnownTool] = useState<KnownToolFull | null>(null);
+  const [previewKnownToolLoading, setPreviewKnownToolLoading] = useState(false);
   const [autoExportPdfForId, setAutoExportPdfForId] = useState<string | null>(null);
   const [generateInitiativesForId, setGenerateInitiativesForId] = useState<string | null>(null);
   const [generationDefaults, setGenerationDefaults] = useState({
@@ -570,11 +688,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId, hydrated } =
     useModuleOpenDocuments('tools');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [libraryCategoryFilter, setLibraryCategoryFilter] = useState<
+    'all' | 'strategic' | 'operational' | 'digital' | 'automation' | 'licensed' | 'other'
+  >('all');
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const statusDropdownRef = React.useRef<HTMLDivElement>(null);
   const [isViewDropdownOpen, setIsViewDropdownOpen] = useState(false);
   const viewDropdownRef = React.useRef<HTMLDivElement>(null);
-  const [initiativeDetailsExpanded, setInitiativeDetailsExpanded] = useState(false);
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const [addMenuCategory, setAddMenuCategory] = useState<ToolCategory | 'all'>('all');
   const [addMenuQuery, setAddMenuQuery] = useState('');
@@ -591,8 +711,21 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
 
   // Data State
   const [discoveries, setDiscoveries] = useState<DisplayItem[]>([]);
-  const [reports, setReports] = useState<DisplayItem[]>([]);
+  const [outputs, setOutputs] = useState<OutputItem[]>([]);
   const [initiatives, setInitiatives] = useState<DisplayItem[]>([]);
+  const [assessmentSessions, setAssessmentSessions] = useState<
+    Array<{
+      id: string;
+      name: string;
+      assessmentType: string;
+      status: ItemStatus;
+      progress: number;
+      createdAt?: Date;
+      updatedAt: Date;
+      projectId?: string;
+      _fullData?: any;
+    }>
+  >([]);
   const [knownTools, setKnownTools] = useState<
     Array<{
       id: string;
@@ -647,6 +780,52 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     };
   }, []);
 
+  const transformAssessmentSession = useCallback((session: any) => {
+    const rawType =
+      String(
+        session?.assessmentType ||
+          session?.assessment_type ||
+          session?.framework ||
+          session?.type ||
+          ''
+      ).trim() || 'DRD';
+    const rawName = String(session?.name || session?.title || '').trim();
+
+    const statusMap: Record<string, ItemStatus> = {
+      DRAFT: 'DRAFT',
+      IN_PROGRESS: 'EXECUTING',
+      EXECUTING: 'EXECUTING',
+      REVIEW: 'PENDING_REVIEW',
+      IN_REVIEW: 'PENDING_REVIEW',
+      PENDING_REVIEW: 'PENDING_REVIEW',
+      APPROVED: 'APPROVED',
+      GENERATED: 'DONE',
+      COMPLETED: 'DONE',
+      DONE: 'DONE',
+    };
+
+    const status = statusMap[String(session?.status || 'DRAFT').toUpperCase()] || 'DRAFT';
+    const progressRaw =
+      session?.completionPercent ??
+      session?.completion_percent ??
+      session?.progress ??
+      session?.completion ??
+      0;
+    const progress = Number.isFinite(Number(progressRaw)) ? Number(progressRaw) : 0;
+
+    return {
+      id: String(session?.id || ''),
+      name: rawName || `${rawType} Assessment`,
+      assessmentType: rawType,
+      status,
+      progress,
+      createdAt: session?.createdAt ? new Date(session.createdAt) : undefined,
+      updatedAt: session?.updatedAt ? new Date(session.updatedAt) : new Date(),
+      projectId: session?.projectId || session?.project_id,
+      _fullData: session,
+    };
+  }, []);
+
   // Fetch data from API
   const fetchData = useCallback(
     async (showRefreshIndicator = false) => {
@@ -657,12 +836,23 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       }
 
       try {
-        // Fetch all tool sessions
-        const response = await Api.listToolSessions({
-          projectId: currentProjectId || undefined,
-        });
+        const [toolSessionsRes, assessmentRes, assessmentReports, reportBuilderList, decksList] =
+          await Promise.all([
+          Api.listToolSessions({
+            projectId: currentProjectId || undefined,
+          }),
+          Api.listAssessments({
+            projectId: currentProjectId || undefined,
+            limit: 100,
+            offset: 0,
+          }).catch(() => ({ items: [] as any[] })),
+          Api.getAssessmentReports(currentProjectId || undefined).catch(() => []),
+          Api.get('/report-builder').catch(() => ({ reports: [] as any[] })),
+          Api.get('/presentations/decks').catch(() => ({ success: true, data: [] as any[] })),
+        ]);
 
-        const allSessions = (response.items || []).map(transformToolSession);
+        const allSessions = (toolSessionsRes.items || []).map(transformToolSession);
+        const allAssessments = ((assessmentRes as any)?.items || []).map(transformAssessmentSession);
 
         // Split by status for different tabs
         // Discovery: DRAFT, REVIEW (work in progress)
@@ -671,21 +861,142 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         );
         setDiscoveries(discoveryItems);
 
-        // Reports: APPROVED, COMPLETED (finished analyses)
-        const reportItems = allSessions.filter(
-          (s) => s.status === 'APPROVED' || s.status === 'DONE'
-        );
-        setReports(reportItems);
+        // Outputs: real artifacts (assessment reports → redirect to report builder, report builder reports, decks)
+        const mapOutputStatus = (raw: any): ItemStatus => {
+          const s = String(raw || '').toUpperCase();
+          const map: Record<string, ItemStatus> = {
+            DRAFT: 'DRAFT',
+            GENERATING: 'EXECUTING',
+            IN_PROGRESS: 'EXECUTING',
+            PENDING_APPROVAL: 'PENDING_REVIEW',
+            IN_REVIEW: 'PENDING_REVIEW',
+            REVIEW: 'PENDING_REVIEW',
+            APPROVED: 'APPROVED',
+            FINAL: 'DONE',
+            COMPLETED: 'DONE',
+            DONE: 'DONE',
+            UTILIZED: 'DONE',
+            REJECTED: 'CANCELLED',
+            ARCHIVED: 'ARCHIVED',
+            CANCELLED: 'CANCELLED',
+            FAILED: 'BLOCKED',
+            ERROR: 'BLOCKED',
+          };
+          return map[s] || 'DRAFT';
+        };
 
-        // Initiatives: Fetch DRAFT initiatives (generated from tools/assessment)
+        const normalizeDate = (v: any): Date => {
+          try {
+            const d = v ? new Date(v) : new Date();
+            return Number.isFinite(d.getTime()) ? d : new Date();
+          } catch {
+            return new Date();
+          }
+        };
+
+        const assessmentReportRows: OutputItem[] = (Array.isArray(assessmentReports) ? assessmentReports : [])
+          .slice(0, 200)
+          .map((r: any) => ({
+            kind: 'output' as const,
+            outputKind: 'assessment_report' as const,
+            id: String(r?.id || ''),
+            name: String(r?.name || r?.title || 'Assessment Report'),
+            status: mapOutputStatus(r?.status),
+            createdAt: r?.createdAt ? normalizeDate(r.createdAt) : undefined,
+            updatedAt: normalizeDate(r?.updatedAt || r?.updated_at || r?.createdAt || r?.created_at),
+            projectId: r?.projectId || r?.project_id || currentProjectId || undefined,
+            sourceType: 'assessment',
+            sourceId: r?.assessmentId || r?.assessment_id || null,
+            _fullData: r,
+          }))
+          .filter((r: any) => Boolean(r.id));
+
+        const reportBuilderRowsRaw = (reportBuilderList as any)?.reports || (reportBuilderList as any)?.data || [];
+        const reportBuilderRows: OutputItem[] = (Array.isArray(reportBuilderRowsRaw) ? reportBuilderRowsRaw : [])
+          .slice(0, 200)
+          .map((r: any) => ({
+            kind: 'output' as const,
+            outputKind: 'report_builder' as const,
+            id: String(r?.id || ''),
+            name: String(r?.title || r?.name || 'Report'),
+            status: mapOutputStatus(r?.status),
+            createdAt: r?.createdAt ? normalizeDate(r.createdAt) : (r?.created_at ? normalizeDate(r.created_at) : undefined),
+            updatedAt: normalizeDate(r?.updatedAt || r?.updated_at || r?.createdAt || r?.created_at),
+            projectId: currentProjectId || undefined,
+            sourceType: r?.sourceType || r?.source_type || null,
+            sourceId: r?.sourceId || r?.source_id || null,
+            _fullData: r,
+          }))
+          .filter((r: any) => Boolean(r.id));
+
+        const decksRaw = (decksList as any)?.data || [];
+        const deckRows: OutputItem[] = (Array.isArray(decksRaw) ? decksRaw : [])
+          .slice(0, 200)
+          .map((d: any) => ({
+            kind: 'output' as const,
+            outputKind: 'presentation_deck' as const,
+            id: String(d?.id || ''),
+            name: String(d?.title || 'Presentation'),
+            status: mapOutputStatus(d?.status),
+            createdAt: d?.created_at ? normalizeDate(d.created_at) : undefined,
+            updatedAt: normalizeDate(d?.updated_at || d?.updatedAt || d?.created_at),
+            projectId: currentProjectId || undefined,
+            sourceType: null,
+            sourceId: null,
+            _fullData: d,
+          }))
+          .filter((r: any) => Boolean(r.id));
+
+        const mergedOutputs = [...assessmentReportRows, ...reportBuilderRows, ...deckRows].sort(
+          (a, b) => Number(b.updatedAt.getTime()) - Number(a.updatedAt.getTime())
+        );
+        setOutputs(mergedOutputs);
+
+        const inProgressAssessments = allAssessments.filter(
+          (a: any) =>
+            a.status === 'DRAFT' ||
+            a.status === 'PENDING_REVIEW' ||
+            a.status === 'EXECUTING' ||
+            a.status === 'PLANNING'
+        );
+        setAssessmentSessions(inProgressAssessments);
+
+        // Initiatives: Fetch initiatives derived from tools/assessments (traceability).
         try {
           const initiativesList = await Api.getInitiativesByStatus(
-            'DRAFT',
+            [
+              'DRAFT',
+              'PENDING_REVIEW',
+              'REVIEW',
+              'PLANNING',
+              'APPROVED',
+              'SCHEDULED',
+              'EXECUTING',
+              'BLOCKED',
+              'DONE',
+              'TRACKING',
+              'CANCELLED',
+            ].join(','),
             currentProjectId || undefined
           );
 
           // Map initiatives to display format
-          const draftInitiatives = initiativesList.slice(0, 100).map((i: any) => ({
+          const traceable = (initiativesList || []).filter((i: any) => {
+            const st = String(i?.sourceType || i?.source_type || '').toLowerCase();
+            const sid = String(i?.sourceId || i?.source_id || '').trim();
+            if (!sid) return false;
+            // We treat only tool/assessment-derived initiatives as part of Tools hub "Initiatives".
+            return (
+              st === 'tool' ||
+              st === 'assessment' ||
+              st === 'assessment_report' ||
+              st === 'assessment_drd' ||
+              st === 'assessment_siri' ||
+              st === 'assessment_adma'
+            );
+          });
+
+          const rows = traceable.slice(0, 150).map((i: any) => ({
             id: i.id,
             name: i.title || i.name || 'Untitled Initiative',
             toolType: 'SWT' as ToolType,
@@ -703,7 +1014,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
             // Keep full initiative data for detail view
             _fullData: i,
           }));
-          setInitiatives(draftInitiatives);
+          setInitiatives(rows);
         } catch (err) {
           console.warn('[DiscoveryToolsHub] Failed to fetch initiatives:', err);
           setInitiatives([]);
@@ -716,7 +1027,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         setIsRefreshing(false);
       }
     },
-    [currentProjectId, transformToolSession]
+    [currentProjectId, transformAssessmentSession, transformToolSession]
   );
 
   // Fetch data on mount and when projectId changes
@@ -826,7 +1137,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     setPreviewItemId(null);
     setPreviewFullSession(null);
     setPreviewFullLoading(false);
-    setInitiativeDetailsExpanded(false);
+    setPreviewFullAssessment(null);
+    setPreviewFullAssessmentLoading(false);
     setIsAddMenuOpen(false);
     setAddMenuCategory('all');
     setAddMenuQuery('');
@@ -838,48 +1150,130 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   }, [activeDocumentId]);
 
   useEffect(() => {
-    if (viewMode !== 'table') setPreviewItemId(null);
-  }, [viewMode]);
+    const supportsPreview = viewMode === 'table' || (activeTab === 'library' && viewMode === 'grid');
+    if (!supportsPreview) setPreviewItemId(null);
+  }, [activeTab, viewMode]);
+
+  // View modes: we currently support Grid only in Library.
+  useEffect(() => {
+    if (activeTab !== 'library' && viewMode === 'grid') setViewMode('table');
+  }, [activeTab, viewMode]);
 
   // Tools → Initiatives: preview needs richer data (owners/tasks), so fetch on selection.
   useEffect(() => {
     if (activeTab !== 'initiatives') return;
     if (!previewItemId) return;
-    setInitiativeDetailsExpanded(false);
     void fetchInitiativeDetails(previewItemId);
   }, [activeTab, fetchInitiativeDetails, previewItemId]);
 
-  // Tools → Sessions/Outputs: fetch full tool session for canonical preview.
+  // Tools → Sessions: fetch full session for canonical preview.
   useEffect(() => {
     const shouldFetch =
-      Boolean(previewItemId) && (activeTab === 'sessions' || activeTab === 'outputs' || activeTab === 'reports');
+      Boolean(previewItemId) && (activeTab === 'sessions' || activeTab === 'list');
     if (!shouldFetch) {
       setPreviewFullSession(null);
       setPreviewFullLoading(false);
+      setPreviewFullAssessment(null);
+      setPreviewFullAssessmentLoading(false);
       return;
     }
 
     let cancelled = false;
-    setPreviewFullSession(null);
-    setPreviewFullLoading(true);
-    Api.getToolSession(String(previewItemId))
+    const isAssessment =
+      activeTab === 'sessions' && (assessmentSessions || []).some((a) => String(a.id) === String(previewItemId));
+
+    if (isAssessment) {
+      setPreviewFullAssessment(null);
+      setPreviewFullAssessmentLoading(true);
+      setPreviewFullSession(null);
+      setPreviewFullLoading(false);
+
+      Api.getAssessmentSession(String(previewItemId))
+        .then((res) => {
+          if (cancelled) return;
+          setPreviewFullAssessment(res || null);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setPreviewFullAssessment(null);
+        })
+        .finally(() => {
+          if (cancelled) return;
+          setPreviewFullAssessmentLoading(false);
+        });
+    } else {
+      setPreviewFullSession(null);
+      setPreviewFullLoading(true);
+      setPreviewFullAssessment(null);
+      setPreviewFullAssessmentLoading(false);
+
+      Api.getToolSession(String(previewItemId))
+        .then((res) => {
+          if (cancelled) return;
+          setPreviewFullSession(res || null);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setPreviewFullSession(null);
+        })
+        .finally(() => {
+          if (cancelled) return;
+          setPreviewFullLoading(false);
+        });
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, assessmentSessions, previewItemId]);
+
+  // Tools → Library: fetch full known tool details for canonical preview.
+  useEffect(() => {
+    const shouldFetch = Boolean(previewItemId) && activeTab === 'library';
+    if (!shouldFetch) {
+      setPreviewKnownTool(null);
+      setPreviewKnownToolLoading(false);
+      return;
+    }
+
+    if (String(previewItemId || '').startsWith('assessment:')) {
+      setPreviewKnownTool(null);
+      setPreviewKnownToolLoading(false);
+      return;
+    }
+
+    const selected = knownTools.find((k) => k.id === previewItemId);
+    const toolType =
+      String(previewItemId) === 'tool:process-automation'
+        ? 'process-automation'
+        : String(selected?.toolType || '').trim();
+    if (!toolType) {
+      setPreviewKnownTool(null);
+      setPreviewKnownToolLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setPreviewKnownTool(null);
+    setPreviewKnownToolLoading(true);
+    Api.getKnownTool(toolType, { lang })
       .then((res) => {
         if (cancelled) return;
-        setPreviewFullSession(res || null);
+        setPreviewKnownTool((res as any)?.tool || null);
       })
       .catch(() => {
         if (cancelled) return;
-        setPreviewFullSession(null);
+        setPreviewKnownTool(null);
       })
       .finally(() => {
         if (cancelled) return;
-        setPreviewFullLoading(false);
+        setPreviewKnownToolLoading(false);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [activeTab, previewItemId]);
+  }, [activeTab, lang, knownTools, previewItemId]);
 
   // Close status dropdown when clicking outside
   useEffect(() => {
@@ -918,24 +1312,33 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
 
   // Tab configuration with dynamic counts
   const tabs = useMemo(
-    () => [
-      {
-        id: 'library' as ModuleTab,
-        label: t('tools.hub.tabs.library', 'Library'),
-        icon: <Library size={16} />,
-        count: knownTools.length,
-      },
+    () => {
+      const hasAutomationInKnownTools = (knownTools || []).some(
+        (k) => String(k?.toolType || '').trim() === 'process-automation'
+      );
+      const libraryCount =
+        (knownTools || []).length +
+        Object.keys(ASSESSMENT_FRAMEWORK_META).length +
+        (hasAutomationInKnownTools ? 0 : 1);
+
+      return [
+        {
+          id: 'library' as ModuleTab,
+          label: t('tools.hub.tabs.library', 'Library'),
+          icon: <Library size={16} />,
+          count: libraryCount,
+        },
       {
         id: 'sessions' as ModuleTab,
         label: t('tools.hub.tabs.sessions', 'Sessions'),
         icon: <Play size={16} />,
-        count: discoveries.length,
+        count: discoveries.length + assessmentSessions.length,
       },
       {
         id: 'outputs' as ModuleTab,
         label: t('tools.hub.tabs.outputs', 'Outputs'),
         icon: <FolderOutput size={16} />,
-        count: reports.length,
+        count: outputs.length,
       },
       {
         id: 'initiatives' as ModuleTab,
@@ -943,8 +1346,16 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         icon: <Lightbulb size={16} />,
         count: initiatives.length,
       },
-    ],
-    [discoveries.length, reports.length, initiatives.length, knownTools.length, t]
+      ];
+    },
+    [
+      assessmentSessions.length,
+      discoveries.length,
+      initiatives.length,
+      knownTools,
+      outputs.length,
+      t,
+    ]
   );
 
   // Table columns
@@ -952,7 +1363,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     () => [
       {
         id: 'toolType',
-        label: 'Type',
+        label: t('tools.hub.table.type', 'Type'),
         width: '120px',
         filterable: true,
         filterOptions: Object.entries(TOOL_META).map(([key, meta]) => ({
@@ -964,7 +1375,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
           const categoryMeta = CATEGORY_META[meta?.category || 'strategic'];
           return (
             <div className="flex items-center gap-2">
-              <span className={`text-${categoryMeta.color}-400`}>{categoryMeta.icon}</span>
+              <span className={categoryMeta.textClass}>{categoryMeta.icon}</span>
               <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
                 {meta?.shortName || row.toolType}
               </span>
@@ -974,7 +1385,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       },
       {
         id: 'name',
-        label: 'Name',
+        label: t('tools.hub.table.name', 'Name'),
         render: (row) => (
           <div className="min-w-0">
             <span className="block text-sm text-slate-900 dark:text-white font-medium truncate">
@@ -985,7 +1396,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       },
       {
         id: 'category',
-        label: 'Category',
+        label: t('tools.hub.table.category', 'Category'),
         width: '130px',
         filterable: true,
         filterOptions: Object.entries(CATEGORY_META).map(([key, meta]) => ({
@@ -995,7 +1406,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         render: (row) => {
           const meta = CATEGORY_META[row.category as ToolCategory];
           return (
-            <span className={`text-xs font-medium text-${meta?.color || 'slate'}-400`}>
+            <span className={`text-xs font-medium ${meta?.textClass || 'text-slate-400'}`}>
               {meta?.name || row.category}
             </span>
           );
@@ -1003,29 +1414,133 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       },
       {
         id: 'status',
-        label: 'Status',
+        label: t('tools.hub.table.status', 'Status'),
         width: '140px',
         filterable: true,
         filterOptions: [
-          { value: 'draft', label: 'Draft', color: 'bg-slate-400' },
-          { value: 'in_review', label: 'In Review', color: 'bg-amber-400' },
-          { value: 'approved', label: 'Approved', color: 'bg-emerald-400' },
-          { value: 'completed', label: 'Completed', color: 'bg-emerald-400' },
+          { value: 'draft', label: t('common.draft', 'Draft'), color: 'bg-slate-400' },
+          {
+            value: 'pending_review',
+            label: t('common.pendingReview', 'Pending Review'),
+            color: 'bg-amber-400',
+          },
+          { value: 'approved', label: t('common.approved', 'Approved'), color: 'bg-emerald-400' },
+          { value: 'done', label: t('common.completed', 'Completed'), color: 'bg-emerald-400' },
         ],
       },
       {
         id: 'progress',
-        label: 'Progress',
+        label: t('tools.hub.table.progress', 'Progress'),
         width: '150px',
       },
       {
         id: 'updatedAt',
-        label: 'Updated',
+        label: t('tools.hub.table.updated', 'Updated'),
         width: '120px',
         sortable: true,
       },
     ],
-    []
+    [t]
+  );
+
+  const sessionsColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'sessionType',
+        label: t('tools.hub.table.type', 'Type'),
+        width: '160px',
+        filterable: true,
+        filterOptions: [
+          ...Object.entries(TOOL_META).map(([key, meta]) => ({
+            value: meta.shortName,
+            label: `${meta.shortName} - ${meta.name}`,
+          })),
+          ...(Object.keys(ASSESSMENT_FRAMEWORK_META) as AssessmentFramework[]).map((fw) => ({
+            value: fw,
+            label: `${fw} - ${ASSESSMENT_FRAMEWORK_META[fw].name}`,
+          })),
+        ],
+        render: (row: any) => {
+          if (row?.kind === 'assessmentSession') {
+            const fw = String(row.assessmentType || row.sessionType || '').toUpperCase();
+            const meta = (ASSESSMENT_FRAMEWORK_META as any)?.[fw];
+            return (
+              <div className="flex items-center gap-2">
+                <span className="text-rose-400">{meta?.icon || <Shield size={16} />}</span>
+                <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
+                  {fw || 'ASSESS'}
+                </span>
+              </div>
+            );
+          }
+          const toolCode = String(row?.toolType || row?.sessionType || '');
+          const meta = TOOL_META[toolCode as ToolType];
+          const categoryMeta = CATEGORY_META[meta?.category || 'strategic'];
+          return (
+            <div className="flex items-center gap-2">
+              <span className={categoryMeta.textClass}>{categoryMeta.icon}</span>
+              <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
+                {meta?.shortName || toolCode}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'name',
+        label: t('tools.hub.table.name', 'Name'),
+        render: (row: any) => (
+          <div className="min-w-0">
+            <span className="block text-sm text-slate-900 dark:text-white font-medium truncate">
+              {row.name}
+            </span>
+          </div>
+        ),
+      },
+      {
+        id: 'category',
+        label: t('tools.hub.table.category', 'Category'),
+        width: '130px',
+        filterable: true,
+        filterOptions: Object.entries(CATEGORY_META).map(([key, meta]) => ({
+          value: key,
+          label: meta.name,
+        })),
+        render: (row: any) => {
+          const meta = CATEGORY_META[row.category as ToolCategory];
+          return (
+            <span className={`text-xs font-medium ${meta?.textClass || 'text-slate-400'}`}>
+              {meta?.name || row.category}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'status',
+        label: t('tools.hub.table.status', 'Status'),
+        width: '140px',
+        filterable: true,
+        filterOptions: [
+          { value: 'draft', label: t('common.draft', 'Draft'), color: 'bg-slate-400' },
+          { value: 'executing', label: t('common.inProgress', 'In Progress'), color: 'bg-blue-400' },
+          { value: 'pending_review', label: t('common.pendingReview', 'Pending Review'), color: 'bg-amber-400' },
+          { value: 'approved', label: t('common.approved', 'Approved'), color: 'bg-emerald-400' },
+          { value: 'done', label: t('common.done', 'Done'), color: 'bg-emerald-400' },
+        ],
+      },
+      {
+        id: 'progress',
+        label: t('tools.hub.table.progress', 'Progress'),
+        width: '150px',
+      },
+      {
+        id: 'updatedAt',
+        label: t('tools.hub.table.updated', 'Updated'),
+        width: '120px',
+        sortable: true,
+      },
+    ],
+    [t]
   );
 
   const libraryColumns: TableColumn[] = useMemo(
@@ -1064,7 +1579,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
           const category = (row.libraryCategory || '') as ToolCategory;
           const meta = CATEGORY_META[category];
           return (
-            <span className={`text-xs font-medium text-${meta?.color || 'slate'}-400`}>
+            <span className={`text-xs font-medium ${meta?.textClass || 'text-slate-400'}`}>
               {meta?.name || row.libraryCategory || '-'}
             </span>
           );
@@ -1218,6 +1733,70 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     [t]
   );
 
+  const outputsColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'outputKind',
+        label: t('tools.hub.outputs.columns.type', 'Type'),
+        width: '150px',
+        render: (row: any) => {
+          const kind = String(row?.outputKind || '');
+          const cfg: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
+            assessment_report: {
+              icon: <Activity size={14} />,
+              label: isPolish ? 'Raport assessment' : 'Assessment report',
+              color: 'text-purple-400',
+            },
+            report_builder: {
+              icon: <FileText size={14} />,
+              label: isPolish ? 'Raport' : 'Report',
+              color: 'text-blue-400',
+            },
+            presentation_deck: {
+              icon: <Layers size={14} />,
+              label: isPolish ? 'Prezentacja' : 'Presentation',
+              color: 'text-emerald-400',
+            },
+          };
+          const c = cfg[kind] || {
+            icon: <FileText size={14} />,
+            label: isPolish ? 'Output' : 'Output',
+            color: 'text-slate-400',
+          };
+          return (
+            <div className="flex items-center gap-2">
+              <span className={c.color}>{c.icon}</span>
+              <span className={`text-xs font-medium ${c.color}`}>{c.label}</span>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'name',
+        label: t('tools.hub.outputs.columns.name', 'Name'),
+        render: (row: any) => (
+          <div className="min-w-0">
+            <span className="block text-sm text-slate-900 dark:text-white font-medium truncate">
+              {String(row?.name || '')}
+            </span>
+          </div>
+        ),
+      },
+      {
+        id: 'status',
+        label: t('tools.hub.outputs.columns.status', 'Status'),
+        width: '120px',
+      },
+      {
+        id: 'updatedAt',
+        label: t('tools.hub.outputs.columns.updated', 'Updated'),
+        width: '120px',
+        sortable: true,
+      },
+    ],
+    [isPolish, t]
+  );
+
   // Handlers
   const handleOpenDocument = useCallback(
     (row: DisplayItem | any) => {
@@ -1246,6 +1825,26 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     [fetchInitiativeDetails]
   );
 
+  const openOutput = useCallback(
+    (item: OutputItem) => {
+      if (!item?.id) return;
+      if (item.outputKind === 'assessment_report') {
+        // Canonical: resolve builder link and redirect.
+        navigate(`/assessment-reports/${encodeURIComponent(item.id)}`);
+        return;
+      }
+      if (item.outputKind === 'report_builder') {
+        navigate(`/reports/builder/${encodeURIComponent(item.id)}`);
+        return;
+      }
+      if (item.outputKind === 'presentation_deck') {
+        navigate(`/presentations/builder/${encodeURIComponent(item.id)}`);
+        return;
+      }
+    },
+    [navigate]
+  );
+
   const openDocumentById = useCallback(
     async (id: string) => {
       const existing = openDocuments.find((d) => d.id === id);
@@ -1254,9 +1853,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         return;
       }
 
-      const reportMatch = reports.find((r) => r.id === id);
-      if (reportMatch) {
-        handleOpenDocument(reportMatch);
+      const outputMatch = outputs.find((r: OutputItem) => r.id === id);
+      if (outputMatch) {
+        openOutput(outputMatch);
         return;
       }
 
@@ -1299,11 +1898,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     },
     [
       openDocuments,
-      reports,
+      outputs,
       initiatives,
       discoveries,
       setActiveDocumentId,
       handleOpenDocument,
+      openOutput,
       transformToolSession,
     ]
   );
@@ -1421,15 +2021,69 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     [currentProjectId, fetchData, handleOpenDocument, isPolish, t]
   );
 
+  const createAndOpenAssessmentSession = useCallback(
+    async (params: {
+      assessmentType: AssessmentFramework | string;
+      name?: string;
+      source?: 'add_menu' | 'library';
+    }) => {
+      const assessmentType = String(params.assessmentType || '').trim().toUpperCase();
+      if (!assessmentType) return;
+
+      try {
+        const sessionName =
+          String(params.name || '').trim() ||
+          `${assessmentType} — ${isPolish ? 'Assessment' : 'Assessment'}`;
+        const created = await Api.createAssessmentSession({
+          assessmentType: assessmentType as any,
+          name: sessionName,
+          projectId: currentProjectId ?? null,
+        });
+        trackFunnelEvent('licensed_tool_framework_opened', {
+          assessmentType,
+          source: params.source || 'add_menu',
+        });
+        await fetchData(true);
+        toast.success(t('tools.hub.toast.sessionCreated', 'Session created'));
+        navigate(`/assessment/${assessmentType.toLowerCase()}/${created.id}`);
+      } catch {
+        toast.error(t('tools.hub.toast.assessmentCreateError', 'Failed to create assessment session'));
+      }
+    },
+    [currentProjectId, fetchData, isPolish, navigate, t]
+  );
+
   const handleRowAction = useCallback(
     (action: string, row: any) => {
       if (action === 'view' || action === 'edit') {
+        if (row?.kind === 'assessmentSession') {
+          navigate(`/assessment/${String(row.assessmentType || '').toLowerCase()}/${row.id}`);
+          return;
+        }
         handleOpenDocument(row);
       } else if (action === 'preview') {
         setPreviewItemId(row.id);
       } else if (action === 'library_open_full') {
+        if (row?.kind === 'assessment') {
+          void createAndOpenAssessmentSession({
+            assessmentType: String(row?.toolType || '').trim(),
+            name: `${String(row?.toolType || '').trim()} — ${isPolish ? 'Assessment' : 'Assessment'}`,
+            source: 'library',
+          });
+          return;
+        }
         handleOpenKnownTool(row);
       } else if (action === 'library_start_session') {
+        if (row?.kind === 'assessment') {
+          const fw = String(row?.toolType || '').trim();
+          if (!fw) return;
+          void createAndOpenAssessmentSession({
+            assessmentType: fw,
+            name: `${fw} — ${isPolish ? 'Assessment' : 'Assessment'}`,
+            source: 'library',
+          });
+          return;
+        }
         const toolType = String(row?.toolType || '').trim();
         if (!toolType) return;
         if (row?.isComingSoon) return;
@@ -1444,10 +2098,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         (async () => {
           try {
             const convId = await openChatWithContext({
-              entityType: 'tool',
+              entityType: row?.kind === 'assessment' ? 'assessment' : 'tool',
               entityId: toolType,
               entityName: row?.name || toolType,
               contextData: {
+                kind: row?.kind || 'tool',
                 toolType,
                 category: row?.libraryCategory,
                 isLicensed: !!row?.isLicensed,
@@ -1460,8 +2115,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
               conversationId: convId,
               role: 'user',
               content: isPolish
-                ? `Wyjaśnij, kiedy użyć tego narzędzia („${row?.name || toolType}”), jakie są typowe pułapki oraz jakie deliverables powinienem otrzymać.`
-                : `Explain when to use this tool (“${row?.name || toolType}”), typical pitfalls, and what deliverables I should expect.`,
+                ? row?.kind === 'assessment'
+                  ? `Wyjaśnij, kiedy użyć tego frameworku assessment („${row?.name || toolType}”), jakie dane wejściowe są potrzebne i jak interpretować wyniki.`
+                  : `Wyjaśnij, kiedy użyć tego narzędzia („${row?.name || toolType}”), jakie są typowe pułapki oraz jakie deliverables powinienem otrzymać.`
+                : row?.kind === 'assessment'
+                  ? `Explain when to use this assessment framework (“${row?.name || toolType}”), what inputs are needed, and how to interpret the results.`
+                  : `Explain when to use this tool (“${row?.name || toolType}”), typical pitfalls, and what deliverables I should expect.`,
             } as any);
             toast.success(t('tools.hub.toast.chatOpened', 'Chat opened'), { duration: 1500 });
           } catch (e) {
@@ -1473,29 +2132,28 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     [
       activeTab,
       addChatMessage,
+      createAndOpenAssessmentSession,
       createAndOpenToolSession,
       handleOpenDocument,
       handleOpenKnownTool,
       isPolish,
+      navigate,
       openChatWithContext,
       t,
     ]
   );
 
-  // Get current data based on tab
+  // Get current data based on tab (non-Library)
   const currentData = useMemo(() => {
-    let data: DisplayItem[] = [];
+    let data: any[] = [];
     switch (activeTab) {
-      case 'library':
-        data = [];
-        break;
       case 'sessions':
       case 'list':
         data = discoveries;
         break;
       case 'outputs':
       case 'reports':
-        data = reports;
+        data = outputs;
         break;
       case 'initiatives':
         data = initiatives;
@@ -1515,8 +2173,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
           );
         }
         return (
-          item.status === statusFilter ||
-          item.status.replace('_', '') === statusFilter.replace('_', '')
+          String(item.status || '').toLowerCase() === statusFilter.toLowerCase() ||
+          String(item.status || '')
+            .toLowerCase()
+            .replace('_', '') === statusFilter.replace('_', '').toLowerCase()
         );
       });
     }
@@ -1527,35 +2187,262 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       data = data.filter(
         (item) =>
           item.name.toLowerCase().includes(query) ||
-          item.toolType.toLowerCase().includes(query) ||
-          item.category.toLowerCase().includes(query)
+          String((item as any)?.outputKind || '').toLowerCase().includes(query) ||
+          String(item.apiToolType || item.toolType || '').toLowerCase().includes(query) ||
+          String(item.category || '').toLowerCase().includes(query)
       );
     }
 
     return data;
-  }, [activeTab, discoveries, reports, initiatives, searchQuery, statusFilter]);
+  }, [activeTab, discoveries, initiatives, outputs, searchQuery, statusFilter]);
 
-  const filteredKnownTools = useMemo(() => {
-    let data = knownTools.slice();
+  type UnifiedSessionRow =
+    | (DisplayItem & { kind: 'toolSession'; sessionType: string })
+    | {
+        kind: 'assessmentSession';
+        id: string;
+        name: string;
+        assessmentType: string;
+        sessionType: string;
+        category: ToolCategory;
+        status: ItemStatus;
+        progress: number;
+        createdAt?: Date;
+        updatedAt: Date;
+        apiToolType: 'assessment';
+        _fullData?: any;
+      };
+
+  const unifiedSessionsData: UnifiedSessionRow[] = useMemo(() => {
+    let data: UnifiedSessionRow[] = [
+      ...discoveries.map((d) => ({
+        ...d,
+        kind: 'toolSession' as const,
+        sessionType: String((d as any)?.toolType || ''),
+      })),
+      ...assessmentSessions.map((a) => ({
+        kind: 'assessmentSession' as const,
+        id: a.id,
+        name: a.name,
+        assessmentType: a.assessmentType,
+        sessionType: a.assessmentType,
+        category: 'licensed' as ToolCategory,
+        status: a.status,
+        progress: a.progress,
+        createdAt: a.createdAt,
+        updatedAt: a.updatedAt,
+        apiToolType: 'assessment' as const,
+        _fullData: a._fullData,
+      })),
+    ];
+
+    // Apply status filter
+    if (statusFilter && statusFilter !== 'all') {
+      const wanted = statusFilter.toLowerCase();
+      data = data.filter((item: any) => {
+        const s = String(item?.status || '').toLowerCase();
+        return s === wanted || s.replace('_', '') === wanted.replace('_', '');
+      });
+    }
+
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      data = data.filter((item: any) => {
+        const typeText =
+          item.kind === 'assessmentSession'
+            ? String(item.assessmentType || '')
+            : String(item.apiToolType || item.toolType || '');
+        return (
+          String(item.name || '').toLowerCase().includes(query) ||
+          typeText.toLowerCase().includes(query) ||
+          String(item.category || '').toLowerCase().includes(query)
+        );
+      });
+    }
+
+    return data;
+  }, [assessmentSessions, discoveries, searchQuery, statusFilter]);
+
+  const assessmentTemplateItems: UnifiedLibraryItem[] = useMemo(() => {
+    return (Object.keys(ASSESSMENT_FRAMEWORK_META) as AssessmentFramework[]).map((fw, idx) => {
+      const meta = ASSESSMENT_FRAMEWORK_META[fw];
+      return {
+        kind: 'assessment',
+        id: `assessment:${fw}`,
+        toolType: fw,
+        name: meta.name,
+        libraryCategory: 'licensed',
+        description: isPolish
+          ? 'Framework oceny do uruchomienia jako sesja assessment.'
+          : 'Assessment framework template you can start as an assessment session.',
+        whatYouGet: isPolish
+          ? ['Wyniki dojrzałości i luki', 'Rekomendacje i inicjatywy', 'Raport do zatwierdzenia']
+          : ['Maturity results and gaps', 'Recommendations and initiatives', 'Report for approval'],
+        tags: meta.tags,
+        icon: null,
+        isLicensed: true,
+        isComingSoon: false,
+        sortOrder: 900 + idx,
+        createdAt: null,
+        license: 'licensed',
+      };
+    });
+  }, [isPolish]);
+
+  const automationTemplateItem: UnifiedLibraryItem = useMemo(
+    () => ({
+      kind: 'tool',
+      id: 'tool:process-automation',
+      toolType: 'process-automation',
+      name: isPolish ? 'System analizy procesu pod automatyzację' : 'Process Automation System',
+      libraryCategory: 'automation',
+      description: isPolish
+        ? 'Analiza procesu end-to-end (As-Is → To-Be) i pipeline automatyzacji.'
+        : 'End-to-end process analysis (As-Is → To-Be) with automation pipeline.',
+      whatYouGet: isPolish
+        ? ['Mapa procesu i wąskie gardła', 'Backlog automatyzacji', 'Priorytetyzacja i ROI']
+        : ['Process map and bottlenecks', 'Automation backlog', 'Prioritization and ROI'],
+      tags: ['automation', 'process', 'pipeline'],
+      icon: null,
+      isLicensed: false,
+      isComingSoon: false,
+      sortOrder: 850,
+      createdAt: null,
+      license: 'free',
+    }),
+    [isPolish]
+  );
+
+  const libraryCatalogItems: UnifiedLibraryItem[] = useMemo(() => {
+    const toolItems: UnifiedLibraryItem[] = (knownTools || []).map((t) => {
+      const catRaw = String(t.libraryCategory || '').trim();
+      const cat: ToolCategory =
+        catRaw === 'strategic' || catRaw === 'operational' || catRaw === 'digital' || catRaw === 'automation'
+          ? (catRaw as ToolCategory)
+          : t.isLicensed
+            ? 'licensed'
+            : 'strategic';
+      return {
+        kind: 'tool',
+        id: String(t.id),
+        toolType: String(t.toolType || ''),
+        name: String(t.name || ''),
+        libraryCategory: cat,
+        description: String(t.description || ''),
+        whatYouGet: Array.isArray(t.whatYouGet) ? t.whatYouGet : [],
+        tags: Array.isArray(t.tags) ? t.tags : [],
+        icon: t.icon ?? null,
+        isLicensed: !!t.isLicensed,
+        isComingSoon: !!t.isComingSoon,
+        sortOrder: Number.isFinite(Number(t.sortOrder)) ? Number(t.sortOrder) : 999,
+        createdAt: t.createdAt ?? null,
+        license: t.isLicensed ? 'licensed' : 'free',
+      };
+    });
+
+    const byToolType = new Set(toolItems.map((i) => i.toolType));
+    const extras: UnifiedLibraryItem[] = [...assessmentTemplateItems];
+    if (!byToolType.has(automationTemplateItem.toolType)) extras.unshift(automationTemplateItem);
+
+    return [...toolItems, ...extras].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  }, [assessmentTemplateItems, automationTemplateItem, knownTools]);
+
+  const filteredLibraryItems = useMemo(() => {
+    let data = libraryCatalogItems.slice();
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       data = data.filter(
         (t) =>
           t.name.toLowerCase().includes(q) ||
           t.toolType.toLowerCase().includes(q) ||
-          (t.libraryCategory || '').toLowerCase().includes(q) ||
+          String(t.libraryCategory || '').toLowerCase().includes(q) ||
           t.description.toLowerCase().includes(q)
       );
     }
+    if (libraryCategoryFilter !== 'all') {
+      data = data.filter((t) => {
+        const cat = (t.libraryCategory ?? 'other') as string;
+        return cat === libraryCategoryFilter;
+      });
+    }
     return data;
-  }, [knownTools, searchQuery]);
+  }, [libraryCatalogItems, searchQuery, libraryCategoryFilter]);
+
+  const libraryCategoryCounts = useMemo(() => {
+    const counts: Record<ToolCategory | 'other', number> = {
+      strategic: 0,
+      operational: 0,
+      digital: 0,
+      automation: 0,
+      licensed: 0,
+      other: 0,
+    };
+    for (const k of libraryCatalogItems) {
+      const cat = (k.libraryCategory ?? 'other') as string;
+      if (cat === 'strategic') counts.strategic += 1;
+      else if (cat === 'operational') counts.operational += 1;
+      else if (cat === 'digital') counts.digital += 1;
+      else if (cat === 'automation') counts.automation += 1;
+      else if (cat === 'licensed') counts.licensed += 1;
+      else counts.other += 1;
+    }
+    return counts;
+  }, [libraryCatalogItems]);
+
+  const statusCountsForCommandRow = useMemo(() => {
+    const matchesSearch = (item: any) => {
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      const typeText =
+        item?.kind === 'assessmentSession'
+          ? String(item?.assessmentType || '')
+          : item?.kind === 'output'
+            ? String(item?.outputKind || '')
+          : String(item?.apiToolType || item?.toolType || '');
+      return (
+        String(item?.name || '').toLowerCase().includes(query) ||
+        typeText.toLowerCase().includes(query) ||
+        String(item?.category || '').toLowerCase().includes(query)
+      );
+    };
+
+    const base =
+      activeTab === 'sessions' || activeTab === 'list'
+        ? (unifiedSessionsData as any[])
+        : activeTab === 'outputs' || activeTab === 'reports'
+          ? outputs
+          : activeTab === 'initiatives'
+            ? initiatives
+            : [];
+
+    const counts: Record<string, number> = { all: 0 };
+    const filteredBase = base.filter(matchesSearch);
+    counts.all = filteredBase.length;
+
+    for (const opt of currentStatusOptions) {
+      if (opt.id === 'all') continue;
+      counts[opt.id] = filteredBase.filter((item: any) => {
+        if (activeTab === 'initiatives' && item._fullData?.status) {
+          const s = String(item._fullData.status || '').toLowerCase();
+          const wanted = String(opt.id || '').toLowerCase();
+          return s === wanted || s.replace('_', '') === wanted.replace('_', '');
+        }
+        const s = String(item.status || '').toLowerCase();
+        const wanted = String(opt.id || '').toLowerCase();
+        return s === wanted || s.replace('_', '') === wanted.replace('_', '');
+      }).length;
+    }
+
+    return counts;
+  }, [activeTab, currentStatusOptions, initiatives, outputs, searchQuery, unifiedSessionsData]);
 
   const libraryGridItems: GridItem[] = useMemo(() => {
-    return filteredKnownTools.map((tool) => ({
+    return filteredLibraryItems.map((tool) => ({
       ...tool,
-      id: tool.toolType,
+      id: tool.id,
       name: tool.name,
-      type: tool.libraryCategory || 'tool',
+      type: tool.libraryCategory || tool.kind,
       typeColor:
         tool.libraryCategory === 'strategic'
           ? 'emerald'
@@ -1563,26 +2450,16 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
             ? 'blue'
             : tool.libraryCategory === 'digital'
               ? 'purple'
-              : 'amber',
+              : tool.libraryCategory === 'automation'
+                ? 'amber'
+                : tool.libraryCategory === 'licensed'
+                  ? 'rose'
+                  : 'amber',
       status: 'DRAFT',
       progress: 0,
-      updatedAt: tool.createdAt || new Date(),
+      updatedAt: tool.createdAt ? new Date(tool.createdAt) : new Date(),
     }));
-  }, [filteredKnownTools]);
-
-  // Convert to grid items
-  const gridItems: GridItem[] = useMemo(() => {
-    return currentData.map((item) => {
-      const meta = TOOL_META[item.toolType as ToolType];
-      const categoryMeta = CATEGORY_META[meta?.category || 'strategic'];
-      return {
-        ...item,
-        type: item.toolType,
-        typeColor: categoryMeta?.color || 'slate',
-        status: mapStatusToUppercase(item.status),
-      };
-    });
-  }, [currentData]);
+  }, [filteredLibraryItems]);
 
   // Helper functions for initiative detail
   const formatCurrency = (amount?: number) => {
@@ -2115,68 +2992,297 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
 
     // Known Tools Library tab
     if (activeTab === 'library') {
+      type LibraryPreviewItem = (typeof filteredLibraryItems)[number] & { title: string };
+      const selectedRow = previewItemId
+        ? (filteredLibraryItems.find((d) => d.id === previewItemId) as any)
+        : null;
+      const selectedItem: LibraryPreviewItem | null = selectedRow
+        ? ({ ...selectedRow, title: selectedRow.name } as LibraryPreviewItem)
+        : null;
+      const itemIds = filteredLibraryItems.map((d) => d.id);
+
+      const renderPreview = (item: LibraryPreviewItem) => {
+        if ((item as any)?.kind === 'assessment') {
+          const model: AssessmentFrameworkPreviewModel = {
+            id: item.id,
+            framework: String((item as any)?.toolType || ''),
+            name: item.name,
+            description: String((item as any)?.description || ''),
+            whatYouGet: Array.isArray((item as any)?.whatYouGet) ? (item as any).whatYouGet : [],
+            tags: Array.isArray((item as any)?.tags) ? (item as any).tags : [],
+          };
+          return <AssessmentFrameworkPreviewV3Body item={model} />;
+        }
+        return (
+          <KnownToolPreviewV3Body
+            tool={item as any}
+            full={previewKnownTool}
+            fullLoading={previewKnownToolLoading}
+          />
+        );
+      };
+
+      const renderFooter = (item: LibraryPreviewItem) => {
+        if ((item as any)?.kind === 'assessment') {
+          const model: AssessmentFrameworkPreviewModel = {
+            id: item.id,
+            framework: String((item as any)?.toolType || ''),
+            name: item.name,
+            description: String((item as any)?.description || ''),
+            whatYouGet: Array.isArray((item as any)?.whatYouGet) ? (item as any).whatYouGet : [],
+            tags: Array.isArray((item as any)?.tags) ? (item as any).tags : [],
+          };
+          return (
+            <AssessmentFrameworkPreviewV3Footer
+              item={model}
+              onOpenFull={() => handleRowAction('library_open_full', item as any)}
+              onStart={() => handleRowAction('library_start_session', item as any)}
+              onChat={() => handleRowAction('library_chat', item as any)}
+            />
+          );
+        }
+        return (
+          <KnownToolPreviewV3Footer
+            tool={item as any}
+            full={previewKnownTool}
+            fullLoading={previewKnownToolLoading}
+            onOpenFull={() => handleOpenKnownTool(item as any)}
+            onStartSession={() => handleRowAction('library_start_session', item as any)}
+            onChat={() => handleRowAction('library_chat', item as any)}
+          />
+        );
+      };
+
       if (viewMode === 'grid') {
         return (
-          <GridView
-            items={libraryGridItems}
-            onItemClick={(item) => handleOpenKnownTool(item)}
-            emptyMessage={t('tools.hub.empty.library', 'No tools available.')}
-          />
+          <div className="h-full overflow-hidden">
+            <TableWithPreviewLayout<LibraryPreviewItem>
+              selectedId={previewItemId}
+              selectedItem={selectedItem}
+              onSelect={setPreviewItemId}
+              itemIds={itemIds}
+              onOpenFull={(id) => {
+                const row = filteredLibraryItems.find((d) => d.id === id);
+                if (row) handleRowAction('library_open_full', row as any);
+              }}
+              renderPreview={renderPreview}
+              renderPreviewFooter={renderFooter}
+            >
+              <GridView
+                items={libraryGridItems}
+                selectedItemId={previewItemId}
+                onItemClick={(item) => setPreviewItemId(item.id)}
+                onItemAction={(action, item) => {
+                  if (action === 'open') return handleRowAction('library_open_full', item as any);
+                  return handleRowAction(action, item as any);
+                }}
+                emptyMessage={t('tools.hub.empty.library', 'No tools available.')}
+              />
+            </TableWithPreviewLayout>
+          </div>
         );
       }
 
       return (
         <div className="h-full overflow-hidden">
-          <FilterableTable
-            columns={libraryColumns}
-            data={filteredKnownTools}
-            onRowClick={handleOpenKnownTool}
-            onRowDoubleClick={handleOpenKnownTool}
-            onRowAction={handleRowAction}
-            getRowActions={(row) =>
-              [
-                {
-                  id: 'open',
-                  label: t('common.open', 'Open'),
-                  icon: ExternalLink,
-                  variant: 'primary',
-                  onClick: () => handleRowAction('library_open_full', row),
-                },
-                {
-                  id: 'start',
-                  label: isPolish ? 'Rozpocznij sesję' : 'Start session',
-                  icon: Play,
-                  disabled: !!(row as any)?.isComingSoon,
-                  onClick: () => handleRowAction('library_start_session', row),
-                },
-                {
-                  id: 'chat',
-                  label: isPolish ? 'Czat' : 'Chat',
-                  icon: MessageSquare,
-                  divider: true,
-                  onClick: () => handleRowAction('library_chat', row),
-                },
-              ] as RowAction[]
-            }
-            activeFilters={activeFilters}
-            onFilterChange={setActiveFilters}
-            emptyMessage={t('tools.hub.empty.library', 'No tools available.')}
-            canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-            density="compact"
-          />
+          <TableWithPreviewLayout<LibraryPreviewItem>
+            selectedId={previewItemId}
+            selectedItem={selectedItem}
+            onSelect={setPreviewItemId}
+            itemIds={itemIds}
+            onOpenFull={(id) => {
+              const row = filteredLibraryItems.find((d) => d.id === id);
+              if (row) handleRowAction('library_open_full', row as any);
+            }}
+            renderPreview={renderPreview}
+            renderPreviewFooter={renderFooter}
+          >
+            <FilterableTable
+              columns={libraryColumns}
+              data={filteredLibraryItems}
+              selectedRowId={previewItemId}
+              onRowClick={(row) => setPreviewItemId(row.id)}
+              onRowDoubleClick={(row) => handleRowAction('library_open_full', row as any)}
+              onRowAction={handleRowAction}
+              getRowActions={(row) =>
+                [
+                  {
+                    id: 'open',
+                    label: t('common.open', 'Open'),
+                    icon: ExternalLink,
+                    variant: 'primary',
+                    onClick: () => handleRowAction('library_open_full', row),
+                  },
+                  {
+                    id: 'start',
+                    label:
+                      row?.kind === 'assessment'
+                        ? isPolish
+                          ? 'Start assessment'
+                          : 'Start assessment'
+                        : isPolish
+                          ? 'Rozpocznij sesję'
+                          : 'Start session',
+                    icon: Play,
+                    disabled: !!(row as any)?.isComingSoon,
+                    onClick: () => handleRowAction('library_start_session', row),
+                  },
+                  {
+                    id: 'chat',
+                    label: isPolish ? 'Czat' : 'Chat',
+                    icon: MessageSquare,
+                    divider: true,
+                    onClick: () => handleRowAction('library_chat', row),
+                  },
+                ] as RowAction[]
+              }
+              activeFilters={activeFilters}
+              onFilterChange={setActiveFilters}
+              emptyMessage={t('tools.hub.empty.library', 'No tools available.')}
+              canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+              density="compact"
+            />
+          </TableWithPreviewLayout>
         </div>
       );
     }
 
-    // Grid view
-    if (viewMode === 'grid') {
+    // Unified Sessions tab (tool sessions + assessment sessions)
+    if (activeTab === 'sessions' || activeTab === 'list') {
+      type SessionPreviewItem = UnifiedSessionRow & { title: string };
+      const selectedRow = previewItemId ? unifiedSessionsData.find((d: any) => d.id === previewItemId) : null;
+      const selectedItem: SessionPreviewItem | null = selectedRow
+        ? ({ ...selectedRow, title: selectedRow.name } as SessionPreviewItem)
+        : null;
+      const itemIds = unifiedSessionsData.map((d) => d.id);
+
+      const openFull = (row: any) => {
+        if (row?.kind === 'assessmentSession') {
+          navigate(`/assessment/${String(row.assessmentType || '').toLowerCase()}/${row.id}`);
+          return;
+        }
+        handleOpenDocument(row);
+      };
+
       return (
-        <GridView
-          items={gridItems}
-          onItemClick={handleOpenDocument}
-          onItemAction={handleRowAction}
-          emptyMessage="No discoveries yet. Select a tool category to start."
-        />
+        <div className="h-full overflow-hidden">
+          <TableWithPreviewLayout<SessionPreviewItem>
+            selectedId={previewItemId}
+            selectedItem={selectedItem}
+            onSelect={setPreviewItemId}
+            itemIds={itemIds}
+            onOpenFull={(id) => {
+              const row = unifiedSessionsData.find((d) => d.id === id);
+              if (row) openFull(row as any);
+            }}
+            renderPreview={(item) => {
+              if ((item as any)?.kind === 'assessmentSession') {
+                return (
+                  <AssessmentSessionPreviewV3Body
+                    itemName={String(item.name || '')}
+                    framework={String((item as any)?.assessmentType || '')}
+                    status={String(item.status || '')}
+                    progress={Number((item as any)?.progress || 0)}
+                    createdAt={(item as any)?.createdAt}
+                    updatedAt={(item as any)?.updatedAt}
+                    details={(previewFullAssessment as AssessmentSessionPreviewDetails | null) || null}
+                    detailsLoading={previewFullAssessmentLoading}
+                  />
+                );
+              }
+              return (
+                <ToolSessionPreviewV3Body
+                  itemName={item.name}
+                  itemToolType={String((item as any).apiToolType || (item as any).toolType || '')}
+                  status={String(item.status || '')}
+                  progress={(item as any).progress}
+                  createdAt={(item as any).createdAt}
+                  updatedAt={(item as any).updatedAt}
+                  details={(previewFullSession as ToolSessionPreviewDetails | null) || null}
+                  detailsLoading={previewFullLoading}
+                />
+              );
+            }}
+            renderPreviewFooter={(item) => {
+              if ((item as any)?.kind === 'assessmentSession') {
+                return <AssessmentSessionPreviewV3Footer onOpenFull={() => openFull(item as any)} />;
+              }
+
+              const canResume =
+                ['DRAFT', 'PENDING_REVIEW', 'REVIEW'].includes(String((item as any).status || '').toUpperCase());
+
+              const refreshFull = async () => {
+                try {
+                  const refreshed = await Api.getToolSession(String((item as any).id));
+                  setPreviewFullSession(refreshed || null);
+                } catch {
+                  setPreviewFullSession(null);
+                }
+              };
+
+              return (
+                <ToolSessionPreviewV3Footer
+                  details={(previewFullSession as ToolSessionPreviewDetails | null) || null}
+                  detailsLoading={previewFullLoading}
+                  canResume={canResume}
+                  showOpen={false}
+                  onOpenFull={() => openFull(item as any)}
+                  onResume={() => openFull(item as any)}
+                  onRequestReview={async () => {
+                    try {
+                      await Api.requestToolReview((item as any).id, {});
+                      toast.success(isPolish ? 'Wysłano do review' : 'Sent for review');
+                      await fetchData(true);
+                      await refreshFull();
+                    } catch (e: any) {
+                      toast.error(
+                        e?.message ||
+                          (isPolish ? 'Nie udało się wysłać do review' : 'Request review failed')
+                      );
+                    }
+                  }}
+                  onApprove={async () => {
+                    try {
+                      await Api.approveTool((item as any).id, {});
+                      toast.success(isPolish ? 'Zatwierdzono' : 'Approved');
+                      await fetchData(true);
+                      await refreshFull();
+                    } catch (e: any) {
+                      toast.error(e?.message || (isPolish ? 'Nie udało się zatwierdzić' : 'Approve failed'));
+                    }
+                  }}
+                  onSendBack={async () => {
+                    const comment = prompt(isPolish ? 'Powód odesłania:' : 'Reason for sending back:');
+                    if (!comment) return;
+                    try {
+                      await Api.sendToolBackToDraft((item as any).id, comment);
+                      toast.success(isPolish ? 'Odesłano do draftu' : 'Sent back to draft');
+                      await fetchData(true);
+                      await refreshFull();
+                    } catch (e: any) {
+                      toast.error(e?.message || (isPolish ? 'Nie udało się odesłać' : 'Send back failed'));
+                    }
+                  }}
+                  onOpenGenerateModal={() => setGenerateInitiativesForId((item as any).id)}
+                />
+              );
+            }}
+          >
+            <FilterableTable
+              columns={sessionsColumns}
+              data={unifiedSessionsData as any}
+              selectedRowId={previewItemId}
+              onRowClick={(row) => setPreviewItemId(row.id)}
+              onRowDoubleClick={(row) => openFull(row as any)}
+              onRowAction={handleRowAction}
+              activeFilters={activeFilters}
+              onFilterChange={setActiveFilters}
+              emptyMessage={t('tools.hub.empty.sessions', 'No active sessions. Start from the Library.')}
+              canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+              density="compact"
+            />
+          </TableWithPreviewLayout>
+        </div>
       );
     }
 
@@ -2184,14 +3290,21 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     // Use different columns and empty messages based on active tab
     const isInitiativesTab = activeTab === 'initiatives';
     const isOutputsTab = activeTab === 'outputs' || activeTab === 'reports';
-    const columns = isInitiativesTab ? initiativeColumns : discoveryColumns;
-    const emptyMessage = isInitiativesTab
-      ? 'No draft initiatives yet. Run a tool or assessment to generate initiatives.'
+    const columns = isInitiativesTab
+      ? initiativeColumns
       : isOutputsTab
-        ? 'No outputs yet. Finalize a tool session to generate reports and presentations.'
-        : 'No active sessions. Start a tool from the Library to begin.';
+        ? outputsColumns
+        : discoveryColumns;
+    const emptyMessage = isInitiativesTab
+      ? t(
+          'tools.hub.empty.initiatives',
+          'No draft initiatives yet. Run a tool or assessment to generate initiatives.'
+        )
+      : isOutputsTab
+        ? t('tools.hub.empty.outputs', 'No outputs yet. Generate reports or presentations from your sessions.')
+        : t('tools.hub.empty.sessions', 'No active sessions. Start from the Library.');
 
-    type ToolsPreviewItem = DisplayItem & { title: string };
+    type ToolsPreviewItem = (DisplayItem | OutputItem) & { title: string };
 
     const selectedRow = previewItemId ? currentData.find((d: any) => d.id === previewItemId) : null;
     const selectedItem: ToolsPreviewItem | null = selectedRow
@@ -2209,25 +3322,69 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
           itemIds={itemIds}
           onOpenFull={(id) => {
             const row = currentData.find((d) => d.id === id);
-            if (row) handleOpenDocument(row);
+            if (!row) return;
+            if (isOutputsTab) {
+              openOutput(row as any);
+              return;
+            }
+            handleOpenDocument(row);
           }}
-          renderKicker={(item) =>
-            isInitiativesTab
-              ? isPolish
-                ? 'Inicjatywa'
-                : 'Initiative'
-              : getToolCategoryLabel(String(item.apiToolType || ''), isPolish)
-          }
           renderPreview={(item) => {
+            if (isOutputsTab) {
+              const kind = String((item as any)?.outputKind || '');
+              const label =
+                kind === 'assessment_report'
+                  ? t('tools.hub.outputs.type.assessmentReport', 'Assessment report')
+                  : kind === 'presentation_deck'
+                    ? t('tools.hub.outputs.type.presentation', 'Presentation')
+                    : t('tools.hub.outputs.type.report', 'Report');
+              return (
+                <div className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-xs text-slate-500 dark:text-slate-400">{label}</div>
+                      <div className="text-base font-semibold text-slate-900 dark:text-white truncate">
+                        {item.name}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openOutput(item as any)}
+                      className="inline-flex items-center gap-2 h-8 px-3 rounded-full bg-primary-600 text-white text-xs font-medium hover:bg-primary-700 active:scale-[0.98]"
+                    >
+                      <ExternalLink size={14} />
+                      {t('common.open', 'Open')}
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="text-slate-500 dark:text-slate-400">
+                      {t('common.status', 'Status')}
+                      <div className="text-slate-900 dark:text-white font-medium mt-0.5">
+                        {String((item as any)?.status || '')}
+                      </div>
+                    </div>
+                    <div className="text-slate-500 dark:text-slate-400">
+                      {t('common.updated', 'Updated')}
+                      <div className="text-slate-900 dark:text-white font-medium mt-0.5">
+                        {(item as any)?.updatedAt
+                          ? new Date((item as any).updatedAt).toLocaleString()
+                          : '-'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
             if (!isInitiativesTab) {
+              const session = item as DisplayItem;
               return (
                 <ToolSessionPreviewV3Body
-                  itemName={item.name}
-                  itemToolType={String(item.apiToolType || item.toolType || '')}
-                  status={String(item.status || '')}
-                  progress={item.progress}
-                  createdAt={item.createdAt}
-                  updatedAt={item.updatedAt}
+                  itemName={session.name}
+                  itemToolType={String(session.apiToolType || session.toolType || '')}
+                  status={String(session.status || '')}
+                  progress={session.progress}
+                  createdAt={session.createdAt}
+                  updatedAt={session.updatedAt}
                   details={(previewFullSession as ToolSessionPreviewDetails | null) || null}
                   detailsLoading={previewFullLoading}
                 />
@@ -2239,137 +3396,54 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                 ? selectedInitiative
                 : ((item as any)?._fullData as any) || {};
 
-            const status = String(init?.status || item.status || '').toUpperCase() || 'DRAFT';
-            const axis = String(init?.axis || (item as any)?.category || '').trim();
-            const priority = String(init?.priority || '').trim();
-            const progress = Number.isFinite(item.progress as any) ? (item.progress as any) : null;
+            const mapToPreviewModel = (i: any): InitiativePreviewV3Model => ({
+              id: String(i?.id || item.id),
+              name: String(i?.name || i?.title || item.name || ''),
+              title: String(i?.title || i?.name || item.name || ''),
+              status: i?.status ?? item.status,
+              axis: i?.axis ?? (item as any)?.category,
+              priority: i?.priority ?? null,
+              progress:
+                Number.isFinite(Number((item as any)?.progress)) ? Number((item as any)?.progress) : (i?.progress ?? null),
+              createdAt: i?.createdAt ?? i?.created_at ?? (item as any)?.createdAt ?? null,
+              updatedAt: i?.updatedAt ?? i?.updated_at ?? (item as any)?.updatedAt ?? null,
+              summary: i?.summary ?? null,
+              description: i?.description ?? null,
+              plannedStartDate: i?.plannedStartDate ?? null,
+              plannedEndDate: i?.plannedEndDate ?? null,
+              ownerBusiness: i?.ownerBusiness ?? null,
+              ownerExecution: i?.ownerExecution ?? null,
+              sourceType: i?.sourceType ?? i?.source_type ?? null,
+              sourceId: i?.sourceId ?? i?.source_id ?? null,
+            });
 
-            const createdAt = init?.createdAt || init?.created_at || (item as any)?.createdAt;
-            const updatedAt = init?.updatedAt || init?.updated_at || item.updatedAt;
-            const fmtDate = (value: any) => {
-              if (!value) return '—';
-              const d = value instanceof Date ? value : new Date(value);
-              if (Number.isNaN(d.getTime())) return '—';
-              return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+            const openChat = async (promptText: string) => {
+              try {
+                const convId = await openChatWithContext({
+                  entityType: 'initiative',
+                  entityId: item.id,
+                  entityName: item.name,
+                  contextData: init,
+                  pmoContext: { initiativeIds: [item.id] },
+                });
+                await addChatMessage({ conversationId: convId, role: 'user', content: promptText } as any);
+                toast.success(t('tools.hub.toast.chatOpened', 'Chat opened'), { duration: 1500 });
+              } catch {
+                toast.error(t('tools.hub.toast.chatOpenError', 'Failed to open chat'));
+              }
             };
 
-            const detailsText = String(init?.summary || init?.description || '').trim();
-
-            const detailsMenu: RowAction[] = [
-              {
-                id: 'toggle',
-                label: initiativeDetailsExpanded
-                  ? isPolish
-                    ? 'Zwiń'
-                    : 'Collapse'
-                  : isPolish
-                    ? 'Rozwiń'
-                    : 'Expand',
-                onClick: () => setInitiativeDetailsExpanded((v) => !v),
-              },
-              {
-                id: 'summarize',
-                label: isPolish ? 'Podsumuj' : 'Summarize',
-                onClick: async () => {
-                  try {
-                    const convId = await openChatWithContext({
-                      entityType: 'initiative',
-                      entityId: item.id,
-                      entityName: item.name,
-                      contextData: init,
-                      pmoContext: { initiativeIds: [item.id] },
-                    });
-                    await addChatMessage({
-                      conversationId: convId,
-                      role: 'user',
-                      content: isPolish
-                        ? 'Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki.'
-                        : 'Summarize this initiative in 5 bullets and propose 3 next steps.',
-                    } as any);
-                    toast.success(t('tools.hub.toast.chatOpened', 'Chat opened'), { duration: 1500 });
-                  } catch {
-                    toast.error(t('tools.hub.toast.chatOpenError', 'Failed to open chat'));
-                  }
-                },
-              },
-              {
-                id: 'copy',
-                label: isPolish ? 'Kopiuj' : 'Copy',
-                divider: true,
-                onClick: async () => {
-                  try {
-                    await navigator.clipboard.writeText([item.name, '', detailsText].filter(Boolean).join('\n'));
-                    toast.success(isPolish ? 'Skopiowano' : 'Copied');
-                  } catch {
-                    toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
-                  }
-                },
-              },
-            ];
-
-            const metaPill = (label: string, value: string) => (
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200">
-                <span className="text-slate-500 dark:text-slate-400">{label}</span>
-                <span className="text-slate-900 dark:text-white">{value}</span>
-              </span>
-            );
-
-            const statusPill = (value: string) => (
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-slate-200">
-                {value.replace(/_/g, ' ')}
-              </span>
-            );
-
             return (
-              <div className="space-y-4">
-                {/* Brief/meta card — mirrors MyWork rhythm */}
-                <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-slate-200">
-                      {isPolish ? 'Inicjatywa' : 'Initiative'}
-                    </span>
-                    <div className="flex flex-wrap items-center justify-end gap-1.5">
-                      {statusPill(status)}
-                      {progress != null ? metaPill(isPolish ? 'Postęp' : 'Progress', `${progress}%`) : null}
-                      {axis ? metaPill(isPolish ? 'Oś' : 'Axis', axis) : null}
-                      {priority ? metaPill(isPolish ? 'Pilność' : 'Priority', priority) : null}
-                    </div>
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
-                    <div>
-                      <div className="text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Utworzono' : 'Created'}
-                      </div>
-                      <div className="text-slate-900 dark:text-white">{fmtDate(createdAt)}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Ostatnia zmiana' : 'Last modified'}
-                      </div>
-                      <div className="text-slate-900 dark:text-white">{fmtDate(updatedAt)}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Details */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      {isPolish ? 'Szczegóły' : 'Details'}
-                    </div>
-                    <RowActionsMenu iconVariant="vertical" actions={detailsMenu} />
-                  </div>
-
-                  <div
-                    className={[
-                      'text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap',
-                      initiativeDetailsExpanded ? '' : 'line-clamp-6',
-                    ].join(' ')}
-                  >
-                    {detailsText || (isPolish ? 'Brak opisu.' : 'No description.')}
-                  </div>
-                </div>
-              </div>
+              <InitiativePreviewV3Body
+                initiative={mapToPreviewModel(init)}
+                onSummarize={() =>
+                  openChat(
+                    isPolish
+                      ? 'Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki.'
+                      : 'Summarize this initiative in 5 bullets and propose 3 next steps.'
+                  )
+                }
+              />
             );
           }}
           renderPreviewFooter={(item) => {
@@ -2379,15 +3453,32 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                   ? selectedInitiative
                   : ((item as any)?._fullData as any) || {};
 
-              const status = String(init?.status || item.status || '').toUpperCase() || 'DRAFT';
-              const hintChipClass =
-                'inline-flex items-center h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-500 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors active:scale-[0.98]';
-              const footerPillBase =
+              const mapToPreviewModel = (i: any): InitiativePreviewV3Model => ({
+                id: String(i?.id || item.id),
+                name: String(i?.name || i?.title || item.name || ''),
+                title: String(i?.title || i?.name || item.name || ''),
+                status: i?.status ?? item.status,
+                axis: i?.axis ?? (item as any)?.category,
+                priority: i?.priority ?? null,
+                progress:
+                  Number.isFinite(Number((item as any)?.progress)) ? Number((item as any)?.progress) : (i?.progress ?? null),
+                createdAt: i?.createdAt ?? i?.created_at ?? (item as any)?.createdAt ?? null,
+                updatedAt: i?.updatedAt ?? i?.updated_at ?? (item as any)?.updatedAt ?? null,
+                summary: i?.summary ?? null,
+                description: i?.description ?? null,
+                plannedStartDate: i?.plannedStartDate ?? null,
+                plannedEndDate: i?.plannedEndDate ?? null,
+                ownerBusiness: i?.ownerBusiness ?? null,
+                ownerExecution: i?.ownerExecution ?? null,
+                sourceType: i?.sourceType ?? i?.source_type ?? null,
+                sourceId: i?.sourceId ?? i?.source_id ?? null,
+              });
+
+              const statusUpper = String(init?.status || item.status || '').toUpperCase() || 'DRAFT';
+              const extraPillBase =
                 'inline-flex items-center justify-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-              const pillNeutral =
-                `${footerPillBase} border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
-              const pillPrimary =
-                `${footerPillBase} border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-300 hover:bg-primary-500/15`;
+              const extraPillNeutral =
+                `${extraPillBase} border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
 
               const openChat = async (promptText: string) => {
                 try {
@@ -2405,174 +3496,35 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                 }
               };
 
-              const aiHints = isPolish
-                ? [
-                    { label: 'Kolejne kroki', prompt: 'Zaproponuj 3 kolejne kroki dla tej inicjatywy.' },
-                    { label: 'Ryzyka', prompt: 'Wypisz 5 ryzyk i propozycje mitigacji dla tej inicjatywy.' },
-                    { label: 'Zakres', prompt: 'Ułóż krótki zakres i kryteria sukcesu dla tej inicjatywy.' },
-                  ]
-                : [
-                    { label: 'Next steps', prompt: 'Propose 3 next steps for this initiative.' },
-                    { label: 'Risks', prompt: 'List 5 risks and mitigations for this initiative.' },
-                    { label: 'Scope', prompt: 'Draft a short scope and success criteria for this initiative.' },
-                  ];
-
-              const aiMenu: RowAction[] = [
-                {
-                  id: 'regenerate',
-                  label: isPolish ? 'Regeneruj' : 'Regenerate',
-                  onClick: () =>
-                    openChat(
-                      isPolish
-                        ? 'Wygeneruj 3 szybkie hinty (co zrobić / na co uważać / jak mierzyć).'
-                        : 'Generate 3 quick hints (what to do / risks / how to measure).'
-                    ),
-                },
-                {
-                  id: 'copy-link',
-                  label: isPolish ? 'Kopiuj link' : 'Copy link',
-                  divider: true,
-                  onClick: async () => {
-                    try {
-                      const url = `${window.location.origin}${ROUTES.INITIATIVES}?open=${encodeURIComponent(item.id)}&mode=doc`;
-                      await navigator.clipboard.writeText(url);
-                      toast.success(isPolish ? 'Skopiowano link' : 'Link copied');
-                    } catch {
-                      toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
-                    }
-                  },
-                },
-                {
-                  id: 'clear',
-                  label: isPolish ? 'Wyczyść' : 'Clear',
-                  onClick: () => {
-                    setInitiativeDetailsExpanded(false);
-                    toast.success(isPolish ? 'Wyczyściłem stan podglądu' : 'Preview state cleared', {
-                      duration: 1200,
-                    });
-                  },
-                },
-              ];
-
-              const relationsPill = (label: string, value: string, onClick?: () => void) => (
-                <button
-                  type="button"
-                  onClick={onClick}
-                  disabled={!onClick}
-                  className={[
-                    'inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border',
-                    'border-slate-200/70 dark:border-white/[0.08]',
-                    'bg-transparent',
-                    onClick
-                      ? 'text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors'
-                      : 'text-slate-500 dark:text-slate-400 cursor-default',
-                  ].join(' ')}
-                >
-                  <span className="text-slate-500 dark:text-slate-400">{label}</span>
-                  <span className="truncate max-w-[220px]">{value}</span>
-                </button>
-              );
-
-              const sourceType = String(init?.sourceType || init?.source_type || '').trim();
-              const sourceId = String(init?.sourceId || init?.source_id || '').trim();
-              const sourceLabel = sourceType
-                ? sourceId
-                  ? `${sourceType} · ${sourceId.slice(0, 8)}…`
-                  : sourceType
-                : '—';
+              const copyLink = async () => {
+                try {
+                  const url = `${window.location.origin}${ROUTES.INITIATIVES}?open=${encodeURIComponent(item.id)}&mode=doc`;
+                  await navigator.clipboard.writeText(url);
+                  toast.success(isPolish ? 'Skopiowano link' : 'Link copied');
+                } catch {
+                  toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+                }
+              };
 
               return (
-                <div className="space-y-0">
-                  {/* AI zone (raised + more room like MyWork) */}
-                  <div className="py-1">
-                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-                        <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
-                      </div>
-                      <RowActionsMenu iconVariant="vertical" actions={aiMenu} />
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {aiHints.map((h) => (
-                        <button
-                          key={h.label}
-                          type="button"
-                          onClick={() => openChat(h.prompt)}
-                          className={hintChipClass}
-                        >
-                          {h.label}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-                      {isPolish
-                        ? 'Użyj AI hintów w stopce, aby wygenerować brief.'
-                        : 'Use AI hints in the footer to generate a brief.'}
-                    </div>
-                  </div>
-
-                  <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
-                  {/* Relations (room for 2 rows) */}
-                  <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
-                    {relationsPill(
-                      isPolish ? 'Źródło' : 'Source',
-                      sourceLabel,
-                      sourceId ? () => void openDocumentById(sourceId) : undefined
-                    )}
-                    {relationsPill(
-                      isPolish ? 'Inicjatywy' : 'Initiatives',
-                      isPolish ? 'Otwórz' : 'Open',
-                      () =>
-                        navigate(`${ROUTES.INITIATIVES}?open=${encodeURIComponent(item.id)}&mode=doc`)
-                    )}
-                    {initiativeTasks?.length ? (
-                      relationsPill(isPolish ? 'Zadania' : 'Tasks', String(initiativeTasks.length))
-                    ) : null}
-                  </div>
-
-                  <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
-                  {/* Actions — more buttons (initiative is “in motion”) */}
-                  <div className="space-y-2.5 py-1">
-                    <div className="flex gap-2 flex-wrap">
-                      <button type="button" onClick={() => handleOpenDocument(item)} className={pillPrimary}>
-                        <ExternalLink size={14} />
-                        {isPolish ? 'Otwórz' : 'Open'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          navigate(`${ROUTES.INITIATIVES}?open=${encodeURIComponent(item.id)}&mode=doc`)
-                        }
-                        className={pillNeutral}
-                      >
-                        <ChevronRight size={14} />
-                        {isPolish ? 'W module' : 'In module'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          openChat(
-                            isPolish
-                              ? 'Pomóż mi dopracować tę inicjatywę: brakujące pola, ryzyka, KPI i następne kroki.'
-                              : 'Help me refine this initiative: missing fields, risks, KPIs, and next steps.'
-                          )
-                        }
-                        className={pillNeutral}
-                      >
-                        <MessageSquare size={14} />
-                        {isPolish ? 'Czat' : 'Chat'}
-                      </button>
-                    </div>
-
+                <InitiativePreviewV3Footer
+                  initiative={mapToPreviewModel(init)}
+                  tasksCount={initiativeTasks?.length}
+                  onOpenFull={() => handleOpenDocument(item)}
+                  onOpenInModule={() =>
+                    navigate(`${ROUTES.INITIATIVES}?open=${encodeURIComponent(item.id)}&mode=doc`)
+                  }
+                  onOpenChat={(prompt) => openChat(prompt)}
+                  onCopyLink={copyLink}
+                  extraActionsAfterSlot={
                     <div className="grid grid-cols-3 gap-2">
                       <button
                         type="button"
                         onClick={() => submitInitiativeForReviewById(item.id)}
-                        disabled={status !== 'DRAFT'}
-                        className={`${pillNeutral} ${status !== 'DRAFT' ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        disabled={statusUpper !== 'DRAFT'}
+                        className={`${extraPillNeutral} ${statusUpper !== 'DRAFT' ? 'opacity-60 cursor-not-allowed' : ''}`}
                         title={
-                          status !== 'DRAFT'
+                          statusUpper !== 'DRAFT'
                             ? isPolish
                               ? 'Dostępne tylko dla DRAFT'
                               : 'Available only for DRAFT'
@@ -2582,19 +3534,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                         <ArrowRight size={14} />
                         {isPolish ? 'Do review' : 'Review'}
                       </button>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          try {
-                            const url = `${window.location.origin}${ROUTES.INITIATIVES}?open=${encodeURIComponent(item.id)}&mode=doc`;
-                            await navigator.clipboard.writeText(url);
-                            toast.success(isPolish ? 'Skopiowano link' : 'Link copied');
-                          } catch {
-                            toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
-                          }
-                        }}
-                        className={pillNeutral}
-                      >
+                      <button type="button" onClick={() => void copyLink()} className={extraPillNeutral}>
                         {isPolish ? 'Link' : 'Link'}
                       </button>
                       <button
@@ -2603,19 +3543,17 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                           await fetchData(true);
                           await fetchInitiativeDetails(item.id);
                         }}
-                        className={pillNeutral}
+                        className={extraPillNeutral}
                       >
                         {isPolish ? 'Odśwież' : 'Refresh'}
                       </button>
                     </div>
-                  </div>
-                </div>
+                  }
+                />
               );
             }
 
-            const canResume =
-              activeTab === 'sessions' &&
-              ['DRAFT', 'PENDING_REVIEW', 'REVIEW'].includes(String(item.status || '').toUpperCase());
+            const canResume = false;
             const showOpen = isOutputsTab;
 
             const refreshFull = async () => {
@@ -2676,7 +3614,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
             columns={columns}
             data={currentData}
             onRowClick={(row) => setPreviewItemId(row.id)}
-            onRowDoubleClick={handleOpenDocument}
+            onRowDoubleClick={(row) => {
+              if (isOutputsTab) {
+                openOutput(row as any);
+                return;
+              }
+              handleOpenDocument(row);
+            }}
             onRowAction={handleRowAction}
             getRowActions={
               isInitiativesTab
@@ -2728,7 +3672,33 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                       },
                     ] as RowAction[];
                   }
-                : undefined
+                : isOutputsTab
+                  ? (row) => {
+                      const id = String(row?.id || '').trim();
+                      return [
+                        {
+                          id: 'open',
+                          label: isPolish ? 'Otwórz' : 'Open',
+                          icon: ExternalLink,
+                          variant: 'primary',
+                          onClick: () => openOutput(row as any),
+                        },
+                        {
+                          id: 'preview',
+                          label: t('common.preview', 'Preview'),
+                          icon: Eye,
+                          onClick: () => setPreviewItemId(id),
+                        },
+                        {
+                          id: 'chat',
+                          label: isPolish ? 'Czat' : 'Chat',
+                          icon: MessageSquare,
+                          divider: true,
+                          onClick: () => setPreviewItemId(id),
+                        },
+                      ] as RowAction[];
+                    }
+                  : undefined
             }
             activeFilters={activeFilters}
             onFilterChange={setActiveFilters}
@@ -2837,6 +3807,16 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       };
     });
 
+    const assessments = (Object.keys(ASSESSMENT_FRAMEWORK_META) as AssessmentFramework[]).map((fw) => ({
+      id: `assessment:${fw}`,
+      toolType: fw,
+      shortCode: fw,
+      name: ASSESSMENT_FRAMEWORK_META[fw].name,
+      description: isPolish ? 'Framework assessment' : 'Assessment framework',
+      category: 'licensed' as ToolCategory,
+      kind: 'assessment' as const,
+    }));
+
     const catalog =
       strategyCatalogSlugs.length > 0
         ? strategyCatalogSlugs.map((slug) => ({
@@ -2850,7 +3830,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
           }))
         : [];
 
-    const all = [...base, ...catalog].filter((x) => Boolean(x.toolType));
+    const all = [...base, ...assessments, ...catalog].filter((x) => Boolean(x.toolType));
 
     return all
       .filter((x) => (addMenuCategory === 'all' ? true : x.category === addMenuCategory))
@@ -2946,11 +3926,19 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                       type="button"
                       onClick={() => {
                         setIsAddMenuOpen(false);
-                        void createAndOpenToolSession({
-                          toolType: item.toolType,
-                          name: `${item.name} — ${isPolish ? 'Sesja' : 'Session'}`,
-                          source: 'add_menu',
-                        });
+                        if (item.kind === 'assessment') {
+                          void createAndOpenAssessmentSession({
+                            assessmentType: item.toolType,
+                            name: `${item.shortCode} — ${isPolish ? 'Assessment' : 'Assessment'}`,
+                            source: 'add_menu',
+                          });
+                        } else {
+                          void createAndOpenToolSession({
+                            toolType: item.toolType,
+                            name: `${item.name} — ${isPolish ? 'Sesja' : 'Session'}`,
+                            source: 'add_menu',
+                          });
+                        }
                       }}
                       className="w-full flex items-start gap-3 px-3 py-2 rounded-xl text-left hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
                     >
@@ -3049,6 +4037,275 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     </div>
   );
 
+  // AI button (rightmost in topbar cluster; scan from right: AI → Add → Views → Filters)
+  const handleAiContextClick = useCallback(async () => {
+    try {
+      if (activeDocumentId) {
+        toast(t('tools.hub.toast.closeDocForAi', isPolish ? 'Wróć do listy, aby użyć AI.' : 'Return to list to use AI.'));
+        return;
+      }
+
+      // If we have a selected item, open chat in that entity context (best UX).
+      if (previewItemId) {
+        if (activeTab === 'library') {
+          const row = filteredLibraryItems.find((k) => k.id === previewItemId);
+          if (row) {
+            const convId = await openChatWithContext({
+              entityType: (row as any)?.kind === 'assessment' ? 'assessment' : 'tool',
+              entityId: String((row as any)?.toolType || row.id),
+              entityName: String(row.name || ''),
+              contextData:
+                (row as any)?.kind === 'assessment' ? (row as any) : (previewKnownTool as any) || (row as any),
+              pmoContext: {},
+            });
+            await addChatMessage({
+              conversationId: convId,
+              role: 'user',
+              content: isPolish
+                ? (row as any)?.kind === 'assessment'
+                  ? 'Pomóż mi zdecydować, czy ten framework assessment pasuje. Daj 6–8 punktów: kiedy użyć, jak zebrać dane wejściowe i jak czytać wyniki.'
+                  : 'Pomóż mi zdecydować, czy to narzędzie jest właściwe. Daj 6–8 punktów: kiedy użyć, jak przygotować dane wejściowe, i jakie pułapki.'
+                : (row as any)?.kind === 'assessment'
+                  ? 'Help me decide if this assessment framework fits. Give 6–8 bullets: when to use, how to gather inputs, and how to interpret results.'
+                  : 'Help me decide if this tool fits. Give 6–8 bullets: when to use, how to prepare inputs, and pitfalls.',
+            } as any);
+            return;
+          }
+        }
+
+        if (activeTab === 'initiatives') {
+          const row = initiatives.find((i) => i.id === previewItemId);
+          const init = (selectedInitiative && selectedInitiative.id === previewItemId ? selectedInitiative : (row as any)?._fullData) || {};
+          const convId = await openChatWithContext({
+            entityType: 'initiative',
+            entityId: String(previewItemId),
+            entityName: String(row?.name || (init as any)?.title || '') || previewItemId,
+            contextData: init,
+            pmoContext: { initiativeIds: [String(previewItemId)] },
+          });
+          await addChatMessage({
+            conversationId: convId,
+            role: 'user',
+            content: isPolish
+              ? 'Podsumuj tę inicjatywę i zaproponuj 3 kolejne kroki.'
+              : 'Summarize this initiative and propose 3 next steps.',
+          } as any);
+          return;
+        }
+
+        // Sessions / Outputs
+        const row =
+          activeTab === 'sessions'
+            ? unifiedSessionsData.find((d: any) => d.id === previewItemId)
+            : activeTab === 'outputs'
+              ? outputs.find((r: OutputItem) => r.id === previewItemId)
+              : null;
+        if (row) {
+          const isAssessment = (row as any)?.kind === 'assessmentSession';
+          const isOutput = (row as any)?.kind === 'output';
+          const outputKind = isOutput ? String((row as any)?.outputKind || '') : '';
+          const convId = await openChatWithContext({
+            entityType: isOutput
+              ? outputKind === 'presentation_deck'
+                ? 'presentation'
+                : 'report'
+              : isAssessment
+                ? 'assessment'
+                : 'tool',
+            entityId: String(previewItemId),
+            entityName: String(row.name || '') || previewItemId,
+            contextData:
+              isAssessment
+                ? (previewFullAssessment as any) || (row as any)
+                : isOutput
+                  ? (row as any)?._fullData || (row as any)
+                  : (previewFullSession as any) || (row as any),
+            pmoContext: {},
+          });
+          await addChatMessage({
+            conversationId: convId,
+            role: 'user',
+            content: isPolish
+              ? isAssessment
+                ? 'Zrób krótki executive brief (6–8 punktów) z tej sesji assessment.'
+                : isOutput
+                  ? 'Zrób krótki executive brief (6–8 punktów) na podstawie tego outputu.'
+                  : 'Zrób krótki executive brief (6–8 punktów) z tej sesji.'
+              : isAssessment
+                ? 'Write a short executive brief (6–8 bullets) from this assessment session.'
+                : isOutput
+                  ? 'Write a short executive brief (6–8 bullets) based on this output.'
+                  : 'Write a short executive brief (6–8 bullets) from this session.',
+          } as any);
+          return;
+        }
+      }
+
+      // Fallback: module context
+      const tabLabel =
+        activeTab === 'library'
+          ? t('tools.hub.tabs.library', 'Library')
+          : activeTab === 'sessions'
+            ? t('tools.hub.tabs.sessions', 'Sessions')
+            : activeTab === 'outputs'
+              ? t('tools.hub.tabs.outputs', 'Outputs')
+              : t('tools.hub.tabs.initiatives', 'Initiatives');
+      const convId = await openChatWithContext({
+        entityType: 'tools',
+        entityId: String(currentProjectId || 'tools'),
+        entityName: isPolish ? `Narzędzia — ${tabLabel}` : `Tools — ${tabLabel}`,
+        contextData: {
+          module: 'tools',
+          tab: activeTab,
+          searchQuery,
+          statusFilter,
+        },
+        pmoContext: {},
+      });
+      await addChatMessage({
+        conversationId: convId,
+        role: 'user',
+        content: isPolish
+          ? 'Pomóż mi w tej zakładce: co warto zrobić dalej i na co uważać?'
+          : 'Help me in this tab: what should I do next and what should I watch out for?',
+      } as any);
+    } catch {
+      toast.error(t('tools.hub.toast.chatOpenError', 'Failed to open chat'));
+    }
+  }, [
+    activeDocumentId,
+    activeTab,
+    addChatMessage,
+    currentProjectId,
+    discoveries,
+    filteredLibraryItems,
+    initiatives,
+    isPolish,
+    openChatWithContext,
+    previewFullAssessment,
+    previewFullSession,
+    previewItemId,
+    previewKnownTool,
+    outputs,
+    searchQuery,
+    selectedInitiative,
+    statusFilter,
+    t,
+    unifiedSessionsData,
+  ]);
+
+  const AiContextButton = (
+    <button
+      type="button"
+      onClick={() => void handleAiContextClick()}
+      className="inline-flex items-center gap-2 h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-primary-600 dark:text-primary-300 hover:bg-primary-50/70 dark:hover:bg-primary-500/10 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 text-sm font-medium"
+      title={isPolish ? 'Kontekst AI' : 'AI Context'}
+      aria-label={isPolish ? 'Kontekst AI' : 'AI Context'}
+    >
+      <Sparkles size={16} />
+      <span>{t('common.ai', 'AI')}</span>
+    </button>
+  );
+
+  const CommandRowContent = (
+    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+      {activeTab === 'library' ? (
+        <>
+          {(
+            [
+              {
+                id: 'all' as const,
+                label: t('common.all', 'All'),
+                count: libraryCatalogItems.length,
+                dot: 'bg-slate-500',
+              },
+              {
+                id: 'strategic' as const,
+                label: isPolish ? 'Strategia' : 'Strategy',
+                count: libraryCategoryCounts.strategic,
+                dot: 'bg-emerald-500',
+              },
+              {
+                id: 'operational' as const,
+                label: isPolish ? 'Operacje' : 'Operations',
+                count: libraryCategoryCounts.operational,
+                dot: 'bg-blue-500',
+              },
+              {
+                id: 'digital' as const,
+                label: 'Digital',
+                count: libraryCategoryCounts.digital,
+                dot: 'bg-purple-500',
+              },
+              {
+                id: 'automation' as const,
+                label: isPolish ? 'Automatyzacje' : 'Automation',
+                count: libraryCategoryCounts.automation,
+                dot: 'bg-amber-500',
+              },
+              {
+                id: 'licensed' as const,
+                label: isPolish ? 'Assessments' : 'Assessments',
+                count: libraryCategoryCounts.licensed,
+                dot: 'bg-rose-500',
+              },
+              {
+                id: 'other' as const,
+                label: isPolish ? 'Inne' : 'Other',
+                count: libraryCategoryCounts.other,
+                dot: 'bg-slate-500',
+              },
+            ] as const
+          ).map((opt) => {
+            const isActive = libraryCategoryFilter === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setLibraryCategoryFilter(opt.id)}
+                className={[
+                  'inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-sm font-medium border transition-colors',
+                  isActive
+                    ? 'border-primary-500/40 bg-primary-500/10 text-slate-900 dark:text-slate-100'
+                    : 'border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]',
+                ].join(' ')}
+              >
+                <span className={`w-2 h-2 rounded-full ${opt.dot}`} />
+                <span>{opt.label}</span>
+                <span className="text-slate-500 dark:text-slate-400 text-xs">{opt.count}</span>
+              </button>
+            );
+          })}
+        </>
+      ) : (
+        <>
+          {currentStatusOptions.map((opt) => {
+            const isActive = statusFilter === opt.id;
+            const label = getStatusOptionLabel(opt.id, opt.label);
+            const count = statusCountsForCommandRow[opt.id] ?? 0;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setStatusFilter(opt.id)}
+                className={[
+                  'inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-sm font-medium border transition-colors',
+                  isActive
+                    ? 'border-primary-500/40 bg-primary-500/10 text-slate-900 dark:text-slate-100'
+                    : 'border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]',
+                ].join(' ')}
+              >
+                <span className={`w-2 h-2 rounded-full ${opt.bgColor}`} />
+                <span>{label}</span>
+                <span className="text-slate-500 dark:text-slate-400 text-xs">{count}</span>
+              </button>
+            );
+          })}
+        </>
+      )}
+    </div>
+  );
+
   return (
     <>
       <ModuleHub
@@ -3066,12 +4323,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
+        commandRowContent={CommandRowContent}
         primaryCta={PrimaryCta}
+        aiControl={AiContextButton}
         availableViewModes={['table']}
         rightControls={
           <div className="flex items-center gap-2">
-            {ViewToolDropdown}
             {activeTab === 'library' ? null : StatusFilterDropdown}
+            {ViewToolDropdown}
           </div>
         }
       >

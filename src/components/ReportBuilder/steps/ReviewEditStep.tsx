@@ -57,7 +57,7 @@ interface ReviewEditStepProps {
     password?: string;
     expiresInDays?: number;
     showCompanyLogo?: boolean;
-    showConsultinityBranding?: boolean;
+    showConsultifyBranding?: boolean;
     customMessage?: string;
   }) => Promise<{
     id: string;

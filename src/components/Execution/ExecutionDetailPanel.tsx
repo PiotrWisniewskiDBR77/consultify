@@ -19,6 +19,7 @@ import {
 import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
 import {
@@ -149,6 +150,7 @@ const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
   isLoading,
 }) => {
   const [reason, setReason] = useState('');
+  const { t } = useTranslation();
 
   return (
     <div
@@ -164,15 +166,15 @@ const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
           {action.requiresReason
-            ? 'Please provide a reason for this change.'
-            : 'Are you sure you want to proceed?'}
+            ? t('execution.statusChange.reasonPrompt', 'Please provide a reason for this change.')
+            : t('execution.statusChange.confirmPrompt', 'Are you sure you want to proceed?')}
         </p>
 
         {action.requiresReason && (
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Enter reason..."
+            placeholder={t('execution.statusChange.reasonPlaceholder', 'Enter reason...')}
             className="w-full p-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm resize-none focus:outline-none focus:border-cyan-500"
             rows={3}
           />
@@ -184,7 +186,7 @@ const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
             className="px-4 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
             disabled={isLoading}
           >
-            Cancel
+            {t('common.cancel', 'Cancel')}
           </button>
           <button
             onClick={() => onConfirm(reason || undefined)}
@@ -198,7 +200,7 @@ const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
             }`}
           >
             {isLoading && <Loader2 size={14} className="animate-spin" />}
-            Confirm
+            {t('common.confirm', 'Confirm')}
           </button>
         </div>
       </div>
@@ -217,6 +219,7 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [selectedAction, setSelectedAction] = useState<StatusAction | null>(null);
 
   const progress = initiative.progress || 0;
@@ -581,6 +584,13 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                       <span className="text-sm text-green-400">{initiative.expectedRoi}x</span>
                     </div>
                   )}
+                  <button
+                    onClick={() => navigate('/economics?tab=valuation')}
+                    className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-colors"
+                  >
+                    <TrendingUp size={14} />
+                    {t('execution.detail.openEconomics', 'Otwórz w module Finanse')}
+                  </button>
                 </div>
               </div>
             )}

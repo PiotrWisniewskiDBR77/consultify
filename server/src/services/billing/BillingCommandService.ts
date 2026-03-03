@@ -605,7 +605,7 @@ export class BillingCommandService {
       for (const admin of admins) {
         await EmailService.send({
           to: admin.email,
-          subject: 'Your Consultinity subscription has been canceled',
+          subject: 'Your Consultify subscription has been canceled',
           html: this.generateCancellationEmailHtml({
             firstName: admin.first_name,
             orgName: org?.name || 'Your organization',
@@ -677,7 +677,7 @@ export class BillingCommandService {
             
             <p><strong>Changed your mind?</strong></p>
             <p>
-                <a href="${process.env.FRONTEND_URL || 'https://app.consultinity.com'}/settings/billing" 
+                <a href="${process.env.FRONTEND_URL || 'https://app.consultify.com'}/settings/billing" 
                    style="display: inline-block; background: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
                     Reactivate Subscription
                 </a>
@@ -685,10 +685,10 @@ export class BillingCommandService {
             
             <p>We'd love to know why you decided to cancel. Your feedback helps us improve.</p>
             
-            <p>Best regards,<br>The Consultinity Team</p>
+            <p>Best regards,<br>The Consultify Team</p>
         </div>
         <div class="footer">
-            <p>© ${new Date().getFullYear()} Consultinity. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} Consultify. All rights reserved.</p>
         </div>
     </div>
 </body>
@@ -858,7 +858,7 @@ export class BillingCommandService {
             }
             
             <p>
-                <a href="${process.env.FRONTEND_URL || 'https://app.consultinity.com'}/settings/billing" 
+                <a href="${process.env.FRONTEND_URL || 'https://app.consultify.com'}/settings/billing" 
                    style="display: inline-block; background: ${color}; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
                     View Billing Details
                 </a>
@@ -866,10 +866,10 @@ export class BillingCommandService {
             
             <p>If you have any questions, please contact our support team.</p>
             
-            <p>Best regards,<br>The Consultinity Team</p>
+            <p>Best regards,<br>The Consultify Team</p>
         </div>
         <div class="footer">
-            <p>© ${new Date().getFullYear()} Consultinity. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} Consultify. All rights reserved.</p>
         </div>
     </div>
 </body>

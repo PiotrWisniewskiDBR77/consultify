@@ -337,16 +337,16 @@ export const PartnerSettlementsView: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
             {t('superadmin.settlements.title', 'Partner Settlements')}
           </h1>
-          <p className="text-slate-400 dark:text-slate-500">
+          <p className="text-slate-600 dark:text-slate-400">
             {t('superadmin.settlements.subtitle', 'Manage partner commissions and payouts')}
           </p>
         </div>
         <button
           onClick={() => window.location.reload()}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Refresh
@@ -355,68 +355,72 @@ export const PartnerSettlementsView: React.FC = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-lg bg-amber-500/20">
               <Clock className="w-5 h-5 text-amber-400" />
             </div>
-            <span className="text-sm text-slate-400 dark:text-slate-500">Pending Commissions</span>
+            <span className="text-sm text-slate-600 dark:text-slate-400">Pending Commissions</span>
           </div>
-          <p className="text-2xl font-bold text-white">{summary?.totalPendingCommissions}</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+            {summary?.totalPendingCommissions}
+          </p>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             €{summary?.pendingCommissionAmount.toLocaleString()} total
           </p>
         </div>
 
-        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-lg bg-blue-500/20">
               <Banknote className="w-5 h-5 text-blue-400" />
             </div>
-            <span className="text-sm text-slate-400 dark:text-slate-500">Pending Payouts</span>
+            <span className="text-sm text-slate-600 dark:text-slate-400">Pending Payouts</span>
           </div>
-          <p className="text-2xl font-bold text-white">{summary?.totalPendingPayouts}</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+            {summary?.totalPendingPayouts}
+          </p>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             €{summary?.pendingPayoutAmount.toLocaleString()} total
           </p>
         </div>
 
-        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-lg bg-emerald-500/20">
               <TrendingUp className="w-5 h-5 text-emerald-400" />
             </div>
-            <span className="text-sm text-slate-400 dark:text-slate-500">
+            <span className="text-sm text-slate-600 dark:text-slate-400">
               This Month Commissions
             </span>
           </div>
-          <p className="text-2xl font-bold text-white">
+          <p className="text-2xl font-bold text-slate-900 dark:text-white">
             €{summary?.thisMonthCommissions.toLocaleString()}
           </p>
         </div>
 
-        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-lg bg-violet-500/20">
               <DollarSign className="w-5 h-5 text-violet-400" />
             </div>
-            <span className="text-sm text-slate-400 dark:text-slate-500">This Month Payouts</span>
+            <span className="text-sm text-slate-600 dark:text-slate-400">This Month Payouts</span>
           </div>
-          <p className="text-2xl font-bold text-white">
+          <p className="text-2xl font-bold text-slate-900 dark:text-white">
             €{summary?.thisMonthPayouts.toLocaleString()}
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 p-1 bg-navy-800/50 rounded-lg w-fit">
+      <div className="flex items-center gap-1 p-1 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/5 rounded-lg w-fit">
         <button
           onClick={() => setActiveTab('commissions')}
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors',
             activeTab === 'commissions'
               ? 'bg-violet-600 text-white'
-              : 'text-slate-400 dark:text-slate-500 hover:text-white'
+              : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           )}
         >
           Pending Commissions
@@ -427,7 +431,7 @@ export const PartnerSettlementsView: React.FC = () => {
             'px-4 py-2 text-sm font-medium rounded-md transition-colors',
             activeTab === 'payouts'
               ? 'bg-violet-600 text-white'
-              : 'text-slate-400 dark:text-slate-500 hover:text-white'
+              : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           )}
         >
           Pending Payouts
@@ -438,7 +442,7 @@ export const PartnerSettlementsView: React.FC = () => {
             'px-4 py-2 text-sm font-medium rounded-md transition-colors',
             activeTab === 'attribution'
               ? 'bg-violet-600 text-white'
-              : 'text-slate-400 dark:text-slate-500 hover:text-white'
+              : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           )}
         >
           Attribution Manager
@@ -449,7 +453,7 @@ export const PartnerSettlementsView: React.FC = () => {
             'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
             activeTab === 'expiring'
               ? 'bg-violet-600 text-white'
-              : 'text-slate-400 dark:text-slate-500 hover:text-white'
+              : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           )}
         >
           <AlertTriangle className="w-4 h-4" />
@@ -466,7 +470,7 @@ export const PartnerSettlementsView: React.FC = () => {
             'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
             activeTab === 'analytics'
               ? 'bg-violet-600 text-white'
-              : 'text-slate-400 dark:text-slate-500 hover:text-white'
+              : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           )}
         >
           <BarChart3 className="w-4 h-4" />
@@ -476,7 +480,7 @@ export const PartnerSettlementsView: React.FC = () => {
 
       {/* Commissions Tab */}
       {activeTab === 'commissions' && (
-        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
           {/* Toolbar */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -485,10 +489,10 @@ export const PartnerSettlementsView: React.FC = () => {
                 <input
                   type="text"
                   placeholder="Search partners..."
-                  className="pl-9 pr-4 py-2 bg-navy-900 border border-white/10 rounded-lg text-sm text-white w-64"
+                  className="pl-9 pr-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white w-64"
                 />
               </div>
-              <button className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 dark:text-slate-500 hover:text-white border border-white/10 rounded-lg">
+              <button className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/10 rounded-lg">
                 <Filter className="w-4 h-4" />
                 Filter
               </button>
@@ -509,7 +513,7 @@ export const PartnerSettlementsView: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/5">
+                <tr className="border-b border-slate-200 dark:border-white/10">
                   <th className="text-left px-3 py-2">
                     <input
                       type="checkbox"
@@ -541,7 +545,7 @@ export const PartnerSettlementsView: React.FC = () => {
                   <th className="px-3 py-2"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/10">
                 {commissions.map((commission) => (
                   <tr key={commission.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
                     <td className="px-3 py-3">
@@ -555,11 +559,15 @@ export const PartnerSettlementsView: React.FC = () => {
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-2">
                         <Building2 className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                        <span className="font-medium text-white">{commission.partnerName}</span>
+                        <span className="font-medium text-slate-900 dark:text-white">
+                          {commission.partnerName}
+                        </span>
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      <span className="text-slate-300">{commission.organizationName}</span>
+                      <span className="text-slate-700 dark:text-slate-300">
+                        {commission.organizationName}
+                      </span>
                     </td>
                     <td className="px-3 py-3">
                       <span className="text-sm text-slate-400 dark:text-slate-500 capitalize">
@@ -567,7 +575,7 @@ export const PartnerSettlementsView: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-3 py-3 text-right">
-                      <span className="text-slate-300">
+                      <span className="text-slate-700 dark:text-slate-300">
                         €{commission.grossAmount.toLocaleString()}
                       </span>
                     </td>
@@ -585,7 +593,7 @@ export const PartnerSettlementsView: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-3 py-3">
-                      <button className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-white rounded transition-colors">
+                      <button className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors">
                         <Eye className="w-4 h-4" />
                       </button>
                     </td>
@@ -610,7 +618,10 @@ export const PartnerSettlementsView: React.FC = () => {
       {activeTab === 'payouts' && (
         <div className="space-y-4">
           {payouts.map((payout) => (
-            <div key={payout.id} className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+            <div
+              key={payout.id}
+              className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div
@@ -627,8 +638,8 @@ export const PartnerSettlementsView: React.FC = () => {
                     )}
                   </div>
                   <div>
-                    <p className="font-medium text-white">{payout.partnerName}</p>
-                    <p className="text-sm text-slate-400 dark:text-slate-500">
+                    <p className="font-medium text-slate-900 dark:text-white">{payout.partnerName}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
                       {payout.transactionCount} transactions • {payout.periodStart} to{' '}
                       {payout.periodEnd}
                     </p>
@@ -636,7 +647,7 @@ export const PartnerSettlementsView: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-6">
                   <div className="text-right">
-                    <p className="text-xl font-bold text-white">
+                    <p className="text-xl font-bold text-slate-900 dark:text-white">
                       €{payout.netAmount.toLocaleString()}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -678,9 +689,9 @@ export const PartnerSettlementsView: React.FC = () => {
           ))}
 
           {payouts.length === 0 && (
-            <div className="bg-navy-800/50 rounded-xl border border-white/5 p-12 text-center">
+            <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-12 text-center">
               <CheckCircle className="w-12 h-12 text-emerald-500/50 mx-auto mb-3" />
-              <p className="text-slate-400 dark:text-slate-500">No pending payouts to process</p>
+              <p className="text-slate-600 dark:text-slate-400">No pending payouts to process</p>
             </div>
           )}
         </div>
@@ -688,13 +699,13 @@ export const PartnerSettlementsView: React.FC = () => {
 
       {/* Attribution Tab */}
       {activeTab === 'attribution' && (
-        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-white">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {t('superadmin.settlements.attributionManager', 'Attribution Manager')}
               </h3>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 {t(
                   'superadmin.settlements.attributionDesc',
                   'Manually link organizations to partners or view existing attributions'
@@ -716,7 +727,7 @@ export const PartnerSettlementsView: React.FC = () => {
                 placeholder="Search by organization or partner name..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-navy-900 border border-white/10 rounded-lg text-sm text-white"
+                className="w-full pl-9 pr-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white"
               />
             </div>
           </div>
@@ -726,7 +737,7 @@ export const PartnerSettlementsView: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-white/5">
+                  <tr className="border-b border-slate-200 dark:border-white/10">
                     <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
                       Organization
                     </th>
@@ -748,7 +759,7 @@ export const PartnerSettlementsView: React.FC = () => {
                     <th className="px-3 py-2"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-slate-200 dark:divide-white/10">
                   {attributions
                     .filter(
                       (a) =>
@@ -762,14 +773,14 @@ export const PartnerSettlementsView: React.FC = () => {
                         className="hover:bg-slate-50 dark:hover:bg-navy-800/20"
                       >
                         <td className="px-3 py-3">
-                          <span className="font-medium text-white">
+                          <span className="font-medium text-slate-900 dark:text-white">
                             {attribution.organizationName || attribution.organizationId}
                           </span>
                         </td>
                         <td className="px-3 py-3">
                           <div className="flex items-center gap-2">
                             <Building2 className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                            <span className="text-slate-300">
+                            <span className="text-slate-700 dark:text-slate-300">
                               {attribution.partnerName || attribution.partnerOrgId}
                             </span>
                           </div>
@@ -835,7 +846,7 @@ export const PartnerSettlementsView: React.FC = () => {
           ) : (
             <div className="text-center py-12">
               <Link2 className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-              <p className="text-slate-400 dark:text-slate-500">No attributions found</p>
+              <p className="text-slate-600 dark:text-slate-400">No attributions found</p>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                 Create a new attribution to link an organization with a partner
               </p>
@@ -846,14 +857,14 @@ export const PartnerSettlementsView: React.FC = () => {
 
       {/* GAP-PARTNER-004: Expiring Attributions Tab */}
       {activeTab === 'expiring' && (
-        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-amber-500" />
                 Expiring Attributions & Discounts
               </h3>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Partner discounts expiring within the selected timeframe
               </p>
             </div>
@@ -861,7 +872,7 @@ export const PartnerSettlementsView: React.FC = () => {
               <select
                 value={expiringDays}
                 onChange={(e) => setExpiringDays(Number(e.target.value))}
-                className="px-3 py-2 bg-navy-900 border border-white/10 rounded-lg text-sm text-white"
+                className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white"
               >
                 <option value={7}>Next 7 days</option>
                 <option value={14}>Next 14 days</option>
@@ -871,7 +882,7 @@ export const PartnerSettlementsView: React.FC = () => {
               </select>
               <button
                 onClick={fetchData}
-                className="p-2 text-slate-400 dark:text-slate-500 hover:text-white border border-white/10 rounded-lg"
+                className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/10 rounded-lg"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
@@ -882,7 +893,7 @@ export const PartnerSettlementsView: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-white/5">
+                  <tr className="border-b border-slate-200 dark:border-white/10">
                     <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
                       Organization
                     </th>
@@ -903,11 +914,13 @@ export const PartnerSettlementsView: React.FC = () => {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-slate-200 dark:divide-white/10">
                   {expiringAttributions.map((attr) => (
                     <tr key={attr.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
                       <td className="px-3 py-3">
-                        <span className="font-medium text-white">{attr.organizationName}</span>
+                        <span className="font-medium text-slate-900 dark:text-white">
+                          {attr.organizationName}
+                        </span>
                         {attr.referralCodeUsed && (
                           <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">
                             ({attr.referralCodeUsed})
@@ -915,7 +928,7 @@ export const PartnerSettlementsView: React.FC = () => {
                         )}
                       </td>
                       <td className="px-3 py-3">
-                        <span className="text-slate-300">{attr.partnerName}</span>
+                        <span className="text-slate-700 dark:text-slate-300">{attr.partnerName}</span>
                       </td>
                       <td className="px-3 py-3 text-center">
                         {attr.discountPercent ? (
@@ -941,7 +954,7 @@ export const PartnerSettlementsView: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-3 py-3 text-right">
-                        <span className="text-white font-medium">
+                        <span className="text-slate-900 dark:text-white font-medium">
                           €{attr.lifetimeValue.toLocaleString()}
                         </span>
                       </td>
@@ -958,7 +971,7 @@ export const PartnerSettlementsView: React.FC = () => {
           ) : (
             <div className="text-center py-12">
               <CheckCircle className="w-12 h-12 text-emerald-500/50 mx-auto mb-3" />
-              <p className="text-slate-400 dark:text-slate-500">
+              <p className="text-slate-600 dark:text-slate-400">
                 No expiring discounts in the selected timeframe
               </p>
             </div>
@@ -968,20 +981,20 @@ export const PartnerSettlementsView: React.FC = () => {
 
       {/* GAP-PARTNER-003: Code Analytics Tab */}
       {activeTab === 'analytics' && (
-        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-violet-400" />
                 Referral Code Analytics
               </h3>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Performance metrics per partner referral code (last 90 days)
               </p>
             </div>
             <button
               onClick={fetchData}
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-white border border-white/10 rounded-lg"
+              className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/10 rounded-lg"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
@@ -991,7 +1004,7 @@ export const PartnerSettlementsView: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-white/5">
+                  <tr className="border-b border-slate-200 dark:border-white/10">
                     <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
                       Code
                     </th>
@@ -1018,7 +1031,7 @@ export const PartnerSettlementsView: React.FC = () => {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-slate-200 dark:divide-white/10">
                   {codeAnalytics.map((code) => (
                     <tr
                       key={code.referralCode}
@@ -1030,13 +1043,17 @@ export const PartnerSettlementsView: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-3 py-3">
-                        <span className="text-slate-300">{code.partnerName}</span>
+                        <span className="text-slate-700 dark:text-slate-300">{code.partnerName}</span>
                       </td>
                       <td className="px-3 py-3 text-center">
-                        <span className="text-white">{code.totalClicks.toLocaleString()}</span>
+                        <span className="text-slate-900 dark:text-white">
+                          {code.totalClicks.toLocaleString()}
+                        </span>
                       </td>
                       <td className="px-3 py-3 text-center">
-                        <span className="text-white">{code.totalSignups.toLocaleString()}</span>
+                        <span className="text-slate-900 dark:text-white">
+                          {code.totalSignups.toLocaleString()}
+                        </span>
                       </td>
                       <td className="px-3 py-3 text-center">
                         <span
@@ -1058,7 +1075,7 @@ export const PartnerSettlementsView: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-3 py-3 text-right">
-                        <span className="text-white font-medium">
+                        <span className="text-slate-900 dark:text-white font-medium">
                           €{code.totalRevenue.toLocaleString()}
                         </span>
                       </td>
@@ -1075,7 +1092,7 @@ export const PartnerSettlementsView: React.FC = () => {
           ) : (
             <div className="text-center py-12">
               <BarChart3 className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-              <p className="text-slate-400 dark:text-slate-500">No code analytics data available</p>
+              <p className="text-slate-600 dark:text-slate-400">No code analytics data available</p>
             </div>
           )}
         </div>

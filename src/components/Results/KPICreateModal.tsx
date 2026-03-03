@@ -2,7 +2,7 @@ import { X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { API_URL, getHeaders } from '@/services/api';
+import { Api, API_URL, getHeaders } from '@/services/api';
 
 interface KPICreateModalProps {
   onClose: () => void;
@@ -15,7 +15,6 @@ interface Initiative {
   name: string;
 }
 
-type Direction = 'increase' | 'decrease' | 'maintain';
 type Frequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
 
 export const KPICreateModal: React.FC<KPICreateModalProps> = ({
@@ -33,12 +32,13 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
   const [baseline, setBaseline] = useState('');
   const [target, setTarget] = useState('');
   const [frequency, setFrequency] = useState<Frequency>('MONTHLY');
-  const [direction, setDirection] = useState<Direction>('increase');
-  const [initiativeId, setInitiativeId] = useState('');
+  const [direction, setDirection] = useState<'increase' | 'decrease'>('increase');
+  const [initiativeSearch, setInitiativeSearch] = useState('');
+  const [initiativeIds, setInitiativeIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (initialInitiativeId) {
-      setInitiativeId(initialInitiativeId);
+      setInitiativeIds([initialInitiativeId]);
     }
   }, [initialInitiativeId]);
 
@@ -62,6 +62,7 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
       if (!name.trim()) return;
       setSaving(true);
 
+      const kpiDirection = direction === 'decrease' ? 'LOWER_IS_BETTER' : 'HIGHER_IS_BETTER';
       const payload = {
         name: name.trim(),
         description: description.trim() || undefined,
@@ -69,32 +70,47 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
         baselineValue: baseline ? Number(baseline) : null,
         targetValue: target ? Number(target) : null,
         measurementFrequency: frequency,
-        alertDirection: direction === 'decrease' ? 'BELOW' : 'ABOVE',
-        isPrimary: false,
-        sortOrder: 0,
+        // Canon v3: deterministic evaluation relies on direction + thresholds.
+        direction: kpiDirection,
+        thresholdMode: 'PERCENT_FROM_TARGET',
+        amberThresholdPct: 0.1,
+        redThresholdPct: 0.2,
       };
 
       try {
-        const url = initiativeId
-          ? `${API_URL}/initiatives/${initiativeId}/kpis`
-          : `${API_URL}/benefits/kpi-mappings`;
+        // Always create as a global KPI and (optionally) link to initiatives via mappings.
+        // This keeps Results compatible with the V3 SSOT mapping model (N↔N).
+        const created: any = await Api.post('/benefits/kpis', payload);
+        const kpiId =
+          (created as any)?.data?.id ||
+          (created as any)?.id ||
+          (created as any)?.data?.data?.id ||
+          (created as any)?.data?.data ||
+          null;
 
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: getHeaders(),
-          body: JSON.stringify(payload),
-        });
-
-        if (res.ok) {
-          onSuccess();
+        if (initiativeIds.length > 0 && kpiId) {
+          await Promise.allSettled(
+            initiativeIds.map((id) =>
+              Api.post('/benefits/kpi-mappings', {
+                initiativeId: id,
+                kpiId,
+                impactWeight: 1.0,
+                impactDirection: direction === 'decrease' ? 'decrease' : 'increase',
+                confidence: 'medium',
+                notes: 'Linked from Results KPI create',
+              })
+            )
+          );
         }
+
+        onSuccess();
       } catch {
         // silently fail
       } finally {
         setSaving(false);
       }
     },
-    [name, description, unit, baseline, target, frequency, direction, initiativeId, onSuccess]
+    [name, description, unit, baseline, target, frequency, direction, initiativeIds, onSuccess]
   );
 
   const inputCls =
@@ -197,33 +213,75 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
               <select
                 className={selectCls}
                 value={direction}
-                onChange={(e) => setDirection(e.target.value as Direction)}
+                onChange={(e) => setDirection(e.target.value as 'increase' | 'decrease')}
               >
                 <option value="increase">{t('results.direction.increase', 'Increase')}</option>
                 <option value="decrease">{t('results.direction.decrease', 'Decrease')}</option>
-                <option value="maintain">{t('results.direction.maintain', 'Maintain')}</option>
               </select>
             </div>
           </div>
 
           <div>
             <label className={labelCls}>
-              {t('results.createModal.initiative', 'Initiative (optional)')}
+              {t('results.createModal.initiative', 'Initiatives (optional)')}
             </label>
-            <select
-              className={selectCls}
-              value={initiativeId}
-              onChange={(e) => setInitiativeId(e.target.value)}
-            >
-              <option value="">
-                {t('results.createModal.globalKpi', '— Global KPI (no initiative) —')}
-              </option>
-              {initiatives.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.name}
-                </option>
-              ))}
-            </select>
+            <input
+              className={inputCls}
+              value={initiativeSearch}
+              onChange={(e) => setInitiativeSearch(e.target.value)}
+              placeholder={t('common.search', 'Search')}
+            />
+            <div className="mt-2 max-h-56 overflow-auto rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/40 dark:bg-navy-800/40">
+              {(() => {
+                const q = initiativeSearch.trim().toLowerCase();
+                const list = q
+                  ? initiatives.filter((i) => String(i.name || '').toLowerCase().includes(q))
+                  : initiatives;
+                if (list.length === 0) {
+                  return (
+                    <div className="p-3 text-sm text-slate-500">
+                      {t('results.createModal.noInitiatives', 'No initiatives found.')}
+                    </div>
+                  );
+                }
+                return (
+                  <div className="divide-y divide-slate-200 dark:divide-navy-700">
+                    {list.map((i) => {
+                      const checked = initiativeIds.includes(i.id);
+                      return (
+                        <label
+                          key={i.id}
+                          className="flex items-start gap-2 p-3 cursor-pointer hover:bg-white/60 dark:hover:bg-navy-800/70 transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            className="mt-0.5"
+                            checked={checked}
+                            onChange={(e) => {
+                              const next = e.target.checked;
+                              setInitiativeIds((prev) =>
+                                next
+                                  ? Array.from(new Set([...prev, i.id]))
+                                  : prev.filter((id) => id !== i.id)
+                              );
+                            }}
+                          />
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                              {i.name}
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+            <div className="mt-1 text-xs text-slate-500">
+              {t('results.createModal.globalKpi', 'Global KPI if nothing selected.')} ({initiativeIds.length}/
+              {initiatives.length})
+            </div>
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-2">

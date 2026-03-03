@@ -1,17 +1,19 @@
 import {
   AlertCircle,
   Building2,
+  Calculator,
   CheckCircle,
   Coins,
   CreditCard,
   Loader2,
   Plus,
+  Save,
   ShieldCheck,
   UserCircle,
   Users,
   X,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -40,6 +42,33 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberRole, setNewMemberRole] = useState('MEMBER');
+
+  // Finance Defaults
+  const [financeSettings, setFinanceSettings] = useState<{
+    defaultWacc: number;
+    defaultCurrency: string;
+    defaultHorizonYears: number;
+  }>({ defaultWacc: 12, defaultCurrency: 'PLN', defaultHorizonYears: 5 });
+  const [savingFinance, setSavingFinance] = useState(false);
+
+  const loadFinanceSettings = useCallback(async () => {
+    try {
+      const data = await Api.get('/api/economics/finance-settings');
+      if (data) setFinanceSettings((prev) => ({ ...prev, ...data }));
+    } catch { /* not configured yet */ }
+  }, []);
+
+  const handleSaveFinanceSettings = useCallback(async () => {
+    setSavingFinance(true);
+    try {
+      await Api.put('/api/economics/finance-settings', financeSettings);
+      toast.success(t('settings.financeSaved', 'Finance defaults saved'));
+    } catch {
+      toast.error(t('settings.financeError', 'Failed to save finance defaults'));
+    } finally {
+      setSavingFinance(false);
+    }
+  }, [financeSettings, t]);
 
   useEffect(() => {
     fetchOrganizations();
@@ -85,6 +114,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
         ledger,
       });
       setMembers(orgMembers);
+      loadFinanceSettings();
     } catch (error) {
       console.error(error);
       toast.error('Failed to load organization details');
@@ -430,6 +460,71 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               </tbody>
             </table>
           )}
+        </div>
+      </div>
+
+      {/* Finance Defaults Card */}
+      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2 mb-4">
+          <Calculator size={20} className="text-slate-500 dark:text-slate-400" />
+          {t('settings.financeDefaults', 'Finance Defaults')}
+        </h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+          {t('settings.financeDefaultsDesc', 'Default values for new valuations, budgets, and financial models across the organization.')}
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
+              {t('settings.defaultWacc', 'Default WACC (%)')}
+            </label>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              step={0.1}
+              value={financeSettings.defaultWacc}
+              onChange={(e) => setFinanceSettings((p) => ({ ...p, defaultWacc: Number(e.target.value) }))}
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
+              {t('settings.defaultCurrency', 'Default Currency')}
+            </label>
+            <select
+              value={financeSettings.defaultCurrency}
+              onChange={(e) => setFinanceSettings((p) => ({ ...p, defaultCurrency: e.target.value }))}
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm"
+            >
+              <option value="PLN">PLN</option>
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+              <option value="GBP">GBP</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
+              {t('settings.defaultHorizon', 'Default Horizon (years)')}
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={20}
+              value={financeSettings.defaultHorizonYears}
+              onChange={(e) => setFinanceSettings((p) => ({ ...p, defaultHorizonYears: Number(e.target.value) }))}
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm"
+            />
+          </div>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={handleSaveFinanceSettings}
+            disabled={savingFinance}
+            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            {savingFinance ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            {savingFinance ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
+          </button>
         </div>
       </div>
 

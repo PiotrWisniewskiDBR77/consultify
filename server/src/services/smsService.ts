@@ -281,10 +281,10 @@ class SMSServiceClass {
 
       // Send SMS
       const messages: Record<string, string> = {
-        phone_verify: `Your Consultinity verification code is: ${code}. Valid for ${CONFIG.OTP_EXPIRY_MINUTES} minutes.`,
-        mfa_login: `Your Consultinity login code is: ${code}. Do not share this code with anyone.`,
-        mfa_setup: `Your Consultinity MFA setup code is: ${code}. Valid for ${CONFIG.OTP_EXPIRY_MINUTES} minutes.`,
-        password_reset: `Your Consultinity password reset code is: ${code}. If you didn't request this, ignore this message.`,
+        phone_verify: `Your Consultify verification code is: ${code}. Valid for ${CONFIG.OTP_EXPIRY_MINUTES} minutes.`,
+        mfa_login: `Your Consultify login code is: ${code}. Do not share this code with anyone.`,
+        mfa_setup: `Your Consultify MFA setup code is: ${code}. Valid for ${CONFIG.OTP_EXPIRY_MINUTES} minutes.`,
+        password_reset: `Your Consultify password reset code is: ${code}. If you didn't request this, ignore this message.`,
       };
 
       const message = messages[purpose] || messages.mfa_login;

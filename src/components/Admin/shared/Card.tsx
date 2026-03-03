@@ -42,9 +42,23 @@ export const Card: React.FC<CardProps> = ({
   padding = 'md',
   className = '',
   children,
+  onClick,
 }) => {
+  const clickable = typeof onClick === 'function';
   return (
-    <div className={`${variantClasses[variant]} ${paddingClasses[padding]} ${className}`}>
+    <div
+      className={`${variantClasses[variant]} ${paddingClasses[padding]} ${className}`}
+      onClick={onClick}
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onKeyDown={
+        clickable
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') onClick?.();
+            }
+          : undefined
+      }
+    >
       {children}
     </div>
   );

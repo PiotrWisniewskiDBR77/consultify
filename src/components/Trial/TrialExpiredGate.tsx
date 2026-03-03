@@ -29,7 +29,7 @@ export const TrialExpiredGate: React.FC<{ children: React.ReactNode }> = ({ chil
           </h2>
           <p className="text-lg text-slate-600 dark:text-slate-400 mb-8 max-w-lg mx-auto">
             Your 14-day trial has ended. Your data is safe, but your organization is now in
-            read-only mode. Upgrade to Enterprise to continue using Consultinity.
+            read-only mode. Upgrade to Enterprise to continue using Consultify.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto">
@@ -42,7 +42,7 @@ export const TrialExpiredGate: React.FC<{ children: React.ReactNode }> = ({ chil
             </button>
 
             <button
-              onClick={() => window.open('https://consultinity.io/contact', '_blank')}
+              onClick={() => window.open('https://consultify.io/contact', '_blank')}
               className="bg-white dark:bg-navy-900 border-2 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 px-6 py-4 rounded-xl font-bold hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-all flex items-center justify-center"
             >
               Talk to Consulting

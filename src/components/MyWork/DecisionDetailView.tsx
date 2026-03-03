@@ -1112,7 +1112,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   }, [lastDraftSavedAt, isPolish]);
 
   const persistDraft = (source: 'autosave' | 'chat' | 'publish') => {
-    const draftKey = `consultinity-decision-draft:${decisionId || 'new'}`;
+    const draftKey = `consultify-decision-draft:${decisionId || 'new'}`;
     const savedAt = new Date().toISOString();
     try {
       localStorage.setItem(
@@ -1599,7 +1599,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 
       // Hydrate local enhancements (for fields without backend persistence yet)
       try {
-        const raw = localStorage.getItem(`consultinity-decision-enhancements:${id}`);
+        const raw = localStorage.getItem(`consultify-decision-enhancements:${id}`);
         if (raw) {
           const local = JSON.parse(raw);
           if (Array.isArray(local.comments) && local.comments.length > 0)
@@ -1647,7 +1647,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     if (!isLocalHydrated || !decisionId) return;
     try {
       localStorage.setItem(
-        `consultinity-decision-enhancements:${decisionId}`,
+        `consultify-decision-enhancements:${decisionId}`,
         JSON.stringify({
           schemaVersion: 1,
           savedAt: new Date().toISOString(),

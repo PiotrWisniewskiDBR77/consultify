@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, Globe, Handshake, Menu, Moon, Sun, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Globe, Handshake, Menu, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -20,6 +20,8 @@ interface EntryTopBarProps {
   onRegisterClick?: () => void;
   isLoggedIn: boolean;
   hasWorkspace: boolean;
+  /** Force cinematic dark variant for marketing LP */
+  forceDark?: boolean;
 }
 
 export const EntryTopBar: React.FC<EntryTopBarProps> = ({
@@ -29,24 +31,29 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
   onRegisterClick,
   isLoggedIn,
   hasWorkspace,
+  forceDark = false,
 }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNavOpen, setIsNavOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
-  const { theme, toggleTheme } = useAppStore();
-  const brandLogoSrc =
-    theme === 'dark'
-      ? new URL('../../../Logo consultinity/Consultinity_logo_dark_medium.svg', import.meta.url)
-          .href
-      : new URL(
-          '../../../Logo consultinity/Consultinity_logo_light_transparent.svg',
-          import.meta.url
-        ).href;
+  const navRef = useRef<HTMLDivElement>(null);
 
-  // Use centralized language configuration
+  const navLinks = [
+    { label: t('nav.home', 'Home'), href: '/' },
+    { label: t('nav.howItWorks', 'How it works'), href: '/how-it-works' },
+    { label: t('nav.forWhom', 'For whom'), href: '/for-whom' },
+    { label: t('nav.ourStory', 'Our story'), href: '/our-story' },
+    { label: t('nav.resources', 'Resources'), href: '/resources' },
+    { label: t('nav.pricing', 'Pricing'), href: '/pricing' },
+    { label: t('nav.enterprise', 'Enterprise'), href: '/enterprise' },
+  ];
+  const { theme, toggleTheme } = useAppStore();
+  const effectiveTheme = forceDark ? 'dark' : theme;
+
   const languages = SUPPORTED_LANGUAGES.map((code) => ({
     code,
     label: LANGUAGE_NAMES[code],
@@ -65,17 +72,17 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
       if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
         setIsMobileMenuOpen(false);
       }
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setIsNavOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Close mobile menu on resize to desktop
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setIsMobileMenuOpen(false);
-      }
+      if (window.innerWidth >= 768) setIsMobileMenuOpen(false);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -86,268 +93,322 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
     setIsLangOpen(false);
   };
 
+  const isDark = effectiveTheme === 'dark';
+
   return (
-    <header className="fixed top-0 left-0 right-0 h-20 md:h-28 bg-white/70 dark:bg-navy-950/70 backdrop-blur-xl border-b border-white/20 dark:border-navy-700 z-[100] transition-colors duration-300">
-      <div className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
-        {/* Logo + Brand Name */}
-        <div className="flex items-center gap-6">
-          <a href="/" className="group flex items-center" title="Consultinity">
+    <header
+      className="fixed top-0 left-0 right-0 h-14 z-[100] transition-colors duration-300"
+      style={{
+        background: isDark
+          ? 'rgba(10, 8, 30, 0.72)'
+          : 'rgba(255, 255, 255, 0.80)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: isDark
+          ? '1px solid rgba(255,255,255,0.07)'
+          : '1px solid rgba(0,0,0,0.06)',
+      }}
+    >
+      <div className="max-w-7xl mx-auto h-full px-5 flex items-center justify-between gap-4">
+
+        {/* ── Left: Logo + Become Partner + Demo + Trial ── */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Logo */}
+          <a href="/" className="flex items-center transition-opacity duration-200 hover:opacity-80 mr-1" title="Consultify">
             <img
-              src={brandLogoSrc}
-              alt="Consultinity"
-              className="h-14 sm:h-16 md:h-20 lg:h-24 w-auto transition-transform duration-300 group-hover:scale-[1.02] group-hover:brightness-110"
+              src={isDark ? '/assets/logos/logo-dark.svg' : '/assets/logos/logo-light.svg'}
+              alt="Consultify"
+              className="h-6 w-auto object-contain"
             />
           </a>
 
-          {/* Partner Program Button - Desktop Only */}
-          <button
-            onClick={() => navigate('/become-partner')}
-            className="hidden md:inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-500 hover:to-purple-500 rounded-lg transition-all duration-300 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-105 group"
-          >
-            <Handshake
-              size={18}
-              className="group-hover:rotate-12 transition-transform duration-300"
-            />
-            <span>{t('partner.becomePartner', 'Become Partner')}</span>
-          </button>
+          {/* Ghost pill helper */}
+          {(['partner', 'demo', 'trial'] as const).map((id) => {
+            const cfg = {
+              partner: { label: t('partner.becomePartner', 'Become Partner'), icon: <Handshake size={13} />, onClick: () => navigate('/become-partner') },
+              demo:    { label: t('landing.topBar.demo', 'Demo'),             icon: null,                   onClick: onDemoClick },
+              trial:   { label: t('landing.topBar.trial', 'Trial'),           icon: null,                   onClick: onTrialClick },
+            }[id];
+            return (
+              <button
+                key={id}
+                onClick={cfg.onClick}
+                className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer"
+                style={{ color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.60)', border: isDark ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(0,0,0,0.12)', background: 'transparent' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'; (e.currentTarget as HTMLButtonElement).style.color = isDark ? '#fff' : '#000'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.60)'; }}
+              >
+                {cfg.icon}
+                <span>{cfg.label}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Right Navigation - Demo, Trial, Auth & Settings */}
-        <div className="hidden md:flex items-center gap-3">
-          {/* Demo Button */}
-          <button
-            onClick={onDemoClick}
-            className="min-w-24 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all border border-slate-200 dark:border-navy-700 cursor-pointer"
-          >
-            {t('landing.topBar.demo', 'Demo')}
-          </button>
+        {/* ── Right: Nav hamburger + auth pills ── */}
+        <div className="hidden md:flex items-center gap-2">
 
-          {/* Trial Button */}
-          <button
-            onClick={onTrialClick}
-            className="min-w-24 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all border border-slate-200 dark:border-navy-700 cursor-pointer mr-8"
-          >
-            {t('landing.topBar.trial', 'Trial')}
-          </button>
+          {/* Hamburger nav dropdown */}
+          <div className="relative" ref={navRef}>
+            <button
+              onClick={() => setIsNavOpen(!isNavOpen)}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer"
+              style={{
+                color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.60)',
+                border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.10)',
+                background: isNavOpen
+                  ? isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'
+                  : 'transparent',
+              }}
+            >
+              {isNavOpen ? <X size={15} /> : <Menu size={15} />}
+              <span className="text-xs font-semibold">Menu</span>
+            </button>
 
-          {/* Log in Button - using useNavigate for reliable navigation */}
-          <button
-            onClick={() => {
-              console.log('[EntryTopBar] Log in clicked - navigating to /login');
-              navigate('/login');
-            }}
-            className="px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all border border-slate-200 dark:border-navy-700 cursor-pointer"
-          >
-            {t('landing.topBar.login', 'Log in')}
-          </button>
+            <AnimatePresence>
+              {isNavOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 mt-2 w-52 py-2 z-50"
+                  style={{
+                    background: isDark ? 'rgba(12,8,32,0.97)' : '#fff',
+                    border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.08)',
+                    borderRadius: '16px',
+                    boxShadow: isDark ? '0 24px 48px rgba(0,0,0,0.70)' : '0 12px 32px rgba(0,0,0,0.12)',
+                  }}
+                >
+                  {navLinks.map((link) => (
+                    <button
+                      key={link.href}
+                      onClick={() => { navigate(link.href); setIsNavOpen(false); }}
+                      className="w-full text-left px-4 py-2.5 text-sm flex items-center justify-between group transition-colors"
+                      style={{
+                        color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.70)',
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.background = isDark
+                          ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
+                        (e.currentTarget as HTMLButtonElement).style.color = isDark ? '#fff' : '#000';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+                        (e.currentTarget as HTMLButtonElement).style.color = isDark
+                          ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.70)';
+                      }}
+                    >
+                      <span className="font-medium">{link.label}</span>
+                      <ChevronRight size={13} className="opacity-30 group-hover:opacity-70 transition-opacity" />
+                    </button>
+                  ))}
 
-          {/* Sign up Button - using useNavigate for reliable navigation */}
-          <button
-            onClick={() => {
-              console.log('[EntryTopBar] Sign up clicked - navigating to /register');
-              navigate('/register');
-            }}
-            className="px-5 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-lg transition-all shadow-lg shadow-purple-500/25 dark:shadow-purple-900/25 cursor-pointer"
-          >
-            {t('landing.topBar.signUp', 'Sign up')}
-          </button>
+                  <div className="mx-3 my-2 h-px" style={{ background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} />
 
-          <div className="h-6 w-px bg-slate-200 dark:bg-white/10 mx-1" />
+                  <div className="px-3 pb-1 flex gap-2">
+                    <button
+                      onClick={() => { onDemoClick(); setIsNavOpen(false); }}
+                      className="flex-1 py-1.5 rounded-full text-xs font-medium text-center transition-all"
+                      style={{
+                        color: isDark ? 'rgba(255,255,255,0.60)' : 'rgba(0,0,0,0.55)',
+                        border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.10)',
+                      }}
+                    >
+                      Demo
+                    </button>
+                    <button
+                      onClick={() => { onTrialClick(); setIsNavOpen(false); }}
+                      className="flex-1 py-1.5 rounded-full text-xs font-medium text-center text-white transition-all"
+                      style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
+                    >
+                      Free Trial
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
-          {/* Theme Toggle */}
-          <button
-            onClick={() => toggleTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="p-2 text-slate-600 dark:text-slate-400 hover:text-navy-950 dark:hover:text-white transition-colors"
-            title={
-              theme === 'dark'
-                ? t('common.switchToLightMode', 'Switch to light mode')
-                : t('common.switchToDarkMode', 'Switch to dark mode')
-            }
-          >
-            {theme === 'dark' ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                />
-              </svg>
-            )}
-          </button>
+          {/* Separator */}
+          <div className="h-4 w-px" style={{ background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)' }} />
 
-          {/* Language Selector */}
+          {/* Language pill */}
           <div className="relative" ref={langRef}>
             <button
               onClick={() => setIsLangOpen(!isLangOpen)}
-              className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-navy-950 dark:hover:text-white transition-colors py-2"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer"
+              style={{
+                color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
+                border: isDark ? '1px solid rgba(255,255,255,0.10)' : '1px solid rgba(0,0,0,0.08)',
+              }}
             >
-              <Globe size={18} />
+              <Globe size={13} />
               <span>{currentLang.displayCode}</span>
-              <ChevronDown
-                size={14}
-                className={`transition-transform duration-200 ${isLangOpen ? 'rotate-180' : ''}`}
-              />
+              <ChevronDown size={11} className={`transition-transform duration-200 ${isLangOpen ? 'rotate-180' : ''}`} />
             </button>
 
             <AnimatePresence>
               {isLangOpen && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute right-0 mt-2 w-48 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl py-2 z-50 overflow-hidden"
+                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 mt-2 w-44 py-1.5 z-50"
+                  style={{
+                    background: isDark ? 'rgba(18,12,40,0.95)' : '#fff',
+                    border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.08)',
+                    borderRadius: '14px',
+                    boxShadow: isDark ? '0 20px 40px rgba(0,0,0,0.60)' : '0 12px 32px rgba(0,0,0,0.12)',
+                  }}
                 >
                   {languages.map((lang) => (
                     <button
                       key={lang.code}
                       onClick={() => handleLangChange(lang.code)}
-                      className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between ${
-                        i18n.language.startsWith(lang.code)
-                          ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 font-bold'
-                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
-                      }`}
+                      className="w-full text-left px-4 py-2 text-sm transition-colors flex items-center justify-between"
+                      style={{
+                        color: i18n.language.startsWith(lang.code) ? '#a855f7' : isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.65)',
+                        background: i18n.language.startsWith(lang.code) ? 'rgba(168,85,247,0.10)' : 'transparent',
+                        fontWeight: i18n.language.startsWith(lang.code) ? 700 : 400,
+                      }}
                     >
                       {lang.label}
-                      {i18n.language.startsWith(lang.code) && (
-                        <div className="w-1.5 h-1.5 rounded-full bg-purple-600" />
-                      )}
+                      {i18n.language.startsWith(lang.code) && <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />}
                     </button>
                   ))}
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
+
+          {/* Separator */}
+          <div className="h-4 w-px" style={{ background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)' }} />
+
+          {/* Log in */}
+          <button
+            onClick={() => navigate('/login')}
+            className="px-4 py-1.5 text-sm font-medium transition-all duration-200 cursor-pointer rounded-full"
+            style={{ color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.60)', border: isDark ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(0,0,0,0.12)', background: 'transparent' }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = isDark ? '#fff' : '#000';
+              (e.currentTarget as HTMLButtonElement).style.background = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.60)';
+              (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+            }}
+          >
+            {t('landing.topBar.login', 'Log in')}
+          </button>
+
+          {/* Sign up — filled pill */}
+          <button
+            onClick={() => navigate('/register')}
+            className="px-5 py-1.5 rounded-full text-sm font-semibold text-white transition-all duration-200 cursor-pointer"
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', boxShadow: '0 0 20px -6px rgba(124,58,237,0.60)' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.88'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
+          >
+            {t('landing.topBar.signUp', 'Sign up')}
+          </button>
         </div>
 
-        {/* Mobile Menu Toggle */}
+        {/* ── Mobile menu toggle ── */}
         <div className="md:hidden" ref={mobileMenuRef}>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 text-navy-950 dark:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-            aria-label={
-              isMobileMenuOpen
-                ? t('common.closeMenu', 'Close menu')
-                : t('common.openMenu', 'Open menu')
-            }
+            className="p-2 rounded-full transition-colors"
+            style={{
+              color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.60)',
+              background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+            }}
+            aria-label={isMobileMenuOpen ? t('common.closeMenu', 'Close menu') : t('common.openMenu', 'Open menu')}
           >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
 
-          {/* Mobile Menu Dropdown */}
           <AnimatePresence>
             {isMobileMenuOpen && (
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
+                initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="absolute top-full left-0 right-0 bg-white dark:bg-navy-950 border-b border-slate-200 dark:border-navy-700 shadow-xl"
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.18 }}
+                className="absolute top-full left-0 right-0 shadow-2xl"
+                style={{
+                  background: isDark ? 'rgba(10,8,30,0.96)' : 'rgba(255,255,255,0.97)',
+                  borderBottom: isDark
+                    ? '1px solid rgba(255,255,255,0.08)'
+                    : '1px solid rgba(0,0,0,0.06)',
+                  backdropFilter: 'blur(20px)',
+                }}
               >
                 <nav className="flex flex-col p-4 gap-2 max-w-7xl mx-auto">
-                  {/* Partner Program Button - Featured */}
-                  <button
-                    onClick={() => {
-                      navigate('/become-partner');
-                      setIsMobileMenuOpen(false);
+                  <div
+                    className="h-px my-1"
+                    style={{
+                      background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
                     }}
-                    className="w-full px-4 py-3 text-base font-semibold text-white bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-500 hover:to-purple-500 rounded-lg transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
-                  >
-                    <Handshake size={20} />
-                    <span>{t('partner.becomePartner', 'Become Partner')}</span>
-                  </button>
+                  />
 
-                  <div className="h-px bg-slate-200 dark:bg-white/10 my-2" />
+                  {[
+                    { label: t('landing.topBar.demo', 'Demo'), onClick: () => { onDemoClick(); setIsMobileMenuOpen(false); } },
+                    { label: t('landing.topBar.trial', 'Trial'), onClick: () => { onTrialClick(); setIsMobileMenuOpen(false); } },
+                    { label: t('landing.topBar.login', 'Log in'), onClick: () => { onLoginClick(); setIsMobileMenuOpen(false); } },
+                  ].map((item) => (
+                    <button
+                      key={item.label}
+                      onClick={item.onClick}
+                      className="w-full text-left px-4 py-2.5 rounded-full text-sm font-medium transition-all"
+                      style={{
+                        color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.65)',
+                        background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                        border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
+                      }}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
 
-                  {/* Navigation Links */}
-                  <button
-                    onClick={() => {
-                      onDemoClick();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full text-left px-4 py-3 text-base font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all"
-                  >
-                    {t('landing.topBar.demo', 'Demo')}
-                  </button>
-                  <button
-                    onClick={() => {
-                      onTrialClick();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full text-left px-4 py-3 text-base font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all"
-                  >
-                    {t('landing.topBar.trial', 'Trial')}
-                  </button>
-
-                  <div className="h-px bg-slate-200 dark:bg-white/10 my-2" />
-
-                  <button
-                    onClick={() => {
-                      onLoginClick();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full text-left px-4 py-3 text-base font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all"
-                  >
-                    {t('landing.topBar.login', 'Log in')}
-                  </button>
                   <button
                     onClick={() => {
                       onRegisterClick?.();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full px-4 py-3 text-base font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-lg transition-all text-center"
+                    className="w-full px-4 py-2.5 rounded-full text-sm font-semibold text-white text-center transition-all"
+                    style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
                   >
                     {t('auth.createOne', 'Sign up')}
                   </button>
 
-                  <div className="h-px bg-slate-200 dark:bg-white/10 my-2" />
-
-                  {/* Theme & Language Row */}
-                  <div className="flex items-center justify-between px-4 py-2">
-                    {/* Theme Toggle */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-slate-500 dark:text-slate-400">
-                        {t('common.themeLabel', 'Theme')}:
-                      </span>
+                  {/* Language row */}
+                  <div className="flex items-center justify-end gap-1.5 pt-1">
+                    {languages.slice(0, 3).map((lang) => (
                       <button
-                        onClick={() => toggleTheme(theme === 'dark' ? 'light' : 'dark')}
-                        className="p-2 text-slate-600 dark:text-slate-400 hover:text-navy-950 dark:hover:text-white transition-colors bg-slate-100 dark:bg-white/10 rounded-lg"
+                        key={lang.code}
+                        onClick={() => handleLangChange(lang.code)}
+                        className="text-xs px-3 py-1 rounded-full border transition-colors font-medium"
+                        style={{
+                          background: i18n.language.startsWith(lang.code)
+                            ? 'rgba(168,85,247,0.15)'
+                            : 'transparent',
+                          borderColor: i18n.language.startsWith(lang.code)
+                            ? 'rgba(168,85,247,0.40)'
+                            : isDark
+                              ? 'rgba(255,255,255,0.12)'
+                              : 'rgba(0,0,0,0.10)',
+                          color: i18n.language.startsWith(lang.code)
+                            ? '#a855f7'
+                            : isDark
+                              ? 'rgba(255,255,255,0.50)'
+                              : 'rgba(0,0,0,0.50)',
+                        }}
                       >
-                        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                        {lang.displayCode}
                       </button>
-                    </div>
-
-                    {/* Language Selector */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-slate-500 dark:text-slate-400">
-                        {t('common.languageLabel', 'Language')}:
-                      </span>
-                      <div className="flex gap-1">
-                        {languages.slice(0, 3).map((lang) => (
-                          <button
-                            key={lang.code}
-                            onClick={() => handleLangChange(lang.code)}
-                            className={`text-xs px-2 py-1.5 rounded-lg border transition-colors font-medium ${
-                              i18n.language.startsWith(lang.code)
-                                ? 'bg-purple-100 border-purple-300 text-purple-700 dark:bg-purple-900/30 dark:border-purple-500/30 dark:text-purple-300'
-                                : 'border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-navy-700 dark:hover:bg-white/5 dark:text-slate-400'
-                            }`}
-                          >
-                            {lang.displayCode}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </nav>
               </motion.div>

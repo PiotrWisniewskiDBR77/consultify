@@ -90,7 +90,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedEnvironment, setSelectedEnvironment] = useState('production');
+  const [selectedEnvironment, setSelectedEnvironment] = useState('development');
   const [editingConfig, setEditingConfig] = useState<ConfigItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -104,155 +104,36 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
   const [unsavedChanges, setUnsavedChanges] = useState<Record<string, string>>({});
   const [revealedSecrets, setRevealedSecrets] = useState<Set<string>>(new Set());
 
+  const handleRollback = async (version: ConfigVersion) => {
+    if (!historyConfig) return;
+    const reason = window.prompt('Rollback reason (optional):') || undefined;
+    try {
+      await Api.rollbackSystemConfig(historyConfig.id, version.id, reason);
+      toast.success('Rollback completed');
+      // Refresh both the configs list and the versions list
+      await Promise.allSettled([fetchConfigs(), (async () => {
+        const data = await Api.getSystemConfigVersions(historyConfig.id);
+        setVersions((data as any)?.versions || []);
+      })()]);
+    } catch (e) {
+      console.error('Rollback failed:', e);
+      toast.error('Failed to rollback configuration');
+    }
+  };
+
   const fetchConfigs = useCallback(async () => {
+    setLoading(true);
     try {
       const data = await Api.getSystemConfigs(selectedEnvironment);
-      if (data && data.length > 0) {
-        setConfigs(data);
-      } else {
-        // Use default configs when backend returns empty
-        setConfigs(getDefaultConfigs());
-      }
+      setConfigs(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.warn('[Config] Failed to fetch from API, using defaults:', error);
-      setConfigs(getDefaultConfigs());
+      console.error('[Config] Failed to fetch from API:', error);
+      toast.error('Failed to load system configuration');
+      setConfigs([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [selectedEnvironment]);
-
-  // Default configurations when API returns empty or fails
-  const getDefaultConfigs = (): ConfigItem[] => [
-    {
-      id: '1',
-      key: 'app_name',
-      value: 'Consultinity',
-      type: 'string',
-      category: 'general',
-      description: 'Application name displayed in the UI',
-      is_sensitive: false,
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      key: 'max_upload_size_mb',
-      value: '50',
-      type: 'number',
-      category: 'limits',
-      description: 'Maximum file upload size in MB',
-      is_sensitive: false,
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: '3',
-      key: 'enable_registration',
-      value: 'true',
-      type: 'boolean',
-      category: 'security',
-      description: 'Allow new user registrations',
-      is_sensitive: false,
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: '4',
-      key: 'openai_api_key',
-      value: '••••••••••••••••',
-      type: 'secret',
-      category: 'ai',
-      description: 'OpenAI API key for AI features',
-      is_sensitive: true,
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: '5',
-      key: 'ai_model',
-      value: 'gpt-4-turbo',
-      type: 'string',
-      category: 'ai',
-      description: 'Default AI model for analysis',
-      is_sensitive: false,
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: '6',
-      key: 'ai_max_tokens',
-      value: '4096',
-      type: 'number',
-      category: 'ai',
-      description: 'Maximum tokens per AI request',
-      is_sensitive: false,
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: '7',
-      key: 'session_timeout_minutes',
-      value: '30',
-      type: 'number',
-      category: 'security',
-      description: 'Session timeout in minutes',
-      is_sensitive: false,
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: '8',
-      key: 'password_policy',
-      value: '{"minLength": 8, "requireNumbers": true, "requireSpecial": true}',
-      type: 'json',
-      category: 'security',
-      description: 'Password requirements',
-      is_sensitive: false,
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: '9',
-      key: 'smtp_host',
-      value: 'smtp.sendgrid.net',
-      type: 'string',
-      category: 'notifications',
-      description: 'SMTP server host',
-      is_sensitive: false,
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: '10',
-      key: 'smtp_password',
-      value: '••••••••••••••••',
-      type: 'secret',
-      category: 'notifications',
-      description: 'SMTP password',
-      is_sensitive: true,
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: '11',
-      key: 'primary_color',
-      value: '#8B5CF6',
-      type: 'string',
-      category: 'branding',
-      description: 'Primary brand color',
-      is_sensitive: false,
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: '12',
-      key: 'max_projects_per_user',
-      value: '50',
-      type: 'number',
-      category: 'limits',
-      description: 'Maximum projects per user',
-      is_sensitive: false,
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: '13',
-      key: 'slack_webhook_url',
-      value: '••••••••••••••••',
-      type: 'secret',
-      category: 'integrations',
-      description: 'Slack webhook URL',
-      is_sensitive: true,
-      updated_at: new Date().toISOString(),
-    },
-  ];
 
   useEffect(() => {
     fetchConfigs();
@@ -260,7 +141,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
 
   const handleSaveConfig = async (config: ConfigItem, newValue: string) => {
     try {
-      await (Api as any).updateSystemConfig(config.id, { value: newValue });
+      await Api.updateSystemConfig(config.id, { value: newValue });
       toast.success(`Configuration "${config.key}" updated`);
       setUnsavedChanges((prev) => {
         const next = { ...prev };
@@ -277,7 +158,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
   const handleDeleteConfig = async (id: string) => {
     if (!confirm('Are you sure you want to delete this configuration?')) return;
     try {
-      await (Api as any).deleteSystemConfig(id);
+      await Api.deleteSystemConfig(id);
       toast.success('Configuration deleted');
       fetchConfigs();
     } catch (error) {
@@ -288,8 +169,12 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
   const handleViewHistory = async (config: ConfigItem) => {
     setHistoryConfig(config);
     setShowHistoryModal(true);
-    // Empty state - no mock data
-    setVersions([]);
+    try {
+      const data = await Api.getSystemConfigVersions(config.id);
+      setVersions((data as any)?.versions || []);
+    } catch (error) {
+      setVersions([]);
+    }
   };
 
   const handleExportConfig = () => {
@@ -355,24 +240,24 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
             Configuration Management
           </h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm">
+          <p className="text-slate-600 dark:text-slate-400 text-sm">
             Manage system settings and environment configurations
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleExportConfig}
-            className="flex items-center gap-2 px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 text-slate-700 dark:text-slate-300 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-navy-950/20 hover:bg-slate-50 dark:hover:bg-navy-800/40 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-lg transition-colors"
           >
             <Download className="w-4 h-4" />
             Export
           </button>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
             Add Config
@@ -393,7 +278,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
                   : env === 'staging'
                     ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                     : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/20'
             }`}
           >
             {env.charAt(0).toUpperCase() + env.slice(1)}
@@ -413,7 +298,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
             placeholder="Search configurations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
+            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
           />
         </div>
         <div className="flex gap-1 p-1 bg-slate-50 dark:bg-white/5 rounded-lg">
@@ -423,8 +308,8 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
               onClick={() => setSelectedCategory(cat.id)}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 selectedCategory === cat.id
-                  ? 'bg-cyan-600 text-slate-900 dark:text-white'
-                  : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-primary-600 text-white'
+                  : 'text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/20'
               }`}
             >
               {cat.icon} {cat.label}
@@ -436,23 +321,23 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       {/* Config Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-          <div className="text-sm text-slate-400 dark:text-slate-500">Total Configs</div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">{configs.length}</div>
+          <div className="text-sm text-slate-600 dark:text-slate-400">Total Configs</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{configs.length}</div>
         </div>
         <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
-          <div className="text-sm text-slate-400 dark:text-slate-500">Sensitive</div>
+          <div className="text-sm text-slate-600 dark:text-slate-400">Sensitive</div>
           <div className="text-2xl font-bold text-amber-400">
             {configs.filter((c) => c.is_sensitive).length}
           </div>
         </div>
-        <div className="p-4 bg-cyan-500/10 rounded-xl border border-cyan-500/30">
-          <div className="text-sm text-slate-400 dark:text-slate-500">Categories</div>
-          <div className="text-2xl font-bold text-cyan-400">
+        <div className="p-4 bg-primary-600/10 rounded-xl border border-primary-500/30">
+          <div className="text-sm text-slate-600 dark:text-slate-400">Categories</div>
+          <div className="text-2xl font-bold text-primary-700 dark:text-primary-300">
             {new Set(configs.map((c) => c.category)).size}
           </div>
         </div>
         <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30">
-          <div className="text-sm text-slate-400 dark:text-slate-500">Unsaved Changes</div>
+          <div className="text-sm text-slate-600 dark:text-slate-400">Unsaved Changes</div>
           <div className="text-2xl font-bold text-purple-400">
             {Object.keys(unsavedChanges).length}
           </div>
@@ -483,7 +368,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-xl">{catInfo.icon}</span>
-                    <span className="font-medium text-slate-900 dark:text-white">
+                    <span className="font-medium text-slate-900 dark:text-slate-100">
                       {catInfo.label}
                     </span>
                     <span className="px-2 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded">
@@ -544,6 +429,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
         <ConfigHistoryModal
           config={historyConfig}
           versions={versions}
+          onRollback={handleRollback}
           onClose={() => {
             setShowHistoryModal(false);
             setHistoryConfig(null);
@@ -569,7 +455,7 @@ const ConfigRow: React.FC<{
     <div className="flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors border-b border-slate-200 dark:border-white/5 last:border-b-0">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <code className="text-sm text-cyan-400 font-mono">{config.key}</code>
+          <code className="text-sm text-primary-600 dark:text-primary-400 font-mono">{config.key}</code>
           <span className="text-xs text-slate-500 dark:text-slate-400">
             {TYPE_ICONS[config.type]}
           </span>
@@ -727,7 +613,7 @@ const ConfigEditModal: React.FC<{
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               Save Changes
@@ -759,7 +645,13 @@ const ConfigAddModal: React.FC<{
     e.preventDefault();
     setSaving(true);
     try {
-      await (Api as any).createSystemConfig({ ...formData, organization_id: 'current' });
+      await Api.createSystemConfig({
+        key: formData.key,
+        value: formData.value,
+        description: formData.description || undefined,
+        category: formData.category || undefined,
+        is_sensitive: !!formData.is_sensitive,
+      });
       toast.success('Configuration created');
       onSave();
     } catch (error) {
@@ -877,7 +769,7 @@ const ConfigAddModal: React.FC<{
               type="checkbox"
               checked={formData.is_sensitive}
               onChange={(e) => setFormData({ ...formData, is_sensitive: e.target.checked })}
-              className="rounded border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 text-cyan-500"
+              className="rounded border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 text-primary-600 dark:text-primary-400"
             />
             <span className="text-sm text-slate-700 dark:text-slate-300">
               Sensitive value (will be masked)
@@ -895,7 +787,7 @@ const ConfigAddModal: React.FC<{
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               Create
@@ -911,14 +803,15 @@ const ConfigAddModal: React.FC<{
 const ConfigHistoryModal: React.FC<{
   config: ConfigItem;
   versions: ConfigVersion[];
+  onRollback: (version: ConfigVersion) => void;
   onClose: () => void;
-}> = ({ config, versions, onClose }) => (
+}> = ({ config, versions, onRollback, onClose }) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
     <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-xl font-bold text-slate-900 dark:text-white">Version History</h3>
-          <code className="text-sm text-cyan-400">{config.key}</code>
+          <code className="text-sm text-primary-600 dark:text-primary-400">{config.key}</code>
         </div>
         <button
           onClick={onClose}
@@ -945,7 +838,7 @@ const ConfigHistoryModal: React.FC<{
                   <span
                     className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-medium ${
                       index === 0
-                        ? 'bg-cyan-500/20 text-cyan-400'
+                        ? 'bg-primary-600/10 text-primary-700 dark:text-primary-300'
                         : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                     }`}
                   >
@@ -979,7 +872,10 @@ const ConfigHistoryModal: React.FC<{
                 </p>
               )}
               {index > 0 && (
-                <button className="mt-2 text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
+                <button
+                  onClick={() => onRollback(version)}
+                  className="mt-2 text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center gap-1"
+                >
                   <RotateCcw className="w-3 h-3" />
                   Rollback to this version
                 </button>

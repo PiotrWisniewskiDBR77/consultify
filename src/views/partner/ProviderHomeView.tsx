@@ -140,7 +140,7 @@ const ValueCardsSection: React.FC = () => {
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-          {t('partner.value.title', 'Why Partner with Consultinity?')}
+          {t('partner.value.title', 'Why Partner with Consultify?')}
         </h2>
         <p className="text-slate-600 dark:text-slate-400">
           {t('partner.value.subtitle', 'Everything you need to grow your transformation practice')}
@@ -547,7 +547,7 @@ const CommissionCalculatorSection: React.FC = () => {
           Calculate Your Earning Potential
         </h2>
         <p className="text-slate-600 dark:text-slate-400">
-          See how much you could earn as a Consultinity Partner
+          See how much you could earn as a Consultify Partner
         </p>
       </div>
 
@@ -644,7 +644,7 @@ const AcademyPreviewSection: React.FC = () => {
     {
       title: 'Platform Fundamentals',
       description:
-        'Learn the Consultinity platform inside out. Master assessments, reporting, and client management.',
+        'Learn the Consultify platform inside out. Master assessments, reporting, and client management.',
       duration: '45 min',
       certificate: true,
       free: true,
@@ -798,7 +798,7 @@ const ContactPartnerManagerSection: React.FC = () => {
       </div>
 
       <blockquote className="text-sm text-slate-600 dark:text-slate-400 italic text-center mb-6 px-4">
-        "I'm here to help you grow your business with Consultinity. Whether you have questions about
+        "I'm here to help you grow your business with Consultify. Whether you have questions about
         the program, need help with a client pitch, or want to discuss co-marketing opportunities -
         let's connect!"
       </blockquote>
@@ -873,7 +873,7 @@ const FAQSection: React.FC = () => {
     {
       question: 'How do I earn commissions as a partner?',
       answer:
-        'You earn commissions by referring new clients to Consultinity. When a client signs up using your unique referral code or link and becomes a paying customer, you receive a percentage of their subscription fee. Commission rates range from 10% to 20% depending on your partner tier.',
+        'You earn commissions by referring new clients to Consultify. When a client signs up using your unique referral code or link and becomes a paying customer, you receive a percentage of their subscription fee. Commission rates range from 10% to 20% depending on your partner tier.',
     },
     {
       question: 'When and how do I get paid?',
@@ -893,7 +893,7 @@ const FAQSection: React.FC = () => {
     {
       question: 'Can I refer clients from any country?',
       answer:
-        'Yes! Consultinity operates globally, and you can refer clients from any country. Your Partner Directory listing can highlight your regional expertise, helping local clients find you. Commission payments can be made in EUR, USD, or GBP.',
+        'Yes! Consultify operates globally, and you can refer clients from any country. Your Partner Directory listing can highlight your regional expertise, helping local clients find you. Commission payments can be made in EUR, USD, or GBP.',
     },
     {
       question: 'What happens if a referred client cancels?',

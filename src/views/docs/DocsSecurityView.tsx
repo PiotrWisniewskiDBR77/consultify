@@ -249,7 +249,7 @@ export function DocsSecurityView() {
             </div>
             <h1 className="text-4xl font-bold text-white mb-4">Security & Compliance</h1>
             <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-8">
-              Enterprise-grade security built into every layer of the Consultinity platform. Your
+              Enterprise-grade security built into every layer of the Consultify platform. Your
               data protection is our top priority.
             </p>
 
@@ -393,7 +393,7 @@ export function DocsSecurityView() {
                   Responsible Disclosure Program
                 </h3>
                 <p className="text-zinc-400 mb-4">
-                  Found a security vulnerability? We appreciate your help in keeping Consultinity
+                  Found a security vulnerability? We appreciate your help in keeping Consultify
                   secure. Report issues responsibly and you may be eligible for our bug bounty
                   program.
                 </p>

@@ -376,7 +376,7 @@ router.get('/referral-tools', async (req: Request, res: Response, next: NextFunc
       // Return fallback demo data when DB is unavailable
       tools = {
         referralCode: 'ACME-2024',
-        referralLink: `${process.env.APP_URL || 'https://app.consultinity.com'}/ref/acme-consulting`,
+        referralLink: `${process.env.APP_URL || 'https://app.consultify.com'}/ref/acme-consulting`,
         referralLinkSlug: 'acme-consulting',
         qrCodeUrl: null,
         campaignLinks: [],
@@ -677,7 +677,7 @@ router.get('/dashboard', async (req: Request, res: Response, next: NextFunction)
         completed: 2,
         total: 4,
         courses: [
-          { name: 'Consultinity Foundations', status: 'completed' },
+          { name: 'Consultify Foundations', status: 'completed' },
           { name: 'PMO Standards', status: 'completed' },
           { name: 'AI Intelligence Modules', status: 'in-progress', progress: 45 },
           { name: 'Assessment Specialist', status: 'locked' },

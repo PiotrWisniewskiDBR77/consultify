@@ -23,7 +23,7 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
   onToggleCollapse,
   t,
 }) => {
-  const logoSrc = theme === 'dark' ? '/assets/logos/logo-dark.png' : '/assets/logos/logo-light.png';
+  const logoSrc = theme === 'dark' ? '/assets/logos/logo-dark.svg' : '/assets/logos/logo-light.svg';
 
   return (
     <div
@@ -40,7 +40,7 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
             animate={{ opacity: 1 }}
             transition={{ duration: 0.15 }}
           >
-            <img src={logoSrc} alt="Consultinity" className="max-w-full h-auto object-contain" />
+            <img src={logoSrc} alt="Consultify" className="max-w-full h-auto object-contain" />
           </motion.div>
 
           <motion.button

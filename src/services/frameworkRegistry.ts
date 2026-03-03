@@ -81,7 +81,7 @@ export const FRAMEWORK_CONFIGS: Record<FrameworkId, FrameworkConfig> = {
     supportsImport: true,
     supportsManualEntry: true,
     legalNotice:
-      'SIRI (Smart Industry Readiness Index) jest narzędziem opracowanym przez Singapore Economic Development Board (EDB) we współpracy z TÜV SÜD. Wykorzystanie struktury SIRI w Consultinity ma wyłącznie cel edukacyjny i służy do nauki metodologii Industry 4.0. Oficjalna certyfikacja SIRI wymaga akredytowanego audytora.',
+      'SIRI (Smart Industry Readiness Index) jest narzędziem opracowanym przez Singapore Economic Development Board (EDB) we współpracy z TÜV SÜD. Wykorzystanie struktury SIRI w Consultify ma wyłącznie cel edukacyjny i służy do nauki metodologii Industry 4.0. Oficjalna certyfikacja SIRI wymaga akredytowanego audytora.',
     legalNoticeType: 'educational',
     dimensions: [], // Loaded from siriStructure.ts
     categories: [
@@ -119,7 +119,7 @@ export const FRAMEWORK_CONFIGS: Record<FrameworkId, FrameworkConfig> = {
     supportsImport: true,
     supportsManualEntry: true,
     legalNotice:
-      'ADMA (Advanced Digital Maturity Assessment) jest narzędziem opracowanym przez European Commission w ramach programu Digital Innovation Hubs. Wykorzystanie w Consultinity służy celom edukacyjnym.',
+      'ADMA (Advanced Digital Maturity Assessment) jest narzędziem opracowanym przez European Commission w ramach programu Digital Innovation Hubs. Wykorzystanie w Consultify służy celom edukacyjnym.',
     legalNoticeType: 'educational',
     dimensions: [], // Loaded from admaStructure.ts
     categories: [
@@ -144,7 +144,7 @@ export const FRAMEWORK_CONFIGS: Record<FrameworkId, FrameworkConfig> = {
     supportsImport: true,
     supportsManualEntry: true,
     legalNotice:
-      'CMMI jest znakiem towarowym ISACA (dawniej CMMI Institute). Oficjalna certyfikacja CMMI wymaga akredytowanego Lead Appraiser. Implementacja w Consultinity służy celom edukacyjnym.',
+      'CMMI jest znakiem towarowym ISACA (dawniej CMMI Institute). Oficjalna certyfikacja CMMI wymaga akredytowanego Lead Appraiser. Implementacja w Consultify służy celom edukacyjnym.',
     legalNoticeType: 'educational',
     dimensions: [], // Loaded from cmmiStructure.ts
     categories: [
@@ -182,7 +182,7 @@ export const FRAMEWORK_CONFIGS: Record<FrameworkId, FrameworkConfig> = {
     supportsImport: false,
     supportsManualEntry: true,
     legalNotice:
-      'Metoda DBR77 Lean 4.0 (Pomierz-Zoptymalizuj-Automatyzuj) jest autorską metodą Consultinity, łączącą klasyczne narzędzia Lean z oceną potencjału automatyzacji i AI.',
+      'Metoda DBR77 Lean 4.0 (Pomierz-Zoptymalizuj-Automatyzuj) jest autorską metodą Consultify, łączącą klasyczne narzędzia Lean z oceną potencjału automatyzacji i AI.',
     legalNoticeType: 'proprietary',
     dimensions: [], // Loaded from dbr77LeanStructure.ts
     categories: [

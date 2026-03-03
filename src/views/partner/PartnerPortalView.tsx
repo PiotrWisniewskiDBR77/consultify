@@ -11,7 +11,7 @@
  * - Responsive two-column layout
  * - Consistent styling with Admin module (violet accents)
  *
- * Designed for DBR77 Consultinity Partner Program
+ * Designed for DBR77 Consultify Partner Program
  */
 
 import {

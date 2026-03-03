@@ -57,12 +57,22 @@ const METRIC_TYPES = [
   { id: 'custom', label: 'Custom', icon: BarChart3, color: 'gray' },
 ];
 
+const COLOR_STYLES: Record<string, { bg: string; text: string }> = {
+  green: { bg: 'bg-emerald-500/15', text: 'text-emerald-600 dark:text-emerald-400' },
+  blue: { bg: 'bg-blue-500/15', text: 'text-blue-600 dark:text-blue-400' },
+  purple: { bg: 'bg-purple-500/15', text: 'text-purple-600 dark:text-purple-400' },
+  orange: { bg: 'bg-orange-500/15', text: 'text-orange-600 dark:text-orange-400' },
+  cyan: { bg: 'bg-cyan-500/15', text: 'text-cyan-600 dark:text-cyan-400' },
+  gray: { bg: 'bg-slate-500/10', text: 'text-slate-700 dark:text-slate-300' },
+};
+
 const BusinessMetricsView: React.FC = () => {
   const [metrics, setMetrics] = useState<BusinessMetric[]>([]);
   const [selectedMetric, setSelectedMetric] = useState<BusinessMetric | null>(null);
   const [history, setHistory] = useState<MetricHistory[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filterType, setFilterType] = useState<string>('');
@@ -77,30 +87,61 @@ const BusinessMetricsView: React.FC = () => {
   });
 
   useEffect(() => {
-    fetchMetrics();
-    fetchStats();
+    const load = async () => {
+      const loadedMetrics = await fetchMetrics();
+      await fetchStats(loadedMetrics);
+    };
+    load();
   }, [filterType]);
 
-  const fetchMetrics = async () => {
+  const fetchMetrics = async (): Promise<any[]> => {
     setIsLoading(true);
+    setError(null);
     try {
       const data = await Api.getBusinessMetrics(
         filterType ? { metricType: filterType } : undefined
       );
-      setMetrics(data || []);
-    } catch (error) {
-      console.error('Failed to fetch metrics:', error);
+      const list = data || [];
+      setMetrics(list);
+      return list;
+    } catch (err: any) {
+      console.error('Failed to fetch metrics:', err);
+      setError(err.message || 'Failed to load business metrics. Please try again.');
+      return [];
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchStats = async () => {
+  const computeStatsFromMetrics = (metricsList: any[]) => {
+    const onTarget = metricsList.filter((m) => m.target_value != null && m.current_value != null && Number(m.current_value) >= Number(m.target_value)).length;
+    const needsAttention = metricsList.filter((m) => m.target_value != null && m.current_value != null && Number(m.current_value) < Number(m.target_value) && Number(m.current_value) >= Number(m.target_value) * 0.8).length;
+    const critical = metricsList.filter((m) => m.target_value != null && m.current_value != null && Number(m.current_value) < Number(m.target_value) * 0.8).length;
+    return {
+      totalMetrics: metricsList.length,
+      onTarget,
+      needsAttention,
+      critical,
+      activeMetrics: metricsList.filter((m) => m.is_active).length,
+      categories: new Set(metricsList.map((m) => m.category)).size,
+    };
+  };
+
+  const fetchStats = async (metricsList?: any[]) => {
     try {
       const data = await Api.getMetricsStats();
-      setStats(data);
-    } catch (error) {
-      console.error('Failed to fetch stats:', error);
+      if (data && (data.totalMetrics > 0 || data.onTarget > 0 || data.needsAttention > 0 || data.critical > 0)) {
+        setStats(data);
+      } else {
+        const list = metricsList ?? metrics;
+        if (list.length > 0) {
+          setStats(computeStatsFromMetrics(list));
+        } else {
+          setStats(data);
+        }
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch stats:', err);
     }
   };
 
@@ -123,8 +164,12 @@ const BusinessMetricsView: React.FC = () => {
 
     try {
       await Api.createBusinessMetric({
-        ...newMetric,
-        targetValue: newMetric.targetValue ? parseFloat(newMetric.targetValue) : null,
+        name: newMetric.name,
+        description: newMetric.description,
+        category: newMetric.metricType,
+        formula: newMetric.calculationFormula || null,
+        unit: newMetric.unit || null,
+        target_value: newMetric.targetValue ? parseFloat(newMetric.targetValue) : null,
       });
       setShowCreateModal(false);
       setNewMetric({
@@ -212,8 +257,10 @@ const BusinessMetricsView: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-white">Business Metrics & KPIs</h2>
-          <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-1">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Business Metrics & KPIs
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 mt-1">
             Track and monitor key performance indicators
           </p>
         </div>
@@ -221,7 +268,7 @@ const BusinessMetricsView: React.FC = () => {
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm"
+            className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm"
           >
             <option value="">All Types</option>
             {METRIC_TYPES.map((mt) => (
@@ -240,72 +287,99 @@ const BusinessMetricsView: React.FC = () => {
         </div>
       </div>
 
+      {/* Error Banner */}
+      {error && (
+        <div className="flex items-center justify-between p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-400" />
+            <span className="text-sm text-red-700 dark:text-red-300">{error}</span>
+          </div>
+          <button
+            onClick={async () => { setError(null); const m = await fetchMetrics(); await fetchStats(m); }}
+            className="flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Overview Stats */}
       {stats && (
-        <div className="grid grid-cols-4 gap-4">
-          <Card className="bg-gray-800 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/20 rounded-lg">
-                <BarChart3 className="w-5 h-5 text-blue-400" />
+        <div className="space-y-2">
+          <div className="grid grid-cols-4 gap-4">
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/20 rounded-lg">
+                  <BarChart3 className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {stats.totalMetrics || 0}
+                  </p>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">Total Metrics</span>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-white">{stats.totalMetrics || 0}</p>
-                <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
-                  Total Metrics
-                </span>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-500/20 rounded-lg">
+                  <CheckCircle2 className="w-5 h-5 text-green-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {stats.onTarget || 0}
+                  </p>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">On Target</span>
+                </div>
               </div>
-            </div>
-          </Card>
-          <Card className="bg-gray-800 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-500/20 rounded-lg">
-                <CheckCircle2 className="w-5 h-5 text-green-400" />
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-yellow-500/20 rounded-lg">
+                  <AlertTriangle className="w-5 h-5 text-yellow-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {stats.needsAttention || 0}
+                  </p>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">Needs Attention</span>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-white">{stats.onTarget || 0}</p>
-                <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
-                  On Target
-                </span>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-500/20 rounded-lg">
+                  <XCircle className="w-5 h-5 text-red-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {stats.critical || 0}
+                  </p>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">Critical</span>
+                </div>
               </div>
-            </div>
-          </Card>
-          <Card className="bg-gray-800 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-yellow-500/20 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-yellow-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-white">{stats.needsAttention || 0}</p>
-                <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
-                  Needs Attention
-                </span>
-              </div>
-            </div>
-          </Card>
-          <Card className="bg-gray-800 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-500/20 rounded-lg">
-                <XCircle className="w-5 h-5 text-red-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-white">{stats.critical || 0}</p>
-                <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
-                  Critical
-                </span>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
+          {stats.totalMetrics === 0 && metrics.length > 0 && (
+            <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 pl-1">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              Stats update after metrics are calculated. Click &quot;Calculate Now&quot; on each metric to update.
+            </p>
+          )}
         </div>
       )}
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-3 gap-4">
         {metrics.length === 0 ? (
-          <Card className="col-span-3 bg-gray-800 p-8">
+          <Card className="col-span-3 p-8">
             <div className="flex flex-col items-center justify-center">
-              <BarChart3 className="w-16 h-16 text-gray-600 dark:text-gray-400 mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">No Metrics Yet</h3>
-              <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-center mb-4">
+              <BarChart3 className="w-16 h-16 text-slate-400 dark:text-slate-400 mb-4" />
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+                No Metrics Yet
+              </h3>
+              <p className="text-slate-600 dark:text-slate-400 text-center mb-4">
                 Create your first KPI to start tracking business performance
               </p>
               <button
@@ -321,24 +395,25 @@ const BusinessMetricsView: React.FC = () => {
           metrics.map((metric) => {
             const typeInfo = getMetricTypeInfo(metric.metric_type);
             const TypeIcon = typeInfo.icon;
+            const color = COLOR_STYLES[typeInfo.color] || COLOR_STYLES.gray;
             const health = getHealthStatus(metric);
 
             return (
               <Card
                 key={metric.id}
-                className={`bg-gray-800 p-4 cursor-pointer transition-all hover:ring-1 hover:ring-blue-500 ${
+                className={`p-4 cursor-pointer transition-all hover:ring-1 hover:ring-blue-500 ${
                   selectedMetric?.id === metric.id ? 'ring-2 ring-blue-500' : ''
                 }`}
                 onClick={() => handleSelectMetric(metric)}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <div className={`p-2 rounded-lg bg-${typeInfo.color}-500/20`}>
-                      <TypeIcon className={`w-4 h-4 text-${typeInfo.color}-400`} />
+                    <div className={`p-2 rounded-lg ${color.bg}`}>
+                      <TypeIcon className={`w-4 h-4 ${color.text}`} />
                     </div>
                     <div>
-                      <h4 className="text-white font-medium">{metric.name}</h4>
-                      <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                      <h4 className="text-slate-900 dark:text-white font-medium">{metric.name}</h4>
+                      <span className="text-xs text-slate-600 dark:text-slate-400">
                         {typeInfo.label}
                       </span>
                     </div>
@@ -351,7 +426,7 @@ const BusinessMetricsView: React.FC = () => {
                           ? 'bg-yellow-500/20 text-yellow-400'
                           : health === 'bad'
                             ? 'bg-red-500/20 text-red-400'
-                            : 'bg-gray-50 dark:bg-navy-8000/20 text-gray-400'
+                            : 'bg-slate-100 text-slate-700 dark:bg-white/5 dark:text-slate-300'
                     }`}
                   >
                     {health === 'good'
@@ -366,13 +441,13 @@ const BusinessMetricsView: React.FC = () => {
 
                 <div className="flex items-end justify-between">
                   <div>
-                    <p className="text-3xl font-bold text-white">
+                    <p className="text-3xl font-bold text-slate-900 dark:text-white">
                       {formatValue(metric.current_value, metric.unit)}
                     </p>
                     {metric.target_value && (
                       <div className="flex items-center gap-1 mt-1">
-                        <Target className="w-3 h-3 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
-                        <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                        <Target className="w-3 h-3 text-slate-500 dark:text-slate-400" />
+                        <span className="text-xs text-slate-600 dark:text-slate-400">
                           Target: {formatValue(metric.target_value, metric.unit)}
                         </span>
                       </div>
@@ -384,10 +459,10 @@ const BusinessMetricsView: React.FC = () => {
                       <span
                         className={`text-sm ${
                           metric.trend > 0
-                            ? 'text-green-400'
+                            ? 'text-emerald-600 dark:text-emerald-400'
                             : metric.trend < 0
-                              ? 'text-red-400'
-                              : 'text-gray-400 dark:text-gray-500 dark:text-gray-400'
+                              ? 'text-red-600 dark:text-red-400'
+                              : 'text-slate-600 dark:text-slate-400'
                         }`}
                       >
                         {metric.trend > 0 ? '+' : ''}
@@ -424,12 +499,14 @@ const BusinessMetricsView: React.FC = () => {
 
       {/* Selected Metric Details */}
       {selectedMetric && (
-        <Card className="bg-gray-800 p-4">
+        <Card className="p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-xl font-bold text-white">{selectedMetric.name}</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                {selectedMetric.name}
+              </h3>
               {selectedMetric.description && (
-                <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-sm mt-1">
+                <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
                   {selectedMetric.description}
                 </p>
               )}
@@ -458,56 +535,50 @@ const BusinessMetricsView: React.FC = () => {
 
           {/* Metric Info */}
           <div className="grid grid-cols-4 gap-4 mb-4">
-            <div className="bg-gray-700/50 rounded-lg p-3">
-              <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs">
-                Current Value
-              </span>
-              <p className="text-white font-bold text-lg mt-1">
+            <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg p-3">
+              <span className="text-slate-600 dark:text-slate-400 text-xs">Current Value</span>
+              <p className="text-slate-900 dark:text-white font-bold text-lg mt-1">
                 {formatValue(selectedMetric.current_value, selectedMetric.unit)}
               </p>
             </div>
-            <div className="bg-gray-700/50 rounded-lg p-3">
-              <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs">
-                Target
-              </span>
-              <p className="text-white font-bold text-lg mt-1">
+            <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg p-3">
+              <span className="text-slate-600 dark:text-slate-400 text-xs">Target</span>
+              <p className="text-slate-900 dark:text-white font-bold text-lg mt-1">
                 {formatValue(selectedMetric.target_value, selectedMetric.unit)}
               </p>
             </div>
-            <div className="bg-gray-700/50 rounded-lg p-3">
-              <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs">
-                Unit
-              </span>
-              <p className="text-white font-bold text-lg mt-1">{selectedMetric.unit || '-'}</p>
+            <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg p-3">
+              <span className="text-slate-600 dark:text-slate-400 text-xs">Unit</span>
+              <p className="text-slate-900 dark:text-white font-bold text-lg mt-1">
+                {selectedMetric.unit || '-'}
+              </p>
             </div>
-            <div className="bg-gray-700/50 rounded-lg p-3">
-              <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs">
-                Formula
-              </span>
-              <p className="text-white font-mono text-sm mt-1 truncate">
+            <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg p-3">
+              <span className="text-slate-600 dark:text-slate-400 text-xs">Formula</span>
+              <p className="text-slate-900 dark:text-white font-mono text-sm mt-1 truncate">
                 {selectedMetric.calculation_formula || 'Manual'}
               </p>
             </div>
           </div>
 
           {/* History Chart Placeholder */}
-          <div className="bg-gray-700/30 rounded-lg p-4">
+          <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-white font-medium">Value History</h4>
-              <LineChart className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+              <h4 className="text-slate-900 dark:text-white font-medium">Value History</h4>
+              <LineChart className="w-4 h-4 text-slate-500 dark:text-slate-400" />
             </div>
             {history.length === 0 ? (
-              <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
+              <p className="text-slate-600 dark:text-slate-400 text-sm text-center py-4">
                 No history data yet. Calculate the metric to start tracking.
               </p>
             ) : (
               <div className="space-y-2">
                 {history.slice(0, 10).map((h, idx) => (
                   <div key={h.id} className="flex items-center justify-between text-sm">
-                    <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                    <span className="text-slate-600 dark:text-slate-400">
                       {new Date(h.calculated_at).toLocaleDateString()}
                     </span>
-                    <span className="text-white font-medium">
+                    <span className="text-slate-900 dark:text-white font-medium">
                       {formatValue(h.value, selectedMetric.unit)}
                     </span>
                   </div>
@@ -521,30 +592,38 @@ const BusinessMetricsView: React.FC = () => {
       {/* Create Metric Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-lg">
-            <h3 className="text-xl font-bold text-white mb-4">Create New Metric</h3>
+          <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-lg border border-slate-200 dark:border-navy-700 shadow-xl">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+              Create New Metric
+            </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Metric Name</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                  Metric Name
+                </label>
                 <input
                   type="text"
                   value={newMetric.name}
                   onChange={(e) => setNewMetric({ ...newMetric, name: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
                   placeholder="Monthly Recurring Revenue"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                  Description
+                </label>
                 <textarea
                   value={newMetric.description}
                   onChange={(e) => setNewMetric({ ...newMetric, description: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
                   rows={2}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Metric Type</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+                  Metric Type
+                </label>
                 <div className="grid grid-cols-3 gap-2">
                   {METRIC_TYPES.map((mt) => (
                     <button
@@ -552,35 +631,37 @@ const BusinessMetricsView: React.FC = () => {
                       onClick={() => setNewMetric({ ...newMetric, metricType: mt.id })}
                       className={`p-2 rounded-lg flex items-center gap-2 transition-colors ${
                         newMetric.metricType === mt.id
-                          ? 'bg-blue-600/20 border border-blue-500'
-                          : 'bg-gray-700 hover:bg-gray-600'
+                          ? 'bg-blue-600/10 border border-blue-400/60 dark:bg-blue-500/10 dark:border-blue-500/30'
+                          : 'bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-transparent'
                       }`}
                     >
-                      <mt.icon className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
-                      <span className="text-sm text-white">{mt.label}</span>
+                      <mt.icon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                      <span className="text-sm text-slate-900 dark:text-white">{mt.label}</span>
                     </button>
                   ))}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
                     Target Value
                   </label>
                   <input
                     type="number"
                     value={newMetric.targetValue}
                     onChange={(e) => setNewMetric({ ...newMetric, targetValue: e.target.value })}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                    className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
                     placeholder="1000"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Unit</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                    Unit
+                  </label>
                   <select
                     value={newMetric.unit}
                     onChange={(e) => setNewMetric({ ...newMetric, unit: e.target.value })}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                    className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
                   >
                     <option value="">None</option>
                     <option value="$">Dollar ($)</option>
@@ -592,7 +673,7 @@ const BusinessMetricsView: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
                   Calculation Formula (optional)
                 </label>
                 <input
@@ -601,10 +682,10 @@ const BusinessMetricsView: React.FC = () => {
                   onChange={(e) =>
                     setNewMetric({ ...newMetric, calculationFormula: e.target.value })
                   }
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white font-mono text-sm"
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono text-sm"
                   placeholder="SUM(revenue) / COUNT(users)"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                   SQL-like formula for automatic calculation
                 </p>
               </div>
@@ -612,7 +693,7 @@ const BusinessMetricsView: React.FC = () => {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-lg transition-colors dark:bg-navy-700 dark:hover:bg-navy-600 dark:text-white"
               >
                 Cancel
               </button>

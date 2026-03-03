@@ -71,13 +71,13 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
       <div className="w-full md:w-1/3 bg-slate-50 dark:bg-navy-900 border-b md:border-b-0 md:border-r border-slate-200 dark:border-navy-700 p-8 md:p-12 flex flex-col">
         <div className="flex items-center gap-3 mb-12">
           <img
-            src="/assets/logos/logo-dark.png"
-            alt="Consultinity"
+            src="/assets/logos/logo-light.svg"
+            alt="Consultify"
             className="h-7 w-auto dark:hidden"
           />
           <img
-            src="/assets/logos/logo-light.png"
-            alt="Consultinity"
+            src="/assets/logos/logo-dark.svg"
+            alt="Consultify"
             className="hidden h-7 w-auto dark:block"
           />
           <span className="text-sm font-bold tracking-widest text-navy-900 dark:text-white opacity-40 uppercase">

@@ -2,6 +2,7 @@
 import bcrypt from 'bcryptjs';
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import crypto from 'node:crypto';
 import * as uuid from 'uuid';
 
 import { config } from '../config/index.js';
@@ -13,6 +14,7 @@ import integrationService from '../services/integrationService.js';
 import legalService from '../services/legalService.js';
 import permissionsMatrixService from '../services/permissionsMatrixService.js';
 import securityIncidentService from '../services/securityIncidentService.js';
+import threatIntelligenceService from '../services/threatIntelligenceService.js';
 import usageService from '../services/usageService.js';
 import webhookService from '../services/WebhookService.js';
 import { AppError, asyncHandler as catchAsync } from '../utils/ErrorHandler.js';
@@ -160,7 +162,7 @@ const deps: {
   EmailTemplateService: { getTemplates: async () => [] } as any,
   EmailCampaignService: { getCampaigns: async () => [] } as any,
   SecurityIncidentService: securityIncidentService,
-  ThreatIntelligenceService: { getThreats: async () => [] } as any,
+  ThreatIntelligenceService: threatIntelligenceService as any,
   DLPService: { getPolicies: async () => [] } as any,
   DashboardBuilderService: { getDashboards: async () => [] } as any,
   IntegrationService: integrationService,
@@ -200,11 +202,24 @@ const setDependencies = (newDeps: Partial<typeof deps>): void => {
 };
 
 const tableExists = async (tableName: string): Promise<boolean> => {
+  const t = String(tableName || '').trim();
+  if (!t) return false;
+
   return new Promise((resolve) => {
+    // SQLite
     deps.db.get(
-      `SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`,
-      [tableName],
-      (err: any, row: any) => resolve(!err && !!row)
+      `SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?`,
+      [t],
+      (sqliteErr: any, sqliteRow: any) => {
+        if (!sqliteErr && sqliteRow) return resolve(true);
+
+        // Postgres
+        deps.db.get(
+          `SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`,
+          [t],
+          (pgErr: any, pgRow: any) => resolve(!pgErr && !!pgRow)
+        );
+      }
     );
   });
 };
@@ -506,6 +521,29 @@ const createUser = catchAsync(async (req, res, next) => {
 });
 
 /**
+ * DELETE User (soft delete)
+ */
+const deleteUser = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  const sql = `UPDATE users SET status = 'deleted' WHERE id = ?`;
+
+  deps.db.run(sql, [id], function (err) {
+    if (err) return next(new AppError(err.message, 500));
+    if (this.changes === 0) return next(new AppError('User not found', 404));
+
+    deps.ActivityService.log({
+      userId: req.user?.id,
+      action: 'deleted',
+      entityType: 'user',
+      entityId: id,
+    });
+
+    res.json({ message: 'User deleted successfully' });
+  });
+});
+
+/**
  * INVITE USER
  */
 const inviteUser = catchAsync(async (req, res, next) => {
@@ -671,6 +709,48 @@ const createAccessCode = catchAsync(async (req, res, next) => {
 });
 
 /**
+ * DEACTIVATE / REVOKE Access Code
+ *
+ * NOTE: The access codes schema has evolved over time (legacy vs engine).
+ * We attempt a few compatible UPDATEs in order, so the operation works across deployments.
+ */
+const deactivateAccessCode = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const nowIso = new Date().toISOString();
+
+  const attempts: Array<{ sql: string; params: any[] }> = [
+    // Newer "engine" schema (status + revoked_at + updated_at)
+    {
+      sql: `UPDATE access_codes SET status = 'REVOKED', revoked_at = ?, updated_at = ? WHERE id = ?`,
+      params: [nowIso, nowIso, id],
+    },
+    // Legacy schema (boolean flag)
+    {
+      sql: `UPDATE access_codes SET is_active = 0 WHERE id = ?`,
+      params: [id],
+    },
+    // Minimal fallback: expire immediately
+    {
+      sql: `UPDATE access_codes SET expires_at = ? WHERE id = ?`,
+      params: [nowIso, id],
+    },
+  ];
+
+  const runAttempt = (idx: number) => {
+    if (idx >= attempts.length) return next(new AppError('Failed to deactivate access code', 500));
+    const { sql, params } = attempts[idx];
+    deps.db.run(sql, params, function (err) {
+      if (err) return runAttempt(idx + 1);
+      // @ts-ignore - sqlite callback context
+      if (this?.changes === 0) return next(new AppError('Access code not found', 404));
+      res.json({ success: true });
+    });
+  };
+
+  runAttempt(0);
+});
+
+/**
  * IMPERSONATE USER
  */
 const impersonateUser = catchAsync(async (req, res, next) => {
@@ -728,11 +808,21 @@ const impersonateUser = catchAsync(async (req, res, next) => {
  * DATABASE EXPLORER - TABLES
  */
 const getDatabaseTables = catchAsync(async (req, res, next) => {
-  const query =
+  const pgQuery =
     "SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public' AND table_name NOT LIKE 'pg_%' AND table_name NOT LIKE '_%'";
-  deps.db.all(query, [], (err, rows) => {
-    if (err) return next(new AppError(err.message, 500));
-    res.json(rows.map((r) => r.name));
+  deps.db.all(pgQuery, [], (err, rows) => {
+    if (!err) {
+      res.json((rows || []).map((r) => r.name));
+      return;
+    }
+
+    // SQLite fallback (local/dev). information_schema doesn't exist there.
+    const sqliteQuery =
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_%' ORDER BY name";
+    deps.db.all(sqliteQuery, [], (err2, rows2) => {
+      if (err2) return next(new AppError(err2.message, 500));
+      res.json((rows2 || []).map((r) => r.name));
+    });
   });
 });
 
@@ -743,9 +833,19 @@ const getDatabaseRows = catchAsync(async (req, res, next) => {
   const { tableName } = req.params;
   if (!/^[a-zA-Z0-9_]+$/.test(tableName)) return next(new AppError('Invalid table name', 400));
 
-  deps.db.all(`SELECT * FROM ${tableName} ORDER BY ctid DESC LIMIT 100`, [], (err, rows) => {
-    if (err) return next(new AppError(err.message, 500));
-    res.json(rows);
+  const pgQuery = `SELECT * FROM ${tableName} ORDER BY ctid DESC LIMIT 100`;
+  deps.db.all(pgQuery, [], (err, rows) => {
+    if (!err) {
+      res.json(rows);
+      return;
+    }
+
+    // SQLite fallback (no ctid). rowid exists for most tables.
+    const sqliteQuery = `SELECT * FROM ${tableName} ORDER BY rowid DESC LIMIT 100`;
+    deps.db.all(sqliteQuery, [], (err2, rows2) => {
+      if (err2) return next(new AppError(err2.message, 500));
+      res.json(rows2);
+    });
   });
 });
 
@@ -862,7 +962,13 @@ const toggleLegalDocActive = catchAsync(async (req, res, next) => {
   const { isActive } = req.body;
   if (typeof isActive !== 'boolean') return next(new AppError('isActive must be a boolean', 400));
 
-  const result = await deps.LegalService.toggleDocumentActive(id, isActive);
+  const current = await deps.LegalService.getDocumentById(id);
+  if (!current) return next(new AppError('Document not found', 404));
+  const currentlyActive =
+    current.is_active === true || current.is_active === 1 || current.status === 'active';
+
+  const result =
+    currentlyActive === isActive ? current : await deps.LegalService.toggleDocumentActive(id);
 
   deps.ActivityService.log({
     userId: req.user.id,
@@ -1298,12 +1404,107 @@ const markInvoicePaid = catchAsync(async (req, res, next) => {
 });
 
 /**
- * Get invoice PDF
- *
- * Not implemented in this codebase yet → honest 503.
+ * Get invoice as downloadable HTML document.
  */
-const getInvoicePdf = catchAsync(async (req, res, next) => {
-  return next(new AppError('Invoice PDF generation is not available', 503, 'FEATURE_UNAVAILABLE'));
+const getInvoicePdf = catchAsync(async (req: AuthenticatedRequest, res, next) => {
+  const { id } = req.params;
+  const isPg =
+    process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
+
+  const query = `
+    SELECT
+      t.id,
+      'INV-' || SUBSTR(t.id, 1, 8) as invoice_number,
+      t.organization_id,
+      o.name as organization_name,
+      CASE
+        WHEN t.type = 'purchase' THEN 'paid'
+        WHEN t.type = 'refund' THEN 'refunded'
+        ELSE 'pending'
+      END as status,
+      ABS(t.amount_usd) as amount,
+      'USD' as currency,
+      0 as tax,
+      ABS(t.amount_usd) as total,
+      t.created_at as due_date,
+      t.created_at as paid_at,
+      t.created_at,
+      t.description
+    FROM token_transactions t
+    LEFT JOIN organizations o ON o.id = t.organization_id
+    WHERE t.id = ?
+    LIMIT 1
+  `;
+
+  deps.db.get(query, [id], (err: any, row: any) => {
+    if (err) return next(new AppError('Failed to fetch invoice', 500));
+    if (!row) return next(new AppError('Invoice not found', 404));
+
+    const inv = row;
+    const invoiceNumber = inv.invoice_number || `INV-${String(inv.id).slice(0, 8)}`;
+    const issueDate = inv.created_at ? new Date(inv.created_at).toLocaleDateString('en-US') : '-';
+    const dueDate = inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-US') : '-';
+    const statusLabel = (inv.status || 'pending').toUpperCase();
+    const amount = parseFloat(inv.amount || 0).toFixed(2);
+    const tax = parseFloat(inv.tax || 0).toFixed(2);
+    const total = parseFloat(inv.total || inv.amount || 0).toFixed(2);
+    const currency = inv.currency || 'USD';
+    const orgName = inv.organization_name || 'N/A';
+    const description = inv.description || 'Platform services';
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Invoice ${invoiceNumber}</title>
+<style>
+  body{font-family:system-ui,-apple-system,sans-serif;margin:0;padding:40px;color:#1e293b;background:#fff}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:40px}
+  .brand{font-size:24px;font-weight:700;color:#7c3aed}
+  .inv-title{font-size:28px;font-weight:700;color:#0f172a}
+  .inv-number{color:#64748b;font-size:14px;margin-top:4px}
+  .meta{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px}
+  .meta-block label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;margin-bottom:4px}
+  .meta-block span{font-size:14px;font-weight:500}
+  .status{display:inline-block;padding:4px 12px;border-radius:9999px;font-size:12px;font-weight:600}
+  .status-paid{background:#d1fae5;color:#065f46}
+  .status-pending{background:#fef3c7;color:#92400e}
+  .status-refunded{background:#dbeafe;color:#1e40af}
+  table{width:100%;border-collapse:collapse;margin-bottom:24px}
+  th{text-align:left;padding:12px 16px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:2px solid #e2e8f0}
+  td{padding:12px 16px;border-bottom:1px solid #f1f5f9;font-size:14px}
+  .text-right{text-align:right}
+  .totals{margin-left:auto;width:280px}
+  .totals tr td{border:none;padding:8px 16px}
+  .totals .grand td{font-size:18px;font-weight:700;border-top:2px solid #e2e8f0;padding-top:12px}
+  .footer{margin-top:48px;padding-top:24px;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;text-align:center}
+  @media print{body{padding:20px}}
+</style></head>
+<body>
+  <div class="header">
+    <div><div class="brand">Consultify</div><div style="font-size:12px;color:#94a3b8">Enterprise Platform</div></div>
+    <div style="text-align:right"><div class="inv-title">INVOICE</div><div class="inv-number">${invoiceNumber}</div></div>
+  </div>
+  <div class="meta">
+    <div class="meta-block"><label>Bill To</label><span>${orgName}</span></div>
+    <div class="meta-block" style="text-align:right"><label>Status</label><span class="status status-${inv.status || 'pending'}">${statusLabel}</span></div>
+    <div class="meta-block"><label>Issue Date</label><span>${issueDate}</span></div>
+    <div class="meta-block" style="text-align:right"><label>Due Date</label><span>${dueDate}</span></div>
+  </div>
+  <table>
+    <thead><tr><th>Description</th><th class="text-right">Qty</th><th class="text-right">Unit Price</th><th class="text-right">Amount</th></tr></thead>
+    <tbody><tr><td>${description}</td><td class="text-right">1</td><td class="text-right">${currency} ${amount}</td><td class="text-right">${currency} ${amount}</td></tr></tbody>
+  </table>
+  <table class="totals">
+    <tr><td>Subtotal</td><td class="text-right">${currency} ${amount}</td></tr>
+    <tr><td>Tax</td><td class="text-right">${currency} ${tax}</td></tr>
+    <tr class="grand"><td>Total</td><td class="text-right">${currency} ${total}</td></tr>
+  </table>
+  <div class="footer">Generated by Consultify &middot; ${new Date().toISOString().slice(0, 10)}</div>
+</body></html>`;
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoiceNumber}.html"`);
+    res.send(html);
+  });
 });
 
 /**
@@ -1318,8 +1519,82 @@ const uploadBrandingLogo = catchAsync(async (req, res, next) => {
 /**
  * Get all API keys
  */
+const ensureApiKeysSchema = async () => {
+  const db = deps.db;
+
+  const hasTable = await tableExists('api_keys');
+  if (!hasTable) {
+    await new Promise<void>((resolve, reject) => {
+      db.run(
+        `
+          CREATE TABLE IF NOT EXISTS api_keys (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            user_id TEXT,
+            name TEXT NOT NULL,
+            description TEXT,
+            key_hash TEXT NOT NULL,
+            key_prefix TEXT NOT NULL,
+            key_type TEXT,
+            scopes TEXT,
+            allowed_ips TEXT,
+            rate_limit_per_minute INTEGER,
+            rate_limit_per_day INTEGER,
+            expires_at TEXT,
+            is_active INTEGER DEFAULT 1,
+            usage_count INTEGER DEFAULT 0,
+            last_used_at TEXT,
+            created_by TEXT,
+            created_at DATETIME,
+            revoked_at DATETIME,
+            revoked_by TEXT,
+            revoke_reason TEXT
+          )
+        `,
+        [],
+        (err: any) => (err ? reject(err) : resolve())
+      );
+    });
+  }
+
+  const cols = await new Promise<Set<string>>((resolve) => {
+    db.all(`PRAGMA table_info(api_keys)`, [], (_err: any, rows: any[]) => {
+      const s = new Set<string>();
+      (rows || []).forEach((r: any) => s.add(String(r?.name || '').toLowerCase()));
+      resolve(s);
+    });
+  });
+
+  // Best-effort: add columns if missing (older schemas).
+  // NOTE: We avoid DEFAULT expressions that differ across DBs; code sets values on insert.
+  const maybeAdd = async (name: string, type: string) => {
+    if (cols.has(name.toLowerCase())) return;
+    await new Promise<void>((resolve) => {
+      db.run(`ALTER TABLE api_keys ADD COLUMN ${name} ${type}`, [], () => resolve());
+    });
+  };
+
+  await maybeAdd('description', 'TEXT');
+  await maybeAdd('key_type', 'TEXT');
+  await maybeAdd('scopes', 'TEXT');
+  await maybeAdd('allowed_ips', 'TEXT');
+  await maybeAdd('rate_limit_per_minute', 'INTEGER');
+  await maybeAdd('rate_limit_per_day', 'INTEGER');
+  await maybeAdd('expires_at', 'TEXT');
+  await maybeAdd('is_active', 'INTEGER');
+  await maybeAdd('usage_count', 'INTEGER');
+  await maybeAdd('last_used_at', 'TEXT');
+  await maybeAdd('created_by', 'TEXT');
+  await maybeAdd('created_at', 'DATETIME');
+  await maybeAdd('revoked_at', 'DATETIME');
+  await maybeAdd('revoked_by', 'TEXT');
+  await maybeAdd('revoke_reason', 'TEXT');
+};
+
 const getApiKeys = catchAsync(async (req, res, next) => {
   try {
+    await ensureApiKeysSchema();
+
     const db = deps.db;
     const query = `
             SELECT 
@@ -1327,9 +1602,12 @@ const getApiKeys = catchAsync(async (req, res, next) => {
                 k.organization_id as organizationId, 
                 o.name as organizationName,
                 k.user_id as userId,
-                k.display_name as name, 
-                k.provider, 
-                k.scopes,
+                k.name as name, 
+                k.description as description,
+                k.key_prefix as keyPrefix,
+                k.key_type as keyType,
+                k.scopes as scopes,
+                k.allowed_ips as allowedIps,
                 k.is_active as isActive, 
                 k.usage_count as usageCount, 
                 k.last_used_at as lastUsedAt,
@@ -1337,7 +1615,7 @@ const getApiKeys = catchAsync(async (req, res, next) => {
                 k.expires_at as expiresAt,
                 k.rate_limit_per_minute as rateLimitPerMinute,
                 k.rate_limit_per_day as rateLimitPerDay
-            FROM user_api_keys k
+            FROM api_keys k
             LEFT JOIN organizations o ON k.organization_id = o.id
             ORDER BY k.created_at DESC
         `;
@@ -1348,7 +1626,26 @@ const getApiKeys = catchAsync(async (req, res, next) => {
           const parsedRows = (rows || []).map((row) => ({
             ...row,
             isActive: !!row.isActive,
-            scopes: typeof row.scopes === 'string' ? JSON.parse(row.scopes) : row.scopes || [],
+            scopes:
+              typeof row.scopes === 'string'
+                ? (() => {
+                    try {
+                      return JSON.parse(row.scopes);
+                    } catch {
+                      return [];
+                    }
+                  })()
+                : row.scopes || [],
+            allowedIps:
+              typeof row.allowedIps === 'string'
+                ? (() => {
+                    try {
+                      return JSON.parse(row.allowedIps);
+                    } catch {
+                      return [];
+                    }
+                  })()
+                : row.allowedIps || [],
           }));
           resolve(parsedRows);
         }
@@ -1365,26 +1662,100 @@ const getApiKeys = catchAsync(async (req, res, next) => {
  * Create a new API key
  */
 const createApiKey = catchAsync(async (req, res, next) => {
-  const { name, permissions, userId, organizationId } = req.body;
-  const db = deps.db;
-  const keyId = deps.uuid.v4();
+  try {
+    await ensureApiKeysSchema();
 
-  db.run(
-    'INSERT INTO user_api_keys (id, user_id, organization_id, display_name, provider, scopes, is_active, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime("now"))',
-    [
-      keyId,
-      userId || req.user.id,
-      organizationId || req.user.organization_id,
+    const {
+      organizationId,
       name,
-      'custom',
-      JSON.stringify(permissions || []),
-      1,
-    ],
-    (err) => {
-      if (err) return next(err);
-      res.json({ id: keyId, name, permissions });
+      description,
+      keyType,
+      scopes,
+      permissions,
+      rateLimitPerMinute,
+      rateLimitPerDay,
+      allowedIps,
+      expiresAt,
+      userId,
+    } = req.body || {};
+
+    const orgId = String(organizationId || '').trim();
+    const keyName = String(name || '').trim();
+    if (!orgId || !keyName) {
+      return res.status(400).json({ error: 'organizationId and name are required' });
     }
-  );
+
+    const scopesArr = Array.isArray(scopes)
+      ? scopes
+      : Array.isArray(permissions)
+        ? permissions
+        : [];
+    if (scopesArr.length === 0) {
+      return res.status(400).json({ error: 'At least one scope is required' });
+    }
+
+    const db = deps.db;
+    const keyId = deps.uuid.v4();
+    const keyBody = crypto.randomBytes(32).toString('hex');
+    const plainKey = `ck_${keyBody}`;
+    const keyHash = crypto.createHash('sha256').update(keyBody).digest('hex');
+    const keyPrefix = `${plainKey.substring(0, 12)}...`;
+
+    const rlMin =
+      typeof rateLimitPerMinute === 'number' && Number.isFinite(rateLimitPerMinute)
+        ? Math.max(1, Math.floor(rateLimitPerMinute))
+        : 60;
+    const rlDay =
+      typeof rateLimitPerDay === 'number' && Number.isFinite(rateLimitPerDay)
+        ? Math.max(1, Math.floor(rateLimitPerDay))
+        : 10000;
+
+    const allowedIpsJson = Array.isArray(allowedIps) ? JSON.stringify(allowedIps) : null;
+    const expiresAtValue = expiresAt ? String(expiresAt) : null;
+    const userIdValue = userId ? String(userId) : null;
+
+    await new Promise<void>((resolve, reject) => {
+      db.run(
+        `INSERT INTO api_keys (
+          id, organization_id, user_id, name, description,
+          key_hash, key_prefix, key_type, scopes,
+          rate_limit_per_minute, rate_limit_per_day,
+          allowed_ips, expires_at, is_active, created_by, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, datetime('now'))`,
+        [
+          keyId,
+          orgId,
+          userIdValue,
+          keyName,
+          description ? String(description) : null,
+          keyHash,
+          keyPrefix,
+          keyType === 'service' || keyType === 'user' ? keyType : 'org',
+          JSON.stringify(scopesArr),
+          rlMin,
+          rlDay,
+          allowedIpsJson,
+          expiresAtValue,
+          req.user?.id || null,
+        ],
+        (err: any) => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+
+    return res.status(201).json({
+      id: keyId,
+      key: plainKey,
+      name: keyName,
+      keyPrefix,
+      warning: 'Save this API key now. It cannot be shown again.',
+    });
+  } catch (error) {
+    console.error('[SuperAdmin] Create API key error:', error);
+    return res.status(500).json({ error: 'Failed to create API key' });
+  }
 });
 
 /**
@@ -1392,13 +1763,28 @@ const createApiKey = catchAsync(async (req, res, next) => {
  */
 const deleteApiKey = catchAsync(async (req, res, next) => {
   try {
+    await ensureApiKeysSchema();
+
     const { id } = req.params;
     const db = deps.db;
-    await new Promise((resolve, reject) => {
-      db.run('DELETE FROM user_api_keys WHERE id = ?', [id], (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
+    await new Promise<void>((resolve, reject) => {
+      db.run(
+        `UPDATE api_keys
+         SET is_active = 0,
+             revoked_at = datetime('now'),
+             revoked_by = ?,
+             revoke_reason = COALESCE(revoke_reason, 'revoked via superadmin')
+         WHERE id = ?`,
+        [req.user?.id || null, id],
+        (err: any) => {
+          if (!err) return resolve();
+          // Fallback for older schemas (no revoke_* columns)
+          db.run(`UPDATE api_keys SET is_active = 0 WHERE id = ?`, [id], (err2: any) => {
+            if (err2) reject(err2);
+            else resolve();
+          });
+        }
+      );
     });
     res.json({ success: true });
   } catch (error) {
@@ -1414,13 +1800,101 @@ const getApiKeyUsage = catchAsync(async (req, res, next) => {
   try {
     const { id } = req.params;
     const db = deps.db;
-    const key = await new Promise((resolve, reject) => {
-      db.get('SELECT usage_count, quota_used FROM user_api_keys WHERE id = ?', [id], (err, row) => {
-        if (err) reject(err);
-        else resolve(row || { usage_count: 0, quota_used: 0 });
+
+    const hasUsageTable = await tableExists('api_key_usage');
+    if (!hasUsageTable) {
+      const keyRow: any = await new Promise((resolve, reject) => {
+        db.get(
+          `SELECT usage_count, last_used_at FROM api_keys WHERE id = ?`,
+          [id],
+          (err: any, row: any) => {
+            if (err) reject(err);
+            else resolve(row || { usage_count: 0, last_used_at: null });
+          }
+        );
       });
+      return res.json({
+        totals: { total_requests: keyRow.usage_count || 0, total_errors: 0, avg_response_time: 0 },
+        daily: [],
+        endpoints: [],
+        lastUsedAt: keyRow.last_used_at || null,
+      });
+    }
+
+    const totals: any = await new Promise((resolve, reject) => {
+      db.get(
+        `
+        SELECT
+          COUNT(*) as total_requests,
+          SUM(CASE WHEN status_code >= 400 THEN 1 ELSE 0 END) as total_errors,
+          AVG(response_time_ms) as avg_response_time
+        FROM api_key_usage
+        WHERE api_key_id = ?
+          AND created_at >= datetime('now', '-30 days')
+        `,
+        [id],
+        (err: any, row: any) => {
+          if (err) reject(err);
+          else resolve(row || { total_requests: 0, total_errors: 0, avg_response_time: 0 });
+        }
+      );
     });
-    res.json({ count: key.usage_count || 0, tokens: key.quota_used || 0 });
+
+    const daily: any[] = await new Promise((resolve, reject) => {
+      db.all(
+        `
+        SELECT
+          substr(created_at, 1, 10) as date,
+          COUNT(*) as requests,
+          SUM(CASE WHEN status_code >= 400 THEN 1 ELSE 0 END) as errors,
+          AVG(response_time_ms) as avg_response_time
+        FROM api_key_usage
+        WHERE api_key_id = ?
+          AND created_at >= datetime('now', '-30 days')
+        GROUP BY substr(created_at, 1, 10)
+        ORDER BY date DESC
+        `,
+        [id],
+        (err: any, rows: any[]) => {
+          if (err) reject(err);
+          else resolve(rows || []);
+        }
+      );
+    });
+
+    const endpoints: any[] = await new Promise((resolve, reject) => {
+      db.all(
+        `
+        SELECT
+          endpoint,
+          method,
+          COUNT(*) as requests,
+          SUM(CASE WHEN status_code >= 400 THEN 1 ELSE 0 END) as errors,
+          AVG(response_time_ms) as avg_response_time
+        FROM api_key_usage
+        WHERE api_key_id = ?
+          AND created_at >= datetime('now', '-30 days')
+        GROUP BY endpoint, method
+        ORDER BY requests DESC
+        LIMIT 50
+        `,
+        [id],
+        (err: any, rows: any[]) => {
+          if (err) reject(err);
+          else resolve(rows || []);
+        }
+      );
+    });
+
+    return res.json({
+      totals: {
+        total_requests: totals?.total_requests || 0,
+        total_errors: totals?.total_errors || 0,
+        avg_response_time: totals?.avg_response_time || 0,
+      },
+      daily,
+      endpoints,
+    });
   } catch (error) {
     console.error('[SuperAdmin] Get API key usage error:', error);
     res.status(500).json({ error: 'Failed to get API key usage' });
@@ -1431,13 +1905,136 @@ const getApiKeyUsage = catchAsync(async (req, res, next) => {
  * Get compliance frameworks list
  */
 const getComplianceFrameworks = catchAsync(async (req, res, next) => {
-  const frameworks = deps.ComplianceService?.COMPLIANCE_STANDARDS || [];
-  if (!frameworks.length) {
-    return next(
-      new AppError('Compliance frameworks are not available', 503, 'FEATURE_UNAVAILABLE')
-    );
+  const hasFrameworksTable = await tableExists('compliance_frameworks');
+  if (!hasFrameworksTable) {
+    await new Promise<void>((resolve, reject) => {
+      deps.db.run(
+        `CREATE TABLE IF NOT EXISTS compliance_frameworks (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          display_name TEXT,
+          description TEXT,
+          version TEXT,
+          requirements TEXT DEFAULT '[]',
+          is_active INTEGER DEFAULT 1,
+          created_at TEXT DEFAULT (datetime('now'))
+        )`,
+        [],
+        (err: any) => (err ? reject(err) : resolve())
+      );
+    });
+
+    const defaultFrameworks = [
+      {
+        id: 'soc2',
+        name: 'SOC 2 Type II',
+        display_name: 'SOC 2 Type II',
+        description: 'Service Organization Control 2 — Trust Services Criteria',
+        version: '2017',
+        requirements: JSON.stringify([
+          { id: 'CC1.1', category: 'Control Environment', title: 'COSO Principle 1', description: 'The entity demonstrates a commitment to integrity and ethical values.' },
+          { id: 'CC1.2', category: 'Control Environment', title: 'COSO Principle 2', description: 'The board of directors demonstrates independence from management.' },
+          { id: 'CC2.1', category: 'Communication', title: 'COSO Principle 13', description: 'The entity obtains or generates relevant, quality information.' },
+          { id: 'CC3.1', category: 'Risk Assessment', title: 'COSO Principle 6', description: 'The entity specifies objectives with sufficient clarity.' },
+          { id: 'CC5.1', category: 'Control Activities', title: 'COSO Principle 10', description: 'The entity selects and develops control activities.' },
+          { id: 'CC6.1', category: 'Logical Access', title: 'Logical Access Security', description: 'Logical access security measures are implemented.' },
+          { id: 'CC7.1', category: 'System Operations', title: 'Detection of Changes', description: 'Procedures exist to detect changes to software and infrastructure.' },
+          { id: 'CC8.1', category: 'Change Management', title: 'Change Management Process', description: 'Authorization, design, development, testing, and implementation of changes.' },
+        ]),
+      },
+      {
+        id: 'gdpr',
+        name: 'GDPR',
+        display_name: 'GDPR',
+        description: 'EU General Data Protection Regulation',
+        version: '2016/679',
+        requirements: JSON.stringify([
+          { id: 'Art5', category: 'Principles', title: 'Principles of Processing', description: 'Lawfulness, fairness, transparency, purpose limitation.' },
+          { id: 'Art6', category: 'Lawful Basis', title: 'Lawfulness of Processing', description: 'At least one lawful basis for processing personal data.' },
+          { id: 'Art12', category: 'Data Subject Rights', title: 'Transparent Information', description: 'Communication and modalities for exercising data subject rights.' },
+          { id: 'Art25', category: 'Design', title: 'Data Protection by Design', description: 'Data protection by design and by default.' },
+          { id: 'Art30', category: 'Records', title: 'Records of Processing', description: 'Records of processing activities.' },
+          { id: 'Art32', category: 'Security', title: 'Security of Processing', description: 'Appropriate technical and organisational measures.' },
+          { id: 'Art33', category: 'Breach', title: 'Breach Notification', description: 'Notification to supervisory authority within 72 hours.' },
+          { id: 'Art35', category: 'Impact', title: 'DPIA', description: 'Data protection impact assessment for high-risk processing.' },
+        ]),
+      },
+      {
+        id: 'hipaa',
+        name: 'HIPAA',
+        display_name: 'HIPAA',
+        description: 'Health Insurance Portability and Accountability Act',
+        version: '2013',
+        requirements: JSON.stringify([
+          { id: '164.308a1', category: 'Administrative', title: 'Security Management', description: 'Implement policies to prevent, detect, contain, and correct security violations.' },
+          { id: '164.308a3', category: 'Administrative', title: 'Workforce Security', description: 'Implement policies ensuring appropriate access to ePHI.' },
+          { id: '164.308a5', category: 'Administrative', title: 'Security Awareness', description: 'Security awareness and training program.' },
+          { id: '164.310a1', category: 'Physical', title: 'Facility Access', description: 'Limit physical access to electronic information systems.' },
+          { id: '164.312a1', category: 'Technical', title: 'Access Control', description: 'Implement technical policies to allow access only to authorized persons.' },
+          { id: '164.312c1', category: 'Technical', title: 'Integrity Controls', description: 'Implement mechanisms to authenticate ePHI.' },
+          { id: '164.312e1', category: 'Technical', title: 'Transmission Security', description: 'Implement measures to guard against unauthorized access during transmission.' },
+        ]),
+      },
+      {
+        id: 'iso27001',
+        name: 'ISO 27001',
+        display_name: 'ISO 27001:2022',
+        description: 'Information Security Management System standard',
+        version: '2022',
+        requirements: JSON.stringify([
+          { id: 'A5.1', category: 'Organizational', title: 'Information Security Policies', description: 'Management direction for information security.' },
+          { id: 'A6.1', category: 'People', title: 'Screening', description: 'Background verification checks on candidates.' },
+          { id: 'A7.1', category: 'Physical', title: 'Physical Security Perimeters', description: 'Security perimeters to protect information and assets.' },
+          { id: 'A8.1', category: 'Technology', title: 'User Endpoint Devices', description: 'Information stored on, processed by or accessible via user endpoint devices.' },
+          { id: 'A8.5', category: 'Technology', title: 'Secure Authentication', description: 'Secure authentication technologies and procedures.' },
+          { id: 'A8.9', category: 'Technology', title: 'Configuration Management', description: 'Configurations of hardware, software, services and networks.' },
+        ]),
+      },
+    ];
+
+    for (const fw of defaultFrameworks) {
+      await new Promise<void>((resolve, reject) => {
+        deps.db.run(
+          `INSERT OR IGNORE INTO compliance_frameworks (id, name, display_name, description, version, requirements)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [fw.id, fw.name, fw.display_name, fw.description, fw.version, fw.requirements],
+          (err: any) => (err ? reject(err) : resolve())
+        );
+      });
+    }
   }
-  res.json({ frameworks });
+
+  deps.db.all(
+    `SELECT id, name, display_name as "displayName", description, version, requirements
+     FROM compliance_frameworks
+     WHERE is_active = 1
+     ORDER BY name ASC`,
+    [],
+    (err: any, rows: any[]) => {
+      if (err) {
+        console.error('[SuperAdmin] Compliance frameworks query error:', err);
+        return next(new AppError('Failed to fetch compliance frameworks', 500));
+      }
+      const frameworks =
+        (rows || []).map((r: any) => {
+          let reqs: any[] = [];
+          try {
+            reqs = typeof r?.requirements === 'string' ? JSON.parse(r.requirements) : r?.requirements;
+          } catch {
+            reqs = [];
+          }
+          return {
+            id: r.id,
+            name: r.name,
+            displayName: r.displayName || r.display_name || r.name,
+            description: r.description || '',
+            version: r.version || '',
+            requirements: Array.isArray(reqs) ? reqs : [],
+          };
+        }) || [];
+      res.json({ frameworks });
+    }
+  );
 });
 
 /**
@@ -1445,31 +2042,123 @@ const getComplianceFrameworks = catchAsync(async (req, res, next) => {
  */
 const getComplianceStatus = catchAsync(async (req, res, next) => {
   const { frameworkId } = req.params;
-  const organizationId =
-    req.query.organizationId || req.user?.organization_id || req.user?.organizationId;
-  if (!organizationId) {
-    return next(new AppError('organizationId is required', 400));
-  }
+  const organizationIdRaw =
+    (req.query.organizationId as any) ||
+    (req.query.orgId as any) ||
+    (req.query.organization_id as any) ||
+    (req.user as any)?.organization_id ||
+    (req.user as any)?.organizationId;
+  const organizationId = String(organizationIdRaw || '').trim();
 
   const hasComplianceTable = await tableExists('compliance_status');
   if (!hasComplianceTable) {
-    return next(new AppError('Compliance status is not available', 503, 'FEATURE_UNAVAILABLE'));
+    await new Promise<void>((resolve, reject) => {
+      deps.db.run(
+        `CREATE TABLE IF NOT EXISTS compliance_status (
+          id TEXT PRIMARY KEY,
+          organization_id TEXT NOT NULL,
+          framework_id TEXT NOT NULL,
+          requirement_id TEXT NOT NULL,
+          status TEXT DEFAULT 'pending',
+          notes TEXT,
+          evidence TEXT,
+          updated_at TEXT DEFAULT (datetime('now')),
+          updated_by TEXT,
+          UNIQUE(organization_id, framework_id, requirement_id)
+        )`,
+        [],
+        (err: any) => (err ? reject(err) : resolve())
+      );
+    });
   }
 
-  const row = await deps.db.get(
-    `SELECT status, score, updated_at FROM compliance_status WHERE organization_id = ? AND framework_id = ? ORDER BY updated_at DESC LIMIT 1`,
-    [organizationId, frameworkId]
-  );
+  // Fetch framework metadata (incl. requirements for total)
+  const fwRow = await new Promise<any>((resolve, reject) => {
+    deps.db.get(
+      `SELECT id, name, display_name as "displayName", requirements
+       FROM compliance_frameworks
+       WHERE id = ?
+       LIMIT 1`,
+      [frameworkId],
+      (err: any, row: any) => {
+        if (err) return reject(err);
+        resolve(row);
+      }
+    );
+  }).catch(() => null);
 
-  if (!row) {
-    return next(new AppError('Compliance status is not available', 503, 'FEATURE_UNAVAILABLE'));
+  let requirements: any[] = [];
+  try {
+    requirements =
+      typeof fwRow?.requirements === 'string' ? JSON.parse(fwRow.requirements) : fwRow?.requirements;
+  } catch {
+    requirements = [];
   }
+  const perOrgTotal = Array.isArray(requirements) ? requirements.length : 0;
+
+  const computeForAllOrgs = !organizationId || organizationId === 'all';
+
+  const orgCount = computeForAllOrgs
+    ? await new Promise<number>((resolve) => {
+        deps.db.get(`SELECT COUNT(*) as cnt FROM organizations`, [], (_e: any, row: any) => {
+          resolve(Number(row?.cnt) || 0);
+        });
+      })
+    : 1;
+
+  const total = computeForAllOrgs ? perOrgTotal * orgCount : perOrgTotal;
+
+  const rows = await new Promise<any[]>((resolve) => {
+    const params = computeForAllOrgs ? [frameworkId] : [organizationId, frameworkId];
+    const sql = computeForAllOrgs
+      ? `SELECT status, COUNT(*) as cnt
+         FROM compliance_status
+         WHERE framework_id = ?
+         GROUP BY status`
+      : `SELECT status, COUNT(*) as cnt
+         FROM compliance_status
+         WHERE organization_id = ? AND framework_id = ?
+         GROUP BY status`;
+    deps.db.all(sql, params, (_err: any, r: any[]) => resolve(r || []));
+  });
+
+  const counts: Record<string, number> = {
+    compliant: 0,
+    in_progress: 0,
+    pending: 0,
+    non_compliant: 0,
+    not_applicable: 0,
+  };
+  let knownSum = 0;
+  for (const r of rows || []) {
+    const key = String(r?.status || '').toLowerCase();
+    const cnt = Number(r?.cnt) || 0;
+    if (key && Object.prototype.hasOwnProperty.call(counts, key)) {
+      counts[key] += cnt;
+      knownSum += cnt;
+    }
+  }
+
+  // Treat any missing requirement rows as pending
+  const pending = Math.max(0, total - knownSum) + (counts.pending || 0);
+
+  const compliant = counts.compliant || 0;
+  const inProgress = counts.in_progress || 0;
+  const nonCompliant = counts.non_compliant || 0;
+  const score = total > 0 ? Math.round((compliant / total) * 100) : 0;
 
   res.json({
     framework: frameworkId,
-    status: row.status,
-    lastAudit: row.updated_at,
-    score: row.score,
+    status: {
+      frameworkId,
+      frameworkName: fwRow?.displayName || fwRow?.name || frameworkId,
+      total,
+      compliant,
+      inProgress,
+      pending,
+      nonCompliant,
+      score,
+    },
   });
 });
 
@@ -1503,7 +2192,359 @@ const getDsarRequests = catchAsync(async (req, res, next) => {
  * Get compliance audits list (placeholder)
  */
 const getComplianceAudits = catchAsync(async (req, res, next) => {
-  return next(new AppError('Compliance audits are not available', 503, 'FEATURE_UNAVAILABLE'));
+  try {
+    const db = deps.db;
+    const audits = await new Promise<any[]>((resolve, reject) => {
+      db.all('SELECT * FROM compliance_audits ORDER BY planned_start DESC LIMIT 50', [], (err: any, rows: any[]) => {
+        if (err) {
+          if (err.message?.includes('no such table')) {
+            resolve([]);
+          } else {
+            reject(err);
+          }
+        } else {
+          resolve((rows || []).map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            frameworkId: r.framework_id,
+            auditType: r.audit_type || 'internal',
+            status: r.status || 'planned',
+            plannedStart: r.planned_start,
+            plannedEnd: r.planned_end,
+            findingsCount: r.findings_count || 0,
+          })));
+        }
+      });
+    });
+    res.json({ audits });
+  } catch (error) {
+    console.error('[SuperAdmin] Get compliance audits error:', error);
+    res.json({ audits: [] });
+  }
+});
+
+/**
+ * Update a compliance control (status, notes, etc.)
+ */
+const updateComplianceControl = catchAsync(async (req, res, next) => {
+  const { controlId } = req.params;
+  const { name, description, status, category, priority, notes } = req.body;
+
+  if (!controlId) {
+    return next(new AppError('Control ID is required', 400));
+  }
+
+  const hasTable = await tableExists('compliance_controls');
+  if (!hasTable) {
+    await new Promise<void>((resolve, reject) => {
+      deps.db.run(
+        `CREATE TABLE IF NOT EXISTS compliance_controls (
+          id TEXT PRIMARY KEY,
+          framework_id TEXT,
+          requirement_id TEXT,
+          name TEXT NOT NULL,
+          description TEXT,
+          status TEXT DEFAULT 'pending',
+          category TEXT,
+          priority TEXT DEFAULT 'medium',
+          notes TEXT,
+          updated_at TEXT DEFAULT (datetime('now')),
+          updated_by TEXT,
+          created_at TEXT DEFAULT (datetime('now'))
+        )`,
+        [],
+        (err: any) => (err ? reject(err) : resolve())
+      );
+    });
+  }
+
+  const existing = await new Promise<any>((resolve, reject) => {
+    deps.db.get(`SELECT * FROM compliance_controls WHERE id = ?`, [controlId], (err: any, row: any) => {
+      if (err) {
+        if (err.message?.includes('no such table')) return resolve(null);
+        return reject(err);
+      }
+      resolve(row || null);
+    });
+  });
+
+  const userId = (req as any).user?.id || 'system';
+
+  if (existing) {
+    await new Promise<void>((resolve, reject) => {
+      deps.db.run(
+        `UPDATE compliance_controls SET name = COALESCE(?, name), description = COALESCE(?, description),
+         status = COALESCE(?, status), category = COALESCE(?, category), priority = COALESCE(?, priority),
+         notes = COALESCE(?, notes), updated_at = datetime('now'), updated_by = ? WHERE id = ?`,
+        [name, description, status, category, priority, notes, userId, controlId],
+        (err: any) => (err ? reject(err) : resolve())
+      );
+    });
+  } else {
+    await new Promise<void>((resolve, reject) => {
+      deps.db.run(
+        `INSERT INTO compliance_controls (id, name, description, status, category, priority, notes, updated_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [controlId, name || controlId, description || '', status || 'pending', category || '', priority || 'medium', notes || '', userId],
+        (err: any) => (err ? reject(err) : resolve())
+      );
+    });
+  }
+
+  const updated = await new Promise<any>((resolve) => {
+    deps.db.get(`SELECT * FROM compliance_controls WHERE id = ?`, [controlId], (_e: any, row: any) => resolve(row || {}));
+  });
+
+  res.json({ control: updated });
+});
+
+/**
+ * Create a new DSAR request
+ */
+const createDsarRequest = catchAsync(async (req, res, next) => {
+  const { subjectName, requesterEmail, requestType, description } = req.body;
+
+  if (!requesterEmail || !requestType) {
+    return next(new AppError('Requester email and request type are required', 400));
+  }
+
+  const hasTable = await tableExists('dsar_requests');
+  if (!hasTable) {
+    await new Promise<void>((resolve, reject) => {
+      deps.db.run(
+        `CREATE TABLE IF NOT EXISTS dsar_requests (
+          id TEXT PRIMARY KEY,
+          subject_name TEXT,
+          requesterEmail TEXT NOT NULL,
+          requestType TEXT NOT NULL,
+          description TEXT,
+          status TEXT DEFAULT 'pending',
+          assignedTo TEXT,
+          receivedAt TEXT DEFAULT (datetime('now')),
+          dueDate TEXT,
+          completedAt TEXT,
+          notes TEXT,
+          created_at TEXT DEFAULT (datetime('now'))
+        )`,
+        [],
+        (err: any) => (err ? reject(err) : resolve())
+      );
+    });
+  }
+
+  const id = `dsar_${uuid.v4().slice(0, 8)}`;
+  const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  await new Promise<void>((resolve, reject) => {
+    deps.db.run(
+      `INSERT INTO dsar_requests (id, subject_name, requesterEmail, requestType, description, status, dueDate)
+       VALUES (?, ?, ?, ?, ?, 'pending', ?)`,
+      [id, subjectName || '', requesterEmail, requestType, description || '', dueDate],
+      (err: any) => (err ? reject(err) : resolve())
+    );
+  });
+
+  const created = await new Promise<any>((resolve) => {
+    deps.db.get(`SELECT * FROM dsar_requests WHERE id = ?`, [id], (_e: any, row: any) => resolve(row || {}));
+  });
+
+  res.status(201).json({ request: created });
+});
+
+/**
+ * Get a single DSAR request by ID
+ */
+const getDsarRequestById = catchAsync(async (req, res, next) => {
+  const { dsarId } = req.params;
+  if (!dsarId) {
+    return next(new AppError('DSAR ID is required', 400));
+  }
+
+  const request = await new Promise<any>((resolve, reject) => {
+    deps.db.get(`SELECT * FROM dsar_requests WHERE id = ?`, [dsarId], (err: any, row: any) => {
+      if (err) {
+        if (err.message?.includes('no such table')) return resolve(null);
+        return reject(err);
+      }
+      resolve(row || null);
+    });
+  });
+
+  if (!request) {
+    return next(new AppError('DSAR request not found', 404));
+  }
+
+  res.json({ request });
+});
+
+/**
+ * Create a compliance audit
+ */
+const createComplianceAudit = catchAsync(async (req, res, next) => {
+  const { name, auditType, scheduledDate, scope, auditor, frameworkId } = req.body;
+
+  if (!name) {
+    return next(new AppError('Audit name is required', 400));
+  }
+
+  const hasTable = await tableExists('compliance_audits');
+  if (!hasTable) {
+    await new Promise<void>((resolve, reject) => {
+      deps.db.run(
+        `CREATE TABLE IF NOT EXISTS compliance_audits (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          framework_id TEXT,
+          audit_type TEXT DEFAULT 'internal',
+          status TEXT DEFAULT 'planned',
+          planned_start TEXT,
+          planned_end TEXT,
+          scope TEXT,
+          auditor TEXT,
+          findings_count INTEGER DEFAULT 0,
+          notes TEXT,
+          created_at TEXT DEFAULT (datetime('now'))
+        )`,
+        [],
+        (err: any) => (err ? reject(err) : resolve())
+      );
+    });
+  }
+
+  const id = `audit_${uuid.v4().slice(0, 8)}`;
+  const plannedStart = scheduledDate || new Date().toISOString();
+  const plannedEnd = new Date(new Date(plannedStart).getTime() + 14 * 24 * 60 * 60 * 1000).toISOString();
+
+  await new Promise<void>((resolve, reject) => {
+    deps.db.run(
+      `INSERT INTO compliance_audits (id, name, framework_id, audit_type, status, planned_start, planned_end, scope, auditor)
+       VALUES (?, ?, ?, ?, 'planned', ?, ?, ?, ?)`,
+      [id, name, frameworkId || '', auditType || 'internal', plannedStart, plannedEnd, scope || '', auditor || ''],
+      (err: any) => (err ? reject(err) : resolve())
+    );
+  });
+
+  const created = await new Promise<any>((resolve) => {
+    deps.db.get(`SELECT * FROM compliance_audits WHERE id = ?`, [id], (_e: any, row: any) => resolve(row || {}));
+  });
+
+  res.status(201).json({
+    audit: {
+      id: created.id,
+      name: created.name,
+      frameworkId: created.framework_id,
+      auditType: created.audit_type,
+      status: created.status,
+      plannedStart: created.planned_start,
+      plannedEnd: created.planned_end,
+      scope: created.scope,
+      auditor: created.auditor,
+      findingsCount: created.findings_count || 0,
+    },
+  });
+});
+
+/**
+ * Create a data processing record (GDPR Art 30)
+ */
+const createProcessingRecord = catchAsync(async (req, res, next) => {
+  const { name, purpose, dataCategories, legalBasis, retentionPeriod } = req.body;
+
+  if (!name) {
+    return next(new AppError('Processing record name is required', 400));
+  }
+
+  const hasTable = await tableExists('processing_records');
+  if (!hasTable) {
+    await new Promise<void>((resolve, reject) => {
+      deps.db.run(
+        `CREATE TABLE IF NOT EXISTS processing_records (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          purpose TEXT,
+          data_categories TEXT,
+          legal_basis TEXT,
+          retention_period TEXT,
+          status TEXT DEFAULT 'active',
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        )`,
+        [],
+        (err: any) => (err ? reject(err) : resolve())
+      );
+    });
+  }
+
+  const id = `pr_${uuid.v4().slice(0, 8)}`;
+
+  await new Promise<void>((resolve, reject) => {
+    deps.db.run(
+      `INSERT INTO processing_records (id, name, purpose, data_categories, legal_basis, retention_period)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [id, name, purpose || '', dataCategories || '', legalBasis || '', retentionPeriod || ''],
+      (err: any) => (err ? reject(err) : resolve())
+    );
+  });
+
+  const created = await new Promise<any>((resolve) => {
+    deps.db.get(`SELECT * FROM processing_records WHERE id = ?`, [id], (_e: any, row: any) => resolve(row || {}));
+  });
+
+  res.status(201).json({ record: created });
+});
+
+/**
+ * Get all processing records
+ */
+const getProcessingRecords = catchAsync(async (req, res, next) => {
+  const records = await new Promise<any[]>((resolve, reject) => {
+    deps.db.all(`SELECT * FROM processing_records ORDER BY created_at DESC LIMIT 100`, [], (err: any, rows: any[]) => {
+      if (err) {
+        if (err.message?.includes('no such table')) return resolve([]);
+        return reject(err);
+      }
+      resolve(rows || []);
+    });
+  });
+  res.json({ records });
+});
+
+/**
+ * Export compliance report (JSON)
+ */
+const exportComplianceReport = catchAsync(async (req, res, next) => {
+  const frameworks = await new Promise<any[]>((resolve) => {
+    deps.db.all(`SELECT * FROM compliance_frameworks WHERE is_active = 1`, [], (_e: any, rows: any[]) => resolve(rows || []));
+  }).catch(() => []);
+
+  const dsars = await new Promise<any[]>((resolve) => {
+    deps.db.all(`SELECT * FROM dsar_requests ORDER BY created_at DESC`, [], (_e: any, rows: any[]) => resolve(rows || []));
+  }).catch(() => []);
+
+  const audits = await new Promise<any[]>((resolve) => {
+    deps.db.all(`SELECT * FROM compliance_audits ORDER BY planned_start DESC`, [], (_e: any, rows: any[]) => resolve(rows || []));
+  }).catch(() => []);
+
+  const processingRecords = await new Promise<any[]>((resolve) => {
+    deps.db.all(`SELECT * FROM processing_records ORDER BY created_at DESC`, [], (_e: any, rows: any[]) => resolve(rows || []));
+  }).catch(() => []);
+
+  const controls = await new Promise<any[]>((resolve) => {
+    deps.db.all(`SELECT * FROM compliance_controls ORDER BY created_at DESC`, [], (_e: any, rows: any[]) => resolve(rows || []));
+  }).catch(() => []);
+
+  const report = {
+    generatedAt: new Date().toISOString(),
+    frameworks,
+    dsarRequests: dsars,
+    audits,
+    processingRecords,
+    controls,
+  };
+
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', `attachment; filename="compliance-report-${new Date().toISOString().slice(0, 10)}.json"`);
+  res.json(report);
 });
 
 /**
@@ -1513,7 +2554,7 @@ const getComplianceSummary = catchAsync(async (_req, res, next) => {
   try {
     const hasComplianceTable = await tableExists('compliance_status');
     if (!hasComplianceTable) {
-      return next(new AppError('Compliance summary is not available', 503, 'FEATURE_UNAVAILABLE'));
+      return res.json({ summary: [] });
     }
 
     const isPg =
@@ -1523,8 +2564,8 @@ const getComplianceSummary = catchAsync(async (_req, res, next) => {
                 SELECT 
                     o.id as org_id,
                     o.name as org_name,
-                    SUM(CASE WHEN cs.framework_id = 'fw_gdpr' AND cs.status = 'compliant' THEN 1 ELSE 0 END) as gdpr_ok,
-                    SUM(CASE WHEN cs.framework_id = 'fw_gdpr' THEN 1 ELSE 0 END) as gdpr_total,
+                    SUM(CASE WHEN cs.framework_id = 'gdpr' AND cs.status = 'compliant' THEN 1 ELSE 0 END) as gdpr_ok,
+                    SUM(CASE WHEN cs.framework_id = 'gdpr' THEN 1 ELSE 0 END) as gdpr_total,
                     SUM(CASE WHEN cs.status = 'compliant' THEN 1 ELSE 0 END) as compliant_total,
                     COUNT(cs.id) as requirement_total,
                     MAX(cs.updated_at) as last_audit_date
@@ -1537,8 +2578,8 @@ const getComplianceSummary = catchAsync(async (_req, res, next) => {
                 SELECT 
                     o.id as org_id,
                     o.name as org_name,
-                    SUM(CASE WHEN cs.framework_id = 'fw_gdpr' AND cs.status = 'compliant' THEN 1 ELSE 0 END) as gdpr_ok,
-                    SUM(CASE WHEN cs.framework_id = 'fw_gdpr' THEN 1 ELSE 0 END) as gdpr_total,
+                    SUM(CASE WHEN cs.framework_id = 'gdpr' AND cs.status = 'compliant' THEN 1 ELSE 0 END) as gdpr_ok,
+                    SUM(CASE WHEN cs.framework_id = 'gdpr' THEN 1 ELSE 0 END) as gdpr_total,
                     SUM(CASE WHEN cs.status = 'compliant' THEN 1 ELSE 0 END) as compliant_total,
                     COUNT(cs.id) as requirement_total,
                     MAX(cs.updated_at) as last_audit_date
@@ -2219,7 +3260,7 @@ const getMFAMethods = catchAsync(async (req, res, next) => {
 const setupTOTP = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const speakeasy = require('speakeasy');
-  const secret = speakeasy.generateSecret({ name: `Consultinity (${req.user.email})` });
+  const secret = speakeasy.generateSecret({ name: `Consultify (${req.user.email})` });
   const mfaId = deps.uuid.v4();
 
   deps.db.run(
@@ -4319,15 +5360,39 @@ const getRecognitionSchedule = catchAsync(async (req, res, next) => {
 });
 
 const getRevenueRecognitionStats = catchAsync(async (req, res, next) => {
-  const stats = await deps.db.get(`
-        SELECT 
+  const stats: any = await new Promise((resolve, reject) => {
+    deps.db.get(
+      `SELECT 
             COUNT(*) as total,
-            SUM(revenue_amount) as total_revenue,
-            SUM(recognized_amount) as total_recognized,
-            SUM(remaining_amount) as total_remaining
-        FROM revenue_recognition
-    `);
-  res.json(stats);
+            COALESCE(SUM(COALESCE(total_amount, revenue_amount, amount, 0)), 0) as total_revenue,
+            COALESCE(SUM(recognized_amount), 0) as total_recognized,
+            COALESCE(SUM(remaining_amount), 0) as total_remaining,
+            COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_items,
+            COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as in_progress_items,
+            COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_items
+        FROM revenue_recognition`,
+      [],
+      (err: any, row: any) => (err ? reject(err) : resolve(row))
+    );
+  });
+  const totalRev = Number(stats?.total_revenue || 0);
+  const recognizedRev = Number(stats?.total_recognized || 0);
+  const remainingRev = Number(stats?.total_remaining || 0);
+  res.json({
+    total: Number(stats?.total || 0),
+    totalRevenue: totalRev,
+    total_revenue: totalRev,
+    recognizedRevenue: recognizedRev,
+    recognized_revenue: recognizedRev,
+    remainingRevenue: remainingRev > 0 ? remainingRev : Math.max(0, totalRev - recognizedRev),
+    remaining_revenue: remainingRev > 0 ? remainingRev : Math.max(0, totalRev - recognizedRev),
+    pendingItems: Number(stats?.pending_items || 0),
+    pending_items: Number(stats?.pending_items || 0),
+    inProgressItems: Number(stats?.in_progress_items || 0),
+    in_progress_items: Number(stats?.in_progress_items || 0),
+    completedItems: Number(stats?.completed_items || 0),
+    completed_items: Number(stats?.completed_items || 0),
+  });
 });
 
 // Revenue Forecasting
@@ -4724,27 +5789,8 @@ const getIPAccessRules = catchAsync(async (req, res, next) => {
       return;
     }
 
-    // Demo data for display
-    res.json([
-      {
-        id: 'rule-1',
-        ip_pattern: '192.168.1.0/24',
-        rule_type: 'allow',
-        description: 'Internal network access',
-        created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-        created_by: 'admin@company.com',
-        enabled: true,
-      },
-      {
-        id: 'rule-2',
-        ip_pattern: '10.0.0.0/8',
-        rule_type: 'allow',
-        description: 'VPN clients',
-        created_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-        created_by: 'admin@company.com',
-        enabled: true,
-      },
-    ]);
+    // No rules configured
+    res.json([]);
   } catch (error) {
     console.error('getIPAccessRules error:', error);
     res.json([]);
@@ -4894,38 +5940,7 @@ const getIntegrations = catchAsync(async (req, res, next) => {
       return;
     }
 
-    // Demo data for display
-    res.json({
-      integrations: [
-        {
-          id: 'int-slack-1',
-          type: 'slack',
-          name: 'Team Notifications',
-          description: 'Notifications to #general channel',
-          enabled: true,
-          status: 'connected',
-          last_sync_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-          last_sync_status: 'success',
-          sync_frequency: '5m',
-          config: { channel: '#general' },
-          created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: 'int-jira-1',
-          type: 'jira',
-          name: 'Project Sync',
-          description: 'Sync initiatives with Jira',
-          enabled: true,
-          status: 'connected',
-          last_sync_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          last_sync_status: 'success',
-          sync_frequency: '1h',
-          config: { project: 'PROJ' },
-          created_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-      ],
-      demo: true,
-    });
+    res.json({ integrations: [] });
   } catch (error) {
     console.error('getIntegrations error:', error);
     res.json({ integrations: [] });
@@ -4950,9 +5965,23 @@ const connectIntegration = catchAsync(async (req, res, next) => {
  * Disconnect a system integration
  */
 const disconnectIntegration = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  const success = await deps.IntegrationService.deleteIntegration(id);
-  res.json({ success });
+  const provider = (req.params as any).provider || (req.params as any).id;
+  if (!provider) return res.status(400).json({ error: 'provider is required' });
+
+  // Resolve integration ID by provider/type for system scope
+  const row = await deps.db.get(
+    `SELECT id FROM integrations
+     WHERE type = ? AND (organization_id = 'system' OR organization_id IS NULL)
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [provider]
+  );
+  if (!row?.id) {
+    res.json({ success: true, deleted: false });
+    return;
+  }
+  const success = await deps.IntegrationService.deleteIntegration(row.id);
+  res.json({ success, deleted: true });
 });
 
 /**
@@ -5008,24 +6037,7 @@ const getWebhooks = catchAsync(async (req, res, next) => {
       return;
     }
 
-    // Demo data
-    res.json({
-      webhooks: [
-        {
-          id: 'wh-1',
-          name: 'Project Notifications',
-          url: 'https://hooks.example.com/notify',
-          events: ['project.created', 'project.updated', 'initiative.status_changed'],
-          is_active: true,
-          secret: 'whsec_demo123',
-          last_triggered_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-          success_count: 142,
-          failure_count: 3,
-          created_at: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-      ],
-      demo: true,
-    });
+    res.json({ webhooks: [] });
   } catch (error) {
     console.error('getWebhooks error:', error);
     res.json({ webhooks: [] });
@@ -5772,6 +6784,13 @@ export {
   getComplianceStatus,
   getComplianceSummary,
   getContractAmendments,
+  createComplianceAudit,
+  createDsarRequest,
+  createProcessingRecord,
+  exportComplianceReport,
+  getDsarRequestById,
+  getProcessingRecords,
+  updateComplianceControl,
   getContractStats,
   getCustomerContracts,
   getCustomerHealthCheck,
@@ -5962,6 +6981,7 @@ export default {
   getUsers,
   updateUser,
   createUser,
+  deleteUser,
   inviteUser,
   resetUserPassword,
   getAccessRequests,
@@ -5969,6 +6989,7 @@ export default {
   rejectAccessRequest,
   getAccessCodes,
   createAccessCode,
+  deactivateAccessCode,
   impersonateUser,
   getDatabaseTables,
   getDatabaseRows,
@@ -6002,6 +7023,13 @@ export default {
   getComplianceSummary,
   getDsarRequests,
   getComplianceAudits,
+  updateComplianceControl,
+  createDsarRequest,
+  getDsarRequestById,
+  createComplianceAudit,
+  createProcessingRecord,
+  getProcessingRecords,
+  exportComplianceReport,
   refreshToken,
 
   // Enterprise Customers Module - Organizations

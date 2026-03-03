@@ -109,14 +109,7 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       icon: React.createElement(Calculator, { size: 20 }),
       viewId: AppView.ECONOMICS,
     },
-    // 9. Raporty
-    {
-      id: 'MODULE_REPORTS',
-      label: t('sidebar.reports', 'Reports'),
-      icon: React.createElement(BookOpen, { size: 20 }),
-      viewId: AppView.FULL_STEP6_REPORTS,
-    },
-    // 10. Prezentacje
+    // 9. Prezentacje (V3 unified hub contains reports & templates)
     {
       id: 'MODULE_PRESENTATIONS',
       label: t('sidebar.presentations', 'Presentations'),

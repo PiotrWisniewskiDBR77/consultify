@@ -247,9 +247,9 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
     title: 'Prompting: Context first (artifacts, citations, and constraints)',
     titlePl: 'Promptowanie: kontekst najpierw (artefakty, cytowania, ograniczenia)',
     description:
-      'How to ask better questions in Consultinity: reference artifacts, request structure, and demand grounding.',
+      'How to ask better questions in Consultify: reference artifacts, request structure, and demand grounding.',
     descriptionPl:
-      'Jak zadawać lepsze pytania w Consultinity: odwołuj się do artefaktów, proś o strukturę i wymuszaj grounding.',
+      'Jak zadawać lepsze pytania w Consultify: odwołuj się do artefaktów, proś o strukturę i wymuszaj grounding.',
     videoUrl: '#',
     duration: '6:00',
     durationSeconds: 360,
@@ -372,8 +372,8 @@ export const VIDEO_TUTORIALS: VideoTutorial[] = [
   {
     id: 'edu-presentations-01-walkthrough',
     moduleId: 'knowledge',
-    title: 'Presentations: building a Gamma-style deck in Consultinity',
-    titlePl: 'Prezentacje: Gamma-style deck w Consultinity',
+    title: 'Presentations: building a Gamma-style deck in Consultify',
+    titlePl: 'Prezentacje: Gamma-style deck w Consultify',
     description:
       'A step-by-step walkthrough of building a crisp presentation from reports, KPIs, and initiatives.',
     descriptionPl:

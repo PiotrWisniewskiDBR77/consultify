@@ -344,7 +344,7 @@ export const useAIActionsStore = create<AIActionsState>()(
       },
     }),
     {
-      name: 'consultinity-ai-actions',
+      name: 'consultify-ai-actions',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         // Only persist pending actions (not full history)

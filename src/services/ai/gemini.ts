@@ -82,7 +82,7 @@ export const sendMessageToAIStream = async (
 };
 
 export const SYSTEM_PROMPTS = {
-  FREE_ASSESSMENT: `You are 'Consultinity AI', a senior Digital Transformation Consultant.You are speaking with a business leader in the manufacturing sector.
+  FREE_ASSESSMENT: `You are 'Consultify AI', a senior Digital Transformation Consultant.You are speaking with a business leader in the manufacturing sector.
 
     Your Objective: Guide the user through a strategic discovery conversation to understand their manufacturing maturity and identify high - value opportunities.
 

@@ -9,6 +9,7 @@
  * of the controller logic will be done in subsequent stages.
  */
 
+import { randomUUID } from 'crypto';
 import { Response, Router } from 'express';
 
 import SuperAdminController from '../controllers/SuperAdminController.js';
@@ -64,6 +65,7 @@ router.get('/organizations/:id/billing', SuperAdminController.getOrgBilling);
 router.get('/users', SuperAdminController.getUsers);
 router.put('/users/:id', validateBody(UpdateUserAdminSchema), SuperAdminController.updateUser);
 router.post('/users', validateBody(CreateUserAdminSchema), SuperAdminController.createUser);
+router.delete('/users/:id', SuperAdminController.deleteUser);
 router.post(
   '/users/invite',
   asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
@@ -115,6 +117,12 @@ router.post(
   validateBody(CreateAccessCodeSchema),
   asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
     await SuperAdminController.createAccessCode(req, res, next);
+  })
+);
+router.post(
+  '/access-codes/:id/deactivate',
+  asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
+    await SuperAdminController.deactivateAccessCode(req, res, next);
   })
 );
 
@@ -284,6 +292,30 @@ router.get(
     await SuperAdminController.getInvoicePdf(req, res, next);
   })
 );
+router.post(
+  '/invoices',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, lineItems, currency, dueDate, description } = req.body;
+    if (!organizationId) {
+      return res.status(400).json({ error: 'organizationId is required' });
+    }
+    try {
+      const { createInvoice } = await import('../services/InvoiceService.js') as any;
+      const items = Array.isArray(lineItems) && lineItems.length > 0
+        ? lineItems
+        : [{ description: description || 'Invoice item', quantity: 1, unitPrice: 0 }];
+      const invoice = await createInvoice({
+        organizationId,
+        items,
+        currency: currency || 'USD',
+        dueDate: dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      });
+      return res.status(201).json(invoice);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message || 'Failed to create invoice' });
+    }
+  })
+);
 
 // ==========================================
 // BRANDING
@@ -359,6 +391,48 @@ router.get(
     await SuperAdminController.getComplianceAudits(req, res, next);
   })
 );
+router.put(
+  '/compliance/controls/:controlId',
+  asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
+    await SuperAdminController.updateComplianceControl(req, res, next);
+  })
+);
+router.post(
+  '/compliance/dsar',
+  asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
+    await SuperAdminController.createDsarRequest(req, res, next);
+  })
+);
+router.get(
+  '/compliance/dsar/:dsarId',
+  asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
+    await SuperAdminController.getDsarRequestById(req, res, next);
+  })
+);
+router.post(
+  '/compliance/audits',
+  asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
+    await SuperAdminController.createComplianceAudit(req, res, next);
+  })
+);
+router.post(
+  '/compliance/processing-records',
+  asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
+    await SuperAdminController.createProcessingRecord(req, res, next);
+  })
+);
+router.get(
+  '/compliance/processing-records',
+  asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
+    await SuperAdminController.getProcessingRecords(req, res, next);
+  })
+);
+router.get(
+  '/compliance/export',
+  asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
+    await SuperAdminController.exportComplianceReport(req, res, next);
+  })
+);
 
 // ==========================================
 // GDPR REQUESTS (for Legal Panel)
@@ -414,6 +488,27 @@ router.post(
 // ==========================================
 // INTEGRATIONS & WEBHOOKS
 // ==========================================
+
+router.get(
+  '/integrations/catalog',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    const catalog = [
+      { id: 'slack', name: 'Slack', description: 'Team communication & notifications', category: 'Communication', icon: '💬', auth_type: 'oauth', status: 'available' },
+      { id: 'microsoft_teams', name: 'Microsoft Teams', description: 'Team collaboration & meetings', category: 'Communication', icon: '👥', auth_type: 'oauth', status: 'available' },
+      { id: 'jira', name: 'Jira', description: 'Project & issue tracking', category: 'Project Management', icon: '📋', auth_type: 'oauth', status: 'available' },
+      { id: 'asana', name: 'Asana', description: 'Work management platform', category: 'Project Management', icon: '✅', auth_type: 'oauth', status: 'available' },
+      { id: 'google_calendar', name: 'Google Calendar', description: 'Calendar integration', category: 'Productivity', icon: '📅', auth_type: 'oauth', status: 'available' },
+      { id: 'salesforce', name: 'Salesforce', description: 'CRM integration', category: 'CRM', icon: '☁️', auth_type: 'oauth', status: 'available' },
+      { id: 'hubspot', name: 'HubSpot', description: 'Marketing & sales platform', category: 'CRM', icon: '🧲', auth_type: 'oauth', status: 'available' },
+      { id: 'zapier', name: 'Zapier', description: 'Automation workflows', category: 'Automation', icon: '⚡', auth_type: 'api_key', status: 'available' },
+      { id: 'power_automate', name: 'Power Automate', description: 'Microsoft automation', category: 'Automation', icon: '🔄', auth_type: 'oauth', status: 'beta' },
+      { id: 'github', name: 'GitHub', description: 'Code repository', category: 'Development', icon: '🐙', auth_type: 'oauth', status: 'available' },
+      { id: 'azure_devops', name: 'Azure DevOps', description: 'Development lifecycle', category: 'Development', icon: '🔷', auth_type: 'oauth', status: 'coming_soon' },
+      { id: 'aws_s3', name: 'AWS S3', description: 'Cloud storage', category: 'Storage', icon: '📦', auth_type: 'api_key', status: 'available' },
+    ];
+    return res.json({ connectors: catalog });
+  })
+);
 
 router.get(
   '/integrations',
@@ -497,6 +592,506 @@ router.get('/system-health', SuperAdminController.getSystemHealth);
 router.get('/system-analytics', SuperAdminController.getSystemAnalytics);
 
 // ==========================================
+// SYSTEM HEALTH ALERTS (persisted)
+// ==========================================
+
+const ensureAlertsTable = async () => {
+  await dbRun(
+    `CREATE TABLE IF NOT EXISTS system_health_alerts (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      metric TEXT NOT NULL,
+      condition TEXT NOT NULL,
+      threshold REAL NOT NULL,
+      severity TEXT DEFAULT 'warning',
+      channels TEXT DEFAULT '[]',
+      is_enabled INTEGER DEFAULT 1,
+      last_triggered_at TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )`,
+    [],
+    { fallback: false }
+  );
+};
+
+router.get(
+  '/system-health/alerts',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    await ensureAlertsTable();
+    const rows = (await dbAll(
+      `SELECT * FROM system_health_alerts ORDER BY created_at DESC`,
+      [],
+      { fallback: false }
+    )) || [];
+    const alerts = rows.map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      metric: r.metric,
+      operator: r.condition,
+      threshold: r.threshold,
+      severity: r.severity || 'warning',
+      channels: (() => { try { return JSON.parse(r.channels || '[]'); } catch { return []; } })(),
+      enabled: !!r.is_enabled,
+      lastTriggeredAt: r.last_triggered_at || null,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    }));
+    return res.json(alerts);
+  })
+);
+
+router.post(
+  '/system-health/alerts',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureAlertsTable();
+    const { name, metric, operator, threshold, severity, channels } = req.body;
+    if (!name || !metric) return res.status(400).json({ error: 'name and metric are required' });
+    const id = `alert-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await dbRun(
+      `INSERT INTO system_health_alerts (id, name, metric, condition, threshold, severity, channels)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        String(name).trim(),
+        String(metric),
+        String(operator || 'gt'),
+        Number(threshold ?? 90),
+        String(severity || 'warning'),
+        JSON.stringify(channels || []),
+      ],
+      { fallback: false }
+    );
+    return res.status(201).json({ success: true, id });
+  })
+);
+
+router.put(
+  '/system-health/alerts/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureAlertsTable();
+    const { id } = req.params;
+    const existing = await dbGet(`SELECT id FROM system_health_alerts WHERE id = ?`, [id], { fallback: false });
+    if (!existing) return res.status(404).json({ error: 'Alert not found' });
+    const { name, metric, operator, threshold, severity, channels } = req.body;
+    await dbRun(
+      `UPDATE system_health_alerts
+       SET name = COALESCE(?, name),
+           metric = COALESCE(?, metric),
+           condition = COALESCE(?, condition),
+           threshold = COALESCE(?, threshold),
+           severity = COALESCE(?, severity),
+           channels = COALESCE(?, channels),
+           updated_at = datetime('now')
+       WHERE id = ?`,
+      [
+        name ?? null,
+        metric ?? null,
+        operator ?? null,
+        threshold ?? null,
+        severity ?? null,
+        channels ? JSON.stringify(channels) : null,
+        id,
+      ],
+      { fallback: false }
+    );
+    return res.json({ success: true });
+  })
+);
+
+router.put(
+  '/system-health/alerts/:id/toggle',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureAlertsTable();
+    const { id } = req.params;
+    await dbRun(
+      `UPDATE system_health_alerts
+       SET is_enabled = CASE WHEN is_enabled = 1 THEN 0 ELSE 1 END,
+           updated_at = datetime('now')
+       WHERE id = ?`,
+      [id],
+      { fallback: false }
+    );
+    return res.json({ success: true });
+  })
+);
+
+router.delete(
+  '/system-health/alerts/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureAlertsTable();
+    const { id } = req.params;
+    await dbRun(`DELETE FROM system_health_alerts WHERE id = ?`, [id], { fallback: false });
+    return res.json({ success: true });
+  })
+);
+
+// ==========================================
+// SYSTEM CONFIGURATION (settings table)
+// ==========================================
+
+function inferSettingType(row: any): 'string' | 'number' | 'boolean' | 'json' | 'secret' {
+  if (row?.is_sensitive) return 'secret';
+  const raw = String(row?.value ?? '').trim();
+  if (raw === 'true' || raw === 'false') return 'boolean';
+  if (raw && !Number.isNaN(Number(raw)) && /^-?\d+(\.\d+)?$/.test(raw)) return 'number';
+  if ((raw.startsWith('{') && raw.endsWith('}')) || (raw.startsWith('[') && raw.endsWith(']')))
+    return 'json';
+  return 'string';
+}
+
+router.get(
+  '/system-configs',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { category } = req.query as any;
+    const where: string[] = [];
+    const params: any[] = [];
+    if (category && category !== 'all') {
+      where.push(`category = ?`);
+      params.push(String(category));
+    }
+    const sql = `SELECT id, key, value, description, category, is_sensitive, updated_at, updated_by
+                 FROM settings
+                 ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+                 ORDER BY category ASC, key ASC`;
+    const rows = await dbAll(sql, params, { fallback: true });
+    const configs = (rows || []).map((r: any) => ({
+      id: String(r.id),
+      key: r.key,
+      value: r.value ?? '',
+      type: inferSettingType(r),
+      category: r.category || 'general',
+      description: r.description || '',
+      is_sensitive: !!r.is_sensitive,
+      updated_at: r.updated_at || new Date().toISOString(),
+      updated_by: r.updated_by || undefined,
+    }));
+    return res.json(configs);
+  })
+);
+
+router.post(
+  '/system-configs',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { key, value, description, category, is_sensitive } = req.body || {};
+    if (!key) return res.status(400).json({ error: 'key is required' });
+    const k = String(key).trim();
+    const v =
+      typeof value === 'object' ? JSON.stringify(value) : value === null || value === undefined ? '' : String(value);
+    const desc = description ? String(description) : '';
+    const cat = category ? String(category) : 'general';
+    const sensitive = is_sensitive ? 1 : 0;
+
+    await dbRun(
+      `INSERT INTO settings (key, value, description, category, is_sensitive, updated_at, updated_by)
+       VALUES (?, ?, ?, ?, ?, datetime('now'), ?)`,
+      [k, v, desc, cat, sensitive, req.user?.id || null],
+      { fallback: false }
+    );
+
+    await dbRun(
+      `INSERT INTO superadmin_audit_log (id, admin_user_id, admin_email, action, entity_type, entity_id, old_value, new_value, ip_address, user_agent, metadata)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        randomUUID(),
+        req.user?.id || null,
+        (req.user as any)?.email || null,
+        'settings_create',
+        'settings',
+        k,
+        null,
+        JSON.stringify({ value: v }),
+        (req as any).ip || null,
+        String((req.headers as any)['user-agent'] || ''),
+        JSON.stringify({ source: 'superadmin.system-configs' }),
+      ],
+      { fallback: false }
+    );
+
+    const created = await dbGet(
+      `SELECT id, key, value, description, category, is_sensitive, updated_at, updated_by FROM settings WHERE key = ?`,
+      [k],
+      { fallback: false }
+    );
+    return res.status(201).json({
+      id: String((created as any)?.id),
+      key: (created as any)?.key,
+      value: (created as any)?.value ?? '',
+      type: inferSettingType(created),
+      category: (created as any)?.category || 'general',
+      description: (created as any)?.description || '',
+      is_sensitive: !!(created as any)?.is_sensitive,
+      updated_at: (created as any)?.updated_at || new Date().toISOString(),
+      updated_by: (created as any)?.updated_by || undefined,
+    });
+  })
+);
+
+router.put(
+  '/system-configs/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const existing = await dbGet(
+      `SELECT id, key, value, description, category, is_sensitive FROM settings WHERE id = ?`,
+      [id],
+      { fallback: false }
+    );
+    if (!existing) return res.status(404).json({ error: 'Config not found' });
+
+    const { value, description, category, is_sensitive } = req.body || {};
+    const nextValue =
+      typeof value === 'object'
+        ? JSON.stringify(value)
+        : value === null || value === undefined
+          ? (existing as any).value ?? ''
+          : String(value);
+    const nextDesc = description !== undefined ? String(description) : (existing as any).description ?? '';
+    const nextCat = category !== undefined ? String(category) : (existing as any).category ?? 'general';
+    const nextSensitive = is_sensitive !== undefined ? (is_sensitive ? 1 : 0) : (existing as any).is_sensitive ? 1 : 0;
+
+    await dbRun(
+      `UPDATE settings
+       SET value = ?, description = ?, category = ?, is_sensitive = ?, updated_at = datetime('now'), updated_by = ?
+       WHERE id = ?`,
+      [nextValue, nextDesc, nextCat, nextSensitive, req.user?.id || null, id],
+      { fallback: false }
+    );
+
+    await dbRun(
+      `INSERT INTO superadmin_audit_log (id, admin_user_id, admin_email, action, entity_type, entity_id, old_value, new_value, ip_address, user_agent, metadata)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        randomUUID(),
+        req.user?.id || null,
+        (req.user as any)?.email || null,
+        'settings_update',
+        'settings',
+        (existing as any).key,
+        JSON.stringify({ value: (existing as any).value }),
+        JSON.stringify({ value: nextValue }),
+        (req as any).ip || null,
+        String((req.headers as any)['user-agent'] || ''),
+        JSON.stringify({ source: 'superadmin.system-configs' }),
+      ],
+      { fallback: false }
+    );
+
+    return res.json({ success: true });
+  })
+);
+
+router.delete(
+  '/system-configs/:id',
+  requireConfirmation('delete_system_config', 'high'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const existing = await dbGet(`SELECT id, key, value FROM settings WHERE id = ?`, [id], {
+      fallback: false,
+    });
+    if (!existing) return res.status(404).json({ error: 'Config not found' });
+
+    await dbRun(`DELETE FROM settings WHERE id = ?`, [id], { fallback: false });
+
+    await dbRun(
+      `INSERT INTO superadmin_audit_log (id, admin_user_id, admin_email, action, entity_type, entity_id, old_value, new_value, ip_address, user_agent, metadata)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        randomUUID(),
+        req.user?.id || null,
+        (req.user as any)?.email || null,
+        'settings_delete',
+        'settings',
+        (existing as any).key,
+        JSON.stringify({ value: (existing as any).value }),
+        null,
+        (req as any).ip || null,
+        String((req.headers as any)['user-agent'] || ''),
+        JSON.stringify({ source: 'superadmin.system-configs' }),
+      ],
+      { fallback: false }
+    );
+
+    return res.json({ success: true });
+  })
+);
+
+router.get(
+  '/system-configs/:id/versions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const existing = await dbGet(`SELECT id, key FROM settings WHERE id = ?`, [id], { fallback: false });
+    if (!existing) return res.status(404).json({ error: 'Config not found' });
+    const key = (existing as any).key;
+
+    const rows = await dbAll(
+      `SELECT id, entity_id, old_value, new_value, created_at, admin_user_id
+       FROM superadmin_audit_log
+       WHERE entity_type = 'settings' AND entity_id = ?
+       ORDER BY created_at DESC
+       LIMIT 200`,
+      [key],
+      { fallback: false }
+    );
+
+    const versions = (rows || []).map((r: any) => ({
+      id: r.id,
+      config_key: r.entity_id,
+      old_value: r.old_value,
+      new_value: r.new_value,
+      changed_at: r.created_at,
+      changed_by: r.admin_user_id,
+    }));
+
+    return res.json({ versions });
+  })
+);
+
+router.post(
+  '/system-configs/:id/rollback',
+  requireConfirmation('rollback_system_config', 'high'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const { versionId, reason } = req.body || {};
+    if (!versionId) return res.status(400).json({ error: 'versionId is required' });
+
+    const existing = await dbGet(`SELECT id, key, value FROM settings WHERE id = ?`, [id], { fallback: false });
+    if (!existing) return res.status(404).json({ error: 'Config not found' });
+    const key = (existing as any).key;
+
+    const versionRow = await dbGet(
+      `SELECT id, entity_id, old_value, new_value, created_at
+       FROM superadmin_audit_log
+       WHERE id = ? AND entity_type = 'settings' AND entity_id = ?`,
+      [String(versionId), String(key)],
+      { fallback: false }
+    );
+    if (!versionRow) return res.status(404).json({ error: 'Version not found' });
+
+    const currentValue = (existing as any).value ?? '';
+    const rawOld = (versionRow as any).old_value;
+    let rolledValue = '';
+    try {
+      const parsed = rawOld ? JSON.parse(String(rawOld)) : null;
+      rolledValue = parsed && typeof parsed === 'object' && 'value' in parsed ? String((parsed as any).value ?? '') : String(rawOld ?? '');
+    } catch {
+      rolledValue = String(rawOld ?? '');
+    }
+
+    await dbRun(
+      `UPDATE settings
+       SET value = ?, updated_at = datetime('now'), updated_by = ?
+       WHERE id = ?`,
+      [rolledValue, req.user?.id || null, id],
+      { fallback: false }
+    );
+
+    await dbRun(
+      `INSERT INTO superadmin_audit_log (id, admin_user_id, admin_email, action, entity_type, entity_id, old_value, new_value, ip_address, user_agent, metadata)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        randomUUID(),
+        req.user?.id || null,
+        (req.user as any)?.email || null,
+        'settings_rollback',
+        'settings',
+        key,
+        JSON.stringify({ value: currentValue }),
+        JSON.stringify({ value: rolledValue }),
+        (req as any).ip || null,
+        String((req.headers as any)['user-agent'] || ''),
+        JSON.stringify({
+          source: 'superadmin.system-configs',
+          rollbackFromVersionId: String(versionId),
+          reason: reason ? String(reason) : undefined,
+        }),
+      ],
+      { fallback: false }
+    );
+
+    return res.json({ success: true });
+  })
+);
+
+// ==========================================
+// BACKUP SCHEDULING (backup_configurations table)
+// ==========================================
+
+router.get(
+  '/backup/schedules',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    // Model schedules as a single platform-level configuration row (organization_id = 'system')
+    const cfgId = 'backupcfg-system';
+    const existing = await dbGet(
+      `SELECT * FROM backup_configurations WHERE organization_id = 'system' LIMIT 1`,
+      [],
+      { fallback: false }
+    );
+    if (!existing) {
+      await dbRun(
+        `INSERT INTO backup_configurations (id, organization_id, enabled, frequency, retention_days, include_attachments, include_audit_logs, created_at, updated_at)
+         VALUES (?, 'system', 1, 'daily', 30, 1, 1, datetime('now'), datetime('now'))`,
+        [cfgId],
+        { fallback: false }
+      );
+    }
+
+    const row = await dbGet(
+      `SELECT * FROM backup_configurations WHERE organization_id = 'system' LIMIT 1`,
+      [],
+      { fallback: false }
+    );
+
+    const schedules = row
+      ? [
+          {
+            id: (row as any).id,
+            name: 'System Backup',
+            type: 'full',
+            frequency: (row as any).frequency || 'daily',
+            time: '02:00',
+            retention_days: (row as any).retention_days ?? 30,
+            enabled: !!(row as any).enabled,
+            last_run: (row as any).last_backup_at || null,
+            next_run: (row as any).next_backup_at || null,
+          },
+        ]
+      : [];
+
+    return res.json({ schedules });
+  })
+);
+
+router.put(
+  '/backup/schedules/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const { enabled, frequency, retention_days } = req.body || {};
+    const existing = await dbGet(`SELECT * FROM backup_configurations WHERE id = ?`, [id], {
+      fallback: false,
+    });
+    if (!existing) return res.status(404).json({ error: 'Schedule not found' });
+
+    await dbRun(
+      `UPDATE backup_configurations
+       SET enabled = COALESCE(?, enabled),
+           frequency = COALESCE(?, frequency),
+           retention_days = COALESCE(?, retention_days),
+           updated_at = datetime('now')
+       WHERE id = ?`,
+      [
+        enabled === undefined ? null : enabled ? 1 : 0,
+        frequency === undefined ? null : String(frequency),
+        retention_days === undefined ? null : Number(retention_days),
+        id,
+      ],
+      { fallback: false }
+    );
+
+    return res.json({ success: true });
+  })
+);
+
+// ==========================================
 // SECURITY EVENTS & INCIDENTS
 // ==========================================
 
@@ -540,6 +1135,103 @@ router.put(
   '/security/policies/:id',
   asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
     await SuperAdminController.updateSecurityPolicy(req, res, next);
+  })
+);
+
+// ==========================================
+// SECURITY SESSIONS (Platform view)
+// ==========================================
+
+router.get(
+  '/security/sessions',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    // This endpoint intentionally uses a defensive strategy because the project contains
+    // multiple historical `user_sessions` schemas (SQLite vs Postgres / early vs extended).
+    const parseDeviceType = (raw?: string) => {
+      const v = (raw || '').toLowerCase();
+      if (v.includes('tablet')) return 'tablet';
+      if (v.includes('mobile') || v.includes('iphone') || v.includes('android')) return 'mobile';
+      return 'desktop';
+    };
+    const parseBrowser = (ua?: string) => {
+      const v = ua || '';
+      if (v.includes('Edg/')) return 'Edge';
+      if (v.includes('Chrome/')) return 'Chrome';
+      if (v.includes('Firefox/')) return 'Firefox';
+      if (v.includes('Safari/') && !v.includes('Chrome/')) return 'Safari';
+      return 'Unknown';
+    };
+
+    const mapRow = (r: any) => {
+      const deviceType = r.device_type || parseDeviceType(r.device_info || r.user_agent);
+      const browser = r.browser || parseBrowser(r.user_agent || r.device_info);
+      return {
+        id: r.id,
+        user_id: r.user_id,
+        user_email: r.user_email || r.email || 'unknown',
+        device_type: deviceType,
+        browser,
+        ip_address: r.ip_address || 'unknown',
+        location: r.location || 'unknown',
+        created_at: r.created_at,
+        last_activity: r.last_activity || r.last_active_at || r.last_activity_at || r.created_at,
+        is_current: !!r.is_current,
+      };
+    };
+
+    try {
+      // Extended schema (has `is_active`, `last_activity`, browser/os fields)
+      const rows = await dbAll(
+        `
+          SELECT s.*, u.email as user_email
+          FROM user_sessions s
+          LEFT JOIN users u ON u.id = s.user_id
+          WHERE s.is_active = TRUE
+          ORDER BY COALESCE(s.last_activity, s.last_active_at, s.created_at) DESC
+          LIMIT 200
+        `,
+        []
+      );
+      return res.json({ sessions: (rows || []).map(mapRow) });
+    } catch (_err) {
+      // Fallback schema (no `is_active` / `last_activity`)
+      const rows = await dbAll(
+        `
+          SELECT s.*, u.email as user_email
+          FROM user_sessions s
+          LEFT JOIN users u ON u.id = s.user_id
+          ORDER BY COALESCE(s.last_active_at, s.created_at) DESC
+          LIMIT 200
+        `,
+        []
+      ).catch(() => []);
+      return res.json({ sessions: (rows || []).map(mapRow) });
+    }
+  })
+);
+
+router.delete(
+  '/security/sessions/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    try {
+      // Extended schema prefers soft-revoke.
+      await dbRun(
+        `
+          UPDATE user_sessions
+          SET is_active = FALSE,
+              terminated_at = COALESCE(terminated_at, CURRENT_TIMESTAMP),
+              termination_reason = COALESCE(termination_reason, 'forced')
+          WHERE id = ?
+        `,
+        [id]
+      );
+      return res.json({ success: true });
+    } catch (_err) {
+      // Fallback schema: hard delete.
+      await dbRun(`DELETE FROM user_sessions WHERE id = ?`, [id]);
+      return res.json({ success: true });
+    }
   })
 );
 
@@ -608,52 +1300,96 @@ router.get(
 router.get(
   '/security/threats/stats',
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    const stats = (await dbGet<{
-      totalThreats: number;
-      blockedCount: number;
-      critical: number;
-      high: number;
-      medium: number;
-      low: number;
-      ipCount: number;
-      domainCount: number;
-      avgReputation: number;
-    }>(`
+    const raw = (await dbGet<Record<string, any>>(`
             SELECT 
-                COUNT(*) as totalThreats,
-                SUM(CASE WHEN is_blocked = 1 THEN 1 ELSE 0 END) as blockedCount,
-                SUM(CASE WHEN threat_level = 'CRITICAL' THEN 1 ELSE 0 END) as critical,
-                SUM(CASE WHEN threat_level = 'HIGH' THEN 1 ELSE 0 END) as high,
-                SUM(CASE WHEN threat_level = 'MEDIUM' THEN 1 ELSE 0 END) as medium,
-                SUM(CASE WHEN threat_level = 'LOW' THEN 1 ELSE 0 END) as low,
-                SUM(CASE WHEN threat_type = 'ip' THEN 1 ELSE 0 END) as ipCount,
-                SUM(CASE WHEN threat_type = 'domain' THEN 1 ELSE 0 END) as domainCount,
-                AVG(reputation_score) as avgReputation
+                COUNT(*) as "totalThreats",
+                SUM(CASE WHEN is_blocked = 1 THEN 1 ELSE 0 END) as "blockedCount",
+                SUM(CASE WHEN threat_level = 'CRITICAL' OR threat_level = 'critical' THEN 1 ELSE 0 END) as critical,
+                SUM(CASE WHEN threat_level = 'HIGH' OR threat_level = 'high' THEN 1 ELSE 0 END) as high,
+                SUM(CASE WHEN threat_level = 'MEDIUM' OR threat_level = 'medium' THEN 1 ELSE 0 END) as medium,
+                SUM(CASE WHEN threat_level = 'LOW' OR threat_level = 'low' THEN 1 ELSE 0 END) as low,
+                SUM(CASE WHEN threat_type = 'ip' OR threat_type = 'malicious_ip' OR indicator LIKE '%.%.%.%' THEN 1 ELSE 0 END) as "ipCount",
+                SUM(CASE WHEN (threat_type = 'domain' OR threat_type = 'suspicious_domain') AND indicator NOT LIKE '%.%.%.%' THEN 1 ELSE 0 END) as "domainCount",
+                AVG(reputation_score) as "avgReputation"
             FROM threat_intelligence
-        `)) || {
-      totalThreats: 0,
-      blockedCount: 0,
-      critical: 0,
-      high: 0,
-      medium: 0,
-      low: 0,
-      ipCount: 0,
-      domainCount: 0,
-      avgReputation: 50,
-    };
+        `)) || {};
+
+    const s = (key: string) => Number(raw[key] ?? raw[key.toLowerCase()]) || 0;
 
     res.json({
-      totalThreats: stats.totalThreats || 0,
-      blockedCount: stats.blockedCount || 0,
+      totalThreats: s('totalThreats'),
+      blockedCount: s('blockedCount'),
       byThreatLevel: {
-        critical: stats.critical || 0,
-        high: stats.high || 0,
-        medium: stats.medium || 0,
-        low: stats.low || 0,
+        critical: s('critical'),
+        high: s('high'),
+        medium: s('medium'),
+        low: s('low'),
       },
-      ipCount: stats.ipCount || 0,
-      domainCount: stats.domainCount || 0,
-      avgReputation: Math.round(stats.avgReputation || 50),
+      ipCount: s('ipCount'),
+      domainCount: s('domainCount'),
+      avgReputation: Math.round(s('avgReputation') || 50),
+    });
+  })
+);
+
+router.get(
+  '/security/threats/check-ip',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const ip = String((req.query as any)?.ip || '').trim();
+    if (!ip) return res.status(400).json({ error: 'ip is required' });
+
+    const row =
+      (await dbGet<any>(
+        `SELECT * FROM threat_intelligence WHERE threat_type = 'ip' AND indicator = ? ORDER BY created_at DESC LIMIT 1`,
+        [ip]
+      ).catch(() => null)) || null;
+
+    if (!row) {
+      return res.json({
+        found: false,
+        threatLevel: 'CLEAN',
+        reputationScore: 90,
+        isBlocked: false,
+      });
+    }
+
+    return res.json({
+      found: true,
+      threatLevel: row.threat_level || 'MEDIUM',
+      reputationScore: Number(row.reputation_score ?? 50),
+      isBlocked: !!(row.is_blocked ?? row.isBlocked),
+      description: row.description || '',
+    });
+  })
+);
+
+router.get(
+  '/security/threats/check-domain',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const domain = String((req.query as any)?.domain || '').trim();
+    if (!domain) return res.status(400).json({ error: 'domain is required' });
+
+    const row =
+      (await dbGet<any>(
+        `SELECT * FROM threat_intelligence WHERE threat_type = 'domain' AND indicator = ? ORDER BY created_at DESC LIMIT 1`,
+        [domain]
+      ).catch(() => null)) || null;
+
+    if (!row) {
+      return res.json({
+        found: false,
+        threatLevel: 'CLEAN',
+        reputationScore: 90,
+        isBlocked: false,
+      });
+    }
+
+    return res.json({
+      found: true,
+      threatLevel: row.threat_level || 'MEDIUM',
+      reputationScore: Number(row.reputation_score ?? 50),
+      isBlocked: !!(row.is_blocked ?? row.isBlocked),
+      description: row.description || '',
     });
   })
 );
@@ -1037,6 +1773,32 @@ router.get('/admin/sessions', SuperAdminController.getAdminSessions);
 router.post('/admin/sessions', SuperAdminController.createAdminSession);
 router.delete('/admin/sessions/:id', SuperAdminController.revokeAdminSession);
 router.get('/admin/sessions/stats', SuperAdminController.getAdminSessionStats);
+router.post(
+  '/admin/sessions/revoke-all',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const exceptSessionId = (req.body as any)?.exceptSessionId ? String((req.body as any).exceptSessionId) : null;
+    try {
+      const params: any[] = [];
+      let sql = `UPDATE admin_sessions SET is_active = 0 WHERE is_active = 1`;
+      if (exceptSessionId) {
+        sql += ` AND id != ?`;
+        params.push(exceptSessionId);
+      }
+      await dbRun(sql, params);
+      return res.json({ success: true });
+    } catch (_err) {
+      // Minimal schema fallback: expire sessions by timestamp.
+      const params: any[] = [];
+      let sql = `UPDATE admin_sessions SET expires_at = CURRENT_TIMESTAMP WHERE expires_at > CURRENT_TIMESTAMP`;
+      if (exceptSessionId) {
+        sql += ` AND id != ?`;
+        params.push(exceptSessionId);
+      }
+      await dbRun(sql, params);
+      return res.json({ success: true });
+    }
+  })
+);
 
 /**
  * GET /api/superadmin/platform-stats

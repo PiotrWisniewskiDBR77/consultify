@@ -347,12 +347,12 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
   };
 
   const downloadCodes = () => {
-    const content = `Consultinity Backup Codes\nGenerated: ${new Date().toLocaleDateString()}\n\n${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}\n\nKeep these codes safe. Each code can only be used once.`;
+    const content = `Consultify Backup Codes\nGenerated: ${new Date().toLocaleDateString()}\n\n${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}\n\nKeep these codes safe. Each code can only be used once.`;
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'consultinity-backup-codes.txt';
+    a.download = 'consultify-backup-codes.txt';
     a.click();
     URL.revokeObjectURL(url);
   };

@@ -242,7 +242,7 @@ export interface AcademyModule {
 export interface PartnerCertification {
   id: string;
   partnerId: string;
-  type: 'CONSULTINITY_CERTIFIED' | 'CO_SELL_EXPERT' | 'ENTERPRISE_PARTNER';
+  type: 'CONSULTIFY_CERTIFIED' | 'CO_SELL_EXPERT' | 'ENTERPRISE_PARTNER';
   earnedAt: string;
   expiresAt: string;
   modulesCompleted: string[];

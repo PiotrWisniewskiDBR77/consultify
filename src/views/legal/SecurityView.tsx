@@ -11,7 +11,7 @@ import { EntryTopBar } from '../../components/Landing/EntryTopBar';
 const COMPANY = {
   name: 'DBR77 Sp. z o.o.',
   securityEmail: 'security@dbr77.com',
-  website: 'https://consultinity.com',
+  website: 'https://consultify.com',
 };
 
 export const SecurityView: React.FC = () => {
@@ -108,7 +108,7 @@ export const SecurityView: React.FC = () => {
             </h1>
 
             <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-              Consultinity is built with security at its core. We protect your strategic data with
+              Consultify is built with security at its core. We protect your strategic data with
               industry-leading security practices and compliance standards.
             </p>
           </motion.div>

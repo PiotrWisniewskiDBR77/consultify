@@ -1421,12 +1421,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   />
                 </div>
 
-                {/* Consultinity branding */}
+                {/* Consultify branding */}
                 <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
                   <label className="flex items-center justify-between cursor-pointer">
                     <div>
                       <div className="text-sm text-slate-700 dark:text-slate-300">
-                        {isPl ? '"Stworzono w Consultinity"' : '"Created in Consultinity"'}
+                        {isPl ? '"Stworzono w Consultify"' : '"Created in Consultify"'}
                       </div>
                       <div className="text-xs text-slate-400">
                         {isPl ? 'Automatyczny napis w stopce' : 'Auto footer text'}

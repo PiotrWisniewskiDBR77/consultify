@@ -279,7 +279,9 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
 
       {/* Main Content Area */}
       <div
-        className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'ml-16' : 'ml-72'}`}
+        className={`flex-1 min-w-0 flex flex-col transition-all duration-300 ${
+          isSidebarCollapsed ? 'pl-16' : 'pl-72'
+        }`}
       >
         {/* SuperAdmin Dedicated Header */}
         <header className="h-14 bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-800 flex items-center justify-between px-4 shrink-0 shadow-sm relative z-50">
@@ -302,7 +304,9 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-hidden relative z-0">{renderContent()}</main>
+        <main className="flex-1 min-w-0 overflow-hidden relative z-0 pr-16">
+          {renderContent()}
+        </main>
       </div>
 
       {/* Floating Action Buttons - Order: Help, Feedback, Docs */}

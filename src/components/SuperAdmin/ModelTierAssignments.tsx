@@ -62,33 +62,33 @@ const TIER_CONFIG = {
     icon: Zap,
     color: 'emerald',
     description: 'Fast, cost-effective models for simple tasks',
-    bgClass: 'bg-emerald-500/10 border-emerald-500/30',
-    textClass: 'text-emerald-400',
-    badgeClass: 'bg-emerald-500/20 text-emerald-300',
+    bgClass: 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30',
+    textClass: 'text-emerald-800 dark:text-emerald-300',
+    badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200',
   },
   STANDARD: {
     icon: Server,
     color: 'blue',
     description: 'Balanced performance for most use cases',
-    bgClass: 'bg-blue-500/10 border-blue-500/30',
-    textClass: 'text-blue-400',
-    badgeClass: 'bg-blue-500/20 text-blue-300',
+    bgClass: 'bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30',
+    textClass: 'text-blue-800 dark:text-blue-300',
+    badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-200',
   },
   PREMIUM: {
     icon: Crown,
     color: 'violet',
     description: 'High-quality output for complex tasks',
-    bgClass: 'bg-violet-500/10 border-violet-500/30',
-    textClass: 'text-violet-400',
-    badgeClass: 'bg-violet-500/20 text-violet-300',
+    bgClass: 'bg-violet-50 dark:bg-violet-500/10 border-violet-200 dark:border-violet-500/30',
+    textClass: 'text-violet-800 dark:text-violet-300',
+    badgeClass: 'bg-violet-100 text-violet-800 dark:bg-violet-500/20 dark:text-violet-200',
   },
   REASONING: {
     icon: Brain,
     color: 'amber',
     description: 'Advanced reasoning for deep analysis',
-    bgClass: 'bg-amber-500/10 border-amber-500/30',
-    textClass: 'text-amber-400',
-    badgeClass: 'bg-amber-500/20 text-amber-300',
+    bgClass: 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30',
+    textClass: 'text-amber-900 dark:text-amber-300',
+    badgeClass: 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200',
   },
 };
 
@@ -274,7 +274,7 @@ export const ModelTierAssignments: React.FC = () => {
       case 'unhealthy':
         return <XCircle size={14} className="text-red-400" />;
       default:
-        return <Server size={14} className="text-slate-400 dark:text-slate-500" />;
+        return <Server size={14} className="text-slate-500 dark:text-slate-400" />;
     }
   };
 
@@ -287,26 +287,26 @@ export const ModelTierAssignments: React.FC = () => {
   }
 
   return (
-    <div className="p-6 space-y-6 overflow-y-auto h-full relative">
+    <div className="p-6 space-y-6 overflow-y-auto h-full relative bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white">
       <InfoButton cardId="superadmin-ai-model-tiers" position="top-right" />
 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
             <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-600/10">
               <Layers size={24} className="text-violet-400" />
             </div>
             Model Tier Assignments
           </h2>
-          <p className="text-slate-400 dark:text-slate-500 mt-1">
+          <p className="text-slate-600 dark:text-slate-400 mt-1">
             Assign models to performance tiers. Models can belong to multiple tiers. Drag to reorder
             priority within each tier.
           </p>
         </div>
         <button
           onClick={loadData}
-          className="flex items-center gap-2 px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.04] rounded-lg transition-colors"
         >
           <RefreshCw size={18} />
           Refresh
@@ -314,12 +314,12 @@ export const ModelTierAssignments: React.FC = () => {
       </div>
 
       {/* Info Banner */}
-      <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+      <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl p-4">
         <div className="flex items-start gap-3">
           <Sparkles size={20} className="text-blue-400 mt-0.5" />
           <div>
-            <h4 className="text-blue-300 font-medium">How It Works</h4>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+            <h4 className="text-blue-800 dark:text-blue-200 font-medium">How It Works</h4>
+            <p className="text-sm text-slate-700 dark:text-slate-400 mt-1">
               When a user selects a tier, the system automatically picks the best available model
               using round-robin selection. If all models in a tier fail, the system falls back to
               lower tiers automatically.
@@ -341,7 +341,7 @@ export const ModelTierAssignments: React.FC = () => {
               {/* Tier Header */}
               <button
                 onClick={() => toggleTier(tier)}
-                className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
+                className="w-full flex items-center justify-between p-4 hover:bg-black/[0.02] dark:hover:bg-white/[0.03] transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg ${config.badgeClass}`}>
@@ -349,7 +349,7 @@ export const ModelTierAssignments: React.FC = () => {
                   </div>
                   <div className="text-left">
                     <h3 className={`font-semibold ${config.textClass}`}>{tier}</h3>
-                    <p className="text-sm text-slate-400 dark:text-slate-500">
+                    <p className="text-sm text-slate-700 dark:text-slate-400">
                       {config.description}
                     </p>
                   </div>
@@ -359,9 +359,9 @@ export const ModelTierAssignments: React.FC = () => {
                     {tierAssignments.length} models
                   </span>
                   {isExpanded ? (
-                    <ChevronUp size={20} className="text-slate-400 dark:text-slate-500" />
+                    <ChevronUp size={20} className="text-slate-600 dark:text-slate-400" />
                   ) : (
-                    <ChevronDown size={20} className="text-slate-400 dark:text-slate-500" />
+                    <ChevronDown size={20} className="text-slate-600 dark:text-slate-400" />
                   )}
                 </div>
               </button>
@@ -374,7 +374,7 @@ export const ModelTierAssignments: React.FC = () => {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="border-t border-white/10"
+                    className="border-t border-slate-200 dark:border-white/10"
                   >
                     <div className="p-4 space-y-3">
                       {/* Assigned Models (Reorderable) */}
@@ -389,7 +389,7 @@ export const ModelTierAssignments: React.FC = () => {
                             <Reorder.Item
                               key={assignment.id}
                               value={assignment}
-                              className="flex items-center gap-3 px-4 py-3 bg-navy-800/50 border border-white/10 rounded-xl cursor-grab active:cursor-grabbing"
+                              className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-navy-800/50 border border-slate-200 dark:border-white/10 rounded-xl cursor-grab active:cursor-grabbing"
                             >
                               <GripVertical
                                 size={16}
@@ -400,7 +400,9 @@ export const ModelTierAssignments: React.FC = () => {
                               </span>
                               <div className="flex-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-white font-medium">{assignment.name}</span>
+                                  <span className="text-slate-900 dark:text-white font-medium">
+                                    {assignment.name}
+                                  </span>
                                   {getHealthIcon(assignment.health_status)}
                                 </div>
                                 <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -412,7 +414,7 @@ export const ModelTierAssignments: React.FC = () => {
                                   e.stopPropagation();
                                   handleRemoveFromTier(assignment.provider_id, tier);
                                 }}
-                                className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-400 transition-colors"
+                                className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.03] rounded-lg transition-colors hover:text-red-600 dark:hover:text-red-400"
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -420,7 +422,7 @@ export const ModelTierAssignments: React.FC = () => {
                           ))}
                         </Reorder.Group>
                       ) : (
-                        <div className="text-center py-6 text-slate-500 dark:text-slate-400">
+                        <div className="text-center py-6 text-slate-600 dark:text-slate-400">
                           No models assigned to this tier
                         </div>
                       )}
@@ -435,7 +437,7 @@ export const ModelTierAssignments: React.FC = () => {
                                 handleAddToTier(e.target.value, tier);
                               }
                             }}
-                            className="w-full px-4 py-3 bg-navy-900/30 border border-dashed border-white/20 rounded-xl text-slate-400 dark:text-slate-500 text-sm cursor-pointer hover:border-white/30 transition-colors"
+                            className="w-full px-4 py-3 bg-white dark:bg-navy-900/30 border border-dashed border-slate-300 dark:border-white/20 rounded-xl text-slate-700 dark:text-slate-300 text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
                           >
                             <option value="">+ Add model to {tier}</option>
                             {unassignedProviders.map((p) => (
@@ -456,9 +458,9 @@ export const ModelTierAssignments: React.FC = () => {
       </div>
 
       {/* Available Providers Reference */}
-      <div className="bg-white/5 rounded-xl border border-white/10 p-6">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Server size={20} className="text-slate-400 dark:text-slate-500" />
+      <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-6">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <Server size={20} className="text-slate-600 dark:text-slate-400" />
           Available Providers ({providers.length})
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -470,12 +472,12 @@ export const ModelTierAssignments: React.FC = () => {
             return (
               <div
                 key={p.id}
-                className="flex items-center justify-between p-3 bg-navy-900/30 rounded-lg border border-white/5"
+                className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-900/30 rounded-lg border border-slate-200 dark:border-white/5"
               >
                 <div className="flex items-center gap-2">
                   {getHealthIcon(p.health_status)}
                   <div>
-                    <div className="text-sm text-white">{p.name}</div>
+                    <div className="text-sm text-slate-900 dark:text-white">{p.name}</div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">{p.model_id}</div>
                   </div>
                 </div>
@@ -483,7 +485,10 @@ export const ModelTierAssignments: React.FC = () => {
                   {assignedTiers.map((tier) => (
                     <span
                       key={tier}
-                      className={`px-2 py-0.5 rounded text-xs ${TIER_CONFIG[tier as keyof typeof TIER_CONFIG]?.badgeClass || 'bg-slate-50 dark:bg-navy-800/300/20 text-slate-300'}`}
+                      className={`px-2 py-0.5 rounded text-xs ${
+                        TIER_CONFIG[tier as keyof typeof TIER_CONFIG]?.badgeClass ||
+                        'bg-slate-100 text-slate-700 dark:bg-navy-800/20 dark:text-slate-200'
+                      }`}
                     >
                       {tier.charAt(0)}
                     </span>

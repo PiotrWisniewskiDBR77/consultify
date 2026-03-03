@@ -76,8 +76,8 @@ export const AdminMarginConfig = () => {
 
   if (loading && margins.length === 0) {
     return (
-      <div className="bg-navy-900 border border-white/10 rounded-xl p-6 h-full flex items-center justify-center">
-        <div className="text-white/50 flex flex-col items-center gap-2">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 h-full flex items-center justify-center">
+        <div className="text-slate-600 dark:text-white/60 flex flex-col items-center gap-2">
           <RefreshCw className="animate-spin" />
           <span>Loading margins...</span>
         </div>
@@ -86,23 +86,25 @@ export const AdminMarginConfig = () => {
   }
 
   return (
-    <div className="bg-navy-900 border border-white/10 rounded-xl p-6 h-full flex flex-col">
+    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 h-full flex flex-col">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-emerald-400" />
             Global Margins
           </h2>
-          <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
             Base profit margins for non-LLM costs.
           </p>
         </div>
         <button
           onClick={loadMargins}
-          className="p-2 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors border border-white/5"
+          className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-navy-950/20 dark:hover:bg-navy-800/40 rounded-lg transition-colors border border-slate-200 dark:border-white/10"
           title="Refresh Data"
         >
-          <RefreshCw className={`w-4 h-4 text-white/70 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw
+            className={`w-4 h-4 text-slate-600 dark:text-white/70 ${loading ? 'animate-spin' : ''}`}
+          />
         </button>
       </div>
 
@@ -121,7 +123,7 @@ export const AdminMarginConfig = () => {
 
       <div className="space-y-4 flex-1 overflow-auto">
         {margins.length === 0 && !loading && !error && (
-          <div className="text-center p-8 text-slate-500 dark:text-slate-400 border border-dashed border-white/10 rounded-lg">
+          <div className="text-center p-8 text-slate-500 dark:text-slate-400 border border-dashed border-slate-300 dark:border-white/10 rounded-lg">
             No margin configurations found.
           </div>
         )}
@@ -129,11 +131,13 @@ export const AdminMarginConfig = () => {
         {margins.map((margin) => (
           <div
             key={margin.id}
-            className="bg-navy-950/50 border border-white/5 rounded-xl p-4 hover:border-white/10 transition-colors"
+            className="bg-slate-50 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-xl p-4 hover:border-slate-300 dark:hover:border-white/20 transition-colors"
           >
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="text-white font-bold text-sm">{margin.display_name}</h3>
+                <h3 className="text-slate-900 dark:text-white font-bold text-sm">
+                  {margin.display_name}
+                </h3>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">
                   {margin.source_type.replace('_', ' ')}
                 </p>
@@ -185,7 +189,7 @@ export const AdminMarginConfig = () => {
                       onChange={(e) =>
                         handleChange(margin.source_type, 'base_cost_per_1k', e.target.value)
                       }
-                      className="w-full bg-navy-900 border border-white/10 rounded-lg pl-7 pr-3 py-2 text-sm text-white focus:border-blue-500 outline-none transition-colors"
+                      className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg pl-7 pr-3 py-2 text-sm text-slate-900 dark:text-white focus:border-blue-500 outline-none transition-colors"
                     />
                     <span className="absolute left-2.5 top-2 text-slate-500 dark:text-slate-400 text-xs">
                       $
@@ -207,7 +211,7 @@ export const AdminMarginConfig = () => {
                     onChange={(e) =>
                       handleChange(margin.source_type, 'margin_percent', e.target.value)
                     }
-                    className="w-full bg-navy-900 border border-white/10 rounded-lg pr-7 pl-3 py-2 text-sm text-emerald-400 font-bold focus:border-emerald-500 outline-none transition-colors"
+                    className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg pr-7 pl-3 py-2 text-sm text-emerald-600 dark:text-emerald-400 font-bold focus:border-emerald-500 outline-none transition-colors"
                   />
                   <span className="absolute right-2.5 top-2 text-emerald-500/50 text-xs">%</span>
                 </div>
@@ -217,7 +221,7 @@ export const AdminMarginConfig = () => {
         ))}
       </div>
 
-      <div className="mt-4 pt-4 border-t border-white/5 flex items-start gap-2 text-xs text-slate-500 dark:text-slate-400">
+      <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10 flex items-start gap-2 text-xs text-slate-500 dark:text-slate-400">
         <HelpCircle className="w-3 h-3 flex-shrink-0 mt-0.5" />
         <p>
           These global margins apply to base infrastructure costs. For AI Models, use the specific

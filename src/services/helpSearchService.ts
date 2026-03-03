@@ -430,7 +430,7 @@ export function getRecentSearches(): string[] {
   if (typeof window === 'undefined') return [];
 
   try {
-    const stored = localStorage.getItem('consultinity_help_searches');
+    const stored = localStorage.getItem('consultify_help_searches');
     return stored ? JSON.parse(stored) : [];
   } catch {
     return [];
@@ -450,7 +450,7 @@ export function saveRecentSearch(query: string): void {
       10
     );
 
-    localStorage.setItem('consultinity_help_searches', JSON.stringify(updated));
+    localStorage.setItem('consultify_help_searches', JSON.stringify(updated));
   } catch {
     // Ignore storage errors
   }
@@ -463,7 +463,7 @@ export function clearRecentSearches(): void {
   if (typeof window === 'undefined') return;
 
   try {
-    localStorage.removeItem('consultinity_help_searches');
+    localStorage.removeItem('consultify_help_searches');
   } catch {
     // Ignore storage errors
   }

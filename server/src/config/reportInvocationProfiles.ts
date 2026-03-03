@@ -56,7 +56,7 @@ export interface InvocationProfile {
   // Styling defaults
   defaultStyling: {
     showCompanyLogo: boolean;
-    showConsultinityBranding: boolean;
+    showConsultifyBranding: boolean;
     primaryColor?: string;
   };
 
@@ -184,7 +184,7 @@ export const INVOCATION_PROFILES: Record<string, InvocationProfile> = {
 
     defaultStyling: {
       showCompanyLogo: true,
-      showConsultinityBranding: true,
+      showConsultifyBranding: true,
       primaryColor: '#3B82F6',
     },
 
@@ -255,7 +255,7 @@ export const INVOCATION_PROFILES: Record<string, InvocationProfile> = {
 
     defaultStyling: {
       showCompanyLogo: true,
-      showConsultinityBranding: true,
+      showConsultifyBranding: true,
       primaryColor: '#3B82F6',
     },
 
@@ -337,8 +337,110 @@ export const INVOCATION_PROFILES: Record<string, InvocationProfile> = {
 
     defaultStyling: {
       showCompanyLogo: true,
-      showConsultinityBranding: true,
+      showConsultifyBranding: true,
       primaryColor: '#10B981',
+    },
+
+    features: {
+      allowCustomSections: true,
+      allowReordering: true,
+      allowMatrixVisualization: false,
+      allowPdfExport: true,
+      allowPublicSharing: true,
+    },
+  },
+
+  /**
+   * Results KPI Review Profile (R1)
+   * For monthly/quarterly KPI review + deviation action plan
+   */
+  results_kpi_review: {
+    id: 'results_kpi_review',
+    name: 'KPI Performance Review',
+    namePl: 'Przegląd KPI (Raport wyników)',
+    description: 'Performance review report for KPIs and deviation action plans',
+    descriptionPl: 'Raport przeglądu KPI wraz z odchyleniami i planem działań',
+
+    sourceTypes: ['RESULTS_KPI_REPORT'],
+
+    allowedBlockTypes: null,
+    disallowedBlockTypes: ['matrix'], // Not needed here
+
+    defaultTemplateSections: [
+      {
+        key: 'cover',
+        type: 'cover',
+        title: 'Cover Page',
+        titlePl: 'Strona tytułowa',
+        required: false,
+        order: 0,
+        defaultLength: 'short',
+        defaultLanguage: 'business',
+      },
+      {
+        key: 'executive_summary',
+        type: 'summary',
+        title: 'Executive Summary',
+        titlePl: 'Streszczenie zarządcze',
+        required: true,
+        order: 1,
+        defaultLength: 'medium',
+        defaultLanguage: 'business',
+      },
+      {
+        key: 'kpi_overview',
+        type: 'list',
+        title: 'KPI Overview',
+        titlePl: 'Przegląd KPI',
+        required: true,
+        order: 2,
+        defaultLength: 'medium',
+        defaultLanguage: 'business',
+      },
+      {
+        key: 'deviation_cases',
+        type: 'list',
+        title: 'Deviation Cases',
+        titlePl: 'Sprawy odchyleń',
+        required: false,
+        order: 3,
+        defaultLength: 'medium',
+        defaultLanguage: 'business',
+      },
+      {
+        key: 'action_plan',
+        type: 'action_plan',
+        title: 'Action Plan',
+        titlePl: 'Plan działań',
+        required: true,
+        order: 4,
+        defaultLength: 'medium',
+        defaultLanguage: 'business',
+      },
+      {
+        key: 'appendix',
+        type: 'appendix',
+        title: 'Appendix',
+        titlePl: 'Załączniki',
+        required: false,
+        order: 5,
+        defaultLength: 'long',
+        defaultLanguage: 'technical',
+      },
+    ],
+
+    requiredIntentFields: ['audience', 'goal', 'language'],
+    defaultIntent: {
+      audience: 'executive',
+      goal: 'summary',
+      tone: 'consulting',
+      scope: 'focused',
+    },
+
+    defaultStyling: {
+      showCompanyLogo: true,
+      showConsultifyBranding: true,
+      primaryColor: '#3B82F6',
     },
 
     features: {
@@ -389,7 +491,7 @@ export const INVOCATION_PROFILES: Record<string, InvocationProfile> = {
 
     defaultStyling: {
       showCompanyLogo: true,
-      showConsultinityBranding: true,
+      showConsultifyBranding: true,
       primaryColor: '#6366F1',
     },
 
@@ -461,7 +563,7 @@ export const INVOCATION_PROFILES: Record<string, InvocationProfile> = {
 
     defaultStyling: {
       showCompanyLogo: true,
-      showConsultinityBranding: true,
+      showConsultifyBranding: true,
       primaryColor: '#3B82F6',
     },
 

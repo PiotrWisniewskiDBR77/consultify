@@ -2262,6 +2262,7 @@ router.get('/:reportId/export/deck', async (req: AuthRequest, res: Response) => 
 
     if (framework === 'SIRI') {
       const dims = formData.dimensions || {};
+      const prioritisationMatrix = formData.prioritisationMatrix || {};
       const blocks = [
         {
           id: 'PROCESS',
@@ -2314,6 +2315,8 @@ router.get('/:reportId/export/deck', async (req: AuthRequest, res: Response) => 
           if (d.current === 0) dataGaps.push({ name: d.name, reason: 'Not assessed' });
         }
       }
+      // Attach prioritisation matrix for deck appendix (16 areas)
+      (formData as any).__prioritisationMatrixForDeck = prioritisationMatrix;
     } else if (framework === 'ADMA') {
       const pillars = formData.pillars || {};
       const pillarOrder = [
@@ -2430,6 +2433,8 @@ router.get('/:reportId/export/deck', async (req: AuthRequest, res: Response) => 
       topStrengths: topStrengths.slice(0, 8),
       topGaps: topGaps.slice(0, 10),
       dataGaps,
+      prioritisationMatrix:
+        framework === 'SIRI' ? ((formData as any).__prioritisationMatrixForDeck as any) : undefined,
       language,
     });
 

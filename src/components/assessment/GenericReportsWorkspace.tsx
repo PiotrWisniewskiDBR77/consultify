@@ -60,7 +60,8 @@ export const GenericReportsWorkspace: React.FC<GenericReportsWorkspaceProps> = (
   const fetchReports = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`/api/generic-reports/organization/${organizationId}`, {
+      // Canonical Path C endpoints live under Report Builder.
+      const response = await axios.get(`/api/report-builder/upload-chaos`, {
         params: { search: searchQuery, type: filterType },
       });
       setReports(response.data.reports || []);
@@ -69,7 +70,7 @@ export const GenericReportsWorkspace: React.FC<GenericReportsWorkspaceProps> = (
     } finally {
       setLoading(false);
     }
-  }, [organizationId, searchQuery, filterType]);
+  }, [searchQuery, filterType]);
 
   React.useEffect(() => {
     fetchReports();
@@ -82,7 +83,7 @@ export const GenericReportsWorkspace: React.FC<GenericReportsWorkspaceProps> = (
 
       const file = acceptedFiles[0];
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('files', file);
       formData.append('reportType', uploadMetadata.reportType);
       formData.append('title', uploadMetadata.title || file.name);
       formData.append('consultantName', uploadMetadata.consultantName);
@@ -92,7 +93,7 @@ export const GenericReportsWorkspace: React.FC<GenericReportsWorkspaceProps> = (
 
       setLoading(true);
       try {
-        const response = await axios.post('/api/generic-reports', formData, {
+        await axios.post('/api/report-builder/upload-chaos', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
 
@@ -135,7 +136,7 @@ export const GenericReportsWorkspace: React.FC<GenericReportsWorkspaceProps> = (
     if (!confirm('Delete this report?')) return;
 
     try {
-      await axios.delete(`/api/generic-reports/${reportId}`);
+      await axios.delete(`/api/report-builder/upload-chaos/${reportId}`);
       fetchReports();
     } catch (error) {
       console.error('Delete error:', error);

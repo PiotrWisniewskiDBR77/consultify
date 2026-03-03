@@ -10,7 +10,7 @@
  *   2) Smart-open rules (based on entity data / status)
  *   3) Default open set (per entity type)
  *
- * Persistence key: `consultinity:accordionSections:<entityType>:<entityId>`
+ * Persistence key: `consultify:accordionSections:<entityType>:<entityId>`
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -56,7 +56,7 @@ interface UseAccordionSectionsReturn {
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 function persistenceKey(entityType: EntityType, entityId: string): string {
-  return `consultinity:accordionSections:${entityType}:${entityId}`;
+  return `consultify:accordionSections:${entityType}:${entityId}`;
 }
 
 function readPersistedSections(entityType: EntityType, entityId: string | null): string[] | null {

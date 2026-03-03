@@ -834,7 +834,7 @@ export const useDiscoveryStore = create<DiscoveryState>()(
       },
     }),
     {
-      name: 'consultinity-discovery',
+      name: 'consultify-discovery',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         sessions: state.sessions,

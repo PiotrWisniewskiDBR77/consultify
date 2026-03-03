@@ -45,7 +45,7 @@ export const HELP_CONFIG: HelpConfig = {
       id: 'gettingStarted',
       path: '/getting-started',
       icon: 'Rocket',
-      articleSlug: 'getting-started-consultinity',
+      articleSlug: 'getting-started-consultify',
     },
     {
       id: 'assessment',

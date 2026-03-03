@@ -291,7 +291,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Feature Flags</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Feature Flags</h2>
           <p className="text-slate-400 dark:text-slate-500 text-sm">
             Control feature availability with targeting, A/B testing, and percentage rollouts
           </p>
@@ -307,9 +307,9 @@ export const EnterpriseFeatureFlags: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
           <div className="text-sm text-slate-400 dark:text-slate-500">Total Flags</div>
-          <div className="text-2xl font-bold text-white">{flags.length}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{flags.length}</div>
         </div>
         <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
           <div className="text-sm text-slate-400 dark:text-slate-500">Enabled</div>
@@ -349,13 +349,13 @@ export const EnterpriseFeatureFlags: React.FC = () => {
             placeholder="Search flags..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
         </div>
         <select
           value={filterEnvironment}
           onChange={(e) => setFilterEnvironment(e.target.value)}
-          className="px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           <option value="all">All Environments</option>
           {ENVIRONMENTS.map((env) => (
@@ -367,7 +367,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
-          className="px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           <option value="all">All Types</option>
           {Object.entries(FLAG_TYPE_CONFIG).map(([key, config]) => (
@@ -378,17 +378,19 @@ export const EnterpriseFeatureFlags: React.FC = () => {
         </select>
         <button
           onClick={fetchFlags}
-          className="p-2 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 border border-white/10 rounded-lg"
+          className="p-2 bg-white dark:bg-navy-950/20 hover:bg-slate-50 dark:hover:bg-navy-800/40 border border-slate-200 dark:border-white/10 rounded-lg"
         >
           <RefreshCw className="w-4 h-4 text-slate-400 dark:text-slate-500" />
         </button>
       </div>
 
       {/* Test Context Panel */}
-      <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+      <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
         <div className="flex items-center gap-2 mb-3">
           <Eye className="w-4 h-4 text-cyan-400" />
-          <span className="text-sm font-medium text-white">Test Evaluation Context</span>
+          <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+            Test Evaluation Context
+          </span>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div>
@@ -397,7 +399,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
               type="text"
               value={testContext.userId}
               onChange={(e) => setTestContext({ ...testContext, userId: e.target.value })}
-              className="w-full px-2 py-1.5 bg-slate-800 border border-white/10 rounded text-sm text-white"
+              className="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded text-sm text-slate-900 dark:text-slate-100"
               placeholder="user-123"
             />
           </div>
@@ -407,7 +409,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
               type="text"
               value={testContext.email}
               onChange={(e) => setTestContext({ ...testContext, email: e.target.value })}
-              className="w-full px-2 py-1.5 bg-slate-800 border border-white/10 rounded text-sm text-white"
+              className="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded text-sm text-slate-900 dark:text-slate-100"
               placeholder="user@example.com"
             />
           </div>
@@ -419,7 +421,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
               type="text"
               value={testContext.orgId}
               onChange={(e) => setTestContext({ ...testContext, orgId: e.target.value })}
-              className="w-full px-2 py-1.5 bg-slate-800 border border-white/10 rounded text-sm text-white"
+              className="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded text-sm text-slate-900 dark:text-slate-100"
               placeholder="org-abc"
             />
           </div>
@@ -429,7 +431,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
               type="text"
               value={testContext.role}
               onChange={(e) => setTestContext({ ...testContext, role: e.target.value })}
-              className="w-full px-2 py-1.5 bg-slate-800 border border-white/10 rounded text-sm text-white"
+              className="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded text-sm text-slate-900 dark:text-slate-100"
               placeholder="admin"
             />
           </div>
@@ -453,7 +455,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
             return (
               <div
                 key={flag.id}
-                className="bg-white/5 rounded-xl border border-white/10 overflow-hidden hover:border-white/20 transition-colors"
+                className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden hover:border-slate-300 dark:hover:border-white/20 transition-colors"
               >
                 <div
                   className="p-4 cursor-pointer"
@@ -466,13 +468,15 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-white font-medium">{flag.name}</h3>
+                          <h3 className="text-slate-900 dark:text-slate-100 font-medium">
+                            {flag.name}
+                          </h3>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleCopyKey(flag.flag_key);
                             }}
-                            className="flex items-center gap-1 px-2 py-0.5 text-xs bg-slate-800 text-slate-400 dark:text-slate-500 rounded hover:bg-slate-700"
+                            className="flex items-center gap-1 px-2 py-0.5 text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded hover:bg-slate-200 dark:hover:bg-slate-700"
                           >
                             <Code className="w-3 h-3" />
                             {flag.flag_key}
@@ -482,7 +486,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                           >
                             {typeConfig.label}
                           </span>
-                          <span className="px-2 py-0.5 text-xs bg-slate-700 text-slate-300 rounded">
+                          <span className="px-2 py-0.5 text-xs bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded">
                             {flag.environment}
                           </span>
                         </div>
@@ -556,14 +560,16 @@ export const EnterpriseFeatureFlags: React.FC = () => {
 
                 {/* Expanded Details */}
                 {isExpanded && (
-                  <div className="px-4 pb-4 border-t border-white/5">
+                  <div className="px-4 pb-4 border-t border-slate-200 dark:border-white/5">
                     <div className="pt-4 space-y-4">
                       {/* Evaluation Reason */}
-                      <div className="p-3 bg-slate-800/50 rounded-lg">
+                      <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-transparent">
                         <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">
                           Evaluation Reason
                         </div>
-                        <div className="text-sm text-slate-300">{evaluation.reason}</div>
+                        <div className="text-sm text-slate-700 dark:text-slate-300">
+                          {evaluation.reason}
+                        </div>
                       </div>
 
                       {/* Percentage Rollout */}
@@ -573,9 +579,11 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                             <span className="text-slate-400 dark:text-slate-500">
                               Rollout Progress
                             </span>
-                            <span className="text-white">{flag.rollout_percentage}%</span>
+                            <span className="text-slate-900 dark:text-slate-100">
+                              {flag.rollout_percentage}%
+                            </span>
                           </div>
-                          <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                             <div
                               className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full"
                               style={{ width: `${flag.rollout_percentage}%` }}
@@ -597,7 +605,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                                 className={`p-2 rounded-lg ${
                                   rule.enabled
                                     ? 'bg-purple-500/10 border border-purple-500/30'
-                                    : 'bg-slate-800/50'
+                                    : 'bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-transparent'
                                 }`}
                               >
                                 <div className="flex items-center gap-2 text-sm">
@@ -613,7 +621,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                                   <span className="text-slate-500 dark:text-slate-400">
                                     {rule.operator}
                                   </span>
-                                  <code className="text-xs bg-slate-800 px-1 rounded text-slate-300">
+                                  <code className="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-transparent">
                                     {rule.values.join(', ')}
                                   </code>
                                 </div>
@@ -636,7 +644,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                                 className={`p-3 rounded-lg ${
                                   evaluation.variant === variant.name
                                     ? 'bg-amber-500/20 border border-amber-500/30'
-                                    : 'bg-slate-800/50'
+                                    : 'bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-transparent'
                                 }`}
                               >
                                 <div className="flex items-center justify-between">
@@ -644,7 +652,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                                     className={`font-medium ${
                                       evaluation.variant === variant.name
                                         ? 'text-amber-400'
-                                        : 'text-white'
+                                        : 'text-slate-900 dark:text-slate-100'
                                     }`}
                                   >
                                     {variant.name}
@@ -663,20 +671,20 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                         <div>
                           <span className="text-slate-500 dark:text-slate-400">Created</span>
-                          <div className="text-slate-300">
+                          <div className="text-slate-700 dark:text-slate-300">
                             {new Date(flag.created_at).toLocaleDateString()}
                           </div>
                         </div>
                         <div>
                           <span className="text-slate-500 dark:text-slate-400">Updated</span>
-                          <div className="text-slate-300">
+                          <div className="text-slate-700 dark:text-slate-300">
                             {new Date(flag.updated_at).toLocaleDateString()}
                           </div>
                         </div>
                         {flag.organization_id && (
                           <div>
                             <span className="text-slate-500 dark:text-slate-400">Org-specific</span>
-                            <div className="text-slate-300">
+                            <div className="text-slate-700 dark:text-slate-300">
                               {flag.organization_id.slice(0, 8)}...
                             </div>
                           </div>
@@ -762,9 +770,9 @@ const FeatureFlagModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-navy-900 rounded-xl border border-white/10 p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-white">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
             {flag ? 'Edit Feature Flag' : 'Create Feature Flag'}
           </h3>
           <button
@@ -778,7 +786,9 @@ const FeatureFlagModal: React.FC<{
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Flag Key *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Flag Key *
+              </label>
               <input
                 type="text"
                 required
@@ -789,39 +799,45 @@ const FeatureFlagModal: React.FC<{
                     flag_key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_'),
                   })
                 }
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+                className="w-full px-3 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
                 placeholder="new_feature"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Name *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Name *
+              </label>
               <input
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+                className="w-full px-3 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Description</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Description
+            </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+              className="w-full px-3 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
               rows={2}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Type *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Type *
+              </label>
               <select
                 value={formData.flag_type}
                 onChange={(e) => setFormData({ ...formData, flag_type: e.target.value as any })}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+                className="w-full px-3 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
               >
                 {Object.entries(FLAG_TYPE_CONFIG).map(([key, config]) => (
                   <option key={key} value={key}>
@@ -831,11 +847,13 @@ const FeatureFlagModal: React.FC<{
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Environment *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Environment *
+              </label>
               <select
                 value={formData.environment}
                 onChange={(e) => setFormData({ ...formData, environment: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+                className="w-full px-3 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
               >
                 {ENVIRONMENTS.map((env) => (
                   <option key={env} value={env}>
@@ -870,9 +888,9 @@ const FeatureFlagModal: React.FC<{
               id="enabled"
               checked={formData.enabled}
               onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
-              className="w-4 h-4 text-purple-600 bg-slate-50/30 dark:bg-navy-950/20 border-white/10 rounded"
+              className="w-4 h-4 text-purple-600 bg-white dark:bg-navy-950/20 border-slate-300 dark:border-white/10 rounded"
             />
-            <label htmlFor="enabled" className="text-sm text-slate-300">
+            <label htmlFor="enabled" className="text-sm text-slate-700 dark:text-slate-300">
               Enable flag immediately
             </label>
           </div>

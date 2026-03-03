@@ -28,7 +28,7 @@ const VIEW_ROUTE_MAP: Record<string, string> = {
   portfolio: '/portfolio',
   execution: '/execution',
   roadmap: '/roadmap',
-  reports: '/reports/builder',
+  reports: '/presentations?tab=reports',
   assessment: '/assessment',
   interview: '/interview',
   discovery: '/interview',
@@ -56,11 +56,11 @@ const MODULE_ROUTE_MAP: Record<string, string> = {
   assessment: '/assessment',
   initiatives: '/initiatives',
   initiative: '/initiatives',
-  reports: '/reports/builder',
+  reports: '/presentations?tab=reports',
   'report-builder': '/reports/builder',
   report_builder: '/reports/builder',
-  presentations: '/reports/builder',
-  presentation: '/reports/builder',
+  presentations: '/presentations',
+  presentation: '/presentations',
   results: '/benefits',
   benefits: '/benefits',
   economics: '/economics',
@@ -148,12 +148,27 @@ const buildNavigateRoute = (payload: NavigateContract): string | null => {
   }
 
   if (
-    moduleKey === 'reports' ||
-    moduleKey === 'report-builder' ||
-    moduleKey === 'report_builder' ||
     moduleKey === 'presentations' ||
     moduleKey === 'presentation'
   ) {
+    const templateId = normalizeValue(payload.templateId) || params.templateId || '';
+    const wantsWizard =
+      surface === 'wizard' || surface === 'new' || surface === 'create' || params.new === '1';
+
+    if (wantsWizard) {
+      const wizardParams: Record<string, string> = {};
+      if (templateId) wizardParams.templateId = templateId;
+      return withQuery('/presentations/wizard', wizardParams);
+    }
+
+    if (entityId) {
+      return `/presentations/builder/${encodeURIComponent(entityId)}`;
+    }
+
+    return withQuery('/presentations', params);
+  }
+
+  if (moduleKey === 'reports' || moduleKey === 'report-builder' || moduleKey === 'report_builder') {
     const sourceType = normalizeValue(payload.sourceType) || params.sourceType || '';
     const sourceId = normalizeValue(payload.sourceId) || params.sourceId || '';
     const sourceName = normalizeValue(payload.sourceName) || params.sourceName || '';
@@ -182,7 +197,8 @@ const buildNavigateRoute = (payload: NavigateContract): string | null => {
       }
       return withQuery('/reports/builder', { docId: entityId });
     }
-    return withQuery('/reports/builder', params);
+    // Default "Reports" surface is the unified hub under Presentations.
+    return withQuery('/presentations', { tab: 'reports', ...params });
   }
 
   return withQuery(baseRoute, params);

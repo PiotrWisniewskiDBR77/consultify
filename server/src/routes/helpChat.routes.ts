@@ -282,12 +282,12 @@ const MODULE_KNOWLEDGE: Record<
 // ==================== HELPER FUNCTIONS ====================
 
 function buildHelpSystemPrompt(context?: string, isProductQuestion?: boolean): string {
-  const basePrompt = `You are the Consultinity Help Assistant, an AI-powered guide for the Consultinity enterprise PMO platform.
+  const basePrompt = `You are the Consultify Help Assistant, an AI-powered guide for the Consultify enterprise PMO platform.
 
 ROLE: Help users understand features, troubleshoot issues, and maximize platform value.
 
 PLATFORM OVERVIEW:
-Consultinity is an enterprise PMO (Project Management Office) platform for digital transformation. It combines:
+Consultify is an enterprise PMO (Project Management Office) platform for digital transformation. It combines:
 - AI-powered assessments using CMMI, LEAN, ISO frameworks
 - Initiative lifecycle management with stage-gate workflows
 - Strategic roadmap planning and visualization

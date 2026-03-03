@@ -177,8 +177,8 @@ export const StatusPageView: React.FC = () => {
   const t = {
     title: { en: 'System Status', pl: 'Status Systemu' },
     subtitle: {
-      en: 'Current operational status of Consultinity services',
-      pl: 'Aktualny status operacyjny usług Consultinity',
+      en: 'Current operational status of Consultify services',
+      pl: 'Aktualny status operacyjny usług Consultify',
     },
     allOperational: { en: 'All Systems Operational', pl: 'Wszystkie systemy działają' },
     services: { en: 'Services', pl: 'Usługi' },

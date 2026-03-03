@@ -13,8 +13,8 @@ const DEFAULT_FAQS: FAQItem[] = [
   {
     id: 'default-1',
     moduleId: '_default',
-    question: 'How do I get started with Consultinity?',
-    questionPl: 'Jak zacząć korzystać z Consultinity?',
+    question: 'How do I get started with Consultify?',
+    questionPl: 'Jak zacząć korzystać z Consultify?',
     answer:
       'Start by completing your profile setup, then run your first assessment to understand your digital maturity level. The dashboard will guide you through the key features and next steps.',
     answerPl:
@@ -27,9 +27,9 @@ const DEFAULT_FAQS: FAQItem[] = [
     question: 'How can I contact support?',
     questionPl: 'Jak mogę skontaktować się ze wsparciem?',
     answer:
-      'You can reach our support team via the Feedback button in the sidebar, or email us at support@consultinity.app. For urgent issues, use the "Critical" severity option in the feedback form.',
+      'You can reach our support team via the Feedback button in the sidebar, or email us at support@consultify.app. For urgent issues, use the "Critical" severity option in the feedback form.',
     answerPl:
-      'Możesz skontaktować się z zespołem wsparcia przez przycisk Feedback w sidebarze lub wysłać email na support@consultinity.app. W pilnych sprawach użyj opcji "Krytyczny" w formularzu.',
+      'Możesz skontaktować się z zespołem wsparcia przez przycisk Feedback w sidebarze lub wysłać email na support@consultify.app. W pilnych sprawach użyj opcji "Krytyczny" w formularzu.',
     tags: ['support', 'contact'],
   },
   {

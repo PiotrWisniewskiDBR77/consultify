@@ -75,7 +75,7 @@ class HealthCheckJob {
             'RESOLVED: System Database Recovered',
             `
                         <h1>System Recovered</h1>
-                        <p>The Consultinity database is back online.</p>
+                        <p>The Consultify database is back online.</p>
                         <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
                         `
           );
@@ -98,7 +98,7 @@ class HealthCheckJob {
             'CRITICAL ALERT: System Database Down',
             `
                         <h1>System Alert</h1>
-                        <p>The Consultinity database is unreachable.</p>
+                        <p>The Consultify database is unreachable.</p>
                         <p><strong>Error:</strong> ${error.message}</p>
                         <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
                         <p>Please investigate immediately.</p>

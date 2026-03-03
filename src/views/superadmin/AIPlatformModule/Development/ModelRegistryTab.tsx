@@ -33,6 +33,7 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { Api } from '@/services/api';
 
 interface Model {
   id: string;
@@ -68,27 +69,20 @@ export const ModelRegistryTab: React.FC = () => {
   const loadModels = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-
-      const [providersRes, healthRes, usageRes] = await Promise.all([
-        fetch('/api/llm/providers', { headers }),
-        fetch('/api/llm/health/detailed', { headers }),
-        fetch('/api/llm/control/usage', { headers }),
+      const [providersPayload, healthPayload, usagePayload] = await Promise.all([
+        Api.getLLMProviders(),
+        Api.getLLMHealthDetailed(),
+        Api.getLLMControlUsage(),
       ]);
 
-      const providersPayload = await providersRes.json().catch(() => []);
-      const healthPayload = await healthRes.json().catch(() => ({}));
-      const usagePayload = await usageRes.json().catch(() => ({}));
-
       const providers: any[] = Array.isArray(providersPayload) ? providersPayload : [];
-      const healthProviders: any[] = Array.isArray(healthPayload?.providers)
-        ? healthPayload.providers
+      const healthProviders: any[] = Array.isArray((healthPayload as any)?.providers)
+        ? (healthPayload as any).providers
         : [];
       const usageByProvider: Array<{ provider?: string; calls?: number }> = Array.isArray(
-        usagePayload?.byProvider
+        (usagePayload as any)?.byProvider
       )
-        ? usagePayload.byProvider
+        ? (usagePayload as any).byProvider
         : [];
 
       const callsByProvider = new Map(

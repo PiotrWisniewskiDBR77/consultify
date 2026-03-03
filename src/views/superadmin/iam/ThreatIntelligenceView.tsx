@@ -283,7 +283,7 @@ const ThreatIntelligenceView: React.FC = () => {
               <Shield className="w-5 h-5 text-indigo-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Total Threats</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Total Threats</p>
               <p className="text-xl font-semibold">{stats?.totalThreats || 0}</p>
             </div>
           </div>
@@ -295,7 +295,7 @@ const ThreatIntelligenceView: React.FC = () => {
               <Lock className="w-5 h-5 text-red-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Blocked</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Blocked</p>
               <p className="text-xl font-semibold">{stats?.blockedCount || 0}</p>
             </div>
           </div>
@@ -307,7 +307,7 @@ const ThreatIntelligenceView: React.FC = () => {
               <AlertCircle className="w-5 h-5 text-red-600" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Critical</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Critical</p>
               <p className="text-xl font-semibold">{stats?.byThreatLevel.critical || 0}</p>
             </div>
           </div>
@@ -319,7 +319,7 @@ const ThreatIntelligenceView: React.FC = () => {
               <AlertTriangle className="w-5 h-5 text-orange-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">High</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">High</p>
               <p className="text-xl font-semibold">{stats?.byThreatLevel.high || 0}</p>
             </div>
           </div>
@@ -331,7 +331,7 @@ const ThreatIntelligenceView: React.FC = () => {
               <Monitor className="w-5 h-5 text-violet-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">IPs</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">IPs</p>
               <p className="text-xl font-semibold">{stats?.ipCount || 0}</p>
             </div>
           </div>
@@ -343,7 +343,7 @@ const ThreatIntelligenceView: React.FC = () => {
               <Globe className="w-5 h-5 text-cyan-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Domains</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Domains</p>
               <p className="text-xl font-semibold">{stats?.domainCount || 0}</p>
             </div>
           </div>
@@ -355,7 +355,7 @@ const ThreatIntelligenceView: React.FC = () => {
         <Card variant="bordered" className="p-4 border-red-500/30 bg-red-500/5">
           <div className="flex items-center gap-2 text-red-400">
             <AlertTriangle className="w-5 h-5" />
-            <span>{error}</span>
+            <span>{typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}</span>
             <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
               Dismiss
             </button>
@@ -370,7 +370,9 @@ const ThreatIntelligenceView: React.FC = () => {
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
-              showFilters ? 'bg-indigo-500/20 text-indigo-400' : 'bg-slate-700 hover:bg-slate-600'
+              showFilters
+                ? 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200'
             }`}
           >
             <Filter className="w-4 h-4" />
@@ -386,7 +388,7 @@ const ThreatIntelligenceView: React.FC = () => {
           <button
             onClick={loadData}
             disabled={loading}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded-lg transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -406,13 +408,13 @@ const ThreatIntelligenceView: React.FC = () => {
         <Card variant="bordered" className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
-              <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
                 Threat Type
               </label>
               <select
                 value={filters.threatType}
                 onChange={(e) => setFilters({ ...filters, threatType: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               >
                 <option value="">All Types</option>
                 {THREAT_TYPES.map((t) => (
@@ -423,13 +425,13 @@ const ThreatIntelligenceView: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
                 Threat Level
               </label>
               <select
                 value={filters.threatLevel}
                 onChange={(e) => setFilters({ ...filters, threatLevel: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               >
                 <option value="">All Levels</option>
                 {THREAT_LEVELS.map((l) => (
@@ -440,13 +442,13 @@ const ThreatIntelligenceView: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
                 Blocked Status
               </label>
               <select
                 value={filters.isBlocked}
                 onChange={(e) => setFilters({ ...filters, isBlocked: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               >
                 <option value="">All</option>
                 <option value="true">Blocked</option>
@@ -454,7 +456,7 @@ const ThreatIntelligenceView: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
                 IP Address
               </label>
               <input
@@ -462,11 +464,11 @@ const ThreatIntelligenceView: React.FC = () => {
                 value={filters.ipAddress}
                 onChange={(e) => setFilters({ ...filters, ipAddress: e.target.value })}
                 placeholder="Search IP..."
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               />
             </div>
             <div>
-              <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
                 Domain
               </label>
               <input
@@ -474,7 +476,7 @@ const ThreatIntelligenceView: React.FC = () => {
                 value={filters.domain}
                 onChange={(e) => setFilters({ ...filters, domain: e.target.value })}
                 placeholder="Search domain..."
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               />
             </div>
           </div>
@@ -486,26 +488,26 @@ const ThreatIntelligenceView: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+              <tr className="border-b border-slate-200 dark:border-slate-700">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   Type
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   IP / Domain
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   Level
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   Reputation
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   Status
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   Last Seen
                 </th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   Actions
                 </th>
               </tr>
@@ -513,7 +515,7 @@ const ThreatIntelligenceView: React.FC = () => {
             <tbody>
               {threats.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-8 text-slate-400 dark:text-slate-500">
+                  <td colSpan={7} className="text-center py-8 text-slate-600 dark:text-slate-400">
                     No threats found
                   </td>
                 </tr>
@@ -521,7 +523,7 @@ const ThreatIntelligenceView: React.FC = () => {
                 threats.map((threat) => (
                   <tr
                     key={threat.id}
-                    className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors"
+                    className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                   >
                     <td className="py-3 px-4">
                       <span className="px-2 py-1 bg-slate-700 rounded text-xs font-mono">
@@ -532,13 +534,13 @@ const ThreatIntelligenceView: React.FC = () => {
                       <div className="flex items-center gap-2">
                         {threat.ipAddress && (
                           <span className="flex items-center gap-1 text-sm">
-                            <Monitor className="w-3 h-3 text-slate-400 dark:text-slate-500" />
+                            <Monitor className="w-3 h-3 text-slate-500 dark:text-slate-500" />
                             {threat.ipAddress}
                           </span>
                         )}
                         {threat.domain && (
                           <span className="flex items-center gap-1 text-sm">
-                            <Globe className="w-3 h-3 text-slate-400 dark:text-slate-500" />
+                            <Globe className="w-3 h-3 text-slate-500 dark:text-slate-500" />
                             {threat.domain}
                           </span>
                         )}
@@ -558,7 +560,7 @@ const ThreatIntelligenceView: React.FC = () => {
                           Blocked
                         </span>
                       ) : (
-                        <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/300/10 text-slate-400 dark:text-slate-500 rounded text-xs">
+                        <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-400 dark:text-slate-500 rounded text-xs">
                           Active
                         </span>
                       )}
@@ -587,7 +589,7 @@ const ThreatIntelligenceView: React.FC = () => {
                         )}
                         <button
                           onClick={() => handleDelete(threat.id)}
-                          className="p-2 text-slate-400 dark:text-slate-500 hover:bg-slate-700 rounded-lg transition-colors"
+                          className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />

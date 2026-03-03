@@ -20,7 +20,8 @@ export type TargetModule =
   | 'results'
   | 'assessment'
   | 'interview'
-  | 'mywork';
+  | 'mywork'
+  | 'economics';
 
 export type TargetSurface = 'list' | 'detail' | 'wizard' | 'builder' | 'dashboard';
 
@@ -55,7 +56,9 @@ const MODULE_ROUTES: Record<TargetModule, { list: string; detail?: (id: string) 
     detail: (id) => `/initiatives?open=${encodeURIComponent(id)}&mode=doc`,
   },
   reports: {
-    list: '/reports/builder',
+    // Unified hub (V3-J01): list view is the /reports workspace.
+    // Direct editing still lives under /reports/builder/:id.
+    list: '/reports',
     detail: (id) => `/reports/builder/${encodeURIComponent(id)}`,
   },
   presentations: {
@@ -76,6 +79,10 @@ const MODULE_ROUTES: Record<TargetModule, { list: string; detail?: (id: string) 
   mywork: {
     list: '/my-work',
   },
+  economics: {
+    list: '/economics',
+    detail: (id) => `/economics?tab=valuation&open=${encodeURIComponent(id)}`,
+  },
 };
 
 // Module keys for openDocumentsStore (V3-A02)
@@ -88,6 +95,7 @@ const MODULE_KEYS: Record<TargetModule, string> = {
   assessment: 'assessment',
   interview: 'interview',
   mywork: 'mywork',
+  economics: 'economics',
 };
 
 // OpenDocument types from openDocumentsStore
@@ -108,6 +116,10 @@ const ENTITY_TO_DOC_TYPE: Record<string, OpenDocType> = {
   presentation: 'presentation',
   assessment: 'report', // assessment sessions map to report-like docs
   interview: 'report', // interview sessions
+  valuation: 'report',
+  financial_model: 'report',
+  budget: 'report',
+  analysis: 'report',
 };
 
 // ---------------------------------------------------------------------------

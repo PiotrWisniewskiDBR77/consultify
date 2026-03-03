@@ -427,6 +427,15 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
       {/* VAT Validation Tab */}
       {activeTab === 'validation' && (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+          <div className="p-4 bg-amber-50 dark:bg-amber-500/10 rounded-lg border border-amber-200 dark:border-amber-500/20 mb-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+              <p className="text-sm text-amber-800 dark:text-amber-300">
+                VAT validation is currently not configured. Integration with VIES (EU) or Stripe
+                Tax is required.
+              </p>
+            </div>
+          </div>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
             Validate VAT/Tax ID Number
           </h3>
@@ -464,13 +473,18 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                   placeholder="e.g., PL1234567890"
                   className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white font-mono"
                 />
-                <button
-                  onClick={handleValidateVAT}
-                  disabled={!vatNumber || !vatCountry || validating}
-                  className="px-6 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {validating ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Validate'}
-                </button>
+                <div className="relative group">
+                  <button
+                    disabled
+                    className="px-6 py-2 rounded-lg bg-purple-600 text-white opacity-50 cursor-not-allowed"
+                  >
+                    Verify
+                  </button>
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-slate-900 dark:bg-slate-700 text-white text-xs rounded-lg whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity">
+                    VAT validation service not configured
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-900 dark:border-t-slate-700" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

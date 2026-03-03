@@ -462,10 +462,12 @@ router.get(
   '/health/detailed',
   asyncHandler(async (_req, res: Response) => {
     try {
-      // Get providers with health info
+      // Get active providers with real sentinel health_status
       const providers = (await dbAll(`
                 SELECT 
                     id, name, provider, is_active, visibility,
+                    health_status,
+                    api_key,
                     COALESCE(
                         (SELECT AVG(latency_ms) FROM llm_logs WHERE provider = lp.provider ORDER BY created_at DESC LIMIT 10),
                         0
@@ -478,35 +480,64 @@ router.get(
         provider: string;
         is_active: number;
         visibility: string;
+        health_status: string | null;
+        api_key: string | null;
         avgLatency: number;
       }>;
 
-      // Get summary metrics
-      const summaryResult = (await dbAll(`
-                SELECT 
-                    COUNT(*) as total,
-                    SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as healthy
-                FROM llm_providers
-            `)) as Array<{ total: number; healthy: number }>;
+      // Only count providers that have a key configured (env or DB)
+      const envKeys: Record<string, string | undefined> = {
+        openrouter: process.env.OPENROUTER_API_KEY,
+        openai: process.env.OPENAI_API_KEY,
+        anthropic: process.env.ANTHROPIC_API_KEY,
+        google: process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY,
+        gemini: process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY,
+        deepseek: process.env.DEEPSEEK_API_KEY,
+      };
 
-      const summary = summaryResult[0] || { total: 0, healthy: 0 };
+      const configuredProviders = providers.filter(
+        (p) => !!String(p.api_key || '').trim() || !!envKeys[p.provider]?.trim()
+      );
+
+      const healthyCount = configuredProviders.filter(
+        (p) => p.health_status === 'healthy' || p.health_status === 'degraded'
+      ).length;
+
+      // If never tested (health_status null) but has key → treat as degraded (not dead)
+      const neverTestedWithKey = configuredProviders.filter(
+        (p) => p.health_status === null || p.health_status === undefined
+      ).length;
+
+      const effectiveHealthy = healthyCount + neverTestedWithKey;
+      const total = configuredProviders.length;
 
       return res.json({
         success: true,
-        providers: providers.map((p) => ({
-          id: p.id,
-          name: p.name,
-          provider: p.provider,
-          status: p.is_active ? 'healthy' : 'unhealthy',
-          latency: Math.round(p.avgLatency || 0),
-          visibility: p.visibility || 'internal',
-        })),
+        providers: providers.map((p) => {
+          const hasKey = !!String(p.api_key || '').trim() || !!envKeys[p.provider]?.trim();
+          const hs = p.health_status;
+          const status = !hasKey
+            ? 'no_key'
+            : hs === 'healthy' || hs === 'degraded'
+              ? 'healthy'
+              : hs === 'unhealthy'
+                ? 'unhealthy'
+                : 'unknown';
+          return {
+            id: p.id,
+            name: p.name,
+            provider: p.provider,
+            status,
+            latency: Math.round(p.avgLatency || 0),
+            visibility: p.visibility || 'internal',
+          };
+        }),
         alerts: [],
         summary: {
-          total: summary.total,
-          healthy: summary.healthy,
+          total,
+          healthy: effectiveHealthy,
           degraded: 0,
-          unhealthy: summary.total - summary.healthy,
+          unhealthy: total - effectiveHealthy,
         },
       });
     } catch (error: unknown) {

@@ -92,7 +92,7 @@ export async function exportToPDF(elementId: string, options: ExportOptions = {}
     pdf.setPage(i);
     pdf.setFontSize(8);
     pdf.setTextColor(150, 150, 150);
-    pdf.text(`Page ${i} of ${totalPages} • Consultinity`, pageWidth - margin, pageHeight - 5, {
+    pdf.text(`Page ${i} of ${totalPages} • Consultify`, pageWidth - margin, pageHeight - 5, {
       align: 'right',
     });
   }
@@ -135,7 +135,7 @@ export async function exportConversationToPDF(
   pdf.setFontSize(9);
   pdf.setTextColor(120, 120, 120);
   pdf.text(
-    `Exported: ${new Date().toLocaleString()} • ${messages.length} messages • Consultinity`,
+    `Exported: ${new Date().toLocaleString()} • ${messages.length} messages • Consultify`,
     margin,
     y
   );
@@ -202,7 +202,7 @@ export async function exportConversationToPDF(
     pdf.setPage(i);
     pdf.setFontSize(8);
     pdf.setTextColor(150, 150, 150);
-    pdf.text(`Page ${i} of ${totalPages} • Consultinity AI`, pageWidth - margin, pageHeight - 5, {
+    pdf.text(`Page ${i} of ${totalPages} • Consultify AI`, pageWidth - margin, pageHeight - 5, {
       align: 'right',
     });
   }

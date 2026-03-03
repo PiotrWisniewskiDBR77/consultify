@@ -12,7 +12,7 @@ const COMPANY = {
   name: 'DBR77 Sp. z o.o.',
   founded: '2020',
   location: 'Warszawa, Polska',
-  website: 'https://consultinity.com',
+  website: 'https://consultify.com',
 };
 
 export const AboutView: React.FC = () => {
@@ -43,7 +43,7 @@ export const AboutView: React.FC = () => {
                                          text-purple-600 dark:text-purple-400 text-sm font-semibold mb-6"
             >
               <Sparkles size={16} />
-              About Consultinity
+              About Consultify
             </span>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-navy-950 dark:text-white mb-6 tracking-tight">
@@ -55,7 +55,7 @@ export const AboutView: React.FC = () => {
 
             <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
               We believe every leader deserves access to world-class strategic consulting.
-              Consultinity combines AI intelligence with proven frameworks to democratize strategic
+              Consultify combines AI intelligence with proven frameworks to democratize strategic
               decision-making.
             </p>
           </motion.div>
@@ -80,7 +80,7 @@ export const AboutView: React.FC = () => {
               </p>
               <p className="text-lg text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
                 <strong className="text-navy-900 dark:text-white">
-                  Consultinity changes that.
+                  Consultify changes that.
                 </strong>{' '}
                 We've built a platform that combines the rigor of top-tier consulting methodologies
                 with the speed and accessibility of AI.
@@ -144,7 +144,7 @@ export const AboutView: React.FC = () => {
             Built by Consultants, for Leaders
           </h2>
           <p className="text-lg text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
-            Consultinity is developed by {COMPANY.name}, a team of technologists and strategy
+            Consultify is developed by {COMPANY.name}, a team of technologists and strategy
             professionals based in {COMPANY.location}. We combine deep experience in enterprise
             consulting with cutting-edge AI capabilities.
           </p>

@@ -201,8 +201,8 @@ const PermissionsMatrixView: React.FC = () => {
               <Key className="w-5 h-5 text-indigo-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Total Permissions</p>
-              <p className="text-xl font-semibold">
+              <p className="text-sm text-slate-600 dark:text-slate-400">Total Permissions</p>
+              <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                 {stats?.totalPermissions || permissions.length}
               </p>
             </div>
@@ -215,8 +215,10 @@ const PermissionsMatrixView: React.FC = () => {
               <Key className="w-5 h-5 text-violet-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">System Permissions</p>
-              <p className="text-xl font-semibold">{stats?.systemPermissions || 0}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">System Permissions</p>
+              <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                {stats?.systemPermissions || 0}
+              </p>
             </div>
           </div>
         </Card>
@@ -227,8 +229,8 @@ const PermissionsMatrixView: React.FC = () => {
               <BarChart3 className="w-5 h-5 text-amber-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Categories</p>
-              <p className="text-xl font-semibold">
+              <p className="text-sm text-slate-600 dark:text-slate-400">Categories</p>
+              <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                 {Object.keys(stats?.categoryBreakdown || matrix?.categories || {}).length}
               </p>
             </div>
@@ -241,8 +243,10 @@ const PermissionsMatrixView: React.FC = () => {
               <Key className="w-5 h-5 text-emerald-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Roles</p>
-              <p className="text-xl font-semibold">{matrix?.roles?.length || 0}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Roles</p>
+              <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                {matrix?.roles?.length || 0}
+              </p>
             </div>
           </div>
         </Card>
@@ -253,7 +257,7 @@ const PermissionsMatrixView: React.FC = () => {
         <Card variant="bordered" className="p-4 border-red-500/30 bg-red-500/5">
           <div className="flex items-center gap-2 text-red-400">
             <AlertTriangle className="w-5 h-5" />
-            <span>{error}</span>
+            <span>{typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}</span>
             <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
               Dismiss
             </button>
@@ -296,8 +300,8 @@ const PermissionsMatrixView: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-700">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
                     Permission
                   </th>
                   {(matrix.roles || []).map((role) => {
@@ -305,7 +309,7 @@ const PermissionsMatrixView: React.FC = () => {
                     return (
                       <th
                         key={roleName}
-                        className="text-center py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500"
+                        className="text-center py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400"
                       >
                         <div>
                           <span>{roleName}</span>
@@ -323,10 +327,10 @@ const PermissionsMatrixView: React.FC = () => {
               <tbody>
                 {Object.entries(matrix.categories || {}).map(([category, perms]) => (
                   <React.Fragment key={category}>
-                    <tr className="bg-slate-800/50">
+                    <tr className="bg-slate-50 dark:bg-slate-800/50">
                       <td
                         colSpan={matrix.roles.length + 1}
-                        className="py-2 px-4 text-sm font-medium text-indigo-400 uppercase"
+                        className="py-2 px-4 text-sm font-medium text-indigo-700 dark:text-indigo-300 uppercase"
                       >
                         {category}
                       </td>
@@ -334,12 +338,12 @@ const PermissionsMatrixView: React.FC = () => {
                     {perms.map((perm) => (
                       <tr
                         key={perm.key}
-                        className="border-b border-slate-700/50 hover:bg-slate-800/30"
+                        className="border-b border-slate-200 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30"
                       >
                         <td className="py-2 px-4">
                           <div>
                             <p className="text-sm font-mono">{perm.key}</p>
-                            <p className="text-xs text-slate-400 dark:text-slate-500">
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
                               {perm.description}
                             </p>
                           </div>
@@ -363,7 +367,7 @@ const PermissionsMatrixView: React.FC = () => {
                                 title={`${isEnabled ? 'Revoke' : 'Grant'} ${perm.key} for ${roleName}`}
                               >
                                 {toggling === toggleKey ? (
-                                  <Loader2 className="w-4 h-4 animate-spin text-slate-400 dark:text-slate-500 mx-auto" />
+                                  <Loader2 className="w-4 h-4 animate-spin text-slate-500 dark:text-slate-400 mx-auto" />
                                 ) : isEnabled ? (
                                   <Check className="w-4 h-4 text-emerald-400 mx-auto" />
                                 ) : (
@@ -391,17 +395,17 @@ const PermissionsMatrixView: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+              <tr className="border-b border-slate-200 dark:border-slate-700">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
                   Key
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
                   Description
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
                   Category
                 </th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-right py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
                   Actions
                 </th>
               </tr>
@@ -409,19 +413,24 @@ const PermissionsMatrixView: React.FC = () => {
             <tbody>
               {permissions.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-8 text-slate-400 dark:text-slate-500">
+                  <td colSpan={4} className="text-center py-8 text-slate-600 dark:text-slate-400">
                     No permissions defined
                   </td>
                 </tr>
               ) : (
                 permissions.map((perm) => (
-                  <tr key={perm.key} className="border-b border-slate-700/50 hover:bg-slate-800/50">
+                  <tr
+                    key={perm.key}
+                    className="border-b border-slate-200 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                  >
                     <td className="py-3 px-4">
-                      <span className="font-mono text-sm bg-slate-800 px-2 py-1 rounded">
+                      <span className="font-mono text-sm bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 px-2 py-1 rounded">
                         {perm.key}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-sm text-slate-300">{perm.description}</td>
+                    <td className="py-3 px-4 text-sm text-slate-700 dark:text-slate-300">
+                      {perm.description}
+                    </td>
                     <td className="py-3 px-4">
                       <span className="px-2 py-1 bg-indigo-500/10 text-indigo-400 rounded text-xs">
                         {perm.category}
@@ -431,7 +440,7 @@ const PermissionsMatrixView: React.FC = () => {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => openEditModal(perm)}
-                          className="p-2 text-slate-400 dark:text-slate-500 hover:text-slate-200 hover:bg-slate-700 rounded-lg transition-colors"
+                          className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                           title="Edit"
                         >
                           <Edit2 className="w-4 h-4" />
@@ -463,7 +472,7 @@ const PermissionsMatrixView: React.FC = () => {
             <div className="space-y-4">
               {!editingPermission && (
                 <div>
-                  <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                     Key
                   </label>
                   <input
@@ -471,12 +480,12 @@ const PermissionsMatrixView: React.FC = () => {
                     value={formData.key}
                     onChange={(e) => setFormData({ ...formData, key: e.target.value })}
                     placeholder="e.g., users:read"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100"
                   />
                 </div>
               )}
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                   Description
                 </label>
                 <input
@@ -484,17 +493,17 @@ const PermissionsMatrixView: React.FC = () => {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Permission description"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100"
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                   Category
                 </label>
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100"
                 >
                   {categories.map((cat) => (
                     <option key={cat} value={cat}>
@@ -537,19 +546,19 @@ const PermissionsMatrixView: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <Card variant="elevated" className="w-full max-w-md p-6">
             <h3 className="text-lg font-semibold mb-4">Copy Permissions Between Roles</h3>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
               Copy all permissions from one role to another. This will replace the target role's
               permissions.
             </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                   Source Role
                 </label>
                 <select
                   value={copyFormData.sourceRole}
                   onChange={(e) => setCopyFormData({ ...copyFormData, sourceRole: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100"
                 >
                   <option value="">Select source role...</option>
                   {matrix?.roles?.map((role) => {
@@ -563,13 +572,13 @@ const PermissionsMatrixView: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                   Target Role
                 </label>
                 <select
                   value={copyFormData.targetRole}
                   onChange={(e) => setCopyFormData({ ...copyFormData, targetRole: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100"
                 >
                   <option value="">Select target role...</option>
                   {matrix?.roles?.map((role) => {

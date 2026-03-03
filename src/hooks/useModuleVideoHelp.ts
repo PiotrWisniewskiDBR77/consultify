@@ -5,7 +5,7 @@ import { trackFunnelEvent } from '../services/funnelAnalytics';
 
 const getAuthToken = (): string | null => {
   try {
-    const stored = localStorage.getItem('consultinity-storage');
+    const stored = localStorage.getItem('consultify-storage');
     if (!stored) return null;
     const parsed = JSON.parse(stored);
     return parsed?.state?.token || null;

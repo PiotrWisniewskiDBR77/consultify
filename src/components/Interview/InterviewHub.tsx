@@ -7,6 +7,7 @@
  * - Dynamic tabs for open documents
  * - Table/Grid views for listing items
  * - Full document view when selected
+ * - Command Row: context counters
  *
  * @see docs/wdrozenia/UI_UX_GOLDEN_STANDARD.md
  */
@@ -87,6 +88,7 @@ import {
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { Modal } from '@/components/ui/primitives/Modal';
 import { GridView, type GridItem } from '@/components/shared/ModuleHub/GridView';
+import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 
 import { RowActionsMenu } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
@@ -96,12 +98,12 @@ import { InsightViewer } from './InsightViewer';
 import { InterviewWorkspace } from './InterviewWorkspace';
 import { TemplateBuilder } from './TemplateBuilder';
 
-const INTERVIEW_INBOX_TABLE_VIEW_STORAGE_KEY = 'consultinity-interview-inbox-table-view';
+const INTERVIEW_INBOX_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-inbox-table-view';
 const INTERVIEW_MANAGED_ASSIGNMENTS_TABLE_VIEW_STORAGE_KEY =
-  'consultinity-interview-managed-assignments-table-view';
-const INTERVIEW_SESSIONS_TABLE_VIEW_STORAGE_KEY = 'consultinity-interview-sessions-table-view';
-const INTERVIEW_INSIGHTS_TABLE_VIEW_STORAGE_KEY = 'consultinity-interview-insights-table-view';
-const INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY = 'consultinity-interview-templates-table-view';
+  'consultify-interview-managed-assignments-table-view';
+const INTERVIEW_SESSIONS_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-sessions-table-view';
+const INTERVIEW_INSIGHTS_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-insights-table-view';
+const INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-templates-table-view';
 
 const INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
 const INTERVIEW_TEMPLATES_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
@@ -408,6 +410,7 @@ export const InterviewHub: React.FC = () => {
   const [assignmentStatusFilter, setAssignmentStatusFilter] = useState<string>('all');
   const [selectedInsightId, setSelectedInsightId] = useState<string | null>(null);
   const [insightPreviewDetailsExpanded, setInsightPreviewDetailsExpanded] = useState(false);
+  const [insightPreviewAiActiveId, setInsightPreviewAiActiveId] = useState<string | null>(null);
   const [insightTableFilters, setInsightTableFilters] = useState<TableFilters>({});
   const [insightColumnWidths, setInsightColumnWidths] = useState<ColumnWidths>({
     title: 200,
@@ -418,6 +421,12 @@ export const InterviewHub: React.FC = () => {
     actions: 80,
   });
   const [openInsightFilterId, setOpenInsightFilterId] = useState<string | null>(null);
+
+  // Reset preview expansion state when changing selection (KANON v3: stabilny panel)
+  useEffect(() => {
+    setInsightPreviewDetailsExpanded(false);
+    setInsightPreviewAiActiveId(null);
+  }, [selectedInsightId]);
 
   type TemplateBusinessCategory = 'strategic' | 'operational' | 'digital' | 'cost' | 'people';
   const TEMPLATE_BUSINESS_CATEGORIES: Array<{
@@ -494,6 +503,9 @@ export const InterviewHub: React.FC = () => {
   const [previewAiMenuOpen, setPreviewAiMenuOpen] = useState(false);
   const [previewAiText, setPreviewAiText] = useState<string | null>(null);
   const [previewAiError, setPreviewAiError] = useState<string | null>(null);
+  const [previewAiLastIntent, setPreviewAiLastIntent] = useState<'summary' | 'risks' | 'next_steps'>(
+    'summary'
+  );
 
   // Sessions preview (Outlook-style)
   const [previewSessionId, setPreviewSessionId] = useState<string | null>(null);
@@ -3993,7 +4005,6 @@ Return ONLY the answer text (no markdown fences).`;
                 if (s) handleViewSession(s);
               }}
               itemIds={rows.map((r) => r.id)}
-              kicker={isPolish ? 'Sesja' : 'Session'}
               renderPreview={(item) => {
                 const s = item as InterviewSession;
                 const progress =
@@ -4106,10 +4117,10 @@ Return ONLY the answer text (no markdown fences).`;
                   `${pillBase} bg-primary-600 text-white border-primary-500/40 hover:bg-primary-700`;
 
                 return (
-                  <div className="space-y-3">
+                  <div className="space-y-0">
                     {/* AI hints */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex flex-wrap items-center gap-2">
+                    <div className="py-1 flex items-start justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
                           AI
                         </span>
@@ -4183,48 +4194,44 @@ Return ONLY the answer text (no markdown fences).`;
                       />
                     </div>
 
-                    <div className="border-t border-slate-200/70 dark:border-white/[0.06]" />
+                    <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
                     {/* Relations (2 rows) */}
-                    <div className="grid grid-cols-[90px_1fr] gap-x-3 gap-y-1 text-xs">
-                      <span className="text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Projekt' : 'Project'}
+                    <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
+                      <span className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300">
+                        <span className="text-slate-500 dark:text-slate-400">
+                          {isPolish ? 'Projekt' : 'Project'}
+                        </span>
+                        <span className="truncate max-w-[220px]">{s.projectId || '—'}</span>
                       </span>
-                      <span className="text-slate-700 dark:text-slate-200 truncate">
-                        {s.projectId || '—'}
-                      </span>
-                      <span className="text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Organizacja' : 'Org'}
-                      </span>
-                      <span className="text-slate-700 dark:text-slate-200 truncate">
-                        {s.organizationId || '—'}
+                      <span className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300">
+                        <span className="text-slate-500 dark:text-slate-400">
+                          {isPolish ? 'Organizacja' : 'Org'}
+                        </span>
+                        <span className="truncate max-w-[220px]">{s.organizationId || '—'}</span>
                       </span>
                     </div>
 
-                    <div className="border-t border-slate-200/70 dark:border-white/[0.06]" />
+                    <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
                     {/* Actions */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        onClick={() => handleViewSession(s)}
-                        className={pillPrimary}
-                      >
-                        <ChevronRight size={14} />
-                        {isPolish ? 'Otwórz' : 'Open'}
-                      </button>
-                      {canRunAi ? (
-                        <button
-                          onClick={() => handleGenerateInsight(s)}
-                          className={pillNeutral}
-                        >
-                          <Sparkles size={14} />
-                          {isPolish ? 'Generuj wnioski' : 'Generate insights'}
+                    <div className="space-y-2.5 py-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button onClick={() => handleViewSession(s)} className={pillPrimary}>
+                          <ChevronRight size={14} />
+                          {isPolish ? 'Otwórz' : 'Open'}
                         </button>
-                      ) : null}
-                      <button onClick={() => copyToClipboard(s.id)} className={pillNeutral}>
-                        <Copy size={14} />
-                        {isPolish ? 'Kopiuj ID' : 'Copy ID'}
-                      </button>
+                        {canRunAi ? (
+                          <button onClick={() => handleGenerateInsight(s)} className={pillNeutral}>
+                            <Sparkles size={14} />
+                            {isPolish ? 'Generuj wnioski' : 'Generate insights'}
+                          </button>
+                        ) : null}
+                        <button onClick={() => copyToClipboard(s.id)} className={pillNeutral}>
+                          <Copy size={14} />
+                          {isPolish ? 'Kopiuj ID' : 'Copy ID'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -4322,7 +4329,6 @@ Return ONLY the answer text (no markdown fences).`;
             const insight = insightsForTable.find((i) => i.id === id);
             if (insight) handleViewInsight(insight);
           }}
-          kicker={isPolish ? 'Wnioski' : 'Insight'}
           renderPreview={(item) => {
             const type = (item.promptType || item.insightType || item.type || 'summary') as string;
             const sourceLabel = item.sourceSessionCount
@@ -4338,35 +4344,106 @@ Return ONLY the answer text (no markdown fences).`;
                 })
               : '—';
             const detailsText = String(item.content || item.description || item.sourceQuote || '').trim();
+            const createdAt = item.createdAt ? new Date(item.createdAt) : null;
+            const createdRelative = (() => {
+              if (!createdAt || Number.isNaN(createdAt.getTime())) return null;
+              const diffMs = Date.now() - createdAt.getTime();
+              const diffMin = Math.round(diffMs / 60000);
+              const rtf = new Intl.RelativeTimeFormat(isPolish ? 'pl' : 'en', { numeric: 'auto' });
+              if (Math.abs(diffMin) < 60) return rtf.format(-diffMin, 'minute');
+              const diffH = Math.round(diffMin / 60);
+              if (Math.abs(diffH) < 48) return rtf.format(-diffH, 'hour');
+              const diffD = Math.round(diffH / 24);
+              return rtf.format(-diffD, 'day');
+            })();
+
+            const status = (item.status || 'completed') as 'generating' | 'completed' | 'failed';
+            const statusConfig: Record<
+              typeof status,
+              { label: { en: string; pl: string }; bg: string; text: string }
+            > = {
+              generating: {
+                label: { en: 'Generating', pl: 'Generowanie' },
+                bg: 'bg-amber-500/20',
+                text: 'text-amber-600 dark:text-amber-300',
+              },
+              completed: {
+                label: { en: 'Completed', pl: 'Gotowe' },
+                bg: 'bg-emerald-500/20',
+                text: 'text-emerald-700 dark:text-emerald-300',
+              },
+              failed: {
+                label: { en: 'Failed', pl: 'Błąd' },
+                bg: 'bg-red-500/20',
+                text: 'text-red-700 dark:text-red-300',
+              },
+            };
+            const sc = statusConfig[status] || statusConfig.completed;
+            const typeConfig = getInsightTypeConfig(type);
+
+            const aiSuggestions = isPolish
+              ? [
+                  { id: 'summarize', label: 'Podsumuj' },
+                  { id: 'risks', label: 'Wypisz ryzyka' },
+                  { id: 'next', label: 'Następne kroki' },
+                ]
+              : [
+                  { id: 'summarize', label: 'Summarize' },
+                  { id: 'risks', label: 'Extract risks' },
+                  { id: 'next', label: 'Next steps' },
+                ];
+
+            const buildAiPrompt = (kind: string) => {
+              const base = `Title: ${item.title}\n\nContent:\n${detailsText || '—'}`;
+              if (kind === 'summarize') return `Summarize this insight in 5 bullets.\n\n${base}`;
+              if (kind === 'risks') return `Extract risks (with severity) from this insight.\n\n${base}`;
+              if (kind === 'next') return `Propose next steps as a prioritized plan.\n\n${base}`;
+              return base;
+            };
+
+            const activeAi = insightPreviewAiActiveId
+              ? aiSuggestions.find((s) => s.id === insightPreviewAiActiveId) || null
+              : null;
             return (
-              <div className="space-y-4 text-sm">
-                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-                  <span className="text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Typ' : 'Type'}
-                  </span>
-                  <span className="text-slate-900 dark:text-white">
-                    {getInsightTypeLabel(type)}
-                  </span>
-                  <span className="text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Źródło' : 'Source'}
-                  </span>
-                  <span className="text-slate-900 dark:text-white">{sourceLabel}</span>
-                  <span className="text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Data' : 'Date'}
-                  </span>
-                  <span className="text-slate-900 dark:text-white">{dateStr}</span>
-                  {item.confidence && (
-                    <>
-                      <span className="text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Pewność' : 'Confidence'}
+              <div className="space-y-4">
+                {/* 2) Entity Meta Bar (Status & Context Strip) */}
+                <div className="rounded-xl bg-slate-50/70 dark:bg-white/[0.04] border border-slate-200/70 dark:border-white/[0.06] p-4">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-200/60 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200">
+                      {isPolish ? 'Wniosek' : 'Insight'}
+                    </span>
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${typeConfig.bgColor} ${typeConfig.textColor}`}
+                      title={getInsightTypeLabel(type)}
+                    >
+                      {getInsightTypeLabel(type)}
+                    </span>
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${sc.bg} ${sc.text}`}
+                      title={isPolish ? 'Status' : 'Status'}
+                    >
+                      {isPolish ? sc.label.pl : sc.label.en}
+                    </span>
+                    {item.confidence ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-200/40 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300">
+                        {isPolish ? 'Pewność' : 'Confidence'}: {item.confidence}
                       </span>
-                      <span className="text-slate-900 dark:text-white">{item.confidence}</span>
-                    </>
-                  )}
+                    ) : null}
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-200/40 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300">
+                      {sourceLabel}
+                    </span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-200/40 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300">
+                      {createdRelative
+                        ? isPolish
+                          ? `Utworzono ${createdRelative}`
+                          : `Created ${createdRelative}`
+                        : dateStr}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Details (canonical preview section) */}
-                <div className="pt-2 border-t border-slate-200/70 dark:border-white/[0.06]">
+                {/* 3) Content Section — Details */}
+                <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       {isPolish ? 'Szczegóły' : 'Details'}
@@ -4395,169 +4472,219 @@ Return ONLY the answer text (no markdown fences).`;
                           id: 'copy-summarize-prompt',
                           label: isPolish ? 'Kopiuj prompt: podsumuj' : 'Copy prompt: summarize',
                           icon: Sparkles,
-                          onClick: () =>
-                            copyToClipboard(
-                              `Summarize this insight in 5 bullets.\n\nTitle: ${item.title}\n\nContent:\n${detailsText || '—'}`
-                            ),
+                          onClick: () => copyToClipboard(buildAiPrompt('summarize')),
                         },
                       ]}
                     />
                   </div>
-                  <div
-                    className={[
-                      'mt-2 text-slate-700 dark:text-slate-300 whitespace-pre-wrap',
-                      insightPreviewDetailsExpanded ? '' : 'line-clamp-6',
-                    ].join(' ')}
-                  >
-                    {detailsText || '—'}
+
+                  {detailsText ? (
+                    <div
+                      className={[
+                        'text-sm leading-relaxed text-slate-700 dark:text-slate-200 whitespace-pre-wrap',
+                        insightPreviewDetailsExpanded ? '' : 'line-clamp-8',
+                      ].join(' ')}
+                    >
+                      {detailsText}
+                    </div>
+                  ) : (
+                    <EmptyStateInline
+                      message={isPolish ? 'Brak szczegółów.' : 'No details yet.'}
+                      hint={
+                        isPolish
+                          ? 'Otwórz pełny widok, aby dodać treść lub zregenerować wniosek.'
+                          : 'Open full view to add content or regenerate the insight.'
+                      }
+                      className="p-6"
+                    />
+                  )}
+                </div>
+
+                {/* 4) AI Insights (distinct zone) */}
+                <div className="pt-4 border-t border-slate-200/70 dark:border-white/[0.06]">
+                  <div className="rounded-xl bg-purple-500/[0.04] dark:bg-purple-500/[0.08] border border-slate-200/70 dark:border-white/[0.06] p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                        <Sparkles size={14} className="text-purple-600 dark:text-purple-300" />
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          {isPolish ? 'Wskazówki AI' : 'AI Insights'}
+                        </span>
+                      </div>
+                      <RowActionsMenu
+                        iconVariant="vertical"
+                        actions={[
+                          {
+                            id: 'copy-ai-prompt',
+                            label: isPolish ? 'Kopiuj prompt AI' : 'Copy AI prompt',
+                            icon: Copy,
+                            onClick: () =>
+                              copyToClipboard(buildAiPrompt(insightPreviewAiActiveId || 'summarize')),
+                          },
+                          {
+                            id: 'copy-details',
+                            label: isPolish ? 'Kopiuj szczegóły' : 'Copy details',
+                            icon: Copy,
+                            onClick: () => copyToClipboard(detailsText || item.title || ''),
+                          },
+                          {
+                            id: 'clear-ai',
+                            label: isPolish ? 'Wyczyść' : 'Clear',
+                            icon: RotateCcw,
+                            onClick: () => setInsightPreviewAiActiveId(null),
+                          },
+                        ]}
+                      />
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      {aiSuggestions.map((s) => {
+                        const active = insightPreviewAiActiveId === s.id;
+                        return (
+                          <button
+                            key={s.id}
+                            onClick={() =>
+                              setInsightPreviewAiActiveId((prev) => (prev === s.id ? null : s.id))
+                            }
+                            className={[
+                              'inline-flex items-center h-8 px-3 rounded-full border text-xs font-medium transition-colors',
+                              active
+                                ? 'bg-white/70 dark:bg-white/[0.08] border-purple-500/30 text-purple-700 dark:text-purple-200'
+                                : 'bg-transparent border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-white/[0.06]',
+                            ].join(' ')}
+                          >
+                            {s.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* 4.3 AI Expansion Container (200ms ease) */}
+                    <div
+                      className={[
+                        'mt-3 grid transition-[grid-template-rows,opacity] duration-200 ease-out',
+                        activeAi ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-90',
+                      ].join(' ')}
+                    >
+                      <div className="overflow-hidden">
+                        {activeAi ? (
+                          <div className="rounded-xl bg-white/70 dark:bg-white/[0.04] border border-slate-200/70 dark:border-white/[0.06] p-3">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                                {activeAi.label}
+                              </div>
+                              <button
+                                onClick={() => copyToClipboard(buildAiPrompt(activeAi.id))}
+                                className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-transparent text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors text-xs font-medium"
+                              >
+                                <Copy size={14} />
+                                {isPolish ? 'Kopiuj prompt' : 'Copy prompt'}
+                              </button>
+                            </div>
+                            <div className="mt-2 text-xs text-slate-600 dark:text-slate-300 whitespace-pre-wrap font-mono leading-relaxed">
+                              {buildAiPrompt(activeAi.id)}
+                            </div>
+                            <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                              {isPolish
+                                ? 'AI jest doradcze — zweryfikuj przed zastosowaniem.'
+                                : 'AI is advisory — verify before applying.'}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5) Linked Entities Section (References) */}
+                <div className="pt-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Powiązania' : 'Linked Items'}
+                  </div>
+                  <div className="mt-2 min-h-[4.5rem] flex flex-wrap items-start gap-2">
+                    {item.sessionId ? (
+                      <button
+                        onClick={() => openSessionById(item.sessionId!)}
+                        className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/60 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors text-xs font-medium"
+                        title={item.sessionId}
+                      >
+                        <MessageSquare size={14} />
+                        {isPolish ? 'Sesja' : 'Session'} {item.sessionId.slice(0, 8)}…
+                      </button>
+                    ) : null}
+                    {item.createdBy ? (
+                      <span className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-transparent text-slate-600 dark:text-slate-300 text-xs font-medium">
+                        <Users size={14} />
+                        {item.createdBy}
+                      </span>
+                    ) : null}
+                    {!item.sessionId && !item.createdBy ? (
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Brak powiązań.' : 'No linked items.'}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               </div>
             );
           }}
           renderPreviewFooter={(item) => {
-            const aiHints = isPolish
-              ? ['Podsumuj', 'Wypisz ryzyka', 'Następne kroki']
-              : ['Summarize', 'Extract risks', 'Next steps'];
-            const detailsText = String(item.content || item.description || item.sourceQuote || '').trim();
             const pillBase =
               'inline-flex items-center gap-2 h-9 px-3 rounded-full border text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-            const pillNeutral =
+            const pillSecondary =
               `${pillBase} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
             const pillPrimary =
               `${pillBase} bg-primary-600 text-white border-primary-500/40 hover:bg-primary-700`;
-            const chipClass =
-              'inline-flex items-center h-8 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-transparent text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-white/70 dark:hover:bg-white/[0.06] transition-colors';
+            const pillTertiary =
+              'inline-flex items-center gap-2 h-9 px-3 rounded-full text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 bg-transparent text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]';
 
             return (
-              <div className="space-y-3">
-                {/* AI hints + AI kebab (canonical) */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      AI
-                    </span>
-                    {aiHints.map((hint) => (
-                      <button
-                        key={hint}
-                        onClick={() =>
-                          copyToClipboard(
-                            `${hint}\n\nTitle: ${item.title}\n\nContent:\n${detailsText || '—'}`
-                          )
-                        }
-                        className={chipClass}
-                      >
-                        {hint}
-                      </button>
-                    ))}
-                  </div>
-                  <RowActionsMenu
-                    iconVariant="vertical"
-                    actions={[
-                      {
-                        id: 'copy-ai-prompt',
-                        label: isPolish ? 'Kopiuj prompt AI' : 'Copy AI prompt',
-                        icon: Copy,
-                        onClick: () =>
-                          copyToClipboard(
-                            `Summarize / extract actions from insight:\n\nTitle: ${item.title}\n\nContent:\n${detailsText || '—'}`
-                          ),
-                      },
-                      {
-                        id: 'copy-details',
-                        label: isPolish ? 'Kopiuj szczegóły' : 'Copy details',
-                        icon: Copy,
-                        onClick: () => copyToClipboard(detailsText || item.title || ''),
-                      },
-                      {
-                        id: 'clear',
-                        label: isPolish ? 'Wyczyść' : 'Clear',
-                        icon: RotateCcw,
-                        onClick: () =>
-                          toast.success(isPolish ? 'Wyczyściłem stan podglądu' : 'Preview state cleared'),
-                      },
-                    ]}
-                  />
-                </div>
-
-                <div className="border-t border-slate-200/70 dark:border-white/[0.06]" />
-
-                {/* Relations (2 rows, canonical) */}
-                <div className="grid grid-cols-[90px_1fr] gap-x-3 gap-y-1 text-xs">
-                  <span className="text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Sesja' : 'Session'}
-                  </span>
-                  {item.sessionId ? (
-                    <button
-                      onClick={() => openSessionById(item.sessionId!)}
-                      className="text-left text-purple-700 dark:text-purple-300 hover:underline truncate"
-                      title={item.sessionId}
-                    >
-                      {item.sessionId.slice(0, 8)}…
-                    </button>
-                  ) : (
-                    <span className="text-slate-700 dark:text-slate-200">—</span>
-                  )}
-
-                  <span className="text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Autor' : 'Creator'}
-                  </span>
-                  <span className="text-slate-700 dark:text-slate-200 truncate">
-                    {item.createdBy || '—'}
-                  </span>
-                </div>
-
-                <div className="border-t border-slate-200/70 dark:border-white/[0.06]" />
-
-                {/* Actions (canonical footer zone) */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <button onClick={() => handleViewInsight(item)} className={pillPrimary}>
-                    <ChevronRight size={14} />
-                    {isPolish ? 'Otwórz' : 'Open'}
-                  </button>
-                  <button
-                    onClick={() => !item.exportedToTools && handleExportInsightToTools(item.id)}
-                    disabled={!!item.exportedToTools}
-                    className={`${pillNeutral} ${item.exportedToTools ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    title={item.exportedToTools ? (isPolish ? 'Już wyeksportowano' : 'Already exported') : undefined}
-                  >
-                    <Send size={14} />
-                    {item.exportedToTools
+              <div className="flex flex-wrap items-center gap-2">
+                <button onClick={() => handleViewInsight(item)} className={pillPrimary}>
+                  <ChevronRight size={14} />
+                  {isPolish ? 'Otwórz' : 'Open'}
+                </button>
+                <button
+                  onClick={() => !item.exportedToTools && handleExportInsightToTools(item.id)}
+                  disabled={!!item.exportedToTools}
+                  className={`${pillSecondary} ${item.exportedToTools ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  title={
+                    item.exportedToTools ? (isPolish ? 'Już wyeksportowano' : 'Already exported') : undefined
+                  }
+                >
+                  <Send size={14} />
+                  {item.exportedToTools
+                    ? isPolish
+                      ? 'W Tools'
+                      : 'In Tools'
+                    : isPolish
+                      ? 'Eksport: Tools'
+                      : 'Export: Tools'}
+                </button>
+                <button
+                  onClick={() => !item.exportedToAssessment && handleExportInsightToAssessment(item.id)}
+                  disabled={!!item.exportedToAssessment}
+                  className={`${pillSecondary} ${item.exportedToAssessment ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  title={
+                    item.exportedToAssessment
                       ? isPolish
-                        ? 'W Tools'
-                        : 'In Tools'
-                      : isPolish
-                        ? 'Eksport: Tools'
-                        : 'Export: Tools'}
-                  </button>
-                  <button
-                    onClick={() =>
-                      !item.exportedToAssessment && handleExportInsightToAssessment(item.id)
-                    }
-                    disabled={!!item.exportedToAssessment}
-                    className={`${pillNeutral} ${item.exportedToAssessment ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    title={
-                      item.exportedToAssessment
-                        ? isPolish
-                          ? 'Już wyeksportowano'
-                          : 'Already exported'
-                        : undefined
-                    }
-                  >
-                    <Target size={14} />
-                    {item.exportedToAssessment
-                      ? isPolish
-                        ? 'W Ocena'
-                        : 'In Assessment'
-                      : isPolish
-                        ? 'Eksport: Ocena'
-                        : 'Export: Assessment'}
-                  </button>
-                  <button onClick={() => copyToClipboard(item.title || '')} className={pillNeutral}>
-                    <Copy size={14} />
-                    {isPolish ? 'Kopiuj tytuł' : 'Copy title'}
-                  </button>
-                </div>
+                        ? 'Już wyeksportowano'
+                        : 'Already exported'
+                      : undefined
+                  }
+                >
+                  <Target size={14} />
+                  {item.exportedToAssessment
+                    ? isPolish
+                      ? 'W Ocena'
+                      : 'In Assessment'
+                    : isPolish
+                      ? 'Eksport: Ocena'
+                      : 'Export: Assessment'}
+                </button>
+                <button onClick={() => copyToClipboard(item.title || '')} className={pillTertiary}>
+                  <Copy size={14} />
+                  {isPolish ? 'Kopiuj tytuł' : 'Copy title'}
+                </button>
               </div>
             );
           }}
@@ -4681,38 +4808,61 @@ Return ONLY the answer text (no markdown fences).`;
             onSelect={(id) => setSelectedTemplateId(id)}
             onOpenFull={onOpenFull}
             itemIds={rows.map((t) => t.id)}
-            kicker={isPolish ? 'Szablon' : 'Template'}
             renderPreview={(item) => {
               const itemQuestions = templateQuestionsById[item.id] || [];
               const isLoadingQuestions = !!templateQuestionsLoading[item.id];
 
               return (
                 <div className="space-y-4">
-                  {/* Meta row */}
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-300 border border-slate-200/70 dark:border-white/[0.08]">
-                      {isPolish ? 'Szablon' : 'Template'}
-                    </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-white/[0.08]">
-                      {item.category}
-                    </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300">
-                      {item.isDefault ? (isPolish ? 'Domyślny' : 'Default') : isPolish ? 'Aktywny' : 'Active'}
-                    </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300">
-                      {item.questionCount} {isPolish ? 'pytań' : 'questions'}
-                    </span>
+                  {/* Brief / Meta card (KANON v3) */}
+                  <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-300 border border-slate-200/70 dark:border-white/[0.08]">
+                        {isPolish ? 'Szablon' : 'Template'}
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-white/[0.08]">
+                        {item.category}
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300">
+                        {item.isDefault
+                          ? isPolish
+                            ? 'Domyślny'
+                            : 'Default'
+                          : isPolish
+                            ? 'Aktywny'
+                            : 'Active'}
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300">
+                        {item.questionCount} {isPolish ? 'pytań' : 'questions'}
+                      </span>
+                    </div>
+
+                    <div className="mt-2 text-xs text-slate-600 dark:text-slate-300 line-clamp-2">
+                      {(item.description || '').trim()
+                        ? item.description
+                        : isPolish
+                          ? 'Brak opisu.'
+                          : 'No description.'}
+                    </div>
+
+                    <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Utworzono' : 'Created'}:{' '}
+                      {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}
+                    </div>
                   </div>
 
-                  {/* Details block + kebab */}
-                  <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-3">
+                  {/* Details — with kebab (MUST) */}
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         {isPolish ? 'Szczegóły' : 'Details'}
                       </div>
                       <div className="relative">
                         <button
-                          onClick={() => setTemplatePreviewDetailsMenuOpen((v) => !v)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTemplatePreviewDetailsMenuOpen((v) => !v);
+                          }}
                           className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
                           aria-label={isPolish ? 'Opcje szczegółów' : 'Details options'}
                           title={isPolish ? 'Opcje' : 'Options'}
@@ -4727,7 +4877,8 @@ Return ONLY the answer text (no markdown fences).`;
                             />
                             <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
                               <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setTemplatePreviewDetailsMenuOpen(false);
                                   onOpenFull(item.id);
                                 }}
@@ -4736,7 +4887,8 @@ Return ONLY the answer text (no markdown fences).`;
                                 {canAssign ? (isPolish ? 'Edytuj' : 'Edit') : isPolish ? 'Otwórz' : 'Open'}
                               </button>
                               <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setTemplatePreviewDetailsMenuOpen(false);
                                   handleCloneTemplate(item);
                                 }}
@@ -4746,7 +4898,8 @@ Return ONLY the answer text (no markdown fences).`;
                               </button>
                               {canAssign && !item.isDefault ? (
                                 <button
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setTemplatePreviewDetailsMenuOpen(false);
                                     handleDeleteTemplate(item);
                                   }}
@@ -4761,7 +4914,7 @@ Return ONLY the answer text (no markdown fences).`;
                       </div>
                     </div>
 
-                    <div className="mt-2 text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
+                    <div className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
                       {(item.description || '').trim()
                         ? item.description
                         : isPolish
@@ -4770,12 +4923,12 @@ Return ONLY the answer text (no markdown fences).`;
                     </div>
                   </div>
 
-                  {/* Questions list (preview) */}
-                  <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.02] p-3">
-                    <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  {/* Questions (read-only preview) */}
+                  <div className="space-y-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       {isPolish ? 'Pytania' : 'Questions'}
                     </div>
-                    <div className="mt-2 space-y-1.5">
+                    <div className="space-y-1.5">
                       {isLoadingQuestions ? (
                         <div className="text-xs text-slate-400 dark:text-slate-500">
                           {isPolish ? 'Ładowanie…' : 'Loading…'}
@@ -4821,15 +4974,18 @@ Return ONLY the answer text (no markdown fences).`;
               return (
                 <div className="space-y-0">
                   {/* AI hints (functional: copy prompt for AI use) */}
-                  <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
-                    <div className="flex items-center justify-between gap-2">
+                  <div className="py-1">
+                    <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
                         <Sparkles size={12} />
                         <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
                       </div>
                       <div className="relative">
                         <button
-                          onClick={() => setTemplatePreviewAiMenuOpen((v) => !v)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTemplatePreviewAiMenuOpen((v) => !v);
+                          }}
                           className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
                           aria-label={isPolish ? 'Opcje AI' : 'AI options'}
                           title={isPolish ? 'Opcje' : 'Options'}
@@ -4844,7 +5000,8 @@ Return ONLY the answer text (no markdown fences).`;
                             />
                             <div className="absolute right-0 top-full mt-1 z-50 w-60 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
                               <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setTemplatePreviewAiMenuOpen(false);
                                   copyToClipboard(buildPrompt('summary', item.id));
                                 }}
@@ -4853,7 +5010,8 @@ Return ONLY the answer text (no markdown fences).`;
                                 {isPolish ? 'Kopiuj prompt: Podsumuj' : 'Copy prompt: Summarize'}
                               </button>
                               <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setTemplatePreviewAiMenuOpen(false);
                                   copyToClipboard(buildPrompt('improvements', item.id));
                                 }}
@@ -4862,7 +5020,8 @@ Return ONLY the answer text (no markdown fences).`;
                                 {isPolish ? 'Kopiuj prompt: Usprawnienia' : 'Copy prompt: Improvements'}
                               </button>
                               <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setTemplatePreviewAiMenuOpen(false);
                                   copyToClipboard(buildPrompt('gaps', item.id));
                                 }}
@@ -4876,14 +5035,23 @@ Return ONLY the answer text (no markdown fences).`;
                       </div>
                     </div>
 
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <button className={hintChip} onClick={() => copyToClipboard(buildPrompt('summary', item.id))}>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      <button
+                        className={hintChip}
+                        onClick={() => copyToClipboard(buildPrompt('summary', item.id))}
+                      >
                         {isPolish ? 'Podsumuj' : 'Summarize'}
                       </button>
-                      <button className={hintChip} onClick={() => copyToClipboard(buildPrompt('improvements', item.id))}>
+                      <button
+                        className={hintChip}
+                        onClick={() => copyToClipboard(buildPrompt('improvements', item.id))}
+                      >
                         {isPolish ? 'Usprawnienia' : 'Improve'}
                       </button>
-                      <button className={hintChip} onClick={() => copyToClipboard(buildPrompt('gaps', item.id))}>
+                      <button
+                        className={hintChip}
+                        onClick={() => copyToClipboard(buildPrompt('gaps', item.id))}
+                      >
                         {isPolish ? 'Luki' : 'Find gaps'}
                       </button>
                     </div>
@@ -4892,20 +5060,17 @@ Return ONLY the answer text (no markdown fences).`;
                   <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
                   {/* Relations (2 rows) */}
-                  <div className="min-h-[4.5rem]">
-                    <div className="flex flex-wrap gap-2 py-1">
-                      <span className="inline-flex items-center h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300">
-                        {isPolish ? 'Kategoria:' : 'Category:'} {item.category}
+                  <div className="min-h-[4.5rem] py-1">
+                    <div className="grid grid-cols-[90px_1fr] gap-x-3 gap-y-1 text-xs">
+                      <span className="text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Kategoria' : 'Category'}
                       </span>
-                      <span className="inline-flex items-center h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300">
-                        {isPolish ? 'Użycia:' : 'Used:'} {usage}
+                      <span className="text-slate-700 dark:text-slate-200 truncate">{item.category || '—'}</span>
+
+                      <span className="text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Użycia' : 'Used'}
                       </span>
-                    </div>
-                    <div className="flex flex-wrap gap-2 py-1">
-                      <span className="inline-flex items-center h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300">
-                        {isPolish ? 'Utworzono:' : 'Created:'}{' '}
-                        {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}
-                      </span>
+                      <span className="text-slate-700 dark:text-slate-200 truncate">{usage}</span>
                     </div>
                   </div>
 
@@ -5012,7 +5177,6 @@ Return ONLY the answer text (no markdown fences).`;
                 if (a) void openInterviewAssignmentFull(a, false);
               }}
               itemIds={rows.map((r) => r.id)}
-              kicker={isPolish ? 'Przydziały' : 'Assignments'}
               renderPreview={(item) => {
                 const a = item as InterviewAssignment;
                 const progress = a.session?.completenessPercent ?? 0;
@@ -5141,10 +5305,10 @@ Return ONLY the answer text (no markdown fences).`;
                 return (
                   <div className="space-y-0">
                     {/* AI hints (MUST) */}
-                    <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          AI
+                    <div className="py-1">
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                          <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
                         </div>
                         <div className="relative">
                           <button
@@ -5159,6 +5323,21 @@ Return ONLY the answer text (no markdown fences).`;
                             <>
                               <div className="fixed inset-0 z-40" onClick={() => setPreviewAiMenuOpen(false)} />
                               <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
+                                <button
+                                  onClick={async () => {
+                                    setPreviewAiMenuOpen(false);
+                                    const text = await runAssignmentAi(previewAiLastIntent, a);
+                                    if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                                    else {
+                                      setPreviewAiError(null);
+                                      setPreviewAiText(text);
+                                    }
+                                  }}
+                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                                >
+                                  {isPolish ? 'Regeneruj' : 'Regenerate'}
+                                </button>
+                                <div className="border-t border-slate-200/70 dark:border-white/[0.08]" />
                                 <button
                                   onClick={async () => {
                                     setPreviewAiMenuOpen(false);
@@ -5185,10 +5364,11 @@ Return ONLY the answer text (no markdown fences).`;
                         </div>
                       </div>
 
-                      <div className="mt-2 flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-1.5">
                         <button
                           className={hintChip}
                           onClick={async () => {
+                            setPreviewAiLastIntent('summary');
                             const text = await runAssignmentAi('summary', a);
                             if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
                             else {
@@ -5202,6 +5382,7 @@ Return ONLY the answer text (no markdown fences).`;
                         <button
                           className={hintChip}
                           onClick={async () => {
+                            setPreviewAiLastIntent('risks');
                             const text = await runAssignmentAi('risks', a);
                             if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
                             else {
@@ -5215,6 +5396,7 @@ Return ONLY the answer text (no markdown fences).`;
                         <button
                           className={hintChip}
                           onClick={async () => {
+                            setPreviewAiLastIntent('next_steps');
                             const text = await runAssignmentAi('next_steps', a);
                             if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
                             else {
@@ -5239,24 +5421,22 @@ Return ONLY the answer text (no markdown fences).`;
                     <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
                     {/* Relations (2 rows) */}
-                    <div className="min-h-[4.5rem]">
-                      <div className="flex flex-wrap gap-2 py-1">
-                        {relations.length > 0 ? (
-                          relations.map((r) => (
-                            <span
-                              key={r.label}
-                              className={`inline-flex items-center h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent ${r.tone}`}
-                              title={r.label}
-                            >
-                              {r.label}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-xs text-slate-400 dark:text-slate-500">
-                            {isPolish ? 'Brak powiązań' : 'No relations'}
+                    <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
+                      {relations.length > 0 ? (
+                        relations.map((r) => (
+                          <span
+                            key={r.label}
+                            className={`inline-flex items-center h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent ${r.tone}`}
+                            title={r.label}
+                          >
+                            {r.label}
                           </span>
-                        )}
-                      </div>
+                        ))
+                      ) : (
+                        <span className="text-xs text-slate-400 dark:text-slate-500 italic py-1.5">
+                          {isPolish ? 'Brak powiązań' : 'No linked documents'}
+                        </span>
+                      )}
                     </div>
 
                     <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
@@ -5384,7 +5564,6 @@ Return ONLY the answer text (no markdown fences).`;
                 if (a) void openInterviewAssignmentFull(a, true);
               }}
               itemIds={rows.map((r) => r.id)}
-              kicker={isPolish ? 'Przydziały' : 'Assignments'}
               renderPreview={(item) => {
                 const a = item as InterviewAssignment;
                 const progress = a.session?.completenessPercent ?? 0;
@@ -5513,10 +5692,10 @@ Return ONLY the answer text (no markdown fences).`;
                 return (
                   <div className="space-y-0">
                     {/* AI hints (MUST) */}
-                    <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          AI
+                    <div className="py-1">
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                          <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
                         </div>
                         <div className="relative">
                           <button
@@ -5531,6 +5710,21 @@ Return ONLY the answer text (no markdown fences).`;
                             <>
                               <div className="fixed inset-0 z-40" onClick={() => setPreviewAiMenuOpen(false)} />
                               <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
+                                <button
+                                  onClick={async () => {
+                                    setPreviewAiMenuOpen(false);
+                                    const text = await runAssignmentAi(previewAiLastIntent, a);
+                                    if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                                    else {
+                                      setPreviewAiError(null);
+                                      setPreviewAiText(text);
+                                    }
+                                  }}
+                                  className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                                >
+                                  {isPolish ? 'Regeneruj' : 'Regenerate'}
+                                </button>
+                                <div className="border-t border-slate-200/70 dark:border-white/[0.08]" />
                                 <button
                                   onClick={async () => {
                                     setPreviewAiMenuOpen(false);
@@ -5557,10 +5751,11 @@ Return ONLY the answer text (no markdown fences).`;
                         </div>
                       </div>
 
-                      <div className="mt-2 flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-1.5">
                         <button
                           className={hintChip}
                           onClick={async () => {
+                            setPreviewAiLastIntent('summary');
                             const text = await runAssignmentAi('summary', a);
                             if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
                             else {
@@ -5574,6 +5769,7 @@ Return ONLY the answer text (no markdown fences).`;
                         <button
                           className={hintChip}
                           onClick={async () => {
+                            setPreviewAiLastIntent('risks');
                             const text = await runAssignmentAi('risks', a);
                             if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
                             else {
@@ -5587,6 +5783,7 @@ Return ONLY the answer text (no markdown fences).`;
                         <button
                           className={hintChip}
                           onClick={async () => {
+                            setPreviewAiLastIntent('next_steps');
                             const text = await runAssignmentAi('next_steps', a);
                             if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
                             else {
@@ -5611,24 +5808,22 @@ Return ONLY the answer text (no markdown fences).`;
                     <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
                     {/* Relations (2 rows) */}
-                    <div className="min-h-[4.5rem]">
-                      <div className="flex flex-wrap gap-2 py-1">
-                        {relations.length > 0 ? (
-                          relations.map((r) => (
-                            <span
-                              key={r.label}
-                              className={`inline-flex items-center h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent ${r.tone}`}
-                              title={r.label}
-                            >
-                              {r.label}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-xs text-slate-400 dark:text-slate-500">
-                            {isPolish ? 'Brak powiązań' : 'No relations'}
+                    <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
+                      {relations.length > 0 ? (
+                        relations.map((r) => (
+                          <span
+                            key={r.label}
+                            className={`inline-flex items-center h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent ${r.tone}`}
+                            title={r.label}
+                          >
+                            {r.label}
                           </span>
-                        )}
-                      </div>
+                        ))
+                      ) : (
+                        <span className="text-xs text-slate-400 dark:text-slate-500 italic py-1.5">
+                          {isPolish ? 'Brak powiązań' : 'No linked documents'}
+                        </span>
+                      )}
                     </div>
 
                     <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />

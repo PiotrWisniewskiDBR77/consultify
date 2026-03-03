@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
@@ -104,7 +105,16 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
         const res = await fetch(`/api/execution-control/budget/initiative/${initiativeId}`, {
           headers,
         });
-        if (res.ok) setInitSummary(await res.json());
+        if (res.ok) {
+          setInitSummary(await res.json());
+        } else {
+          const err = await res.json().catch(() => ({}));
+          toast.error(
+            (err as any)?.error ||
+              (err as any)?.message ||
+              t('execution.toast.budgetLoadFailed', 'Failed to load budget')
+          );
+        }
       } else {
         const params = new URLSearchParams();
         if (projectId) params.set('projectId', projectId);
@@ -134,7 +144,10 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
     if (!initiativeId || !entryForm.amount) return;
     try {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        toast.error(t('execution.toast.notAuthenticated', 'Not authenticated'));
+        return;
+      }
       const res = await fetch('/api/execution-control/budget/entries', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -154,9 +167,17 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
         setEntryForm({ costType: 'CAPEX', amount: '', category: '', description: '' });
         loadData();
         trackFunnelEvent('budget_actual_updated', { initiativeId });
+        toast.success(t('execution.toast.budgetEntryAdded', 'Budget entry added'));
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(
+          (err as any)?.error ||
+            (err as any)?.message ||
+            t('execution.toast.budgetEntryAddFailed', 'Failed to add budget entry')
+        );
       }
     } catch {
-      // non-blocking
+      toast.error(t('execution.toast.budgetEntryAddFailed', 'Failed to add budget entry'));
     }
   }, [initiativeId, entryForm, loadData]);
 

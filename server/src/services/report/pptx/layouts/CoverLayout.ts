@@ -92,7 +92,7 @@ export function CoverLayout(
   elements.push(
     BodyText(
       {
-        text: 'Consultinity',
+        text: 'Consultify',
         position: { x: 0.8, y: 4.8, w: 8.4, h: 0.3 },
         fontSize: 11,
         color: tokens.colors.textInverse,

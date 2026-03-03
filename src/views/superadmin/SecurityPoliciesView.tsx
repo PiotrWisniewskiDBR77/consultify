@@ -115,30 +115,29 @@ export const SecurityPoliciesView: React.FC = () => {
   const [newAllowlistIP, setNewAllowlistIP] = useState('');
   const [newBlocklistIP, setNewBlocklistIP] = useState('');
 
+  const [orgPoliciesMap, setOrgPoliciesMap] = useState<Map<string, any>>(new Map());
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch global policy (defaults)
       const globalResult = await Api.get('/security-policies/defaults');
       setGlobalPolicy(globalResult.policy);
 
-      // Fetch organizations and all policies at once
       const [orgs, policiesResult] = await Promise.all([
         Api.getOrganizations(),
         Api.get('/security-policies/all'),
       ]);
 
-      // Map policies to organizations
-      const orgPolicies = new Map(
+      const policiesMap = new Map(
         (policiesResult.policies || []).map((p: any) => [p.organization_id, p])
       );
+      setOrgPoliciesMap(policiesMap);
       const orgsWithPolicy = orgs.map((org: any) => ({
         ...org,
-        hasCustomPolicy: orgPolicies.has(org.id),
+        hasCustomPolicy: policiesMap.has(org.id),
       }));
       setOrganizations(orgsWithPolicy);
 
-      // Lockouts would need a separate endpoint - skip for now
       setLockouts([]);
     } catch (error) {
       console.error('Failed to fetch security data:', error);
@@ -569,7 +568,15 @@ export const SecurityPoliciesView: React.FC = () => {
         {organizations.map((org) => (
           <div
             key={org.id}
-            onClick={() => setSelectedOrg(org.id)}
+            onClick={() => {
+              setSelectedOrg(org.id);
+              const existingPolicy = orgPoliciesMap.get(org.id);
+              if (existingPolicy) {
+                setSelectedPolicy(existingPolicy);
+              } else if (globalPolicy) {
+                setSelectedPolicy({ ...globalPolicy, organizationId: org.id, organizationName: org.name });
+              }
+            }}
             className={`p-4 rounded-xl border cursor-pointer transition-all ${
               selectedOrg === org.id
                 ? 'bg-violet-50 dark:bg-violet-500/10 border-violet-300 dark:border-violet-500/30'
@@ -594,7 +601,7 @@ export const SecurityPoliciesView: React.FC = () => {
                   Custom Policy
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-50 dark:bg-navy-800/300/10 text-slate-600 dark:text-slate-400">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-400">
                   Using Global
                 </span>
               )}
@@ -758,7 +765,7 @@ export const SecurityPoliciesView: React.FC = () => {
             {lockouts.map((lockout) => (
               <tr
                 key={lockout.id}
-                className="hover:bg-slate-50 dark:hover:bg-slate-50 dark:hover:bg-navy-800/20"
+                className="hover:bg-slate-50 dark:hover:bg-navy-800/20"
               >
                 <td className="px-6 py-4">
                   <span className="font-medium text-slate-900 dark:text-white">
@@ -829,7 +836,7 @@ export const SecurityPoliciesView: React.FC = () => {
           />
           <button
             onClick={fetchData}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
             title="Refresh"
           >
             <RefreshCw

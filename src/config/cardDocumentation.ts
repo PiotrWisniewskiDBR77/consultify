@@ -76,6 +76,153 @@ export const CARD_DOCS: Record<string, CardDocumentation> = {
     relatedDocs: ['superadmin-overview', 'superadmin-security'],
   },
 
+  // ==========================================
+  // SUPERADMIN → CUSTOMERS (sub-views)
+  // NOTE: These cardIds are used by InfoButton across Customers screens.
+  // ==========================================
+
+  'superadmin-organizations': {
+    title: 'Organizations',
+    description:
+      'Manage customer organizations: plans, status, discounts, billing overview, and access governance (requests + codes).',
+    moduleId: 'SUPERADMIN_CUSTOMERS',
+    features: [
+      'Organizations list with search',
+      'Inline quick edit for plan/status/discount',
+      'Organization details modal (billing/usage/invoices)',
+      'Access requests triage (approve/reject)',
+      'Access codes generation and governance',
+    ],
+    howToUse: [
+      'Use Search to quickly find an organization by name or id',
+      'Use Quick Edit for fast plan/status adjustments; use Details for billing view',
+      'Process Pending Requests to activate/block org access',
+      'Generate Access Codes for controlled onboarding/invites',
+    ],
+    relatedDocs: ['superadmin-customers', 'superadmin-security', 'superadmin-billing'],
+  },
+
+  'superadmin-users': {
+    title: 'Users (Platform)',
+    description:
+      'Manage all platform users across organizations: roles, status, org assignment, invitations, password resets, and impersonation.',
+    moduleId: 'SUPERADMIN_CUSTOMERS',
+    features: [
+      'Platform-wide user list with search',
+      'Create / edit user',
+      'Block / unblock user',
+      'Move user between organizations',
+      'Invite user to organization',
+      'Reset password (admin-generated link)',
+      'Impersonate user (protected action)',
+    ],
+    tips: [
+      'Prefer Invite flow for standard onboarding; create users only when required',
+      'Use impersonation only with explicit confirmation and audit trail',
+    ],
+    relatedDocs: ['superadmin-customers', 'superadmin-security', 'superadmin-system-audit'],
+  },
+
+  'superadmin-lifecycle': {
+    title: 'Customer Lifecycle',
+    description:
+      'Define lifecycle stages and track customer transitions across the journey.',
+    moduleId: 'SUPERADMIN_CUSTOMERS',
+    features: [
+      'Lifecycle stages management',
+      'Transition organizations between stages',
+      'Recent transitions and lifecycle stats',
+    ],
+    steps: [
+      'Add stages in the desired order and set colors for clarity',
+      'Transition an organization to reflect the real customer state',
+      'Review recent transitions for anomalies',
+    ],
+    relatedDocs: ['superadmin-customers', 'superadmin-support'],
+  },
+
+  'superadmin-playbooks': {
+    title: 'Customer Success Playbooks',
+    description:
+      'Automate customer success workflows with triggers and actions; monitor actions and overall playbook effectiveness.',
+    moduleId: 'SUPERADMIN_CUSTOMERS',
+    features: ['Playbooks CRUD', 'Playbook execution for an organization', 'Actions timeline'],
+    relatedDocs: ['superadmin-customers', 'superadmin-support-health'],
+  },
+
+  'superadmin-contracts': {
+    title: 'Contracts',
+    description:
+      'Manage customer contracts, track renewals, and monitor contract value and status.',
+    moduleId: 'SUPERADMIN_CUSTOMERS',
+    features: ['Contracts list with status filter', 'Upcoming renewals', 'Create/delete contracts'],
+    relatedDocs: ['superadmin-customers', 'superadmin-revenue', 'superadmin-invoices'],
+  },
+
+  'superadmin-analytics-customers': {
+    title: 'Customer Analytics',
+    description:
+      'Overview of customer health and engagement across organizations (usage, activity, and health scores).',
+    moduleId: 'SUPERADMIN_CUSTOMERS',
+    features: ['Aggregated org usage', 'AI calls overview', 'Health score summary'],
+    relatedDocs: ['superadmin-analytics', 'superadmin-customers'],
+  },
+
+  'superadmin-compliance-customers': {
+    title: 'Customer Compliance',
+    description:
+      'Track customer compliance posture (GDPR/DPA/retention/audits) at an organization level.',
+    moduleId: 'SUPERADMIN_CUSTOMERS',
+    features: ['Compliance summary across orgs', 'At-risk detection'],
+    relatedDocs: ['superadmin-security-compliance', 'superadmin-customers'],
+  },
+
+  'superadmin-automation': {
+    title: 'Customer Automation Rules',
+    description:
+      'Configure automated customer workflows (triggers + actions), and inspect rule executions.',
+    moduleId: 'SUPERADMIN_CUSTOMERS',
+    features: ['Rules CRUD', 'Enable/disable rules', 'Executions view'],
+    relatedDocs: ['superadmin-customers', 'superadmin-support'],
+  },
+
+  'superadmin-communication': {
+    title: 'Communication Center',
+    description:
+      'Create and send customer communications (email / announcements / broadcasts) and monitor engagement.',
+    moduleId: 'SUPERADMIN_CUSTOMERS',
+    features: ['Compose message', 'Send message', 'Review recent communications'],
+    relatedDocs: ['superadmin-customers', 'superadmin-support'],
+  },
+
+  'superadmin-feedback': {
+    title: 'User Feedback & Triage',
+    description:
+      'Review incoming feedback (bugs/ideas/features), triage by status/severity, and respond as an admin.',
+    moduleId: 'SUPERADMIN_CUSTOMERS',
+    features: ['Feedback list filters', 'Status updates', 'Admin response workflow'],
+    relatedDocs: ['superadmin-customers', 'superadmin-support'],
+  },
+
+  'superadmin-bulk-ops': {
+    title: 'Bulk Operations',
+    description:
+      'Enterprise bulk operations for administrators: import users, assign roles in bulk, send mass emails, and export operational data.',
+    moduleId: 'SUPERADMIN_CUSTOMERS',
+    features: [
+      'CSV user import with mapping + preview',
+      'Bulk role assignment for selected users',
+      'Mass email campaigns (all/admins/selected)',
+      'Data exports (users, activity log, audit log, settings)',
+    ],
+    tips: [
+      'Use the template to ensure CSV columns match expected fields',
+      'Prefer small batches for first import to validate mapping',
+      'Treat exports as sensitive (PII) and store securely',
+    ],
+    relatedDocs: ['superadmin-security', 'superadmin-system-audit', 'superadmin-customers'],
+  },
+
   'superadmin-ai-infrastructure': {
     title: 'AI Infrastructure',
     description:
@@ -127,6 +274,77 @@ export const CARD_DOCS: Record<string, CardDocumentation> = {
     relatedDocs: ['superadmin-ai-infrastructure', 'superadmin-ai-operations'],
   },
 
+  'superadmin-ai-prompts-library': {
+    title: 'Prompts Library',
+    description:
+      'Manage the canonical prompt registry: create/edit prompts, review versions, and test templates safely.',
+    moduleId: 'SUPERADMIN_AI_DEVELOPMENT',
+    features: [
+      'Prompt listing + category filters',
+      'CRUD operations with version history',
+      'Preview/testing for selected prompt',
+      'Assistant + block builder + test bench (where available)',
+    ],
+    howToUse: [
+      'Use search + category filters to find a prompt quickly',
+      'Review versions before changing production templates',
+      'Use Test/Preview to validate output after edits',
+    ],
+    tips: [
+      'Treat prompts as production code: review, version, and test changes',
+      'Prefer incremental edits with clear reasons (auditability)',
+    ],
+    relatedDocs: ['superadmin-ai-intelligence', 'superadmin-ai-development'],
+  },
+
+  'superadmin-ai-ab-testing': {
+    title: 'A/B Testing (Experiments)',
+    description:
+      'Run controlled experiments for prompts/models/parameters: allocate traffic, monitor results, and declare winners.',
+    moduleId: 'SUPERADMIN_AI_DEVELOPMENT',
+    features: [
+      'Experiment list with status filters',
+      'Create experiment with variants + traffic split',
+      'Start/Pause/Stop/Archive experiment lifecycle actions',
+      'Declare a winning variant (where supported by backend)',
+    ],
+    howToUse: [
+      'Create an experiment with variants whose traffic sums to 100%',
+      'Start the experiment and monitor participant/conversion stats',
+      'Pause/stop if quality or latency regresses',
+      'Declare winner only when sample size + significance is sufficient',
+    ],
+    tips: [
+      'Run experiments on one dimension at a time (prompt OR model OR parameter)',
+      'Record rationale for winner selection for audit trail',
+    ],
+    relatedDocs: ['superadmin-ai-intelligence', 'superadmin-ai-development'],
+  },
+
+  'superadmin-ai-model-registry': {
+    title: 'Model Registry',
+    description:
+      'Operational registry for models/providers: catalog, purpose assignments, pricing snapshots, and audit log.',
+    moduleId: 'SUPERADMIN_AI_DEVELOPMENT',
+    features: [
+      'Model catalog backed by configured providers',
+      'Purpose assignments per kind (TEXT_LLM / IMAGE_MODEL / BUSINESS_MODEL)',
+      'Pricing snapshots (manual/api_sync/contract)',
+      'Audit log for configuration changes',
+    ],
+    howToUse: [
+      'Use Catalog to inspect models, health, regions, and costs',
+      'Assign models to purposes and order them by priority',
+      'Maintain pricing snapshots for cost governance',
+      'Review Audit Log during incidents or governance reviews',
+    ],
+    tips: [
+      'Keep catalog clean: deactivate unused providers instead of leaving stale keys',
+      'Ensure each critical purpose has at least 2 providers assigned for resilience',
+    ],
+    relatedDocs: ['superadmin-llm-management', 'superadmin-ai-purposes-assignments', 'superadmin-ai-global-settings'],
+  },
+
   'superadmin-ai-operations': {
     title: 'AI Operations',
     description:
@@ -150,6 +368,50 @@ export const CARD_DOCS: Record<string, CardDocumentation> = {
       'Use tier routing to optimize cost vs quality',
     ],
     relatedDocs: ['superadmin-ai-infrastructure', 'superadmin-ai-development'],
+  },
+
+  'superadmin-ai-knowledge': {
+    title: 'AI Knowledge',
+    description:
+      'Knowledge management for AI: idea inbox, RAG documents, and strategic directions that guide behavior and recommendations.',
+    moduleId: 'SUPERADMIN_AI_KNOWLEDGE',
+    features: [
+      'Idea Inbox (triage: pending/approved/rejected/implemented)',
+      'Approved Ideas Library (filters by category)',
+      'Documents (RAG): upload, indexing, and metadata',
+      'Strategic Directions: active goals with progress and success metrics',
+    ],
+    howToUse: [
+      'Use Idea Inbox to approve high-signal feedback into the library',
+      'Upload documents in Documents (RAG) and verify index status',
+      'Define Strategic Directions to steer AI output priorities',
+    ],
+    tips: [
+      'Keep categories/tags consistent to improve retrieval quality',
+      'Treat RAG documents as controlled artifacts: version and audit changes',
+      'Keep at least 1–2 active strategic directions to maintain alignment',
+    ],
+    relatedDocs: ['superadmin-ai-development', 'superadmin-ai-operations'],
+  },
+
+  // Backward-compatible help ID used by knowledge views (Admin / SuperAdmin wrappers)
+  'admin-knowledge': {
+    title: 'Knowledge Base',
+    description:
+      'Global knowledge brain: manage the idea inbox, knowledge documents for RAG, and strategic alignment.',
+    moduleId: 'ADMIN_KNOWLEDGE',
+    features: [
+      'Idea Inbox for triage and learning',
+      'Documents (RAG) upload and indexing',
+      'Strategic Directions for alignment',
+    ],
+    howToUse: [
+      'Review pending ideas and approve/reject',
+      'Upload documents and tag them for retrieval',
+      'Create strategic directions and keep them up to date',
+    ],
+    tips: ['Prefer small, high-signal documents', 'Use tags to improve discoverability'],
+    relatedDocs: ['superadmin-ai-knowledge'],
   },
 
   // Backward-compatible help ID used by AI Intelligence view
@@ -259,6 +521,102 @@ export const CARD_DOCS: Record<string, CardDocumentation> = {
       'Review tier assignments after adding new providers',
     ],
     relatedDocs: ['superadmin-ai-infrastructure', 'superadmin-llm-management'],
+  },
+
+  'superadmin-ai-routing-rules': {
+    title: 'Routing Rules',
+    description:
+      'Preview and validate model routing signals per tier (default vs fallback) and derived failover/cost rules.',
+    moduleId: 'SUPERADMIN_AI_ROUTING_RULES',
+    features: [
+      'Model routing per tier derived from tier assignments',
+      'Health-based failover signal (derived from provider health)',
+      'Cost optimization signal (derived from configured provider costs)',
+      'Read-only preview (no persistence for custom rules yet)',
+    ],
+    howToUse: [
+      'Verify each tier has at least 2 models assigned (default + fallback)',
+      'Use Health tab in LLM Management to confirm incidents/health align with routing signals',
+      'Treat this view as validation of current configuration (not a policy editor yet)',
+    ],
+    tips: [
+      'If a tier shows no fallback, add another model in Model Tiers',
+      'Keep Budget and Standard populated with low-latency models',
+      'Use Premium/Reasoning for quality-critical flows, but always keep fallbacks configured',
+    ],
+    relatedDocs: ['superadmin-ai-model-tiers', 'superadmin-llm-management', 'superadmin-ai-infrastructure'],
+  },
+
+  'superadmin-ai-purposes-assignments': {
+    title: 'Purposes & Assignments',
+    description:
+      'Enterprise routing registry: define AI purposes and assign provider priority globally or per-organization override.',
+    moduleId: 'SUPERADMIN_AI_PURPOSE_ASSIGNMENTS',
+    features: [
+      'Purpose registry (ai_purposes): kind, default tier, requirements, description',
+      'Assignments (ai_purpose_assignments): provider priority, global + org override',
+      'Starter presets for text/image routing',
+      'Audit log entries for policy/assignment changes',
+    ],
+    howToUse: [
+      'Create/update a purpose (e.g. "TEXT chain" / "IMAGE chain")',
+      'Select a purpose and optionally set organizationId for overrides',
+      'Add assignments in priority order (higher priority = preferred)',
+      'Remove an assignment to revoke it from effective routing',
+    ],
+    tips: [
+      'Use org overrides sparingly; prefer global defaults with minimal exceptions',
+      'Keep at least 2 providers assigned for each purpose for availability',
+      'Validate provider health before assigning as top priority',
+    ],
+    relatedDocs: ['superadmin-llm-management', 'superadmin-ai-infrastructure'],
+  },
+
+  'superadmin-ai-org-ai-policy': {
+    title: 'Org AI Policy',
+    description:
+      'Enterprise policy enforcement per organization: restrict providers/types/origins and data classes via JSON policy.',
+    moduleId: 'SUPERADMIN_AI_ORG_POLICY',
+    features: [
+      'Load policy JSON for a given organizationId',
+      'Edit and validate JSON in-place',
+      'Save policy to persist enforcement rules',
+      'Audit logging of policy updates',
+    ],
+    howToUse: [
+      'Paste organizationId and click Load',
+      'Edit Policy JSON (must stay valid JSON)',
+      'Click Save and then re-load to confirm persisted state',
+    ],
+    tips: [
+      'Keep the policy minimal and explicit (deny-list + required constraints)',
+      'Use "require_local_for_data_classes" for sensitive workloads',
+      'Validate impact in a sandbox org before rolling out broadly',
+    ],
+    relatedDocs: ['superadmin-ai-infrastructure', 'superadmin-security'],
+  },
+
+  'superadmin-ai-governance': {
+    title: 'AI Governance',
+    description:
+      'Runtime guardrails: context categories, internet/audit policy, and platform sanity checks for AI modules.',
+    moduleId: 'SUPERADMIN_AI_GOVERNANCE',
+    features: [
+      'Context policy toggles per category (what the model can see)',
+      'Internet enabled / Audit required policy controls',
+      'Sanity check report (warnings/errors + duplicate route mounts)',
+    ],
+    howToUse: [
+      'Toggle context categories according to the org security posture',
+      'Set Internet/Audit policy to match compliance requirements',
+      'Use Sanity check to spot missing env keys or duplicate mounts',
+    ],
+    tips: [
+      'Treat governance changes as security changes (review + audit)',
+      'If sanity check shows WARNs (e.g. missing API keys), fix env/config and re-run',
+      'Investigate duplicate mounts to avoid ambiguous routing and surprising behavior',
+    ],
+    relatedDocs: ['superadmin-ai-infrastructure', 'superadmin-security'],
   },
 
   'superadmin-ai-health-monitoring': {
@@ -1054,6 +1412,245 @@ export const CARD_DOCS: Record<string, CardDocumentation> = {
       'Clean up deprecated flags quarterly',
     ],
     relatedDocs: ['superadmin-system'],
+  },
+
+  'superadmin-system-integrations': {
+    title: 'Integrations Hub',
+    description:
+      'Connect Consultify with third-party tools and services. Manage OAuth connections, webhooks, and sync configurations.',
+    moduleId: 'SUPERADMIN_SYSTEM_INTEGRATIONS',
+    features: [
+      'Connectors catalog (Slack, Teams, Jira, Asana, etc.)',
+      'OAuth flow management',
+      'Webhook configuration and delivery tracking',
+      'Sync status monitoring',
+      'Integration health checks',
+    ],
+    howToUse: [
+      'Connected tab: View active integrations and their status',
+      'Webhooks tab: Create and manage webhook endpoints',
+      'Catalog tab: Browse available connectors and click Connect',
+    ],
+    tips: [
+      'Test webhooks after creation to verify delivery',
+      'Monitor sync status for data consistency',
+      'Disconnect unused integrations to reduce attack surface',
+    ],
+    relatedDocs: ['superadmin-system'],
+  },
+
+  'superadmin-system-security': {
+    title: 'System Security',
+    description:
+      'Security overview for the platform including events, active sessions, IP access rules, security policies, and compliance frameworks.',
+    moduleId: 'SUPERADMIN_SYSTEM_SECURITY',
+    features: [
+      'Security event monitoring and resolution',
+      'Active session management',
+      'IP access rules (allow/deny)',
+      'Security policy configuration',
+      'Compliance framework tracking',
+    ],
+    howToUse: [
+      'Events tab: Review and resolve security incidents',
+      'Sessions tab: Monitor active admin sessions, terminate suspicious ones',
+      'IP Rules tab: Configure IP allow/deny lists',
+      'Policies tab: Enable/disable security policies',
+      'Compliance tab: Track framework adherence',
+    ],
+    tips: [
+      'Review security events daily for anomalies',
+      'Terminate idle sessions after 30 minutes',
+      'Restrict admin access to known IP ranges',
+    ],
+    relatedDocs: ['superadmin-system', 'superadmin-system-audit'],
+  },
+
+  'superadmin-system-configuration': {
+    title: 'System Configuration',
+    description:
+      'Manage system-wide configuration settings with environment separation, versioning, and category organization.',
+    moduleId: 'SUPERADMIN_SYSTEM_CONFIGURATION',
+    features: [
+      'Environment-specific configs (production, staging, development)',
+      'Category-based organization',
+      'Version history for each setting',
+      'Inline editing with validation',
+      'Sensitive value masking',
+    ],
+    howToUse: [
+      'Filter by environment and category to find settings',
+      'Click on a value to edit inline',
+      'Use version history to track changes',
+      'Create new configs with the + button',
+    ],
+    tips: [
+      'Always test config changes in staging first',
+      'Document the purpose of each configuration key',
+      'Review version history before reverting changes',
+    ],
+    relatedDocs: ['superadmin-system'],
+  },
+
+  'superadmin-system-analytics': {
+    title: 'System Analytics',
+    description:
+      'Platform-level analytics showing API request volumes, error rates, latency trends, and system performance over time.',
+    moduleId: 'SUPERADMIN_SYSTEM_ANALYTICS',
+    features: [
+      'API request volume charts',
+      'Error rate monitoring',
+      'Latency trend analysis',
+      'Active session tracking',
+      'System information overview',
+    ],
+    howToUse: [
+      'Select time range (24h, 7d, 30d, 90d) for trend analysis',
+      'Review error rate spikes for incident correlation',
+      'Monitor active sessions for capacity planning',
+    ],
+    tips: [
+      'Set up scheduled reports for weekly review',
+      'Compare metrics across time ranges to spot trends',
+      'Correlate error spikes with deployment events',
+    ],
+    relatedDocs: ['superadmin-system', 'superadmin-system-health'],
+  },
+
+  'superadmin-system-backup': {
+    title: 'Backup & Disaster Recovery',
+    description:
+      'Manage database backups, configure backup schedules, and test disaster recovery procedures.',
+    moduleId: 'SUPERADMIN_SYSTEM_BACKUP',
+    features: [
+      'Manual and scheduled backups',
+      'Backup history with status tracking',
+      'Restore from backup',
+      'Backup schedule configuration',
+      'Disaster recovery testing',
+    ],
+    howToUse: [
+      'Create manual backup before major changes',
+      'Configure automated backup schedules',
+      'Test restore procedures periodically',
+      'Monitor backup success/failure status',
+    ],
+    tips: [
+      'Schedule backups during low-traffic periods',
+      'Test restore at least once per quarter',
+      'Keep at least 30 days of backup history',
+      'Verify backup integrity after creation',
+    ],
+    relatedDocs: ['superadmin-system'],
+  },
+
+  'superadmin-system-api-keys': {
+    title: 'API Key Management',
+    description:
+      'Create and manage API keys for programmatic access to the Consultify platform. Control scopes, rate limits, and expiration.',
+    moduleId: 'SUPERADMIN_SYSTEM_API_KEYS',
+    features: [
+      'API key creation with scope control',
+      'Rate limit configuration per key',
+      'Expiration date management',
+      'Usage analytics per key',
+      'Key revocation',
+    ],
+    howToUse: [
+      'Keys tab: View and manage existing API keys',
+      'Click Create API Key to generate a new key',
+      'Copy the key immediately — it is shown only once',
+      'Usage tab: Monitor API call volumes per key',
+    ],
+    tips: [
+      'Rotate API keys quarterly for security',
+      'Use minimal scopes (principle of least privilege)',
+      'Set expiration dates on all keys',
+      'Monitor usage for unusual patterns',
+    ],
+    relatedDocs: ['superadmin-system', 'superadmin-system-security'],
+  },
+
+  // =============================================
+  // CONTENT MODULE HELP
+  // =============================================
+
+  'superadmin-content-playbooks': {
+    title: 'Playbook Templates',
+    description:
+      'Create and manage AI playbook templates that automate workflows. Templates can be published for use across organizations.',
+    moduleId: 'SUPERADMIN_CONTENT',
+    features: [
+      'Template library with search and status filters',
+      'Draft / Published / Deprecated lifecycle',
+      'JSON import/export for sharing',
+      'Validate templates before publishing',
+      'Duplicate existing templates',
+    ],
+    howToUse: [
+      'Browse existing templates or create a new one',
+      'Validate a draft template to check for errors',
+      'Publish validated templates to make them available',
+      'Export templates as JSON for backup or sharing',
+    ],
+    tips: [
+      'Validate templates before publishing to catch issues early',
+      'Use descriptive trigger names for easy identification',
+      'Deprecate unused templates instead of deleting them',
+    ],
+    relatedDocs: ['superadmin-playbooks'],
+  },
+
+  'superadmin-content-email-templates': {
+    title: 'Email Templates',
+    description:
+      'Manage email templates used for notifications, onboarding, and customer communications. Supports categories, tags, and versioning.',
+    moduleId: 'SUPERADMIN_CONTENT',
+    features: [
+      'Template editor with preview',
+      'Category and tag organization',
+      'Draft / Published / Deprecated lifecycle',
+      'Clone templates for variations',
+      'Search and filter by status, category, tags',
+    ],
+    howToUse: [
+      'Create a new template with subject and body',
+      'Assign categories and tags for organization',
+      'Preview the template before publishing',
+      'Clone published templates to create variations',
+    ],
+    tips: [
+      'Use variables like {{firstName}} for personalization',
+      'Test email rendering across clients before publishing',
+      'Keep a consistent tone across all templates',
+    ],
+    relatedDocs: ['superadmin-content-playbooks'],
+  },
+
+  'superadmin-content-partner-outreach': {
+    title: 'Partner Outreach',
+    description:
+      'Import partner leads from CSV, create outreach campaigns, and manage compliance-friendly email sequences.',
+    moduleId: 'SUPERADMIN_CONTENT',
+    features: [
+      'CSV lead import with field mapping',
+      'Campaign creation with subject and body',
+      'Campaign lifecycle (Start / Pause / Resume)',
+      'Compliance-friendly outreach (lawful basis tracking)',
+      'Variable substitution ({FirstName}, {Company})',
+    ],
+    howToUse: [
+      'Import leads from CSV with required fields (email, company, name)',
+      'Create a campaign with subject, body, and optional sender details',
+      'Start the campaign to begin sending',
+      'Pause running campaigns if needed',
+    ],
+    tips: [
+      'Always include lawful_basis in CSV for GDPR compliance',
+      'Test with a small batch before full campaign launch',
+      'Monitor campaign status for delivery issues',
+    ],
+    relatedDocs: ['superadmin-content-email-templates'],
   },
 
   // =============================================
@@ -1874,7 +2471,7 @@ export const CARD_DOCS: Record<string, CardDocumentation> = {
     ],
     tips: [
       'Enable two-way sync for full integration',
-      'Create separate calendar for Consultinity events',
+      'Create separate calendar for Consultify events',
       'Set buffer time between meetings',
     ],
     relatedDocs: ['settings-integrations', 'settings-working-hours'],

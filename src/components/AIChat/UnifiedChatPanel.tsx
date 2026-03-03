@@ -325,7 +325,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
     // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
-    const explicitPref = localStorage.getItem('consultinity-preferred-chat-lang');
+    // Backward-compatible keys (older builds used consultinity-*).
+    const explicitPref =
+      localStorage.getItem('consultinity-preferred-chat-lang') ||
+      localStorage.getItem('consultify-preferred-chat-lang');
     // 2. Conversation-specific language (from DB/store)
     const activeLang = activeConversationId
       ? chatLanguageByConversationId[activeConversationId]

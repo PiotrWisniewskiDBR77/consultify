@@ -136,8 +136,8 @@ export const SubscriptionChangesView: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-white">Subscription Changes</h2>
-          <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-1">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Subscription Changes</h2>
+          <p className="text-slate-600 dark:text-slate-400 mt-1">
             Manage subscription upgrades, downgrades, and cancellations
           </p>
         </div>
@@ -158,60 +158,60 @@ export const SubscriptionChangesView: React.FC = () => {
       {/* Stats */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-white">{stats.total}</div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">{stats.total}</div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 Total Changes
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-yellow-400">{stats.pending}</div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 Pending
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-green-400">{stats.upgrades}</div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 Upgrades
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-orange-400">{stats.downgrades}</div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 Downgrades
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-red-400">{stats.cancellations}</div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 Cancellations
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-green-400">{stats.approved}</div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 Approved
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-lg font-bold text-indigo-400">
                 {formatCurrency(stats.totalProration || 0)}
               </div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 Total Proration
               </div>
             </CardContent>
@@ -220,17 +220,17 @@ export const SubscriptionChangesView: React.FC = () => {
       )}
 
       {/* Filters */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card>
         <CardContent className="pt-4">
           <div className="flex flex-wrap gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Status
               </label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
               >
                 <option value="all">All Statuses</option>
                 <option value="pending">Pending</option>
@@ -240,13 +240,13 @@ export const SubscriptionChangesView: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Type
               </label>
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
               >
                 <option value="all">All Types</option>
                 <option value="upgrade">Upgrade</option>
@@ -260,31 +260,36 @@ export const SubscriptionChangesView: React.FC = () => {
       </Card>
 
       {/* Changes List */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-white">Recent Subscription Changes</CardTitle>
+          <CardTitle>Recent Subscription Changes</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {changes.map((change) => (
-              <div key={change.id} className="p-4 bg-gray-900/50 rounded-lg border border-gray-700">
+              <div
+                key={change.id}
+                className="p-4 bg-slate-50 dark:bg-navy-950/20 rounded-lg border border-slate-200 dark:border-navy-700"
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
-                      <span className="text-white font-medium">
+                      <span className="text-slate-900 dark:text-white font-medium">
                         {change.organization_name || change.organization_id}
                       </span>
                       {getChangeTypeBadge(change.change_type)}
                       {getStatusBadge(change.status)}
                     </div>
-                    <div className="mt-2 text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
-                      <span className="text-gray-500 dark:text-gray-400">
+                    <div className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                      <span className="text-slate-500 dark:text-slate-400">
                         {change.from_plan_name || change.from_plan_id || 'No plan'}
                       </span>
                       <span className="mx-2">→</span>
-                      <span className="text-white">{change.to_plan_name || change.to_plan_id}</span>
+                      <span className="text-slate-900 dark:text-white">
+                        {change.to_plan_name || change.to_plan_id}
+                      </span>
                     </div>
-                    <div className="mt-2 flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-500 dark:text-gray-400">
                       <span>Effective: {new Date(change.effective_date).toLocaleDateString()}</span>
                       {change.proration_amount !== 0 && (
                         <span

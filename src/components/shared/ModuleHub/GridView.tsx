@@ -27,6 +27,8 @@ export interface GridItem {
 
 interface GridViewProps {
   items: GridItem[];
+  /** Optional: highlight a selected card (for Cards+Preview layouts). */
+  selectedItemId?: string | null;
   onItemClick?: (item: GridItem) => void;
   onItemAction?: (action: string, item: GridItem) => void;
   onNewItem?: () => void;
@@ -215,6 +217,7 @@ const formatRelativeTime = (date: Date | string, isPolish: boolean) => {
 
 export const GridView: React.FC<GridViewProps> = ({
   items,
+  selectedItemId,
   onItemClick,
   onItemAction,
   onNewItem,
@@ -261,6 +264,7 @@ export const GridView: React.FC<GridViewProps> = ({
         const rawBrief = String(item.brief ?? item.summary ?? item.description ?? '').trim();
         const firstLine = rawBrief.split('\n').find((l) => l.trim().length > 0)?.trim() || '';
         const brief = firstLine.length > 140 ? `${firstLine.slice(0, 137)}…` : firstLine;
+        const isSelected = Boolean(selectedItemId && item.id === selectedItemId);
 
         return (
           <div
@@ -272,6 +276,7 @@ export const GridView: React.FC<GridViewProps> = ({
               accent.borderLeft,
               'bg-slate-50/80 dark:bg-navy-800/60',
               'hover:bg-white dark:hover:bg-navy-800/80',
+              isSelected ? 'ring-2 ring-primary-500/30 bg-white dark:bg-navy-800/80' : '',
               'transition-colors duration-150',
             ].join(' ')}
           >

@@ -68,12 +68,12 @@ export const PartnerPricingView: React.FC = () => {
             <h1 className="mt-6 text-4xl font-black tracking-tight text-navy-950 dark:text-white md:text-5xl">
               Rozwijaj biznes{' '}
               <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                razem z Consultinity
+                razem z Consultify
               </span>
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-600 dark:text-slate-300">
-              Dołącz do ekosystemu partnerów Consultinity i uzyskaj dostęp do co-sell leads,
+              Dołącz do ekosystemu partnerów Consultify i uzyskaj dostęp do co-sell leads,
               prowizji do 20%, dedykowanego wsparcia i narzędzi zgodnych z PMO standards.
             </p>
 
@@ -408,7 +408,7 @@ export const PartnerPricingView: React.FC = () => {
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="text-3xl font-black text-white">Gotowy do współpracy?</h2>
           <p className="mx-auto mt-4 max-w-xl text-purple-100">
-            Dołącz do programu partnerskiego Consultinity i rozwijaj swój biznes z dostępem do
+            Dołącz do programu partnerskiego Consultify i rozwijaj swój biznes z dostępem do
             narzędzi, leadów i prowizji do 20%.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">

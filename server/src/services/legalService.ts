@@ -326,7 +326,7 @@ class LegalService {
         if (existingAcceptance) {
           await dbRun(
             `UPDATE legal_document_acceptances
-             SET document_version = ?, accepted_at = NOW(),
+             SET document_version = ?, accepted_at = CURRENT_TIMESTAMP,
                  ip_address = ?, user_agent = ?, scope = ?,
                  organization_id = ?, document_type = ?
              WHERE id = ?`,
@@ -346,7 +346,7 @@ class LegalService {
             `INSERT INTO legal_document_acceptances
              (id, user_id, document_id, document_type, document_version,
               accepted_at, ip_address, user_agent, scope, organization_id)
-             VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?)`,
+             VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?)`,
             [
               id,
               userId,
@@ -444,7 +444,7 @@ class LegalService {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?,
                'active', TRUE, ?, ?,
                ?, ?, ?, ?,
-               ?, ?, NOW(), NOW(), NOW(),
+               ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
                TRUE)`,
       [
         id,
@@ -489,7 +489,7 @@ class LegalService {
     }
 
     await dbRun(
-      `UPDATE legal_documents SET is_active = ?, status = ?, updated_at = NOW() WHERE id = ?`,
+      `UPDATE legal_documents SET is_active = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
       [newActive, newStatus, id]
     );
 

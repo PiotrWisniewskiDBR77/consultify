@@ -10,7 +10,7 @@ const COMPANY = {
   nip: '8792725331',
   krs: '0000860440',
   email: 'legal@dbr77.com',
-  website: 'https://consultinity.com',
+  website: 'https://consultify.com',
 };
 
 export const TermsOfServiceView: React.FC = () => {
@@ -25,7 +25,7 @@ export const TermsOfServiceView: React.FC = () => {
       <section>
         <h2>1. Introduction and Acceptance</h2>
         <p>
-          Welcome to Consultinity ("Service", "Platform"), an AI-powered strategic consulting
+          Welcome to Consultify ("Service", "Platform"), an AI-powered strategic consulting
           platform operated by <strong>{COMPANY.name}</strong> ("Company", "we", "us", "our").
         </p>
         <p>
@@ -70,7 +70,7 @@ export const TermsOfServiceView: React.FC = () => {
       {/* 3. Eligibility */}
       <section>
         <h2>3. Eligibility</h2>
-        <p>To use Consultinity, you must:</p>
+        <p>To use Consultify, you must:</p>
         <ul>
           <li>Be at least 18 years of age</li>
           <li>Have the legal capacity to enter into binding agreements</li>
@@ -112,7 +112,7 @@ export const TermsOfServiceView: React.FC = () => {
 
         <h3>5.1 Plans and Pricing</h3>
         <p>
-          Consultinity offers various subscription plans. Current pricing is available on our
+          Consultify offers various subscription plans. Current pricing is available on our
           website. We reserve the right to modify pricing with 30 days' notice.
         </p>
 
@@ -219,7 +219,7 @@ export const TermsOfServiceView: React.FC = () => {
 
         <h3>9.1 AI Processing</h3>
         <p>
-          Consultinity uses third-party AI providers (including OpenAI, Anthropic, and Google) to
+          Consultify uses third-party AI providers (including OpenAI, Anthropic, and Google) to
           power certain features. By using AI features, you acknowledge that your inputs may be
           processed by these providers subject to their terms.
         </p>

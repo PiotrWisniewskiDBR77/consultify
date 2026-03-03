@@ -238,7 +238,7 @@ const ApprovalWorkflowsView: React.FC = () => {
         <Card variant="bordered" className="p-4 border-red-500/30 bg-red-500/5">
           <div className="flex items-center gap-2 text-red-400">
             <AlertTriangle className="w-5 h-5" />
-            <span>{error}</span>
+            <span>{typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}</span>
             <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
               Dismiss
             </button>
@@ -253,7 +253,7 @@ const ApprovalWorkflowsView: React.FC = () => {
           className={`pb-3 px-1 text-sm font-medium transition-colors ${
             activeTab === 'workflows'
               ? 'text-indigo-400 border-b-2 border-indigo-400'
-              : 'text-slate-400 dark:text-slate-500 hover:text-slate-200'
+              : 'text-slate-600 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-200'
           }`}
         >
           Workflows ({workflows.length})
@@ -263,7 +263,7 @@ const ApprovalWorkflowsView: React.FC = () => {
           className={`pb-3 px-1 text-sm font-medium transition-colors ${
             activeTab === 'requests'
               ? 'text-indigo-400 border-b-2 border-indigo-400'
-              : 'text-slate-400 dark:text-slate-500 hover:text-slate-200'
+              : 'text-slate-600 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-200'
           }`}
         >
           Requests ({requests.length})
@@ -279,7 +279,7 @@ const ApprovalWorkflowsView: React.FC = () => {
           <button
             onClick={loadData}
             disabled={loading}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded-lg transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -302,23 +302,23 @@ const ApprovalWorkflowsView: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-700">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Name
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Resource Type
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Approvers
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Status
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Created
                   </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Actions
                   </th>
                 </tr>
@@ -326,7 +326,7 @@ const ApprovalWorkflowsView: React.FC = () => {
               <tbody>
                 {workflows.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-slate-400 dark:text-slate-500">
+                    <td colSpan={6} className="text-center py-8 text-slate-600 dark:text-slate-400">
                       No workflows configured
                     </td>
                   </tr>
@@ -334,7 +334,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                   workflows.map((workflow) => (
                     <tr
                       key={workflow.id}
-                      className="border-b border-slate-700/50 hover:bg-slate-800/50"
+                      className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                     >
                       <td className="py-3 px-4">
                         <div>
@@ -397,23 +397,23 @@ const ApprovalWorkflowsView: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-700">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Workflow
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Requester
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Resource
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Status
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Created
                   </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Actions
                   </th>
                 </tr>
@@ -421,7 +421,7 @@ const ApprovalWorkflowsView: React.FC = () => {
               <tbody>
                 {requests.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-slate-400 dark:text-slate-500">
+                    <td colSpan={6} className="text-center py-8 text-slate-600 dark:text-slate-400">
                       No approval requests
                     </td>
                   </tr>
@@ -429,7 +429,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                   requests.map((request) => (
                     <tr
                       key={request.id}
-                      className="border-b border-slate-700/50 hover:bg-slate-800/50"
+                      className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                     >
                       <td className="py-3 px-4">
                         <p className="font-medium">{request.workflow_name}</p>

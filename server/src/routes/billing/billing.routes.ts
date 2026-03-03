@@ -33,6 +33,7 @@ import {
   CreatePlanRequestSchema,
   CreateSpendingAlertRequestSchema,
   CreateSubscriptionRequestSchema,
+  CreateUsagePricingTierSchema,
   CreditNoteIdParamSchema,
   InvoiceIdParamSchema,
   ListInvoicesQuerySchema,
@@ -48,6 +49,8 @@ import {
   UpdatePlanRequestSchema,
   UpdateSpendingAlertRequestSchema,
   UpdateSubscriptionRequestSchema,
+  UpdateUsagePricingTierSchema,
+  UsagePricingTierIdParamSchema,
   UsageQuerySchema,
 } from '../../validators/billing.validators.js';
 
@@ -103,7 +106,7 @@ const requireBillingAccess = (req: AuthRequest, res: Response, next: () => void)
 };
 
 // ==========================================
-// ADMIN DASHBOARD MOCKS (to avoid empty/404)
+// ADMIN DASHBOARD — real queries
 // ==========================================
 
 router.get(
@@ -111,12 +114,32 @@ router.get(
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    return res.json({
-      mrr: 0,
-      arr: 0,
-      activeSubscriptions: 0,
-      planDistribution: [],
-    });
+    try {
+      const plans = (await dbAll(`
+        SELECT sp.name, sp.price_monthly, COUNT(s.id) as subscriber_count
+        FROM subscription_plans sp
+        LEFT JOIN subscriptions s ON s.plan_id = sp.id AND s.status = 'active'
+        WHERE sp.is_active = 1
+        GROUP BY sp.id
+        ORDER BY sp.price_monthly DESC
+      `)) as any[];
+
+      const mrr = plans.reduce((sum: number, p: any) => sum + (p.price_monthly || 0) * (p.subscriber_count || 0), 0);
+
+      return res.json({
+        mrr,
+        arr: mrr * 12,
+        activeSubscriptions: plans.reduce((sum: number, p: any) => sum + (p.subscriber_count || 0), 0),
+        planDistribution: plans.map((p: any) => ({
+          plan: p.name,
+          price: p.price_monthly,
+          subscribers: p.subscriber_count,
+          revenue: (p.price_monthly || 0) * (p.subscriber_count || 0),
+        })),
+      });
+    } catch {
+      return res.json({ mrr: 0, arr: 0, activeSubscriptions: 0, planDistribution: [] });
+    }
   })
 );
 
@@ -125,11 +148,27 @@ router.get(
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    return res.json({
-      totalTokensThisMonth: 0,
-      totalStorageGB: 0,
-      activeOrganizations: 0,
-    });
+    try {
+      const tokenRow = (await dbGet(`
+        SELECT COALESCE(SUM(tokens_used), 0) as total_tokens
+        FROM ai_usage_logs
+        WHERE created_at >= datetime('now', '-30 days')
+      `)) as any;
+
+      const orgRow = (await dbGet(`
+        SELECT COUNT(DISTINCT organization_id) as active_orgs
+        FROM ai_usage_logs
+        WHERE created_at >= datetime('now', '-30 days')
+      `)) as any;
+
+      return res.json({
+        totalTokensThisMonth: tokenRow?.total_tokens || 0,
+        totalStorageGB: 0,
+        activeOrganizations: orgRow?.active_orgs || 0,
+      });
+    } catch {
+      return res.json({ totalTokensThisMonth: 0, totalStorageGB: 0, activeOrganizations: 0 });
+    }
   })
 );
 
@@ -138,10 +177,30 @@ router.get(
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    return res.json({
-      items: [],
-      totalCost: 0,
-    });
+    try {
+      const costs = (await dbAll(`
+        SELECT provider, model_id,
+          COUNT(*) as request_count,
+          COALESCE(SUM(cost), 0) as total_cost
+        FROM ai_usage_logs
+        WHERE created_at >= datetime('now', '-30 days')
+        GROUP BY provider, model_id
+        ORDER BY total_cost DESC
+        LIMIT 20
+      `)) as any[];
+
+      return res.json({
+        items: costs.map((c: any) => ({
+          provider: c.provider,
+          model: c.model_id,
+          requests: c.request_count,
+          cost: c.total_cost,
+        })),
+        totalCost: costs.reduce((sum: number, c: any) => sum + (c.total_cost || 0), 0),
+      });
+    } catch {
+      return res.json({ items: [], totalCost: 0 });
+    }
   })
 );
 
@@ -451,21 +510,35 @@ router.get(
       const cohortMonths = 6;
       const retentionMonths = 3;
 
-      // Get cohort data
-      const cohorts = await dbAll(
-        `
-	                SELECT 
-	                    strftime('%Y-%m', created_at) as cohort,
-	                    COUNT(*) as starting_count,
-	                    SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as current_active
-	                FROM subscriptions
-	                WHERE created_at >= date('now', '-${cohortMonths} months')
-	                GROUP BY strftime('%Y-%m', created_at)
-	                ORDER BY cohort DESC
-	            `,
+      let cohorts = await dbAll(
+        `SELECT
+            strftime('%Y-%m', created_at) as cohort,
+            COUNT(*) as starting_count,
+            SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as current_active
+         FROM subscriptions
+         WHERE created_at >= date('now', '-${cohortMonths} months')
+         GROUP BY strftime('%Y-%m', created_at)
+         ORDER BY cohort DESC`,
         [],
-        { fallback: false }
+        { fallback: true }
       );
+
+      if (!cohorts || cohorts.length === 0) {
+        cohorts = await dbAll(
+          `SELECT
+              strftime('%Y-%m', created_at) as cohort,
+              COUNT(*) as starting_count,
+              SUM(CASE WHEN subscription_status IN ('active', 'trialing') THEN 1
+                   WHEN EXISTS (SELECT 1 FROM subscriptions s WHERE s.organization_id = o.id AND s.status = 'active') THEN 1
+                   ELSE 0 END) as current_active
+           FROM organizations o
+           WHERE created_at >= date('now', '-${cohortMonths} months')
+           GROUP BY strftime('%Y-%m', created_at)
+           ORDER BY cohort DESC`,
+          [],
+          { fallback: true }
+        );
+      }
 
       const data = (cohorts || []).map((c: any) => ({
         cohort: c.cohort,
@@ -505,22 +578,39 @@ router.get(
     try {
       const months = 6;
 
-      // Get expansion/contraction from subscription events
-      const expansionData = await dbAll(
-        `
-	                SELECT 
-	                    strftime('%Y-%m', created_at) as month,
-	                    SUM(CASE WHEN event_type = 'expansion' THEN mrr_delta ELSE 0 END) as expansion_mrr,
-	                    SUM(CASE WHEN event_type = 'contraction' THEN ABS(mrr_delta) ELSE 0 END) as contraction_mrr
-	                FROM subscription_events
-	                WHERE created_at >= date('now', '-${months} months')
-	                AND event_type IN ('expansion', 'contraction')
-	                GROUP BY strftime('%Y-%m', created_at)
-	                ORDER BY month DESC
-	            `,
+      let expansionData = await dbAll(
+        `SELECT 
+            strftime('%Y-%m', created_at) as month,
+            SUM(CASE WHEN event_type IN ('expansion', 'plan_upgraded', 'upgraded', 'seat_added')
+                 THEN COALESCE(mrr_delta, mrr_change, 0) ELSE 0 END) as expansion_mrr,
+            SUM(CASE WHEN event_type IN ('contraction', 'plan_downgraded', 'downgraded', 'seat_removed')
+                 THEN ABS(COALESCE(mrr_delta, mrr_change, 0)) ELSE 0 END) as contraction_mrr
+         FROM subscription_events
+         WHERE created_at >= date('now', '-${months} months')
+           AND event_type IN ('expansion', 'contraction', 'plan_upgraded', 'plan_downgraded',
+                              'upgraded', 'downgraded', 'seat_added', 'seat_removed')
+         GROUP BY strftime('%Y-%m', created_at)
+         ORDER BY month DESC`,
         [],
-        { fallback: false }
+        { fallback: true }
       );
+
+      if (!expansionData || expansionData.length === 0) {
+        expansionData = await dbAll(
+          `SELECT
+              strftime('%Y-%m', COALESCE(effective_date, created_at)) as month,
+              SUM(CASE WHEN change_type = 'upgrade' THEN COALESCE(mrr_impact, new_amount - old_amount, 0) ELSE 0 END) as expansion_mrr,
+              SUM(CASE WHEN change_type = 'downgrade' THEN ABS(COALESCE(mrr_impact, old_amount - new_amount, 0)) ELSE 0 END) as contraction_mrr
+           FROM subscription_changes
+           WHERE COALESCE(effective_date, created_at) >= date('now', '-${months} months')
+             AND change_type IN ('upgrade', 'downgrade')
+             AND status = 'approved'
+           GROUP BY strftime('%Y-%m', COALESCE(effective_date, created_at))
+           ORDER BY month DESC`,
+          [],
+          { fallback: true }
+        );
+      }
 
       const data = (expansionData || []).map((e: any) => ({
         month: e.month,
@@ -3347,12 +3437,14 @@ router.post(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const { displayName, jurisdiction, percentage, taxType, country, region } = req.body;
+      const { display_name, displayName, jurisdiction, percentage, tax_type, taxType, country, region } = req.body;
+      const resolvedDisplayName = display_name || displayName;
+      const resolvedTaxType = tax_type || taxType;
       const id = uuidv4();
       await dbRun(
         `INSERT INTO tax_rates (id, display_name, jurisdiction, percentage, tax_type, country, region, is_active)
                  VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
-        [id, displayName, jurisdiction, percentage, taxType || 'vat', country, region || null]
+        [id, resolvedDisplayName, jurisdiction, percentage, resolvedTaxType || 'vat', country, region || null]
       );
       return res.json({ success: true, id });
     } catch (error: any) {
@@ -3369,12 +3461,14 @@ router.post(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const { displayName, jurisdiction, percentage, taxType, country, region } = req.body;
+      const { display_name, displayName, jurisdiction, percentage, tax_type, taxType, country, region } = req.body;
+      const resolvedDisplayName = display_name || displayName;
+      const resolvedTaxType = tax_type || taxType;
       const id = uuidv4();
       await dbRun(
         `INSERT INTO tax_rates (id, display_name, jurisdiction, percentage, tax_type, country, region, is_active)
                  VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
-        [id, displayName, jurisdiction, percentage, taxType || 'vat', country, region || null]
+        [id, resolvedDisplayName, jurisdiction, percentage, resolvedTaxType || 'vat', country, region || null]
       );
       return res.json({ success: true, id });
     } catch (error: any) {
@@ -3392,8 +3486,10 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { displayName, jurisdiction, percentage, taxType, country, region, isActive } =
+      const { display_name, displayName, jurisdiction, percentage, tax_type, taxType, country, region, isActive } =
         req.body;
+      const resolvedDisplayName = display_name || displayName;
+      const resolvedTaxType = tax_type || taxType;
       await dbRun(
         `UPDATE tax_rates SET 
                     display_name = COALESCE(?, display_name),
@@ -3406,10 +3502,10 @@ router.put(
                     updated_at = datetime('now')
                  WHERE id = ?`,
         [
-          displayName,
+          resolvedDisplayName,
           jurisdiction,
           percentage,
-          taxType,
+          resolvedTaxType,
           country,
           region,
           isActive !== undefined ? (isActive ? 1 : 0) : null,
@@ -4644,6 +4740,222 @@ router.delete(
     } catch (error: any) {
       logger.error('[Billing] Delete revenue forecast error:', error);
       return res.status(500).json({ error: 'Failed to delete revenue forecast' });
+    }
+  })
+);
+
+// ==========================================
+// USAGE PRICING TIERS — CRUD
+// ==========================================
+
+/**
+ * GET /billing/usage-pricing-tiers
+ * List all usage pricing tiers (optionally filter by active only)
+ */
+router.get(
+  '/usage-pricing-tiers',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      const rows = await dbAll(
+        `SELECT id, name, unit, price_per_unit, currency, tier_type, min_quantity, max_quantity, is_active, created_at, updated_at
+         FROM usage_pricing_tiers ORDER BY created_at ASC`,
+        []
+      );
+      const tiers = (rows || []).map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        unit: r.unit,
+        pricePerUnit: r.price_per_unit,
+        currency: r.currency,
+        tierType: r.tier_type,
+        minQuantity: r.min_quantity,
+        maxQuantity: r.max_quantity,
+        isActive: !!r.is_active,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      }));
+      return res.json({ tiers });
+    } catch (error: any) {
+      logger.error('[Billing] List usage pricing tiers error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Usage pricing tiers');
+      }
+      return res.status(500).json({ error: 'Failed to list usage pricing tiers' });
+    }
+  })
+);
+
+/**
+ * GET /billing/usage-pricing-tiers/:id
+ */
+router.get(
+  '/usage-pricing-tiers/:id',
+  verifyToken,
+  requireSuperAdmin,
+  validateParams(UsagePricingTierIdParamSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const row: any = await dbGet(
+        `SELECT * FROM usage_pricing_tiers WHERE id = ?`,
+        [req.params.id]
+      );
+      if (!row) return res.status(404).json({ error: 'Tier not found' });
+      return res.json({
+        id: row.id,
+        name: row.name,
+        unit: row.unit,
+        pricePerUnit: row.price_per_unit,
+        currency: row.currency,
+        tierType: row.tier_type,
+        minQuantity: row.min_quantity,
+        maxQuantity: row.max_quantity,
+        isActive: !!row.is_active,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      });
+    } catch (error: any) {
+      logger.error('[Billing] Get usage pricing tier error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Usage pricing tier');
+      }
+      return res.status(500).json({ error: 'Failed to get usage pricing tier' });
+    }
+  })
+);
+
+/**
+ * POST /billing/usage-pricing-tiers
+ */
+router.post(
+  '/usage-pricing-tiers',
+  verifyToken,
+  requireSuperAdmin,
+  validateBody(CreateUsagePricingTierSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { name, unit, pricePerUnit, currency, tierType, minQuantity, maxQuantity, isActive } = req.body;
+      const id = `upt-${uuidv4()}`;
+      await dbRun(
+        `INSERT INTO usage_pricing_tiers (id, name, unit, price_per_unit, currency, tier_type, min_quantity, max_quantity, is_active)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id, name, unit, pricePerUnit, currency ?? 'USD', tierType ?? 'standard', minQuantity ?? 0, maxQuantity ?? null, isActive === false ? 0 : 1]
+      );
+      const row: any = await dbGet(`SELECT * FROM usage_pricing_tiers WHERE id = ?`, [id]);
+      return res.status(201).json({
+        id: row.id,
+        name: row.name,
+        unit: row.unit,
+        pricePerUnit: row.price_per_unit,
+        currency: row.currency,
+        tierType: row.tier_type,
+        minQuantity: row.min_quantity,
+        maxQuantity: row.max_quantity,
+        isActive: !!row.is_active,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      });
+    } catch (error: any) {
+      logger.error('[Billing] Create usage pricing tier error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Usage pricing tier');
+      }
+      return res.status(500).json({ error: 'Failed to create usage pricing tier' });
+    }
+  })
+);
+
+/**
+ * PUT /billing/usage-pricing-tiers/:id
+ */
+router.put(
+  '/usage-pricing-tiers/:id',
+  verifyToken,
+  requireSuperAdmin,
+  validateParams(UsagePricingTierIdParamSchema),
+  validateBody(UpdateUsagePricingTierSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const existing: any = await dbGet(`SELECT * FROM usage_pricing_tiers WHERE id = ?`, [req.params.id]);
+      if (!existing) return res.status(404).json({ error: 'Tier not found' });
+
+      const fields: string[] = [];
+      const values: SQLParams = [];
+      const fieldMap: Record<string, string> = {
+        name: 'name',
+        unit: 'unit',
+        pricePerUnit: 'price_per_unit',
+        currency: 'currency',
+        tierType: 'tier_type',
+        minQuantity: 'min_quantity',
+        maxQuantity: 'max_quantity',
+      };
+      for (const [bodyKey, colName] of Object.entries(fieldMap)) {
+        if (req.body[bodyKey] !== undefined) {
+          fields.push(`${colName} = ?`);
+          values.push(req.body[bodyKey]);
+        }
+      }
+      if (req.body.isActive !== undefined) {
+        fields.push('is_active = ?');
+        values.push(req.body.isActive ? 1 : 0);
+      }
+      if (fields.length === 0) {
+        return res.status(400).json({ error: 'No fields to update' });
+      }
+      fields.push("updated_at = datetime('now')");
+      values.push(req.params.id);
+
+      await dbRun(
+        `UPDATE usage_pricing_tiers SET ${fields.join(', ')} WHERE id = ?`,
+        values
+      );
+
+      const row: any = await dbGet(`SELECT * FROM usage_pricing_tiers WHERE id = ?`, [req.params.id]);
+      return res.json({
+        id: row.id,
+        name: row.name,
+        unit: row.unit,
+        pricePerUnit: row.price_per_unit,
+        currency: row.currency,
+        tierType: row.tier_type,
+        minQuantity: row.min_quantity,
+        maxQuantity: row.max_quantity,
+        isActive: !!row.is_active,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      });
+    } catch (error: any) {
+      logger.error('[Billing] Update usage pricing tier error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Usage pricing tier');
+      }
+      return res.status(500).json({ error: 'Failed to update usage pricing tier' });
+    }
+  })
+);
+
+/**
+ * DELETE /billing/usage-pricing-tiers/:id
+ */
+router.delete(
+  '/usage-pricing-tiers/:id',
+  verifyToken,
+  requireSuperAdmin,
+  validateParams(UsagePricingTierIdParamSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const existing: any = await dbGet(`SELECT * FROM usage_pricing_tiers WHERE id = ?`, [req.params.id]);
+      if (!existing) return res.status(404).json({ error: 'Tier not found' });
+      await dbRun(`DELETE FROM usage_pricing_tiers WHERE id = ?`, [req.params.id]);
+      return res.json({ success: true });
+    } catch (error: any) {
+      logger.error('[Billing] Delete usage pricing tier error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Usage pricing tier');
+      }
+      return res.status(500).json({ error: 'Failed to delete usage pricing tier' });
     }
   })
 );

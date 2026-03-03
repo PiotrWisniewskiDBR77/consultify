@@ -187,7 +187,7 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
           />
         </div>
         <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-          {t('landing.demo.subtext', 'Free 30-min call • See Consultinity in action')}
+          {t('landing.demo.subtext', 'Free 30-min call • See Consultify in action')}
         </span>
       </div>
     </motion.a>

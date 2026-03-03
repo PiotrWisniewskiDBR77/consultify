@@ -3,7 +3,7 @@
 // - This prevents "zero changes" after deploy (stale cached index.html).
 // - Bump CACHE_VERSION when changing caching strategy.
 const CACHE_VERSION = 'v3';
-const CACHE_NAME = `consultinity-${CACHE_VERSION}`;
+const CACHE_NAME = `consultify-${CACHE_VERSION}`;
 const APP_SHELL_URLS = [
   '/',
   '/index.html',
@@ -74,7 +74,7 @@ self.addEventListener('activate', (event) => {
       const cacheNames = await caches.keys();
       await Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME && cacheName.startsWith('consultinity-')) {
+          if (cacheName !== CACHE_NAME && cacheName.startsWith('consultify-')) {
             return caches.delete(cacheName);
           }
         })

@@ -55,6 +55,20 @@ interface CreditNoteStats {
   total_remaining: number;
 }
 
+function normalizeCreditNoteStats(raw: any): CreditNoteStats {
+  return {
+    total_count: raw.total_count ?? raw.totalCount ?? 0,
+    issued_count: raw.issued_count ?? raw.issuedCount ?? 0,
+    applied_count: raw.applied_count ?? raw.appliedCount ?? 0,
+    refunded_count: raw.refunded_count ?? raw.refundedCount ?? 0,
+    voided_count: raw.voided_count ?? raw.voidedCount ?? 0,
+    total_value: raw.total_value ?? raw.totalValue ?? 0,
+    total_applied: raw.total_applied ?? raw.totalApplied ?? 0,
+    total_refunded: raw.total_refunded ?? raw.totalRefunded ?? 0,
+    total_remaining: raw.total_remaining ?? raw.totalRemaining ?? 0,
+  };
+}
+
 interface CreditNoteItem {
   id: string;
   description: string;
@@ -154,7 +168,7 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({
       ]);
 
       setCreditNotes(notesRes.creditNotes || []);
-      if (statsRes) setStats(statsRes.stats);
+      if (statsRes) setStats(normalizeCreditNoteStats(statsRes.stats));
     } catch (err: any) {
       setError(err.message || 'Failed to load credit notes');
     } finally {
@@ -162,12 +176,12 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({
     }
   };
 
-  const formatCurrency = (amount: number, currency = 'USD') => {
+  const formatCurrency = (amount: number | undefined | null, currency = 'USD') => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency,
       minimumFractionDigits: 2,
-    }).format(amount / 100);
+    }).format((amount || 0) / 100);
   };
 
   const formatDate = (dateStr: string) => {

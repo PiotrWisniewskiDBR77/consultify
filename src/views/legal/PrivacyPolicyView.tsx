@@ -11,7 +11,7 @@ const COMPANY = {
   krs: '0000860440',
   email: 'privacy@dbr77.com',
   dpo: 'dpo@dbr77.com',
-  website: 'https://consultinity.com',
+  website: 'https://consultify.com',
 };
 
 export const PrivacyPolicyView: React.FC = () => {
@@ -26,12 +26,12 @@ export const PrivacyPolicyView: React.FC = () => {
       <section>
         <h2>1. Introduction</h2>
         <p>
-          Welcome to Consultinity, operated by <strong>{COMPANY.name}</strong>. We are committed to
+          Welcome to Consultify, operated by <strong>{COMPANY.name}</strong>. We are committed to
           protecting your personal data and respecting your privacy. This Privacy Policy explains
           how we collect, use, store, and protect your information when you use our platform.
         </p>
         <p>
-          By using Consultinity, you agree to the collection and use of information in accordance
+          By using Consultify, you agree to the collection and use of information in accordance
           with this policy.
         </p>
       </section>
@@ -108,7 +108,7 @@ export const PrivacyPolicyView: React.FC = () => {
         <p>We use your personal data for the following purposes:</p>
         <ul>
           <li>
-            <strong>Service Delivery:</strong> To provide and maintain Consultinity's features
+            <strong>Service Delivery:</strong> To provide and maintain Consultify's features
           </li>
           <li>
             <strong>Account Management:</strong> To manage your account and subscription
@@ -281,7 +281,7 @@ export const PrivacyPolicyView: React.FC = () => {
       <section>
         <h2>12. Children's Privacy</h2>
         <p>
-          Consultinity is not intended for users under 18 years of age. We do not knowingly collect
+          Consultify is not intended for users under 18 years of age. We do not knowingly collect
           data from children. If you believe a child has provided us with personal data, please
           contact us immediately.
         </p>

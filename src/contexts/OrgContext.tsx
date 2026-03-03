@@ -38,7 +38,7 @@ interface OrgContextValue {
 
 const OrgContext = createContext<OrgContextValue | undefined>(undefined);
 
-const STORAGE_KEY = 'consultinity_current_org_id';
+const STORAGE_KEY = 'consultify_current_org_id';
 
 interface OrgProviderProps {
   children: ReactNode;

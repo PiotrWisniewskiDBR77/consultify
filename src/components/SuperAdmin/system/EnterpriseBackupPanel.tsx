@@ -195,9 +195,12 @@ export const EnterpriseBackupPanel: React.FC = () => {
   const handleToggleSchedule = async (id: string, enabled: boolean) => {
     try {
       setSchedules((prev) => prev.map((s) => (s.id === id ? { ...s, enabled } : s)));
+      await Api.updateBackupSchedule(id, { enabled });
       toast.success(`Schedule ${enabled ? 'enabled' : 'disabled'}`);
+      fetchSchedules();
     } catch (error) {
       toast.error('Failed to update schedule');
+      fetchSchedules();
     }
   };
 
@@ -218,8 +221,10 @@ export const EnterpriseBackupPanel: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Backup & Recovery</h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+            Backup & Recovery
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 text-sm">
             Manage database backups and disaster recovery procedures
           </p>
         </div>
@@ -235,30 +240,34 @@ export const EnterpriseBackupPanel: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-          <div className="text-sm text-slate-400 dark:text-slate-500">Total Backups</div>
-          <div className="text-2xl font-bold text-white">{backups.length}</div>
+        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+          <div className="text-sm text-slate-600 dark:text-slate-400">Total Backups</div>
+          <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+            {backups.length}
+          </div>
         </div>
-        <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-          <div className="text-sm text-slate-400 dark:text-slate-500">Storage Used</div>
-          <div className="text-2xl font-bold text-white">{formatBytes(getTotalBackupSize())}</div>
+        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+          <div className="text-sm text-slate-600 dark:text-slate-400">Storage Used</div>
+          <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+            {formatBytes(getTotalBackupSize())}
+          </div>
         </div>
         <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
-          <div className="text-sm text-slate-400 dark:text-slate-500">Last Backup</div>
-          <div className="text-lg font-bold text-emerald-400">
+          <div className="text-sm text-slate-600 dark:text-slate-400">Last Backup</div>
+          <div className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">
             {backups[0] ? new Date(backups[0].createdAt).toLocaleDateString() : 'Never'}
           </div>
         </div>
         <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30">
-          <div className="text-sm text-slate-400 dark:text-slate-500">Active Schedules</div>
-          <div className="text-2xl font-bold text-purple-400">
+          <div className="text-sm text-slate-600 dark:text-slate-400">Active Schedules</div>
+          <div className="text-2xl font-semibold text-purple-700 dark:text-purple-300">
             {schedules.filter((s) => s.enabled).length}
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-white/10 pb-1">
+      <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
         {[
           { id: 'backups', label: 'Backups', icon: HardDrive },
           { id: 'schedules', label: 'Schedules', icon: Calendar },
@@ -270,8 +279,8 @@ export const EnterpriseBackupPanel: React.FC = () => {
             onClick={() => setActiveTab(id as any)}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeTab === id
-                ? 'bg-white/10 text-white border-b-2 border-purple-500'
-                : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-primary-500'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/20'
             }`}
           >
             <Icon className="w-4 h-4" />
@@ -290,7 +299,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
           {activeTab === 'backups' && (
             <div className="space-y-2">
               {backups.length === 0 ? (
-                <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+                <div className="text-center py-12 text-slate-600 dark:text-slate-400">
                   <HardDrive className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No backups available</p>
                   <p className="text-sm mt-1">Create your first backup to get started</p>
@@ -304,7 +313,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                   return (
                     <div
                       key={backup.id}
-                      className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10 hover:border-white/20 transition-colors"
+                      className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-colors"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -320,7 +329,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                               <span className={`px-2 py-0.5 text-xs rounded ${typeConfig.color}`}>
                                 {typeConfig.label}
                               </span>
-                              <code className="text-sm text-white font-mono">
+                              <code className="text-sm text-slate-900 dark:text-slate-100 font-mono">
                                 {backup.filename}
                               </code>
                               {backup.encrypted && <Lock className="w-3 h-3 text-emerald-400" />}
@@ -383,10 +392,12 @@ export const EnterpriseBackupPanel: React.FC = () => {
           {activeTab === 'schedules' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-white">Backup Schedules</h3>
+                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+                  Backup Schedules
+                </h3>
                 <button
                   onClick={() => setShowScheduleModal(true)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 text-white text-sm rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-navy-950/20 hover:bg-slate-50 dark:hover:bg-navy-800/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-100 text-sm rounded-lg transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Add Schedule
@@ -397,27 +408,29 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 {schedules.map((schedule) => (
                   <div
                     key={schedule.id}
-                    className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10"
+                    className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div
-                          className={`p-2 rounded-lg ${schedule.enabled ? 'bg-emerald-500/20' : 'bg-slate-700'}`}
+                          className={`p-2 rounded-lg ${schedule.enabled ? 'bg-emerald-500/20' : 'bg-slate-100 dark:bg-slate-700'}`}
                         >
                           <Calendar
-                            className={`w-5 h-5 ${schedule.enabled ? 'text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}
+                            className={`w-5 h-5 ${schedule.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'}`}
                           />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-white">{schedule.name}</span>
+                            <span className="font-medium text-slate-900 dark:text-slate-100">
+                              {schedule.name}
+                            </span>
                             <span
                               className={`px-2 py-0.5 text-xs rounded ${BACKUP_TYPE_CONFIG[schedule.type].color}`}
                             >
                               {BACKUP_TYPE_CONFIG[schedule.type].label}
                             </span>
                           </div>
-                          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400 mt-1">
                             <span className="capitalize">
                               {schedule.frequency} at {schedule.time}
                             </span>
@@ -460,11 +473,13 @@ export const EnterpriseBackupPanel: React.FC = () => {
           {activeTab === 'settings' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-                  <h4 className="font-medium text-white mb-4">Retention Policy</h4>
+                <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                  <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-4">
+                    Retention Policy
+                  </h4>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                      <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
                         Retention Days
                       </label>
                       <input
@@ -473,11 +488,11 @@ export const EnterpriseBackupPanel: React.FC = () => {
                         onChange={(e) =>
                           setConfig({ ...config, retention_days: parseInt(e.target.value) })
                         }
-                        className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-lg text-white"
+                        className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                      <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
                         Max Local Backups
                       </label>
                       <input
@@ -489,52 +504,58 @@ export const EnterpriseBackupPanel: React.FC = () => {
                             max_local_backups: parseInt(e.target.value),
                           })
                         }
-                        className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-lg text-white"
+                        className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-                  <h4 className="font-medium text-white mb-4">Security</h4>
+                <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                  <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-4">Security</h4>
                   <div className="space-y-4">
                     <label className="flex items-center justify-between">
-                      <span className="text-sm text-slate-300">Encrypt backups at rest</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                        Encrypt backups at rest
+                      </span>
                       <input
                         type="checkbox"
                         checked={config.encryption_enabled}
                         onChange={(e) =>
                           setConfig({ ...config, encryption_enabled: e.target.checked })
                         }
-                        className="rounded border-slate-600 bg-slate-800 text-purple-500"
+                        className="rounded border-slate-300 bg-white text-purple-600 dark:border-slate-600 dark:bg-slate-800 dark:text-purple-500"
                       />
                     </label>
                     <label className="flex items-center justify-between">
-                      <span className="text-sm text-slate-300">Auto-verify after backup</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                        Auto-verify after backup
+                      </span>
                       <input
                         type="checkbox"
                         checked={config.auto_verify}
                         onChange={(e) => setConfig({ ...config, auto_verify: e.target.checked })}
-                        className="rounded border-slate-600 bg-slate-800 text-purple-500"
+                        className="rounded border-slate-300 bg-white text-purple-600 dark:border-slate-600 dark:bg-slate-800 dark:text-purple-500"
                       />
                     </label>
                   </div>
                 </div>
 
-                <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10 md:col-span-2">
-                  <h4 className="font-medium text-white mb-4 flex items-center gap-2">
+                <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 md:col-span-2">
+                  <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
                     <Cloud className="w-4 h-4 text-cyan-400" />
                     Cloud Storage
                   </h4>
                   <label className="flex items-center justify-between mb-4">
-                    <span className="text-sm text-slate-300">Enable cloud backup sync</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300">
+                      Enable cloud backup sync
+                    </span>
                     <input
                       type="checkbox"
                       checked={config.cloud_storage_enabled}
                       onChange={(e) =>
                         setConfig({ ...config, cloud_storage_enabled: e.target.checked })
                       }
-                      className="rounded border-slate-600 bg-slate-800 text-purple-500"
+                      className="rounded border-slate-300 bg-white text-purple-600 dark:border-slate-600 dark:bg-slate-800 dark:text-purple-500"
                     />
                   </label>
                   {config.cloud_storage_enabled && (
@@ -544,8 +565,8 @@ export const EnterpriseBackupPanel: React.FC = () => {
                           key={provider}
                           className={`p-3 rounded-lg border transition-colors ${
                             config.cloud_provider === provider
-                              ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
-                              : 'bg-slate-800 border-white/10 text-slate-400 dark:text-slate-500 hover:border-white/20'
+                              ? 'bg-primary-600/10 border-primary-500/30 text-primary-700 dark:text-primary-300'
+                              : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20'
                           }`}
                           onClick={() => setConfig({ ...config, cloud_provider: provider })}
                         >
@@ -572,7 +593,9 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 <div className="flex items-start gap-4">
                   <Shield className="w-8 h-8 text-amber-400" />
                   <div>
-                    <h3 className="text-lg font-bold text-white mb-2">Disaster Recovery Testing</h3>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">
+                      Disaster Recovery Testing
+                    </h3>
                     <p className="text-slate-400 dark:text-slate-500 mb-4">
                       Regularly test your backup and recovery procedures to ensure business
                       continuity. DR tests run in an isolated environment and do not affect
@@ -587,38 +610,38 @@ export const EnterpriseBackupPanel: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+                <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
                   <div className="flex items-center gap-3 mb-3">
                     <Zap className="w-5 h-5 text-emerald-400" />
-                    <span className="font-medium text-white">Last DR Test</span>
+                    <span className="font-medium text-slate-900 dark:text-slate-100">Last DR Test</span>
                   </div>
                   <div className="text-2xl font-bold text-emerald-400">Passed</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">14 days ago</div>
                 </div>
-                <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+                <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
                   <div className="flex items-center gap-3 mb-3">
                     <Clock className="w-5 h-5 text-cyan-400" />
-                    <span className="font-medium text-white">Recovery Time</span>
+                    <span className="font-medium text-slate-900 dark:text-slate-100">Recovery Time</span>
                   </div>
-                  <div className="text-2xl font-bold text-white">4m 32s</div>
+                  <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">4m 32s</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Average restore time
                   </div>
                 </div>
-                <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+                <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
                   <div className="flex items-center gap-3 mb-3">
                     <FileArchive className="w-5 h-5 text-purple-400" />
-                    <span className="font-medium text-white">Data Integrity</span>
+                    <span className="font-medium text-slate-900 dark:text-slate-100">Data Integrity</span>
                   </div>
-                  <div className="text-2xl font-bold text-white">100%</div>
+                  <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">100%</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     All checksums verified
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-                <h4 className="font-medium text-white mb-4">DR Test History</h4>
+              <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-4">DR Test History</h4>
                 <div className="space-y-2">
                   {[
                     {
@@ -642,11 +665,11 @@ export const EnterpriseBackupPanel: React.FC = () => {
                   ].map((test, i) => (
                     <div
                       key={i}
-                      className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg"
+                      className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-transparent rounded-lg"
                     >
                       <div className="flex items-center gap-3">
                         <CheckCircle className="w-4 h-4 text-emerald-400" />
-                        <span className="text-sm text-white">{test.type}</span>
+                        <span className="text-sm text-slate-900 dark:text-slate-100">{test.type}</span>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-slate-400 dark:text-slate-500">
                         <span>{test.duration}</span>
@@ -664,8 +687,8 @@ export const EnterpriseBackupPanel: React.FC = () => {
       {/* Create Backup Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-navy-900 rounded-xl border border-white/10 p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">Create Backup</h3>
+          <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Create Backup</h3>
             <div className="space-y-4">
               <p className="text-sm text-slate-400 dark:text-slate-500">Select backup type:</p>
               <div className="grid grid-cols-2 gap-3">
@@ -690,7 +713,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
               </div>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="w-full py-2 text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+                className="w-full py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
               >
                 Cancel
               </button>

@@ -202,12 +202,12 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
 
   // Download codes as file
   const handleDownloadCodes = () => {
-    const content = `Consultinity Backup Codes\nGenerated: ${new Date().toLocaleString()}\n\n${backupCodes.join('\n')}\n\nStore these codes in a safe place. Each code can only be used once.`;
+    const content = `Consultify Backup Codes\nGenerated: ${new Date().toLocaleString()}\n\n${backupCodes.join('\n')}\n\nStore these codes in a safe place. Each code can only be used once.`;
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'consultinity-backup-codes.txt';
+    a.download = 'consultify-backup-codes.txt';
     a.click();
     URL.revokeObjectURL(url);
   };

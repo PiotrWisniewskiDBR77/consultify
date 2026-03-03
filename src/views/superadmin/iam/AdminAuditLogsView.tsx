@@ -229,8 +229,10 @@ const AdminAuditLogsView: React.FC = () => {
               <Shield className="w-5 h-5 text-indigo-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Total Logs</p>
-              <p className="text-xl font-semibold">{stats?.total_logs || 0}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Total Logs</p>
+              <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                {stats?.total_logs || 0}
+              </p>
             </div>
           </div>
         </Card>
@@ -241,8 +243,10 @@ const AdminAuditLogsView: React.FC = () => {
               <AlertTriangle className="w-5 h-5 text-amber-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Unresolved</p>
-              <p className="text-xl font-semibold">{stats?.unresolved_count || 0}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Unresolved</p>
+              <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                {stats?.unresolved_count || 0}
+              </p>
             </div>
           </div>
         </Card>
@@ -253,8 +257,10 @@ const AdminAuditLogsView: React.FC = () => {
               <AlertCircle className="w-5 h-5 text-red-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">High Risk</p>
-              <p className="text-xl font-semibold">{stats?.high_risk_count || 0}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">High Risk</p>
+              <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                {stats?.high_risk_count || 0}
+              </p>
             </div>
           </div>
         </Card>
@@ -265,8 +271,10 @@ const AdminAuditLogsView: React.FC = () => {
               <AlertTriangle className="w-5 h-5 text-amber-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Medium Risk</p>
-              <p className="text-xl font-semibold">{stats?.medium_risk_count || 0}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Medium Risk</p>
+              <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                {stats?.medium_risk_count || 0}
+              </p>
             </div>
           </div>
         </Card>
@@ -277,8 +285,10 @@ const AdminAuditLogsView: React.FC = () => {
               <CheckCircle className="w-5 h-5 text-emerald-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Low Risk</p>
-              <p className="text-xl font-semibold">{stats?.low_risk_count || 0}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Low Risk</p>
+              <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                {stats?.low_risk_count || 0}
+              </p>
             </div>
           </div>
         </Card>
@@ -289,7 +299,7 @@ const AdminAuditLogsView: React.FC = () => {
         <Card variant="bordered" className="p-4 border-red-500/30 bg-red-500/5">
           <div className="flex items-center gap-2 text-red-400">
             <AlertTriangle className="w-5 h-5" />
-            <span>{error}</span>
+            <span>{typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}</span>
             <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
               Dismiss
             </button>
@@ -304,7 +314,9 @@ const AdminAuditLogsView: React.FC = () => {
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
-              showFilters ? 'bg-indigo-500/20 text-indigo-400' : 'bg-slate-700 hover:bg-slate-600'
+              showFilters
+                ? 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200'
             }`}
           >
             <Filter className="w-4 h-4" />
@@ -328,7 +340,7 @@ const AdminAuditLogsView: React.FC = () => {
           <button
             onClick={loadData}
             disabled={loading}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded-lg transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -340,11 +352,11 @@ const AdminAuditLogsView: React.FC = () => {
       {showFilters && (
         <Card variant="bordered" className="p-4">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-sm font-medium text-slate-300">Filter Audit Logs</h3>
+            <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">Filter Audit Logs</h3>
             {Object.values(filters).some((v) => v) && (
               <button
                 onClick={clearFilters}
-                className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 hover:text-slate-300"
+                className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
               >
                 <X className="w-3 h-3" />
                 Clear Filters
@@ -353,13 +365,13 @@ const AdminAuditLogsView: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <div>
-              <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+              <label className="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                 Action Type
               </label>
               <select
                 value={filters.actionType}
                 onChange={(e) => setFilters({ ...filters, actionType: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100"
               >
                 <option value="">All Actions</option>
                 <option value="login">Login</option>
@@ -373,13 +385,13 @@ const AdminAuditLogsView: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+              <label className="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                 Status
               </label>
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100"
               >
                 <option value="">All Statuses</option>
                 <option value="unresolved">Unresolved</option>
@@ -389,13 +401,13 @@ const AdminAuditLogsView: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+              <label className="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                 Risk Level
               </label>
               <select
                 value={filters.riskScoreMin}
                 onChange={(e) => setFilters({ ...filters, riskScoreMin: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100"
               >
                 <option value="">Any Risk</option>
                 <option value="80">Critical (80+)</option>
@@ -404,30 +416,30 @@ const AdminAuditLogsView: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+              <label className="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                 From Date
               </label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-slate-400" />
                 <input
                   type="date"
                   value={filters.fromDate}
                   onChange={(e) => setFilters({ ...filters, fromDate: e.target.value })}
-                  className="w-full pl-10 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                  className="w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+              <label className="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                 To Date
               </label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-slate-400" />
                 <input
                   type="date"
                   value={filters.toDate}
                   onChange={(e) => setFilters({ ...filters, toDate: e.target.value })}
-                  className="w-full pl-10 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                  className="w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100"
                 />
               </div>
             </div>
@@ -440,29 +452,29 @@ const AdminAuditLogsView: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+              <tr className="border-b border-slate-200 dark:border-slate-700">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
                   Admin
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
                   Action
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
                   Resource
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
                   IP Address
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
                   Risk
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
                   Status
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
                   Time
                 </th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-right py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
                   Actions
                 </th>
               </tr>
@@ -470,7 +482,7 @@ const AdminAuditLogsView: React.FC = () => {
             <tbody>
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-8 text-slate-400 dark:text-slate-500">
+                  <td colSpan={8} className="text-center py-8 text-slate-600 dark:text-slate-400">
                     No audit logs found
                   </td>
                 </tr>
@@ -478,27 +490,27 @@ const AdminAuditLogsView: React.FC = () => {
                 logs.map((log) => (
                   <tr
                     key={log.id}
-                    className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors"
+                    className="border-b border-slate-200 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                   >
                     <td className="py-3 px-4">
                       <div>
                         <p className="font-medium">
                           {log.admin?.firstName} {log.admin?.lastName}
                         </p>
-                        <p className="text-sm text-slate-400 dark:text-slate-500">
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
                           {log.admin?.email}
                         </p>
                       </div>
                     </td>
                     <td className="py-3 px-4">
-                      <span className="text-sm font-mono bg-slate-800 px-2 py-1 rounded">
+                      <span className="text-sm font-mono bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 px-2 py-1 rounded">
                         {log.action_type}
                       </span>
                     </td>
                     <td className="py-3 px-4">
                       <div>
                         <p className="text-sm">{log.resource_type || '-'}</p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 truncate max-w-[150px]">
+                        <p className="text-xs text-slate-600 dark:text-slate-400 truncate max-w-[150px]">
                           {log.resource_id || '-'}
                         </p>
                       </div>
@@ -507,8 +519,8 @@ const AdminAuditLogsView: React.FC = () => {
                     <td className="py-3 px-4">{getRiskBadge(log.risk_score)}</td>
                     <td className="py-3 px-4">{getStatusBadge(log.status)}</td>
                     <td className="py-3 px-4">
-                      <div className="flex items-center gap-1 text-sm text-slate-300">
-                        <Clock className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                      <div className="flex items-center gap-1 text-sm text-slate-700 dark:text-slate-300">
+                        <Clock className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                         {new Date(log.created_at).toLocaleString()}
                       </div>
                     </td>
@@ -542,7 +554,7 @@ const AdminAuditLogsView: React.FC = () => {
               value={resolutionNotes}
               onChange={(e) => setResolutionNotes(e.target.value)}
               placeholder="Resolution notes..."
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm mb-4 h-24 resize-none"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100 mb-4 h-24 resize-none"
             />
             <div className="flex justify-end gap-2">
               <button
@@ -550,7 +562,7 @@ const AdminAuditLogsView: React.FC = () => {
                   setShowResolveModal(null);
                   setResolutionNotes('');
                 }}
-                className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg"
+                className="px-4 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded-lg"
               >
                 Cancel
               </button>

@@ -8,9 +8,9 @@ import { Layers, Mail, Megaphone } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { InfoButton } from '../../components/shared/InfoButton';
-import { EmailTemplatesPanel } from '../../components/SuperAdmin/EmailTemplatesPanel';
 import { PartnerOutreachPanel } from '../../components/SuperAdmin/PartnerOutreachPanel';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { EmailTemplatesView } from './EmailTemplatesView';
 import { PlaybookTemplatesListView } from './PlaybookTemplatesListView';
 
 interface ContentModuleProps {
@@ -29,13 +29,13 @@ export const ContentModule: React.FC<ContentModuleProps> = ({ initialTab }) => {
   const getCardId = () => {
     switch (activeTab) {
       case 'playbooks':
-        return 'superadmin-playbooks';
+        return 'superadmin-content-playbooks';
       case 'email-templates':
-        return 'superadmin-email-templates';
+        return 'superadmin-content-email-templates';
       case 'partner-outreach':
-        return 'partners.outreach';
+        return 'superadmin-content-partner-outreach';
       default:
-        return 'superadmin-playbooks';
+        return 'superadmin-content-playbooks';
     }
   };
 
@@ -44,7 +44,7 @@ export const ContentModule: React.FC<ContentModuleProps> = ({ initialTab }) => {
       case 'playbooks':
         return <PlaybookTemplatesListView />;
       case 'email-templates':
-        return <EmailTemplatesPanel />;
+        return <EmailTemplatesView />;
       case 'partner-outreach':
         return <PartnerOutreachPanel />;
       default:

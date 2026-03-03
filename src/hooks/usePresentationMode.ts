@@ -16,7 +16,7 @@
  *   Reads: 'd'|'accordion'|'notion'|'clickup' → normalizes to n|c
  *   Writes: always n|c only
  *
- * Persistence key: `consultinity:presentationMode:<entityType>`
+ * Persistence key: `consultify:presentationMode:<entityType>`
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -31,7 +31,7 @@ const FALLBACK_MODE: PresentationMode = 'n';
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function storageKey(entityType: EntityType): string {
-  return `consultinity:presentationMode:${entityType}`;
+  return `consultify:presentationMode:${entityType}`;
 }
 
 /** Normalize any legacy or current value to n|c */

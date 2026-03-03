@@ -77,12 +77,14 @@ const TOOLS: CanvasToolType[] = ['mindmap', 'process_flow', 'table', 'whiteboard
 export interface IdeaCanvasToolSelectorProps {
   activeTool: CanvasToolType;
   onToolChange: (tool: CanvasToolType) => void;
+  disabledTools?: CanvasToolType[];
   className?: string;
 }
 
 export const IdeaCanvasToolSelector: React.FC<IdeaCanvasToolSelectorProps> = ({
   activeTool,
   onToolChange,
+  disabledTools = [],
   className = '',
 }) => {
   const { t } = useTranslation();
@@ -91,10 +93,11 @@ export const IdeaCanvasToolSelector: React.FC<IdeaCanvasToolSelectorProps> = ({
     (e: React.KeyboardEvent, tool: CanvasToolType) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
+        if (disabledTools.includes(tool)) return;
         onToolChange(tool);
       }
     },
-    [onToolChange]
+    [disabledTools, onToolChange]
   );
 
   return (
@@ -107,6 +110,7 @@ export const IdeaCanvasToolSelector: React.FC<IdeaCanvasToolSelectorProps> = ({
         const config = TOOL_CONFIG[tool];
         const Icon = config.icon;
         const isActive = activeTool === tool;
+        const isDisabled = disabledTools.includes(tool);
         const label = t(config.labelKey);
         const tooltip = t(config.tooltipKey);
 
@@ -116,10 +120,15 @@ export const IdeaCanvasToolSelector: React.FC<IdeaCanvasToolSelectorProps> = ({
             type="button"
             role="radio"
             aria-checked={isActive}
+            aria-disabled={isDisabled}
             aria-label={label}
-            title={tooltip}
+            title={isDisabled ? `${tooltip} — ${t('comingSoon')}` : tooltip}
             tabIndex={isActive ? 0 : -1}
-            onClick={() => onToolChange(tool)}
+            disabled={isDisabled}
+            onClick={() => {
+              if (isDisabled) return;
+              onToolChange(tool);
+            }}
             onKeyDown={(e) => handleKeyDown(e, tool)}
             className={`
               relative flex items-center justify-center p-2 rounded-full
@@ -127,7 +136,9 @@ export const IdeaCanvasToolSelector: React.FC<IdeaCanvasToolSelectorProps> = ({
               transition-colors duration-160
               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 focus-visible:ring-offset-1
               ${
-                isActive
+                isDisabled
+                  ? 'opacity-40 cursor-not-allowed'
+                  : isActive
                   ? 'bg-white dark:bg-navy-700 text-primary-600 dark:text-primary-400 shadow-sm'
                   : 'hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700/50'
               }

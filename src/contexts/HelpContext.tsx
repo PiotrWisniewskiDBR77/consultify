@@ -113,7 +113,7 @@ const HelpContext = createContext<HelpContextValue | undefined>(undefined);
 // Helper to get auth token
 const getAuthToken = (): string | null => {
   try {
-    const stored = localStorage.getItem('consultinity-storage');
+    const stored = localStorage.getItem('consultify-storage');
     if (stored) {
       const parsed = JSON.parse(stored);
       return parsed.state?.currentUser?.token || localStorage.getItem('auth_token') || null;

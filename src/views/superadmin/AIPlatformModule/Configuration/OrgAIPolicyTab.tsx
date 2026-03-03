@@ -11,10 +11,7 @@ import { RefreshCw, Save, Shield } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-const authHeaders = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${localStorage.getItem('token')}`,
-});
+import { Api } from '@/services/api';
 
 export const OrgAIPolicyTab: React.FC = () => {
   const [orgId, setOrgId] = useState('');
@@ -41,11 +38,7 @@ export const OrgAIPolicyTab: React.FC = () => {
     }
     setLoading(true);
     try {
-      const res = await fetch(`/api/llm/org/${encodeURIComponent(id)}/policy`, {
-        headers: authHeaders(),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Failed to load policy');
+      const json = await Api.getOrgLLMPolicy(id);
       const rawPolicy = json?.policy?.policy ?? json?.policy ?? {};
       let policyObj: any = rawPolicy;
       if (typeof rawPolicy === 'string') {
@@ -77,13 +70,7 @@ export const OrgAIPolicyTab: React.FC = () => {
     }
     setSaving(true);
     try {
-      const res = await fetch(`/api/llm/org/${encodeURIComponent(id)}/policy`, {
-        method: 'PUT',
-        headers: authHeaders(),
-        body: JSON.stringify({ policy: parsed }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Save failed');
+      await Api.updateOrgLLMPolicy(id, parsed);
       toast.success('Policy saved');
       setLastLoadedAt(new Date().toISOString());
     } catch (e: any) {

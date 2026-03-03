@@ -55,7 +55,7 @@ interface ExportSharePanelProps {
     password?: string;
     expiresInDays?: number;
     showCompanyLogo?: boolean;
-    showConsultinityBranding?: boolean;
+    showConsultifyBranding?: boolean;
     customMessage?: string;
   }) => Promise<{
     id: string;
@@ -137,7 +137,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
       password: password || undefined,
       expiresInDays: expiresInDays ? Number(expiresInDays) : undefined,
       customMessage: customMessage || undefined,
-      showConsultinityBranding: showBranding,
+      showConsultifyBranding: showBranding,
       showCompanyLogo: true,
     });
 
@@ -399,7 +399,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                     onChange={(e) => setShowBranding(e.target.checked)}
                     className="rounded border-slate-300"
                   />
-                  {isPl ? 'Pokaż branding Consultinity' : 'Show Consultinity branding'}
+                  {isPl ? 'Pokaż branding Consultify' : 'Show Consultify branding'}
                 </label>
 
                 <button

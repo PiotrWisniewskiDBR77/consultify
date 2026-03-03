@@ -35,6 +35,7 @@ import ReactFlow, {
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
+import type { CanvasToolType } from './IdeaCanvasToolSelector';
 
 type PersistenceStatus = 'online' | 'no_route' | 'missing_table' | 'offline';
 
@@ -281,6 +282,9 @@ type IdeaRecommendationMapProps = {
   ideaTitle: string;
   onClose: () => void;
   onCenterEdit?: () => void;
+  preferredTool?: CanvasToolType;
+  extensions?: Record<string, unknown>;
+  onPreferredToolLoaded?: (tool: CanvasToolType | null) => void;
   /** Default: 'overlay' (full-screen). Use 'embedded' inside a workspace split. */
   variant?: 'overlay' | 'embedded';
   /** Whether to show the close button in the top bar (default true). */
@@ -296,6 +300,9 @@ function MindMapInner({
   ideaTitle,
   onClose,
   onCenterEdit,
+  preferredTool,
+  extensions,
+  onPreferredToolLoaded,
   variant = 'overlay',
   showClose = true,
   className,
@@ -325,6 +332,12 @@ function MindMapInner({
       const map = res?.map || {};
       const nextNodes = Array.isArray(map.nodes) ? map.nodes : [];
       const nextEdges = Array.isArray(map.edges) ? map.edges : [];
+      const loadedPreferred = map?.preferredTool ? String(map.preferredTool) : null;
+      const loadedPreferredSafe =
+        loadedPreferred && ['mindmap', 'process_flow', 'table', 'whiteboard'].includes(loadedPreferred)
+          ? (loadedPreferred as CanvasToolType)
+          : null;
+      onPreferredToolLoaded?.(loadedPreferredSafe);
 
       // Keep center label consistent with current title (map stores a snapshot)
       const patchedNodes = nextNodes.map((n: any) => {
@@ -428,7 +441,12 @@ function MindMapInner({
       saveTimerRef.current = window.setTimeout(async () => {
         setSaving(true);
         try {
-          await Api.saveMyIdeaMap(ideaId, { nodes: nextNodes, edges: nextEdges });
+          await Api.saveMyIdeaMap(ideaId, {
+            nodes: nextNodes,
+            edges: nextEdges,
+            preferredTool: preferredTool || undefined,
+            extensions: extensions || undefined,
+          });
           setLastSavedAt(Date.now());
         } catch (err: any) {
           toast.error(
@@ -439,7 +457,7 @@ function MindMapInner({
         }
       }, 700);
     },
-    [ideaId, isPolish, locked, persistence]
+    [extensions, ideaId, isPolish, locked, persistence, preferredTool]
   );
 
   // Persist on changes (debounced)
@@ -588,7 +606,12 @@ function MindMapInner({
 
       // Persist immediately (modal apply should be explicit)
       if (persistence === 'online') {
-        await Api.saveMyIdeaMap(ideaId, { nodes: nextNodes as any, edges: nextEdges as any });
+        await Api.saveMyIdeaMap(ideaId, {
+          nodes: nextNodes as any,
+          edges: nextEdges as any,
+          preferredTool: preferredTool || undefined,
+          extensions: extensions || undefined,
+        });
         setLastSavedAt(Date.now());
       }
 

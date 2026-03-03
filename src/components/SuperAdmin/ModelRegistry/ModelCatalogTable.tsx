@@ -26,6 +26,8 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { trackFunnelEvent } from '../../../services/funnelAnalytics';
+import { useAppStore } from '../../../store/useAppStore';
+import { AppView } from '../../../types';
 import type { DataClass, HealthStatus, ModelKind, ProviderType, RegistryModel } from './types';
 import { HEALTH_STYLES, KIND_BADGE_STYLES, PROVIDER_TYPE_STYLES } from './types';
 
@@ -33,132 +35,6 @@ const authHeaders = () => ({
   'Content-Type': 'application/json',
   Authorization: `Bearer ${localStorage.getItem('token')}`,
 });
-
-const DEMO_MODELS: RegistryModel[] = [
-  {
-    id: '1',
-    name: 'GPT-4o',
-    provider: 'openrouter',
-    providerType: 'aggregator',
-    originVendor: 'OpenAI',
-    modelId: 'openai/gpt-4o',
-    kind: 'TEXT_LLM',
-    isActive: true,
-    healthStatus: 'healthy',
-    lastHealthCheck: new Date().toISOString(),
-    avgLatencyMs: 320,
-    costPer1k: 0.005,
-    capabilities: {
-      vision: true,
-      tools: true,
-      streaming: true,
-      jsonMode: true,
-      contextWindow: 128000,
-    },
-    executionRegions: ['US', 'EU'],
-    allowedDataClasses: ['no_pii', 'pii'],
-    createdAt: '2024-01-15T00:00:00Z',
-    updatedAt: '2024-06-01T00:00:00Z',
-  },
-  {
-    id: '2',
-    name: 'Claude 3.5 Sonnet',
-    provider: 'openrouter',
-    providerType: 'aggregator',
-    originVendor: 'Anthropic',
-    modelId: 'anthropic/claude-3.5-sonnet',
-    kind: 'TEXT_LLM',
-    isActive: true,
-    healthStatus: 'healthy',
-    lastHealthCheck: new Date().toISOString(),
-    avgLatencyMs: 280,
-    costPer1k: 0.003,
-    capabilities: {
-      vision: true,
-      tools: true,
-      streaming: true,
-      jsonMode: true,
-      contextWindow: 200000,
-    },
-    executionRegions: ['US'],
-    allowedDataClasses: ['no_pii', 'pii', 'confidential'],
-    createdAt: '2024-03-01T00:00:00Z',
-    updatedAt: '2024-06-15T00:00:00Z',
-  },
-  {
-    id: '3',
-    name: 'DALL-E 3',
-    provider: 'openai',
-    providerType: 'direct',
-    originVendor: 'OpenAI',
-    modelId: 'dall-e-3',
-    kind: 'IMAGE_MODEL',
-    isActive: true,
-    healthStatus: 'degraded',
-    lastHealthCheck: new Date().toISOString(),
-    avgLatencyMs: 8500,
-    costPer1k: 0.04,
-    capabilities: {
-      vision: false,
-      tools: false,
-      streaming: false,
-      jsonMode: false,
-      contextWindow: 0,
-    },
-    executionRegions: ['US'],
-    allowedDataClasses: ['no_pii'],
-    createdAt: '2024-02-01T00:00:00Z',
-    updatedAt: '2024-05-20T00:00:00Z',
-  },
-  {
-    id: '4',
-    name: 'LeanLM v2',
-    provider: 'internal',
-    providerType: 'local',
-    originVendor: 'Consultify',
-    modelId: 'consultify/lean-lm-v2',
-    kind: 'BUSINESS_MODEL',
-    isActive: true,
-    healthStatus: 'healthy',
-    avgLatencyMs: 150,
-    costPer1k: 0.001,
-    capabilities: {
-      vision: false,
-      tools: true,
-      streaming: false,
-      jsonMode: true,
-      contextWindow: 32000,
-    },
-    executionRegions: ['EU'],
-    allowedDataClasses: ['no_pii', 'pii', 'confidential'],
-    createdAt: '2024-04-01T00:00:00Z',
-    updatedAt: '2024-06-20T00:00:00Z',
-  },
-  {
-    id: '5',
-    name: 'Gemini 1.5 Pro',
-    provider: 'google',
-    providerType: 'direct',
-    originVendor: 'Google',
-    modelId: 'google/gemini-1.5-pro',
-    kind: 'TEXT_LLM',
-    isActive: false,
-    healthStatus: 'unknown',
-    avgLatencyMs: 450,
-    costPer1k: 0.0035,
-    capabilities: {
-      vision: true,
-      tools: true,
-      streaming: true,
-      jsonMode: true,
-      contextWindow: 1000000,
-    },
-    executionRegions: ['US', 'EU', 'APAC'],
-    allowedDataClasses: ['no_pii'],
-    createdAt: '2024-05-01T00:00:00Z',
-    updatedAt: '2024-06-25T00:00:00Z',
-  },
-];
 
 function HealthBadge({ status }: { status: HealthStatus }) {
   const style = HEALTH_STYLES[status];
@@ -228,9 +104,10 @@ interface ActionsMenuProps {
   onToggleActive: (model: RegistryModel) => void;
   onEdit: (model: RegistryModel) => void;
   onTestConnection: (model: RegistryModel) => void;
+  onDelete: (model: RegistryModel) => void;
 }
 
-function ActionsMenu({ model, onToggleActive, onEdit, onTestConnection }: ActionsMenuProps) {
+function ActionsMenu({ model, onToggleActive, onEdit, onTestConnection, onDelete }: ActionsMenuProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -281,7 +158,13 @@ function ActionsMenu({ model, onToggleActive, onEdit, onTestConnection }: Action
             <Wifi size={14} /> Test Connection
           </button>
           <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
-          <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10">
+          <button
+            onClick={() => {
+              onDelete(model);
+              setOpen(false);
+            }}
+            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10"
+          >
             <Trash2 size={14} /> Delete
           </button>
         </div>
@@ -290,8 +173,144 @@ function ActionsMenu({ model, onToggleActive, onEdit, onTestConnection }: Action
   );
 }
 
+interface EditModelModalProps {
+  model: RegistryModel;
+  onClose: () => void;
+  onSaved: () => void;
+}
+
+function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    name: model.name,
+    provider: model.provider,
+    model_id: model.modelId,
+    is_active: model.isActive,
+    tier: (model as any).tier || '',
+    description: (model as any).description || '',
+  });
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/llm/providers/${encodeURIComponent(model.id)}`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json?.error || 'Update failed');
+      }
+      toast.success(`${form.name} updated`);
+      onSaved();
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to update model');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl max-w-lg w-full">
+        <div className="p-6 border-b border-slate-200 dark:border-navy-700">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Edit Model</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Update provider configuration for {model.name}
+          </p>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
+            <input
+              type="text"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Provider</label>
+              <input
+                type="text"
+                value={form.provider}
+                onChange={(e) => setForm({ ...form, provider: e.target.value })}
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Model ID</label>
+              <input
+                type="text"
+                value={form.model_id}
+                onChange={(e) => setForm({ ...form, model_id: e.target.value })}
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white font-mono text-sm"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tier</label>
+              <select
+                value={form.tier}
+                onChange={(e) => setForm({ ...form, tier: e.target.value })}
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+              >
+                <option value="">No tier</option>
+                <option value="primary">Primary</option>
+                <option value="fallback">Fallback</option>
+                <option value="economy">Economy</option>
+              </select>
+            </div>
+            <div className="flex items-end pb-1">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.is_active}
+                  onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-indigo-600"
+                />
+                <span className="text-sm text-slate-700 dark:text-slate-300">Active</span>
+              </label>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              rows={3}
+              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+              placeholder="Optional description..."
+            />
+          </div>
+        </div>
+        <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2.5 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || !form.name}
+            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
+          >
+            {saving ? <RefreshCw size={16} className="animate-spin" /> : <Edit size={16} />}
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export const ModelCatalogTable: React.FC = () => {
   const { t } = useTranslation();
+  const { setCurrentView } = useAppStore();
   const [loading, setLoading] = useState(true);
   const [models, setModels] = useState<RegistryModel[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -300,6 +319,7 @@ export const ModelCatalogTable: React.FC = () => {
   const [filterHealth, setFilterHealth] = useState<HealthStatus | ''>('');
   const [filterActive, setFilterActive] = useState<'' | 'active' | 'inactive'>('');
   const [showFilters, setShowFilters] = useState(false);
+  const [editingModel, setEditingModel] = useState<RegistryModel | null>(null);
 
   useEffect(() => {
     loadModels();
@@ -312,65 +332,109 @@ export const ModelCatalogTable: React.FC = () => {
       if (res.ok) {
         const data = await res.json();
         const providers: any[] = Array.isArray(data) ? data : [];
-        if (providers.length > 0) {
-          const mapped: RegistryModel[] = providers.map((p) => ({
-            id: String(p.id || ''),
-            name: String(p.name || p.model_id || ''),
-            provider: String(p.provider || ''),
-            providerType: (p.provider_type as ProviderType) || 'direct',
-            originVendor: String(p.origin_vendor || p.provider || ''),
-            modelId: String(p.model_id || ''),
-            kind: (p.kind as ModelKind) || 'TEXT_LLM',
-            isActive: p.is_active === 1 || p.is_active === true,
-            healthStatus: (p.health_status as HealthStatus) || 'unknown',
-            lastHealthCheck: p.last_health_check || undefined,
-            avgLatencyMs: Number(p.avg_latency_ms || 0) || undefined,
-            costPer1k: Number(p.cost_per_1k || 0) || undefined,
-            capabilities: {
-              vision: !!p.vision,
-              tools: !!p.tools,
-              streaming: !!p.streaming,
-              jsonMode: !!p.json_mode,
-              contextWindow: Number(p.context_window || 0),
-            },
-            executionRegions: Array.isArray(p.execution_regions)
-              ? p.execution_regions
-              : typeof p.execution_regions === 'string'
-                ? p.execution_regions.split(',').map((s: string) => s.trim())
-                : [],
-            allowedDataClasses: Array.isArray(p.allowed_data_classes) ? p.allowed_data_classes : [],
-            createdAt: p.created_at || '',
-            updatedAt: p.updated_at || '',
-          }));
-          setModels(mapped);
-        } else {
-          setModels(DEMO_MODELS);
-        }
+        const mapped: RegistryModel[] = providers.map((p) => ({
+          id: String(p.id || ''),
+          name: String(p.name || p.model_id || ''),
+          provider: String(p.provider || ''),
+          providerType: (p.provider_type as ProviderType) || 'direct',
+          originVendor: String(p.origin_vendor || p.provider || ''),
+          modelId: String(p.model_id || ''),
+          kind: (p.kind as ModelKind) || 'TEXT_LLM',
+          isActive: p.is_active === 1 || p.is_active === true,
+          healthStatus: (p.health_status as HealthStatus) || 'unknown',
+          lastHealthCheck: p.last_health_check || undefined,
+          avgLatencyMs: Number(p.avg_latency_ms || 0) || undefined,
+          costPer1k: Number(p.cost_per_1k || 0) || undefined,
+          capabilities: {
+            vision: !!p.vision,
+            tools: !!p.tools,
+            streaming: !!p.streaming,
+            jsonMode: !!p.json_mode,
+            contextWindow: Number(p.context_window || 0),
+          },
+          executionRegions: Array.isArray(p.execution_regions)
+            ? p.execution_regions
+            : typeof p.execution_regions === 'string'
+              ? p.execution_regions.split(',').map((s: string) => s.trim())
+              : [],
+          allowedDataClasses: Array.isArray(p.allowed_data_classes) ? p.allowed_data_classes : [],
+          createdAt: p.created_at || '',
+          updatedAt: p.updated_at || '',
+        }));
+        setModels(mapped);
       } else {
-        setModels(DEMO_MODELS);
+        const err = await res.json().catch(() => ({}));
+        toast.error(err?.error || 'Failed to load providers');
+        setModels([]);
       }
       trackFunnelEvent('model_registry_viewed');
     } catch {
-      setModels(DEMO_MODELS);
+      toast.error('Failed to load providers');
+      setModels([]);
     } finally {
       setLoading(false);
     }
   };
 
   const handleToggleActive = async (model: RegistryModel) => {
-    setModels((prev) => prev.map((m) => (m.id === model.id ? { ...m, isActive: !m.isActive } : m)));
-    toast.success(`${model.name} ${model.isActive ? 'deactivated' : 'activated'}`);
+    const nextActive = !model.isActive;
+    setModels((prev) => prev.map((m) => (m.id === model.id ? { ...m, isActive: nextActive } : m)));
+    try {
+      const res = await fetch(`/api/llm/providers/${encodeURIComponent(model.id)}`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ is_active: nextActive }),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json?.error || 'Update failed');
+      }
+      toast.success(`${model.name} ${nextActive ? 'activated' : 'deactivated'}`);
+    } catch (e: any) {
+      // revert
+      setModels((prev) => prev.map((m) => (m.id === model.id ? { ...m, isActive: model.isActive } : m)));
+      toast.error(e?.message || 'Failed to update model');
+    }
   };
 
   const handleEdit = (model: RegistryModel) => {
-    toast(`Edit ${model.name} — modal coming soon`);
+    setEditingModel(model);
   };
 
   const handleTestConnection = async (model: RegistryModel) => {
     toast.loading(`Testing ${model.name}...`, { id: 'test-conn' });
-    setTimeout(() => {
-      toast.success(`${model.name} connection OK`, { id: 'test-conn' });
-    }, 1500);
+    try {
+      const res = await fetch('/api/llm/test', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ providerId: model.id }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(json?.message || json?.error || 'Connection failed');
+      }
+      toast.success(json?.message || `${model.name} connection OK`, { id: 'test-conn' });
+    } catch (e: any) {
+      toast.error(e?.message || 'Connection failed', { id: 'test-conn' });
+    }
+  };
+
+  const handleDelete = async (model: RegistryModel) => {
+    if (!confirm(`Delete ${model.name}? This cannot be undone.`)) return;
+    const previous = models;
+    setModels((prev) => prev.filter((m) => m.id !== model.id));
+    try {
+      const res = await fetch(`/api/llm/providers/${encodeURIComponent(model.id)}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'Delete failed');
+      toast.success('Provider deleted');
+    } catch (e: any) {
+      setModels(previous);
+      toast.error(e?.message || 'Failed to delete provider');
+    }
   };
 
   const filteredModels = useMemo(() => {
@@ -429,7 +493,14 @@ export const ModelCatalogTable: React.FC = () => {
           >
             <RefreshCw size={18} />
           </button>
-          <button className="flex items-center gap-2 px-4 h-9 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-sm font-medium transition-colors">
+          <button
+            onClick={() => {
+              // Model catalog is backed by LLM providers. For full creation flow reuse the canonical LLM Management UI.
+              setCurrentView(AppView.SUPERADMIN_LLM_MANAGEMENT);
+              toast('Go to LLM Providers to add a model/provider');
+            }}
+            className="flex items-center gap-2 px-4 h-9 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-sm font-medium transition-colors"
+          >
             <Plus size={16} />
             {t('modelRegistry.catalog.addModel', 'Add Model')}
           </button>
@@ -677,6 +748,7 @@ export const ModelCatalogTable: React.FC = () => {
                       onToggleActive={handleToggleActive}
                       onEdit={handleEdit}
                       onTestConnection={handleTestConnection}
+                      onDelete={handleDelete}
                     />
                   </td>
                 </tr>
@@ -696,6 +768,17 @@ export const ModelCatalogTable: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {editingModel && (
+        <EditModelModal
+          model={editingModel}
+          onClose={() => setEditingModel(null)}
+          onSaved={() => {
+            setEditingModel(null);
+            loadModels();
+          }}
+        />
+      )}
     </div>
   );
 };

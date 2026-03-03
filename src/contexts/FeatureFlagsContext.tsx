@@ -32,7 +32,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import {
   FeatureFlag,
@@ -249,7 +249,34 @@ export const FeatureFlagsProvider: React.FC<FeatureFlagsProviderProps> = ({
   config = {},
   showDevTools = process.env.NODE_ENV === 'development',
 }) => {
-  const featureFlags = useFeatureFlags(config);
+  const resolvedConfig = useMemo(() => {
+    if (typeof window === 'undefined') return config;
+
+    const storageKey = `${config.storagePrefix ?? 'consultify'}_anon_id`;
+    let anonId = '';
+    try {
+      anonId = localStorage.getItem(storageKey) ?? '';
+      if (!anonId) {
+        // Prefer crypto.randomUUID when available for stable client bucketing
+        const uuid =
+          typeof crypto !== 'undefined' && 'randomUUID' in crypto
+            ? (crypto.randomUUID as () => string)()
+            : `anon_${Math.random().toString(36).slice(2)}_${Date.now().toString(36)}`;
+        anonId = uuid;
+        localStorage.setItem(storageKey, anonId);
+      }
+    } catch {
+      // If storage is unavailable, use a per-session fallback (still deterministic within the session)
+      anonId = `anon_${Math.random().toString(36).slice(2)}_${Date.now().toString(36)}`;
+    }
+
+    return {
+      ...config,
+      userId: config.userId ?? anonId,
+    };
+  }, [config]);
+
+  const featureFlags = useFeatureFlags(resolvedConfig);
   const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
 
   useEffect(() => {

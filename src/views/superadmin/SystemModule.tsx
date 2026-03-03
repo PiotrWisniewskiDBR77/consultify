@@ -252,7 +252,7 @@ const SystemHealthView: React.FC = () => {
 const TAB_TO_HELP_MAP: Record<string, string> = {
   health: 'superadmin-system-health',
   'audit-log': 'superadmin-system-audit',
-  'feature-flags': 'superadmin-system-feature-flags',
+  'feature-flags': 'superadmin-system-flags',
   integrations: 'superadmin-system-integrations',
   security: 'superadmin-system-security',
   configuration: 'superadmin-system-configuration',
@@ -287,7 +287,6 @@ export const SystemModule: React.FC<SystemModuleProps> = ({ initialTab }) => {
         // Use enterprise audit log with compliance and export features
         return <EnterpriseAuditLog />;
       case 'feature-flags':
-        // Use enterprise feature flags with A/B testing and targeting
         return <EnterpriseFeatureFlags />;
       case 'integrations':
         // Use enterprise integrations hub with connectors catalog and webhooks

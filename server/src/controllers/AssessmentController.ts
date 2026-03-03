@@ -193,10 +193,6 @@ const ensurePermission = async (
   const user = req.user;
   if (!user) return false;
   if (process.env.ASSESSMENT_SKIP_PERMISSIONS === 'true') return true;
-  if (process.env.NODE_ENV !== 'production') {
-    const key = String(permissionKey || '').toUpperCase();
-    if (key.startsWith('ASSESSMENT_')) return true;
-  }
   const allowed = await hasPermission(
     user.id,
     user.organizationId,
@@ -2040,14 +2036,25 @@ export class AssessmentController {
 
       const assessments = await queryHelpers.queryAll(sql, params);
 
+      const mapped = (assessments as AssessmentRow[]).map((a) => ({
+        ...a,
+        status: normalizeStatus(a.status),
+        backendStatus: a.status,
+        answers: a.answers_json ? JSON.parse(a.answers_json) : {},
+        scoreSummary: a.score_summary ? JSON.parse(a.score_summary) : {},
+      }));
+
+      const lim = Number(limit ?? 100) || 100;
+      const off = Number(offset ?? 0) || 0;
+
       res.json({
-        assessments: (assessments as AssessmentRow[]).map((a) => ({
-          ...a,
-          status: normalizeStatus(a.status),
-          backendStatus: a.status,
-          answers: a.answers_json ? JSON.parse(a.answers_json) : {},
-          scoreSummary: a.score_summary ? JSON.parse(a.score_summary) : {},
-        })),
+        // Canonical list shape expected by new hubs
+        items: mapped,
+        total: mapped.length,
+        limit: lim,
+        offset: off,
+        // Backwards-compat for older call sites
+        assessments: mapped,
       });
     }
   );

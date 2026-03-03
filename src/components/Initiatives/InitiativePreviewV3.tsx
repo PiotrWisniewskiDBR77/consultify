@@ -1,7 +1,8 @@
-import { ChevronRight, ExternalLink, MessageSquare } from 'lucide-react';
+import { Calculator, ChevronRight, ExternalLink, MessageSquare } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 
@@ -166,6 +167,49 @@ export const InitiativePreviewV3Body: React.FC<{
           {detailsText || (isPolish ? 'Brak opisu.' : 'No description.')}
         </div>
       </div>
+
+      {/* Financial Analysis Card (V3 position 4, 19.3) */}
+      <FinancialAnalysisCard initiativeId={initiative.id} />
+    </div>
+  );
+};
+
+const FinancialAnalysisCard: React.FC<{ initiativeId: string }> = ({ initiativeId }) => {
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const isPolish = i18n.language === 'pl';
+
+  return (
+    <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
+      <div className="flex items-center gap-2 mb-2">
+        <Calculator size={14} className="text-slate-500 dark:text-slate-400" />
+        <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          {t('initiatives.preview.financialAnalysis', 'Financial Analysis')}
+        </span>
+      </div>
+      <div className="space-y-1.5">
+        <button
+          onClick={() => navigate(`/economics?tab=analysis&initiativeId=${initiativeId}`)}
+          className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
+        >
+          <ExternalLink size={12} className="text-purple-500 shrink-0" />
+          {isPolish ? 'Analiza wskaźnikowa' : 'Ratio Analysis'}
+        </button>
+        <button
+          onClick={() => navigate(`/economics?tab=valuation&initiativeId=${initiativeId}`)}
+          className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
+        >
+          <ExternalLink size={12} className="text-purple-500 shrink-0" />
+          {isPolish ? 'Wycena przedsiębiorstwa' : 'Company Valuation'}
+        </button>
+        <button
+          onClick={() => navigate(`/economics?tab=prediction&initiativeId=${initiativeId}`)}
+          className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
+        >
+          <ExternalLink size={12} className="text-purple-500 shrink-0" />
+          {isPolish ? 'Budżet i predykcja' : 'Budget & Prediction'}
+        </button>
+      </div>
     </div>
   );
 };
@@ -178,7 +222,17 @@ export const InitiativePreviewV3Footer: React.FC<{
   onOpenChat?: (prompt: string) => Promise<void> | void;
   onCopyLink?: () => Promise<void> | void;
   extraActionsSlot?: React.ReactNode;
-}> = ({ initiative, tasksCount, onOpenFull, onOpenInModule, onOpenChat, onCopyLink, extraActionsSlot }) => {
+  extraActionsAfterSlot?: React.ReactNode;
+}> = ({
+  initiative,
+  tasksCount,
+  onOpenFull,
+  onOpenInModule,
+  onOpenChat,
+  onCopyLink,
+  extraActionsSlot,
+  extraActionsAfterSlot,
+}) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
@@ -263,7 +317,7 @@ export const InitiativePreviewV3Footer: React.FC<{
           </div>
           <RowActionsMenu iconVariant="vertical" actions={aiMenu} />
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {aiHints.map((h) => (
             <button
               key={h.label}
@@ -275,9 +329,6 @@ export const InitiativePreviewV3Footer: React.FC<{
               {h.label}
             </button>
           ))}
-        </div>
-        <div className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-          {isPolish ? 'Użyj AI hintów, aby wygenerować brief.' : 'Use AI hints to generate a brief.'}
         </div>
       </div>
 
@@ -325,6 +376,7 @@ export const InitiativePreviewV3Footer: React.FC<{
             ) : null}
           </div>
         )}
+        {extraActionsAfterSlot ? extraActionsAfterSlot : null}
       </div>
     </div>
   );

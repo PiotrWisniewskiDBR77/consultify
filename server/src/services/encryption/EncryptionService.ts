@@ -92,7 +92,7 @@ class KeyManager {
   private generateDevelopmentKey(): string {
     return crypto
       .createHash('sha256')
-      .update('consultinity-dev-encryption-key-do-not-use-in-production')
+      .update('consultify-dev-encryption-key-do-not-use-in-production')
       .digest('hex');
   }
 
@@ -109,7 +109,7 @@ class KeyManager {
     if (process.env.NODE_ENV !== 'production') {
       return crypto
         .createHash('sha256')
-        .update('consultinity-dev-salt')
+        .update('consultify-dev-salt')
         .digest()
         .slice(0, SALT_LENGTH);
     }

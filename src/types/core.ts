@@ -170,7 +170,7 @@ export enum AppView {
   // AI Action Proposals Review
   AI_ACTION_PROPOSALS = 'AI_ACTION_PROPOSALS',
 
-  // Consultinity Studio - Visual AI Workspace
+  // Consultify Studio - Visual AI Workspace
   STUDIO = 'STUDIO',
 
   // Consultant Views
@@ -909,7 +909,8 @@ export interface InitiativeTaskStats {
 /** Initiative KPI - Key Performance Indicator */
 export interface InitiativeKPI {
   id: string;
-  initiativeId: string;
+  // V3: KPI can be global (no single initiative); relations live in mapping table.
+  initiativeId?: string | null;
   name: string;
   description?: string;
   targetValue: number | null;
@@ -921,8 +922,21 @@ export interface InitiativeKPI {
   sortOrder: number;
   latestValue?: number;
   latestMeasurementDate?: string;
+  // Optional helper fields for trend calculation (R1).
+  prevValue?: number;
+  prevMeasurementDate?: string;
   isOnTarget: boolean;
   createdAt: string;
+  // Optional enrichment used by Results (R0/R1).
+  baselineValue?: number | null;
+  ownerUserId?: string | null;
+  ownerName?: string | null;
+  direction?: 'HIGHER_IS_BETTER' | 'LOWER_IS_BETTER';
+  thresholdMode?: 'ABSOLUTE' | 'PERCENT_FROM_TARGET';
+  amberThresholdPct?: number | null;
+  redThresholdPct?: number | null;
+  amberThresholdAbs?: number | null;
+  redThresholdAbs?: number | null;
 }
 
 /** KPI Measurement - historical value record */

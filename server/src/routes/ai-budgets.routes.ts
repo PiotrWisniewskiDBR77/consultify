@@ -9,6 +9,7 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
+import aiBudgetServiceImpl from '../services/aiBudgetService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -101,15 +102,8 @@ interface AIBudgetServiceInterface {
   estimateCost?: (model: string, inputTokens: number, outputTokens: number) => number;
 }
 
-// Dynamic import for aiBudgetService (may not be migrated yet)
-let aiBudgetService: AIBudgetServiceInterface | null = null;
-
-try {
-  const budgetModule = await import('../../services/aiBudgetService.js');
-  aiBudgetService = (budgetModule.default || budgetModule) as AIBudgetServiceInterface;
-} catch {
-  console.warn('[AI Budgets Routes] aiBudgetService not available');
-}
+const aiBudgetService: AIBudgetServiceInterface | null =
+  aiBudgetServiceImpl as unknown as AIBudgetServiceInterface;
 
 // ====== BUDGET MANAGEMENT ======
 

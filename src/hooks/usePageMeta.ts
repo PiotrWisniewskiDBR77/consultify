@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-const BRAND = 'Consultinity';
+const BRAND = 'Consultify';
 
 interface PageMeta {
   title: string;
@@ -12,12 +12,12 @@ const ROUTE_META: Record<string, PageMeta> = {
   '/': {
     title: `${BRAND} — Transformation AI Consulting Platform`,
     description:
-      'Consultinity combines human governance with AI acceleration to transform enterprise strategy, PMO, and decision-making.',
+      'Consultify combines human governance with AI acceleration to transform enterprise strategy, PMO, and decision-making.',
   },
   '/docs': {
     title: `Documentation — ${BRAND}`,
     description:
-      'Guides, tutorials, and best practices for the Consultinity Transformation AI Platform.',
+      'Guides, tutorials, and best practices for the Consultify Transformation AI Platform.',
   },
   '/docs/security': {
     title: `Security & Compliance — ${BRAND}`,
@@ -41,7 +41,7 @@ const ROUTE_META: Record<string, PageMeta> = {
   '/become-partner': {
     title: `Partner Program — ${BRAND}`,
     description:
-      'Join the Consultinity partner ecosystem. Earn recurring revenue, access premium tools, and grow your practice.',
+      'Join the Consultify partner ecosystem. Earn recurring revenue, access premium tools, and grow your practice.',
   },
   '/legal': {
     title: `Legal Center — ${BRAND}`,
@@ -50,15 +50,15 @@ const ROUTE_META: Record<string, PageMeta> = {
   },
   '/changelog': {
     title: `Changelog — ${BRAND}`,
-    description: 'Track all updates and improvements to Consultinity.',
+    description: 'Track all updates and improvements to Consultify.',
   },
   '/login': {
     title: `Sign In — ${BRAND}`,
-    description: 'Sign in to your Consultinity workspace.',
+    description: 'Sign in to your Consultify workspace.',
   },
   '/demo': {
     title: `Demo — ${BRAND}`,
-    description: 'Experience Consultinity with realistic demo data. No signup required.',
+    description: 'Experience Consultify with realistic demo data. No signup required.',
   },
 };
 
@@ -68,13 +68,13 @@ function getMetaForPath(path: string): PageMeta {
   if (path.startsWith('/docs/')) {
     return {
       title: `Documentation — ${BRAND}`,
-      description: 'Consultinity platform documentation.',
+      description: 'Consultify platform documentation.',
     };
   }
   if (path.startsWith('/legal/')) {
     return {
       title: `Legal — ${BRAND}`,
-      description: 'Consultinity legal documents and policies.',
+      description: 'Consultify legal documents and policies.',
     };
   }
 

@@ -83,8 +83,8 @@ export const IPWhitelistView: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white">IP Whitelist</h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">IP Whitelist</h2>
+          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
             Manage IP addresses allowed to access organization accounts
           </p>
         </div>
@@ -92,7 +92,7 @@ export const IPWhitelistView: React.FC = () => {
           <select
             value={selectedOrgId}
             onChange={(e) => setSelectedOrgId(e.target.value)}
-            className="bg-navy-800 border border-slate-700 text-white px-4 py-2 rounded-lg"
+            className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
           >
             <option value="">Select Organization</option>
             {organizations.map((org) => (
@@ -112,48 +112,52 @@ export const IPWhitelistView: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="text-center py-12">Loading...</div>
+        <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
       ) : (
-        <div className="bg-navy-800 rounded-xl border border-slate-700 overflow-hidden">
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
                   IP Address
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
                   IP Range
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
                   Description
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
                   Status
                 </th>
-                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">
+                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-700">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {whitelist.length === 0 ? (
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-6 py-12 text-center text-slate-400 dark:text-slate-500"
+                    className="px-6 py-12 text-center text-slate-500 dark:text-slate-400"
                   >
                     No IP addresses whitelisted
                   </td>
                 </tr>
               ) : (
                 whitelist.map((ip) => (
-                  <tr key={ip.id} className="hover:bg-navy-700/50">
-                    <td className="px-6 py-4 text-white">{ip.ip_address}</td>
-                    <td className="px-6 py-4 text-slate-300">{ip.ip_range || '-'}</td>
-                    <td className="px-6 py-4 text-slate-300">{ip.description || '-'}</td>
+                  <tr key={ip.id} className="hover:bg-slate-50 dark:hover:bg-navy-700/50">
+                    <td className="px-6 py-4 text-slate-900 dark:text-white">{ip.ip_address}</td>
+                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">{ip.ip_range || '-'}</td>
+                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">{ip.description || '-'}</td>
                     <td className="px-6 py-4">
                       <span
-                        className={`px-2 py-1 rounded text-xs ${ip.is_active ? 'bg-green-500/20 text-green-400' : 'bg-slate-50 dark:bg-navy-800/300/20 text-slate-400 dark:text-slate-500'}`}
+                        className={`px-2 py-1 rounded text-xs ${
+                          ip.is_active
+                            ? 'bg-green-500/10 text-green-700 dark:bg-green-500/20 dark:text-green-400'
+                            : 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300'
+                        }`}
                       >
                         {ip.is_active ? 'Active' : 'Inactive'}
                       </span>
@@ -161,7 +165,7 @@ export const IPWhitelistView: React.FC = () => {
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => handleRemoveIP(ip.id)}
-                        className="text-red-400 hover:text-red-300"
+                        className="text-red-700 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -176,36 +180,44 @@ export const IPWhitelistView: React.FC = () => {
 
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-navy-800 rounded-xl p-6 w-full max-w-md border border-slate-700">
-            <h3 className="text-lg font-bold text-white mb-4">Add IP to Whitelist</h3>
+          <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-md border border-slate-200 dark:border-slate-700">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+              Add IP to Whitelist
+            </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-slate-300 mb-2">IP Address *</label>
+                <label className="block text-sm text-slate-700 dark:text-slate-300 mb-2">
+                  IP Address *
+                </label>
                 <input
                   type="text"
                   value={newIP.ipAddress}
                   onChange={(e) => setNewIP({ ...newIP, ipAddress: e.target.value })}
-                  className="w-full bg-navy-900 border border-slate-700 text-white px-4 py-2 rounded-lg"
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
                   placeholder="192.168.1.1"
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-300 mb-2">IP Range (CIDR)</label>
+                <label className="block text-sm text-slate-700 dark:text-slate-300 mb-2">
+                  IP Range (CIDR)
+                </label>
                 <input
                   type="text"
                   value={newIP.ipRange}
                   onChange={(e) => setNewIP({ ...newIP, ipRange: e.target.value })}
-                  className="w-full bg-navy-900 border border-slate-700 text-white px-4 py-2 rounded-lg"
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
                   placeholder="192.168.1.0/24"
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-300 mb-2">Description</label>
+                <label className="block text-sm text-slate-700 dark:text-slate-300 mb-2">
+                  Description
+                </label>
                 <input
                   type="text"
                   value={newIP.description}
                   onChange={(e) => setNewIP({ ...newIP, description: e.target.value })}
-                  className="w-full bg-navy-900 border border-slate-700 text-white px-4 py-2 rounded-lg"
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
                   placeholder="Office network"
                 />
               </div>
@@ -213,7 +225,7 @@ export const IPWhitelistView: React.FC = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowAddModal(false)}
-                className="flex-1 px-4 py-2 border border-slate-700 text-slate-300 rounded-lg hover:bg-navy-700"
+                className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700"
               >
                 Cancel
               </button>

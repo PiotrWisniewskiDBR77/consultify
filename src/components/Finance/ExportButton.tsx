@@ -36,7 +36,8 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
 
   const handleExportComplete = (result: ExportResult) => {
     const outputUrl = `/reports/builder/${result.outputId}`;
-    const sourceUrl = `/finance`; // or analysis-specific route if exists
+    // Canonical alias: /finance (keeps backwards compatibility with /economics)
+    const sourceUrl = `/finance`;
 
     toast.custom(
       (toastInstance) => (

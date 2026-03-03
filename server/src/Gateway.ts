@@ -173,6 +173,7 @@ import reportCommentsRoutes from './routes/report-comments.routes.js';
 import reportImportRoutes from './routes/report-import.routes.js';
 import reportInitiativesRoutes from './routes/report-initiatives.routes.js';
 import reportsRoutes from './routes/reports.routes.js';
+import resultsKpiReportsRoutes from './routes/results-kpi-reports.routes.js';
 import researchRoutes from './routes/research.routes.js';
 import resourceManagementRoutes from './routes/resourceManagement.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
@@ -376,7 +377,7 @@ export class ApiGateway {
       app.use('/api/test-support', testSupportRoutes);
       app.use('/api/admin', resourceManagementRoutes);
       mountStub('/api/audit-logs', auditLogRoutes, 'auditLogRoutes');
-      mountStub('/api/feature-flags', featureFlagsRoutes, 'featureFlagsRoutes');
+      app.use('/api/feature-flags', featureFlagsRoutes);
       mountStub('/api/integrations', integrationsRoutes, 'integrationsRoutes');
       mountStub('/api/system-config', systemConfigRoutes, 'systemConfigRoutes');
       app.use('/api/system-health', systemHealthRoutes);
@@ -536,6 +537,7 @@ export class ApiGateway {
       );
       app.use('/api/economics', economicsRoutes);
       app.use('/api/presentations', presentationsRoutes);
+      app.use('/api/results', resultsKpiReportsRoutes);
       mountStub('/api/locations', locationsRoutes, 'locationsRoutes');
       mountStub(
         '/api/notification-settings',

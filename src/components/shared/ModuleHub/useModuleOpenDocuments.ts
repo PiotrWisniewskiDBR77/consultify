@@ -35,11 +35,15 @@ const parseStoredState = (raw: string | null): ModuleDocsState | null => {
   }
 };
 
-export const useModuleOpenDocuments = (moduleKey: string) => {
+export const useModuleOpenDocuments = (
+  moduleKey: string,
+  options?: { maxOpenDocuments?: number }
+) => {
   const storageKey = useMemo(() => `${STORAGE_PREFIX}${moduleKey}`, [moduleKey]);
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const maxOpen = options?.maxOpenDocuments;
 
   useEffect(() => {
     try {
@@ -74,6 +78,16 @@ export const useModuleOpenDocuments = (moduleKey: string) => {
       // Ignore storage write failures.
     }
   }, [storageKey, openDocuments, activeDocumentId, hydrated]);
+
+  useEffect(() => {
+    if (!maxOpen) return;
+    if (openDocuments.length <= maxOpen) return;
+    setOpenDocuments((prev) => prev.slice(0, maxOpen));
+    if (activeDocumentId && !openDocuments.slice(0, maxOpen).some((d) => d.id === activeDocumentId)) {
+      setActiveDocumentId(openDocuments[0]?.id ?? null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maxOpen, openDocuments.length]);
 
   return {
     openDocuments,

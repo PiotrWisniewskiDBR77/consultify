@@ -85,7 +85,7 @@ interface MyTasksListContentProps {
   } | null) => void;
 }
 
-const TASK_TABLE_VIEW_STORAGE_KEY = 'consultinity-tasks-table-view';
+const TASK_TABLE_VIEW_STORAGE_KEY = 'consultify-tasks-table-view';
 const TASK_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
 
 function loadTasksHiddenColumns(): string[] {
@@ -857,7 +857,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   // Smart sort toggle (persisted)
   const [smartSort, setSmartSort] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('consultinity-smart-sort') === 'true';
+      return localStorage.getItem('consultify-smart-sort') === 'true';
     } catch {
       return false;
     }
@@ -866,7 +866,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const toggleSmartSort = useCallback(() => {
     setSmartSort((prev) => {
       const next = !prev;
-      localStorage.setItem('consultinity-smart-sort', String(next));
+      localStorage.setItem('consultify-smart-sort', String(next));
       trackFunnelEvent('smart_sort_toggled', { enabled: next });
       return next;
     });
@@ -875,7 +875,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   // Triage state (persisted in localStorage)
   const [triagedIds, setTriagedIds] = useState<Set<string>>(() => {
     try {
-      const saved = localStorage.getItem('consultinity-triaged-task-ids');
+      const saved = localStorage.getItem('consultify-triaged-task-ids');
       return saved ? new Set(JSON.parse(saved)) : new Set();
     } catch {
       return new Set();
@@ -886,7 +886,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     setTriagedIds((prev) => {
       const next = new Set(prev);
       next.add(taskId);
-      localStorage.setItem('consultinity-triaged-task-ids', JSON.stringify([...next]));
+      localStorage.setItem('consultify-triaged-task-ids', JSON.stringify([...next]));
       return next;
     });
   }, []);
@@ -1626,7 +1626,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
             onTaskClick(id, full);
           }}
           itemIds={orderedTaskIds}
-          kicker={isPolish ? 'Podgląd' : 'Preview'}
           renderPreview={(task) => {
             const isCompleted = ['done', 'completed', 'validated'].includes(
               task.status?.toLowerCase() || ''
@@ -1828,7 +1827,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                     </div>
                   </div>
 
-                  <div className="mt-2 flex flex-wrap gap-2">
+                  <div className="mt-2 flex flex-wrap gap-1.5">
                     <button
                       className={hintChip}
                       onClick={() => runTaskAi('why_urgent', task)}
@@ -1868,24 +1867,22 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                 <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
                 {/* Relations (2 rows) */}
-                <div className="min-h-[4.5rem]">
-                  <div className="flex flex-wrap gap-2 py-1">
-                    {relations.length > 0 ? (
-                      relations.map((r) => (
-                        <span
-                          key={r.label}
-                          className={`inline-flex items-center h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent ${r.tone}`}
-                          title={r.label}
-                        >
-                          {r.label}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-xs text-slate-400 dark:text-slate-500">
-                        {isPolish ? 'Brak powiązań' : 'No relations'}
+                <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
+                  {relations.length > 0 ? (
+                    relations.map((r) => (
+                      <span
+                        key={r.label}
+                        className={`inline-flex items-center h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent ${r.tone}`}
+                        title={r.label}
+                      >
+                        {r.label}
                       </span>
-                    )}
-                  </div>
+                    ))
+                  ) : (
+                    <span className="text-xs text-slate-400 dark:text-slate-500 italic py-1.5">
+                      {isPolish ? 'Brak powiązań' : 'No relations'}
+                    </span>
+                  )}
                 </div>
 
                 <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />

@@ -147,7 +147,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
               <FileText className="w-8 h-8 text-purple-600 dark:text-purple-400" />
             </div>
             <h1 className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
-              Welcome to Consultinity!
+              Welcome to Consultify!
             </h1>
             <p className="text-slate-600 dark:text-slate-300">
               Before we begin, please review and accept our terms
@@ -172,7 +172,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
                 Terms & Conditions
               </h3>
               <div className="max-h-40 overflow-y-auto text-sm text-slate-600 dark:text-slate-300 mb-4 space-y-2">
-                <p>By using Consultinity, you agree to our enterprise service agreement...</p>
+                <p>By using Consultify, you agree to our enterprise service agreement...</p>
                 <p>• Professional services and AI-powered consulting tools</p>
                 <p>• Data processing and privacy compliance (GDPR compliant)</p>
                 <p>• Subscription terms and billing policies</p>
@@ -489,7 +489,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
         </div>
         <h1 className="text-3xl font-bold text-navy-900 dark:text-white mb-4">Welcome Aboard!</h1>
         <p className="text-lg text-slate-600 dark:text-slate-300 mb-8">
-          Your account is ready. Let's get started with Consultinity!
+          Your account is ready. Let's get started with Consultify!
         </p>
         <button
           onClick={() => navigate('/app')}

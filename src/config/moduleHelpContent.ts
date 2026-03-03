@@ -23,8 +23,8 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
   welcome: {
     id: 'welcome',
     title: 'Welcome',
-    description: 'Welcome to Consultinity',
-    content: 'Welcome to Consultinity help center.',
+    description: 'Welcome to Consultify',
+    content: 'Welcome to Consultify help center.',
     icon: 'Home',
     translationKey: 'help.sidePanel.modules.welcome',
   },
@@ -265,7 +265,7 @@ AI-generated insights and recommendations for improving operations.
     id: 'partner',
     title: 'Partner Portal',
     description: 'Comprehensive partner management, referral tracking, and commission system.',
-    content: `The Partner Portal provides everything you need to manage your partnership with Consultinity:
+    content: `The Partner Portal provides everything you need to manage your partnership with Consultify:
 
 **Partner Home** ⭐ NEW
 • Welcome page with program benefits overview
@@ -327,7 +327,7 @@ Partners can offer discounts to referred clients (configured by SuperAdmin). Def
     id: 'partner-home',
     title: 'Partner Home',
     description: 'Welcome page and program overview for partners.',
-    content: `The Partner Home is your starting point in the Consultinity Partner Program:
+    content: `The Partner Home is your starting point in the Consultify Partner Program:
 
 **Welcome Banner**
 • "Be Our Partner. Let's Grow Together." - Our partnership philosophy
@@ -572,7 +572,7 @@ Gentle guided steps to get started:
 
 **Learning Path**
 Progress through structured courses:
-1. Consultinity Foundations - Platform basics
+1. Consultify Foundations - Platform basics
 2. PMO Standards - ISO 21500, PMBOK 7, PRINCE2
 3. AI Intelligence Modules - AI-powered features
 4. Assessment Specialist - Framework expertise
@@ -692,7 +692,7 @@ Where you provide services:
     title: 'Onboarding',
     description: 'Guided introduction to the platform.',
     content:
-      'Step-by-step tutorials and setup assistance to help you get started with Consultinity.',
+      'Step-by-step tutorials and setup assistance to help you get started with Consultify.',
     icon: 'GraduationCap',
     translationKey: 'help.sidePanel.modules.onboarding',
     relatedModules: ['dashboard', 'assessment'],
@@ -1456,7 +1456,7 @@ Where you provide services:
     id: 'billing',
     title: 'Billing & Subscription',
     description: 'Subscription management, invoicing, and payment processing.',
-    content: `Manage your Consultinity subscription and billing:
+    content: `Manage your Consultify subscription and billing:
 
 **Subscription**
 • Current plan details

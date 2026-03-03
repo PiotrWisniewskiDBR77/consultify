@@ -202,6 +202,26 @@ vi.mock('@/contexts/AIContext', () => ({
 }));
 
 // --------------------------------------------------------
+// Global Mock for FeatureFlagsContext
+// --------------------------------------------------------
+const mockFeatureFlags = {
+  flags: {},
+  flagDefinitions: [],
+  isLoading: false,
+  isEnabled: vi.fn((_id: string) => false),
+  setFlag: vi.fn(),
+  clearAllOverrides: vi.fn(),
+  refresh: vi.fn(),
+};
+
+vi.mock('@/contexts/FeatureFlagsContext', () => ({
+  useFeatureFlagsContext: () => mockFeatureFlags,
+  FeatureFlagsProvider: ({ children }: any) => children,
+  Feature: ({ children, fallback }: any) => fallback ?? children ?? null,
+  default: ({ children }: any) => children,
+}));
+
+// --------------------------------------------------------
 // Global Database Mock (SQLite-compatible)
 // --------------------------------------------------------
 // We define this on global so server/database.js picks it up.

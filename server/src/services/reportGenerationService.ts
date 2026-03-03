@@ -11,6 +11,8 @@ import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/index.js';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
+import { buildContextPack, saveContextPackSnapshot, type SourceRef } from './contextPackBuilder.js';
+import { generateNarrative, type NarrativeEngineInput, type NarrativeEngineOutput } from './narrativeEngine/index.js';
 import ReportBuilderService, {
   ReportRecord,
   SectionLanguage,
@@ -508,8 +510,12 @@ function getSectionPrompt(
   // Get report-level style settings from config
   const reportConfig = report.config || {};
   const styleGuidance = buildStyleGuidance(reportConfig);
+  const outputLanguage = String((reportConfig as any)?.language || 'en').toLowerCase() === 'pl'
+    ? 'Polish'
+    : 'English';
 
   const baseSystem = `You are a senior management consultant creating a professional assessment report.
+Output language: ${outputLanguage}.
 Write in ${section.language} style. ${languageGuidance}
 Target length: ${lengthGuidance}
 ${section.customPrompt ? `\nAdditional guidance: ${section.customPrompt}` : ''}
@@ -526,7 +532,10 @@ Include:
 - Report title
 - Company name: ${companyName}
 - Assessment type: ${assessmentType}
-- Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+- Date: ${new Date().toLocaleDateString(
+          String((reportConfig as any)?.language || '').toLowerCase() === 'pl' ? 'pl-PL' : 'en-US',
+          { year: 'numeric', month: 'long', day: 'numeric' }
+        )}
 
 Format as structured JSON with fields: title, subtitle, companyName, date, assessmentType.`,
       };
@@ -904,6 +913,197 @@ async function callAI(
 }
 
 // ==========================================
+// V3 NARRATIVE ENGINE BRIDGE
+// ==========================================
+
+async function generateSectionViaNarrativeEngine(
+  report: ReportRecord,
+  section: SectionRecord,
+  organizationId: string,
+  context: GenerationContext
+): Promise<NarrativeEngineOutput | null> {
+  const sourceRefs: SourceRef[] = [];
+  if (section.sourceRefsJson) {
+    try {
+      const parsed = JSON.parse(section.sourceRefsJson as string);
+      if (Array.isArray(parsed)) sourceRefs.push(...parsed);
+    } catch { /* skip */ }
+  }
+  if ((report as any).sourceRefsJson) {
+    try {
+      const parsed = JSON.parse((report as any).sourceRefsJson);
+      if (Array.isArray(parsed)) sourceRefs.push(...parsed);
+    } catch { /* skip */ }
+  }
+
+  const language =
+    String(
+      (report as any)?.config?.language ||
+        (report as any)?.config?.intent?.language ||
+        (report as any)?.companyContext?.language ||
+        'en'
+    ).toLowerCase() === 'pl'
+      ? 'pl'
+      : 'en';
+
+  let contextPack: any = null;
+  if (sourceRefs.length > 0) {
+    try {
+      contextPack = await buildContextPack(organizationId, sourceRefs, language);
+    } catch (err) {
+      logger.warn('[ReportGeneration] ContextPack build failed, using lightweight pack', { error: err });
+    }
+  }
+
+  if (!contextPack) {
+    contextPack = {
+      pack_id: `cp_fallback_${Date.now()}`,
+      created_at: new Date().toISOString(),
+      organization_id: organizationId,
+      language,
+      sources: sourceRefs,
+      headings: [],
+      key_points: context.sourceData.assessment
+        ? [`Assessment: ${context.sourceData.assessment.name}`]
+        : [],
+      data_points: [],
+      charts_available: [],
+      images_available: [],
+      metadata: { total_source_artifacts: sourceRefs.length, confidence_score: 0.5, extraction_warnings: ['fallback_pack'] },
+    };
+  }
+
+  const reportTypeV3 = (report as any).reportTypeV3 || (report as any).report_type_v3 || 'custom';
+  const goalV3 = (report as any).goalV3 || (report as any).goal_v3 || 'inform';
+  const reportRegister = (report as any).communicationRegister || (report as any).communication_register || 'formal';
+  const density = (report as any).density || 'standard';
+  const form = (report as any).form || 'narrative';
+  const dataLevel = (report as any).dataLevel || (report as any).data_level || 'summary';
+
+  // G4: Per-section voice override from canonical template
+  let sectionRegister = reportRegister;
+  try {
+    const { getCanonicalTemplate } = await import('./reportCanonicalTemplatesService.js');
+    const template = getCanonicalTemplate(reportTypeV3);
+    if (template) {
+      const canonicalSection = template.sections.find((s) => s.key === section.sectionKey);
+      if (canonicalSection?.defaultRegister) {
+        sectionRegister = canonicalSection.defaultRegister;
+      }
+    }
+  } catch { /* canonical templates not required */ }
+
+  const input: NarrativeEngineInput = {
+    context_pack: contextPack,
+    report_config: {
+      report_type_v3: reportTypeV3,
+      goal_v3: goalV3,
+      communication_register: sectionRegister,
+      density,
+      form,
+      data_level: dataLevel,
+      language,
+    },
+    section_key: section.sectionKey,
+    section_type: section.sectionType,
+    section_title: section.title,
+  };
+
+  const result = await generateNarrative(input);
+
+  if (!result.content || result.content.trim().length < 50) {
+    logger.warn('[ReportGeneration] Narrative Engine produced insufficient content', {
+      sectionKey: section.sectionKey,
+      contentLength: result.content?.length ?? 0,
+    });
+    return null;
+  }
+
+  return result;
+}
+
+// ==========================================
+// V3 EXECUTIVE NARRATIVE SYNTHESIS (G3)
+// ==========================================
+
+/**
+ * After all sections are generated for R2/R4 reports, synthesize a cross-section
+ * executive summary by feeding all section summaries to the LLM.
+ * Overwrites the `executive_summary` section with a synthesis narrative.
+ */
+async function synthesizeExecutiveSummary(
+  reportId: string,
+  organizationId: string,
+  sectionSummaries: Array<{ key: string; title: string; summary: string }>
+): Promise<{ content: string; tokensUsed: number } | null> {
+  if (sectionSummaries.length < 2) return null;
+
+  const execSection = await queryOne<{ section_key: string }>(
+    `SELECT section_key FROM report_builder_sections
+     WHERE report_id = ? AND section_key = 'executive_summary' AND enabled = 1`,
+    [reportId]
+  );
+  if (!execSection) return null;
+
+  const report = await queryOne<{
+    report_type_v3: string;
+    goal_v3: string;
+    communication_register: string;
+    title: string;
+  }>(
+    `SELECT report_type_v3, goal_v3, communication_register, title
+     FROM report_builder_reports WHERE id = ?`,
+    [reportId]
+  );
+  if (!report) return null;
+
+  const register = report.communication_register || 'executive';
+  const goal = report.goal_v3 || 'inform';
+  const reportType = report.report_type_v3 || 'R2';
+
+  const sectionDigest = sectionSummaries
+    .filter((s) => s.key !== 'executive_summary')
+    .map((s) => `### ${s.title}\n${s.summary}`)
+    .join('\n\n');
+
+  const systemPrompt = [
+    'You are a senior executive report synthesizer.',
+    `Communication register: ${register}. Write in crisp, decision-oriented language.`,
+    'Your task: produce a single Executive Summary that synthesizes all section content below.',
+    'Rules:',
+    '1. Lead with the most critical finding or decision required.',
+    '2. Cover each section in 1-2 sentences maximum.',
+    '3. Highlight Red/Amber items first, then Green.',
+    '4. End with a clear "recommended actions" list (max 3 items).',
+    '5. Total length: 250-500 words.',
+    '6. Output Markdown. Start with ## Executive Summary.',
+  ].join('\n');
+
+  const userPrompt = [
+    `Report: "${report.title}" (${reportType})`,
+    `Goal: ${goal}`,
+    '',
+    '## Section Digests',
+    sectionDigest,
+    '',
+    'Write the executive summary now.',
+  ].join('\n');
+
+  const result = await callAI(systemPrompt, userPrompt, 1200);
+
+  const now = new Date().toISOString();
+  await queryRun(
+    `UPDATE report_builder_sections
+     SET generated_content = ?, generated_at = ?, tokens_used = ?,
+         generation_model = ?, updated_at = ?
+     WHERE report_id = ? AND section_key = 'executive_summary'`,
+    [result.content, now, result.tokensUsed, result.model + ':executive-synthesis', now, reportId]
+  );
+
+  return { content: result.content, tokensUsed: result.tokensUsed };
+}
+
+// ==========================================
 // GENERATION SERVICE
 // ==========================================
 
@@ -1081,15 +1281,60 @@ export async function generateSectionContent(
     return { content, tokensUsed: 0 };
   }
 
-  // Call AI
+  // V3 Narrative Engine path: use the 5-layer pipeline when report has V3 parameters
+  const reportTypeV3 = (reportData.report as any).reportTypeV3 || (reportData.report as any).report_type_v3;
+  if (reportTypeV3 && targetFormat !== 'pptx') {
+    try {
+      const narrativeResult = await generateSectionViaNarrativeEngine(
+        reportData.report,
+        section,
+        organizationId,
+        context
+      );
+      if (narrativeResult) {
+        const now = new Date().toISOString();
+        await queryRun(
+          `UPDATE report_builder_sections
+           SET generated_content = ?, generated_at = ?, tokens_used = ?, generation_model = ?,
+               source_data_snapshot = ?, updated_at = ?
+           WHERE report_id = ? AND section_key = ?`,
+          [
+            narrativeResult.content,
+            now,
+            0,
+            'narrative-engine-v3',
+            JSON.stringify({ ...context.sourceData, narrative_engine: {
+              facts_used: narrativeResult.facts_used.length,
+              observations_used: narrativeResult.observations_used.length,
+              post_check_passed: narrativeResult.post_check.passed,
+            }}),
+            now,
+            reportId,
+            sectionKey,
+          ]
+        );
+
+        logger.info(`[ReportGeneration] V3 Narrative Engine generated section ${sectionKey}`, {
+          reportId,
+          factsUsed: narrativeResult.facts_used.length,
+          observationsUsed: narrativeResult.observations_used.length,
+          postCheckPassed: narrativeResult.post_check.passed,
+        });
+
+        return { content: narrativeResult.content, tokensUsed: 0 };
+      }
+    } catch (err) {
+      logger.warn(`[ReportGeneration] Narrative Engine failed for ${sectionKey}, falling back to direct AI`, { error: err });
+    }
+  }
+
+  // Legacy / fallback path: direct AI call
   const result = await callAI(prompts.system, prompts.user, maxTokens);
 
-  // Detect if the result is JSON-based (e.g. initiatives, dashboard, kpis)
   const isJsonSection = ['initiatives'].includes(section.sectionType);
   const detectedFormat = isJsonSection ? 'json' : undefined;
   const detectedRenderKind = isJsonSection ? 'initiatives' : undefined;
 
-  // Save generated content
   const now = new Date().toISOString();
   await queryRun(
     `
@@ -1145,6 +1390,50 @@ export async function generateFullReport(
     reportId,
     sectionsCount: reportData.sections?.length,
   });
+
+  // Build ContextPack from source_refs if available
+  let contextPackSummary = '';
+  try {
+    const sourceRefsRaw = await queryOne<{ source_refs_json: string }>(
+      `SELECT source_refs_json FROM report_builder_reports WHERE id = ?`,
+      [reportId]
+    );
+    const sourceRefs: SourceRef[] = sourceRefsRaw?.source_refs_json
+      ? JSON.parse(sourceRefsRaw.source_refs_json)
+      : [];
+
+    if (sourceRefs.length > 0) {
+      const lang = ((reportData.report.config as any)?.language || 'en') as 'en' | 'pl';
+      const contextPack = await buildContextPack(organizationId, sourceRefs, lang);
+
+      await saveContextPackSnapshot(reportId, contextPack);
+
+      await queryRun(
+        `UPDATE report_builder_reports SET context_pack_snapshot = ?, updated_at = ? WHERE id = ?`,
+        [JSON.stringify(contextPack), new Date().toISOString(), reportId]
+      );
+
+      const kpSummary = contextPack.key_points.slice(0, 15).join('\n- ');
+      const dpSummary = contextPack.data_points
+        .slice(0, 10)
+        .map((dp) => `${dp.label}: ${dp.value}${dp.unit ? ' ' + dp.unit : ''}`)
+        .join('\n- ');
+      contextPackSummary =
+        `\n\nCONTEXT PACK DATA (use as primary data source):\n` +
+        (kpSummary ? `Key Points:\n- ${kpSummary}\n` : '') +
+        (dpSummary ? `Data Points:\n- ${dpSummary}\n` : '') +
+        `Sources: ${contextPack.sources.map((s) => s.artifact_name).join(', ')}\n`;
+
+      logger.info('[ReportGeneration] ContextPack built and saved', {
+        reportId,
+        sourcesCount: sourceRefs.length,
+        keyPoints: contextPack.key_points.length,
+        dataPoints: contextPack.data_points.length,
+      });
+    }
+  } catch (err) {
+    logger.warn('[ReportGeneration] ContextPack build failed (non-fatal), continuing', { reportId, err });
+  }
 
   // Update status to GENERATING
   await ReportBuilderService.updateReportStatus(reportId, 'GENERATING', userId);
@@ -1243,6 +1532,9 @@ Keep the outline concise (max 400 words). Focus on narrative flow and avoiding r
     if (glossaryTerms) {
       coherenceContext += `\nTERMINOLOGY (use consistently): ${glossaryTerms}\n`;
     }
+    if (contextPackSummary) {
+      coherenceContext += contextPackSummary;
+    }
 
     // Temporarily append coherence context to section's customPrompt
     const originalCustomPrompt = section.customPrompt || '';
@@ -1286,6 +1578,23 @@ Keep the outline concise (max 400 words). Focus on narrative flow and avoiding r
           [originalCustomPrompt || null, reportId, section.sectionKey]
         );
       }
+    }
+  }
+
+  // V3: Executive Narrative Synthesis for R2/R4 reports
+  const reportTypeV3 = (reportData.report as any).reportTypeV3 || (reportData.report as any).report_type_v3;
+  if (reportTypeV3 && ['R2', 'R4'].includes(String(reportTypeV3).toUpperCase())) {
+    try {
+      const synthResult = await synthesizeExecutiveSummary(reportId, organizationId, previousSectionsSummaries);
+      if (synthResult) {
+        totalTokens += synthResult.tokensUsed;
+        logger.info('[ReportGeneration] Executive synthesis completed for ' + reportTypeV3, {
+          reportId,
+          tokensUsed: synthResult.tokensUsed,
+        });
+      }
+    } catch (err) {
+      logger.warn('[ReportGeneration] Executive synthesis failed (non-fatal)', { reportId, error: err });
     }
   }
 
@@ -1507,7 +1816,7 @@ export async function createPublicLink(options: {
   password?: string;
   expiresInDays?: number;
   showCompanyLogo?: boolean;
-  showConsultinityBranding?: boolean;
+  showConsultifyBranding?: boolean;
   customMessage?: string;
 }): Promise<{ linkToken: string; url: string; expiresAt: string }> {
   logger.info('[ReportGeneration] createPublicLink', { reportId: options.reportId });
@@ -1537,7 +1846,7 @@ export async function createPublicLink(options: {
     passwordHash,
     expiresAt: expiresAt.toISOString(),
     showCompanyLogo: options.showCompanyLogo,
-    showConsultinityBranding: options.showConsultinityBranding,
+    showConsultifyBranding: options.showConsultifyBranding,
     customMessage: options.customMessage,
   });
 
@@ -1613,7 +1922,7 @@ export async function getPublicReport(
       },
       customMessage: link.customMessage,
       showCompanyLogo: link.showCompanyLogo,
-      showConsultinityBranding: link.showConsultinityBranding,
+      showConsultifyBranding: link.showConsultifyBranding,
       sections: sections
         .filter((s) => s.enabled)
         .sort((a, b) => a.orderIndex - b.orderIndex)

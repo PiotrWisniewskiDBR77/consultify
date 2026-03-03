@@ -43,6 +43,7 @@ interface SystemHealth {
     status: string;
     responseTime: number;
     version: string;
+    errorRatePercent?: number;
   };
   database: {
     status: string;
@@ -110,7 +111,7 @@ class SystemHealthServiceClass {
    * Get detailed health status
    */
   async getDetailedHealth(): Promise<SystemHealth> {
-    const [dbStatus, _errorRate, aiServicesStatus] = await Promise.all([
+    const [dbStatus, errorRate, aiServicesStatus] = await Promise.all([
       this.checkDb(),
       this.getErrorRate(),
       this.checkAIServices(),
@@ -128,6 +129,7 @@ class SystemHealthServiceClass {
         status: 'healthy',
         responseTime: 0,
         version: process.env.npm_package_version || '2.5.0',
+        errorRatePercent: Math.round((errorRate || 0) * 100) / 100,
       },
       database: {
         status: dbStatus.connected ? 'healthy' : 'error',
@@ -215,24 +217,16 @@ class SystemHealthServiceClass {
    */
   async getErrorRate(): Promise<number> {
     try {
-      // Check error logs from last hour
-      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-
-      const errorCount = await this.dbGet<{ count: number }>(
-        `SELECT COUNT(*) as count FROM error_logs WHERE created_at > ?`,
-        [oneHourAgo]
-      );
-
+      // Use api_logs (T113). This gives a real request/error rate signal for API traffic.
       const totalRequests = await this.dbGet<{ count: number }>(
-        `SELECT COUNT(*) as count FROM request_logs WHERE created_at > ?`,
-        [oneHourAgo]
+        `SELECT COUNT(*) as count FROM api_logs WHERE created_at > datetime('now', '-1 hour')`
+      );
+      const errorRequests = await this.dbGet<{ count: number }>(
+        `SELECT COUNT(*) as count FROM api_logs WHERE created_at > datetime('now', '-1 hour') AND status_code >= 500`
       );
 
-      if (!totalRequests || totalRequests.count === 0) {
-        return 0;
-      }
-
-      return ((errorCount?.count || 0) / totalRequests.count) * 100;
+      if (!totalRequests || Number(totalRequests.count) === 0) return 0;
+      return ((Number(errorRequests?.count || 0) / Number(totalRequests.count)) * 100) || 0;
     } catch (err: any) {
       logger.warn('[SystemHealth] Error calculating error rate:', err);
       return 0;
@@ -284,11 +278,12 @@ class SystemHealthServiceClass {
    */
   async getDatabaseMetrics(): Promise<{ total_queries: number; queries_last_hour: number }> {
     try {
+      // Best-effort: use audit_log entries as a proxy for DB-related activity (no dedicated query log table).
       const row = await this.dbGet<{ total_queries: number; queries_last_hour: number }>(
-        `SELECT 
-                    COUNT(*) as total_queries,
-                    AVG(CASE WHEN timestamp > datetime('now', '-1 hour') THEN 1 ELSE 0 END) as queries_last_hour
-                FROM audit_logs`
+        `SELECT
+            COUNT(*) as total_queries,
+            COUNT(CASE WHEN timestamp > datetime('now', '-1 hour') THEN 1 END) as queries_last_hour
+         FROM audit_log`
       );
 
       return {
@@ -307,11 +302,10 @@ class SystemHealthServiceClass {
   async getAPIMetrics(): Promise<{ total_requests: number; requests_last_hour: number }> {
     try {
       const row = await this.dbGet<{ total_requests: number; requests_last_hour: number }>(
-        `SELECT 
-                    COUNT(*) as total_requests,
-                    COUNT(CASE WHEN timestamp > datetime('now', '-1 hour') THEN 1 END) as requests_last_hour
-                FROM audit_logs
-                WHERE action_type LIKE 'api_%'`
+        `SELECT
+            COUNT(*) as total_requests,
+            COUNT(CASE WHEN created_at > datetime('now', '-1 hour') THEN 1 END) as requests_last_hour
+         FROM api_logs`
       );
 
       return {

@@ -6,7 +6,7 @@ import { LegalPageLayout } from '../../components/legal/LegalPageLayout';
 const COMPANY = {
   name: 'DBR77 Robotics Sp. z o.o.',
   email: 'contact@dbr77.com',
-  website: 'https://consultinity.com',
+  website: 'https://consultify.com',
 };
 
 /**
@@ -75,7 +75,7 @@ export const CookiePolicyView: React.FC = () => {
       <section>
         <h2>2. Cookies We Use</h2>
         <p>
-          Consultinity uses only essential and functional cookies. We do not use third-party
+          Consultify uses only essential and functional cookies. We do not use third-party
           tracking or advertising cookies.
         </p>
 

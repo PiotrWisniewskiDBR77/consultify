@@ -39,7 +39,6 @@ export const IntegrationsPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'integrations' | 'webhooks'>('integrations');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [availableTypes, setAvailableTypes] = useState<any[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -49,15 +48,21 @@ export const IntegrationsPanel: React.FC = () => {
     setLoading(true);
     try {
       if (activeTab === 'integrations') {
-        const orgId = 'current'; // Get from context/store
-        const data = await (Api as any).getIntegrations(orgId);
-        setIntegrations(data);
-        const types = await (Api as any).getAvailableIntegrationTypes();
-        setAvailableTypes(types);
+        const data = await Api.getSystemIntegrations();
+        const list = Array.isArray((data as any)?.integrations)
+          ? (data as any).integrations
+          : Array.isArray(data)
+            ? (data as any)
+            : [];
+        setIntegrations(list);
       } else {
-        const orgId = 'current'; // Get from context/store
-        const data = (await (Api as any).getWebhooks(orgId)) || [];
-        setWebhooks(data);
+        const data = await Api.getSystemWebhooks();
+        const list = Array.isArray((data as any)?.webhooks)
+          ? (data as any).webhooks
+          : Array.isArray(data)
+            ? (data as any)
+            : [];
+        setWebhooks(list || []);
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -69,7 +74,7 @@ export const IntegrationsPanel: React.FC = () => {
 
   const handleSync = async (id: string) => {
     try {
-      await (Api as any).syncIntegration(id);
+      await Api.refreshSystemIntegration(id);
       toast.success('Sync started');
       fetchData();
     } catch (error) {
@@ -83,9 +88,9 @@ export const IntegrationsPanel: React.FC = () => {
 
     try {
       if (type === 'integration') {
-        await (Api as any).deleteIntegration(id);
+        await Api.deleteSystemIntegration(id);
       } else {
-        await (Api as any).deleteWebhook(id);
+        await Api.deleteSystemWebhook(id);
       }
       toast.success(`${type} deleted`);
       fetchData();
@@ -108,14 +113,16 @@ export const IntegrationsPanel: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">Integrations Hub</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+            Integrations Hub
+          </h2>
           <p className="text-slate-400 dark:text-slate-500 text-sm">
-            Connect Consultinity with your existing tools
+            Connect Consultify with your existing tools
           </p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
         >
           <Plus size={16} />
           {activeTab === 'integrations' ? 'Add Integration' : 'Create Webhook'}
@@ -123,13 +130,13 @@ export const IntegrationsPanel: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-white/10">
+      <div className="flex gap-2 border-b border-slate-200 dark:border-white/10">
         <button
           onClick={() => setActiveTab('integrations')}
           className={`px-4 py-2 font-medium transition-colors ${
             activeTab === 'integrations'
-              ? 'text-cyan-400 border-b-2 border-cyan-400'
-              : 'text-slate-400 dark:text-slate-500 hover:text-white'
+              ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
           }`}
         >
           Integrations
@@ -138,8 +145,8 @@ export const IntegrationsPanel: React.FC = () => {
           onClick={() => setActiveTab('webhooks')}
           className={`px-4 py-2 font-medium transition-colors ${
             activeTab === 'webhooks'
-              ? 'text-cyan-400 border-b-2 border-cyan-400'
-              : 'text-slate-400 dark:text-slate-500 hover:text-white'
+              ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
           }`}
         >
           Webhooks
@@ -158,19 +165,21 @@ export const IntegrationsPanel: React.FC = () => {
             integrations.map((integration) => (
               <div
                 key={integration.id}
-                className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10 hover:border-white/20 transition-colors"
+                className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-navy-900/20 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-white font-medium">{integration.name}</h3>
-                      <span className="px-2 py-0.5 text-xs bg-cyan-500/20 text-cyan-400 rounded">
+                      <h3 className="text-slate-900 dark:text-slate-100 font-medium">
+                        {integration.name}
+                      </h3>
+                      <span className="px-2 py-0.5 text-xs bg-primary-600/10 text-primary-700 dark:text-primary-300 rounded">
                         {integration.type}
                       </span>
                       {integration.enabled ? (
-                        <CheckCircle size={16} className="text-green-400" />
+                        <CheckCircle size={16} className="text-emerald-600 dark:text-emerald-400" />
                       ) : (
-                        <XCircle size={16} className="text-red-400" />
+                        <XCircle size={16} className="text-red-600 dark:text-red-400" />
                       )}
                     </div>
                     {integration.last_sync_at && (
@@ -180,8 +189,8 @@ export const IntegrationsPanel: React.FC = () => {
                           <span
                             className={`ml-2 ${
                               integration.last_sync_status === 'success'
-                                ? 'text-green-400'
-                                : 'text-red-400'
+                                ? 'text-emerald-700 dark:text-emerald-400'
+                                : 'text-red-700 dark:text-red-400'
                             }`}
                           >
                             ({integration.last_sync_status})
@@ -192,14 +201,14 @@ export const IntegrationsPanel: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleSync(integration.id)}
-                      className="p-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors"
+                      onClick={() => handleSync(integration.type)}
+                      className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
                       title="Sync"
                     >
                       <RefreshCw size={16} />
                     </button>
                     <button
-                      onClick={() => handleDelete(integration.id, 'integration')}
+                      onClick={() => handleDelete(integration.type, 'integration')}
                       className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
                       title="Delete"
                     >
@@ -222,16 +231,18 @@ export const IntegrationsPanel: React.FC = () => {
             webhooks.map((webhook) => (
               <div
                 key={webhook.id}
-                className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10 hover:border-white/20 transition-colors"
+                className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-navy-900/20 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-white font-medium">{webhook.name}</h3>
+                      <h3 className="text-slate-900 dark:text-slate-100 font-medium">
+                        {webhook.name}
+                      </h3>
                       {webhook.is_active ? (
-                        <CheckCircle size={16} className="text-green-400" />
+                        <CheckCircle size={16} className="text-emerald-600 dark:text-emerald-400" />
                       ) : (
-                        <XCircle size={16} className="text-red-400" />
+                        <XCircle size={16} className="text-red-600 dark:text-red-400" />
                       )}
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 break-all">
@@ -242,7 +253,7 @@ export const IntegrationsPanel: React.FC = () => {
                         {webhook.events.map((event: string, idx: number) => (
                           <span
                             key={idx}
-                            className="px-2 py-0.5 text-xs bg-slate-700 text-slate-300 rounded"
+                            className="px-2 py-0.5 text-xs bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded"
                           >
                             {event}
                           </span>

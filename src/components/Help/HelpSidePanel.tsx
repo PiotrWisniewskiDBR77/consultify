@@ -360,7 +360,7 @@ export const HelpSidePanel: React.FC = () => {
               {/* Welcome Title */}
               <div>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                  {t('help.sidePanel.overview.title', 'Welcome to Consultinity')}
+                  {t('help.sidePanel.overview.title', 'Welcome to Consultify')}
                 </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                   {t(

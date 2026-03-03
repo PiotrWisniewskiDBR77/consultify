@@ -108,13 +108,13 @@ export const StrategicDirectionsTab: React.FC = () => {
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
       case 'high':
-        return 'bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400';
+        return 'bg-red-100 text-red-700';
       case 'medium':
-        return 'bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400';
+        return 'bg-amber-100 text-amber-700';
       case 'low':
-        return 'bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400';
+        return 'bg-blue-100 text-blue-700';
       default:
-        return 'bg-slate-100 dark:bg-slate-500/10 text-slate-600 dark:text-slate-400';
+        return 'bg-slate-100 text-slate-700';
     }
   };
 
@@ -127,7 +127,7 @@ export const StrategicDirectionsTab: React.FC = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 text-slate-900 dark:text-slate-100">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -151,13 +151,9 @@ export const StrategicDirectionsTab: React.FC = () => {
       {/* Strategies Grid */}
       {strategies.length === 0 ? (
         <div className="text-center py-16 bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-dashed border-slate-200 dark:border-navy-700">
-          <Target size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
-            No Strategic Directions
-          </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-            Add strategic directions to guide AI behavior
-          </p>
+          <Target size={48} className="mx-auto text-slate-300 mb-4" />
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">No Strategic Directions</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Add strategic directions to guide AI behavior</p>
           <button
             onClick={() => setShowModal(true)}
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors"
@@ -170,18 +166,15 @@ export const StrategicDirectionsTab: React.FC = () => {
           {strategies.map((s) => (
             <div
               key={s.id}
-              className={`bg-white dark:bg-navy-800 border rounded-xl p-6 transition-all ${
+              className={`bg-white dark:bg-navy-800 border dark:border-navy-700 rounded-xl p-6 transition-colors ${
                 s.is_active
-                  ? 'border-indigo-500/50 shadow-lg shadow-indigo-500/10'
-                  : 'border-slate-200 dark:border-navy-700 opacity-75'
+                  ? 'border-indigo-200 ring-1 ring-indigo-200'
+                  : 'border-slate-200'
               }`}
             >
               <div className="flex justify-between items-start mb-4">
-                <div className="p-3 rounded-lg bg-slate-100 dark:bg-navy-900">
-                  <Target
-                    className={s.is_active ? 'text-indigo-500' : 'text-slate-400'}
-                    size={24}
-                  />
+                <div className="p-3 rounded-lg bg-slate-100 dark:bg-navy-900/60">
+                  <Target className={s.is_active ? 'text-indigo-500' : 'text-slate-400'} size={24} />
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -196,7 +189,7 @@ export const StrategicDirectionsTab: React.FC = () => {
                         progress_percentage: s.progress_percentage || 0,
                       });
                     }}
-                    className="p-2 bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-500/20 transition-colors"
+                    className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
                     title="Edit"
                   >
                     <Edit2 size={16} />
@@ -205,8 +198,8 @@ export const StrategicDirectionsTab: React.FC = () => {
                     onClick={() => handleToggleStrategy(s.id, !!s.is_active)}
                     className={`p-2 rounded-lg transition-colors ${
                       s.is_active
-                        ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-500'
-                        : 'bg-slate-100 dark:bg-navy-700 text-slate-500 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 hover:text-emerald-500'
+                        ? 'bg-emerald-100 text-emerald-700 hover:bg-red-100 hover:text-red-700'
+                        : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'
                     }`}
                     title={s.is_active ? 'Deactivate' : 'Activate'}
                   >
@@ -226,9 +219,7 @@ export const StrategicDirectionsTab: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                  {s.description}
-                </p>
+                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{s.description}</p>
                 {s.target_date && (
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                     Target: {new Date(s.target_date).toLocaleDateString()}
@@ -240,9 +231,7 @@ export const StrategicDirectionsTab: React.FC = () => {
               <div className="mb-4">
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-xs text-slate-500 dark:text-slate-400">Progress</span>
-                  <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
-                    {s.progress_percentage || 0}%
-                  </span>
+                  <span className="text-xs text-slate-700 dark:text-slate-200 font-medium">{s.progress_percentage || 0}%</span>
                 </div>
                 <div className="w-full h-2 bg-slate-200 dark:bg-navy-900 rounded-full overflow-hidden">
                   <div
@@ -255,14 +244,12 @@ export const StrategicDirectionsTab: React.FC = () => {
               {/* Success Metrics */}
               {s.success_metrics && s.success_metrics.length > 0 && (
                 <div className="mb-4">
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                    Success Metrics:
-                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Success Metrics:</p>
                   <div className="flex flex-wrap gap-1">
                     {s.success_metrics.map((metric, idx) => (
                       <span
                         key={idx}
-                        className="text-xs px-2 py-0.5 bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded"
+                        className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300 rounded"
                       >
                         {metric}
                       </span>
@@ -293,7 +280,7 @@ export const StrategicDirectionsTab: React.FC = () => {
                   setEditingStrategy(null);
                   resetForm();
                 }}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <X size={20} />
               </button>
@@ -311,7 +298,7 @@ export const StrategicDirectionsTab: React.FC = () => {
                   autoFocus
                   value={strategyForm.title}
                   onChange={(e) => setStrategyForm({ ...strategyForm, title: e.target.value })}
-                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 outline-none"
                   placeholder="e.g., Digital First"
                 />
               </div>
@@ -326,13 +313,13 @@ export const StrategicDirectionsTab: React.FC = () => {
                   onChange={(e) =>
                     setStrategyForm({ ...strategyForm, description: e.target.value })
                   }
-                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 outline-none"
                   placeholder="Explain how the AI should behave or what it should prioritize..."
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Priority
                   </label>
                   <select
@@ -343,7 +330,7 @@ export const StrategicDirectionsTab: React.FC = () => {
                         priority: e.target.value as 'low' | 'medium' | 'high',
                       })
                     }
-                    className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 focus:border-indigo-500 outline-none"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -351,21 +338,19 @@ export const StrategicDirectionsTab: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Target Date
-                  </label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Target Date</label>
                   <input
                     type="date"
                     value={strategyForm.target_date}
                     onChange={(e) =>
                       setStrategyForm({ ...strategyForm, target_date: e.target.value })
                     }
-                    className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 focus:border-indigo-500 outline-none"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Success Metrics (one per line)
                 </label>
                 <textarea
@@ -377,13 +362,13 @@ export const StrategicDirectionsTab: React.FC = () => {
                       success_metrics: e.target.value.split('\n').filter((m) => m.trim()),
                     })
                   }
-                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 focus:border-indigo-500 outline-none"
                   placeholder="Metric 1&#10;Metric 2&#10;Metric 3"
                 />
               </div>
               {editingStrategy && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Progress (%)
                   </label>
                   <input
@@ -397,7 +382,7 @@ export const StrategicDirectionsTab: React.FC = () => {
                         progress_percentage: parseInt(e.target.value) || 0,
                       })
                     }
-                    className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 focus:border-indigo-500 outline-none"
                   />
                 </div>
               )}
@@ -409,7 +394,7 @@ export const StrategicDirectionsTab: React.FC = () => {
                     setEditingStrategy(null);
                     resetForm();
                   }}
-                  className="flex-1 py-2 bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium hover:bg-slate-200 dark:hover:bg-navy-600"
+                  className="flex-1 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200"
                 >
                   Cancel
                 </button>

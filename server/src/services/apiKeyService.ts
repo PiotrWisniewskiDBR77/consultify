@@ -187,7 +187,7 @@ class ApiKeyServiceImpl {
     });
 
     // Return full key ONCE
-    return { key, plainTextKey: `ck_${plainTextKey}` }; // ck_ prefix for Consultinity Key
+    return { key, plainTextKey: `ck_${plainTextKey}` }; // ck_ prefix for Consultify Key
   }
 
   /**

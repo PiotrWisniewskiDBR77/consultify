@@ -35,14 +35,26 @@ ceo@example.com,Example Co,Ada,Lovelace,US,NA,manual,legitimate_interest`,
     []
   );
 
+  const normalizeCampaigns = (payload: any): Campaign[] => {
+    if (Array.isArray(payload)) return payload as Campaign[];
+    if (Array.isArray(payload?.data)) return payload.data as Campaign[];
+    if (Array.isArray(payload?.campaigns)) return payload.campaigns as Campaign[];
+    return [];
+  };
+
   const fetchCampaigns = useCallback(async () => {
     try {
       setLoadingCampaigns(true);
-      const resp = await Api.get('/api/superadmin/partner-outreach/campaigns');
-      if (!resp?.success) throw new Error(resp?.error || 'Failed');
-      setCampaigns(resp.data || []);
+      const resp = await Api.get('/superadmin/partner-outreach/campaigns');
+      // Accept both shapes:
+      // - { success: true, data: Campaign[] }
+      // - Campaign[] (legacy/unwrapped)
+      if (resp?.success === false) throw new Error(resp?.error || 'Failed');
+      const nextCampaigns = normalizeCampaigns(resp?.data ?? resp);
+      setCampaigns(nextCampaigns);
     } catch (e: any) {
       toast.error(e?.message || 'Failed to load campaigns');
+      setCampaigns([]);
     } finally {
       setLoadingCampaigns(false);
     }
@@ -56,7 +68,7 @@ ceo@example.com,Example Co,Ada,Lovelace,US,NA,manual,legitimate_interest`,
     try {
       setImporting(true);
       const content = csv.trim().length > 0 ? csv : exampleCsv;
-      const resp = await Api.post('/api/superadmin/partner-outreach/leads/import', {
+      const resp = await Api.post('/superadmin/partner-outreach/leads/import', {
         csv: content,
       });
       if (!resp?.success) throw new Error(resp?.error || 'Import failed');
@@ -82,7 +94,7 @@ ceo@example.com,Example Co,Ada,Lovelace,US,NA,manual,legitimate_interest`,
         toast.error(t('partners.outreach.subjectRequired', 'Step subject required'));
         return;
       }
-      const resp = await Api.post('/api/superadmin/partner-outreach/campaigns', {
+      const resp = await Api.post('/superadmin/partner-outreach/campaigns', {
         name: newCampaignName.trim(),
         fromName: newFromName.trim() || undefined,
         fromEmail: newFromEmail.trim() || undefined,
@@ -108,7 +120,7 @@ ceo@example.com,Example Co,Ada,Lovelace,US,NA,manual,legitimate_interest`,
 
   const startCampaign = async (id: string) => {
     try {
-      const resp = await Api.post(`/api/superadmin/partner-outreach/campaigns/${id}/start`, {});
+      const resp = await Api.post(`/superadmin/partner-outreach/campaigns/${id}/start`, {});
       if (!resp?.success) throw new Error(resp?.error || 'Start failed');
       toast.success(t('partners.outreach.campaignStarted', 'Campaign started'));
       await fetchCampaigns();
@@ -119,7 +131,7 @@ ceo@example.com,Example Co,Ada,Lovelace,US,NA,manual,legitimate_interest`,
 
   const pauseCampaign = async (id: string) => {
     try {
-      const resp = await Api.post(`/api/superadmin/partner-outreach/campaigns/${id}/pause`, {});
+      const resp = await Api.post(`/superadmin/partner-outreach/campaigns/${id}/pause`, {});
       if (!resp?.success) throw new Error(resp?.error || 'Pause failed');
       toast.success(t('partners.outreach.campaignPaused', 'Campaign paused'));
       await fetchCampaigns();
@@ -130,7 +142,7 @@ ceo@example.com,Example Co,Ada,Lovelace,US,NA,manual,legitimate_interest`,
 
   const resumeCampaign = async (id: string) => {
     try {
-      const resp = await Api.post(`/api/superadmin/partner-outreach/campaigns/${id}/resume`, {});
+      const resp = await Api.post(`/superadmin/partner-outreach/campaigns/${id}/resume`, {});
       if (!resp?.success) throw new Error(resp?.error || 'Resume failed');
       toast.success(t('partners.outreach.campaignResumed', 'Campaign resumed'));
       await fetchCampaigns();
@@ -253,13 +265,13 @@ ceo@example.com,Example Co,Ada,Lovelace,US,NA,manual,legitimate_interest`,
         </div>
         {loadingCampaigns ? (
           <div className="text-sm text-slate-500">{t('common.loading', 'Loading...')}</div>
-        ) : campaigns.length === 0 ? (
+        ) : normalizeCampaigns(campaigns).length === 0 ? (
           <div className="text-sm text-slate-500">
             {t('partners.outreach.noCampaigns', 'No campaigns yet')}
           </div>
         ) : (
           <div className="divide-y divide-slate-200 dark:divide-navy-700">
-            {campaigns.map((c) => (
+            {normalizeCampaigns(campaigns).map((c) => (
               <div key={c.id} className="py-3 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="font-medium text-slate-900 dark:text-white truncate">

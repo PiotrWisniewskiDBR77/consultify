@@ -22,7 +22,7 @@ export interface TaskViewPreset {
   createdAt: number;
 }
 
-const STORAGE_KEY = 'consultinity-task-view-presets';
+const STORAGE_KEY = 'consultify-task-view-presets';
 
 function loadPresets(): TaskViewPreset[] {
   try {

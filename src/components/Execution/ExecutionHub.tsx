@@ -49,6 +49,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
 import {
   Callout,
@@ -57,6 +58,8 @@ import {
   InlineTable,
   ToggleBlock,
 } from '@/components/shared/NModeBlocks';
+import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { ROUTES } from '@/routes/routeConfig';
 import { Api, API_URL, getHeaders } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import {
@@ -64,11 +67,17 @@ import {
   getStatusesForModule,
   STATUS_METADATA,
 } from '@/services/initiativeLifecycle';
+import { useConversationStore } from '@/store/useConversationStore';
 
 import { useAppStore } from '../../store/useAppStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
+import {
+  InitiativePreviewV3Body,
+  InitiativePreviewV3Footer,
+  type InitiativePreviewV3Model,
+} from '../Initiatives/InitiativePreviewV3';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
 import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 import {
@@ -479,6 +488,8 @@ interface ExecutionHubProps {
 export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const openChatWithContext = useOpenChatWithContext();
+  const addChatMessage = useConversationStore((s) => s.addMessage);
   const { currentProjectId, fullSessionData } = useAppStore();
   const toggleChatCollapse = useAppStore((s) => s.toggleChatCollapse);
   const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
@@ -491,11 +502,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
-  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
+  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(InitiativeStatus.EXECUTING);
   // Active/All toggle (consistent with InitiativesHub)
   const [scope, setScope] = useState<'active' | 'all'>('active');
   const [selectedInitiative, setSelectedInitiative] = useState<FullInitiative | null>(null);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
+  // Zestawienie (Table+Preview) filters + preview selection
+  const [summaryFilters, setSummaryFilters] = useState<FilterChip[]>([]);
+  const [summaryPreviewInitiativeId, setSummaryPreviewInitiativeId] = useState<string | null>(null);
   const [demoMode, setDemoMode] = useState<boolean>(() => {
     try {
       return window.localStorage.getItem('execution_demo_data') === '1';
@@ -935,12 +949,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   // Keep view mode consistent per tab (simple, iPhone-like)
   useEffect(() => {
-    if (activeTab === 'initiatives') {
-      const allowed: ViewMode[] = ['table', 'grid', 'kanban', 'timeline', 'calendar'];
+    if (activeTab === 'reports') {
+      // View modes order must follow the v3 canonical order (docs/ui-standards/.../view-modes-standard.md)
+      const allowed: ViewMode[] = ['table', 'kanban', 'timeline', 'calendar', 'grid'];
       if (!allowed.includes(viewMode)) setViewMode('table');
       return;
     }
-    // list / tasks / decisions / team / reports
+    // list / management (and any other tabs)
     if (viewMode !== 'table') setViewMode('table');
   }, [activeTab, viewMode]);
 
@@ -1428,12 +1443,89 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     decisionsByInitiative,
   ]);
 
+  const summaryInitiatives = useMemo(() => {
+    let result = initiatives;
+
+    // Scope (Active = scheduled/executing/blocked; All = everything loaded for this hub)
+    if (scope === 'active') {
+      result = result.filter((i) => ACTIVE_EXECUTION_STATUSES.includes(i.status));
+    }
+
+    // Status dropdown selection (default: EXECUTING to satisfy "w realizacji")
+    if (activeStatusFilter) {
+      result = result.filter((i) => i.status === activeStatusFilter);
+    }
+
+    // Search
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      result = result.filter(
+        (i) =>
+          String(i.name || '').toLowerCase().includes(q) ||
+          String(i.summary || i.description || '').toLowerCase().includes(q)
+      );
+    }
+
+    return result;
+  }, [initiatives, scope, activeStatusFilter, searchQuery]);
+
+  const mapToPreviewModel = useCallback((i: FullInitiative): InitiativePreviewV3Model => {
+    return {
+      id: i.id,
+      name: i.name,
+      status: i.status,
+      axis: (i as any).axis,
+      priority: (i as any).priority,
+      progress: (i as any).progress ?? null,
+      createdAt: (i as any).createdAt ?? null,
+      updatedAt: (i as any).updatedAt ?? null,
+      summary: (i as any).summary ?? null,
+      description: (i as any).description ?? null,
+      plannedStartDate: (i as any).plannedStartDate ?? null,
+      plannedEndDate: (i as any).plannedEndDate ?? null,
+      ownerBusiness: (i as any).ownerBusiness ?? null,
+      ownerExecution: (i as any).ownerExecution ?? null,
+      sourceType: (i as any).sourceType ?? (i as any).source_type ?? null,
+      sourceId: (i as any).sourceId ?? (i as any).source_id ?? null,
+    };
+  }, []);
+
+  const openAiChatForInitiative = useCallback(
+    async (initiative: FullInitiative, promptText: string) => {
+      try {
+        const convId = await openChatWithContext({
+          entityType: 'initiative',
+          entityId: initiative.id,
+          entityName: initiative.name,
+          contextData: initiative as unknown as Record<string, unknown>,
+          pmoContext: { initiativeIds: [initiative.id] },
+        });
+        await addChatMessage({ conversationId: convId, role: 'user', content: promptText } as any);
+        toast.success(t('initiatives.toast.chatOpened', 'Chat opened'), { duration: 1500 });
+        if (isChatCollapsed) toggleChatCollapse();
+      } catch {
+        toast.error(t('initiatives.toast.chatOpenError', 'Failed to open chat'));
+      }
+    },
+    [addChatMessage, isChatCollapsed, openChatWithContext, t, toggleChatCollapse]
+  );
+
+  const copyExecutionLink = useCallback(async (id: string) => {
+    try {
+      const url = `${window.location.origin}${ROUTES.IMPLEMENTATION}?open=${encodeURIComponent(id)}&mode=doc`;
+      await navigator.clipboard.writeText(url);
+      toast.success(t('common.copied', 'Copied'));
+    } catch {
+      toast.error(t('common.copyFailed', 'Copy failed'));
+    }
+  }, [t]);
+
   // Tab configuration
   const tabs = useMemo(
     () => [
       {
         id: 'list' as ModuleTab,
-        label: t('execution.tabs.execution', 'Control'),
+        label: t('execution.tabs.execution', 'Summary'),
         icon: <LayoutDashboard size={16} />,
         count:
           (stats.blocked ?? 0) +
@@ -1442,37 +1534,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           ).length,
       },
       {
-        id: 'initiatives' as ModuleTab,
-        label: t('execution.tabs.initiatives', 'Initiatives'),
-        icon: <Target size={16} />,
+        id: 'reports' as ModuleTab,
+        label: t('execution.tabs.reports', 'Reporting'),
+        icon: <FileText size={16} />,
         count: filteredInitiatives.length,
       },
       {
-        id: 'tasks' as ModuleTab,
-        label: t('execution.tabs.tasks', 'Tasks'),
-        icon: <ClipboardList size={16} />,
-        count: tasks.length,
-      },
-      {
-        id: 'decisions' as ModuleTab,
-        label: t('execution.tabs.decisions', 'Decisions'),
-        icon: <Scale size={16} />,
-        count: decisions.filter((d) => String(d.status).toUpperCase() === 'PENDING').length,
-      },
-      {
-        id: 'team' as ModuleTab,
-        label: t('execution.tabs.team', 'Team'),
-        icon: <Users size={16} />,
-      },
-      {
-        id: 'reports' as ModuleTab,
-        label: t('execution.tabs.reports', 'Reports'),
-        icon: <FileText size={16} />,
-      },
-      {
         id: 'people_change' as ModuleTab,
-        label: t('execution.tabs.peopleChange', 'People & Change'),
+        label: t('execution.tabs.peopleChange', 'Management'),
         icon: <Heart size={16} />,
+        count: stats.blocked ?? 0,
       },
     ],
     [t, filteredInitiatives.length, stats.blocked, tasks.length, decisions]
@@ -1501,7 +1572,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         id: 'name',
         label: t('execution.table.name'),
         render: (row) => (
-          <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>
+          <span
+            className="text-sm text-slate-900 dark:text-white font-medium truncate block max-w-[420px]"
+            title={String(row.name || '')}
+          >
+            {row.name}
+          </span>
         ),
       },
       {
@@ -1828,9 +1904,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   );
 
   const rightControls = useMemo(() => {
-    const showScope = activeTab === 'list' || activeTab === 'initiatives';
-    const showHeatmapShortcut = activeTab === 'initiatives' || activeTab === 'team';
-    const showHeatmapControls = activeTab === 'team';
+    const showScope = activeTab === 'list' || activeTab === 'reports';
+    const showHeatmapShortcut = false;
+    const showHeatmapControls = activeTab === ('people_change' as ModuleTab);
     const execChip =
       currentProjectId && activeTab !== 'list' ? (
         <button
@@ -2256,10 +2332,18 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, []);
 
   const handleRemoveFilter = useCallback((id: string) => {
+    if (activeTab === 'list') {
+      setSummaryFilters((prev) => prev.filter((f) => f.id !== id));
+      return;
+    }
     setActiveFilters((prev) => prev.filter((f) => f.id !== id));
   }, []);
 
   const handleClearFilters = useCallback(() => {
+    if (activeTab === 'list') {
+      setSummaryFilters([]);
+      return;
+    }
     setActiveFilters([]);
   }, []);
 
@@ -2556,6 +2640,82 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       prev?.id === updated.id ? { ...prev, status: updated.status } : prev
     );
   }, []);
+
+  const handleTimelineUpdate = useCallback(
+    async (initiativeId: string, field: string, value: string, reason?: string) => {
+      try {
+        const res = await fetch('/api/execution-control/timeline-update', {
+          method: 'POST',
+          headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ initiativeId, field, value, reason }),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const msg = (json as any)?.error || (json as any)?.message || `HTTP ${res.status}`;
+          throw new Error(String(msg));
+        }
+
+        // Keep UI state consistent with persisted changes.
+        setInitiatives((prev) =>
+          prev.map((i) => {
+            if (i.id !== initiativeId) return i;
+            const next: any = { ...i };
+            switch (field) {
+              case 'planned_start_date':
+                next.plannedStartDate = value;
+                break;
+              case 'planned_end_date':
+                next.plannedEndDate = value;
+                break;
+              case 'start_date':
+                next.startDate = value;
+                break;
+              case 'actual_end_date':
+                next.actualEndDate = value;
+                break;
+              case 'status':
+                next.status = value;
+                break;
+              case 'progress':
+                next.progress = Number(value);
+                break;
+            }
+            return next as FullInitiative;
+          })
+        );
+        setSelectedInitiative((prev) => {
+          if (!prev || prev.id !== initiativeId) return prev;
+          const next: any = { ...prev };
+          switch (field) {
+            case 'planned_start_date':
+              next.plannedStartDate = value;
+              break;
+            case 'planned_end_date':
+              next.plannedEndDate = value;
+              break;
+            case 'start_date':
+              next.startDate = value;
+              break;
+            case 'actual_end_date':
+              next.actualEndDate = value;
+              break;
+            case 'status':
+              next.status = value;
+              break;
+            case 'progress':
+              next.progress = Number(value);
+              break;
+          }
+          return next as FullInitiative;
+        });
+      } catch (e: any) {
+        toast.error(
+          e?.message || t('execution.toast.timelineUpdateFailed', 'Failed to update timeline')
+        );
+      }
+    },
+    [t]
+  );
 
   // Handle refresh
   const handleRefresh = useCallback(async () => {
@@ -3337,7 +3497,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     (
       attention: 'blocked' | 'missing_dates' | 'overdue' | 'overdue_decisions' | 'due_soon_tasks'
     ) => {
-      setActiveTab('initiatives' as ModuleTab);
+      setActiveTab('reports' as ModuleTab);
       setViewMode('table');
       // Status filter is useful only for pure-status buckets.
       if (attention === 'blocked') {
@@ -3605,6 +3765,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             initiatives={filteredInitiatives as FullInitiative[]}
             onInitiativeClick={handleOpenSidePanel}
             onUpdateInitiative={handleInitiativeUpdate}
+            onTimelineUpdate={handleTimelineUpdate}
+            onDependenciesChanged={handleRefresh}
             riskSignals={riskSignals}
             delaySignals={delaySignals}
             projectId={currentProjectId || undefined}
@@ -3690,6 +3852,83 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       );
     }
 
+    if (activeTab === 'list') {
+      type PreviewItem = FullInitiative & { title: string };
+
+      const selectedInit = summaryPreviewInitiativeId
+        ? summaryInitiatives.find((i) => i.id === summaryPreviewInitiativeId) || null
+        : null;
+      const selectedItem: PreviewItem | null = selectedInit
+        ? ({ ...selectedInit, title: selectedInit.name } as PreviewItem)
+        : null;
+      const itemIds = summaryInitiatives.map((i) => i.id);
+
+      return (
+        <div className="h-full overflow-hidden">
+          <TableWithPreviewLayout<PreviewItem>
+            selectedId={summaryPreviewInitiativeId}
+            selectedItem={selectedItem}
+            onSelect={setSummaryPreviewInitiativeId}
+            itemIds={itemIds}
+            onOpenFull={(id) => {
+              const init = summaryInitiatives.find((x) => x.id === id);
+              if (init) handleOpenDocument(init);
+            }}
+            renderPreview={(item) => (
+              <InitiativePreviewV3Body
+                initiative={mapToPreviewModel(item)}
+                onSummarize={() =>
+                  openAiChatForInitiative(
+                    item,
+                    t(
+                      'execution.summary.summarizePrompt',
+                      'Summarize this initiative in 5 bullets and propose 3 next steps.'
+                    )
+                  )
+                }
+              />
+            )}
+            renderPreviewFooter={(item) => (
+              <InitiativePreviewV3Footer
+                initiative={mapToPreviewModel(item)}
+                tasksCount={tasksByInitiative[item.id]?.length}
+                onOpenFull={() => handleOpenDocument(item)}
+                onOpenChat={(prompt) => openAiChatForInitiative(item, prompt)}
+                onCopyLink={() => copyExecutionLink(item.id)}
+              />
+            )}
+          >
+            <FilterableTable
+              columns={columns}
+              data={summaryInitiatives as any[]}
+              selectedRowId={summaryPreviewInitiativeId}
+              onRowClick={(row) => setSummaryPreviewInitiativeId(String(row.id))}
+              onRowDoubleClick={(row) => {
+                const init = summaryInitiatives.find((x) => x.id === row.id);
+                if (init) handleOpenDocument(init);
+              }}
+              onRowAction={(action, row) => {
+                const init = summaryInitiatives.find((x) => x.id === row.id);
+                if (!init) return;
+                if (action === 'preview') {
+                  setSummaryPreviewInitiativeId(init.id);
+                  return;
+                }
+                if (action === 'edit') {
+                  handleOpenDocument(init);
+                }
+              }}
+              activeFilters={summaryFilters}
+              onFilterChange={setSummaryFilters}
+              emptyMessage={t('execution.empty.noInExecution')}
+              canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+              density="compact"
+            />
+          </TableWithPreviewLayout>
+        </div>
+      );
+    }
+
     if (activeTab === 'initiatives') {
       return (
         <div className="p-4">
@@ -3734,18 +3973,73 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
     if (activeTab === ('people_change' as ModuleTab)) {
       return (
-        <PeopleChangeWorkspace
-          initiativeId={undefined}
-          projectId={currentProjectId || undefined}
-          organizationId={currentProjectId || ''}
-        />
+        <div className="p-4 space-y-4">
+          <Callout
+            variant="info"
+            title={t('execution.management.backlogTitle', 'Change management')}
+          >
+            {t(
+              'execution.management.backlogBody',
+              'Timeline change proposals and workout plans (propose→accept) are tracked as an R1 backlog (V3-G02).'
+            )}
+          </Callout>
+
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+            <ExecutionWorkloadView
+              initiatives={initiatives}
+              onInitiativeClick={handleOpenSidePanel}
+              showControls={false}
+              controls={{
+                viewMode: workloadViewMode,
+                setViewMode: setWorkloadViewMode,
+                weekCount: workloadWeekCount,
+                setWeekCount: setWorkloadWeekCount,
+                monthCount: workloadMonthCount,
+                setMonthCount: setWorkloadMonthCount,
+                startDate: workloadStartDate,
+                setStartDate: setWorkloadStartDate,
+              }}
+            />
+          </div>
+
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+            <PeopleChangeWorkspace
+              initiativeId={undefined}
+              projectId={currentProjectId || undefined}
+              organizationId={currentProjectId || ''}
+            />
+          </div>
+        </div>
       );
     }
 
     if (activeTab === 'reports') {
       const reportRows = demoMode ? demo?.reportsDemo || [] : [];
       return (
-        <div className="p-4">
+        <div className="p-4 space-y-4">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+            {renderExecutionView()}
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <ToggleBlock
+              title={t('execution.reporting.tasksTitle', 'Tasks')}
+              badge={tasks.length}
+              defaultOpen={false}
+              icon={<ClipboardList size={16} />}
+            >
+              {renderTasksQueue()}
+            </ToggleBlock>
+            <ToggleBlock
+              title={t('execution.reporting.decisionsTitle', 'Decisions')}
+              badge={decisions.filter((d) => String(d.status).toUpperCase() === 'PENDING').length}
+              defaultOpen={false}
+              icon={<Scale size={16} />}
+            >
+              {renderDecisionsBuckets()}
+            </ToggleBlock>
+          </div>
+
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-5">
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -3768,8 +4062,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               </button>
             </div>
           </div>
+
           {demoMode ? (
-            <div className="mt-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
               <InlineTable
                 caption={t('execution.demo.reportsCaption', 'Demo report history')}
                 compact
@@ -4439,8 +4734,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   const availableViewModes = useMemo(
     () =>
-      activeTab === 'initiatives'
-        ? (['table', 'grid', 'kanban', 'timeline', 'calendar'] as ViewMode[])
+      activeTab === 'reports'
+        ? (['table', 'kanban', 'timeline', 'calendar', 'grid'] as ViewMode[])
         : (['table'] as ViewMode[]),
     [activeTab]
   );
@@ -4459,16 +4754,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         onSelectDocument={setActiveDocumentId}
         onCloseDocument={handleCloseDocument}
         onShowList={handleShowList}
-        activeFilters={activeFilters}
+        activeFilters={activeTab === 'list' ? summaryFilters : activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         activeStatusFilter={activeStatusFilter}
         onStatusFilterChange={setActiveStatusFilter}
         statusDropdownContext={
-          activeTab === 'list' || activeTab === 'initiatives' ? 'execution' : undefined
+          activeTab === 'list' || activeTab === 'reports' ? 'execution' : undefined
         }
         statusCounts={
-          activeTab === 'list' || activeTab === 'initiatives' ? statusDropdownCounts : undefined
+          activeTab === 'list' || activeTab === 'reports' ? statusDropdownCounts : undefined
         }
         rightControls={rightControls}
         availableViewModes={availableViewModes}

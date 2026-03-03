@@ -23,6 +23,8 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { Api } from '@/services/api';
+
 interface ComplianceCheck {
   id: string;
   name: string;
@@ -54,18 +56,14 @@ export const ComplianceTab: React.FC = () => {
   const loadCompliance = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-
-      const [healthRes, providersRes] = await Promise.all([
-        fetch('/api/ai-governance/health', { headers }),
-        fetch('/api/llm/providers', { headers }),
+      const [healthPayload, providersPayload] = await Promise.all([
+        Api.getAIGovernanceHealth(),
+        Api.getLLMProviders(),
       ]);
 
       const nowIso = new Date().toISOString();
 
       // Compliance checks (DB + services + env) from AI governance sanity report
-      const healthPayload = await healthRes.json().catch(() => ({}));
       const report = healthPayload?.data || null;
       const healthChecks: Array<{ name: string; status: 'ok' | 'warn' | 'error'; detail: string }> =
         Array.isArray(report?.healthChecks) ? report.healthChecks : [];
@@ -113,7 +111,6 @@ export const ComplianceTab: React.FC = () => {
       setChecks(nextChecks);
 
       // Data residency: best-effort summary of configured LLM providers (real DB-backed list)
-      const providersPayload = await providersRes.json().catch(() => []);
       const providersArray: any[] = Array.isArray(providersPayload) ? providersPayload : [];
       const providerNames = Array.from(
         new Set(

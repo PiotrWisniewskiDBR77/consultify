@@ -94,7 +94,7 @@ const TYPE_BORDER_COLORS: Record<string, string> = {
 
 // Shared tab styles
 const TAB_BASE = `
-  flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium
+  flex items-center gap-2 px-2.5 py-1 rounded-lg text-[11px] font-medium
   border border-l-2 transition-all duration-200 cursor-pointer
 `;
 
@@ -219,7 +219,7 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
           <button
             onClick={() => setShowOverflowMenu(!showOverflowMenu)}
             className={`
-              flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm font-medium
+              flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium
               border transition-all duration-200
               ${
                 activeInOverflow

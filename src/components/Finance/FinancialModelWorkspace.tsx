@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import Api from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
@@ -90,6 +91,9 @@ type Tab = 'inputs' | 'events' | 'outputs' | 'validation';
 
 interface Props {
   projectId?: string;
+  initialModelId?: string;
+  hideSidebar?: boolean;
+  onModelChanged?: (modelId: string) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -163,9 +167,15 @@ const STATUS_CONFIG: Record<string, { color: string; icon: React.ReactNode }> = 
 // Component
 // ---------------------------------------------------------------------------
 
-export const FinancialModelWorkspace: React.FC<Props> = ({ projectId }) => {
+export const FinancialModelWorkspace: React.FC<Props> = ({
+  projectId,
+  initialModelId,
+  hideSidebar = false,
+  onModelChanged,
+}) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
+  const navigate = useNavigate();
 
   const [models, setModels] = useState<Model[]>([]);
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
@@ -226,7 +236,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({ projectId }) => {
     loadModels();
   }, [loadModels]);
 
-  const selectModel = async (modelId: string) => {
+  const selectModel = useCallback(async (modelId: string) => {
     setLoading(true);
     try {
       const model = await Api.get(`/api/financial-modeling/models/${modelId}`);
@@ -239,7 +249,12 @@ export const FinancialModelWorkspace: React.FC<Props> = ({ projectId }) => {
       setError(e?.response?.data?.error || e?.message || String(e));
     }
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!initialModelId) return;
+    void selectModel(initialModelId);
+  }, [initialModelId, selectModel]);
 
   // ── Create model ──
   const handleCreate = async () => {
@@ -259,7 +274,11 @@ export const FinancialModelWorkspace: React.FC<Props> = ({ projectId }) => {
       setShowCreate(false);
       setNewName('');
       await loadModels();
-      if ((data as any)?.id) await selectModel((data as any).id);
+      if ((data as any)?.id) {
+        const createdModelId = (data as any).id as string;
+        await selectModel(createdModelId);
+        onModelChanged?.(createdModelId);
+      }
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || String(e));
     }
@@ -296,6 +315,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({ projectId }) => {
         cfClassification: 'operating',
       });
       await selectModel(selectedModel.id);
+      onModelChanged?.(selectedModel.id);
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || String(e));
     }
@@ -304,7 +324,10 @@ export const FinancialModelWorkspace: React.FC<Props> = ({ projectId }) => {
   const handleDeleteEvent = async (eventId: string) => {
     try {
       await Api.delete(`/api/financial-modeling/events/${eventId}`);
-      if (selectedModel) await selectModel(selectedModel.id);
+      if (selectedModel) {
+        await selectModel(selectedModel.id);
+        onModelChanged?.(selectedModel.id);
+      }
     } catch {
       /* noop */
     }
@@ -330,6 +353,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({ projectId }) => {
       setValidationSummary((valData as any)?.summary || { total: 0, pass: 0, fail: 0, warning: 0 });
 
       setActiveTab('outputs');
+      onModelChanged?.(selectedModel.id);
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || String(e));
     }
@@ -346,6 +370,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({ projectId }) => {
         trackFunnelEvent('financial_model_approved', { modelId: selectedModel.id });
         await selectModel(selectedModel.id);
         await loadModels();
+        onModelChanged?.(selectedModel.id);
       } else {
         setError((data as any)?.error || 'Approval failed');
       }
@@ -360,6 +385,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({ projectId }) => {
     if (!selectedModel) return;
     try {
       await Api.put(`/api/financial-modeling/models/${selectedModel.id}`, { assumptions });
+      onModelChanged?.(selectedModel.id);
     } catch {
       /* noop */
     }
@@ -416,46 +442,48 @@ export const FinancialModelWorkspace: React.FC<Props> = ({ projectId }) => {
   return (
     <div className="flex h-full min-h-[600px]">
       {/* ── Sidebar ── */}
-      <div className="w-72 border-r border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-4 flex flex-col">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-slate-900 dark:text-white text-sm">
-            {t('finance.model.title', 'Financial Models')}
-          </h2>
-          <button
-            onClick={() => setShowCreate(true)}
-            className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500"
-          >
-            <Plus size={14} />
-          </button>
-        </div>
-
-        <div className="space-y-1.5 flex-1 overflow-y-auto">
-          {models.map((m) => (
+      {!hideSidebar && (
+        <div className="w-72 border-r border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-4 flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-slate-900 dark:text-white text-sm">
+              {t('finance.model.title', 'Financial Models')}
+            </h2>
             <button
-              key={m.id}
-              onClick={() => selectModel(m.id)}
-              className={`w-full text-left p-3 rounded-xl transition-colors ${
-                selectedModel?.id === m.id
-                  ? 'bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'
-                  : 'hover:bg-white dark:hover:bg-navy-800 border border-transparent'
-              }`}
+              onClick={() => setShowCreate(true)}
+              className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500"
             >
-              <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                {m.name}
-              </p>
-              <div className="flex items-center gap-2 mt-1">
-                {statusBadge(m.status)}
-                <span className="text-[10px] text-slate-400">v{m.version}</span>
-              </div>
+              <Plus size={14} />
             </button>
-          ))}
-          {models.length === 0 && (
-            <p className="text-xs text-slate-400 text-center py-8">
-              {t('finance.model.noModels', 'No models yet. Create one to start.')}
-            </p>
-          )}
+          </div>
+
+          <div className="space-y-1.5 flex-1 overflow-y-auto">
+            {models.map((m) => (
+              <button
+                key={m.id}
+                onClick={() => selectModel(m.id)}
+                className={`w-full text-left p-3 rounded-xl transition-colors ${
+                  selectedModel?.id === m.id
+                    ? 'bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'
+                    : 'hover:bg-white dark:hover:bg-navy-800 border border-transparent'
+                }`}
+              >
+                <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                  {m.name}
+                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  {statusBadge(m.status)}
+                  <span className="text-[10px] text-slate-400">v{m.version}</span>
+                </div>
+              </button>
+            ))}
+            {models.length === 0 && (
+              <p className="text-xs text-slate-400 text-center py-8">
+                {t('finance.model.noModels', 'No models yet. Create one to start.')}
+              </p>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── Main area ── */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -490,8 +518,19 @@ export const FinancialModelWorkspace: React.FC<Props> = ({ projectId }) => {
                   className="shrink-0"
                 />
                 <button
+                  onClick={() =>
+                    navigate(
+                      `/economics?tab=valuation&createFrom=financial_model&sourceId=${selectedModel.id}`
+                    )
+                  }
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-colors"
+                >
+                  <TrendingUp size={14} />
+                  {t('finance.model.valuateModel', 'Wycen model')}
+                </button>
+                <button
                   onClick={handleCompute}
-                  disabled={computing || events.length === 0}
+                  disabled={computing}
                   className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-500 disabled:opacity-50"
                 >
                   {computing ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}

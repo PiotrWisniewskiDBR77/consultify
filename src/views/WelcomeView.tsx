@@ -62,16 +62,16 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
       <header className="h-20 border-b border-slate-200 dark:border-elegant flex items-center justify-between px-8 lg:px-12 bg-white dark:bg-navy-950 shrink-0 relative z-50 transition-colors duration-300">
         <div className="flex items-center gap-3 font-bold text-xl tracking-tight text-navy-950 dark:text-white">
           <img
-            src="/assets/logos/logo-dark.png"
-            alt="Consultinity"
+            src="/assets/logos/logo-light.svg"
+            alt="Consultify"
             className="h-7 w-auto dark:hidden"
           />
           <img
-            src="/assets/logos/logo-light.png"
-            alt="Consultinity"
+            src="/assets/logos/logo-dark.svg"
+            alt="Consultify"
             className="hidden h-7 w-auto dark:block"
           />
-          <span className="tracking-widest text-sm">Consultinity</span>
+          <span className="tracking-widest text-sm">Consultify</span>
         </div>
 
         <div className="flex items-center gap-6">

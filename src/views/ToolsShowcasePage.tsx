@@ -410,7 +410,7 @@ export const ToolsShowcasePage: React.FC = () => {
               <span className="text-white font-bold text-[10px] tracking-tight">C</span>
             </div>
             <span className="text-sm font-bold tracking-[0.15em] text-white/60 uppercase">
-              Consultinity
+              Consultify
             </span>
           </div>
           <div className="flex items-center gap-6 text-xs text-white/40">

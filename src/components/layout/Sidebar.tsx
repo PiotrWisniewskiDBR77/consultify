@@ -801,10 +801,10 @@ export const Sidebar: React.FC = () => {
                 <img
                   src={
                     theme === 'dark'
-                      ? '/assets/logos/logo-dark.png'
-                      : '/assets/logos/logo-light.png'
+                      ? '/assets/logos/logo-dark.svg'
+                      : '/assets/logos/logo-light.svg'
                   }
-                  alt="Consultinity"
+                  alt="Consultify"
                   className="h-8 w-auto object-contain"
                 />
               </div>

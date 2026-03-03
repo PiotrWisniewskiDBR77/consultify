@@ -67,7 +67,7 @@ export const PARTNER_TIERS: PartnerTier[] = [
     id: 'BRONZE',
     name: 'Bronze',
     subtitle: 'Entry Level',
-    description: 'Rozpocznij współpracę i poznaj ekosystem Consultinity',
+    description: 'Rozpocznij współpracę i poznaj ekosystem Consultify',
     commissionRate: 10,
     icon: Shield,
     supportSLA: '48h',
@@ -234,7 +234,7 @@ export const PARTNER_BENEFITS: PartnerBenefit[] = [
   },
   {
     icon: Users,
-    title: 'Co-selling z Consultinity',
+    title: 'Co-selling z Consultify',
     description:
       'Wspólne generowanie leadów, pipeline review i deal desk support dla większych transakcji.',
   },
@@ -290,7 +290,7 @@ export const PARTNER_FAQS: PartnerFAQ[] = [
   {
     question: 'Jak działa Co-sell Lead Sharing?',
     answer:
-      'Od poziomu Silver otrzymujesz dostęp do leadów generowanych przez Consultinity. Leady są przydzielane na podstawie Twojej specjalizacji, regionu i historii współpracy. Na poziomie Gold i Platinum masz priorytetowy dostęp.',
+      'Od poziomu Silver otrzymujesz dostęp do leadów generowanych przez Consultify. Leady są przydzielane na podstawie Twojej specjalizacji, regionu i historii współpracy. Na poziomie Gold i Platinum masz priorytetowy dostęp.',
   },
   {
     question: 'Jakie wsparcie marketingowe oferujecie?',

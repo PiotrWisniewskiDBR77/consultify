@@ -1,0 +1,80 @@
+/**
+ * SourceTraceability — UI components showing source references on cards and blocks.
+ * Per-card footer with source chips, per-block subtle indicator.
+ */
+
+import { Database, ExternalLink, FileText, Target, TrendingUp, Zap } from 'lucide-react';
+import React from 'react';
+
+interface SourceRef {
+  artifact_id: string;
+  artifact_type: string;
+  artifact_name: string;
+}
+
+const SOURCE_ICONS: Record<string, React.FC<{ size?: number; className?: string }>> = {
+  initiative: Target,
+  financial_analysis: TrendingUp,
+  report: FileText,
+  tool_session: Zap,
+  note: FileText,
+};
+
+interface CardSourceFooterProps {
+  sourceRefs: SourceRef[];
+  onClickSource?: (ref: SourceRef) => void;
+}
+
+export const CardSourceFooter: React.FC<CardSourceFooterProps> = ({
+  sourceRefs,
+  onClickSource,
+}) => {
+  if (sourceRefs.length === 0) return null;
+
+  return (
+    <div className="flex items-center gap-1.5 pt-2 mt-auto opacity-60 hover:opacity-100 transition-opacity">
+      <Database size={9} className="text-slate-400 flex-shrink-0" />
+      <div className="flex flex-wrap gap-1">
+        {sourceRefs.map((ref) => {
+          const Icon = SOURCE_ICONS[ref.artifact_type] || FileText;
+          return (
+            <button
+              key={ref.artifact_id}
+              onClick={(e) => {
+                e.stopPropagation();
+                onClickSource?.(ref);
+              }}
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-500/10 hover:bg-blue-500/10 text-[8px] text-slate-500 hover:text-blue-600 transition-colors"
+              title={`${ref.artifact_type}: ${ref.artifact_name}`}
+            >
+              <Icon size={8} />
+              <span className="max-w-[80px] truncate">{ref.artifact_name}</span>
+              <ExternalLink size={7} className="opacity-0 group-hover:opacity-100" />
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+interface BlockSourceBadgeProps {
+  sourceRef?: { artifact_id: string; artifact_type: string; artifact_name: string };
+  isRefreshable: boolean;
+}
+
+export const BlockSourceBadge: React.FC<BlockSourceBadgeProps> = ({
+  sourceRef,
+  isRefreshable,
+}) => {
+  if (!sourceRef) return null;
+
+  return (
+    <div className="absolute bottom-0.5 right-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+      <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-blue-500/10 text-[7px] text-blue-500 font-medium">
+        {isRefreshable && <span className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />}
+        {sourceRef.artifact_name}
+      </span>
+    </div>
+  );
+};

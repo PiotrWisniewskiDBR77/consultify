@@ -15,11 +15,12 @@ import {
   Plus,
   RefreshCw,
   Shield,
+  Sparkles,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
@@ -124,6 +125,7 @@ interface InitiativesHubProps {
 
 export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'list' }) => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const { currentProjectId, currentUser } = useAppStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const [handledDeepLinkOpen, setHandledDeepLinkOpen] = useState(false);
@@ -852,7 +854,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 const init = searchedInitiatives.find((x) => x.id === id);
                 if (init) handleOpenFullScreen(init);
               }}
-              renderKicker={(_item) => (i18n.language === 'pl' ? 'Inicjatywa' : 'Initiative')}
               renderPreview={(item) => (
                 <InitiativePreviewV3Body
                   initiative={mapToPreviewModel(item)}
@@ -873,6 +874,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   onOpenFull={() => handleOpenFullScreen(item)}
                   onOpenChat={(prompt) => openAiChat(item, prompt)}
                   onCopyLink={() => copyInitiativeLink(item.id)}
+                  extraActionsAfterSlot={
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/economics?tab=models&initiativeId=${item.id}`)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition"
+                    >
+                      {i18n.language?.startsWith('pl') ? 'Finanse' : 'Finance'}
+                    </button>
+                  }
                 />
               )}
             >
@@ -996,6 +1006,97 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     </div>
   );
 
+  const aiControl = (
+    <button
+      type="button"
+      onClick={() => {
+        const selected =
+          previewInitiativeId ? initiatives.find((i) => i.id === previewInitiativeId) : null;
+        const prompt = i18n.language?.startsWith('pl')
+          ? 'Pomóż mi w tym widoku: pokaż krytyczne inicjatywy, luki w danych i następne kroki. Jeśli jest zaznaczona inicjatywa, skup się na niej.'
+          : 'Help me in this view: highlight critical initiatives, missing data, and next steps. If an initiative is selected, focus on it.';
+
+        (async () => {
+          try {
+            if (selected) {
+              const convId = await openChatWithContext({
+                entityType: 'initiative',
+                entityId: selected.id,
+                entityName: selected.name,
+                contextData: selected as unknown as Record<string, unknown>,
+                pmoContext: { initiativeIds: [selected.id] },
+              });
+              await addChatMessage({ conversationId: convId, role: 'user', content: prompt } as any);
+            } else {
+              const convId = await openChatWithContext({
+                entityType: 'initiative',
+                entityId: 'initiatives',
+                entityName: 'Initiatives',
+                contextData: {
+                  scope,
+                  status: activeStatusFilter || 'all',
+                  tab: activeTab,
+                },
+                pmoContext: {},
+              });
+              await addChatMessage({ conversationId: convId, role: 'user', content: prompt } as any);
+            }
+            toast.success(t('initiatives.toast.chatOpened', 'Chat opened'), { duration: 1500 });
+          } catch {
+            toast.error(t('initiatives.toast.chatOpenError', 'Failed to open chat'));
+          }
+        })();
+      }}
+      className="inline-flex items-center gap-2 h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-primary-600 dark:text-primary-300 hover:bg-primary-50/70 dark:hover:bg-primary-500/10 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 text-sm font-medium"
+      title={i18n.language?.startsWith('pl') ? 'Kontekst AI' : 'AI Context'}
+      aria-label={i18n.language?.startsWith('pl') ? 'Kontekst AI' : 'AI Context'}
+    >
+      <Sparkles size={16} />
+      <span>AI</span>
+    </button>
+  );
+
+  const commandRowContent = (
+    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+      <button
+        type="button"
+        onClick={() => setActiveStatusFilter(null)}
+        className={[
+          'inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-sm font-medium border transition-colors',
+          !activeStatusFilter
+            ? 'border-primary-500/40 bg-primary-500/10 text-slate-900 dark:text-slate-100'
+            : 'border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]',
+        ].join(' ')}
+      >
+        <span className="w-2 h-2 rounded-full bg-slate-500" />
+        <span>{t('common.all', 'All')}</span>
+        <span className="text-slate-500 dark:text-slate-400 text-xs">{statusCounts.all ?? 0}</span>
+      </button>
+      {ALLOWED_STATUSES.map((s) => {
+        const meta = STATUS_METADATA[s];
+        const isActive = activeStatusFilter === s;
+        const count = statusCounts[s] ?? 0;
+        return (
+          <button
+            key={s}
+            type="button"
+            onClick={() => setActiveStatusFilter(s)}
+            className={[
+              'inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-sm font-medium border transition-colors',
+              isActive
+                ? 'border-primary-500/40 bg-primary-500/10 text-slate-900 dark:text-slate-100'
+                : 'border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]',
+            ].join(' ')}
+          >
+            <span className={`w-2 h-2 rounded-full ${meta?.dotColor || 'bg-slate-400'}`} />
+            <span>{meta?.label || s}</span>
+            <span className="text-slate-500 dark:text-slate-400 text-xs">{count}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div className="h-full" data-testid="initiatives-hub">
       <ModuleHub
@@ -1018,9 +1119,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         newItemLabel={`+ ${t('initiatives.form.newInitiative')}`}
         filterActions={filterActions}
         rightControls={rightControls}
+        aiControl={aiControl}
+        commandRowContent={activeTab === 'analysis' ? null : commandRowContent}
         availableViewModes={availableViewModes}
       >
-        <div className="flex-1 overflow-hidden">{renderContent()}</div>
+        <div className="h-full min-h-0 overflow-hidden">{renderContent()}</div>
       </ModuleHub>
 
       {/* New Initiative Modal — D1.1: includes type/level selector */}

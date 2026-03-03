@@ -21,7 +21,7 @@ async function sendWelcomeEmail(data: WelcomeEmailData): Promise<void> {
 
     await EmailService.send({
       to: data.email,
-      subject: `Welcome to Consultinity${data.isDemo ? ' (Demo Account)' : ''} 🎉`,
+      subject: `Welcome to Consultify${data.isDemo ? ' (Demo Account)' : ''} 🎉`,
       html: generateWelcomeEmailHtml(data),
     });
 
@@ -36,7 +36,7 @@ async function sendWelcomeEmail(data: WelcomeEmailData): Promise<void> {
  * Generate welcome email HTML
  */
 function generateWelcomeEmailHtml(data: WelcomeEmailData): string {
-  const appUrl = process.env.FRONTEND_URL || 'https://app.consultinity.com';
+  const appUrl = process.env.FRONTEND_URL || 'https://app.consultify.com';
 
   return `
 <!DOCTYPE html>
@@ -64,7 +64,7 @@ function generateWelcomeEmailHtml(data: WelcomeEmailData): string {
 <body>
     <div class="container">
         <div class="header">
-            <h1>Welcome to Consultinity! 🎉</h1>
+            <h1>Welcome to Consultify! 🎉</h1>
             <p>Your AI-powered consulting platform is ready</p>
             ${data.isDemo ? '<span class="demo-badge">Demo Account</span>' : ''}
         </div>
@@ -72,7 +72,7 @@ function generateWelcomeEmailHtml(data: WelcomeEmailData): string {
         <div class="content">
             <p>Hi ${data.firstName},</p>
             
-            <p>Thank you for joining Consultinity! We're excited to have <strong>${data.companyName}</strong> on board.</p>
+            <p>Thank you for joining Consultify! We're excited to have <strong>${data.companyName}</strong> on board.</p>
             
             ${
               data.isDemo
@@ -118,24 +118,24 @@ function generateWelcomeEmailHtml(data: WelcomeEmailData): string {
             <ul style="padding-left: 20px;">
                 <li><a href="${appUrl}/help">Visit our Help Center</a></li>
                 <li><a href="${appUrl}/settings/team">Invite your team members</a></li>
-                <li><a href="mailto:support@consultinity.com">Contact our support team</a></li>
+                <li><a href="mailto:support@consultify.com">Contact our support team</a></li>
             </ul>
             
             <p style="margin-top: 30px;">We're here to help you succeed!</p>
             
             <p>Best regards,<br>
-            <strong>The Consultinity Team</strong></p>
+            <strong>The Consultify Team</strong></p>
         </div>
         
         <div class="footer">
-            <p>© ${new Date().getFullYear()} Consultinity. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} Consultify. All rights reserved.</p>
             <p>
                 <a href="${appUrl}/settings">Settings</a> • 
                 <a href="${appUrl}/help">Help</a> • 
-                <a href="mailto:support@consultinity.com">Contact Us</a>
+                <a href="mailto:support@consultify.com">Contact Us</a>
             </p>
             <p style="font-size: 12px; color: #9ca3af;">
-                DBR77 Consultinity Sp. z o.o. | Warsaw, Poland
+                DBR77 Consultify Sp. z o.o. | Warsaw, Poland
             </p>
         </div>
     </div>

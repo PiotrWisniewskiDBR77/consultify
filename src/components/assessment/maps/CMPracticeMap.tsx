@@ -257,7 +257,7 @@ const CMMILegalNotice: React.FC = () => (
     <div className="text-sm text-amber-800 dark:text-amber-200">
       <strong>CMMI (Capability Maturity Model Integration)</strong> jest znakiem towarowym{' '}
       <strong>ISACA</strong> (dawniej CMMI Institute). Oficjalna certyfikacja CMMI wymaga{' '}
-      <strong>akredytowanego Lead Appraiser</strong>. Implementacja w Consultinity służy{' '}
+      <strong>akredytowanego Lead Appraiser</strong>. Implementacja w Consultify służy{' '}
       <strong>celom edukacyjnym</strong>.
     </div>
   </div>

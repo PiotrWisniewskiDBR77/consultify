@@ -1,16 +1,36 @@
 /**
- * IntentStep
+ * IntentStep V3
  *
- * Step 1 (Gate): Collect report intent and context BEFORE writing.
- * Includes source selection + report metadata + generation intent parameters.
+ * Report Definition Layer: collects report type (R1-R4/custom), intent, and context
+ * BEFORE writing. Supports both canonical (Path A) and free (Path B) flows.
  */
 
-import { FileText, Loader2 } from 'lucide-react';
+import {
+  BarChart3,
+  CalendarRange,
+  FileText,
+  LayoutDashboard,
+  Loader2,
+  Lock,
+  Shield,
+  TrendingUp,
+  Users,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
-import type { ReportSourceType, SourceOption } from '../useReportBuilder';
+import type {
+  CommunicationRegister,
+  Confidentiality,
+  DataLevel,
+  GoalV3,
+  ReportDensity,
+  ReportForm,
+  ReportSourceType,
+  ReportTypeV3,
+  SourceOption,
+} from '../useReportBuilder';
 import { SourceSelectStep } from './SourceSelectStep';
 
 export type ReportAudience = 'executive' | 'it' | 'operations' | 'mixed';
@@ -19,7 +39,6 @@ export type ReportLanguageCode = 'pl' | 'en';
 export type ReportTone = 'consulting' | 'neutral' | 'decisive';
 export type ReportScope = 'full' | 'executive' | 'focused';
 
-// New style parameters for controlling generation verbosity
 export type VerbosityLevel = 'concise' | 'standard' | 'detailed' | 'comprehensive';
 export type WritingStyle = 'formal' | 'professional' | 'consultative' | 'persuasive';
 export type IllustrationLevel = 'minimal' | 'moderate' | 'extensive';
@@ -31,16 +50,24 @@ export interface ReportIntent {
   tone: ReportTone;
   scope: ReportScope;
   focusedAxes?: string[];
-  visuals?: {
-    assessmentMatrix?: boolean;
-  };
+  visuals?: { assessmentMatrix?: boolean };
   profileId?: string;
-  // Style parameters
   verbosity?: VerbosityLevel;
   writingStyle?: WritingStyle;
   illustrationLevel?: IllustrationLevel;
   useMetrics?: boolean;
   includeReferences?: boolean;
+  // V3 Report Definition Layer
+  reportTypeV3?: ReportTypeV3;
+  goalV3?: GoalV3;
+  communicationRegister?: CommunicationRegister;
+  density?: ReportDensity;
+  form?: ReportForm;
+  dataLevel?: DataLevel;
+  confidentiality?: Confidentiality;
+  periodFrom?: string;
+  periodTo?: string;
+  themeId?: string;
 }
 
 interface InvocationProfile {
@@ -80,6 +107,65 @@ interface IntentStepProps {
   isLoading: boolean;
 }
 
+const REPORT_TYPE_V3_OPTIONS: Array<{
+  id: ReportTypeV3;
+  icon: React.ElementType;
+  labelEn: string;
+  labelPl: string;
+  descEn: string;
+  descPl: string;
+  frequency: string;
+}> = [
+  {
+    id: 'R1',
+    icon: LayoutDashboard,
+    labelEn: 'R1 — Weekly Execution',
+    labelPl: 'R1 — Tygodniowy raport realizacji',
+    descEn: 'Operational control of initiative execution for PMO / Project Team',
+    descPl: 'Kontrola operacyjna realizacji inicjatyw dla PMO / Zespołu Projektowego',
+    frequency: 'Weekly',
+  },
+  {
+    id: 'R2',
+    icon: Users,
+    labelEn: 'R2 — Steering Committee',
+    labelPl: 'R2 — Komitet Sterujący',
+    descEn: 'Strategic oversight & decision-making for Sponsors / Board',
+    descPl: 'Nadzór strategiczny i podejmowanie decyzji dla Sponsorów / Zarządu',
+    frequency: 'Monthly',
+  },
+  {
+    id: 'R3',
+    icon: TrendingUp,
+    labelEn: 'R3 — Benefits Tracking',
+    labelPl: 'R3 — Śledzenie korzyści',
+    descEn: 'Verify delivered initiatives produce business value',
+    descPl: 'Weryfikacja, czy dostarczone inicjatywy przynoszą wartość biznesową',
+    frequency: 'Quarterly',
+  },
+  {
+    id: 'R4',
+    icon: BarChart3,
+    labelEn: 'R4 — Portfolio Overview',
+    labelPl: 'R4 — Przegląd portfela',
+    descEn: 'High-level view of transformation portfolio for Executives',
+    descPl: 'Widok portfela transformacyjnego dla kadry zarządzającej',
+    frequency: 'On-demand',
+  },
+  {
+    id: 'custom',
+    icon: FileText,
+    labelEn: 'Custom Report',
+    labelPl: 'Raport własny',
+    descEn: 'Free-form report with AI-proposed outline',
+    descPl: 'Raport dowolny z proponowaną strukturą AI',
+    frequency: '',
+  },
+];
+
+const selectClasses =
+  'w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 text-sm';
+
 export const IntentStep: React.FC<IntentStepProps> = (props) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -89,14 +175,12 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
   const [profiles, setProfiles] = useState<InvocationProfile[]>([]);
   const [isLoadingProfiles, setIsLoadingProfiles] = useState(false);
 
-  // Load profiles when source type changes
   useEffect(() => {
     if (sourceType) {
       setIsLoadingProfiles(true);
       Api.get(`/report-builder/profiles/for-source/${sourceType}`)
         .then((res) => {
           setProfiles(res?.profiles || []);
-          // Auto-select first profile if none selected
           if (!intent.profileId && res?.profiles?.length > 0) {
             const defaultProfile = res.profiles[0];
             onIntentChange({
@@ -113,15 +197,11 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
   const selectedProfile = profiles.find((p) => p.id === intent.profileId);
 
   const axisOptions = useMemo(
-    () => [
-      { id: '1', label: isPl ? 'Oś 1' : 'Axis 1' },
-      { id: '2', label: isPl ? 'Oś 2' : 'Axis 2' },
-      { id: '3', label: isPl ? 'Oś 3' : 'Axis 3' },
-      { id: '4', label: isPl ? 'Oś 4' : 'Axis 4' },
-      { id: '5', label: isPl ? 'Oś 5' : 'Axis 5' },
-      { id: '6', label: isPl ? 'Oś 6' : 'Axis 6' },
-      { id: '7', label: isPl ? 'Oś 7' : 'Axis 7' },
-    ],
+    () =>
+      Array.from({ length: 7 }, (_, i) => ({
+        id: String(i + 1),
+        label: isPl ? `Oś ${i + 1}` : `Axis ${i + 1}`,
+      })),
     [isPl]
   );
 
@@ -135,30 +215,91 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
   const handleProfileSelect = (profileId: string) => {
     const profile = profiles.find((p) => p.id === profileId);
     if (profile) {
-      const defaultIntent = (profile.defaultIntent || {}) as unknown as Partial<ReportIntent>;
-      onIntentChange({
-        profileId,
-        ...defaultIntent,
-      });
+      onIntentChange({ profileId, ...(profile.defaultIntent || {}) } as Partial<ReportIntent>);
     }
   };
+
+  const reportTypeV3 = intent.reportTypeV3 || 'custom';
+  const isCanonical = reportTypeV3 !== 'custom';
 
   return (
     <div className="space-y-10">
       {/* Source + title/description */}
       <SourceSelectStep {...props} />
 
-      {/* Profile Selection */}
-      {sourceType && profiles.length > 0 && (
+      {/* ── V3: Report Type Selection ── */}
+      <div className="border-t border-slate-200 dark:border-slate-700 pt-8 space-y-4">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {isPl ? 'Typ raportu' : 'Report Type'}
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            {isPl
+              ? 'Wybierz kanoniczny typ raportowy (R1-R4) lub stwórz własny raport'
+              : 'Choose a canonical report type (R1-R4) or create a custom report'}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {REPORT_TYPE_V3_OPTIONS.map((opt) => {
+            const Icon = opt.icon;
+            const selected = reportTypeV3 === opt.id;
+            return (
+              <button
+                key={opt.id}
+                onClick={() => onIntentChange({ reportTypeV3: opt.id })}
+                className={`
+                  p-4 rounded-lg border text-left transition-all
+                  ${
+                    selected
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-500/20'
+                      : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                  }
+                `}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      selected
+                        ? 'bg-blue-100 dark:bg-blue-900/50'
+                        : 'bg-slate-100 dark:bg-slate-800'
+                    }`}
+                  >
+                    <Icon
+                      className={`w-5 h-5 ${selected ? 'text-blue-600' : 'text-slate-500'}`}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-slate-900 dark:text-white text-sm">
+                      {isPl ? opt.labelPl : opt.labelEn}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {isPl ? opt.descPl : opt.descEn}
+                    </div>
+                    {opt.frequency && (
+                      <span className="inline-block mt-1.5 text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded">
+                        {opt.frequency}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Legacy profile selection (only for custom + source-based) ── */}
+      {reportTypeV3 === 'custom' && sourceType && profiles.length > 0 && (
         <div className="border-t border-slate-200 dark:border-slate-700 pt-8 space-y-4">
           <div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-              {isPl ? 'Typ raportu' : 'Report Type'}
+              {isPl ? 'Profil inwokacji' : 'Invocation Profile'}
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               {isPl
-                ? 'Wybierz szablon raportu dopasowany do Twoich potrzeb'
-                : 'Choose a report template that fits your needs'}
+                ? 'Opcjonalnie wybierz szablon generowania dopasowany do źródła'
+                : 'Optionally select a generation template tailored to your source'}
             </p>
           </div>
 
@@ -172,30 +313,22 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
                 <button
                   key={profile.id}
                   onClick={() => handleProfileSelect(profile.id)}
-                  className={`
-                    p-4 rounded-lg border text-left transition-all
-                    ${
-                      intent.profileId === profile.id
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-500/20'
-                        : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                    }
-                  `}
+                  className={`p-4 rounded-lg border text-left transition-all ${
+                    intent.profileId === profile.id
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-500/20'
+                      : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                  }`}
                 >
                   <div className="flex items-start gap-3">
                     <div
-                      className={`
-                      w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0
-                      ${
+                      className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                         intent.profileId === profile.id
                           ? 'bg-blue-100 dark:bg-blue-900/50'
                           : 'bg-slate-100 dark:bg-slate-800'
-                      }
-                    `}
+                      }`}
                     >
                       <FileText
-                        className={`w-5 h-5 ${
-                          intent.profileId === profile.id ? 'text-blue-600' : 'text-slate-500'
-                        }`}
+                        className={`w-5 h-5 ${intent.profileId === profile.id ? 'text-blue-600' : 'text-slate-500'}`}
                       />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -205,7 +338,6 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
                       <div className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                         {isPl ? profile.descriptionPl : profile.description}
                       </div>
-                      {/* Feature badges */}
                       <div className="flex flex-wrap gap-1 mt-2">
                         {profile.features.allowMatrixVisualization && (
                           <span className="text-xs px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded">
@@ -227,16 +359,182 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
         </div>
       )}
 
-      {/* Intent parameters */}
+      {/* ── V3 Report Definition Layer ── */}
       <div className="border-t border-slate-200 dark:border-slate-700 pt-8 space-y-6">
         <div>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-            {isPl ? 'Parametry raportu (wymagane)' : 'Report intent (required)'}
+            {isPl ? 'Definicja raportu' : 'Report Definition'}
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             {isPl
-              ? 'Te ustawienia są zbierane przed generowaniem i sterują strukturą oraz treścią raportu.'
-              : 'These settings are captured before generation and drive report structure and content.'}
+              ? 'Te parametry sterują strukturą, stylem i treścią raportu'
+              : 'These parameters control the structure, style, and content of the report'}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {/* Goal V3 */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              {isPl ? 'Cel raportu' : 'Report Goal'}
+            </label>
+            <select
+              value={intent.goalV3 || 'inform'}
+              onChange={(e) => onIntentChange({ goalV3: e.target.value as GoalV3 })}
+              className={selectClasses}
+            >
+              <option value="inform">{isPl ? 'Informować' : 'Inform'}</option>
+              <option value="decide">{isPl ? 'Wspierać decyzję' : 'Support Decision'}</option>
+              <option value="sell">{isPl ? 'Sprzedać / przekonać' : 'Sell / Convince'}</option>
+              <option value="align">{isPl ? 'Zgrać zespół' : 'Align Stakeholders'}</option>
+            </select>
+          </div>
+
+          {/* Communication Register */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              {isPl ? 'Rejestr komunikacji' : 'Communication Register'}
+            </label>
+            <select
+              value={intent.communicationRegister || 'professional'}
+              onChange={(e) =>
+                onIntentChange({ communicationRegister: e.target.value as CommunicationRegister })
+              }
+              className={selectClasses}
+            >
+              <option value="executive">{isPl ? 'Executive' : 'Executive'}</option>
+              <option value="professional">{isPl ? 'Profesjonalny' : 'Professional'}</option>
+              <option value="technical">{isPl ? 'Techniczny' : 'Technical'}</option>
+              <option value="narrative">{isPl ? 'Narracyjny' : 'Narrative'}</option>
+            </select>
+          </div>
+
+          {/* Language */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              {isPl ? 'Język raportu' : 'Report Language'}
+            </label>
+            <select
+              value={intent.language}
+              onChange={(e) => onIntentChange({ language: e.target.value as any })}
+              className={selectClasses}
+            >
+              <option value="pl">PL</option>
+              <option value="en">EN</option>
+            </select>
+          </div>
+
+          {/* Density */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              {isPl ? 'Gęstość treści' : 'Content Density'}
+            </label>
+            <select
+              value={intent.density || 'standard'}
+              onChange={(e) => onIntentChange({ density: e.target.value as ReportDensity })}
+              className={selectClasses}
+            >
+              <option value="concise">{isPl ? 'Zwięzły' : 'Concise'}</option>
+              <option value="standard">{isPl ? 'Standardowy' : 'Standard'}</option>
+              <option value="detailed">{isPl ? 'Szczegółowy' : 'Detailed'}</option>
+              <option value="comprehensive">{isPl ? 'Wyczerpujący' : 'Comprehensive'}</option>
+            </select>
+          </div>
+
+          {/* Form */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              {isPl ? 'Forma raportu' : 'Report Form'}
+            </label>
+            <select
+              value={intent.form || 'strategic'}
+              onChange={(e) => onIntentChange({ form: e.target.value as ReportForm })}
+              className={selectClasses}
+            >
+              <option value="strategic">{isPl ? 'Strategiczny' : 'Strategic'}</option>
+              <option value="operational">{isPl ? 'Operacyjny' : 'Operational'}</option>
+              <option value="technical">{isPl ? 'Techniczny' : 'Technical'}</option>
+              <option value="investment">{isPl ? 'Inwestorski' : 'Investment'}</option>
+            </select>
+          </div>
+
+          {/* Data Level */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              {isPl ? 'Poziom danych' : 'Data Level'}
+            </label>
+            <select
+              value={intent.dataLevel || 'balanced'}
+              onChange={(e) => onIntentChange({ dataLevel: e.target.value as DataLevel })}
+              className={selectClasses}
+            >
+              <option value="data-heavy">{isPl ? 'Dużo danych' : 'Data-heavy'}</option>
+              <option value="balanced">{isPl ? 'Zbalansowany' : 'Balanced'}</option>
+              <option value="narrative-heavy">
+                {isPl ? 'Narracyjny' : 'Narrative-heavy'}
+              </option>
+            </select>
+          </div>
+
+          {/* Period */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <CalendarRange className="inline w-4 h-4 mr-1 -mt-0.5" />
+              {isPl ? 'Okres od' : 'Period From'}
+            </label>
+            <input
+              type="date"
+              value={intent.periodFrom || ''}
+              onChange={(e) => onIntentChange({ periodFrom: e.target.value })}
+              className={selectClasses}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <CalendarRange className="inline w-4 h-4 mr-1 -mt-0.5" />
+              {isPl ? 'Okres do' : 'Period To'}
+            </label>
+            <input
+              type="date"
+              value={intent.periodTo || ''}
+              onChange={(e) => onIntentChange({ periodTo: e.target.value })}
+              className={selectClasses}
+            />
+          </div>
+
+          {/* Confidentiality */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <Shield className="inline w-4 h-4 mr-1 -mt-0.5" />
+              {isPl ? 'Poufność' : 'Confidentiality'}
+            </label>
+            <select
+              value={intent.confidentiality || 'internal'}
+              onChange={(e) =>
+                onIntentChange({ confidentiality: e.target.value as Confidentiality })
+              }
+              className={selectClasses}
+            >
+              <option value="confidential">
+                {isPl ? 'Poufny (Confidential)' : 'Confidential'}
+              </option>
+              <option value="internal">{isPl ? 'Wewnętrzny (Internal)' : 'Internal'}</option>
+              <option value="public">{isPl ? 'Publiczny (Public)' : 'Public'}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Legacy intent parameters (Audience, Tone, Scope) ── */}
+      <div className="border-t border-slate-200 dark:border-slate-700 pt-8 space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {isPl ? 'Zaawansowane parametry' : 'Advanced Parameters'}
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            {isPl
+              ? 'Dodatkowe ustawienia sterujące generowaniem treści'
+              : 'Additional settings controlling content generation'}
           </p>
         </div>
 
@@ -249,50 +547,12 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
             <select
               value={intent.audience}
               onChange={(e) => onIntentChange({ audience: e.target.value as any })}
-              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              className={selectClasses}
             >
               <option value="executive">{isPl ? 'Zarząd / C-level' : 'Executive / C-level'}</option>
               <option value="it">{isPl ? 'IT / Engineering' : 'IT / Engineering'}</option>
               <option value="operations">{isPl ? 'Operacje' : 'Operations'}</option>
               <option value="mixed">{isPl ? 'Mieszany' : 'Mixed'}</option>
-            </select>
-          </div>
-
-          {/* Goal */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              {isPl ? 'Cel raportu' : 'Goal'}
-            </label>
-            <select
-              value={intent.goal}
-              onChange={(e) => onIntentChange({ goal: e.target.value as any })}
-              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="diagnosis">{isPl ? 'Diagnoza' : 'Diagnosis'}</option>
-              <option value="roadmap">
-                {isPl ? 'Roadmap / plan działań' : 'Roadmap / action plan'}
-              </option>
-              <option value="investment_decision">
-                {isPl ? 'Decyzja inwestycyjna' : 'Investment decision'}
-              </option>
-              <option value="stakeholder_update">
-                {isPl ? 'Komunikacja do interesariuszy' : 'Stakeholder update'}
-              </option>
-            </select>
-          </div>
-
-          {/* Language */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              {isPl ? 'Język raportu' : 'Report language'}
-            </label>
-            <select
-              value={intent.language}
-              onChange={(e) => onIntentChange({ language: e.target.value as any })}
-              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="pl">PL</option>
-              <option value="en">EN</option>
             </select>
           </div>
 
@@ -304,7 +564,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
             <select
               value={intent.tone}
               onChange={(e) => onIntentChange({ tone: e.target.value as any })}
-              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              className={selectClasses}
             >
               <option value="consulting">{isPl ? 'Konsultingowy' : 'Consulting'}</option>
               <option value="neutral">{isPl ? 'Neutralny' : 'Neutral'}</option>
@@ -326,14 +586,11 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
                 <button
                   key={opt.id}
                   onClick={() => onIntentChange({ scope: opt.id as any })}
-                  className={`
-                    p-3 rounded-lg border text-center transition-all
-                    ${
-                      intent.scope === opt.id
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-slate-200 dark:border-slate-700 hover:border-blue-300'
-                    }
-                  `}
+                  className={`p-3 rounded-lg border text-center transition-all ${
+                    intent.scope === opt.id
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-slate-200 dark:border-slate-700 hover:border-blue-300'
+                  }`}
                 >
                   <div className="font-medium text-sm text-slate-900 dark:text-white">
                     {opt.label}
@@ -343,7 +600,6 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
             </div>
           </div>
 
-          {/* Focused axes */}
           {intent.scope === 'focused' && (
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -356,14 +612,11 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
                     <button
                       key={ax.id}
                       onClick={() => toggleAxis(ax.id)}
-                      className={`
-                        px-3 py-1.5 rounded-full border text-sm transition-all
-                        ${
-                          selected
-                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-200'
-                            : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-300'
-                        }
-                      `}
+                      className={`px-3 py-1.5 rounded-full border text-sm transition-all ${
+                        selected
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-200'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-300'
+                      }`}
                     >
                       {ax.label}
                     </button>
@@ -394,50 +647,15 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
         </div>
       </div>
 
-      {/* Style & Verbosity Settings */}
+      {/* Style & Verbosity */}
       <div className="border-t border-slate-200 dark:border-slate-700 pt-8 space-y-6">
         <div>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
             {isPl ? 'Styl generowania treści' : 'Content Generation Style'}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {isPl
-              ? 'Te ustawienia kontrolują szczegółowość i styl generowanego tekstu'
-              : 'These settings control the detail level and style of generated content'}
-          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {/* Verbosity */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {isPl ? 'Szczegółowość' : 'Verbosity'}
-            </label>
-            <select
-              value={intent.verbosity || 'standard'}
-              onChange={(e) => onIntentChange({ verbosity: e.target.value as VerbosityLevel })}
-              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="concise">{isPl ? 'Zwięzły' : 'Concise'}</option>
-              <option value="standard">{isPl ? 'Standardowy' : 'Standard'}</option>
-              <option value="detailed">{isPl ? 'Szczegółowy' : 'Detailed'}</option>
-              <option value="comprehensive">{isPl ? 'Wyczerpujący' : 'Comprehensive'}</option>
-            </select>
-            <p className="text-xs text-slate-500 mt-1">
-              {intent.verbosity === 'comprehensive' &&
-                (isPl
-                  ? 'Maksymalizuje ilość tekstu i szczegółów'
-                  : 'Maximizes content detail and length')}
-              {intent.verbosity === 'detailed' &&
-                (isPl ? 'Obszerny z wieloma szczegółami' : 'Thorough with extensive details')}
-              {intent.verbosity === 'standard' &&
-                (isPl ? 'Zbalansowane podejście' : 'Balanced approach')}
-              {(intent.verbosity === 'concise' || !intent.verbosity) &&
-                (isPl ? 'Skondensowany, tylko kluczowe punkty' : 'Condensed, key points only')}
-            </p>
-          </div>
-
-          {/* Writing Style */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               {isPl ? 'Styl pisania' : 'Writing Style'}
@@ -445,7 +663,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
             <select
               value={intent.writingStyle || 'professional'}
               onChange={(e) => onIntentChange({ writingStyle: e.target.value as WritingStyle })}
-              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              className={selectClasses}
             >
               <option value="formal">{isPl ? 'Formalny' : 'Formal'}</option>
               <option value="professional">{isPl ? 'Profesjonalny' : 'Professional'}</option>
@@ -454,7 +672,6 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
             </select>
           </div>
 
-          {/* Illustration Level */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               {isPl ? 'Przykłady' : 'Examples'}
@@ -464,41 +681,34 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
               onChange={(e) =>
                 onIntentChange({ illustrationLevel: e.target.value as IllustrationLevel })
               }
-              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              className={selectClasses}
             >
               <option value="minimal">{isPl ? 'Minimalne' : 'Minimal'}</option>
               <option value="moderate">{isPl ? 'Umiarkowane' : 'Moderate'}</option>
               <option value="extensive">{isPl ? 'Rozbudowane' : 'Extensive'}</option>
             </select>
-            <p className="text-xs text-slate-500 mt-1">
-              {intent.illustrationLevel === 'extensive' &&
-                (isPl ? 'Wiele przykładów i case studies' : 'Many examples and case studies')}
-            </p>
           </div>
-        </div>
 
-        {/* Additional options */}
-        <div className="flex flex-wrap gap-4">
-          <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-            <input
-              type="checkbox"
-              checked={Boolean(intent.useMetrics)}
-              onChange={(e) => onIntentChange({ useMetrics: e.target.checked })}
-              className="rounded border-slate-300"
-            />
-            {isPl ? 'Używaj metryk i danych liczbowych' : 'Use metrics and quantitative data'}
-          </label>
-          <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-            <input
-              type="checkbox"
-              checked={Boolean(intent.includeReferences)}
-              onChange={(e) => onIntentChange({ includeReferences: e.target.checked })}
-              className="rounded border-slate-300"
-            />
-            {isPl
-              ? 'Dodaj odniesienia do standardów branżowych'
-              : 'Include industry standard references'}
-          </label>
+          <div className="flex flex-col justify-end gap-2">
+            <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={Boolean(intent.useMetrics)}
+                onChange={(e) => onIntentChange({ useMetrics: e.target.checked })}
+                className="rounded border-slate-300"
+              />
+              {isPl ? 'Metryki liczbowe' : 'Use metrics'}
+            </label>
+            <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={Boolean(intent.includeReferences)}
+                onChange={(e) => onIntentChange({ includeReferences: e.target.checked })}
+                className="rounded border-slate-300"
+              />
+              {isPl ? 'Standardy branżowe' : 'Industry references'}
+            </label>
+          </div>
         </div>
       </div>
     </div>

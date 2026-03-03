@@ -1,4 +1,4 @@
-import { Key, Lock, Server, ShieldCheck } from 'lucide-react';
+import { Handshake, Key, Lock, Server, ShieldCheck } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -71,7 +71,7 @@ export const EntryFooter: React.FC = () => {
       links: [
         {
           label: t('landing.footer.resources.masterclass', 'Masterclass'),
-          href: 'https://masterclass.dbr77.com/?utm_source=Consultinity&utm_medium=Footer&utm_campaign=landing_footer',
+          href: 'https://masterclass.dbr77.com/?utm_source=Consultify&utm_medium=Footer&utm_campaign=landing_footer',
           external: true,
         },
         {
@@ -115,9 +115,10 @@ export const EntryFooter: React.FC = () => {
           <div className="col-span-2 space-y-6">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <img src="/assets/logos/logo-dark.png" alt="Consultinity" className="h-8" />
+              <img src="/assets/logos/logo-light.svg" alt="Consultify" className="h-8 w-auto dark:hidden" />
+              <img src="/assets/logos/logo-dark.svg" alt="Consultify" className="hidden h-8 w-auto dark:block" />
               <span className="text-lg font-black tracking-tight text-navy-950 dark:text-white uppercase">
-                Consultinity
+                Consultify
               </span>
             </div>
 
@@ -203,12 +204,35 @@ export const EntryFooter: React.FC = () => {
           ))}
         </div>
 
+        {/* Become Partner CTA */}
+        <div className="mt-12 pt-10 border-t border-white/[0.07] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-black text-white mb-0.5">
+              {t('partner.footerCta.title', 'Become a Consultify Partner')}
+            </p>
+            <p className="text-xs text-white/40">
+              {t('partner.footerCta.sub', 'Resell, integrate, or co-create with us globally.')}
+            </p>
+          </div>
+          <a
+            href="/become-partner"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200 shrink-0"
+            style={{
+              background: 'linear-gradient(135deg, #7c3aed, #c026d3)',
+              boxShadow: '0 0 24px -8px rgba(124,58,237,0.60)',
+            }}
+          >
+            <Handshake size={15} />
+            <span>{t('partner.becomePartner', 'Become Partner')}</span>
+          </a>
+        </div>
+
         {/* Bottom Section */}
-        <div className="mt-16 pt-8 border-t border-slate-100 dark:border-navy-700">
+        <div className="mt-10 pt-8 border-t border-slate-100 dark:border-navy-700">
           <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
             {/* Copyright */}
             <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-widest">
-              © 2025 Consultinity. Powered by{' '}
+              © 2025 Consultify. Powered by{' '}
               <a
                 href={COMPANY.website}
                 target="_blank"

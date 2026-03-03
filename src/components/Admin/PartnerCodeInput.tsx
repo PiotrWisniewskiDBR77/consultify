@@ -410,7 +410,7 @@ export const PartnerCodeInput: React.FC<PartnerCodeInputProps> = ({ className })
                 <p>
                   {t(
                     'admin.billing.codeInfo',
-                    'If you were referred by a Consultinity partner, enter their code to receive special benefits and discounts.'
+                    'If you were referred by a Consultify partner, enter their code to receive special benefits and discounts.'
                   )}
                 </p>
                 <p className="mt-2">

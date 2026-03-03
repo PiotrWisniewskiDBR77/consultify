@@ -124,7 +124,7 @@ export function getDatabaseType(): 'postgres' {
       '\n\x1b[31m%s\x1b[0m',
       'FATAL ERROR: PostgreSQL required. Set DATABASE_URL or DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD.'
     );
-    logger.error('Example: DATABASE_URL=postgresql://user:pass@localhost:5432/consultinity\n');
+    logger.error('Example: DATABASE_URL=postgresql://user:pass@localhost:5432/consultify\n');
     process.exit(1);
   }
 
@@ -218,7 +218,7 @@ function getPostgresConfig(): PostgresConfig {
   return {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432'),
-    database: process.env.DB_NAME || 'consultinity',
+    database: process.env.DB_NAME || 'consultify',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || '',
     ssl: sslConfig,

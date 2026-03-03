@@ -15,6 +15,7 @@ import llmConfigService from '../services/ai/llmConfigService.js';
 import { llmService } from '../services/ai/llmService.js';
 import { syncOpenRouterMarket } from '../services/ai/openRouterMarketService.js';
 import { applyRecommendedModelPreset } from '../services/ai/recommendedModelPresetService.js';
+import { routingRulesService } from '../services/ai/routingRulesService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
@@ -62,6 +63,7 @@ async function ensureEnterpriseSchema(): Promise<void> {
             model_id TEXT NOT NULL DEFAULT '',
             priority INTEGER DEFAULT 0,
             is_active BOOLEAN DEFAULT TRUE,
+            fallback_model_id TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(organization_id, purpose, provider_id, model_id)
@@ -72,6 +74,10 @@ async function ensureEnterpriseSchema(): Promise<void> {
         },
         {
           sql: `CREATE INDEX IF NOT EXISTS idx_ai_purpose_assignments_org ON ai_purpose_assignments(organization_id)`,
+        },
+        {
+          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN fallback_model_id TEXT`,
+          optional: true,
         },
 
         // organization_ai_policy
@@ -198,6 +204,26 @@ function summarizeProviderHealth(providers: any[]) {
     (p) => (p as any)?.healthStatus === 'unhealthy'
   ).length;
   return { total, configured, healthy, degraded, unhealthy };
+}
+
+// ---------------------------------------------------------------------------
+// Routing rules schema bootstrap (safe in DB_MANAGED_SCHEMA=off environments)
+// ---------------------------------------------------------------------------
+let _routingRulesSchemaEnsured = false;
+let _routingRulesSchemaEnsuring: Promise<void> | null = null;
+
+async function ensureRoutingRulesSchema(): Promise<void> {
+  if (_routingRulesSchemaEnsured) return;
+  if (_routingRulesSchemaEnsuring) return _routingRulesSchemaEnsuring;
+  _routingRulesSchemaEnsuring = (async () => {
+    try {
+      await routingRulesService.ensureSchema();
+      _routingRulesSchemaEnsured = true;
+    } finally {
+      _routingRulesSchemaEnsuring = null;
+    }
+  })();
+  return _routingRulesSchemaEnsuring;
 }
 
 async function buildStatusSnapshot(options?: { timeoutMs?: number }) {
@@ -658,6 +684,163 @@ router.delete('/tiers/assign', verifyToken, asyncHandler(LLMController.removeFro
  */
 router.put('/tiers/priority', verifyToken, asyncHandler(LLMController.updateTierPriority));
 
+// ==================== ROUTING RULES (PERSISTED) ====================
+
+/**
+ * GET /api/llm/routing-rules
+ * List persisted routing rules (global + optional org-scoped).
+ */
+router.get(
+  '/routing-rules',
+  verifySuperAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    await ensureRoutingRulesSchema();
+    const organizationIdRaw =
+      (req.query?.organizationId as any) ||
+      (req.query?.orgId as any) ||
+      (req.query?.organization_id as any) ||
+      null;
+    const organizationId = organizationIdRaw ? String(organizationIdRaw).trim() : null;
+    const includeInactive =
+      String(req.query?.includeInactive || '').trim().toLowerCase() === 'true' ||
+      String(req.query?.include_inactive || '').trim().toLowerCase() === 'true';
+
+    const rules = await routingRulesService.listRules({ organizationId, includeInactive });
+    return res.json({ success: true, rules });
+  })
+);
+
+/**
+ * POST /api/llm/routing-rules
+ * Create a routing rule.
+ */
+router.post(
+  '/routing-rules',
+  verifySuperAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    await ensureRoutingRulesSchema();
+    const actorId = getAuditActor(req);
+    const rule = await routingRulesService.createRule(
+      {
+        organizationId: req.body?.organizationId ?? null,
+        name: req.body?.name,
+        description: req.body?.description,
+        type: req.body?.type,
+        priority: req.body?.priority,
+        isActive: req.body?.isActive ?? req.body?.is_active ?? req.body?.isActive,
+        config: req.body?.config,
+      } as any,
+      actorId
+    );
+    return res.status(201).json({ success: true, rule });
+  })
+);
+
+/**
+ * PUT /api/llm/routing-rules/:id
+ * Update a routing rule.
+ */
+router.put(
+  '/routing-rules/:id',
+  verifySuperAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    await ensureRoutingRulesSchema();
+    const actorId = getAuditActor(req);
+    const id = String(req.params?.id || '').trim();
+    if (!id) return res.status(400).json({ success: false, error: 'id is required' });
+
+    const rule = await routingRulesService.updateRule(
+      id,
+      {
+        organizationId: req.body?.organizationId,
+        name: req.body?.name,
+        description: req.body?.description,
+        type: req.body?.type,
+        priority: req.body?.priority,
+        isActive: req.body?.isActive ?? req.body?.is_active,
+        config: req.body?.config,
+      } as any,
+      actorId
+    );
+    return res.json({ success: true, rule });
+  })
+);
+
+/**
+ * PUT /api/llm/routing-rules/:id/toggle
+ * Toggle a routing rule active flag.
+ */
+router.put(
+  '/routing-rules/:id/toggle',
+  verifySuperAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    await ensureRoutingRulesSchema();
+    const actorId = getAuditActor(req);
+    const id = String(req.params?.id || '').trim();
+    const isActive =
+      req.body?.isActive === true ||
+      req.body?.isActive === 1 ||
+      String(req.body?.isActive || '').toLowerCase() === 'true' ||
+      req.body?.is_active === true ||
+      req.body?.is_active === 1 ||
+      String(req.body?.is_active || '').toLowerCase() === 'true';
+
+    const rule = await routingRulesService.updateRule(id, { isActive } as any, actorId);
+    return res.json({ success: true, rule });
+  })
+);
+
+/**
+ * DELETE /api/llm/routing-rules/:id
+ * Delete (or deactivate) a routing rule.
+ */
+router.delete(
+  '/routing-rules/:id',
+  verifySuperAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    await ensureRoutingRulesSchema();
+    const actorId = getAuditActor(req);
+    const id = String(req.params?.id || '').trim();
+    if (!id) return res.status(400).json({ success: false, error: 'id is required' });
+    await routingRulesService.deleteRule(id, actorId);
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * POST /api/llm/routing-rules/simulate
+ * Debug helper for Phase C validation: apply persisted rules to a provided candidate set.
+ *
+ * Security: SUPERADMIN only.
+ */
+router.post(
+  '/routing-rules/simulate',
+  verifySuperAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    await ensureRoutingRulesSchema();
+    const tier = String(req.body?.tier || 'STANDARD').toUpperCase();
+    const purpose = req.body?.purpose ? String(req.body.purpose) : undefined;
+    const organizationId = req.body?.organizationId ? String(req.body.organizationId) : null;
+    const candidates = Array.isArray(req.body?.candidates) ? req.body.candidates : [];
+
+    const applied = await routingRulesService.applyRulesToCandidates({
+      candidates,
+      tier: tier as any,
+      purpose,
+      organizationId,
+    });
+
+    return res.json({
+      success: true,
+      appliedRuleIds: applied.appliedRuleIds,
+      selectionStrategy: applied.selectionStrategy || { kind: 'round_robin' },
+      candidatesBefore: candidates.length,
+      candidatesAfter: applied.candidates.length,
+      candidates: applied.candidates,
+    });
+  })
+);
+
 // ==================== ENTERPRISE: PURPOSES / POLICY / PRICING / MARKET ====================
 
 /**
@@ -799,19 +982,21 @@ router.post(
     const modelId = req.body?.modelId ? String(req.body.modelId).trim() : '';
     const priority = Number.isFinite(Number(req.body?.priority)) ? Number(req.body.priority) : 0;
     const isActive = req.body?.is_active === false ? 0 : 1;
+    const fallbackModelId = req.body?.fallback_model_id || req.body?.fallbackModelId || null;
 
     if (!purpose || !providerId) {
       return res.status(400).json({ success: false, error: 'purpose and providerId are required' });
     }
     const id = `${organizationId || 'global'}-${purpose}-${providerId}-${modelId || 'default'}`;
     await dbRun(
-      `INSERT INTO ai_purpose_assignments (id, organization_id, purpose, provider_id, model_id, priority, is_active, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `INSERT INTO ai_purpose_assignments (id, organization_id, purpose, provider_id, model_id, priority, is_active, fallback_model_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
        ON CONFLICT(organization_id, purpose, provider_id, model_id) DO UPDATE SET
          priority = excluded.priority,
          is_active = excluded.is_active,
+         fallback_model_id = excluded.fallback_model_id,
          updated_at = CURRENT_TIMESTAMP`,
-      [id, organizationId, purpose, providerId, modelId, priority, isActive],
+      [id, organizationId, purpose, providerId, modelId, priority, isActive, fallbackModelId],
       { fallback: false } as any
     );
     await logModelAuditEntry({

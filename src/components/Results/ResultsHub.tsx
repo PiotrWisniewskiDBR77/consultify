@@ -2,7 +2,7 @@ import { BarChart3, ClipboardList, DollarSign, FileText, Target } from 'lucide-r
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { API_URL, getHeaders } from '@/services/api';
+import { Api } from '@/services/api';
 import { InitiativeKPI } from '@/types/core';
 
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
@@ -16,6 +16,8 @@ import { ResultsKpisTableV3 } from './ResultsKpisTableV3';
 import { ROITrackingView } from './ROITrackingView';
 import { ResultsKpiReportsView } from './ResultsKpiReportsView';
 import { ResultsSummaryView } from './ResultsSummaryView';
+import { OperationalAnalysisView } from './OperationalAnalysisView';
+import { ROIAnalysisView } from './ROIAnalysisView';
 
 export type KPIStatus = 'on-target' | 'below' | 'no-data';
 export type KPITrend = 'up' | 'down' | 'stable';
@@ -25,8 +27,12 @@ export interface ResultsKPI extends InitiativeKPI {
   ownerName?: string;
   ownerAvatar?: string;
   baselineValue?: number | null;
+  openDeviationCase?: { id: string; severity: 'AMBER' | 'RED'; status: string } | null;
+  linkedInitiatives?: Array<{ id: string; name: string }>;
+  linkedInitiativesCount?: number;
   status: KPIStatus;
   trend: KPITrend;
+  needsEntry: boolean;
 }
 
 function deriveStatus(kpi: InitiativeKPI): KPIStatus {
@@ -34,8 +40,37 @@ function deriveStatus(kpi: InitiativeKPI): KPIStatus {
   return kpi.isOnTarget ? 'on-target' : 'below';
 }
 
-function deriveTrend(_kpi: InitiativeKPI): KPITrend {
+function deriveTrend(kpi: InitiativeKPI): KPITrend {
+  const prev = (kpi as any).prevValue;
+  const latest = kpi.latestValue;
+  if (latest == null || prev == null) return 'stable';
+  const a = Number(latest);
+  const b = Number(prev);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return 'stable';
+  if (a > b) return 'up';
+  if (a < b) return 'down';
   return 'stable';
+}
+
+function deriveNeedsEntry(kpi: InitiativeKPI): boolean {
+  const latest = kpi.latestMeasurementDate;
+  if (!latest) return true;
+  const d = new Date(latest);
+  if (Number.isNaN(d.getTime())) return true;
+
+  const now = new Date();
+  const freq = kpi.measurementFrequency || 'MONTHLY';
+
+  const diffDays = (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
+  if (freq === 'DAILY') return diffDays > 2;
+  if (freq === 'WEEKLY') return diffDays > 8;
+  if (freq === 'MONTHLY')
+    return d.getFullYear() < now.getFullYear() || d.getMonth() < now.getMonth();
+
+  // QUARTERLY
+  const q = (dt: Date) => Math.floor(dt.getMonth() / 3) + 1;
+  if (d.getFullYear() !== now.getFullYear()) return d.getFullYear() < now.getFullYear();
+  return q(d) < q(now);
 }
 
 export const ResultsHub: React.FC = () => {
@@ -46,6 +81,7 @@ export const ResultsHub: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [kpiReportCreateNonce, setKpiReportCreateNonce] = useState(0);
   const [drawerKpiId, setDrawerKpiId] = useState<string | null>(null);
 
   const [kpis, setKpis] = useState<ResultsKPI[]>([]);
@@ -57,18 +93,51 @@ export const ResultsHub: React.FC = () => {
   const fetchKPIs = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/benefits/kpi-mappings`, {
-        headers: getHeaders(),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const mapped: ResultsKPI[] = (data || []).map((k: any) => ({
+      const [kpisRes, mappingsRes] = await Promise.allSettled([
+        Api.get('/benefits/kpis'),
+        Api.get('/benefits/kpi-mappings'),
+      ]);
+
+      const kpisPayload: any =
+        kpisRes.status === 'fulfilled' ? (kpisRes.value as any) : null;
+      const kpisList = (kpisPayload?.data || []) as any[];
+
+      const mappingsPayload: any =
+        mappingsRes.status === 'fulfilled' ? (mappingsRes.value as any) : null;
+      const mappingsList = (mappingsPayload?.data || []) as any[];
+
+      const byKpi = new Map<string, Array<{ id: string; name: string }>>();
+      for (const m of mappingsList || []) {
+        const kpiId = String(m.kpi_id ?? m.kpiId ?? '').trim();
+        const initiativeId = String(m.initiative_id ?? m.initiativeId ?? '').trim();
+        const initiativeName = String(m.initiative_name ?? m.initiativeName ?? '').trim();
+        if (!kpiId || !initiativeId) continue;
+        const arr = byKpi.get(kpiId) || [];
+        if (!arr.some((x) => x.id === initiativeId)) {
+          arr.push({ id: initiativeId, name: initiativeName || initiativeId });
+        }
+        byKpi.set(kpiId, arr);
+      }
+
+      const mapped: ResultsKPI[] = (kpisList || []).map((k: any) => {
+        const kpiId = String(k?.id ?? '').trim();
+        const linked = kpiId ? byKpi.get(kpiId) || [] : [];
+        const legacyInitiativeName = k?.initiativeName || k?.initiative_name || null;
+        const derivedInitiativeName =
+          legacyInitiativeName ||
+          (linked.length === 1 ? linked[0]?.name : linked.length > 1 ? `${linked[0]?.name} +${linked.length - 1}` : null);
+
+        return {
           ...k,
+          initiativeName: derivedInitiativeName || undefined,
+          linkedInitiatives: linked,
+          linkedInitiativesCount: linked.length,
           status: deriveStatus(k),
           trend: deriveTrend(k),
-        }));
-        setKpis(mapped);
-      }
+          needsEntry: deriveNeedsEntry(k),
+        } as ResultsKPI;
+      });
+      setKpis(mapped);
     } catch {
       // silently fail — table will show empty state
     } finally {
@@ -103,6 +172,16 @@ export const ResultsHub: React.FC = () => {
         label: t('results.tabs.roi', 'ROI'),
         icon: <DollarSign size={16} />,
       },
+      {
+        id: 'operational' as ModuleTab,
+        label: t('results.tabs.operational', 'KPI Analysis'),
+        icon: <BarChart3 size={16} />,
+      },
+      {
+        id: 'roi_analysis' as ModuleTab,
+        label: t('results.tabs.roiAnalysis', 'ROI Analysis'),
+        icon: <DollarSign size={16} />,
+      },
     ],
     [t, kpis]
   );
@@ -116,6 +195,7 @@ export const ResultsHub: React.FC = () => {
         (k) =>
           k.name.toLowerCase().includes(q) ||
           k.initiativeName?.toLowerCase().includes(q) ||
+          (k.linkedInitiatives || []).some((i) => i.name.toLowerCase().includes(q)) ||
           k.description?.toLowerCase().includes(q)
       );
     }
@@ -185,9 +265,23 @@ export const ResultsHub: React.FC = () => {
         activeFilters={activeFilters}
         onRemoveFilter={(id) => setActiveFilters((prev) => prev.filter((f) => f.id !== id))}
         onClearFilters={() => setActiveFilters([])}
-        onNewItem={activeTab === 'kpis' ? () => setShowCreateModal(true) : undefined}
-        newItemLabel={activeTab === 'kpis' ? t('results.addKpi', '+ Add KPI') : undefined}
-        availableViewModes={activeTab === 'kpis' ? ['table', 'grid'] : ['table']}
+        onNewItem={
+          activeTab === 'kpis'
+            ? () => setShowCreateModal(true)
+            : activeTab === 'kpi_reports'
+              ? () => setKpiReportCreateNonce(Date.now())
+              : undefined
+        }
+        newItemLabel={
+          activeTab === 'kpis'
+            ? t('results.addKpi', '+ Add KPI')
+            : activeTab === 'kpi_reports'
+              ? t('results.kpiReports.new', '+ New KPI report')
+              : undefined
+        }
+        // A03 canon: Results hub uses the canonical subset order (table→grid).
+        // Non-KPI tabs can ignore viewMode; we keep the toggle consistent across the hub.
+        availableViewModes={['table', 'grid']}
       >
         {activeTab === 'summary' ? (
           <ResultsSummaryView
@@ -195,8 +289,16 @@ export const ResultsHub: React.FC = () => {
             activeFilters={activeFilters}
             onFilterChange={setActiveFilters}
           />
+        ) : activeTab === 'operational' ? (
+          <OperationalAnalysisView />
+        ) : activeTab === 'roi_analysis' ? (
+          <ROIAnalysisView />
         ) : activeTab === 'kpi_reports' ? (
-          <ResultsKpiReportsView activeFilters={activeFilters} onFilterChange={setActiveFilters} />
+          <ResultsKpiReportsView
+            activeFilters={activeFilters}
+            onFilterChange={setActiveFilters}
+            createNonce={kpiReportCreateNonce}
+          />
         ) : activeTab === 'roi' ? (
           <ROITrackingView />
         ) : loading ? (

@@ -152,11 +152,19 @@ const getDefaultCommands = (onNavigate: (view: AppView) => void): CommandItem[] 
   {
     id: 'nav-reports',
     label: 'Reports',
-    description: 'Analytics and reporting',
+    description: 'Reports & presentations hub',
     icon: <BarChart3 size={18} />,
     category: 'navigation',
     keywords: ['reports', 'analytics', 'dashboard', 'metrics'],
-    onSelect: () => onNavigate(AppView.FULL_STEP6_REPORTS),
+    onSelect: () => {
+      // The Reports library surface is hosted under /presentations?tab=reports (V3 unified hub).
+      // We keep AppView navigation as a fallback for SSR.
+      if (typeof window !== 'undefined') {
+        window.location.assign('/presentations?tab=reports');
+        return;
+      }
+      onNavigate(AppView.PRESENTATIONS);
+    },
   },
   {
     id: 'nav-studio',

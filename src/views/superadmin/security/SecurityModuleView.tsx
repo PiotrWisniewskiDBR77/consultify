@@ -4,10 +4,10 @@
  */
 
 import { AlertTriangle, Key, Lock, Shield, Smartphone } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
+import { InfoButton } from '../../../components/shared/InfoButton';
 import { Tab, TabLayout } from '../../../components/SuperAdmin/TabLayout';
-import { Api } from '../../../services/api';
 import { DeviceManagementView } from './DeviceManagementView';
 import { IPWhitelistView } from './IPWhitelistView';
 import { MFAView } from './MFAView';
@@ -43,14 +43,17 @@ export const SecurityModuleView: React.FC = () => {
   };
 
   return (
-    <TabLayout
-      tabs={tabs}
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
-      title="Security"
-      subtitle="Manage security settings, IP whitelisting, devices, MFA, and monitor security events"
-    >
-      {renderContent()}
-    </TabLayout>
+    <div className="h-full relative">
+      <InfoButton cardId="superadmin-security" position="top-right" />
+      <TabLayout
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        title="Security"
+        subtitle="Manage security settings, IP whitelisting, devices, MFA, and monitor security events"
+      >
+        {renderContent()}
+      </TabLayout>
+    </div>
   );
 };

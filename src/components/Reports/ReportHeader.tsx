@@ -16,6 +16,7 @@ import {
   CheckCircle,
   Clock,
   Download,
+  ExternalLink,
   FileSpreadsheet,
   FileText,
   Loader2,
@@ -28,7 +29,7 @@ import {
   Sparkles,
   Target,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
@@ -46,6 +47,8 @@ interface ReportHeaderProps {
   createdAt?: string;
   updatedAt?: string;
   isFullscreen?: boolean;
+  sourceType?: string;
+  sourceId?: string;
   onBack: () => void;
   onSave: () => void;
   onFinalize: () => void;
@@ -109,6 +112,8 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
   createdAt,
   updatedAt,
   isFullscreen,
+  sourceType,
+  sourceId,
   onBack,
   onSave,
   onFinalize,
@@ -122,6 +127,16 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
   const isPolish = i18n.language === 'pl';
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+
+  const sourceLink = useMemo(() => {
+    if (!sourceType || !sourceId) return null;
+    const st = sourceType.toUpperCase();
+    if (st === 'VALUATION') return { label: t('reports.openSourceValuation', 'Open Valuation'), url: `/economics?tab=valuation&openId=${sourceId}` };
+    if (st === 'FINANCIAL_ANALYSIS') return { label: t('reports.openSourceAnalysis', 'Open Analysis'), url: `/economics?tab=analysis&openId=${sourceId}` };
+    if (st === 'ASSESSMENT') return { label: t('reports.openSourceAssessment', 'Open Assessment'), url: `/interview?assessmentId=${sourceId}` };
+    if (st === 'INITIATIVE') return { label: t('reports.openSourceInitiative', 'Open Initiative'), url: `/initiatives?id=${sourceId}` };
+    return null;
+  }, [sourceType, sourceId, t]);
 
   const statusConfig = STATUS_CONFIG[status] || STATUS_CONFIG['DRAFT'];
   const StatusIcon = statusConfig.icon;
@@ -205,6 +220,15 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                     <Calendar className="w-3.5 h-3.5" />
                     {formatDate(updatedAt)}
                   </span>
+                )}
+                {sourceLink && (
+                  <a
+                    href={sourceLink.url}
+                    className="inline-flex items-center gap-1 text-purple-600 dark:text-purple-400 hover:underline"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    {sourceLink.label}
+                  </a>
                 )}
               </div>
             </div>

@@ -106,13 +106,37 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     category: 'performance',
     allowLocalOverride: true,
   },
+  {
+    id: 'landingProfitHeroV1',
+    name: 'Landing: Profit Hero (V1)',
+    description: 'Landing override: profit-first hero + video demo modal',
+    defaultValue: false,
+    category: 'experimental',
+    allowLocalOverride: true,
+  },
+  {
+    id: 'landingEpicHeroV1',
+    name: 'Landing: Epic Hero (V1)',
+    description: 'Landing override: cinematic hero (100vh) with floating preview + neon ambience',
+    defaultValue: false,
+    category: 'experimental',
+    allowLocalOverride: true,
+  },
+  {
+    id: 'landingHeroExperimentV2',
+    name: 'Landing: Hero Experiment (V2)',
+    description: '3-way bucketing on LP (control vs profit vs epic) with stable cohorts',
+    defaultValue: true,
+    category: 'experimental',
+    allowLocalOverride: true,
+  },
 ];
 
 // ============================================
 // STORAGE HELPERS
 // ============================================
 
-const STORAGE_KEY = 'consultinity_feature_flags';
+const STORAGE_KEY = 'consultify_feature_flags';
 
 function getStoredOverrides(): Record<string, boolean> {
   if (typeof window === 'undefined') return {};

@@ -39,6 +39,7 @@ import { PromptAssistantPanel } from '../../components/Admin/PromptAssistantPane
 import { PromptBlockBuilder } from '../../components/Admin/PromptBlockBuilder';
 import { PromptTestBench } from '../../components/Admin/PromptTestBench';
 import { InfoButton } from '../../components/shared/InfoButton';
+import { Api } from '../../services/api';
 
 type AIIntelligenceTab = 'overview' | 'prompts' | 'blocks' | 'testing' | 'assistant' | 'learning';
 
@@ -64,14 +65,8 @@ export const AIIntelligenceView: React.FC = () => {
   const loadStats = async () => {
     setLoading(true);
     try {
-      // Load system stats
-      const response = await fetch('/api/prompt-assistant/stats', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      }
+      const data = await Api.getPromptAssistantStats();
+      if (data) setStats(data);
     } catch (err) {
       console.error('Failed to load AI stats:', err);
     }
@@ -92,19 +87,19 @@ export const AIIntelligenceView: React.FC = () => {
   ];
 
   return (
-    <div className="h-full flex flex-col bg-navy-950 overflow-hidden relative">
+    <div className="h-full flex flex-col bg-white dark:bg-navy-950 text-slate-900 dark:text-white overflow-hidden relative">
       <InfoButton cardId="superadmin-ai-intelligence" position="top-right" />
 
       {/* Header */}
-      <div className="shrink-0 px-8 py-6 border-b border-white/10">
+      <div className="shrink-0 px-8 py-6 border-b border-slate-200 dark:border-white/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
               <Brain className="text-white" size={24} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">AI Intelligence</h1>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">AI Intelligence</h1>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Harvard-level Co-Thinker System Configuration
               </p>
             </div>
@@ -119,7 +114,7 @@ export const AIIntelligenceView: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="shrink-0 px-8 py-3 border-b border-white/5 flex gap-2 overflow-x-auto">
+      <div className="shrink-0 px-8 py-3 border-b border-slate-100 dark:border-white/5 flex gap-2 overflow-x-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -127,7 +122,7 @@ export const AIIntelligenceView: React.FC = () => {
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
               activeTab === tab.id
                 ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
             }`}
           >
             <tab.icon size={16} />
@@ -177,7 +172,9 @@ export const AIIntelligenceView: React.FC = () => {
 
             {/* Core Capabilities */}
             <div className="mb-8">
-              <h2 className="text-xl font-bold text-white mb-4">Core Capabilities</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+                Core Capabilities
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <CapabilityCard
                   icon={Brain}
@@ -219,8 +216,10 @@ export const AIIntelligenceView: React.FC = () => {
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+                Quick Actions
+              </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <QuickAction
                   icon={FileText}
@@ -296,14 +295,14 @@ const StatCard: React.FC<{ icon: any; label: string; value: string; color: strin
   value,
   color,
 }) => (
-  <div className="bg-navy-900 border border-white/10 rounded-xl p-4">
+  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4">
     <div className="flex items-center gap-3 mb-2">
       <Icon size={18} className={color} />
       <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
         {label}
       </span>
     </div>
-    <div className="text-2xl font-bold text-white">{value}</div>
+    <div className="text-2xl font-bold text-slate-900 dark:text-white">{value}</div>
   </div>
 );
 
@@ -313,14 +312,14 @@ const CapabilityCard: React.FC<{
   description: string;
   status: 'active' | 'beta' | 'coming';
 }> = ({ icon: Icon, title, description, status }) => (
-  <div className="bg-navy-900 border border-white/10 rounded-xl p-4 hover:border-purple-500/30 transition-colors">
+  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 hover:border-purple-500/30 transition-colors">
     <div className="flex items-start gap-4">
       <div className="p-2 rounded-lg bg-purple-500/20 shrink-0">
         <Icon size={20} className="text-purple-400" />
       </div>
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-1">
-          <h4 className="text-white font-medium">{title}</h4>
+          <h4 className="text-slate-900 dark:text-white font-medium">{title}</h4>
           <span
             className={`px-1.5 py-0.5 rounded text-[10px] ${
               status === 'active'
@@ -333,7 +332,7 @@ const CapabilityCard: React.FC<{
             {status === 'active' ? 'Active' : status === 'beta' ? 'Beta' : 'Coming'}
           </span>
         </div>
-        <p className="text-sm text-slate-400 dark:text-slate-500">{description}</p>
+        <p className="text-sm text-slate-600 dark:text-slate-400">{description}</p>
       </div>
     </div>
   </div>
@@ -346,10 +345,12 @@ const QuickAction: React.FC<{ icon: any; label: string; onClick: () => void }> =
 }) => (
   <button
     onClick={onClick}
-    className="flex items-center gap-3 p-4 bg-navy-950/50 border border-white/5 rounded-lg hover:bg-navy-950 hover:border-purple-500/30 transition-all group"
+    className="flex items-center gap-3 p-4 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-950 hover:border-purple-500/30 transition-all group"
   >
     <Icon size={18} className="text-purple-400 group-hover:text-purple-300" />
-    <span className="text-sm text-slate-300 group-hover:text-white">{label}</span>
+    <span className="text-sm text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white">
+      {label}
+    </span>
     <ChevronRight
       size={14}
       className="ml-auto text-slate-600 dark:text-slate-400 group-hover:text-slate-400"
@@ -369,13 +370,8 @@ const PromptTemplateManager: React.FC = () => {
   const loadTemplates = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/prompt-assistant/templates', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setTemplates(data.templates || []);
-      }
+      const data = await Api.getPromptAssistantTemplates();
+      setTemplates((data as any)?.templates || []);
     } catch (err) {
       console.error('Failed to load templates:', err);
     }
@@ -399,8 +395,8 @@ const PromptTemplateManager: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-bold text-white">Prompt Templates</h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Prompt Templates</h2>
+          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
             Language-independent templates for AI capabilities
           </p>
         </div>
@@ -439,22 +435,22 @@ const PromptTemplateManager: React.FC = () => {
           displayTemplates.map((template, idx) => (
             <div
               key={template.code || idx}
-              className="bg-navy-900 border border-white/10 rounded-xl p-4 hover:border-purple-500/30 transition-colors"
+              className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 hover:border-purple-500/30 transition-colors"
             >
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h4 className="text-white font-medium">{template.name}</h4>
+                  <h4 className="text-slate-900 dark:text-white font-medium">{template.name}</h4>
                   <code className="text-xs text-purple-400">{template.code}</code>
                 </div>
-                <span className="px-2 py-1 bg-navy-950 text-slate-400 dark:text-slate-500 rounded text-xs capitalize">
+                <span className="px-2 py-1 bg-slate-100 dark:bg-navy-950 text-slate-700 dark:text-slate-300 rounded text-xs capitalize">
                   {template.category}
                 </span>
               </div>
-              <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
                 {template.description}
               </p>
               <div className="flex gap-2">
-                <button className="flex-1 px-3 py-1.5 bg-navy-950 hover:bg-navy-800 text-slate-300 rounded text-xs">
+                <button className="flex-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-navy-950 dark:hover:bg-navy-800 text-slate-800 dark:text-slate-300 rounded text-xs">
                   Edit
                 </button>
                 <button className="flex-1 px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 rounded text-xs">
@@ -507,47 +503,17 @@ const LearningSystemDashboard: React.FC = () => {
   const loadLearningData = async () => {
     setLoading(true);
     try {
-      // Load patterns
-      const patternsRes = await fetch('/api/ai/learning/patterns', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      if (patternsRes.ok) {
-        const data = await patternsRes.json();
-        setPatterns(data.patterns || []);
-      }
+      const [patternsData, interactionsData, metricsData] = await Promise.all([
+        Api.getAiLearningPatterns(),
+        Api.getAiLearningInteractions({ limit: 10, range: timeRange }),
+        Api.getAiLearningMetrics(timeRange),
+      ]);
 
-      // Load recent interactions
-      const interactionsRes = await fetch(
-        `/api/ai/learning/interactions?limit=10&range=${timeRange}`,
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        }
-      );
-      if (interactionsRes.ok) {
-        const data = await interactionsRes.json();
-        setInteractions(data.interactions || []);
-      }
-
-      // Load metrics
-      const metricsRes = await fetch(`/api/ai/learning/metrics?range=${timeRange}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      if (metricsRes.ok) {
-        const data = await metricsRes.json();
-        setMetrics(data.metrics || metrics);
-        setQualityTrends(data.qualityTrends || []);
-      } else {
-        // Set empty state instead of mock data
-        setQualityTrends([]);
-        setMetrics({
-          totalInteractions: 0,
-          successRate: 0,
-          avgQualityScore: 0,
-          avgResponseTime: 0,
-          patternsLearned: patterns.length || 0,
-          activeModels: 0,
-        });
-      }
+      const nextPatterns = (patternsData as any)?.patterns || [];
+      setPatterns(nextPatterns);
+      setInteractions((interactionsData as any)?.interactions || []);
+      setMetrics((metricsData as any)?.metrics || metrics);
+      setQualityTrends((metricsData as any)?.qualityTrends || []);
     } catch (err) {
       console.error('Failed to load learning data:', err);
       // Set empty state on error instead of mock data
@@ -586,14 +552,14 @@ const LearningSystemDashboard: React.FC = () => {
       {/* Header with Controls */}
       <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white">Learning Analytics</h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Learning Analytics</h2>
+          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
             AI learning patterns, quality metrics, and performance trends
           </p>
         </div>
         <div className="flex items-center gap-3">
           {/* Time Range Selector */}
-          <div className="flex bg-navy-800 rounded-lg p-1">
+          <div className="flex bg-slate-100 dark:bg-navy-800 rounded-lg p-1">
             {(['7d', '30d', '90d'] as const).map((range) => (
               <button
                 key={range}
@@ -601,7 +567,7 @@ const LearningSystemDashboard: React.FC = () => {
                 className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                   timeRange === range
                     ? 'bg-purple-600 text-white'
-                    : 'text-slate-400 dark:text-slate-500 hover:text-white'
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-navy-700/50'
                 }`}
               >
                 {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : '90 Days'}
@@ -610,14 +576,14 @@ const LearningSystemDashboard: React.FC = () => {
           </div>
           <button
             onClick={handleExport}
-            className="flex items-center gap-2 px-3 py-2 bg-navy-800 hover:bg-navy-700 text-slate-300 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-navy-800 dark:hover:bg-navy-700 text-slate-800 dark:text-slate-300 rounded-lg text-sm font-medium transition-colors"
           >
             <Download size={14} />
             Export
           </button>
           <button
             onClick={loadLearningData}
-            className="flex items-center gap-2 px-3 py-2 bg-navy-800 hover:bg-navy-700 text-slate-300 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-navy-800 dark:hover:bg-navy-700 text-slate-800 dark:text-slate-300 rounded-lg text-sm font-medium transition-colors"
           >
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
             Refresh
@@ -666,8 +632,8 @@ const LearningSystemDashboard: React.FC = () => {
       </div>
 
       {/* Quality Score Trend Chart */}
-      <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <TrendingUp size={18} className="text-purple-400" />
           Quality Score Trend
         </h3>
@@ -696,8 +662,8 @@ const LearningSystemDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Learned Patterns */}
-        <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <Lightbulb size={18} className="text-amber-400" />
             Learned Patterns
             <span className="ml-auto text-xs text-slate-500 dark:text-slate-400 font-normal">
@@ -718,9 +684,14 @@ const LearningSystemDashboard: React.FC = () => {
           ) : (
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {patterns.map((pattern, idx) => (
-                <div key={idx} className="flex items-center gap-4 p-3 bg-navy-950/50 rounded-lg">
+                <div
+                  key={idx}
+                  className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-navy-950/50 rounded-lg"
+                >
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm text-white truncate">{pattern.type}</div>
+                    <div className="text-sm text-slate-900 dark:text-white truncate">
+                      {pattern.type}
+                    </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
                       {pattern.description}
                     </div>
@@ -738,8 +709,8 @@ const LearningSystemDashboard: React.FC = () => {
         </div>
 
         {/* Recent Interactions */}
-        <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <MessageSquare size={18} className="text-cyan-400" />
             Recent Interactions
             <span className="ml-auto text-xs text-slate-500 dark:text-slate-400 font-normal">
@@ -757,9 +728,12 @@ const LearningSystemDashboard: React.FC = () => {
           ) : (
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {interactions.map((interaction, idx) => (
-                <div key={idx} className="flex items-center gap-4 p-3 bg-navy-950/50 rounded-lg">
+                <div
+                  key={idx}
+                  className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-navy-950/50 rounded-lg"
+                >
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm text-white truncate">
+                    <div className="text-sm text-slate-900 dark:text-white truncate">
                       {interaction.input?.substring(0, 50)}...
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -795,14 +769,14 @@ const MetricCard: React.FC<{ icon: any; label: string; value: string; color: str
   value,
   color,
 }) => (
-  <div className="bg-navy-900 border border-white/10 rounded-xl p-4">
+  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4">
     <div className="flex items-center gap-2 mb-2">
       <Icon size={16} className={color} />
       <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
         {label}
       </span>
     </div>
-    <div className="text-xl font-bold text-white">{value}</div>
+    <div className="text-xl font-bold text-slate-900 dark:text-white">{value}</div>
   </div>
 );
 

@@ -21,6 +21,7 @@ export type WhySlipReason =
 
 export interface DelaySignal {
   id: string;
+  projectId?: string;
   entityType: 'INITIATIVE' | 'TASK';
   entityId: string;
   entityName: string;
@@ -84,6 +85,7 @@ interface TaskRow {
   sla_due_at: string | null;
   initiative_id: string | null;
   assignee_id: string | null;
+  project_id: string | null;
 }
 
 interface DependencyRow {
@@ -171,6 +173,13 @@ export async function detectDelaySignals(
   const now = new Date();
 
   try {
+    // Respect dismissals (even in live detection mode) so dismissed signals do not re-appear.
+    const dismissedRows = ((await dbAll(
+      `SELECT id FROM delay_signals WHERE organization_id = ? AND is_dismissed = TRUE`,
+      [organizationId]
+    )) || []) as Array<{ id: string }>;
+    const dismissedIds = new Set(dismissedRows.map((r) => String(r.id)));
+
     let initQuery = `
       SELECT id, name, status, priority, planned_start_date, planned_end_date,
              start_date, actual_end_date, execution_started_at, sla_deadline,
@@ -202,6 +211,7 @@ export async function detectDelaySignals(
             const whySlip = await analyzeWhySlip(init, organizationId);
             signals.push({
               id: `late-start-${init.id}`,
+              projectId: init.project_id || undefined,
               entityType: 'INITIATIVE',
               entityId: init.id,
               entityName: init.name,
@@ -228,6 +238,7 @@ export async function detectDelaySignals(
         const whySlip = await analyzeWhySlip(init, organizationId);
         signals.push({
           id: `overdue-${init.id}`,
+          projectId: init.project_id || undefined,
           entityType: 'INITIATIVE',
           entityId: init.id,
           entityName: init.name,
@@ -268,6 +279,7 @@ export async function detectDelaySignals(
             const whySlip = await analyzeWhySlip(init, organizationId);
             signals.push({
               id: `late-finish-${init.id}`,
+              projectId: init.project_id || undefined,
               entityType: 'INITIATIVE',
               entityId: init.id,
               entityName: init.name,
@@ -293,6 +305,7 @@ export async function detectDelaySignals(
         if (daysUntilSla > 0 && daysUntilSla <= thresholds.warningDays) {
           signals.push({
             id: `deadline-risk-${init.id}`,
+            projectId: init.project_id || undefined,
             entityType: 'INITIATIVE',
             entityId: init.id,
             entityName: init.name,
@@ -313,7 +326,7 @@ export async function detectDelaySignals(
     // Task-level deviations
     let taskQuery = `
       SELECT t.id, t.title, t.status, t.priority, t.due_date, t.sla_due_at,
-             t.initiative_id, t.assignee_id
+             t.initiative_id, t.assignee_id, i.project_id as project_id
       FROM tasks t
       JOIN initiatives i ON i.id = t.initiative_id
       WHERE i.organization_id = ?
@@ -340,6 +353,7 @@ export async function detectDelaySignals(
 
       signals.push({
         id: `task-overdue-${task.id}`,
+        projectId: task.project_id || undefined,
         entityType: 'TASK',
         entityId: task.id,
         entityName: task.title,
@@ -357,12 +371,14 @@ export async function detectDelaySignals(
       });
     }
 
-    signals.sort((a, b) => {
+    const visibleSignals = signals.filter((s) => !dismissedIds.has(String(s.id)));
+
+    visibleSignals.sort((a, b) => {
       const sev = { CRITICAL: 2, WARNING: 1 };
       return (sev[b.severity] || 0) - (sev[a.severity] || 0) || b.daysDeviation - a.daysDeviation;
     });
 
-    return signals.slice(0, 100);
+    return visibleSignals.slice(0, 100);
   } catch (err) {
     logger.error('Delay detection failed', err);
     return [];
@@ -383,19 +399,21 @@ export async function persistDelaySignals(
     try {
       await dbRun(
         `INSERT INTO delay_signals
-           (id, organization_id, entity_type, entity_id, entity_name, deviation_type,
+           (id, organization_id, project_id, entity_type, entity_id, entity_name, deviation_type,
             severity, days_deviation, planned_date, actual_or_current, why_slip_reasons, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::JSONB, NOW(), NOW())
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::JSONB, NOW(), NOW())
          ON CONFLICT ON CONSTRAINT idx_delay_signals_unique_entity
          DO UPDATE SET
            severity = EXCLUDED.severity,
            days_deviation = EXCLUDED.days_deviation,
            actual_or_current = EXCLUDED.actual_or_current,
            why_slip_reasons = EXCLUDED.why_slip_reasons,
+           project_id = COALESCE(EXCLUDED.project_id, delay_signals.project_id),
            updated_at = NOW()`,
         [
           sig.id,
           organizationId,
+          sig.projectId || null,
           sig.entityType,
           sig.entityId,
           sig.entityName,
@@ -446,7 +464,7 @@ export async function getPersistedDelaySignals(
   }
 ): Promise<DelaySignal[]> {
   let query = `
-    SELECT id, entity_type, entity_id, entity_name, deviation_type, severity,
+    SELECT id, project_id, entity_type, entity_id, entity_name, deviation_type, severity,
            days_deviation, planned_date, actual_or_current, why_slip_reasons,
            alert_sent_at, is_dismissed, created_at
     FROM delay_signals
@@ -456,6 +474,10 @@ export async function getPersistedDelaySignals(
 
   if (!options?.includeDismissed) {
     query += ' AND is_dismissed = FALSE';
+  }
+  if (options?.projectId) {
+    query += ' AND project_id = ?';
+    params.push(options.projectId);
   }
   if (options?.severity) {
     query += ' AND severity = ?';
@@ -473,6 +495,7 @@ export async function getPersistedDelaySignals(
 
   const rows = ((await dbAll(query, params)) || []) as Array<{
     id: string;
+    project_id: string | null;
     entity_type: string;
     entity_id: string;
     entity_name: string;
@@ -489,6 +512,7 @@ export async function getPersistedDelaySignals(
 
   return rows.map((r) => ({
     id: r.id,
+    projectId: r.project_id || undefined,
     entityType: r.entity_type as 'INITIATIVE' | 'TASK',
     entityId: r.entity_id,
     entityName: r.entity_name,

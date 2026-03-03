@@ -2,7 +2,7 @@
  * TrustProgressionIndicator Component
  *
  * Displays partner trust progression through ecosystem phases
- * Aligned with Consultinity's Trust Progression Model
+ * Aligned with Consultify's Trust Progression Model
  */
 
 import { Check, ChevronRight, Circle, Loader2 } from 'lucide-react';

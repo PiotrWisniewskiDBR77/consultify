@@ -93,10 +93,10 @@ export const DocsHomeView: React.FC = () => {
             transition={{ duration: 0.5 }}
           >
             <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-4">
-              Consultinity Documentation
+              Consultify Documentation
             </h1>
             <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-8">
-              Comprehensive guides, tutorials, and best practices for the Consultinity
+              Comprehensive guides, tutorials, and best practices for the Consultify
               Transformation AI Platform. Learn how to accelerate your digital transformation
               journey.
             </p>
@@ -127,7 +127,7 @@ export const DocsHomeView: React.FC = () => {
             {/* Quick Links */}
             <div className="flex flex-wrap justify-center gap-4 mt-8">
               <Link
-                to="/docs/quick-guides/getting-started-consultinity"
+                to="/docs/quick-guides/getting-started-consultify"
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium text-sm hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
               >
                 <Rocket size={16} />
@@ -373,7 +373,7 @@ export const DocsHomeView: React.FC = () => {
               Ready to Transform Your Organization?
             </h2>
             <p className="text-lg opacity-90 max-w-xl mx-auto mb-6">
-              Start your free trial today and access the complete Consultinity Transformation AI
+              Start your free trial today and access the complete Consultify Transformation AI
               Platform.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

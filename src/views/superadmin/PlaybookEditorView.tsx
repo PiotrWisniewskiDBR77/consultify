@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { v4 as uuidv4 } from 'uuid';
 
+import { Api } from '../../services/api';
 import {
   PlaybookCanvas,
   PlaybookPropertiesPanel,
@@ -29,7 +30,6 @@ interface PlaybookEditorViewProps {
  * Full-page editor for creating and editing playbook templates.
  */
 export const PlaybookEditorView: React.FC<PlaybookEditorViewProps> = ({ templateId, onBack }) => {
-  const token = localStorage.getItem('token');
   const [template, setTemplate] = useState<PlaybookTemplateVersion | null>(null);
   const [nodes, setNodes] = useState<PlaybookNode[]>([]);
   const [edges, setEdges] = useState<PlaybookEdge[]>([]);
@@ -53,13 +53,7 @@ export const PlaybookEditorView: React.FC<PlaybookEditorViewProps> = ({ template
   const loadTemplate = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/ai/playbooks/templates/${templateId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error('Failed to load template');
-
-      const data = await res.json();
+      const data = await Api.getPlaybookTemplate(String(templateId));
       setTemplate(data);
 
       if (data.templateGraph) {
@@ -185,22 +179,13 @@ export const PlaybookEditorView: React.FC<PlaybookEditorViewProps> = ({ template
         meta: { trigger_signal: template.triggerSignal || '' },
       };
 
-      const res = await fetch(`/api/ai/playbooks/templates/${template.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: template.title,
-          description: template.description,
-          triggerSignal: template.triggerSignal,
-          templateGraph: graph,
-          estimatedDurationMins: template.estimatedDurationMins,
-        }),
+      await Api.updatePlaybookTemplate(template.id, {
+        title: template.title,
+        description: template.description,
+        triggerSignal: template.triggerSignal,
+        templateGraph: graph,
+        estimatedDurationMins: template.estimatedDurationMins,
       });
-
-      if (!res.ok) throw new Error('Save failed');
 
       toast.success('Template saved');
       setIsDirty(false);
@@ -217,12 +202,7 @@ export const PlaybookEditorView: React.FC<PlaybookEditorViewProps> = ({ template
     try {
       setValidating(true);
 
-      const res = await fetch(`/api/ai/playbooks/templates/${template.id}/validate`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const result = await res.json();
+      const result = await Api.validatePlaybookTemplate(template.id);
       setValidationErrors(result.errors || []);
 
       if (result.ok) {

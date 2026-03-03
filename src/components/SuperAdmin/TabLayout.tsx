@@ -66,15 +66,15 @@ export const TabLayout: React.FC<TabLayoutProps> = ({
                                 border-b-2 transition-all duration-200
                                 ${
                                   activeTab === tab.id
-                                    ? 'text-slate-900 dark:text-white border-red-500 bg-slate-100 dark:bg-white/5'
+                                    ? 'text-slate-900 dark:text-slate-100 border-primary-500 bg-slate-100 dark:bg-white/5'
                                     : tab.disabled
                                       ? 'text-slate-400 dark:text-slate-600 border-transparent cursor-not-allowed'
-                                      : 'text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-700 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
+                                      : 'text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-white/5'
                                 }
                             `}
             >
               {tab.icon && (
-                <span className={activeTab === tab.id ? 'text-red-500 dark:text-red-400' : ''}>
+                <span className={activeTab === tab.id ? 'text-primary-600 dark:text-primary-400' : ''}>
                   {tab.icon}
                 </span>
               )}
@@ -83,7 +83,7 @@ export const TabLayout: React.FC<TabLayoutProps> = ({
                 <span
                   className={`
                                     px-1.5 py-0.5 text-[10px] font-bold rounded-full
-                                    ${activeTab === tab.id ? 'bg-red-500 text-white' : 'bg-slate-600 text-slate-300'}
+                                    ${activeTab === tab.id ? 'bg-primary-600 text-white' : 'bg-slate-200 text-slate-700 dark:bg-white/10 dark:text-slate-300'}
                                 `}
                 >
                   {tab.badge > 99 ? '99+' : tab.badge}
@@ -95,7 +95,7 @@ export const TabLayout: React.FC<TabLayoutProps> = ({
       </div>
 
       {/* Content area */}
-      <div className="flex-1 overflow-y-auto">{children}</div>
+      <div className="flex-1 min-w-0 overflow-y-auto overflow-x-auto">{children}</div>
     </div>
   );
 };

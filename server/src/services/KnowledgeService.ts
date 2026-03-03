@@ -1,281 +1,708 @@
 /**
- * Knowledge Service — provides strategic knowledge context for AI.
+ * Knowledge Service
  *
- * Replaces the stub in aiContextBuilder.ts with real database queries
- * for knowledge documents, strategic directions, and approved ideas.
+ * Canonical backend implementation for `server/src/routes/knowledge.routes.ts`.
+ * Focus: candidates (idea inbox), global strategies, and RAG documents.
  */
 
-import { dbAll, dbGet } from '../database/db.js';
+import { randomUUID } from 'node:crypto';
+
+import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-import { queryRun } from '../utils/queryHelpers.js';
+import { EmbeddingService } from './ai/embeddingService.js';
 
-// Use dbAll/dbGet helpers; fall back to raw if needed
-const all = async (sql: string, params: any[] = []): Promise<any[]> => {
+type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
+
+const embeddingService = new EmbeddingService();
+
+const parseJson = <T>(value: unknown, fallback: T): T => {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === 'object') return value as T;
   try {
-    return (await dbAll(sql, params)) || [];
+    return JSON.parse(String(value)) as T;
   } catch {
-    return [];
+    return fallback;
   }
 };
 
-const get = async (sql: string, params: any[] = []): Promise<any> => {
-  try {
-    return await dbGet(sql, params);
-  } catch {
-    return null;
+const toJsonArrayString = (value: unknown): string => {
+  if (value === null || value === undefined) return '[]';
+  if (Array.isArray(value)) return JSON.stringify(value);
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return '[]';
+    if (trimmed.startsWith('[')) return trimmed;
+    return JSON.stringify(
+      trimmed
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean)
+    );
   }
+  return JSON.stringify(value);
 };
 
-const run = async (
-  sql: string,
-  params: any[] = []
-): Promise<{ changes: number; lastID?: number }> => {
-  try {
-    return (await queryRun(sql, params)) as { changes: number; lastID?: number };
-  } catch {
-    return { changes: 0 };
-  }
+const safeFilename = (name: string): string => {
+  return String(name || 'document')
+    .replace(/[/\\]+/g, '_')
+    .replace(/\s+/g, ' ')
+    .trim();
 };
 
-export const knowledgeService = {
-  /**
-   * Get active strategic directions for an organization.
-   * Queries organization_context for strategic goals/challenges.
-   */
-  async getActiveStrategies(organizationId?: string): Promise<any[]> {
-    if (!organizationId) return [];
+const chunkText = (text: string, opts?: { chunkSize?: number; overlap?: number }): string[] => {
+  const chunkSize = Math.max(200, Math.min(2000, opts?.chunkSize ?? 1000));
+  const overlap = Math.max(0, Math.min(chunkSize - 50, opts?.overlap ?? 200));
+  const normalized = String(text || '').replace(/\r\n/g, '\n');
+  if (!normalized.trim()) return [];
+
+  const chunks: string[] = [];
+  let i = 0;
+  while (i < normalized.length) {
+    const end = Math.min(normalized.length, i + chunkSize);
+    const slice = normalized.slice(i, end).trim();
+    if (slice.length >= 40) chunks.push(slice);
+    i = end - overlap;
+    if (i <= 0) i = end;
+  }
+  return chunks;
+};
+
+async function ensureKnowledgeSchema(): Promise<void> {
+  try {
+    // Candidates (ideas inbox)
+    await DbPromise.run(
+      `CREATE TABLE IF NOT EXISTS knowledge_candidates (
+        id TEXT PRIMARY KEY,
+        content TEXT NOT NULL,
+        reasoning TEXT,
+        source TEXT DEFAULT 'user_feedback',
+        status TEXT DEFAULT 'pending',
+        origin_context TEXT,
+        related_axis TEXT,
+        category TEXT,
+        tags TEXT,
+        implementation_notes TEXT,
+        impact_score REAL,
+        related_project_ids TEXT,
+        admin_comment TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP
+      )`,
+      [],
+      { fallback: true } as any
+    );
+
+    // Global strategies
+    await DbPromise.run(
+      `CREATE TABLE IF NOT EXISTS global_strategies (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        created_by TEXT,
+        success_metrics TEXT,
+        priority TEXT DEFAULT 'medium',
+        target_date TEXT,
+        progress_percentage INTEGER DEFAULT 0,
+        is_active INTEGER DEFAULT 1,
+        related_document_ids TEXT,
+        related_idea_ids TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP
+      )`,
+      [],
+      { fallback: true } as any
+    );
+
+    // knowledge_docs (RAG documents metadata)
+    await DbPromise.run(
+      `CREATE TABLE IF NOT EXISTS knowledge_docs (
+        id TEXT PRIMARY KEY,
+        filename TEXT NOT NULL,
+        filepath TEXT,
+        organization_id TEXT,
+        project_id TEXT,
+        file_size_bytes INTEGER,
+        status TEXT DEFAULT 'pending',
+        category TEXT,
+        tags TEXT,
+        version INTEGER DEFAULT 1,
+        parent_doc_id TEXT,
+        chunk_count INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`,
+      [],
+      { fallback: true } as any
+    );
+
+    // knowledge_chunks (local chunks store)
+    await DbPromise.run(
+      `CREATE TABLE IF NOT EXISTS knowledge_chunks (
+        id TEXT PRIMARY KEY,
+        doc_id TEXT NOT NULL,
+        chunk_index INTEGER,
+        content TEXT NOT NULL,
+        embedding TEXT,
+        metadata TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (doc_id) REFERENCES knowledge_docs(id)
+      )`,
+      [],
+      { fallback: true } as any
+    );
+  } catch (e: any) {
+    logger.warn('[KnowledgeService] ensureKnowledgeSchema failed:', e?.message || e);
+  }
+}
+
+type CandidateRow = Record<string, unknown>;
+type StrategyRow = Record<string, unknown>;
+type DocumentRow = Record<string, unknown>;
+
+const normalizeCandidate = (row: CandidateRow) => ({
+  ...row,
+  tags: parseJson<string[]>(row.tags, []),
+  related_project_ids: parseJson<string[]>(row.related_project_ids, []),
+});
+
+const normalizeStrategy = (row: StrategyRow) => ({
+  ...row,
+  success_metrics: parseJson<string[]>(row.success_metrics, []),
+  related_document_ids: parseJson<string[]>(row.related_document_ids, []),
+  related_idea_ids: parseJson<string[]>(row.related_idea_ids, []),
+  is_active: Boolean((row as any).is_active === true || Number((row as any).is_active) === 1),
+});
+
+const normalizeDocument = (row: DocumentRow) => ({
+  ...row,
+  tags: parseJson<string[]>(row.tags, []),
+});
+
+const KnowledgeService = {
+  // -------------------------
+  // Candidates (Idea inbox)
+  // -------------------------
+  async getCandidates(status: string = 'pending'): Promise<any[]> {
+    await ensureKnowledgeSchema();
+    const st = String(status || 'pending')
+      .trim()
+      .toLowerCase();
+    const params: unknown[] = [];
+    let sql = `SELECT * FROM knowledge_candidates`;
+    if (st && st !== 'all') {
+      sql += ` WHERE status = ?`;
+      params.push(st);
+    }
+    sql += ` ORDER BY created_at DESC LIMIT 500`;
+    const rows = await DbPromise.all<CandidateRow>(sql, params, { fallback: true } as any);
+    return (rows || []).map(normalizeCandidate);
+  },
+
+  async addCandidate(
+    content: string,
+    reasoning: string,
+    source: string,
+    relatedAxis?: string,
+    originContext?: string
+  ): Promise<string> {
+    await ensureKnowledgeSchema();
+    const id = randomUUID();
+    await DbPromise.run(
+      `INSERT INTO knowledge_candidates
+        (id, content, reasoning, source, status, origin_context, related_axis, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'pending', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      [
+        id,
+        String(content || '').trim(),
+        reasoning || null,
+        source || 'user_feedback',
+        originContext || null,
+        relatedAxis || null,
+      ],
+      { fallback: true } as any
+    );
+    return id;
+  },
+
+  async updateCandidateStatus(id: string, status: string, adminComment?: string): Promise<void> {
+    await ensureKnowledgeSchema();
+    await DbPromise.run(
+      `UPDATE knowledge_candidates SET status = ?, admin_comment = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [
+        String(status || '')
+          .trim()
+          .toLowerCase(),
+        adminComment || null,
+        id,
+      ],
+      { fallback: true } as any
+    );
+  },
+
+  async updateCandidate(
+    id: string,
+    updates: Record<string, unknown>
+  ): Promise<{ changes: number }> {
+    await ensureKnowledgeSchema();
+    const allowed: Array<[string, string, unknown]> = [];
+
+    if ('category' in updates)
+      allowed.push(['category', 'category = ?', (updates as any).category ?? null]);
+    if ('tags' in updates)
+      allowed.push(['tags', 'tags = ?', toJsonArrayString((updates as any).tags)]);
+    if ('implementation_notes' in updates)
+      allowed.push([
+        'implementation_notes',
+        'implementation_notes = ?',
+        (updates as any).implementation_notes ?? null,
+      ]);
+    if ('impact_score' in updates)
+      allowed.push(['impact_score', 'impact_score = ?', (updates as any).impact_score ?? null]);
+    if ('status' in updates)
+      allowed.push([
+        'status',
+        'status = ?',
+        String((updates as any).status || '')
+          .trim()
+          .toLowerCase(),
+      ]);
+
+    if (allowed.length === 0) return { changes: 0 };
+
+    const setClauses = allowed.map(([, clause]) => clause);
+    const params = allowed.map(([, , v]) => v);
+    params.push(id);
+
+    const result = await DbPromise.run(
+      `UPDATE knowledge_candidates SET ${setClauses.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      params,
+      { fallback: true } as any
+    );
+
+    return { changes: (result as any)?.changes ?? 0 };
+  },
+
+  async linkIdeaToProject(
+    ideaId: string,
+    projectId: string,
+    notes: string
+  ): Promise<{ changes: number }> {
+    await ensureKnowledgeSchema();
+    const row = await DbPromise.get<CandidateRow>(
+      `SELECT related_project_ids, implementation_notes FROM knowledge_candidates WHERE id = ?`,
+      [ideaId],
+      { fallback: true } as any
+    );
+    const current = parseJson<string[]>(row?.related_project_ids, []);
+    const next = Array.from(
+      new Set([...(Array.isArray(current) ? current : []), String(projectId)])
+    );
+    const impl = String(notes || '').trim();
+    const result = await DbPromise.run(
+      `UPDATE knowledge_candidates
+       SET related_project_ids = ?, implementation_notes = COALESCE(NULLIF(?, ''), implementation_notes), updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [JSON.stringify(next), impl, ideaId],
+      { fallback: true } as any
+    );
+    return { changes: (result as any)?.changes ?? 0 };
+  },
+
+  async getApprovedIdeas(filters: { category?: string } = {}): Promise<any[]> {
+    await ensureKnowledgeSchema();
+    const params: unknown[] = ['approved'];
+    let sql = `SELECT * FROM knowledge_candidates WHERE status = ?`;
+    if (filters?.category) {
+      sql += ` AND category = ?`;
+      params.push(String(filters.category));
+    }
+    sql += ` ORDER BY created_at DESC LIMIT 500`;
+    const rows = await DbPromise.all<CandidateRow>(sql, params, { fallback: true } as any);
+    return (rows || []).map(normalizeCandidate);
+  },
+
+  async getIdeasByCategory(category: string): Promise<any[]> {
+    await ensureKnowledgeSchema();
+    const rows = await DbPromise.all<CandidateRow>(
+      `SELECT * FROM knowledge_candidates WHERE category = ? ORDER BY created_at DESC LIMIT 500`,
+      [String(category)],
+      { fallback: true } as any
+    );
+    return (rows || []).map(normalizeCandidate);
+  },
+
+  async getIdeasByProject(projectId: string): Promise<any[]> {
+    await ensureKnowledgeSchema();
+    const pid = String(projectId);
+    const rows = await DbPromise.all<CandidateRow>(
+      `SELECT * FROM knowledge_candidates
+       WHERE related_project_ids LIKE ?
+       ORDER BY created_at DESC LIMIT 500`,
+      [`%${pid}%`],
+      { fallback: true } as any
+    );
+    return (rows || []).map(normalizeCandidate);
+  },
+
+  // -------------------------
+  // Global strategies
+  // -------------------------
+  async getAllStrategies(): Promise<any[]> {
+    await ensureKnowledgeSchema();
+    const rows = await DbPromise.all<StrategyRow>(
+      `SELECT * FROM global_strategies ORDER BY created_at DESC LIMIT 500`,
+      [],
+      { fallback: true } as any
+    );
+    return (rows || []).map(normalizeStrategy);
+  },
+
+  async getActiveStrategies(): Promise<any[]> {
+    await ensureKnowledgeSchema();
+    const rows = await DbPromise.all<StrategyRow>(
+      `SELECT * FROM global_strategies WHERE is_active = 1 ORDER BY created_at DESC LIMIT 500`,
+      [],
+      { fallback: true } as any
+    );
+    return (rows || []).map(normalizeStrategy);
+  },
+
+  async addStrategy(
+    title: string,
+    description: string,
+    createdBy: string,
+    options: {
+      success_metrics?: string[];
+      priority?: string;
+      target_date?: string | null;
+      progress_percentage?: number;
+    }
+  ): Promise<string> {
+    await ensureKnowledgeSchema();
+    const id = randomUUID();
+    await DbPromise.run(
+      `INSERT INTO global_strategies
+        (id, title, description, created_by, success_metrics, priority, target_date, progress_percentage, is_active, related_document_ids, related_idea_ids, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, '[]', '[]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      [
+        id,
+        String(title || '').trim(),
+        description || '',
+        createdBy || 'admin',
+        JSON.stringify(options?.success_metrics || []),
+        options?.priority || 'medium',
+        options?.target_date || null,
+        Number.isFinite(Number(options?.progress_percentage))
+          ? Number(options?.progress_percentage)
+          : 0,
+      ],
+      { fallback: true } as any
+    );
+    return id;
+  },
+
+  async updateStrategy(id: string, updates: Record<string, unknown>): Promise<{ changes: number }> {
+    await ensureKnowledgeSchema();
+    const allowed: Array<[string, string, unknown]> = [];
+
+    if ('title' in updates) allowed.push(['title', 'title = ?', (updates as any).title ?? null]);
+    if ('description' in updates)
+      allowed.push(['description', 'description = ?', (updates as any).description ?? null]);
+    if ('success_metrics' in updates)
+      allowed.push([
+        'success_metrics',
+        'success_metrics = ?',
+        toJsonArrayString((updates as any).success_metrics),
+      ]);
+    if ('priority' in updates)
+      allowed.push(['priority', 'priority = ?', String((updates as any).priority || 'medium')]);
+    if ('target_date' in updates)
+      allowed.push(['target_date', 'target_date = ?', (updates as any).target_date ?? null]);
+    if ('progress_percentage' in updates)
+      allowed.push([
+        'progress_percentage',
+        'progress_percentage = ?',
+        Number.isFinite(Number((updates as any).progress_percentage))
+          ? Number((updates as any).progress_percentage)
+          : 0,
+      ]);
+    if ('is_active' in updates)
+      allowed.push([
+        'is_active',
+        'is_active = ?',
+        (updates as any).is_active === true || Number((updates as any).is_active) === 1 ? 1 : 0,
+      ]);
+    if ('related_document_ids' in updates)
+      allowed.push([
+        'related_document_ids',
+        'related_document_ids = ?',
+        toJsonArrayString((updates as any).related_document_ids),
+      ]);
+    if ('related_idea_ids' in updates)
+      allowed.push([
+        'related_idea_ids',
+        'related_idea_ids = ?',
+        toJsonArrayString((updates as any).related_idea_ids),
+      ]);
+
+    if (allowed.length === 0) return { changes: 0 };
+
+    const setClauses = allowed.map(([, clause]) => clause);
+    const params = allowed.map(([, , v]) => v);
+    params.push(id);
+
+    const result = await DbPromise.run(
+      `UPDATE global_strategies SET ${setClauses.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      params,
+      { fallback: true } as any
+    );
+    return { changes: (result as any)?.changes ?? 0 };
+  },
+
+  async updateStrategyProgress(
+    id: string,
+    progressPercentage: number
+  ): Promise<{ changes: number }> {
+    return KnowledgeService.updateStrategy(id, { progress_percentage: progressPercentage });
+  },
+
+  async toggleStrategy(id: string, isActive: boolean): Promise<void> {
+    await KnowledgeService.updateStrategy(id, { is_active: isActive ? 1 : 0 });
+  },
+
+  async getStrategyWithRelated(id: string): Promise<any | null> {
+    await ensureKnowledgeSchema();
+    const row = await DbPromise.get<StrategyRow>(
+      `SELECT * FROM global_strategies WHERE id = ?`,
+      [id],
+      { fallback: true } as any
+    );
+    return row ? normalizeStrategy(row) : null;
+  },
+
+  async linkStrategyToDocument(
+    strategyId: string,
+    documentId: string
+  ): Promise<{ changes: number }> {
+    await ensureKnowledgeSchema();
+    const row = await DbPromise.get<StrategyRow>(
+      `SELECT related_document_ids FROM global_strategies WHERE id = ?`,
+      [strategyId],
+      { fallback: true } as any
+    );
+    const current = parseJson<string[]>(row?.related_document_ids, []);
+    const next = Array.from(
+      new Set([...(Array.isArray(current) ? current : []), String(documentId)])
+    );
+    return KnowledgeService.updateStrategy(strategyId, { related_document_ids: next });
+  },
+
+  async linkStrategyToIdea(strategyId: string, ideaId: string): Promise<{ changes: number }> {
+    await ensureKnowledgeSchema();
+    const row = await DbPromise.get<StrategyRow>(
+      `SELECT related_idea_ids FROM global_strategies WHERE id = ?`,
+      [strategyId],
+      { fallback: true } as any
+    );
+    const current = parseJson<string[]>(row?.related_idea_ids, []);
+    const next = Array.from(new Set([...(Array.isArray(current) ? current : []), String(ideaId)]));
+    return KnowledgeService.updateStrategy(strategyId, { related_idea_ids: next });
+  },
+
+  async unlinkStrategyFromDocument(
+    strategyId: string,
+    docId: string
+  ): Promise<{ changes: number }> {
+    await ensureKnowledgeSchema();
+    const row = await DbPromise.get<StrategyRow>(
+      `SELECT related_document_ids FROM global_strategies WHERE id = ?`,
+      [strategyId],
+      { fallback: true } as any
+    );
+    const current = parseJson<string[]>(row?.related_document_ids, []);
+    const next = (Array.isArray(current) ? current : []).filter((x) => String(x) !== String(docId));
+    return KnowledgeService.updateStrategy(strategyId, { related_document_ids: next });
+  },
+
+  async unlinkStrategyFromIdea(strategyId: string, ideaId: string): Promise<{ changes: number }> {
+    await ensureKnowledgeSchema();
+    const row = await DbPromise.get<StrategyRow>(
+      `SELECT related_idea_ids FROM global_strategies WHERE id = ?`,
+      [strategyId],
+      { fallback: true } as any
+    );
+    const current = parseJson<string[]>(row?.related_idea_ids, []);
+    const next = (Array.isArray(current) ? current : []).filter(
+      (x) => String(x) !== String(ideaId)
+    );
+    return KnowledgeService.updateStrategy(strategyId, { related_idea_ids: next });
+  },
+
+  // -------------------------
+  // Documents (RAG)
+  // -------------------------
+  async addDocument(
+    originalFilename: string,
+    filepath: string,
+    organizationId: string,
+    projectId: string | null,
+    fileSizeBytes: number,
+    category: string | null,
+    tags: string[] = [],
+    id?: string
+  ): Promise<string> {
+    await ensureKnowledgeSchema();
+    const docId = id || randomUUID();
+    const filename = safeFilename(originalFilename);
+    await DbPromise.run(
+      `INSERT INTO knowledge_docs
+        (id, filename, filepath, organization_id, project_id, file_size_bytes, status, category, tags, chunk_count, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'indexing', ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      [
+        docId,
+        filename,
+        filepath,
+        organizationId,
+        projectId,
+        Number.isFinite(Number(fileSizeBytes)) ? Number(fileSizeBytes) : null,
+        category,
+        JSON.stringify(tags || []),
+      ],
+      { fallback: true } as any
+    );
+    return docId;
+  },
+
+  async processDocument(docId: string, text: string): Promise<number> {
+    await ensureKnowledgeSchema();
+    const chunks = chunkText(text, { chunkSize: 1000, overlap: 200 });
 
     try {
-      // Try organization_context table (strategic goals, challenges, megatrends)
-      const ctx = await get(
-        `SELECT strategic_goals, challenges, megatrends, company_name, industry
-         FROM organization_context
-         WHERE organization_id = ?`,
-        [organizationId]
+      await DbPromise.run(`DELETE FROM knowledge_chunks WHERE doc_id = ?`, [docId], {
+        fallback: true,
+      } as any);
+    } catch {
+      // ignore
+    }
+
+    let stored = 0;
+    for (let i = 0; i < chunks.length; i++) {
+      const content = chunks[i];
+      let embedding: number[] | null = null;
+
+      try {
+        embedding = await embeddingService.generateEmbedding(content);
+      } catch {
+        embedding = null;
+      }
+
+      const chunkId = randomUUID();
+      const metadata: Record<string, JsonValue> = { chunk_index: i, source: 'knowledge_upload' };
+
+      await DbPromise.run(
+        `INSERT INTO knowledge_chunks (id, doc_id, chunk_index, content, embedding, metadata, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [
+          chunkId,
+          docId,
+          i,
+          content,
+          embedding ? JSON.stringify(embedding) : null,
+          JSON.stringify(metadata),
+        ],
+        { fallback: true } as any
       );
 
-      if (!ctx) return [];
-
-      const strategies: any[] = [];
-
-      // Parse strategic goals
-      if (ctx.strategic_goals) {
+      if (embedding && embedding.length > 0) {
         try {
-          const goals =
-            typeof ctx.strategic_goals === 'string'
-              ? JSON.parse(ctx.strategic_goals)
-              : ctx.strategic_goals;
-          if (Array.isArray(goals)) {
-            goals.forEach((g: any, i: number) => {
-              strategies.push({
-                title: typeof g === 'string' ? g : g.title || g.name || `Goal ${i + 1}`,
-                description: typeof g === 'string' ? g : g.description || '',
-                priority: g.priority || 'medium',
-                type: 'strategic_goal',
-              });
-            });
-          }
+          await embeddingService.storeChunk(
+            { content, chunkIndex: i, documentId: docId, metadata, sourceType: 'knowledge' },
+            embedding
+          );
         } catch {
-          // Might be a plain text field
-          strategies.push({
-            title: 'Strategic Goals',
-            description: String(ctx.strategic_goals).slice(0, 500),
-            priority: 'high',
-            type: 'strategic_goal',
-          });
+          // ignore
         }
       }
 
-      // Parse challenges
-      if (ctx.challenges) {
-        try {
-          const challenges =
-            typeof ctx.challenges === 'string' ? JSON.parse(ctx.challenges) : ctx.challenges;
-          if (Array.isArray(challenges)) {
-            challenges.forEach((c: any, i: number) => {
-              strategies.push({
-                title: typeof c === 'string' ? c : c.title || c.name || `Challenge ${i + 1}`,
-                description: typeof c === 'string' ? c : c.description || '',
-                priority: c.priority || 'medium',
-                type: 'challenge',
-              });
-            });
-          }
-        } catch {
-          strategies.push({
-            title: 'Key Challenges',
-            description: String(ctx.challenges).slice(0, 500),
-            priority: 'high',
-            type: 'challenge',
-          });
-        }
-      }
-
-      return strategies;
-    } catch (err: any) {
-      logger.warn('[KnowledgeService] Failed to load strategies:', err?.message);
-      return [];
+      stored++;
     }
+
+    await DbPromise.run(
+      `UPDATE knowledge_docs SET status = 'indexed', chunk_count = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [stored, docId],
+      { fallback: true } as any
+    );
+
+    return stored;
   },
 
-  /**
-   * Get approved ideas / generated initiatives from assessment batches.
-   */
-  async getApprovedIdeas(options: {
-    organizationId?: string;
-    projectId?: string;
-    limit?: number;
-  }): Promise<any[]> {
-    const { organizationId, projectId, limit = 10 } = options;
-
-    try {
-      // Query initiative batches that have been generated from assessments
-      let sql = `
-        SELECT aib.id, aib.assessment_id, aib.methodology_id, aib.initiatives_count,
-               aib.status, aib.created_at
-        FROM assessment_initiative_batches aib
-      `;
-      const params: any[] = [];
-
-      if (projectId) {
-        sql += ` JOIN maturity_assessments ma ON aib.assessment_id = ma.id WHERE ma.project_id = ?`;
-        params.push(projectId);
-      } else if (organizationId) {
-        sql += ` JOIN maturity_assessments ma ON aib.assessment_id = ma.id 
-                 JOIN projects p ON ma.project_id = p.id 
-                 WHERE p.organization_id = ?`;
-        params.push(organizationId);
-      }
-
-      sql += ` ORDER BY aib.created_at DESC LIMIT ?`;
-      params.push(limit);
-
-      const batches = await all(sql, params);
-
-      return batches.map((b: any) => ({
-        id: b.id,
-        content: `Initiative batch from assessment (${b.methodology_id})`,
-        category: b.methodology_id,
-        count: b.initiatives_count,
-        status: b.status,
-      }));
-    } catch (err: any) {
-      logger.warn('[KnowledgeService] Failed to load approved ideas:', err?.message);
-      return [];
-    }
+  async getDocuments(orgId: string, _userId?: string, _role?: string): Promise<any[]> {
+    await ensureKnowledgeSchema();
+    const rows = await DbPromise.all<DocumentRow>(
+      `SELECT * FROM knowledge_docs WHERE (organization_id = ? OR organization_id IS NULL) ORDER BY created_at DESC LIMIT 200`,
+      [orgId],
+      { fallback: true } as any
+    );
+    return (rows || []).map(normalizeDocument);
   },
 
-  /**
-   * Get knowledge documents for an organization.
-   * R10: Queries unified schema (knowledge_documents) with fallback to legacy (knowledge_docs).
-   */
-  async getDocuments(organizationId: string, projectId?: string): Promise<any[]> {
-    if (!organizationId) return [];
-
-    // Try new schema first
-    try {
-      const sqlWithGovernance = `
-        SELECT id, title, original_filename as filename, document_type,
-               description, category, tags, language, word_count,
-               processing_status, created_at,
-               ai_visibility, sensitivity
-        FROM knowledge_documents
-        WHERE (organization_id = ? OR organization_id IS NULL)
-          AND processing_status IN ('completed', 'processed', 'indexed')
-      `;
-      const sqlBasic = `
-        SELECT id, title, original_filename as filename, document_type,
-               description, category, tags, language, word_count,
-               processing_status, created_at
-        FROM knowledge_documents
-        WHERE (organization_id = ? OR organization_id IS NULL)
-          AND processing_status IN ('completed', 'processed', 'indexed')
-      `;
-      const params: any[] = [organizationId];
-
-      let sql = sqlWithGovernance;
-      if (projectId) {
-        sql += ` AND (project_id = ? OR project_id IS NULL)`;
-        params.push(projectId);
-      }
-
-      sql += ` ORDER BY created_at DESC LIMIT 50`;
-
-      let docs: any[] = [];
-      try {
-        docs = await all(sql, params);
-      } catch {
-        // Columns may not exist in some deployments yet — retry without governance fields.
-        let sql2 = sqlBasic;
-        const params2: any[] = [organizationId];
-        if (projectId) {
-          sql2 += ` AND (project_id = ? OR project_id IS NULL)`;
-          params2.push(projectId);
-        }
-        sql2 += ` ORDER BY created_at DESC LIMIT 50`;
-        docs = await all(sql2, params2);
-      }
-      if (docs.length > 0) return docs;
-    } catch {
-      // knowledge_documents table may not exist — try legacy
-    }
-
-    // Fallback to legacy knowledge_docs schema
-    try {
-      let sql = `
-        SELECT id, filename, filepath, status as processing_status,
-               filename as title, 'document' as document_type,
-               created_at,
-               'allowed' as ai_visibility,
-               'internal' as sensitivity
-        FROM knowledge_docs
-        WHERE status IN ('completed', 'processed', 'indexed', 'ready')
-      `;
-      const params: any[] = [];
-
-      if (projectId) {
-        sql += ` AND project_id = ?`;
-        params.push(projectId);
-      }
-
-      sql += ` ORDER BY created_at DESC LIMIT 50`;
-
-      return await all(sql, params);
-    } catch (err: any) {
-      logger.warn('[KnowledgeService] Failed to load documents from both schemas:', err?.message);
-      return [];
-    }
+  async getDocumentsByCategory(orgId: string, category: string): Promise<any[]> {
+    await ensureKnowledgeSchema();
+    const rows = await DbPromise.all<DocumentRow>(
+      `SELECT * FROM knowledge_docs
+       WHERE (organization_id = ? OR organization_id IS NULL) AND category = ?
+       ORDER BY created_at DESC LIMIT 200`,
+      [orgId, String(category)],
+      { fallback: true } as any
+    );
+    return (rows || []).map(normalizeDocument);
   },
 
-  /**
-   * Update knowledge document metadata (SuperAdmin/Admin).
-   * Updates unified schema (knowledge_documents) only.
-   */
+  async getDocumentsByStrategy(strategyId: string): Promise<any[]> {
+    await ensureKnowledgeSchema();
+    const strategy = await KnowledgeService.getStrategyWithRelated(strategyId);
+    const ids = Array.isArray(strategy?.related_document_ids) ? strategy.related_document_ids : [];
+    if (!ids.length) return [];
+    const placeholders = ids.map(() => '?').join(', ');
+    const rows = await DbPromise.all<DocumentRow>(
+      `SELECT * FROM knowledge_docs WHERE id IN (${placeholders}) ORDER BY created_at DESC LIMIT 200`,
+      ids,
+      { fallback: true } as any
+    );
+    return (rows || []).map(normalizeDocument);
+  },
+
   async updateDocumentMetadata(
-    organizationId: string,
+    orgId: string,
     docId: string,
     updates: { category?: string | null; tags?: string[] | null }
   ): Promise<{ updated: boolean }> {
-    if (!organizationId || !docId) return { updated: false };
-    const category = updates.category ?? null;
-    const tagsJson = Array.isArray(updates.tags) ? JSON.stringify(updates.tags) : null;
+    await ensureKnowledgeSchema();
+    const sets: string[] = [];
+    const params: unknown[] = [];
 
-    try {
-      const res = await run(
-        `UPDATE knowledge_documents
-         SET category = COALESCE(?, category),
-             tags = COALESCE(?, tags),
-             updated_at = datetime('now')
-         WHERE id = ?
-           AND (organization_id = ? OR organization_id IS NULL)`,
-        [category, tagsJson, docId, organizationId]
-      );
-      return { updated: (res?.changes || 0) > 0 };
-    } catch (err: any) {
-      logger.warn('[KnowledgeService] Failed to update document metadata:', err?.message);
-      return { updated: false };
+    if (updates.category !== undefined) {
+      sets.push('category = ?');
+      params.push(updates.category ?? null);
     }
+    if (updates.tags !== undefined) {
+      sets.push('tags = ?');
+      params.push(JSON.stringify(updates.tags ?? []));
+    }
+    if (!sets.length) return { updated: false };
+
+    params.push(docId, orgId);
+    const result = await DbPromise.run(
+      `UPDATE knowledge_docs
+       SET ${sets.join(', ')}, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND (organization_id = ? OR organization_id IS NULL)`,
+      params,
+      { fallback: true } as any
+    );
+
+    return { updated: Boolean((result as any)?.changes) };
   },
 };
 
-export default knowledgeService;
+export const knowledgeService = KnowledgeService;
+export default KnowledgeService;

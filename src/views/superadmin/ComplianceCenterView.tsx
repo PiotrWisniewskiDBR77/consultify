@@ -14,10 +14,7 @@
 import {
   AlertCircle,
   AlertTriangle,
-  BarChart3,
-  Building2,
   Calendar,
-  CheckCircle2,
   ChevronRight,
   Clock,
   Download,
@@ -25,7 +22,6 @@ import {
   Eye,
   FileCheck,
   FileText,
-  Filter,
   Loader2,
   PieChart,
   Plus,
@@ -33,9 +29,8 @@ import {
   Search,
   Shield,
   Target,
-  TrendingUp,
   Users,
-  XCircle,
+  X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -88,6 +83,17 @@ interface Audit {
   findingsCount: number;
 }
 
+interface ProcessingRecord {
+  id: string;
+  name: string;
+  purpose: string;
+  data_categories: string;
+  legal_basis: string;
+  retention_period: string;
+  status: string;
+  created_at: string;
+}
+
 type TabType = 'overview' | 'frameworks' | 'dsar' | 'audits' | 'records';
 
 const STATUS_COLORS = {
@@ -114,52 +120,173 @@ export const ComplianceCenterView: React.FC = () => {
   const [complianceStatus, setComplianceStatus] = useState<ComplianceStatus[]>([]);
   const [dsarRequests, setDsarRequests] = useState<DSAR[]>([]);
   const [audits, setAudits] = useState<Audit[]>([]);
+  const [frameworksLoadError, setFrameworksLoadError] = useState<string | null>(null);
   const [selectedFramework, setSelectedFramework] = useState<string | null>(null);
   const [selectedOrg, setSelectedOrg] = useState<string>('all');
   const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
+  const [processingRecords, setProcessingRecords] = useState<ProcessingRecord[]>([]);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  // Modal states
+  const [editControlModal, setEditControlModal] = useState<{ open: boolean; control: any } | null>(null);
+  const [editControlForm, setEditControlForm] = useState({ name: '', description: '', status: 'pending', category: '', priority: 'medium' });
+  const [editControlSaving, setEditControlSaving] = useState(false);
+
+  const [dsarCreateModal, setDsarCreateModal] = useState(false);
+  const [dsarCreateForm, setDsarCreateForm] = useState({ subjectName: '', requesterEmail: '', requestType: 'access', description: '' });
+  const [dsarCreateSaving, setDsarCreateSaving] = useState(false);
+
+  const [dsarViewModal, setDsarViewModal] = useState<{ open: boolean; dsar: any } | null>(null);
+  const [dsarViewLoading, setDsarViewLoading] = useState(false);
+
+  const [auditCreateModal, setAuditCreateModal] = useState(false);
+  const [auditCreateForm, setAuditCreateForm] = useState({ name: '', auditType: 'internal', scheduledDate: '', scope: '', auditor: '', frameworkId: '' });
+  const [auditCreateSaving, setAuditCreateSaving] = useState(false);
+
+  const [recordCreateModal, setRecordCreateModal] = useState(false);
+  const [recordCreateForm, setRecordCreateForm] = useState({ name: '', purpose: '', dataCategories: '', legalBasis: '', retentionPeriod: '' });
+  const [recordCreateSaving, setRecordCreateSaving] = useState(false);
+
+  const [exportingReport, setExportingReport] = useState(false);
+
+  const showNotice = (msg: string) => {
+    setNotice(msg);
+    setTimeout(() => setNotice(null), 3000);
+  };
+
+  const pct = (part: any, total: any) => {
+    const t = Number(total);
+    if (!Number.isFinite(t) || t <= 0) return 0;
+    const p = Number(part);
+    if (!Number.isFinite(p) || p <= 0) return 0;
+    return Math.max(0, Math.min(100, (p / t) * 100));
+  };
+
+  const normalizeFrameworks = (raw: any[]): ComplianceFramework[] => {
+    if (!Array.isArray(raw)) return [];
+    // Support legacy response where frameworks were strings like "GDPR"
+    return raw
+      .map((fw: any) => {
+        if (typeof fw === 'string') {
+          const name = fw;
+          const id = `fw_${String(fw).toLowerCase()}`;
+          return {
+            id,
+            name,
+            displayName: name,
+            description: '',
+            version: '',
+            requirements: [],
+          } as ComplianceFramework;
+        }
+        const id = String(fw?.id || '');
+        const name = String(fw?.name || fw?.standard || fw?.code || fw?.id || '');
+        const displayName = String(
+          fw?.displayName || fw?.display_name || fw?.display_name || fw?.name || name || ''
+        );
+        const requirements = Array.isArray(fw?.requirements) ? fw.requirements : [];
+        return {
+          id,
+          name,
+          displayName,
+          description: String(fw?.description || ''),
+          version: String(fw?.version || ''),
+          requirements,
+        } as ComplianceFramework;
+      })
+      .filter((fw) => !!fw?.id);
+  };
+
+  const normalizeComplianceStatus = (raw: any, fw: ComplianceFramework): ComplianceStatus => {
+    // Backend is expected to return { status: { ... } }, but some older paths returned a string.
+    const obj = raw && typeof raw === 'object' ? raw : {};
+    const frameworkId = String(obj.frameworkId || obj.framework_id || fw?.id || '');
+    const frameworkName = String(obj.frameworkName || obj.framework_name || fw?.displayName || fw?.name || 'Unknown');
+    const total = Number(obj.total ?? (fw?.requirements || []).length) || 0;
+    const compliant = Number(obj.compliant) || 0;
+    const inProgress = Number(obj.inProgress ?? obj.in_progress) || 0;
+    const nonCompliant = Number(obj.nonCompliant ?? obj.non_compliant) || 0;
+    const pending = Number(obj.pending) || Math.max(0, total - compliant - inProgress - nonCompliant);
+    const score =
+      Number.isFinite(Number(obj.score)) ? Number(obj.score) : total > 0 ? Math.round((compliant / total) * 100) : 0;
+
+    return {
+      frameworkId,
+      frameworkName,
+      total,
+      compliant,
+      inProgress,
+      pending,
+      nonCompliant,
+      score,
+    };
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setFrameworksLoadError(null);
     try {
       const [frameworksResult, orgsResult] = await Promise.all([
-        Api.get('/api/superadmin/compliance/frameworks'),
-        Api.getOrganizations(),
+        // Use non-/api path so `Api.get` prefixes API_URL (works with/without proxy).
+        Api.get('/superadmin/compliance/frameworks').catch((e: any) => {
+          const raw =
+            e?.data?.error ||
+            e?.data?.message ||
+            e?.message ||
+            'Failed to load compliance frameworks';
+          const msg = typeof raw === 'string' ? raw : (raw as any)?.message || JSON.stringify(raw);
+          setFrameworksLoadError(msg);
+          return { frameworks: [] };
+        }),
+        Api.getOrganizations().catch(() => []),
       ]);
-      setFrameworks(frameworksResult.frameworks || []);
+      const normalizedFrameworks = normalizeFrameworks(frameworksResult.frameworks || []);
+      setFrameworks(normalizedFrameworks);
       setOrganizations(orgsResult);
 
       // Fetch compliance status for each framework
-      const statusPromises = (frameworksResult.frameworks || []).map(
-        async (fw: ComplianceFramework) => {
+      const statusPromises = normalizedFrameworks.map(async (fw: ComplianceFramework) => {
           try {
             const result = await Api.get(
-              `/api/superadmin/compliance/status/${fw.id}${selectedOrg !== 'all' ? `?orgId=${selectedOrg}` : ''}`
+              `/superadmin/compliance/status/${fw.id}${
+                selectedOrg !== 'all' ? `?organizationId=${selectedOrg}` : ''
+              }`
             );
-            return result.status;
+            return normalizeComplianceStatus(result.status, fw);
           } catch {
-            return {
-              frameworkId: fw.id,
-              frameworkName: fw.displayName,
-              total: fw.requirements.length,
-              compliant: 0,
-              inProgress: 0,
-              pending: fw.requirements.length,
-              nonCompliant: 0,
-              score: 0,
-            };
+            return normalizeComplianceStatus(null, fw);
           }
-        }
-      );
+        });
       const statusResults = await Promise.all(statusPromises);
       setComplianceStatus(statusResults);
 
       // Fetch DSARs
-      const dsarResult = await Api.get('/api/superadmin/compliance/dsar');
-      setDsarRequests(dsarResult.requests || []);
+      try {
+        const dsarResult = await Api.get('/superadmin/compliance/dsar');
+        // Backend may return array directly
+        const requests = Array.isArray(dsarResult) ? dsarResult : dsarResult?.requests;
+        setDsarRequests(Array.isArray(requests) ? requests : []);
+      } catch {
+        setDsarRequests([]);
+      }
 
       // Fetch audits
-      const auditsResult = await Api.get('/api/superadmin/compliance/audits');
-      setAudits(auditsResult.audits || []);
+      try {
+        const auditsResult = await Api.get('/superadmin/compliance/audits');
+        const list = Array.isArray(auditsResult) ? auditsResult : auditsResult?.audits;
+        setAudits(Array.isArray(list) ? list : []);
+      } catch {
+        setAudits([]);
+      }
+
+      // Fetch processing records
+      try {
+        const prResult = await Api.get('/superadmin/compliance/processing-records');
+        const recs = Array.isArray(prResult) ? prResult : prResult?.records;
+        setProcessingRecords(Array.isArray(recs) ? recs : []);
+      } catch {
+        setProcessingRecords([]);
+      }
     } catch (error) {
       console.error('Failed to fetch compliance data:', error);
     } finally {
@@ -183,6 +310,123 @@ export const ComplianceCenterView: React.FC = () => {
     (d) => new Date(d.dueDate) < new Date() && d.status !== 'completed'
   ).length;
   const activeAudits = audits.filter((a) => a.status === 'in_progress').length;
+
+  const handleEditControl = (control: any) => {
+    setEditControlForm({
+      name: control.title || control.name || '',
+      description: control.description || '',
+      status: 'pending',
+      category: control.category || '',
+      priority: 'medium',
+    });
+    setEditControlModal({ open: true, control });
+  };
+
+  const handleSaveControl = async () => {
+    if (!editControlModal?.control) return;
+    setEditControlSaving(true);
+    try {
+      await Api.put(`/superadmin/compliance/controls/${editControlModal.control.id}`, editControlForm);
+      showNotice('Control updated successfully');
+      setEditControlModal(null);
+      fetchData();
+    } catch {
+      showNotice('Failed to update control');
+    } finally {
+      setEditControlSaving(false);
+    }
+  };
+
+  const handleCreateDsar = async () => {
+    if (!dsarCreateForm.requesterEmail || !dsarCreateForm.requestType) {
+      showNotice('Email and request type are required');
+      return;
+    }
+    setDsarCreateSaving(true);
+    try {
+      await Api.post('/superadmin/compliance/dsar', dsarCreateForm);
+      showNotice('DSAR request created successfully');
+      setDsarCreateModal(false);
+      setDsarCreateForm({ subjectName: '', requesterEmail: '', requestType: 'access', description: '' });
+      fetchData();
+    } catch {
+      showNotice('Failed to create DSAR request');
+    } finally {
+      setDsarCreateSaving(false);
+    }
+  };
+
+  const handleViewDsar = async (dsar: DSAR) => {
+    setDsarViewLoading(true);
+    setDsarViewModal({ open: true, dsar });
+    try {
+      const result = await Api.get(`/superadmin/compliance/dsar/${dsar.id}`);
+      setDsarViewModal({ open: true, dsar: result?.request || dsar });
+    } catch {
+      // Keep the local data if fetch fails
+    } finally {
+      setDsarViewLoading(false);
+    }
+  };
+
+  const handleCreateAudit = async () => {
+    if (!auditCreateForm.name) {
+      showNotice('Audit name is required');
+      return;
+    }
+    setAuditCreateSaving(true);
+    try {
+      await Api.post('/superadmin/compliance/audits', auditCreateForm);
+      showNotice('Audit scheduled successfully');
+      setAuditCreateModal(false);
+      setAuditCreateForm({ name: '', auditType: 'internal', scheduledDate: '', scope: '', auditor: '', frameworkId: '' });
+      fetchData();
+    } catch {
+      showNotice('Failed to schedule audit');
+    } finally {
+      setAuditCreateSaving(false);
+    }
+  };
+
+  const handleCreateRecord = async () => {
+    if (!recordCreateForm.name) {
+      showNotice('Record name is required');
+      return;
+    }
+    setRecordCreateSaving(true);
+    try {
+      await Api.post('/superadmin/compliance/processing-records', recordCreateForm);
+      showNotice('Processing record added successfully');
+      setRecordCreateModal(false);
+      setRecordCreateForm({ name: '', purpose: '', dataCategories: '', legalBasis: '', retentionPeriod: '' });
+      fetchData();
+    } catch {
+      showNotice('Failed to add processing record');
+    } finally {
+      setRecordCreateSaving(false);
+    }
+  };
+
+  const handleExportReport = async () => {
+    setExportingReport(true);
+    try {
+      const result = await Api.get('/superadmin/compliance/export');
+      const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `compliance-report-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showNotice('Compliance report exported');
+    } catch {
+      showNotice('Failed to export report');
+    } finally {
+      setExportingReport(false);
+    }
+  };
 
   const renderOverviewTab = () => (
     <div className="space-y-6">
@@ -281,14 +525,17 @@ export const ComplianceCenterView: React.FC = () => {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                    {status.frameworkName.charAt(0)}
+                    {String(status?.frameworkName || 'U')
+                      .trim()
+                      .charAt(0)
+                      .toUpperCase()}
                   </div>
                   <div>
                     <h4 className="font-medium text-slate-900 dark:text-white">
-                      {status.frameworkName}
+                      {status.frameworkName || 'Unknown'}
                     </h4>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {status.total} controls
+                      {Number(status.total) || 0} controls
                     </p>
                   </div>
                 </div>
@@ -302,7 +549,7 @@ export const ComplianceCenterView: React.FC = () => {
                           : 'text-red-600'
                     }`}
                   >
-                    {status.score}%
+                    {Number(status.score) || 0}%
                   </div>
                   <button
                     onClick={() => {
@@ -318,35 +565,35 @@ export const ComplianceCenterView: React.FC = () => {
               <div className="flex gap-1 h-2">
                 <div
                   className="bg-emerald-500 rounded-l"
-                  style={{ width: `${(status.compliant / status.total) * 100}%` }}
+                  style={{ width: `${pct(status.compliant, status.total)}%` }}
                 />
                 <div
                   className="bg-blue-500"
-                  style={{ width: `${(status.inProgress / status.total) * 100}%` }}
+                  style={{ width: `${pct(status.inProgress, status.total)}%` }}
                 />
                 <div
                   className="bg-slate-300"
-                  style={{ width: `${(status.pending / status.total) * 100}%` }}
+                  style={{ width: `${pct(status.pending, status.total)}%` }}
                 />
                 <div
                   className="bg-red-500 rounded-r"
-                  style={{ width: `${(status.nonCompliant / status.total) * 100}%` }}
+                  style={{ width: `${pct(status.nonCompliant, status.total)}%` }}
                 />
               </div>
               <div className="flex justify-between mt-2 text-xs text-slate-500 dark:text-slate-400">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" /> {status.compliant}{' '}
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" /> {Number(status.compliant) || 0}{' '}
                   Compliant
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-blue-500" /> {status.inProgress} In
+                  <span className="w-2 h-2 rounded-full bg-blue-500" /> {Number(status.inProgress) || 0} In
                   Progress
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-slate-300" /> {status.pending} Pending
+                  <span className="w-2 h-2 rounded-full bg-slate-300" /> {Number(status.pending) || 0} Pending
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-red-500" /> {status.nonCompliant}{' '}
+                  <span className="w-2 h-2 rounded-full bg-red-500" /> {Number(status.nonCompliant) || 0}{' '}
                   Non-Compliant
                 </span>
               </div>
@@ -423,12 +670,15 @@ export const ComplianceCenterView: React.FC = () => {
     const framework = selectedFramework ? frameworks.find((f) => f.id === selectedFramework) : null;
 
     if (framework) {
+      const requirements = Array.isArray((framework as any)?.requirements)
+        ? (framework as any).requirements
+        : [];
       return (
         <div className="space-y-6">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSelectedFramework(null)}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+              className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
             >
               <ChevronRight size={20} className="rotate-180 text-slate-400 dark:text-slate-500" />
             </button>
@@ -464,10 +714,10 @@ export const ComplianceCenterView: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-                {framework.requirements.map((req) => (
+                {requirements.map((req) => (
                   <tr
                     key={req.id}
-                    className="hover:bg-slate-50 dark:hover:bg-slate-50 dark:hover:bg-navy-800/20"
+                    className="hover:bg-slate-50 dark:hover:bg-navy-800/20"
                   >
                     <td className="px-6 py-4">
                       <span className="font-mono text-sm text-slate-700 dark:text-slate-300">
@@ -486,13 +736,13 @@ export const ComplianceCenterView: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-50 dark:bg-navy-800/300/10 text-slate-600 dark:text-slate-400">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-400">
                         <Clock size={12} />
                         Pending
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg">
+                      <button onClick={() => handleEditControl(req)} className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg">
                         <Edit size={16} className="text-slate-400 dark:text-slate-500" />
                       </button>
                     </td>
@@ -505,10 +755,37 @@ export const ComplianceCenterView: React.FC = () => {
       );
     }
 
+    if (frameworks.length === 0) {
+      return (
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-10 text-center">
+          <Shield size={40} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+          <p className="text-slate-900 dark:text-white font-semibold">No compliance frameworks</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl mx-auto">
+            This section lists available compliance standards (e.g., SOC 2, GDPR, HIPAA) so you can
+            review their controls and see completion status per organization.
+          </p>
+          {frameworksLoadError && (
+            <div className="mt-4 text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg p-3 max-w-2xl mx-auto">
+              {frameworksLoadError}
+            </div>
+          )}
+          <div className="mt-6 flex justify-center">
+            <button
+              onClick={fetchData}
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-navy-700 dark:hover:bg-navy-600 dark:text-slate-200 rounded-lg font-medium transition-colors"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {frameworks.map((fw) => {
           const status = complianceStatus.find((s) => s.frameworkId === fw.id);
+          const reqsCount = Array.isArray((fw as any)?.requirements) ? (fw as any).requirements.length : 0;
           return (
             <button
               key={fw.id}
@@ -518,7 +795,7 @@ export const ComplianceCenterView: React.FC = () => {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl">
-                    {fw.name.charAt(0)}
+                    {(fw.displayName || fw.name || 'F').charAt(0)}
                   </div>
                   <div>
                     <h3 className="font-semibold text-slate-900 dark:text-white">
@@ -534,7 +811,7 @@ export const ComplianceCenterView: React.FC = () => {
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{fw.description}</p>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-500 dark:text-slate-400">
-                  {fw.requirements.length} controls
+                  {reqsCount} controls
                 </span>
                 {status && (
                   <span
@@ -571,7 +848,7 @@ export const ComplianceCenterView: React.FC = () => {
             className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg"
           />
         </div>
-        <button className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2">
+        <button onClick={() => setDsarCreateModal(true)} className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2">
           <Plus size={18} />
           New Request
         </button>
@@ -605,7 +882,7 @@ export const ComplianceCenterView: React.FC = () => {
             {dsarRequests.map((dsar) => (
               <tr
                 key={dsar.id}
-                className="hover:bg-slate-50 dark:hover:bg-slate-50 dark:hover:bg-navy-800/20"
+                className="hover:bg-slate-50 dark:hover:bg-navy-800/20"
               >
                 <td className="px-6 py-4">
                   <span className="font-medium text-slate-900 dark:text-white">
@@ -648,7 +925,7 @@ export const ComplianceCenterView: React.FC = () => {
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg">
+                  <button onClick={() => handleViewDsar(dsar)} className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg">
                     <Eye size={16} className="text-slate-400 dark:text-slate-500" />
                   </button>
                 </td>
@@ -673,7 +950,7 @@ export const ComplianceCenterView: React.FC = () => {
   const renderAuditsTab = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-end">
-        <button className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2">
+        <button onClick={() => setAuditCreateModal(true)} className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2">
           <Plus size={18} />
           Schedule Audit
         </button>
@@ -751,26 +1028,58 @@ export const ComplianceCenterView: React.FC = () => {
       </div>
 
       <div className="flex justify-end">
-        <button className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2">
+        <button onClick={() => setRecordCreateModal(true)} className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2">
           <Plus size={18} />
           Add Processing Record
         </button>
       </div>
 
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <div className="p-12 text-center">
-          <FileText size={40} className="mx-auto mb-3 text-slate-300" />
-          <p className="text-slate-500 dark:text-slate-400 font-medium">No processing records</p>
-          <p className="text-sm text-slate-400 dark:text-slate-500">
-            Document your data processing activities
-          </p>
-        </div>
+        {processingRecords.length > 0 ? (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-navy-700">
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Name</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Purpose</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Legal Basis</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Retention</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Created</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+              {processingRecords.map((rec) => (
+                <tr key={rec.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
+                  <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{rec.name}</td>
+                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{rec.purpose}</td>
+                  <td className="px-6 py-4">
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600">{rec.legal_basis || '—'}</span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{rec.retention_period || '—'}</td>
+                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{rec.created_at ? new Date(rec.created_at).toLocaleDateString() : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="p-12 text-center">
+            <FileText size={40} className="mx-auto mb-3 text-slate-300" />
+            <p className="text-slate-500 dark:text-slate-400 font-medium">No processing records</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500">
+              Document your data processing activities
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
 
   return (
     <div className="space-y-6 relative">
+      {notice && (
+        <div className="fixed top-4 right-4 z-50 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm animate-pulse">
+          {notice}
+        </div>
+      )}
       <InfoButton cardId="superadmin-compliance" position="top-right" />
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -802,15 +1111,15 @@ export const ComplianceCenterView: React.FC = () => {
           </select>
           <button
             onClick={fetchData}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
           >
             <RefreshCw
               size={18}
               className={`text-slate-400 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
             />
           </button>
-          <button className="px-4 py-2 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-50 dark:hover:bg-navy-800/20 flex items-center gap-2">
-            <Download size={16} />
+          <button onClick={handleExportReport} disabled={exportingReport} className="px-4 py-2 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/20 flex items-center gap-2 disabled:opacity-50">
+            {exportingReport ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
             Export Report
           </button>
         </div>
@@ -853,6 +1162,303 @@ export const ComplianceCenterView: React.FC = () => {
           {activeTab === 'audits' && renderAuditsTab()}
           {activeTab === 'records' && renderRecordsTab()}
         </>
+      )}
+
+      {/* Edit Control Modal */}
+      {editControlModal?.open && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-lg border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Edit Control</h3>
+              <button onClick={() => setEditControlModal(null)} className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg">
+                <X size={18} className="text-slate-400" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
+                <input type="text" value={editControlForm.name} onChange={(e) => setEditControlForm({ ...editControlForm, name: e.target.value })} className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+                <textarea rows={3} value={editControlForm.description} onChange={(e) => setEditControlForm({ ...editControlForm, description: e.target.value })} className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
+                  <select value={editControlForm.status} onChange={(e) => setEditControlForm({ ...editControlForm, status: e.target.value })} className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white">
+                    <option value="pending">Pending</option>
+                    <option value="compliant">Compliant</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="non_compliant">Non-Compliant</option>
+                    <option value="not_applicable">Not Applicable</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Priority</label>
+                  <select value={editControlForm.priority} onChange={(e) => setEditControlForm({ ...editControlForm, priority: e.target.value })} className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white">
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category</label>
+                <input type="text" value={editControlForm.category} onChange={(e) => setEditControlForm({ ...editControlForm, category: e.target.value })} className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setEditControlModal(null)} className="px-4 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700">Cancel</button>
+              <button onClick={handleSaveControl} disabled={editControlSaving} className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2">
+                {editControlSaving && <Loader2 size={16} className="animate-spin" />}
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create DSAR Modal */}
+      {dsarCreateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-lg border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">New DSAR Request</h3>
+              <button onClick={() => setDsarCreateModal(false)} className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg">
+                <X size={18} className="text-slate-400" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subject Name</label>
+                <input type="text" value={dsarCreateForm.subjectName} onChange={(e) => setDsarCreateForm({ ...dsarCreateForm, subjectName: e.target.value })} placeholder="Data subject's full name" className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email *</label>
+                <input type="email" value={dsarCreateForm.requesterEmail} onChange={(e) => setDsarCreateForm({ ...dsarCreateForm, requesterEmail: e.target.value })} placeholder="requester@example.com" className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Request Type *</label>
+                <select value={dsarCreateForm.requestType} onChange={(e) => setDsarCreateForm({ ...dsarCreateForm, requestType: e.target.value })} className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white">
+                  <option value="access">Data Access</option>
+                  <option value="erasure">Erasure / Deletion</option>
+                  <option value="rectification">Rectification</option>
+                  <option value="portability">Data Portability</option>
+                  <option value="restriction">Restriction</option>
+                  <option value="objection">Objection</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+                <textarea rows={3} value={dsarCreateForm.description} onChange={(e) => setDsarCreateForm({ ...dsarCreateForm, description: e.target.value })} placeholder="Details about the request..." className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setDsarCreateModal(false)} className="px-4 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700">Cancel</button>
+              <button onClick={handleCreateDsar} disabled={dsarCreateSaving} className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2">
+                {dsarCreateSaving && <Loader2 size={16} className="animate-spin" />}
+                Create Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View DSAR Modal */}
+      {dsarViewModal?.open && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-2xl border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">DSAR Request Details</h3>
+              <button onClick={() => setDsarViewModal(null)} className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg">
+                <X size={18} className="text-slate-400" />
+              </button>
+            </div>
+            {dsarViewLoading ? (
+              <div className="flex justify-center py-8"><Loader2 size={24} className="animate-spin text-violet-500" /></div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold">Request ID</span>
+                    <p className="text-slate-900 dark:text-white font-mono text-sm mt-1">{dsarViewModal.dsar.id}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold">Status</span>
+                    <p className="mt-1">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        dsarViewModal.dsar.status === 'completed' ? 'bg-emerald-500/10 text-emerald-600'
+                        : dsarViewModal.dsar.status === 'in_progress' ? 'bg-blue-500/10 text-blue-600'
+                        : dsarViewModal.dsar.status === 'pending' ? 'bg-amber-500/10 text-amber-600'
+                        : 'bg-red-500/10 text-red-600'
+                      }`}>{(dsarViewModal.dsar.status || 'pending').replace('_', ' ')}</span>
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold">Requester</span>
+                    <p className="text-slate-900 dark:text-white text-sm mt-1">{dsarViewModal.dsar.requesterEmail}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold">Subject Name</span>
+                    <p className="text-slate-900 dark:text-white text-sm mt-1">{dsarViewModal.dsar.subject_name || dsarViewModal.dsar.subjectName || '—'}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold">Request Type</span>
+                    <p className="mt-1">
+                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600">
+                        {DSAR_TYPE_LABELS[dsarViewModal.dsar.requestType as keyof typeof DSAR_TYPE_LABELS] || dsarViewModal.dsar.requestType}
+                      </span>
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold">Assigned To</span>
+                    <p className="text-slate-900 dark:text-white text-sm mt-1">{dsarViewModal.dsar.assignedTo || '—'}</p>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold">Description</span>
+                  <p className="text-slate-700 dark:text-slate-300 text-sm mt-1">{dsarViewModal.dsar.description || '—'}</p>
+                </div>
+                <div className="border-t border-slate-200 dark:border-navy-700 pt-4">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold">Timeline</span>
+                  <div className="mt-3 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-blue-500" />
+                      <span className="text-sm text-slate-700 dark:text-slate-300">Received: {dsarViewModal.dsar.receivedAt ? new Date(dsarViewModal.dsar.receivedAt).toLocaleString() : '—'}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${dsarViewModal.dsar.dueDate && new Date(dsarViewModal.dsar.dueDate) < new Date() && dsarViewModal.dsar.status !== 'completed' ? 'bg-red-500' : 'bg-amber-500'}`} />
+                      <span className={`text-sm ${dsarViewModal.dsar.dueDate && new Date(dsarViewModal.dsar.dueDate) < new Date() && dsarViewModal.dsar.status !== 'completed' ? 'text-red-600 font-medium' : 'text-slate-700 dark:text-slate-300'}`}>Due: {dsarViewModal.dsar.dueDate ? new Date(dsarViewModal.dsar.dueDate).toLocaleString() : '—'}</span>
+                    </div>
+                    {dsarViewModal.dsar.completedAt && (
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                        <span className="text-sm text-slate-700 dark:text-slate-300">Completed: {new Date(dsarViewModal.dsar.completedAt).toLocaleString()}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="flex justify-end mt-6">
+              <button onClick={() => setDsarViewModal(null)} className="px-4 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Audit Modal */}
+      {auditCreateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-lg border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Schedule Audit</h3>
+              <button onClick={() => setAuditCreateModal(false)} className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg">
+                <X size={18} className="text-slate-400" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Audit Name *</label>
+                <input type="text" value={auditCreateForm.name} onChange={(e) => setAuditCreateForm({ ...auditCreateForm, name: e.target.value })} placeholder="e.g. Q1 2026 SOC 2 Audit" className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Audit Type</label>
+                  <select value={auditCreateForm.auditType} onChange={(e) => setAuditCreateForm({ ...auditCreateForm, auditType: e.target.value })} className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white">
+                    <option value="internal">Internal</option>
+                    <option value="external">External</option>
+                    <option value="certification">Certification</option>
+                    <option value="surveillance">Surveillance</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Scheduled Date</label>
+                  <input type="date" value={auditCreateForm.scheduledDate} onChange={(e) => setAuditCreateForm({ ...auditCreateForm, scheduledDate: e.target.value })} className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Framework</label>
+                <select value={auditCreateForm.frameworkId} onChange={(e) => setAuditCreateForm({ ...auditCreateForm, frameworkId: e.target.value })} className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white">
+                  <option value="">Select framework...</option>
+                  {frameworks.map((fw) => (
+                    <option key={fw.id} value={fw.id}>{fw.displayName || fw.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Scope</label>
+                <textarea rows={2} value={auditCreateForm.scope} onChange={(e) => setAuditCreateForm({ ...auditCreateForm, scope: e.target.value })} placeholder="Audit scope description..." className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Auditor</label>
+                <input type="text" value={auditCreateForm.auditor} onChange={(e) => setAuditCreateForm({ ...auditCreateForm, auditor: e.target.value })} placeholder="Auditor name or firm" className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setAuditCreateModal(false)} className="px-4 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700">Cancel</button>
+              <button onClick={handleCreateAudit} disabled={auditCreateSaving} className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2">
+                {auditCreateSaving && <Loader2 size={16} className="animate-spin" />}
+                Schedule
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Processing Record Modal */}
+      {recordCreateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-lg border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Add Processing Record</h3>
+              <button onClick={() => setRecordCreateModal(false)} className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg">
+                <X size={18} className="text-slate-400" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Processing Activity Name *</label>
+                <input type="text" value={recordCreateForm.name} onChange={(e) => setRecordCreateForm({ ...recordCreateForm, name: e.target.value })} placeholder="e.g. Customer Data Processing" className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Purpose</label>
+                <textarea rows={2} value={recordCreateForm.purpose} onChange={(e) => setRecordCreateForm({ ...recordCreateForm, purpose: e.target.value })} placeholder="Purpose of processing..." className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Data Categories</label>
+                <input type="text" value={recordCreateForm.dataCategories} onChange={(e) => setRecordCreateForm({ ...recordCreateForm, dataCategories: e.target.value })} placeholder="e.g. Personal data, Financial data" className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Legal Basis</label>
+                  <select value={recordCreateForm.legalBasis} onChange={(e) => setRecordCreateForm({ ...recordCreateForm, legalBasis: e.target.value })} className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white">
+                    <option value="">Select...</option>
+                    <option value="consent">Consent (Art. 6(1)(a))</option>
+                    <option value="contract">Contract (Art. 6(1)(b))</option>
+                    <option value="legal_obligation">Legal Obligation (Art. 6(1)(c))</option>
+                    <option value="vital_interests">Vital Interests (Art. 6(1)(d))</option>
+                    <option value="public_task">Public Task (Art. 6(1)(e))</option>
+                    <option value="legitimate_interests">Legitimate Interests (Art. 6(1)(f))</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Retention Period</label>
+                  <input type="text" value={recordCreateForm.retentionPeriod} onChange={(e) => setRecordCreateForm({ ...recordCreateForm, retentionPeriod: e.target.value })} placeholder="e.g. 3 years" className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white" />
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setRecordCreateModal(false)} className="px-4 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700">Cancel</button>
+              <button onClick={handleCreateRecord} disabled={recordCreateSaving} className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2">
+                {recordCreateSaving && <Loader2 size={16} className="animate-spin" />}
+                Add Record
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

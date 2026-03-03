@@ -56,9 +56,22 @@ export const PaymentMethodsView: React.FC = () => {
         Api.getPaymentFailures(),
         Api.getPaymentFailureStats(),
       ]);
-      setMethods(methodsRes || []);
-      setFailures(failuresRes || []);
-      setStats(statsRes as any);
+      const methodsList = Array.isArray(methodsRes) ? methodsRes : (methodsRes as any)?.methods || [];
+      const failuresList = Array.isArray(failuresRes) ? failuresRes : (failuresRes as any)?.failures || [];
+      setMethods(methodsList);
+      setFailures(failuresList);
+      const failureStats = statsRes as any;
+      const totalMethods = methodsList.length;
+      const activeMethods = methodsList.filter((m: any) => m.is_active !== false && m.status !== 'expired').length;
+      const totalFailures = failureStats?.total || failuresList.length;
+      const pendingFailures = failureStats?.pending || failuresList.filter((f: any) => f.status === 'pending' || f.status === 'retrying').length;
+      setStats({
+        totalMethods,
+        activeMethods,
+        pendingFailures,
+        totalFailures,
+        failureRate: totalMethods > 0 ? totalFailures / (totalMethods + totalFailures) : 0,
+      });
     } catch (err: any) {
       setError(err.message || 'Failed to load payment data');
     } finally {
@@ -68,7 +81,7 @@ export const PaymentMethodsView: React.FC = () => {
 
   const handleResolveFailure = async (id: string) => {
     try {
-      await Api.retryPayment(id);
+      await Api.resolvePaymentFailure(id, 'manual');
       fetchData();
     } catch (err: any) {
       setError(err.message || 'Failed to resolve payment failure');
@@ -108,19 +121,21 @@ export const PaymentMethodsView: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
+    const safe = status || 'unknown';
     const badges: Record<string, { bg: string; text: string }> = {
       pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400' },
       retrying: { bg: 'bg-blue-500/20', text: 'text-blue-400' },
       resolved: { bg: 'bg-green-500/20', text: 'text-green-400' },
       failed: { bg: 'bg-red-500/20', text: 'text-red-400' },
+      recovered: { bg: 'bg-green-500/20', text: 'text-green-400' },
     };
-    const badge = badges[status] || {
+    const badge = badges[safe] || {
       bg: 'bg-gray-50 dark:bg-navy-8000/20',
       text: 'text-gray-400',
     };
     return (
       <span className={`px-2 py-0.5 text-xs rounded-full ${badge.bg} ${badge.text}`}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {safe.charAt(0).toUpperCase() + safe.slice(1)}
       </span>
     );
   };
@@ -151,8 +166,10 @@ export const PaymentMethodsView: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-white">Payment Management & Dunning</h2>
-          <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-1">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Payment Management & Dunning
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 mt-1">
             Manage payment methods and handle payment failures
           </p>
         </div>
@@ -173,59 +190,51 @@ export const PaymentMethodsView: React.FC = () => {
       {/* Stats */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-white">{stats.totalMethods}</div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
-                Total Methods
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                {stats.totalMethods}
               </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Total Methods</div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-green-400">{stats.activeMethods}</div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
-                Active Methods
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Active Methods</div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-yellow-400">{stats.pendingFailures}</div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
-                Pending Failures
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Pending Failures</div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-red-400">{stats.totalFailures}</div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
-                Total Failures
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Total Failures</div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 border-gray-700">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-orange-400">
                 {(stats.failureRate * 100).toFixed(1)}%
               </div>
-              <div className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
-                Failure Rate
-              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Failure Rate</div>
             </CardContent>
           </Card>
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-gray-700">
+      <div className="flex gap-2 border-b border-slate-200 dark:border-white/10">
         <button
           onClick={() => setActiveTab('methods')}
           className={`px-4 py-2 -mb-px border-b-2 transition-colors ${
             activeTab === 'methods'
-              ? 'border-indigo-500 text-white'
-              : 'border-transparent text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-white'
+              ? 'border-indigo-500 text-slate-900 dark:text-white'
+              : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           Payment Methods ({methods.length})
@@ -234,8 +243,8 @@ export const PaymentMethodsView: React.FC = () => {
           onClick={() => setActiveTab('failures')}
           className={`px-4 py-2 -mb-px border-b-2 transition-colors ${
             activeTab === 'failures'
-              ? 'border-indigo-500 text-white'
-              : 'border-transparent text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-white'
+              ? 'border-indigo-500 text-slate-900 dark:text-white'
+              : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           Payment Failures (
@@ -245,9 +254,9 @@ export const PaymentMethodsView: React.FC = () => {
 
       {/* Payment Methods Tab */}
       {activeTab === 'methods' && (
-        <Card className="bg-gray-800 border-gray-700">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-white">Payment Methods</CardTitle>
+            <CardTitle>Payment Methods</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -256,12 +265,12 @@ export const PaymentMethodsView: React.FC = () => {
                 return (
                   <div
                     key={method.id}
-                    className="p-4 bg-gray-900/50 rounded-lg border border-gray-700"
+                    className="p-4 bg-slate-50 dark:bg-navy-950/20 rounded-lg border border-slate-200 dark:border-navy-700"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
-                          <span className="text-white font-medium">
+                          <span className="text-slate-900 dark:text-white font-medium">
                             {method.organization_name || method.organization_id}
                           </span>
                           {getPaymentTypeBadge(method.payment_type)}
@@ -275,12 +284,12 @@ export const PaymentMethodsView: React.FC = () => {
                               Active
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 text-xs bg-gray-50 dark:bg-navy-8000/20 text-gray-400 rounded-full">
+                            <span className="px-2 py-0.5 text-xs bg-slate-200/60 dark:bg-navy-800/20 text-slate-700 dark:text-slate-300 rounded-full">
                               Inactive
                             </span>
                           )}
                         </div>
-                        <div className="mt-2 text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                        <div className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                           {method.payment_type === 'credit_card' && details.last_four && (
                             <span>{maskCardNumber(details.last_four)}</span>
                           )}
@@ -294,7 +303,7 @@ export const PaymentMethodsView: React.FC = () => {
                           )}
                           {method.payment_type === 'invoice' && <span>Invoice billing</span>}
                         </div>
-                        <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="mt-1 text-xs text-slate-500 dark:text-gray-400">
                           Added: {new Date(method.created_at).toLocaleDateString()}
                         </div>
                       </div>
@@ -310,7 +319,7 @@ export const PaymentMethodsView: React.FC = () => {
               })}
 
               {methods.length === 0 && (
-                <div className="text-center py-8 text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                <div className="text-center py-8 text-slate-600 dark:text-slate-400">
                   No payment methods found
                 </div>
               )}
@@ -321,9 +330,9 @@ export const PaymentMethodsView: React.FC = () => {
 
       {/* Payment Failures Tab */}
       {activeTab === 'failures' && (
-        <Card className="bg-gray-800 border-gray-700">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-white">Payment Failures (Dunning)</CardTitle>
+            <CardTitle>Payment Failures (Dunning)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -333,13 +342,13 @@ export const PaymentMethodsView: React.FC = () => {
                   className={`p-4 rounded-lg border ${
                     failure.status === 'pending' || failure.status === 'retrying'
                       ? 'bg-red-900/20 border-red-800'
-                      : 'bg-gray-900/50 border-gray-700'
+                      : 'bg-slate-50 dark:bg-navy-950/20 border-slate-200 dark:border-navy-700'
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
-                        <span className="text-white font-medium">
+                        <span className="text-slate-900 dark:text-white font-medium">
                           {failure.organization_name || failure.organization_id}
                         </span>
                         {getStatusBadge(failure.status)}
@@ -353,11 +362,11 @@ export const PaymentMethodsView: React.FC = () => {
                         <strong>Reason:</strong> {failure.failure_reason}
                       </div>
                       {failure.failure_code && (
-                        <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="mt-1 text-xs text-slate-500 dark:text-gray-400">
                           Error Code: {failure.failure_code}
                         </div>
                       )}
-                      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      <div className="mt-1 text-xs text-slate-500 dark:text-gray-400">
                         Attempted: {new Date(failure.attempted_at).toLocaleString()}
                         {failure.resolved_at && (
                           <span> • Resolved: {new Date(failure.resolved_at).toLocaleString()}</span>
@@ -377,7 +386,7 @@ export const PaymentMethodsView: React.FC = () => {
               ))}
 
               {failures.length === 0 && (
-                <div className="text-center py-8 text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                <div className="text-center py-8 text-slate-600 dark:text-slate-400">
                   No payment failures recorded
                 </div>
               )}

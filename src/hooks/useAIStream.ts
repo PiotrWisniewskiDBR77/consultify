@@ -1114,7 +1114,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
 
       const mergedContext = focusMode ? { ...(context || {}), focusMode } : context;
       const resolvedLanguage =
-        (language || localStorage.getItem('consultinity-preferred-chat-lang') || 'pl').split(
+        (language || localStorage.getItem('consultify-preferred-chat-lang') || 'pl').split(
           '-'
         )[0] || 'pl';
 

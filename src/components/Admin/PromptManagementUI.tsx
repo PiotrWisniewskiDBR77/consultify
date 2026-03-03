@@ -113,7 +113,7 @@ export function PromptManagementUI() {
 
     try {
       const response = await api.get('/ai-prompts');
-      const data = response?.data;
+      const data = (response as any)?.data ?? response;
 
       if (data?.success) {
         setPrompts(data.prompts || []);
@@ -141,7 +141,7 @@ export function PromptManagementUI() {
   const fetchVersionHistory = async (promptId: string) => {
     try {
       const response = await api.get(`/ai-prompts/${promptId}/versions`);
-      const data = response?.data;
+      const data = (response as any)?.data ?? response;
       if (data?.success || data?.versions) {
         setVersions(data.versions || []);
       } else if (Array.isArray(data)) {
@@ -176,7 +176,7 @@ export function PromptManagementUI() {
     setIsSaving(true);
     try {
       const response = await api.put(`/ai-prompts/${editForm.id}`, editForm);
-      const data = response?.data;
+      const data = (response as any)?.data ?? response;
 
       if (data?.success !== false) {
         toast.success('Prompt saved successfully');
@@ -200,7 +200,7 @@ export function PromptManagementUI() {
 
     try {
       const response = await api.delete(`/ai-prompts/${selectedPrompt.id}`);
-      const data = response?.data;
+      const data = (response as any)?.data ?? response;
 
       if (data?.success !== false) {
         toast.success('Prompt deleted');
@@ -239,7 +239,7 @@ export function PromptManagementUI() {
       const response = await api.post(`/ai-prompts/${selectedPrompt.id}/test`, {
         variables: {},
       });
-      const data = response?.data;
+      const data = (response as any)?.data ?? response;
 
       if (data?.success !== false) {
         setPreviewResult(data?.result || 'No response');

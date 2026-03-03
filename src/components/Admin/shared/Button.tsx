@@ -28,7 +28,9 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 const variantClasses: Record<ButtonVariant, string> = {
   primary: 'bg-primary-600 hover:bg-primary-700 text-white', // Fiolet
   secondary: 'bg-secondary-800 hover:bg-secondary-900 text-white border border-white/10', // Navy
-  ghost: 'hover:bg-white/[0.04] text-slate-400 dark:text-slate-500 hover:text-slate-300',
+  ghost:
+    'bg-transparent hover:bg-slate-100 text-slate-700 hover:text-slate-900 ' +
+    'dark:hover:bg-white/[0.04] dark:text-slate-400 dark:hover:text-slate-100',
   danger: 'bg-danger-600/10 hover:bg-danger-600/20 text-danger-400 border border-danger-500/20', // Czerwień
 };
 
@@ -64,7 +66,7 @@ export const Button: React.FC<ButtonProps> = ({
                 inline-flex items-center justify-center font-medium rounded-lg 
                 transition-colors focus:outline-none focus-visible:ring-2 
                 focus-visible:ring-primary-500/50 focus-visible:ring-offset-2 
-                focus-visible:ring-offset-slate-900
+                focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900
                 disabled:opacity-50 disabled:cursor-not-allowed
                 ${variantClasses[variant]}
                 ${sizeClasses[size]}
@@ -110,8 +112,8 @@ export const IconButton: React.FC<IconButtonProps> = ({
 
   const variantClass =
     variant === 'danger'
-      ? 'text-slate-400 dark:text-slate-500 hover:text-red-400 hover:bg-red-500/10'
-      : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-white/[0.04]';
+      ? 'text-slate-600 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10'
+      : 'text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04]';
 
   return (
     <button

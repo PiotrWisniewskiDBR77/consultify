@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { Api } from '@/services/api';
+
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, WorkflowState } from '../../types';
 
@@ -132,18 +134,30 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
     setError(null);
 
     try {
-      const response = await fetch('/api/assessments/my-assessments', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to load assessments');
-      }
-
-      const data = await response.json();
-      setAssessments(data.assessments || []);
+      const resp = await Api.listAssessments({ limit: 200, offset: 0 });
+      const list = Array.isArray((resp as any)?.items)
+        ? (resp as any).items
+        : Array.isArray((resp as any)?.assessments)
+          ? (resp as any).assessments
+          : [];
+      setAssessments(
+        list.map((a: any) => ({
+          id: String(a?.id || ''),
+          projectId: String(a?.projectId || a?.project_id || ''),
+          projectName: String(a?.projectName || a?.project_name || ''),
+          name: String(a?.name || a?.title || ''),
+          type: (String(a?.assessmentType || a?.assessment_type || a?.type || 'DRD').toUpperCase() ||
+            'DRD') as any,
+          status: (String(a?.backendStatus || a?.status || 'DRAFT').toUpperCase() || 'DRAFT') as any,
+          completedAxes: Number(a?.completedAxes || 0),
+          totalAxes: Number(a?.totalAxes || 0),
+          overallScore: a?.overallScore ?? a?.overall_score ?? undefined,
+          createdAt: String(a?.createdAt || a?.created_at || ''),
+          updatedAt: String(a?.updatedAt || a?.updated_at || ''),
+          createdBy: String(a?.createdBy || a?.created_by || ''),
+          createdByName: a?.createdByName || a?.created_by_name,
+        }))
+      );
     } catch (err: any) {
       console.error('[MyAssessmentsList] Error:', err);
       setError(err.message);

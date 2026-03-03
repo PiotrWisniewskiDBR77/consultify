@@ -673,11 +673,7 @@ router.post(
         return;
       }
 
-      if (
-        !StorageService?.storeFile ||
-        !KnowledgeService?.addDocument ||
-        !KnowledgeService?.processDocument
-      ) {
+      if (!KnowledgeService?.addDocument || !KnowledgeService?.processDocument) {
         return notConfigured(res);
         return;
       }
@@ -694,14 +690,23 @@ router.post(
         return;
       }
 
-      // Move file to isolated storage (use null for projectId to enforce global scope)
-      const finalPath = await StorageService.storeFile(
-        tempPath,
-        orgId,
-        null,
-        'knowledge',
-        originalname
-      );
+      // Move file to local storage (org-scoped; global docs => project_id NULL)
+      const safeName = String(path.basename(originalname || 'document'))
+        .replace(/[/\\]+/g, '_')
+        .replace(/\s+/g, ' ')
+        .trim();
+      const destDir = path.resolve(process.cwd(), 'uploads', 'knowledge', orgId);
+      fs.mkdirSync(destDir, { recursive: true });
+      const finalPath = path.join(destDir, `${Date.now()}-${safeName}`);
+      try {
+        fs.renameSync(tempPath, finalPath);
+        tempPath = null;
+      } catch (_moveErr) {
+        // Fallback for cross-device moves
+        fs.copyFileSync(tempPath, finalPath);
+        fs.unlinkSync(tempPath);
+        tempPath = null;
+      }
 
       // Save metadata with category and tags
       const category = (req.body.category as string) || null;

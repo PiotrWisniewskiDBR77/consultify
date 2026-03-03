@@ -159,6 +159,11 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
     .sort(([, a], [, b]) => (b || 0) - (a || 0))
     .slice(0, 5);
 
+  const prioritisationAreas = SIRI_PRIORITISATION_AREAS.map((a) => ({
+    ...a,
+    score: Number((data.prioritisationMatrix || {})[a.id] || 0),
+  })).sort((a, b) => (b.score || 0) - (a.score || 0));
+
   return (
     <div className="bg-white dark:bg-navy-950 min-h-full p-8 print:p-0">
       {/* Header */}
@@ -278,6 +283,47 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
               </div>
             );
           })}
+        </div>
+      </section>
+
+      {/* Assessment Matrix (16 Prioritisation Areas) */}
+      <section className="mb-8">
+        <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+          <TrendingUp size={20} />
+          Assessment Matrix (16 Prioritisation Areas)
+        </h2>
+        <div className="bg-slate-50 dark:bg-navy-900/50 rounded-xl p-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-slate-500 dark:text-slate-400">
+                <th className="py-2 pr-4">Area</th>
+                <th className="py-2 pr-4">Building Block</th>
+                <th className="py-2 pr-4">Dimension</th>
+                <th className="py-2 pr-0">Priority</th>
+              </tr>
+            </thead>
+            <tbody>
+              {prioritisationAreas.map((a) => (
+                <tr key={a.id} className="border-t border-slate-200/60 dark:border-navy-800">
+                  <td className="py-2 pr-4">
+                    <div className="font-semibold text-navy-900 dark:text-white">
+                      {a.namePL || a.name}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{a.name}</div>
+                  </td>
+                  <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">{a.buildingBlock}</td>
+                  <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">
+                    {String(a.dimension || '').replace(/_/g, ' ')}
+                  </td>
+                  <td className="py-2 pr-0">
+                    <span className="font-semibold text-navy-900 dark:text-white">
+                      {(a.score || 0).toFixed(1)}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 
@@ -526,7 +572,7 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
 
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-navy-700 pt-4 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-        <p>Raport wygenerowany przez Consultinity • {new Date().toLocaleDateString('pl-PL')}</p>
+        <p>Raport wygenerowany przez Consultify • {new Date().toLocaleDateString('pl-PL')}</p>
         <p className="mt-1">SIRI Assessment • {organizationName}</p>
       </footer>
     </div>

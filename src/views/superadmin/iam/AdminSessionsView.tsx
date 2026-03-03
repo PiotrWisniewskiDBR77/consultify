@@ -67,7 +67,8 @@ const AdminSessionsView: React.FC = () => {
         Api.getAdminSessions(),
         Api.getAdminSessionStats(),
       ]);
-      setSessions(sessionsData as AdminSession[]);
+      const nextSessions = (sessionsData as any)?.sessions;
+      setSessions(Array.isArray(nextSessions) ? nextSessions : []);
       // Map API response to expected interface
       const mappedStats = statsData as any;
       setStats({
@@ -150,7 +151,7 @@ const AdminSessionsView: React.FC = () => {
               <Users className="w-5 h-5 text-indigo-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Total Sessions</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Total Sessions</p>
               <p className="text-xl font-semibold">{stats?.totalSessions || 0}</p>
             </div>
           </div>
@@ -162,7 +163,7 @@ const AdminSessionsView: React.FC = () => {
               <Shield className="w-5 h-5 text-emerald-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Active Sessions</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Active Sessions</p>
               <p className="text-xl font-semibold">{stats?.activeSessions || 0}</p>
             </div>
           </div>
@@ -174,7 +175,7 @@ const AdminSessionsView: React.FC = () => {
               <ShieldCheck className="w-5 h-5 text-violet-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">MFA Verified</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">MFA Verified</p>
               <p className="text-xl font-semibold">{stats?.mfaVerifiedSessions || 0}</p>
             </div>
           </div>
@@ -186,7 +187,7 @@ const AdminSessionsView: React.FC = () => {
               <Users className="w-5 h-5 text-amber-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Unique Admins</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Unique Admins</p>
               <p className="text-xl font-semibold">{stats?.uniqueAdmins || 0}</p>
             </div>
           </div>
@@ -198,7 +199,7 @@ const AdminSessionsView: React.FC = () => {
         <Card variant="bordered" className="p-4 border-red-500/30 bg-red-500/5">
           <div className="flex items-center gap-2 text-red-400">
             <AlertTriangle className="w-5 h-5" />
-            <span>{error}</span>
+            <span>{typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}</span>
             <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
               Dismiss
             </button>
@@ -212,7 +213,7 @@ const AdminSessionsView: React.FC = () => {
         <div className="flex gap-2">
           <button
             onClick={loadData}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded-lg transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             Refresh
@@ -237,26 +238,26 @@ const AdminSessionsView: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+              <tr className="border-b border-slate-200 dark:border-slate-700">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   Admin
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   Device
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   IP Address
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   MFA
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   Created
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   Expires
                 </th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                   Actions
                 </th>
               </tr>
@@ -264,7 +265,7 @@ const AdminSessionsView: React.FC = () => {
             <tbody>
               {sessions.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-8 text-slate-400 dark:text-slate-500">
+                  <td colSpan={7} className="text-center py-8 text-slate-600 dark:text-slate-400">
                     No active sessions found
                   </td>
                 </tr>
@@ -272,14 +273,14 @@ const AdminSessionsView: React.FC = () => {
                 sessions.map((session) => (
                   <tr
                     key={session.id}
-                    className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors"
+                    className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                   >
                     <td className="py-3 px-4">
                       <div>
                         <p className="font-medium">
                           {session.admin.firstName} {session.admin.lastName}
                         </p>
-                        <p className="text-sm text-slate-400 dark:text-slate-500">
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
                           {session.admin.email}
                         </p>
                       </div>
@@ -294,7 +295,7 @@ const AdminSessionsView: React.FC = () => {
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                        <Globe className="w-4 h-4 text-slate-500 dark:text-slate-500" />
                         <span className="text-sm">{session.ipAddress || 'Unknown'}</span>
                       </div>
                     </td>
@@ -313,7 +314,7 @@ const AdminSessionsView: React.FC = () => {
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-1 text-sm text-slate-300">
-                        <Clock className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                        <Clock className="w-4 h-4 text-slate-500 dark:text-slate-500" />
                         {formatDate(session.createdAt)}
                       </div>
                     </td>

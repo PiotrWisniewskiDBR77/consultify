@@ -15,6 +15,8 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { Api } from '../../services/api';
+
 interface AIStats {
   tokensToday: number;
   tokensThisMonth: number;
@@ -63,20 +65,10 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
     try {
       setRefreshing(true);
 
-      // Fetch AI Stats
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-
       const [statsRes, providersRes, diagRes] = await Promise.all([
-        fetch('/api/llm/audit/stats', { headers })
-          .then((r) => r.json())
-          .catch(() => null),
-        fetch('/api/llm/providers/public', { headers })
-          .then((r) => r.json())
-          .catch(() => []),
-        fetch('/api/llm/diagnose')
-          .then((r) => r.json())
-          .catch(() => null),
+        Api.getLLMAuditStats().catch(() => null),
+        Api.getPublicLLMProviders().catch(() => []),
+        Api.diagnoseLLM().catch(() => null),
       ]);
 
       if (statsRes) setStats(statsRes);
@@ -131,7 +123,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
         <button
           onClick={fetchData}
           disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded-lg text-sm transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 dark:bg-navy-800 dark:hover:bg-navy-700 dark:text-white dark:border-white/10 rounded-lg text-sm transition-colors disabled:opacity-50"
         >
           <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
           Refresh
@@ -157,13 +149,15 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
           <div className="flex-1">
             <p
               className={`font-medium ${
-                diagnostics.status === 'OK' ? 'text-green-400' : 'text-yellow-400'
+                diagnostics.status === 'OK'
+                  ? 'text-emerald-700 dark:text-green-400'
+                  : 'text-amber-800 dark:text-yellow-400'
               }`}
             >
               System Status:{' '}
               {diagnostics.status === 'OK' ? 'All Systems Operational' : diagnostics.status}
             </p>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-500">
               Version: {diagnostics.version} •
               {diagnostics.checks.find((c) => c.name === 'api_connection')?.details && (
                 <>
@@ -179,24 +173,26 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
       {/* Primary Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Tokens Today */}
-        <div className="bg-navy-900 border border-white/10 rounded-xl p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-slate-400 dark:text-slate-500 text-sm">Tokens Today</span>
             <Activity className="text-blue-400" size={20} />
           </div>
-          <p className="text-3xl font-bold text-white">{formatNumber(stats?.tokensToday || 0)}</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-white">
+            {formatNumber(stats?.tokensToday || 0)}
+          </p>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Est. cost: {estimateCost(stats?.tokensToday || 0)}
           </p>
         </div>
 
         {/* Tokens This Month */}
-        <div className="bg-navy-900 border border-white/10 rounded-xl p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-slate-400 dark:text-slate-500 text-sm">Tokens This Month</span>
             <TrendingUp className="text-green-400" size={20} />
           </div>
-          <p className="text-3xl font-bold text-white">
+          <p className="text-3xl font-bold text-slate-900 dark:text-white">
             {formatNumber(stats?.tokensThisMonth || 0)}
           </p>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -380,8 +376,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
           <button
             onClick={async () => {
               try {
-                const res = await fetch('/api/llm/diagnose');
-                const data = await res.json();
+                const data = await Api.diagnoseLLM();
                 setDiagnostics(data);
                 toast.success('Diagnostics refreshed');
               } catch {

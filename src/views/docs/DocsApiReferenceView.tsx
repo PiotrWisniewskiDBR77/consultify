@@ -528,7 +528,7 @@ export function DocsApiReferenceView() {
             </div>
             <h1 className="text-4xl font-bold text-white mb-4">API Reference</h1>
             <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-8">
-              Complete REST API documentation for the Consultinity platform. Build integrations and
+              Complete REST API documentation for the Consultify platform. Build integrations and
               automate your transformation workflows.
             </p>
 

@@ -17,6 +17,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
@@ -95,12 +96,38 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
       if (!token) return;
       const params = new URLSearchParams();
       if (projectId) params.set('projectId', projectId);
-      const res = await fetch(`/api/execution-control/delay-signals?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
+      const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+      // Try to persist detections (admin-only). Non-blocking: ignore 403/401.
+      try {
+        await fetch('/api/execution-control/delay-signals/detect', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ projectId: projectId || null }),
+        });
+      } catch {
+        // non-blocking
+      }
+
+      // Prefer persisted signals (stable + respects dismiss rows).
+      const persistedRes = await fetch(
+        `/api/execution-control/delay-signals?${params.toString()}&persisted=true`,
+        { headers }
+      );
+      if (persistedRes.ok) {
+        const data = await persistedRes.json();
         setSignals(data.signals || []);
+        return;
+      }
+
+      // Fallback to live detection (e.g., if persisted is restricted).
+      const liveRes = await fetch(`/api/execution-control/delay-signals?${params}`, { headers });
+      if (liveRes.ok) {
+        const data = await liveRes.json();
+        setSignals(data.signals || []);
+      } else {
+        const err = await liveRes.json().catch(() => ({}));
+        toast.error((err as any)?.error || t('execution.delay.loadFailed', 'Failed to load'));
       }
     } catch {
       // non-blocking
@@ -126,7 +153,7 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      await fetch('/api/execution-control/delay-signals/dismiss', {
+      const res = await fetch('/api/execution-control/delay-signals/dismiss', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -136,6 +163,12 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
           deviationType: signal.deviationType,
         }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error((err as any)?.error || t('execution.delay.dismissFailed', 'Failed to dismiss'));
+        return;
+      }
+
       setSignals((prev) => prev.filter((s) => s.id !== signal.id));
       trackFunnelEvent('delay_signal_dismissed', {
         deviationType: signal.deviationType,

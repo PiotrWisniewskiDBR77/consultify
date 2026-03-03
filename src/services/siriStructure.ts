@@ -2,7 +2,7 @@
  * SIRI (Smart Industry Readiness Index) Structure
  *
  * SIRI jest narzędziem opracowanym przez Singapore Economic Development Board (EDB)
- * we współpracy z TÜV SÜD. Wykorzystanie w Consultinity ma wyłącznie cel edukacyjny.
+ * we współpracy z TÜV SÜD. Wykorzystanie w Consultify ma wyłącznie cel edukacyjny.
  *
  * Structure:
  * - 3 Building Blocks (Process, Technology, Organization)

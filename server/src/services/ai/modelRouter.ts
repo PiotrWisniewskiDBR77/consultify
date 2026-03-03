@@ -8,6 +8,7 @@ import type { LLMConfigService } from './llmConfigService.js';
 import { aiLogger } from './logger.js';
 import { modelMeetsRequirements, type ModelRequirements } from './modelCapabilities.js';
 import { modelRegistryService } from './modelRegistryService.js';
+import { routingRulesService } from './routingRulesService.js';
 
 export const TIER_HIERARCHY = ['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING'] as const;
 export type Tier = (typeof TIER_HIERARCHY)[number] | 'VISION';
@@ -374,15 +375,26 @@ export class ModelRouter {
       : availableModels;
 
     if (availableModelsAfterPolicy.length > 0) {
-      const selectedModel = await this.selectWithRoundRobin(
+      const applied = await routingRulesService.applyRulesToCandidates({
+        candidates: availableModelsAfterPolicy as any,
         tier,
-        organizationId,
-        availableModelsAfterPolicy
-      );
+        purpose: capability,
+        organizationId: organizationId || null,
+      });
+
+      const candidatesAfterRules = applied.candidates || [];
+      const strategy = applied.selectionStrategy?.kind || 'round_robin';
+
+      const selectedModel =
+        strategy === 'weighted_random' && candidatesAfterRules.length > 0
+          ? routingRulesService.pickWeightedRandom(candidatesAfterRules as any, applied.selectionStrategy?.weights)
+          : await this.selectWithRoundRobin(tier, organizationId, candidatesAfterRules as any);
       if (selectedModel) {
         aiLogger.info(
           'ModelRouter',
-          `Selected via round-robin: ${selectedModel.model_id} (${selectedModel.provider})`
+          `Selected via ${strategy === 'weighted_random' ? 'weighted routing' : 'round-robin'}: ${
+            selectedModel.model_id
+          } (${selectedModel.provider})`
         );
         return {
           id: selectedModel.model_id || selectedModel.id,

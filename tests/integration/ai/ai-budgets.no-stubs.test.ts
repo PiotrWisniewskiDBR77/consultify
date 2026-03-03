@@ -34,19 +34,20 @@ describe('AI budgets routes (no stubs)', () => {
     router = (await import('../../../server/src/routes/ai/ai-budgets.routes.ts')).default;
   });
 
-  it('GET /api/ai-budgets/budgets returns 503 when service is unavailable (no 501 stubs)', async () => {
+  it('GET /api/ai-budgets/budgets returns 200 with budgets list', async () => {
     const res = await request(makeApp()).get(`${basePath}/budgets`);
-    expect(res.status).toBe(503);
-    expect(res.body).toEqual(expect.objectContaining({ success: false, error: expect.any(String) }));
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(expect.objectContaining({ success: true, data: expect.any(Array) }));
   });
 
-  it('POST /api/ai-budgets/budgets returns 503 when service is unavailable (no 501 stubs)', async () => {
+  it('POST /api/ai-budgets/budgets creates budget and returns 201', async () => {
     const res = await request(makeApp()).post(`${basePath}/budgets`).send({
-      budgetType: 'monthly',
-      period: '2026-02',
+      budgetType: 'cost',
+      period: 'monthly',
       budgetLimit: 10,
     });
-    expect(res.status).toBe(503);
-    expect(res.body).toEqual(expect.objectContaining({ success: false, error: expect.any(String) }));
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual(expect.objectContaining({ success: true, data: expect.any(Object) }));
+    expect(res.body.data).toHaveProperty('id');
   });
 });

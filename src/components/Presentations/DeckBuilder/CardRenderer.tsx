@@ -1,0 +1,197 @@
+import React, { useMemo } from 'react';
+
+import type { CardBlock, CuratedColorSet, DeckCard } from '../wizard/types';
+import { CURATED_COLOR_SETS } from '../wizard/types';
+
+import { AnimatedBlock, AnimatedCard } from './AnimatedBlock';
+import { CardSourceFooter } from './SourceTraceability';
+import { ArtifactEmbedBlock } from './blocks/ArtifactEmbedBlock';
+import { BulletListBlock } from './blocks/BulletListBlock';
+import { CalloutBlock } from './blocks/CalloutBlock';
+import { ChartBlock } from './blocks/ChartBlock';
+import { DividerBlock } from './blocks/DividerBlock';
+import { HeadingBlock } from './blocks/HeadingBlock';
+import { ImageBlock } from './blocks/ImageBlock';
+import { KpiWidgetBlock } from './blocks/KpiWidgetBlock';
+import { MetricStripBlock } from './blocks/MetricStripBlock';
+import { ParagraphBlock } from './blocks/ParagraphBlock';
+import { SmartDiagramBlock } from './blocks/SmartDiagramBlock';
+import { SmartLayoutBlock } from './blocks/SmartLayoutBlock';
+import { TableBlock } from './blocks/TableBlock';
+import { TimelineBlock } from './blocks/TimelineBlock';
+import { assignBlocksToRegions, selectLayout } from './layouts/LayoutEngine';
+
+interface CardRendererProps {
+  card: DeckCard;
+  colorSetId?: string;
+  isActive?: boolean;
+  scale?: number;
+  animationsEnabled?: boolean;
+  recentLayoutIds?: string[];
+  onBlockClick?: (blockId: string) => void;
+}
+
+const BLOCK_COMPONENTS: Record<string, React.FC<{ block: CardBlock; theme: CuratedColorSet }>> = {
+  heading: HeadingBlock,
+  paragraph: ParagraphBlock,
+  bullet_list: BulletListBlock,
+  numbered_list: BulletListBlock,
+  table: TableBlock,
+  chart: ChartBlock,
+  image: ImageBlock,
+  kpi_widget: KpiWidgetBlock,
+  metric_strip: MetricStripBlock,
+  smart_layout: SmartLayoutBlock,
+  smart_diagram: SmartDiagramBlock,
+  callout: CalloutBlock,
+  quote_block: CalloutBlock,
+  timeline_block: TimelineBlock,
+  artifact_embed: ArtifactEmbedBlock,
+  divider: DividerBlock,
+  icon_row: DividerBlock,
+};
+
+export const CardRenderer: React.FC<CardRendererProps> = ({
+  card,
+  colorSetId,
+  isActive,
+  scale = 1,
+  animationsEnabled = true,
+  recentLayoutIds = [],
+  onBlockClick,
+}) => {
+  const theme =
+    CURATED_COLOR_SETS.find((c) => c.id === colorSetId) || CURATED_COLOR_SETS[1];
+
+  const bgStyle = getBackgroundStyle(card, theme);
+
+  const layout = useMemo(() => {
+    if (card.blocks.length === 0) return null;
+    return selectLayout(card, recentLayoutIds);
+  }, [card, recentLayoutIds]);
+
+  const regionMap = useMemo(() => {
+    if (!layout || card.blocks.length === 0) return null;
+    return assignBlocksToRegions(card.blocks, layout);
+  }, [layout, card.blocks]);
+
+  const useGridLayout = layout && regionMap && layout.regions.length > 1;
+
+  const renderBlockItem = (block: CardBlock, blockIndex: number) => {
+    const Component = BLOCK_COMPONENTS[block.type];
+    if (!Component) return null;
+    return (
+      <AnimatedBlock
+        key={block.block_id}
+        blockType={block.type}
+        index={blockIndex}
+        animationsEnabled={animationsEnabled}
+        blockStagger={card.animations.block_stagger}
+      >
+        <div
+          onClick={() => onBlockClick?.(block.block_id)}
+          className="relative group cursor-pointer"
+        >
+          <Component block={block} theme={theme} />
+          <div className="absolute inset-0 rounded border-2 border-transparent group-hover:border-purple-400/50 transition-colors pointer-events-none" />
+        </div>
+      </AnimatedBlock>
+    );
+  };
+
+  const cardContent = (
+    <div
+      className={`relative rounded-xl overflow-hidden shadow-lg transition-shadow ${
+        isActive ? 'ring-2 ring-purple-500 shadow-xl' : 'shadow-md'
+      }`}
+      style={{
+        aspectRatio: '16/9',
+        transform: scale !== 1 ? `scale(${scale})` : undefined,
+        transformOrigin: 'top left',
+        ...bgStyle,
+      }}
+    >
+      <div className="absolute inset-0 p-8 flex flex-col overflow-hidden">
+        {card.blocks.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center">
+            <p
+              className="text-lg font-semibold opacity-60"
+              style={{ color: theme.colors.textPrimary }}
+            >
+              {card.title}
+            </p>
+          </div>
+        ) : useGridLayout ? (
+          <div
+            className="flex-1 gap-3"
+            style={{
+              display: 'grid',
+              gridTemplateAreas: layout.gridTemplate,
+              gridTemplateColumns: layout.gridTemplateColumns,
+              gridTemplateRows: layout.gridTemplateRows,
+            }}
+          >
+            {layout.regions.map((region) => {
+              const blocksInRegion = regionMap.get(region.area) || [];
+              return (
+                <div
+                  key={region.area}
+                  style={{ gridArea: region.gridArea }}
+                  className="flex flex-col gap-2 overflow-hidden"
+                >
+                  {blocksInRegion.map((block, idx) =>
+                    renderBlockItem(block as CardBlock, idx)
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col gap-3">
+            {card.blocks
+              .sort((a, b) => a.position.order - b.position.order)
+              .map((block, blockIndex) => renderBlockItem(block, blockIndex))}
+          </div>
+        )}
+
+        {/* Source Traceability Footer */}
+        {card.source_refs.length > 0 && scale === 1 && (
+          <CardSourceFooter sourceRefs={card.source_refs} />
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <AnimatedCard
+      entrance={card.animations.entrance}
+      animationsEnabled={animationsEnabled && scale === 1}
+    >
+      {cardContent}
+    </AnimatedCard>
+  );
+};
+
+function getBackgroundStyle(
+  card: DeckCard,
+  theme: CuratedColorSet
+): React.CSSProperties {
+  switch (card.background.type) {
+    case 'color':
+      return { backgroundColor: card.background.value || theme.colors.background };
+    case 'gradient':
+      return {
+        background:
+          card.background.value ||
+          `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary})`,
+      };
+    case 'image':
+      return {
+        backgroundImage: `url(${card.background.value})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      };
+    default:
+      return { backgroundColor: theme.colors.surface };
+  }
+}

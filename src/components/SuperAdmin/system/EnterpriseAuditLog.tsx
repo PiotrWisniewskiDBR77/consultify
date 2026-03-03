@@ -152,6 +152,54 @@ export const EnterpriseAuditLog: React.FC = () => {
     total: 0,
   });
 
+  const getRiskLevelFromScore = (riskScore: any): AuditLog['risk_level'] => {
+    const score = Number(riskScore);
+    if (Number.isNaN(score)) return 'LOW';
+    if (score >= 90) return 'CRITICAL';
+    if (score >= 70) return 'HIGH';
+    if (score >= 31) return 'MEDIUM';
+    return 'LOW';
+  };
+
+  const normalizeLog = (row: any): AuditLog => {
+    const metadata = row?.metadataJson ?? row?.metadata ?? {};
+    const complianceTagsRaw =
+      row?.compliance_tags ??
+      row?.complianceTags ??
+      metadata?.complianceTags ??
+      metadata?.compliance_tags ??
+      [];
+    const complianceTags = Array.isArray(complianceTagsRaw)
+      ? complianceTagsRaw
+      : (() => {
+          try {
+            return JSON.parse(String(complianceTagsRaw || '[]'));
+          } catch {
+            return [];
+          }
+        })();
+
+    const riskScore = row?.risk_score ?? row?.riskScore ?? metadata?.riskScore ?? null;
+    return {
+      id: String(row?.id ?? ''),
+      timestamp: row?.timestamp ?? row?.created_at ?? row?.createdAt ?? null,
+      user_id: row?.user_id ?? row?.admin_id ?? row?.adminId ?? null,
+      user_email: row?.user_email ?? row?.admin_email ?? row?.admin?.email ?? null,
+      ip_address: row?.ip_address ?? row?.ipAddress ?? null,
+      user_agent: row?.user_agent ?? row?.userAgent ?? null,
+      action_type: row?.action_type ?? row?.actionType ?? null,
+      resource_type: row?.resource_type ?? row?.resourceType ?? row?.entity_type ?? null,
+      resource_id: row?.resource_id ?? row?.resourceId ?? row?.entity_id ?? null,
+      before_data: row?.before_data ?? metadata?.before_data ?? metadata?.beforeData ?? null,
+      after_data: row?.after_data ?? metadata?.after_data ?? metadata?.afterData ?? null,
+      risk_level: row?.risk_level ?? getRiskLevelFromScore(riskScore),
+      compliance_tags: complianceTags,
+      request_id: row?.request_id ?? metadata?.requestId ?? null,
+      organization_id: row?.organization_id ?? row?.organizationId ?? null,
+      metadata,
+    } as any;
+  };
+
   const fetchLogs = useCallback(async () => {
     setLoading(true);
     try {
@@ -170,7 +218,8 @@ export const EnterpriseAuditLog: React.FC = () => {
         pageSize: pagination.pageSize,
       });
 
-      setLogs(Array.isArray(data) ? data : data.logs || []);
+      const raw = Array.isArray(data) ? data : data.logs || [];
+      setLogs((raw || []).map(normalizeLog));
       if (data.pagination) {
         setPagination((prev) => ({ ...prev, total: data.pagination.total }));
       }
@@ -244,12 +293,60 @@ export const EnterpriseAuditLog: React.FC = () => {
     });
   };
 
+  const analyticsActionCounts = (() => {
+    const counts = new Map<string, number>();
+    for (const l of logs) {
+      const k = String((l as any)?.action_type || '').trim() || 'UNKNOWN';
+      counts.set(k, (counts.get(k) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([action, count]) => ({ action, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6);
+  })();
+  const analyticsActionMax = Math.max(1, ...analyticsActionCounts.map((x) => x.count));
+
+  const analyticsComplianceCounts = (() => {
+    return COMPLIANCE_TAGS.map((tag) => {
+      const count = logs.reduce((acc, l: any) => {
+        const tags = Array.isArray(l?.compliance_tags) ? l.compliance_tags : [];
+        return acc + (tags.includes(tag.id) ? 1 : 0);
+      }, 0);
+      return { ...tag, count };
+    });
+  })();
+
+  const analyticsTimeline = (() => {
+    // last 7 days (including today), local date buckets
+    const days = Array.from({ length: 7 }).map((_, i) => {
+      const d = new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    });
+    const bucket = new Map<string, number>(days.map((d) => [d.toISOString().slice(0, 10), 0]));
+    for (const l of logs as any[]) {
+      const ts = l?.timestamp;
+      if (!ts) continue;
+      const d = new Date(ts);
+      if (Number.isNaN(d.getTime())) continue;
+      d.setHours(0, 0, 0, 0);
+      const key = d.toISOString().slice(0, 10);
+      if (bucket.has(key)) bucket.set(key, (bucket.get(key) || 0) + 1);
+    }
+    const series = days.map((d) => {
+      const key = d.toISOString().slice(0, 10);
+      return { date: d, count: bucket.get(key) || 0 };
+    });
+    const max = Math.max(1, ...series.map((s) => s.count));
+    return { series, max };
+  })();
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Audit Log</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Audit Log</h2>
           <p className="text-slate-400 dark:text-slate-500 text-sm">
             Comprehensive activity tracking for compliance and security
           </p>
@@ -260,8 +357,8 @@ export const EnterpriseAuditLog: React.FC = () => {
               onClick={() => setActiveView('logs')}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 activeView === 'logs'
-                  ? 'bg-white/10 text-white'
-                  : 'text-slate-400 dark:text-slate-500 hover:text-white'
+                  ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
               }`}
             >
               Logs
@@ -270,8 +367,8 @@ export const EnterpriseAuditLog: React.FC = () => {
               onClick={() => setActiveView('analytics')}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 activeView === 'analytics'
-                  ? 'bg-white/10 text-white'
-                  : 'text-slate-400 dark:text-slate-500 hover:text-white'
+                  ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
               }`}
             >
               Analytics
@@ -293,13 +390,13 @@ export const EnterpriseAuditLog: React.FC = () => {
             <div className="absolute right-0 mt-2 w-40 bg-slate-800 border border-white/10 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
               <button
                 onClick={() => handleExport('csv')}
-                className="w-full px-4 py-2 text-sm text-left text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-t-lg"
+                className="w-full px-4 py-2 text-sm text-left text-slate-200 hover:bg-slate-700 rounded-t-lg"
               >
                 Export as CSV
               </button>
               <button
                 onClick={() => handleExport('json')}
-                className="w-full px-4 py-2 text-sm text-left text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-b-lg"
+                className="w-full px-4 py-2 text-sm text-left text-slate-200 hover:bg-slate-700 rounded-b-lg"
               >
                 Export as JSON
               </button>
@@ -311,13 +408,15 @@ export const EnterpriseAuditLog: React.FC = () => {
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+          <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
             <div className="text-sm text-slate-400 dark:text-slate-500">Total Events</div>
-            <div className="text-2xl font-bold text-white mt-1">{stats.total || 0}</div>
+            <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">
+              {stats.total || 0}
+            </div>
           </div>
-          <div className="p-4 bg-slate-50 dark:bg-navy-800/300/10 rounded-xl border border-slate-500/30">
+          <div className="p-4 bg-slate-50 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
             <div className="text-sm text-slate-400 dark:text-slate-500">Low Risk</div>
-            <div className="text-2xl font-bold text-slate-400 dark:text-slate-500 mt-1">
+            <div className="text-2xl font-bold text-slate-700 dark:text-slate-300 mt-1">
               {stats.low_risk || 0}
             </div>
           </div>
@@ -349,13 +448,13 @@ export const EnterpriseAuditLog: React.FC = () => {
               placeholder="Search by action, resource, user, request ID..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
           <select
             value={filters.riskLevel}
             onChange={(e) => setFilters({ ...filters, riskLevel: e.target.value })}
-            className="px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
           >
             <option value="ALL">All Risk Levels</option>
             <option value="LOW">Low</option>
@@ -377,7 +476,7 @@ export const EnterpriseAuditLog: React.FC = () => {
           <button
             onClick={fetchLogs}
             disabled={loading}
-            className="p-2 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 border border-white/10 rounded-lg text-slate-300"
+            className="p-2 bg-white dark:bg-navy-950/20 hover:bg-slate-50 dark:hover:bg-navy-800/40 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-300"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -385,7 +484,7 @@ export const EnterpriseAuditLog: React.FC = () => {
 
         {/* Advanced Filters */}
         {showFilters && (
-          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10 space-y-4">
+          <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
@@ -394,7 +493,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                 <select
                   value={filters.actionType}
                   onChange={(e) => setFilters({ ...filters, actionType: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-lg text-white text-sm"
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 text-sm"
                 >
                   <option value="">All Actions</option>
                   {ACTION_TYPES.map((type) => (
@@ -411,7 +510,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                 <select
                   value={filters.resourceType}
                   onChange={(e) => setFilters({ ...filters, resourceType: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-lg text-white text-sm"
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 text-sm"
                 >
                   <option value="">All Resources</option>
                   {RESOURCE_TYPES.map((type) => (
@@ -428,7 +527,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                 <select
                   value={filters.complianceTag}
                   onChange={(e) => setFilters({ ...filters, complianceTag: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-lg text-white text-sm"
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 text-sm"
                 >
                   <option value="">All Tags</option>
                   {COMPLIANCE_TAGS.map((tag) => (
@@ -447,7 +546,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                   value={filters.userId}
                   onChange={(e) => setFilters({ ...filters, userId: e.target.value })}
                   placeholder="Filter by user"
-                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-lg text-white text-sm"
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 text-sm"
                 />
               </div>
               <div>
@@ -458,7 +557,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                   type="date"
                   value={filters.startDate}
                   onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-lg text-white text-sm"
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 text-sm"
                 />
               </div>
               <div>
@@ -469,14 +568,14 @@ export const EnterpriseAuditLog: React.FC = () => {
                   type="date"
                   value={filters.endDate}
                   onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-lg text-white text-sm"
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 text-sm"
                 />
               </div>
             </div>
             <div className="flex justify-end">
               <button
                 onClick={resetFilters}
-                className="text-sm text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+                className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
               >
                 Reset Filters
               </button>
@@ -507,7 +606,7 @@ export const EnterpriseAuditLog: React.FC = () => {
               return (
                 <div
                   key={log.id}
-                  className="bg-white/5 rounded-xl border border-white/10 overflow-hidden"
+                  className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden"
                 >
                   <div
                     className="p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
@@ -520,9 +619,11 @@ export const EnterpriseAuditLog: React.FC = () => {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-white">{log.action_type}</span>
+                            <span className="font-medium text-slate-900 dark:text-slate-100">
+                              {log.action_type}
+                            </span>
                             {log.resource_type && (
-                              <span className="text-slate-400 dark:text-slate-500">
+                              <span className="text-slate-600 dark:text-slate-400">
                                 on {log.resource_type}
                               </span>
                             )}
@@ -534,7 +635,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
-                              {new Date(log.timestamp).toLocaleString()}
+                              {log.timestamp && !isNaN(new Date(log.timestamp).getTime()) ? new Date(log.timestamp).toLocaleString() : 'Unknown date'}
                             </span>
                             {log.ip_address && (
                               <span className="flex items-center gap-1">
@@ -582,12 +683,12 @@ export const EnterpriseAuditLog: React.FC = () => {
 
                   {/* Expanded Details */}
                   {isExpanded && (
-                    <div className="px-4 pb-4 pt-0 border-t border-white/5 mt-0">
+                    <div className="px-4 pb-4 pt-0 border-t border-slate-200 dark:border-white/5 mt-0">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                         <div>
                           <div className="text-xs text-slate-500 dark:text-slate-400">Log ID</div>
                           <div className="flex items-center gap-1 mt-1">
-                            <code className="text-xs text-slate-300 font-mono">
+                            <code className="text-xs text-slate-700 dark:text-slate-300 font-mono">
                               {log.id.slice(0, 8)}...
                             </code>
                             <button
@@ -610,7 +711,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                             <div className="text-xs text-slate-500 dark:text-slate-400">
                               Request ID
                             </div>
-                            <code className="text-xs text-slate-300 font-mono mt-1 block">
+                            <code className="text-xs text-slate-700 dark:text-slate-300 font-mono mt-1 block">
                               {log.request_id.slice(0, 12)}...
                             </code>
                           </div>
@@ -620,7 +721,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                             <div className="text-xs text-slate-500 dark:text-slate-400">
                               Resource ID
                             </div>
-                            <code className="text-xs text-slate-300 font-mono mt-1 block">
+                            <code className="text-xs text-slate-700 dark:text-slate-300 font-mono mt-1 block">
                               {log.resource_id.slice(0, 12)}...
                             </code>
                           </div>
@@ -630,7 +731,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                             <div className="text-xs text-slate-500 dark:text-slate-400">
                               Organization
                             </div>
-                            <code className="text-xs text-slate-300 font-mono mt-1 block">
+                            <code className="text-xs text-slate-700 dark:text-slate-300 font-mono mt-1 block">
                               {log.organization_id.slice(0, 12)}...
                             </code>
                           </div>
@@ -644,7 +745,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                               <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">
                                 Before
                               </div>
-                              <pre className="p-2 bg-slate-900 rounded-lg text-xs text-slate-300 overflow-x-auto max-h-32">
+                              <pre className="p-2 bg-slate-900 rounded-lg text-xs text-slate-100 overflow-x-auto max-h-32">
                                 {JSON.stringify(log.before_data, null, 2)}
                               </pre>
                             </div>
@@ -654,7 +755,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                               <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">
                                 After
                               </div>
-                              <pre className="p-2 bg-slate-900 rounded-lg text-xs text-slate-300 overflow-x-auto max-h-32">
+                              <pre className="p-2 bg-slate-900 rounded-lg text-xs text-slate-100 overflow-x-auto max-h-32">
                                 {JSON.stringify(log.after_data, null, 2)}
                               </pre>
                             </div>
@@ -716,29 +817,33 @@ export const EnterpriseAuditLog: React.FC = () => {
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Activity by Action Type */}
-            <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-              <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+            <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+              <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
                 <Activity className="w-4 h-4 text-cyan-400" />
                 Activity by Action Type
               </h3>
               <div className="space-y-3">
-                {ACTION_TYPES.slice(0, 6).map((action, i) => (
+                {analyticsActionCounts.length === 0 ? (
+                  <div className="text-sm text-slate-500 dark:text-slate-400">No data</div>
+                ) : (
+                  analyticsActionCounts.map(({ action, count }) => (
                   <div key={action} className="flex items-center gap-3">
                     <div className="w-24 text-sm text-slate-400 dark:text-slate-500">{action}</div>
-                    <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full"
-                        style={{ width: `${Math.random() * 60 + 10}%` }}
+                        style={{ width: `${(count / analyticsActionMax) * 100}%` }}
                       />
                     </div>
                   </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
 
             {/* Risk Distribution */}
-            <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-              <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+            <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+              <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
                 <Shield className="w-4 h-4 text-purple-400" />
                 Risk Distribution
               </h3>
@@ -749,7 +854,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                   return (
                     <div key={level} className="flex items-center gap-3">
                       <div className={`w-24 text-sm ${config.text}`}>{level}</div>
-                      <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div
                           className={`h-full ${config.color} rounded-full`}
                           style={{ width: `${percent}%` }}
@@ -765,13 +870,13 @@ export const EnterpriseAuditLog: React.FC = () => {
             </div>
 
             {/* Compliance Coverage */}
-            <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-              <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+            <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+              <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
                 <Tag className="w-4 h-4 text-emerald-400" />
                 Compliance Coverage
               </h3>
               <div className="grid grid-cols-2 gap-3">
-                {COMPLIANCE_TAGS.map((tag) => (
+                {analyticsComplianceCounts.map((tag) => (
                   <div
                     key={tag.id}
                     className={`p-3 rounded-lg ${tag.color.replace('text-', 'border-').replace('/20', '/30')} border`}
@@ -780,7 +885,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                       {tag.name}
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      {Math.floor(Math.random() * 100)} events
+                      {tag.count} events
                     </div>
                   </div>
                 ))}
@@ -788,23 +893,20 @@ export const EnterpriseAuditLog: React.FC = () => {
             </div>
 
             {/* Recent Activity Timeline */}
-            <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-              <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+            <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+              <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-amber-400" />
                 Activity Timeline (Last 7 Days)
               </h3>
               <div className="flex items-end gap-2 h-32">
-                {Array.from({ length: 7 }).map((_, i) => (
+                {analyticsTimeline.series.map(({ date, count }, i) => (
                   <div key={i} className="flex-1 flex flex-col items-center">
                     <div
                       className="w-full bg-gradient-to-t from-amber-500 to-amber-400 rounded-t-sm transition-all hover:from-amber-400 hover:to-amber-300"
-                      style={{ height: `${Math.random() * 80 + 20}%` }}
+                      style={{ height: `${(count / analyticsTimeline.max) * 100}%` }}
                     />
                     <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                      {new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(
-                        'en-US',
-                        { weekday: 'short' }
-                      )}
+                      {date.toLocaleDateString('en-US', { weekday: 'short' })}
                     </div>
                   </div>
                 ))}

@@ -161,13 +161,24 @@ export const PresentationsHub: React.FC = () => {
   const [allDecks, setAllDecks] = useState<PresentationDeck[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch decks from API (mock when endpoint not available)
   const fetchDecks = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = (await Api.get('/presentations/decks')) as { items?: PresentationDeck[] };
-      const items = res?.items ?? [];
-      setAllDecks(Array.isArray(items) ? items : []);
+      const res = (await Api.get('/presentations/decks')) as any;
+      const items: PresentationDeck[] = (res?.data ?? res?.items ?? []).map((r: any) => ({
+        id: r.id,
+        title: r.title || 'Untitled',
+        createdAt: r.created_at || r.createdAt || new Date().toISOString(),
+        createdBy: r.created_by || r.createdBy || '—',
+        sourceType: r.deck_type || r.sourceType || 'tool',
+        sourceId: r.source_id || r.sourceId,
+        lastExportAt: r.exported_at || r.lastExportAt,
+        exportFormats: r.export_format ? [r.export_format] : (r.exportFormats || []),
+        thumbnailUrl: r.thumbnail_url || r.thumbnailUrl,
+        status: r.status || 'draft',
+        slideCount: r.slide_count || r.slideCount || 0,
+      }));
+      setAllDecks(items.length > 0 ? items : MOCK_DECKS);
     } catch {
       setAllDecks(MOCK_DECKS);
     } finally {

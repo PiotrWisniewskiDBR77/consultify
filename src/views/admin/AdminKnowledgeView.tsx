@@ -342,16 +342,16 @@ export const AdminKnowledgeView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 relative">
+    <div className="space-y-6 relative text-slate-900 dark:text-slate-100">
       <InfoButton cardId="admin-knowledge" position="top-right" />
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-lg font-bold text-white flex items-center gap-2">
-            <BrainCircuit className="text-purple-400" size={20} />
+          <h1 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <BrainCircuit className="text-purple-600" size={20} />
             Global Knowledge Brain
           </h1>
-          <p className="text-slate-400 dark:text-slate-500 text-xs mt-1">
+          <p className="text-slate-600 dark:text-slate-400 text-xs mt-1">
             Manage AI Learning & Strategic Alignment
           </p>
         </div>
@@ -367,22 +367,34 @@ export const AdminKnowledgeView: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-white/5">
+      <div className="flex gap-4 border-b border-slate-200 dark:border-navy-800">
         <button
           onClick={() => setActiveTab('candidates')}
-          className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'candidates' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-white'}`}
+          className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-2 ${
+            activeTab === 'candidates'
+              ? 'border-purple-500 text-purple-700 dark:text-purple-300'
+              : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+          }`}
         >
           <Lightbulb size={14} /> Idea Inbox
         </button>
         <button
           onClick={() => setActiveTab('documents')}
-          className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'documents' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-white'}`}
+          className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-2 ${
+            activeTab === 'documents'
+              ? 'border-purple-500 text-purple-700 dark:text-purple-300'
+              : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+          }`}
         >
           <FileText size={14} /> Documents (RAG)
         </button>
         <button
           onClick={() => setActiveTab('strategies')}
-          className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'strategies' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-white'}`}
+          className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-2 ${
+            activeTab === 'strategies'
+              ? 'border-purple-500 text-purple-700 dark:text-purple-300'
+              : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+          }`}
         >
           <Target size={14} /> Strategic Directions
         </button>
@@ -391,9 +403,7 @@ export const AdminKnowledgeView: React.FC = () => {
       {/* CONTENT AREA */}
       <div className="min-h-[400px]">
         {loading ? (
-          <div className="flex justify-center py-20 text-slate-500 dark:text-slate-400 animate-pulse">
-            Accessing Global Brain...
-          </div>
+          <div className="flex justify-center py-20 text-slate-500 animate-pulse">Accessing Global Brain...</div>
         ) : (
           <>
             {/* --- IDEA CANDIDATES --- */}
@@ -409,7 +419,11 @@ export const AdminKnowledgeView: React.FC = () => {
                           setCandidateFilter(f as any);
                           setShowApprovedLibrary(false);
                         }}
-                        className={`px-3 py-1 rounded-full text-xs capitalize ${candidateFilter === f ? 'bg-purple-500/20 text-purple-300 border border-purple-500/50' : 'bg-navy-900 text-slate-400 dark:text-slate-500 border border-white/5'}`}
+                        className={`px-3 py-1 rounded-full text-xs capitalize border ${
+                          candidateFilter === f
+                            ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-500/10 dark:text-purple-300 dark:border-purple-500/20'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-navy-900/40 dark:text-slate-200 dark:border-navy-700'
+                        }`}
                       >
                         {f}
                       </button>
@@ -420,7 +434,11 @@ export const AdminKnowledgeView: React.FC = () => {
                       setShowApprovedLibrary(!showApprovedLibrary);
                       setCandidateFilter('all');
                     }}
-                    className={`px-3 py-1 rounded-full text-xs ${showApprovedLibrary ? 'bg-green-500/20 text-green-300 border border-green-500/50' : 'bg-navy-900 text-slate-400 dark:text-slate-500 border border-white/5'}`}
+                    className={`px-3 py-1 rounded-full text-xs border ${
+                      showApprovedLibrary
+                        ? 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20'
+                        : 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-navy-900/40 dark:text-slate-200 dark:border-navy-700'
+                    }`}
                   >
                     Approved Ideas Library
                   </button>
@@ -428,7 +446,7 @@ export const AdminKnowledgeView: React.FC = () => {
                     <select
                       value={ideaCategoryFilter}
                       onChange={(e) => setIdeaCategoryFilter(e.target.value)}
-                      className="bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded px-3 py-1 text-slate-900 dark:text-white text-xs focus:border-purple-500 outline-none"
+                      className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded px-3 py-1 text-slate-900 dark:text-white text-xs focus:border-purple-500 outline-none"
                     >
                       <option value="">All Categories</option>
                       {IDEA_CATEGORIES.map((cat) => (
@@ -441,7 +459,7 @@ export const AdminKnowledgeView: React.FC = () => {
                 </div>
 
                 {candidates.length === 0 ? (
-                  <div className="text-center py-12 text-slate-500 dark:text-slate-400 bg-navy-900/50 rounded-xl border border-dashed border-white/10">
+                  <div className="text-center py-12 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-dashed border-slate-200 dark:border-navy-700">
                     No {candidateFilter} ideas found.
                   </div>
                 ) : (
@@ -449,14 +467,14 @@ export const AdminKnowledgeView: React.FC = () => {
                     {candidates.map((c) => (
                       <div
                         key={c.id}
-                        className="bg-navy-900 border border-white/5 rounded-xl p-4 hover:border-white/10 transition-all group"
+                        className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4 transition-colors hover:bg-slate-50 dark:hover:bg-navy-700/40 group"
                       >
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex items-center gap-2">
-                            <span className="px-2 py-1 bg-blue-500/10 text-blue-400 text-[10px] uppercase font-bold rounded tracking-wider">
+                            <span className="px-2 py-1 bg-blue-50 text-blue-700 text-[10px] uppercase font-bold rounded tracking-wider">
                               {c.source || 'Unknown'}
                             </span>
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                            <span className="text-xs text-slate-500">
                               {new Date(c.created_at).toLocaleDateString()}
                             </span>
                           </div>
@@ -464,14 +482,14 @@ export const AdminKnowledgeView: React.FC = () => {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleAction(c.id, 'rejected')}
-                                className="p-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500 hover:text-white transition-colors"
+                                className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
                                 title="Reject"
                               >
                                 <X size={16} />
                               </button>
                               <button
                                 onClick={() => handleAction(c.id, 'approved')}
-                                className="p-2 bg-green-500/10 text-green-400 rounded-lg hover:bg-green-500 hover:text-white transition-colors"
+                                className="p-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors"
                                 title="Approve & Learn"
                               >
                                 <Check size={16} />
@@ -480,15 +498,17 @@ export const AdminKnowledgeView: React.FC = () => {
                           )}
                         </div>
 
-                        <h3 className="font-semibold text-white mb-2 text-lg">{c.content}</h3>
-                        <p className="text-slate-400 dark:text-slate-500 text-sm mb-3 bg-navy-950/50 p-3 rounded-lg flex gap-3">
+                        <h3 className="font-semibold text-slate-900 dark:text-white mb-2 text-lg">
+                          {c.content}
+                        </h3>
+                        <p className="text-slate-700 dark:text-slate-200 text-sm mb-3 bg-slate-50 dark:bg-navy-900/50 p-3 rounded-lg flex gap-3">
                           <MessageSquare size={16} className="text-purple-500 shrink-0 mt-0.5" />
                           {c.reasoning || 'No reasoning provided.'}
                         </p>
 
                         <div className="flex flex-wrap gap-2 mb-2">
                           {c.category && (
-                            <span className="text-xs px-2 py-1 bg-purple-500/10 text-purple-400 rounded">
+                            <span className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded">
                               {c.category}
                             </span>
                           )}
@@ -510,16 +530,16 @@ export const AdminKnowledgeView: React.FC = () => {
                         </div>
 
                         {c.related_axis && (
-                          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 mb-2">
+                          <div className="text-xs text-slate-500 flex items-center gap-2 mb-2">
                             <Activity size={12} /> Related to:{' '}
-                            <span className="text-slate-300">{c.related_axis}</span>
+                            <span className="text-slate-700 dark:text-slate-200">{c.related_axis}</span>
                           </div>
                         )}
 
                         {c.related_project_ids &&
                           Array.isArray(c.related_project_ids) &&
                           c.related_project_ids.length > 0 && (
-                            <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 mb-2">
+                            <div className="text-xs text-slate-500 flex items-center gap-2 mb-2">
                               Applied in {c.related_project_ids.length} project(s)
                             </div>
                           )}
@@ -532,7 +552,7 @@ export const AdminKnowledgeView: React.FC = () => {
                               setLinkProjectNotes('');
                               loadProjects();
                             }}
-                            className="mt-2 px-3 py-1 bg-green-500/10 text-green-400 rounded-lg hover:bg-green-500 hover:text-white transition-colors text-xs"
+                            className="mt-2 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors text-xs"
                           >
                             Apply in Project
                           </button>
@@ -550,10 +570,10 @@ export const AdminKnowledgeView: React.FC = () => {
                 {/* Upload Box */}
                 <form
                   onSubmit={handleUpload}
-                  className="bg-navy-900 border border-white/10 rounded-xl p-6"
+                  className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6"
                 >
-                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <Upload size={18} className="text-blue-400" />
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Upload size={18} className="text-blue-600" />
                     Upload Knowledge Document
                   </h3>
 
@@ -566,13 +586,13 @@ export const AdminKnowledgeView: React.FC = () => {
                           onChange={(e) => setUploadFile(e.target.files ? e.target.files[0] : null)}
                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                         />
-                        <div className="bg-navy-950 border border-dashed border-slate-600 rounded-lg p-3 text-center transition-colors hover:bg-navy-800 hover:border-blue-500">
+                        <div className="bg-slate-50 dark:bg-navy-900 border border-dashed border-slate-300 dark:border-navy-700 rounded-lg p-3 text-center transition-colors hover:bg-slate-100 dark:hover:bg-navy-800/60 hover:border-blue-500">
                           {uploadFile ? (
-                            <span className="text-blue-400 font-medium flex justify-center items-center gap-2">
+                            <span className="text-blue-700 font-medium flex justify-center items-center gap-2">
                               <FileText size={16} /> {uploadFile.name}
                             </span>
                           ) : (
-                            <span className="text-slate-400 dark:text-slate-500 text-sm">
+                            <span className="text-slate-600 dark:text-slate-300 text-sm">
                               Drag & drop PDF, TXT, MD here or click to select
                             </span>
                           )}
@@ -594,13 +614,13 @@ export const AdminKnowledgeView: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                        <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">
                           Category
                         </label>
                         <select
                           value={uploadCategory}
                           onChange={(e) => setUploadCategory(e.target.value)}
-                          className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none"
+                          className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-2 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none"
                         >
                           <option value="">Select category...</option>
                           {DOCUMENT_CATEGORIES.map((cat) => (
@@ -611,7 +631,7 @@ export const AdminKnowledgeView: React.FC = () => {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                        <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">
                           Tags (comma-separated)
                         </label>
                         <input
@@ -619,7 +639,7 @@ export const AdminKnowledgeView: React.FC = () => {
                           value={uploadTags}
                           onChange={(e) => setUploadTags(e.target.value)}
                           placeholder="tag1, tag2, tag3"
-                          className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none"
+                          className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-2 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none"
                         />
                       </div>
                     </div>
@@ -633,13 +653,13 @@ export const AdminKnowledgeView: React.FC = () => {
                 {/* List of Docs */}
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <h3 className="text-sm font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
                       Indexed Documents
                     </h3>
                     <select
                       value={documentCategoryFilter}
                       onChange={(e) => setDocumentCategoryFilter(e.target.value)}
-                      className="bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded px-3 py-1 text-slate-900 dark:text-white text-xs focus:border-purple-500 outline-none"
+                      className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded px-3 py-1 text-slate-900 dark:text-white text-xs focus:border-purple-500 outline-none"
                     >
                       <option value="">All Categories</option>
                       {DOCUMENT_CATEGORIES.map((cat) => (
@@ -651,30 +671,28 @@ export const AdminKnowledgeView: React.FC = () => {
                   </div>
 
                   {filteredDocuments.length === 0 ? (
-                    <div className="text-center py-10 text-slate-500 dark:text-slate-400">
-                      No documents indexed yet.
-                    </div>
+                    <div className="text-center py-10 text-slate-500">No documents indexed yet.</div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {filteredDocuments.map((doc) => (
                         <div
                           key={doc.id}
-                          className="bg-navy-900 border border-white/5 rounded-lg p-4 group"
+                          className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4 transition-colors hover:bg-slate-50 dark:hover:bg-navy-700/40"
                         >
                           <div className="flex justify-between items-start mb-2">
                             <div className="flex items-center gap-3 overflow-hidden flex-1">
-                              <div className="p-2 bg-navy-950 rounded-lg shrink-0">
-                                <FileText className="text-purple-400" size={20} />
+                              <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg shrink-0">
+                                <FileText className="text-purple-600" size={20} />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <h4 className="text-white text-sm font-medium truncate">
+                                <h4 className="text-slate-900 dark:text-white text-sm font-medium truncate">
                                   {doc.filename}
                                 </h4>
                                 <p className="text-slate-500 dark:text-slate-400 text-xs">
                                   {new Date(doc.created_at).toLocaleDateString()}
                                 </p>
                                 {doc.category && (
-                                  <span className="inline-block mt-1 text-[10px] px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded">
+                                  <span className="inline-block mt-1 text-[10px] px-2 py-0.5 bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-200 rounded">
                                     {doc.category}
                                   </span>
                                 )}
@@ -683,7 +701,7 @@ export const AdminKnowledgeView: React.FC = () => {
                                     {doc.tags.map((tag: string, idx: number) => (
                                       <span
                                         key={idx}
-                                        className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded flex items-center gap-1"
+                                        className="text-[10px] px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-200 rounded flex items-center gap-1"
                                       >
                                         <Tag size={10} /> {tag}
                                       </span>
@@ -696,8 +714,8 @@ export const AdminKnowledgeView: React.FC = () => {
                               <span
                                 className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wide ${
                                   doc.status === 'indexed'
-                                    ? 'bg-green-500/10 text-green-400'
-                                    : 'bg-yellow-500/10 text-yellow-500'
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : 'bg-amber-100 text-amber-700'
                                 }`}
                               >
                                 {doc.status}
@@ -710,13 +728,13 @@ export const AdminKnowledgeView: React.FC = () => {
                                     Array.isArray(doc.tags) ? doc.tags.join(', ') : ''
                                   );
                                 }}
-                                className="text-slate-600 dark:text-slate-400 hover:text-blue-400 transition-colors"
+                                className="text-slate-400 hover:text-indigo-600 transition-colors"
                                 title="Edit"
                               >
                                 <Edit2 size={16} />
                               </button>
                               <button
-                                className="text-slate-600 dark:text-slate-400 hover:text-red-400 transition-colors"
+                                className="text-slate-400 hover:text-red-600 transition-colors"
                                 title="Delete (Pending Implementation)"
                               >
                                 <Trash2 size={16} />
@@ -737,14 +755,16 @@ export const AdminKnowledgeView: React.FC = () => {
                 {strategies.map((s) => (
                   <div
                     key={s.id}
-                    className={`bg-navy-900 border rounded-xl p-6 transition-all ${s.is_active ? 'border-purple-500/50 shadow-lg shadow-purple-900/10' : 'border-white/5 opacity-75'}`}
+                    className={`bg-white dark:bg-navy-800 border rounded-xl p-6 transition-colors ${
+                      s.is_active
+                        ? 'border-purple-200 dark:border-purple-500/40 ring-1 ring-purple-200/60 dark:ring-purple-500/20'
+                        : 'border-slate-200 dark:border-navy-700'
+                    }`}
                   >
                     <div className="flex justify-between items-start mb-4">
-                      <div className="p-3 rounded-lg bg-navy-950 border border-white/5">
+                      <div className="p-3 rounded-lg bg-slate-100 dark:bg-navy-900">
                         <Target
-                          className={
-                            s.is_active ? 'text-purple-400' : 'text-slate-600 dark:text-slate-400'
-                          }
+                          className={s.is_active ? 'text-purple-600' : 'text-slate-400'}
                           size={24}
                         />
                       </div>
@@ -761,14 +781,18 @@ export const AdminKnowledgeView: React.FC = () => {
                               progress_percentage: s.progress_percentage || 0,
                             });
                           }}
-                          className="p-2 bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors"
+                          className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
                           title="Edit"
                         >
                           <Edit2 size={16} />
                         </button>
                         <button
                           onClick={() => handleToggleStrategy(s.id, !!s.is_active)}
-                          className={`p-2 rounded-lg transition-colors ${s.is_active ? 'bg-green-500/20 text-green-400 hover:bg-red-500/20 hover:text-red-400' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:bg-green-500/20 hover:text-green-400'}`}
+                          className={`p-2 rounded-lg transition-colors ${
+                            s.is_active
+                              ? 'bg-emerald-100 text-emerald-700 hover:bg-red-100 hover:text-red-700'
+                              : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'
+                          }`}
                           title={s.is_active ? 'Click to Deactivate' : 'Click to Activate'}
                         >
                           <Power size={18} />
@@ -778,26 +802,26 @@ export const AdminKnowledgeView: React.FC = () => {
 
                     <div className="mb-3">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-xl font-bold text-white">{s.title}</h3>
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">{s.title}</h3>
                         {s.priority && (
                           <span
                             className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold ${
                               s.priority === 'high'
-                                ? 'bg-red-500/10 text-red-400'
+                                ? 'bg-red-100 text-red-700'
                                 : s.priority === 'medium'
-                                  ? 'bg-yellow-500/10 text-yellow-400'
-                                  : 'bg-blue-500/10 text-blue-400'
+                                  ? 'bg-amber-100 text-amber-700'
+                                  : 'bg-blue-100 text-blue-700'
                             }`}
                           >
                             {s.priority}
                           </span>
                         )}
                       </div>
-                      <p className="text-slate-400 dark:text-slate-500 text-sm leading-relaxed mb-2">
+                      <p className="text-slate-600 text-sm leading-relaxed mb-2">
                         {s.description}
                       </p>
                       {s.target_date && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-slate-500">
                           Target: {new Date(s.target_date).toLocaleDateString()}
                         </p>
                       )}
@@ -806,12 +830,12 @@ export const AdminKnowledgeView: React.FC = () => {
                     {/* Progress Bar */}
                     <div className="mb-4">
                       <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs text-slate-400 dark:text-slate-500">Progress</span>
-                        <span className="text-xs text-slate-300 font-medium">
+                        <span className="text-xs text-slate-500">Progress</span>
+                        <span className="text-xs text-slate-700 font-medium">
                           {s.progress_percentage || 0}%
                         </span>
                       </div>
-                      <div className="w-full h-2 bg-navy-950 rounded-full overflow-hidden">
+                      <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-purple-500 transition-all duration-500"
                           style={{ width: `${s.progress_percentage || 0}%` }}
@@ -824,14 +848,12 @@ export const AdminKnowledgeView: React.FC = () => {
                       Array.isArray(s.success_metrics) &&
                       s.success_metrics.length > 0 && (
                         <div className="mb-4">
-                          <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">
-                            Success Metrics:
-                          </p>
+                          <p className="text-xs text-slate-500 mb-1">Success Metrics:</p>
                           <div className="flex flex-wrap gap-1">
                             {s.success_metrics.map((metric: string, idx: number) => (
                               <span
                                 key={idx}
-                                className="text-xs px-2 py-0.5 bg-green-500/10 text-green-400 rounded"
+                                className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded"
                               >
                                 {metric}
                               </span>
@@ -841,9 +863,9 @@ export const AdminKnowledgeView: React.FC = () => {
                       )}
 
                     {/* Related Knowledge */}
-                    <div className="mb-4 border-t border-white/5 pt-4">
+                    <div className="mb-4 border-t border-slate-200 pt-4">
                       <div className="flex justify-between items-center mb-2">
-                        <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">
+                        <p className="text-xs font-semibold text-slate-500 uppercase">
                           Related Knowledge
                         </p>
                         <div className="flex gap-1">
@@ -853,7 +875,7 @@ export const AdminKnowledgeView: React.FC = () => {
                               setLinkType('document');
                               setLinkItemId('');
                             }}
-                            className="text-xs px-2 py-1 bg-blue-500/10 text-blue-400 rounded hover:bg-blue-500/20"
+                            className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100"
                             title="Link Document"
                           >
                             + Doc
@@ -864,7 +886,7 @@ export const AdminKnowledgeView: React.FC = () => {
                               setLinkType('idea');
                               setLinkItemId('');
                             }}
-                            className="text-xs px-2 py-1 bg-purple-500/10 text-purple-400 rounded hover:bg-purple-500/20"
+                            className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100"
                             title="Link Idea"
                           >
                             + Idea
@@ -875,7 +897,7 @@ export const AdminKnowledgeView: React.FC = () => {
                         Array.isArray(s.related_document_ids) &&
                         s.related_document_ids.length > 0 && (
                           <div className="mb-2">
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                            <p className="text-xs text-slate-500 mb-1">
                               Documents ({s.related_document_ids.length})
                             </p>
                             <div className="flex flex-wrap gap-1">
@@ -904,7 +926,7 @@ export const AdminKnowledgeView: React.FC = () => {
                         Array.isArray(s.related_idea_ids) &&
                         s.related_idea_ids.length > 0 && (
                           <div>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                            <p className="text-xs text-slate-500 mb-1">
                               Ideas ({s.related_idea_ids.length})
                             </p>
                             <div className="flex flex-wrap gap-1">
@@ -913,14 +935,14 @@ export const AdminKnowledgeView: React.FC = () => {
                                 .map((idea: any) => (
                                   <span
                                     key={idea.id}
-                                    className="text-xs px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded flex items-center gap-1"
+                                    className="text-xs px-2 py-0.5 bg-purple-50 text-purple-700 rounded flex items-center gap-1"
                                   >
                                     <Lightbulb size={10} /> {idea.content.substring(0, 30)}...
                                     <button
                                       onClick={() =>
                                         handleUnlinkFromStrategy(s.id, 'idea', idea.id)
                                       }
-                                      className="hover:text-red-400"
+                                      className="hover:text-red-600"
                                     >
                                       <X size={10} />
                                     </button>
@@ -931,7 +953,7 @@ export const AdminKnowledgeView: React.FC = () => {
                         )}
                     </div>
 
-                    <div className="w-full h-1 bg-navy-950 rounded-full overflow-hidden">
+                    <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
                       <div
                         className={`h-full transition-all duration-500 ${s.is_active ? 'w-full bg-purple-500' : 'w-0'}`}
                       />
@@ -944,7 +966,7 @@ export const AdminKnowledgeView: React.FC = () => {
 
                 {/* Empty State / Add Placeholder */}
                 {strategies.length === 0 && (
-                  <div className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400 bg-navy-900/30 border border-dashed border-white/10 rounded-xl">
+                  <div className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-900 border border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
                     No active strategic directions. Add one to guide the AI.
                   </div>
                 )}
@@ -954,19 +976,21 @@ export const AdminKnowledgeView: React.FC = () => {
             {/* --- AI OBSERVATIONS --- */}
             {activeTab === 'observations' && (
               <div className="space-y-6">
-                <div className="bg-navy-900 border border-white/10 rounded-xl p-6 flex flex-col items-center justify-center text-center">
-                  <div className="p-3 bg-purple-500/10 rounded-full mb-4">
-                    <BrainCircuit size={32} className="text-purple-400" />
+                <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6 flex flex-col items-center justify-center text-center">
+                  <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-full mb-4">
+                    <BrainCircuit size={32} className="text-purple-600" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Analyze Global Interactions</h3>
-                  <p className="text-slate-400 dark:text-slate-500 text-sm max-w-md mb-6">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                    Analyze Global Interactions
+                  </h3>
+                  <p className="text-slate-600 dark:text-slate-300 text-sm max-w-md mb-6">
                     The AI will analyze recent user interactions and feedback log to identify
                     patterns, feature requests, and knowledge gaps.
                   </p>
                   <button
                     onClick={generateObservations}
                     disabled={loading}
-                    className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium shadow-lg shadow-purple-900/20 flex items-center gap-2 transition-all"
+                    className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
                   >
                     {loading ? (
                       <RefreshCw className="animate-spin" size={18} />
@@ -983,7 +1007,7 @@ export const AdminKnowledgeView: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                       {/* App Improvements */}
                       <div className="space-y-4">
-                        <h3 className="flex items-center gap-2 text-lg font-bold text-white">
+                        <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
                           <div className="w-2 h-8 bg-blue-500 rounded-full"></div>
                           App Improvements
                         </h3>
@@ -991,28 +1015,28 @@ export const AdminKnowledgeView: React.FC = () => {
                           {observations.app_improvements.map((item: any, i: number) => (
                             <div
                               key={i}
-                              className="bg-navy-900 border border-white/5 rounded-xl p-4 hover:border-blue-500/30 transition-colors"
+                              className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4 transition-colors hover:bg-slate-50 dark:hover:bg-navy-700/40"
                             >
                               <div className="flex justify-between items-start mb-2">
                                 <span
                                   className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wide ${
                                     item.severity === 'high'
-                                      ? 'bg-red-500/10 text-red-400'
+                                      ? 'bg-red-100 text-red-700'
                                       : item.severity === 'medium'
-                                        ? 'bg-yellow-500/10 text-yellow-500'
-                                        : 'bg-blue-500/10 text-blue-400'
+                                        ? 'bg-amber-100 text-amber-700'
+                                        : 'bg-blue-100 text-blue-700'
                                   }`}
                                 >
                                   {item.severity}
                                 </span>
                               </div>
-                              <p className="text-slate-200 text-sm font-medium mb-2">
+                              <p className="text-slate-900 dark:text-white text-sm font-medium mb-2">
                                 {item.description}
                               </p>
-                              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 bg-navy-950 p-2 rounded">
-                                <Target size={12} className="text-blue-400" />
+                              <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-navy-900 p-2 rounded border border-slate-200 dark:border-navy-700">
+                                <Target size={12} className="text-blue-600" />
                                 Recommendation:{' '}
-                                <span className="text-slate-300">{item.action_item}</span>
+                                <span className="text-slate-900 dark:text-white">{item.action_item}</span>
                               </div>
                             </div>
                           ))}
@@ -1026,7 +1050,7 @@ export const AdminKnowledgeView: React.FC = () => {
 
                       {/* Content Gaps */}
                       <div className="space-y-4">
-                        <h3 className="flex items-center gap-2 text-lg font-bold text-white">
+                        <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
                           <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
                           Knowledge Gaps
                         </h3>
@@ -1034,28 +1058,28 @@ export const AdminKnowledgeView: React.FC = () => {
                           {observations.content_gaps.map((item: any, i: number) => (
                             <div
                               key={i}
-                              className="bg-navy-900 border border-white/5 rounded-xl p-4 hover:border-purple-500/30 transition-colors"
+                              className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4 transition-colors hover:bg-slate-50 dark:hover:bg-navy-700/40"
                             >
                               <div className="flex justify-between items-start mb-2">
                                 <span
                                   className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wide ${
                                     item.severity === 'high'
-                                      ? 'bg-red-500/10 text-red-400'
+                                      ? 'bg-red-100 text-red-700'
                                       : item.severity === 'medium'
-                                        ? 'bg-yellow-500/10 text-yellow-500'
-                                        : 'bg-purple-500/10 text-purple-400'
+                                        ? 'bg-amber-100 text-amber-700'
+                                        : 'bg-purple-100 text-purple-700'
                                   }`}
                                 >
                                   {item.severity}
                                 </span>
                               </div>
-                              <p className="text-slate-200 text-sm font-medium mb-2">
+                              <p className="text-slate-900 dark:text-white text-sm font-medium mb-2">
                                 {item.description}
                               </p>
-                              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 bg-navy-950 p-2 rounded">
-                                <Lightbulb size={12} className="text-purple-400" />
+                              <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-navy-900 p-2 rounded border border-slate-200 dark:border-navy-700">
+                                <Lightbulb size={12} className="text-purple-600" />
                                 Missing Topic:{' '}
-                                <span className="text-slate-300">{item.action_item}</span>
+                                <span className="text-slate-900 dark:text-white">{item.action_item}</span>
                               </div>
                             </div>
                           ))}
@@ -1077,35 +1101,35 @@ export const AdminKnowledgeView: React.FC = () => {
       {/* Approve Idea Modal */}
       {approvingIdea && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-white">Approve Idea</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Approve Idea</h2>
               <button
                 onClick={() => {
                   setApprovingIdea(null);
                   setApproveIdeaCategory('');
                   setApproveIdeaTags('');
                 }}
-                className="text-slate-400 dark:text-slate-500 hover:text-white"
+                className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
               >
                 <X size={20} />
               </button>
             </div>
             <div className="space-y-4">
-              <div className="bg-navy-950 p-4 rounded-lg">
-                <p className="text-white font-medium mb-2">{approvingIdea.content}</p>
-                <p className="text-slate-400 dark:text-slate-500 text-sm">
-                  {approvingIdea.reasoning}
+              <div className="bg-slate-50 dark:bg-navy-900 p-4 rounded-lg border border-slate-200 dark:border-navy-700">
+                <p className="text-slate-900 dark:text-white font-medium mb-2">
+                  {approvingIdea.content}
                 </p>
+                <p className="text-slate-700 dark:text-slate-300 text-sm">{approvingIdea.reasoning}</p>
               </div>
               <div>
-                <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">
                   Category
                 </label>
                 <select
                   value={approveIdeaCategory}
                   onChange={(e) => setApproveIdeaCategory(e.target.value)}
-                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
                 >
                   <option value="">Select category...</option>
                   {IDEA_CATEGORIES.map((cat) => (
@@ -1116,7 +1140,7 @@ export const AdminKnowledgeView: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">
                   Tags (comma-separated)
                 </label>
                 <input
@@ -1124,7 +1148,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   value={approveIdeaTags}
                   onChange={(e) => setApproveIdeaTags(e.target.value)}
                   placeholder="tag1, tag2, tag3"
-                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
                 />
               </div>
               <div className="pt-4 flex gap-3">
@@ -1135,14 +1159,14 @@ export const AdminKnowledgeView: React.FC = () => {
                     setApproveIdeaCategory('');
                     setApproveIdeaTags('');
                   }}
-                  className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 text-slate-300 rounded font-medium"
+                  className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-navy-900 dark:hover:bg-navy-700/60 text-slate-700 dark:text-slate-200 rounded font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleApproveWithDetails}
-                  className="flex-1 py-2 bg-green-600 hover:bg-green-500 text-white font-medium rounded shadow-lg shadow-green-900/20"
+                  className="flex-1 py-2 bg-green-600 hover:bg-green-500 text-white font-medium rounded transition-colors"
                 >
                   Approve & Add to Library
                 </button>
@@ -1155,32 +1179,34 @@ export const AdminKnowledgeView: React.FC = () => {
       {/* Link Idea to Project Modal */}
       {linkingIdea && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-white">Apply Idea in Project</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                Apply Idea in Project
+              </h2>
               <button
                 onClick={() => {
                   setLinkingIdea(null);
                   setLinkProjectId('');
                   setLinkProjectNotes('');
                 }}
-                className="text-slate-400 dark:text-slate-500 hover:text-white"
+                className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
               >
                 <X size={20} />
               </button>
             </div>
             <div className="space-y-4">
-              <div className="bg-navy-950 p-4 rounded-lg">
-                <p className="text-white font-medium">{linkingIdea.content}</p>
+              <div className="bg-slate-50 dark:bg-navy-900 p-4 rounded-lg border border-slate-200 dark:border-navy-700">
+                <p className="text-slate-900 dark:text-white font-medium">{linkingIdea.content}</p>
               </div>
               <div>
-                <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">
                   Select Project
                 </label>
                 <select
                   value={linkProjectId}
                   onChange={(e) => setLinkProjectId(e.target.value)}
-                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
                 >
                   <option value="">Select project...</option>
                   {projects.map((project) => (
@@ -1191,7 +1217,7 @@ export const AdminKnowledgeView: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">
                   Implementation Notes (optional)
                 </label>
                 <textarea
@@ -1199,7 +1225,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   onChange={(e) => setLinkProjectNotes(e.target.value)}
                   placeholder="How was this idea applied?"
                   rows={3}
-                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
                 />
               </div>
               <div className="pt-4 flex gap-3">
@@ -1210,7 +1236,7 @@ export const AdminKnowledgeView: React.FC = () => {
                     setLinkProjectId('');
                     setLinkProjectNotes('');
                   }}
-                  className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 text-slate-300 rounded font-medium"
+                  className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-navy-900 dark:hover:bg-navy-700/60 text-slate-700 dark:text-slate-200 rounded font-medium transition-colors"
                 >
                   Cancel
                 </button>
@@ -1218,7 +1244,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   type="button"
                   onClick={handleLinkIdeaToProject}
                   disabled={!linkProjectId}
-                  className="flex-1 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded shadow-lg shadow-green-900/20"
+                  className="flex-1 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded transition-colors"
                 >
                   Link to Project
                 </button>
@@ -1231,29 +1257,29 @@ export const AdminKnowledgeView: React.FC = () => {
       {/* Edit Document Modal */}
       {editingDoc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-white">Edit Document</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Edit Document</h2>
               <button
                 onClick={() => {
                   setEditingDoc(null);
                   setEditDocCategory('');
                   setEditDocTags('');
                 }}
-                className="text-slate-400 dark:text-slate-500 hover:text-white"
+                className="text-slate-400 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white"
               >
                 <X size={20} />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">
                   Category
                 </label>
                 <select
                   value={editDocCategory}
                   onChange={(e) => setEditDocCategory(e.target.value)}
-                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
                 >
                   <option value="">No category</option>
                   {DOCUMENT_CATEGORIES.map((cat) => (
@@ -1264,7 +1290,7 @@ export const AdminKnowledgeView: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">
                   Tags (comma-separated)
                 </label>
                 <input
@@ -1272,7 +1298,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   value={editDocTags}
                   onChange={(e) => setEditDocTags(e.target.value)}
                   placeholder="tag1, tag2, tag3"
-                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
                 />
               </div>
               <div className="pt-4 flex gap-3">
@@ -1283,14 +1309,14 @@ export const AdminKnowledgeView: React.FC = () => {
                     setEditDocCategory('');
                     setEditDocTags('');
                   }}
-                  className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 rounded font-medium"
+                  className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-navy-900 dark:hover:bg-navy-700/60 text-slate-700 dark:text-slate-200 rounded font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={() => handleUpdateDocument(editingDoc.id)}
-                  className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded shadow-lg shadow-purple-900/20"
+                  className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded transition-colors"
                 >
                   Save Changes
                 </button>
@@ -1303,9 +1329,9 @@ export const AdminKnowledgeView: React.FC = () => {
       {/* Link to Strategy Modal */}
       {linkingStrategy && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-white">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                 Link {linkType === 'document' ? 'Document' : 'Idea'} to Strategy
               </h2>
               <button
@@ -1313,23 +1339,23 @@ export const AdminKnowledgeView: React.FC = () => {
                   setLinkingStrategy(null);
                   setLinkItemId('');
                 }}
-                className="text-slate-400 dark:text-slate-500 hover:text-white"
+                className="text-slate-400 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white"
               >
                 <X size={20} />
               </button>
             </div>
             <div className="space-y-4">
-              <div className="bg-navy-950 p-4 rounded-lg">
-                <p className="text-white font-medium">{linkingStrategy.title}</p>
+              <div className="bg-slate-50 dark:bg-navy-900 p-4 rounded-lg border border-slate-200 dark:border-navy-700">
+                <p className="text-slate-900 dark:text-white font-medium">{linkingStrategy.title}</p>
               </div>
               <div>
-                <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">
                   Select {linkType === 'document' ? 'Document' : 'Idea'}
                 </label>
                 <select
                   value={linkItemId}
                   onChange={(e) => setLinkItemId(e.target.value)}
-                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
                 >
                   <option value="">
                     Select {linkType === 'document' ? 'document' : 'idea'}...
@@ -1356,7 +1382,7 @@ export const AdminKnowledgeView: React.FC = () => {
                     setLinkingStrategy(null);
                     setLinkItemId('');
                   }}
-                  className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 text-slate-300 rounded font-medium"
+                  className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-navy-900 dark:hover:bg-navy-700/60 text-slate-700 dark:text-slate-200 rounded font-medium transition-colors"
                 >
                   Cancel
                 </button>
@@ -1364,7 +1390,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   type="button"
                   onClick={handleLinkToStrategy}
                   disabled={!linkItemId}
-                  className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded shadow-lg shadow-purple-900/20"
+                  className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded transition-colors"
                 >
                   Link
                 </button>
@@ -1377,9 +1403,9 @@ export const AdminKnowledgeView: React.FC = () => {
       {/* Strategy Modal */}
       {(showStrategyModal || editingStrategy) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-white">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                 {editingStrategy ? 'Edit Strategic Direction' : 'New Strategic Direction'}
               </h2>
               <button
@@ -1395,7 +1421,7 @@ export const AdminKnowledgeView: React.FC = () => {
                     progress_percentage: 0,
                   });
                 }}
-                className="text-slate-400 dark:text-slate-500 hover:text-white"
+                className="text-slate-400 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white"
               >
                 <X size={20} />
               </button>
@@ -1412,7 +1438,7 @@ export const AdminKnowledgeView: React.FC = () => {
               className="space-y-4"
             >
               <div>
-                <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">
                   Strategy Title (e.g., "Digital First")
                 </label>
                 <input
@@ -1420,12 +1446,12 @@ export const AdminKnowledgeView: React.FC = () => {
                   autoFocus
                   value={strategyForm.title}
                   onChange={(e) => setStrategyForm({ ...strategyForm, title: e.target.value })}
-                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
                   placeholder="Enter a concise title..."
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">
                   Description (Instructions for AI)
                 </label>
                 <textarea
@@ -1435,13 +1461,13 @@ export const AdminKnowledgeView: React.FC = () => {
                   onChange={(e) =>
                     setStrategyForm({ ...strategyForm, description: e.target.value })
                   }
-                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
                   placeholder="Explain how the AI should behave or what it should prioritize..."
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">
                     Priority
                   </label>
                   <select
@@ -1452,7 +1478,7 @@ export const AdminKnowledgeView: React.FC = () => {
                         priority: e.target.value as 'low' | 'medium' | 'high',
                       })
                     }
-                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
+                    className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -1460,7 +1486,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">
                     Target Date
                   </label>
                   <input
@@ -1469,12 +1495,12 @@ export const AdminKnowledgeView: React.FC = () => {
                     onChange={(e) =>
                       setStrategyForm({ ...strategyForm, target_date: e.target.value })
                     }
-                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
+                    className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">
                   Success Metrics (one per line)
                 </label>
                 <textarea
@@ -1486,13 +1512,13 @@ export const AdminKnowledgeView: React.FC = () => {
                       success_metrics: e.target.value.split('\n').filter((m) => m.trim()),
                     })
                   }
-                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
                   placeholder="Metric 1&#10;Metric 2&#10;Metric 3"
                 />
               </div>
               {editingStrategy && (
                 <div>
-                  <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1">
                     Progress (%)
                   </label>
                   <input
@@ -1506,7 +1532,7 @@ export const AdminKnowledgeView: React.FC = () => {
                         progress_percentage: parseInt(e.target.value) || 0,
                       })
                     }
-                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
+                    className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
                   />
                 </div>
               )}
@@ -1525,13 +1551,13 @@ export const AdminKnowledgeView: React.FC = () => {
                       progress_percentage: 0,
                     });
                   }}
-                  className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 text-slate-300 rounded font-medium"
+                  className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-navy-900 dark:hover:bg-navy-700/60 text-slate-700 dark:text-slate-200 rounded font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded shadow-lg shadow-purple-900/20"
+                  className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded transition-colors"
                 >
                   {editingStrategy ? 'Update Strategy' : 'Add Strategy'}
                 </button>

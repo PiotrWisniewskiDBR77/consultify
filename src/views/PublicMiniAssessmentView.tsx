@@ -398,7 +398,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
             </div>
           </div>
 
-          <p className="text-center text-xs text-gray-400 mt-6">Powered by Consultinity</p>
+          <p className="text-center text-xs text-gray-400 mt-6">Powered by Consultify</p>
         </div>
       </div>
     );
@@ -412,7 +412,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
           <h1 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
             {t('publicAssessment.title', 'Digital Transformation Readiness Check')}
           </h1>
-          <span className="text-xs text-gray-400">Consultinity</span>
+          <span className="text-xs text-gray-400">Consultify</span>
         </div>
       </header>
       <div className="max-w-3xl mx-auto py-6">

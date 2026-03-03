@@ -83,6 +83,7 @@ interface NotebookContentProps {
   onChatOpenChange?: (open: boolean) => void;
   createPageRequestId?: number;
   refreshTrigger?: number;
+  openPageId?: string | null;
 }
 
 const MATURITY_CONFIG: Record<
@@ -454,6 +455,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   onChatOpenChange,
   createPageRequestId,
   refreshTrigger,
+  openPageId,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -463,6 +465,31 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [hasMore, setHasMore] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
   const activePage = useMemo(() => pages.find((p) => p.id === activeId) || null, [pages, activeId]);
+
+  // Allow external navigation to a specific note (e.g. from origin badges / backlinks)
+  useEffect(() => {
+    const targetId = String(openPageId || '').trim();
+    if (!targetId) return;
+    let cancelled = false;
+    const run = async () => {
+      setActiveId(targetId);
+      if (pages.some((p) => p.id === targetId)) return;
+      try {
+        const page = (await Api.getNotebookPage(targetId)) as any;
+        if (cancelled || !page?.id) return;
+        setPages((prev) => {
+          const exists = prev.some((p) => p.id === page.id);
+          return exists ? prev : [page as NotebookPage, ...prev];
+        });
+      } catch {
+        /* best-effort */
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [openPageId, pages]);
 
   const [title, setTitle] = useState(activePage?.title || '');
   const [pageProjectId, setPageProjectId] = useState(activePage?.projectId || '');
@@ -877,12 +904,31 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       if (!activePage) return;
       try {
         const title = text?.trim() || activePage.title || 'Task from notebook';
-        await Api.createPersonalTask({
+        const created = await Api.createPersonalTask({
           title,
           description: `From note: ${activePage.title}`,
           tags: ['from-notebook'],
+          sourceType: 'notebook',
+          sourceId: activePage.id,
         });
-        emitMyWorkEvent({ type: 'item:created', entityType: 'task', entityId: activePage.id });
+        const createdId = String(created?.id || '').trim();
+        if (createdId) {
+          try {
+            await Api.createLinkGraphEdge({
+              source: { type: 'task', id: createdId },
+              target: { type: 'notebook', id: activePage.id },
+              relation: 'ref',
+              context: { containerType: 'notebook_slash', containerId: activePage.id },
+            });
+          } catch {
+            /* best-effort */
+          }
+        }
+        emitMyWorkEvent({
+          type: 'item:created',
+          entityType: 'task',
+          entityId: createdId || activePage.id,
+        });
         toast.success(isPolish ? 'Zadanie utworzone' : 'Task created');
       } catch {
         toast.error(isPolish ? 'Nie udało się utworzyć zadania' : 'Failed to create task');
@@ -894,13 +940,30 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       if (!activePage) return;
       try {
         const title = text?.trim() || activePage.title || 'Decision from notebook';
-        await Api.createDecision({
+        const created = await Api.createDecision({
           title,
           description: `From note: ${activePage.title}`,
           source_type: 'notebook',
           source_id: activePage.id,
         });
-        emitMyWorkEvent({ type: 'item:created', entityType: 'decision', entityId: activePage.id });
+        const createdId = String(created?.id || '').trim();
+        if (createdId) {
+          try {
+            await Api.createLinkGraphEdge({
+              source: { type: 'decision', id: createdId },
+              target: { type: 'notebook', id: activePage.id },
+              relation: 'ref',
+              context: { containerType: 'notebook_slash', containerId: activePage.id },
+            });
+          } catch {
+            /* best-effort */
+          }
+        }
+        emitMyWorkEvent({
+          type: 'item:created',
+          entityType: 'decision',
+          entityId: createdId || activePage.id,
+        });
         toast.success(isPolish ? 'Decyzja utworzona' : 'Decision created');
       } catch {
         toast.error(isPolish ? 'Nie udało się utworzyć decyzji' : 'Failed to create decision');
@@ -912,12 +975,29 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       if (!activePage) return;
       try {
         const title = text?.trim() || activePage.title || 'Idea from notebook';
-        await Api.createMyIdea({
+        const created = await Api.createMyIdea({
           title,
           body: text || '',
           sourceType: 'notebook',
         });
-        emitMyWorkEvent({ type: 'item:created', entityType: 'idea', entityId: activePage.id });
+        const createdId = String(created?.id || '').trim();
+        if (createdId) {
+          try {
+            await Api.createLinkGraphEdge({
+              source: { type: 'idea', id: createdId },
+              target: { type: 'notebook', id: activePage.id },
+              relation: 'ref',
+              context: { containerType: 'notebook_slash', containerId: activePage.id },
+            });
+          } catch {
+            /* best-effort */
+          }
+        }
+        emitMyWorkEvent({
+          type: 'item:created',
+          entityType: 'idea',
+          entityId: createdId || activePage.id,
+        });
         toast.success(isPolish ? 'Pomysł zapisany' : 'Idea saved');
       } catch {
         toast.error(isPolish ? 'Nie udało się zapisać pomysłu' : 'Failed to save idea');

@@ -799,7 +799,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
       // Always persist a local draft before attempting network save (offline safety net)
       try {
-        const draftKey = `consultinity-task-draft:${taskId || 'new'}`;
+        const draftKey = `consultify-task-draft:${taskId || 'new'}`;
         localStorage.setItem(
           draftKey,
           JSON.stringify({
@@ -895,7 +895,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     );
 
     // Persist local draft so user never loses input (even offline)
-    const draftKey = `consultinity-task-draft:${taskId || 'new'}`;
+    const draftKey = `consultify-task-draft:${taskId || 'new'}`;
     try {
       localStorage.setItem(
         draftKey,

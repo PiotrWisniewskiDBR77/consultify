@@ -72,9 +72,9 @@ AI w v3 jest uruchamiane przez **jeden** kanoniczny przycisk w **kontekstowym to
 - chat ma znać kontekst (gdzie user jest i nad czym pracuje), nawet jeśli “milczy”
 - kontrakt: korzystamy z `useOpenChatWithContext` (SSOT w kodzie)
 
-**Kolejność w Module Topbar (prawa strona):**  
-AI context → Primary CTA (+New) → View modes → Filters  
-SSOT: `docs/ui-standards/03-modules/module-hub-standard.md`
+**Kolejność w Module Topbar (prawa strona, od prawej):**  
+**Area (toggle lewego panelu / split chat)** → **Add (+New)** → **Tool** → **View modes** → **Filters**  
+SSOT: `docs/ui-standards/03-modules/module-hub-standard.md` (pełna anatomia 3‑liniowego menu + Command Row)
 
 ---
 

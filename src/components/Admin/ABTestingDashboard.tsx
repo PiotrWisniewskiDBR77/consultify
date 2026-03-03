@@ -128,13 +128,14 @@ export function ABTestingDashboard() {
 
     try {
       const params = statusFilter !== 'all' ? `?status=${statusFilter}` : '';
-      const response = await api.get(`/ai-ab-testing/experiments${params}`);
+      const response = await api.get(`/ai/ab-testing/experiments${params}`);
+      const payload = (response as any)?.data ?? response;
 
-      if (response.data.success) {
+      if (payload?.success) {
         // Backend returns { success, data: experiments[] }
-        setExperiments(response.data.data || response.data.experiments || []);
+        setExperiments(payload.data || payload.experiments || []);
       } else {
-        throw new Error(response.data.error || 'Failed to fetch experiments');
+        throw new Error(payload?.error || 'Failed to fetch experiments');
       }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch experiments');
@@ -162,9 +163,10 @@ export function ABTestingDashboard() {
 
     setCreating(true);
     try {
-      const response = await api.post('/ai-ab-testing/experiments', newExperiment);
+      const response = await api.post('/ai/ab-testing/experiments', newExperiment);
+      const payload = (response as any)?.data ?? response;
 
-      if (response.data.success) {
+      if (payload?.success) {
         toast.success('Experiment created');
         setShowCreateModal(false);
         setNewExperiment({
@@ -181,7 +183,7 @@ export function ABTestingDashboard() {
         });
         await fetchExperiments();
       } else {
-        throw new Error(response.data.error);
+        throw new Error(payload?.error || 'Failed to create experiment');
       }
     } catch (err: any) {
       toast.error(err.message || 'Failed to create experiment');
@@ -197,15 +199,16 @@ export function ABTestingDashboard() {
     try {
       const endpointAction = action === 'complete' ? 'stop' : action;
       const response = await api.post(
-        `/ai-ab-testing/experiments/${experimentId}/${endpointAction}`,
+        `/ai/ab-testing/experiments/${experimentId}/${endpointAction}`,
         {}
       );
+      const payload = (response as any)?.data ?? response;
 
-      if (response.data.success) {
+      if (payload?.success) {
         toast.success(`Experiment ${action}ed`);
         await fetchExperiments();
       } else {
-        throw new Error(response.data.error);
+        throw new Error(payload?.error || `Failed to ${action} experiment`);
       }
     } catch (err: any) {
       toast.error(err.message || `Failed to ${action} experiment`);
@@ -216,15 +219,16 @@ export function ABTestingDashboard() {
     if (!confirm('Are you sure you want to declare this variant as the winner?')) return;
 
     try {
-      const response = await api.post(`/ai-ab-testing/experiments/${experimentId}/declare-winner`, {
+      const response = await api.post(`/ai/ab-testing/experiments/${experimentId}/declare-winner`, {
         winningVariantId: variantId,
       });
+      const payload = (response as any)?.data ?? response;
 
-      if (response.data.success) {
+      if (payload?.success) {
         toast.success('Winner declared!');
         await fetchExperiments();
       } else {
-        throw new Error(response.data.error);
+        throw new Error(payload?.error || 'Failed to declare winner');
       }
     } catch (err: any) {
       toast.error(err.message || 'Failed to declare winner');

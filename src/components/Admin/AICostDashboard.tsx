@@ -83,7 +83,7 @@ export const AICostDashboard: React.FC = () => {
       case 'down':
         return <TrendingDown className="w-4 h-4 text-green-400" />;
       default:
-        return <Zap className="w-4 h-4 text-slate-400 dark:text-slate-500" />;
+        return <Zap className="w-4 h-4 text-slate-500 dark:text-slate-400" />;
     }
   };
 
@@ -100,25 +100,30 @@ export const AICostDashboard: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <DollarSign className="w-5 h-5 text-primary-400" />
-          <h3 className="text-lg font-semibold text-white">AI Cost Analytics</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            AI Cost Analytics
+          </h3>
         </div>
         <button
           onClick={fetchCosts}
           className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors"
           title="Refresh"
         >
-          <RefreshCw className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+          <RefreshCw className="w-4 h-4 text-slate-500 dark:text-slate-400" />
         </button>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {metrics.map((metric, index) => (
-          <div key={index} className="bg-navy-800 rounded-xl border border-white/10 p-4">
+          <div
+            key={index}
+            className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-4"
+          >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-slate-400 dark:text-slate-500">{metric.label}</span>
+              <span className="text-xs text-slate-600 dark:text-slate-400">{metric.label}</span>
               {getTrendIcon(metric.trend)}
             </div>
-            <div className="text-xl font-bold text-white">{metric.value}</div>
+            <div className="text-xl font-bold text-slate-900 dark:text-white">{metric.value}</div>
             {metric.change !== 0 && (
               <div
                 className={`text-xs mt-1 ${metric.change > 0 ? 'text-red-400' : 'text-green-400'}`}
@@ -131,8 +136,10 @@ export const AICostDashboard: React.FC = () => {
         ))}
       </div>
 
-      <div className="bg-navy-800 rounded-xl border border-white/10 p-6">
-        <h4 className="text-sm font-medium text-slate-300 mb-4">Cost Breakdown by Provider</h4>
+      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-6">
+        <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4">
+          Cost Breakdown by Provider
+        </h4>
         {error ? (
           <div className="text-center py-8 text-red-400">
             <p>{error}</p>
@@ -145,10 +152,12 @@ export const AICostDashboard: React.FC = () => {
             {Object.entries(costData?.byProvider || {}).map(([provider, data]) => (
               <div
                 key={provider}
-                className="flex items-center justify-between p-3 bg-navy-900/50 rounded-lg"
+                className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-900/50 rounded-lg"
               >
                 <div>
-                  <span className="text-white font-medium capitalize">{provider}</span>
+                  <span className="text-slate-900 dark:text-white font-medium capitalize">
+                    {provider}
+                  </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400 ml-2">
                     {data.tokens.toLocaleString()} tokens
                   </span>

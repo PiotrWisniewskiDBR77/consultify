@@ -1,23 +1,19 @@
 import {
   Activity,
-  AlertTriangle,
   Building2,
   CheckCircle2,
-  ChevronRight,
-  Clock,
-  Edit,
   Loader2,
   Play,
   Plus,
-  Settings,
   Target,
   Trash2,
-  Users,
   Zap,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Card } from '../../../components/Admin/shared/Card';
+import { InfoButton } from '../../../components/shared/InfoButton';
 import Api from '../../../services/api';
 
 interface Playbook {
@@ -49,25 +45,24 @@ interface PlaybookStats {
   completed_actions: number;
 }
 
-const ACTION_TYPES = [
-  { id: 'send_email', label: 'Send Email', icon: '📧' },
-  { id: 'create_task', label: 'Create Task', icon: '✅' },
-  { id: 'notify_csm', label: 'Notify CSM', icon: '👤' },
-  { id: 'schedule_call', label: 'Schedule Call', icon: '📞' },
-  { id: 'update_health', label: 'Update Health Score', icon: '📊' },
-  { id: 'custom', label: 'Custom Action', icon: '⚙️' },
-];
-
-const TRIGGER_TYPES = [
-  { id: 'onboarding_complete', label: 'Onboarding Complete' },
-  { id: 'trial_ending', label: 'Trial Ending' },
-  { id: 'low_engagement', label: 'Low Engagement' },
-  { id: 'health_score_drop', label: 'Health Score Drop' },
-  { id: 'subscription_change', label: 'Subscription Change' },
-  { id: 'milestone_reached', label: 'Milestone Reached' },
-];
-
 const CustomerSuccessPlaybooksView: React.FC = () => {
+  const { t } = useTranslation();
+  const actionTypes = [
+    { id: 'send_email', label: t('superadmin.customers.playbooks.actionTypes.sendEmail'), icon: '📧' },
+    { id: 'create_task', label: t('superadmin.customers.playbooks.actionTypes.createTask'), icon: '✅' },
+    { id: 'notify_csm', label: t('superadmin.customers.playbooks.actionTypes.notifyCsm'), icon: '👤' },
+    { id: 'schedule_call', label: t('superadmin.customers.playbooks.actionTypes.scheduleCall'), icon: '📞' },
+    { id: 'update_health', label: t('superadmin.customers.playbooks.actionTypes.updateHealth'), icon: '📊' },
+    { id: 'custom', label: t('superadmin.customers.playbooks.actionTypes.custom'), icon: '⚙️' },
+  ];
+  const triggerTypes = [
+    { id: 'onboarding_complete', label: t('superadmin.customers.playbooks.triggerTypes.onboardingComplete') },
+    { id: 'trial_ending', label: t('superadmin.customers.playbooks.triggerTypes.trialEnding') },
+    { id: 'low_engagement', label: t('superadmin.customers.playbooks.triggerTypes.lowEngagement') },
+    { id: 'health_score_drop', label: t('superadmin.customers.playbooks.triggerTypes.healthScoreDrop') },
+    { id: 'subscription_change', label: t('superadmin.customers.playbooks.triggerTypes.subscriptionChange') },
+    { id: 'milestone_reached', label: t('superadmin.customers.playbooks.triggerTypes.milestoneReached') },
+  ];
   const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
   const [actions, setActions] = useState<PlaybookAction[]>([]);
   const [stats, setStats] = useState<PlaybookStats | null>(null);
@@ -75,7 +70,6 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showExecuteModal, setShowExecuteModal] = useState(false);
-  const [editingPlaybook, setEditingPlaybook] = useState<Playbook | null>(null);
 
   const [newPlaybook, setNewPlaybook] = useState({
     name: '',
@@ -132,7 +126,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
   };
 
   const handleDeletePlaybook = async (playbookId: string) => {
-    if (!confirm('Are you sure you want to delete this playbook?')) return;
+    if (!confirm(t('superadmin.customers.playbooks.confirmDelete'))) return;
 
     try {
       await Api.deleteSuccessPlaybook(playbookId);
@@ -175,11 +169,41 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
   };
 
   const getActionLabel = (type: string) => {
-    return ACTION_TYPES.find((a) => a.id === type)?.label || type;
+    switch (type) {
+      case 'send_email':
+        return t('superadmin.customers.playbooks.actionTypes.sendEmail');
+      case 'create_task':
+        return t('superadmin.customers.playbooks.actionTypes.createTask');
+      case 'notify_csm':
+        return t('superadmin.customers.playbooks.actionTypes.notifyCsm');
+      case 'schedule_call':
+        return t('superadmin.customers.playbooks.actionTypes.scheduleCall');
+      case 'update_health':
+        return t('superadmin.customers.playbooks.actionTypes.updateHealth');
+      case 'custom':
+        return t('superadmin.customers.playbooks.actionTypes.custom');
+      default:
+        return type;
+    }
   };
 
   const getActionIcon = (type: string) => {
-    return ACTION_TYPES.find((a) => a.id === type)?.icon || '⚡';
+    switch (type) {
+      case 'send_email':
+        return '📧';
+      case 'create_task':
+        return '✅';
+      case 'notify_csm':
+        return '👤';
+      case 'schedule_call':
+        return '📞';
+      case 'update_health':
+        return '📊';
+      case 'custom':
+        return '⚙️';
+      default:
+        return '⚡';
+    }
   };
 
   const formatDate = (dateStr?: string) => {
@@ -199,72 +223,85 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Customer Success Playbooks</h2>
-          <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-1">
-            Automate customer success workflows
-          </p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+              {t('superadmin.customers.playbooks.title')}
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 mt-1">
+              {t('superadmin.customers.playbooks.subtitle')}
+            </p>
+          </div>
+          <InfoButton cardId="superadmin-playbooks" />
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
         >
           <Plus className="w-4 h-4" />
-          New Playbook
+          {t('superadmin.customers.playbooks.newPlaybook')}
         </button>
       </div>
 
       {/* Overview Stats */}
       {stats && (
         <div className="grid grid-cols-4 gap-4">
-          <Card className="bg-gray-800 p-4">
+          <Card padding="sm">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-500/20 rounded-lg">
                 <Zap className="w-5 h-5 text-blue-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{stats.total_playbooks}</p>
-                <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
-                  Total Playbooks
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {stats.total_playbooks}
+                </p>
+                <span className="text-xs text-slate-600 dark:text-slate-400">
+                  {t('superadmin.customers.playbooks.stats.totalPlaybooks')}
                 </span>
               </div>
             </div>
           </Card>
-          <Card className="bg-gray-800 p-4">
+          <Card padding="sm">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-500/20 rounded-lg">
                 <CheckCircle2 className="w-5 h-5 text-green-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{stats.active_playbooks}</p>
-                <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
-                  Active
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {stats.active_playbooks}
+                </p>
+                <span className="text-xs text-slate-600 dark:text-slate-400">
+                  {t('superadmin.customers.playbooks.stats.active')}
                 </span>
               </div>
             </div>
           </Card>
-          <Card className="bg-gray-800 p-4">
+          <Card padding="sm">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-purple-500/20 rounded-lg">
                 <Activity className="w-5 h-5 text-purple-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{stats.total_actions}</p>
-                <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
-                  Total Actions
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {stats.total_actions}
+                </p>
+                <span className="text-xs text-slate-600 dark:text-slate-400">
+                  {t('superadmin.customers.playbooks.stats.totalActions')}
                 </span>
               </div>
             </div>
           </Card>
-          <Card className="bg-gray-800 p-4">
+          <Card padding="sm">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-yellow-500/20 rounded-lg">
                 <Target className="w-5 h-5 text-yellow-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{stats.completed_actions}</p>
-                <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
-                  Completed Actions
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {stats.completed_actions}
+                </p>
+                <span className="text-xs text-slate-600 dark:text-slate-400">
+                  {t('superadmin.customers.playbooks.stats.completedActions')}
                 </span>
               </div>
             </div>
@@ -275,20 +312,22 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
       <div className="grid grid-cols-12 gap-6">
         {/* Playbooks List */}
         <div className="col-span-4">
-          <Card className="bg-gray-800 p-4">
-            <h3 className="text-lg font-semibold text-white mb-4">
-              Playbooks ({playbooks.length})
+          <Card padding="sm">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+              {t('superadmin.customers.playbooks.playbooks')} ({playbooks.length})
             </h3>
             <div className="space-y-2 max-h-[500px] overflow-y-auto">
               {playbooks.length === 0 ? (
                 <div className="text-center py-8">
                   <Zap className="w-12 h-12 text-gray-600 dark:text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">No playbooks yet</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
+                    {t('superadmin.customers.playbooks.empty.noPlaybooks')}
+                  </p>
                   <button
                     onClick={() => setShowCreateModal(true)}
                     className="text-blue-400 hover:text-blue-300 text-sm mt-2"
                   >
-                    Create your first playbook
+                    {t('superadmin.customers.playbooks.empty.createFirst')}
                   </button>
                 </div>
               ) : (
@@ -305,33 +344,41 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                       className={`p-3 rounded-lg cursor-pointer transition-colors ${
                         selectedPlaybook?.id === playbook.id
                           ? 'bg-blue-600/20 border border-blue-500'
-                          : 'bg-gray-700/50 hover:bg-gray-700'
+                          : 'bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10'
                       }`}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
                           <Zap
-                            className={`w-4 h-4 ${playbook.is_active ? 'text-green-400' : 'text-gray-400 dark:text-gray-500 dark:text-gray-400'}`}
+                            className={`w-4 h-4 ${
+                              playbook.is_active
+                                ? 'text-green-400'
+                                : 'text-slate-500 dark:text-slate-400'
+                            }`}
                           />
-                          <span className="text-white font-medium">{playbook.name}</span>
+                          <span className="text-slate-900 dark:text-white font-medium">
+                            {playbook.name}
+                          </span>
                         </div>
                         <span
                           className={`text-xs px-2 py-1 rounded ${
                             playbook.is_active
                               ? 'bg-green-500/20 text-green-400'
-                              : 'bg-gray-50 dark:bg-navy-8000/20 text-gray-400'
+                              : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300'
                           }`}
                         >
-                          {playbook.is_active ? 'Active' : 'Inactive'}
+                          {playbook.is_active
+                            ? t('superadmin.customers.playbooks.status.active')
+                            : t('superadmin.customers.playbooks.status.inactive')}
                         </span>
                       </div>
                       {playbook.description && (
-                        <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs mt-1 truncate">
+                        <p className="text-slate-600 dark:text-slate-400 text-xs mt-1 truncate">
                           {playbook.description}
                         </p>
                       )}
-                      <p className="text-gray-500 dark:text-gray-400 text-xs mt-2">
-                        {actionsCount} actions
+                      <p className="text-slate-500 dark:text-slate-400 text-xs mt-2">
+                        {t('superadmin.customers.playbooks.actionsCount', { count: actionsCount })}
                       </p>
                     </div>
                   );
@@ -346,23 +393,27 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
           {selectedPlaybook ? (
             <div className="space-y-4">
               {/* Playbook Header */}
-              <Card className="bg-gray-800 p-4">
+              <Card padding="sm">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-xl font-bold text-white">{selectedPlaybook.name}</h3>
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                        {selectedPlaybook.name}
+                      </h3>
                       <span
                         className={`text-xs px-2 py-1 rounded ${
                           selectedPlaybook.is_active
                             ? 'bg-green-500/20 text-green-400'
-                            : 'bg-gray-50 dark:bg-navy-8000/20 text-gray-400'
+                            : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300'
                         }`}
                       >
-                        {selectedPlaybook.is_active ? 'Active' : 'Inactive'}
+                        {selectedPlaybook.is_active
+                          ? t('superadmin.customers.playbooks.status.active')
+                          : t('superadmin.customers.playbooks.status.inactive')}
                       </span>
                     </div>
                     {selectedPlaybook.description && (
-                      <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-sm mt-1">
+                      <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
                         {selectedPlaybook.description}
                       </p>
                     )}
@@ -373,7 +424,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                       className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm transition-colors"
                     >
                       <Play className="w-4 h-4" />
-                      Execute
+                      {t('superadmin.customers.playbooks.execute')}
                     </button>
                     <button
                       onClick={() => handleDeletePlaybook(selectedPlaybook.id)}
@@ -386,9 +437,11 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
 
                 {/* Trigger Conditions */}
                 <div className="mb-4">
-                  <h4 className="text-sm font-medium text-gray-300 mb-2">Trigger Conditions</h4>
-                  <div className="bg-gray-700/50 rounded-lg p-3">
-                    <pre className="text-xs text-gray-300 overflow-x-auto">
+                  <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Trigger Conditions
+                  </h4>
+                  <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3">
+                    <pre className="text-xs text-slate-800 dark:text-slate-200 overflow-x-auto">
                       {JSON.stringify(
                         JSON.parse(selectedPlaybook.trigger_conditions_json || '{}'),
                         null,
@@ -400,28 +453,30 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
 
                 {/* Actions */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-300 mb-2">Actions</h4>
+                  <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Actions
+                  </h4>
                   <div className="space-y-2">
                     {(() => {
                       try {
                         const actions = JSON.parse(selectedPlaybook.actions_json || '[]');
                         return actions.length === 0 ? (
-                          <p className="text-gray-500 dark:text-gray-400 text-sm">
+                          <p className="text-slate-600 dark:text-slate-400 text-sm">
                             No actions defined
                           </p>
                         ) : (
                           actions.map((action: any, idx: number) => (
                             <div
                               key={idx}
-                              className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg"
+                              className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg"
                             >
                               <span className="text-xl">{getActionIcon(action.type)}</span>
                               <div>
-                                <p className="text-white font-medium">
+                                <p className="text-slate-900 dark:text-white font-medium">
                                   {getActionLabel(action.type)}
                                 </p>
                                 {action.config && Object.keys(action.config).length > 0 && (
-                                  <p className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                                  <p className="text-xs text-slate-600 dark:text-slate-400">
                                     {JSON.stringify(action.config)}
                                   </p>
                                 )}
@@ -431,7 +486,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                         );
                       } catch {
                         return (
-                          <p className="text-gray-500 dark:text-gray-400 text-sm">
+                          <p className="text-slate-600 dark:text-slate-400 text-sm">
                             Invalid actions data
                           </p>
                         );
@@ -442,10 +497,12 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
               </Card>
 
               {/* Recent Executions */}
-              <Card className="bg-gray-800 p-4">
-                <h4 className="text-lg font-semibold text-white mb-4">Recent Executions</h4>
+              <Card padding="sm">
+                <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+                  Recent Executions
+                </h4>
                 {actions.filter((a) => a.playbook_id === selectedPlaybook.id).length === 0 ? (
-                  <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
+                  <p className="text-slate-600 dark:text-slate-400 text-sm text-center py-4">
                     No executions yet
                   </p>
                 ) : (
@@ -456,15 +513,15 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                       .map((action) => (
                         <div
                           key={action.id}
-                          className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg"
+                          className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg"
                         >
                           <div className="flex items-center gap-3">
                             <Building2 className="w-4 h-4 text-blue-400" />
                             <div>
-                              <p className="text-white text-sm">
+                              <p className="text-slate-900 dark:text-white text-sm">
                                 {action.organization_name || action.organization_id}
                               </p>
-                              <p className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                              <p className="text-xs text-slate-600 dark:text-slate-400">
                                 {action.action_type}
                               </p>
                             </div>
@@ -481,7 +538,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                             >
                               {action.status}
                             </span>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                               {formatDate(action.executed_at)}
                             </p>
                           </div>
@@ -492,12 +549,14 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
               </Card>
             </div>
           ) : (
-            <Card className="bg-gray-800 p-8">
+            <Card padding="lg">
               <div className="flex flex-col items-center justify-center h-64">
                 <Zap className="w-16 h-16 text-gray-600 dark:text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">Select a Playbook</h3>
-                <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-center">
-                  Choose a playbook from the list or create a new one
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+                  {t('superadmin.customers.playbooks.empty.selectTitle')}
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400 text-center">
+                  {t('superadmin.customers.playbooks.empty.selectSubtitle')}
                 </p>
               </div>
             </Card>
@@ -508,32 +567,38 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
       {/* Create Playbook Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-white mb-4">Create Customer Success Playbook</h3>
+          <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-navy-700">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+              {t('superadmin.customers.playbooks.modals.createTitle')}
+            </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Playbook Name
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t('superadmin.customers.playbooks.fields.name')}
                 </label>
                 <input
                   type="text"
                   value={newPlaybook.name}
                   onChange={(e) => setNewPlaybook({ ...newPlaybook, name: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
-                  placeholder="e.g., New Customer Onboarding"
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+                  placeholder={t('superadmin.customers.playbooks.placeholders.name')}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t('superadmin.customers.playbooks.fields.description')}
+                </label>
                 <textarea
                   value={newPlaybook.description}
                   onChange={(e) => setNewPlaybook({ ...newPlaybook, description: e.target.value })}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
                   rows={2}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Trigger</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  {t('superadmin.customers.playbooks.fields.trigger')}
+                </label>
                 <select
                   value={newPlaybook.triggerConditions.type}
                   onChange={(e) =>
@@ -545,26 +610,30 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                       },
                     })
                   }
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
                 >
-                  {TRIGGER_TYPES.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.label}
+                  {triggerTypes.map((tt) => (
+                    <option key={tt.id} value={tt.id}>
+                      {tt.label}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Actions</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  {t('superadmin.customers.playbooks.fields.actions')}
+                </label>
                 <div className="space-y-2 mb-2">
                   {newPlaybook.actions.map((action, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-2 bg-gray-700/50 rounded-lg"
+                      className="flex items-center justify-between p-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg"
                     >
                       <div className="flex items-center gap-2">
                         <span>{getActionIcon(action.type)}</span>
-                        <span className="text-white">{getActionLabel(action.type)}</span>
+                        <span className="text-slate-900 dark:text-white">
+                          {getActionLabel(action.type)}
+                        </span>
                       </div>
                       <button
                         onClick={() => removeActionFromPlaybook(idx)}
@@ -576,11 +645,11 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                   ))}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {ACTION_TYPES.map((at) => (
+                  {actionTypes.map((at) => (
                     <button
                       key={at.id}
                       onClick={() => addActionToPlaybook(at.id)}
-                      className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm text-white transition-colors"
+                      className="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-navy-900 dark:hover:bg-navy-700 rounded-lg text-sm text-slate-900 dark:text-white transition-colors"
                     >
                       {at.icon} {at.label}
                     </button>
@@ -591,16 +660,16 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                className="px-4 py-2 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleCreatePlaybook}
                 disabled={!newPlaybook.name || newPlaybook.actions.length === 0}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
               >
-                Create Playbook
+                {t('superadmin.customers.playbooks.modals.createCta')}
               </button>
             </div>
           </div>
@@ -610,38 +679,46 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
       {/* Execute Modal */}
       {showExecuteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">Execute Playbook</h3>
+          <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-md border border-slate-200 dark:border-navy-700">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+              {t('superadmin.customers.playbooks.modals.executeTitle')}
+            </h3>
             <div className="space-y-4">
-              <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
-                Execute "{selectedPlaybook?.name}" for a specific organization.
+              <p className="text-slate-600 dark:text-slate-400">
+                {t('superadmin.customers.playbooks.modals.executeSubtitle', {
+                  name: selectedPlaybook?.name || '',
+                })}
               </p>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Organization ID
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t('superadmin.customers.playbooks.fields.organizationId')}
                 </label>
                 <input
                   type="text"
                   value={executeOrgId}
                   onChange={(e) => setExecuteOrgId(e.target.value)}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
-                  placeholder="Enter organization ID"
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+                  placeholder={t('superadmin.customers.playbooks.placeholders.organizationId')}
                 />
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowExecuteModal(false)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                className="px-4 py-2 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleExecutePlaybook}
                 disabled={!executeOrgId || isExecuting}
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50"
               >
-                {isExecuting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Execute'}
+                {isExecuting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  t('superadmin.customers.playbooks.modals.executeCta')
+                )}
               </button>
             </div>
           </div>

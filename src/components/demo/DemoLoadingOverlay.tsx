@@ -88,7 +88,7 @@ export const DemoLoadingOverlay: React.FC<DemoLoadingOverlayProps> = ({
               <div className="w-20 h-20 mx-auto bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-2xl shadow-purple-500/30 mb-6">
                 <img
                   src="/assets/logos/logo-icon.png"
-                  alt="Consultinity"
+                  alt="Consultify"
                   className="w-12 h-12 object-contain"
                 />
               </div>

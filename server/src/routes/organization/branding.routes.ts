@@ -12,6 +12,10 @@
  */
 
 import { Response, Router } from 'express';
+import { resolveCname } from 'dns/promises';
+import fs from 'fs';
+import multer from 'multer';
+import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
@@ -21,6 +25,28 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.
 import logger from '../../utils/Logger.js';
 
 const router = Router();
+
+const brandingUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, _file, cb) => {
+      const orgId = String(req.params.orgId || 'unknown');
+      const uploadDir = path.join(process.cwd(), 'uploads', 'branding', orgId);
+      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+      cb(null, uploadDir);
+    },
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname || '').toLowerCase() || '.png';
+      cb(null, `${uuidv4()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (_req, file, cb) => {
+    const ok = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml'].includes(
+      file.mimetype
+    );
+    cb(ok ? null : new Error('Unsupported file type'), ok);
+  },
+});
 
 // ===========================================
 // ENSURE BRANDING TABLE EXISTS
@@ -133,6 +159,29 @@ router.get(
       logger.error('[branding] Error listing brandings:', err);
       return res.status(500).json({ error: err.message });
     }
+  })
+);
+
+// ===========================================
+// POST /api/branding/:orgId/upload - Upload branding asset (SuperAdmin)
+// ===========================================
+router.post(
+  '/:orgId/upload',
+  verifyToken,
+  verifySuperAdmin,
+  brandingUpload.single('file'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { orgId } = req.params;
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const filename = req.file.filename;
+    const url = `/uploads/branding/${orgId}/${filename}`;
+
+    return res.status(201).json({
+      url,
+      id: filename,
+      type: req.body?.type || null,
+    });
   })
 );
 
@@ -470,12 +519,53 @@ router.post(
         return res.status(400).json({ error: 'No custom domain configured' });
       }
 
-      // No simulated DNS verification in runtime.
-      return res.status(503).json({
-        statusCode: 503,
-        status: false,
-        type: 'not_configured',
-        message: 'Service temporarily unavailable due to missing configuration',
+      const domain = String((branding as any).custom_domain || '').trim();
+      if (!domain) return res.status(400).json({ error: 'No custom domain configured' });
+
+      const expectedTarget = String(process.env.BRANDING_CNAME_TARGET || 'app.consultify.com')
+        .trim()
+        .toLowerCase()
+        .replace(/\.$/, '');
+
+      const normalizeTarget = (value: string) => String(value || '').trim().toLowerCase().replace(/\.$/, '');
+
+      let cnames: string[] = [];
+      try {
+        cnames = (await resolveCname(domain)).map(normalizeTarget).filter(Boolean);
+      } catch (dnsErr: any) {
+        // DNS errors are not "server errors" — they simply mean "not verified yet".
+        await dbRun(
+          `UPDATE organization_branding
+           SET custom_domain_verified = 0,
+               updated_at = datetime('now')
+           WHERE organization_id = ?`,
+          [orgId]
+        );
+        return res.json({
+          verified: false,
+          domain,
+          expectedTarget,
+          foundTargets: [],
+          error: dnsErr?.code || dnsErr?.message || 'DNS lookup failed',
+        });
+      }
+
+      const verified = cnames.includes(expectedTarget);
+
+      await dbRun(
+        `UPDATE organization_branding
+         SET custom_domain_verified = ?,
+             custom_domain_ssl_status = COALESCE(custom_domain_ssl_status, 'pending'),
+             updated_at = datetime('now')
+         WHERE organization_id = ?`,
+        [verified ? 1 : 0, orgId]
+      );
+
+      return res.json({
+        verified,
+        domain,
+        expectedTarget,
+        foundTargets: cnames,
       });
     } catch (err: any) {
       logger.error(`[branding] Error verifying domain for ${orgId}:`, err);

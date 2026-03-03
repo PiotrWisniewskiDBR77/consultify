@@ -9,10 +9,7 @@ import { DollarSign, Plus, RefreshCw, Save } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-const authHeaders = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${localStorage.getItem('token')}`,
-});
+import { Api } from '@/services/api';
 
 type SnapshotRow = {
   id: string;
@@ -65,12 +62,11 @@ export const PricingRegistryTab: React.FC = () => {
       const qs = new URLSearchParams();
       if (providerFilter.trim()) qs.set('provider', providerFilter.trim());
       if (modelFilter.trim()) qs.set('model_id', modelFilter.trim());
-      const res = await fetch(`/api/llm/pricing/snapshots?${qs.toString()}`, {
-        headers: authHeaders(),
+      const json = await Api.getLLMPricingSnapshots({
+        provider: providerFilter.trim() || undefined,
+        model_id: modelFilter.trim() || undefined,
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Failed to load snapshots');
-      setRows(Array.isArray(json?.snapshots) ? json.snapshots : []);
+      setRows(Array.isArray((json as any)?.snapshots) ? (json as any).snapshots : []);
     } catch (e: any) {
       toast.error(e?.message || 'Load failed');
       setRows([]);
@@ -90,20 +86,14 @@ export const PricingRegistryTab: React.FC = () => {
     }
     setSaving(true);
     try {
-      const res = await fetch('/api/llm/pricing/snapshots', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          provider: form.provider.trim(),
-          model_id: form.model_id.trim(),
-          currency: form.currency.trim() || 'USD',
-          source: form.source.trim() || 'manual',
-          units: parsedUnits,
-          notes: form.notes || null,
-        }),
+      await Api.createLLMPricingSnapshot({
+        provider: form.provider.trim(),
+        model_id: form.model_id.trim(),
+        currency: form.currency.trim() || 'USD',
+        source: form.source.trim() || 'manual',
+        units: parsedUnits,
+        notes: form.notes || null,
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Create failed');
       toast.success('Snapshot created');
       await load();
     } catch (e: any) {

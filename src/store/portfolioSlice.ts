@@ -104,7 +104,7 @@ export const usePortfolioStore = create<PortfolioState>()(
         }),
     }),
     {
-      name: 'consultinity-portfolio',
+      name: 'consultify-portfolio',
       partialize: (state) => ({
         viewMode: state.viewMode,
         sortConfig: state.sortConfig,

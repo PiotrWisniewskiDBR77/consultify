@@ -21,10 +21,13 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
-import { DemoButton, RegionalDemoButtons } from './DemoButton';
+import { LANDING_FILMS } from '@/config/landingFilms';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { useAppStore } from '@/store/useAppStore';
 
 // App Feature Carousel Slides
 const AppFeatureSlide: React.FC<{
@@ -489,21 +492,25 @@ const FAQItem: React.FC<{
 
 export const InfoSections: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { currentUser } = useAppStore();
+  const howItWorksTeaserRef = useRef<HTMLVideoElement | null>(null);
+  const [howItWorksTeaserEnded, setHowItWorksTeaserEnded] = useState(false);
   const [openFAQ, setOpenFAQ] = useState<number | null>(0);
 
   const faqs = [
     {
-      q: t('landing.faq.items.0.q', 'What is Consultinity?'),
+      q: t('landing.faq.items.0.q', 'What is Consultify?'),
       a: t(
         'landing.faq.items.0.a',
-        'Consultinity is an AI-powered strategic consulting platform that helps industrial organizations navigate digital transformation. It combines artificial intelligence with human governance to deliver actionable roadmaps, not just reports.'
+        'Consultify is an AI-powered strategic consulting platform that helps industrial organizations navigate digital transformation. It combines artificial intelligence with human governance to deliver actionable roadmaps, not just reports.'
       ),
     },
     {
       q: t('landing.faq.items.1.q', 'How is this different from traditional consulting?'),
       a: t(
         'landing.faq.items.1.a',
-        'Traditional consulting delivers PowerPoint decks. Consultinity delivers a living system. Our AI continuously analyzes your context, generates initiatives, and tracks execution. You get real-time strategic guidance, not a one-time report that sits on a shelf.'
+        'Traditional consulting delivers PowerPoint decks. Consultify delivers a living system. Our AI continuously analyzes your context, generates initiatives, and tracks execution. You get real-time strategic guidance, not a one-time report that sits on a shelf.'
       ),
     },
     {
@@ -517,7 +524,7 @@ export const InfoSections: React.FC = () => {
       q: t('landing.faq.items.3.q', 'Do I need technical expertise to use it?'),
       a: t(
         'landing.faq.items.3.a',
-        'No. Consultinity is designed for business leaders, not IT specialists. The interface is intuitive, and our AI guides you through every step. We also offer onboarding support and training for your team.'
+        'No. Consultify is designed for business leaders, not IT specialists. The interface is intuitive, and our AI guides you through every step. We also offer onboarding support and training for your team.'
       ),
     },
     {
@@ -572,6 +579,87 @@ export const InfoSections: React.FC = () => {
             </h3>
           </div>
 
+          {/* Public teaser (Film 2) */}
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-4xl mx-auto mb-16"
+          >
+            <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl">
+              <div className="p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-slate-200 dark:border-navy-700">
+                <div>
+                  <p className="text-sm font-black text-slate-900 dark:text-white">
+                    {t('landing.howItWorks.teaser.title', 'See it live (20s)')}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {t('landing.howItWorks.teaser.subtitle', 'Public teaser. Full version after login.')}
+                  </p>
+                </div>
+                <button
+                  onClick={async () => {
+                    try {
+                      howItWorksTeaserRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      await howItWorksTeaserRef.current?.play();
+                    } catch {
+                      // ignore autoplay restrictions
+                    }
+                  }}
+                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold transition-colors"
+                >
+                  {t('landing.howItWorks.teaser.cta', 'See it live')}
+                </button>
+              </div>
+
+              <div className="bg-black">
+                <video
+                  ref={howItWorksTeaserRef}
+                  className="w-full aspect-video object-contain"
+                  playsInline
+                  controls
+                  onPlay={() => {
+                    setHowItWorksTeaserEnded(false);
+                    trackFunnelEvent('landing_video_teaser_started', { filmId: LANDING_FILMS.film2.id });
+                  }}
+                  onEnded={() => {
+                    setHowItWorksTeaserEnded(true);
+                    trackFunnelEvent('landing_video_teaser_completed', { filmId: LANDING_FILMS.film2.id });
+                  }}
+                >
+                  <source src={LANDING_FILMS.film2.teaserUrl} type="video/mp4" />
+                </video>
+              </div>
+
+              {howItWorksTeaserEnded ? (
+                <div className="p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                  <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">
+                    {t(
+                      'landing.howItWorks.teaser.after',
+                      'Want the full version? Log in to unlock all videos.'
+                    )}
+                  </p>
+                  <button
+                    onClick={() => {
+                      trackFunnelEvent('landing_watch_full_after_login_clicked', {
+                        filmId: LANDING_FILMS.film2.id,
+                      });
+                      if (currentUser?.isAuthenticated) {
+                        navigate('/resources');
+                      } else {
+                        navigate('/login');
+                      }
+                    }}
+                    className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-800 dark:text-slate-200 font-semibold transition-colors"
+                  >
+                    {currentUser?.isAuthenticated
+                      ? t('landing.howItWorks.teaser.afterCtaAuthed', 'Watch full version')
+                      : t('landing.howItWorks.teaser.afterCta', 'Watch full version after login')}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </motion.div>
+
           <div className="grid md:grid-cols-3 gap-16 lg:gap-24">
             {steps.map((step, idx) => {
               const Icon = step.icon;
@@ -599,28 +687,6 @@ export const InfoSections: React.FC = () => {
               );
             })}
           </div>
-
-          {/* Regional Demo CTAs after methodology */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mt-20"
-          >
-            <div className="text-center mb-8">
-              <h4 className="text-lg font-bold text-navy-950 dark:text-white mb-2">
-                {t('landing.regional.title', 'Schedule a')}{' '}
-                <span className="bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-                  {t('landing.regional.demo', 'Demo')}
-                </span>{' '}
-                {t('landing.regional.titleEnd', 'in Your Region')}
-              </h4>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                {t('landing.regional.subtitle', 'Choose your timezone for the best experience')}
-              </p>
-            </div>
-            <RegionalDemoButtons />
-          </motion.div>
         </div>
       </section>
 
@@ -643,7 +709,7 @@ export const InfoSections: React.FC = () => {
               <p className="text-lg text-slate-400 dark:text-slate-500 leading-relaxed font-medium">
                 {t(
                   'landing.trust.description',
-                  'AI is a partner, not an authority. Consultinity implements a strict governance layer where every strategic move requires high-level human validation.'
+                  'AI is a partner, not an authority. Consultify implements a strict governance layer where every strategic move requires high-level human validation.'
                 )}
               </p>
 
@@ -732,9 +798,19 @@ export const InfoSections: React.FC = () => {
               </a>
             </p>
 
-            {/* Demo CTA after FAQ - framed button */}
-            <div className="pt-6">
-              <DemoButton variant="framed" />
+            <div className="pt-6 flex flex-col sm:flex-row justify-center gap-3">
+              <button
+                onClick={() => navigate('/register')}
+                className="px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold shadow-lg shadow-purple-500/20 transition-colors"
+              >
+                {t('landing.faq.ctaPrimary', 'Launch Free Trial')}
+              </button>
+              <button
+                onClick={() => navigate('/resources')}
+                className="px-6 py-3 rounded-xl border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-800 dark:text-slate-200 font-semibold transition-colors"
+              >
+                {t('landing.faq.ctaSecondary', 'Browse resources')}
+              </button>
             </div>
           </div>
         </div>

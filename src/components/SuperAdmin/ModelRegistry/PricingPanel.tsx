@@ -24,54 +24,6 @@ const authHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem('token')}`,
 });
 
-const DEMO_SNAPSHOTS: PriceSnapshot[] = [
-  {
-    id: '1',
-    modelId: 'openai/gpt-4o',
-    provider: 'openrouter',
-    inputPer1MTokens: 2.5,
-    outputPer1MTokens: 10.0,
-    source: 'api_sync',
-    currency: 'USD',
-    effectiveFrom: '2024-06-01',
-    notes: 'Synced from OpenRouter pricing API',
-    createdAt: '2024-06-01T00:00:00Z',
-  },
-  {
-    id: '2',
-    modelId: 'anthropic/claude-3.5-sonnet',
-    provider: 'openrouter',
-    inputPer1MTokens: 3.0,
-    outputPer1MTokens: 15.0,
-    source: 'api_sync',
-    currency: 'USD',
-    effectiveFrom: '2024-06-15',
-    createdAt: '2024-06-15T00:00:00Z',
-  },
-  {
-    id: '3',
-    modelId: 'dall-e-3',
-    provider: 'openai',
-    perImage: 0.04,
-    source: 'manual',
-    currency: 'USD',
-    effectiveFrom: '2024-05-01',
-    notes: 'Standard quality 1024x1024',
-    createdAt: '2024-05-01T00:00:00Z',
-  },
-  {
-    id: '4',
-    modelId: 'consultify/lean-lm-v2',
-    provider: 'internal',
-    perRequest: 0.001,
-    source: 'contract',
-    currency: 'USD',
-    effectiveFrom: '2024-04-01',
-    notes: 'Internal cost allocation',
-    createdAt: '2024-04-01T00:00:00Z',
-  },
-];
-
 const SOURCE_BADGE_STYLES: Record<PriceSource, { bg: string; text: string }> = {
   api_sync: { bg: 'bg-blue-500/10', text: 'text-blue-400' },
   manual: { bg: 'bg-amber-500/10', text: 'text-amber-400' },
@@ -118,32 +70,31 @@ export const PricingPanel: React.FC = () => {
       if (res.ok) {
         const json = await res.json();
         const rows = Array.isArray(json?.snapshots) ? json.snapshots : [];
-        if (rows.length > 0) {
-          setSnapshots(
-            rows.map((r: any) => ({
-              id: String(r.id || ''),
-              modelId: String(r.model_id || ''),
-              provider: String(r.provider || ''),
-              inputPer1MTokens: r.units?.input_per_1m_tokens ?? undefined,
-              outputPer1MTokens: r.units?.output_per_1m_tokens ?? undefined,
-              perImage: r.units?.per_image ?? undefined,
-              perRequest: r.units?.per_request ?? undefined,
-              source: (r.source as PriceSource) || 'manual',
-              currency: r.currency || 'USD',
-              effectiveFrom: r.effective_from || '',
-              effectiveTo: r.effective_to || undefined,
-              notes: r.notes || undefined,
-              createdAt: r.created_at || '',
-            }))
-          );
-        } else {
-          setSnapshots(DEMO_SNAPSHOTS);
-        }
+        setSnapshots(
+          rows.map((r: any) => ({
+            id: String(r.id || ''),
+            modelId: String(r.model_id || ''),
+            provider: String(r.provider || ''),
+            inputPer1MTokens: r.units?.input_per_1m_tokens ?? undefined,
+            outputPer1MTokens: r.units?.output_per_1m_tokens ?? undefined,
+            perImage: r.units?.per_image ?? undefined,
+            perRequest: r.units?.per_request ?? undefined,
+            source: (r.source as PriceSource) || 'manual',
+            currency: r.currency || 'USD',
+            effectiveFrom: r.effective_from || '',
+            effectiveTo: r.effective_to || undefined,
+            notes: r.notes || undefined,
+            createdAt: r.created_at || '',
+          }))
+        );
       } else {
-        setSnapshots(DEMO_SNAPSHOTS);
+        const err = await res.json().catch(() => ({}));
+        toast.error(err?.error || 'Failed to load pricing snapshots');
+        setSnapshots([]);
       }
     } catch {
-      setSnapshots(DEMO_SNAPSHOTS);
+      toast.error('Failed to load pricing snapshots');
+      setSnapshots([]);
     } finally {
       setLoading(false);
     }

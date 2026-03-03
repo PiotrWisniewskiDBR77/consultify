@@ -58,6 +58,7 @@ export interface FinancialAnalysis {
   periods: string[];
   statementData: StatementData;
   currency: string;
+  sourceStatementIds?: string[];
   approvedBy?: string;
   approvedAt?: string;
   createdBy?: string;
@@ -89,6 +90,7 @@ function mapRow(row: any): FinancialAnalysis {
     periods: safeJsonParse(row.periods, []),
     statementData: safeJsonParse(row.statement_data, {}),
     currency: row.currency,
+    sourceStatementIds: safeJsonParse(row.source_statement_ids, []),
     approvedBy: row.approved_by,
     approvedAt: row.approved_at,
     createdBy: row.created_by,
@@ -112,13 +114,26 @@ export async function createAnalysis(
     periods?: string[];
     statementData?: StatementData;
     currency?: string;
+    sourceStatementIds?: string[];
   },
   userId?: string
 ): Promise<FinancialAnalysis> {
   const id = uuidv4();
   const now = new Date().toISOString();
+  const sourceStatementIds = Array.isArray(data.sourceStatementIds) ? data.sourceStatementIds : [];
+
+  const resolved =
+    sourceStatementIds.length > 0 &&
+    (!data.statementData || Object.keys(data.statementData).length === 0)
+      ? await buildStatementDataFromStatements(orgId, sourceStatementIds)
+      : {
+          periods: data.periods || [],
+          statementData: data.statementData || {},
+          currency: data.currency || 'PLN',
+        };
+
   await dbRun(
-    `INSERT INTO financial_analyses (id,organization_id,project_id,title,description,status,analysis_type,periods,statement_data,currency,created_by,created_at,updated_at) VALUES (?,?,?,?,?,'DRAFT',?,?,?,?,?,?,?)`,
+    `INSERT INTO financial_analyses (id,organization_id,project_id,title,description,status,analysis_type,periods,statement_data,currency,source_statement_ids,created_by,created_at,updated_at) VALUES (?,?,?,?,?,'DRAFT',?,?,?,?,?,?,?,?)`,
     [
       id,
       orgId,
@@ -126,9 +141,10 @@ export async function createAnalysis(
       data.title,
       data.description || null,
       data.analysisType || 'comprehensive',
-      JSON.stringify(data.periods || []),
-      JSON.stringify(data.statementData || {}),
-      data.currency || 'PLN',
+      JSON.stringify(resolved.periods || []),
+      JSON.stringify(resolved.statementData || {}),
+      resolved.currency || 'PLN',
+      JSON.stringify(sourceStatementIds),
       userId || null,
       now,
       now,
@@ -142,9 +158,10 @@ export async function createAnalysis(
     description: data.description,
     status: 'DRAFT',
     analysisType: data.analysisType || 'comprehensive',
-    periods: data.periods || [],
-    statementData: data.statementData || {},
-    currency: data.currency || 'PLN',
+    periods: resolved.periods || [],
+    statementData: resolved.statementData || {},
+    currency: resolved.currency || 'PLN',
+    sourceStatementIds,
     createdBy: userId,
     createdAt: now,
     updatedAt: now,
@@ -183,6 +200,8 @@ export async function updateAnalysis(
     periods: string[];
     statementData: StatementData;
     currency: string;
+    sourceStatementIds: string[];
+    rebuildFromStatements: boolean;
   }>
 ): Promise<void> {
   const s: string[] = [];
@@ -206,6 +225,23 @@ export async function updateAnalysis(
   if (data.currency !== undefined) {
     s.push('currency=?');
     p.push(data.currency);
+  }
+  if (data.sourceStatementIds !== undefined) {
+    s.push('source_statement_ids=?');
+    p.push(JSON.stringify(Array.isArray(data.sourceStatementIds) ? data.sourceStatementIds : []));
+  }
+  if (
+    data.rebuildFromStatements &&
+    Array.isArray(data.sourceStatementIds) &&
+    data.sourceStatementIds.length > 0
+  ) {
+    const rebuilt = await buildStatementDataFromStatements(orgId, data.sourceStatementIds);
+    s.push('periods=?');
+    p.push(JSON.stringify(rebuilt.periods || []));
+    s.push('statement_data=?');
+    p.push(JSON.stringify(rebuilt.statementData || {}));
+    s.push('currency=?');
+    p.push(rebuilt.currency || 'PLN');
   }
   s.push('updated_at=?');
   p.push(new Date().toISOString());
@@ -271,18 +307,34 @@ export function computeHorizontalAnalysis(
 export function computeRatios(data: StatementData, period: string): RatioResult[] {
   const pl = (c: string) => lineVal(data.pl, c, period);
   const bs = (c: string) => lineVal(data.bs, c, period);
+  const bsAny = (...codes: string[]) => {
+    for (const c of codes) {
+      const v = bs(c);
+      if (v !== 0) return v;
+    }
+    return 0;
+  };
+  const plAny = (...codes: string[]) => {
+    for (const c of codes) {
+      const v = pl(c);
+      if (v !== 0) return v;
+    }
+    return 0;
+  };
   const ca = bs('CURRENT_ASSETS');
   const cl = bs('CURRENT_LIABILITIES');
   const inv = bs('INVENTORY');
   const cash = bs('CASH');
   const ta = bs('TOTAL_ASSETS');
-  const te = bs('TOTAL_EQUITY');
-  const td = bs('TOTAL_DEBT');
-  const rec = bs('RECEIVABLES');
-  const rev = pl('REVENUE');
+  const te = bsAny('TOTAL_EQUITY', 'EQUITY');
+  // Align with T054 (financialModelingService) and T050 canonical lines.
+  // We use long-term debt as the default leverage proxy.
+  const td = bsAny('LONG_TERM_DEBT', 'TOTAL_LIABILITIES');
+  const rec = bsAny('AR', 'RECEIVABLES');
+  const rev = plAny('REVENUE', 'SALES');
   const cogs = pl('COGS');
-  const gp = pl('GROSS_PROFIT');
-  const oi = pl('OPERATING_INCOME');
+  const gp = plAny('GROSS_PROFIT', 'GROSS_MARGIN');
+  const oi = plAny('EBIT', 'OPERATING_INCOME', 'EBITDA');
   const ni = pl('NET_INCOME');
   const ie = pl('INTEREST_EXPENSE');
   return [
@@ -498,4 +550,136 @@ export async function getAnalysisInsights(analysisId: string): Promise<any[]> {
     `SELECT * FROM financial_analysis_insights WHERE analysis_id=? ORDER BY priority DESC,created_at`,
     [analysisId]
   );
+}
+
+export async function computeLivePreview(orgId: string): Promise<any[]> {
+  const latestModel = await dbGet<any>(
+    `SELECT id FROM financial_models WHERE organization_id = ? ORDER BY updated_at DESC LIMIT 1`,
+    [orgId]
+  );
+  if (!latestModel) throw new Error('No financial model found');
+
+  const outputs = await dbAll<any>(
+    // Postgres schema (T054): period_date + period_label (not "period").
+    `SELECT statement_type, line_code, line_name, period_label as period, value FROM financial_model_outputs WHERE model_id = ? ORDER BY period_date, statement_type, line_code`,
+    [latestModel.id]
+  );
+  if (!outputs?.length) throw new Error('Model has no computed outputs');
+
+  const periods = [...new Set(outputs.map((o: any) => o.period))].sort();
+  const sd: StatementData = { pl: [], bs: [], cf: [] };
+  const lineMap = new Map<string, StatementLine>();
+  for (const o of outputs) {
+    const key = `${o.statement_type}:${o.line_code}`;
+    let line = lineMap.get(key);
+    if (!line) {
+      line = { code: o.line_code, name: o.line_name || o.line_code, values: {} };
+      lineMap.set(key, line);
+      const st = (o.statement_type || '').toUpperCase();
+      if (st.includes('PL') || st.includes('P&L')) sd.pl!.push(line);
+      else if (st.includes('BS')) sd.bs!.push(line);
+      else if (st.includes('CF')) sd.cf!.push(line);
+      else sd.pl!.push(line);
+    }
+    line.values[o.period] = Number(o.value || 0);
+  }
+
+  const result: any[] = [];
+  for (const p of periods) {
+    const ratios = computeRatios(sd, p);
+    for (const r of ratios) {
+      if (r.value == null) continue;
+      result.push({
+        id: `live-${r.code}-${p}`,
+        category: r.category,
+        ratio_code: r.code,
+        ratio_name: r.name,
+        value: r.value,
+        period: p,
+        benchmark_value: r.benchmark ?? null,
+      });
+    }
+  }
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// T052: statement_data builder from T050 financial_statements
+// ---------------------------------------------------------------------------
+
+async function buildStatementDataFromStatements(
+  organizationId: string,
+  statementIds: string[]
+): Promise<{ periods: string[]; statementData: StatementData; currency: string }> {
+  const ids = statementIds.filter(Boolean).slice(0, 50);
+  if (ids.length === 0) return { periods: [], statementData: {}, currency: 'PLN' };
+
+  const placeholders = ids.map(() => '?').join(',');
+  const stmts = await dbAll<any>(
+    `SELECT id, statement_type, period_label, period_end, currency
+     FROM financial_statements
+     WHERE organization_id = ? AND id IN (${placeholders}) AND status IN ('confirmed','mapped','imported','draft')
+     ORDER BY period_end DESC`,
+    [organizationId, ...ids]
+  );
+
+  const currency = String(stmts?.find((s: any) => s.currency)?.currency || 'PLN');
+  const periodKey = (s: any) =>
+    String(s.period_label || '').trim() ||
+    String(s.period_end || '').slice(0, 10) ||
+    String(s.id).slice(0, 8);
+
+  const periods = Array.from(new Set((stmts || []).map(periodKey))).sort();
+
+  const valueRows = await dbAll<any>(
+    `SELECT fsv.statement_id, fsv.value, fsl.line_code, fsl.line_name, fsl.statement_type
+     FROM financial_statement_values fsv
+     LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
+     WHERE fsv.statement_id IN (${placeholders})`,
+    [...ids]
+  );
+
+  const stmtById = new Map<string, any>();
+  for (const s of stmts || []) stmtById.set(String(s.id), s);
+
+  const makeLineMap = () => new Map<string, StatementLine>();
+  const plMap = makeLineMap();
+  const bsMap = makeLineMap();
+  const cfMap = makeLineMap();
+
+  const pushVal = (
+    map: Map<string, StatementLine>,
+    code: string,
+    name: string,
+    period: string,
+    v: number
+  ) => {
+    if (!code) return;
+    const key = String(code);
+    const line = map.get(key) || { code: key, name: name || key, values: {} };
+    line.values[period] = (line.values[period] || 0) + (Number(v) || 0);
+    map.set(key, line);
+  };
+
+  for (const r of valueRows || []) {
+    const stmtId = String(r.statement_id);
+    const stmt = stmtById.get(stmtId);
+    if (!stmt) continue;
+    const p = periodKey(stmt);
+    const st = String(r.statement_type || stmt.statement_type || '').toUpperCase();
+    const code = String(r.line_code || '').toUpperCase();
+    const name = String(r.line_name || code);
+    if (!code) continue;
+    if (st === 'P&L' || st.includes('PL')) pushVal(plMap, code, name, p, r.value);
+    else if (st === 'BS') pushVal(bsMap, code, name, p, r.value);
+    else if (st === 'CF') pushVal(cfMap, code, name, p, r.value);
+  }
+
+  const statementData: StatementData = {
+    pl: Array.from(plMap.values()),
+    bs: Array.from(bsMap.values()),
+    cf: Array.from(cfMap.values()),
+  };
+
+  return { periods, statementData, currency };
 }

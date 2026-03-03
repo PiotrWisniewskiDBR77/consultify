@@ -25,7 +25,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const sql = `SELECT * FROM settings`;
-      const rows = await dbAll(sql, [], { fallback: false });
+      const rows = await dbAll(sql, [], { fallback: true });
 
       // Convert to key-value object
       const settings: Record<string, any> = {};
@@ -1656,7 +1656,7 @@ router.get(
     res.setHeader('Content-Type', 'application/json');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="consultinity-data-export-${requestId}.json"`
+      `attachment; filename="consultify-data-export-${requestId}.json"`
     );
     return res.send(request.metadata);
   })
@@ -3298,7 +3298,7 @@ const ensureUserApiKeysTable = async () => {
 
 const generateApiKey = (): string => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let key = 'ck_'; // consultinity key prefix
+  let key = 'ck_'; // consultify key prefix
   for (let i = 0; i < 32; i++) {
     key += chars.charAt(Math.floor(Math.random() * chars.length));
   }
@@ -3618,7 +3618,7 @@ router.post(
       const testPayload = {
         event: 'test',
         timestamp: new Date().toISOString(),
-        data: { message: 'This is a test webhook from Consultinity' },
+        data: { message: 'This is a test webhook from Consultify' },
       };
 
       const response = await fetch(webhook.url, {

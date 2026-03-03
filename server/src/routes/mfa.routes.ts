@@ -102,7 +102,7 @@ router.post('/setup', verifyToken, isAuthenticated, async (req: Request, res: Re
     }
 
     const secret = generateSecret();
-    const issuer = 'Consultinity';
+    const issuer = 'Consultify';
     const otpauthUrl = `otpauth://totp/${issuer}:${encodeURIComponent(user.email)}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
 
     // Store pending secret (not yet verified)

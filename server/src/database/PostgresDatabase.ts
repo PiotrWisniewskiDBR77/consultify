@@ -6,7 +6,7 @@
  * Provides SQLite-compatible interface for PostgreSQL
  */
 
-import { Pool, type PoolClient, type PoolConfig } from 'pg';
+import { Client, Pool, type PoolClient, type PoolConfig } from 'pg';
 
 import databaseConfig from '../config/DatabaseConfig.js';
 import logger from '../utils/Logger.js';
@@ -16,6 +16,50 @@ let pool: Pool | null = null;
 let readPool: Pool | null = null;
 let initDbPromise: Promise<void> | null = null;
 const SLOW_QUERY_THRESHOLD_MS = 1000;
+let ensuredMissingDatabaseOnce = false;
+
+function getPrimaryDbName(): string | null {
+  const cfg = databaseConfig.postgres as PoolConfig | undefined;
+  const name = (cfg as any)?.database ? String((cfg as any).database) : '';
+  return name && name.trim() ? name.trim() : null;
+}
+
+async function ensureDatabaseExistsForTests(err: any): Promise<boolean> {
+  if (process.env.NODE_ENV !== 'test') return false;
+  if (!err || String(err.code || '') !== '3D000') return false; // invalid_catalog_name
+  if (ensuredMissingDatabaseOnce) return false;
+  ensuredMissingDatabaseOnce = true;
+
+  const cfg = databaseConfig.postgres as PoolConfig | undefined;
+  const dbName = getPrimaryDbName();
+  if (!cfg || !dbName) return false;
+
+  // Connect to admin DB (postgres) to create missing test DB.
+  const adminCfg: PoolConfig = { ...(cfg as any), database: 'postgres' };
+  const client = new Client(adminCfg);
+  try {
+    await client.connect();
+    const exists = await client.query('SELECT 1 FROM pg_database WHERE datname = $1', [dbName]);
+    if (!exists.rowCount) {
+      const safeIdent = `"${dbName.replace(/"/g, '""')}"`;
+      await client.query(`CREATE DATABASE ${safeIdent}`);
+      logger.info('[Postgres] Created missing test database', { database: dbName });
+    }
+    return true;
+  } catch (e: any) {
+    logger.warn('[Postgres] Failed to auto-create missing test database (non-fatal)', {
+      database: dbName,
+      message: e?.message,
+    });
+    return false;
+  } finally {
+    try {
+      await client.end();
+    } catch {
+      // ignore
+    }
+  }
+}
 
 function isDbReadOnlyEnabled(): boolean {
   const v = String(process.env.DB_READONLY || '')
@@ -190,6 +234,22 @@ async function executeWithLogging<T>(
 
     return { rows: res.rows as T[], rowCount: res.rowCount };
   } catch (err) {
+    // Test-only: if the DB doesn't exist yet (common in fresh local env),
+    // auto-create it once and retry the query.
+    if (await ensureDatabaseExistsForTests(err)) {
+      try {
+        if (pool) await pool.end();
+      } catch {
+        // ignore
+      }
+      pool = null;
+      initDbPromise = null;
+      const retryPool = poolFn();
+      if (initDbPromise) await initDbPromise;
+      const res = await retryPool.query(sql, params);
+      return { rows: res.rows as T[], rowCount: res.rowCount };
+    }
+
     // Log query error with context
     logger.error(`[Postgres] Query Error [${method}]:`, (err as Error).message);
     logger.error(`[Postgres] Failed SQL: ${sql.substring(0, 500)}`);
@@ -1301,14 +1361,64 @@ export async function initDb(): Promise<void> {
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             )`);
 
-    // API usage logs (aggregation)
+    // API logs (T113) + legacy aggregation fields
+    // This table is used by apiLoggingMiddleware to log request metadata.
     await query(`CREATE TABLE IF NOT EXISTS api_logs(
                 id TEXT PRIMARY KEY,
+                endpoint TEXT,
+                method TEXT,
+                status_code INTEGER,
+                response_time_ms INTEGER,
+                user_id TEXT,
+                organization_id TEXT,
+                correlation_id TEXT,
+                error_message TEXT,
                 api_key_id TEXT,
                 tokens_used REAL DEFAULT 0,
                 cost REAL DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )`);
+
+    // Reconcile older schemas that created a minimal api_logs table
+    await query(`
+            DO $$
+        BEGIN
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns
+                               WHERE table_name = 'api_logs' AND column_name = 'endpoint') THEN
+                    ALTER TABLE api_logs ADD COLUMN endpoint TEXT;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns
+                               WHERE table_name = 'api_logs' AND column_name = 'method') THEN
+                    ALTER TABLE api_logs ADD COLUMN method TEXT;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns
+                               WHERE table_name = 'api_logs' AND column_name = 'status_code') THEN
+                    ALTER TABLE api_logs ADD COLUMN status_code INTEGER;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns
+                               WHERE table_name = 'api_logs' AND column_name = 'response_time_ms') THEN
+                    ALTER TABLE api_logs ADD COLUMN response_time_ms INTEGER;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns
+                               WHERE table_name = 'api_logs' AND column_name = 'user_id') THEN
+                    ALTER TABLE api_logs ADD COLUMN user_id TEXT;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns
+                               WHERE table_name = 'api_logs' AND column_name = 'organization_id') THEN
+                    ALTER TABLE api_logs ADD COLUMN organization_id TEXT;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns
+                               WHERE table_name = 'api_logs' AND column_name = 'correlation_id') THEN
+                    ALTER TABLE api_logs ADD COLUMN correlation_id TEXT;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns
+                               WHERE table_name = 'api_logs' AND column_name = 'error_message') THEN
+                    ALTER TABLE api_logs ADD COLUMN error_message TEXT;
+                END IF;
+            END $$;
+        `).catch((_err: Error | null) => {
+      logger.info('[Postgres] api_logs schema reconciliation skipped (may already exist)');
+    });
 
     // Verification Tokens (email/account verification)
     await query(`CREATE TABLE IF NOT EXISTS verification_tokens(

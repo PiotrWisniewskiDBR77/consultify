@@ -1,5 +1,5 @@
 /**
- * Consultinity Studio Components Export
+ * Consultify Studio Components Export
  */
 
 // Main components

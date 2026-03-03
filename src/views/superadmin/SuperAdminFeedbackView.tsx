@@ -22,6 +22,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 
 type FeedbackStatus = 'NEW' | 'PENDING' | 'IN_PROGRESS' | 'REVIEWED' | 'RESOLVED' | 'ARCHIVED';
@@ -68,19 +69,43 @@ const STATUS_ORDER: FeedbackStatus[] = [
 ];
 
 const STATUS_CONFIG: Record<FeedbackStatus, { color: string; bg: string; border: string }> = {
-  NEW: { color: 'text-blue-400', bg: 'bg-blue-600/10', border: 'border-blue-600/20' },
-  PENDING: { color: 'text-yellow-400', bg: 'bg-yellow-600/10', border: 'border-yellow-600/20' },
-  IN_PROGRESS: { color: 'text-orange-400', bg: 'bg-orange-600/10', border: 'border-orange-600/20' },
-  REVIEWED: { color: 'text-purple-400', bg: 'bg-purple-600/10', border: 'border-purple-600/20' },
-  RESOLVED: { color: 'text-green-400', bg: 'bg-green-600/10', border: 'border-green-600/20' },
-  ARCHIVED: { color: 'text-slate-500', bg: 'bg-slate-700/50', border: 'border-slate-700' },
+  NEW: {
+    color: 'text-blue-700 dark:text-blue-400',
+    bg: 'bg-blue-600/10',
+    border: 'border-blue-600/20',
+  },
+  PENDING: {
+    color: 'text-yellow-800 dark:text-yellow-400',
+    bg: 'bg-yellow-600/10',
+    border: 'border-yellow-600/20',
+  },
+  IN_PROGRESS: {
+    color: 'text-orange-700 dark:text-orange-400',
+    bg: 'bg-orange-600/10',
+    border: 'border-orange-600/20',
+  },
+  REVIEWED: {
+    color: 'text-purple-700 dark:text-purple-400',
+    bg: 'bg-purple-600/10',
+    border: 'border-purple-600/20',
+  },
+  RESOLVED: {
+    color: 'text-green-700 dark:text-green-400',
+    bg: 'bg-green-600/10',
+    border: 'border-green-600/20',
+  },
+  ARCHIVED: {
+    color: 'text-slate-700 dark:text-slate-300',
+    bg: 'bg-slate-100 dark:bg-slate-700/50',
+    border: 'border-slate-200 dark:border-slate-700',
+  },
 };
 
 const SEVERITY_CONFIG: Record<string, { color: string; icon: React.ReactNode }> = {
-  CRITICAL: { color: 'text-red-400', icon: <AlertTriangle size={12} /> },
-  HIGH: { color: 'text-orange-400', icon: <AlertTriangle size={12} /> },
-  NORMAL: { color: 'text-slate-400', icon: null },
-  LOW: { color: 'text-slate-500', icon: null },
+  CRITICAL: { color: 'text-red-700 dark:text-red-400', icon: <AlertTriangle size={12} /> },
+  HIGH: { color: 'text-orange-700 dark:text-orange-400', icon: <AlertTriangle size={12} /> },
+  NORMAL: { color: 'text-slate-600 dark:text-slate-400', icon: null },
+  LOW: { color: 'text-slate-600 dark:text-slate-500', icon: null },
 };
 
 export const SuperAdminFeedbackView: React.FC = () => {
@@ -209,19 +234,28 @@ export const SuperAdminFeedbackView: React.FC = () => {
 
     return (
       <div className="p-6 max-w-5xl mx-auto space-y-6">
-        <button
-          onClick={() => setSelectedItem(null)}
-          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm"
-        >
-          <ArrowLeft size={16} /> {t('feedback.backToList', 'Back to list')}
-        </button>
+        <div className="flex items-center justify-between gap-4">
+          <button
+            onClick={() => setSelectedItem(null)}
+            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors text-sm"
+          >
+            <ArrowLeft size={16} /> {t('feedback.backToList', 'Back to list')}
+          </button>
+          <InfoButton cardId="superadmin-feedback" position="header-inline" size="md" />
+        </div>
 
-        <div className="bg-navy-800 border border-slate-700 rounded-xl p-6 space-y-4">
+        <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 space-y-4">
           <div className="flex items-start justify-between">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
                 <span
-                  className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 ${selectedItem.type === 'BUG' ? 'bg-red-900/40 text-red-400 border border-red-900' : selectedItem.type === 'FEATURE' ? 'bg-purple-900/40 text-purple-400 border border-purple-900' : 'bg-amber-900/40 text-amber-400 border border-amber-900'}`}
+                  className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 border ${
+                    selectedItem.type === 'BUG'
+                      ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-400 dark:border-red-900'
+                      : selectedItem.type === 'FEATURE'
+                        ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/40 dark:text-purple-400 dark:border-purple-900'
+                        : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-900'
+                  }`}
                 >
                   {selectedItem.type === 'BUG' ? <Bug size={12} /> : <Lightbulb size={12} />}
                   {selectedItem.type}
@@ -255,12 +289,12 @@ export const SuperAdminFeedbackView: React.FC = () => {
               ))}
             </div>
           </div>
-          <div className="bg-navy-900/50 rounded-lg p-4">
-            <p className="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed">
+          <div className="bg-slate-50 dark:bg-navy-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
+            <p className="text-slate-800 dark:text-slate-200 text-sm whitespace-pre-wrap leading-relaxed">
               {selectedItem.message}
             </p>
           </div>
-          <div className="flex flex-wrap gap-4 text-xs text-slate-400">
+          <div className="flex flex-wrap gap-4 text-xs text-slate-600 dark:text-slate-400">
             <span className="flex items-center gap-1">
               <User size={12} /> {selectedItem.user_email || selectedItem.user_name || 'Anonymous'}
             </span>
@@ -276,44 +310,44 @@ export const SuperAdminFeedbackView: React.FC = () => {
         </div>
 
         {(selectedItem.route_path || selectedItem.device_type || Object.keys(meta).length > 0) && (
-          <div className="bg-navy-800 border border-slate-700 rounded-xl p-5 space-y-3">
-            <h3 className="text-sm font-semibold text-slate-300">
+          <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-3">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-300">
               {t('feedback.context', 'Context & Metadata')}
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
               {selectedItem.route_path && (
-                <div className="flex items-center gap-2 text-slate-400">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                   <Globe size={12} />{' '}
-                  <span className="text-slate-300">{selectedItem.route_path}</span>
+                  <span className="text-slate-800 dark:text-slate-300">{selectedItem.route_path}</span>
                 </div>
               )}
               {selectedItem.device_type && (
-                <div className="flex items-center gap-2 text-slate-400">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                   <Monitor size={12} />{' '}
-                  <span className="text-slate-300">
+                  <span className="text-slate-800 dark:text-slate-300">
                     {selectedItem.device_type}{' '}
                     {selectedItem.screen_size ? `(${selectedItem.screen_size})` : ''}
                   </span>
                 </div>
               )}
               {selectedItem.ui_language && (
-                <div className="flex items-center gap-2 text-slate-400">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                   <Globe size={12} />{' '}
-                  <span className="text-slate-300">{selectedItem.ui_language}</span>
+                  <span className="text-slate-800 dark:text-slate-300">{selectedItem.ui_language}</span>
                 </div>
               )}
               {selectedItem.ui_theme && (
-                <div className="flex items-center gap-2 text-slate-400">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                   <Palette size={12} />{' '}
-                  <span className="text-slate-300">{selectedItem.ui_theme}</span>
+                  <span className="text-slate-800 dark:text-slate-300">{selectedItem.ui_theme}</span>
                 </div>
               )}
               {Object.entries(meta)
                 .filter(([k]) => !['userEmail', 'userName', 'type', 'severity'].includes(k))
                 .map(([k, v]) => (
-                  <div key={k} className="text-slate-400">
+                  <div key={k} className="text-slate-600 dark:text-slate-400">
                     <span className="text-slate-500">{k}:</span>{' '}
-                    <span className="text-slate-300">{String(v)}</span>
+                    <span className="text-slate-800 dark:text-slate-300">{String(v)}</span>
                   </div>
                 ))}
             </div>
@@ -321,13 +355,16 @@ export const SuperAdminFeedbackView: React.FC = () => {
         )}
 
         {statusHist.length > 0 && (
-          <div className="bg-navy-800 border border-slate-700 rounded-xl p-5 space-y-3">
-            <h3 className="text-sm font-semibold text-slate-300">
+          <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-3">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-300">
               {t('feedback.statusHistory', 'Status History')}
             </h3>
             <div className="space-y-2">
               {statusHist.map((entry) => (
-                <div key={entry.id} className="flex items-center gap-3 text-xs text-slate-400">
+                <div
+                  key={entry.id}
+                  className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400"
+                >
                   <span className="text-slate-500">{formatDate(entry.created_at)}</span>
                   <ChevronRight size={12} />
                   <span>{entry.from_status || '—'}</span>
@@ -346,8 +383,8 @@ export const SuperAdminFeedbackView: React.FC = () => {
           </div>
         )}
 
-        <div className="bg-navy-800 border border-slate-700 rounded-xl p-5 space-y-3">
-          <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+        <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-3">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-300 flex items-center gap-2">
             <MessageSquare size={14} /> {t('feedback.adminResponse', 'Admin Response')}
           </h3>
           {selectedItem.admin_response ? (
@@ -371,7 +408,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
               value={responseText}
               onChange={(e) => setResponseText(e.target.value)}
               placeholder={t('feedback.responsePlaceholder', 'Type your response...')}
-              className="flex-1 bg-navy-900 border border-slate-700 text-slate-200 px-3 py-2 rounded-lg text-sm resize-none focus:ring-2 focus:ring-blue-500 outline-none"
+              className="flex-1 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-200 px-3 py-2 rounded-lg text-sm resize-none focus:ring-2 focus:ring-blue-500 outline-none"
               rows={2}
             />
             <button
@@ -390,30 +427,38 @@ export const SuperAdminFeedbackView: React.FC = () => {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <MessageSquareWarning className="text-amber-500" size={32} />
-            {t('feedback.title', 'User Feedback & Triage')}
-          </h1>
-          <p className="text-slate-400 mt-1">
-            {t('feedback.subtitle', 'Manage incoming reports, ideas, and feature requests.')}
-          </p>
+        <div className="flex items-start gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+              <MessageSquareWarning className="text-amber-500" size={32} />
+              {t('feedback.title', 'User Feedback & Triage')}
+            </h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-1">
+              {t('feedback.subtitle', 'Manage incoming reports, ideas, and feature requests.')}
+            </p>
+          </div>
+          <div className="pt-0.5">
+            <InfoButton cardId="superadmin-feedback" position="header-inline" size="md" />
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 w-full md:w-auto">
+          <div className="relative w-full sm:w-auto min-w-0">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
+              size={16}
+            />
             <input
               type="text"
               placeholder={t('feedback.search', 'Search...')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="bg-navy-900 border border-slate-700 text-slate-200 pl-9 pr-4 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-64"
+              className="bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-200 pl-9 pr-4 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-64"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="bg-navy-900 border border-slate-700 text-slate-200 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            className="bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-200 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-auto"
           >
             <option value="ALL">{t('feedback.allStatuses', 'All Statuses')}</option>
             {STATUS_ORDER.map((s) => (
@@ -425,7 +470,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="bg-navy-900 border border-slate-700 text-slate-200 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            className="bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-200 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-auto"
           >
             <option value="ALL">{t('feedback.allTypes', 'All Types')}</option>
             <option value="BUG">Bug</option>
@@ -436,7 +481,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
           <select
             value={severityFilter}
             onChange={(e) => setSeverityFilter(e.target.value)}
-            className="bg-navy-900 border border-slate-700 text-slate-200 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            className="bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-200 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-auto"
           >
             <option value="ALL">{t('feedback.allSeverities', 'All Severities')}</option>
             <option value="CRITICAL">Critical</option>
@@ -447,7 +492,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {STATUS_ORDER.map((s) => {
           const count = feedback.filter((f) => f.status === s).length;
           const conf = STATUS_CONFIG[s];
@@ -455,10 +500,14 @@ export const SuperAdminFeedbackView: React.FC = () => {
             <button
               key={s}
               onClick={() => setStatusFilter(statusFilter === s ? 'ALL' : s)}
-              className={`rounded-lg p-3 text-center border transition-colors ${statusFilter === s ? `${conf.bg} ${conf.border}` : 'bg-navy-800/50 border-slate-700/50 hover:border-slate-600'}`}
+              className={`rounded-lg p-3 text-center border transition-colors ${
+                statusFilter === s
+                  ? `${conf.bg} ${conf.border}`
+                  : 'bg-white dark:bg-navy-800/50 border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600'
+              }`}
             >
               <div className={`text-lg font-bold ${conf.color}`}>{count}</div>
-              <div className="text-xs text-slate-500">{s}</div>
+              <div className="text-xs text-slate-600 dark:text-slate-500">{s}</div>
             </button>
           );
         })}
@@ -471,7 +520,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 gap-3">
           {filteredFeedback.length === 0 ? (
-            <div className="text-center py-12 bg-navy-800/50 rounded-xl border border-dashed border-slate-700">
+            <div className="text-center py-12 bg-white dark:bg-navy-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
               <p className="text-slate-500">
                 {t('feedback.noResults', 'No feedback found matching your criteria.')}
               </p>
@@ -483,13 +532,19 @@ export const SuperAdminFeedbackView: React.FC = () => {
                 <div
                   key={item.id}
                   onClick={() => loadDetail(item)}
-                  className="bg-navy-800 border border-slate-700 rounded-xl p-4 hover:border-slate-600 transition-colors cursor-pointer"
+                  className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-slate-300 dark:hover:border-slate-600 transition-colors cursor-pointer"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-3 flex-wrap">
                         <span
-                          className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 ${item.type === 'BUG' ? 'bg-red-900/40 text-red-400 border border-red-900' : item.type === 'FEATURE' ? 'bg-purple-900/40 text-purple-400 border border-purple-900' : 'bg-amber-900/40 text-amber-400 border border-amber-900'}`}
+                          className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 border ${
+                            item.type === 'BUG'
+                              ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-400 dark:border-red-900'
+                              : item.type === 'FEATURE'
+                                ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/40 dark:text-purple-400 dark:border-purple-900'
+                                : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-900'
+                          }`}
                         >
                           {item.type === 'BUG' ? <Bug size={12} /> : <Lightbulb size={12} />}{' '}
                           {item.type}
@@ -510,10 +565,10 @@ export const SuperAdminFeedbackView: React.FC = () => {
                           <Clock size={12} /> {formatDate(item.created_at)}
                         </span>
                       </div>
-                      <p className="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed line-clamp-2">
+                      <p className="text-slate-900 dark:text-slate-200 text-sm whitespace-pre-wrap leading-relaxed line-clamp-2">
                         {item.message}
                       </p>
-                      <div className="flex items-center gap-4 text-xs text-slate-500">
+                      <div className="flex items-center gap-4 text-xs text-slate-600 dark:text-slate-500">
                         <span className="flex items-center gap-1">
                           <User size={12} /> {item.user_email || 'Anonymous'}
                         </span>

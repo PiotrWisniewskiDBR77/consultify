@@ -68,7 +68,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
               {/* Title */}
               <h2 className="text-2xl font-bold text-white mb-2">
                 {mode === 'demo'
-                  ? t('demo.modal.title', 'Experience Consultinity')
+                  ? t('demo.modal.title', 'Experience Consultify')
                   : t('demo.modal.titleTrial', 'Start Your Trial')}
               </h2>
               <p className="text-white/80 text-sm">

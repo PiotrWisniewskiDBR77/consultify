@@ -327,7 +327,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
     try {
       const resp = await Api.post(`/report-builder/${reportId}/share`, {
         showCompanyLogo: true,
-        showConsultinityBranding: true,
+        showConsultifyBranding: true,
       });
       const link = resp?.link;
       const url = link?.url ? `${window.location.origin}${String(link.url)}` : '';

@@ -43,6 +43,14 @@ const StatusBadge: React.FC<{ status: KPIStatus }> = ({ status }) => {
   );
 };
 
+const NeedsEntryBadge: React.FC = () => {
+  return (
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300">
+      <span className="text-xs font-medium">Needs entry</span>
+    </span>
+  );
+};
+
 // ---------------------------------------------------------------------------
 // Trend Arrow
 // ---------------------------------------------------------------------------
@@ -239,7 +247,14 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
         width: '14%',
         sortable: true,
         filterOptions: [
-          ...new Set(kpis.filter((k) => k.initiativeName).map((k) => k.initiativeName!)),
+          ...new Set(
+            kpis
+              .flatMap((k) => [
+                k.initiativeName,
+                ...(k.linkedInitiatives || []).map((i) => i.name),
+              ])
+              .filter(Boolean) as string[]
+          ),
         ].map((n) => ({ value: n, label: n })),
       },
       { id: 'baseline', label: t('results.columns.baseline', 'Baseline'), width: '8%' },
@@ -407,13 +422,20 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      {kpi.initiativeName ? (
-                        <span className="text-sm text-primary-400 hover:underline">
-                          {kpi.initiativeName}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-slate-500">—</span>
-                      )}
+                      {(() => {
+                        const label =
+                          kpi.initiativeName ||
+                          (kpi.linkedInitiativesCount && kpi.linkedInitiatives?.length
+                            ? kpi.linkedInitiativesCount === 1
+                              ? kpi.linkedInitiatives[0]?.name
+                              : `${kpi.linkedInitiatives[0]?.name} +${kpi.linkedInitiativesCount - 1}`
+                            : null);
+                        return label ? (
+                          <span className="text-sm text-primary-400 hover:underline">{label}</span>
+                        ) : (
+                          <span className="text-sm text-slate-500">—</span>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3">
                       <ValueCell value={kpi.baselineValue} unit={kpi.unit} />
@@ -430,7 +452,10 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
                       />
                     </td>
                     <td className="px-4 py-3">
-                      <StatusBadge status={kpi.status} />
+                      <div className="flex flex-col gap-1">
+                        <StatusBadge status={kpi.status} />
+                        {kpi.needsEntry ? <NeedsEntryBadge /> : null}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <TrendArrow trend={kpi.trend} />

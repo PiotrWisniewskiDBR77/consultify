@@ -24,6 +24,7 @@ import { Api } from '../../services/api';
 import ConfigureStructureStep from './steps/ConfigureStructureStep';
 import GenerateStep from './steps/GenerateStep';
 import { IntentStep, type ReportIntent } from './steps/IntentStep';
+import { OutlineProposalStep, type ProposedSection } from './steps/OutlineProposalStep';
 import ReviewEditStep from './steps/ReviewEditStep';
 import useReportBuilder from './useReportBuilder';
 
@@ -40,29 +41,37 @@ interface WizardStep {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-const STEPS: WizardStep[] = [
+const BASE_STEPS: WizardStep[] = [
   {
     id: 0,
-    title: 'Define Intent',
-    titlePl: 'Ustal Parametry',
-    description: 'Set the report intent and required parameters before writing',
-    descriptionPl: 'Ustal intencję raportu i wymagane parametry przed generowaniem',
+    title: 'Report Definition',
+    titlePl: 'Definicja raportu',
+    description: 'Set report type, intent, and definition layer',
+    descriptionPl: 'Ustal typ raportu, intencję i warstwę definicji',
     icon: ClipboardCheck,
   },
   {
     id: 1,
-    title: 'Outline',
-    titlePl: 'Układ / Bloki',
+    title: 'AI Outline',
+    titlePl: 'Propozycja AI',
+    description: 'AI proposes report outline for your approval',
+    descriptionPl: 'AI proponuje strukturę raportu do akceptacji',
+    icon: Sparkles,
+  },
+  {
+    id: 2,
+    title: 'Configure',
+    titlePl: 'Konfiguracja',
     description: 'Edit blocks, order, and section options',
     descriptionPl: 'Edytuj bloki, kolejność i ustawienia sekcji',
     icon: Settings2,
   },
   {
-    id: 2,
+    id: 3,
     title: 'Generate & Edit',
     titlePl: 'Generuj i Edytuj',
-    description: 'Generate content, review, and submit for verification',
-    descriptionPl: 'Wygeneruj treść, przejrzyj i wyślij do weryfikacji',
+    description: 'Generate content, review, and submit',
+    descriptionPl: 'Wygeneruj treść, przejrzyj i wyślij',
     icon: Sparkles,
   },
 ];
@@ -145,7 +154,19 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
     scope: 'full',
     focusedAxes: [],
     visuals: { assessmentMatrix: true },
+    reportTypeV3: 'custom',
+    goalV3: 'inform',
+    communicationRegister: 'professional',
+    density: 'standard',
+    form: 'strategic',
+    dataLevel: 'balanced',
+    confidentiality: 'internal',
   });
+
+  const isCanonicalReport = intent.reportTypeV3 && intent.reportTypeV3 !== 'custom';
+  const STEPS = isCanonicalReport
+    ? BASE_STEPS.filter((s) => s.id !== 1)
+    : BASE_STEPS;
 
   // If we loaded an existing report with config.intent, hydrate local intent
   useEffect(() => {
@@ -200,8 +221,17 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
     const config = {
       invocationProfileId: intent.profileId || 'default',
       intent,
+      reportTypeV3: intent.reportTypeV3 || 'custom',
+      goalV3: intent.goalV3,
+      communicationRegister: intent.communicationRegister,
+      density: intent.density,
+      form: intent.form,
+      dataLevel: intent.dataLevel,
+      confidentiality: intent.confidentiality,
+      periodFrom: intent.periodFrom,
+      periodTo: intent.periodTo,
     };
-    // If we already have a report (e.g. returning to CONFIGURING), update intent instead of creating a new one.
+
     if (report?.id) {
       await Api.put(`/report-builder/${report.id}/intent`, { config });
       nextStep();
@@ -226,6 +256,19 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
     createReport,
     nextStep,
   ]);
+
+  const handleOutlineAccepted = useCallback(
+    async (proposedSections: ProposedSection[]) => {
+      if (!report?.id) return;
+      for (const sec of proposedSections) {
+        await addCustomSection(report.id, sec.title, sec.type, {
+          length: sec.defaultLength,
+        });
+      }
+      nextStep();
+    },
+    [report?.id, addCustomSection, nextStep]
+  );
 
   const handleConfigComplete = useCallback(async () => {
     if (!report) return;
@@ -291,26 +334,31 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
         e.preventDefault();
         // Trigger next step
         const canGo = (() => {
-          switch (currentStep) {
+          switch (activeStepId) {
             case 0:
               return sourceType && selectedSource && reportTitle.trim();
             case 1:
-              return sections.filter((s) => s.enabled).length > 0;
+              return true;
             case 2:
+              return sections.filter((s) => s.enabled).length > 0;
+            case 3:
               return sections.filter((s) => s.enabled).length > 0;
             default:
               return false;
           }
         })();
         if (canGo && !isLoading && !isGenerating) {
-          switch (currentStep) {
+          switch (activeStepId) {
             case 0:
               handleIntentComplete();
               break;
             case 1:
-              handleConfigComplete();
+              nextStep();
               break;
             case 2:
+              handleConfigComplete();
+              break;
+            case 3:
               if (report?.status === 'GENERATED') handleFinalize();
               else handleGenerate();
               break;
@@ -407,8 +455,10 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
     </div>
   );
 
+  const activeStepId = STEPS[currentStep]?.id ?? 0;
+
   const renderStepContent = () => {
-    switch (currentStep) {
+    switch (activeStepId) {
       case 0:
         return (
           <IntentStep
@@ -428,6 +478,16 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
         );
 
       case 1:
+        return report?.id ? (
+          <OutlineProposalStep
+            reportId={report.id}
+            intent={intent}
+            onAcceptOutline={handleOutlineAccepted}
+            isLoading={isLoading}
+          />
+        ) : null;
+
+      case 2:
         return (
           <ConfigureStructureStep
             report={report}
@@ -453,7 +513,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
           />
         );
 
-      case 2:
+      case 3:
         return report?.status === 'GENERATED' ||
           report?.status === 'IN_REVIEW' ||
           report?.status === 'APPROVED' ||
@@ -516,13 +576,14 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
   const renderNavigation = () => {
     const canGoBack = currentStep > 0 && !isGenerating;
     const canGoNext = (() => {
-      switch (currentStep) {
+      switch (activeStepId) {
         case 0:
           return sourceType && selectedSource && reportTitle.trim();
         case 1:
-          return sections.filter((s) => s.enabled).length > 0;
+          return true;
         case 2:
-          // Either ready to generate (enabled sections exist) or ready to submit for review
+          return sections.filter((s) => s.enabled).length > 0;
+        case 3:
           return sections.filter((s) => s.enabled).length > 0;
         default:
           return false;
@@ -530,12 +591,14 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
     })();
 
     const nextLabel = (() => {
-      switch (currentStep) {
+      switch (activeStepId) {
         case 0:
-          return isPl ? 'Zapisz parametry' : 'Save intent';
+          return isPl ? 'Zapisz definicję' : 'Save definition';
         case 1:
-          return isPl ? 'Przejdź do generowania' : 'Proceed to generation';
+          return isPl ? 'Zaakceptuj strukturę' : 'Accept outline';
         case 2:
+          return isPl ? 'Przejdź do generowania' : 'Proceed to generation';
+        case 3:
           return report?.status === 'GENERATED'
             ? isPl
               ? 'Wyślij do weryfikacji'
@@ -549,14 +612,17 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
     })();
 
     const handleNext = () => {
-      switch (currentStep) {
+      switch (activeStepId) {
         case 0:
           handleIntentComplete();
           break;
         case 1:
-          handleConfigComplete();
+          nextStep();
           break;
         case 2:
+          handleConfigComplete();
+          break;
+        case 3:
           if (report?.status === 'GENERATED') handleFinalize();
           else handleGenerate();
           break;
@@ -592,7 +658,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
               flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold transition-all text-sm
               ${
                 canGoNext && !isLoading && !isGenerating
-                  ? currentStep === 2
+                  ? activeStepId === 3
                     ? 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md hover:shadow-lg'
                     : 'bg-purple-600 text-white hover:bg-purple-700 shadow-sm'
                   : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
@@ -601,7 +667,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
           >
             {isLoading || isGenerating ? (
               <Loader2 className="w-4 h-4 animate-spin" />
-            ) : currentStep === 2 ? (
+            ) : activeStepId === 3 ? (
               <Sparkles className="w-4 h-4" />
             ) : (
               <ArrowRight className="w-4 h-4" />

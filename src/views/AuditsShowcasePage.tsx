@@ -1,7 +1,7 @@
 /**
  * Audits Showcase Page
  *
- * Public page showcasing the 4 major industrial audit methodologies supported by Consultinity.
+ * Public page showcasing the 4 major industrial audit methodologies supported by Consultify.
  * DRD, SIRI, ADMA, and Lean 4.0.
  *
  * Route: /audits

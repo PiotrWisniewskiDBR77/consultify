@@ -72,10 +72,48 @@ function normalizeStatus(raw: any): ValuationStatus {
   return 'DRAFT';
 }
 
-export function defaultAssumptions(horizonYears: number = 5): ValuationAssumptions {
+export async function getOrgDefaultWacc(orgId: string): Promise<number> {
+  try {
+    const row = await dbGet<{ setting_value: string }>(
+      `SELECT setting_value FROM organization_settings WHERE organization_id = ? AND setting_key = 'finance'`,
+      [orgId]
+    );
+    if (row?.setting_value) {
+      const parsed = typeof row.setting_value === 'string' ? JSON.parse(row.setting_value) : row.setting_value;
+      if (parsed?.defaultWacc != null) return Number(parsed.defaultWacc);
+    }
+  } catch {
+    // table may not exist or no settings
+  }
+  return 12;
+}
+
+export async function getOrgFinanceSettings(orgId: string): Promise<Record<string, any>> {
+  try {
+    const row = await dbGet<{ setting_value: string }>(
+      `SELECT setting_value FROM organization_settings WHERE organization_id = ? AND setting_key = 'finance'`,
+      [orgId]
+    );
+    if (row?.setting_value) {
+      return typeof row.setting_value === 'string' ? JSON.parse(row.setting_value) : row.setting_value;
+    }
+  } catch { /* table may not exist */ }
+  return { defaultWacc: 12, defaultCurrency: 'PLN', defaultHorizonYears: 5 };
+}
+
+export async function setOrgFinanceSettings(orgId: string, settings: Record<string, any>): Promise<void> {
+  await dbRun(
+    `INSERT OR REPLACE INTO organization_settings (organization_id, setting_key, setting_value, updated_at)
+     VALUES (?, 'finance', ?, datetime('now'))`,
+    [orgId, JSON.stringify(settings)]
+  );
+}
+
+export function defaultAssumptions(horizonYears: number = 5, orgWacc?: number): ValuationAssumptions {
+  const wacc = orgWacc ?? 12;
   return {
     horizonYears,
-    waccPercent: 12,
+    waccPercent: wacc,
     waccBreakdown: {
       riskFreeRate: 4,
       equityRiskPremium: 5,
@@ -111,7 +149,8 @@ export async function createValuation(
 ): Promise<{ id: string }> {
   const id = uuidv4().replace(/-/g, '');
   const horizonYears = clamp(Number(data.horizonYears ?? 5), 1, 20);
-  const assumptions = defaultAssumptions(horizonYears);
+  const orgWacc = await getOrgDefaultWacc(orgId);
+  const assumptions = defaultAssumptions(horizonYears, orgWacc);
 
   await dbRun(
     `INSERT INTO valuations (id, organization_id, project_id, initiative_id, title, description, status, source_type, source_id, horizon_years, currency, assumptions, peers, results, created_by)
@@ -706,6 +745,91 @@ export async function approveValuation(
   );
 }
 
+interface DriverImpact {
+  driver: string;
+  currentValue: string;
+  change: string;
+  evImpactDirection: string;
+  evImpactMagnitude: string;
+  lever: string;
+}
+
+function buildDriverDecomposition(
+  waccPct: number,
+  growthPct: number,
+  ev: number,
+  terminalShare: number | null,
+  tornado: any[]
+): { drivers: DriverImpact[]; summary: string } {
+  const drivers: DriverImpact[] = [];
+
+  if (waccPct > 0) {
+    const deltaWacc = -1;
+    const approxImpact = ev > 0 ? (ev * Math.abs(deltaWacc) * 0.08) : 0;
+    drivers.push({
+      driver: 'WACC (Discount Rate)',
+      currentValue: `${waccPct.toFixed(1)}%`,
+      change: `${deltaWacc}pp`,
+      evImpactDirection: '↑',
+      evImpactMagnitude: approxImpact > 0 ? `~+${Math.round(approxImpact).toLocaleString()}` : 'Positive',
+      lever: 'De-risk execution, improve reporting discipline, strengthen governance',
+    });
+  }
+
+  if (growthPct > 0) {
+    const deltaGrowth = +0.5;
+    const approxImpact = ev > 0 && terminalShare != null ? (ev * terminalShare * deltaGrowth * 0.15) : 0;
+    drivers.push({
+      driver: 'Terminal Growth Rate',
+      currentValue: `${growthPct.toFixed(1)}%`,
+      change: `+${deltaGrowth}pp`,
+      evImpactDirection: '↑',
+      evImpactMagnitude: approxImpact > 0 ? `~+${Math.round(approxImpact).toLocaleString()}` : 'Positive',
+      lever: 'Credible growth narrative backed by pipeline and market data',
+    });
+  }
+
+  drivers.push({
+    driver: 'FCFF Margin',
+    currentValue: 'Current',
+    change: '+2pp operating margin',
+    evImpactDirection: '↑',
+    evImpactMagnitude: ev > 0 ? `~+${Math.round(ev * 0.05).toLocaleString()}` : 'Positive',
+    lever: 'Cost optimization, pricing review, operational efficiency',
+  });
+
+  drivers.push({
+    driver: 'Working Capital Efficiency',
+    currentValue: 'Current DSO/DPO',
+    change: '-5 days DSO',
+    evImpactDirection: '↑',
+    evImpactMagnitude: 'Moderate positive',
+    lever: 'Billing discipline, collection playbook, supplier terms',
+  });
+
+  for (const td of tornado.slice(0, 3)) {
+    if (!td?.driver) continue;
+    const existing = drivers.find((d) => d.driver === td.driver);
+    if (existing) continue;
+    drivers.push({
+      driver: String(td.driver),
+      currentValue: td.base != null ? String(td.base) : 'Current',
+      change: td.high != null && td.low != null ? `${td.low} → ${td.high}` : 'Varied',
+      evImpactDirection: '↕',
+      evImpactMagnitude: td.evHigh != null && td.evLow != null
+        ? `${Math.round(td.evLow).toLocaleString()} – ${Math.round(td.evHigh).toLocaleString()}`
+        : 'Significant',
+      lever: `Sensitivity driver from tornado analysis`,
+    });
+  }
+
+  const summary = drivers.length > 0
+    ? `${drivers.length} key value drivers identified. WACC and growth rate are the primary levers; margin improvement and working capital efficiency provide additional upside.`
+    : 'No driver decomposition available.';
+
+  return { drivers, summary };
+}
+
 export async function generateAdvisory(orgId: string, valuationId: string): Promise<any> {
   const val = await getValuation(orgId, valuationId);
   if (!val) throw new Error('Valuation not found');
@@ -736,11 +860,22 @@ export async function generateAdvisory(orgId: string, valuationId: string): Prom
     .filter(Boolean);
   if (topDrivers.length) evidenceLines.push(`Top drivers: ${topDrivers.join(', ')}`);
 
+  const assumptions = safeJsonParse<ValuationAssumptions>(
+    val.assumptions,
+    defaultAssumptions(val.horizon_years)
+  );
+  const waccPct = Number(assumptions.waccPercent || 12);
+  const growthPct = Number(assumptions.terminalGrowthPercent || 3);
+  const ev = Number(dcf.enterpriseValue ?? 0);
+
+  const driverDecomposition = buildDriverDecomposition(waccPct, growthPct, ev, terminalShare, tornado);
+
   const mkId = () => `rec-${uuidv4().replace(/-/g, '').slice(0, 10)}`;
 
   const advisory = {
     generatedAt: new Date().toISOString(),
     valuationId,
+    driverDecomposition,
     recommendations: [
       {
         id: mkId(),
@@ -959,7 +1094,16 @@ export async function generateAdvisory(orgId: string, valuationId: string): Prom
     guardrails: [
       'Informational only; not investment, legal, or tax advice.',
       'No guarantees; validate assumptions with qualified professionals.',
+      'This advisory does not constitute a recommendation to buy, sell, or hold any security.',
+      'All projections are based on assumptions that may not materialize. Past performance is not indicative of future results.',
+      'Consult qualified legal, tax, and financial advisors before making any transaction decisions.',
     ],
+    complianceFlags: {
+      isInvestmentAdvice: false,
+      isLegalAdvice: false,
+      isTaxAdvice: false,
+      regulatoryDisclaimer: 'This output is generated for informational and analytical purposes only. It does not represent regulated financial, legal, or tax advice. The platform operator is not a licensed financial advisor, broker, or legal counsel.',
+    },
   };
 
   await dbRun(

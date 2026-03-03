@@ -292,7 +292,7 @@ const DLPView: React.FC = () => {
               <FileText className="w-5 h-5 text-indigo-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Total Policies</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Total Policies</p>
               <p className="text-xl font-semibold">{stats?.policies.total || 0}</p>
             </div>
           </div>
@@ -304,7 +304,7 @@ const DLPView: React.FC = () => {
               <Power className="w-5 h-5 text-emerald-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Active Policies</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Active Policies</p>
               <p className="text-xl font-semibold">{stats?.policies.active || 0}</p>
             </div>
           </div>
@@ -316,7 +316,7 @@ const DLPView: React.FC = () => {
               <AlertCircle className="w-5 h-5 text-red-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Total Violations</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Total Violations</p>
               <p className="text-xl font-semibold">{stats?.violations.total || 0}</p>
             </div>
           </div>
@@ -328,7 +328,7 @@ const DLPView: React.FC = () => {
               <AlertTriangle className="w-5 h-5 text-amber-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Unresolved</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Unresolved</p>
               <p className="text-xl font-semibold">{stats?.violations.unresolved || 0}</p>
             </div>
           </div>
@@ -340,7 +340,7 @@ const DLPView: React.FC = () => {
               <AlertCircle className="w-5 h-5 text-red-600" />
             </div>
             <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Critical</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Critical</p>
               <p className="text-xl font-semibold">{stats?.violations.bySeverity.critical || 0}</p>
             </div>
           </div>
@@ -352,7 +352,7 @@ const DLPView: React.FC = () => {
         <Card variant="bordered" className="p-4 border-red-500/30 bg-red-500/5">
           <div className="flex items-center gap-2 text-red-400">
             <AlertTriangle className="w-5 h-5" />
-            <span>{error}</span>
+            <span>{typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}</span>
             <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
               Dismiss
             </button>
@@ -367,7 +367,7 @@ const DLPView: React.FC = () => {
           className={`pb-3 px-1 text-sm font-medium transition-colors ${
             activeTab === 'policies'
               ? 'text-indigo-400 border-b-2 border-indigo-400'
-              : 'text-slate-400 dark:text-slate-500 hover:text-slate-200'
+              : 'text-slate-600 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-200'
           }`}
         >
           Policies ({policies.length})
@@ -377,7 +377,7 @@ const DLPView: React.FC = () => {
           className={`pb-3 px-1 text-sm font-medium transition-colors ${
             activeTab === 'violations'
               ? 'text-indigo-400 border-b-2 border-indigo-400'
-              : 'text-slate-400 dark:text-slate-500 hover:text-slate-200'
+              : 'text-slate-600 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-200'
           }`}
         >
           Violations ({violations.length})
@@ -393,7 +393,7 @@ const DLPView: React.FC = () => {
           <button
             onClick={loadData}
             disabled={loading}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded-lg transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -416,23 +416,23 @@ const DLPView: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-700">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Name
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Type
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Enforcement
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Rules
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Status
                   </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Actions
                   </th>
                 </tr>
@@ -440,7 +440,7 @@ const DLPView: React.FC = () => {
               <tbody>
                 {policies.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-slate-400 dark:text-slate-500">
+                    <td colSpan={6} className="text-center py-8 text-slate-600 dark:text-slate-400">
                       No DLP policies found
                     </td>
                   </tr>
@@ -448,12 +448,12 @@ const DLPView: React.FC = () => {
                   policies.map((policy) => (
                     <tr
                       key={policy.id}
-                      className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors"
+                      className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                     >
                       <td className="py-3 px-4">
                         <div>
                           <p className="font-medium">{policy.name}</p>
-                          <p className="text-sm text-slate-400 dark:text-slate-500 truncate max-w-xs">
+                          <p className="text-sm text-slate-600 dark:text-slate-400 truncate max-w-xs">
                             {policy.description}
                           </p>
                         </div>
@@ -483,7 +483,7 @@ const DLPView: React.FC = () => {
                             Active
                           </span>
                         ) : (
-                          <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/300/10 text-slate-400 dark:text-slate-500 rounded text-xs">
+                          <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-400 dark:text-slate-500 rounded text-xs">
                             Inactive
                           </span>
                         )}
@@ -529,23 +529,23 @@ const DLPView: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-700">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Policy
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Resource
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Violation
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Severity
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Detected
                   </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
                     Actions
                   </th>
                 </tr>
@@ -553,7 +553,7 @@ const DLPView: React.FC = () => {
               <tbody>
                 {violations.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-slate-400 dark:text-slate-500">
+                    <td colSpan={6} className="text-center py-8 text-slate-600 dark:text-slate-400">
                       No unresolved violations
                     </td>
                   </tr>
@@ -561,12 +561,12 @@ const DLPView: React.FC = () => {
                   violations.map((violation) => (
                     <tr
                       key={violation.id}
-                      className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors"
+                      className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                     >
                       <td className="py-3 px-4">
                         <div>
                           <p className="font-medium">{violation.policyName}</p>
-                          <p className="text-sm text-slate-400 dark:text-slate-500">
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
                             {getPolicyTypeLabel(violation.policyType)}
                           </p>
                         </div>
@@ -574,7 +574,7 @@ const DLPView: React.FC = () => {
                       <td className="py-3 px-4">
                         <div>
                           <p className="text-sm">{violation.resourceType}</p>
-                          <p className="text-xs text-slate-400 dark:text-slate-500 truncate max-w-[150px]">
+                          <p className="text-xs text-slate-600 dark:text-slate-400 truncate max-w-[150px]">
                             {violation.resourceId}
                           </p>
                         </div>

@@ -41,7 +41,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       title: t('landing.hero.cards.demo.title', 'Interactive Demo'),
       description: t(
         'landing.hero.cards.demo.description',
-        'Explore Consultinity with AI-guided walkthrough. No signup required.'
+        'Explore Consultify with AI-guided walkthrough. No signup required.'
       ),
       meta: t('landing.hero.cards.demo.meta', 'GUIDED EXPERIENCE'),
       cta: t('landing.hero.cards.demo.cta', 'Start Demo'),
@@ -70,7 +70,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       title: t('landing.hero.cards.video.title', 'Watch How It Works'),
       description: t(
         'landing.hero.cards.video.description',
-        'See Consultinity in action with real enterprise transformation examples.'
+        'See Consultify in action with real enterprise transformation examples.'
       ),
       meta: t('landing.hero.cards.video.meta', '3 MIN VIDEO'),
       cta: t('landing.hero.cards.video.cta', 'Play Video'),

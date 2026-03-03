@@ -925,16 +925,16 @@ function generateUsageAlertEmail(data: {
             }
             
             <p>
-                <a href="${process.env.FRONTEND_URL || 'https://app.consultinity.com'}/settings/billing" 
+                <a href="${process.env.FRONTEND_URL || 'https://app.consultify.com'}/settings/billing" 
                    style="display: inline-block; background: ${severityColor}; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
                     View Billing Settings
                 </a>
             </p>
             
-            <p>Best regards,<br>The Consultinity Team</p>
+            <p>Best regards,<br>The Consultify Team</p>
         </div>
         <div class="footer">
-            <p>© ${new Date().getFullYear()} Consultinity. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} Consultify. All rights reserved.</p>
             <p>You're receiving this because you have billing alerts enabled.</p>
         </div>
     </div>

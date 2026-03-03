@@ -45,6 +45,9 @@ import { Api } from '@/services/api';
 import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
 import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativeHelpers';
 
+import { BudgetControlPanel } from '../Execution/BudgetControlPanel';
+import { MitigationPanel } from '../Execution/MitigationPanel';
+
 import { InitiativeStatus, PortfolioInitiative, User } from '../../types';
 
 // ==========================================
@@ -90,6 +93,11 @@ interface RaidItem {
   title: string;
   severity?: string;
   status?: string;
+  mitigation_plan?: string | null;
+  response_strategy?: string | null;
+  mitigation_owner_id?: string | null;
+  mitigation_due_date?: string | null;
+  mitigation_status?: string | null;
 }
 
 // ==========================================
@@ -1041,6 +1049,7 @@ const CompactDecisionRow: React.FC<{ decision: DecisionItem }> = ({ decision }) 
 
 const RaidTab: React.FC<{ items: RaidItem[] }> = ({ items }) => {
   const { t } = useTranslation();
+  const [expandedMitigationId, setExpandedMitigationId] = useState<string | null>(null);
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-32 text-slate-500 dark:text-slate-400">
@@ -1083,27 +1092,49 @@ const RaidTab: React.FC<{ items: RaidItem[] }> = ({ items }) => {
       {items.map((item) => {
         const cfg = RAID_TYPE_CONFIG[item.type] || RAID_TYPE_CONFIG.risk;
         const Icon = cfg.icon;
+        const isExpandable = item.type === 'risk' || item.type === 'RISK' || item.type === 'issue' || item.type === 'ISSUE';
+        const isExpanded = expandedMitigationId === item.id;
         return (
-          <div
-            key={item.id}
-            className="flex items-start gap-2 p-2 rounded-lg bg-slate-50/50 dark:bg-navy-800/30"
-          >
-            <Icon size={12} className={`${cfg.color} mt-0.5 flex-shrink-0`} />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-slate-700 dark:text-slate-300">{item.title}</p>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[9px] text-slate-500 dark:text-slate-400 uppercase">
-                  {item.type}
-                </span>
-                {item.severity && (
-                  <span
-                    className={`text-[9px] font-medium ${item.severity === 'CRITICAL' || item.severity === 'HIGH' ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'}`}
-                  >
-                    {item.severity}
+          <div key={item.id} className="space-y-2">
+            <div className="flex items-start gap-2 p-2 rounded-lg bg-slate-50/50 dark:bg-navy-800/30">
+              <Icon size={12} className={`${cfg.color} mt-0.5 flex-shrink-0`} />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-slate-700 dark:text-slate-300">{item.title}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[9px] text-slate-500 dark:text-slate-400 uppercase">
+                    {item.type}
                   </span>
-                )}
+                  {item.severity && (
+                    <span
+                      className={`text-[9px] font-medium ${item.severity === 'CRITICAL' || item.severity === 'HIGH' ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'}`}
+                    >
+                      {item.severity}
+                    </span>
+                  )}
+                  {isExpandable && (
+                    <button
+                      onClick={() => setExpandedMitigationId(isExpanded ? null : item.id)}
+                      className="ml-auto text-[10px] font-semibold text-cyan-600 dark:text-cyan-400 hover:underline"
+                    >
+                      {isExpanded
+                        ? t('execution.mitigation.hide', 'Hide mitigation')
+                        : t('execution.mitigation.show', 'Mitigation')}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
+
+            {isExpandable && isExpanded && (
+              <MitigationPanel
+                raidItemId={item.id}
+                initialPlan={item.mitigation_plan || ''}
+                initialStrategy={item.response_strategy || ''}
+                initialOwnerId={item.mitigation_owner_id || ''}
+                initialDueDate={item.mitigation_due_date || ''}
+                initialStatus={item.mitigation_status || 'OPEN'}
+              />
+            )}
           </div>
         );
       })}
@@ -1184,6 +1215,12 @@ const FinanceTab: React.FC<{ initiative: PortfolioInitiative | null }> = ({ init
         <div className="flex flex-col items-center justify-center h-24 text-slate-500 dark:text-slate-400">
           <DollarSign size={24} className="mb-2 opacity-30" />
           <p className="text-xs">{t('initiatives.compact.noFinancialData')}</p>
+        </div>
+      )}
+
+      {!!init?.id && (
+        <div className="pt-1">
+          <BudgetControlPanel initiativeId={String(init.id)} />
         </div>
       )}
     </div>

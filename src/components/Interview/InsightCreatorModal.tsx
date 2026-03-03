@@ -250,17 +250,13 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 2. KLUCZOWE WNIOSKI (5-7 punktów) — najważniejsze odkrycia, uszeregowane wg wpływu
 3. WZORCE I TRENDY — powtarzające się tematy, wspólne obawy
 4. ROZBIEŻNOŚCI — gdzie opinie się różnią i dlaczego
-5. RYZYKA I SZANSE — zidentyfikowane zagrożenia i możliwości
-6. REKOMENDACJE (3-5) — konkretne, mierzalne, z priorytetem i timeframe
-7. NASTĘPNE KROKI — co zrobić w ciągu 30/60/90 dni`
+5. RYZYKA I SZANSE — zidentyfikowane zagrożenia i możliwości (tylko na podstawie danych, bez planów działań)`
           : `Use a precise consulting formula:
 1. CONTEXT (2-3 sentences) — interview purpose, scope, number of respondents
 2. KEY FINDINGS (5-7 points) — most important discoveries, ranked by impact
 3. PATTERNS & TRENDS — recurring themes, common concerns
 4. DIVERGENCES — where opinions differ and why
-5. RISKS & OPPORTUNITIES — identified threats and possibilities
-6. RECOMMENDATIONS (3-5) — specific, measurable, with priority and timeframe
-7. NEXT STEPS — what to do within 30/60/90 days`
+5. RISKS & OPPORTUNITIES — identified threats and possibilities (facts-only; no recommendations or next steps)`
       );
     }
   };

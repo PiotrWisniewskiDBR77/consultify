@@ -76,37 +76,39 @@ export const AdminLLMMultipliers = () => {
       case 'google':
         return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
       default:
-        return 'bg-slate-700/50 text-slate-300 border-white/10';
+        return 'bg-slate-200/70 text-slate-700 border-slate-300 dark:bg-slate-700/50 dark:text-slate-300 dark:border-white/10';
     }
   };
 
   return (
-    <div className="bg-navy-900 border border-white/10 rounded-xl overflow-hidden shadow-lg h-full flex flex-col relative w-full">
+    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-lg h-full flex flex-col relative w-full">
       <div className="absolute top-0 right-0 p-32 bg-yellow-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
 
-      <div className="p-6 border-b border-white/5 flex justify-between items-center relative z-10">
+      <div className="p-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center relative z-10">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Zap className="w-5 h-5 text-yellow-400 fill-yellow-400/20" />
             AI Cost & Pricing Models
           </h2>
-          <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
             Configure base costs and profit margins for each model.
           </p>
         </div>
         <button
           onClick={fetchProviders}
-          className="p-2 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors border border-white/5"
+          className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-navy-950/20 dark:hover:bg-navy-800/40 rounded-lg transition-colors border border-slate-200 dark:border-white/10"
           title="Refresh Data"
         >
-          <RefreshCw className={`w-4 h-4 text-white/70 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw
+            className={`w-4 h-4 text-slate-600 dark:text-white/70 ${loading ? 'animate-spin' : ''}`}
+          />
         </button>
       </div>
 
       <div className="flex-1 overflow-auto">
         <table className="w-full text-left text-sm">
           <thead className="sticky top-0 bg-slate-50/90 dark:bg-navy-950/90 backdrop-blur-sm z-10">
-            <tr className="border-b border-white/10 text-slate-400 dark:text-slate-500 uppercase tracking-wider text-xs">
+            <tr className="border-b border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 uppercase tracking-wider text-xs">
               <th className="py-4 px-6 font-medium">Provider / Model</th>
               <th className="py-4 px-6 font-medium">
                 Base Cost <span className="text-[10px] normal-case opacity-50">(per 1k in)</span>
@@ -119,7 +121,7 @@ export const AdminLLMMultipliers = () => {
               <th className="py-4 px-6 font-medium text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-slate-200 dark:divide-white/10">
             {providers.map((p) => {
               const isEditing = editingId === p.id;
               // Calculation: We bill the user X tokens for every 1000 input tokens.
@@ -131,8 +133,11 @@ export const AdminLLMMultipliers = () => {
               const userCostInTokens = (1000 * currentMultiplier).toFixed(0);
 
               return (
-                <tr key={p.id} className="hover:bg-white/5 transition-colors group">
-                  <td className="py-4 px-6 text-white min-w-[200px]">
+                <tr
+                  key={p.id}
+                  className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group"
+                >
+                  <td className="py-4 px-6 text-slate-900 dark:text-white min-w-[200px]">
                     <div className="flex items-center gap-3">
                       <div
                         className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${getProviderBadgeColor(p.provider)}`}
@@ -148,7 +153,7 @@ export const AdminLLMMultipliers = () => {
                     </div>
                   </td>
 
-                  <td className="py-4 px-6 text-slate-300">
+                  <td className="py-4 px-6 text-slate-700 dark:text-slate-300">
                     {isEditing ? (
                       <div className="flex items-center gap-2">
                         <span className="text-slate-500 dark:text-slate-400">$</span>
@@ -162,7 +167,7 @@ export const AdminLLMMultipliers = () => {
                               cost_per_1k: parseFloat(e.target.value),
                             })
                           }
-                          className="w-24 bg-navy-950 border border-blue-500/50 rounded px-2 py-1 text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-24 bg-white dark:bg-navy-950 border border-blue-500/40 rounded px-2 py-1 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                       </div>
                     ) : (
@@ -187,7 +192,7 @@ export const AdminLLMMultipliers = () => {
                               markup_multiplier: parseFloat(e.target.value),
                             })
                           }
-                          className="w-20 bg-navy-950 border border-yellow-500/50 rounded px-2 py-1 text-yellow-400 font-bold focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                          className="w-20 bg-white dark:bg-navy-950 border border-yellow-500/40 rounded px-2 py-1 text-yellow-700 dark:text-yellow-400 font-bold focus:outline-none focus:ring-1 focus:ring-yellow-500"
                         />
                         <span className="text-slate-500 dark:text-slate-400">x</span>
                       </div>
@@ -200,7 +205,7 @@ export const AdminLLMMultipliers = () => {
                     )}
                   </td>
 
-                  <td className="py-4 px-6 text-slate-300">
+                  <td className="py-4 px-6 text-slate-700 dark:text-slate-300">
                     <div className="flex flex-col">
                       <span className="text-emerald-400 font-bold font-mono text-base">
                         {parseInt(userCostInTokens).toLocaleString()} Tokens
@@ -230,7 +235,7 @@ export const AdminLLMMultipliers = () => {
                     ) : (
                       <button
                         onClick={() => startEdit(p)}
-                        className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
                         title="Edit Pricing"
                       >
                         <Edit2 size={16} />
@@ -252,7 +257,7 @@ export const AdminLLMMultipliers = () => {
         </table>
       </div>
 
-      <div className="p-4 bg-navy-950/50 border-t border-white/5 text-xs text-slate-400 dark:text-slate-500 flex items-start gap-2">
+      <div className="p-4 bg-slate-50 dark:bg-navy-950/20 border-t border-slate-200 dark:border-white/10 text-xs text-slate-600 dark:text-slate-400 flex items-start gap-2">
         <HelpCircle className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
         <p>
           <strong>Pricing Logic:</strong> User Tokens are deducted based on the{' '}

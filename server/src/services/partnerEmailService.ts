@@ -85,10 +85,10 @@ function getNewReferralTemplate(data: NewReferralEmailData): string {
             
             <p>Log in to your Partner Portal to view your referral analytics and earnings.</p>
             
-            <p>Best regards,<br>The Consultinity Partner Team</p>
+            <p>Best regards,<br>The Consultify Partner Team</p>
         </div>
         <div class="footer">
-            <p>© ${new Date().getFullYear()} Consultinity. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} Consultify. All rights reserved.</p>
             <p>You're receiving this email because you're a registered partner.</p>
         </div>
     </div>
@@ -140,10 +140,10 @@ function getCommissionEarnedTemplate(data: CommissionEarnedEmailData): string {
             
             <p>This commission will be added to your pending earnings and included in your next payout.</p>
             
-            <p>Best regards,<br>The Consultinity Partner Team</p>
+            <p>Best regards,<br>The Consultify Partner Team</p>
         </div>
         <div class="footer">
-            <p>© ${new Date().getFullYear()} Consultinity. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} Consultify. All rights reserved.</p>
         </div>
     </div>
 </body>
@@ -192,10 +192,10 @@ function getDiscountExpiringTemplate(data: DiscountExpiringEmailData): string {
             
             <p>After this date, your subscription will be billed at the regular rate. Contact your partner or our support team if you have questions about renewing your discount.</p>
             
-            <p>Best regards,<br>The Consultinity Team</p>
+            <p>Best regards,<br>The Consultify Team</p>
         </div>
         <div class="footer">
-            <p>© ${new Date().getFullYear()} Consultinity. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} Consultify. All rights reserved.</p>
         </div>
     </div>
 </body>

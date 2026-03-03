@@ -7,6 +7,7 @@ import {
   AlertCircle,
   ArrowRight,
   Check,
+  Edit2,
   Globe,
   Layers,
   Plus,
@@ -21,6 +22,10 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { Button } from '@/components/ui/primitives/Button';
+import { Modal } from '@/components/ui/primitives/Modal';
+import { Api } from '@/services/api';
+
 interface RoutingRule {
   id: string;
   name: string;
@@ -28,12 +33,7 @@ interface RoutingRule {
   type: 'cost' | 'latency' | 'health' | 'geographic' | 'load_balance';
   priority: number;
   isActive: boolean;
-  config: {
-    threshold?: number;
-    fallbackProvider?: string;
-    region?: string;
-    weight?: number;
-  };
+  config: Record<string, any>;
 }
 
 interface TierRouting {
@@ -47,9 +47,32 @@ interface TierRouting {
 export const RoutingRulesTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [rules, setRules] = useState<RoutingRule[]>([]);
+  const [suggestedRules, setSuggestedRules] = useState<RoutingRule[]>([]);
   const [tierRoutings, setTierRoutings] = useState<TierRouting[]>([]);
   const [providerModelOptions, setProviderModelOptions] = useState<string[]>([]);
+  const [providers, setProviders] = useState<any[]>([]);
   const [showAddRule, setShowAddRule] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editingRule, setEditingRule] = useState<RoutingRule | null>(null);
+  const [ruleForm, setRuleForm] = useState<{
+    name: string;
+    description: string;
+    type: RoutingRule['type'];
+    priority: number;
+    isActive: boolean;
+    tiersCsv: string;
+    purposesCsv: string;
+    config: Record<string, any>;
+  }>({
+    name: '',
+    description: '',
+    type: 'health',
+    priority: 1,
+    isActive: true,
+    tiersCsv: '',
+    purposesCsv: '',
+    config: {},
+  });
 
   useEffect(() => {
     loadRoutingConfig();
@@ -58,21 +81,21 @@ export const RoutingRulesTab: React.FC = () => {
   const loadRoutingConfig = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-
-      const [assignmentsRes, providersRes, healthRes] = await Promise.all([
-        fetch('/api/llm/tiers/assignments', { headers }),
-        fetch('/api/llm/providers', { headers }),
-        fetch('/api/llm/health/detailed', { headers }),
+      const [assignmentsRes, providersRes, healthRes, rulesRes] = await Promise.allSettled([
+        Api.getLLMTierAssignments(),
+        Api.getLLMProviders(),
+        Api.getLLMHealthDetailed(),
+        Api.getLLMRoutingRules(),
       ]);
 
-      const assignmentsPayload = await assignmentsRes.json().catch(() => ({}));
-      const providersPayload = await providersRes.json().catch(() => []);
-      const healthPayload = await healthRes.json().catch(() => ({}));
+      const assignmentsPayload = assignmentsRes.status === 'fulfilled' ? assignmentsRes.value : null;
+      const providersPayload = providersRes.status === 'fulfilled' ? providersRes.value : [];
+      const healthPayload = healthRes.status === 'fulfilled' ? healthRes.value : null;
+      const rulesPayload = rulesRes.status === 'fulfilled' ? rulesRes.value : [];
 
       const providers: any[] = Array.isArray(providersPayload) ? providersPayload : [];
       const assignments: Record<string, any[]> = assignmentsPayload?.assignments || {};
+      setProviders(providers);
 
       const providerModelIds = Array.from(
         new Set(providers.map((p) => String(p?.model_id || '').trim()).filter((v) => !!v))
@@ -120,7 +143,7 @@ export const RoutingRulesTab: React.FC = () => {
         .flat()
         .sort((a, b) => Number(a?.cost_per_1k || 0) - Number(b?.cost_per_1k || 0))[0];
 
-      setRules([
+      setSuggestedRules([
         {
           id: 'derived-health-failover',
           name: 'Health Check Failover',
@@ -140,6 +163,8 @@ export const RoutingRulesTab: React.FC = () => {
           config: { threshold: Number(cheapestProvider?.cost_per_1k || 0) },
         },
       ]);
+
+      setRules(Array.isArray(rulesPayload) ? (rulesPayload as any) : []);
     } catch (err) {
       toast.error('Failed to load routing configuration');
     } finally {
@@ -147,11 +172,149 @@ export const RoutingRulesTab: React.FC = () => {
     }
   };
 
-  const toggleRule = (ruleId: string) => {
-    // This tab currently displays derived routing signals (read-only).
-    // We keep the UI toggle for UX continuity but do not persist to backend yet.
-    setRules((prev) => prev.map((r) => (r.id === ruleId ? { ...r, isActive: !r.isActive } : r)));
-    toast.success('Rule toggled (preview only)');
+  const toggleRule = async (rule: RoutingRule) => {
+    try {
+      const next = !rule.isActive;
+      setRules((prev) => prev.map((r) => (r.id === rule.id ? { ...r, isActive: next } : r)));
+      await Api.toggleLLMRoutingRule(rule.id, next);
+      toast.success(next ? 'Rule enabled' : 'Rule disabled');
+    } catch (err: any) {
+      setRules((prev) => prev.map((r) => (r.id === rule.id ? { ...r, isActive: !r.isActive } : r)));
+      toast.error(err?.message || 'Failed to toggle rule');
+    }
+  };
+
+  const openCreateModal = (prefill?: Partial<RoutingRule>) => {
+    setEditingRule(null);
+    const cfg = (prefill?.config || {}) as any;
+    const tiersCsv = Array.isArray(cfg?.tiers) ? cfg.tiers.join(', ') : '';
+    const purposesCsv = Array.isArray(cfg?.purposes) ? cfg.purposes.join(', ') : '';
+    setRuleForm({
+      name: prefill?.name || '',
+      description: prefill?.description || '',
+      type: (prefill?.type as any) || 'health',
+      priority: typeof prefill?.priority === 'number' ? prefill.priority : 1,
+      isActive: prefill?.isActive ?? true,
+      tiersCsv,
+      purposesCsv,
+      config: { ...(prefill?.config || {}) },
+    });
+    setShowAddRule(true);
+  };
+
+  const openEditModal = (rule: RoutingRule) => {
+    setEditingRule(rule);
+    const cfg: any = rule.config || {};
+    setRuleForm({
+      name: rule.name || '',
+      description: rule.description || '',
+      type: rule.type,
+      priority: Number(rule.priority || 0),
+      isActive: !!rule.isActive,
+      tiersCsv: Array.isArray(cfg?.tiers) ? cfg.tiers.join(', ') : '',
+      purposesCsv: Array.isArray(cfg?.purposes) ? cfg.purposes.join(', ') : '',
+      config: { ...(cfg || {}) },
+    });
+    setShowAddRule(true);
+  };
+
+  const closeModal = () => {
+    setShowAddRule(false);
+    setEditingRule(null);
+    setSaving(false);
+  };
+
+  const saveRule = async () => {
+    const name = String(ruleForm.name || '').trim();
+    if (!name) {
+      toast.error('Name is required');
+      return;
+    }
+
+    const tiers = ruleForm.tiersCsv
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean)
+      .map((t) => t.toUpperCase());
+    const purposes = ruleForm.purposesCsv
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
+
+    const config: any = { ...(ruleForm.config || {}) };
+    if (tiers.length) config.tiers = tiers;
+    else delete config.tiers;
+    if (purposes.length) config.purposes = purposes;
+    else delete config.purposes;
+
+    // Validate weights JSON if present
+    if (ruleForm.type === 'load_balance') {
+      const w = config?.weights;
+      if (w && typeof w === 'string') {
+        try {
+          const parsed = JSON.parse(w);
+          config.weights = parsed;
+        } catch {
+          toast.error('Weights must be valid JSON');
+          return;
+        }
+      }
+    }
+
+    setSaving(true);
+    try {
+      const payload = {
+        name,
+        description: ruleForm.description,
+        type: ruleForm.type,
+        priority: Number(ruleForm.priority || 0),
+        isActive: !!ruleForm.isActive,
+        config,
+      };
+
+      if (editingRule) {
+        await Api.updateLLMRoutingRule(editingRule.id, payload);
+        toast.success('Rule updated');
+      } else {
+        await Api.createLLMRoutingRule(payload);
+        toast.success('Rule created');
+      }
+
+      await loadRoutingConfig();
+      closeModal();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to save rule');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteRule = async () => {
+    if (!editingRule) return;
+    if (!confirm(`Delete rule "${editingRule.name}"?`)) return;
+    setSaving(true);
+    try {
+      await Api.deleteLLMRoutingRule(editingRule.id);
+      toast.success('Rule deleted');
+      await loadRoutingConfig();
+      closeModal();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to delete rule');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteRuleQuick = async (rule: RoutingRule) => {
+    if (!confirm(`Delete rule "${rule.name}"?`)) return;
+    try {
+      setRules((prev) => prev.filter((r) => r.id !== rule.id));
+      await Api.deleteLLMRoutingRule(rule.id);
+      toast.success('Rule deleted');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to delete rule');
+      await loadRoutingConfig();
+    }
   };
 
   const getTypeIcon = (type: RoutingRule['type']) => {
@@ -206,12 +369,12 @@ export const RoutingRulesTab: React.FC = () => {
             Routing Rules
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Configure intelligent model routing and failover policies
+            Configure intelligent model routing and failover policies (persisted; applied by ModelRouter)
           </p>
         </div>
         <button
-          onClick={() => setShowAddRule(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors"
+          onClick={() => openCreateModal()}
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
         >
           <Plus size={16} />
           Add Rule
@@ -241,7 +404,8 @@ export const RoutingRulesTab: React.FC = () => {
               <div className="flex items-center gap-2">
                 <select
                   value={item.defaultModel}
-                  className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                  disabled
+                  className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-indigo-500 outline-none opacity-70 cursor-not-allowed"
                 >
                   {item.defaultModel && !providerModelOptions.includes(item.defaultModel) && (
                     <option value={item.defaultModel}>{item.defaultModel}</option>
@@ -260,7 +424,8 @@ export const RoutingRulesTab: React.FC = () => {
                 <ArrowRight size={16} className="text-slate-400" />
                 <select
                   value={item.fallbackModel}
-                  className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                  disabled
+                  className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-indigo-500 outline-none opacity-70 cursor-not-allowed"
                 >
                   <option value="">No fallback</option>
                   {item.fallbackModel &&
@@ -289,14 +454,19 @@ export const RoutingRulesTab: React.FC = () => {
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Route size={18} className="text-slate-500" />
-          Active Routing Rules
+          Persisted Routing Rules
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-          Rules are evaluated in priority order. First matching rule is applied.
+          Rules are evaluated in priority order (lower first). Applicable rules can filter/reorder candidates.
         </p>
 
         <div className="space-y-3">
-          {rules.map((rule) => (
+          {rules.length === 0 ? (
+            <div className="py-10 text-center text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-navy-700 rounded-xl bg-slate-50 dark:bg-navy-900/40">
+              No routing rules yet. Add one to control routing behavior.
+            </div>
+          ) : (
+            rules.map((rule) => (
             <div
               key={rule.id}
               className={`flex items-center gap-4 p-4 rounded-lg border transition-all ${
@@ -322,19 +492,84 @@ export const RoutingRulesTab: React.FC = () => {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => toggleRule(rule.id)}
+                  onClick={() => toggleRule(rule)}
                   className={`p-2 rounded-lg transition-colors ${
                     rule.isActive
                       ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
                       : 'bg-slate-200 dark:bg-navy-700 text-slate-500 hover:text-emerald-500'
                   }`}
+                  title={rule.isActive ? 'Disable' : 'Enable'}
                 >
                   <Check size={16} />
                 </button>
-                <button className="p-2 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-500 hover:text-red-500 transition-colors">
+                <button
+                  onClick={() => openEditModal(rule)}
+                  className="p-2 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-navy-600 transition-colors"
+                  title="Edit"
+                >
+                  <Edit2 size={16} />
+                </button>
+                <button
+                  onClick={() => deleteRuleQuick(rule)}
+                  className="p-2 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-200 hover:bg-red-500/20 hover:text-red-500 transition-colors"
+                  title="Delete"
+                >
                   <Trash2 size={16} />
                 </button>
               </div>
+            </div>
+          ))
+          )}
+        </div>
+      </div>
+
+      {/* Suggested (Derived) Rules */}
+      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <Settings size={18} className="text-slate-500" />
+          Suggestions (derived from live signals)
+        </h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+          These are computed from current providers/health. You can convert them into persisted rules.
+        </p>
+
+        <div className="space-y-3">
+          {suggestedRules.map((rule) => (
+            <div
+              key={rule.id}
+              className="flex items-center gap-4 p-4 rounded-lg border bg-slate-50 dark:bg-navy-900/50 border-slate-200 dark:border-navy-700"
+            >
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 font-mono text-sm">
+                {rule.priority}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-medium text-slate-900 dark:text-white">{rule.name}</span>
+                  <span
+                    className={`px-2 py-0.5 rounded text-xs font-medium ${getTypeBadgeColor(rule.type)}`}
+                  >
+                    {getTypeIcon(rule.type)}
+                    <span className="ml-1">{rule.type}</span>
+                  </span>
+                </div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">{rule.description}</div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  openCreateModal({
+                    ...rule,
+                    id: '',
+                    name: rule.name,
+                    description: rule.description,
+                    isActive: rule.isActive,
+                    config: rule.config,
+                  } as any)
+                }
+              >
+                Create from suggestion
+              </Button>
             </div>
           ))}
         </div>
@@ -354,7 +589,8 @@ export const RoutingRulesTab: React.FC = () => {
             <input
               type="number"
               defaultValue={5}
-              className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-4 py-2 text-slate-900 dark:text-white"
+              disabled
+              className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-4 py-2 text-slate-900 dark:text-white opacity-70 cursor-not-allowed"
             />
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Number of failures before circuit opens
@@ -367,7 +603,8 @@ export const RoutingRulesTab: React.FC = () => {
             <input
               type="number"
               defaultValue={60}
-              className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-4 py-2 text-slate-900 dark:text-white"
+              disabled
+              className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-4 py-2 text-slate-900 dark:text-white opacity-70 cursor-not-allowed"
             />
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Wait time before retrying failed provider
@@ -375,6 +612,261 @@ export const RoutingRulesTab: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <Modal
+        open={showAddRule}
+        onClose={closeModal}
+        title={editingRule ? 'Edit Routing Rule' : 'New Routing Rule'}
+        description="Persisted rules are applied by ModelRouter at runtime."
+        size="xl"
+        footer={
+          <div className="flex items-center justify-between w-full">
+            <div>
+              {editingRule && (
+                <Button variant="danger" size="sm" onClick={deleteRule} loading={saving}>
+                  Delete
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" size="sm" onClick={closeModal} disabled={saving}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="sm" onClick={saveRule} loading={saving}>
+                Save
+              </Button>
+            </div>
+          </div>
+        }
+      >
+        <div className="p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                Name
+              </label>
+              <input
+                value={ruleForm.name}
+                onChange={(e) => setRuleForm((p) => ({ ...p, name: e.target.value }))}
+                className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+                placeholder="e.g., EU latency guard"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                Type
+              </label>
+              <select
+                value={ruleForm.type}
+                onChange={(e) =>
+                  setRuleForm((p) => ({
+                    ...p,
+                    type: e.target.value as any,
+                    config: {},
+                  }))
+                }
+                className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+              >
+                <option value="health">health</option>
+                <option value="cost">cost</option>
+                <option value="latency">latency</option>
+                <option value="geographic">geographic</option>
+                <option value="load_balance">load_balance</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+              Description
+            </label>
+            <input
+              value={ruleForm.description}
+              onChange={(e) => setRuleForm((p) => ({ ...p, description: e.target.value }))}
+              className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+              placeholder="What does this rule do?"
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                Priority (lower first)
+              </label>
+              <input
+                type="number"
+                value={ruleForm.priority}
+                onChange={(e) =>
+                  setRuleForm((p) => ({ ...p, priority: parseInt(e.target.value || '0', 10) }))
+                }
+                className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+              />
+            </div>
+            <div className="col-span-2 flex items-end gap-3">
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={ruleForm.isActive}
+                  onChange={(e) => setRuleForm((p) => ({ ...p, isActive: e.target.checked }))}
+                />
+                Active
+              </label>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                Applies to tiers (CSV, optional)
+              </label>
+              <input
+                value={ruleForm.tiersCsv}
+                onChange={(e) => setRuleForm((p) => ({ ...p, tiersCsv: e.target.value }))}
+                className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+                placeholder="BUDGET, STANDARD"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                Applies to purposes (CSV, optional)
+              </label>
+              <input
+                value={ruleForm.purposesCsv}
+                onChange={(e) => setRuleForm((p) => ({ ...p, purposesCsv: e.target.value }))}
+                className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+                placeholder="chat_simple, full_report"
+              />
+            </div>
+          </div>
+
+          {/* Type-specific config */}
+          {ruleForm.type === 'cost' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                  Max cost per 1k (threshold)
+                </label>
+                <input
+                  type="number"
+                  value={ruleForm.config.threshold ?? ''}
+                  onChange={(e) =>
+                    setRuleForm((p) => ({
+                      ...p,
+                      config: { ...p.config, threshold: Number(e.target.value) },
+                    }))
+                  }
+                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+                  placeholder="0.01"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                  Fallback provider (optional)
+                </label>
+                <select
+                  value={ruleForm.config.fallbackProvider || ''}
+                  onChange={(e) =>
+                    setRuleForm((p) => ({
+                      ...p,
+                      config: { ...p.config, fallbackProvider: e.target.value || undefined },
+                    }))
+                  }
+                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+                >
+                  <option value="">—</option>
+                  {providers.map((p: any) => (
+                    <option key={p.id} value={p.id}>
+                      {p.provider} · {p.model_id || p.name || p.id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {ruleForm.type === 'latency' && (
+            <div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                Max avg latency (ms) over last 30 minutes
+              </label>
+              <input
+                type="number"
+                value={ruleForm.config.threshold ?? ''}
+                onChange={(e) =>
+                  setRuleForm((p) => ({
+                    ...p,
+                    config: { ...p.config, threshold: Number(e.target.value) },
+                  }))
+                }
+                className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+                placeholder="1200"
+              />
+            </div>
+          )}
+
+          {ruleForm.type === 'geographic' && (
+            <div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                Region (e.g., EU, US, SG)
+              </label>
+              <input
+                value={ruleForm.config.region ?? ''}
+                onChange={(e) =>
+                  setRuleForm((p) => ({
+                    ...p,
+                    config: { ...p.config, region: e.target.value },
+                  }))
+                }
+                className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+                placeholder="EU"
+              />
+            </div>
+          )}
+
+          {ruleForm.type === 'load_balance' && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                  Strategy
+                </label>
+                <select
+                  value={ruleForm.config.strategy || 'round_robin'}
+                  onChange={(e) =>
+                    setRuleForm((p) => ({
+                      ...p,
+                      config: { ...p.config, strategy: e.target.value },
+                    }))
+                  }
+                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+                >
+                  <option value="round_robin">round_robin</option>
+                  <option value="weighted_random">weighted_random</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                  Weights (JSON object; keys = provider row id or provider name)
+                </label>
+                <textarea
+                  value={
+                    typeof ruleForm.config.weights === 'string'
+                      ? ruleForm.config.weights
+                      : JSON.stringify(ruleForm.config.weights || {}, null, 2)
+                  }
+                  onChange={(e) =>
+                    setRuleForm((p) => ({
+                      ...p,
+                      config: { ...p.config, weights: e.target.value },
+                    }))
+                  }
+                  rows={6}
+                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono text-xs"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 };

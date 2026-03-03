@@ -19,6 +19,7 @@ import {
 } from 'docx';
 import { NextFunction, Request, Response, Router } from 'express';
 import fs from 'fs';
+import multer from 'multer';
 import path from 'path';
 import PDFDocument from 'pdfkit';
 import { v4 as uuidv4 } from 'uuid';
@@ -42,7 +43,17 @@ import {
 import ReportBuilderCommentsService from '../services/reportBuilderCommentsService.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
 import ReportGenerationService from '../services/reportGenerationService.js';
+import { computeRagForReport } from '../services/ragLogicService.js';
+import {
+  getCanonicalTemplate,
+  proposeOutline,
+} from '../services/reportCanonicalTemplatesService.js';
 import { checkQualityGates } from '../services/reportQualityGatesService.js';
+import {
+  getOrCreateBrandVoice,
+  updateBrandVoice,
+} from '../services/brandVoiceProfileService.js';
+import { buildKnowledgeMap } from '../services/knowledgeMapService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -975,6 +986,35 @@ router.get(
 );
 
 // ==========================================
+// CANONICAL TEMPLATES (R1-R4)
+// ==========================================
+
+/**
+ * GET /api/report-builder/templates/canonical/:reportType
+ * Returns the canonical section template for R1/R2/R3/R4.
+ */
+router.get(
+  '/templates/canonical/:reportType',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const reportType = req.params.reportType;
+      const template = getCanonicalTemplate(reportType);
+
+      if (!template) {
+        return res
+          .status(404)
+          .json({ error: `No canonical template for report type "${reportType}"` });
+      }
+
+      res.json({ template });
+    } catch (err) {
+      logger.error('[ReportBuilder] Error getting canonical template:', err);
+      next(err);
+    }
+  }
+);
+
+// ==========================================
 // TEMPLATE SOURCE TYPE ENDPOINT
 // ==========================================
 
@@ -1109,6 +1149,264 @@ router.delete(
 );
 
 // ==========================================
+// PATH C: UPLOAD CHAOS -> KNOWLEDGE MAP
+// ==========================================
+
+const chaosUploadStorage = multer.diskStorage({
+  destination: (_req: Request, _file: Express.Multer.File, cb) => {
+    const orgId = ((_req as any)?.user?.organizationId || 'unknown') as string;
+    const dir = path.join(process.cwd(), 'uploads', 'chaos', orgId);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (_req: Request, file: Express.Multer.File, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    const basename = path.basename(file.originalname, ext);
+    cb(null, `${uniqueSuffix}-${basename}${ext}`);
+  },
+});
+
+const chaosUpload = multer({
+  storage: chaosUploadStorage,
+  limits: { fileSize: 20 * 1024 * 1024, files: 10 },
+  fileFilter: (_req: Request, file: Express.Multer.File, cb) => {
+    const allowedExts = /\.(pdf|docx|xlsx|csv)$/i;
+    const allowedMimes = /pdf|spreadsheet|document|msword|csv|comma-separated/i;
+    if (allowedExts.test(file.originalname) || allowedMimes.test(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF, DOCX, XLSX, and CSV files are allowed'));
+    }
+  },
+});
+
+/**
+ * POST /api/report-builder/upload-chaos
+ * Accept multipart file uploads for Path C, store and return file IDs.
+ */
+router.post(
+  '/upload-chaos',
+  // Support both "files" (multi) and legacy "file" (single) field names.
+  chaosUpload.fields([
+    { name: 'files', maxCount: 10 },
+    { name: 'file', maxCount: 1 },
+  ]),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId, organizationId } = getAuthContext(req);
+      const incoming = (req as any).files as
+        | Express.Multer.File[]
+        | Record<string, Express.Multer.File[]>
+        | undefined;
+      const files: Express.Multer.File[] = Array.isArray(incoming)
+        ? incoming
+        : [...(incoming?.files || []), ...(incoming?.file || [])];
+
+      if (!files || files.length === 0) {
+        return res.status(400).json({ error: 'No files uploaded' });
+      }
+
+      logger.info('[ReportBuilder] Upload chaos – received files', {
+        count: files.length,
+        userId,
+        organizationId,
+      });
+
+      const reportType = String((req.body?.reportType || req.body?.report_type || 'OTHER') as string)
+        .toUpperCase()
+        .trim();
+      const title = String((req.body?.title || '') as string).trim();
+      const consultantName = String((req.body?.consultantName || req.body?.consultant_name || '') as string).trim();
+      const reportDate = String((req.body?.reportDate || req.body?.report_date || '') as string).trim();
+      const projectId = req.body?.projectId ? String(req.body.projectId) : null;
+      const tagsRaw = String((req.body?.tags || '') as string).trim();
+      const tags = tagsRaw
+        ? tagsRaw
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : [];
+
+      const fileIds: string[] = [];
+
+      for (const file of files) {
+        const fileId = uuidv4();
+        await dbRun(
+          `INSERT INTO generic_assessment_reports (
+            id, organization_id, project_id,
+            title, report_type, consultant_name, report_date,
+            tags_json,
+            file_path, file_name, file_size,
+            original_name, mime_type, file_type,
+            upload_status, processing_status,
+            uploaded_by, uploaded_at,
+            created_at, updated_at
+          ) VALUES (
+            ?, ?, ?,
+            ?, ?, ?, ?,
+            ?,
+            ?, ?, ?,
+            ?, ?, ?,
+            'done', 'uploaded',
+            ?, datetime('now'),
+            datetime('now'), datetime('now')
+          )`,
+          [
+            fileId,
+            organizationId,
+            projectId,
+            title || file.originalname,
+            reportType || 'OTHER',
+            consultantName || null,
+            reportDate || null,
+            JSON.stringify(tags),
+            file.path,
+            file.filename || file.originalname,
+            file.size,
+            file.originalname,
+            file.mimetype,
+            file.mimetype,
+            userId,
+          ]
+        );
+        fileIds.push(fileId);
+      }
+
+      res.json({
+        fileIds,
+        files: files.map((f, i) => ({
+          id: fileIds[i],
+          name: f.originalname,
+          size: f.size,
+          mimeType: f.mimetype,
+        })),
+      });
+    } catch (err) {
+      logger.error('[ReportBuilder] Error in upload-chaos:', err);
+      next(err);
+    }
+  }
+);
+
+/**
+ * GET /api/report-builder/upload-chaos
+ * List uploaded Path C files for the organization (best-effort workspace).
+ */
+router.get('/upload-chaos', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { organizationId } = getAuthContext(req);
+    const { search, type } = req.query;
+
+    let sql = `
+      SELECT id, title, report_type, consultant_name, report_date,
+             file_name, file_size, mime_type, upload_status, processing_status,
+             tags_json, uploaded_at
+      FROM generic_assessment_reports
+      WHERE organization_id = ?
+    `;
+    const params: any[] = [organizationId];
+
+    if (search && typeof search === 'string' && search.trim()) {
+      sql += ` AND (title LIKE ? OR consultant_name LIKE ? OR ai_summary LIKE ? OR ocr_text LIKE ?)`;
+      const q = `%${search.trim()}%`;
+      params.push(q, q, q, q);
+    }
+
+    if (type && typeof type === 'string' && type !== 'ALL') {
+      sql += ` AND report_type = ?`;
+      params.push(type.toUpperCase());
+    }
+
+    sql += ` ORDER BY COALESCE(uploaded_at, created_at) DESC LIMIT 100`;
+
+    const rows = await dbAll<any>(sql, params);
+    const reports = (rows || []).map((r: any) => ({
+      id: r.id,
+      title: r.title || r.file_name || 'Report',
+      report_type: r.report_type || 'OTHER',
+      consultant_name: r.consultant_name || null,
+      report_date: r.report_date || null,
+      file_name: r.file_name || '',
+      file_size: Number(r.file_size || 0),
+      processing_status: r.processing_status || r.upload_status || 'uploaded',
+      ai_summary: r.ai_summary || null,
+      tags_json: (() => {
+        try {
+          return JSON.parse(r.tags_json || '[]');
+        } catch {
+          return [];
+        }
+      })(),
+      uploaded_at: r.uploaded_at || null,
+    }));
+
+    res.json({ reports });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error listing upload-chaos files:', err);
+    next(err);
+  }
+});
+
+/**
+ * DELETE /api/report-builder/upload-chaos/:id
+ * Delete uploaded Path C file record (best-effort deletes file from disk).
+ */
+router.delete('/upload-chaos/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { organizationId } = getAuthContext(req);
+    const id = paramStr(req.params.id);
+
+    const row = await dbGet<any>(
+      `SELECT file_path FROM generic_assessment_reports WHERE id = ? AND organization_id = ?`,
+      [id, organizationId]
+    );
+    if (!row) return res.status(404).json({ error: 'File not found' });
+
+    await dbRun(`DELETE FROM generic_assessment_reports WHERE id = ? AND organization_id = ?`, [
+      id,
+      organizationId,
+    ]);
+
+    const fp = String(row.file_path || '');
+    if (fp) {
+      try {
+        if (fs.existsSync(fp)) fs.unlinkSync(fp);
+      } catch {
+        // best-effort cleanup
+      }
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error deleting upload-chaos file:', err);
+    next(err);
+  }
+});
+
+/**
+ * POST /api/report-builder/knowledge-map
+ * Build a knowledge map from previously uploaded file IDs.
+ */
+router.post('/knowledge-map', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { organizationId } = getAuthContext(req);
+    const { fileIds } = req.body;
+
+    if (!Array.isArray(fileIds) || fileIds.length === 0) {
+      return res.status(400).json({ error: 'fileIds array is required' });
+    }
+
+    const knowledgeMap = await buildKnowledgeMap(organizationId, fileIds);
+    res.json(knowledgeMap);
+  } catch (err: any) {
+    logger.error('[ReportBuilder] Error building knowledge map:', err);
+    const msg = err?.message || 'Failed to build knowledge map';
+    res.status(msg.includes('not found') || msg.includes('No file') ? 404 : 500).json({ error: msg });
+  }
+});
+
+// ==========================================
 // REPORT CRUD ENDPOINTS
 // ==========================================
 
@@ -1207,6 +1505,179 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     next(err);
   }
 });
+
+/**
+ * GET /api/report-builder/backlinks/:artifactType/:artifactId
+ * Find all reports that reference a given artifact
+ */
+router.get(
+  '/backlinks/:artifactType/:artifactId',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { organizationId } = getAuthContext(req);
+      const artifactType = paramStr(req.params.artifactType);
+      const artifactId = paramStr(req.params.artifactId);
+
+      if (!artifactType || !artifactId) {
+        return res.status(400).json({ error: 'artifactType and artifactId are required' });
+      }
+
+      const reports = await dbAll(
+        `SELECT id, title, status, source_type, created_at, updated_at, source_refs_json
+         FROM report_builder_reports
+         WHERE organization_id = ?
+           AND source_refs_json LIKE ?
+         ORDER BY updated_at DESC
+         LIMIT 50`,
+        [organizationId, `%"artifact_id":"${artifactId}"%`]
+      );
+
+      const sectionRefs = await dbAll(
+        `SELECT s.report_id, s.section_key, s.title AS section_title, s.source_refs_json
+         FROM report_builder_sections s
+         JOIN report_builder_reports r ON s.report_id = r.id
+         WHERE r.organization_id = ?
+           AND s.source_refs_json LIKE ?
+         LIMIT 100`,
+        [organizationId, `%"artifact_id":"${artifactId}"%`]
+      );
+
+      const reportIds = new Set(reports.map((r: any) => r.id));
+      for (const sec of sectionRefs) {
+        if (!reportIds.has(sec.report_id)) {
+          reportIds.add(sec.report_id);
+        }
+      }
+
+      const results = reports.map((r: any) => ({
+        reportId: r.id,
+        title: r.title,
+        status: r.status,
+        sourceType: r.source_type,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+        sections: sectionRefs
+          .filter((s: any) => s.report_id === r.id)
+          .map((s: any) => ({ sectionKey: s.section_key, sectionTitle: s.section_title })),
+      }));
+
+      res.json({ artifactType, artifactId, reports: results, total: results.length });
+    } catch (err) {
+      logger.error('[ReportBuilder] Error finding backlinks:', err);
+      next(err);
+    }
+  }
+);
+
+// ==========================================
+// BRAND VOICE PROFILE ENDPOINTS
+// ==========================================
+
+/**
+ * GET /api/report-builder/brand-voice
+ * Returns org's brand voice profile (creates default if none exists)
+ */
+router.get('/brand-voice', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { organizationId } = getAuthContext(req);
+    const profile = await getOrCreateBrandVoice(organizationId);
+    res.json({ profile });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error fetching brand voice profile:', err);
+    next(err);
+  }
+});
+
+/**
+ * PUT /api/report-builder/brand-voice
+ * Updates org's brand voice profile
+ */
+router.put('/brand-voice', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { organizationId } = getAuthContext(req);
+    const updates = req.body || {};
+    const profile = await updateBrandVoice(organizationId, updates);
+    res.json({ profile });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error updating brand voice profile:', err);
+    next(err);
+  }
+});
+
+// ==========================================
+// REPORT SESSIONS (Dynamic Menu)
+// ==========================================
+
+/**
+ * GET /api/report-builder/sessions
+ * List open report sessions (dynamic menu). Max 6.
+ */
+router.get('/sessions', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { userId, organizationId } = getAuthContext(req);
+    const sessions = await ReportBuilderService.listOpenSessions(organizationId, userId);
+    res.json({ sessions });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error listing sessions:', err);
+    next(err);
+  }
+});
+
+/**
+ * POST /api/report-builder/:id/session/open
+ * Open a report in the dynamic menu (upsert). Enforces max 6.
+ */
+router.post('/:id/session/open', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = paramStr(req.params.id);
+    const { userId, organizationId } = getAuthContext(req);
+    const { navigationState } = req.body || {};
+
+    const report = await ReportBuilderService.getReport(id, organizationId);
+    if (!report) return res.status(404).json({ error: 'Report not found' });
+
+    const session = await ReportBuilderService.openSession({
+      organizationId,
+      userId,
+      reportId: id,
+      navigationState: navigationState && typeof navigationState === 'object' ? navigationState : null,
+    });
+
+    res.json({ session });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error opening session:', err);
+    next(err);
+  }
+});
+
+/**
+ * POST /api/report-builder/:id/session/close
+ * Close a report from the dynamic menu.
+ */
+router.post('/:id/session/close', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = paramStr(req.params.id);
+    const { userId, organizationId } = getAuthContext(req);
+
+    const report = await ReportBuilderService.getReport(id, organizationId);
+    if (!report) return res.status(404).json({ error: 'Report not found' });
+
+    const success = await ReportBuilderService.closeSession({
+      organizationId,
+      userId,
+      reportId: id,
+    });
+
+    res.json({ success });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error closing session:', err);
+    next(err);
+  }
+});
+
+// ==========================================
+// REPORT CRUD ENDPOINTS
+// ==========================================
 
 /**
  * GET /api/report-builder/:id
@@ -2090,6 +2561,85 @@ router.get('/:id/source-data', async (req: Request, res: Response, next: NextFun
   }
 });
 
+/**
+ * GET /api/report-builder/:id/source-refs
+ * Returns all source_refs for a report (from report + aggregated from sections)
+ */
+router.get('/:id/source-refs', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = paramStr(req.params.id);
+    const { organizationId } = getAuthContext(req);
+
+    const report = await dbGet<{ source_refs_json: string }>(
+      `SELECT source_refs_json FROM report_builder_reports WHERE id = ? AND organization_id = ?`,
+      [id, organizationId]
+    );
+
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    const reportRefs: Array<{ artifact_id: string; artifact_type: string; artifact_name: string }> =
+      report.source_refs_json ? JSON.parse(report.source_refs_json) : [];
+
+    const sectionRows = await dbAll(
+      `SELECT section_key, title, source_refs_json
+       FROM report_builder_sections
+       WHERE report_id = ? AND source_refs_json IS NOT NULL`,
+      [id]
+    );
+
+    const sectionRefMap: Record<string, Array<{ sectionKey: string; sectionTitle: string }>> = {};
+    for (const sec of sectionRows) {
+      const secRefs: Array<{ artifact_id: string }> = sec.source_refs_json
+        ? JSON.parse(sec.source_refs_json)
+        : [];
+      for (const ref of secRefs) {
+        if (!sectionRefMap[ref.artifact_id]) sectionRefMap[ref.artifact_id] = [];
+        sectionRefMap[ref.artifact_id].push({
+          sectionKey: sec.section_key,
+          sectionTitle: sec.title,
+        });
+      }
+    }
+
+    const mergedIds = new Set<string>();
+    const allRefs: Array<{
+      artifact_id: string;
+      artifact_type: string;
+      artifact_name: string;
+      usedInSections: Array<{ sectionKey: string; sectionTitle: string }>;
+    }> = [];
+
+    for (const ref of reportRefs) {
+      mergedIds.add(ref.artifact_id);
+      allRefs.push({
+        ...ref,
+        usedInSections: sectionRefMap[ref.artifact_id] || [],
+      });
+    }
+
+    for (const sec of sectionRows) {
+      const secRefs: Array<{ artifact_id: string; artifact_type: string; artifact_name: string }> =
+        sec.source_refs_json ? JSON.parse(sec.source_refs_json) : [];
+      for (const ref of secRefs) {
+        if (!mergedIds.has(ref.artifact_id)) {
+          mergedIds.add(ref.artifact_id);
+          allRefs.push({
+            ...ref,
+            usedInSections: sectionRefMap[ref.artifact_id] || [],
+          });
+        }
+      }
+    }
+
+    res.json({ reportId: id, sourceRefs: allRefs, total: allRefs.length });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error getting source refs:', err);
+    next(err);
+  }
+});
+
 // ==========================================
 // PDF EXPORT ENDPOINTS
 // ==========================================
@@ -2519,7 +3069,7 @@ const writeReportBuilderDocx = async (report: any, sections: any[], filePath: st
             children: [
               new Paragraph({
                 children: [
-                  new TextRun({ text: 'Consultinity Report', size: 16 }),
+                  new TextRun({ text: 'Consultify Report', size: 16 }),
                   new TextRun('  •  '),
                   new TextRun({ children: [PageNumber.CURRENT] }),
                   new TextRun(' / '),
@@ -3296,7 +3846,7 @@ router.post('/:id/share', async (req: Request, res: Response, next: NextFunction
   try {
     const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
-    const { password, expiresInDays, showCompanyLogo, showConsultinityBranding, customMessage } =
+    const { password, expiresInDays, showCompanyLogo, showConsultifyBranding, customMessage } =
       req.body || {};
 
     // Verify report exists and belongs to org
@@ -3332,7 +3882,7 @@ router.post('/:id/share', async (req: Request, res: Response, next: NextFunction
       passwordHash,
       expiresAt,
       showCompanyLogo,
-      showConsultinityBranding,
+      showConsultifyBranding,
       customMessage,
     });
 
@@ -3347,7 +3897,7 @@ router.post('/:id/share', async (req: Request, res: Response, next: NextFunction
         hasPassword: Boolean(passwordHash),
         expiresAt: link.expiresAt,
         showCompanyLogo: link.showCompanyLogo,
-        showConsultinityBranding: link.showConsultinityBranding,
+        showConsultifyBranding: link.showConsultifyBranding,
         customMessage: link.customMessage,
         createdAt: link.createdAt,
       },
@@ -3383,7 +3933,7 @@ router.get('/:id/share', async (req: Request, res: Response, next: NextFunction)
         hasPassword: Boolean(l.passwordHash),
         expiresAt: l.expiresAt,
         showCompanyLogo: l.showCompanyLogo,
-        showConsultinityBranding: l.showConsultinityBranding,
+        showConsultifyBranding: l.showConsultifyBranding,
         customMessage: l.customMessage,
         viewCount: l.viewCount,
         lastViewedAt: l.lastViewedAt,
@@ -3805,6 +4355,34 @@ router.post(
 );
 
 // ==========================================
+// PROPOSE OUTLINE (AI-assisted)
+// ==========================================
+
+/**
+ * POST /api/report-builder/:id/propose-outline
+ * Proposes 1-3 outline variants based on report definition layer.
+ */
+router.post(
+  '/:id/propose-outline',
+  verifyToken,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { organizationId } = getAuthContext(req);
+
+      const variants = await proposeOutline(String(id), organizationId);
+      res.json({ variants });
+    } catch (err: any) {
+      if (err.message?.includes('not found')) {
+        return res.status(404).json({ error: err.message });
+      }
+      logger.error('[ReportBuilder] Error proposing outline:', err);
+      next(err);
+    }
+  }
+);
+
+// ==========================================
 // T060: Quality Gates
 // ==========================================
 
@@ -3824,5 +4402,402 @@ router.get(
     }
   }
 );
+
+// ==========================================
+// Phase 8: Refreshable Blocks & Data Binding
+// ==========================================
+
+/**
+ * POST /api/report-builder/:id/sections/:sectionKey/refresh
+ * Re-generate a single section using latest source data, returning a proposal (no auto-overwrite).
+ */
+router.post(
+  '/:id/sections/:sectionKey/refresh',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = paramStr(req.params.id);
+      const sectionKey = paramStr(req.params.sectionKey);
+      const { userId, organizationId } = getAuthContext(req);
+      const { customPrompt } = req.body || {};
+
+      const reportData = await ReportBuilderService.getReport(id, organizationId);
+      if (!reportData) return res.status(404).json({ error: 'Report not found' });
+
+      const section = reportData.sections.find((s) => s.sectionKey === sectionKey);
+      if (!section) return res.status(404).json({ error: 'Section not found' });
+
+      const previousContent = section.editedContent || section.generatedContent || '';
+
+      const result = await ReportGenerationService.regenerateSection(
+        id,
+        sectionKey,
+        organizationId,
+        userId,
+        customPrompt
+      );
+
+      const newContent = result.content;
+
+      const diff: string[] = [];
+      if (previousContent !== newContent) {
+        diff.push('Content changed');
+        const prevLen = previousContent.length;
+        const newLen = newContent.length;
+        if (newLen > prevLen) {
+          diff.push(`Added ~${newLen - prevLen} characters`);
+        } else if (newLen < prevLen) {
+          diff.push(`Removed ~${prevLen - newLen} characters`);
+        }
+      }
+
+      logger.info('[ReportBuilder] Section refresh proposal generated', {
+        reportId: id,
+        sectionKey,
+        diffCount: diff.length,
+      });
+
+      res.json({ sectionKey, previousContent, newContent, diff });
+    } catch (err: any) {
+      logger.error('[ReportBuilder] Error refreshing section:', err);
+      if (err.message?.includes('not found')) {
+        return res.status(404).json({ error: err.message });
+      }
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/report-builder/:id/sections/:sectionKey/accept-refresh
+ * Accept a refresh proposal — overwrites edited_content, updates last_data_timestamp.
+ */
+router.post(
+  '/:id/sections/:sectionKey/accept-refresh',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = paramStr(req.params.id);
+      const sectionKey = paramStr(req.params.sectionKey);
+      const { userId, organizationId } = getAuthContext(req);
+      const { newContent } = req.body || {};
+
+      if (!newContent) return res.status(400).json({ error: 'newContent is required' });
+
+      const reportData = await ReportBuilderService.getReport(id, organizationId);
+      if (!reportData) return res.status(404).json({ error: 'Report not found' });
+
+      const section = reportData.sections.find((s) => s.sectionKey === sectionKey);
+      if (!section) return res.status(404).json({ error: 'Section not found' });
+
+      await ReportBuilderService.acceptRefreshContent(id, sectionKey, newContent, userId);
+
+      logger.info('[ReportBuilder] Section refresh accepted', { reportId: id, sectionKey });
+
+      res.json({ success: true, sectionKey });
+    } catch (err: any) {
+      logger.error('[ReportBuilder] Error accepting refresh:', err);
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/report-builder/:id/refresh-all
+ * Generate refresh proposals for all refreshable sections.
+ */
+router.post('/:id/refresh-all', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = paramStr(req.params.id);
+    const { userId, organizationId } = getAuthContext(req);
+
+    const reportData = await ReportBuilderService.getReport(id, organizationId);
+    if (!reportData) return res.status(404).json({ error: 'Report not found' });
+
+    const refreshableSections = await ReportBuilderService.getRefreshableSections(id);
+
+    const proposals: Array<{
+      sectionKey: string;
+      previousContent: string;
+      newContent: string;
+    }> = [];
+
+    for (const section of refreshableSections) {
+      try {
+        const previousContent = section.editedContent || section.generatedContent || '';
+        const result = await ReportGenerationService.regenerateSection(
+          id,
+          section.sectionKey,
+          organizationId,
+          userId
+        );
+        proposals.push({
+          sectionKey: section.sectionKey,
+          previousContent,
+          newContent: result.content,
+        });
+      } catch (err) {
+        logger.warn('[ReportBuilder] Failed to refresh section (skipping)', {
+          reportId: id,
+          sectionKey: section.sectionKey,
+          err,
+        });
+      }
+    }
+
+    logger.info('[ReportBuilder] Refresh-all completed', {
+      reportId: id,
+      proposalsCount: proposals.length,
+      totalRefreshable: refreshableSections.length,
+    });
+
+    res.json({ proposals });
+  } catch (err: any) {
+    logger.error('[ReportBuilder] Error in refresh-all:', err);
+    if (err.message?.includes('not found')) {
+      return res.status(404).json({ error: err.message });
+    }
+    next(err);
+  }
+});
+
+// ==========================================
+// Phase 6: RAG Status Computation
+// ==========================================
+
+router.post(
+  '/:id/compute-rag',
+  verifyToken,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { organizationId } = getAuthContext(req);
+
+      const results = await computeRagForReport(String(id), organizationId);
+      res.json({ results });
+    } catch (err: any) {
+      if (err.message?.includes('not found')) {
+        return res.status(404).json({ error: err.message });
+      }
+      logger.error('[ReportBuilder] Error computing RAG:', err);
+      next(err);
+    }
+  }
+);
+
+// ── R1→R2 Auto-Escalation Trigger (G7) ──────────────────────
+router.post(
+  '/:id/evaluate-escalation',
+  verifyToken,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { organizationId } = getAuthContext(req);
+
+      const report = await dbGet<{ report_type_v3: string; period_from: string; period_to: string }>(
+        `SELECT report_type_v3, period_from, period_to
+         FROM report_builder_reports WHERE id = ? AND organization_id = ?`,
+        [id, organizationId]
+      );
+
+      if (!report) {
+        return res.status(404).json({ error: 'Report not found' });
+      }
+
+      const reportType = (report.report_type_v3 || '').toUpperCase();
+      if (reportType !== 'R1') {
+        return res.json({
+          shouldEscalate: false,
+          severity: 'none',
+          reasons: [],
+          message: 'Escalation evaluation is only applicable to R1 reports',
+        });
+      }
+
+      const { evaluateR1EscalationTrigger } = await import('../services/ragLogicService.js');
+      const periodFrom = report.period_from || new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+      const periodTo = report.period_to || new Date().toISOString();
+
+      const trigger = await evaluateR1EscalationTrigger(organizationId, periodFrom, periodTo);
+      res.json(trigger);
+    } catch (err: any) {
+      logger.error('[ReportBuilder] Error evaluating escalation:', err);
+      next(err);
+    }
+  }
+);
+
+// ==========================================
+// Phase 9: Report -> Execution Integration
+// ==========================================
+
+/**
+ * POST /api/report-builder/:id/sections/:sectionKey/create-initiative
+ * Creates an initiative from a report section's content.
+ */
+router.post(
+  '/:id/sections/:sectionKey/create-initiative',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = paramStr(req.params.id);
+      const sectionKey = paramStr(req.params.sectionKey);
+      const { userId, organizationId } = getAuthContext(req);
+      const { title: bodyTitle, description: bodyDescription } = req.body || {};
+
+      const reportData = await ReportBuilderService.getReport(id, organizationId);
+      if (!reportData) return res.status(404).json({ error: 'Report not found' });
+
+      const section = reportData.sections.find((s) => s.sectionKey === sectionKey);
+      if (!section) return res.status(404).json({ error: 'Section not found' });
+
+      const sectionContent = section.editedContent || section.generatedContent || '';
+      const initiativeTitle = bodyTitle || section.title || 'Untitled Initiative';
+      const initiativeDescription =
+        bodyDescription || (sectionContent ? sectionContent.slice(0, 500) : '');
+
+      const initiativeId = uuidv4();
+      const now = new Date().toISOString();
+
+      await dbRun(
+        `INSERT INTO initiatives (
+          id, organization_id, project_id, name, summary, status,
+          report_id, owner_business_id, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?)`,
+        [
+          initiativeId,
+          organizationId,
+          reportData.report.projectId || null,
+          initiativeTitle,
+          initiativeDescription,
+          id,
+          userId,
+          now,
+          now,
+        ]
+      );
+
+      logger.info('[ReportBuilder] Initiative created from section', {
+        reportId: id,
+        sectionKey,
+        initiativeId,
+      });
+
+      res.json({ id: initiativeId, title: initiativeTitle, status: 'DRAFT' });
+    } catch (err: any) {
+      logger.error('[ReportBuilder] Error creating initiative from section:', err);
+      next(err);
+    }
+  }
+);
+
+/**
+ * GET /api/report-builder/:id/entity-links
+ * Returns all entities (initiatives, tasks, decisions) linked to the report.
+ */
+router.get('/:id/entity-links', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = paramStr(req.params.id);
+    const { organizationId } = getAuthContext(req);
+
+    const report = await dbGet<{ id: string }>(
+      `SELECT id FROM report_builder_reports WHERE id = ? AND organization_id = ?`,
+      [id, organizationId]
+    );
+    if (!report) return res.status(404).json({ error: 'Report not found' });
+
+    const initiatives = await dbAll<{ id: string; name: string; status: string }>(
+      `SELECT id, name, status FROM initiatives
+       WHERE organization_id = ? AND report_id = ?
+       ORDER BY created_at DESC`,
+      [organizationId, id]
+    );
+
+    const tasks = await dbAll<{ id: string; title: string; status: string }>(
+      `SELECT t.id, t.title, t.status FROM tasks t
+       JOIN initiatives i ON t.initiative_id = i.id
+       WHERE i.organization_id = ? AND i.report_id = ?
+       ORDER BY t.created_at DESC`,
+      [organizationId, id]
+    );
+
+    const decisions = await dbAll<{ id: string; title: string; status: string }>(
+      `SELECT d.id, d.title, d.status FROM decisions d
+       JOIN initiatives i ON d.initiative_id = i.id
+       WHERE d.organization_id = ? AND i.report_id = ?
+       ORDER BY d.created_at DESC`,
+      [organizationId, id]
+    );
+
+    res.json({
+      initiatives: initiatives.map((i) => ({ id: i.id, title: i.name, status: i.status })),
+      tasks: tasks.map((t) => ({ id: t.id, title: t.title, status: t.status })),
+      decisions: decisions.map((d) => ({ id: d.id, title: d.title, status: d.status })),
+    });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error getting entity links:', err);
+    next(err);
+  }
+});
+
+// ==========================================
+// Phase 10: Convenience Schedule Endpoint
+// ==========================================
+
+/**
+ * POST /api/report-builder/schedule
+ * Create a scheduled report from a template.
+ * Delegates to scheduledReportService.createSchedule.
+ */
+router.post('/schedule', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { userId, organizationId } = getAuthContext(req);
+    const {
+      templateId,
+      scheduleName,
+      frequency,
+      dayOfWeek,
+      dayOfMonth,
+      time,
+      deliveryMethods,
+      timezone,
+    } = req.body || {};
+
+    if (!scheduleName || !frequency || !deliveryMethods?.length) {
+      return res.status(400).json({
+        error: 'Missing required fields: scheduleName, frequency, deliveryMethods',
+      });
+    }
+
+    const { scheduledReportService } = await import('../services/scheduledReportService.js');
+
+    const schedule = await scheduledReportService.createSchedule(
+      {
+        name: scheduleName,
+        templateId: templateId || undefined,
+        reportType: 'custom',
+        frequency,
+        timezone: timezone || 'UTC',
+        deliveryMethods: deliveryMethods || [],
+        deliveryConfig: {
+          email:
+            deliveryMethods?.includes('email')
+              ? { recipients: [], subject: scheduleName }
+              : undefined,
+        },
+      },
+      organizationId,
+      userId
+    );
+
+    logger.info('[ReportBuilder] Schedule created via convenience endpoint', {
+      scheduleId: schedule.id,
+      templateId,
+      frequency,
+    });
+
+    res.status(201).json({ success: true, data: schedule });
+  } catch (err: any) {
+    logger.error('[ReportBuilder] Error creating schedule:', err);
+    next(err);
+  }
+});
 
 export default router;
