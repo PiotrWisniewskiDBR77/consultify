@@ -206,4 +206,4 @@ knowledge/**/*.pptx
 knowledge/**/*.docx
 
 # Duplicate lib artifacts
-lib/
+/lib/

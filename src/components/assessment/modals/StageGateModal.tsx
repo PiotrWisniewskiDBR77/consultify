@@ -84,7 +84,7 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
       try {
         const token = localStorage.getItem('token');
         const response = await fetch(
-          `/api/stage-gates/${projectId}/check?from=${fromPhase}&to=${toPhase}`,
+          `/api/stage-gates/${projectId}/evaluate/${gateType}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -95,60 +95,22 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
           setCriteria(data.completionCriteria || []);
           setIsGatePassed(data.status === 'READY');
         } else {
-          // Generate default criteria based on gate type
-          const defaultCriteria = getDefaultCriteria(gateType);
-          setCriteria(defaultCriteria);
-          setIsGatePassed(defaultCriteria.every((c) => c.isMet));
+          setError('Nie udało się pobrać kryteriów bramki. Spróbuj ponownie.');
+          setCriteria([]);
+          setIsGatePassed(false);
         }
       } catch (err) {
         console.error('[StageGateModal] Error:', err);
-        // Use default criteria on error
-        const defaultCriteria = getDefaultCriteria(gateType);
-        setCriteria(defaultCriteria);
-        setIsGatePassed(defaultCriteria.every((c) => c.isMet));
+        setError('Nie udało się pobrać kryteriów bramki. Sprawdź połączenie i spróbuj ponownie.');
+        setCriteria([]);
+        setIsGatePassed(false);
       } finally {
         setLoading(false);
       }
     };
 
     fetchGateCriteria();
-  }, [projectId, fromPhase, toPhase, gateType]);
-
-  // Get default criteria based on gate type
-  const getDefaultCriteria = (type: string): GateCriterion[] => {
-    switch (type) {
-      case 'DESIGN_GATE':
-        return [
-          {
-            id: '1',
-            criterion: 'Assessment w statusie APPROVED',
-            isMet: true,
-            evidence: 'Status sprawdzony',
-          },
-          {
-            id: '2',
-            criterion: 'Wszystkie osie ocenione (7/7)',
-            isMet: true,
-            evidence: 'Postęp 100%',
-          },
-          {
-            id: '3',
-            criterion: 'Recenzje zakończone',
-            isMet: true,
-            evidence: 'Wszystkie recenzje zatwierdzone',
-          },
-          { id: '4', criterion: 'Gap Analysis dostępna', isMet: true, evidence: 'Dane wyliczone' },
-        ];
-      case 'PLANNING_GATE':
-        return [
-          { id: '1', criterion: 'Raport w statusie FINAL', isMet: false, evidence: '' },
-          { id: '2', criterion: 'Inicjatywy wygenerowane', isMet: false, evidence: '' },
-          { id: '3', criterion: 'Priorytety przypisane', isMet: false, evidence: '' },
-        ];
-      default:
-        return [{ id: '1', criterion: 'Wymagania spełnione', isMet: true, evidence: 'OK' }];
-    }
-  };
+  }, [projectId, gateType]);
 
   // Handle passing the gate
   const handlePassGate = async () => {
@@ -157,19 +119,24 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
     setPassing(true);
     try {
       const token = localStorage.getItem('token');
-      await fetch(`/api/stage-gates/${projectId}/pass`, {
+      const response = await fetch(`/api/stage-gates/${projectId}/pass/${gateType}`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ from: fromPhase, to: toPhase }),
+        body: JSON.stringify({}),
       });
 
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Nie udało się przejść bramki');
+      }
+
       onProceed();
-    } catch (err) {
+    } catch (err: any) {
       console.error('[StageGateModal] Error passing gate:', err);
-      onProceed(); // Proceed anyway for demo
+      setError(err?.message || 'Nie udało się przejść bramki. Spróbuj ponownie.');
     } finally {
       setPassing(false);
     }
@@ -230,6 +197,19 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
               <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
                 {gateConfig.description}
               </p>
+
+              {/* Error state */}
+              {error && (
+                <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-red-700 dark:text-red-300">{error}</p>
+                    <p className="text-xs text-red-500 dark:text-red-400 mt-1">
+                      Nie można ocenić bramki. Sprawdź konfigurację projektu lub skontaktuj się z administratorem.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Progress */}
               <div className="flex items-center gap-3 mb-4">

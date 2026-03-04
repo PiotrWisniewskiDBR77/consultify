@@ -6,6 +6,7 @@
 import { BookTemplate, FileText, Presentation } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { TEMPLATE_TYPE_META, type TemplateItem } from '../types';
 
@@ -15,6 +16,7 @@ interface TemplatePreviewProps {
 
 export const TemplatePreview: React.FC<TemplatePreviewProps> = ({ template }) => {
   const { i18n, t } = useTranslation();
+  const navigate = useNavigate();
   const isPolish = i18n.language?.startsWith('pl');
   const typeMeta = TEMPLATE_TYPE_META[template.type];
 
@@ -75,7 +77,12 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({ template }) =>
       <button
         type="button"
         className="w-full flex items-center justify-center gap-2 h-10 rounded-lg bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium transition-colors"
-        onClick={() => console.log('Use template:', template.id)}
+        onClick={() => {
+          const path = template.type === 'presentation'
+            ? `/presentations/wizard?templateId=${encodeURIComponent(template.id)}`
+            : `/reports/builder?templateId=${encodeURIComponent(template.id)}`;
+          navigate(path);
+        }}
       >
         <BookTemplate size={14} />
         {t('rap.preview.useTemplate', 'Użyj tego wzorca')}

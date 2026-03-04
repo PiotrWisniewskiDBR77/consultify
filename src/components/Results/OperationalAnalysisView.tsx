@@ -69,7 +69,6 @@ export const OperationalAnalysisView: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('worst');
   const [filterProject, setFilterProject] = useState<string | null>(null);
   const [filterOwner, setFilterOwner] = useState<string | null>(null);
-  const [filterCategory, setFilterCategory] = useState<string | null>(null);
 
   const fetchKPIs = useCallback(async () => {
     setLoading(true);
@@ -140,19 +139,11 @@ export const OperationalAnalysisView: React.FC = () => {
     () => [...new Set(kpis.filter((k) => k.ownerName).map((k) => k.ownerName!))],
     [kpis]
   );
-  const categories = useMemo(
-    () =>
-      [...new Set(kpis.filter((k) => (k as any).category).map((k) => (k as any).category))].filter(
-        Boolean
-      ) as string[],
-    [kpis]
-  );
 
   const filteredKpis = useMemo(() => {
     let items = [...kpis];
     if (filterProject) items = items.filter((k) => k.initiativeName === filterProject);
     if (filterOwner) items = items.filter((k) => k.ownerName === filterOwner);
-    if (filterCategory) items = items.filter((k) => (k as any).category === filterCategory);
 
     if (sortBy === 'worst') {
       items.sort((a, b) => {
@@ -174,29 +165,24 @@ export const OperationalAnalysisView: React.FC = () => {
       });
     }
     return items;
-  }, [kpis, sortBy, filterProject, filterOwner, filterCategory]);
+  }, [kpis, sortBy, filterProject, filterOwner]);
 
   const summary = useMemo(() => {
     const total = filteredKpis.length;
     const onTarget = filteredKpis.filter((k) => k.status === 'on-target').length;
     const below = filteredKpis.filter((k) => k.status === 'below').length;
-    const withValue = filteredKpis.filter((k) => k.latestValue != null);
-    const avgScore =
-      withValue.length > 0
-        ? withValue.reduce((s, k) => s + (k.latestValue ?? 0), 0) / withValue.length
-        : 0;
+    const needsEntry = filteredKpis.filter((k) => Boolean((k as any).needsEntry)).length;
     return {
       total,
       onTargetPct: total > 0 ? Math.round((onTarget / total) * 100) : 0,
       belowCount: below,
-      avgScore: avgScore.toFixed(1),
+      needsEntry,
     };
   }, [filteredKpis]);
 
   const clearFilters = useCallback(() => {
     setFilterProject(null);
     setFilterOwner(null);
-    setFilterCategory(null);
   }, []);
 
   if (loading) {
@@ -245,10 +231,10 @@ export const OperationalAnalysisView: React.FC = () => {
           <div className="flex items-center gap-2 mb-1">
             <BarChart3 size={16} className="text-slate-400" />
             <span className="text-xs font-medium text-slate-500 uppercase">
-              {t('results.operational.avgScore', 'Average Score')}
+              {t('results.operational.needsEntry', 'Needs entry')}
             </span>
           </div>
-          <p className="text-lg font-semibold text-white">{summary.avgScore}</p>
+          <p className="text-lg font-semibold text-amber-300">{summary.needsEntry}</p>
         </div>
       </div>
 
@@ -283,20 +269,7 @@ export const OperationalAnalysisView: React.FC = () => {
             {o}
           </button>
         ))}
-        {categories.map((c) => (
-          <button
-            key={c}
-            onClick={() => setFilterCategory(filterCategory === c ? null : c)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              filterCategory === c
-                ? 'bg-primary-500/20 text-primary-400 border border-primary-500/40'
-                : 'bg-navy-800 text-slate-400 border border-navy-600 hover:border-navy-500'
-            }`}
-          >
-            {c}
-          </button>
-        ))}
-        {(filterProject || filterOwner || filterCategory) && (
+        {(filterProject || filterOwner) && (
           <button
             onClick={clearFilters}
             className="px-3 py-1.5 rounded-full text-xs font-medium text-slate-500 hover:text-white"

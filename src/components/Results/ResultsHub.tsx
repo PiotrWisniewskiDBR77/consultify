@@ -80,7 +80,8 @@ function deriveNeedsEntry(kpi: InitiativeKPI): boolean {
 export const ResultsHub: React.FC = () => {
   const { t } = useTranslation();
   const openChatWithContext = useOpenChatWithContext();
-  const { isChatCollapsed, toggleChatCollapse } = useConversationStore();
+  const displayMode = useConversationStore((s) => s.displayMode);
+  const setDisplayMode = useConversationStore((s) => s.setDisplayMode);
 
   const [activeTab, setActiveTab] = useState<ModuleTab>('summary');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
@@ -227,21 +228,46 @@ export const ResultsHub: React.FC = () => {
     return items;
   }, [kpis, searchQuery, activeFilters]);
 
-  const handleRowAction = useCallback((action: string, kpi: ResultsKPI) => {
-    switch (action) {
-      case 'open':
-      case 'preview':
-        setDrawerKpiId(kpi.id);
-        break;
-      case 'record':
-        setDrawerKpiId(kpi.id);
-        break;
-      case 'delete':
-        break;
-      default:
-        break;
-    }
-  }, []);
+  const handleDeleteKpi = useCallback(
+    async (kpiId: string) => {
+      const ok = window.confirm(
+        t(
+          'results.deleteConfirm',
+          'Delete this KPI? This will remove its measurements, mappings, and deviation cases.'
+        )
+      );
+      if (!ok) return;
+      try {
+        await Api.delete(`/benefits/kpis/${kpiId}`);
+      } catch {
+        // silent
+      } finally {
+        setDrawerKpiId((prev) => (prev === kpiId ? null : prev));
+        fetchKPIs();
+      }
+    },
+    [fetchKPIs, t]
+  );
+
+  const handleRowAction = useCallback(
+    (action: string, kpi: ResultsKPI) => {
+      switch (action) {
+        case 'open':
+        case 'preview':
+        case 'record':
+        case 'edit':
+        case 'links':
+          setDrawerKpiId(kpi.id);
+          break;
+        case 'delete':
+          void handleDeleteKpi(kpi.id);
+          break;
+        default:
+          break;
+      }
+    },
+    [handleDeleteKpi]
+  );
 
   const handleCreateSuccess = useCallback(() => {
     setShowCreateModal(false);
@@ -261,11 +287,11 @@ export const ResultsHub: React.FC = () => {
           activeFilters,
         },
       });
-      if (isChatCollapsed) toggleChatCollapse();
+      if (displayMode === 'collapsed') setDisplayMode('split');
     } catch {
       // silent
     }
-  }, [activeFilters, activeTab, isChatCollapsed, openChatWithContext, searchQuery, t, toggleChatCollapse, viewMode]);
+  }, [activeFilters, activeTab, displayMode, openChatWithContext, searchQuery, setDisplayMode, t, viewMode]);
 
   const aiControl = useMemo(
     () => (
@@ -614,6 +640,7 @@ export const ResultsHub: React.FC = () => {
             activeFilters={activeFilters}
             onFilterChange={setActiveFilters}
             onOpenKpi={(id) => setDrawerKpiId(id)}
+            onDeleteKpi={handleDeleteKpi}
           />
         ) : activeTab === 'kpis' ? (
           <ResultsGridView

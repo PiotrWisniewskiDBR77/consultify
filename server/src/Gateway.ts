@@ -106,6 +106,9 @@ import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
 import knowledgeRoutes from './routes/knowledge.routes.js';
 import knowledgeBaseRoutes from './routes/knowledgeBase.routes.js';
 import knownToolsRoutes from './routes/knownTools.routes.js';
+import toolAssetsRoutes from './routes/toolAssets.routes.js';
+import assessmentEvidenceRoutes from './routes/assessmentEvidence.routes.js';
+import consultingTemplatesRoutes from './routes/consultingTemplates.routes.js';
 import legalRoutes from './routes/legal.routes.js';
 import llmRoutes from './routes/llm.routes.js';
 import locationsRoutes from './routes/locations.routes.js';
@@ -272,6 +275,12 @@ export class ApiGateway {
       app.use('/api/tools', toolsRoutes);
       console.log('[ApiGateway] Mounting /api/known-tools');
       app.use('/api/known-tools', knownToolsRoutes);
+      console.log('[ApiGateway] Mounting /api/tool-assets');
+      app.use('/api/tool-assets', toolAssetsRoutes);
+      console.log('[ApiGateway] Mounting /api/assessment-evidence');
+      app.use('/api/assessment-evidence', assessmentEvidenceRoutes);
+      console.log('[ApiGateway] Mounting /api/consulting-templates');
+      app.use('/api/consulting-templates', consultingTemplatesRoutes);
       console.log('[ApiGateway] Mounting /api/portfolio-optimization');
       app.use('/api/portfolio-optimization', portfolioOptimizationRoutes);
       console.log('[ApiGateway] Mounting /api/assessment-workflow');
@@ -384,6 +393,42 @@ export class ApiGateway {
       mountStub('/api/api-keys', apiKeysRoutes, 'apiKeysRoutes');
       mountStub('/api/research', researchRoutes, 'researchRoutes');
       app.use('/api/backups', backupRoutes);
+
+      // Link preview (og:meta fetcher for whiteboard LinkNodes)
+      app.get('/api/link-preview', async (req, res) => {
+        const url = String(req.query.url || '');
+        if (!url || !url.startsWith('http')) return res.status(400).json({ error: 'Invalid URL' });
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 5000);
+          const resp = await fetch(url, {
+            signal: controller.signal,
+            headers: { 'User-Agent': 'Consultify-LinkPreview/1.0' },
+          });
+          clearTimeout(timeout);
+          const html = await resp.text();
+          const getMetaContent = (name: string) => {
+            const re = new RegExp(`<meta[^>]*(?:property|name)=["']${name}["'][^>]*content=["']([^"']*)["']`, 'i');
+            const alt = new RegExp(`<meta[^>]*content=["']([^"']*)["'][^>]*(?:property|name)=["']${name}["']`, 'i');
+            return (html.match(re)?.[1] || html.match(alt)?.[1] || '').trim();
+          };
+          const titleTag = html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1] || '';
+          const faviconMatch = html.match(/<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["']([^"']*)["']/i);
+          let favicon = faviconMatch?.[1] || '';
+          if (favicon && !favicon.startsWith('http')) {
+            const base = new URL(url);
+            favicon = favicon.startsWith('/') ? `${base.origin}${favicon}` : `${base.origin}/${favicon}`;
+          }
+          res.json({
+            ogTitle: getMetaContent('og:title') || titleTag,
+            ogDescription: getMetaContent('og:description') || getMetaContent('description'),
+            ogImage: getMetaContent('og:image'),
+            favicon: favicon || `${new URL(url).origin}/favicon.ico`,
+          });
+        } catch {
+          res.status(502).json({ error: 'Failed to fetch URL' });
+        }
+      });
 
       // Core API routes
       app.use('/api/projects', projectRoutes);
@@ -570,7 +615,7 @@ export class ApiGateway {
       mountStub('/api/help-analytics', helpAnalyticsRoutes, 'helpAnalyticsRoutes');
       mountStub('/api/videos', videoRoutes, 'videoRoutes');
       mountStub('/api/status', statusRoutes, 'statusRoutes');
-      mountStub('/api/status-reports', statusReportsRoutes, 'statusReportsRoutes');
+      app.use('/api/status-reports', statusReportsRoutes);
       mountStub('/api/verify', verifyRoutes, 'verifyRoutes');
       app.use('/api/preferences', preferencesRoutes);
       mountStub('/api/features', featureFlagRoutes, 'featureFlagRoutes');
@@ -585,10 +630,10 @@ export class ApiGateway {
       mountStub('/api/connectors', connectorRoutes, 'connectorRoutes');
       mountStub('/api/audit', auditRoutes, 'auditRoutes');
       app.use('/api/mfa', mfaRoutes);
-      mountStub('/api/raid', raidRoutes, 'raidRoutes');
+      app.use('/api/raid', raidRoutes);
       app.use('/api/execution-control', executionControlRoutes);
       app.use('/api/portfolio-optimization', portfolioOptimizationRoutes);
-      mountStub('/api/budget', budgetRoutes, 'budgetRoutes');
+      app.use('/api/budget', budgetRoutes);
       app.use('/api/benefits', benefitsRoutes);
       app.use('/api/finance-statements', financeStatementsRoutes);
       app.use('/api/financial-modeling', financialModelingRoutes);

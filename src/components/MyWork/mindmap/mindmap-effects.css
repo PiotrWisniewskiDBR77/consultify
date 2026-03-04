@@ -1,0 +1,133 @@
+/* Mind Map Visual Effects */
+
+/* Animated dash for edges */
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -36;
+  }
+}
+
+.animate-dash {
+  animation: dash-flow 1.5s linear infinite;
+}
+
+/* Slow pulse for glow effects */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+/* Neon glow for dark mode */
+.dark .neon-glow-purple {
+  box-shadow:
+    0 0 5px rgba(139, 92, 246, 0.3),
+    0 0 10px rgba(139, 92, 246, 0.2),
+    0 0 20px rgba(139, 92, 246, 0.1);
+}
+
+.dark .neon-glow-amber {
+  box-shadow:
+    0 0 5px rgba(251, 191, 36, 0.3),
+    0 0 10px rgba(251, 191, 36, 0.2),
+    0 0 20px rgba(251, 191, 36, 0.1);
+}
+
+.dark .neon-glow-emerald {
+  box-shadow:
+    0 0 5px rgba(52, 211, 153, 0.3),
+    0 0 10px rgba(52, 211, 153, 0.2),
+    0 0 20px rgba(52, 211, 153, 0.1);
+}
+
+.dark .neon-glow-rose {
+  box-shadow:
+    0 0 5px rgba(251, 113, 133, 0.3),
+    0 0 10px rgba(251, 113, 133, 0.2),
+    0 0 20px rgba(251, 113, 133, 0.1);
+}
+
+.dark .neon-glow-sky {
+  box-shadow:
+    0 0 5px rgba(56, 189, 248, 0.3),
+    0 0 10px rgba(56, 189, 248, 0.2),
+    0 0 20px rgba(56, 189, 248, 0.1);
+}
+
+/* Heatmap overlay colors */
+.heatmap-cold {
+  background: rgba(56, 189, 248, 0.08) !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+}
+
+.heatmap-warm {
+  background: rgba(251, 191, 36, 0.08) !important;
+  border-color: rgba(251, 191, 36, 0.3) !important;
+}
+
+.heatmap-hot {
+  background: rgba(239, 68, 68, 0.08) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+/* Cluster bubble backgrounds */
+.cluster-bubble {
+  border-radius: 50%;
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.08;
+  filter: blur(30px);
+  transition: all 0.5s ease;
+}
+
+.dark .cluster-bubble {
+  opacity: 0.12;
+}
+
+/* Particle keyframes */
+@keyframes particle-float {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(5px, -3px) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.6;
+  }
+}
+
+.particle-dot {
+  animation: particle-float 2s ease-in-out infinite;
+}
+
+/* Edge hover glow */
+.react-flow__edge:hover path {
+  filter: drop-shadow(0 0 4px currentColor);
+  stroke-opacity: 1 !important;
+}
+
+/* Node hover lift */
+.react-flow__node:hover {
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
+}
+
+.dark .react-flow__node:hover {
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+}
+
+/* Smooth transitions for all nodes */
+.react-flow__node {
+  transition: filter 0.2s ease, transform 0.2s ease;
+}

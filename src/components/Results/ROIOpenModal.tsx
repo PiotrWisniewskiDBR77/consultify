@@ -2,7 +2,7 @@ import { Search, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { API_URL, getHeaders } from '@/services/api';
+import { Api } from '@/services/api';
 
 type Initiative = { id: string; name: string };
 
@@ -20,9 +20,8 @@ export const ROIOpenModal: React.FC<ROIOpenModalProps> = ({ onClose, onSelect, t
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/initiatives`, { headers: getHeaders() });
-        if (!res.ok) return;
-        const data = await res.json();
+        const res: any = await Api.get('/initiatives');
+        const data = (res?.data ?? res) as any;
         const mapped = (data || []).map((i: any) => ({
           id: String(i.id),
           name: String(i.name || i.title || i.id),

@@ -29,6 +29,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BudgetWorkspace } from '../Benefits/BudgetWorkspace';
 import { FinancialAnalysisWorkspace } from '../Benefits/FinancialAnalysisWorkspace';
 import { ValuationWorkspace } from '../Benefits/ValuationWorkspace';
+import { ExportToOutputDialog } from '../Finance/ExportToOutputDialog';
 import { FinancialModelWorkspace } from '../Finance/FinancialModelWorkspace';
 import { FinancialStatementImportWizard } from '../Finance/FinancialStatementImportWizard';
 import {
@@ -81,6 +82,13 @@ export const FinanceHub: React.FC = () => {
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
   const [activeDocument, setActiveDocument] = useState<FinanceRow | null>(null);
+
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportTarget, setExportTarget] = useState<{
+    id: string;
+    title: string;
+    sourceType: 'financial_analysis' | 'financial_model' | 'valuation';
+  } | null>(null);
 
   // ---- Modal visibility ----
   const [showCreateModelModal, setShowCreateModelModal] = useState(false);
@@ -190,9 +198,21 @@ export const FinanceHub: React.FC = () => {
     await loadValuations();
   }, [loadValuations]);
 
+  const handleExport = useCallback((row: FinanceRow) => {
+    const sourceType =
+      row.kind === 'analysis'
+        ? 'financial_analysis'
+        : row.kind === 'valuation'
+          ? 'valuation'
+          : 'financial_model';
+    setExportTarget({ id: row.id, title: row.title, sourceType });
+    setExportDialogOpen(true);
+  }, []);
+
   // ---- Row actions ----
   const { getRowActions } = useFinanceRowActions({
     handleOpenFull,
+    handleExport,
     loadModels,
     loadAnalyses,
     loadBudgets,
@@ -211,6 +231,8 @@ export const FinanceHub: React.FC = () => {
     valuationPreviewResults,
     valuationPreviewDetail,
     handleOpenFull,
+    handleExport,
+    loadModels,
     loadAnalyses,
     loadAnalysisPreviewRatios,
     loadBudgets,
@@ -596,14 +618,14 @@ export const FinanceHub: React.FC = () => {
   const aiControl = useMemo(
     () => (
       <button
-        onClick={() => toast(t('common.comingSoon', 'Coming soon'))}
+        onClick={() => navigate('/chat?context=finance')}
         className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-sm font-medium bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 hover:bg-purple-500/15 transition-colors duration-150"
       >
         <Sparkles size={14} />
         <span>AI</span>
       </button>
     ),
-    [t]
+    [navigate]
   );
 
   // ---- Command Row ----
@@ -659,7 +681,12 @@ export const FinanceHub: React.FC = () => {
               }
               setActiveFilters((prev) => [
                 ...prev.filter((f) => f.column !== 'status'),
-                { id: `status-${statusValue}`, column: 'status', value: statusValue, label: chip.label },
+                {
+                  id: `status-${statusValue}`,
+                  column: 'status',
+                  value: statusValue,
+                  label: chip.label,
+                },
               ]);
             }}
             className={`h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap ${
@@ -760,14 +787,13 @@ export const FinanceHub: React.FC = () => {
         onItemAction={(action, item) => {
           const row = filteredRows.find((r) => r.id === item.id);
           if (!row) return;
-          if (action === 'open') handleOpenFull(row);
-          if (action === 'duplicate') toast(t('common.comingSoon', 'Coming soon'));
-          if (action === 'delete') toast(t('common.comingSoon', 'Coming soon'));
+          const actionObj = getRowActions(row).find((a) => a.id === action);
+          actionObj?.onClick?.();
         }}
         emptyMessage={emptyMessage}
       />
     ),
-    [gridItems, selectedId, filteredRows, emptyMessage, onSelectRow, handleOpenFull, t]
+    [gridItems, selectedId, filteredRows, emptyMessage, onSelectRow, getRowActions]
   );
 
   // ---- Full view ----
@@ -963,6 +989,21 @@ export const FinanceHub: React.FC = () => {
             setShowValuationCreateModal(false);
             setValuationInitialSource({});
             handleOpenFull(row);
+          }}
+        />
+      )}
+
+      {exportDialogOpen && exportTarget && (
+        <ExportToOutputDialog
+          open={exportDialogOpen}
+          onClose={() => setExportDialogOpen(false)}
+          analysisId={exportTarget.id}
+          analysisTitle={exportTarget.title}
+          analysisType={exportTarget.sourceType}
+          onExportComplete={(result) => {
+            toast.success(t('finance.export.created', 'Output created'));
+            setExportDialogOpen(false);
+            navigate(`/reports/builder/${result.outputId}`);
           }}
         />
       )}

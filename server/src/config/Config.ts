@@ -119,8 +119,8 @@ function loadConfig(): AppConfig {
     MICROSOFT_CALLBACK_URL:
       process.env.MICROSOFT_CALLBACK_URL || 'http://localhost:3005/api/auth/microsoft/callback',
     FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
-    SLACK_WEBHOOK_URL: process.env.SLACK_WEBHOOK_URL,
-    DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL,
+    SLACK_WEBHOOK_URL: process.env.SLACK_WEBHOOK_URL || undefined,
+    DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL || undefined,
     AI_ALERTING_ENABLED: (process.env.AI_ALERTING_ENABLED || 'true') as 'true' | 'false',
   };
 

@@ -1,4 +1,4 @@
-import { ExternalLink, Target, Sparkles, Copy } from 'lucide-react';
+import { ExternalLink, Target, Sparkles, Copy, Pencil, Link2, Trash2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -79,6 +79,7 @@ export interface ResultsKpisTableV3Props {
   activeFilters: FilterChip[];
   onFilterChange: (filters: FilterChip[]) => void;
   onOpenKpi: (kpiId: string) => void;
+  onDeleteKpi?: (kpiId: string) => void | Promise<void>;
 }
 
 type PreviewKpi = ResultsKPI & { title: string };
@@ -88,6 +89,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
   activeFilters,
   onFilterChange,
   onOpenKpi,
+  onDeleteKpi,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -635,6 +637,29 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
             icon: Target,
             onClick: () => onOpenKpi(row.id),
           },
+          {
+            id: 'edit',
+            label: t('common.edit', 'Edit'),
+            icon: Pencil,
+            onClick: () => onOpenKpi(row.id),
+          },
+          {
+            id: 'links',
+            label: t('results.actions.manageLinks', 'Manage links'),
+            icon: Link2,
+            onClick: () => onOpenKpi(row.id),
+          },
+          ...(onDeleteKpi
+            ? ([
+                {
+                  id: 'delete',
+                  label: t('common.delete', 'Delete'),
+                  icon: Trash2,
+                  variant: 'danger',
+                  onClick: () => void onDeleteKpi(row.id),
+                },
+              ] as RowAction[])
+            : []),
         ]}
       />
     </TableWithPreviewLayout>

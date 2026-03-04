@@ -22,7 +22,6 @@ import { DeckBuilderTopBar } from './DeckBuilderTopBar';
 import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
 import { DeckThemeProvider } from './DeckThemeContext';
 import { MediaLibraryBrowser } from './MediaLibraryBrowser';
-import { MOCK_DECK } from './mockDeckData';
 import { PresentMode } from './PresentMode';
 import { ShareAnalyticsPanel } from './ShareAnalyticsPanel';
 import { ShareModal } from './ShareModal';
@@ -65,26 +64,26 @@ function deckFromUnifiedJson(params: {
   const intentMap: Record<string, DeckCard['intent']> = {
     cover: 'cover',
     executive_summary: 'executive_summary',
-    section_intro: 'section_divider',
-    key_messages: 'content',
-    performance_overview: 'kpi_dashboard',
-    single_insight: 'data',
+    section_intro: 'section_intro',
+    key_messages: 'key_messages',
+    performance_overview: 'performance_overview',
+    single_insight: 'single_insight',
     comparison: 'comparison',
-    assessment: 'data',
-    roadmap: 'timeline',
-    risk_management: 'risk_overview',
-    recommendation_portfolio: 'recommendation',
-    recommendation_single: 'recommendation',
-    initiative_portfolio: 'content',
+    assessment: 'assessment',
+    roadmap: 'roadmap',
+    risk_management: 'risk_management',
+    recommendation_portfolio: 'recommendation_portfolio',
+    recommendation_single: 'recommendation_portfolio',
+    initiative_portfolio: 'initiative_portfolio',
     next_steps: 'next_steps',
-    appendix: 'content',
-    root_cause: 'content',
-    prioritization_matrix: 'data',
+    appendix: 'appendix',
+    root_cause: 'assessment',
+    prioritization_matrix: 'prioritization_matrix',
   };
 
   const cards: DeckCard[] = parsed.slides.map((slide: any, idx: number) => {
     const cardId = `card-${params.deckId}-${idx}`;
-    const intent = intentMap[String(slide.intent || '')] || 'content';
+    const intent = intentMap[String(slide.intent || '')] || 'key_messages';
     const contentType = String(slide?.content?.type || slide?.intent || '');
 
     const blocks: CardBlock[] = [];
@@ -185,7 +184,7 @@ function deckFromUnifiedJson(params: {
       deck_id: params.deckId,
       order_index: idx,
       intent,
-      layout_id: intent === 'cover' ? 'cover_centered' : intent === 'kpi_dashboard' ? 'data_grid' : 'content_full',
+      layout_id: intent === 'cover' ? 'cover_centered' : intent === 'performance_overview' ? 'data_grid' : 'content_full',
       title: String(headingText || 'Slide'),
       blocks,
       source_refs: [],
@@ -287,7 +286,8 @@ export const DeckBuilder: React.FC = () => {
 
       try {
         const res = (await Api.get(`/presentations/decks/${deckId}`)) as any;
-        const row = res?.data ?? res;
+        const payload = res?.data;
+        const row = (payload && typeof payload === 'object' && 'data' in payload) ? payload.data : payload;
 
         const status = (String(row?.status || 'draft').toLowerCase() as Deck['status']) || 'draft';
         const title = row?.title ? String(row.title) : undefined;
@@ -331,25 +331,47 @@ export const DeckBuilder: React.FC = () => {
           return;
         }
 
-        // 3) Final fallback: mock deck (so UI still opens), but keep real deckId/title.
-        const fallback: Deck = {
-          ...MOCK_DECK,
+        // 3) No valid deck data found — show empty deck shell.
+        const nowIso = new Date().toISOString();
+        const emptyDeck: Deck = {
           deck_id: deckId,
-          title: title || MOCK_DECK.title || 'Untitled',
+          organization_id: String(row?.organization_id || ''),
+          title: title || 'Untitled',
+          theme_id: 'default',
+          presentation_mode: 'show',
+          communication_register: 'professional',
+          image_style_preset: 'minimal_no_images',
+          color_set_id: 'midnight_navy',
           status,
-          updated_at: row?.updated_at || new Date().toISOString(),
-        } as Deck;
+          card_size: '16:9',
+          cards: [],
+          source_refs: [],
+          generation_settings: {
+            text_mode: 'preserve',
+            content_depth: 'concise',
+            audience: 'internal',
+            tone: 'professional',
+            language: 'en',
+            image_source: 'none',
+          },
+          animations_enabled: true,
+          share_settings: { is_shared: false, permissions: 'view' },
+          speaker_notes_generated: false,
+          created_by: String(row?.generated_by || row?.created_by || ''),
+          created_at: String(row?.created_at || nowIso),
+          updated_at: String(row?.updated_at || nowIso),
+        };
         if (!cancelled) {
-          setDeck(fallback);
+          setDeck(emptyDeck);
           setLoadingDeck(false);
           hasLoadedInitialRef.current = true;
+          toast.error('Deck has no content yet. Generate slides first.');
         }
       } catch (e: any) {
         if (!cancelled) {
           toast.error(e?.message ? String(e.message) : 'Failed to load presentation deck');
-          setDeck({ ...(MOCK_DECK as any), deck_id: deckId || 'unknown' });
+          setDeck(null);
           setLoadingDeck(false);
-          hasLoadedInitialRef.current = true;
         }
       }
     };
@@ -416,7 +438,7 @@ export const DeckBuilder: React.FC = () => {
         card_id: `card-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         deck_id: deck?.deck_id || '',
         order_index: idx,
-        intent: 'content',
+        intent: 'key_messages',
         layout_id: 'content_full',
         title: 'New Slide',
         blocks: [],
@@ -642,6 +664,7 @@ export const DeckBuilder: React.FC = () => {
         <ShareModal
           isOpen={shareModalOpen}
           onClose={() => setShareModalOpen(false)}
+          deckId={deck.deck_id}
           deckTitle={deck.title}
           onExport={handleExport}
         />

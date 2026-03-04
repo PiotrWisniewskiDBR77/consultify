@@ -192,6 +192,46 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     sortOrder: 107,
   },
   {
+    id: 'tool-known-ambition-decomposer',
+    toolType: 'ambition-decomposer',
+    displayName: 'Ambition Decomposer',
+    libraryCategory: 'strategic',
+    descriptionEn:
+      'Translate vision into measurable dimensions, targets, and initiative clusters.',
+    descriptionPl: 'Przełóż wizję na mierzalne wymiary, cele i klastry inicjatyw.',
+    whatYouGetEn: ['Ambition tree', 'Targets & metrics', 'Initiative themes'],
+    whatYouGetPl: ['Drzewo ambicji', 'Cele i metryki', 'Tematy inicjatyw'],
+    tags: ['strategy', 'targets', 'roadmap'],
+    icon: 'Target',
+    sortOrder: 108,
+  },
+  {
+    id: 'tool-known-focus-tradeoff',
+    toolType: 'focus-tradeoff',
+    displayName: 'Focus & Trade-offs',
+    libraryCategory: 'strategic',
+    descriptionEn: 'Make trade-offs explicit and decide what NOT to do.',
+    descriptionPl: 'Uczyń trade-offy jawne i zdecyduj czego NIE robić.',
+    whatYouGetEn: ['Trade-off map', 'Stop-doing list', 'Decision rationale'],
+    whatYouGetPl: ['Mapa trade-offów', 'Lista stop-doing', 'Uzasadnienie decyzji'],
+    tags: ['strategy', 'tradeoffs', 'focus'],
+    icon: 'GitBranch',
+    sortOrder: 109,
+  },
+  {
+    id: 'tool-known-narrative-engine',
+    toolType: 'narrative-engine',
+    displayName: 'Narrative & Alignment',
+    libraryCategory: 'strategic',
+    descriptionEn: 'Create a coherent strategy narrative and test alignment.',
+    descriptionPl: 'Zbuduj spójną narrację strategii i sprawdź alignment.',
+    whatYouGetEn: ['Storyline outline', 'Alignment checklist', 'Messaging gaps'],
+    whatYouGetPl: ['Szkic narracji', 'Checklist alignmentu', 'Luki w komunikacji'],
+    tags: ['strategy', 'narrative', 'alignment'],
+    icon: 'FileText',
+    sortOrder: 110,
+  },
+  {
     id: 'tool-known-sop-builder',
     toolType: 'sop-builder',
     displayName: 'SOP Builder',
@@ -286,6 +326,48 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     icon: 'Zap',
     sortOrder: 207,
   },
+  {
+    id: 'tool-known-smed-planner',
+    toolType: 'smed-planner',
+    displayName: 'SMED Planner',
+    libraryCategory: 'operational',
+    descriptionEn:
+      'Reduce changeover time by classifying steps and converting internal to external.',
+    descriptionPl:
+      'Redukuj czas przezbrojenia przez klasyfikację kroków i konwersję internal→external.',
+    whatYouGetEn: ['Step list (internal/external)', 'Conversion plan', 'Improvement backlog'],
+    whatYouGetPl: ['Lista kroków (internal/external)', 'Plan konwersji', 'Backlog usprawnień'],
+    tags: ['operations', 'smed', 'setup'],
+    icon: 'Clock',
+    sortOrder: 208,
+  },
+  {
+    id: 'tool-known-dms-builder',
+    toolType: 'dms-builder',
+    displayName: 'Daily Management System',
+    libraryCategory: 'operational',
+    descriptionEn:
+      'Define daily/weekly cadence, KPIs, and escalation to drive predictable execution.',
+    descriptionPl: 'Zdefiniuj rytm daily/weekly, KPI i eskalację dla przewidywalnej realizacji.',
+    whatYouGetEn: ['Tier cadence', 'KPI board', 'Escalation rules'],
+    whatYouGetPl: ['Cadence tierów', 'Tablica KPI', 'Reguły eskalacji'],
+    tags: ['operations', 'cadence', 'kpi'],
+    icon: 'Radar',
+    sortOrder: 209,
+  },
+  {
+    id: 'tool-known-inventory-autopilot',
+    toolType: 'inventory-autopilot',
+    displayName: 'Inventory Autopilot',
+    libraryCategory: 'operational',
+    descriptionEn: 'Define replenishment policies and simulate cash/stockout trade-offs.',
+    descriptionPl: 'Zdefiniuj polityki uzupełnień i zasymuluj trade-off cash/stockout.',
+    whatYouGetEn: ['SKU segmentation', 'Policy table', 'Simulation assumptions'],
+    whatYouGetPl: ['Segmentacja SKU', 'Tabela polityk', 'Założenia symulacji'],
+    tags: ['operations', 'inventory', 'policy'],
+    icon: 'Boxes',
+    sortOrder: 210,
+  },
   // Digital examples (T023)
   {
     id: 'tool-known-robotics-feasibility',
@@ -341,6 +423,87 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     sortOrder: 304,
   },
   {
+    id: 'tool-known-integration-diagnostic',
+    toolType: 'integration-diagnostic',
+    displayName: 'Integration Diagnostic',
+    libraryCategory: 'digital',
+    descriptionEn: 'Map integration debt and build an architecture remediation roadmap.',
+    descriptionPl: 'Zmapuj dług integracyjny i zbuduj roadmapę naprawy architektury.',
+    whatYouGetEn: ['Integration debt map', 'Architecture roadmap', 'Priority actions'],
+    whatYouGetPl: ['Mapa długu integracyjnego', 'Roadmapa architektury', 'Priorytetowe akcje'],
+    tags: ['digital', 'integration', 'architecture'],
+    icon: 'Network',
+    sortOrder: 305,
+  },
+  {
+    id: 'tool-known-digital-value-pool',
+    toolType: 'digital-value-pool',
+    displayName: 'Digital Value Pool',
+    libraryCategory: 'digital',
+    descriptionEn: 'Identify where digital changes the economics of the business.',
+    descriptionPl: 'Wskaż, gdzie cyfryzacja zmienia ekonomię biznesu.',
+    whatYouGetEn: ['Value pool map', 'Economic levers', 'Initiative shortlist'],
+    whatYouGetPl: ['Mapa pul wartości', 'Dźwignie ekonomiczne', 'Shortlista inicjatyw'],
+    tags: ['digital', 'value', 'economics'],
+    icon: 'DollarSign',
+    sortOrder: 306,
+  },
+  {
+    id: 'tool-known-legacy-analyzer',
+    toolType: 'legacy-analyzer',
+    displayName: 'Legacy Analyzer',
+    libraryCategory: 'digital',
+    descriptionEn: 'Quantify the drag of legacy systems on speed, cost, and risk.',
+    descriptionPl: 'Zmierz obciążenie legacy systemów na szybkość, koszt i ryzyko.',
+    whatYouGetEn: ['Legacy drag scorecard', 'Risk heatmap', 'Modernization backlog'],
+    whatYouGetPl: ['Scorecard obciążenia legacy', 'Heatmapa ryzyk', 'Backlog modernizacji'],
+    tags: ['digital', 'legacy', 'modernization'],
+    icon: 'HardDrive',
+    sortOrder: 307,
+  },
+  {
+    id: 'tool-known-data-inventory',
+    toolType: 'data-inventory',
+    displayName: 'Data Inventory',
+    libraryCategory: 'digital',
+    descriptionEn: 'Map decisions to data needs and identify gaps in availability and quality.',
+    descriptionPl: 'Zmapuj decyzje na potrzeby danych i wskaż luki w dostępności i jakości.',
+    whatYouGetEn: ['Decision→data map', 'Gap register', 'Data initiative backlog'],
+    whatYouGetPl: ['Mapa decyzja→dane', 'Rejestr luk', 'Backlog inicjatyw danych'],
+    tags: ['digital', 'data', 'governance'],
+    icon: 'Database',
+    sortOrder: 308,
+  },
+  {
+    id: 'tool-known-pain-to-solution',
+    toolType: 'pain-to-solution',
+    displayName: 'Pain-to-Solution Mapper',
+    libraryCategory: 'digital',
+    descriptionEn: 'Map pains to solution archetypes and build a prioritized solution backlog.',
+    descriptionPl:
+      'Zmapuj bóle na archetypy rozwiązań i zbuduj priorytetyzowany backlog rozwiązań.',
+    whatYouGetEn: ['Pain→archetype map', 'Solution backlog', 'Feasibility notes'],
+    whatYouGetPl: ['Mapa ból→archetyp', 'Backlog rozwiązań', 'Notatki wykonalności'],
+    tags: ['digital', 'solutions', 'mapping'],
+    icon: 'Lightbulb',
+    sortOrder: 309,
+  },
+  {
+    id: 'tool-known-pain-explorer',
+    toolType: 'pain-explorer',
+    displayName: 'Pain Explorer',
+    libraryCategory: 'digital',
+    descriptionEn:
+      'Turn chaotic pains into structured problems with hypotheses and evidence tags.',
+    descriptionPl:
+      'Zamień chaotyczne bóle w ustrukturyzowane problemy z hipotezami i tagami evidence.',
+    whatYouGetEn: ['Structured problem list', 'Hypotheses', 'Evidence gaps'],
+    whatYouGetPl: ['Lista ustrukturyzowanych problemów', 'Hipotezy', 'Luki w evidence'],
+    tags: ['digital', 'discovery', 'problems'],
+    icon: 'Search',
+    sortOrder: 310,
+  },
+  {
     id: 'tool-known-process-automation',
     toolType: 'process-automation',
     displayName: 'Process Automation (Speed Tool)',
@@ -368,8 +531,71 @@ class KnownToolsService {
     return this.db;
   }
 
-  private async ensureSqliteSchemaAndSeedOnce(): Promise<void> {
-    return;
+  private async ensureToolsSeedOnce(): Promise<void> {
+    if (this.ensuredSqliteSeed) return;
+
+    const db = await this.getDb();
+    const q = new QueryAdapter(db);
+
+    const countRow = await q.get<{ cnt: number | string }>(
+      `SELECT COUNT(*) as cnt FROM tools WHERE tool_type IS NOT NULL`
+    );
+    const existing = Number(countRow?.cnt ?? 0);
+
+    if (existing >= SQLITE_KNOWN_TOOLS_SEED.length) {
+      this.ensuredSqliteSeed = true;
+      return;
+    }
+
+    for (const seed of SQLITE_KNOWN_TOOLS_SEED) {
+      const descTranslations = JSON.stringify({
+        en: seed.descriptionEn,
+        pl: seed.descriptionPl,
+      });
+      const libraryContentTranslations = JSON.stringify({
+        en: { whatYouGet: seed.whatYouGetEn },
+        pl: { whatYouGet: seed.whatYouGetPl },
+      });
+      const tagsJson = JSON.stringify(seed.tags);
+
+      await q.run(
+        `INSERT INTO tools (id, name, tool_type, display_name, category, library_category,
+                            description, description_translations, library_content_translations,
+                            icon, is_active, is_licensed, is_coming_soon, tags_json, sort_order, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (name) DO UPDATE SET
+           tool_type = EXCLUDED.tool_type,
+           display_name = EXCLUDED.display_name,
+           library_category = EXCLUDED.library_category,
+           description = EXCLUDED.description,
+           description_translations = EXCLUDED.description_translations,
+           library_content_translations = EXCLUDED.library_content_translations,
+           icon = EXCLUDED.icon,
+           is_active = EXCLUDED.is_active,
+           tags_json = EXCLUDED.tags_json,
+           sort_order = EXCLUDED.sort_order`,
+        [
+          seed.id,
+          seed.toolType,
+          seed.toolType,
+          seed.displayName,
+          seed.libraryCategory,
+          seed.libraryCategory,
+          seed.descriptionEn,
+          descTranslations,
+          libraryContentTranslations,
+          seed.icon,
+          1,
+          0,
+          0,
+          tagsJson,
+          seed.sortOrder,
+          new Date().toISOString(),
+        ]
+      );
+    }
+
+    this.ensuredSqliteSeed = true;
   }
 
   async listKnownTools(params: {
@@ -379,7 +605,7 @@ class KnownToolsService {
     limit?: number;
     offset?: number;
   }): Promise<{ items: KnownToolListItem[]; total: number; limit: number; offset: number }> {
-    await this.ensureSqliteSchemaAndSeedOnce();
+    await this.ensureToolsSeedOnce();
     const db = await this.getDb();
     const q = new QueryAdapter(db);
     const lang = normalizeLanguage(params.lang);
@@ -448,7 +674,7 @@ class KnownToolsService {
   }
 
   async getKnownTool(toolTypeOrName: string, langRaw?: string): Promise<KnownToolDetail | null> {
-    await this.ensureSqliteSchemaAndSeedOnce();
+    await this.ensureToolsSeedOnce();
     const db = await this.getDb();
     const q = new QueryAdapter(db);
     const lang = normalizeLanguage(langRaw);

@@ -11,6 +11,7 @@ import {
   FileCheck,
   FileText,
   HeadphonesIcon,
+  ListTodo,
   Mail,
   MessageSquare,
   RefreshCw,
@@ -36,6 +37,7 @@ import {
 import { OrganizationsView } from './OrganizationsView';
 import { SecurityModuleView } from './security/SecurityModuleView';
 import { SuperAdminFeedbackView } from './SuperAdminFeedbackView';
+import { SuperAdminFeedbackBacklogView } from './SuperAdminFeedbackBacklogView';
 import { SuperAdminUserManagement } from './SuperAdminUserManagement';
 import { SupportModuleView } from './support/SupportModuleView';
 
@@ -89,6 +91,7 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({ initialTab }) 
       icon: <MessageSquare size={16} />,
       badge: pendingFeedbackCount,
     },
+    { id: 'feedback-backlog', label: 'Backlog', icon: <ListTodo size={16} /> },
     { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={16} /> },
     { id: 'compliance', label: 'Compliance', icon: <FileCheck size={16} /> },
     { id: 'automation', label: 'Automation', icon: <Zap size={16} /> },
@@ -128,6 +131,12 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({ initialTab }) 
         return (
           <div className="p-6 overflow-y-auto h-full">
             <SuperAdminFeedbackView />
+          </div>
+        );
+      case 'feedback-backlog':
+        return (
+          <div className="p-6 overflow-y-auto h-full">
+            <SuperAdminFeedbackBacklogView />
           </div>
         );
       case 'analytics':

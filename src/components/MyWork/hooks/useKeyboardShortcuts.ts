@@ -22,6 +22,12 @@ export interface KeyboardShortcutsConfig {
   onCancel?: () => void;
   onOpen?: () => void;
 
+  // Canvas-specific
+  onGroup?: () => void;
+  onAIExpand?: () => void;
+  onSlashCommand?: () => void;
+  onToggleCollapse?: () => void;
+
   // Status changes
   onSetPriority?: (priority: 'low' | 'medium' | 'high' | 'critical') => void;
   onToggleComplete?: () => void;
@@ -68,9 +74,13 @@ export const SHORTCUTS_HELP: ShortcutHelp[] = [
   { key: '4', description: 'Set priority: Critical', category: 'status' },
   { key: 'x', description: 'Toggle complete', category: 'status' },
 
+  // Canvas
+  { key: 'Ctrl+G', description: 'Group selected nodes', category: 'actions' },
+  { key: 'Ctrl+Shift+A', description: 'AI expand selected', category: 'actions' },
+  { key: 'Space', description: 'Toggle collapse/expand (mindmap)', category: 'actions' },
+
   // Selection
   { key: 'Ctrl+A', description: 'Select all', category: 'selection' },
-  { key: 'Space', description: 'Toggle selection', category: 'selection' },
   { key: 'Ctrl+D', description: 'Clear selection', category: 'selection' },
 ];
 
@@ -94,6 +104,10 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
     onSelectAll,
     onClearSelection,
     onToggleSelection,
+    onGroup,
+    onAIExpand,
+    onSlashCommand,
+    onToggleCollapse,
     onSearch,
     enabled = true,
   } = config;
@@ -200,7 +214,21 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
 
       if (event.key === '/') {
         event.preventDefault();
-        onSearch?.();
+        if (onSlashCommand) onSlashCommand();
+        else onSearch?.();
+        return;
+      }
+
+      // Canvas shortcuts
+      if (event.key === 'g' && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        onGroup?.();
+        return;
+      }
+
+      if (event.key === 'A' && (event.ctrlKey || event.metaKey) && event.shiftKey) {
+        event.preventDefault();
+        onAIExpand?.();
         return;
       }
 
@@ -250,7 +278,8 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
 
       if (event.key === ' ') {
         event.preventDefault();
-        onToggleSelection?.();
+        if (onToggleCollapse) onToggleCollapse();
+        else onToggleSelection?.();
         return;
       }
     },
@@ -267,6 +296,10 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
       onSave,
       onCancel,
       onOpen,
+      onGroup,
+      onAIExpand,
+      onSlashCommand,
+      onToggleCollapse,
       onSetPriority,
       onToggleComplete,
       onSelectAll,

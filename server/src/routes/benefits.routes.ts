@@ -291,6 +291,61 @@ router.put(
   })
 );
 
+router.delete(
+  '/kpis/:kpiId',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const { kpiId } = req.params;
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    if (!kpiId) return res.status(400).json({ success: false, error: 'kpiId is required' });
+
+    // Ensure KPI belongs to org (global KPI or initiative-bound KPI).
+    const row = await dbGet<any>(
+      `
+      SELECT k.id
+      FROM initiative_kpis k
+      LEFT JOIN initiatives i ON i.id = k.initiative_id
+      WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?
+      `,
+      [kpiId, orgId]
+    );
+    if (!row?.id) return res.status(404).json({ success: false, error: 'KPI not found' });
+
+    // Cascade cleanup (portable across sqlite/postgres):
+    await dbRun(`DELETE FROM initiative_kpi_mappings WHERE kpi_id = ? AND organization_id = ?`, [
+      kpiId,
+      orgId,
+    ]).catch(() => null);
+
+    await dbRun(`DELETE FROM kpi_time_series WHERE kpi_id = ? AND organization_id = ?`, [
+      kpiId,
+      orgId,
+    ]).catch(() => null);
+
+    const cases = await dbAll<any>(
+      `SELECT id FROM kpi_deviation_cases WHERE organization_id = ? AND kpi_id = ?`,
+      [orgId, kpiId]
+    ).catch(() => []);
+    const caseIds = (cases || []).map((c: any) => String(c.id)).filter(Boolean);
+    if (caseIds.length) {
+      await dbRun(
+        `DELETE FROM kpi_deviation_actions WHERE case_id IN (${caseIds.map(() => '?').join(',')})`,
+        caseIds
+      ).catch(() => null);
+    }
+
+    await dbRun(`DELETE FROM kpi_deviation_cases WHERE organization_id = ? AND kpi_id = ?`, [
+      orgId,
+      kpiId,
+    ]).catch(() => null);
+
+    // Finally delete KPI.
+    await dbRun(`DELETE FROM initiative_kpis WHERE id = ?`, [kpiId]);
+
+    res.json({ success: true });
+  })
+);
+
 // ============================================================
 // T047: KPI TIME SERIES
 // ============================================================

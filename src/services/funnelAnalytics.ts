@@ -94,6 +94,15 @@ export type FunnelEventName =
   | 'mywork_convert_clicked'
   | 'mywork_convert_completed'
   | 'ideas_tool_switched'
+  | 'ideas_selection_changed'
+  | 'ideas_generator_proposal_created'
+  | 'ideas_proposal_accepted'
+  | 'ideas_proposal_rejected'
+  | 'ideas_quick_tool_used'
+  | 'ideas_ai_suggestion_inserted'
+  | 'ideas_table_view_changed'
+  | 'ideas_table_filter_applied'
+  | 'ideas_table_sort_applied'
   // Notebook — extra UI actions used in My Work notebook
   | 'notebook_action_item_created'
   | 'notebook_action_items_bulk_created'
@@ -435,7 +444,19 @@ export type FunnelEventName =
   // V3-A06 — Model Registry
   | 'model_registry_viewed'
   | 'model_assignment_changed'
-  | 'model_audit_log_viewed';
+  | 'model_audit_log_viewed'
+  // V3 — Idea Table events
+  | 'ideas_table_row_added'
+  | 'ideas_table_column_added'
+  | 'ideas_table_framework_applied'
+  | 'ideas_table_suggestion_applied'
+  | 'ideas_table_csv_imported'
+  | 'ideas_table_sort_applied'
+  | 'ideas_table_filter_applied'
+  | 'ideas_table_categorize_applied'
+  | 'ideas_table_scoring_applied'
+  | 'ideas_table_export_presentation'
+  | 'ideas_table_timeline_opened';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

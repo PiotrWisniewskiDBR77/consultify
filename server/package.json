@@ -26,6 +26,7 @@
     "test:migration:imports": "cd .. && vitest run --config vitest.migration.config.ts tests/migration/imports.test.ts",
     "test:migration:duplicates": "cd .. && vitest run --config vitest.migration.config.ts tests/migration/duplicates.test.ts",
     "test:migration:performance": "cd .. && vitest run --config vitest.migration.config.ts tests/migration/performance.test.ts",
+    "seed:finance": "tsx scripts/seed-finance.ts",
     "start": "node dist/src/index.js",
     "clean": "rm -rf dist .tsbuildinfo"
   },

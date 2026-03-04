@@ -1,7 +1,7 @@
 /**
  * useRapData — Hook for fetching real data from backend for Reports & Presentations Hub
  *
- * Replaces MOCK_DATA with live API calls to:
+ * API calls:
  *   - GET /api/report-builder           → reports list
  *   - GET /api/report-builder/templates → report templates
  *   - GET /api/presentations/decks      → presentation decks

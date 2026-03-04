@@ -9,32 +9,21 @@ import {
   AlertCircle,
   AlertTriangle,
   BarChart3,
-  CheckCircle,
-  CheckSquare,
   Clock,
   Copy,
   Download,
   ExternalLink,
   FileText,
-  Flag,
-  Frown,
-  Hash,
   History,
   Lightbulb,
   Loader2,
-  Meh,
   MessageSquare,
-  Paperclip,
   Plus,
-  Quote,
   RefreshCw,
   Send,
-  Shuffle,
-  Smile,
   Sparkles,
   Star,
   Target,
-  X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -43,8 +32,6 @@ import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
 
-import type { Attachment } from '@/components/MyWork/shared/AttachmentsSection';
-import type { LinkedItem } from '@/components/MyWork/shared/LinkedItemsSection';
 import { NModeCanvas } from '@/components/shared/NModeLayout/NModeCanvas';
 import { NModeHeader } from '@/components/shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '@/components/shared/NModeLayout/NModeLeftNav';
@@ -56,7 +43,6 @@ import {
   type ActivityStats,
   type ActivityTypeMeta,
 } from '@/components/shared/NModeSections';
-import { AttachmentsLinksCanvas } from '@/components/shared/NModeSections';
 import {
   type CommentItem,
   type CommentPriority,
@@ -115,71 +101,11 @@ interface SourceSession {
   department?: string;
 }
 
-interface LocalActivityLogEntry {
-  id: string;
-  type: 'created' | 'regenerated' | 'exported' | 'comment' | 'edit';
-  description: string;
-  timestamp: string;
-  userName?: string;
-}
-
-interface KeyFinding {
-  id: string;
-  content: string;
-  confidence: 'high' | 'medium' | 'low';
-  category?: string;
-  sourceCount: number;
-}
-
-interface QuoteEvidence {
-  id: string;
-  quote: string;
-  source: string;
-  department?: string;
-  role?: string;
-  tags: string[];
-  sentiment: 'positive' | 'neutral' | 'negative';
-}
-
-interface PatternTheme {
-  id: string;
-  theme: string;
-  frequency: number;
-  relatedKeywords: string[];
-}
-
-interface Contradiction {
-  id: string;
-  topic: string;
-  viewA: string;
-  viewB: string;
-  sourceA: string;
-  sourceB: string;
-  severity: 'high' | 'medium' | 'low';
-}
-
-interface ActionItem {
-  id: string;
-  action: string;
-  priority: 'high' | 'medium' | 'low';
-  type: 'quick_win' | 'short_term' | 'long_term';
-  owner?: string;
-  completed: boolean;
-}
-
-interface RiskFlag {
-  id: string;
-  risk: string;
-  severity: 'high' | 'medium' | 'low';
-  category: string;
-  mitigation?: string;
-}
-
 interface InsightViewerProps {
   insightId: string;
   onClose: () => void;
   onRegenerate?: () => void;
-  onSaved?: (data: any) => void;
+  onSaved?: (data: Insight) => void;
 }
 
 // ── Type metadata ────────────────────────────────────────────────────────────
@@ -272,25 +198,10 @@ const STATUS_CONFIG: Record<
 const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   { id: 'executive-summary', icon: Star, label: { en: 'Executive Summary', pl: 'Podsumowanie' } },
   { id: 'full-analysis', icon: FileText, label: { en: 'Full Analysis', pl: 'Pełna Analiza' } },
-  { id: 'key-findings', icon: Target, label: { en: 'Key Findings', pl: 'Kluczowe Ustalenia' } },
-  { id: 'quotes-evidence', icon: Quote, label: { en: 'Quotes & Evidence', pl: 'Cytaty i Dowody' } },
-  { id: 'patterns', icon: Hash, label: { en: 'Patterns & Themes', pl: 'Wzorce i Tematy' } },
-  { id: 'contradictions', icon: Shuffle, label: { en: 'Contradictions', pl: 'Sprzeczności' } },
-  {
-    id: 'action-items',
-    icon: CheckSquare,
-    label: { en: 'Action Items', pl: 'Zalecane Działania' },
-  },
-  { id: 'risk-flags', icon: Flag, label: { en: 'Risk Flags', pl: 'Flagi Ryzyka' } },
   {
     id: 'source-sessions',
     icon: MessageSquare,
     label: { en: 'Source Sessions', pl: 'Sesje Źródłowe' },
-  },
-  {
-    id: 'attachments-links',
-    icon: Paperclip,
-    label: { en: 'Attachments & Links', pl: 'Załączniki' },
   },
   { id: 'comments', icon: MessageSquare, label: { en: 'Comments', pl: 'Komentarze' } },
   { id: 'activity-log', icon: History, label: { en: 'Activity Log', pl: 'Aktywność' } },
@@ -328,7 +239,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   // AI generation states
   const [isRegenerating, setIsRegenerating] = useState(false);
-  const [isGeneratingFindings, setIsGeneratingFindings] = useState(false);
 
   // Export states
   const [isExportingTools, setIsExportingTools] = useState(false);
@@ -336,22 +246,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   // Related data
   const [sourceSessions, setSourceSessions] = useState<SourceSession[]>([]);
-  const [tags, setTags] = useState<string[]>([]);
-  const [newTag, setNewTag] = useState('');
-  const [activityLog, setActivityLog] = useState<LocalActivityLogEntry[]>([]);
-
-  // Extended report data
-  const [keyFindings, setKeyFindings] = useState<KeyFinding[]>([]);
-  const [quotes, setQuotes] = useState<QuoteEvidence[]>([]);
-  const [patterns, setPatterns] = useState<PatternTheme[]>([]);
-  const [contradictions, setContradictions] = useState<Contradiction[]>([]);
-  const [actionItems, setActionItems] = useState<ActionItem[]>([]);
-  const [riskFlags, setRiskFlags] = useState<RiskFlag[]>([]);
-
-  // Quote filter
-  const [quoteFilter, setQuoteFilter] = useState<'all' | 'positive' | 'neutral' | 'negative'>(
-    'all'
-  );
+  const [activityEntries, setActivityEntries] = useState<NModeActivityLogEntry[]>([]);
 
   // NMode shared section state — Comments
   const [nComments, setNComments] = useState<CommentItem[]>([]);
@@ -359,10 +254,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [commentDateFilter, setCommentDateFilter] = useState<DateFilter>('all');
   const [commentSortOrder, setCommentSortOrder] = useState<SortOrder>('desc');
   const [draftPriority, setDraftPriority] = useState<CommentPriority>('normal');
-
-  // NMode shared section state — Attachments
-  const [nAttachments, setNAttachments] = useState<Attachment[]>([]);
-  const [nLinkedItems, setNLinkedItems] = useState<LinkedItem[]>([]);
 
   // ── Load data ──────────────────────────────────────────────────────────────
 
@@ -382,31 +273,25 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           );
         }
 
-        setActivityLog([
-          {
-            id: '1',
-            type: 'created',
-            description: isPolish ? 'Wniosek utworzony' : 'Insight created',
-            timestamp: data.createdAt,
-            userName: 'System',
-          },
-        ]);
-
         if (data.sourceSessionIds?.length > 0) {
           try {
             const sessionsData = await Promise.all(
-              data.sourceSessionIds.slice(0, 10).map((id: string) =>
-                Api.get(`/interview/sessions/${id}`).catch(() => ({
-                  id,
-                  name: `Session ${id.slice(0, 8)}`,
-                }))
-              )
+              data.sourceSessionIds
+                .slice(0, 10)
+                .map((id: string) => Api.get(`/interview/sessions/${id}`).catch(() => null))
             );
-            setSourceSessions(sessionsData);
+            setSourceSessions((sessionsData || []).filter(Boolean));
           } catch {
             // sessions are optional
           }
         }
+
+        const [activityRes, commentsRes] = await Promise.all([
+          Api.get(`/interview/insights/${insightId}/activity`).catch(() => []),
+          Api.get(`/interview/insights/${insightId}/comments`).catch(() => []),
+        ]);
+        setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
+        setNComments(Array.isArray(commentsRes) ? commentsRes : []);
       } catch (err: any) {
         setError(err?.message || 'Failed to load insight');
         console.error('[InsightViewer] Failed to load insight:', err);
@@ -417,42 +302,32 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
     loadInsight();
 
+    let lastStatus: InsightStatus | null = null;
     const interval = setInterval(async () => {
-      if (insight?.status === 'generating') {
-        try {
-          const data = await Api.get(`/interview/insights/${insightId}`);
-          setInsight(data);
-          if (data.status !== 'generating') {
-            clearInterval(interval);
-            addActivityLogEntry(
-              'regenerated',
-              isPolish ? 'Generowanie zakończone' : 'Generation completed'
-            );
-          }
-        } catch (err) {
-          console.error('[InsightViewer] Poll error:', err);
+      try {
+        const data = await Api.get(`/interview/insights/${insightId}`);
+        setInsight(data);
+        const nextStatus = data?.status as InsightStatus | undefined;
+        if (lastStatus === null) lastStatus = nextStatus ?? null;
+
+        if (lastStatus === 'generating' && nextStatus && nextStatus !== 'generating') {
+          clearInterval(interval);
+          const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
+            () => []
+          );
+          setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
         }
+
+        lastStatus = nextStatus ?? null;
+      } catch (err) {
+        // keep polling best-effort
       }
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [insightId]);
+  }, [insightId, isPolish]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
-
-  const addActivityLogEntry = useCallback(
-    (type: LocalActivityLogEntry['type'], description: string) => {
-      const entry: LocalActivityLogEntry = {
-        id: Math.random().toString(36).substr(2, 9),
-        type,
-        description,
-        timestamp: new Date().toISOString(),
-        userName: 'Current User',
-      };
-      setActivityLog((prev) => [entry, ...prev]);
-    },
-    []
-  );
 
   const typeMeta = insight
     ? TYPE_METADATA[insight.promptType] || TYPE_METADATA.summary
@@ -463,20 +338,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   const isDirty = title !== (insight?.title || '');
 
-  const filteredQuotes = useMemo(() => {
-    if (quoteFilter === 'all') return quotes;
-    return quotes.filter((q) => q.sentiment === quoteFilter);
-  }, [quotes, quoteFilter]);
-
-  const riskCounts = useMemo(
-    () => ({
-      high: riskFlags.filter((r) => r.severity === 'high').length,
-      medium: riskFlags.filter((r) => r.severity === 'medium').length,
-      low: riskFlags.filter((r) => r.severity === 'low').length,
-    }),
-    [riskFlags]
-  );
-
   // ── Handlers ───────────────────────────────────────────────────────────────
 
   const handleSave = async () => {
@@ -485,8 +346,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     try {
       await Api.patch(`/interview/insights/${insight.id}`, { title });
       toast.success(isPolish ? 'Zapisano' : 'Saved');
-      addActivityLogEntry('edit', isPolish ? 'Tytuł zaktualizowany' : 'Title updated');
-      onSaved?.({ ...insight, title });
+      const refreshed = await Api.get(`/interview/insights/${insightId}`).catch(() => null);
+      if (refreshed) {
+        setInsight(refreshed);
+        onSaved?.(refreshed);
+      } else {
+        onSaved?.({ ...insight, title });
+      }
+      const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
+        () => []
+      );
+      setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
     } catch {
       toast.error(isPolish ? 'Nie udało się zapisać' : 'Failed to save');
     } finally {
@@ -506,6 +376,45 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     });
   };
 
+  const openSourceSessionInInterviewHub = useCallback(
+    (session: SourceSession) => {
+      try {
+        const raw = window.sessionStorage.getItem('moduleHub.openDocuments.interview');
+        const parsed = raw ? JSON.parse(raw) : {};
+        const openDocuments = Array.isArray(parsed?.openDocuments) ? parsed.openDocuments : [];
+        const activeDocumentId =
+          typeof parsed?.activeDocumentId === 'string' ? parsed.activeDocumentId : null;
+
+        const exists = openDocuments.some((d: any) => d?.id === session.id);
+        const inferredStatus = session.completedAt ? ('completed' as const) : ('active' as const);
+        const nextDocuments = exists
+          ? openDocuments
+          : [
+              ...openDocuments,
+              {
+                id: session.id,
+                type: 'session',
+                name: session.name || 'Session',
+                status: inferredStatus,
+                data: { id: session.id, name: session.name || 'Session', status: inferredStatus },
+              },
+            ];
+
+        window.sessionStorage.setItem(
+          'moduleHub.openDocuments.interview',
+          JSON.stringify({
+            openDocuments: nextDocuments,
+            activeDocumentId: session.id || activeDocumentId,
+          })
+        );
+      } catch {
+        // ignore
+      }
+      navigate(ROUTES.INTERVIEW);
+    },
+    [navigate]
+  );
+
   const handleRegenerate = async () => {
     if (!insight) return;
     setIsRegenerating(true);
@@ -514,10 +423,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       toast.success(isPolish ? 'Regenerowanie rozpoczęte...' : 'Regeneration started...');
       const data = await Api.get(`/interview/insights/${insightId}`);
       setInsight(data);
-      addActivityLogEntry(
-        'regenerated',
-        isPolish ? 'Regeneracja rozpoczęta' : 'Regeneration started'
+      const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
+        () => []
       );
+      setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
       onRegenerate?.();
     } catch {
       toast.error(isPolish ? 'Nie udało się zregenerować' : 'Failed to regenerate');
@@ -546,10 +455,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     a.click();
     URL.revokeObjectURL(url);
     toast.success(isPolish ? 'Pobrano plik Markdown' : 'Downloaded Markdown file');
-    addActivityLogEntry(
-      'exported',
-      isPolish ? 'Wyeksportowano do Markdown' : 'Exported to Markdown'
-    );
   };
 
   const handleExportToTools = async () => {
@@ -560,7 +465,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         target: 'tools',
       });
       toast.success(isPolish ? 'Wyeksportowano do Tools' : 'Exported to Tools');
-      addActivityLogEntry('exported', isPolish ? 'Wyeksportowano do Tools' : 'Exported to Tools');
+      const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
+        () => []
+      );
+      setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
       const toolId = exportRes?.targetId;
       if (toolId) navigate(`${ROUTES.DISCOVERY_TOOLS.STRATEGIC}?tool=${toolId}`);
     } catch {
@@ -578,10 +486,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         target: 'assessment',
       });
       toast.success(isPolish ? 'Wyeksportowano do Assessment' : 'Exported to Assessment');
-      addActivityLogEntry(
-        'exported',
-        isPolish ? 'Wyeksportowano do Assessment' : 'Exported to Assessment'
+      const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
+        () => []
       );
+      setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
       const assessmentId = exportRes?.targetId;
       const assessmentType = String(exportRes?.assessmentType || 'DRD').toLowerCase();
       if (assessmentId) navigate(`${ROUTES.ASSESSMENT.ROOT}/${assessmentType}/${assessmentId}`);
@@ -592,45 +500,56 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }
   };
 
-  const handleGenerateFindings = async () => {
-    setIsGeneratingFindings(true);
-    try {
-      toast(
-        isPolish
-          ? 'Generowanie ustaleń będzie dostępne po integracji z API'
-          : 'Findings generation will be available after API integration',
-        { icon: 'ℹ️' }
-      );
-    } finally {
-      setIsGeneratingFindings(false);
-    }
-  };
-
-  const toggleActionItem = (id: string) => {
-    setActionItems(
-      actionItems.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item))
+  const handleGenerateFindings = useCallback(() => {
+    toast(
+      isPolish
+        ? 'Ta sekcja jest jeszcze niedostępna dla Insight (brak kontraktu backend).'
+        : 'This section is not available for Insight yet (no backend contract).'
     );
-  };
+  }, [isPolish]);
 
   // Comments handlers (NMode)
   const handleSubmitComment = useCallback(() => {
-    if (!commentDraft.trim()) return;
-    const newComment: CommentItem = {
-      id: Math.random().toString(36).substr(2, 9),
-      content: commentDraft.trim(),
-      authorName: 'Current User',
-      createdAt: new Date().toISOString(),
-      priority: draftPriority,
-    };
-    setNComments((prev) => [...prev, newComment]);
-    setCommentDraft('');
-    setDraftPriority('normal');
-    addActivityLogEntry('comment', isPolish ? 'Dodano komentarz' : 'Comment added');
-  }, [commentDraft, draftPriority, isPolish, addActivityLogEntry]);
+    void (async () => {
+      const text = commentDraft.trim();
+      if (!text) return;
 
-  const handleDeleteComment = useCallback((id: string) => {
-    setNComments((prev) => prev.filter((c) => c.id !== id));
-  }, []);
+      try {
+        const created = await Api.post(`/interview/insights/${insightId}/comments`, {
+          content: text,
+          priority: draftPriority,
+        });
+        setNComments((prev) => [...prev, created]);
+        setCommentDraft('');
+        setDraftPriority('normal');
+
+        const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
+          () => []
+        );
+        setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
+      } catch {
+        toast.error(isPolish ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+      }
+    })();
+  }, [commentDraft, draftPriority, insightId, isPolish]);
+
+  const handleDeleteComment = useCallback(
+    (commentId: string) => {
+      void (async () => {
+        try {
+          await Api.delete(`/interview/insights/${insightId}/comments/${commentId}`);
+          setNComments((prev) => prev.filter((c) => c.id !== commentId));
+          const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
+            () => []
+          );
+          setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
+        } catch {
+          toast.error(isPolish ? 'Nie udało się usunąć komentarza' : 'Failed to delete comment');
+        }
+      })();
+    },
+    [insightId, isPolish]
+  );
 
   const getPriorityDotClass = useCallback((p: CommentPriority) => {
     if (p === 'high') return 'bg-red-500';
@@ -690,44 +609,33 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     [isPolish]
   );
 
-  // Attachments handlers (NMode)
-  const handleUploadAttachments = useCallback(
-    async (files: FileList) => {
-      const newAttachments: Attachment[] = Array.from(files).map((file) => ({
-        id: Math.random().toString(36).substr(2, 9),
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        url: URL.createObjectURL(file),
-        uploadedAt: new Date().toISOString(),
-        uploadedBy: 'Current User',
-      }));
-      setNAttachments((prev) => [...prev, ...newAttachments]);
-      toast.success(isPolish ? 'Załączniki dodane' : 'Attachments added');
-      addActivityLogEntry('edit', isPolish ? 'Dodano załączniki' : 'Attachments added');
-    },
-    [isPolish, addActivityLogEntry]
-  );
+  const filteredComments = useMemo(() => {
+    const now = Date.now();
+    const cutoffMs =
+      commentDateFilter === 'today'
+        ? 24 * 60 * 60 * 1000
+        : commentDateFilter === '7d'
+          ? 7 * 24 * 60 * 60 * 1000
+          : commentDateFilter === '30d'
+            ? 30 * 24 * 60 * 60 * 1000
+            : null;
 
-  const handleDeleteAttachment = useCallback(
-    async (id: string) => {
-      setNAttachments((prev) => prev.filter((a) => a.id !== id));
-      toast.success(isPolish ? 'Załącznik usunięty' : 'Attachment deleted');
-    },
-    [isPolish]
-  );
+    const withinRange = (c: CommentItem) => {
+      if (!cutoffMs) return true;
+      const ts = new Date(c.createdAt).getTime();
+      if (!Number.isFinite(ts)) return true;
+      return now - ts <= cutoffMs;
+    };
 
-  const handleAddLinkedItem = useCallback(async (item: LinkedItem) => {
-    setNLinkedItems((prev) => [...prev, item]);
-  }, []);
-
-  const handleRemoveLinkedItem = useCallback(async (item: Pick<LinkedItem, 'id' | 'type'>) => {
-    setNLinkedItems((prev) => prev.filter((i) => i.id !== item.id));
-  }, []);
-
-  const searchLinkedItems = useCallback(async (_query: string): Promise<LinkedItem[]> => {
-    return [];
-  }, []);
+    const filtered = nComments.filter(withinRange);
+    const sorted = [...filtered].sort((a, b) => {
+      const ta = new Date(a.createdAt).getTime();
+      const tb = new Date(b.createdAt).getTime();
+      if (!Number.isFinite(ta) || !Number.isFinite(tb)) return 0;
+      return commentSortOrder === 'asc' ? ta - tb : tb - ta;
+    });
+    return sorted;
+  }, [nComments, commentDateFilter, commentSortOrder]);
 
   // ── Properties strip fields ────────────────────────────────────────────────
 
@@ -778,72 +686,25 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         onChange: () => {},
         readOnly: true,
       },
-      {
-        id: 'tags',
-        label: { en: 'Tags', pl: 'Tagi' },
-        type: 'custom' as const,
-        value: '',
-        onChange: () => {},
-        render: () => (
-          <div className="flex flex-wrap items-center gap-1">
-            {tags.map((tag, idx) => (
-              <span
-                key={idx}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-500/10 dark:bg-pink-500/20 text-pink-700 dark:text-pink-300 text-[10px] font-medium"
-              >
-                #{tag}
-                <button
-                  onClick={() => setTags(tags.filter((_, i) => i !== idx))}
-                  className="p-0.5 rounded-full hover:bg-pink-500/20"
-                >
-                  <X size={8} />
-                </button>
-              </span>
-            ))}
-            <input
-              type="text"
-              value={newTag}
-              onChange={(e) => setNewTag(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && newTag.trim()) {
-                  if (!tags.includes(newTag.trim().toLowerCase())) {
-                    setTags([...tags, newTag.trim().toLowerCase()]);
-                  }
-                  setNewTag('');
-                }
-              }}
-              placeholder="+"
-              className="w-12 h-5 px-1 rounded text-[10px] bg-transparent text-slate-600 dark:text-slate-400 placeholder-slate-400 focus:outline-none"
-            />
-          </div>
-        ),
-      },
     ],
-    [insight, isPolish, typeMeta, tags, newTag]
+    [insight, isPolish, typeMeta]
   );
 
   // ── Activity log → NMode format ───────────────────────────────────────────
 
   const nModeActivityEntries = useMemo<NModeActivityLogEntry[]>(
-    () =>
-      activityLog.map((e) => ({
-        id: e.id,
-        type: e.type,
-        description: e.description,
-        timestamp: e.timestamp,
-        userName: e.userName,
-      })),
-    [activityLog]
+    () => activityEntries,
+    [activityEntries]
   );
 
   const activityStats = useMemo<ActivityStats>(
     () => ({
-      total: activityLog.length,
-      edited: activityLog.filter((e) => e.type === 'edit').length,
+      total: activityEntries.length,
+      edited: activityEntries.filter((e) => e.type === 'edit').length,
       escalations: 0,
-      collaboration: activityLog.filter((e) => e.type === 'comment').length,
+      collaboration: activityEntries.filter((e) => e.type === 'comment').length,
     }),
-    [activityLog]
+    [activityEntries]
   );
 
   const activityTypeMeta = useCallback(
@@ -907,15 +768,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                  <Lightbulb size={14} />
+                  <MessageSquare size={14} />
                   <span>
-                    {keyFindings.length} {isPolish ? 'ustaleń' : 'findings'}
+                    {nComments.length} {isPolish ? 'komentarzy' : 'comments'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                  <Flag size={14} />
+                  <History size={14} />
                   <span>
-                    {riskCounts.high} {isPolish ? 'ryzyk wysokich' : 'high risks'}
+                    {activityEntries.length} {isPolish ? 'zdarzeń' : 'events'}
                   </span>
                 </div>
               </div>
@@ -999,6 +860,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           );
           break;
 
+        /*
+        // Placeholder sections (backend contract TBD):
+        // - key-findings
+        // - quotes-evidence
+        // - patterns
+        // - contradictions
+        // - action-items
+        // - risk-flags
+        // - attachments-links
         case 'key-findings':
           component = (
             <div className="space-y-3">
@@ -1383,6 +1253,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             </div>
           );
           break;
+        */
 
         case 'source-sessions':
           component = (
@@ -1413,7 +1284,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         )}
                       </div>
                     </div>
-                    <button className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 transition-colors">
+                    <button
+                      onClick={() => openSourceSessionInInterviewHub(session)}
+                      className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 transition-colors"
+                    >
                       <ExternalLink size={14} />
                     </button>
                   </div>
@@ -1423,24 +1297,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           );
           break;
 
-        case 'attachments-links':
-          component = (
-            <AttachmentsLinksCanvas
-              attachments={nAttachments}
-              onUploadAttachments={handleUploadAttachments}
-              onDeleteAttachment={handleDeleteAttachment}
-              linkedItems={nLinkedItems}
-              onAddLinkedItem={handleAddLinkedItem}
-              onRemoveLinkedItem={handleRemoveLinkedItem}
-              searchLinkedItems={searchLinkedItems}
-            />
-          );
-          break;
+        // (removed) attachments-links — no backend contract for insight attachments/links
 
         case 'comments':
           component = (
             <CommentsCanvas
-              comments={nComments}
+              comments={filteredComments}
               onDeleteComment={handleDeleteComment}
               dateFilter={commentDateFilter}
               onDateFilterChange={setCommentDateFilter}
@@ -1477,33 +1339,18 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         badge:
           section.id === 'comments'
             ? nComments.length
-            : section.id === 'key-findings'
-              ? keyFindings.length
-              : section.id === 'risk-flags'
-                ? riskFlags.length
-                : section.id === 'source-sessions'
-                  ? sourceSessions.length
-                  : section.id === 'activity-log'
-                    ? activityLog.length
-                    : undefined,
+            : section.id === 'source-sessions'
+              ? sourceSessions.length
+              : section.id === 'activity-log'
+                ? activityEntries.length
+                : undefined,
       } as NModeSection;
     });
   }, [
     executiveSummary,
     insight,
     isPolish,
-    keyFindings,
-    riskCounts,
-    filteredQuotes,
-    quoteFilter,
-    quotes,
-    patterns,
-    contradictions,
-    actionItems,
-    riskFlags,
     sourceSessions,
-    nAttachments,
-    nLinkedItems,
     nComments,
     commentDraft,
     commentDateFilter,
@@ -1512,16 +1359,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     nModeActivityEntries,
     activityStats,
     activityTypeMeta,
-    isGeneratingFindings,
     handleSubmitComment,
     handleDeleteComment,
     getPriorityDotClass,
-    handleUploadAttachments,
-    handleDeleteAttachment,
-    handleAddLinkedItem,
-    handleRemoveLinkedItem,
-    searchLinkedItems,
-    activityLog,
+    openSourceSessionInInterviewHub,
+    activityEntries,
   ]);
 
   // ── Render ─────────────────────────────────────────────────────────────────

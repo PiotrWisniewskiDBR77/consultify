@@ -195,7 +195,7 @@ export const MitigationPanel: React.FC<MitigationPanelProps> = ({
             type="text"
             value={ownerId}
             onChange={(e) => setOwnerId(e.target.value)}
-            placeholder="Owner ID"
+            placeholder={t('execution.mitigation.ownerIdPlaceholder', 'Owner ID')}
             className="w-full text-xs bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded px-2 py-1.5 text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
           />
         </div>

@@ -28,6 +28,12 @@ import {
   type WizardStep,
 } from './wizard';
 
+function unwrap<T = any>(res: any): T {
+  const d = res?.data;
+  if (d && typeof d === 'object' && 'data' in d) return d.data;
+  return d;
+}
+
 export const PresentationWizard: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -75,8 +81,9 @@ export const PresentationWizard: React.FC<{ onClose?: () => void }> = ({ onClose
       // Clone happens server-side; then we select the cloned template.
       (async () => {
         try {
-          const res = (await Api.post(`/presentations/templates/${cloneTemplateId}/clone`, {})) as any;
-          const clonedId = res?.data?.id || res?.id;
+          const res = await Api.post(`/presentations/templates/${cloneTemplateId}/clone`, {});
+          const cloneData = unwrap(res);
+          const clonedId = cloneData?.id;
           if (clonedId) {
             setSettings((prev) => ({ ...prev, selectedTemplate: String(clonedId) }));
           }
@@ -90,7 +97,8 @@ export const PresentationWizard: React.FC<{ onClose?: () => void }> = ({ onClose
   const loadTemplates = async () => {
     try {
       const res = await Api.get('/presentations/templates');
-      setTemplates(res.data || []);
+      const data = unwrap(res);
+      setTemplates(Array.isArray(data) ? data : []);
     } catch {
       /* templates are optional */
     }
@@ -99,7 +107,8 @@ export const PresentationWizard: React.FC<{ onClose?: () => void }> = ({ onClose
   const loadIntents = async () => {
     try {
       const res = await Api.get('/presentations/intents');
-      setIntents(res.data || []);
+      const data = unwrap(res);
+      setIntents(Array.isArray(data) ? data : []);
     } catch {
       /* intents are optional */
     }
@@ -108,11 +117,12 @@ export const PresentationWizard: React.FC<{ onClose?: () => void }> = ({ onClose
   const loadBrandKit = async () => {
     try {
       const res = await Api.get('/presentations/brand-kit');
-      if (res.data) {
+      const kit = unwrap(res);
+      if (kit && kit.primary_color) {
         setBrandKitColors({
-          primary: `#${res.data.primary_color || '003A70'}`,
-          secondary: `#${res.data.secondary_color || '2C5F8A'}`,
-          accent: `#${res.data.accent_color || '00AA55'}`,
+          primary: `#${kit.primary_color || '003A70'}`,
+          secondary: `#${kit.secondary_color || '2C5F8A'}`,
+          accent: `#${kit.accent_color || '00AA55'}`,
         });
         setSettings((prev) => ({ ...prev, colorSetId: 'brand_kit' }));
       }
@@ -141,7 +151,7 @@ export const PresentationWizard: React.FC<{ onClose?: () => void }> = ({ onClose
       toast.error(t('presentations.wizard.titleRequired', 'Please enter a title'));
       return;
     }
-    setStep('outline');
+    setStep('generating');
     try {
       const res = await Api.post('/presentations/generate/outline', {
         title: settings.title,
@@ -156,14 +166,18 @@ export const PresentationWizard: React.FC<{ onClose?: () => void }> = ({ onClose
         confidentiality: settings.confidentiality,
         sourceArtifacts: selectedSources,
       });
-      setOutline(res.data.outline);
-      setDeckId(res.data.deckId);
+      const data = unwrap(res);
+      const outlineArr = Array.isArray(data?.outline) ? data.outline : [];
+      setOutline(outlineArr);
+      setDeckId(data?.deckId || '');
+      setStep('outline');
       trackFunnelEvent('presentation_outline_generated', {
         templateId: settings.selectedTemplate,
-        slideCount: res.data.outline.length,
+        slideCount: outlineArr.length,
         presentationMode: settings.presentationMode,
       });
-    } catch {
+    } catch (err) {
+      console.error('[PresentationWizard] generateOutline failed:', err);
       toast.error(t('presentations.wizard.outlineFailed', 'Failed to generate outline'));
       setStep('setup');
     }
@@ -197,14 +211,16 @@ export const PresentationWizard: React.FC<{ onClose?: () => void }> = ({ onClose
           additionalInstructions: settings.additionalInstructions || undefined,
         },
       });
-      setResult(res.data);
+      const data = unwrap(res);
+      setResult(data || { slideCount: 0, warnings: [] });
       setStep('result');
       trackFunnelEvent('presentation_exported', {
         format: 'pptx',
-        slideCount: res.data.slideCount,
+        slideCount: data?.slideCount ?? 0,
         presentationMode: settings.presentationMode,
       });
-    } catch {
+    } catch (err) {
+      console.error('[PresentationWizard] generateDeck failed:', err);
       toast.error(t('presentations.wizard.generationFailed', 'Generation failed'));
       setStep('outline');
     }

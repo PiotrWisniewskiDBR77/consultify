@@ -188,10 +188,10 @@ export async function getInitiativeBudgetSummary(
   organizationId: string,
   initiativeId: string
 ): Promise<InitiativeBudgetSummary | null> {
-  // Planned budget from budget_items (ResourcesSection)
+  // Planned budget from initiative_budget_items (ResourcesSection)
   const planned = ((await dbAll(
     `SELECT cost_type, SUM(amount) as total_amount, currency
-     FROM budget_items
+     FROM initiative_budget_items
      WHERE initiative_id = ? AND organization_id = ?
      GROUP BY cost_type, currency`,
     [initiativeId, organizationId]
@@ -267,7 +267,7 @@ export async function getPortfolioBudgetSummary(
     SELECT i.id, i.name, i.budget_currency,
            COALESCE(SUM(bi.amount), 0) as planned_total
     FROM initiatives i
-    LEFT JOIN budget_items bi ON bi.initiative_id = i.id AND bi.organization_id = i.organization_id
+    LEFT JOIN initiative_budget_items bi ON bi.initiative_id = i.id AND bi.organization_id = i.organization_id
     WHERE i.organization_id = ?
       AND i.status NOT IN ('DRAFT', 'CANCELLED', 'ARCHIVED')
   `;

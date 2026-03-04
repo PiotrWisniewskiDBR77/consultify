@@ -50,16 +50,14 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ onClose, sourceNames, on
     onSendMessage?.(input.trim());
     setInput('');
 
-    setTimeout(() => {
-      const agentMsg: AgentMessage = {
-        id: `msg-${Date.now()}-agent`,
-        role: 'agent',
-        text: `I'll work on that. Processing your request: "${userMsg.text}"...`,
-        timestamp: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, agentMsg]);
-    }, 800);
-  }, [input, onSendMessage]);
+    const agentMsg: AgentMessage = {
+      id: `msg-${Date.now()}-agent`,
+      role: 'agent',
+      text: t('presentations.agent.comingSoon', 'AI deck editing is coming soon. This feature is not yet connected to a backend.'),
+      timestamp: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, agentMsg]);
+  }, [input, onSendMessage, t]);
 
   const handleSuggestion = (key: string) => {
     const text = t(key, '');

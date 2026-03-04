@@ -30,11 +30,12 @@ const CONFIDENTIALITIES = ['confidential', 'internal', 'public'] as const;
 export const SetupStep: React.FC<SetupStepProps> = ({
   settings,
   onChange,
-  templates,
+  templates: templatesProp,
   brandKitColors,
   onBack,
   onNext,
 }) => {
+  const templates = Array.isArray(templatesProp) ? templatesProp : [];
   const { t } = useTranslation();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [smartDefaultsApplied, setSmartDefaultsApplied] = useState(false);
@@ -49,14 +50,15 @@ export const SetupStep: React.FC<SetupStepProps> = ({
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         if (!response.ok || cancelled) return;
-        const data = await response.json();
-        if (cancelled || !data) return;
+        const raw = await response.json();
+        if (cancelled || !raw) return;
+        const profile = raw?.data ?? raw;
 
-        if (data.preferred_mode) onChange('presentationMode', data.preferred_mode as any);
-        if (data.preferred_register) onChange('communicationRegister', data.preferred_register as any);
-        if (data.preferred_image_style) onChange('imageStylePreset', data.preferred_image_style as any);
-        if (data.preferred_color_set) onChange('colorSetId', data.preferred_color_set);
-        if (data.preferred_content_depth) onChange('contentDepth', data.preferred_content_depth as any);
+        if (profile.preferred_mode) onChange('presentationMode', profile.preferred_mode as any);
+        if (profile.preferred_register) onChange('communicationRegister', profile.preferred_register as any);
+        if (profile.preferred_image_style) onChange('imageStylePreset', profile.preferred_image_style as any);
+        if (profile.preferred_color_set) onChange('colorSetId', profile.preferred_color_set);
+        if (profile.preferred_content_depth) onChange('contentDepth', profile.preferred_content_depth as any);
         setSmartDefaultsApplied(true);
       } catch {
         /* silent — defaults remain unchanged */

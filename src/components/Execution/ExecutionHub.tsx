@@ -510,14 +510,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Zestawienie (Table+Preview) filters + preview selection
   const [summaryFilters, setSummaryFilters] = useState<FilterChip[]>([]);
   const [summaryPreviewInitiativeId, setSummaryPreviewInitiativeId] = useState<string | null>(null);
-  const [demoMode, setDemoMode] = useState<boolean>(() => {
-    try {
-      return window.localStorage.getItem('execution_demo_data') === '1';
-    } catch {
-      return false;
-    }
-  });
-  const [autoDemoApplied, setAutoDemoApplied] = useState(false);
 
   // Workload heatmap controls (rendered in top bar)
   const [workloadViewMode, setWorkloadViewMode] = useState<'weekly' | 'monthly'>('monthly');
@@ -549,216 +541,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [execSnapshotError, setExecSnapshotError] = useState<string | null>(null);
   const [execSnapshotSource, setExecSnapshotSource] = useState<'server' | 'local' | null>(null);
   const [workstreamsViewMode, setWorkstreamsViewMode] = useState<'list' | 'table'>('list');
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem('execution_demo_data', demoMode ? '1' : '0');
-    } catch {
-      // ignore
-    }
-  }, [demoMode]);
-
-  const buildDemoData = useCallback(() => {
-    const now = new Date();
-    const iso = (d: Date) => d.toISOString();
-    const addDays = (n: number) => new Date(now.getTime() + n * 24 * 60 * 60 * 1000);
-
-    const people = [
-      { id: 'demo-u-anna', firstName: 'Anna', lastName: 'Nowak', avatarUrl: undefined },
-      { id: 'demo-u-piotr', firstName: 'Piotr', lastName: 'Kowalski', avatarUrl: undefined },
-      { id: 'demo-u-kasia', firstName: 'Kasia', lastName: 'Zielińska', avatarUrl: undefined },
-      { id: 'demo-u-marek', firstName: 'Marek', lastName: 'Wiśniewski', avatarUrl: undefined },
-      { id: 'demo-u-ola', firstName: 'Ola', lastName: 'Wójcik', avatarUrl: undefined },
-      { id: 'demo-u-tomek', firstName: 'Tomek', lastName: 'Kamiński', avatarUrl: undefined },
-    ];
-
-    const pick = <T,>(arr: T[], i: number) => arr[i % arr.length];
-    const projId = currentProjectId || 'demo-project';
-
-    const initiativesDemo: FullInitiative[] = Array.from({ length: 10 }).map((_, idx) => {
-      const ownerBusiness = pick(people, idx);
-      const ownerExecution = pick(people, idx + 2);
-      const status =
-        idx % 7 === 0
-          ? InitiativeStatus.BLOCKED
-          : idx % 5 === 0
-            ? InitiativeStatus.SCHEDULED
-            : idx % 4 === 0
-              ? InitiativeStatus.DONE
-              : InitiativeStatus.EXECUTING;
-      const start = addDays(-20 + idx * 2);
-      const end = addDays(15 + idx * 6);
-      const plannedStart = addDays(-14 + idx);
-      const plannedEnd = addDays(10 + idx * 5);
-      const progress =
-        status === InitiativeStatus.DONE ? 100 : Math.max(5, Math.min(92, 15 + idx * 7));
-
-      return {
-        id: `demo-ini-${idx + 1}`,
-        projectId: projId,
-        name: idx % 2 === 0 ? `Digital workflow #${idx + 1}` : `Process optimization #${idx + 1}`,
-        description:
-          idx % 2 === 0
-            ? 'Automate approvals and reduce handoffs for a key operational flow.'
-            : 'Remove bottlenecks and standardize work instructions for throughput.',
-        axis:
-          idx % 6 === 0
-            ? 'aiMaturity'
-            : idx % 5 === 0
-              ? 'cybersecurity'
-              : idx % 4 === 0
-                ? 'culture'
-                : idx % 3 === 0
-                  ? 'dataManagement'
-                  : idx % 2 === 0
-                    ? 'digitalProducts'
-                    : 'processes',
-        priority: idx % 5 === 0 ? 'Critical' : idx % 3 === 0 ? 'High' : 'Medium',
-        complexity: idx % 4 === 0 ? 'High' : 'Medium',
-        status,
-        plannedStartDate: iso(plannedStart),
-        plannedEndDate: iso(plannedEnd),
-        startDate: iso(start),
-        endDate: iso(end),
-        slaDeadline: iso(addDays(7 + idx * 4)),
-        blockedReason:
-          status === InitiativeStatus.BLOCKED ? 'Waiting for vendor contract sign-off.' : undefined,
-        progress,
-        capex: 50000 + idx * 7500,
-        annualBenefit: 120000 + idx * 15000,
-        ownerBusiness: ownerBusiness as any,
-        ownerExecution: ownerExecution as any,
-        createdAt: iso(addDays(-60 - idx)),
-        updatedAt: iso(addDays(-idx)),
-      };
-    });
-
-    const tasksDemo: Task[] = Array.from({ length: 12 }).map((_, idx) => {
-      const ini = initiativesDemo[idx % initiativesDemo.length];
-      const due =
-        idx % 4 === 0 ? addDays(-2 - idx) : idx % 4 === 1 ? addDays(2 + idx) : addDays(10 + idx);
-      const status = idx % 5 === 0 ? 'blocked' : idx % 4 === 0 ? 'in_progress' : 'todo';
-      return {
-        id: `demo-task-${idx + 1}`,
-        projectId: projId,
-        title:
-          idx % 2 === 0 ? `Prepare stakeholder review #${idx + 1}` : `Implement change #${idx + 1}`,
-        description:
-          idx % 2 === 0
-            ? 'Align scope, owners, and acceptance criteria for the next gate.'
-            : 'Ship the smallest slice to unblock dependent work.',
-        type: 'task',
-        status: status as any,
-        priority: idx % 6 === 0 ? 'high' : idx % 3 === 0 ? 'medium' : 'low',
-        assigneeName: `${pick(people, idx).firstName} ${pick(people, idx).lastName}`,
-        dueDate: iso(due),
-        initiativeId: ini.id,
-        initiativeName: ini.name,
-        createdAt: iso(addDays(-30 - idx)),
-        updatedAt: iso(addDays(-idx)),
-      } as Task;
-    });
-
-    const decisionsDemo: ExecutionDecision[] = Array.from({ length: 10 }).map((_, idx) => {
-      const ini = initiativesDemo[(idx + 1) % initiativesDemo.length];
-      const due =
-        idx % 3 === 0 ? addDays(-1 - idx) : idx % 3 === 1 ? addDays(4 + idx) : addDays(18 + idx);
-      return {
-        id: `demo-decision-${idx + 1}`,
-        title:
-          idx % 2 === 0 ? `Approve budget tranche #${idx + 1}` : `Confirm scope change #${idx + 1}`,
-        status: idx % 5 === 0 ? 'APPROVED' : 'PENDING',
-        dueDate: iso(due),
-        ownerName: `${pick(people, idx + 1).firstName} ${pick(people, idx + 1).lastName}`,
-        relatedObjectName: ini.name,
-        relatedObjectId: ini.id,
-      } as any;
-    });
-
-    const healthDemo: PMOHealthSnapshot = {
-      projectId: projId,
-      projectName: 'Demo program',
-      phase: { number: 4, name: 'Execution' },
-      stageGate: {
-        gateType: 'EXECUTION_GATE',
-        isReady: true,
-        missingCriteria: [],
-        metCriteria: [
-          { criterion: 'Owners assigned', evidence: 'Workstream owners confirmed' },
-          { criterion: 'Plan baselined', evidence: 'Timeline + budget approved' },
-        ],
-      },
-      blockers: initiativesDemo
-        .filter((i) => i.status === InitiativeStatus.BLOCKED)
-        .slice(0, 3)
-        .map((i) => ({
-          type: 'initiative',
-          message: `${i.name}: ${i.blockedReason || 'Blocked'}`,
-        })),
-      tasks: { overdueCount: 3, dueSoonCount: 4, blockedCount: 1 },
-      decisions: { pendingCount: 5, overdueCount: 2 },
-      initiatives: { atRiskCount: 2, blockedCount: 1 },
-      updatedAt: iso(now),
-    };
-
-    const riskSignalsDemo: RiskSignalItem[] = Array.from({ length: 10 }).map((_, idx) => {
-      const ini = initiativesDemo[idx % initiativesDemo.length];
-      return {
-        id: `demo-risk-${idx + 1}`,
-        initiativeId: ini.id,
-        initiativeName: ini.name,
-        signalType: 'RISK',
-        severity: idx % 4 === 0 ? 'CRITICAL' : idx % 3 === 0 ? 'HIGH' : 'MEDIUM',
-        title: idx % 2 === 0 ? 'Scope creep risk' : 'Dependency risk',
-        description:
-          idx % 2 === 0
-            ? 'Backlog growth detected and acceptance criteria unclear.'
-            : 'External dependency may slip based on latest ETA.',
-        suggestedAction: 'Confirm owner, freeze scope, and align a mitigation plan.',
-      };
-    });
-
-    const delaySignalsDemo: DelaySignalItem[] = Array.from({ length: 10 }).map((_, idx) => {
-      const ini = initiativesDemo[(idx + 2) % initiativesDemo.length];
-      return {
-        id: `demo-delay-${idx + 1}`,
-        entityType: 'INITIATIVE',
-        entityId: ini.id,
-        entityName: ini.name,
-        deviationType: idx % 2 === 0 ? 'LATE_FINISH_RISK' : 'DEADLINE_RISK',
-        severity: idx % 4 === 0 ? 'CRITICAL' : 'WARNING',
-        daysDeviation: 3 + idx,
-        whySlipReasons: [
-          { reason: 'Capacity', detail: 'Key contributor overallocated across workstreams.' },
-          { reason: 'Dependency', detail: 'Waiting for upstream decision to be approved.' },
-        ],
-      };
-    });
-
-    const reportsDemo = Array.from({ length: 10 }).map((_, idx) => ({
-      id: `demo-report-${idx + 1}`,
-      name:
-        idx % 2 === 0
-          ? `Weekly Execution Pack · Week ${idx + 6}`
-          : `Deep-dive: Workstream ${String.fromCharCode(65 + (idx % 5))}`,
-      type: idx % 2 === 0 ? 'weekly_pack' : 'deep_dive',
-      status: idx % 4 === 0 ? 'scheduled' : idx % 3 === 0 ? 'failed' : 'generated',
-      lastGeneratedAt: iso(addDays(-idx * 3)),
-      nextRunAt: iso(addDays(7 - idx)),
-    }));
-
-    return {
-      initiativesDemo,
-      tasksDemo,
-      decisionsDemo,
-      healthDemo,
-      riskSignalsDemo,
-      delaySignalsDemo,
-      reportsDemo,
-    };
-  }, [currentProjectId]);
-
-  const demo = useMemo(() => (demoMode ? buildDemoData() : null), [buildDemoData, demoMode]);
 
   const formatNumber = useCallback(
     (v: number | null | undefined, opts?: Intl.NumberFormatOptions) => {
@@ -971,11 +753,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   // Fetch initiatives in execution phase
   useEffect(() => {
-    if (demoMode) {
-      setInitiatives(demo?.initiativesDemo || []);
-      setIsLoading(false);
-      return;
-    }
     const loadInitiatives = async () => {
       setIsLoading(true);
       try {
@@ -1001,14 +778,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadInitiatives();
-  }, [currentProjectId, demo?.initiativesDemo, demoMode, fullSessionData?.initiatives]);
+  }, [currentProjectId, fullSessionData?.initiatives]);
 
   useEffect(() => {
-    if (demoMode) {
-      setRiskSignals(demo?.riskSignalsDemo || []);
-      setDelaySignals(demo?.delaySignalsDemo || []);
-      return;
-    }
     const loadRiskSignals = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -1045,20 +817,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     };
     loadRiskSignals();
     loadDelaySignals();
-  }, [
-    currentProjectId,
-    demo?.delaySignalsDemo,
-    demo?.riskSignalsDemo,
-    demoMode,
-    initiatives.length,
-  ]);
+  }, [currentProjectId, initiatives.length]);
 
   useEffect(() => {
-    if (demoMode) {
-      setTasks(demo?.tasksDemo || []);
-      setIsLoadingTasks(false);
-      return;
-    }
     if (!currentProjectId) return;
     const loadTasks = async () => {
       setIsLoadingTasks(true);
@@ -1073,14 +834,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadTasks();
-  }, [currentProjectId, demo?.tasksDemo, demoMode]);
+  }, [currentProjectId]);
 
   useEffect(() => {
-    if (demoMode) {
-      setDecisions(demo?.decisionsDemo || []);
-      setIsLoadingDecisions(false);
-      return;
-    }
     if (!currentProjectId) return;
     const loadDecisions = async () => {
       setIsLoadingDecisions(true);
@@ -1096,14 +852,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadDecisions();
-  }, [currentProjectId, demo?.decisionsDemo, demoMode]);
+  }, [currentProjectId]);
 
   useEffect(() => {
-    if (demoMode) {
-      setHealthSnapshot(demo?.healthDemo || null);
-      setIsLoadingHealth(false);
-      return;
-    }
     if (!currentProjectId) return;
     const loadHealthSnapshot = async () => {
       setIsLoadingHealth(true);
@@ -1118,21 +869,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadHealthSnapshot();
-  }, [currentProjectId, demo?.healthDemo, demoMode]);
+  }, [currentProjectId]);
 
   const loadExecutiveSnapshot = useCallback(
     async (opts?: { refresh?: boolean }) => {
-      if (demoMode) {
-        setIsLoadingExecSnapshot(true);
-        setExecSnapshotError(null);
-        try {
-          setExecSnapshot(buildLocalExecutiveSnapshot());
-          setExecSnapshotSource('local');
-        } finally {
-          setIsLoadingExecSnapshot(false);
-        }
-        return;
-      }
       if (!currentProjectId) return;
       setIsLoadingExecSnapshot(true);
       setExecSnapshotError(null);
@@ -1185,7 +925,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         setIsLoadingExecSnapshot(false);
       }
     },
-    [API_URL, buildLocalExecutiveSnapshot, currentProjectId, demoMode, execIncludeAI, execPeriod, t]
+    [API_URL, buildLocalExecutiveSnapshot, currentProjectId, execIncludeAI, execPeriod, t]
   );
 
   const execTopline = useMemo(() => {
@@ -1301,26 +1041,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       </div>
     );
   }, [activeTab, execIncludeAI, execPeriod, isLoadingExecSnapshot, loadExecutiveSnapshot, t]);
-
-  useEffect(() => {
-    if (demoMode) return;
-    if (autoDemoApplied) return;
-    if (!currentProjectId) return;
-    if (isLoading || isLoadingTasks || isLoadingDecisions) return;
-    if (initiatives.length > 0 || tasks.length > 0 || decisions.length > 0) return;
-    setDemoMode(true);
-    setAutoDemoApplied(true);
-  }, [
-    autoDemoApplied,
-    currentProjectId,
-    decisions.length,
-    demoMode,
-    initiatives.length,
-    isLoading,
-    isLoadingDecisions,
-    isLoadingTasks,
-    tasks.length,
-  ]);
 
   // Calculate stats
   const statusCounts = useMemo(() => {
@@ -4119,7 +3839,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             <PeopleChangeWorkspace
               initiativeId={undefined}
               projectId={currentProjectId || undefined}
-              organizationId={currentProjectId || ''}
             />
           </div>
         </div>
@@ -4127,7 +3846,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }
 
     if (activeTab === 'reports') {
-      const reportRows = demoMode ? demo?.reportsDemo || [] : [];
       return (
         <div className="p-4 space-y-4">
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
@@ -4175,58 +3893,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               </button>
             </div>
           </div>
-
-          {demoMode ? (
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-              <InlineTable
-                caption={t('execution.demo.reportsCaption', 'Demo report history')}
-                compact
-                columns={[
-                  {
-                    key: 'name',
-                    header: t('execution.reports.title', 'Execution reports'),
-                    render: (row: any) => (
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
-                          {row.name}
-                        </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
-                          {row.type} · {row.status}
-                        </div>
-                      </div>
-                    ),
-                  },
-                  {
-                    key: 'last',
-                    header: t('execution.demo.lastGenerated', 'Last'),
-                    width: 'w-36',
-                    align: 'right',
-                    render: (row: any) => (
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {row.lastGeneratedAt
-                          ? new Date(row.lastGeneratedAt).toLocaleDateString()
-                          : '—'}
-                      </span>
-                    ),
-                  },
-                  {
-                    key: 'next',
-                    header: t('execution.demo.nextRun', 'Next'),
-                    width: 'w-36',
-                    align: 'right',
-                    render: (row: any) => (
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {row.nextRunAt ? new Date(row.nextRunAt).toLocaleDateString() : '—'}
-                      </span>
-                    ),
-                  },
-                ]}
-                data={reportRows.slice(0, 10) as any[]}
-                rowKey={(row: any) => row.id}
-                emptyMessage={t('execution.demo.empty', 'No demo items')}
-              />
-            </div>
-          ) : null}
         </div>
       );
     }

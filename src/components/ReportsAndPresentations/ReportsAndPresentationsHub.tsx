@@ -34,7 +34,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const openChatWithContext = useOpenChatWithContext();
-  const { isChatCollapsed, toggleChatCollapse } = useConversationStore();
+  const displayMode = useConversationStore((s) => s.displayMode);
+  const setDisplayMode = useConversationStore((s) => s.setDisplayMode);
 
   const initialTab = useMemo<RapTab>(() => {
     const params = new URLSearchParams(location.search || '');
@@ -133,11 +134,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         entityName: t('rap.title', 'Reports & Presentations'),
         contextData: { activeTab, searchQuery, activeFilters },
       });
-      if (isChatCollapsed) toggleChatCollapse();
+      if (displayMode === 'collapsed') setDisplayMode('split');
     } catch {
       // silent
     }
-  }, [activeFilters, activeTab, isChatCollapsed, openChatWithContext, searchQuery, t, toggleChatCollapse]);
+  }, [activeFilters, activeTab, displayMode, openChatWithContext, searchQuery, setDisplayMode, t]);
 
   const aiControl = useMemo(
     () => (

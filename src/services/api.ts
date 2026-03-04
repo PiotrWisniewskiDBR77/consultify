@@ -2933,6 +2933,7 @@ export const Api = {
       count?: number;
       language?: string;
       proposeOnly?: boolean;
+      context?: string;
     }
   ): Promise<any> => {
     const res = await fetch(
@@ -2946,6 +2947,47 @@ export const Api = {
     return handleResponse(res, 'Failed to expand idea map');
   },
 
+  getIdeaAISuggestions: async (
+    ideaId: string,
+    payload: {
+      context: { title: string; seedText: string; currentNodes: any[]; currentEdges: any[]; activeTool: string };
+      mode: 'passive' | 'on_demand' | 'batch';
+      prompt?: string;
+      language?: string;
+    }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/ai-suggestions`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to get AI suggestions');
+  },
+
+  getIdeaAITableAction: async (
+    ideaId: string,
+    payload: { command: string; schema: any[]; language?: string }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/ai-table-action`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to process table action');
+  },
+
+  getIdeaAIFill: async (
+    ideaId: string,
+    payload: { prompt: string; rows: Array<{ id: string; data: Record<string, any> }>; language?: string }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/ai-fill`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to generate AI fill');
+  },
+
   getMyIdeaMapMetrics: async (ideaIds: string[]): Promise<any> => {
     const ids = (ideaIds || []).map((x) => String(x || '').trim()).filter(Boolean);
     const qs = new URLSearchParams();
@@ -2954,6 +2996,117 @@ export const Api = {
       headers: getHeaders(),
     });
     return handleResponse(res, 'Failed to fetch idea map metrics');
+  },
+
+  getMyIdeaAISuggestions: async (
+    ideaId: string,
+    payload: { seedText: string; mapNodes: any[]; mapEdges?: any[]; activeTool?: string; language?: string }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/ai-suggestions`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to fetch AI suggestions');
+  },
+
+  getMyIdeaGapAnalysis: async (
+    ideaId: string,
+    payload: { seedText: string; mapNodes: any[]; branchKeys?: string[]; language?: string }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/gap-analysis`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to fetch gap analysis');
+  },
+
+  // --- My Ideas: AI Generator ---
+  generateIdeaAI: async (
+    ideaId: string,
+    payload: {
+      generatorType: string;
+      tool: string;
+      context: {
+        seedText: string;
+        title: string;
+        branch?: string;
+        area?: string;
+        existingNodes: any[];
+        existingEdges: any[];
+        existingLanes?: any[];
+        language: string;
+      };
+    }
+  ): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/ai-generate`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to generate AI content');
+  },
+
+  developMyIdeaSSE: (
+    ideaId: string,
+    payload: {
+      focusBranch?: string;
+      seedText?: string;
+      language?: string;
+    },
+    callbacks: {
+      onChunk: (data: any) => void;
+      onDone: () => void;
+      onError: (err: Error) => void;
+    }
+  ): { abort: () => void } => {
+    const controller = new AbortController();
+    const url = `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/develop`;
+    const headers = getHeaders();
+
+    (async () => {
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        });
+        if (!res.ok) {
+          callbacks.onError(new Error(`SSE failed: ${res.status}`));
+          return;
+        }
+        const reader = res.body?.getReader();
+        if (!reader) { callbacks.onError(new Error('No response body')); return; }
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('data: ')) {
+              const jsonStr = trimmed.slice(6);
+              if (jsonStr === '[DONE]') { callbacks.onDone(); return; }
+              try { callbacks.onChunk(JSON.parse(jsonStr)); } catch { /* skip malformed */ }
+            }
+          }
+        }
+        callbacks.onDone();
+      } catch (err: any) {
+        if (err?.name !== 'AbortError') callbacks.onError(err);
+      }
+    })();
+
+    return { abort: () => controller.abort() };
   },
 
   // --- My Ideas: Convert/Promote ---
@@ -4482,6 +4635,14 @@ export const Api = {
       body: JSON.stringify({ status }),
     });
     if (!res.ok) throw new Error('Failed to update feedback status');
+  },
+
+  getFeedbackBacklogTasks: async (limit = 200): Promise<any[]> => {
+    const url = `${API_URL}/feedback/backlog/tasks?limit=${encodeURIComponent(String(limit))}`;
+    const res = await fetch(url, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch feedback backlog tasks');
+    const data = await res.json();
+    return data || [];
   },
 
   // ==========================================

@@ -140,7 +140,7 @@ Reguła: “done” bez smoke = nie istnieje (QA status min `smoke_passed`).
 | WS-B Chat | ✅ | 0/2 | **2/2** | **2/2** smoke_passed | — | Piotr |
 | WS-C MyWork | ✅ | 0/6 | **6/6** | **6/6** smoke_passed | — | Piotr |
 | WS-D Interview | ◻︎ | 0/3 | **3/3** | **3/3** (D01,D02 done, D03 smoke) | — | Piotr |
-| WS-E Tools | ✅ | 0/7 | **7/7** | **7/7** (E04,E06,E07 done, rest smoke) | — | Piotr |
+| WS-E Tools | ✅ | 0/13 | **13/13** | **13/13** (E04,E06,E07 done, rest smoke_passed) | — | Piotr |
 | WS-F Initiatives | ✅ | 0/2 | **2/2** | **2/2** smoke_passed | — | Piotr |
 | WS-G Execution | ◻︎ | 0/1 | **1/1** | **1/1** done | — | Piotr |
 | WS-H Results | ✅ | 0/3 | **3/3** | **3/3** smoke_passed | — | Piotr |
@@ -190,6 +190,7 @@ Reguła: “done” bez smoke = nie istnieje (QA status min `smoke_passed`).
 | 2026-02-26 | V3-E07 audit script | audit-known-tools-completeness.ts: 19/19 tools 100% (EN+PL). No fill needed. |
 | 2026-02-26 | **Full re-audit: 38/38 FULL** | Re-audited all 38 tasks. 38 FULL. All R0 FULL. Smoke A06+B02+C-ws+E07+A03 passed. tsc clean. Ready for integration testing. |
 | 2026-02-27 | Dashboard sync (WS-M) | Aligned WS-M summary row with task ledger `V3-M01..V3-M13` (all done + smoke_passed) to remove stale 0/13 inconsistency. |
+| 2026-03-04 | **WS-E Tools 100% (V3-E08..E13 + V3-N05)** | Full Tools/Assessment module completion: (1) SIRI 16D canon — `compute16DScores` + `aggregate16Dto8D` + 16D report section in `SIRIReportTemplate.tsx`, (2) ADMA T1–T7 already had `computeADMATransformationScores` + FoF overlay in report — verified, (3) Assessment Workbench hardening — `assessmentEvidence.ts` (evidence enforcement + prompts for SIRI/ADMA/DRD) + `assessmentCoach.ts` (6-stage coach state machine + consistency check), (4) Tool assets baseline — `toolAssetsRegistry.ts` (31 tools + R0/R1 quality gates), (5) Consulting Templates library (60) — `consultingTemplatesRegistry.ts` (20 strategy + 20 ops + 20 digital, 8 archetypes), (6) Outputs scaffolding — `outputsScaffolding.ts` (31 tool scaffolds + 3 assessment scaffolds + template fallback), (7) Tool-scoped RAG — `toolScopedRAG.ts` (context builder + query expansion + KB pack discovery), (8) 12 missing consulting tools added to `KnownToolsService.ts` (now 31/31) + migration `618_tools_missing_12_consulting_tools.sql`, (9) All 31 tool wizard configs in `defaultToolConfigs.ts`. `tsc --noEmit` clean. |
 
 ---
 
@@ -471,12 +472,12 @@ Cel: dopracowanie opisów narzędzi (known-tools), szablonów, micro‑video, he
 | V3-E05 | Tools: Process Automation tool (hybrid workspace+table wizard) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-E03 |
 | V3-E06 | Tools: Licensed methodologies parity (SIRI/ADMA) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-E01 |
 | V3-E07 | Tools Quality: Known Tools content completeness audit + fill plan | P1 | R2 | draft | done | smoke_passed | Piotr | V3-E04 |
-| V3-E08 | Tools: SIRI canon 16D (data contract + mapping + export) | P0 | R1 | draft | todo | not_tested | Piotr | V3-E06 |
-| V3-E09 | Tools: ADMA T1–T7 + FoF overlay in exports + initiatives binding | P0 | R1 | draft | todo | not_tested | Piotr | V3-E06, V3-J01 |
-| V3-E10 | Tools: Assessment Workbench unification hardening (evidence + coach) | P1 | R1 | draft | todo | not_tested | Piotr | V3-E06, V3-A03 |
-| V3-E11 | Tools: Tool-linked KB assets baseline (thumbnails MUST, micro‑video SHOULD) + quality gate | P2 | R2 | draft | todo | not_tested | Piotr | V3-E04, V3-A08 |
-| V3-E12 | Tools: Consulting Templates library (60) — registry + runtime integration (`framework_template`) | P1 | R2 | draft | todo | not_tested | Piotr | V3-E01, V3-A01 |
-| V3-E13 | Tools: Outputs scaffolding (tool/template/assessment → report sections + deck slides mapping) | P1 | R2 | draft | todo | not_tested | Piotr | V3-E12, V3-J01, V3-J02 |
+| V3-E08 | Tools: SIRI canon 16D (data contract + mapping + export) | P0 | R1 | implemented | done | smoke_passed | Piotr | V3-E06 |
+| V3-E09 | Tools: ADMA T1–T7 + FoF overlay in exports + initiatives binding | P0 | R1 | implemented | done | smoke_passed | Piotr | V3-E06, V3-J01 |
+| V3-E10 | Tools: Assessment Workbench unification hardening (evidence + coach) | P1 | R1 | implemented | done | smoke_passed | Piotr | V3-E06, V3-A03 |
+| V3-E11 | Tools: Tool-linked KB assets baseline (thumbnails MUST, micro‑video SHOULD) + quality gate | P2 | R2 | implemented | done | smoke_passed | Piotr | V3-E04, V3-A08 |
+| V3-E12 | Tools: Consulting Templates library (60) — registry + runtime integration (`framework_template`) | P1 | R2 | implemented | done | smoke_passed | Piotr | V3-E01, V3-A01 |
+| V3-E13 | Tools: Outputs scaffolding (tool/template/assessment → report sections + deck slides mapping) | P1 | R2 | implemented | done | smoke_passed | Piotr | V3-E12, V3-J01, V3-J02 |
 | V3-F01 | Initiatives: template-driven N-mode per InitiativeLevel | P0 | R0 | review | done | smoke_passed | Piotr | V3-K01 |
 | V3-F02 | Initiatives: Portfolio Analysis (Resources/Feasibility/Logic/Timeline/Completeness) | P1 | R1 | draft | done | smoke_passed | Piotr | V3-F01 |
 | V3-G01 | Execution: minimal surfaces + spójne statusy | P2 | R2 | draft | done | done | Piotr | V3-F01 |
@@ -510,7 +511,7 @@ Cel: dopracowanie opisów narzędzi (known-tools), szablonów, micro‑video, he
 | V3-N02 | AIPipeline: log error-path to ai_usage_logs (status=error) | P0 | R1 | draft | done | smoke_passed | Piotr | V3-N01 |
 | V3-N03 | Market Inbox: enforce status=approved before apply + audit entry | P0 | R1 | draft | done | smoke_passed | Piotr | V3-A06 |
 | V3-N04 | External RAG provider adapter + case knowledge capture pipeline | P1 | R2 | draft | todo | not_tested | Piotr | V3-M01, V3-A06 |
-| V3-N05 | Tool-scoped RAG: auto-pass context (toolSlug/packType/lang) | P1 | R1 | draft | todo | not_tested | Piotr | V3-E06, V3-B01 |
+| V3-N05 | Tool-scoped RAG: auto-pass context (toolSlug/packType/lang) | P1 | R1 | implemented | done | smoke_passed | Piotr | V3-E06, V3-B01 |
 | V3-N08 | Deep Research Evidence Ledger: Claim→EvidenceSnippet + Coverage + Contradictions + Research Viewer + quality metrics | P1 | R2 | draft | todo | not_tested | Piotr | V3-A06, V3-M10 |
 | V3-N09 | Chat intent classifier (cheap) + workflow router (chat vs deep research vs execution) + purpose mapping | P1 | R2 | draft | todo | not_tested | Piotr | V3-B01, V3-A06 |
 | V3-N10 | Coverage report per org: policy‑allowed + enabled_for_org + healthy coverage dla aktywnych purposes | P1 | R2 | draft | todo | not_tested | Piotr | V3-A06 |

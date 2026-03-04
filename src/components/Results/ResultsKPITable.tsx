@@ -3,10 +3,10 @@ import {
   ArrowRight,
   ArrowUp,
   ChevronDown,
-  Edit,
   Link2,
   Maximize2,
   MoreVertical,
+  Pencil,
   Plus,
   Target,
   Trash2,
@@ -534,28 +534,27 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
                                 }}
                                 className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
                               >
-                                <Edit size={14} />
+                                <Pencil size={14} />
                                 {t('common.edit', 'Edit')}
                               </button>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  onRowAction?.('map', kpi);
+                                  onRowAction?.('links', kpi);
                                   setMenuRowId(null);
                                 }}
                                 className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
                               >
                                 <Link2 size={14} />
-                                {t('results.actions.mapInitiative', 'Map to initiative')}
+                                {t('results.actions.manageLinks', 'Manage links')}
                               </button>
-                              <div className="border-t border-slate-300 dark:border-navy-600" />
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   onRowAction?.('delete', kpi);
                                   setMenuRowId(null);
                                 }}
-                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-rose-400 hover:bg-slate-100 dark:hover:bg-navy-700"
+                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 dark:text-red-300 hover:bg-red-500/10"
                               >
                                 <Trash2 size={14} />
                                 {t('common.delete', 'Delete')}
@@ -594,6 +593,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
   onNewItem,
 }) => {
   const { t } = useTranslation();
+  const [menuCardId, setMenuCardId] = useState<string | null>(null);
 
   if (kpis.length === 0 && !onNewItem) {
     return (
@@ -632,7 +632,95 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
             <div className="p-4">
               <div className="flex items-start justify-between mb-3">
                 <StatusBadge status={kpi.status} />
-                <TIcon size={16} className={tColor} />
+                <div className="flex items-center gap-2">
+                  <TIcon size={16} className={tColor} />
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMenuCardId((prev) => (prev === kpi.id ? null : kpi.id));
+                      }}
+                      className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                      aria-label={t('common.more', 'More')}
+                    >
+                      <MoreVertical size={14} />
+                    </button>
+                    {menuCardId === kpi.id && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setMenuCardId(null);
+                          }}
+                        />
+                        <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onItemAction?.('open', kpi);
+                              setMenuCardId(null);
+                            }}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
+                          >
+                            <Maximize2 size={14} />
+                            {t('results.actions.openDetail', 'Open detail')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onItemAction?.('record', kpi);
+                              setMenuCardId(null);
+                            }}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
+                          >
+                            <Target size={14} />
+                            {t('results.actions.recordValue', 'Record value')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onItemAction?.('edit', kpi);
+                              setMenuCardId(null);
+                            }}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
+                          >
+                            <Pencil size={14} />
+                            {t('common.edit', 'Edit')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onItemAction?.('links', kpi);
+                              setMenuCardId(null);
+                            }}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
+                          >
+                            <Link2 size={14} />
+                            {t('results.actions.manageLinks', 'Manage links')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onItemAction?.('delete', kpi);
+                              setMenuCardId(null);
+                            }}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 dark:text-red-300 hover:bg-red-500/10"
+                          >
+                            <Trash2 size={14} />
+                            {t('common.delete', 'Delete')}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
               <h3 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2 mb-1">
                 {kpi.name}

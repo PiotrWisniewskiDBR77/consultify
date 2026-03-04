@@ -1318,12 +1318,24 @@ export const InterviewHub: React.FC = () => {
     [isPolish, handleViewSession]
   );
 
+  type InsightPromptType =
+    | 'summary'
+    | 'trends'
+    | 'problems'
+    | 'recommendations'
+    | 'comparison'
+    | 'gaps'
+    | 'risk_assessment'
+    | 'opportunity_scan'
+    | 'maturity'
+    | 'stakeholder_map';
+
   // Generate insight from session
   const handleGenerateInsight = useCallback(
-    async (session: InterviewSession) => {
+    async (session: InterviewSession, promptType: InsightPromptType = 'summary') => {
       try {
         toast.loading(isPolish ? 'Generowanie wniosków AI...' : 'Generating AI insights...');
-        await Api.post('/interview/insights', { sessionId: session.id });
+        await Api.post('/interview/insights', { sessionId: session.id, promptType });
         toast.dismiss();
         toast.success(isPolish ? 'Wnioski wygenerowane!' : 'Insights generated!');
 
@@ -1903,7 +1915,7 @@ export const InterviewHub: React.FC = () => {
                                   id: 'generate-insight',
                                   label: isPolish ? 'Generuj wnioski AI' : 'Generate AI insights',
                                   icon: Lightbulb,
-                                  onClick: () => handleGenerateInsight(session),
+                                  onClick: () => handleGenerateInsight(session, 'summary'),
                                 },
                               ]
                             : []),
@@ -4145,7 +4157,7 @@ Return ONLY the answer text (no markdown fences).`;
                               });
                               return;
                             }
-                            void handleGenerateInsight(s);
+                            void handleGenerateInsight(s, 'summary');
                           }}
                         >
                           {isPolish ? 'Podsumuj' : 'Summarize'}
@@ -4159,7 +4171,7 @@ Return ONLY the answer text (no markdown fences).`;
                               });
                               return;
                             }
-                            void handleGenerateInsight(s);
+                            void handleGenerateInsight(s, 'risk_assessment');
                           }}
                         >
                           {isPolish ? 'Ryzyka' : 'Risks'}
@@ -4173,7 +4185,7 @@ Return ONLY the answer text (no markdown fences).`;
                               });
                               return;
                             }
-                            void handleGenerateInsight(s);
+                            void handleGenerateInsight(s, 'recommendations');
                           }}
                         >
                           {isPolish ? 'Następne kroki' : 'Next steps'}
@@ -4189,7 +4201,7 @@ Return ONLY the answer text (no markdown fences).`;
                                   id: 'generate',
                                   label: isPolish ? 'Generuj wnioski AI' : 'Generate AI insights',
                                   icon: Sparkles,
-                                  onClick: () => handleGenerateInsight(s),
+                                  onClick: () => handleGenerateInsight(s, 'summary'),
                                 },
                               ]
                             : []),
@@ -4234,7 +4246,7 @@ Return ONLY the answer text (no markdown fences).`;
                           {isPolish ? 'Otwórz' : 'Open'}
                         </button>
                         {canRunAi ? (
-                          <button onClick={() => handleGenerateInsight(s)} className={pillNeutral}>
+                          <button onClick={() => handleGenerateInsight(s, 'summary')} className={pillNeutral}>
                             <Sparkles size={14} />
                             {isPolish ? 'Generuj wnioski' : 'Generate insights'}
                           </button>

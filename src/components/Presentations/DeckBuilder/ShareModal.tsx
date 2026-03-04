@@ -10,18 +10,23 @@ import {
   FileText,
   Image,
   Link,
+  Loader2,
   Mail,
   MessageCircle,
   X,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { Api } from '@/services/api';
 
 type ShareTab = 'collaborate' | 'share' | 'export' | 'embed';
 
 interface ShareModalProps {
   isOpen: boolean;
   onClose: () => void;
+  deckId: string;
   deckTitle: string;
   onExport?: (format: 'pdf' | 'pptx' | 'png') => void;
 }
@@ -29,6 +34,7 @@ interface ShareModalProps {
 export const ShareModal: React.FC<ShareModalProps> = ({
   isOpen,
   onClose,
+  deckId,
   deckTitle,
   onExport,
 }) => {
@@ -36,14 +42,56 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const [activeTab, setActiveTab] = useState<ShareTab>('share');
   const [linkCopied, setLinkCopied] = useState(false);
   const [publicLink, setPublicLink] = useState(false);
+  const [shareToken, setShareToken] = useState<string | null>(null);
+  const [generatingLink, setGeneratingLink] = useState(false);
+
+  const generateShareLink = useCallback(async () => {
+    if (shareToken) {
+      setPublicLink(true);
+      return;
+    }
+    setGeneratingLink(true);
+    try {
+      const res = await Api.post(`/presentations/decks/${deckId}/share`, { expiresInDays: 7 });
+      const payload = res?.data;
+      const data = (payload && typeof payload === 'object' && 'data' in payload) ? payload.data : payload;
+      if (data?.shareToken) {
+        setShareToken(data.shareToken);
+        setPublicLink(true);
+      } else {
+        toast.error('Failed to generate share link');
+      }
+    } catch {
+      toast.error('Failed to generate share link');
+    } finally {
+      setGeneratingLink(false);
+    }
+  }, [deckId, shareToken]);
 
   if (!isOpen) return null;
 
+  const shareUrl = shareToken
+    ? `${window.location.origin}/presentations/shared/${shareToken}`
+    : '';
+
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(`${window.location.origin}/presentations/shared/demo-share-id`);
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl);
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);
   };
+
+  const handleTogglePublicLink = () => {
+    if (!publicLink) {
+      generateShareLink();
+    } else {
+      setPublicLink(false);
+    }
+  };
+
+  const embedCode = shareToken
+    ? `<iframe src="${window.location.origin}/presentations/embed/${shareToken}" width="100%" height="480" frameborder="0" allowfullscreen></iframe>`
+    : '';
 
   const tabs: { id: ShareTab; labelKey: string }[] = [
     { id: 'collaborate', labelKey: 'presentations.builder.share.collaborate' },
@@ -132,23 +180,24 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   </span>
                 </div>
                 <button
-                  onClick={() => setPublicLink(!publicLink)}
+                  onClick={handleTogglePublicLink}
+                  disabled={generatingLink}
                   className={`px-3 py-1 rounded-full text-xs font-medium ${
                     publicLink
                       ? 'bg-green-500/20 text-green-600'
                       : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
                   }`}
                 >
-                  {publicLink ? 'ON' : 'OFF'}
+                  {generatingLink ? <Loader2 size={12} className="animate-spin" /> : publicLink ? 'ON' : 'OFF'}
                 </button>
               </div>
 
-              {publicLink && (
+              {publicLink && shareUrl && (
                 <>
                   <div className="flex gap-2">
                     <input
                       readOnly
-                      value={`${window.location.origin}/presentations/shared/demo-share-id`}
+                      value={shareUrl}
                       className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-xs text-slate-500 truncate"
                     />
                     <button
@@ -201,27 +250,44 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
           {activeTab === 'embed' && (
             <div className="space-y-3">
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                Embed this deck on external websites:
-              </p>
-              <div className="relative">
-                <textarea
-                  readOnly
-                  value={`<iframe src="${window.location.origin}/presentations/embed/demo-share-id" width="100%" height="480" frameborder="0" allowfullscreen></iframe>`}
-                  rows={3}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-xs text-slate-500 font-mono resize-none"
-                />
-              </div>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(
-                    `<iframe src="${window.location.origin}/presentations/embed/demo-share-id" width="100%" height="480" frameborder="0" allowfullscreen></iframe>`
-                  );
-                }}
-                className="flex items-center gap-1.5 text-xs text-purple-600 hover:text-purple-500"
-              >
-                <Copy size={12} /> Copy embed code
-              </button>
+              {!shareToken ? (
+                <div className="text-center py-6">
+                  <p className="text-sm text-slate-500 mb-3">
+                    {t('presentations.builder.share.enablePublicFirst', 'Enable public link sharing first to get an embed code.')}
+                  </p>
+                  <button
+                    onClick={generateShareLink}
+                    disabled={generatingLink}
+                    className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:bg-purple-500 disabled:opacity-50"
+                  >
+                    {generatingLink ? <Loader2 size={14} className="animate-spin inline mr-1" /> : null}
+                    {t('presentations.builder.share.generateLink', 'Generate share link')}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    Embed this deck on external websites:
+                  </p>
+                  <div className="relative">
+                    <textarea
+                      readOnly
+                      value={embedCode}
+                      rows={3}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-xs text-slate-500 font-mono resize-none"
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(embedCode);
+                      toast.success('Embed code copied');
+                    }}
+                    className="flex items-center gap-1.5 text-xs text-purple-600 hover:text-purple-500"
+                  >
+                    <Copy size={12} /> Copy embed code
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>

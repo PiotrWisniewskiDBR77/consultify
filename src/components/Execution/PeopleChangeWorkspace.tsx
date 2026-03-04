@@ -15,6 +15,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getHeaders } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 /* ------------------------------------------------------------------ */
@@ -24,7 +25,6 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 interface PeopleChangeWorkspaceProps {
   initiativeId?: string;
   projectId?: string;
-  organizationId: string;
 }
 
 interface Capability {
@@ -101,17 +101,9 @@ type SubTab = 'capability' | 'sentiment' | 'communication';
 export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
   initiativeId,
   projectId,
-  organizationId,
 }) => {
   const { t } = useTranslation();
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('capability');
-  const demoMode = useMemo(() => {
-    try {
-      return window.localStorage.getItem('execution_demo_data') === '1';
-    } catch {
-      return false;
-    }
-  }, []);
 
   /* ------------- Capability state ------------- */
   const [capabilities, setCapabilities] = useState<Capability[]>([]);
@@ -146,32 +138,11 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
   }, [initiativeId, projectId]);
 
   const fetchCapabilities = useCallback(async () => {
-    if (demoMode) {
-      const demoCaps: Capability[] = Array.from({ length: 10 }).map((_, idx) => ({
-        id: `demo-cap-${idx + 1}`,
-        name:
-          idx % 2 === 0 ? `Lean facilitation L${(idx % 5) + 1}` : `Data literacy L${(idx % 5) + 1}`,
-        domain: idx % 3 === 0 ? 'Operations' : idx % 3 === 1 ? 'Digital' : 'Change',
-        description: 'Demo capability used to populate the People & Change workspace.',
-        tags: idx % 2 === 0 ? ['lean', 'kaizen', 'standard-work'] : ['data', 'kpi', 'analytics'],
-        isActive: true,
-      }));
-      const demoReq: CapabilityRequirement[] = Array.from({ length: 10 }).map((_, idx) => ({
-        id: `demo-req-${idx + 1}`,
-        capabilityId: demoCaps[idx % demoCaps.length].id,
-        minLevel: (idx % 5) + 1,
-        priority: idx % 3 === 0 ? 'high' : idx % 3 === 1 ? 'medium' : 'low',
-        initiativeId,
-      }));
-      setCapabilities(demoCaps);
-      setRequirements(demoReq);
-      return;
-    }
     setCapLoading(true);
     try {
       const [capRes, reqRes] = await Promise.all([
-        fetch(`/api/capabilities?${qs}`),
-        fetch(`/api/capabilities/requirements?${qs}`),
+        fetch(`/api/capabilities?${qs}`, { headers: getHeaders() }),
+        fetch(`/api/capabilities/requirements?${qs}`, { headers: getHeaders() }),
       ]);
       const capData = await capRes.json();
       const reqData = await reqRes.json();
@@ -181,72 +152,25 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
       /* ignore */
     }
     setCapLoading(false);
-  }, [demoMode, initiativeId, qs]);
+  }, [initiativeId, qs]);
 
   const fetchCandidates = useCallback(async () => {
-    if (demoMode) {
-      const demoCandidates: CandidateMatch[] = Array.from({ length: 10 }).map((_, idx) => ({
-        userId: `demo-user-${idx + 1}`,
-        matchScore: 45 + ((idx * 7) % 55),
-        gaps: [
-          {
-            capabilityId: `demo-cap-${(idx % 10) + 1}`,
-            capabilityName: 'Data literacy',
-            required: 4,
-            actual: (idx % 3) + 1,
-          },
-        ],
-      }));
-      setCandidates(demoCandidates);
-      return;
-    }
     try {
-      const res = await fetch(`/api/capabilities/match?${qs}`);
+      const res = await fetch(`/api/capabilities/match?${qs}`, { headers: getHeaders() });
       const data = await res.json();
       setCandidates(data.data ?? []);
       trackFunnelEvent('capability_match_viewed');
     } catch {
       /* ignore */
     }
-  }, [demoMode, qs]);
+  }, [qs]);
 
   const fetchSentiment = useCallback(async () => {
-    if (demoMode) {
-      const demoPulse: PulseSummary = {
-        avgRating: 3.6,
-        totalResponses: 24,
-        trend: 'stable',
-        distribution: { '1': 2, '2': 4, '3': 7, '4': 8, '5': 3 },
-        recentComments: [
-          'We need clearer ownership on the new process.',
-          'Training helped, but tooling is still slow.',
-          'Comms cadence is good; keep it weekly.',
-        ],
-      };
-      const demoAlerts: ResistanceAlert[] = Array.from({ length: 10 }).map((_, idx) => ({
-        id: `demo-alert-${idx + 1}`,
-        alertType: 'resistance_signal',
-        severity: idx % 4 === 0 ? 'high' : 'medium',
-        message:
-          idx % 2 === 0
-            ? 'Shift supervisors are pushing back on standard work.'
-            : 'Adoption risk: some teams still use the old workflow.',
-        recommendations: [
-          'Run a short leadership huddle to clarify “why”.',
-          'Pair champions with skeptical teams for 2 weeks.',
-        ],
-        isAcknowledged: idx % 5 === 0,
-        createdAt: new Date(Date.now() - idx * 86400000).toISOString(),
-      }));
-      setPulseSummary(demoPulse);
-      setAlerts(demoAlerts);
-      return;
-    }
     setSentLoading(true);
     try {
       const [pulseRes, alertRes] = await Promise.all([
-        fetch(`/api/change-sentiment/pulse/summary?${qs}`),
-        fetch(`/api/change-sentiment/alerts?${qs}`),
+        fetch(`/api/change-sentiment/pulse/summary?${qs}`, { headers: getHeaders() }),
+        fetch(`/api/change-sentiment/alerts?${qs}`, { headers: getHeaders() }),
       ]);
       const pulseData = await pulseRes.json();
       const alertData = await alertRes.json();
@@ -256,50 +180,16 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
       /* ignore */
     }
     setSentLoading(false);
-  }, [demoMode, qs]);
+  }, [qs]);
 
   const fetchComm = useCallback(async () => {
-    if (demoMode) {
-      const demoSegments: StakeholderSegment[] = Array.from({ length: 10 }).map((_, idx) => ({
-        id: `demo-seg-${idx + 1}`,
-        name: idx % 2 === 0 ? `Supervisors · Cell ${idx + 1}` : `Operators · Line ${idx + 1}`,
-        description: 'Demo segment used for communication planning.',
-        segmentType: idx % 3 === 0 ? 'core' : 'extended',
-        membersJson: Array.from({ length: 6 + (idx % 5) }).map((__, j) => ({
-          id: `m-${idx}-${j}`,
-          name: `Member ${j + 1}`,
-        })),
-      }));
-      const demoPlans: CommPlan[] = Array.from({ length: 10 }).map((_, idx) => ({
-        id: `demo-plan-${idx + 1}`,
-        cadence: idx % 2 === 0 ? 'weekly' : 'biweekly',
-        description: idx % 2 === 0 ? 'Weekly sponsor update' : 'Team pulse + Q&A',
-        isActive: idx % 4 !== 0,
-        nextDueAt: new Date(Date.now() + (idx - 2) * 86400000).toISOString(),
-      }));
-      const demoOverdue = demoPlans.filter(
-        (p) => p.nextDueAt && new Date(p.nextDueAt).getTime() < Date.now()
-      );
-      const demoLog: SendLogEntry[] = Array.from({ length: 10 }).map((_, idx) => ({
-        id: `demo-send-${idx + 1}`,
-        channel: idx % 2 === 0 ? 'email' : 'slack',
-        recipientCount: 12 + idx * 3,
-        sentBy: 'demo',
-        sentAt: new Date(Date.now() - idx * 2 * 86400000).toISOString(),
-      }));
-      setSegments(demoSegments);
-      setPlans(demoPlans);
-      setOverduePlans(demoOverdue);
-      setSendLog(demoLog);
-      return;
-    }
     setCommLoading(true);
     try {
       const [segRes, planRes, overdueRes, logRes] = await Promise.all([
-        fetch(`/api/stakeholder-comm/segments?${qs}`),
-        fetch(`/api/stakeholder-comm/plans?${qs}`),
-        fetch(`/api/stakeholder-comm/overdue`),
-        fetch(`/api/stakeholder-comm/log?${qs}&limit=20`),
+        fetch(`/api/stakeholder-comm/segments?${qs}`, { headers: getHeaders() }),
+        fetch(`/api/stakeholder-comm/plans?${qs}`, { headers: getHeaders() }),
+        fetch(`/api/stakeholder-comm/overdue`, { headers: getHeaders() }),
+        fetch(`/api/stakeholder-comm/log?${qs}&limit=20`, { headers: getHeaders() }),
       ]);
       const segData = await segRes.json();
       const planData = await planRes.json();
@@ -313,7 +203,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
       /* ignore */
     }
     setCommLoading(false);
-  }, [demoMode, qs]);
+  }, [qs]);
 
   useEffect(() => {
     if (activeSubTab === 'capability') {
@@ -335,7 +225,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
     try {
       await fetch('/api/change-sentiment/pulse', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({
           initiativeId,
           projectId,
@@ -356,7 +246,10 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
 
   const handleAcknowledgeAlert = async (alertId: string) => {
     try {
-      await fetch(`/api/change-sentiment/alerts/${alertId}/acknowledge`, { method: 'POST' });
+      await fetch(`/api/change-sentiment/alerts/${alertId}/acknowledge`, {
+        method: 'POST',
+        headers: getHeaders(),
+      });
       trackFunnelEvent('change_resistance_alert_clicked');
       fetchSentiment();
     } catch {

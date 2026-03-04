@@ -1,8 +1,8 @@
-import { Calendar, Target, TrendingUp, X } from 'lucide-react';
+import { Calendar, Link2, Pencil, Target, Trash2, TrendingUp, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Api, API_URL, getHeaders } from '@/services/api';
+import { Api } from '@/services/api';
 import { InitiativeKPI, KPIMeasurement } from '@/types/core';
 
 interface KPITimeSeriesDrawerProps {
@@ -33,6 +33,17 @@ type DeviationCase = {
   actions?: DeviationAction[];
 };
 
+type InitiativeOption = { id: string; name: string };
+
+type KpiMappingRow = {
+  id: string;
+  initiative_id: string;
+  initiative_name?: string | null;
+  kpi_id: string;
+  kpi_name?: string | null;
+  impact_direction?: string | null;
+};
+
 export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   kpiId,
   onClose,
@@ -54,24 +65,57 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   const [newNotes, setNewNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const [editMode, setEditMode] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const [settingsName, setSettingsName] = useState('');
+  const [settingsDescription, setSettingsDescription] = useState('');
+  const [settingsUnit, setSettingsUnit] = useState('');
+  const [settingsBaseline, setSettingsBaseline] = useState('');
+  const [settingsTarget, setSettingsTarget] = useState('');
+  const [settingsFrequency, setSettingsFrequency] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY'>(
+    'MONTHLY'
+  );
+  const [settingsDirection, setSettingsDirection] = useState<'increase' | 'decrease'>('increase');
+
+  const [initiatives, setInitiatives] = useState<InitiativeOption[]>([]);
+  const [initiativeSearch, setInitiativeSearch] = useState('');
+  const [mappings, setMappings] = useState<KpiMappingRow[]>([]);
+  const [mappingBusy, setMappingBusy] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res: any = await Api.get('/initiatives');
+        const data = (res?.data ?? res) as any;
+        setInitiatives((data || []).map((i: any) => ({ id: i.id, name: i.name || i.title })));
+      } catch {
+        // silent
+      }
+    })();
+  }, []);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [kpiRes, tsRes, casesRes] = await Promise.all([
-        fetch(`${API_URL}/benefits/kpis`, { headers: getHeaders() }),
-        fetch(`${API_URL}/benefits/kpis/${kpiId}/time-series`, { headers: getHeaders() }),
-        fetch(`${API_URL}/benefits/kpis/${kpiId}/deviation-cases?openOnly=1`, { headers: getHeaders() }),
+      const [kpisRes, tsRes, casesRes, mappingsRes] = await Promise.allSettled([
+        Api.get('/benefits/kpis'),
+        Api.get(`/benefits/kpis/${kpiId}/time-series`),
+        Api.get(`/benefits/kpis/${kpiId}/deviation-cases?openOnly=1`),
+        Api.get(`/benefits/kpi-mappings?kpiId=${encodeURIComponent(kpiId)}`),
       ]);
 
-      if (kpiRes.ok) {
-        const json = await kpiRes.json();
-        const all = json?.data || json || [];
-        const found = (all || []).find((k: any) => k.id === kpiId);
+      if (kpisRes.status === 'fulfilled') {
+        const payload: any = kpisRes.value as any;
+        const all = payload?.data ?? payload ?? [];
+        const found = (all || []).find((k: any) => String(k?.id) === String(kpiId));
         if (found) setKpi(found);
       }
-      if (tsRes.ok) {
-        const json = await tsRes.json();
-        const ts = json?.data || json || [];
+
+      if (tsRes.status === 'fulfilled') {
+        const payload: any = tsRes.value as any;
+        const ts = payload?.data ?? payload ?? [];
         setMeasurements(
           (ts || []).sort(
             (a: KPIMeasurement, b: KPIMeasurement) =>
@@ -80,15 +124,23 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         );
       }
 
-      if (casesRes.ok) {
-        const json = await casesRes.json();
-        const list = json?.data || [];
+      if (casesRes.status === 'fulfilled') {
+        const payload: any = casesRes.value as any;
+        const list = payload?.data ?? payload ?? [];
         const first = Array.isArray(list) && list.length > 0 ? (list[0] as DeviationCase) : null;
         setOpenCase(first);
         setRcaDraft(first?.rcaText || '');
       } else {
         setOpenCase(null);
         setRcaDraft('');
+      }
+
+      if (mappingsRes.status === 'fulfilled') {
+        const payload: any = mappingsRes.value as any;
+        const rows = (payload?.data ?? payload ?? []) as any[];
+        setMappings((rows || []) as KpiMappingRow[]);
+      } else {
+        setMappings([]);
       }
     } catch {
       // silent
@@ -100,6 +152,26 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    if (!kpi) return;
+    if (editMode) return;
+    setSettingsName(String((kpi as any)?.name || ''));
+    setSettingsDescription(String((kpi as any)?.description || ''));
+    setSettingsUnit(String((kpi as any)?.unit || ''));
+    setSettingsBaseline(
+      (kpi as any)?.baselineValue != null && (kpi as any)?.baselineValue !== ''
+        ? String((kpi as any).baselineValue)
+        : ''
+    );
+    setSettingsTarget(
+      (kpi as any)?.targetValue != null && (kpi as any)?.targetValue !== ''
+        ? String((kpi as any).targetValue)
+        : ''
+    );
+    setSettingsFrequency(((kpi as any)?.measurementFrequency || 'MONTHLY') as any);
+    setSettingsDirection((kpi as any)?.direction === 'LOWER_IS_BETTER' ? 'decrease' : 'increase');
+  }, [kpi, editMode]);
 
   const handleRecord = useCallback(
     async (e: React.FormEvent) => {
@@ -123,6 +195,103 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       }
     },
     [kpiId, newValue, newDate, newNotes, fetchData, onValueRecorded]
+  );
+
+  const handleSaveSettings = useCallback(async () => {
+    if (!settingsName.trim()) return;
+    setSavingSettings(true);
+    try {
+      const kpiDirection = settingsDirection === 'decrease' ? 'LOWER_IS_BETTER' : 'HIGHER_IS_BETTER';
+      await Api.put(`/benefits/kpis/${kpiId}`, {
+        name: settingsName.trim(),
+        description: settingsDescription.trim() || undefined,
+        unit: settingsUnit.trim() || undefined,
+        baselineValue: settingsBaseline !== '' ? Number(settingsBaseline) : null,
+        targetValue: settingsTarget !== '' ? Number(settingsTarget) : null,
+        measurementFrequency: settingsFrequency,
+        direction: kpiDirection,
+      });
+      setEditMode(false);
+      fetchData();
+      onValueRecorded?.();
+    } catch {
+      // silent
+    } finally {
+      setSavingSettings(false);
+    }
+  }, [
+    fetchData,
+    kpiId,
+    onValueRecorded,
+    settingsBaseline,
+    settingsDescription,
+    settingsDirection,
+    settingsFrequency,
+    settingsName,
+    settingsTarget,
+    settingsUnit,
+  ]);
+
+  const handleDeleteKpi = useCallback(async () => {
+    if (!kpiId) return;
+    const ok = window.confirm(
+      t(
+        'results.drawer.deleteConfirm',
+        'Delete this KPI? This will remove its measurements, mappings, and deviation cases.'
+      )
+    );
+    if (!ok) return;
+    setDeleting(true);
+    try {
+      await Api.delete(`/benefits/kpis/${kpiId}`);
+      onValueRecorded?.();
+      onClose();
+    } catch {
+      // silent
+    } finally {
+      setDeleting(false);
+    }
+  }, [kpiId, onClose, onValueRecorded, t]);
+
+  const handleLinkInitiative = useCallback(
+    async (initiativeId: string) => {
+      if (!initiativeId) return;
+      setMappingBusy(true);
+      try {
+        await Api.post('/benefits/kpi-mappings', {
+          initiativeId,
+          kpiId,
+          impactWeight: 1.0,
+          impactDirection: settingsDirection === 'decrease' ? 'decrease' : 'increase',
+          confidence: 'medium',
+        });
+        setInitiativeSearch('');
+        fetchData();
+        onValueRecorded?.();
+      } catch {
+        // silent
+      } finally {
+        setMappingBusy(false);
+      }
+    },
+    [fetchData, kpiId, onValueRecorded, settingsDirection]
+  );
+
+  const handleUnlinkMapping = useCallback(
+    async (mappingId: string) => {
+      if (!mappingId) return;
+      setMappingBusy(true);
+      try {
+        await Api.delete(`/benefits/kpi-mappings/${mappingId}`);
+        fetchData();
+        onValueRecorded?.();
+      } catch {
+        // silent
+      } finally {
+        setMappingBusy(false);
+      }
+    },
+    [fetchData, onValueRecorded]
   );
 
   const quickStats: QuickStat[] = useMemo(() => {
@@ -571,6 +740,246 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     {t('results.drawer.noMeasurements', 'No measurements yet')}
                   </p>
                 )}
+              </div>
+
+              {/* Settings */}
+              <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {t('results.drawer.settingsTitle', 'Settings')}
+                  </div>
+                  {!editMode ? (
+                    <button
+                      type="button"
+                      onClick={() => setEditMode(true)}
+                      className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <Pencil size={14} />
+                        {t('common.edit', 'Edit')}
+                      </span>
+                    </button>
+                  ) : null}
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                      {t('results.createModal.name', 'Name')} *
+                    </div>
+                    <input
+                      className={inputCls}
+                      value={settingsName}
+                      onChange={(e) => setSettingsName(e.target.value)}
+                      disabled={!editMode}
+                    />
+                  </div>
+
+                  <div>
+                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                      {t('results.createModal.description', 'Description')}
+                    </div>
+                    <textarea
+                      className={`${inputCls} h-20 resize-none py-2`}
+                      value={settingsDescription}
+                      onChange={(e) => setSettingsDescription(e.target.value)}
+                      disabled={!editMode}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                        {t('results.createModal.unit', 'Unit')}
+                      </div>
+                      <input
+                        className={inputCls}
+                        value={settingsUnit}
+                        onChange={(e) => setSettingsUnit(e.target.value)}
+                        disabled={!editMode}
+                      />
+                    </div>
+                    <div>
+                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                        {t('results.columns.baseline', 'Baseline')}
+                      </div>
+                      <input
+                        className={inputCls}
+                        type="number"
+                        value={settingsBaseline}
+                        onChange={(e) => setSettingsBaseline(e.target.value)}
+                        disabled={!editMode}
+                      />
+                    </div>
+                    <div>
+                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                        {t('results.columns.target', 'Target')}
+                      </div>
+                      <input
+                        className={inputCls}
+                        type="number"
+                        value={settingsTarget}
+                        onChange={(e) => setSettingsTarget(e.target.value)}
+                        disabled={!editMode}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                        {t('results.createModal.frequency', 'Frequency')}
+                      </div>
+                      <select
+                        className={`${inputCls} appearance-none`}
+                        value={settingsFrequency}
+                        onChange={(e) => setSettingsFrequency(e.target.value as any)}
+                        disabled={!editMode}
+                      >
+                        <option value="DAILY">Daily</option>
+                        <option value="WEEKLY">Weekly</option>
+                        <option value="MONTHLY">Monthly</option>
+                        <option value="QUARTERLY">Quarterly</option>
+                      </select>
+                    </div>
+                    <div>
+                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                        {t('results.createModal.direction', 'Direction')}
+                      </div>
+                      <select
+                        className={`${inputCls} appearance-none`}
+                        value={settingsDirection}
+                        onChange={(e) => setSettingsDirection(e.target.value as any)}
+                        disabled={!editMode}
+                      >
+                        <option value="increase">{t('results.direction.increase', 'Increase')}</option>
+                        <option value="decrease">{t('results.direction.decrease', 'Decrease')}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {editMode ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={savingSettings || !settingsName.trim()}
+                        onClick={() => void handleSaveSettings()}
+                        className="h-8 px-3 rounded-full text-xs font-medium border border-primary-500/30 bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/15 transition-colors disabled:opacity-60"
+                      >
+                        {savingSettings ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={savingSettings}
+                        onClick={() => {
+                          setEditMode(false);
+                          setSettingsName(String((kpi as any)?.name || ''));
+                          setSettingsDescription(String((kpi as any)?.description || ''));
+                          setSettingsUnit(String((kpi as any)?.unit || ''));
+                          setSettingsBaseline(
+                            (kpi as any)?.baselineValue != null ? String((kpi as any).baselineValue) : ''
+                          );
+                          setSettingsTarget(
+                            (kpi as any)?.targetValue != null ? String((kpi as any).targetValue) : ''
+                          );
+                          setSettingsFrequency(((kpi as any)?.measurementFrequency || 'MONTHLY') as any);
+                          setSettingsDirection(
+                            (kpi as any)?.direction === 'LOWER_IS_BETTER' ? 'decrease' : 'increase'
+                          );
+                        }}
+                        className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-500 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors disabled:opacity-60"
+                      >
+                        {t('common.cancel', 'Cancel')}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              {/* Links */}
+              <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {t('results.drawer.linksTitle', 'Linked initiatives')}
+                  </div>
+                  <Link2 size={16} className="text-slate-400" />
+                </div>
+
+                {(mappings || []).length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {mappings.map((m) => (
+                      <span
+                        key={m.id}
+                        className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/70 dark:bg-white/[0.04] border border-slate-200/70 dark:border-white/[0.08] text-xs text-slate-700 dark:text-slate-200"
+                      >
+                        <span className="truncate max-w-[220px]">
+                          {m.initiative_name || t('common.unknown', 'Unknown')}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={mappingBusy}
+                          onClick={() => void handleUnlinkMapping(m.id)}
+                          className="text-slate-400 hover:text-red-400 transition-colors disabled:opacity-60"
+                          title={t('common.remove', 'Remove')}
+                        >
+                          <X size={12} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                    {t('results.drawer.noLinks', 'No linked initiatives')}
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <input
+                    className={inputCls}
+                    value={initiativeSearch}
+                    onChange={(e) => setInitiativeSearch(e.target.value)}
+                    placeholder={t('results.drawer.linkSearch', 'Search initiatives to link...')}
+                    disabled={mappingBusy}
+                  />
+                  <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30">
+                    {initiatives
+                      .filter((i) => {
+                        if (!initiativeSearch.trim()) return true;
+                        return i.name.toLowerCase().includes(initiativeSearch.toLowerCase());
+                      })
+                      .filter((i) => !mappings.some((m) => String(m.initiative_id) === String(i.id)))
+                      .slice(0, 25)
+                      .map((i) => (
+                        <button
+                          key={i.id}
+                          type="button"
+                          disabled={mappingBusy}
+                          onClick={() => void handleLinkInitiative(i.id)}
+                          className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.04] transition-colors disabled:opacity-60"
+                        >
+                          {i.name}
+                        </button>
+                      ))}
+                    {initiatives.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+                        {t('common.loading', 'Loading...')}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+
+              {/* Danger zone */}
+              <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4">
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={() => void handleDeleteKpi()}
+                  className="w-full h-9 text-sm font-medium rounded-full border border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-300 hover:bg-red-500/15 transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                >
+                  <Trash2 size={16} />
+                  {deleting ? t('common.deleting', 'Deleting...') : t('common.delete', 'Delete')}
+                </button>
               </div>
             </div>
           )}

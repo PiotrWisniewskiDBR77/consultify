@@ -129,7 +129,7 @@ class BillingServiceClass {
     return this.#queryService.getInvoices(orgId);
   }
 
-  async recordInvoice(orgId: string, stripeInvoice: import('stripe').Stripe.Invoice) {
+  async recordInvoice(orgId: string, stripeInvoice: Stripe.Invoice) {
     await this.#ensureInitialized();
     return this.#commandService.recordInvoice(orgId, stripeInvoice);
   }
@@ -218,16 +218,6 @@ class BillingServiceClass {
     await this.#ensureInitialized();
     return this.#queryService.getBillingModel(orgId);
   }
-
-  async getGracePeriodStatus(orgId: string) {
-    await this.#ensureInitialized();
-    return this.#commandService.getGracePeriodStatus(orgId);
-  }
-
-  async reactivateSubscription(orgId: string) {
-    await this.#ensureInitialized();
-    return this.#commandService.reactivateSubscription(orgId);
-  }
 }
 
 const billingServiceInstance = new BillingServiceClass();
@@ -264,7 +254,7 @@ export const cancelSubscription = (orgId: string) =>
 export const changePlan = (orgId: string, newPlanId: string) =>
   billingServiceInstance.changePlan(orgId, newPlanId);
 export const getInvoices = (orgId: string) => billingServiceInstance.getInvoices(orgId);
-export const recordInvoice = (orgId: string, stripeInvoice: import('stripe').Stripe.Invoice) =>
+export const recordInvoice = (orgId: string, stripeInvoice: Stripe.Invoice) =>
   billingServiceInstance.recordInvoice(orgId, stripeInvoice);
 export const getRevenueStats = () => billingServiceInstance.getRevenueStats();
 export const getPaymentMethods = (orgId: string) => billingServiceInstance.getPaymentMethods(orgId);
@@ -294,7 +284,3 @@ export const calculateSeatCost = (orgId: string, quantity: number) =>
 export const processSeatPurchase = (orgId: string, quantity: number, paymentMethodId: string) =>
   billingServiceInstance.processSeatPurchase(orgId, quantity, paymentMethodId);
 export const getBillingModel = (orgId: string) => billingServiceInstance.getBillingModel(orgId);
-export const getGracePeriodStatus = (orgId: string) =>
-  billingServiceInstance.getGracePeriodStatus(orgId);
-export const reactivateSubscription = (orgId: string) =>
-  billingServiceInstance.reactivateSubscription(orgId);

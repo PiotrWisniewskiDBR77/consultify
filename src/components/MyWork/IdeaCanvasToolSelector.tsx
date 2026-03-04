@@ -12,9 +12,9 @@ import { Network, PenTool, Table2, Workflow } from 'lucide-react';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
-// ── Shared data model (V3-C06) ──────────────────────────────────────────────
-
-export type CanvasToolType = 'mindmap' | 'process_flow' | 'table' | 'whiteboard';
+// Re-export from canonical location
+export type { CanvasToolType } from './ideaSelectionTypes';
+import type { CanvasToolType } from './ideaSelectionTypes';
 
 export interface IdeaNode {
   id: string;

@@ -1,0 +1,217 @@
+/**
+ * AIPriorityRecommender — AI suggests prioritization based on impact/effort
+ * analysis with company KPI context.
+ */
+import { ArrowUpDown, CheckCircle2, Loader2, Sparkles, Target, X, Zap } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '@/services/api';
+
+interface PriorityRecommendation {
+  nodeId: string;
+  label: string;
+  branchKey: string;
+  currentPriority: number;
+  suggestedPriority: number;
+  impact: 'high' | 'medium' | 'low';
+  effort: 'high' | 'medium' | 'low';
+  rationale: string;
+  rank: number;
+}
+
+interface AIPriorityRecommenderProps {
+  open: boolean;
+  onClose: () => void;
+  ideaId: string;
+  ideaTitle: string;
+  nodes: Array<{ id: string; data: any }>;
+  locked: boolean;
+  onApplyPriorities: (updates: Array<{ nodeId: string; priority: number }>) => void;
+}
+
+const IMPACT_COLORS = { high: 'text-emerald-600 bg-emerald-500/10', medium: 'text-amber-600 bg-amber-500/10', low: 'text-slate-500 bg-slate-500/10' };
+const EFFORT_COLORS = { high: 'text-red-600 bg-red-500/10', medium: 'text-amber-600 bg-amber-500/10', low: 'text-emerald-600 bg-emerald-500/10' };
+
+export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
+  open,
+  onClose,
+  ideaId,
+  ideaTitle,
+  nodes,
+  locked,
+  onApplyPriorities,
+}) => {
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
+
+  const [recommendations, setRecommendations] = useState<PriorityRecommendation[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [sortBy, setSortBy] = useState<'rank' | 'impact' | 'effort'>('rank');
+
+  const analyze = useCallback(async () => {
+    setLoading(true);
+    try {
+      const ideaNodes = nodes.filter((n) => n.id !== 'root' && !n.id.startsWith('branch-'));
+      const nodeDescriptions = ideaNodes.map((n, idx) => `${idx}. [${n.data?.branchKey}] "${n.data?.label}" (current priority: ${n.data?.priority ?? 50})`);
+
+      const res = await Api.getMyIdeaAISuggestions(ideaId, {
+        seedText: `Prioritize these ideas for "${ideaTitle}" using impact/effort analysis. Consider business value, feasibility, and dependencies.\n\nIdeas:\n${nodeDescriptions.join('\n')}\n\nReturn suggestions with priority scores (0-100), impact (high/medium/low), effort (high/medium/low).`,
+        mapNodes: nodes.map((n) => ({ id: n.id, type: 'idea', data: { label: n.data?.label, branchKey: n.data?.branchKey } })),
+        activeTool: 'mindmap',
+        language: i18n.language,
+      });
+
+      if (res?.suggestions && Array.isArray(res.suggestions)) {
+        const recs: PriorityRecommendation[] = res.suggestions.slice(0, ideaNodes.length).map((s: any, idx: number) => {
+          const node = ideaNodes[idx] || ideaNodes[0];
+          const confidence = s.confidence ?? 0.5;
+          return {
+            nodeId: node?.id || `unknown-${idx}`,
+            label: node?.data?.label || s.text || 'Unknown',
+            branchKey: node?.data?.branchKey || '?',
+            currentPriority: node?.data?.priority ?? 50,
+            suggestedPriority: Math.round(confidence * 100),
+            impact: confidence > 0.7 ? 'high' : confidence > 0.4 ? 'medium' : 'low',
+            effort: confidence > 0.6 ? 'low' : confidence > 0.3 ? 'medium' : 'high',
+            rationale: s.detail || s.text || '',
+            rank: idx + 1,
+          };
+        });
+        setRecommendations(recs);
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to analyze priorities');
+    } finally {
+      setLoading(false);
+    }
+  }, [i18n.language, ideaId, ideaTitle, nodes]);
+
+  const sorted = React.useMemo(() => {
+    const copy = [...recommendations];
+    if (sortBy === 'impact') copy.sort((a, b) => { const order = { high: 0, medium: 1, low: 2 }; return order[a.impact] - order[b.impact]; });
+    if (sortBy === 'effort') copy.sort((a, b) => { const order = { low: 0, medium: 1, high: 2 }; return order[a.effort] - order[b.effort]; });
+    return copy;
+  }, [recommendations, sortBy]);
+
+  const handleApplyAll = useCallback(() => {
+    onApplyPriorities(recommendations.map((r) => ({ nodeId: r.nodeId, priority: r.suggestedPriority })));
+    toast.success(isPl ? 'Priorytety zaktualizowane' : 'Priorities updated', { duration: 1200 });
+    onClose();
+  }, [isPl, onApplyPriorities, onClose, recommendations]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
+      <div className="w-full max-w-2xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+          <div>
+            <div className="flex items-center gap-2">
+              <Target size={16} className="text-amber-500" />
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+                {isPl ? 'AI: Priorytetyzacja' : 'AI: Priority Recommender'}
+              </h3>
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              {isPl ? 'Analiza impact/effort z kontekstem KPI firmy.' : 'Impact/effort analysis with company KPI context.'}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
+          {recommendations.length === 0 && !loading && (
+            <div className="text-center py-8">
+              <ArrowUpDown size={36} className="text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
+                {isPl ? 'AI przeanalizuje priorytety Twoich pomysłów.' : 'AI will analyze the priorities of your ideas.'}
+              </p>
+              <button
+                onClick={analyze}
+                disabled={loading || locked}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/15 to-orange-500/10 text-[11px] font-bold text-amber-700 dark:text-amber-300 hover:from-amber-500/25 hover:to-orange-500/15 transition-all disabled:opacity-40"
+              >
+                <Sparkles size={14} />
+                {isPl ? 'Analizuj priorytety' : 'Analyze priorities'}
+              </button>
+            </div>
+          )}
+
+          {loading && (
+            <div className="flex items-center justify-center gap-2 py-8">
+              <Loader2 size={16} className="animate-spin text-amber-500" />
+              <span className="text-[11px] text-slate-500">{isPl ? 'Analizuję...' : 'Analyzing...'}</span>
+            </div>
+          )}
+
+          {recommendations.length > 0 && (
+            <>
+              {/* Sort controls */}
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">{isPl ? 'Sortuj:' : 'Sort:'}</span>
+                {(['rank', 'impact', 'effort'] as const).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSortBy(s)}
+                    className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-colors ${sortBy === s ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'text-slate-400 hover:text-slate-600'}`}
+                  >
+                    {s === 'rank' ? (isPl ? 'Ranking' : 'Rank') : s === 'impact' ? 'Impact' : 'Effort'}
+                  </button>
+                ))}
+              </div>
+
+              {/* Table */}
+              <div className="space-y-1.5">
+                {sorted.map((rec) => (
+                  <div key={rec.nodeId} className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30">
+                    <div className="w-6 h-6 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 flex items-center justify-center text-[10px] font-bold shrink-0">
+                      {rec.rank}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate">{rec.label}</div>
+                      <div className="text-[9px] text-slate-400">{rec.branchKey}</div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${IMPACT_COLORS[rec.impact]}`}>
+                        {isPl ? 'Wpływ' : 'Impact'}: {rec.impact}
+                      </span>
+                      <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${EFFORT_COLORS[rec.effort]}`}>
+                        {isPl ? 'Wysiłek' : 'Effort'}: {rec.effort}
+                      </span>
+                    </div>
+                    <div className="w-10 text-right">
+                      <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400">{rec.suggestedPriority}</div>
+                      <div className="text-[8px] text-slate-400 line-through">{rec.currentPriority}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {recommendations.length > 0 && (
+          <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center gap-2">
+            <button onClick={onClose} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors">
+              {isPl ? 'Anuluj' : 'Cancel'}
+            </button>
+            <button
+              onClick={handleApplyAll}
+              disabled={locked}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-amber-500/15 to-orange-500/10 text-amber-700 dark:text-amber-300 hover:from-amber-500/25 hover:to-orange-500/15 border border-amber-500/10 transition-all disabled:opacity-40"
+            >
+              <CheckCircle2 size={12} />
+              {isPl ? 'Zastosuj priorytety' : 'Apply priorities'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default AIPriorityRecommender;

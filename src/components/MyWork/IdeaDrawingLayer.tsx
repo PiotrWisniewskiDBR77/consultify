@@ -1,0 +1,350 @@
+/**
+ * IdeaDrawingLayer — SVG drawing overlay for the whiteboard canvas.
+ *
+ * Supports: pen tool, highlighter, eraser, color picker, stroke width.
+ * Drawings are stored as SVG path data in the graph extensions.
+ */
+import {
+  Circle,
+  Eraser,
+  Highlighter,
+  Minus,
+  Pen,
+  Plus,
+  Redo2,
+  Trash2,
+  Undo2,
+  X,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+export interface DrawingPath {
+  id: string;
+  d: string;
+  stroke: string;
+  strokeWidth: number;
+  opacity: number;
+  tool: 'pen' | 'highlighter';
+}
+
+export interface IdeaDrawingLayerProps {
+  active: boolean;
+  onClose: () => void;
+  paths: DrawingPath[];
+  onPathsChange: (paths: DrawingPath[]) => void;
+  viewportTransform?: { x: number; y: number; zoom: number };
+}
+
+const COLORS = [
+  '#1e293b', '#ef4444', '#f97316', '#eab308', '#22c55e',
+  '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#ffffff',
+];
+
+const MIN_STROKE = 1;
+const MAX_STROKE = 12;
+
+type DrawTool = 'pen' | 'highlighter' | 'eraser';
+
+export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
+  active,
+  onClose,
+  paths,
+  onPathsChange,
+  viewportTransform,
+}) => {
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  const [tool, setTool] = useState<DrawTool>('pen');
+  const [color, setColor] = useState('#1e293b');
+  const [strokeWidth, setStrokeWidth] = useState(3);
+  const [drawing, setDrawing] = useState(false);
+  const [currentPath, setCurrentPath] = useState('');
+  const [undoStack, setUndoStack] = useState<DrawingPath[][]>([]);
+  const [redoStack, setRedoStack] = useState<DrawingPath[][]>([]);
+
+  const screenToCanvas = useCallback((clientX: number, clientY: number) => {
+    const svg = svgRef.current;
+    if (!svg) return { x: 0, y: 0 };
+    const rect = svg.getBoundingClientRect();
+    const sx = clientX - rect.left;
+    const sy = clientY - rect.top;
+    if (!viewportTransform) return { x: sx, y: sy };
+    const { x: vx, y: vy, zoom } = viewportTransform;
+    return { x: (sx - vx) / zoom, y: (sy - vy) / zoom };
+  }, [viewportTransform]);
+
+  const startDrawing = useCallback((e: React.PointerEvent) => {
+    if (!active) return;
+    const svg = svgRef.current;
+    if (!svg) return;
+    const { x, y } = screenToCanvas(e.clientX, e.clientY);
+
+    if (tool === 'eraser') {
+      const target = e.target as SVGElement;
+      const pathId = target.getAttribute('data-path-id');
+      if (pathId) {
+        setUndoStack((prev) => [...prev, paths]);
+        setRedoStack([]);
+        onPathsChange(paths.filter((p) => p.id !== pathId));
+      }
+      return;
+    }
+
+    setDrawing(true);
+    setCurrentPath(`M ${x} ${y}`);
+    svg.setPointerCapture(e.pointerId);
+  }, [active, onPathsChange, paths, screenToCanvas, tool]);
+
+  const continueDrawing = useCallback((e: React.PointerEvent) => {
+    if (!drawing || !active) return;
+    const { x, y } = screenToCanvas(e.clientX, e.clientY);
+    setCurrentPath((prev) => `${prev} L ${x} ${y}`);
+  }, [active, drawing, screenToCanvas]);
+
+  const endDrawing = useCallback((e: React.PointerEvent) => {
+    if (!drawing || !active) return;
+    setDrawing(false);
+    if (currentPath.length < 10) return;
+
+    const newPath: DrawingPath = {
+      id: `draw-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      d: currentPath,
+      stroke: color,
+      strokeWidth,
+      opacity: tool === 'highlighter' ? 0.35 : 1,
+      tool: tool as 'pen' | 'highlighter',
+    };
+
+    setUndoStack((prev) => [...prev, paths]);
+    setRedoStack([]);
+    onPathsChange([...paths, newPath]);
+    setCurrentPath('');
+  }, [active, color, currentPath, drawing, onPathsChange, paths, strokeWidth, tool]);
+
+  const handleUndo = useCallback(() => {
+    if (undoStack.length === 0) return;
+    const prev = undoStack[undoStack.length - 1];
+    setRedoStack((r) => [...r, paths]);
+    setUndoStack((u) => u.slice(0, -1));
+    onPathsChange(prev);
+  }, [onPathsChange, paths, undoStack]);
+
+  const handleRedo = useCallback(() => {
+    if (redoStack.length === 0) return;
+    const next = redoStack[redoStack.length - 1];
+    setUndoStack((u) => [...u, paths]);
+    setRedoStack((r) => r.slice(0, -1));
+    onPathsChange(next);
+  }, [onPathsChange, paths, redoStack]);
+
+  const handleClear = useCallback(() => {
+    if (paths.length === 0) return;
+    setUndoStack((prev) => [...prev, paths]);
+    setRedoStack([]);
+    onPathsChange([]);
+  }, [onPathsChange, paths]);
+
+  useEffect(() => {
+    if (!active) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); handleUndo(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); handleRedo(); }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [active, handleRedo, handleUndo, onClose]);
+
+  const vpTransformStr = viewportTransform
+    ? `translate(${viewportTransform.x}, ${viewportTransform.y}) scale(${viewportTransform.zoom})`
+    : undefined;
+
+  if (!active) {
+    if (paths.length === 0) return null;
+    return (
+      <svg className="absolute inset-0 w-full h-full pointer-events-none z-[5]">
+        <g transform={vpTransformStr}>
+          {paths.map((p) => (
+            <path
+              key={p.id}
+              d={p.d}
+              fill="none"
+              stroke={p.stroke}
+              strokeWidth={p.strokeWidth}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={p.opacity}
+            />
+          ))}
+        </g>
+      </svg>
+    );
+  }
+
+  return (
+    <div className="absolute inset-0 z-[70]">
+      {/* Drawing SVG */}
+      <svg
+        ref={svgRef}
+        className={`absolute inset-0 w-full h-full ${tool === 'eraser' ? 'cursor-crosshair' : 'cursor-crosshair'}`}
+        onPointerDown={startDrawing}
+        onPointerMove={continueDrawing}
+        onPointerUp={endDrawing}
+        style={{ touchAction: 'none' }}
+      >
+        <g transform={vpTransformStr}>
+          {/* Existing paths */}
+          {paths.map((p) => (
+            <path
+              key={p.id}
+              data-path-id={p.id}
+              d={p.d}
+              fill="none"
+              stroke={p.stroke}
+              strokeWidth={tool === 'eraser' ? p.strokeWidth + 4 : p.strokeWidth}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={p.opacity}
+              className={tool === 'eraser' ? 'cursor-pointer hover:opacity-30' : ''}
+            />
+          ))}
+          {/* Current drawing path */}
+          {currentPath && (
+            <path
+              d={currentPath}
+              fill="none"
+              stroke={color}
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={tool === 'highlighter' ? 0.35 : 1}
+            />
+          )}
+        </g>
+      </svg>
+
+      {/* Toolbar */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[75]">
+        <div className="flex items-center gap-1 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-xl px-3 py-2">
+          {/* Tool selection */}
+          <ToolBtn
+            active={tool === 'pen'}
+            onClick={() => setTool('pen')}
+            icon={Pen}
+            label={isPl ? 'Pióro' : 'Pen'}
+          />
+          <ToolBtn
+            active={tool === 'highlighter'}
+            onClick={() => setTool('highlighter')}
+            icon={Highlighter}
+            label={isPl ? 'Zakreślacz' : 'Highlighter'}
+          />
+          <ToolBtn
+            active={tool === 'eraser'}
+            onClick={() => setTool('eraser')}
+            icon={Eraser}
+            label={isPl ? 'Gumka' : 'Eraser'}
+          />
+
+          <div className="w-px h-6 bg-slate-200 dark:bg-navy-700 mx-1" />
+
+          {/* Color picker */}
+          <div className="flex items-center gap-0.5">
+            {COLORS.map((c) => (
+              <button
+                key={c}
+                onClick={() => setColor(c)}
+                className={`w-4 h-4 rounded-full border transition-all ${
+                  color === c ? 'ring-2 ring-primary-500 ring-offset-1 scale-110' : 'border-slate-300 dark:border-navy-600'
+                }`}
+                style={{ backgroundColor: c }}
+              />
+            ))}
+          </div>
+
+          <div className="w-px h-6 bg-slate-200 dark:bg-navy-700 mx-1" />
+
+          {/* Stroke width */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setStrokeWidth(Math.max(MIN_STROKE, strokeWidth - 1))}
+              className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            >
+              <Minus size={10} />
+            </button>
+            <div className="flex items-center justify-center w-6">
+              <Circle
+                size={Math.max(4, Math.min(14, strokeWidth * 2))}
+                className="text-slate-600 dark:text-slate-400 fill-current"
+              />
+            </div>
+            <button
+              onClick={() => setStrokeWidth(Math.min(MAX_STROKE, strokeWidth + 1))}
+              className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            >
+              <Plus size={10} />
+            </button>
+          </div>
+
+          <div className="w-px h-6 bg-slate-200 dark:bg-navy-700 mx-1" />
+
+          {/* Undo/Redo/Clear */}
+          <button
+            onClick={handleUndo}
+            disabled={undoStack.length === 0}
+            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 disabled:opacity-30"
+          >
+            <Undo2 size={14} />
+          </button>
+          <button
+            onClick={handleRedo}
+            disabled={redoStack.length === 0}
+            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 disabled:opacity-30"
+          >
+            <Redo2 size={14} />
+          </button>
+          <button
+            onClick={handleClear}
+            disabled={paths.length === 0}
+            className="p-1.5 text-slate-400 hover:text-red-500 disabled:opacity-30"
+          >
+            <Trash2 size={14} />
+          </button>
+
+          <div className="w-px h-6 bg-slate-200 dark:bg-navy-700 mx-1" />
+
+          <button
+            onClick={onClose}
+            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ToolBtn: React.FC<{
+  active: boolean;
+  onClick: () => void;
+  icon: React.ComponentType<{ size?: number }>;
+  label: string;
+}> = ({ active, onClick, icon: Icon, label }) => (
+  <button
+    onClick={onClick}
+    className={`p-1.5 rounded-lg transition-all ${
+      active
+        ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+    }`}
+    title={label}
+  >
+    <Icon size={14} />
+  </button>
+);
+
+export default IdeaDrawingLayer;

@@ -3758,6 +3758,277 @@ No markdown, no extra text.`;
   })
 );
 
+/**
+ * POST /api/my-work/my-ideas/:id/map/ai-suggestions
+ * Context-aware AI suggestions for the idea map.
+ * Body: { seedText, mapNodes, mapEdges?, activeTool?, language? }
+ */
+router.post(
+  '/my-ideas/:id/map/ai-suggestions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_ideas']))) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId || ideaId === 'all') return res.status(400).json({ error: 'Invalid idea id' });
+
+    const idea = await queryHelpers.queryOne<any>(
+      `SELECT id, title, seed_text as "seedText" FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!idea) return res.status(404).json({ error: 'Idea not found' });
+
+    const seedText = String(req.body?.seedText || idea?.seedText || '').trim();
+    const mapNodes = Array.isArray(req.body?.mapNodes) ? req.body.mapNodes : [];
+    const language = String(req.body?.language || 'en').toLowerCase();
+    const isPl = language.startsWith('pl');
+
+    const existingLabels = mapNodes
+      .map((n: any) => String(n?.data?.label || '').trim())
+      .filter(Boolean)
+      .slice(0, 100);
+
+    let suggestions: Array<{ id: string; category: string; text: string; detail: string; confidence: number }> = [];
+
+    try {
+      const { llmService } = await import('../services/ai/llmService.js');
+      const modelRouter = (await import('../services/ai/modelRouter.js')).default;
+      const modelCfg = await modelRouter.select({
+        capability: 'chat',
+        organizationId: orgId,
+        options: { tier: 'STANDARD' },
+      });
+
+      const prompt = isPl
+        ? `Analizujesz mapę pomysłów biznesowych. Kontekst: "${seedText}".
+Istniejące elementy: ${existingLabels.join(' | ')}.
+Zaproponuj 5-8 sugestii w kategoriach: topics, findings, next_steps.
+Zwróć TYLKO JSON array: [{"id":"s1","category":"topics|findings|next_steps","text":"...","detail":"...","confidence":0.8}]`
+        : `You are analyzing a business idea map. Context: "${seedText}".
+Existing items: ${existingLabels.join(' | ')}.
+Propose 5-8 suggestions in categories: topics, findings, next_steps.
+Return ONLY JSON array: [{"id":"s1","category":"topics|findings|next_steps","text":"...","detail":"...","confidence":0.8}]`;
+
+      const r = await llmService.callText({
+        type: 'text',
+        modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
+        systemPrompt: isPl
+          ? 'Jesteś konsultantem biznesowym. Odpowiadasz wyłącznie poprawnym JSON.'
+          : 'You are a business consultant. You respond only with valid JSON.',
+        messages: [{ role: 'user', content: prompt }],
+      });
+      const raw = String((r as any)?.content || '[]');
+      const jsonMatch = raw.match(/\[[\s\S]*\]/);
+      const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : '[]');
+      if (Array.isArray(parsed)) {
+        suggestions = parsed
+          .filter((x: any) => x?.text)
+          .map((x: any, idx: number) => ({
+            id: String(x.id || `s${idx + 1}`),
+            category: String(x.category || 'topics'),
+            text: String(x.text || '').trim(),
+            detail: String(x.detail || '').trim(),
+            confidence: Number(x.confidence) || 0.7,
+          }));
+      }
+    } catch (err: any) {
+      logger.warn('[IdeaMapAISuggestions] LLM failed:', err?.message);
+    }
+
+    res.json({ suggestions });
+  })
+);
+
+/**
+ * POST /api/my-work/my-ideas/:id/map/gap-analysis
+ * Identifies missing areas in the idea map.
+ * Body: { seedText, mapNodes, branchKeys?, language? }
+ */
+router.post(
+  '/my-ideas/:id/map/gap-analysis',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_ideas', 'my_idea_maps']))) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId || ideaId === 'all') return res.status(400).json({ error: 'Invalid idea id' });
+
+    const idea = await queryHelpers.queryOne<any>(
+      `SELECT id, title, seed_text as "seedText" FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!idea) return res.status(404).json({ error: 'Idea not found' });
+
+    const seedText = String(req.body?.seedText || idea?.seedText || '').trim();
+    const mapNodes = Array.isArray(req.body?.mapNodes) ? req.body.mapNodes : [];
+    const branchKeys = Array.isArray(req.body?.branchKeys) ? req.body.branchKeys : [];
+    const language = String(req.body?.language || 'en').toLowerCase();
+    const isPl = language.startsWith('pl');
+
+    const existingLabels = mapNodes
+      .map((n: any) => String(n?.data?.label || '').trim())
+      .filter(Boolean)
+      .slice(0, 100);
+
+    let gapNodes: any[] = [];
+    let gapEdges: any[] = [];
+    let rationale = '';
+
+    try {
+      const { llmService } = await import('../services/ai/llmService.js');
+      const modelRouter = (await import('../services/ai/modelRouter.js')).default;
+      const modelCfg = await modelRouter.select({
+        capability: 'chat',
+        organizationId: orgId,
+        options: { tier: 'STANDARD' },
+      });
+
+      const prompt = isPl
+        ? `Analizujesz mapę pomysłów biznesowych. Kontekst: "${seedText}".
+Istniejące gałęzie: ${branchKeys.join(', ')}.
+Istniejące elementy: ${existingLabels.join(' | ')}.
+Zidentyfikuj 3-5 brakujących obszarów (ryzyka, stakeholderzy, koszty, timeline, compliance itp.).
+Zwróć TYLKO JSON: {"rationale":"...","gaps":[{"title":"...","branchKey":"risks|goal|options|evidence|experiments|problem","nodeType":"gap"}]}`
+        : `You are analyzing a business idea map. Context: "${seedText}".
+Existing branches: ${branchKeys.join(', ')}.
+Existing items: ${existingLabels.join(' | ')}.
+Identify 3-5 missing areas (risks, stakeholders, costs, timeline, compliance, etc.).
+Return ONLY JSON: {"rationale":"...","gaps":[{"title":"...","branchKey":"risks|goal|options|evidence|experiments|problem","nodeType":"gap"}]}`;
+
+      const r = await llmService.callText({
+        type: 'text',
+        modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
+        systemPrompt: isPl
+          ? 'Jesteś konsultantem biznesowym. Odpowiadasz wyłącznie poprawnym JSON.'
+          : 'You are a business consultant. You respond only with valid JSON.',
+        messages: [{ role: 'user', content: prompt }],
+      });
+      const raw = String((r as any)?.content || '{}');
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : '{}');
+      rationale = String(parsed?.rationale || '');
+      const gaps = Array.isArray(parsed?.gaps) ? parsed.gaps : [];
+
+      for (let i = 0; i < gaps.length; i++) {
+        const g = gaps[i];
+        const branchKey = String(g?.branchKey || 'risks');
+        const branchNodeId = `branch-${branchKey}`;
+        const nodeId = `gap-${uuidv4()}`;
+        const branchNode = mapNodes.find((n: any) => String(n?.id) === branchNodeId);
+        const basePos = branchNode?.position || { x: 0, y: 0 };
+
+        gapNodes.push({
+          id: nodeId,
+          type: 'idea',
+          position: { x: Number(basePos.x || 0) + 220, y: Number(basePos.y || 0) + i * 70 },
+          data: {
+            label: String(g?.title || ''),
+            branchKey,
+            sourceType: 'ai_suggestion',
+            nodeType: String(g?.nodeType || 'gap'),
+            ideaId,
+          },
+        });
+        gapEdges.push({
+          id: `edge-${uuidv4()}`,
+          source: branchNodeId,
+          target: nodeId,
+          type: 'smoothstep',
+          animated: true,
+          style: { stroke: '#8b5cf6', strokeWidth: 2, opacity: 0.75 },
+          data: { userCreated: false, kind: 'gap_analysis' },
+        });
+      }
+    } catch (err: any) {
+      logger.warn('[IdeaMapGapAnalysis] LLM failed:', err?.message);
+    }
+
+    res.json({
+      proposal: {
+        add: { nodes: gapNodes, edges: gapEdges },
+        rationale,
+      },
+    });
+  })
+);
+
+// ============================================================================
+// AI Generator — context-aware LLM generation for Idea Workspace tools
+// ============================================================================
+
+const IdeaAIGenerateBodySchema = z.object({
+  generatorType: z.enum([
+    'lane_generator', 'flow_generator', 'suggestions', 'bottleneck',
+    'enrichment', 'mindmap_expand', 'table_columns', 'table_views',
+    'node_context', 'auto_cluster', 'whiteboard_brainstorm', 'whiteboard_clusters',
+    'whiteboard_organize', 'sticky_summarize', 'summary',
+    'mm_branch_generator', 'mm_expand', 'mm_what_if',
+  ]),
+  tool: z.enum(['process_flow', 'mindmap', 'table', 'whiteboard']),
+  context: z.object({
+    seedText: z.string().default(''),
+    title: z.string().default(''),
+    branch: z.string().optional(),
+    area: z.string().optional(),
+    existingNodes: z.array(z.any()).default([]),
+    existingEdges: z.array(z.any()).default([]),
+    existingLanes: z.array(z.any()).optional(),
+    language: z.string().default('en'),
+  }),
+});
+
+/**
+ * POST /api/my-work/my-ideas/:id/ai-generate
+ * Context-aware AI generation for Idea Workspace canvas tools.
+ * Returns AIProposalBatch (propose → accept pattern).
+ */
+router.post(
+  '/my-ideas/:id/ai-generate',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId) return res.status(400).json({ error: 'Invalid idea id' });
+
+    const parsed = IdeaAIGenerateBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Invalid request body', details: parsed.error.flatten() });
+    }
+
+    const { generatorType, tool, context } = parsed.data;
+
+    try {
+      const { generateIdeaAI } = await import('../services/ideaAIGeneratorService.js');
+      const result = await generateIdeaAI({
+        generatorType: generatorType as any,
+        tool: tool as any,
+        context: {
+          seedText: context.seedText,
+          title: context.title,
+          branch: context.branch,
+          area: context.area,
+          existingNodes: context.existingNodes,
+          existingEdges: context.existingEdges,
+          existingLanes: context.existingLanes,
+          language: context.language,
+        },
+        userId,
+        orgId,
+      });
+      res.json(result);
+    } catch (err: any) {
+      logger.error('[IdeaAIGenerate] Failed:', err?.message);
+      res.status(500).json({ error: err?.message || 'AI generation failed' });
+    }
+  })
+);
+
 // ============================================================================
 // T009 Enhancement — My Ideas Convert/Promote
 // ============================================================================
@@ -6996,6 +7267,125 @@ router.get(
     }
 
     res.json({ entityId, entityType, relationships: relationships.slice(0, 15) });
+  })
+);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// AI Suggestions for Idea Workspace
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/my-work/my-ideas/:id/ai-suggestions
+ * Generate contextual AI suggestions grounded in company data.
+ */
+router.post(
+  '/my-ideas/:id/ai-suggestions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId) return res.status(400).json({ error: 'Invalid idea id' });
+
+    const context = req.body?.context || {};
+    const mode = String(req.body?.mode || 'passive');
+    const prompt = req.body?.prompt ? String(req.body.prompt) : undefined;
+    const language = String(req.body?.language || req.query?.language || 'en');
+
+    try {
+      const { generateSuggestions } = await import('../services/ideaAISuggestionsService.js');
+      const result = await generateSuggestions(
+        ideaId,
+        {
+          title: String(context.title || ''),
+          seedText: String(context.seedText || ''),
+          currentNodes: Array.isArray(context.currentNodes) ? context.currentNodes : [],
+          currentEdges: Array.isArray(context.currentEdges) ? context.currentEdges : [],
+          activeTool: String(context.activeTool || 'table'),
+        },
+        mode as any,
+        prompt,
+        userId,
+        orgId,
+        queryHelpers,
+        language
+      );
+      res.json(result);
+    } catch (err: any) {
+      logger.error('[ai-suggestions]', err);
+      res.status(500).json({ error: err?.message || 'Failed to generate suggestions' });
+    }
+  })
+);
+
+/**
+ * POST /api/my-work/my-ideas/:id/ai-table-action
+ * Natural language -> table operation via structured LLM output.
+ */
+router.post(
+  '/my-ideas/:id/ai-table-action',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const command = String(req.body?.command || '').trim();
+    if (!command) return res.status(400).json({ error: 'Command required' });
+
+    const tableSchema = Array.isArray(req.body?.schema) ? req.body.schema : [];
+    const language = String(req.body?.language || 'en');
+
+    try {
+      const { generateTableAction } = await import('../services/ideaAISuggestionsService.js');
+      const action = await generateTableAction(
+        String(req.params.id),
+        command,
+        tableSchema,
+        userId,
+        orgId,
+        language
+      );
+      res.json({ action });
+    } catch (err: any) {
+      logger.error('[ai-table-action]', err);
+      res.status(500).json({ error: err?.message || 'Failed to process command' });
+    }
+  })
+);
+
+/**
+ * POST /api/my-work/my-ideas/:id/ai-fill
+ * AI auto-fill for ai_generated column type.
+ */
+router.post(
+  '/my-ideas/:id/ai-fill',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const columnPrompt = String(req.body?.prompt || '').trim();
+    if (!columnPrompt) return res.status(400).json({ error: 'Prompt required' });
+
+    const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
+    const language = String(req.body?.language || 'en');
+
+    try {
+      const { generateAIFill } = await import('../services/ideaAISuggestionsService.js');
+      const results = await generateAIFill(
+        columnPrompt,
+        rows,
+        userId,
+        orgId,
+        queryHelpers,
+        language
+      );
+      res.json({ results });
+    } catch (err: any) {
+      logger.error('[ai-fill]', err);
+      res.status(500).json({ error: err?.message || 'Failed to generate fill' });
+    }
   })
 );
 

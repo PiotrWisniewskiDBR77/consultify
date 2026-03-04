@@ -33,7 +33,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'cover_centered',
     name: 'Cover Centered',
-    intents: ['cover', 'thank_you'],
+    intents: ['cover'],
     gridTemplate: `"full"`,
     gridTemplateColumns: '1fr',
     gridTemplateRows: '1fr',
@@ -80,7 +80,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'exec_full',
     name: 'Executive Summary Full',
-    intents: ['executive_summary', 'summary'],
+    intents: ['executive_summary', 'key_messages'],
     gridTemplate: `"full"`,
     gridTemplateColumns: '1fr',
     gridTemplateRows: '1fr',
@@ -109,7 +109,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'exec_top_kpi',
     name: 'KPI Strip + Content',
-    intents: ['executive_summary', 'kpi_dashboard'],
+    intents: ['executive_summary', 'performance_overview'],
     gridTemplate: `"kpi" "content"`,
     gridTemplateColumns: '1fr',
     gridTemplateRows: 'auto 1fr',
@@ -127,7 +127,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'content_full',
     name: 'Content Full Width',
-    intents: ['content', 'comparison', 'recommendation'],
+    intents: ['key_messages', 'comparison', 'recommendation_portfolio'],
     gridTemplate: `"full"`,
     gridTemplateColumns: '1fr',
     gridTemplateRows: '1fr',
@@ -140,7 +140,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'content_left_right',
     name: 'Content Split L/R',
-    intents: ['content', 'comparison'],
+    intents: ['key_messages', 'comparison'],
     gridTemplate: `"left right"`,
     gridTemplateColumns: '1fr 1fr',
     gridTemplateRows: '1fr',
@@ -156,7 +156,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'content_right_image',
     name: 'Content + Right Image',
-    intents: ['content', 'recommendation'],
+    intents: ['key_messages', 'recommendation_portfolio'],
     gridTemplate: `"content image"`,
     gridTemplateColumns: '55% 45%',
     gridTemplateRows: '1fr',
@@ -172,7 +172,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'content_left_image',
     name: 'Left Image + Content',
-    intents: ['content'],
+    intents: ['key_messages'],
     gridTemplate: `"image content"`,
     gridTemplateColumns: '45% 55%',
     gridTemplateRows: '1fr',
@@ -188,7 +188,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'content_top_bottom',
     name: 'Content Top + Bottom',
-    intents: ['content', 'process'],
+    intents: ['key_messages', 'roadmap'],
     gridTemplate: `"top" "bottom"`,
     gridTemplateColumns: '1fr',
     gridTemplateRows: '1fr 1fr',
@@ -204,7 +204,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'content_overlay',
     name: 'Content Overlay on Image',
-    intents: ['content', 'quote'],
+    intents: ['key_messages', 'single_insight'],
     gridTemplate: `"overlay"`,
     gridTemplateColumns: '1fr',
     gridTemplateRows: '1fr',
@@ -219,7 +219,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'kpi_grid_4',
     name: 'KPI Grid 2x2',
-    intents: ['kpi_dashboard', 'data'],
+    intents: ['performance_overview', 'single_insight'],
     gridTemplate: `"heading heading" "kpi1 kpi2" "kpi3 kpi4"`,
     gridTemplateColumns: '1fr 1fr',
     gridTemplateRows: 'auto 1fr 1fr',
@@ -238,7 +238,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'data_strip_chart',
     name: 'Metric Strip + Chart',
-    intents: ['kpi_dashboard', 'data'],
+    intents: ['performance_overview', 'single_insight'],
     gridTemplate: `"heading" "strip" "chart"`,
     gridTemplateColumns: '1fr',
     gridTemplateRows: 'auto auto 1fr',
@@ -255,7 +255,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'data_dual_chart',
     name: 'Dual Chart',
-    intents: ['data', 'comparison'],
+    intents: ['single_insight', 'comparison'],
     gridTemplate: `"heading heading" "chart1 chart2"`,
     gridTemplateColumns: '1fr 1fr',
     gridTemplateRows: 'auto 1fr',
@@ -274,7 +274,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'divider_centered',
     name: 'Section Divider Centered',
-    intents: ['section_divider'],
+    intents: ['section_intro'],
     gridTemplate: `"full"`,
     gridTemplateColumns: '1fr',
     gridTemplateRows: '1fr',
@@ -287,7 +287,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'divider_numbered',
     name: 'Section Divider with Number',
-    intents: ['section_divider'],
+    intents: ['section_intro'],
     gridTemplate: `"number content"`,
     gridTemplateColumns: '30% 70%',
     gridTemplateRows: '1fr',
@@ -305,7 +305,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'timeline_full',
     name: 'Timeline Full',
-    intents: ['timeline', 'process'],
+    intents: ['roadmap'],
     gridTemplate: `"heading" "timeline"`,
     gridTemplateColumns: '1fr',
     gridTemplateRows: 'auto 1fr',
@@ -321,7 +321,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'process_top_steps_bottom_detail',
     name: 'Process Steps + Detail',
-    intents: ['process'],
+    intents: ['roadmap'],
     gridTemplate: `"steps" "detail"`,
     gridTemplateColumns: '1fr',
     gridTemplateRows: '40% 60%',
@@ -339,7 +339,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'risk_matrix',
     name: 'Risk Matrix',
-    intents: ['risk_overview'],
+    intents: ['risk_management'],
     gridTemplate: `"heading" "matrix"`,
     gridTemplateColumns: '1fr',
     gridTemplateRows: 'auto 1fr',
@@ -355,7 +355,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'risk_left_matrix_right_list',
     name: 'Risk Matrix + Mitigations',
-    intents: ['risk_overview'],
+    intents: ['risk_management'],
     gridTemplate: `"matrix list"`,
     gridTemplateColumns: '55% 45%',
     gridTemplateRows: '1fr',
@@ -373,7 +373,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'recommendation_callout',
     name: 'Recommendation with Callout',
-    intents: ['recommendation', 'next_steps'],
+    intents: ['recommendation_portfolio', 'next_steps'],
     gridTemplate: `"heading" "content" "callout"`,
     gridTemplateColumns: '1fr',
     gridTemplateRows: 'auto 1fr auto',
@@ -405,11 +405,11 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
     tags: ['checklist', 'actionable'],
   },
 
-  // ─── Quote ─────────────────────────────────────────
+  // ─── Single Insight ────────────────────────────────
   {
     id: 'quote_centered',
     name: 'Quote Centered',
-    intents: ['quote'],
+    intents: ['single_insight'],
     gridTemplate: `"full"`,
     gridTemplateColumns: '1fr',
     gridTemplateRows: '1fr',
@@ -422,7 +422,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'quote_with_image',
     name: 'Quote with Side Image',
-    intents: ['quote'],
+    intents: ['single_insight'],
     gridTemplate: `"image quote"`,
     gridTemplateColumns: '40% 60%',
     gridTemplateRows: '1fr',
@@ -477,7 +477,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'smart_60_40',
     name: '60/40 Split',
-    intents: ['content', 'recommendation', 'executive_summary'],
+    intents: ['key_messages', 'recommendation_portfolio', 'executive_summary'],
     gridTemplate: `"main side"`,
     gridTemplateColumns: '60% 40%',
     gridTemplateRows: '1fr',
@@ -493,7 +493,7 @@ const LAYOUT_TEMPLATES: LayoutTemplate[] = [
   {
     id: 'smart_header_three_col',
     name: 'Header + 3 Columns',
-    intents: ['content', 'process', 'comparison'],
+    intents: ['key_messages', 'roadmap', 'comparison'],
     gridTemplate: `"heading heading heading" "a b c"`,
     gridTemplateColumns: '1fr 1fr 1fr',
     gridTemplateRows: 'auto 1fr',

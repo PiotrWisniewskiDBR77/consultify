@@ -360,11 +360,6 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
     periodLabel: string;
   } | null>(null);
 
-  const [aiModalOpen, setAiModalOpen] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiData, setAiData] = useState<any | null>(null);
-  const [aiSelectedTaskIds, setAiSelectedTaskIds] = useState<Set<string>>(new Set());
-
   // Generate time periods based on view mode
   const periods = useMemo(() => {
     if (viewMode === 'weekly') {
@@ -492,60 +487,6 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
     [initiatives, onInitiativeClick]
   );
 
-  const openAiSuggestions = useCallback(async () => {
-    if (!projectId) {
-      toast.error(
-        t('execution.workloadAi.noProject', 'Project context required for AI workload suggestions.')
-      );
-      return;
-    }
-    setAiModalOpen(true);
-    setAiLoading(true);
-    setAiData(null);
-    setAiSelectedTaskIds(new Set());
-    try {
-      const params = new URLSearchParams({ projectId, horizonDays: '7' });
-      const data = await Api.get(
-        `/portfolio-optimization/workload/suggestions?${params.toString()}`
-      );
-      setAiData(data || null);
-      const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
-      setAiSelectedTaskIds(new Set(suggestions.map((s: any) => String(s.taskId))));
-    } catch (_err) {
-      toast.error(t('execution.workloadAi.loadError', 'Failed to load AI workload suggestions.'));
-      setAiModalOpen(false);
-    } finally {
-      setAiLoading(false);
-    }
-  }, [projectId, t]);
-
-  const applyAiSuggestions = useCallback(async () => {
-    const suggestions = Array.isArray(aiData?.suggestions) ? aiData.suggestions : [];
-    const picked = suggestions.filter((s: any) => aiSelectedTaskIds.has(String(s.taskId)));
-    if (picked.length === 0) {
-      toast.error(
-        t('execution.workloadAi.noneSelected', 'Select at least one suggestion to apply.')
-      );
-      return;
-    }
-    setAiLoading(true);
-    try {
-      await Api.post('/portfolio-optimization/workload/apply', {
-        reassignments: picked.map((s: any) => ({
-          taskId: String(s.taskId),
-          newAssigneeId: String(s.toUserId),
-          reason: 'AI workload balancing suggestion applied (7d horizon)',
-        })),
-      });
-      toast.success(t('execution.workloadAi.applied', 'Reassignments applied.'));
-      setAiModalOpen(false);
-    } catch {
-      toast.error(t('execution.workloadAi.applyError', 'Failed to apply suggestions.'));
-    } finally {
-      setAiLoading(false);
-    }
-  }, [aiData, aiSelectedTaskIds, t]);
-
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
       {/* Controls */}
@@ -572,16 +513,6 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
 
           {/* Right: View controls */}
           <div className="flex items-center gap-3">
-            {projectId && (
-              <button
-                onClick={openAiSuggestions}
-                className="inline-flex items-center gap-2 h-9 px-3 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-white/[0.06] dark:text-slate-100 dark:hover:bg-white/[0.10]"
-              >
-                <Sparkles size={16} />
-                {t('execution.workloadAi.button', 'AI suggestions')}
-              </button>
-            )}
-
             {/* View mode toggle */}
             <div className="flex items-center bg-slate-100 dark:bg-navy-800 rounded-lg p-0.5 border border-slate-200 dark:border-navy-700">
               <button
@@ -803,114 +734,6 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
           )}
         </div>
       </div>
-
-      {/* AI Suggestions Modal */}
-      {aiModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-2xl shadow-2xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
-              <div>
-                <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  {t('execution.workloadAi.title', 'AI workload suggestions')}
-                </div>
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {t('execution.workloadAi.subtitle', '7-day forecast · reassignment proposals')}
-                </div>
-              </div>
-              <button
-                onClick={() => setAiModalOpen(false)}
-                className="p-2 rounded-lg text-slate-500 hover:bg-slate-100/70 dark:text-slate-300 dark:hover:bg-white/[0.05]"
-                aria-label={t('common.close', 'Close')}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="p-4">
-              {aiLoading ? (
-                <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                  <Loader2 size={16} className="animate-spin" />
-                  {t('execution.workloadAi.loading', 'Loading…')}
-                </div>
-              ) : (
-                <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                      {t('execution.workloadAi.suggestionsTitle', 'Suggestions')}
-                    </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {Array.isArray(aiData?.suggestions) ? aiData.suggestions.length : 0}
-                    </div>
-                  </div>
-
-                  {Array.isArray(aiData?.suggestions) && aiData.suggestions.length > 0 ? (
-                    <div className="mt-2 space-y-2">
-                      {aiData.suggestions.map((s: any) => {
-                        const taskId = String(s.taskId);
-                        const checked = aiSelectedTaskIds.has(taskId);
-                        return (
-                          <label
-                            key={taskId}
-                            className="flex items-start gap-3 rounded-lg bg-slate-50 dark:bg-white/[0.04] px-3 py-2 cursor-pointer"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() =>
-                                setAiSelectedTaskIds((prev) => {
-                                  const next = new Set(prev);
-                                  if (next.has(taskId)) next.delete(taskId);
-                                  else next.add(taskId);
-                                  return next;
-                                })
-                              }
-                              className="mt-1 w-4 h-4 rounded border-slate-300 dark:border-white/10 bg-white/80 dark:bg-navy-950 text-primary-600 focus:ring-primary-500/30"
-                            />
-                            <div className="min-w-0 flex-1">
-                              <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                                {String(s.taskTitle || '')}
-                              </div>
-                              <div className="text-xs text-slate-500 dark:text-slate-400">
-                                {t('execution.workloadAi.moveFromTo', 'Move')}:{' '}
-                                {String(s.fromUserName)} → {String(s.toUserName)} ·{' '}
-                                {Number(s.estimatedHours || 0)}h
-                              </div>
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                      {t(
-                        'execution.workloadAi.noSuggestions',
-                        'No reassignment suggestions found.'
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between">
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                {t(
-                  'execution.workloadAi.disclaimer',
-                  'Suggestions are conservative heuristics; always review priority and context before applying.'
-                )}
-              </div>
-              <button
-                onClick={applyAiSuggestions}
-                disabled={aiLoading}
-                className="inline-flex items-center gap-2 h-9 px-3 rounded-lg text-sm font-medium transition-colors bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
-              >
-                {aiLoading ? <Loader2 size={16} className="animate-spin" /> : null}
-                {t('common.apply', 'Apply')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Detail Modal */}
       {selectedCell && (

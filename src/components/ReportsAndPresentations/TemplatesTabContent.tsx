@@ -4,7 +4,7 @@
  * Connected to /api/report-builder/templates + /api/presentations/templates
  */
 
-import { Archive, BookTemplate, Copy, Edit, FileText, Loader2, Play, Presentation } from 'lucide-react';
+import { BookTemplate, Copy, Edit, FileText, Loader2, Play, Presentation } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -197,14 +197,6 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           navigate(`/reports/builder?templateId=${row.id}&edit=true`);
         }
       },
-    },
-    {
-      id: 'archive',
-      label: t('rap.actions.archive', 'Archiwizuj'),
-      icon: Archive,
-      divider: true,
-      variant: 'danger',
-      onClick: () => {},
     },
   ];
 

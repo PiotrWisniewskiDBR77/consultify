@@ -17,19 +17,6 @@ import logger from '../utils/Logger.js';
 const router = Router();
 router.use(verifyToken);
 
-// Ensure analytics table exists (G3)
-dbRun(`CREATE TABLE IF NOT EXISTS presentation_analytics (
-  id TEXT PRIMARY KEY,
-  deck_id TEXT NOT NULL,
-  viewer_token TEXT NOT NULL DEFAULT 'anonymous',
-  event_type TEXT NOT NULL DEFAULT 'page_view',
-  card_index INTEGER DEFAULT 0,
-  duration_ms INTEGER DEFAULT 0,
-  user_agent TEXT,
-  ip_hash TEXT,
-  created_at TEXT DEFAULT (datetime('now'))
-)`).catch(() => {});
-
 const asyncHandler =
   (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) =>
   (req: Request, res: Response, next: NextFunction) =>
@@ -322,55 +309,21 @@ router.post(
   })
 );
 
-// Intent catalog (for UI)
+// Intent catalog (for UI) — reads from presentation_intents table
 router.get(
   '/intents',
   asyncHandler(async (_req, res) => {
-    const intents = [
-      { id: 'cover', label: 'Cover Slide', description: 'Title page with branding' },
-      {
-        id: 'executive_summary',
-        label: 'Executive Summary',
-        description: 'High-level findings and KPIs',
-      },
-      { id: 'section_intro', label: 'Section Intro', description: 'Section divider with title' },
-      { id: 'key_messages', label: 'Key Messages', description: '3-4 critical takeaways' },
-      {
-        id: 'performance_overview',
-        label: 'KPI Dashboard',
-        description: 'Performance metrics overview',
-      },
-      {
-        id: 'single_insight',
-        label: 'Single Insight',
-        description: 'One chart or metric deep-dive',
-      },
-      { id: 'comparison', label: 'Comparison', description: 'Side-by-side or gap analysis' },
-      { id: 'assessment', label: 'Assessment', description: 'Maturity/score overview' },
-      {
-        id: 'recommendation_portfolio',
-        label: 'Recommendations',
-        description: 'Action recommendations',
-      },
-      {
-        id: 'initiative_portfolio',
-        label: 'Initiative Portfolio',
-        description: 'Initiative cards/table',
-      },
-      {
-        id: 'prioritization_matrix',
-        label: 'Prioritization Matrix',
-        description: 'Impact vs effort quadrants',
-      },
-      { id: 'roadmap', label: 'Roadmap', description: 'Timeline with phases' },
-      {
-        id: 'risk_management',
-        label: 'Risks & Mitigations',
-        description: 'Risk table with actions',
-      },
-      { id: 'next_steps', label: 'Next Steps', description: 'Actions, owners, deadlines' },
-      { id: 'appendix', label: 'Appendix', description: 'Disclaimers & methodology' },
-    ];
+    const rows = await dbAll(
+      `SELECT id, label, label_pl, description, description_pl FROM presentation_intents WHERE is_active = TRUE ORDER BY sort_order ASC`,
+      []
+    );
+    const intents = ((rows || []) as any[]).map((r: any) => ({
+      id: r.id,
+      label: r.label,
+      label_pl: r.label_pl,
+      description: r.description,
+      description_pl: r.description_pl,
+    }));
     res.json({ success: true, data: intents });
   })
 );
@@ -395,7 +348,12 @@ router.post(
     }
 
     const { exportDeckAsHtml } = await import('../services/presentationHtmlExportService.js');
-    const deckData = JSON.parse(deck.deck_json || '{}');
+    let deckData: any;
+    try {
+      deckData = JSON.parse(deck.deck_json || deck.unified_json || '{}');
+    } catch {
+      return res.status(422).json({ success: false, error: 'Invalid deck data' });
+    }
 
     const htmlBuffer = await exportDeckAsHtml({
       title: deck.title || 'Presentation',
@@ -440,13 +398,34 @@ router.post(
       return res.json({ success: true, updated: false, reason: 'Block not refreshable' });
     }
 
-    // In production, fetch fresh data from source artifact
-    // For now, return the same content with a timestamp
-    res.json({
-      success: true,
-      updated: true,
-      content: { ...block.content, _refreshed_at: new Date().toISOString() },
-    });
+    const sourceRef = block.source_ref;
+    let freshContent = { ...block.content };
+
+    try {
+      if (sourceRef.artifact_type === 'initiative' && sourceRef.artifact_id) {
+        const init = await dbGet(
+          'SELECT name, status, progress, priority FROM initiatives WHERE id = ? AND organization_id = ?',
+          [sourceRef.artifact_id, orgId]
+        );
+        if (init) {
+          freshContent = { ...freshContent, ...(init as any), _refreshed_at: new Date().toISOString() };
+        }
+      } else if (sourceRef.artifact_type === 'kpi' && sourceRef.artifact_id) {
+        const kpi = await dbGet(
+          'SELECT name, current_value, target_value, unit FROM initiative_kpis WHERE id = ? AND organization_id = ?',
+          [sourceRef.artifact_id, orgId]
+        );
+        if (kpi) {
+          freshContent = { ...freshContent, ...(kpi as any), _refreshed_at: new Date().toISOString() };
+        }
+      } else {
+        freshContent._refreshed_at = new Date().toISOString();
+      }
+    } catch {
+      freshContent._refreshed_at = new Date().toISOString();
+    }
+
+    res.json({ success: true, updated: true, content: freshContent });
   })
 );
 
@@ -460,9 +439,22 @@ router.put(
     const { deckId } = req.params;
     const orgId = getOrgId(req);
 
+    const deck = await dbGet(
+      'SELECT id FROM presentation_decks WHERE id = ? AND organization_id = ?',
+      [deckId, orgId]
+    );
+    if (!deck) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+
+    const bodyStr = JSON.stringify(req.body);
+    if (bodyStr.length > 10_000_000) {
+      return res.status(413).json({ success: false, error: 'Payload too large' });
+    }
+
     await dbRun(
       `UPDATE presentation_decks SET deck_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-      [JSON.stringify(req.body), deckId, orgId]
+      [bodyStr, deckId, orgId]
     );
 
     res.json({ success: true });
@@ -558,10 +550,10 @@ router.post(
       const safeName = cardTitle.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60);
 
       const svg = renderCardToSvg(card, i, title, deck.theme || 'corporate');
-      const pngBuffer = svgToPngBuffer(svg, 1920, 1080);
+      const svgBuffer = svgToBuffer(svg);
 
-      archive.append(Readable.from(pngBuffer), {
-        name: `${String(i + 1).padStart(2, '0')}_${safeName}.png`,
+      archive.append(Readable.from(svgBuffer), {
+        name: `${String(i + 1).padStart(2, '0')}_${safeName}.svg`,
       });
     }
 
@@ -625,7 +617,7 @@ function escapeXml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function svgToPngBuffer(svg: string, _w: number, _h: number): Buffer {
+function svgToBuffer(svg: string): Buffer {
   return Buffer.from(svg, 'utf-8');
 }
 

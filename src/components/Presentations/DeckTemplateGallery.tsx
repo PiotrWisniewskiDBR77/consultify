@@ -20,6 +20,12 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
+function unwrap<T = any>(res: any): T {
+  const d = res?.data;
+  if (d && typeof d === 'object' && 'data' in d) return d.data;
+  return d;
+}
+
 interface DeckTemplate {
   id: string;
   name: string;
@@ -81,7 +87,8 @@ export const DeckTemplateGallery: React.FC<DeckTemplateGalleryProps> = ({ onSele
     setLoading(true);
     try {
       const res = await Api.get('/presentations/templates');
-      setTemplates(res.data || []);
+      const data = unwrap(res);
+      setTemplates(Array.isArray(data) ? data : []);
     } catch {
       toast.error('Failed to load templates');
     }
@@ -92,7 +99,8 @@ export const DeckTemplateGallery: React.FC<DeckTemplateGalleryProps> = ({ onSele
     setCloning(templateId);
     try {
       const res = await Api.post(`/presentations/templates/${templateId}/clone`, {});
-      trackFunnelEvent('template_cloned', { templateId, newId: res.data?.id });
+      const data = unwrap(res);
+      trackFunnelEvent('template_cloned', { templateId, newId: data?.id });
       toast.success(t('presentations.templates.cloned', 'Template cloned to your organization'));
       loadTemplates();
     } catch {

@@ -113,11 +113,18 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ onInsertBlock, onOpe
 const PanelButton: React.FC<{
   label: string;
   description?: string;
+  disabled?: boolean;
   onClick: () => void;
-}> = ({ label, description, onClick }) => (
+}> = ({ label, description, disabled, onClick }) => (
   <button
     onClick={onClick}
-    className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+    disabled={disabled}
+    title={disabled ? 'Coming soon' : undefined}
+    className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+      disabled
+        ? 'opacity-40 cursor-not-allowed'
+        : 'hover:bg-slate-50 dark:hover:bg-navy-800'
+    }`}
   >
     <p className="text-xs font-medium text-slate-700 dark:text-slate-300">{label}</p>
     {description && <p className="text-[10px] text-slate-400 mt-0.5">{description}</p>}
@@ -232,8 +239,8 @@ const ImagesPanel: React.FC<{ onOpenMediaLibrary?: () => void }> = ({ onOpenMedi
         description="Browse your org images"
         onClick={() => onOpenMediaLibrary?.()}
       />
-      <PanelButton label="AI Generate" description="Generate with AI" onClick={() => {}} />
-      <PanelButton label="Upload" description="Drag & drop" onClick={() => {}} />
+      <PanelButton label="AI Generate" description="Generate with AI" disabled onClick={() => {}} />
+      <PanelButton label="Upload" description="Drag & drop" disabled onClick={() => {}} />
     </div>
   </div>
 );
@@ -251,17 +258,17 @@ const SearchPanel: React.FC = () => (
 
 const MediaPanel: React.FC = () => (
   <div className="space-y-0.5">
-    <PanelButton label="Video embed" description="Paste YouTube/Loom URL" onClick={() => {}} />
-    <PanelButton label="Animation" description="Add animated element" onClick={() => {}} />
+    <PanelButton label="Video embed" description="Paste YouTube/Loom URL" disabled onClick={() => {}} />
+    <PanelButton label="Animation" description="Add animated element" disabled onClick={() => {}} />
   </div>
 );
 
 const ArtifactsPanel: React.FC = () => (
   <div className="space-y-0.5">
-    <PanelButton label="Initiative card" description="Mini-view with status" onClick={() => {}} />
-    <PanelButton label="Task list" description="From selected initiative" onClick={() => {}} />
-    <PanelButton label="Financial snapshot" description="Key metrics" onClick={() => {}} />
-    <PanelButton label="Insight card" description="Single insight" onClick={() => {}} />
+    <PanelButton label="Initiative card" description="Mini-view with status" disabled onClick={() => {}} />
+    <PanelButton label="Task list" description="From selected initiative" disabled onClick={() => {}} />
+    <PanelButton label="Financial snapshot" description="Key metrics" disabled onClick={() => {}} />
+    <PanelButton label="Insight card" description="Single insight" disabled onClick={() => {}} />
   </div>
 );
 
@@ -270,13 +277,15 @@ const AIEditPanel: React.FC = () => (
     <textarea
       placeholder="Describe what to change across all cards..."
       rows={3}
-      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm resize-none"
+      disabled
+      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm resize-none opacity-50"
     />
+    <p className="text-[10px] text-slate-400 text-center">AI editing — coming soon</p>
     <div className="space-y-0.5">
-      <PanelButton label="Improve writing" onClick={() => {}} />
-      <PanelButton label="Fix spelling" onClick={() => {}} />
-      <PanelButton label="Translate" onClick={() => {}} />
-      <PanelButton label="Make shorter" onClick={() => {}} />
+      <PanelButton label="Improve writing" disabled onClick={() => {}} />
+      <PanelButton label="Fix spelling" disabled onClick={() => {}} />
+      <PanelButton label="Translate" disabled onClick={() => {}} />
+      <PanelButton label="Make shorter" disabled onClick={() => {}} />
     </div>
   </div>
 );

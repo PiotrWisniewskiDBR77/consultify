@@ -993,7 +993,11 @@ router.post(
           const emailVerificationService = (await import('../services/emailVerificationService.js'))
             .default;
           const token = await emailVerificationService.createVerificationToken(userId, email);
-          await emailVerificationService.sendVerificationEmail(email, firstName, token);
+          // Do not block registration on flaky SMTP/network.
+          await _withTimeout(
+            emailVerificationService.sendVerificationEmail(email, firstName, token),
+            1500
+          );
           emailVerificationSent = true;
           logger.info(`[Auth] Email verification sent to ${email}`);
         } catch (verifyErr) {
@@ -1004,12 +1008,16 @@ router.post(
         // GAP-AUTH-003: Send welcome email
         try {
           const welcomeEmailService = (await import('../services/welcomeEmailService.js')).default;
-          await welcomeEmailService.sendWelcomeEmail({
-            email,
-            firstName,
-            companyName: companyName || 'Your Organization',
-            isDemo,
-          });
+          // Do not block registration on flaky SMTP/network.
+          await _withTimeout(
+            welcomeEmailService.sendWelcomeEmail({
+              email,
+              firstName,
+              companyName: companyName || 'Your Organization',
+              isDemo,
+            }),
+            1500
+          );
           logger.info(`[Auth] Welcome email sent to ${email}`);
         } catch (welcomeErr) {
           logger.warn('[Auth] Failed to send welcome email:', welcomeErr);

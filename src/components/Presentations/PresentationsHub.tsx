@@ -15,6 +15,7 @@ import {
   Loader2,
   Pencil,
   Presentation,
+  Trash2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -56,56 +57,6 @@ export interface PresentationDeck {
 }
 
 type PresentationTab = 'all_decks' | 'recent';
-
-// ---------------------------------------------------------------------------
-// Mock data (used when API is not available)
-// ---------------------------------------------------------------------------
-
-const MOCK_DECKS: PresentationDeck[] = [
-  {
-    id: 'deck-1',
-    title: 'Q4 Strategy Review',
-    createdAt: '2025-02-20T10:00:00Z',
-    createdBy: 'Jane Doe',
-    sourceType: 'tool',
-    sourceId: 'session-swot-1',
-    lastExportAt: '2025-02-22T14:30:00Z',
-    exportFormats: ['pptx', 'pdf'],
-    thumbnailUrl: undefined,
-  },
-  {
-    id: 'deck-2',
-    title: 'DRD Assessment Summary',
-    createdAt: '2025-02-18T09:00:00Z',
-    createdBy: 'John Smith',
-    sourceType: 'assessment',
-    sourceId: 'assessment-drd-1',
-    lastExportAt: undefined,
-    exportFormats: ['pptx'],
-    thumbnailUrl: undefined,
-  },
-  {
-    id: 'deck-3',
-    title: 'Financial Model Overview',
-    createdAt: '2025-02-15T16:00:00Z',
-    createdBy: 'Jane Doe',
-    sourceType: 'finance',
-    sourceId: 'model-fin-1',
-    lastExportAt: '2025-02-16T11:00:00Z',
-    exportFormats: ['pptx', 'pdf'],
-    thumbnailUrl: undefined,
-  },
-  {
-    id: 'deck-4',
-    title: 'Uploaded Pitch Deck',
-    createdAt: '2025-02-10T12:00:00Z',
-    createdBy: 'John Smith',
-    sourceType: 'upload',
-    lastExportAt: undefined,
-    exportFormats: [],
-    thumbnailUrl: undefined,
-  },
-];
 
 // ---------------------------------------------------------------------------
 // Source type metadata
@@ -165,7 +116,9 @@ export const PresentationsHub: React.FC = () => {
     setIsLoading(true);
     try {
       const res = (await Api.get('/presentations/decks')) as any;
-      const items: PresentationDeck[] = (res?.data ?? res?.items ?? []).map((r: any) => ({
+      const payload = res?.data;
+      const rows = Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : [];
+      const items: PresentationDeck[] = rows.map((r: any) => ({
         id: r.id,
         title: r.title || 'Untitled',
         createdAt: r.created_at || r.createdAt || new Date().toISOString(),
@@ -178,9 +131,9 @@ export const PresentationsHub: React.FC = () => {
         status: r.status || 'draft',
         slideCount: r.slide_count || r.slideCount || 0,
       }));
-      setAllDecks(items.length > 0 ? items : MOCK_DECKS);
+      setAllDecks(items);
     } catch {
-      setAllDecks(MOCK_DECKS);
+      setAllDecks([]);
     } finally {
       setIsLoading(false);
     }
@@ -352,6 +305,14 @@ export const PresentationsHub: React.FC = () => {
                         },
                       ] as RowAction[])
                     : []),
+                  {
+                    id: 'delete',
+                    label: t('common.delete', 'Delete'),
+                    icon: Trash2,
+                    variant: 'danger',
+                    divider: true,
+                    onClick: () => handleRowAction('delete', row as PresentationDeck),
+                  },
                 ] as RowAction[]
               }
             />
@@ -398,8 +359,8 @@ export const PresentationsHub: React.FC = () => {
         handleOpenSource(row);
         return;
       }
-      if (action === 'duplicate' || action === 'delete') {
-        toast(t('presentations.comingSoon', 'Coming soon'));
+      if (action === 'delete') {
+        handleDeleteDeck(row);
       }
     },
     [handleOpenDocument, t]
@@ -415,6 +376,21 @@ export const PresentationsHub: React.FC = () => {
       } catch {
         toast.success(t('presentations.exportSuccess', 'Export started'));
         trackFunnelEvent('presentation_exported', { deckId: deck.id });
+      }
+    },
+    [fetchDecks, t]
+  );
+
+  const handleDeleteDeck = useCallback(
+    async (deck: PresentationDeck) => {
+      if (!window.confirm(t('presentations.deleteConfirm', `Delete "${deck.title}"? This cannot be undone.`))) return;
+      try {
+        await Api.delete(`/presentations/decks/${deck.id}`);
+        toast.success(t('presentations.deleteSuccess', 'Deck deleted'));
+        setOpenDocuments((prev) => prev.filter((d) => d.id !== deck.id));
+        fetchDecks();
+      } catch {
+        toast.error(t('presentations.deleteFailed', 'Failed to delete deck'));
       }
     },
     [fetchDecks, t]
@@ -601,10 +577,7 @@ export const PresentationsHub: React.FC = () => {
                       {openDocuments.find((d) => d.id === activeDocumentId)?.name ?? 'Presentation'}
                     </h2>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {t(
-                        'presentations.minimalPreview',
-                        'Minimal preview — full editor coming soon'
-                      )}
+                      {t('presentations.deckPreview', 'Deck preview')}
                     </p>
                   </div>
                 </div>
@@ -613,9 +586,16 @@ export const PresentationsHub: React.FC = () => {
                     size={48}
                     className="mx-auto text-slate-400 dark:text-slate-500 mb-4"
                   />
-                  <p className="text-slate-600 dark:text-slate-300">
-                    {t('presentations.previewPlaceholder', 'Deck preview will be rendered here.')}
+                  <p className="text-slate-600 dark:text-slate-300 mb-4">
+                    {t('presentations.openInBuilder', 'Open this deck in the full editor to view and edit slides.')}
                   </p>
+                  <button
+                    onClick={() => navigate(`/presentations/builder/${activeDocumentId}`)}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-purple-600 text-white hover:bg-purple-500 transition-colors font-medium mb-4"
+                  >
+                    <Presentation size={16} />
+                    {t('presentations.openEditor', 'Open Editor')}
+                  </button>
                   <div className="flex justify-center gap-3 mt-6">
                     <button
                       onClick={() => {

@@ -34,6 +34,7 @@ interface ReportSection {
   content: string;
   isExpanded: boolean;
   aiGenerated?: boolean;
+  isTemplate?: boolean;
 }
 
 interface ReportData {
@@ -204,32 +205,46 @@ export const ReportEditorModal: React.FC<ReportEditorModalProps> = ({
       });
 
       if (!response.ok) {
-        // Fallback to placeholder content if AI endpoint not available
-        const placeholderContent = getPlaceholderContent(sectionId);
-        handleSectionChange(sectionId, placeholderContent);
+        const templateContent = getTemplateContent(sectionId);
+        handleSectionChange(sectionId, templateContent);
+        setReport((prev) => ({
+          ...prev,
+          sections: prev.sections.map((s) =>
+            s.id === sectionId ? { ...s, aiGenerated: false, isTemplate: true } : s
+          ),
+        }));
+        setError('AI generation unavailable — using template. You can edit the content manually.');
         return;
       }
 
       const data = await response.json();
       handleSectionChange(sectionId, data.content);
 
-      // Mark as AI generated
       setReport((prev) => ({
         ...prev,
-        sections: prev.sections.map((s) => (s.id === sectionId ? { ...s, aiGenerated: true } : s)),
+        sections: prev.sections.map((s) =>
+          s.id === sectionId ? { ...s, aiGenerated: true, isTemplate: false } : s
+        ),
       }));
     } catch (err) {
-      // Use placeholder on error
-      const placeholderContent = getPlaceholderContent(sectionId);
-      handleSectionChange(sectionId, placeholderContent);
+      const templateContent = getTemplateContent(sectionId);
+      handleSectionChange(sectionId, templateContent);
+      setReport((prev) => ({
+        ...prev,
+        sections: prev.sections.map((s) =>
+          s.id === sectionId ? { ...s, aiGenerated: false, isTemplate: true } : s
+        ),
+      }));
+      setError('AI generation unavailable — using template. You can edit the content manually.');
     } finally {
       setIsGeneratingAI(null);
     }
   };
 
-  // Placeholder content for sections
-  const getPlaceholderContent = (sectionId: string): string => {
-    const placeholders: Record<string, string> = {
+  // Template content used as fallback when AI generation is unavailable
+  const getTemplateContent = (sectionId: string): string => {
+    const TEMPLATE_HEADER = `<!-- Template content - edit or regenerate with AI -->\n\n`;
+    const templates: Record<string, string> = {
       'executive-summary': `## Executive Summary
 
 This Digital Readiness Assessment provides a comprehensive evaluation of the organization's current digital maturity across 7 key dimensions.
@@ -367,7 +382,8 @@ The assessment reveals a total gap of [X] points between current state and targe
 | Kick-off meeting | [Name] | [Date] |`,
     };
 
-    return placeholders[sectionId] || '## [Section Title]\n\nContent to be added...';
+    const raw = templates[sectionId] || '## [Section Title]\n\nContent to be added...';
+    return TEMPLATE_HEADER + raw;
   };
 
   // Save report
@@ -572,6 +588,11 @@ The assessment reveals a total gap of [X] points between current state and targe
                             AI Generated
                           </span>
                         )}
+                        {section.isTemplate && !section.aiGenerated && (
+                          <span className="px-2 py-0.5 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full">
+                            Template
+                          </span>
+                        )}
                         {section.content && <CheckCircle2 size={14} className="text-green-500" />}
                       </div>
                       {section.isExpanded ? (
@@ -584,6 +605,12 @@ The assessment reveals a total gap of [X] points between current state and targe
                     {/* Section Content */}
                     {section.isExpanded && (
                       <div className="p-4 space-y-3">
+                        {section.isTemplate && !section.aiGenerated && (
+                          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 text-amber-700 dark:text-amber-400 text-sm">
+                            <AlertCircle size={15} className="flex-shrink-0" />
+                            <span>Template content — edit manually or regenerate with AI.</span>
+                          </div>
+                        )}
                         <div className="flex justify-end">
                           <button
                             onClick={() => generateAIContent(section.id)}

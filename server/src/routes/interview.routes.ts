@@ -332,6 +332,9 @@ router.put('/context', InterviewController.updateOrganizationContext);
 /** POST /interview/sessions/:sessionId/summary - Generate summary (FACTS ONLY) */
 router.post('/sessions/:sessionId/summary', InterviewController.generateSummary);
 
+/** GET /interview/sessions/:sessionId/summary - Get stored summary */
+router.get('/sessions/:sessionId/summary', InterviewController.getSummary);
+
 /** POST /interview/sessions/:sessionId/export - Export context to Tools/Assessment */
 router.post('/sessions/:sessionId/export', InterviewController.exportContext);
 
@@ -356,6 +359,14 @@ router.patch('/insights/:id', InterviewController.updateInsight);
 
 /** POST /interview/insights/:id/export - Export insight to Tools or Assessment */
 router.post('/insights/:id/export', InterviewController.exportInsight);
+
+/** GET /interview/insights/:id/activity - Activity log for insight */
+router.get('/insights/:id/activity', InterviewController.getInsightActivity);
+
+/** GET/POST/DELETE /interview/insights/:id/comments - Comments for insight */
+router.get('/insights/:id/comments', InterviewController.getInsightComments);
+router.post('/insights/:id/comments', InterviewController.createInsightComment);
+router.delete('/insights/:id/comments/:commentId', InterviewController.deleteInsightComment);
 
 /** DELETE /interview/insights/:id - Delete insight */
 router.delete('/insights/:id', InterviewController.deleteInsight);

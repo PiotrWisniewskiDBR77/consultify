@@ -36,13 +36,14 @@ const IMAGE_HINT_ICONS: Record<string, React.FC<{ size?: number; className?: str
 };
 
 const ALL_INTENTS: CardIntent[] = [
-  'cover', 'executive_summary', 'summary', 'section_divider', 'content',
-  'data', 'comparison', 'timeline', 'process', 'quote',
-  'kpi_dashboard', 'risk_overview', 'recommendation', 'next_steps', 'thank_you',
+  'cover', 'executive_summary', 'section_intro', 'key_messages',
+  'performance_overview', 'single_insight', 'comparison', 'assessment',
+  'recommendation_portfolio', 'initiative_portfolio', 'prioritization_matrix',
+  'roadmap', 'risk_management', 'next_steps', 'appendix',
 ];
 
 export const OutlineStep: React.FC<OutlineStepProps> = ({
-  outline,
+  outline: outlineProp,
   intents,
   onOutlineChange,
   onBack,
@@ -50,6 +51,8 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
 }) => {
   const { t } = useTranslation();
   const [addMenuOpen, setAddMenuOpen] = useState(false);
+
+  const outline = Array.isArray(outlineProp) ? outlineProp : [];
 
   const enabledSlides = useMemo(() => outline.filter((o) => o.enabled), [outline]);
 
@@ -81,15 +84,15 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
     const suggestions: { intent: CardIntent; labelKey: string }[] = [];
     const hasIntent = (i: CardIntent) => enabledSlides.some((s) => s.intent === i);
 
-    if (!hasIntent('risk_overview') && enabledSlides.length > 3) {
+    if (!hasIntent('risk_management') && enabledSlides.length > 3) {
       suggestions.push({
-        intent: 'risk_overview',
+        intent: 'risk_management',
         labelKey: 'presentations.outline.suggestions.addRisk',
       });
     }
-    if (!hasIntent('kpi_dashboard') && enabledSlides.length > 3) {
+    if (!hasIntent('performance_overview') && enabledSlides.length > 3) {
       suggestions.push({
-        intent: 'kpi_dashboard',
+        intent: 'performance_overview',
         labelKey: 'presentations.outline.suggestions.addKpi',
       });
     }
@@ -99,10 +102,10 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
         labelKey: 'presentations.outline.suggestions.addNextSteps',
       });
     }
-    if (!hasIntent('thank_you')) {
+    if (!hasIntent('appendix') && enabledSlides.length > 5) {
       suggestions.push({
-        intent: 'thank_you',
-        labelKey: 'presentations.outline.suggestions.addThankYou',
+        intent: 'appendix',
+        labelKey: 'presentations.outline.suggestions.addAppendix',
       });
     }
     return suggestions;
@@ -135,7 +138,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
         intent,
         title: info?.label || intent.replace(/_/g, ' '),
         enabled: true,
-        imageHint: intent === 'data' || intent === 'kpi_dashboard' ? 'chart' : undefined,
+        imageHint: intent === 'performance_overview' || intent === 'single_insight' ? 'chart' : undefined,
       },
     ]);
     setAddMenuOpen(false);

@@ -607,11 +607,19 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       const fetchedUsers = await Api.getUsers();
       setUsers(fetchedUsers || []);
 
-      // TODO: Fetch comments and history when API is ready
-      // const commentsData = await Api.getToolComments(toolSessionId);
-      // setComments(commentsData || []);
-      // const historyData = await Api.getToolHistory(toolSessionId);
-      // setHistory(historyData || []);
+      // Fetch comments and history (non-blocking — don't fail the main load)
+      try {
+        const commentsRes = await Api.get(`/api/tools/${toolSessionId}/comments`);
+        setComments(commentsRes || []);
+      } catch {
+        // Endpoint may not exist yet — leave comments empty
+      }
+      try {
+        const historyRes = await Api.get(`/api/tools/${toolSessionId}/history`);
+        setHistory(historyRes || []);
+      } catch {
+        // Endpoint may not exist yet — leave history empty
+      }
     } catch (error) {
       console.error('Failed to fetch tool session:', error);
       toast.error(isPolish ? 'Błąd ładowania sesji' : 'Failed to load session');
@@ -1257,15 +1265,33 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               <CommentsSection
                 comments={comments}
                 onAddComment={async (content) => {
-                  // TODO: Implement when API is ready
-                  toast.success(isPolish ? 'Komentarz dodany' : 'Comment added');
+                  try {
+                    await Api.post(`/api/tools/${toolSessionId}/comments`, { text: content });
+                    const updated = await Api.get(`/api/tools/${toolSessionId}/comments`);
+                    setComments(updated || []);
+                    toast.success(isPolish ? 'Komentarz dodany' : 'Comment added');
+                  } catch {
+                    toast.error(isPolish ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+                  }
                 }}
                 onDeleteComment={async (commentId) => {
-                  // TODO: Implement when API is ready
-                  toast.success(isPolish ? 'Komentarz usunięty' : 'Comment deleted');
+                  try {
+                    await Api.delete(`/api/tools/${toolSessionId}/comments/${commentId}`);
+                    const updated = await Api.get(`/api/tools/${toolSessionId}/comments`);
+                    setComments(updated || []);
+                    toast.success(isPolish ? 'Komentarz usunięty' : 'Comment deleted');
+                  } catch {
+                    toast.error(isPolish ? 'Nie udało się usunąć komentarza' : 'Failed to delete comment');
+                  }
                 }}
                 onLikeComment={async (commentId) => {
-                  // TODO: Implement when API is ready
+                  try {
+                    await Api.post(`/api/tools/${toolSessionId}/comments/${commentId}/like`, {});
+                    const updated = await Api.get(`/api/tools/${toolSessionId}/comments`);
+                    setComments(updated || []);
+                  } catch {
+                    // silent — like is non-critical
+                  }
                 }}
                 onGenerateAIComment={async () => {
                   await handleGenerateAI('comments');

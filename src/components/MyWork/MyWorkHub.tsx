@@ -17,6 +17,7 @@ import {
   CalendarClock,
   CalendarDays,
   Check,
+  CheckCircle2,
   CheckSquare,
   ChevronDown,
   Clock,
@@ -25,7 +26,6 @@ import {
   FileText,
   Flame,
   Flag,
-  Flower2,
   GanttChart,
   GitBranch,
   Hourglass,
@@ -38,11 +38,15 @@ import {
   List,
   Loader2,
   Plus,
+  Rocket,
   Scale,
   Search,
   Sparkles,
+  Sprout,
+  Tag,
   Target,
   Trash2,
+  TreePine,
   TrendingUp,
   User,
   X,
@@ -61,10 +65,14 @@ import { useAppStore } from '@/store/useAppStore';
 
 import { DecisionsPanelContent, type DecisionsBulkBarPayload } from './DecisionsPanelContent';
 import type { FocusFilter, FocusItem, FocusSort } from './Focus/FocusView';
+import type { CanvasToolType } from './ideaSelectionTypes';
+import { IdeaWorkspaceToolbar } from './IdeaWorkspaceToolbar';
 import { InboxContent, type InboxBulkBarPayload, type InboxCounts } from './InboxContent';
-import type { MyIdea } from './MyIdeasListContent';
+import type { IdeaStage, IdeasBulkBarPayload, MyIdea } from './MyIdeasListContent';
 import { MyIdeasListContent } from './MyIdeasListContent';
 import { MyTasksListContent } from './MyTasksListContent';
+import { EMPTY_SELECTION, type IdeaWorkspaceSelection } from './ideaSelectionTypes';
+import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
 // This keeps initial My Work navigation snappy and avoids loading unused tabs upfront.
@@ -106,7 +114,7 @@ const DecisionsTimelineContainer = React.lazy(() =>
 type ModuleTab = 'executive' | 'inbox' | 'focus' | 'tasks' | 'notebook' | 'ideas' | 'decisions';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type TasksViewMode = 'table' | 'kanban' | 'calendar';
-type IdeasViewMode = 'select' | 'overview' | 'blank' | 'mindmap' | 'garden';
+type IdeasViewMode = 'list' | 'cards' | 'garden';
 type DecisionsViewMode = 'table' | 'kanban' | 'timeline';
 type InboxViewMode = 'flat' | 'sections';
 type DecisionFilter = 'all' | 'my' | 'awaiting';
@@ -326,9 +334,30 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // Filter states
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
   const [tasksViewMode, setTasksViewMode] = useState<TasksViewMode>('table');
-  const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('mindmap');
-  const [ideasMenuOpen, setIdeasMenuOpen] = useState(false);
+  const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('list');
   const [ideaToolsOpen, setIdeaToolsOpen] = useState(false);
+  const [ideaActiveTool, setIdeaActiveTool] = useState<CanvasToolType>('mindmap');
+  const [ideaActivePanel, setIdeaActivePanel] = useState<WorkspacePanelKey>(null);
+  const [ideaSelection, setIdeaSelection] = useState<IdeaWorkspaceSelection>(EMPTY_SELECTION);
+  const [ideaLocked, setIdeaLocked] = useState(true);
+  const [showStartupTemplates, setShowStartupTemplates] = useState(false);
+  const [ideaStageFilter, setIdeaStageFilter] = useState<IdeaStage | 'all'>('all');
+  const [ideasStageCounts, setIdeasStageCounts] = useState<{
+    total: number; spark: number; incubating: number; shaping: number; ready: number; promoted: number;
+  }>({ total: 0, spark: 0, incubating: 0, shaping: 0, ready: 0, promoted: 0 });
+  const [ideasBulkUi, setIdeasBulkUi] = useState<{
+    selectedCount: number;
+    allSelected: boolean;
+    someSelected: boolean;
+  } | null>(null);
+  const ideasBulkActionsRef = useRef<
+    Pick<IdeasBulkBarPayload, 'selectAllVisible' | 'clearSelection' | 'convert' | 'tag' | 'deleteSelected'> | null
+  >(null);
+
+  const handleIdeaPanelChange = useCallback((panel: WorkspacePanelKey) => {
+    setIdeaActivePanel(panel);
+    setIdeaToolsOpen(panel === 'tools');
+  }, []);
   const [decisionsViewMode, setDecisionsViewMode] = useState<DecisionsViewMode>('table');
   const [inboxViewMode, setInboxViewMode] = useState<InboxViewMode>('flat');
   const [inboxStatusTab, setInboxStatusTab] = useState<'open' | 'done' | 'saved' | 'all'>('open');
@@ -434,16 +463,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       return [];
     }
   });
-  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(() => {
-    try {
-      const raw = window.sessionStorage.getItem('moduleHub.openDocuments.mywork');
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      return typeof parsed?.activeDocumentId === 'string' ? parsed.activeDocumentId : null;
-    } catch {
-      return null;
-    }
-  });
+  // Always start on list view — workspace opens only via explicit user action (click idea / "New")
+  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
   useEffect(() => {
     try {
       window.sessionStorage.setItem(
@@ -892,13 +913,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   // Idea handlers
   const handleCreateIdea = useCallback(() => {
+    setShowStartupTemplates(true);
+  }, []);
+
+  const handleStartupTemplateSelect = useCallback((templateId: string, defaultTool: string) => {
     const newId = `new-idea-${Date.now()}`;
+    if (defaultTool && ['mindmap', 'process_flow', 'table', 'whiteboard'].includes(defaultTool)) {
+      setIdeaActiveTool(defaultTool as CanvasToolType);
+    }
     handleOpenDocument({
       id: newId,
       type: 'idea',
       name: isPolish ? 'Nowy pomysł' : 'New Idea',
       status: 'idea',
-      data: { isNew: true },
+      data: { isNew: true, templateId },
     });
   }, [handleOpenDocument, isPolish]);
 
@@ -1096,8 +1124,32 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     []
   );
 
-  const handleIdeaCountsChange = useCallback((counts: { total: number }) => {
-    setTabCounts((prev) => ({ ...prev, ideas: counts.total }));
+  const handleIdeaCountsChange = useCallback(
+    (counts: { total: number; spark: number; incubating: number; shaping: number; ready: number; promoted: number }) => {
+      setTabCounts((prev) => ({ ...prev, ideas: counts.total }));
+      setIdeasStageCounts(counts);
+    },
+    []
+  );
+
+  const handleIdeasBulkBarChange = useCallback((payload: IdeasBulkBarPayload | null) => {
+    if (!payload) {
+      setIdeasBulkUi(null);
+      ideasBulkActionsRef.current = null;
+      return;
+    }
+    setIdeasBulkUi({
+      selectedCount: payload.selectedCount,
+      allSelected: payload.allSelected,
+      someSelected: payload.someSelected,
+    });
+    ideasBulkActionsRef.current = {
+      selectAllVisible: payload.selectAllVisible,
+      clearSelection: payload.clearSelection,
+      convert: payload.convert,
+      tag: payload.tag,
+      deleteSelected: payload.deleteSelected,
+    };
   }, []);
 
   const handleNotebookCountsChange = useCallback((counts: { total: number }) => {
@@ -1146,6 +1198,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       setInboxStatusTab('open');
       setInboxSection('all');
       setInboxActionRequiredOnly(false);
+    }
+    if (activeTab !== 'ideas') {
+      setIdeasBulkUi(null);
+      ideasBulkActionsRef.current = null;
+      setIdeaStageFilter('all');
     }
   }, [activeTab]);
 
@@ -1361,7 +1418,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       !activeDocumentId &&
       ((activeTab === 'tasks' && !!tasksBulkUi?.selectedCount) ||
         (activeTab === 'inbox' && !!inboxBulkUi?.selectedCount) ||
-        (activeTab === 'decisions' && !!decisionsBulkUi?.selectedCount));
+        (activeTab === 'decisions' && !!decisionsBulkUi?.selectedCount) ||
+        (activeTab === 'ideas' && !!ideasBulkUi?.selectedCount));
 
     // 1) Search row (when enabled)
     if (!hasBulkMode && showSearch && !activeDocumentId) {
@@ -1858,6 +1916,104 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       );
     }
 
+    // Ideas: stage presets in Command Row (same pattern as Inbox/Tasks)
+    if (activeTab === 'ideas' && !activeDocumentId) {
+      const chipBase =
+        'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+      const chipInactive =
+        'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
+      const chipActive =
+        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
+
+      if (ideasBulkUi?.selectedCount) {
+        const bulk = ideasBulkActionsRef.current;
+        const bulkGhostPill =
+          'inline-flex items-center h-8 px-2.5 rounded-full text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+        const bulkPillBase =
+          'inline-flex items-center gap-2 h-8 px-2.5 rounded-full border text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+
+        return (
+          <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-between gap-3 overflow-x-auto whitespace-nowrap">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  {ideasBulkUi.selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+                </span>
+                <button onClick={() => bulk?.selectAllVisible()} className={bulkGhostPill}>
+                  {isPolish ? 'Zaznacz wszystkie' : 'Select all'}
+                </button>
+                <button onClick={() => bulk?.clearSelection()} className={bulkGhostPill}>
+                  {isPolish ? 'Odznacz' : 'Clear'}
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => bulk?.convert()}
+                  className={`${bulkPillBase} ${chipInactive}`}
+                >
+                  <Sparkles size={14} />
+                  {isPolish ? 'Konwertuj' : 'Convert'}
+                </button>
+                <button
+                  onClick={() => bulk?.tag()}
+                  className={`${bulkPillBase} ${chipInactive}`}
+                >
+                  <Tag size={14} />
+                  {isPolish ? 'Taguj' : 'Tag'}
+                </button>
+                <button
+                  onClick={() => bulk?.deleteSelected()}
+                  className={`${bulkPillBase} border-red-300/40 dark:border-red-500/20 bg-white/70 dark:bg-white/[0.04] text-red-700 dark:text-red-300 hover:bg-red-50/60 dark:hover:bg-red-500/10`}
+                >
+                  <Trash2 size={14} />
+                  {isPolish ? 'Usuń' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      const stagePresets: Array<{
+        id: IdeaStage | 'all';
+        label: string;
+        icon: React.ReactNode;
+        count: number;
+      }> = [
+        { id: 'all', label: isPolish ? 'Wszystkie' : 'ALL', icon: null, count: ideasStageCounts.total },
+        { id: 'spark', label: isPolish ? 'Iskra' : 'Spark', icon: <Lightbulb size={14} />, count: ideasStageCounts.spark },
+        { id: 'incubating', label: isPolish ? 'Rośnie' : 'Growing', icon: <Sprout size={14} />, count: ideasStageCounts.incubating },
+        { id: 'shaping', label: isPolish ? 'Kształtuje' : 'Shaping', icon: <TreePine size={14} />, count: ideasStageCounts.shaping },
+        { id: 'ready', label: isPolish ? 'Gotowy' : 'Ready', icon: <CheckCircle2 size={14} />, count: ideasStageCounts.ready },
+        { id: 'promoted', label: isPolish ? 'Promowany' : 'Promoted', icon: <Rocket size={14} />, count: ideasStageCounts.promoted },
+      ];
+
+      return (
+        <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
+          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
+            <div className="inline-flex items-center gap-1">
+              {stagePresets.map((p) => {
+                const isActive = ideaStageFilter === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setIdeaStageFilter(isActive && p.id !== 'all' ? 'all' : p.id)}
+                    className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
+                  >
+                    {p.icon}
+                    <span>{p.label}</span>
+                    <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                      {p.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // Default cross-tab alerts (tasks/decisions/inbox)
     const chips: Array<{ key: string; label: string; count: number; onClick: () => void }> = [
       {
@@ -1953,6 +2109,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
               toolsOpen={ideaToolsOpen}
               onToolsOpenChange={setIdeaToolsOpen}
+              activeTool={ideaActiveTool}
+              onActiveToolChange={setIdeaActiveTool}
+              activePanel={ideaActivePanel}
+              onActivePanelChange={handleIdeaPanelChange}
+              onSelectionChange={setIdeaSelection}
+              onLockedChange={setIdeaLocked}
             />
           </React.Suspense>
         );
@@ -2115,9 +2277,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           <MyIdeasListContent
             viewMode={ideasViewMode}
             searchQuery={searchQuery}
+            stageFilter={ideaStageFilter}
             onIdeaClick={handleIdeaClick}
             onCreateIdea={handleCreateIdea}
             onCountsChange={handleIdeaCountsChange}
+            onBulkBarChange={handleIdeasBulkBarChange}
             refreshTrigger={refreshTrigger}
           />
         );
@@ -2491,125 +2655,52 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               </button>
             )}
 
-            {/* Ideas workspace tools toggle — when an idea document is open */}
+            {/* Ideas workspace — canvas tools (block 1) */}
             {activeTab === 'ideas' && activeDocumentId && (
-              <div
-                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-950/50 p-0.5"
-                role="group"
-                aria-label={isPolish ? 'Narzędzia workspace' : 'Workspace tools'}
-              >
-                <button
-                  onClick={() => setIdeaToolsOpen((v) => !v)}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    ideaToolsOpen
-                      ? 'bg-white dark:bg-navy-800 text-amber-600 dark:text-amber-300 shadow-sm border border-slate-200 dark:border-navy-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Narzędzia workspace' : 'Workspace tools'}
-                  aria-pressed={ideaToolsOpen}
-                >
-                  <Sparkles size={16} />
-                </button>
-              </div>
+              <IdeaWorkspaceToolbar
+                activeTool={ideaActiveTool}
+                onToolChange={(next) => {
+                  setIdeaActiveTool(next);
+                  setIdeaSelection(EMPTY_SELECTION);
+                }}
+                selection={ideaSelection}
+                locked={ideaLocked}
+                onQuickAction={(action, payload) => {
+                  window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action, ...payload } }));
+                }}
+              />
             )}
 
-            {/* Ideas: collapsible view mode menu — only on Ideas tab */}
+            {/* Ideas workspace — panel strip (block 2: Tools / Context / AI) */}
+            {activeTab === 'ideas' && activeDocumentId && (
+              <WorkspacePanelStrip
+                value={ideaActivePanel}
+                onChange={handleIdeaPanelChange}
+              />
+            )}
+
+            {/* Ideas: view mode switcher — List / Cards / Tags */}
             {activeTab === 'ideas' && !activeDocumentId && (
-              <div className="relative">
-                <button
-                  onClick={() => setIdeasMenuOpen((v) => !v)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                >
-                  {ideasViewMode === 'mindmap' && (
-                    <>
-                      <GitBranch size={14} />
-                      {isPolish ? 'Mind Map' : 'Mind Map'}
-                    </>
-                  )}
-                  {ideasViewMode === 'select' && (
-                    <>
-                      <LayoutList size={14} />
-                      {isPolish ? 'Lista' : 'List'}
-                    </>
-                  )}
-                  {ideasViewMode === 'overview' && (
-                    <>
-                      <LayoutGrid size={14} />
-                      {isPolish ? 'Karty' : 'Cards'}
-                    </>
-                  )}
-                  {ideasViewMode === 'garden' && (
-                    <>
-                      <Flower2 size={14} />
-                      {isPolish ? 'Ogród' : 'Garden'}
-                    </>
-                  )}
-                  {ideasViewMode === 'blank' && (
-                    <>
-                      <GitBranch size={14} />
-                      {isPolish ? 'Czysta mapa' : 'Blank'}
-                    </>
-                  )}
-                  <ChevronDown
-                    size={12}
-                    className={`transition-transform ${ideasMenuOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
-                {ideasMenuOpen && (
-                  <>
-                    <div className="fixed inset-0 z-30" onClick={() => setIdeasMenuOpen(false)} />
-                    <div className="absolute top-full mt-1 left-0 z-40 w-44 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
-                      {[
-                        {
-                          id: 'mindmap' as IdeasViewMode,
-                          icon: GitBranch,
-                          label: 'Mind Map',
-                          labelPl: 'Mind Map',
-                        },
-                        {
-                          id: 'select' as IdeasViewMode,
-                          icon: LayoutList,
-                          label: 'List',
-                          labelPl: 'Lista',
-                        },
-                        {
-                          id: 'overview' as IdeasViewMode,
-                          icon: LayoutGrid,
-                          label: 'Cards',
-                          labelPl: 'Karty',
-                        },
-                        {
-                          id: 'garden' as IdeasViewMode,
-                          icon: Flower2,
-                          label: 'Garden',
-                          labelPl: 'Ogród',
-                        },
-                        {
-                          id: 'blank' as IdeasViewMode,
-                          icon: GitBranch,
-                          label: 'Blank Map',
-                          labelPl: 'Czysta mapa',
-                        },
-                      ].map(({ id, icon: Icon, label, labelPl }) => (
-                        <button
-                          key={id}
-                          onClick={() => {
-                            setIdeasViewMode(id);
-                            setIdeasMenuOpen(false);
-                          }}
-                          className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${
-                            ideasViewMode === id
-                              ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10 font-semibold'
-                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800'
-                          }`}
-                        >
-                          <Icon size={14} />
-                          {isPolish ? labelPl : label}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
+              <div className="inline-flex items-center gap-0.5 p-0.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
+                {([
+                  { id: 'list' as IdeasViewMode, icon: LayoutList, label: 'List', labelPl: 'Lista' },
+                  { id: 'cards' as IdeasViewMode, icon: LayoutGrid, label: 'Cards', labelPl: 'Karty' },
+                  { id: 'garden' as IdeasViewMode, icon: Tag, label: 'Tags', labelPl: 'Tagi' },
+                ] as const).map(({ id, icon: Icon, label, labelPl }) => (
+                  <button
+                    key={id}
+                    onClick={() => setIdeasViewMode(id)}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      ideasViewMode === id
+                        ? 'bg-white dark:bg-navy-800 text-amber-600 dark:text-amber-400 shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                    }`}
+                    title={isPolish ? labelPl : label}
+                  >
+                    <Icon size={14} />
+                    {isPolish ? labelPl : label}
+                  </button>
+                ))}
               </div>
             )}
 
@@ -2654,6 +2745,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto min-h-0">{renderContent()}</div>
+
+      {/* Startup template picker */}
+      <IdeaStartupTemplates
+        open={showStartupTemplates}
+        onClose={() => setShowStartupTemplates(false)}
+        onSelect={handleStartupTemplateSelect}
+      />
     </div>
   );
 };

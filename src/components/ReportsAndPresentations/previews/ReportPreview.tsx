@@ -3,7 +3,7 @@
  * Golden standard §6.10a: Entity Meta → Content → AI Insight → Source Refs → Actions
  */
 
-import { Download, ExternalLink, Share2 } from 'lucide-react';
+import { Download, ExternalLink } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -13,10 +13,9 @@ interface ReportPreviewProps {
   report: ReportItem;
   onOpen?: () => void;
   onExport?: () => void;
-  onShare?: () => void;
 }
 
-export const ReportPreview: React.FC<ReportPreviewProps> = ({ report, onOpen, onExport, onShare }) => {
+export const ReportPreview: React.FC<ReportPreviewProps> = ({ report, onOpen, onExport }) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const typeMeta = REPORT_TYPE_META[report.reportType] || REPORT_TYPE_META.custom;
@@ -124,14 +123,6 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ report, onOpen, on
           title={t('rap.actions.export', 'Eksportuj')}
         >
           <Download size={14} />
-        </button>
-        <button
-          type="button"
-          className="h-9 w-9 flex items-center justify-center rounded-lg border border-slate-200/70 dark:border-white/[0.06] text-slate-500 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-          onClick={onShare}
-          title={t('rap.actions.share', 'Udostępnij')}
-        >
-          <Share2 size={14} />
         </button>
       </div>
     </div>

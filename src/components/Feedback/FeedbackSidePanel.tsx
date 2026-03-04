@@ -20,8 +20,10 @@ import {
   Frown,
   Lightbulb,
   Loader2,
+  MapPin,
   Meh,
   MessageSquareWarning,
+  Monitor,
   Send,
   Smile,
   Sparkles,
@@ -32,7 +34,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -67,6 +69,68 @@ interface AIInsight {
   relevance: number;
 }
 
+// ==================== CONTEXT SNAPSHOT ====================
+
+interface CapturedContext {
+  routePath: string;
+  pageTitle: string;
+  moduleName: string;
+  deviceType: 'mobile' | 'tablet' | 'desktop';
+  screenSize: string;
+  uiLanguage: string;
+  uiTheme: string;
+  timestamp: string;
+  browser: string;
+  scrollPosition: number;
+}
+
+function capturePageContext(): CapturedContext {
+  const w = typeof window !== 'undefined' ? window : null;
+  const pathname = w?.location.pathname || '/';
+
+  const moduleMap: Record<string, string> = {
+    '/my-work': 'My Work',
+    '/interview': 'Interview',
+    '/tools': 'Discovery Tools',
+    '/initiatives': 'Initiatives',
+    '/execution': 'Execution',
+    '/results': 'Results',
+    '/finance': 'Finance',
+    '/presentations': 'Presentations',
+    '/assessment': 'Assessment',
+    '/dashboard': 'Dashboard',
+    '/reports': 'Reports',
+    '/settings': 'Settings',
+    '/admin': 'Admin',
+    '/superadmin': 'SuperAdmin',
+    '/chat': 'AI Chat',
+    '/economics': 'Economics',
+    '/implementation': 'Implementation',
+  };
+
+  const matchedKey = Object.keys(moduleMap).find((key) => pathname.startsWith(key));
+  const moduleName = matchedKey ? moduleMap[matchedKey] : pathname.split('/').filter(Boolean)[0] || 'Home';
+
+  const pageTitle = document.title?.replace(/\s*[-|].*$/, '') || moduleName;
+
+  const width = w?.innerWidth || 0;
+  const deviceType: 'mobile' | 'tablet' | 'desktop' =
+    width < 768 ? 'mobile' : width < 1024 ? 'tablet' : 'desktop';
+
+  return {
+    routePath: pathname,
+    pageTitle,
+    moduleName,
+    deviceType,
+    screenSize: `${w?.innerWidth || 0}x${w?.innerHeight || 0}`,
+    uiLanguage: document.documentElement.lang || navigator.language,
+    uiTheme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+    timestamp: new Date().toISOString(),
+    browser: navigator.userAgent,
+    scrollPosition: w?.scrollY || 0,
+  };
+}
+
 // ==================== COMPONENT ====================
 
 export const FeedbackSidePanel: React.FC = () => {
@@ -74,12 +138,21 @@ export const FeedbackSidePanel: React.FC = () => {
   const { currentUser, activeSidePanel, closeSidePanel } = useAppStore();
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<FeedbackTab>('report');
+  const [activeTab, setActiveTab] = useState<Exclude<FeedbackTab, 'pulse'>>('report');
 
   // Report tab state
   const [reportType, setReportType] = useState<ReportType>('BUG');
+  const [reportTitle, setReportTitle] = useState('');
   const [message, setMessage] = useState('');
   const [severity, setSeverity] = useState<Severity>('MEDIUM');
+  const [stepsToReproduce, setStepsToReproduce] = useState('');
+  const [expectedBehavior, setExpectedBehavior] = useState('');
+  const [actualBehavior, setActualBehavior] = useState('');
+  const [impactNotes, setImpactNotes] = useState('');
+
+  // AI compose (make reports task-grade)
+  const [isComposing, setIsComposing] = useState(false);
+  const [aiQuestions, setAiQuestions] = useState<string[]>([]);
 
   // Quick Pulse state
   const [pulseRating, setPulseRating] = useState<PulseRating | null>(null);
@@ -101,10 +174,21 @@ export const FeedbackSidePanel: React.FC = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
+  // Context snapshot - captured the moment user opens the panel
+  const [capturedCtx, setCapturedCtx] = useState<CapturedContext | null>(null);
+  const wasOpenRef = useRef(false);
+
   const isOpen = activeSidePanel === 'FEEDBACK';
 
-  // Get current context (page/module)
-  const currentContext = typeof window !== 'undefined' ? window.location.pathname : '/';
+  // Capture context snapshot when panel opens
+  useEffect(() => {
+    if (isOpen && !wasOpenRef.current) {
+      setCapturedCtx(capturePageContext());
+    }
+    wasOpenRef.current = isOpen;
+  }, [isOpen]);
+
+  const currentContext = capturedCtx?.routePath || (typeof window !== 'undefined' ? window.location.pathname : '/');
 
   // Fetch AI insights when panel opens
   useEffect(() => {
@@ -141,8 +225,14 @@ export const FeedbackSidePanel: React.FC = () => {
 
   // Reset form after success
   const resetForm = useCallback(() => {
+    setReportTitle('');
     setMessage('');
     setSeverity('MEDIUM');
+    setStepsToReproduce('');
+    setExpectedBehavior('');
+    setActualBehavior('');
+    setImpactNotes('');
+    setAiQuestions([]);
     setPulseRating(null);
     setPulseComment('');
     setShowPulseComment(false);
@@ -168,6 +258,14 @@ export const FeedbackSidePanel: React.FC = () => {
     if (!message.trim()) return;
 
     setIsSubmitting(true);
+    const ctx = capturedCtx || capturePageContext();
+    const structuredBlocks: string[] = [];
+    if (stepsToReproduce.trim()) structuredBlocks.push(`Steps to reproduce:\n${stepsToReproduce.trim()}`);
+    if (expectedBehavior.trim()) structuredBlocks.push(`Expected:\n${expectedBehavior.trim()}`);
+    if (actualBehavior.trim()) structuredBlocks.push(`Actual:\n${actualBehavior.trim()}`);
+    if (impactNotes.trim()) structuredBlocks.push(`Impact:\n${impactNotes.trim()}`);
+
+    const fullDescription = [message.trim(), ...structuredBlocks.map((b) => `\n\n${b}`)].join('');
     try {
       const response = await fetch('/api/feedback', {
         method: 'POST',
@@ -180,19 +278,24 @@ export const FeedbackSidePanel: React.FC = () => {
           userEmail: currentUser?.email || 'anonymous',
           userName: currentUser?.full_name || currentUser?.firstName,
           type: reportType,
+          title: reportTitle.trim() || undefined,
           message,
+          description: fullDescription,
           severity,
-          routePath: currentContext,
-          deviceType:
-            window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1024 ? 'tablet' : 'desktop',
-          screenSize: `${window.innerWidth}x${window.innerHeight}`,
-          uiLanguage: document.documentElement.lang || navigator.language,
-          uiTheme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+          routePath: ctx.routePath,
+          deviceType: ctx.deviceType,
+          screenSize: ctx.screenSize,
+          uiLanguage: ctx.uiLanguage,
+          uiTheme: ctx.uiTheme,
+          clientEnv,
           metadata: {
-            context: currentContext,
-            browser: navigator.userAgent,
-            timestamp: new Date().toISOString(),
-            screenSize: `${window.innerWidth}x${window.innerHeight}`,
+            context: ctx.routePath,
+            moduleName: ctx.moduleName,
+            pageTitle: ctx.pageTitle,
+            browser: ctx.browser,
+            timestamp: ctx.timestamp,
+            screenSize: ctx.screenSize,
+            scrollPosition: ctx.scrollPosition,
           },
         }),
       });
@@ -214,6 +317,56 @@ export const FeedbackSidePanel: React.FC = () => {
     }
   };
 
+  const improveReportWithAI = async () => {
+    if (!message.trim()) return;
+    const ctx = capturedCtx || capturePageContext();
+    setIsComposing(true);
+    setAiQuestions([]);
+    try {
+      const res = await fetch('/api/feedback/compose', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({
+          type: reportType,
+          title: reportTitle.trim() || undefined,
+          message: message.trim(),
+          severity,
+          appEnv: clientEnv || undefined,
+          context: {
+            routePath: ctx.routePath,
+            moduleName: ctx.moduleName,
+            pageTitle: ctx.pageTitle,
+            deviceType: ctx.deviceType,
+            screenSize: ctx.screenSize,
+            uiLanguage: ctx.uiLanguage,
+            uiTheme: ctx.uiTheme,
+          },
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || 'AI compose failed');
+
+      const data = json?.data || json;
+      if (data?.title) setReportTitle(String(data.title));
+      if (data?.summary) setMessage(String(data.summary));
+      if (data?.steps) setStepsToReproduce(Array.isArray(data.steps) ? data.steps.join('\n') : String(data.steps));
+      if (data?.expected) setExpectedBehavior(String(data.expected));
+      if (data?.actual) setActualBehavior(String(data.actual));
+      if (data?.impact) setImpactNotes(String(data.impact));
+      if (Array.isArray(data?.questionsToClarify)) setAiQuestions(data.questionsToClarify.map(String));
+      if (typeof data?.isLikelyBug === 'boolean' && reportType === 'BUG' && !data.isLikelyBug) {
+        toast(t('feedback.ai.maybeNotBug', 'AI suggests this might not be a bug. Please double-check.'));
+      }
+    } catch (e) {
+      toast.error(t('feedback.ai.failed', 'AI assist failed. Please try again.'));
+    } finally {
+      setIsComposing(false);
+    }
+  };
+
   const handlePulseSubmit = async (rating: PulseRating) => {
     setPulseRating(rating);
 
@@ -228,6 +381,7 @@ export const FeedbackSidePanel: React.FC = () => {
 
   const submitPulse = async (rating: PulseRating, comment?: string) => {
     setIsSubmitting(true);
+    const ctx = capturedCtx || capturePageContext();
     try {
       const response = await fetch('/api/feedback/pulse', {
         method: 'POST',
@@ -238,9 +392,9 @@ export const FeedbackSidePanel: React.FC = () => {
         body: JSON.stringify({
           userId: currentUser?.id,
           rating,
-          context: currentContext,
+          context: ctx.routePath,
           comment: comment || pulseComment,
-          timestamp: new Date().toISOString(),
+          timestamp: ctx.timestamp,
         }),
       });
 
@@ -261,6 +415,7 @@ export const FeedbackSidePanel: React.FC = () => {
     if (!featureName.trim() || !featureDescription.trim()) return;
 
     setIsSubmitting(true);
+    const ctx = capturedCtx || capturePageContext();
     try {
       const response = await fetch('/api/feedback/feature', {
         method: 'POST',
@@ -275,8 +430,8 @@ export const FeedbackSidePanel: React.FC = () => {
           featureName,
           description: featureDescription,
           impact: featureImpact,
-          context: currentContext,
-          requestAIAnalysis: true, // Let AI analyze this
+          context: ctx.routePath,
+          requestAIAnalysis: true,
         }),
       });
 
@@ -305,12 +460,11 @@ export const FeedbackSidePanel: React.FC = () => {
     <div className="flex border-b border-slate-200 dark:border-navy-700 px-2">
       {[
         { id: 'report', icon: Bug, label: t('feedback.tabs.report', 'Report') },
-        { id: 'pulse', icon: Zap, label: t('feedback.tabs.pulse', 'Quick') },
         { id: 'feature', icon: Sparkles, label: t('feedback.tabs.feature', 'Feature') },
       ].map(({ id, icon: Icon, label }) => (
         <button
           key={id}
-          onClick={() => setActiveTab(id as FeedbackTab)}
+          onClick={() => setActiveTab(id as Exclude<FeedbackTab, 'pulse'>)}
           className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 ${
             activeTab === id
               ? 'border-amber-500 text-amber-600 dark:text-amber-400'
@@ -324,11 +478,34 @@ export const FeedbackSidePanel: React.FC = () => {
     </div>
   );
 
+  const renderContextBadge = () => {
+    if (!capturedCtx) return null;
+    return (
+      <div className="flex items-center gap-2 p-2.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800 text-xs">
+        <MapPin size={14} className="text-indigo-500 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <span className="font-semibold text-indigo-700 dark:text-indigo-300">
+            {capturedCtx.moduleName}
+          </span>
+          <span className="text-indigo-500 dark:text-indigo-400 ml-1.5">
+            {capturedCtx.routePath}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 text-indigo-400 dark:text-indigo-500 shrink-0">
+          <Monitor size={12} />
+          <span>{capturedCtx.deviceType}</span>
+        </div>
+      </div>
+    );
+  };
+
   const renderReportTab = () => (
     <form onSubmit={handleReportSubmit} className="flex flex-col gap-4 h-full">
       <p className="text-xs text-slate-500 dark:text-slate-400">
         {t('feedback.report.intro', 'Help us improve by reporting issues or sharing ideas.')}
       </p>
+
+      {renderContextBadge()}
 
       {/* Type Selector */}
       <div className="flex bg-slate-100 dark:bg-navy-900 p-1 rounded-lg">
@@ -404,6 +581,48 @@ export const FeedbackSidePanel: React.FC = () => {
         </div>
       )}
 
+      {/* Title + AI Assist */}
+      <div className="space-y-2">
+        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          {t('feedback.label.title', 'Title')}
+        </label>
+        <input
+          type="text"
+          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm"
+          placeholder={t('feedback.placeholder.title', 'Short, specific summary')}
+          value={reportTitle}
+          onChange={(e) => setReportTitle(e.target.value)}
+        />
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={improveReportWithAI}
+            disabled={isComposing || isSubmitting || !message.trim()}
+            className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-900 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-800 disabled:opacity-50 flex items-center gap-2"
+          >
+            {isComposing ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+            {t('feedback.ai.improve', 'Improve with AI')}
+          </button>
+          {aiQuestions.length > 0 ? (
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+              {t('feedback.ai.questions', 'AI has questions')}
+            </span>
+          ) : null}
+        </div>
+        {aiQuestions.length > 0 ? (
+          <div className="text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-3 space-y-1">
+            <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              {t('feedback.ai.clarify', 'To make this actionable, please clarify')}
+            </div>
+            <ul className="list-disc pl-5 space-y-0.5">
+              {aiQuestions.slice(0, 5).map((q, idx) => (
+                <li key={idx}>{q}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </div>
+
       {/* Message Input */}
       <div className="flex-1 flex flex-col">
         <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
@@ -421,6 +640,57 @@ export const FeedbackSidePanel: React.FC = () => {
           required
         />
       </div>
+
+      {/* Bug structure helpers */}
+      {reportType === 'BUG' && (
+        <div className="grid grid-cols-1 gap-3">
+          <div>
+            <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+              {t('feedback.label.steps', 'Steps to reproduce')}
+            </label>
+            <textarea
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none resize-none text-sm min-h-[72px]"
+              placeholder={t('feedback.placeholder.steps', '1) …\n2) …\n3) …')}
+              value={stepsToReproduce}
+              onChange={(e) => setStepsToReproduce(e.target.value)}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                {t('feedback.label.expected', 'Expected')}
+              </label>
+              <textarea
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none resize-none text-sm min-h-[72px]"
+                value={expectedBehavior}
+                onChange={(e) => setExpectedBehavior(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                {t('feedback.label.actual', 'Actual')}
+              </label>
+              <textarea
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none resize-none text-sm min-h-[72px]"
+                value={actualBehavior}
+                onChange={(e) => setActualBehavior(e.target.value)}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+              {t('feedback.label.impact', 'Impact')}
+            </label>
+            <input
+              type="text"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm"
+              placeholder={t('feedback.placeholder.impact', 'Who is affected / how bad is it?')}
+              value={impactNotes}
+              onChange={(e) => setImpactNotes(e.target.value)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Submit Button */}
       <button
@@ -447,122 +717,10 @@ export const FeedbackSidePanel: React.FC = () => {
     </form>
   );
 
-  const renderPulseTab = () => (
-    <div className="flex flex-col items-center justify-center h-full gap-6 py-4">
-      {!showPulseComment ? (
-        <>
-          <div className="text-center">
-            <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1">
-              {t('feedback.pulse.title', "How's your experience?")}
-            </h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t('feedback.pulse.subtitle', 'Quick feedback helps us improve')}
-            </p>
-          </div>
-
-          {/* Emoji Rating */}
-          <div className="flex items-center gap-3">
-            {[
-              {
-                rating: 1,
-                icon: Frown,
-                label: 'Terrible',
-                color: 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20',
-              },
-              {
-                rating: 2,
-                icon: ThumbsDown,
-                label: 'Poor',
-                color: 'text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20',
-              },
-              {
-                rating: 3,
-                icon: Meh,
-                label: 'Okay',
-                color: 'text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20',
-              },
-              {
-                rating: 4,
-                icon: Smile,
-                label: 'Good',
-                color: 'text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20',
-              },
-              {
-                rating: 5,
-                icon: ThumbsUp,
-                label: 'Excellent',
-                color: 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20',
-              },
-            ].map(({ rating, icon: Icon, label, color }) => (
-              <button
-                key={rating}
-                onClick={() => handlePulseSubmit(rating as PulseRating)}
-                disabled={isSubmitting}
-                className={`p-3 rounded-xl transition-all ${color} ${
-                  pulseRating === rating ? 'ring-2 ring-current bg-current/10' : ''
-                } disabled:opacity-50`}
-                title={label}
-              >
-                <Icon size={28} />
-              </button>
-            ))}
-          </div>
-
-          {/* Context Info */}
-          <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
-            <BarChart3 size={12} />
-            <span>
-              {t('feedback.pulse.context', 'Feedback for:')} {currentContext}
-            </span>
-          </div>
-        </>
-      ) : (
-        /* Comment for low rating */
-        <div className="w-full space-y-4">
-          <div className="text-center">
-            <Frown size={40} className="mx-auto text-orange-500 mb-2" />
-            <h4 className="text-base font-bold text-slate-800 dark:text-white">
-              {t('feedback.pulse.sorry', 'Sorry to hear that!')}
-            </h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t('feedback.pulse.tellUs', 'Tell us what went wrong')}
-            </p>
-          </div>
-
-          <textarea
-            className="w-full px-3 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none resize-none text-sm min-h-[100px]"
-            placeholder={t('feedback.pulse.commentPlaceholder', 'What can we improve?')}
-            value={pulseComment}
-            onChange={(e) => setPulseComment(e.target.value)}
-            autoFocus
-          />
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => {
-                setShowPulseComment(false);
-                setPulseRating(null);
-              }}
-              className="flex-1 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg"
-            >
-              {t('common.cancel', 'Cancel')}
-            </button>
-            <button
-              onClick={() => submitPulse(pulseRating!, pulseComment)}
-              disabled={isSubmitting}
-              className="flex-1 py-2 text-sm bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-              {t('feedback.submit', 'Submit')}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
   const renderFeatureTab = () => (
     <form onSubmit={handleFeatureSubmit} className="flex flex-col gap-4 h-full">
+      {renderContextBadge()}
+
       {/* AI Insights Section */}
       {aiInsights.length > 0 && (
         <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
@@ -718,6 +876,91 @@ export const FeedbackSidePanel: React.FC = () => {
     </div>
   );
 
+  const clientEnv = ((import.meta as any)?.env?.VITE_APP_ENV as string | undefined) || '';
+
+  const renderQuickPulseHeader = () => (
+    <div className="flex items-center gap-1.5">
+      {clientEnv ? (
+        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200/70 dark:bg-navy-800 text-slate-700 dark:text-slate-200 mr-1">
+          {clientEnv.toUpperCase()}
+        </span>
+      ) : null}
+      {[
+        { rating: 1, icon: Frown, color: 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20' },
+        {
+          rating: 2,
+          icon: ThumbsDown,
+          color: 'text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20',
+        },
+        { rating: 3, icon: Meh, color: 'text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20' },
+        { rating: 4, icon: Smile, color: 'text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20' },
+        {
+          rating: 5,
+          icon: ThumbsUp,
+          color: 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20',
+        },
+      ].map(({ rating, icon: Icon, color }) => (
+        <button
+          key={rating}
+          onClick={() => handlePulseSubmit(rating as PulseRating)}
+          disabled={isSubmitting}
+          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${color} disabled:opacity-50`}
+          title={t('feedback.quickPulse', 'Quick feedback')}
+        >
+          <Icon size={16} />
+        </button>
+      ))}
+    </div>
+  );
+
+  const renderQuickPulseComment = () => {
+    if (!showPulseComment) return null;
+    return (
+      <div className="mb-4 p-3 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-2xl">
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <div className="min-w-0">
+            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+              {t('feedback.pulse.tellUs', 'Tell us what went wrong')}
+            </div>
+            <div className="text-[10px] text-slate-500 dark:text-slate-400">
+              {t('feedback.pulse.context', 'Feedback for:')}{' '}
+              <span className="font-medium">{capturedCtx?.routePath || currentContext}</span>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setShowPulseComment(false);
+              setPulseRating(null);
+              setPulseComment('');
+            }}
+            className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+          >
+            {t('common.cancel', 'Cancel')}
+          </button>
+        </div>
+
+        <textarea
+          className="w-full px-3 py-2.5 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none resize-none text-sm min-h-[84px]"
+          placeholder={t('feedback.pulse.commentPlaceholder', 'What can we improve?')}
+          value={pulseComment}
+          onChange={(e) => setPulseComment(e.target.value)}
+          autoFocus
+        />
+
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={() => submitPulse(pulseRating!, pulseComment)}
+            disabled={isSubmitting || !pulseRating}
+            className="flex-1 py-2 text-sm bg-amber-500 text-white rounded-xl hover:bg-amber-600 disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+            {t('feedback.submit', 'Submit')}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   // ==================== MAIN RENDER ====================
 
   if (!isOpen) return null;
@@ -736,14 +979,17 @@ export const FeedbackSidePanel: React.FC = () => {
         <div className="h-14 flex items-center justify-between px-4 border-b border-slate-200 dark:border-navy-700 shrink-0 bg-slate-50 dark:bg-navy-900">
           <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <MessageSquareWarning size={18} className="text-amber-500" />
-            {t('feedback.title', 'Feedback')}
+            {t('feedback.title', 'User Feedback & Triage')}
           </h2>
-          <button
-            onClick={closeSidePanel}
-            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-          >
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-2">
+            {!showSuccess && renderQuickPulseHeader()}
+            <button
+              onClick={closeSidePanel}
+              className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -755,8 +1001,8 @@ export const FeedbackSidePanel: React.FC = () => {
             renderSuccess()
           ) : (
             <>
+              {renderQuickPulseComment()}
               {activeTab === 'report' && renderReportTab()}
-              {activeTab === 'pulse' && renderPulseTab()}
               {activeTab === 'feature' && renderFeatureTab()}
             </>
           )}

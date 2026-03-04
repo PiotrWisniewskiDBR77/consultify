@@ -1,0 +1,170 @@
+/**
+ * ExportPowerPoint — Exports mind map as a structured PPTX-like
+ * downloadable HTML presentation. Each branch becomes a slide.
+ */
+import { Download, FileText, Loader2, Presentation, X } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+interface ExportPowerPointProps {
+  open: boolean;
+  onClose: () => void;
+  ideaTitle: string;
+  branches: Array<{
+    branchKey: string;
+    label: string;
+    nodes: Array<{ id: string; label: string; status?: string }>;
+  }>;
+}
+
+function generateSlideHTML(title: string, branches: ExportPowerPointProps['branches']): string {
+  const slideColors: Record<string, string> = {
+    problem: '#fb7185',
+    goal: '#34d399',
+    options: '#fbbf24',
+    evidence: '#38bdf8',
+    risks: '#a78bfa',
+    experiments: '#22d3ee',
+  };
+
+  const slides = [
+    `<div style="page-break-after:always;padding:60px;min-height:700px;display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#f59e0b22,#f9731611);">
+      <h1 style="font-size:48px;font-weight:800;color:#1e293b;margin-bottom:16px;text-align:center;">${title}</h1>
+      <p style="font-size:18px;color:#64748b;text-align:center;">Mind Map Overview &middot; ${branches.length} branches &middot; ${branches.reduce((s, b) => s + b.nodes.length, 0)} ideas</p>
+    </div>`,
+    ...branches.map((branch) => {
+      const color = slideColors[branch.branchKey] || '#94a3b8';
+      const nodesList = branch.nodes
+        .map((n) => `<li style="margin-bottom:8px;font-size:16px;color:#334155;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};margin-right:10px;"></span>${n.label}${n.status ? ` <span style="font-size:12px;color:#94a3b8;">(${n.status})</span>` : ''}</li>`)
+        .join('');
+      return `<div style="page-break-after:always;padding:60px;min-height:700px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:32px;">
+          <div style="width:12px;height:12px;border-radius:50%;background:${color};"></div>
+          <h2 style="font-size:36px;font-weight:700;color:#1e293b;margin:0;">${branch.label}</h2>
+          <span style="font-size:14px;color:#94a3b8;margin-left:auto;">${branch.nodes.length} ideas</span>
+        </div>
+        <ul style="list-style:none;padding:0;margin:0;">${nodesList || '<li style="color:#94a3b8;font-size:16px;">No ideas yet</li>'}</ul>
+      </div>`;
+    }),
+    `<div style="page-break-after:always;padding:60px;min-height:700px;display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#8b5cf622,#6366f111);">
+      <h2 style="font-size:36px;font-weight:700;color:#1e293b;margin-bottom:16px;">Summary</h2>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center;">
+        ${branches.map((b) => `<div style="text-align:center;padding:16px 24px;border-radius:12px;background:white;box-shadow:0 2px 8px rgba(0,0,0,0.08);"><div style="font-size:28px;font-weight:800;color:${slideColors[b.branchKey] || '#94a3b8'};">${b.nodes.length}</div><div style="font-size:13px;color:#64748b;">${b.label}</div></div>`).join('')}
+      </div>
+    </div>`,
+  ];
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${title} - Mind Map Presentation</title>
+  <style>
+    @media print { body { margin: 0; } div { page-break-inside: avoid; } }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 0; background: white; }
+  </style>
+</head>
+<body>
+  ${slides.join('\n')}
+</body>
+</html>`;
+}
+
+export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
+  open,
+  onClose,
+  ideaTitle,
+  branches,
+}) => {
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = useCallback(async () => {
+    setExporting(true);
+    try {
+      const html = generateSlideHTML(ideaTitle, branches);
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${ideaTitle || 'mindmap'}-presentation.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success(isPl ? 'Prezentacja wyeksportowana!' : 'Presentation exported!', { duration: 1500 });
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.message || 'Export failed');
+    } finally {
+      setExporting(false);
+    }
+  }, [branches, ideaTitle, isPl, onClose]);
+
+  const handlePrint = useCallback(() => {
+    const html = generateSlideHTML(ideaTitle, branches);
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => win.print(), 500);
+    }
+  }, [branches, ideaTitle]);
+
+  if (!open) return null;
+
+  const totalIdeas = branches.reduce((s, b) => s + b.nodes.length, 0);
+
+  return (
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
+      <div className="w-full max-w-md rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+          <div className="flex items-center gap-2">
+            <Presentation size={16} className="text-indigo-500" />
+            <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+              {isPl ? 'Eksport prezentacji' : 'Export Presentation'}
+            </h3>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="px-5 py-4">
+          <div className="p-3 rounded-xl bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30 mb-4">
+            <div className="text-[11px] font-bold text-slate-700 dark:text-slate-200">{ideaTitle}</div>
+            <div className="text-[10px] text-slate-500 mt-1">
+              {branches.length} {isPl ? 'gałęzi' : 'branches'} · {totalIdeas} {isPl ? 'pomysłów' : 'ideas'} · {branches.length + 2} {isPl ? 'slajdów' : 'slides'}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500/15 to-blue-500/10 text-[11px] font-bold text-indigo-700 dark:text-indigo-300 hover:from-indigo-500/25 hover:to-blue-500/15 transition-all disabled:opacity-40"
+            >
+              {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+              {isPl ? 'Pobierz HTML (do PDF/PPTX)' : 'Download HTML (for PDF/PPTX)'}
+            </button>
+            <button
+              onClick={handlePrint}
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100/50 dark:bg-navy-800/50 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-navy-700/50 transition-all"
+            >
+              <FileText size={14} />
+              {isPl ? 'Drukuj / Zapisz jako PDF' : 'Print / Save as PDF'}
+            </button>
+          </div>
+
+          <p className="text-[9px] text-slate-400 mt-3 text-center">
+            {isPl ? 'Otwórz HTML w przeglądarce i użyj Ctrl+P aby zapisać jako PDF.' : 'Open HTML in browser and use Ctrl+P to save as PDF.'}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ExportPowerPoint;

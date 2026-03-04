@@ -484,6 +484,49 @@ async function getAssignmentForSession(
   return row || null;
 }
 
+async function ensureInterviewInsightActivityTable(): Promise<void> {
+  await queryHelpers.queryRun(
+    `CREATE TABLE IF NOT EXISTS interview_insight_activity (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL,
+      insight_id TEXT NOT NULL,
+      type TEXT NOT NULL,
+      description TEXT,
+      user_id TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`
+  );
+  await queryHelpers.queryRun(
+    `CREATE INDEX IF NOT EXISTS idx_interview_insight_activity_org ON interview_insight_activity(organization_id)`
+  );
+  await queryHelpers.queryRun(
+    `CREATE INDEX IF NOT EXISTS idx_interview_insight_activity_insight ON interview_insight_activity(insight_id)`
+  );
+  await queryHelpers.queryRun(
+    `CREATE INDEX IF NOT EXISTS idx_interview_insight_activity_created ON interview_insight_activity(created_at DESC)`
+  );
+}
+
+async function logInterviewInsightActivity(params: {
+  organizationId: string;
+  insightId: string;
+  type: string;
+  description: string;
+  userId?: string;
+}): Promise<void> {
+  const { organizationId, insightId, type, description, userId } = params;
+  try {
+    await ensureInterviewInsightActivityTable();
+    await queryHelpers.queryRun(
+      `INSERT INTO interview_insight_activity (id, organization_id, insight_id, type, description, user_id, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [uuidv4(), organizationId, insightId, type, description, userId || null, new Date().toISOString()]
+    );
+  } catch (e) {
+    logger.warn('[InterviewController] Failed to log interview insight activity', e);
+  }
+}
+
 export const InterviewController = {
   // ==========================================
   // SESSIONS
@@ -3733,24 +3776,23 @@ ${JSON.stringify(questions || [], null, 2)}
       [sessionId]
     )) as any[];
 
-    // Group by category and extract facts
-    const facts: { category: string; fact: string }[] = [];
-    const gaps: { category: string; gap: string }[] = [];
-    const constraints: { category: string; constraint: string }[] = [];
-    const painPoints: { category: string; painPoint: string }[] = [];
+    // Summary is stored as simple string arrays for frontend compatibility.
+    const facts: string[] = [];
+    const gaps: string[] = [];
+    const constraints: string[] = [];
+    const painPoints: string[] = [];
 
     for (const q of questions) {
       if (q.answer_text) {
-        // Add as fact
-        facts.push({ category: q.category, fact: `${q.question_text}: ${q.answer_text}` });
+        facts.push(`${q.question_text}: ${q.answer_text}`);
 
         // Check tags for constraints/pain points
         const tags = parseJson(q.tags, []) as string[];
         if (tags.includes('constraint')) {
-          constraints.push({ category: q.category, constraint: q.answer_text });
+          constraints.push(String(q.answer_text));
         }
         if (tags.includes('pain_point') || tags.includes('risk')) {
-          painPoints.push({ category: q.category, painPoint: q.answer_text });
+          painPoints.push(String(q.answer_text));
         }
       }
     }
@@ -3763,7 +3805,7 @@ ${JSON.stringify(questions || [], null, 2)}
 
     for (const q of allQuestions) {
       if (q.status !== 'answered' || (q.confidence_score && q.confidence_score < 3)) {
-        gaps.push({ category: q.category, gap: q.question_text });
+        gaps.push(String(q.question_text));
       }
     }
 
@@ -3788,6 +3830,45 @@ ${JSON.stringify(questions || [], null, 2)}
       constraints,
       painPoints,
       message: 'Summary generated (facts only, no recommendations)',
+    });
+  }),
+
+  getSummary: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { sessionId } = req.params;
+
+    try {
+      await assertSessionAccessibleOrThrow({
+        sessionId,
+        organizationId: user.organizationId,
+        userId: user.id,
+      });
+    } catch (e: any) {
+      const msg = String(e?.message || '');
+      if (msg.toLowerCase().includes('not found')) {
+        res.status(404).json({ error: 'Session not found' });
+        return;
+      }
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const row = await queryHelpers.queryOne(
+      `SELECT summary_facts, summary_gaps, summary_constraints, summary_pain_points
+       FROM interview_sessions
+       WHERE id = ? AND organization_id = ?`,
+      [sessionId, user.organizationId]
+    );
+    if (!row) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+
+    res.json({
+      facts: parseJson((row as any).summary_facts, []),
+      gaps: parseJson((row as any).summary_gaps, []),
+      constraints: parseJson((row as any).summary_constraints, []),
+      painPoints: parseJson((row as any).summary_pain_points, []),
     });
   }),
 
@@ -3909,11 +3990,33 @@ ${JSON.stringify(questions || [], null, 2)}
       createdBy: user.id,
     });
 
+    void logInterviewInsightActivity({
+      organizationId: user.organizationId,
+      insightId: insight.id,
+      type: 'created',
+      description: `Insight created (${normalizedPromptType})`,
+      userId: user.id,
+    });
+
     res.status(201).json(insight);
   }),
 
   regenerateInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
     const { id } = req.params;
+
+    const row = await queryHelpers.queryOne(
+      `SELECT organization_id FROM interview_insights WHERE id = ?`,
+      [id]
+    );
+    if (!row) {
+      res.status(404).json({ error: 'Insight not found' });
+      return;
+    }
+    if (String((row as any).organization_id) !== String(user.organizationId)) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
 
     const interviewInsightService = await import('../services/InterviewInsightService.js');
     const insight = await interviewInsightService.regenerate(id);
@@ -3922,6 +4025,14 @@ ${JSON.stringify(questions || [], null, 2)}
       res.status(404).json({ error: 'Insight not found' });
       return;
     }
+
+    void logInterviewInsightActivity({
+      organizationId: user.organizationId,
+      insightId: id,
+      type: 'regenerated',
+      description: 'Regeneration requested',
+      userId: user.id,
+    });
 
     res.json(insight);
   }),
@@ -3942,12 +4053,17 @@ ${JSON.stringify(questions || [], null, 2)}
 
   // Update insight (status, etc.)
   updateInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
     const { id } = req.params;
-    const { status, exportedToTools, exportedToAssessment } = req.body;
+    const { title, status, exportedToTools, exportedToAssessment } = req.body;
 
     const updates: string[] = [];
     const values: any[] = [];
 
+    if (typeof title === 'string') {
+      updates.push('title = ?');
+      values.push(title.trim());
+    }
     if (status !== undefined) {
       updates.push('status = ?');
       values.push(status);
@@ -3969,11 +4085,22 @@ ${JSON.stringify(questions || [], null, 2)}
     updates.push('updated_at = ?');
     values.push(new Date().toISOString());
     values.push(id);
+    values.push(user.organizationId);
 
     await queryHelpers.queryRun(
-      `UPDATE interview_insights SET ${updates.join(', ')} WHERE id = ?`,
+      `UPDATE interview_insights SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`,
       values
     );
+
+    if (typeof title === 'string') {
+      void logInterviewInsightActivity({
+        organizationId: user.organizationId,
+        insightId: id,
+        type: 'edit',
+        description: 'Insight updated',
+        userId: user.id,
+      });
+    }
 
     res.json({ success: true });
   }),
@@ -4113,6 +4240,13 @@ ${JSON.stringify(questions || [], null, 2)}
         } catch {
           // ignore
         }
+        void logInterviewInsightActivity({
+          organizationId: user.organizationId,
+          insightId: id,
+          type: 'exported',
+          description: `Exported to ${target}`,
+          userId: user.id,
+        });
         res.json({
           success: true,
           target,
@@ -4122,6 +4256,13 @@ ${JSON.stringify(questions || [], null, 2)}
         return;
       }
 
+      void logInterviewInsightActivity({
+        organizationId: user.organizationId,
+        insightId: id,
+        type: 'exported',
+        description: `Exported to ${target}`,
+        userId: user.id,
+      });
       res.json({ success: true, target, targetId: existing.target_id });
       return;
     }
@@ -4250,6 +4391,13 @@ ${JSON.stringify(questions || [], null, 2)}
         // ignore
       }
 
+      void logInterviewInsightActivity({
+        organizationId: user.organizationId,
+        insightId: id,
+        type: 'exported',
+        description: 'Exported to tools',
+        userId: user.id,
+      });
       res.json({ success: true, target: 'tools', targetId: toolSessionId });
       return;
     }
@@ -4358,7 +4506,187 @@ ${JSON.stringify(questions || [], null, 2)}
       // ignore
     }
 
+    void logInterviewInsightActivity({
+      organizationId: user.organizationId,
+      insightId: id,
+      type: 'exported',
+      description: 'Exported to assessment',
+      userId: user.id,
+    });
     res.json({ success: true, target: 'assessment', targetId: assessmentId, assessmentType });
+  }),
+
+  getInsightActivity: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+
+    const row = await queryHelpers.queryOne(`SELECT organization_id FROM interview_insights WHERE id = ?`, [id]);
+    if (!row) {
+      res.status(404).json({ error: 'Insight not found' });
+      return;
+    }
+    if (String((row as any).organization_id) !== String(user.organizationId)) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    await ensureInterviewInsightActivityTable();
+    const entries = await queryHelpers.queryAll(
+      `SELECT a.id, a.type, a.description, a.created_at, u.first_name, u.last_name
+       FROM interview_insight_activity a
+       LEFT JOIN users u ON u.id = a.user_id
+       WHERE a.organization_id = ? AND a.insight_id = ?
+       ORDER BY a.created_at DESC`,
+      [user.organizationId, id]
+    );
+
+    res.json(
+      (entries || []).map((e: any) => ({
+        id: e.id,
+        type: e.type,
+        description: e.description,
+        timestamp: e.created_at,
+        userName: `${String(e.first_name || '').trim()} ${String(e.last_name || '').trim()}`.trim() || undefined,
+      }))
+    );
+  }),
+
+  getInsightComments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+
+    const row = await queryHelpers.queryOne(`SELECT organization_id FROM interview_insights WHERE id = ?`, [id]);
+    if (!row) {
+      res.status(404).json({ error: 'Insight not found' });
+      return;
+    }
+    if (String((row as any).organization_id) !== String(user.organizationId)) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const { CommentService } = await import('../services/content/CommentService.js');
+    const commentService = new CommentService();
+    const comments = await commentService.getContentComments(id, 'interview_insight', { includeResolved: true });
+
+    const safeParsePriority = (positionRef?: string | null) => {
+      if (!positionRef) return 'normal';
+      try {
+        const parsed = JSON.parse(positionRef);
+        const p = String((parsed as any)?.priority || '').toLowerCase();
+        if (p === 'low' || p === 'high' || p === 'normal') return p;
+        return 'normal';
+      } catch {
+        return 'normal';
+      }
+    };
+
+    res.json(
+      (comments || []).map((c: any) => ({
+        id: c.id,
+        authorName: c.user ? `${c.user.firstName} ${c.user.lastName}`.trim() : undefined,
+        content: c.commentText,
+        createdAt: c.createdAt,
+        priority: safeParsePriority(c.positionRef),
+      }))
+    );
+  }),
+
+  createInsightComment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    const { content, priority } = req.body || {};
+
+    const row = await queryHelpers.queryOne(`SELECT organization_id FROM interview_insights WHERE id = ?`, [id]);
+    if (!row) {
+      res.status(404).json({ error: 'Insight not found' });
+      return;
+    }
+    if (String((row as any).organization_id) !== String(user.organizationId)) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const text = typeof content === 'string' ? content.trim() : '';
+    if (!text) {
+      res.status(400).json({ error: 'content is required' });
+      return;
+    }
+
+    const p = String(priority || '').toLowerCase();
+    const safePriority = p === 'low' || p === 'high' || p === 'normal' ? p : 'normal';
+
+    const { CommentService } = await import('../services/content/CommentService.js');
+    const commentService = new CommentService();
+    const created = await commentService.createComment({
+      contentId: id,
+      contentType: 'interview_insight',
+      userId: user.id,
+      commentText: text,
+      positionRef: JSON.stringify({ priority: safePriority }),
+    });
+
+    void logInterviewInsightActivity({
+      organizationId: user.organizationId,
+      insightId: id,
+      type: 'comment',
+      description: 'Comment added',
+      userId: user.id,
+    });
+
+    res.status(201).json({
+      id: created.id,
+      authorName: created.user ? `${created.user.firstName} ${created.user.lastName}`.trim() : undefined,
+      content: created.commentText,
+      createdAt: created.createdAt,
+      priority: safePriority,
+    });
+  }),
+
+  deleteInsightComment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id, commentId } = req.params as any;
+
+    const row = await queryHelpers.queryOne(`SELECT organization_id FROM interview_insights WHERE id = ?`, [id]);
+    if (!row) {
+      res.status(404).json({ error: 'Insight not found' });
+      return;
+    }
+    if (String((row as any).organization_id) !== String(user.organizationId)) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const { CommentService } = await import('../services/content/CommentService.js');
+    const commentService = new CommentService();
+    const comment = await commentService.getCommentById(commentId);
+    if (!comment || comment.contentId !== id || comment.contentType !== 'interview_insight') {
+      res.status(404).json({ error: 'Comment not found' });
+      return;
+    }
+
+    const role = String((user as any).role || '').toUpperCase();
+    const canDelete = comment.userId === user.id || role === 'ADMIN' || role === 'SUPERADMIN';
+    if (!canDelete) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const deleted = await commentService.deleteComment(commentId);
+    if (!deleted) {
+      res.status(404).json({ error: 'Comment not found' });
+      return;
+    }
+
+    void logInterviewInsightActivity({
+      organizationId: user.organizationId,
+      insightId: id,
+      type: 'comment',
+      description: 'Comment deleted',
+      userId: user.id,
+    });
+
+    res.json({ success: true });
   }),
 
   // ==========================================

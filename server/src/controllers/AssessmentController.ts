@@ -1732,11 +1732,125 @@ export class AssessmentController {
       const answers = assessment.answers_json ? JSON.parse(assessment.answers_json) : {};
       const scoreSummary = assessment.score_summary ? JSON.parse(assessment.score_summary) : {};
 
+      // --- Compute gaps from dimension scores ---
+      type Gap = {
+        dimensionId: string;
+        dimensionName: string;
+        current: number;
+        target: number;
+        gap: number;
+        priority: 'high' | 'medium' | 'low';
+      };
+
+      const gaps: Gap[] = [];
+
+      const addGap = (dimId: string, dimName: string, current: number, target: number) => {
+        const gap = target - current;
+        if (gap <= 0) return;
+        const priority: Gap['priority'] = gap >= 3 ? 'high' : gap >= 2 ? 'medium' : 'low';
+        gaps.push({ dimensionId: dimId, dimensionName: dimName, current, target, gap, priority });
+      };
+
+      const assessmentType = assessment.assessment_type;
+
+      if (assessmentType === 'SIRI' && answers.siri?.dimensions) {
+        for (const [dimId, d] of Object.entries(answers.siri.dimensions)) {
+          const dim = d as { current?: number; target?: number };
+          if (dim && typeof dim.current === 'number' && typeof dim.target === 'number') {
+            addGap(dimId, dimId.replace(/_/g, ' '), dim.current, dim.target);
+          }
+        }
+      } else if (assessmentType === 'ADMA' && answers.adma?.dimensions) {
+        for (const [dimId, d] of Object.entries(answers.adma.dimensions)) {
+          const dim = d as { current?: number; target?: number };
+          if (dim && typeof dim.current === 'number' && typeof dim.target === 'number') {
+            addGap(dimId, dimId.replace(/_/g, ' '), dim.current, dim.target);
+          }
+        }
+      } else if (assessmentType === 'DRD' && answers.drd?.areas) {
+        for (const [areaId, areaData] of Object.entries(answers.drd.areas)) {
+          const area = areaData as { achievedLevel?: number; targetLevel?: number; name?: string };
+          if (area && typeof area.achievedLevel === 'number' && typeof area.targetLevel === 'number') {
+            addGap(areaId, area.name || `Area ${areaId}`, area.achievedLevel, area.targetLevel);
+          }
+        }
+      }
+
+      if (gaps.length === 0 && scoreSummary?.byAxis) {
+        for (const [axisId, axisData] of Object.entries(scoreSummary.byAxis)) {
+          const axis = axisData as { current?: number; target?: number; actual?: number; name?: string };
+          const current = axis.current ?? axis.actual ?? 0;
+          const target = axis.target ?? 0;
+          if (typeof current === 'number' && typeof target === 'number') {
+            addGap(axisId, axis.name || axisId.replace(/_/g, ' '), current, target);
+          }
+        }
+      }
+      if (gaps.length === 0 && scoreSummary?.byDimension) {
+        for (const [dimId, dimData] of Object.entries(scoreSummary.byDimension)) {
+          const dim = dimData as { current?: number; target?: number; actual?: number; name?: string };
+          const current = dim.current ?? dim.actual ?? 0;
+          const target = dim.target ?? 0;
+          if (typeof current === 'number' && typeof target === 'number') {
+            addGap(dimId, dim.name || dimId.replace(/_/g, ' '), current, target);
+          }
+        }
+      }
+
+      gaps.sort((a, b) => b.gap - a.gap);
+
+      // --- Compute recommendations from gaps ---
+      type Recommendation = {
+        dimensionId: string;
+        title: string;
+        description: string;
+        priority: string;
+        estimatedEffort: string;
+      };
+
+      const recommendations: Recommendation[] = gaps
+        .filter((g) => g.priority === 'high' || g.priority === 'medium')
+        .map((g) => {
+          const effortMap: Record<string, string> = { high: 'high', medium: 'medium', low: 'low' };
+          return {
+            dimensionId: g.dimensionId,
+            title: `Improve ${g.dimensionName} from level ${g.current} to ${g.target}`,
+            description:
+              g.gap >= 3
+                ? `Critical gap of ${g.gap} levels in ${g.dimensionName}. Requires a dedicated transformation initiative with cross-functional involvement and phased milestones.`
+                : `Moderate gap of ${g.gap} levels in ${g.dimensionName}. Targeted improvement actions can close this gap within a structured program.`,
+            priority: g.priority,
+            estimatedEffort: effortMap[g.priority] || 'medium',
+          };
+        });
+
+      // --- Compute executive summary ---
+      const overallScore = Number(
+        scoreSummary?.overall?.actual || scoreSummary?.overallScore || 0
+      );
+      const highGaps = gaps.filter((g) => g.priority === 'high');
+      const topAreas = highGaps
+        .slice(0, 3)
+        .map((g) => g.dimensionName)
+        .join(', ');
+
+      const executiveSummary =
+        gaps.length > 0
+          ? `Assessment "${assessment.name}" (${assessmentType}) achieved an overall score of ${overallScore.toFixed(1)}. ` +
+            `${gaps.length} gap${gaps.length !== 1 ? 's' : ''} identified across assessed dimensions` +
+            (highGaps.length > 0
+              ? `, with ${highGaps.length} high-priority gap${highGaps.length !== 1 ? 's' : ''} requiring immediate attention` +
+                (topAreas ? ` in: ${topAreas}` : '') +
+                '.'
+              : '.') +
+            ` ${recommendations.length} recommendation${recommendations.length !== 1 ? 's' : ''} generated.`
+          : `Assessment "${assessment.name}" (${assessmentType}) completed with an overall score of ${overallScore.toFixed(1)}. No significant gaps identified between current and target states.`;
+
       const reportContent = {
-        executiveSummary: `Assessment ${assessment.name} - ${assessment.assessment_type}`,
+        executiveSummary,
         scores: scoreSummary,
-        gaps: [], // Will be filled by AI or calculated
-        recommendations: [],
+        gaps,
+        recommendations,
         generatedAt: now,
       };
 

@@ -2,6 +2,8 @@
 -- Adds the 6 consulting toolTypes that are in SSOT inventory but missing from registry:
 -- Strategy: ambition-decomposer, focus-tradeoff, narrative-engine
 -- Operations: smed-planner, dms-builder, inventory-autopilot
+-- NOTE: These 6 tools are also included in migration 618 (which adds all 12 missing tools).
+-- Both migrations use ON CONFLICT ... DO UPDATE so running both is safe and idempotent.
 
 -- ==========================================
 -- Ensure required columns exist (idempotent)
