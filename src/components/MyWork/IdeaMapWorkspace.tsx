@@ -269,7 +269,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           }
         }
 
-        await Api.saveMyIdeaMap(realId, { nodes, edges, extensions });
+        await Api.saveMyIdeaMap(realId, { nodes, edges, extensions, fromAI: true });
         setGraphNodes(nodes);
         setGraphEdges(edges);
         if (extensions?.processFlow && typeof extensions.processFlow === 'object' && Array.isArray((extensions.processFlow as any)?.lanes)) {

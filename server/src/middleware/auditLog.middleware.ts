@@ -12,7 +12,7 @@ import type { NextFunction, Response } from 'express';
 import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
-// Dynamic import for ActivityService to avoid circular dependencies
+// Dynamic import to avoid circular dependencies
 let ActivityService: {
   log: (data: {
     organizationId: string;
@@ -27,13 +27,22 @@ let ActivityService: {
   }) => Promise<void>;
 };
 
-// Lazy load ActivityService
+let AuditEventsService: { log: (input: any) => Promise<string> };
+
 async function getActivityService() {
   if (!ActivityService) {
     const module = await import('../services/ActivityService.js');
     ActivityService = module.default || module;
   }
   return ActivityService;
+}
+
+async function getAuditEventsService() {
+  if (!AuditEventsService) {
+    const module = await import('../services/AuditEventsService.js');
+    AuditEventsService = module.default || module;
+  }
+  return AuditEventsService;
 }
 
 /**
@@ -93,19 +102,28 @@ const auditLogMiddleware = async (
         };
         const action = actionMap[req.method] || 'modified';
 
-        // Log asynchronously
+        // Log asynchronously (ActivityService + V4 audit_events)
+        const auditActionMap: Record<string, string> = {
+          created: 'create',
+          updated: 'update',
+          modified: 'update',
+          deleted: 'delete',
+        };
+        const auditAction = auditActionMap[action] || action;
+        const resourceType = entityType.replace(/s$/, ''); // singularize roughly
+        const entityName =
+          (req.body as { name?: string; title?: string })?.name ||
+          (req.body as { name?: string; title?: string })?.title ||
+          entityType;
         getActivityService()
           .then((service) => {
             return service.log({
               organizationId,
               userId,
               action,
-              entityType: entityType.replace(/s$/, ''), // singularize roughly
+              entityType: resourceType,
               entityId,
-              entityName:
-                (req.body as { name?: string; title?: string })?.name ||
-                (req.body as { name?: string; title?: string })?.title ||
-                entityType,
+              entityName,
               newValue: req.method !== 'DELETE' && req.body ? req.body : null,
               ipAddress: req.ip,
               userAgent: req.get('user-agent') || undefined,
@@ -113,6 +131,24 @@ const auditLogMiddleware = async (
           })
           .catch((err: Error | null) =>
             logger.error('[AuditLog] Failed to log:', (err as Error).message)
+          );
+        // V4-ENT-03: dual-write to audit_events
+        getAuditEventsService()
+          .then((svc) =>
+            svc.log({
+              actorId: userId,
+              actorType: 'USER',
+              action: auditAction,
+              resourceType,
+              resourceId: entityId,
+              after: req.method !== 'DELETE' && req.body ? (req.body as Record<string, unknown>) : undefined,
+              organizationId,
+              ip: req.ip,
+              userAgent: req.get('user-agent') || undefined,
+            })
+          )
+          .catch((err: Error | null) =>
+            logger.error('[AuditLog] Failed audit_events log:', (err as Error).message)
           );
       } catch (err: any) {
         logger.error('[AuditLog] Error processing log:', err);

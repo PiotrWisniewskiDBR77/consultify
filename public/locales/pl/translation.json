@@ -1,4 +1,10 @@
 {
+  "layout": {
+    "aiPanel": {
+      "open": "Otwórz panel AI",
+      "close": "Zamknij panel AI"
+    }
+  },
   "common": {
     "save": "Zapisz",
     "cancel": "Anuluj",
@@ -4514,6 +4520,7 @@
     },
     "builder": {
       "title": "Kreator decka",
+      "exit": "Wróć do Prezentacji",
       "untitled": "Deck bez tytułu",
       "slideSorter": "Sortowanie slajdów",
       "cardView": "Karty",

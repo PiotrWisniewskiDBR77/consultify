@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   BarChart3,
   ChevronRight,
   Clock,
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { PresenceIndicators } from './PresenceIndicators';
 
@@ -70,15 +72,31 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
   onAnalytics,
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
+
+  const goToPresentations = () => navigate('/presentations');
 
   return (
     <div className="h-12 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex items-center px-4 gap-3 flex-shrink-0">
+      {/* Back / Exit */}
+      <button
+        onClick={goToPresentations}
+        className="flex-shrink-0 p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+        title={t('presentations.builder.exit', 'Exit to Presentations')}
+        aria-label={t('presentations.builder.exit', 'Exit to Presentations')}
+      >
+        <ArrowLeft size={18} />
+      </button>
+
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 min-w-0 flex-1">
-        <span className="flex-shrink-0">
+        <button
+          onClick={goToPresentations}
+          className="flex-shrink-0 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+        >
           {t('presentations.builder.title', 'Deck Builder')}
-        </span>
+        </button>
         <ChevronRight size={14} className="flex-shrink-0" />
         {editing ? (
           <input

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
+import { ROUTES } from '../routes/routeConfig';
 
 import { DemoModeModal } from '../components/Landing/DemoModeModal';
 import { DocumentationSection } from '../components/Landing/DocumentationSection';
@@ -28,7 +30,8 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
   onLoginClick,
   onRegisterClick,
 }) => {
-  const { currentUser, setCurrentView, setSessionMode, setCurrentUser } = useAppStore();
+  const navigate = useNavigate();
+  const { currentUser, setCurrentView, setSessionMode, setCurrentUser, setDemoMode } = useAppStore();
   const landingVariant = 'epicHeroV1';
 
   // Demo Modal State (only for Trial now)
@@ -62,40 +65,32 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Handle Demo Modal Start (for trial flow)
-  const handleDemoStart = async () => {
-    try {
-      const demoUser = await Api.demoLogin();
-      setCurrentUser({
-        ...demoUser,
-        hasWorkspace: true,
-      } as any);
-
-      setIsDemoModalOpen(false);
-      setSessionMode(SessionMode.DEMO);
-      setCurrentView(AppView.DASHBOARD);
-    } catch (error) {
-      console.error('[ProductEntryPage] Demo login failed:', error);
-      throw error;
-    }
+  // Handle Demo Modal Start (signup/login → demo)
+  const handleModalSuccess = (user: any, mode: 'demo' | 'trial') => {
+    setCurrentUser({ ...user, hasWorkspace: true } as any);
+    setIsDemoModalOpen(false);
+    setSessionMode(mode === 'demo' ? SessionMode.DEMO : SessionMode.FULL);
+    if (mode === 'demo') setDemoMode(true);
+    else setDemoMode(false);
+    setCurrentView(AppView.DASHBOARD);
+    navigate(ROUTES.AI_CHAT);
   };
 
-  const handleTrialRedirect = () => {
-    // Show demo modal for trial (explains non-DBR77 users go to demo)
+  const handleTrialClick = () => {
     setDemoModalMode('trial');
     setIsDemoModalOpen(true);
   };
 
-  const handleDemoRedirect = () => {
-    // Spec: OPEN DEMO NOW opens Film 1 modal (full 87s)
-    setIsFilm1ModalOpen(true);
+  const handleDemoClick = () => {
+    setDemoModalMode('demo');
+    setIsDemoModalOpen(true);
   };
 
   return (
     <div className="dark absolute inset-0 bg-[#0A0A1F] text-white overflow-y-auto overflow-x-hidden">
       <EntryTopBar
-        onTrialClick={handleTrialRedirect}
-        onDemoClick={handleDemoRedirect}
+        onTrialClick={handleTrialClick}
+        onDemoClick={handleDemoClick}
         onLoginClick={onLoginClick}
         onRegisterClick={onRegisterClick}
         isLoggedIn={!!currentUser}
@@ -105,8 +100,8 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
 
       <main>
         <EpicHeroSection
-          onOpenDemoNow={handleDemoRedirect}
-          onLaunchTrial={handleTrialRedirect}
+          onOpenDemoNow={handleDemoClick}
+          onLaunchTrial={handleTrialClick}
           variant={landingVariant}
         />
 
@@ -129,7 +124,7 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
       <DemoModeModal
         isOpen={isDemoModalOpen}
         onClose={() => setIsDemoModalOpen(false)}
-        onStartDemo={handleDemoStart}
+        onSuccess={handleModalSuccess}
         mode={demoModalMode}
       />
 
@@ -137,7 +132,7 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
         film={LANDING_FILMS.film1}
         isOpen={isFilm1ModalOpen}
         onClose={() => setIsFilm1ModalOpen(false)}
-        onLaunchTrial={handleTrialRedirect}
+        onLaunchTrial={handleTrialClick}
         variant={landingVariant}
       />
     </div>

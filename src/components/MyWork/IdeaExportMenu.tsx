@@ -46,12 +46,21 @@ const FORMATS: ExportFormat[] = [
     ext: 'svg',
   },
   {
+    id: 'pdf',
+    icon: FileText,
+    labelPl: 'PDF',
+    labelEn: 'PDF',
+    descPl: 'Eksport do PDF (V4-IDEA-06)',
+    descEn: 'Export to PDF',
+    ext: 'pdf',
+  },
+  {
     id: 'markdown',
     icon: FileText,
     labelPl: 'Markdown',
     labelEn: 'Markdown',
-    descPl: 'Tekstowa reprezentacja mapy',
-    descEn: 'Text representation of the map',
+    descPl: 'Tekstowa reprezentacja mapy (outline)',
+    descEn: 'Text representation / outline',
     ext: 'md',
   },
   {
@@ -190,6 +199,48 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
     }
   }, [downloadText, graphEdges, graphNodes, safeFilename, title]);
 
+  const exportPDF = useCallback(async () => {
+    setExporting('pdf');
+    try {
+      const container = canvasContainerRef?.current?.querySelector('.react-flow') as HTMLElement;
+      if (!container) throw new Error('Canvas not found');
+      const { toPng } = await import('html-to-image');
+      const { jsPDF } = await import('jspdf');
+      const dataUrl = await toPng(container, {
+        backgroundColor: '#ffffff',
+        quality: 0.95,
+        pixelRatio: 2,
+      });
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const maxW = pageW - 2 * margin;
+      const maxH = pageH - 2 * margin - 8;
+      const aspect = container.offsetHeight / container.offsetWidth;
+      let imgW = maxW;
+      let imgH = imgW * aspect;
+      if (imgH > maxH) {
+        imgH = maxH;
+        imgW = imgH / aspect;
+      }
+      const x = margin + (maxW - imgW) / 2;
+      pdf.addImage(dataUrl, 'PNG', x, margin, imgW, imgH);
+      pdf.setFontSize(8);
+      pdf.setTextColor(128, 128, 128);
+      pdf.text(
+        `Exported from Consultify Idea Workspace • ${title || 'Map'} • ${new Date().toISOString().slice(0, 10)}`,
+        margin,
+        pageH - 5
+      );
+      pdf.save(`${safeFilename}.pdf`);
+    } catch {
+      exportPNG();
+    } finally {
+      setExporting(null);
+    }
+  }, [canvasContainerRef, exportPNG, safeFilename, title]);
+
   const exportJSON = useCallback(() => {
     setExporting('json');
     try {
@@ -221,10 +272,11 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
     switch (formatId) {
       case 'png': exportPNG(); break;
       case 'svg': exportSVG(); break;
+      case 'pdf': exportPDF(); break;
       case 'markdown': exportMarkdown(); break;
       case 'json': exportJSON(); break;
     }
-  }, [exportJSON, exportMarkdown, exportPNG, exportSVG]);
+  }, [exportJSON, exportMarkdown, exportPDF, exportPNG, exportSVG]);
 
   if (!open) return null;
 

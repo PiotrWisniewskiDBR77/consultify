@@ -15,8 +15,9 @@ import type { AuthRequest } from './auth.middleware.js';
 // ==========================================
 
 export const DEMO_ORG_ID = process.env.DEMO_ORG_ID || 'demo-org';
-export const DEMO_ORG_NAME = process.env.DEMO_ORG_NAME || 'Demo Organization';
+export const DEMO_ORG_NAME = process.env.DEMO_ORG_NAME || 'Atelier ToolToys';
 const DEMO_PREF_KEY = 'demo:enabled';
+const DEMO_STARTED_AT_KEY = 'demo:started_at';
 
 // ==========================================
 // TYPES
@@ -31,6 +32,7 @@ export interface DemoOrganization {
 }
 
 export interface DemoStats {
+  projects: number;
   initiatives: number;
   tasks: number;
   decisions: number;
@@ -67,14 +69,12 @@ export const demoContextMiddleware = (req: Request, _res: Response, next: NextFu
 
 /**
  * Demo write protection - prevents writes in demo mode
+ * Defense in depth: blocks when X-Demo-Mode header OR when target org is demo-org
  */
 export const demoWriteProtection = (options: { allowedRoutes?: string[] } = {}) => {
   const allowedRoutes = Array.isArray(options.allowedRoutes) ? options.allowedRoutes : [];
 
   return (req: Request, res: Response, next: NextFunction): void => {
-    const isDemoHeader = String(req.get('X-Demo-Mode') || '').toLowerCase() === 'true';
-    if (!isDemoHeader) return next();
-
     const method = String(req.method || '').toUpperCase();
     const isWrite = !['GET', 'HEAD', 'OPTIONS'].includes(method);
     if (!isWrite) return next();
@@ -83,11 +83,22 @@ export const demoWriteProtection = (options: { allowedRoutes?: string[] } = {}) 
     const isAllowed = allowedRoutes.some((prefix) => url.startsWith(prefix));
     if (isAllowed) return next();
 
-    res.status(403).json({
-      error: 'Demo mode is read-only',
-      code: 'DEMO_READ_ONLY',
-    });
-    return;
+    const isDemoHeader = String(req.get('X-Demo-Mode') || '').toLowerCase() === 'true';
+    const orgId =
+      (req as any).organizationId ??
+      (req as any).user?.organizationId ??
+      (req as any).user?.organization_id;
+    const isDemoOrg = orgId === DEMO_ORG_ID;
+
+    if (isDemoHeader || isDemoOrg) {
+      res.status(403).json({
+        error: 'Demo mode is read-only',
+        code: 'DEMO_READ_ONLY',
+      });
+      return;
+    }
+
+    next();
   };
 };
 
@@ -162,38 +173,72 @@ export const checkUserDemoPreference = async (userId: string): Promise<boolean> 
 };
 
 /**
- * Set user demo preference
+ * Set user demo preference and optionally demo_started_at (for duration tracking)
  */
-export const setUserDemoPreference = async (userId: string, enabled: boolean): Promise<void> => {
+export const setUserDemoPreference = async (
+  userId: string,
+  enabled: boolean,
+  options?: { setStartedAt?: boolean }
+): Promise<void> => {
   try {
     await requireUserPreferencesTable();
     const payload = JSON.stringify(Boolean(enabled));
     const now = new Date().toISOString();
 
-    // Update-first strategy is portable across SQLite/Postgres and avoids ON CONFLICT
-    // mismatches on environments with composite PK(user_id, key).
+    // Update-first strategy for demo:enabled
     const updated = await dbRun(
-      `UPDATE user_preferences
-       SET value = ?, updated_at = ?
-       WHERE user_id = ? AND key = ?`,
+      `UPDATE user_preferences SET value = ?, updated_at = ? WHERE user_id = ? AND key = ?`,
       [payload, now, userId, DEMO_PREF_KEY],
       { fallback: false }
     );
-    if ((updated.changes || 0) > 0) {
-      return;
+    if ((updated.changes || 0) === 0) {
+      const inserted = await dbRun(
+        `INSERT INTO user_preferences (user_id, key, value, updated_at) VALUES (?, ?, ?, ?)`,
+        [userId, DEMO_PREF_KEY, payload, now],
+        { fallback: false }
+      );
+      if (!inserted.success) throw new Error(inserted.error || 'Failed to store demo preference');
     }
 
-    const inserted = await dbRun(
-      `INSERT INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, ?)`,
-      [userId, DEMO_PREF_KEY, payload, now],
-      { fallback: false }
-    );
-    if (!inserted.success) throw new Error(inserted.error || 'Failed to store demo preference');
+    if (enabled && options?.setStartedAt !== false) {
+      await setDemoStartedAt(userId, now);
+    }
   } catch (error: unknown) {
     if (isMissingTableError(error)) throw new Error('Demo preference storage unavailable');
     throw error;
   }
+};
+
+/**
+ * Set demo_started_at timestamp (for duration tracking and follow-up)
+ */
+export const setDemoStartedAt = async (userId: string, isoDate?: string): Promise<void> => {
+  const value = isoDate || new Date().toISOString();
+  await requireUserPreferencesTable();
+  const updated = await dbRun(
+    `UPDATE user_preferences SET value = ?, updated_at = ? WHERE user_id = ? AND key = ?`,
+    [value, value, userId, DEMO_STARTED_AT_KEY],
+    { fallback: false }
+  );
+  if ((updated.changes || 0) === 0) {
+    await dbRun(
+      `INSERT INTO user_preferences (user_id, key, value, updated_at) VALUES (?, ?, ?, ?)`,
+      [userId, DEMO_STARTED_AT_KEY, value, value],
+      { fallback: false }
+    );
+  }
+};
+
+/**
+ * Get demo_started_at timestamp (ISO string or null)
+ */
+export const getDemoStartedAt = async (userId: string): Promise<string | null> => {
+  const row = await dbGet<{ value: string }>(
+    `SELECT value FROM user_preferences WHERE user_id = ? AND key = ?`,
+    [userId, DEMO_STARTED_AT_KEY],
+    { fallback: false }
+  );
+  return row?.value && typeof row.value === 'string' ? row.value : null;
 };
 
 /**
@@ -226,7 +271,12 @@ export const getDemoOrganization = async (): Promise<DemoOrganization> => {
  */
 export const getDemoStats = async (): Promise<DemoStats> => {
   try {
-    const [initiatives, tasks, decisions, users] = await Promise.all([
+    const [projects, initiatives, tasks, decisions, users] = await Promise.all([
+      dbGet<{ c: number }>(
+        `SELECT COUNT(*) as c FROM projects WHERE organization_id = ?`,
+        [DEMO_ORG_ID],
+        { fallback: false }
+      ),
       dbGet<{ c: number }>(
         `SELECT COUNT(*) as c FROM initiatives WHERE organization_id = ?`,
         [DEMO_ORG_ID],
@@ -254,6 +304,7 @@ export const getDemoStats = async (): Promise<DemoStats> => {
     ]);
 
     return {
+      projects: projects?.c || 0,
       initiatives: initiatives?.c || 0,
       tasks: tasks?.c || 0,
       decisions: decisions?.c || 0,

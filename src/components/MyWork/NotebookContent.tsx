@@ -1848,6 +1848,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         open={templateModalOpen}
         onClose={() => setTemplateModalOpen(false)}
         onSelectTemplate={(tmpl) => handleNewPage(tmpl)}
+        onUploadComplete={async (page) => {
+          await fetchPages();
+          if (page?.id) setActiveId(page.id);
+          toast.success(isPolish ? 'Plik wgrano, utworzono notatkę' : 'File uploaded, note created');
+        }}
       />
 
       {activePage && (

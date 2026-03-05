@@ -42,11 +42,13 @@ import assessmentReportsRoutes from './routes/assessment/assessment-reports.rout
 import assessmentWorkflowRoutes from './routes/assessment/assessment-workflow.routes.js';
 import assessmentWorkflowV2Routes from './routes/assessment-workflow-v2.routes.js';
 import auditRoutes from './routes/audit.routes.js';
+import auditEventsRoutes from './routes/audit-events.routes.js';
 import auditLogRoutes from './routes/auditLog.routes.js';
 // Route Imports
 import authRoutes from './routes/auth.routes.js';
 import backupRoutes from './routes/backup.routes.js';
 import baselinesRoutes from './routes/baselines.routes.js';
+import benchmarkRoutes from './routes/benchmark.routes.js';
 import benefitsRoutes from './routes/benefits.routes.js';
 import billingRoutes from './routes/billing/billing.routes.js';
 import billingAdminRoutes from './routes/billing/billingAdmin.routes.js';
@@ -510,6 +512,9 @@ export class ApiGateway {
       mountStub('/api/governance', governanceAdminRoutes, 'governanceAdminRoutes');
       mountStub('/api/context', contextRoutes, 'contextRoutes');
 
+      // V4-ORG-01: Benchmark compare (replaces 503 stub)
+      app.use('/api/benchmark', benchmarkRoutes);
+
       // Assessment routes
       app.use('/api/assessment', assessmentAIRoutes); // AI endpoints: /api/assessment/:projectId/ai/*
       mountStub('/api/assessment', assessmentRoutes, 'assessmentRoutes');
@@ -628,6 +633,7 @@ export class ApiGateway {
       app.use('/api/agents', agentsRoutes);
       mountStub('/api/workqueue', workqueueRoutes, 'workqueueRoutes');
       mountStub('/api/connectors', connectorRoutes, 'connectorRoutes');
+      app.use('/api/audit', auditEventsRoutes);
       mountStub('/api/audit', auditRoutes, 'auditRoutes');
       app.use('/api/mfa', mfaRoutes);
       app.use('/api/raid', raidRoutes);

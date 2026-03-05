@@ -36,6 +36,23 @@
 
 ---
 
+## FROZEN LAYOUTS — NIE ZMIENIAJ (MUST)
+
+**SSOT:** `docs/ui-standards/FROZEN_LAYOUTS.md`
+
+Przy tworzeniu nowych tasków i implementacji **NIGDY** nie zmieniaj:
+
+1. **Sidebar menu** — kolejność: Chat, My Work, Interview, Tools, Initiatives, Execution, Results… (SSOT: `menuConfig.ts`)
+2. **Module topbar** — kolejność od prawej: Area → Add → Tool → View → Filters
+3. **View modes** — kolejność ikon: table → kanban → timeline → calendar → matrix → grid
+4. **Command Row** — dokładnie 1 rząd pod topbarem (bulk/search/tabs/counters). Zero dodatkowych pasków między topbarem a tabelą.
+5. **App Table + Preview** — kanon Outlook style: single click = preview, double = full; anatomia preview (Header/Body/Footer)
+6. **Workspace 3-tools strip** — tylko: Tools | Context | AI Suggestions (single-select). Bez 4. przycisku, bez własnego layoutu.
+
+Przed każdą zmianą UI w tych obszarach — przeczytaj `FROZEN_LAYOUTS.md`.
+
+---
+
 ## UI/UX Standards & Documentation
 
 **KANONICZNE ŹRÓDŁO:** `docs/ui-standards/README.md`

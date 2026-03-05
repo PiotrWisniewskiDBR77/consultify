@@ -11,17 +11,21 @@
  * - Uses small state tables created with IF NOT EXISTS for triage/focus persistence.
  */
 
+import path from 'path';
 import { type Response, Router } from 'express';
+import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import auditEventsService from '../services/AuditEventsService.js';
 import NotificationService from '../services/notificationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { normalizeGraphForStorage } from '../validators/ideaWorkspaceGraph.validators.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -58,6 +62,9 @@ type InboxUrgency = 'critical' | 'high' | 'normal' | 'low';
 type FocusColumn = 'today' | 'thisWeek' | 'later';
 
 type InboxItemKey = `task:${string}` | `decision:${string}` | `notification:${string}`;
+
+/** V4-INBX-01: Canonical item type for routing and filtering */
+type CanonicalItemType = 'task' | 'decision' | 'approval' | 'signal';
 
 type InboxSection =
   | 'decisions_required'
@@ -107,9 +114,12 @@ interface InboxItem {
   reason: string;
   // N2: Is this item actionable (requires my action)?
   isActionable: boolean;
-  // C1: AI suggestions
+  // C1: AI suggestions (V4-INBX-03: confidence score 0–1)
   suggestedAction?: TriageAction;
   suggestedReason?: string;
+  suggestedConfidence?: number;
+  // V4-INBX-01: Canonical type for routing (task|decision|approval|signal)
+  itemType: CanonicalItemType;
   _key: InboxItemKey;
 }
 
@@ -224,19 +234,35 @@ const mapNotificationToInboxType = (type?: string | null): InboxItemType => {
   return 'new_assignment';
 };
 
-// C1: Heuristic auto-triage suggestions (lightweight pattern matching, not LLM)
-const suggestTriageAction = (item: InboxItem): { action?: TriageAction; reason?: string } => {
+/** V4-INBX-01: Map item to canonical type for routing/filtering */
+const toCanonicalItemType = (
+  key: InboxItemKey,
+  inboxType: InboxItemType
+): CanonicalItemType => {
+  if (key.startsWith('task:')) return 'task';
+  if (key.startsWith('decision:')) return 'decision';
+  if (key.startsWith('notification:')) {
+    if (inboxType === 'review_request') return 'approval';
+    return 'signal';
+  }
+  return 'signal';
+};
+
+// C1: Heuristic auto-triage suggestions (V4-INBX-03: includes confidence 0–1)
+const suggestTriageAction = (
+  item: InboxItem
+): { action?: TriageAction; reason?: string; confidence?: number } => {
   // FYI notifications older than 3 days → suggest archive
   if (
     (item.section === 'fyi_system' || item.section === 'fyi_mentions') &&
     Date.now() - new Date(item.receivedAt).getTime() > 3 * 86400000
   ) {
-    return { action: 'archive', reason: 'FYI notification older than 3 days' };
+    return { action: 'archive', reason: 'FYI notification older than 3 days', confidence: 0.92 };
   }
 
   // SLA-breached overdue items → suggest accept_today (urgent)
   if (item.sla?.isBreached && item.section === 'overdue_sla_breach') {
-    return { action: 'accept_today', reason: 'SLA breached — needs immediate attention' };
+    return { action: 'accept_today', reason: 'SLA breached — needs immediate attention', confidence: 0.98 };
   }
 
   // Critical/high urgency decisions → suggest accept_today
@@ -244,12 +270,12 @@ const suggestTriageAction = (item: InboxItem): { action?: TriageAction; reason?:
     item.type === 'decision_request' &&
     (item.urgency === 'critical' || item.urgency === 'high')
   ) {
-    return { action: 'accept_today', reason: 'High-priority decision awaiting you' };
+    return { action: 'accept_today', reason: 'High-priority decision awaiting you', confidence: 0.9 };
   }
 
   // Low urgency system notifications → suggest archive
   if (item.urgency === 'low' && item.type === 'new_assignment' && !item.dueDate) {
-    return { action: 'schedule', reason: 'Low priority, no due date — consider scheduling' };
+    return { action: 'schedule', reason: 'Low priority, no due date — consider scheduling', confidence: 0.75 };
   }
 
   return {};
@@ -357,6 +383,8 @@ const linkGraphAddEdge = async (params: {
   containerType?: string | null;
   containerId?: string | null;
   blockId?: string | null;
+  /** V4-IDEA-05: Node-level backlink (idea map node id) */
+  nodeId?: string | null;
 }): Promise<{ id: string } | null> => {
   const cols = await getTableColumns('link_graph_edges');
   if (!cols || cols.size === 0) return null;
@@ -385,7 +413,7 @@ const linkGraphAddEdge = async (params: {
   add('relation', relation);
   add('container_type', params.containerType ?? null);
   add('container_id', params.containerId ?? null);
-  add('block_id', params.blockId ?? null);
+  add('block_id', params.blockId ?? params.nodeId ?? null);
   add('created_at', now);
 
   try {
@@ -508,6 +536,10 @@ router.get(
 
     const limit = Number(req.query.limit) || 50;
     const onlyOpen = String(req.query.onlyOpen ?? 'true') !== 'false';
+    const taskCols = await getTableColumns('tasks');
+    const customFieldsSelect = taskCols.has('custom_fields_json')
+      ? 't.custom_fields_json as customFields'
+      : "NULL as customFields";
 
     const rows =
       (await queryHelpers.queryAll<any>(
@@ -527,7 +559,8 @@ router.get(
           a.last_name as assigneeLastName,
           a.avatar_url as assigneeAvatarUrl,
           t.estimated_hours as estimatedHours,
-          t.checklist
+          t.checklist,
+          ${customFieldsSelect}
         FROM tasks t
         LEFT JOIN initiatives i ON t.initiative_id = i.id
         LEFT JOIN projects p ON t.project_id = p.id
@@ -544,7 +577,20 @@ router.get(
         [orgId, userId, limit]
       )) || [];
 
-    res.json(rows);
+    const parseCustomFields = (raw: string | null) => {
+      if (!raw) return {};
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return {};
+      }
+    };
+    res.json(
+      rows.map((r: any) => ({
+        ...r,
+        customFields: parseCustomFields(r.customFields),
+      }))
+    );
   })
 );
 
@@ -680,6 +726,25 @@ router.post(
       `INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
       insertParams
     );
+
+    // V4-NOTE-06: Audit when task created from AI-extracted actions (insert-as-blocks apply)
+    const isFromAIApply = tags.some((t) => String(t).toLowerCase() === 'ai-extracted');
+    if (isFromAIApply) {
+      try {
+        await auditEventsService.log({
+          actorId: userId,
+          actorType: 'USER',
+          action: 'NOTE_AI_APPLY',
+          resourceType: 'task',
+          resourceId: id,
+          organizationId: orgId,
+          after: { title, sourceType, sourceId },
+          metadata: { fromAI: true, source: 'extract-actions' },
+        });
+      } catch (_e) {
+        /* audit best-effort */
+      }
+    }
 
     const row = await queryHelpers.queryOne<any>(
       `
@@ -973,6 +1038,9 @@ router.get(
       ? 'd.source_type'
       : 'NULL as source_type';
     const dSourceIdSelect = decisionCols.has('source_id') ? 'd.source_id' : 'NULL as source_id';
+    const workflowStatusSelect = decisionCols.has('workflow_status')
+      ? 'd.workflow_status'
+      : `'proposed' as workflow_status`;
 
     const rows =
       (await queryHelpers.queryAll<any>(
@@ -983,6 +1051,7 @@ router.get(
           d.description,
           d.type as decisionType,
           d.status,
+          ${workflowStatusSelect} as workflowStatus,
           ${prioritySelect},
           ${impactSelect},
           d.deadline as dueDate,
@@ -1057,6 +1126,9 @@ router.get(
     const hasPriority = decisionCols.has('priority');
     const hasImpact = decisionCols.has('impact');
     const hasEscalationLevelCol = decisionCols.has('escalation_level');
+    const workflowStatusSelect = decisionCols.has('workflow_status')
+      ? 'd.workflow_status'
+      : `'proposed' as workflow_status`;
 
     // For "requests pending" we rely on decisions.created_by (canonical).
     if (!decisionCols.has('created_by')) {
@@ -1124,6 +1196,7 @@ router.get(
           d.description,
           d.type as decisionType,
           d.status,
+          ${workflowStatusSelect} as workflowStatus,
           ${prioritySelect},
           ${impactSelect},
           ${escalationSelect},
@@ -1568,6 +1641,7 @@ router.get(
         itemStatus: 'open',
         reason: '',
         isActionable: false,
+        itemType: 'task',
         _key: key,
       });
     }
@@ -1611,6 +1685,7 @@ router.get(
         itemStatus: 'open',
         reason: '',
         isActionable: false,
+        itemType: 'task',
         _key: key,
       });
     }
@@ -1649,6 +1724,7 @@ router.get(
         itemStatus: 'open',
         reason: '',
         isActionable: false,
+        itemType: 'task',
         _key: key,
       });
     }
@@ -1679,6 +1755,7 @@ router.get(
         itemStatus: 'open',
         reason: '',
         isActionable: false,
+        itemType: 'decision',
         _key: key,
       });
     }
@@ -1723,6 +1800,7 @@ router.get(
         itemStatus: 'open',
         reason: '',
         isActionable: false,
+        itemType: toCanonicalItemType(key, inboxType),
         _key: key,
       });
     }
@@ -1775,12 +1853,13 @@ router.get(
       // N2: Is actionable?
       item.isActionable = ACTIONABLE_SECTIONS.has(item.section) || ACTIONABLE_TYPES.has(item.type);
 
-      // C1: Apply heuristic auto-triage suggestions
+      // C1: Apply heuristic auto-triage suggestions (V4-INBX-03: confidence)
       if (!item.triaged) {
         const suggestion = suggestTriageAction(item);
         if (suggestion.action) {
           item.suggestedAction = suggestion.action;
           item.suggestedReason = suggestion.reason;
+          item.suggestedConfidence = suggestion.confidence;
         }
       }
     }
@@ -1873,6 +1952,8 @@ router.post(
 
     const action = String(req.body?.action || '') as TriageAction;
     const params = (req.body?.params || undefined) as Record<string, unknown> | undefined;
+    const fromAISuggestion = Boolean(req.body?.fromAISuggestion);
+    const confidence = typeof req.body?.confidence === 'number' ? req.body.confidence : undefined;
     const itemKey = String(
       req.body?.itemKey || req.body?._key || req.query.itemKey || ''
     ) as InboxItemKey;
@@ -1899,15 +1980,32 @@ router.post(
     }
 
     const triagedAt = new Date().toISOString();
-    await queryHelpers.queryRun(
-      `INSERT INTO my_work_inbox_triage (user_id, item_key, action, params_json, triaged_at)
-       VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT (user_id, item_key) DO UPDATE SET
-         action = excluded.action,
-         params_json = excluded.params_json,
-         triaged_at = excluded.triaged_at`,
-      [userId, itemKey, action, params ? JSON.stringify(params) : null, triagedAt]
-    );
+    const triageCols = await getTableColumns('my_work_inbox_triage');
+    const hasAiCols = triageCols.has('from_ai') && triageCols.has('ai_confidence');
+
+    if (hasAiCols && fromAISuggestion) {
+      await queryHelpers.queryRun(
+        `INSERT INTO my_work_inbox_triage (user_id, item_key, action, params_json, triaged_at, from_ai, ai_confidence)
+         VALUES (?, ?, ?, ?, ?, 1, ?)
+         ON CONFLICT (user_id, item_key) DO UPDATE SET
+           action = excluded.action,
+           params_json = excluded.params_json,
+           triaged_at = excluded.triaged_at,
+           from_ai = excluded.from_ai,
+           ai_confidence = excluded.ai_confidence`,
+        [userId, itemKey, action, params ? JSON.stringify(params) : null, triagedAt, confidence ?? null]
+      );
+    } else {
+      await queryHelpers.queryRun(
+        `INSERT INTO my_work_inbox_triage (user_id, item_key, action, params_json, triaged_at)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT (user_id, item_key) DO UPDATE SET
+           action = excluded.action,
+           params_json = excluded.params_json,
+           triaged_at = excluded.triaged_at`,
+        [userId, itemKey, action, params ? JSON.stringify(params) : null, triagedAt]
+      );
+    }
 
     // Side-effects (minimal, real)
     const [kind, rawId] = itemKey.split(':') as [string, string];
@@ -2018,6 +2116,44 @@ router.post(
     }
 
     res.json({ success: true, triagedAt });
+  })
+);
+
+/**
+ * POST /api/my-work/inbox/undo-last-ai-triage (V4-INBX-03)
+ * Removes the most recent AI-applied triage so the item returns to inbox.
+ */
+router.post(
+  '/inbox/undo-last-ai-triage',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId } = identity;
+    if (!(await requireTables(res, ['my_work_inbox_triage']))) return;
+
+    const triageCols = await getTableColumns('my_work_inbox_triage');
+    if (!triageCols.has('from_ai')) {
+      return res.json({ success: false, message: 'Undo not available (schema not migrated)' });
+    }
+
+    const last =
+      await queryHelpers.queryOne<{ item_key: string; triaged_at: string }>(
+        `SELECT item_key, triaged_at FROM my_work_inbox_triage
+         WHERE user_id = ? AND from_ai = 1
+         ORDER BY triaged_at DESC LIMIT 1`,
+        [userId]
+      );
+
+    if (!last) {
+      return res.json({ success: false, message: 'No AI triage to undo' });
+    }
+
+    await queryHelpers.queryRun(
+      `DELETE FROM my_work_inbox_triage WHERE user_id = ? AND item_key = ?`,
+      [userId, last.item_key]
+    );
+
+    res.json({ success: true, undoneItemKey: last.item_key });
   })
 );
 
@@ -2134,6 +2270,112 @@ router.put(
       [userId, todayIsoDate(), itemId, column, position, new Date().toISOString()]
     );
 
+    res.json({ success: true });
+  })
+);
+
+/**
+ * GET /api/my-work/focus/rules (V4-INBX-02)
+ * Returns focus board rules: max_today, max_week, capacity_aware.
+ */
+router.get(
+  '/focus/rules',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    const rulesTable = await getTableColumns('my_work_focus_rules');
+    if (!rulesTable || rulesTable.size === 0) {
+      return res.json({
+        maxToday: 5,
+        maxWeek: 15,
+        capacityAware: true,
+      });
+    }
+
+    const row = await queryHelpers.queryOne<{
+      max_today: number;
+      max_week: number;
+      capacity_aware: number;
+    }>(
+      `SELECT max_today, max_week, capacity_aware FROM my_work_focus_rules WHERE user_id = ?`,
+      [userId]
+    );
+    if (!row) {
+      return res.json({ maxToday: 5, maxWeek: 15, capacityAware: true });
+    }
+    res.json({
+      maxToday: row.max_today ?? 5,
+      maxWeek: row.max_week ?? 15,
+      capacityAware: Boolean(row.capacity_aware),
+    });
+  })
+);
+
+/**
+ * PUT /api/my-work/focus/rules (V4-INBX-02)
+ * Body: { maxToday?, maxWeek?, capacityAware? }
+ */
+router.put(
+  '/focus/rules',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    const rulesTable = await getTableColumns('my_work_focus_rules');
+    if (!rulesTable || rulesTable.size === 0) {
+      return res.status(503).json({ error: 'Focus rules table not available' });
+    }
+
+    const maxToday =
+      typeof req.body?.maxToday === 'number' ? Math.max(1, Math.min(20, req.body.maxToday)) : undefined;
+    const maxWeek =
+      typeof req.body?.maxWeek === 'number' ? Math.max(1, Math.min(50, req.body.maxWeek)) : undefined;
+    const capacityAware =
+      typeof req.body?.capacityAware === 'boolean' ? req.body.capacityAware : undefined;
+
+    const existing = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM my_work_focus_rules WHERE user_id = ?`,
+      [userId]
+    );
+
+    const now = new Date().toISOString();
+    if (existing) {
+      const updates: string[] = ['updated_at = ?'];
+      const params: unknown[] = [now];
+      if (maxToday != null) {
+        updates.push('max_today = ?');
+        params.push(maxToday);
+      }
+      if (maxWeek != null) {
+        updates.push('max_week = ?');
+        params.push(maxWeek);
+      }
+      if (capacityAware != null) {
+        updates.push('capacity_aware = ?');
+        params.push(capacityAware ? 1 : 0);
+      }
+      params.push(userId);
+      await queryHelpers.queryRun(
+        `UPDATE my_work_focus_rules SET ${updates.join(', ')} WHERE user_id = ?`,
+        params
+      );
+    } else {
+      await queryHelpers.queryRun(
+        `INSERT INTO my_work_focus_rules (id, user_id, organization_id, max_today, max_week, capacity_aware, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          userId,
+          orgId,
+          maxToday ?? 5,
+          maxWeek ?? 15,
+          capacityAware !== false ? 1 : 0,
+          now,
+          now,
+        ]
+      );
+    }
     res.json({ success: true });
   })
 );
@@ -3475,6 +3717,25 @@ router.put(
     if (!nodes || !edges)
       return res.status(400).json({ error: 'nodes and edges are required arrays' });
 
+    // V4-IDEA-01: Validate and normalize canonical schema (no data loss, reject invalid)
+    let normalizedNodes: any[];
+    let normalizedEdges: any[];
+    try {
+      const normalized = normalizeGraphForStorage({
+        nodes,
+        edges,
+        extensions: {},
+        preferredTool: null,
+      });
+      normalizedNodes = normalized.nodes;
+      normalizedEdges = normalized.edges;
+    } catch (err: any) {
+      return res.status(400).json({
+        error: 'Invalid graph schema',
+        details: err?.message || err?.issues?.[0]?.message,
+      });
+    }
+
     const preferredToolRaw = req.body?.preferredTool ?? req.body?.preferred_tool ?? null;
     const preferredTool =
       typeof preferredToolRaw === 'string' && preferredToolRaw.trim() ? preferredToolRaw.trim() : null;
@@ -3491,9 +3752,26 @@ router.put(
     if (!ideaOk) return res.status(404).json({ error: 'Idea not found' });
 
     const existing = await queryHelpers.queryOne<any>(
-      `SELECT id, version FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      `SELECT id, version, extensions_json, nodes_json, edges_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
       [ideaId, userId, orgId]
     );
+
+    // V4-IDEA-01: Merge extensions for no-data-loss tool switch (preserve other tools' view state)
+    let mergedExtensions = extensions;
+    if (existing?.extensions_json && extensions) {
+      try {
+        const existingExt = JSON.parse(String(existing.extensions_json || '{}'));
+        mergedExtensions = { ...existingExt, ...extensions };
+      } catch {
+        mergedExtensions = extensions;
+      }
+    } else if (existing?.extensions_json) {
+      try {
+        mergedExtensions = JSON.parse(String(existing.extensions_json || '{}'));
+      } catch {
+        mergedExtensions = null;
+      }
+    }
 
     const mapCols = await getTableColumns('my_idea_maps');
     const now = new Date().toISOString();
@@ -3513,11 +3791,11 @@ router.put(
       add('idea_id', ideaId);
       add('user_id', userId);
       add('organization_id', orgId);
-      add('nodes_json', JSON.stringify(nodes));
-      add('edges_json', JSON.stringify(edges));
+      add('nodes_json', JSON.stringify(normalizedNodes));
+      add('edges_json', JSON.stringify(normalizedEdges));
       add('version', nextVersion);
       if (preferredTool) add('preferred_tool', preferredTool);
-      if (extensions) add('extensions_json', JSON.stringify(extensions));
+      if (mergedExtensions) add('extensions_json', JSON.stringify(mergedExtensions));
       add('created_at', now);
       add('updated_at', now);
       await queryHelpers.queryRun(
@@ -3532,11 +3810,11 @@ router.put(
         setParts.push(`${col} = ?`);
         params.push(val);
       };
-      set('nodes_json', JSON.stringify(nodes));
-      set('edges_json', JSON.stringify(edges));
+      set('nodes_json', JSON.stringify(normalizedNodes));
+      set('edges_json', JSON.stringify(normalizedEdges));
       set('version', nextVersion);
       if (preferredTool !== null) set('preferred_tool', preferredTool);
-      if (extensions !== null) set('extensions_json', JSON.stringify(extensions));
+      if (mergedExtensions !== null) set('extensions_json', JSON.stringify(mergedExtensions));
       set('updated_at', now);
       params.push(ideaId, userId, orgId);
       await queryHelpers.queryRun(
@@ -3546,6 +3824,32 @@ router.put(
         params
       );
     }
+
+    // V4-IDEA-04 / V4-IDEA-08: Audit log for idea map edits; fromAI = user applied AI proposal
+    const appliedFromAI = Boolean(req.body?.fromAI);
+    let beforeSummary: { nodeCount: number; edgeCount: number; version: number } | undefined;
+    if (existing) {
+      try {
+        const prevNodes = JSON.parse(existing.nodes_json || '[]') as any[];
+        const prevEdges = JSON.parse(existing.edges_json || '[]') as any[];
+        beforeSummary = { nodeCount: prevNodes.length, edgeCount: prevEdges.length, version: Number(existing.version) || 1 };
+      } catch {
+        beforeSummary = undefined;
+      }
+    }
+    auditEventsService
+      .log({
+        actorId: userId,
+        actorType: 'USER',
+        action: existing ? 'IDEA_MAP_UPDATE' : 'IDEA_MAP_CREATE',
+        resourceType: 'idea_map',
+        resourceId: ideaId,
+        before: beforeSummary,
+        after: { nodeCount: normalizedNodes.length, edgeCount: normalizedEdges.length, version: nextVersion },
+        metadata: { preferredTool: preferredTool || undefined, appliedFromAI: appliedFromAI || undefined },
+        organizationId: orgId,
+      })
+      .catch((err: any) => logger.warn('[IdeaMap] Audit log failed:', err?.message));
 
     res.json({ success: true, version: nextVersion });
   })
@@ -4048,6 +4352,9 @@ router.post(
     const ideaId = String(req.params.id || '').trim();
     const target = String(req.body?.target || '').trim();
     const options = (req.body?.options || {}) as Record<string, unknown>;
+    const nodeIds = Array.isArray(options?.nodeIds)
+      ? (options.nodeIds as string[]).filter((id) => typeof id === 'string' && id.trim())
+      : [];
 
     if (!ideaId) return res.status(400).json({ error: 'Missing idea id' });
     if (!['initiative', 'task_set', 'decision', 'team_chat'].includes(target)) {
@@ -4166,6 +4473,7 @@ router.post(
         relation: 'ref',
         containerType: 'mywork_convert',
         containerId: toolSessionId,
+        nodeId: nodeIds[0] || null,
       });
 
       return res.json({
@@ -4173,6 +4481,7 @@ router.post(
         promotedEntityId: initiativeId,
         created: { initiativeId },
         sourceSessionId: toolSessionId,
+        sourceNodeIds: nodeIds,
       });
     }
 
@@ -4820,11 +5129,19 @@ router.get(
     }
 
     if (q) {
-      where.push(
-        `(lower(np.title) LIKE ? OR lower(coalesce(np.content_text,'')) LIKE ? OR lower(coalesce(np.tags_json,'')) LIKE ?)`
-      );
-      const like = `%${q}%`;
-      params.push(like, like, like);
+      const isPg = process.env.DB_TYPE === 'postgres';
+      if (isPg) {
+        // V4-NOTE-03: FTS on Postgres (search_vector from migration 627)
+        const ftsQuery = q.replace(/'/g, "''").trim();
+        where.push(`np.search_vector @@ plainto_tsquery('simple', ?)`);
+        params.push(ftsQuery);
+      } else {
+        where.push(
+          `(lower(np.title) LIKE ? OR lower(coalesce(np.content_text,'')) LIKE ? OR lower(coalesce(np.tags_json,'')) LIKE ?)`
+        );
+        const like = `%${q}%`;
+        params.push(like, like, like);
+      }
     }
 
     const orderClauses: Record<string, string> = {
@@ -4852,6 +5169,10 @@ router.get(
           np.summary,
           coalesce(np.status, 'active') as status,
           coalesce(np.pinned, 0) as pinned,
+          coalesce(np.verification_status, 'unverified') as verificationStatus,
+          coalesce(np.review_cadence, 'monthly') as reviewCadence,
+          np.stale_at as staleAt,
+          np.last_reviewed_at as lastReviewedAt,
           np.converted_to_json as "convertedToJson",
           np.created_at as "createdAt",
           np.updated_at as "updatedAt"
@@ -5017,6 +5338,104 @@ router.post(
   })
 );
 
+// V4-NOTE-01: Capture connector — upload PDF/XLSX/TXT → extract text → create notebook page
+const notebookUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ok =
+      file.mimetype === 'application/pdf' ||
+      file.mimetype === 'text/plain' ||
+      file.mimetype === 'text/markdown' ||
+      file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+      file.mimetype === 'application/vnd.ms-excel';
+    cb(ok ? null : new Error('Only PDF, XLSX, TXT, MD allowed'), ok);
+  },
+});
+
+async function extractTextFromBuffer(
+  buffer: Buffer,
+  mimetype: string,
+  originalname: string
+): Promise<string> {
+  const ext = path.extname(originalname || '').toLowerCase();
+  if (ext === '.pdf' || mimetype === 'application/pdf') {
+    const pdfParse = (await import('pdf-parse')).default as (buf: Buffer) => Promise<{ text: string }>;
+    const data = await pdfParse(buffer);
+    return String(data?.text || '');
+  }
+  if (ext === '.xlsx' || ext === '.xls' || mimetype?.includes('spreadsheet')) {
+    const XLSX = await import('xlsx');
+    const wb = XLSX.read(buffer, { type: 'buffer' });
+    const lines: string[] = [];
+    for (const name of wb.SheetNames) {
+      const ws = wb.Sheets[name];
+      const csv = XLSX.utils.sheet_to_csv(ws, { FS: '\t' });
+      lines.push(`=== ${name} ===`, csv);
+    }
+    return lines.join('\n');
+  }
+  return buffer.toString('utf-8');
+}
+
+router.post(
+  '/notebook/upload',
+  notebookUpload.single('file'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['notebook_pages']))) return;
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: 'File required (PDF, XLSX, TXT, MD)' });
+
+    let text: string;
+    try {
+      text = await extractTextFromBuffer(file.buffer, file.mimetype, file.originalname);
+    } catch (e: any) {
+      logger.warn('[MyWork] Notebook upload extraction failed:', e?.message);
+      return res.status(422).json({ error: 'File extraction failed', detail: e?.message });
+    }
+    const safeText = (text || '').trim().slice(0, 500000);
+    const title = (path.basename(file.originalname, path.extname(file.originalname)) || 'Untitled').slice(0, 200);
+
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    const contentJson = JSON.stringify({
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: safeText.slice(0, 5000) }] }],
+    });
+    await queryHelpers.queryRun(
+      `INSERT INTO notebook_pages (id, owner_user_id, organization_id, title, content_json, content_text, tags_json, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, '[]', 'active', ?, ?)`,
+      [id, userId, orgId, title, contentJson, safeText, now, now]
+    );
+
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT id, owner_user_id as "ownerUserId", organization_id as "organizationId", project_id as "projectId",
+        visibility, title, content_json as "contentJson", content_text as "contentText", tags_json as tags,
+        maturity, icon, summary, coalesce(status, 'active') as status, coalesce(pinned, 0) as pinned,
+        converted_to_json as "convertedToJson", created_at as "createdAt", updated_at as "updatedAt"
+       FROM notebook_pages WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    const parseCT = (r: any) => (r?.convertedToJson ? (() => { try { return JSON.parse(r.convertedToJson); } catch { return null; } })() : null);
+    res.status(201).json({
+      ...row,
+      tags: parseTagsArray((row as any)?.tags),
+      pinned: false,
+      convertedTo: parseCT(row),
+      contentJson: (() => {
+        try {
+          return row?.contentJson ? JSON.parse(row.contentJson) : { type: 'doc', content: [] };
+        } catch (_) {
+          return { type: 'doc', content: [] };
+        }
+      })(),
+    });
+  })
+);
+
 /**
  * GET /api/my-work/notebook/pages/:id
  */
@@ -5045,6 +5464,10 @@ router.get(
         summary,
         coalesce(status, 'active') as status,
         coalesce(pinned, 0) as pinned,
+        coalesce(verification_status, 'unverified') as verificationStatus,
+        coalesce(review_cadence, 'monthly') as reviewCadence,
+        stale_at as staleAt,
+        last_reviewed_at as lastReviewedAt,
         converted_to_json as "convertedToJson",
         created_at as "createdAt",
         updated_at as "updatedAt"
@@ -5078,6 +5501,10 @@ router.get(
       summary: row.summary || null,
       status: row.status,
       pinned: Boolean(row.pinned),
+      verificationStatus: row.verificationStatus ?? 'unverified',
+      reviewCadence: row.reviewCadence ?? 'monthly',
+      staleAt: row.staleAt ?? null,
+      lastReviewedAt: row.lastReviewedAt ?? null,
       convertedTo: parseConvertedTo(row.convertedToJson),
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -5141,6 +5568,21 @@ router.put(
       ['inbox', 'active', 'converted', 'archived'].includes(req.body.status)
     )
       set('status', req.body.status);
+    // V4-NOTE-05: lifecycle
+    if (
+      typeof req.body?.verificationStatus === 'string' &&
+      ['unverified', 'verified', 'disputed'].includes(req.body.verificationStatus)
+    )
+      set('verification_status', req.body.verificationStatus);
+    if (
+      typeof req.body?.reviewCadence === 'string' &&
+      ['weekly', 'monthly', 'quarterly', 'never'].includes(req.body.reviewCadence)
+    )
+      set('review_cadence', req.body.reviewCadence);
+    if (req.body?.staleAt === null || (typeof req.body?.staleAt === 'string' && req.body.staleAt))
+      set('stale_at', req.body.staleAt || null);
+    if (req.body?.lastReviewedAt !== undefined)
+      set('last_reviewed_at', req.body.lastReviewedAt || null);
 
     if (req.body?.projectId !== undefined) {
       const nextProjectId = req.body.projectId ? String(req.body.projectId) : null;
@@ -5165,6 +5607,10 @@ router.put(
         summary,
         coalesce(status, 'active') as status,
         coalesce(pinned, 0) as pinned,
+        coalesce(verification_status, 'unverified') as verificationStatus,
+        coalesce(review_cadence, 'monthly') as reviewCadence,
+        stale_at as staleAt,
+        last_reviewed_at as lastReviewedAt,
         converted_to_json as "convertedToJson",
         created_at as "createdAt",
         updated_at as "updatedAt"
@@ -5183,6 +5629,10 @@ router.put(
         ...r,
         tags: parseTagsArray(r?.tags),
         pinned: Boolean(r?.pinned),
+        verificationStatus: r?.verificationStatus ?? 'unverified',
+        reviewCadence: r?.reviewCadence ?? 'monthly',
+        staleAt: r?.staleAt ?? null,
+        lastReviewedAt: r?.lastReviewedAt ?? null,
         convertedTo: parseCT(r?.convertedToJson),
         convertedToJson: undefined,
         contentJson: (() => {
@@ -6741,6 +7191,393 @@ Return ONLY a JSON object matching the schema. No markdown, no extra text.`;
       logger.error('[InboxAIAssist] Failed:', err);
       return res.status(503).json({ error: 'AI assist unavailable', message: err?.message });
     }
+  })
+);
+
+// ────────────────────────────────────────────────────────────────────────────
+// V4-INBX-04: Evals dla AI triage (accuracy na golden set) + cost controls
+// ────────────────────────────────────────────────────────────────────────────
+router.get(
+  '/inbox/evals/golden-set',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+    const rows = await queryHelpers.queryAll<{
+      id: string;
+      item_key: string;
+      expected_action: string;
+      expected_reason: string | null;
+    }>(
+      `SELECT id, item_key, expected_action, expected_reason FROM inbox_ai_eval_golden_set WHERE organization_id = ?`,
+      [orgId]
+    );
+    res.json({ items: rows || [] });
+  })
+);
+
+router.post(
+  '/inbox/evals/golden-set',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId, userId } = identity;
+    const { itemKey, itemSnapshot, expectedAction, expectedReason } = req.body || {};
+    if (!itemKey || !expectedAction) {
+      return res.status(400).json({ error: 'itemKey and expectedAction required' });
+    }
+    const id = uuidv4();
+    await queryHelpers.queryRun(
+      `INSERT INTO inbox_ai_eval_golden_set (id, organization_id, item_key, item_snapshot_json, expected_action, expected_reason, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT (organization_id, item_key) DO UPDATE SET
+         item_snapshot_json = excluded.item_snapshot_json,
+         expected_action = excluded.expected_action,
+         expected_reason = excluded.expected_reason`,
+      [
+        id,
+        orgId,
+        String(itemKey),
+        itemSnapshot ? JSON.stringify(itemSnapshot) : null,
+        String(expectedAction),
+        expectedReason ? String(expectedReason) : null,
+        userId,
+      ]
+    );
+    res.status(201).json({ success: true, id });
+  })
+);
+
+router.post(
+  '/inbox/evals/run',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+    if (!(await requireTables(res, ['inbox_ai_eval_golden_set']))) return;
+
+    const golden = await queryHelpers.queryAll<{
+      item_key: string;
+      item_snapshot_json: string | null;
+      expected_action: string;
+    }>(
+      `SELECT item_key, item_snapshot_json, expected_action FROM inbox_ai_eval_golden_set WHERE organization_id = ?`,
+      [orgId]
+    );
+
+    if (!golden?.length) {
+      return res.json({ success: true, totalItems: 0, correct: 0, accuracy: 0, costUsd: 0 });
+    }
+
+    let correct = 0;
+    let costUsd = 0;
+    const { llmService } = await import('../services/ai/llmService.js');
+    const modelRouter = (await import('../services/ai/modelRouter.js')).default;
+    const modelCfg = await modelRouter.select({
+      capability: 'chat',
+      organizationId: orgId,
+      options: { tier: 'STANDARD' },
+    });
+    const outSchema = z.object({
+      recommendedAction: z.enum([
+        'accept_today',
+        'accept_week',
+        'accept_later',
+        'schedule',
+        'delegate',
+        'archive',
+        'dismiss',
+        'done',
+        'save',
+        'reject',
+      ]),
+    });
+
+    for (const g of golden) {
+      const snapshot = g.item_snapshot_json ? JSON.parse(g.item_snapshot_json) : {};
+      try {
+        const r = await llmService.call({
+          type: 'structured',
+          schema: outSchema,
+          modelConfig: { id: modelCfg.id, provider: modelCfg.provider },
+          systemPrompt: 'Return only valid JSON with recommendedAction.',
+          messages: [
+            {
+              role: 'user',
+              content: `Item: ${JSON.stringify(snapshot.title || g.item_key)}. Context: ${JSON.stringify(snapshot).slice(0, 1500)}. Return JSON with recommendedAction.`,
+            },
+          ],
+          temperature: 0.1,
+          maxTokens: 100,
+        });
+        const obj = (r as any)?.object;
+        const parsed = outSchema.safeParse(obj);
+        const predicted = parsed.success ? parsed.data.recommendedAction : null;
+        if (predicted === g.expected_action) correct++;
+      } catch (_e) {
+        // skip failed item
+      }
+    }
+    const costRow = await queryHelpers.queryOne<{ cost: number }>(
+      `SELECT COALESCE(SUM(estimated_cost_usd), 0) as cost FROM ai_usage_logs
+       WHERE organization_id = ? AND (action = 'inbox_ai_triage' OR purpose = 'inbox_triage')
+       AND created_at >= datetime('now', '-1 hour')`,
+      [orgId]
+    );
+    costUsd = Number(costRow?.cost || 0);
+
+    const runId = uuidv4();
+    const accuracy = golden.length > 0 ? correct / golden.length : 0;
+    await queryHelpers.queryRun(
+      `INSERT INTO inbox_ai_eval_runs (id, organization_id, ran_at, total_items, correct, accuracy, cost_usd, model_id)
+       VALUES (?, ?, datetime('now'), ?, ?, ?, ?, ?)`,
+      [runId, orgId, golden.length, correct, accuracy, costUsd, modelCfg?.id || null]
+    );
+
+    res.json({
+      success: true,
+      runId,
+      totalItems: golden.length,
+      correct,
+      accuracy: Math.round(accuracy * 1000) / 1000,
+      costUsd,
+    });
+  })
+);
+
+router.get(
+  '/inbox/evals/runs',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+    const limit = Math.min(50, parseInt(String(req.query.limit || '20'), 10) || 20);
+    const rows = await queryHelpers.queryAll<{
+      id: string;
+      ran_at: string;
+      total_items: number;
+      correct: number;
+      accuracy: number;
+      cost_usd: number | null;
+    }>(
+      `SELECT id, ran_at, total_items, correct, accuracy, cost_usd FROM inbox_ai_eval_runs
+       WHERE organization_id = ? ORDER BY ran_at DESC LIMIT ?`,
+      [orgId, limit]
+    );
+    res.json({ runs: rows || [] });
+  })
+);
+
+router.get(
+  '/inbox/evals/cost-summary',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+    const days = Math.min(90, parseInt(String(req.query.days || '30'), 10) || 30);
+    const modifier = `-${days} days`;
+    const row = await queryHelpers.queryOne<{ total: number; count: number }>(
+      `SELECT COALESCE(SUM(estimated_cost_usd), 0) as total, COUNT(*) as count FROM ai_usage_logs
+       WHERE organization_id = ? AND (action = 'inbox_ai_triage' OR purpose = 'inbox_triage')
+       AND created_at >= datetime('now', ?)`,
+      [orgId, modifier]
+    );
+    res.json({
+      totalCostUsd: Number(row?.total || 0),
+      callCount: Number(row?.count || 0),
+      days,
+    });
+  })
+);
+
+// ────────────────────────────────────────────────────────────────────────────
+// V4-INBX-06: Routing rules for connectors
+// ────────────────────────────────────────────────────────────────────────────
+router.get(
+  '/inbox/routing-rules',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+    const rows = await queryHelpers.queryAll<{
+      id: string;
+      channel: string;
+      conditions_json: string | null;
+      target_user_id: string | null;
+      target_project_id: string | null;
+      priority: number;
+      is_active: number;
+    }>(
+      `SELECT id, channel, conditions_json, target_user_id, target_project_id, priority, is_active
+       FROM inbox_routing_rules WHERE organization_id = ? ORDER BY priority DESC`,
+      [orgId]
+    );
+    res.json({ rules: rows || [] });
+  })
+);
+
+router.put(
+  '/inbox/routing-rules',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+    if (!(await requireTables(res, ['inbox_routing_rules']))) return;
+    const rules = Array.isArray(req.body?.rules) ? req.body.rules : [];
+    for (const r of rules) {
+      const id = r.id || uuidv4();
+      const channel = String(r.channel || 'slack').toLowerCase();
+      const conditions = r.conditions ? JSON.stringify(r.conditions) : null;
+      const targetUserId = r.targetUserId || null;
+      const targetProjectId = r.targetProjectId || null;
+      const priority = Number(r.priority) || 0;
+      const isActive = r.isActive !== false ? 1 : 0;
+      await queryHelpers.queryRun(
+        `INSERT INTO inbox_routing_rules (id, organization_id, channel, conditions_json, target_user_id, target_project_id, priority, is_active, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+         ON CONFLICT (id) DO UPDATE SET
+           channel = excluded.channel,
+           conditions_json = excluded.conditions_json,
+           target_user_id = excluded.target_user_id,
+           target_project_id = excluded.target_project_id,
+           priority = excluded.priority,
+           is_active = excluded.is_active,
+           updated_at = excluded.updated_at`,
+        [id, orgId, channel, conditions, targetUserId, targetProjectId, priority, isActive]
+      );
+    }
+    res.json({ success: true });
+  })
+);
+
+// ────────────────────────────────────────────────────────────────────────────
+// V4-INBX-07: Executive analytics z real capacity (allocations) i initiatives linkage
+// ────────────────────────────────────────────────────────────────────────────
+router.get(
+  '/executive-analytics',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+    const projectId = String(req.query.projectId || '');
+    if (!projectId) return res.status(400).json({ error: 'projectId required' });
+
+    const DEFAULT_WEEKLY_HOURS = 40;
+    const [capacityRow, initiativeRow, overloadRows] = await Promise.all([
+      queryHelpers.queryOne<{ cap: number }>(
+        `SELECT COALESCE(SUM((COALESCE(pm.allocation_percent, 100) / 100.0) * ?), 0) as cap
+         FROM project_members pm WHERE pm.project_id = ?`,
+        [DEFAULT_WEEKLY_HOURS, projectId]
+      ),
+      queryHelpers.queryOne<{ executing: number; blocked: number; total: number }>(
+        `SELECT
+           SUM(CASE WHEN UPPER(status) = 'EXECUTING' THEN 1 ELSE 0 END) as executing,
+           SUM(CASE WHEN UPPER(status) = 'BLOCKED' THEN 1 ELSE 0 END) as blocked,
+           COUNT(*) as total
+         FROM initiatives WHERE project_id = ? AND organization_id = ?`,
+        [projectId, orgId]
+      ),
+      queryHelpers.queryAll<{ user_id: string; assigned: number; capacity: number; overload: number }>(
+        `SELECT m.user_id,
+          COALESCE(SUM(t.estimated_hours), 0) as assigned,
+          (COALESCE(m.allocation_percent, 100) / 100.0) * ? as capacity,
+          COALESCE(SUM(t.estimated_hours), 0) - ((COALESCE(m.allocation_percent, 100) / 100.0) * ?) as overload
+         FROM project_members m
+         LEFT JOIN tasks t ON t.assignee_id = m.user_id AND t.project_id = m.project_id
+           AND LOWER(COALESCE(t.status,'')) NOT IN ('done','completed','validated','cancelled')
+         WHERE m.project_id = ?
+         GROUP BY m.user_id HAVING overload > 0`,
+        [DEFAULT_WEEKLY_HOURS, DEFAULT_WEEKLY_HOURS, projectId]
+      ),
+    ]);
+
+    const totalCapacity = Number(capacityRow?.cap || 0);
+    const required = await queryHelpers.queryOne<{ hours: number }>(
+      `SELECT COALESCE(SUM(estimated_hours), 0) as hours FROM tasks
+       WHERE project_id = ? AND organization_id = ? AND LOWER(COALESCE(status,'')) NOT IN ('done','completed','validated','cancelled')`,
+      [projectId, orgId]
+    );
+    const totalRequired = Number(required?.hours || 0);
+    const shortfall = Math.max(0, totalRequired - totalCapacity);
+
+    res.json({
+      projectId,
+      capacity: {
+        totalTeamCapacityHours: Math.round(totalCapacity * 10) / 10,
+        totalRequiredHours: Math.round(totalRequired * 10) / 10,
+        shortfallHours: Math.round(shortfall * 10) / 10,
+      },
+      initiatives: {
+        total: Number(initiativeRow?.total || 0),
+        executing: Number(initiativeRow?.executing || 0),
+        blocked: Number(initiativeRow?.blocked || 0),
+      },
+      overloads: (overloadRows || []).map((r) => ({
+        userId: r.user_id,
+        assignedHours: Math.round(Number(r.assigned) * 10) / 10,
+        capacityHours: Math.round(Number(r.capacity) * 10) / 10,
+        overloadHours: Math.round(Math.max(0, Number(r.overload)) * 10) / 10,
+      })),
+    });
+  })
+);
+
+// ────────────────────────────────────────────────────────────────────────────
+// V4-TASK-05: Automation rules engine (stub — triggers, conditions, actions)
+// ────────────────────────────────────────────────────────────────────────────
+router.get(
+  '/automation-rules',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+    if (!(await requireTables(res, ['task_automation_rules']))) return res.json({ rules: [] });
+    const rows = await queryHelpers.queryAll<{
+      id: string;
+      name: string;
+      trigger_type: string;
+      conditions_json: string | null;
+      actions_json: string;
+      is_active: number;
+    }>(
+      `SELECT id, name, trigger_type, conditions_json, actions_json, is_active
+       FROM task_automation_rules WHERE organization_id = ? ORDER BY created_at DESC`,
+      [orgId]
+    );
+    res.json({
+      rules: (rows || []).map((r) => ({
+        id: r.id,
+        name: r.name,
+        triggerType: r.trigger_type,
+        conditions: r.conditions_json ? JSON.parse(r.conditions_json) : [],
+        actions: JSON.parse(r.actions_json || '[]'),
+        isActive: Boolean(r.is_active),
+      })),
+    });
+  })
+);
+
+router.post(
+  '/automation-rules',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId, userId } = identity;
+    if (!(await requireTables(res, ['task_automation_rules']))) return res.status(503).json({ error: 'Schema not ready' });
+    const name = String(req.body?.name || 'Rule').trim();
+    const triggerType = String(req.body?.triggerType || req.body?.trigger_type || 'manual');
+    const conditions = req.body?.conditions;
+    const actions = req.body?.actions;
+    if (!Array.isArray(actions) || actions.length === 0) {
+      return res.status(400).json({ error: 'actions array required' });
+    }
+    const id = uuidv4();
+    await queryHelpers.queryRun(
+      `INSERT INTO task_automation_rules (id, organization_id, name, trigger_type, trigger_config_json, conditions_json, actions_json, is_active, created_by, updated_at)
+       VALUES (?, ?, ?, ?, '{}', ?, ?, 1, ?, datetime('now'))`,
+      [id, orgId, name, triggerType, JSON.stringify(Array.isArray(conditions) ? conditions : []), JSON.stringify(actions), userId]
+    );
+    res.status(201).json({ success: true, id });
   })
 );
 

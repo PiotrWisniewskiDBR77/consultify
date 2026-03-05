@@ -160,14 +160,8 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[400] bg-navy-950/95 backdrop-blur-xl flex items-center justify-center p-4"
+        className="fixed inset-0 z-[400] bg-slate-900/70 dark:bg-navy-950/95 backdrop-blur-xl flex items-center justify-center p-4"
       >
-        {/* Background Effects */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px]" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-[120px]" />
-        </div>
-
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -177,25 +171,25 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
           {/* Skip Button */}
           <button
             onClick={handleSkip}
-            className="absolute -top-12 right-0 text-white/50 hover:text-white text-sm flex items-center gap-1 transition-colors"
+            className="absolute -top-12 right-0 text-slate-400 hover:text-slate-200 text-sm flex items-center gap-1 transition-colors duration-150"
           >
             {t('tour.skip', 'Skip tour')}
             <X size={14} />
           </button>
 
-          {/* Card */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+          {/* Card — Layer 3 (DBR77: depth by shadow, no gradients, invisible borders) */}
+          <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-hig-xl overflow-hidden">
             {/* Role Selection */}
             {!isRoleSelected && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-8">
                 <div className="text-center mb-8">
-                  <div className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center mb-6">
-                    <Sparkles size={32} className="text-white" />
+                  <div className="w-16 h-16 mx-auto bg-slate-100 dark:bg-navy-700/50 rounded-xl flex items-center justify-center mb-6">
+                    <Sparkles size={32} className="text-slate-400" />
                   </div>
-                  <h2 className="text-2xl font-bold text-white mb-2">
+                  <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
                     {t('tour.welcome.title', 'Welcome to Consultify')}
                   </h2>
-                  <p className="text-white/60">
+                  <p className="text-slate-500 dark:text-slate-400">
                     {t('tour.welcome.subtitle', 'What brings you here today?')}
                   </p>
                 </div>
@@ -204,18 +198,20 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
                   {ROLES.map((role) => (
                     <motion.button
                       key={role.id}
-                      whileHover={{ scale: 1.02 }}
+                      whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handleRoleSelect(role.id)}
-                      className={`p-4 rounded-xl border transition-all text-left ${
+                      className={`p-4 rounded-xl transition-all duration-150 text-left ${
                         selectedRole === role.id
-                          ? 'border-purple-500 bg-purple-500/20'
-                          : 'border-white/10 bg-white/5 hover:border-white/20'
+                          ? 'bg-slate-100 dark:bg-white/[0.08]'
+                          : 'bg-slate-50 dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                       }`}
                     >
-                      <role.icon size={24} className="text-purple-400 mb-2" />
-                      <h3 className="text-white font-semibold text-sm">{role.label}</h3>
-                      <p className="text-white/50 text-xs mt-1">{role.description}</p>
+                      <role.icon size={24} className="text-slate-400 mb-2" />
+                      <h3 className="text-slate-900 dark:text-slate-100 font-semibold text-sm">
+                        {role.label}
+                      </h3>
+                      <p className="text-slate-500 text-xs mt-1">{role.description}</p>
                     </motion.button>
                   ))}
                 </div>
@@ -225,13 +221,15 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
             {/* Tour Steps */}
             {isRoleSelected && (
               <div className="p-8">
-                {/* Progress */}
+                {/* Progress — monochrome (DBR77: max 1 color = CTA) */}
                 <div className="flex gap-2 mb-8">
                   {TOUR_STEPS.map((_, idx) => (
                     <div
                       key={idx}
-                      className={`h-1 flex-1 rounded-full transition-all ${
-                        idx <= currentStep ? 'bg-purple-500' : 'bg-white/10'
+                      className={`h-1 flex-1 rounded-full transition-all duration-150 ${
+                        idx <= currentStep
+                          ? 'bg-slate-400 dark:bg-white/20'
+                          : 'bg-slate-200 dark:bg-white/5'
                       }`}
                     />
                   ))}
@@ -244,32 +242,33 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
+                    transition={{ duration: 0.22 }}
                     className="text-center"
                   >
                     {(() => {
                       const step = TOUR_STEPS[currentStep];
                       const Icon = step.icon;
+                      const isComplete = currentStep === TOUR_STEPS.length - 1;
                       return (
                         <>
                           <div
                             className={`w-16 h-16 mx-auto rounded-xl flex items-center justify-center mb-6 ${
-                              currentStep === TOUR_STEPS.length - 1
-                                ? 'bg-emerald-500/20'
-                                : 'bg-purple-500/20'
+                              isComplete
+                                ? 'bg-success/10'
+                                : 'bg-slate-100 dark:bg-white/[0.05]'
                             }`}
                           >
                             <Icon
                               size={32}
                               className={
-                                currentStep === TOUR_STEPS.length - 1
-                                  ? 'text-emerald-400'
-                                  : 'text-purple-400'
+                                isComplete ? 'text-success-500' : 'text-slate-400'
                               }
                             />
                           </div>
-                          <h2 className="text-2xl font-bold text-white mb-3">{step.title}</h2>
-                          <p className="text-white/70 leading-relaxed max-w-md mx-auto">
+                          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-3">
+                            {step.title}
+                          </h2>
+                          <p className="text-slate-500 dark:text-slate-400 leading-relaxed max-w-md mx-auto">
                             {step.description}
                           </p>
                         </>
@@ -282,7 +281,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
                 <div className="flex justify-between items-center mt-10">
                   <button
                     onClick={() => setCurrentStep((prev) => Math.max(0, prev - 1))}
-                    className={`text-white/50 hover:text-white text-sm transition-colors ${
+                    className={`text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 text-sm transition-colors duration-150 ${
                       currentStep === 0 ? 'invisible' : ''
                     }`}
                   >
@@ -291,7 +290,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
 
                   <button
                     onClick={currentStep === TOUR_STEPS.length - 1 ? handleComplete : handleNext}
-                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-purple-500 hover:to-indigo-500 transition-all flex items-center gap-2 shadow-lg shadow-purple-500/25"
+                    className="px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white font-semibold rounded-xl transition-all duration-150 flex items-center gap-2"
                   >
                     {currentStep === TOUR_STEPS.length - 1
                       ? t('tour.startExploring', 'Start Exploring')

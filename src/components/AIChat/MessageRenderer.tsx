@@ -23,8 +23,6 @@ import {
   Pencil,
   RefreshCw,
   Sparkles,
-  ThumbsDown,
-  ThumbsUp,
   User,
   Volume2,
   Zap,
@@ -233,11 +231,6 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   onOptionSelect,
 }) => {
   const { t } = useTranslation();
-
-  // Quick feedback state (hover toolbar thumbs)
-  const [quickFeedbackGiven, setQuickFeedbackGiven] = useState<'positive' | 'negative' | null>(
-    null
-  );
 
   const isLastMessage = index === displayMessages.length - 1;
   const isHovered = hoveredMessageId === msg.id;
@@ -1168,48 +1161,6 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   </button>
                 )}
 
-                {/* Quick Feedback (AI only) */}
-                {msg.role === 'ai' && (
-                  <>
-                    <button
-                      onClick={() => {
-                        setQuickFeedbackGiven('positive');
-                        handleFeedback(msg.id, msg.content, {
-                          rating: 'positive',
-                          timestamp: new Date(),
-                        });
-                      }}
-                      className={`p-1 rounded-md transition-colors ${
-                        quickFeedbackGiven === 'positive'
-                          ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30'
-                          : 'text-slate-500 hover:text-green-600 dark:text-slate-400 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
-                      }`}
-                      title={t('chat.actions.helpful', 'Helpful')}
-                      disabled={!!quickFeedbackGiven}
-                    >
-                      <ThumbsUp size={12} />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setQuickFeedbackGiven('negative');
-                        handleFeedback(msg.id, msg.content, {
-                          rating: 'negative',
-                          timestamp: new Date(),
-                        });
-                      }}
-                      className={`p-1 rounded-md transition-colors ${
-                        quickFeedbackGiven === 'negative'
-                          ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30'
-                          : 'text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
-                      }`}
-                      title={t('chat.actions.notHelpful', 'Not helpful')}
-                      disabled={!!quickFeedbackGiven}
-                    >
-                      <ThumbsDown size={12} />
-                    </button>
-                  </>
-                )}
-
                 {/* View Artifacts */}
                 {msg.role === 'ai' && hasArtifacts && (
                   <button
@@ -1218,28 +1169,6 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     title={t('chat.actions.viewArtifacts', 'View Artifacts')}
                   >
                     <FileCode size={12} />
-                  </button>
-                )}
-
-                {/* Save as Idea (T009) */}
-                {msg.role === 'ai' && (
-                  <button
-                    onClick={() => handleSaveAsIdea(msg.id, msg.content)}
-                    className="p-1 rounded-md text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-                    title={t('myWork.ideas.saveAsIdea', 'Save as idea')}
-                  >
-                    <Lightbulb size={12} />
-                  </button>
-                )}
-
-                {/* Save as Note (T011) */}
-                {msg.role === 'ai' && (
-                  <button
-                    onClick={() => handleSaveAsNote(msg.id, msg.content)}
-                    className="p-1 rounded-md text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/10"
-                    title={t('myWork.notebook.saveAsNote', 'Save as note')}
-                  >
-                    <Bookmark size={12} />
                   </button>
                 )}
 
@@ -1296,9 +1225,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         </div>
       )}
 
-      {/* Inline Feedback (AI messages only, not streaming) */}
+      {/* Unified Feedback Block (AI only): feedback + idea + note */}
       {msg.role === 'ai' && !msg.isStreaming && (
-        <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}>
+        <div
+          className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1 flex flex-wrap items-start gap-3 p-2 rounded-lg bg-slate-50/80 dark:bg-navy-900/50 border border-slate-200/60 dark:border-navy-700/60`}
+        >
           <InlineResponseFeedback
             messageId={msg.id}
             conversationId={activeConversationId || undefined}
@@ -1306,6 +1237,22 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             onFeedback={(feedback) => handleFeedback(msg.id, msg.content, feedback)}
             compact={isCompact}
           />
+          <div className="flex items-center gap-1 border-l border-slate-200 dark:border-navy-700 pl-3">
+            <button
+              onClick={() => handleSaveAsIdea(msg.id, msg.content)}
+              className="p-1.5 rounded-md text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+              title={t('myWork.ideas.saveAsIdea', 'Save as idea')}
+            >
+              <Lightbulb size={14} />
+            </button>
+            <button
+              onClick={() => handleSaveAsNote(msg.id, msg.content)}
+              className="p-1.5 rounded-md text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+              title={t('myWork.notebook.saveAsNote', 'Save as note')}
+            >
+              <Bookmark size={14} />
+            </button>
+          </div>
         </div>
       )}
 

@@ -382,6 +382,19 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     clearActiveChat,
   } = useConversationStore();
 
+  // Fully unmount when closed to avoid any invisible click-blocking strip on some layouts/breakpoints.
+  const [shouldRenderSidebar, setShouldRenderSidebar] = useState(isSidebarOpen);
+  useEffect(() => {
+    if (isSidebarOpen) {
+      setShouldRenderSidebar(true);
+      return;
+    }
+
+    // Fallback for environments where transitionend may not fire (e.g. reduced motion / zero-duration).
+    const t = window.setTimeout(() => setShouldRenderSidebar(false), 350);
+    return () => window.clearTimeout(t);
+  }, [isSidebarOpen]);
+
   // Project store
   const {
     projects,
@@ -569,20 +582,31 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
       )}
 
       {/* Sidebar Panel - Floating Overlay */}
-      <div
-        data-testid="chat-history-sidebar"
-        className={`
+      {shouldRenderSidebar && (
+        <div
+          data-testid="chat-history-sidebar"
+          onTransitionEnd={(e) => {
+            if (e.currentTarget !== e.target) return;
+            if (!isSidebarOpen) setShouldRenderSidebar(false);
+          }}
+          className={`
                 fixed top-0 h-full z-40
                 bg-slate-50 dark:bg-navy-900 
                 border-r border-slate-200 dark:border-navy-800
                 shadow-2xl
                 flex flex-col
                 transition-all duration-300 ease-in-out
-                ${isSidebarCollapsed ? 'left-16' : 'lg:left-64 left-0'}
-                ${isSidebarOpen ? 'translate-x-0 w-80 pointer-events-auto' : '-translate-x-full w-80 pointer-events-none'}
+                left-0 w-80
+                ${
+                  isSidebarOpen
+                    ? isSidebarCollapsed
+                      ? 'translate-x-0 lg:translate-x-16 pointer-events-auto'
+                      : 'translate-x-0 lg:translate-x-64 pointer-events-auto'
+                    : '-translate-x-full pointer-events-none'
+                }
                 ${className}
             `}
-      >
+        >
         {/* Header */}
         <div className="px-3 pt-3 pb-2">
           <div className="flex items-center gap-2 mb-2">
@@ -788,7 +812,8 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
             )}
           </button>
         </div>
-      </div>
+        </div>
+      )}
     </>
   );
 };

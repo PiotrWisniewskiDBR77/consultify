@@ -14,6 +14,13 @@ export const LoginRequestSchema = z.object({
   trustDevice: z.boolean().optional(),
 });
 
+// Register Demo Request (minimal: email + password for demo-only signup)
+export const RegisterDemoRequestSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  firstName: z.string().optional(),
+});
+
 // Register Request
 export const RegisterRequestSchema = z.object({
   email: z.string().email('Invalid email format'),
@@ -89,6 +96,7 @@ export const SessionIdParamSchema = z.object({
 
 // Type exports
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
+export type RegisterDemoRequest = z.infer<typeof RegisterDemoRequestSchema>;
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
 export type RefreshTokenRequest = z.infer<typeof RefreshTokenRequestSchema>;
 export type ChangePasswordRequest = z.infer<typeof ChangePasswordRequestSchema>;

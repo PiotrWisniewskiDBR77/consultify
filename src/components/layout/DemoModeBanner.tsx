@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { useDemo } from '../../hooks/useDemo';
+import { usePolicySnapshot } from '../../contexts/AccessPolicyContext';
 import { useAppStore } from '../../store/useAppStore';
 
 interface DemoModeBannerProps {
@@ -34,6 +35,9 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
   const { currentUser } = useAppStore();
   const { isDemoMode, demoOrganization, demoStats, demoHints, isDemoLoading, exitDemoMode } =
     useDemo();
+  const { snapshot, isApproachingLimit } = usePolicySnapshot();
+  const approachingAi = isApproachingLimit('aiCalls');
+  const approachingTokens = isApproachingLimit('tokens');
 
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -45,8 +49,8 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
   // Common button styles for uniform size
   const buttonBaseClass =
     'flex items-center gap-1.5 text-xs font-medium rounded-lg px-3 py-1.5 transition-colors';
-  const buttonPrimaryClass = `${buttonBaseClass} bg-white/20 hover:bg-white/30`;
-  const buttonSecondaryClass = `${buttonBaseClass} bg-white/15 hover:bg-white/25`;
+  const buttonPrimaryClass = `${buttonBaseClass} bg-navy-800/60 hover:bg-navy-800 border border-white/10 text-slate-200 hover:text-slate-100`;
+  const buttonSecondaryClass = `${buttonBaseClass} bg-navy-800/40 hover:bg-navy-800/60 border border-white/5 text-slate-300 hover:text-slate-200`;
 
   return (
     <AnimatePresence>
@@ -55,7 +59,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: -100, opacity: 0 }}
         transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-        className={`bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-lg ${className}`}
+        className={`bg-navy-900/95 dark:bg-navy-950 border-b border-white/5 text-slate-100 ${className}`}
       >
         {/* Main Banner Row */}
         <div className="px-4 py-2">
@@ -72,21 +76,45 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
               <div className="hidden sm:flex items-center gap-2">
                 <Building2 className="w-4 h-4" />
                 <span className="font-medium text-sm">
-                  {demoOrganization?.name || 'Acme Digital Corp'}
+                  {demoOrganization?.name || 'Atelier ToolToys'}
                 </span>
               </div>
 
-              {/* Stats badges */}
-              {demoStats && (
-                <div className="hidden md:flex items-center gap-2 text-xs">
-                  <span className="bg-white/15 rounded-lg px-3 py-1.5">
-                    {demoStats.projects} {t('demo.banner.projects', 'projects')}
+              {/* Stats badges + usage meters */}
+              <div className="hidden md:flex items-center gap-2 text-xs">
+                {demoStats && (
+                  <>
+                    <span className="bg-navy-800/50 rounded-lg px-3 py-1.5 text-slate-400 border border-white/5">
+                      {demoStats.projects ?? 0} {t('demo.banner.projects', 'projects')}
+                    </span>
+                    <span className="bg-navy-800/50 rounded-lg px-3 py-1.5 text-slate-400 border border-white/5">
+                      {demoStats.initiatives ?? 0} {t('demo.banner.initiatives', 'initiatives')}
+                    </span>
+                  </>
+                )}
+                {snapshot?.limits && snapshot?.usageToday && (
+                  <span
+                    className={`rounded-lg px-3 py-1.5 border ${
+                      approachingAi
+                        ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                        : 'bg-navy-800/50 text-slate-400 border-white/5'
+                    }`}
+                  >
+                    AI: {snapshot.usageToday.aiCalls ?? 0}/{snapshot.limits.maxAICallsPerDay ?? 10}
                   </span>
-                  <span className="bg-white/15 rounded-lg px-3 py-1.5">
-                    {demoStats.initiatives} {t('demo.banner.initiatives', 'initiatives')}
+                )}
+                {snapshot?.limits && snapshot?.usageToday && (snapshot.limits.maxTotalTokens ?? 0) > 0 && (
+                  <span
+                    className={`rounded-lg px-3 py-1.5 border ${
+                      approachingTokens
+                        ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                        : 'bg-navy-800/50 text-slate-400 border-white/5'
+                    }`}
+                  >
+                    {(snapshot.usageToday.tokensUsed ?? 0) / 1000}k/{(snapshot.limits.maxTotalTokens ?? 10000) / 1000}k
                   </span>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* Right: Actions */}
@@ -132,19 +160,19 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="px-4 py-3 bg-black/20 border-t border-white/10">
+              <div className="px-4 py-3 bg-navy-900/80 border-t border-white/5">
                 <div className="max-w-7xl mx-auto">
                   <div className="flex flex-wrap items-center justify-between gap-4">
                     {/* Info Cards */}
                     <div className="flex flex-wrap items-center gap-6">
                       {/* Warning */}
                       <div className="flex items-center gap-2 text-sm">
-                        <AlertTriangle className="w-4 h-4 text-yellow-300 flex-shrink-0" />
+                        <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
                         <div>
-                          <p className="font-medium text-yellow-300">
+                          <p className="font-medium text-slate-200">
                             {t('demo.banner.readOnlyTitle', 'Read-only mode')}
                           </p>
-                          <p className="text-white/70 text-xs">
+                          <p className="text-slate-400 text-xs">
                             {t('demo.banner.readOnlyDesc', 'Changes are not saved')}
                           </p>
                         </div>
@@ -152,12 +180,12 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
 
                       {/* Info */}
                       <div className="flex items-center gap-2 text-sm">
-                        <Eye className="w-4 h-4 text-blue-300 flex-shrink-0" />
+                        <Eye className="w-4 h-4 text-slate-500 flex-shrink-0" />
                         <div>
-                          <p className="font-medium text-blue-300">
+                          <p className="font-medium text-slate-200">
                             {t('demo.banner.exploreTitle', 'Explore features')}
                           </p>
-                          <p className="text-white/70 text-xs">
+                          <p className="text-slate-400 text-xs">
                             {t('demo.banner.exploreDesc', 'Browse all modules')}
                           </p>
                         </div>
@@ -165,12 +193,12 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
 
                       {/* Hints */}
                       <div className="flex items-center gap-2 text-sm">
-                        <Lightbulb className="w-4 h-4 text-green-300 flex-shrink-0" />
+                        <Lightbulb className="w-4 h-4 text-primary-400 flex-shrink-0" />
                         <div>
-                          <p className="font-medium text-green-300">
+                          <p className="font-medium text-slate-200">
                             {t('demo.banner.hintTitle', 'Hint')}
                           </p>
-                          <p className="text-white/70 text-xs">
+                          <p className="text-slate-400 text-xs">
                             {demoHints?.[0] ||
                               t('demo.banner.defaultHint', 'Click on initiatives to see details')}
                           </p>

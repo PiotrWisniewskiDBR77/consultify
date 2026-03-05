@@ -17,6 +17,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import type { NotebookPage } from '@/types/myWork';
@@ -463,62 +464,56 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
         ) : (
           <>
             <div className="px-3 py-3 border-b border-slate-200 dark:border-navy-800">
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  <Link2 size={14} className="text-slate-500 dark:text-slate-400" />
-                  <span>{pl ? 'Użyte w (backlinks)' : 'Used in (backlinks)'}</span>
-                  <span className="bg-slate-500/10 px-1.5 py-0.5 rounded-full text-[10px]">
-                    {usedIn.length}
-                  </span>
-                </div>
-              </div>
-              {backlinksLoading ? (
-                <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 px-1 py-2">
-                  <Loader2 size={14} className="animate-spin text-slate-400" />
-                  {pl ? 'Wczytuję…' : 'Loading…'}
-                </div>
-              ) : usedIn.length === 0 ? (
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
-                  {pl ? 'Brak powiązań' : 'No links yet'}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {usedIn.slice(0, 8).map((x) => (
-                    <div
-                      key={x.id || `${x.sourceType}:${x.sourceId}`}
-                      className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/60 px-3 py-2.5"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
-                            {x.sourceType}
+              <EmbeddedView
+                title={pl ? 'Użyte w (backlinks)' : 'Used in (backlinks)'}
+                count={usedIn.length}
+                loading={backlinksLoading}
+                readOnly
+                viewModes={['list']}
+              >
+                {usedIn.length === 0 && !backlinksLoading ? (
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
+                    {pl ? 'Brak powiązań' : 'No links yet'}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {usedIn.slice(0, 8).map((x) => (
+                      <div
+                        key={x.id || `${x.sourceType}:${x.sourceId}`}
+                        className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/60 px-3 py-2.5"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                              {x.sourceType}
+                            </div>
+                            <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                              {x.sourceId}
+                            </div>
                           </div>
-                          <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                            {x.sourceId}
-                          </div>
+                          {['task', 'decision', 'idea', 'initiative', 'notebook', 'report', 'presentation'].includes(
+                            String(x.sourceType)
+                          ) ? (
+                            <button
+                              onClick={() =>
+                                openItem(
+                                  x.sourceType as any,
+                                  x.sourceId,
+                                  `${x.sourceType} ${x.sourceId}`.slice(0, 120)
+                                )
+                              }
+                              className="flex items-center justify-center gap-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-2 py-1 text-[11px] font-medium hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
+                            >
+                              <ExternalLink size={12} />
+                              {pl ? 'Otwórz' : 'Open'}
+                            </button>
+                          ) : null}
                         </div>
-                        {['task', 'decision', 'idea', 'initiative', 'notebook', 'report', 'presentation'].includes(
-                          String(x.sourceType)
-                        ) ? (
-                          <button
-                            onClick={() =>
-                              openItem(
-                                x.sourceType as any,
-                                x.sourceId,
-                                `${x.sourceType} ${x.sourceId}`.slice(0, 120)
-                              )
-                            }
-                            className="flex items-center justify-center gap-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-2 py-1 text-[11px] font-medium hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
-                          >
-                            <ExternalLink size={12} />
-                            {pl ? 'Otwórz' : 'Open'}
-                          </button>
-                        ) : null}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </EmbeddedView>
             </div>
 
             <Section k="idea" count={ideas.length}>

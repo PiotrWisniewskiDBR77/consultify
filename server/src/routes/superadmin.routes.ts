@@ -15,6 +15,7 @@ import { Response, Router } from 'express';
 import SuperAdminController from '../controllers/SuperAdminController.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireConfirmation } from '../middleware/confirmAction.middleware.js';
+import { requireNoLegalHold } from '../services/OrgPoliciesService.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
@@ -54,7 +55,17 @@ router.put(
 router.delete(
   '/organizations/:id',
   requireConfirmation('delete_organization', 'critical'),
-  SuperAdminController.deleteOrganization
+  asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
+    try {
+      await requireNoLegalHold(req.params.id, 'Organization deletion');
+    } catch (e: any) {
+      if (e?.code === 'LEGAL_HOLD') {
+        return res.status(403).json({ error: e.message, code: 'LEGAL_HOLD' });
+      }
+      throw e;
+    }
+    return SuperAdminController.deleteOrganization(req, res, next);
+  })
 );
 router.get('/organizations/:id/billing', SuperAdminController.getOrgBilling);
 

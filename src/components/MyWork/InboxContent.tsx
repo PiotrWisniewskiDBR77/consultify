@@ -212,6 +212,10 @@ interface InboxItem {
   isActionable: boolean;
   suggestedAction?: TriageAction;
   suggestedReason?: string;
+  /** V4-INBX-03: AI confidence 0–1 for threshold/undo */
+  suggestedConfidence?: number;
+  /** V4-INBX-01: Canonical type (task|decision|approval|signal) */
+  itemType?: 'task' | 'decision' | 'approval' | 'signal';
   _key: InboxItemKey;
 }
 
@@ -703,7 +707,8 @@ const PreviewPane: React.FC<{
   onTriage: (action: TriageAction) => void;
   onSnooze: (preset: SnoozePreset) => void;
   onSaveAsNote?: (item: InboxItem) => void;
-}> = ({ item, isPolish, onClose, onOpen, onTriage, onSnooze, onSaveAsNote }) => {
+  onUndoLastAI?: () => void;
+}> = ({ item, isPolish, onClose, onOpen, onTriage, onSnooze, onSaveAsNote, onUndoLastAI }) => {
   const u = urgencyConfig[item.urgency] || urgencyConfig.normal;
   const UIcon = u.icon;
   const sla = slaPill(item.sla);
@@ -958,6 +963,17 @@ const PreviewPane: React.FC<{
               </div>
             ) : null}
           </div>
+          {onUndoLastAI ? (
+            <div className="pt-2 border-t border-slate-200/50 dark:border-white/[0.06]">
+              <button
+                onClick={onUndoLastAI}
+                className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+              >
+                <Minus size={12} />
+                {isPolish ? 'Cofnij ostatnią sugestię AI' : 'Undo last AI suggestion'}
+              </button>
+            </div>
+          ) : null}
         </div>
       }
     >
@@ -1525,12 +1541,20 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
   // ── Triage ──
   const triage = useCallback(
-    async (item: InboxItem, action: TriageAction) => {
+    async (
+      item: InboxItem,
+      action: TriageAction,
+      opts?: { fromAISuggestion?: boolean; confidence?: number }
+    ) => {
       if (action === 'snooze') return;
       try {
         await Api.post(`/my-work/inbox/${encodeURIComponent(item.id)}/triage`, {
           action,
           itemKey: item._key,
+          ...(opts?.fromAISuggestion && {
+            fromAISuggestion: true,
+            confidence: opts.confidence ?? item.suggestedConfidence,
+          }),
         });
         // Optimistic: remove from current view (item moves to different status tab)
         setData((prev) => {
@@ -1583,6 +1607,21 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     },
     [isPolish]
   );
+
+  // V4-INBX-03: Undo last AI triage
+  const handleUndoLastAI = useCallback(async () => {
+    try {
+      const res = await Api.undoLastAITriage();
+      if (res.success) {
+        toast.success(isPolish ? 'Cofnięto ostatnią sugestię AI' : 'Undo last AI suggestion');
+        fetchInbox();
+      } else {
+        toast.error(res.message || (isPolish ? 'Brak AI do cofnięcia' : 'No AI triage to undo'));
+      }
+    } catch (e) {
+      toast.error(isPolish ? 'Nie udało się cofnąć' : 'Undo failed');
+    }
+  }, [isPolish, fetchInbox]);
 
   // N9: Snooze — persist to backend (source of truth)
   const handleSnooze = useCallback(
@@ -2128,6 +2167,21 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 variant: 'primary',
                 onClick: () => open(item),
               },
+              ...(item.suggestedAction && !item.triaged
+                ? [
+                    {
+                      id: 'apply-ai',
+                      label:
+                        isPolish ? `Zastosuj AI (${item.suggestedAction})` : `Apply AI (${item.suggestedAction})`,
+                      icon: Sparkles,
+                      onClick: () =>
+                        triage(item, item.suggestedAction!, {
+                          fromAISuggestion: true,
+                          confidence: item.suggestedConfidence,
+                        }),
+                    } as RowAction,
+                  ]
+                : []),
               {
                 id: 'focus-today',
                 label: isPolish ? 'Focus → Dziś' : 'Focus → Today',
@@ -2657,7 +2711,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               onClose={() => setPreviewItem(null)}
               onOpen={() => open(previewItem)}
               onTriage={(action) => {
-                triage(previewItem, action);
+                const isFromAI =
+                  action === previewItem.suggestedAction && previewItem.suggestedConfidence != null;
+                triage(previewItem, action, isFromAI ? { fromAISuggestion: true, confidence: previewItem.suggestedConfidence } : undefined);
                 setPreviewItem(null);
               }}
               onSnooze={(preset) => {
@@ -2665,6 +2721,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 setPreviewItem(null);
               }}
               onSaveAsNote={handleSaveAsNote}
+              onUndoLastAI={handleUndoLastAI}
             />
           </div>
         )}

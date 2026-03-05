@@ -999,6 +999,16 @@ if (startServer && shouldStartHttpServer) {
   (async () => {
     logger.info('[Server] Starting HTTP server after route registration...');
     const server = http.createServer(app);
+
+    // V4-IDEA-02: Idea collab WebSocket /ws/collab/:ideaId (native ws for CollaborationOverlay)
+    try {
+      const { attachIdeaCollabWs } = await import('./gateways/ideaCollabWs.gateway.js');
+      attachIdeaCollabWs(server);
+      logger.info('[Server] Idea collab WebSocket /ws/collab/:ideaId initialized');
+    } catch (err: any) {
+      logger.warn('[Server] Idea collab WebSocket not available:', err?.message);
+    }
+
     // ShutdownManager will be used in graceful shutdown handler
     // const shutdownManager = getShutdownManager(30000); // 30 second timeout
 

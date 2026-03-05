@@ -115,8 +115,10 @@ export const AddTaskCommentSchema = z.object({
 // QUERY SCHEMAS
 // ==========================================
 
+export const ScopeEnum = z.enum(['personal', 'initiative', 'program']);
 export const GetTasksQuerySchema = z.object({
   projectId: FlexibleId.optional(),
+  programId: FlexibleId.optional(),
   status: TaskStatusEnum.optional(),
   assigneeId: FlexibleId.optional(),
   reporterId: FlexibleId.optional(),
@@ -124,6 +126,7 @@ export const GetTasksQuerySchema = z.object({
   initiativeId: FlexibleId.optional(),
   taskType: TaskTypeEnum.optional(),
   search: z.string().optional(),
+  scope: ScopeEnum.optional(),
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).max(100).optional().default(100),
 });

@@ -1172,7 +1172,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           language: i18n.language || 'en',
         },
       });
-      const insights = result?.insights || result?.proposals?.map((p: any) => ({ type: 'bottleneck', message: p.rationale, suggestion: '', confidence: p.confidence })) || [];
+      const insights = result?.insights || result?.proposals?.map((p: any) => ({ type: p.patch?.type || 'bottleneck', message: p.rationale, suggestion: p.patch?.suggestion || p.patch?.recommendation || '', confidence: p.confidence })) || [];
       setCoachInsights(insights);
       setShowCoach(true);
     } catch (err: any) {
@@ -1637,7 +1637,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           )}
           {summaryData.criticalPath && (
             <div className="text-[10px] text-slate-600 dark:text-slate-400 mb-1">
-              <span className="font-semibold">{isPl ? 'Ścieżka krytyczna:' : 'Critical path:'}</span> {summaryData.criticalPath}
+              <span className="font-semibold">{isPl ? 'Ścieżka krytyczna:' : 'Critical path:'}</span>{' '}
+              {Array.isArray(summaryData.criticalPath) ? summaryData.criticalPath.join(' → ') : summaryData.criticalPath}
             </div>
           )}
           {summaryData.risks?.length > 0 && (

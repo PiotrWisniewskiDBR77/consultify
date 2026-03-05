@@ -1,4 +1,10 @@
 {
+  "layout": {
+    "aiPanel": {
+      "open": "Open AI panel",
+      "close": "Close AI panel"
+    }
+  },
   "landing": {
     "hero": {
       "title": "Think bigger.Do smarter",
@@ -4264,6 +4270,7 @@
     },
     "builder": {
       "title": "Deck Builder",
+      "exit": "Exit to Presentations",
       "untitled": "Untitled Deck",
       "slideSorter": "Slide Sorter",
       "cardView": "Cards",

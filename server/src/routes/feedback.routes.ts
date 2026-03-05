@@ -38,6 +38,59 @@ const router = Router();
 type TicketStatus = 'NEW' | 'PENDING' | 'IN_PROGRESS' | 'REVIEWED' | 'RESOLVED' | 'ARCHIVED';
 type TicketPriority = 'low' | 'medium' | 'high' | 'critical';
 
+let _feedbackSchemaEnsured = false;
+async function ensureFeedbackSchema(): Promise<void> {
+  if (_feedbackSchemaEnsured) return;
+  try {
+    // Minimal canonical tables for environments without migrations applied.
+    await dbRun(
+      `
+      CREATE TABLE IF NOT EXISTS feedback_items (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT,
+        user_id TEXT,
+        feedback_type TEXT,
+        title TEXT,
+        description TEXT,
+        status TEXT,
+        priority TEXT,
+        severity TEXT,
+        source_env TEXT,
+        linked_task_id TEXT,
+        admin_response TEXT,
+        responded_at TIMESTAMP,
+        responded_by TEXT,
+        metadata_json TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `
+    );
+    await dbRun(
+      `
+      CREATE TABLE IF NOT EXISTS feedback_items_status_history (
+        id TEXT PRIMARY KEY,
+        feedback_id TEXT NOT NULL,
+        from_status TEXT,
+        to_status TEXT NOT NULL,
+        changed_by TEXT,
+        note TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `
+    );
+    await dbRun(
+      `CREATE INDEX IF NOT EXISTS idx_feedback_items_status_history_feedback ON feedback_items_status_history(feedback_id)`
+    );
+    await dbRun(
+      `CREATE INDEX IF NOT EXISTS idx_feedback_items_status_history_created ON feedback_items_status_history(created_at)`
+    );
+    _feedbackSchemaEnsured = true;
+  } catch (err) {
+    logger.warn('[Feedback] Failed to ensure feedback schema (will rely on migrations):', err);
+  }
+}
+
 // Use auth context when token exists, but do not hard-require it
 const optionalVerifyToken = (req: any, res: any, next: any) => {
   const auth = req?.headers?.authorization;
@@ -185,14 +238,17 @@ Rules:
     const { llmService } = await import('../services/ai/llmService.js');
 
     const ComposeSchema = z.object({
-      title: z.string().optional(),
-      summary: z.string().optional(),
-      steps: z.array(z.string()).optional(),
-      expected: z.string().optional(),
-      actual: z.string().optional(),
-      impact: z.string().optional(),
-      isLikelyBug: z.boolean().optional(),
-      questionsToClarify: z.array(z.string()).optional(),
+      // NOTE: OpenAI's strict response_format schema requires `required` to include every key
+      // in `properties`. Zod optional fields can produce an invalid schema.
+      // We keep fields required but allow empty values; the handler normalizes empties to undefined.
+      title: z.string(),
+      summary: z.string(),
+      steps: z.array(z.string()),
+      expected: z.string(),
+      actual: z.string(),
+      impact: z.string(),
+      isLikelyBug: z.boolean(),
+      questionsToClarify: z.array(z.string()),
     });
 
     const result = await llmService.call({
@@ -216,14 +272,16 @@ Rules:
       data: {
         title: String(parsed.title || '').trim() || undefined,
         summary: String(parsed.summary || '').trim() || undefined,
-        steps: Array.isArray(parsed.steps) ? parsed.steps.map(String) : undefined,
+        steps:
+          Array.isArray(parsed.steps) && parsed.steps.length > 0 ? parsed.steps.map(String) : undefined,
         expected: String(parsed.expected || '').trim() || undefined,
         actual: String(parsed.actual || '').trim() || undefined,
         impact: String(parsed.impact || '').trim() || undefined,
         isLikelyBug: typeof parsed.isLikelyBug === 'boolean' ? parsed.isLikelyBug : undefined,
-        questionsToClarify: Array.isArray(parsed.questionsToClarify)
-          ? parsed.questionsToClarify.map(String)
-          : [],
+        questionsToClarify:
+          Array.isArray(parsed.questionsToClarify) && parsed.questionsToClarify.length > 0
+            ? parsed.questionsToClarify.map(String)
+            : [],
       },
     });
   })
@@ -296,6 +354,7 @@ router.post(
   '/',
   optionalVerifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureFeedbackSchema();
     const { userId, userEmail, userName, type, message, severity, metadata } = req.body;
 
     if (!message || !type) {
@@ -519,6 +578,7 @@ router.post(
 router.get(
   '/',
   asyncHandler(async (_req: AuthRequest, res: Response) => {
+    await ensureFeedbackSchema();
     const rows = await dbAll<any>(
       `
         SELECT

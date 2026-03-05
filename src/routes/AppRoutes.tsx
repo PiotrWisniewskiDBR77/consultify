@@ -10,6 +10,7 @@ import {
   useLocation,
   useNavigate,
   useParams,
+  useSearchParams,
 } from 'react-router-dom';
 
 import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync';
@@ -407,6 +408,35 @@ const ReportsBuilderLegacyRedirect: React.FC = () => {
   }, [reportId, to]);
 
   return <Navigate to={to} replace />;
+};
+
+/** Redirects /auth?action=trial to /trial/start */
+const AuthRouteWithTrialRedirect: React.FC<{
+  isAuthenticated: boolean;
+  authInitialStep: AuthStep;
+  sessionMode: SessionMode | null;
+  onAuthSuccess: (user: { status?: string; message?: string }) => void;
+  onBack: () => void;
+}> = ({ isAuthenticated, authInitialStep, sessionMode, onAuthSuccess, onBack }) => {
+  const [searchParams] = useSearchParams();
+  const action = searchParams.get('action');
+
+  if (isAuthenticated) {
+    return <Navigate to={ROUTES.AI_CHAT} replace />;
+  }
+  if (action === 'trial') {
+    return <Navigate to="/trial/start" replace />;
+  }
+  return (
+    <AuthLayout>
+      <AuthView
+        initialStep={authInitialStep}
+        targetMode={sessionMode || SessionMode.FREE}
+        onAuthSuccess={onAuthSuccess}
+        onBack={onBack}
+      />
+    </AuthLayout>
+  );
 };
 
 export const AppRoutes: React.FC = () => {
@@ -811,22 +841,17 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Legacy /auth route */}
+        {/* Legacy /auth route — ?action=trial redirects to /trial/start */}
         <Route
           path={ROUTES.AUTH}
           element={
-            currentUser?.isAuthenticated ? (
-              <Navigate to={ROUTES.AI_CHAT} replace />
-            ) : (
-              <AuthLayout>
-                <AuthView
-                  initialStep={authInitialStep}
-                  targetMode={sessionMode || SessionMode.FREE}
-                  onAuthSuccess={handleAuthSuccess}
-                  onBack={() => navigate('/')}
-                />
-              </AuthLayout>
-            )
+            <AuthRouteWithTrialRedirect
+              isAuthenticated={!!currentUser?.isAuthenticated}
+              authInitialStep={authInitialStep}
+              sessionMode={sessionMode}
+              onAuthSuccess={handleAuthSuccess}
+              onBack={() => navigate('/')}
+            />
           }
         />
 

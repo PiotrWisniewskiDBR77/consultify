@@ -152,8 +152,10 @@ export const getHeaders = () => {
     'Accept-Language': userLanguage, // Send user's language preference
   };
 
-  // Add demo mode header only for demo sessions/accounts
-  if (isDemoMode && isDemoSession) {
+  // Add demo mode header whenever user has demo mode enabled (viewing demo org).
+  // MUST send for ALL users in demo mode so backend can block writes — DB must stay unchanged on exit.
+  // Previously only sent when isDemoSession (demo account email), which meant real users' writes persisted.
+  if (isDemoMode) {
     headers['X-Demo-Mode'] = 'true';
   }
 
@@ -454,8 +456,52 @@ export const Api = {
   },
 
   /**
-   * Demo Login - Automatically logs in as demo user
-   * Used for demo/trial access from landing page
+   * Register for demo - sign up with email+password to try demo (track duration, contact for follow-up)
+   * Replaces anonymous demoLogin in production
+   */
+  registerDemo: async (params: {
+    email: string;
+    password: string;
+    firstName?: string;
+  }): Promise<{ user: User; token: string; refreshToken: string; isDemo: boolean }> => {
+    let res: Response;
+    try {
+      res = await fetch(`${API_URL}/auth/register-demo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: params.email,
+          password: params.password,
+          firstName: params.firstName,
+        }),
+      });
+    } catch (e: any) {
+      const msg = e?.message ? String(e.message) : String(e);
+      throw new Error(
+        `Network error contacting API (${API_URL}). ${msg}. ` +
+          `Check that the backend is running and that Vite proxy/VITE_API_URL is configured correctly.`
+      );
+    }
+    const data = await handleResponse(res, 'Demo signup failed');
+    tokenService.saveTokens(data.token, data.refreshToken);
+    sessionStorage.setItem('isDemo', 'true');
+    return { ...data, user: { ...data.user, isDemo: true } };
+  },
+
+  /**
+   * Enter demo mode (for logged-in user) - enables demo and records demo_started_at
+   */
+  enterDemo: async (): Promise<{ success: boolean; isDemoMode: boolean }> => {
+    const result = await Api.toggleDemoMode(true);
+    if (result.success && result.isDemoMode) {
+      sessionStorage.setItem('isDemo', 'true');
+    }
+    return result;
+  },
+
+  /**
+   * Demo Login - Anonymous demo (deprecated in production, use registerDemo or login+enterDemo)
+   * Kept for E2E/test gateway compatibility
    */
   demoLogin: async (): Promise<User & { isDemo: boolean }> => {
     console.log('Api.demoLogin called');
@@ -1157,6 +1203,14 @@ export const Api = {
       selectedModelId?: string | null;
     }
   ) => {
+    const isUuidLike = (v: unknown): v is string =>
+      typeof v === 'string' &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        v.trim()
+      );
+    const nonEmptyStringOrNull = (v: unknown): string | null =>
+      typeof v === 'string' && v.trim().length > 0 ? v.trim() : null;
+
     const aiModes = {
       deepResearch: options?.deepResearch ?? false,
       webSearch: options?.webSearch ?? false,
@@ -1187,8 +1241,8 @@ export const Api = {
       responseStyle,
       privateMode: Boolean(options?.privateMode),
       selectedTier: options?.selectedTier,
-      selectedModelId: options?.selectedModelId ?? null,
-      projectId: context?.projectId,
+      selectedModelId: nonEmptyStringOrNull(options?.selectedModelId),
+      projectId: isUuidLike(context?.projectId) ? context?.projectId : undefined,
       screenContext: context?.screenContext,
       focusMode: context?.focusMode,
     };
@@ -1259,6 +1313,14 @@ export const Api = {
     abortSignal?: AbortSignal
   ) => {
     try {
+      const isUuidLike = (v: unknown): v is string =>
+        typeof v === 'string' &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          v.trim()
+        );
+      const nonEmptyStringOrNull = (v: unknown): string | null =>
+        typeof v === 'string' && v.trim().length > 0 ? v.trim() : null;
+
       // Per-user local inference (Ollama): stored in currentUser.aiConfig and persisted locally.
       // We forward it explicitly so the backend can use the per-user endpoint safely.
       let localProvider: { provider: 'ollama'; endpoint: string; modelId: string } | null = null;
@@ -1326,12 +1388,14 @@ export const Api = {
           privateMode: Boolean((options as any)?.privateMode),
           // Model routing
           selectedTier: options?.selectedTier,
-          selectedModelId: options?.selectedModelId ?? localProvider?.modelId ?? null,
+          selectedModelId: nonEmptyStringOrNull(
+            options?.selectedModelId ?? localProvider?.modelId ?? null
+          ),
           // Explicit per-user provider override (used for local Ollama)
           provider: localProvider?.provider,
           endpoint: localProvider?.endpoint,
           // Common context hints (keep as top-level so backend validator doesn't strip them)
-          projectId: context?.projectId,
+          projectId: isUuidLike(context?.projectId) ? context?.projectId : undefined,
           screenContext: context?.screenContext,
           focusMode: context?.focusMode,
         }),
@@ -2915,6 +2979,8 @@ export const Api = {
       version?: number;
       preferredTool?: 'mindmap' | 'process_flow' | 'table' | 'whiteboard';
       extensions?: Record<string, unknown>;
+      /** V4-IDEA-08: When true, audit logs as user applying AI proposal */
+      fromAI?: boolean;
     }
   ): Promise<any> => {
     const res = await fetch(`${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map`, {
@@ -3662,6 +3728,90 @@ export const Api = {
       body: JSON.stringify(decision),
     });
     if (!res.ok) throw new Error('Failed to create decision');
+    return res.json();
+  },
+
+  // V4-INBX: Inbox triage undo + Focus rules
+  undoLastAITriage: async (): Promise<{ success: boolean; undoneItemKey?: string; message?: string }> => {
+    const res = await fetch(`${API_URL}/my-work/inbox/undo-last-ai-triage`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.message || 'Failed to undo');
+    return data;
+  },
+
+  getFocusRules: async (): Promise<{ maxToday: number; maxWeek: number; capacityAware: boolean }> => {
+    const res = await fetch(`${API_URL}/my-work/focus/rules`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch focus rules');
+    return res.json();
+  },
+
+  updateFocusRules: async (rules: {
+    maxToday?: number;
+    maxWeek?: number;
+    capacityAware?: boolean;
+  }): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/my-work/focus/rules`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(rules),
+    });
+    if (!res.ok) throw new Error('Failed to update focus rules');
+    return res.json();
+  },
+
+  // V4-INBX-04/06/07: Evals, routing rules, executive analytics
+  getInboxEvalsGoldenSet: async () => {
+    const res = await fetch(`${API_URL}/my-work/inbox/evals/golden-set`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch golden set');
+    return res.json();
+  },
+  runInboxEval: async () => {
+    const res = await fetch(`${API_URL}/my-work/inbox/evals/run`, { method: 'POST', headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to run eval');
+    return res.json();
+  },
+  getInboxEvalsCostSummary: async (days?: number) => {
+    const qs = days != null ? `?days=${days}` : '';
+    const res = await fetch(`${API_URL}/my-work/inbox/evals/cost-summary${qs}`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch cost summary');
+    return res.json();
+  },
+  getInboxRoutingRules: async () => {
+    const res = await fetch(`${API_URL}/my-work/inbox/routing-rules`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch routing rules');
+    return res.json();
+  },
+  updateInboxRoutingRules: async (rules: any[]) => {
+    const res = await fetch(`${API_URL}/my-work/inbox/routing-rules`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ rules }),
+    });
+    if (!res.ok) throw new Error('Failed to update routing rules');
+    return res.json();
+  },
+  getExecutiveAnalytics: async (projectId: string) => {
+    const res = await fetch(`${API_URL}/my-work/executive-analytics?projectId=${encodeURIComponent(projectId)}`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch executive analytics');
+    return res.json();
+  },
+  getAutomationRules: async () => {
+    const res = await fetch(`${API_URL}/my-work/automation-rules`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch automation rules');
+    return res.json();
+  },
+  createAutomationRule: async (rule: { name: string; triggerType?: string; conditions?: any[]; actions: any[] }) => {
+    const res = await fetch(`${API_URL}/my-work/automation-rules`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(rule),
+    });
+    if (!res.ok) throw new Error('Failed to create automation rule');
     return res.json();
   },
 
@@ -8303,6 +8453,28 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to calculate business metric');
     return res.json();
   },
+  getDemoTrialAnalytics: async (): Promise<{
+    summary: {
+      last7Days: { demo: number; trialStart: number; paid: number };
+      last30Days: Record<string, number>;
+      trialWarningsShown: number;
+    };
+    recentEvents: Array<{
+      id: string;
+      eventType: string;
+      organizationId?: string;
+      userId?: string;
+      source?: string;
+      metadata?: Record<string, unknown>;
+      createdAt: string;
+    }>;
+  }> => {
+    const res = await fetch(`${API_URL}/superadmin/analytics/demo-trial`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch demo-trial analytics');
+    return res.json();
+  },
   // Analytics Dashboards
   getAnalyticsDashboards: async () => {
     const res = await fetch(`${API_URL}/superadmin/analytics/dashboards`, {
@@ -9461,6 +9633,27 @@ export const Api = {
     if (!res.ok) {
       return { success: false, tours: [], categories: {} };
     }
+    return res.json();
+  },
+
+  /**
+   * Record demo/trial telemetry event (e.g. trial_expiry_warning_shown when user sees banner)
+   */
+  recordDemoTrialEvent: async (params: {
+    eventType: 'trial_expiry_warning_shown' | 'demo_ai_limit_reached';
+    organizationId?: string;
+    metadata?: Record<string, unknown>;
+  }): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/demo/record-event`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        eventType: params.eventType,
+        organizationId: params.organizationId,
+        metadata: params.metadata,
+      }),
+    });
+    if (!res.ok) return { success: false };
     return res.json();
   },
 
@@ -10832,6 +11025,20 @@ export const Api = {
       headers: getHeaders(),
     });
     return handleResponse(res, 'Failed to fetch notebook page');
+  },
+
+  /** V4-NOTE-01: Upload PDF/XLSX/TXT → extract text → create notebook page */
+  uploadNotebookFile: async (file: File): Promise<any> => {
+    const form = new FormData();
+    form.append('file', file);
+    const h = getHeaders() as Record<string, string>;
+    const { 'Content-Type': _ct, ...rest } = h;
+    const res = await fetch(`${API_URL}/my-work/notebook/upload`, {
+      method: 'POST',
+      headers: rest,
+      body: form,
+    });
+    return handleResponse(res, 'Failed to upload file');
   },
 
   createNotebookPage: async (page: {

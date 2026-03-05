@@ -47,12 +47,21 @@ import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativ
 
 import { BudgetControlPanel } from '../Execution/BudgetControlPanel';
 import { MitigationPanel } from '../Execution/MitigationPanel';
+import { WhyRedChain } from '../Execution/WhyRedChain';
 
 import { InitiativeStatus, PortfolioInitiative, User } from '../../types';
 
 // ==========================================
 // TYPES
 // ==========================================
+
+/** V4-EXEC-01: Why-red chain for red/amber initiatives */
+export interface WhyRedChainData {
+  signals: Array<{ type: string; message: string; entityId?: string }>;
+  risks: Array<{ id: string; title: string; severity?: string }>;
+  decisions: Array<{ id: string; title: string; overdue?: boolean }>;
+  tasks: Array<{ id: string; title: string; status: string }>;
+}
 
 interface InitiativeCompactPanelProps {
   initiative: PortfolioInitiative | null;
@@ -63,6 +72,8 @@ interface InitiativeCompactPanelProps {
   onUpdate?: (updated: PortfolioInitiative) => void;
   mode?: 'overlay' | 'embedded';
   users?: User[];
+  /** V4-EXEC-01: Precomputed why-red chain when initiative health is RED/AMBER */
+  whyRed?: WhyRedChainData | null;
 }
 
 type CompactTab = 'summary' | 'tasks' | 'decisions' | 'raid' | 'finance';
@@ -190,6 +201,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
   onUpdate,
   mode = 'overlay',
   users = [],
+  whyRed,
 }) => {
   const { t } = useTranslation();
   // Data
@@ -591,6 +603,16 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
           />
         </div>
       </div>
+
+      {/* V4-EXEC-01: Why red? chain — shown when initiative is RED/AMBER and we have chain data */}
+      {whyRed && (
+        <div className="flex-shrink-0 px-4 py-2.5 border-b border-rose-200 dark:border-rose-800/30 bg-rose-50/80 dark:bg-rose-900/10">
+          <p className="text-[10px] font-semibold text-rose-700 dark:text-rose-400 uppercase tracking-wider mb-2">
+            {t('execution.whyRed.title', 'Why red?')}
+          </p>
+          <WhyRedChain data={whyRed} compact={false} />
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex-shrink-0 flex border-b border-slate-200 dark:border-navy-700 px-2 overflow-x-auto">

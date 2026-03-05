@@ -8,9 +8,13 @@ import { verifyToken } from '../../middleware/auth.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import inboxWebhookRoutes from '../webhooks/inbox.routes.js';
 import stripeWebhookRoutes from '../webhooks/stripe.routes.js';
 
 const router = Router();
+
+// V4-INBX-06: Inbox connectors (Slack/Teams → inbox)
+router.use('/inbox', inboxWebhookRoutes);
 interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
 }

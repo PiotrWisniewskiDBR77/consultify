@@ -45,6 +45,7 @@ export default defineConfig(({ mode }) => {
           './src/routes/AppRoutes.tsx',
           './src/views/AIChatWelcomeView.tsx',
           './src/views/MyWorkView.tsx',
+          './src/components/Interview/InterviewHub.tsx',
         ],
       },
       watch: {

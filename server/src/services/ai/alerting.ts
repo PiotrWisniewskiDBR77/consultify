@@ -68,10 +68,32 @@ export class AlertingService {
   enabled: boolean;
 
   constructor() {
-    this.slackWebhook = process.env.SLACK_WEBHOOK_URL || process.env.AI_SLACK_WEBHOOK_URL;
+    // IMPORTANT:
+    // - `SLACK_WEBHOOK_URL` is used by product feedback notifications.
+    // - AI infra alerting (circuit breakers, provider outages) should NOT spam the same channel by default.
+    // Use a dedicated webhook for AI alerting.
+    this.slackWebhook = process.env.AI_SLACK_WEBHOOK_URL;
     this.discordWebhook = process.env.DISCORD_WEBHOOK_URL || process.env.AI_DISCORD_WEBHOOK_URL;
     this.genericWebhook = process.env.AI_ALERT_WEBHOOK_URL;
-    this.enabled = process.env.AI_ALERTING_ENABLED !== 'false';
+
+    // Railway runs both staging/prod with NODE_ENV=production (Dockerfile),
+    // so we must use APP_ENV / Railway env name to decide whether to alert.
+    const env = String(
+      process.env.APP_ENV ||
+        process.env.RAILWAY_ENVIRONMENT_NAME ||
+        process.env.RAILWAY_ENVIRONMENT ||
+        process.env.NODE_ENV ||
+        'development'
+    ).toLowerCase();
+    // Default: only enable AI infra alerting in production unless explicitly enabled.
+    // This prevents noisy spam during local development and staging.
+    if (String(process.env.AI_ALERTING_ENABLED || '').trim().toLowerCase() === 'true') {
+      this.enabled = true;
+    } else if (String(process.env.AI_ALERTING_ENABLED || '').trim().toLowerCase() === 'false') {
+      this.enabled = false;
+    } else {
+      this.enabled = env === 'production';
+    }
   }
 
   async send(alertType: AlertType, data: AlertData = {}): Promise<void> {
@@ -119,7 +141,15 @@ export class AlertingService {
           tags: {
             alertType: alert.type,
             severity: alert.severity,
-            environment: alert.environment || process.env.NODE_ENV || 'unknown',
+            environment:
+              alert.environment ||
+              String(
+                process.env.APP_ENV ||
+                  process.env.RAILWAY_ENVIRONMENT_NAME ||
+                  process.env.RAILWAY_ENVIRONMENT ||
+                  process.env.NODE_ENV ||
+                  'unknown'
+              ).toLowerCase(),
             ...(alert.data.providerId ? { providerId: String(alert.data.providerId) } : {}),
             ...(alert.data.organizationId
               ? { organizationId: String(alert.data.organizationId) }
@@ -211,7 +241,13 @@ export class AlertingService {
       message,
       timestamp,
       data,
-      environment: process.env.NODE_ENV || 'development',
+      environment: String(
+        process.env.APP_ENV ||
+          process.env.RAILWAY_ENVIRONMENT_NAME ||
+          process.env.RAILWAY_ENVIRONMENT ||
+          process.env.NODE_ENV ||
+          'development'
+      ).toLowerCase(),
     };
   }
 

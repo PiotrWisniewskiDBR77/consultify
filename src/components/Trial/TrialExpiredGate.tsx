@@ -28,14 +28,14 @@ export const TrialExpiredGate: React.FC<{ children: React.ReactNode }> = ({ chil
             Trial Period Expired
           </h2>
           <p className="text-lg text-slate-600 dark:text-slate-400 mb-8 max-w-lg mx-auto">
-            Your 14-day trial has ended. Your data is safe, but your organization is now in
-            read-only mode. Upgrade to Enterprise to continue using Consultify.
+            Your 7-day trial has ended. Your data is safe, but your organization is now in
+            read-only mode. Upgrade to continue using Consultify.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto">
             <button
               onClick={() => navigate('/settings?tab=billing')}
-              className="bg-indigo-600 text-white px-6 py-4 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-500/25 flex items-center justify-center"
+              className="bg-primary-500 text-white px-6 py-4 rounded-xl font-bold hover:bg-primary-600 transition-all flex items-center justify-center"
             >
               <span>Create Organization</span>
               <span className="block text-xs font-normal opacity-75 ml-2">(Upgrade)</span>
@@ -43,7 +43,7 @@ export const TrialExpiredGate: React.FC<{ children: React.ReactNode }> = ({ chil
 
             <button
               onClick={() => window.open('https://consultify.io/contact', '_blank')}
-              className="bg-white dark:bg-navy-900 border-2 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 px-6 py-4 rounded-xl font-bold hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-all flex items-center justify-center"
+              className="bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 px-6 py-4 rounded-xl font-bold hover:bg-slate-100 dark:hover:bg-navy-800/50 transition-all flex items-center justify-center"
             >
               Talk to Consulting
             </button>
@@ -52,7 +52,7 @@ export const TrialExpiredGate: React.FC<{ children: React.ReactNode }> = ({ chil
           <div className="mt-8 pt-8 border-t border-slate-100 dark:border-navy-700">
             <p className="text-sm text-slate-500 dark:text-slate-400">
               Need to export your data?{' '}
-              <button className="text-indigo-600 hover:underline">Download Archive</button>
+              <button className="text-primary-500 hover:underline">Download Archive</button>
             </p>
           </div>
         </div>

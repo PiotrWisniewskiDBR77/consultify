@@ -31,6 +31,12 @@ docs/ui-standards/
 
 ---
 
+## ⛔ FROZEN LAYOUTS (NIE ZMIENIAJ)
+
+**[FROZEN_LAYOUTS.md](FROZEN_LAYOUTS.md)** — układy PINOWANE: sidebar order, module topbar order, view-modes order, 1 Command Row, App Table + Preview, Workspace 3-tools strip. Przy nowych taskach i implementacji — **nie rób bałaganu**.
+
+---
+
 ## Szybka nawigacja
 
 | Obszar                   | Dokument                                                                         | Zakres                                                                 |

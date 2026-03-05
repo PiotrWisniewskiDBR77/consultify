@@ -529,6 +529,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [isLoadingDecisions, setIsLoadingDecisions] = useState(false);
   const [healthSnapshot, setHealthSnapshot] = useState<PMOHealthSnapshot | null>(null);
+  /** V4-EXEC-01: Per-initiative health + whyRed chain from execution health API */
+  const [initiativeHealthMap, setInitiativeHealthMap] = useState<
+    Map<string, { health: string; whyRed?: any }>
+  >(new Map());
   const [isLoadingHealth, setIsLoadingHealth] = useState(false);
   const [riskSignals, setRiskSignals] = useState<RiskSignalItem[]>([]);
   const [delaySignals, setDelaySignals] = useState<DelaySignalItem[]>([]);
@@ -869,6 +873,31 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadHealthSnapshot();
+  }, [currentProjectId]);
+
+  // V4-EXEC-01: Fetch execution health for per-initiative whyRed chain
+  useEffect(() => {
+    if (!currentProjectId) return;
+    const loadExecutionHealth = async () => {
+      try {
+        const data = await Api.get(`/execution/${currentProjectId}/health`);
+        const items = (data as any)?.initiativeHealth as Array<{
+          id: string;
+          health: string;
+          whyRed?: any;
+        }>;
+        if (Array.isArray(items)) {
+          const map = new Map<string, { health: string; whyRed?: any }>();
+          items.forEach((item) => map.set(item.id, { health: item.health, whyRed: item.whyRed }));
+          setInitiativeHealthMap(map);
+        } else {
+          setInitiativeHealthMap(new Map());
+        }
+      } catch {
+        setInitiativeHealthMap(new Map());
+      }
+    };
+    loadExecutionHealth();
   }, [currentProjectId]);
 
   const loadExecutiveSnapshot = useCallback(
@@ -4564,6 +4593,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             handleOpenDocument(full);
           }
         }}
+        whyRed={
+          sidePanelInitiative
+            ? initiativeHealthMap.get(sidePanelInitiative.id)?.whyRed ?? null
+            : null
+        }
       />
     </>
   );

@@ -96,7 +96,7 @@ const STICKY_SIZES: Record<string, { w: number; h: number; textRows: number }> =
 
 // ── Custom nodes ─────────────────────────────────────────────────────────────
 
-const StickyNoteNode: React.FC<NodeProps> = ({ data, selected }) => {
+const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
   const colorIdx = (data?.colorIndex ?? 0) % STICKY_COLORS.length;
   const color = STICKY_COLORS[colorIdx];
   const sizeKey = (data?.size as string) || 'm';
@@ -141,7 +141,7 @@ const StickyNoteNode: React.FC<NodeProps> = ({ data, selected }) => {
           className="absolute -top-2 -right-2 z-10 flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white text-[8px] font-bold shadow-sm cursor-pointer hover:bg-blue-600 transition-colors"
           onClick={(e) => {
             e.stopPropagation();
-            window.dispatchEvent(new CustomEvent('idea-node-open-detail', { detail: { nodeId: data?._nodeId } }));
+            window.dispatchEvent(new CustomEvent('idea-node-open-detail', { detail: { nodeId } }));
           }}
           title={`${commentCount} comment${commentCount !== 1 ? 's' : ''}`}
         >

@@ -26,6 +26,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { ToolsPanelShell } from '@/components/shared/WorkspaceTools';
 import { Api } from '@/services/api';
 
@@ -53,7 +54,7 @@ interface IdeaContextPanelProps {
   onInsertToCanvas?: (item: { text: string; type: string; detail?: string }) => void;
 }
 
-type SectionKey = 'backlinks' | 'initiatives' | 'gaps' | 'insights' | 'kpis' | 'similar';
+type SectionKey = 'initiatives' | 'gaps' | 'insights' | 'kpis' | 'similar';
 
 export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
   open,
@@ -240,9 +241,8 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
     labelPl: string;
     labelEn: string;
     color: string;
-    items: ContextItem[] | Backlink[];
+    items: ContextItem[];
   }> = [
-    { key: 'backlinks', icon: Link2, labelPl: 'Powiązania', labelEn: 'Backlinks', color: 'text-slate-600 dark:text-slate-400', items: backlinks },
     { key: 'initiatives', icon: Target, labelPl: 'Inicjatywy', labelEn: 'Initiatives', color: 'text-amber-600 dark:text-amber-400', items: grouped.initiatives },
     { key: 'gaps', icon: AlertTriangle, labelPl: 'Luki (Assessment)', labelEn: 'Gaps (Assessment)', color: 'text-red-600 dark:text-red-400', items: grouped.gaps },
     { key: 'insights', icon: MessageSquare, labelPl: 'Insights (Wywiady)', labelEn: 'Insights (Interviews)', color: 'text-blue-600 dark:text-blue-400', items: grouped.insights },
@@ -272,13 +272,47 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
         )}
       </div>
 
-      <div className="px-3 py-2 flex-1 overflow-auto">
-        {loading ? (
-          <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 px-1 py-8 justify-center">
-            <Loader2 size={14} className="animate-spin text-slate-400" />
-            {isPl ? 'Wczytuję kontekst firmy…' : 'Loading company context…'}
-          </div>
-        ) : error ? (
+      <div className="px-3 py-2 flex-1 overflow-auto space-y-3">
+        {/* V4-IDEA-09: EmbeddedView for "Used in" parity with Notebook/Tools/Initiatives */}
+        <EmbeddedView
+          title={isPl ? 'Użyte w (backlinks)' : 'Used in (backlinks)'}
+          count={backlinks.length}
+          loading={loading}
+          readOnly
+          viewModes={['list']}
+        >
+          {backlinks.length === 0 && !loading ? (
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
+              {isPl ? 'Brak powiązań' : 'No links yet'}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {backlinks.slice(0, 10).map((bl) => (
+                <div
+                  key={bl.id}
+                  className="rounded-xl border border-slate-200/40 dark:border-white/[0.04] bg-white/40 dark:bg-white/[0.02] p-2.5 flex items-center justify-between gap-2"
+                >
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
+                      {bl.sourceType}
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                      {bl.sourceId}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => openItem(bl.sourceType, bl.sourceId)}
+                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
+                  >
+                    <ExternalLink size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </EmbeddedView>
+
+        {loading ? null : error ? (
           <div className="rounded-xl border border-red-200/60 dark:border-red-800/40 bg-red-50/60 dark:bg-red-900/10 p-3">
             <div className="flex items-start gap-2">
               <AlertTriangle size={14} className="text-red-500 mt-0.5 flex-shrink-0" />
@@ -314,29 +348,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
 
                   {isExpanded && (
                     <div className="ml-2 space-y-1 pb-1">
-                      {key === 'backlinks'
-                        ? (items as Backlink[]).slice(0, 10).map((bl) => (
-                            <div
-                              key={bl.id}
-                              className="rounded-xl border border-slate-200/40 dark:border-white/[0.04] bg-white/40 dark:bg-white/[0.02] p-2.5 flex items-center justify-between gap-2"
-                            >
-                              <div className="min-w-0">
-                                <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
-                                  {bl.sourceType}
-                                </div>
-                                <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                                  {bl.sourceId}
-                                </div>
-                              </div>
-                              <button
-                                onClick={() => openItem(bl.sourceType, bl.sourceId)}
-                                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
-                              >
-                                <ExternalLink size={12} />
-                              </button>
-                            </div>
-                          ))
-                        : (items as ContextItem[]).map((item) => (
+                      {(items as ContextItem[]).map((item) => (
                             <div
                               key={item.id}
                               draggable={!!onInsertToCanvas}
@@ -387,7 +399,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
               );
             })}
 
-            {contextItems.length === 0 && backlinks.length === 0 && (
+            {contextItems.length === 0 && (
               <div className="text-center py-8 text-[11px] text-slate-400">
                 {isPl ? 'Brak kontekstu. Dodaj opis wyzwania.' : 'No context yet. Add a challenge description.'}
               </div>

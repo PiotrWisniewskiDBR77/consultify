@@ -1,10 +1,12 @@
-import { ChevronRight, Menu, MessageSquare, X } from 'lucide-react';
+import { ChevronRight, Menu, Sparkles, X } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AccessBlockedModal } from '../components/access/AccessBlockedModal';
 import { UnifiedChatPanel } from '../components/AIChat/UnifiedChatPanel';
 import { AIFreezeBanner } from '../components/AIFreezeBanner';
+import { DemoModeBanner } from '../components/layout/DemoModeBanner';
+import GlobalAccessBanners from '../components/layout/GlobalAccessBanners';
 import { DemoSessionManager } from '../components/demo/DemoSessionManager';
 import { DocumentSidePanel } from '../components/documents/DocumentSidePanel';
 import { DocumentToggleButton } from '../components/documents/DocumentToggleButton';
@@ -45,6 +47,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const isSidebarCollapsed = useAppStore((s) => s.isSidebarCollapsed);
   const setIsSidebarOpen = useAppStore((s) => s.setIsSidebarOpen);
   const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
+  const toggleChatCollapse = useAppStore((s) => s.toggleChatCollapse);
   const chatKickoffMessage = useAppStore((s) => s.chatKickoffMessage);
   const clearChatKickoffMessage = useAppStore((s) => s.clearChatKickoffMessage);
   const currentUser = useAppStore((s) => s.currentUser);
@@ -53,6 +56,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const chatPanelWidth = useAppStore((s) => s.chatPanelWidth);
   const setChatPanelWidth = useAppStore((s) => s.setChatPanelWidth);
 
+  const { t } = useTranslation();
   const { setDisplayMode, setWorkspaceContext, expandToFullScreen } = useConversationStore();
 
   // Views where chat panel should NOT be shown (full-screen chat only, and settings)
@@ -186,6 +190,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       >
         {/* Header */}
         <div className="flex flex-col z-30 shrink-0">
+          <DemoModeBanner />
+          <GlobalAccessBanners
+            onStartTrial={() => window.location.assign('/auth?action=trial')}
+            onUpgrade={() => window.location.assign('/settings?tab=billing')}
+            onContactSales={() => window.open('https://consultify.io/contact', '_blank')}
+          />
           <AIFreezeBanner />
 
           <div className="h-12 border-b border-slate-100 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
@@ -219,6 +229,26 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
               <NotificationDropdown />
 
+              {shouldShowChatPanel && (
+                <>
+                  <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
+                  <button
+                    type="button"
+                    onClick={() => toggleChatCollapse()}
+                    className={`hidden lg:flex w-9 h-9 items-center justify-center rounded-full transition-colors ${
+                      isChatCollapsed
+                        ? 'bg-purple-500 text-white hover:bg-purple-600'
+                        : 'bg-purple-500/15 text-purple-600 dark:text-purple-400 hover:bg-purple-500/25'
+                    }`}
+                    title={isChatCollapsed ? t('layout.aiPanel.open', 'Open AI panel') : t('layout.aiPanel.close', 'Close AI panel')}
+                    aria-label={isChatCollapsed ? t('layout.aiPanel.open', 'Open AI panel') : t('layout.aiPanel.close', 'Close AI panel')}
+                    aria-pressed={!isChatCollapsed}
+                  >
+                    <Sparkles size={18} />
+                  </button>
+                </>
+              )}
+
               <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
 
               <UserProfileMenu />
@@ -233,8 +263,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               <>
                 <div
                   style={{ width: chatPanelWidth }}
-                  className="shrink-0 bg-white dark:bg-navy-900 border-r border-slate-200 dark:border-navy-700 hidden lg:flex flex-col h-full"
+                  className="shrink-0 bg-white dark:bg-navy-900 border-r border-slate-200 dark:border-navy-700 hidden lg:flex flex-col h-full relative"
                 >
+                  <button
+                    type="button"
+                    onClick={() => toggleChatCollapse()}
+                    className="absolute top-2 right-2 z-10 w-8 h-8 inline-flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                    title="Close AI panel"
+                    aria-label="Close AI panel"
+                  >
+                    <X size={16} />
+                  </button>
                   <UnifiedChatPanel
                     mode="split"
                     workspaceContext={workspaceContext}

@@ -123,12 +123,14 @@ export const AccessPolicyProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setError(null);
 
     try {
-      const response = await fetch('/api/organization/policy-snapshot', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+      if (useAppStore.getState().isDemoMode) {
+        headers['X-Demo-Mode'] = 'true';
+      }
+      const response = await fetch('/api/organization/policy-snapshot', { headers });
 
       if (response.status === 404) {
         setSnapshot(null);
@@ -149,13 +151,15 @@ export const AccessPolicyProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [currentUser?.isAuthenticated]);
 
+  const isDemoMode = useAppStore((s) => s.isDemoMode);
+
   useEffect(() => {
     if (authKey) {
       fetchSnapshot();
     } else {
       setSnapshot(null);
     }
-  }, [authKey, fetchSnapshot]);
+  }, [authKey, isDemoMode, fetchSnapshot]);
 
   const isActionBlocked = useCallback(
     (action: string): boolean => {

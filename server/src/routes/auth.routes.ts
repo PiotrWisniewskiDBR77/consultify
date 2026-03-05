@@ -27,6 +27,7 @@ import {
   MFAEnableRequestSchema,
   MFASetupRequestSchema,
   RefreshTokenRequestSchema,
+  RegisterDemoRequestSchema,
   RegisterRequestSchema,
   ResetPasswordRequestSchema,
   RevokeAllTokensRequestSchema,
@@ -485,14 +486,159 @@ router.post(
   })
 );
 
-// DEMO LOGIN - Auto-login as demo account
+// REGISTER DEMO - Sign up with email+password to try demo (track duration, contact for follow-up)
+router.post(
+  '/register-demo',
+  validateBody(RegisterDemoRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { email, password, firstName } = req.body;
+
+    const existingUser = await dbGet<{ id: string; organization_id: string }>(
+      'SELECT id, organization_id FROM users WHERE email = ?',
+      [email]
+    );
+    if (existingUser) {
+      return res.status(400).json({
+        error: 'Email already in use. Please log in and click "Enter Demo".',
+        code: 'EMAIL_IN_USE',
+      });
+    }
+
+    const { default: setUserDemoPreference } = await import(
+      '../middleware/demoGuard.middleware.js'
+    ).then((m) => ({ default: m.setUserDemoPreference }));
+
+    const userId = uuidv4();
+    const hashedPassword = bcrypt.hashSync(password, 8);
+    const demoOrgId = process.env.DEMO_ORG_ID || 'demo-org';
+
+    // Ensure demo org exists
+    await dbRun(
+      `INSERT INTO organizations (id, name, plan, status, organization_type)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO NOTHING`,
+      [demoOrgId, process.env.DEMO_ORG_NAME || 'Atelier ToolToys', 'enterprise', 'active', 'DEMO'],
+      { fallback: true }
+    );
+
+    // Create user in demo org
+    const userResult = await dbRun(
+      `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        userId,
+        demoOrgId,
+        email,
+        hashedPassword,
+        firstName || '',
+        '',
+        'ADMIN',
+        'active',
+      ],
+      { fallback: false }
+    );
+
+    if (!userResult.success) {
+      logger.error('[Auth] Register demo user failed:', userResult.error);
+      return res.status(500).json({ error: 'Failed to create account' });
+    }
+
+    await setUserDemoPreference(userId, true, { setStartedAt: true });
+
+    const user = await dbGet<{
+      id: string;
+      email: string;
+      first_name: string;
+      last_name: string;
+      role: string;
+      organization_id: string;
+    }>('SELECT id, email, first_name, last_name, role, organization_id FROM users WHERE id = ?', [
+      userId,
+    ]);
+
+    if (!user) {
+      return res.status(500).json({ error: 'Account created but login failed' });
+    }
+
+    const tokenResult = await refreshTokenService.generateTokenPair(user, {
+      deviceInfo: 'Demo Signup',
+      ip: req.ip,
+      userAgent: req.get('user-agent') || null,
+    });
+
+    const language = String(req.get('Accept-Language') || '')
+      .split(',')[0]
+      ?.split('-')[0]
+      ?.toLowerCase();
+
+    await recordDemoTrialEvent({
+      eventType: DEMO_TRIAL_EVENT_TYPES.DEMO_STARTED,
+      organizationId: demoOrgId,
+      userId,
+      source: 'register_demo',
+      language: language || undefined,
+      metadata: { entryPoint: 'demo_signup', hasContact: true },
+    });
+
+    const org = await dbGet<{ name: string }>(
+      'SELECT name FROM organizations WHERE id = ?',
+      [demoOrgId]
+    );
+
+    const safeUser = {
+      id: user.id,
+      email: user.email,
+      firstName: user.first_name || '',
+      lastName: user.last_name || '',
+      role: user.role,
+      status: 'active',
+      organizationId: user.organization_id,
+      companyName: org?.name || 'Atelier ToolToys',
+      isDemo: true,
+      hasWorkspace: true,
+      isAuthenticated: true,
+      accessLevel: 'full' as const,
+    };
+
+    try {
+      setAuthCookies(res, tokenResult.accessToken, tokenResult.refreshToken);
+    } catch {
+      /* ignore */
+    }
+
+    logger.info('[Auth] Demo signup successful', { userId, email });
+    return res.json({
+      user: safeUser,
+      token: tokenResult.accessToken,
+      refreshToken: tokenResult.refreshToken,
+      expiresIn: config.JWT_EXPIRES_IN,
+      isDemo: true,
+    });
+  })
+);
+
+// DEMO LOGIN - Anonymous demo (deprecated in production; use register-demo or login+demo/enter)
+// Kept for E2E and test gateway compatibility
 router.post(
   '/demo-login',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const isTestGateway =
+      process.env.NODE_ENV === 'test' ||
+      process.env.E2E_MODE === 'true' ||
+      process.env.ENABLE_TEST_GATEWAY === 'true';
+
+    if (!isTestGateway) {
+      return res.status(410).json({
+        error: 'Anonymous demo is no longer available. Please sign up or log in to try the demo.',
+        code: 'DEMO_LOGIN_DEPRECATED',
+        alternatives: ['/api/auth/register-demo', '/api/auth/login + /api/demo/toggle'],
+      });
+    }
+
     // Single demo account (do not use DBR77 domain)
     const DEMO_EMAILS = ['piotr.wisniewski@demo.com'];
 
-    logger.info('[Auth] Demo login request');
+    logger.info('[Auth] Demo login request (test mode)');
 
     try {
       let user = null as any;

@@ -52,26 +52,26 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
     );
   };
 
+  const DEMO_ORG_NAME = 'Atelier ToolToys';
+
   return (
     <div
       data-tour="demo-banner"
-      className="bg-gradient-to-r from-purple-600 to-indigo-700 text-white shadow-md relative z-50"
+      className="bg-navy-900/95 dark:bg-navy-950 border-b border-white/5 text-slate-100 relative z-50"
     >
-      {/* Main Banner */}
+      {/* Main Banner — DBR77 */}
       <div className="px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-3 text-sm font-medium">
-          <div className="flex items-center gap-2 bg-white/10 px-2 py-1 rounded">
-            <Sparkles size={14} className="text-purple-200" />
-            <span className="font-bold tracking-wide uppercase text-purple-100 text-xs">
-              {t('demo.banner.mode', 'Demo Mode')}
+          <div className="flex items-center gap-2 bg-navy-800/50 px-2 py-1 rounded border border-white/5">
+            <Sparkles size={14} className="text-primary-400" />
+            <span className="font-bold tracking-wide uppercase text-slate-200 text-xs">
+              {t('demo.banner.mode', 'Demo')}
             </span>
           </div>
-          <span className="text-white/90">
-            <code className="bg-white/10 px-1.5 py-0.5 rounded text-xs font-mono">
-              {currentUser?.email || 'piotr.wisniewski@demo.com'}
-            </code>
+          <span className="text-slate-300">
+            <span className="font-medium text-slate-200">{DEMO_ORG_NAME}</span>
             <span className="ml-2 hidden sm:inline">
-              {t('demo.banner.description', 'Exploring with sample data')}
+              {t('demo.banner.description', 'Exploring sample data')}
             </span>
           </span>
         </div>
@@ -79,7 +79,7 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowLimitations(!showLimitations)}
-            className="flex items-center gap-1 text-xs text-purple-200 hover:text-white transition-colors"
+            className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 transition-colors"
           >
             <AlertCircle size={14} />
             <span className="hidden sm:inline">
@@ -90,10 +90,10 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
 
           <button
             data-tour="demo-exit"
-            onClick={handleContactSales}
-            className="bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-1.5 rounded border border-white/20 transition-colors font-semibold flex items-center gap-1.5"
+            onClick={onStartTrialClick || handleContactSales}
+            className="bg-primary-500 hover:bg-primary-600 text-white text-xs px-3 py-1.5 rounded-lg transition-colors font-semibold flex items-center gap-1.5"
           >
-            {t('demo.banner.contactSales', 'Get Full Access')}
+            {t('demo.banner.startTrial', 'Start Trial')}
             <ExternalLink size={12} />
           </button>
         </div>
@@ -101,11 +101,11 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
 
       {/* Expanded Limitations */}
       {showLimitations && (
-        <div className="px-4 py-3 bg-purple-800/50 border-t border-purple-500/30">
-          <div className="flex flex-wrap items-center gap-6 text-xs text-purple-100">
+        <div className="px-4 py-3 bg-navy-800/60 border-t border-white/5">
+          <div className="flex flex-wrap items-center gap-6 text-xs text-slate-300">
             {DEMO_LIMITATIONS.map((limitation, idx) => (
               <div key={idx} className="flex items-center gap-2">
-                <limitation.icon size={14} className="text-purple-300" />
+                <limitation.icon size={14} className="text-slate-500" />
                 <span>{limitation.text}</span>
               </div>
             ))}

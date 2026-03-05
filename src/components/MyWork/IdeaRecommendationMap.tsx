@@ -68,6 +68,15 @@ import { IdeaFunnelAnalytics } from './mindmap/IdeaFunnelAnalytics';
 import { applyRadialLayout } from './mindmap/RadialTreeLayout';
 import { ExportPowerPoint } from './mindmap/ExportPowerPoint';
 import { EmbedInReports } from './mindmap/EmbedInReports';
+import { AICompetitiveLandscape } from './mindmap/AICompetitiveLandscape';
+import { BranchComparison } from './mindmap/BranchComparison';
+import { TimeHeatmap } from './mindmap/TimeHeatmap';
+import { ExportDiagramCode } from './mindmap/ExportDiagramCode';
+import { applyForceLayout } from './mindmap/ForceDirectedLayout';
+import { ImportExternalMap } from './mindmap/ImportExternalMap';
+import { MindMap3DView } from './mindmap/MindMap3DView';
+import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
+import { WebhookSettings, triggerWebhooks } from './mindmap/WebhookSettings';
 import { useAutoLayout } from './mindmap/useAutoLayout';
 import { useMapExport } from './mindmap/useMapExport';
 
@@ -279,11 +288,20 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
     [cancelEdit, confirmEdit]
   );
 
+  const shape = data.shape || 'default';
+  const shapeClass =
+    shape === 'circle' ? 'rounded-full aspect-square flex items-center justify-center' :
+    shape === 'diamond' ? 'rotate-45' :
+    shape === 'hexagon' ? '[clip-path:polygon(25%_0%,75%_0%,100%_50%,75%_100%,25%_100%,0%_50%)]' :
+    'rounded-xl';
+
+  const innerRotate = shape === 'diamond' ? '-rotate-45' : '';
+
   return (
     <GlowWrapper isNew={isNew} isAI={isAI}>
       <div
         onDoubleClick={handleDoubleClick}
-        className={`group px-3 py-2 rounded-xl border-2 ${colors.border} bg-white dark:bg-navy-900 ${
+        className={`group px-3 py-2 ${shapeClass} border-2 ${colors.border} bg-white dark:bg-navy-900 ${
           selected ? `ring-2 ${colors.ring}` : ''
         } shadow-sm hover:shadow-lg cursor-pointer max-w-[210px] relative`}
       >
@@ -299,56 +317,65 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
           </div>
         )}
 
-        {editing ? (
-          <textarea
-            ref={textareaRef}
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={confirmEdit}
-            onKeyDown={handleKeyDown}
-            rows={2}
-            className="w-full text-[11px] font-semibold text-slate-800 dark:text-slate-200 bg-transparent border-none outline-none resize-none p-0 leading-tight nodrag"
-            placeholder="..."
-          />
-        ) : (
-          <>
-            <div className="flex items-start gap-1.5">
-              <div className="flex-shrink-0 mt-0.5">
-                {isAI ? <Bot size={10} className="text-purple-500" /> : <Lightbulb size={10} className="text-amber-500" />}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className={`text-[11px] font-semibold ${colors.text} line-clamp-2 leading-tight`}>
-                  {data.label || '...'}
+        <div className={innerRotate}>
+          {/* Image thumbnail (R3.5) */}
+          {data.imageUrl && !editing && (
+            <div className="mb-1.5 -mx-1 -mt-1 rounded-lg overflow-hidden">
+              <img src={data.imageUrl} alt="" className="w-full h-16 object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            </div>
+          )}
+
+          {editing ? (
+            <textarea
+              ref={textareaRef}
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={confirmEdit}
+              onKeyDown={handleKeyDown}
+              rows={2}
+              className="w-full text-[11px] font-semibold text-slate-800 dark:text-slate-200 bg-transparent border-none outline-none resize-none p-0 leading-tight nodrag"
+              placeholder="..."
+            />
+          ) : (
+            <>
+              <div className="flex items-start gap-1.5">
+                <div className="flex-shrink-0 mt-0.5">
+                  {isAI ? <Bot size={10} className="text-purple-500" /> : <Lightbulb size={10} className="text-amber-500" />}
                 </div>
-                {data.nodeType && (
-                  <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 uppercase tracking-wide">
-                    {String(data.nodeType).replace(/_/g, ' ')}
+                <div className="min-w-0 flex-1">
+                  <div className={`text-[11px] font-semibold ${colors.text} line-clamp-2 leading-tight`}>
+                    {data.label || '...'}
+                  </div>
+                  {data.nodeType && (
+                    <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 uppercase tracking-wide">
+                      {String(data.nodeType).replace(/_/g, ' ')}
+                    </div>
+                  )}
+                </div>
+                {/* Maturity ring */}
+                {nodeStatus !== 'idea' && (
+                  <div className="shrink-0">
+                    <MaturityRing score={maturityScore} size={16} strokeWidth={2} />
                   </div>
                 )}
               </div>
-              {/* Maturity ring */}
-              {nodeStatus !== 'idea' && (
-                <div className="shrink-0">
-                  <MaturityRing score={maturityScore} size={16} strokeWidth={2} />
+              <div className="mt-1.5 flex items-center gap-1.5">
+                <div className="w-8 h-0.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                  <div className={`h-full rounded-full ${priorityColor}`} style={{ width: `${Math.max(10, p)}%` }} />
                 </div>
-              )}
-            </div>
-            <div className="mt-1.5 flex items-center gap-1.5">
-              <div className="w-8 h-0.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                <div className={`h-full rounded-full ${priorityColor}`} style={{ width: `${Math.max(10, p)}%` }} />
+                {votes > 0 && <VoteStars votes={votes} compact disabled />}
+                {data.assignee && (
+                  <div
+                    className="w-4 h-4 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[7px] font-bold"
+                    title={data.assignee}
+                  >
+                    {String(data.assignee).charAt(0).toUpperCase()}
+                  </div>
+                )}
               </div>
-              {votes > 0 && <VoteStars votes={votes} compact disabled />}
-              {data.assignee && (
-                <div
-                  className="w-4 h-4 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[7px] font-bold"
-                  title={data.assignee}
-                >
-                  {String(data.assignee).charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </GlowWrapper>
   );
@@ -1016,6 +1043,26 @@ function MindMapInner({
     }
     if (action === 'mm_export_pptx') setShowExportPPTX(true);
     if (action === 'mm_embed_report') setShowEmbedInReports(true);
+    if (action === 'mm_competitive_landscape') setShowCompetitiveLandscape(true);
+    if (action === 'mm_branch_comparison') setShowBranchComparison(true);
+    if (action === 'mm_time_heatmap') setShowTimeHeatmap(true);
+    if (action === 'mm_export_diagram') setShowExportDiagramCode(true);
+    if (action === 'mm_force_layout') {
+      pushUndo();
+      const newMode = layoutMode === 'force' ? 'tree' : 'force';
+      setLayoutMode(newMode);
+      if (newMode === 'force') {
+        const laid = applyForceLayout(nodes, edges);
+        setNodes(laid);
+      } else {
+        const laid = autoLayout(nodes, edges);
+        setNodes(laid);
+      }
+      setTimeout(() => { try { fitView({ padding: 0.3, duration: 400 }); } catch { /* ignore */ } }, 50);
+    }
+    if (action === 'mm_import_external') setShowImportExternalMap(true);
+    if (action === 'mm_3d_view') setShowMindMap3D(true);
+    if (action === 'mm_webhooks') setShowWebhookSettings(true);
     if (action === 'mm_export') {
       const format = window.prompt(isPolish ? 'Format eksportu: png, svg, json' : 'Export format: png, svg, json', 'png');
       if (format === 'svg') exportAsSVG(`${ideaTitle || 'mindmap'}.svg`);
@@ -1104,6 +1151,18 @@ function MindMapInner({
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
         e.preventDefault();
         undo();
+        return;
+      }
+      // V4-IDEA-07: Select all (Ctrl+A)
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a' && !e.shiftKey) {
+        e.preventDefault();
+        setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id !== 'root' })));
+        return;
+      }
+      // V4-IDEA-07: Clear selection (Ctrl+D)
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: false })));
         return;
       }
 
@@ -1280,8 +1339,29 @@ function MindMapInner({
   const [showExportPPTX, setShowExportPPTX] = useState(false);
   const [showEmbedInReports, setShowEmbedInReports] = useState(false);
 
-  // ── R3: Radial layout mode ────────────────────────────────────────────
-  const [layoutMode, setLayoutMode] = useState<'tree' | 'radial'>('tree');
+  // ── R1.2: Competitive Landscape ──────────────────────────────────────
+  const [showCompetitiveLandscape, setShowCompetitiveLandscape] = useState(false);
+
+  // ── R5.3: Branch Comparison ────────────────────────────────────────
+  const [showBranchComparison, setShowBranchComparison] = useState(false);
+
+  // ── R5.4: Time Heatmap ─────────────────────────────────────────────
+  const [showTimeHeatmap, setShowTimeHeatmap] = useState(false);
+
+  // ── R4.2: Export Diagram Code ──────────────────────────────────────
+  const [showExportDiagramCode, setShowExportDiagramCode] = useState(false);
+
+  // ── R3.1+R3: Layout modes ──────────────────────────────────────────
+  const [layoutMode, setLayoutMode] = useState<'tree' | 'radial' | 'force'>('tree');
+
+  // ── R4.3: Import External Map ──────────────────────────────────────
+  const [showImportExternalMap, setShowImportExternalMap] = useState(false);
+
+  // ── R3.3: 3D Mind Map ──────────────────────────────────────────────
+  const [showMindMap3D, setShowMindMap3D] = useState(false);
+
+  // ── R4.5: Webhook Settings ─────────────────────────────────────────
+  const [showWebhookSettings, setShowWebhookSettings] = useState(false);
 
   // ── AI expand ────────────────────────────────────────────────────────────
   const [showAIModal, setShowAIModal] = useState(false);
@@ -1329,7 +1409,7 @@ function MindMapInner({
       setEdges(nextEdges as any);
 
       if (persistence === 'online') {
-        await Api.saveMyIdeaMap(ideaId, { nodes: nextNodes as any, edges: nextEdges as any, preferredTool: preferredTool || undefined, extensions: extensions || undefined });
+        await Api.saveMyIdeaMap(ideaId, { nodes: nextNodes as any, edges: nextEdges as any, preferredTool: preferredTool || undefined, extensions: extensions || undefined, fromAI: true });
         setLastSavedAt(Date.now());
       }
 
@@ -1459,6 +1539,31 @@ function MindMapInner({
     }
     if (action === 'ctx_dependencies') setShowDependencyDetector(true);
     if (action === 'ctx_priority') setShowPriorityRecommender(true);
+    if (action === 'ctx_competitive') setShowCompetitiveLandscape(true);
+    if (action === 'ctx_change_shape') {
+      const sel = getSelectedNode();
+      if (sel && sel.type === 'idea') {
+        const shapes = ['default', 'circle', 'diamond', 'hexagon'];
+        const current = sel.data?.shape || 'default';
+        const nextIdx = (shapes.indexOf(current) + 1) % shapes.length;
+        setNodes((prev: Node[]) =>
+          prev.map((n) => n.id === sel.id ? { ...n, data: { ...n.data, shape: shapes[nextIdx] } } : n)
+        );
+        toast.success(`Shape: ${shapes[nextIdx]}`, { duration: 800 });
+      }
+    }
+    if (action === 'ctx_add_image') {
+      const sel = getSelectedNode();
+      if (sel && sel.type === 'idea') {
+        const url = window.prompt(isPolish ? 'URL obrazka:' : 'Image URL:');
+        if (url) {
+          setNodes((prev: Node[]) =>
+            prev.map((n) => n.id === sel.id ? { ...n, data: { ...n.data, imageUrl: url } } : n)
+          );
+          toast.success(isPolish ? 'Obraz dodany' : 'Image added', { duration: 800 });
+        }
+      }
+    }
     if (action === 'ctx_share_branch') {
       const sel = getSelectedNode();
       if (sel) {
@@ -1659,6 +1764,7 @@ function MindMapInner({
           maxZoom={3}
           proOptions={{ hideAttribution: true }}
           className="bg-slate-50 dark:bg-navy-950"
+          aria-label={isPolish ? 'Mapa rekomendacji pomysłu — nawigacja strzałkami, Enter/Tab dodawanie węzłów' : 'Idea recommendation map — arrow navigation, Enter/Tab add nodes'}
           defaultEdgeOptions={{
             type: 'gradient',
             style: { stroke: '#8b5cf6', strokeWidth: 2, opacity: 0.7 },
@@ -2108,6 +2214,91 @@ function MindMapInner({
         ideaTitle={ideaTitle}
         nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
         edges={edges.map((e) => ({ source: e.source, target: e.target }))}
+      />
+
+      {/* R1.2: AI Competitive Landscape */}
+      <AICompetitiveLandscape
+        open={showCompetitiveLandscape}
+        onClose={() => setShowCompetitiveLandscape(false)}
+        ideaId={ideaId}
+        ideaTitle={ideaTitle}
+        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+        locked={locked}
+        onAddToMap={(items) => {
+          for (const item of items) {
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-insert', {
+                detail: { items: [item], ideaId },
+              })
+            );
+          }
+          pushActivity(ideaId, { type: 'ai_suggestion', actor: 'AI', detail: `Competitive landscape: ${items.length} items` });
+        }}
+      />
+
+      {/* R5.3: Branch Comparison */}
+      <BranchComparison
+        open={showBranchComparison}
+        onClose={() => setShowBranchComparison(false)}
+        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+        edges={edges.map((e) => ({ source: e.source, target: e.target }))}
+      />
+
+      {/* R5.4: Time Heatmap */}
+      <TimeHeatmap
+        open={showTimeHeatmap}
+        onClose={() => setShowTimeHeatmap(false)}
+        ideaId={ideaId}
+      />
+
+      {/* R4.2: Export Diagram Code */}
+      <ExportDiagramCode
+        open={showExportDiagramCode}
+        onClose={() => setShowExportDiagramCode(false)}
+        ideaTitle={ideaTitle}
+        nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+        edges={edges.map((e) => ({ source: e.source, target: e.target }))}
+      />
+
+      {/* R4.3: Import External Map */}
+      <ImportExternalMap
+        open={showImportExternalMap}
+        onClose={() => setShowImportExternalMap(false)}
+        locked={locked}
+        onImport={(items) => {
+          pushUndo();
+          for (const item of items) {
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-insert', {
+                detail: { items: [{ text: item.label, type: 'topics' }], ideaId },
+              })
+            );
+          }
+          pushActivity(ideaId, { type: 'node_added', actor: 'You', detail: `Imported ${items.length} nodes from external file` });
+        }}
+      />
+
+      {/* R3.3: 3D Mind Map View */}
+      <MindMap3DView
+        open={showMindMap3D}
+        onClose={() => setShowMindMap3D(false)}
+        ideaTitle={ideaTitle}
+        nodes={nodes.map((n) => ({ id: n.id, data: n.data, position: n.position }))}
+        edges={edges.map((e) => ({ source: e.source, target: e.target }))}
+      />
+
+      {/* R2.1+R2.2: Collaboration Overlay (auto-hides when no connection) */}
+      <CollaborationOverlay
+        ideaId={ideaId}
+        currentUserId="current-user"
+        currentUserName="You"
+      />
+
+      {/* R4.5: Webhook Settings */}
+      <WebhookSettings
+        open={showWebhookSettings}
+        onClose={() => setShowWebhookSettings(false)}
+        ideaId={ideaId}
       />
     </div>
   );

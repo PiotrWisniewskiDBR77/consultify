@@ -9,7 +9,9 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import auditEventsService from '../services/AuditEventsService.js';
 import ActivityService from '../services/ActivityService.js';
+import { validateTaskStatusTransition } from '../services/taskWorkflowService.js';
 import NotificationService from '../services/notificationService.js';
 import { PMO_DOMAIN_IDS } from '../services/pmoDomainRegistry.js';
 import TaskAssignmentService from '../services/taskAssignmentService.js';
@@ -229,6 +231,7 @@ export class TaskController {
 
       const {
         projectId,
+        programId,
         status,
         assigneeId,
         priority,
@@ -236,6 +239,7 @@ export class TaskController {
         reporterId,
         taskType,
         search,
+        scope,
       } = query as any;
 
       const sql = `
@@ -256,7 +260,9 @@ export class TaskController {
             LEFT JOIN initiatives i ON t.initiative_id = i.id
             WHERE t.organization_id = ?
         `;
-      const countSql = `SELECT COUNT(*) as total FROM tasks t WHERE t.organization_id = ?`;
+      const countSql = `SELECT COUNT(*) as total FROM tasks t
+        LEFT JOIN initiatives i ON t.initiative_id = i.id
+        WHERE t.organization_id = ?`;
 
       const params: SQLParam[] = [orgId];
       const countParams: SQLParam[] = [orgId];
@@ -282,6 +288,14 @@ export class TaskController {
         if (projectId) {
           s += ` AND t.project_id = ?`;
           p.push(projectId);
+        }
+        if (programId) {
+          s += ` AND i.program_id = ?`;
+          p.push(programId);
+        }
+        if (scope === 'personal') {
+          s += ` AND (t.assignee_id = ? OR t.reporter_id = ?)`;
+          p.push(userId, userId);
         }
         if (status) {
           const statuses = normalizeCsvOrArray(status);
@@ -808,6 +822,20 @@ export class TaskController {
         ]
       ).catch((err: Error | null) => logger.error('[TaskController] PMO Audit log failed:', err));
 
+      // V4-TASK-08: Unified audit log
+      auditEventsService
+        .log({
+          actorId: userId,
+          actorType: 'USER',
+          action: 'TASK_CREATE',
+          resourceType: 'task',
+          resourceId: id,
+          after: { title, status: finalStatus, priority: finalPriority, assigneeId, dueDate },
+          metadata: { initiativeId, projectId: effectiveProjectId },
+          organizationId: orgId,
+        })
+        .catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
+
       // Recalculate Initiative Progress
       if (initiativeId) {
         // Lazy load for now to avoid circular dependency
@@ -869,6 +897,21 @@ export class TaskController {
       if (!currentTask.owner_id && !(updates as any).ownerId) {
         const incomingAssignee = (updates as any).assigneeId || (updates as any).assignee_id;
         (updates as any).ownerId = incomingAssignee || currentTask.assignee_id || userId;
+      }
+
+      // V4-TASK-03: Workflow guard — block invalid status transitions
+      const newStatus = (updates as any)?.status;
+      if (newStatus != null && String(newStatus).toLowerCase() !== String(currentTask.status || '').toLowerCase()) {
+        const validation = validateTaskStatusTransition(currentTask.status, newStatus);
+        if (!validation.allowed && 'rule' in validation && 'message' in validation) {
+          res.status(400).json({
+            error: validation.message,
+            code: validation.rule,
+            from: currentTask.status,
+            to: newStatus,
+          });
+          return;
+        }
       }
 
       // Gate: prevent completing when blocking decisions exist
@@ -1067,6 +1110,36 @@ export class TaskController {
           newValue: updates,
         })
         .catch((err: any) => logger.error('[TaskController] Activity log failed:', err));
+
+      // V4-TASK-08: Unified audit log
+      const beforeSnapshot = {
+        title: currentTask.title,
+        status: currentTask.status,
+        priority: currentTask.priority,
+        assigneeId: currentTask.assignee_id,
+        dueDate: currentTask.due_date,
+      };
+      const afterSnapshot = {
+        ...beforeSnapshot,
+        ...Object.fromEntries(
+          Object.entries(updates).filter(([k]) =>
+            ['title', 'status', 'priority', 'assigneeId', 'dueDate'].includes(k)
+          )
+        ),
+      };
+      auditEventsService
+        .log({
+          actorId: userId,
+          actorType: 'USER',
+          action: 'TASK_UPDATE',
+          resourceType: 'task',
+          resourceId: id,
+          before: beforeSnapshot,
+          after: afterSnapshot,
+          metadata: { changedFields: Object.keys(updates) },
+          organizationId: orgId,
+        })
+        .catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
 
       // Notifications
       const affectedUserId = (updates as any).assigneeId || currentTask.assignee_id;
@@ -1314,6 +1387,20 @@ export class TaskController {
           entityName: task.title,
         })
         .catch((err: any) => logger.error('[TaskController] Activity log failed:', err));
+
+      // V4-TASK-08: Unified audit log
+      auditEventsService
+        .log({
+          actorId: userId,
+          actorType: 'USER',
+          action: 'TASK_DELETE',
+          resourceType: 'task',
+          resourceId: id,
+          before: { title: task.title, initiativeId: task.initiative_id },
+          metadata: {},
+          organizationId: orgId,
+        })
+        .catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
 
       // Recalculate Initiative Progress
       if (task.initiative_id) {

@@ -225,6 +225,11 @@ export const VSMInventoryNode: React.FC<NodeProps> = ({ id, data, selected }) =>
   const locked = data?.locked;
   const qty = data?.inventory;
 
+  const fieldChange = useCallback(
+    (field: VSMFieldKey) => (val: string) => emitFieldChange(id, field, val),
+    [id],
+  );
+
   return (
     <div
       className={`relative flex flex-col items-center justify-end min-w-[72px] min-h-[64px] transition-shadow ${
@@ -246,6 +251,10 @@ export const VSMInventoryNode: React.FC<NodeProps> = ({ id, data, selected }) =>
         <span className="text-[9px] font-bold text-amber-900 mb-1">
           {qty != null ? qty : '?'}
         </span>
+      </div>
+
+      <div className="mt-0.5">
+        <InlineField label="Qty" value={data?.inventory} locked={locked} onCommit={fieldChange('inventory')} />
       </div>
 
       <LabelEditor

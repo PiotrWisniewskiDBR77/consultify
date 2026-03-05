@@ -7,18 +7,24 @@
 import {
   Activity,
   ArrowDownUp,
+  ArrowLeftRight,
   BarChart3,
+  Box,
+  Calendar,
   CheckCircle2,
   CheckSquare,
   ChevronDown,
   CircleDot,
+  Code,
   Columns3,
   Diamond,
   Download,
   FileText,
+  FileUp,
   Filter,
   GitBranch,
   GitMerge,
+  Globe,
   Group,
   Heart,
   LayoutGrid,
@@ -37,6 +43,7 @@ import {
   Save,
   Search,
   Shield,
+  Shuffle,
   SmilePlus,
   Sparkles,
   Square,
@@ -48,6 +55,7 @@ import {
   Type,
   Undo2,
   Upload,
+  Webhook,
   Wand2,
   Zap,
 } from 'lucide-react';
@@ -534,6 +542,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                   <QuickToolBtn icon={Target} label={isPl ? 'Priorytetyzacja AI' : 'AI Priority'} action="mm_priority_recommender" disabled={!isAccepted} />
                   <QuickToolBtn icon={Group} label={isPl ? 'Auto-klastry AI' : 'AI Auto-Clustering'} action="mm_auto_clustering" disabled={!isAccepted} />
                   <QuickToolBtn icon={SmilePlus} label={isPl ? 'Analiza sentymentu' : 'Sentiment analysis'} action="mm_sentiment_analysis" disabled={!isAccepted} />
+                  <QuickToolBtn icon={Globe} label={isPl ? 'Krajobraz konkurencyjny' : 'Competitive landscape'} action="mm_competitive_landscape" disabled={!isAccepted} />
                 </div>
               </div>
 
@@ -553,6 +562,10 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                   <QuickToolBtn icon={Heart} label={isPl ? 'Zdrowie mapy' : 'Map health'} action="mm_toggle_health" disabled={!isAccepted} />
                   <QuickToolBtn icon={TrendingUp} label={isPl ? 'Lejek pomysłów' : 'Idea funnel'} action="mm_funnel_analytics" disabled={!isAccepted} />
                   <QuickToolBtn icon={GitMerge} label={isPl ? 'Układ promieniowy' : 'Radial layout'} action="mm_radial_layout" disabled={!isAccepted} />
+                  <QuickToolBtn icon={ArrowLeftRight} label={isPl ? 'Porównanie gałęzi' : 'Branch comparison'} action="mm_branch_comparison" disabled={!isAccepted} />
+                  <QuickToolBtn icon={Calendar} label={isPl ? 'Mapa ciepła czasu' : 'Time heatmap'} action="mm_time_heatmap" disabled={!isAccepted} />
+                  <QuickToolBtn icon={Shuffle} label={isPl ? 'Układ siłowy' : 'Force layout'} action="mm_force_layout" disabled={!isAccepted} />
+                  <QuickToolBtn icon={Box} label={isPl ? 'Widok 3D' : '3D View'} action="mm_3d_view" disabled={!isAccepted} />
                 </div>
               </div>
 
@@ -563,6 +576,16 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                   <QuickToolBtn icon={Mic} label={isPl ? 'Mów pomysły (Voice)' : 'Voice to Node'} action="mm_voice" disabled={!isAccepted} />
                   <QuickToolBtn icon={Upload} label={isPl ? 'Dokument → Mapa' : 'Document → Map'} action="mm_doc_to_map" disabled={!isAccepted} />
                   <QuickToolBtn icon={MessageSquare} label={isPl ? 'Wywiady → Mapa' : 'Interviews → Map'} action="mm_interview_to_map" disabled={!isAccepted} />
+                  <QuickToolBtn icon={FileUp} label={isPl ? 'Import XMind/FreeMind' : 'Import XMind/FreeMind'} action="mm_import_external" disabled={!isAccepted} />
+                </div>
+              </div>
+
+              {/* Export: Diagram Code + Webhooks */}
+              <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
+                <SectionLabel>{isPl ? 'Eksport zaawansowany' : 'Advanced Export'}</SectionLabel>
+                <div className="space-y-1.5">
+                  <QuickToolBtn icon={Code} label={isPl ? 'Eksport Mermaid/PlantUML' : 'Export Mermaid/PlantUML'} action="mm_export_diagram" disabled={!isAccepted} />
+                  <QuickToolBtn icon={Webhook} label={isPl ? 'Konfiguracja webhooków' : 'Webhook settings'} action="mm_webhooks" disabled={!isAccepted} />
                 </div>
               </div>
             </div>
