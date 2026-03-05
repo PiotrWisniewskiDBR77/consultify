@@ -29,6 +29,10 @@ function getOrgId(req: any): string {
   return req.user?.organizationId || req.user?.organization_id || '';
 }
 
+function getUserId(req: any): string {
+  return req.user?.id || req.user?.userId || '';
+}
+
 // ============================================================
 // V3-H01: KPI LIST + CREATE (global KPI)
 // ============================================================
@@ -678,18 +682,43 @@ router.post(
   '/deviation-cases/:caseId/close',
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
+    const userId = getUserId(req);
     const { caseId } = req.params;
+    const { evidenceText, evidenceRef, resolutionNotes } = req.body || {};
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!caseId) return res.status(400).json({ success: false, error: 'caseId is required' });
 
-    await dbRun(
-      `
-      UPDATE kpi_deviation_cases
-      SET status = 'CLOSED', closed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ? AND organization_id = ?
-      `,
-      [caseId, orgId]
-    );
+    // V4-RSLT-03: Close with evidence
+    try {
+      await dbRun(
+        `UPDATE kpi_deviation_cases SET status = 'CLOSED', closed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP,
+         evidence_text = ?, evidence_ref = ?, closed_by = ?, resolution_notes = ?
+         WHERE id = ? AND organization_id = ?`,
+        [evidenceText || null, evidenceRef || null, userId || null, resolutionNotes || null, caseId, orgId]
+      );
+    } catch {
+      await dbRun(
+        `UPDATE kpi_deviation_cases SET status = 'CLOSED', closed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND organization_id = ?`,
+        [caseId, orgId]
+      );
+    }
+
+    try {
+      const audit = await import('../services/AuditEventsService.js');
+      await audit.default.log({
+        actorId: userId || 'system',
+        actorType: 'USER',
+        action: 'KPI_DEVIATION_CLOSED',
+        resourceType: 'kpi_deviation_case',
+        resourceId: caseId,
+        after: { evidenceText: !!evidenceText, evidenceRef: !!evidenceRef },
+        metadata: {},
+        organizationId: orgId,
+      });
+    } catch {
+      /* audit best-effort */
+    }
     res.json({ success: true });
   })
 );

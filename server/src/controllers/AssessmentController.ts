@@ -1416,6 +1416,32 @@ export class AssessmentController {
         return;
       }
 
+      // V4-ASMT-03: Evidence gate — when requireEvidence=true, block if no evidence rows
+      const requireEvidence = Boolean((req.body as any)?.requireEvidence);
+      if (requireEvidence) {
+        try {
+          const evidenceRows = await queryHelpers.queryAll<{ id: string }>(
+            `SELECT id FROM assessment_evidence WHERE assessment_id = ? LIMIT 1`,
+            [assessmentId]
+          );
+          if (Array.isArray(evidenceRows) && evidenceRows.length === 0) {
+            res.status(400).json({
+              error: 'Evidence completeness required',
+              code: 'EVIDENCE_GATE',
+              message: 'Add evidence for key dimensions before generating initiatives.',
+            });
+            return;
+          }
+        } catch {
+          /* assessment_evidence table may not exist */
+          res.status(400).json({
+            error: 'Evidence gate required but evidence system not configured',
+            code: 'EVIDENCE_GATE',
+          });
+          return;
+        }
+      }
+
       if (!requireDoD(assessment)) {
         res.status(409).json({ error: 'DoD not satisfied' });
         return;

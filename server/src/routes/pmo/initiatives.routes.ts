@@ -57,6 +57,12 @@ router.use(demoContextMiddleware);
 router.get('/portfolio', InitiativeController.getPortfolioData);
 
 /**
+ * GET /api/initiatives/portfolio/rollups
+ * V4-INIT-02: Get portfolio rollups by program (hierarchy)
+ */
+router.get('/portfolio/rollups', InitiativeController.getPortfolioRollups);
+
+/**
  * GET /api/initiatives/portfolio/dependencies
  * Get initiative dependencies for timeline
  */

@@ -7,6 +7,7 @@ import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { hasPermission } from '../services/permissionService.js';
+import KnownToolsService from '../services/KnownToolsService.js';
 import ToolInitiativeService from '../services/ToolInitiativeService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -627,6 +628,86 @@ export class ToolController {
         total,
         limit: limitNum,
         offset: offsetNum,
+      });
+    }
+  );
+
+  /**
+   * V4-TOOL-01: Tools hub — sessions + library in one response for unified navigation
+   */
+  static getToolsHub = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      await ensureToolsSchema();
+
+      const [sessionsRows, libraryResult] = await Promise.all([
+        queryHelpers.queryAll(
+          `SELECT id, name, tool_type, status, completion_percent, confidence_avg, project_id, created_by, created_at, updated_at
+           FROM tool_sessions WHERE organization_id = ? ORDER BY updated_at DESC LIMIT 50`,
+          [user.organizationId]
+        ) as Promise<ToolSessionRow[]>,
+        KnownToolsService.listKnownTools({ lang: 'en', limit: 100, offset: 0 }),
+      ]);
+
+      const sessions = (sessionsRows || []).map((s) => ({
+        id: s.id,
+        name: s.name,
+        toolType: s.tool_type,
+        status: normalizeStatus(s.status),
+        progress: s.completion_percent || 0,
+        confidenceAvg: s.confidence_avg || 0,
+        projectId: s.project_id,
+        createdAt: s.created_at,
+        updatedAt: s.created_at,
+      }));
+
+      res.json({
+        sessions: { items: sessions, total: sessions.length },
+        library: libraryResult,
+      });
+    }
+  );
+
+  /**
+   * V4-TOOL-02: DoD check — returns what's missing before tool can be approved
+   */
+  static getToolDoDCheck = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { toolId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const session = (await queryHelpers.queryOne(
+        `SELECT completion_percent, confidence_avg, status FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+        [toolId, user.organizationId]
+      )) as { completion_percent?: number; confidence_avg?: number; status?: string } | null;
+
+      if (!session) {
+        res.status(404).json({ error: 'Tool session not found' });
+        return;
+      }
+
+      const completion = session.completion_percent || 0;
+      const confidence = session.confidence_avg || 0;
+      const missing: string[] = [];
+      if (completion < 100) missing.push(`Completion ${completion}% (required 100%)`);
+      if (confidence < 3) missing.push(`Confidence ${confidence} (required ≥3)`);
+      const passed = missing.length === 0;
+
+      res.json({
+        passed,
+        missing,
+        completion,
+        confidence,
+        readyForApproval: passed && normalizeStatus(session.status) === 'REVIEW',
       });
     }
   );

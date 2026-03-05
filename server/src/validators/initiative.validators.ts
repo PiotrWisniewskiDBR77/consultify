@@ -104,6 +104,8 @@ export const CreateInitiativeSchema = z
     // V3-A01: Traceability — every output must have a canonical source
     sourceType: SourceTypeEnum.optional().default('manual'),
     sourceId: z.string().max(255).optional().nullable(),
+    // V4-INIT-02: Program hierarchy
+    programId: z.string().max(255).optional().nullable(),
   })
   .refine(
     (data) => {

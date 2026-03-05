@@ -88,4 +88,11 @@ router.post(
  */
 router.post('/:id/remind', validateBody(RemindDecisionSchema), DecisionController.remindDecision);
 
+/**
+ * PATCH /api/decisions/:id/workflow
+ * V4-EXEC-06: Decision workflow — propose→review→approve→publish; auto-create tasks on publish
+ * Body: { toStatus: 'review'|'approve'|'published' }
+ */
+router.patch('/:id/workflow', DecisionController.transitionWorkflow);
+
 export default router;

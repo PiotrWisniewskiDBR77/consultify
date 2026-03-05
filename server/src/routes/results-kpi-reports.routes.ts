@@ -28,6 +28,47 @@ function getUserId(req: any): string {
 }
 
 // ============================================================
+// V4-RSLT-01: Metrics semantic layer — KPI definitions + dimensions
+// ============================================================
+
+router.get(
+  '/kpi-definitions',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const rows = await dbAll<any>(
+      `SELECT k.id, k.organization_id, k.initiative_id, k.name, k.unit, k.target_value,
+              k.baseline_value, k.current_value, k.direction, k.threshold_mode,
+              k.amber_threshold_pct, k.red_threshold_pct, k.owner_user_id,
+              i.name as initiative_name
+       FROM initiative_kpis k
+       LEFT JOIN initiatives i ON i.id = k.initiative_id
+       WHERE (k.organization_id = ? OR (k.organization_id IS NULL AND i.organization_id = ?))
+       ORDER BY k.name`,
+      [orgId, orgId]
+    );
+
+    const defs = (rows || []).map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      initiativeId: r.initiative_id,
+      initiativeName: r.initiative_name,
+      unit: r.unit,
+      targetValue: r.target_value,
+      baselineValue: r.baseline_value,
+      currentValue: r.current_value,
+      direction: r.direction || 'HIGHER_IS_BETTER',
+      thresholdMode: r.threshold_mode || 'PERCENT_FROM_TARGET',
+      amberThresholdPct: r.amber_threshold_pct,
+      redThresholdPct: r.red_threshold_pct,
+    }));
+
+    res.json({ success: true, definitions: defs });
+  })
+);
+
+// ============================================================
 // KPI Reports
 // ============================================================
 
