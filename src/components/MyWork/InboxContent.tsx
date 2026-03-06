@@ -237,6 +237,21 @@ interface InboxResponse {
   items: InboxItem[];
 }
 
+interface InboxAIEvalRun {
+  id: string;
+  ran_at: string;
+  total_items: number;
+  correct: number;
+  accuracy: number;
+  cost_usd: number | null;
+}
+
+interface InboxAICostSummary {
+  totalCostUsd: number;
+  callCount: number;
+  days: number;
+}
+
 export interface InboxCounts {
   total: number;
   critical: number;
@@ -660,6 +675,7 @@ const getDefaultColumnWidths = (): ColumnWidths =>
 
 const INBOX_TABLE_VIEW_STORAGE_KEY = 'consultify-inbox-table-view';
 const INBOX_TABLE_DEFAULT_HIDDEN_COLUMNS = ['type', 'section', 'source'] as const;
+const INBOX_AI_SETTINGS_STORAGE_KEY = 'consultify-inbox-ai-settings';
 
 function loadInboxHiddenColumns(): string[] {
   try {
@@ -679,6 +695,29 @@ function saveInboxHiddenColumns(hiddenColumns: string[]) {
     localStorage.setItem(
       INBOX_TABLE_VIEW_STORAGE_KEY,
       JSON.stringify({ hiddenColumns: Array.from(new Set(hiddenColumns)).sort() })
+    );
+  } catch {
+    // ignore
+  }
+}
+
+function loadInboxAITriageThreshold(): number {
+  try {
+    const raw = localStorage.getItem(INBOX_AI_SETTINGS_STORAGE_KEY);
+    if (!raw) return 0.85;
+    const parsed = JSON.parse(raw) as { threshold?: unknown };
+    const threshold = typeof parsed?.threshold === 'number' ? parsed.threshold : 0.85;
+    return Math.max(0.5, Math.min(0.99, threshold));
+  } catch {
+    return 0.85;
+  }
+}
+
+function saveInboxAITriageThreshold(threshold: number) {
+  try {
+    localStorage.setItem(
+      INBOX_AI_SETTINGS_STORAGE_KEY,
+      JSON.stringify({ threshold: Math.max(0.5, Math.min(0.99, threshold)) })
     );
   } catch {
     // ignore
@@ -1359,11 +1398,21 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   // L4: Auto-triage
   const [autoTriageSuggestions, setAutoTriageSuggestions] = useState<any[]>([]);
   const [autoTriageLoading, setAutoTriageLoading] = useState(false);
+  const [aiTriageThreshold, setAiTriageThreshold] = useState(loadInboxAITriageThreshold);
+  const [canonicalStats, setCanonicalStats] = useState<any | null>(null);
+  const [aiEvalRuns, setAiEvalRuns] = useState<InboxAIEvalRun[]>([]);
+  const [aiCostSummary, setAiCostSummary] = useState<InboxAICostSummary | null>(null);
+  const [aiOpsLoading, setAiOpsLoading] = useState(false);
+
+  useEffect(() => {
+    saveInboxAITriageThreshold(aiTriageThreshold);
+  }, [aiTriageThreshold]);
 
   // ── Fetch ──
   const fetchInbox = useCallback(async () => {
     try {
       setLoading(true);
+      await Api.materializeInbox().catch(() => null);
       const status =
         statusTab === 'all'
           ? 'all'
@@ -1372,8 +1421,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             : statusTab === 'saved'
               ? 'saved'
               : 'open';
-      const res = (await Api.get(`/my-work/inbox?limit=200&status=${status}`)) as InboxResponse;
+      const [res, statsRes] = await Promise.all([
+        Api.get(`/my-work/inbox?limit=200&status=${status}`) as Promise<InboxResponse>,
+        Api.getCanonicalInboxStats().catch(() => null),
+      ]);
       setData(res);
+      setCanonicalStats(statsRes);
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const weekEnd = new Date(todayStart.getTime() + 7 * 86400000);
@@ -1432,6 +1485,24 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   useEffect(() => {
     fetchInbox();
   }, [fetchInbox, refreshTrigger]);
+
+  const fetchAIOperations = useCallback(async () => {
+    try {
+      setAiOpsLoading(true);
+      const [runsRes, costRes] = await Promise.all([
+        Api.getInboxEvalRuns(5).catch(() => ({ runs: [] })),
+        Api.getInboxEvalsCostSummary(30).catch(() => null),
+      ]);
+      setAiEvalRuns(Array.isArray(runsRes?.runs) ? runsRes.runs : []);
+      setAiCostSummary(costRes);
+    } finally {
+      setAiOpsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAIOperations();
+  }, [fetchAIOperations]);
 
   // ── Items with search + section filtering ──
   const items = useMemo(() => {
@@ -1656,36 +1727,32 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   const handleAutoTriage = async () => {
     setAutoTriageLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/my-work/inbox/auto-triage', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const suggestions = data.suggestions || [];
-        const autoApplyItems = suggestions.filter((s: any) => s.autoApply);
-        for (const item of autoApplyItems) {
-          try {
-            await fetch(`/api/my-work/inbox/${item.itemId}/triage`, {
-              method: 'POST',
-              headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: item.suggestedAction, itemKey: item.itemKey }),
-            });
-          } catch {
-            /* continue */
-          }
+      const data = await Api.post('/my-work/inbox/auto-triage', { threshold: aiTriageThreshold });
+      const suggestions = data?.suggestions || [];
+      const autoApplyItems = suggestions.filter((s: any) => s.autoApply);
+      for (const item of autoApplyItems) {
+        try {
+          await Api.post(`/my-work/inbox/${item.itemId}/triage`, {
+            action: item.suggestedAction,
+            itemKey: item.itemKey,
+            fromAISuggestion: true,
+            confidence: item.confidence,
+          });
+        } catch {
+          // continue applying the rest
         }
-        if (autoApplyItems.length > 0) {
-          toast.success(
-            isPolish
-              ? `${autoApplyItems.length} elementów automatycznie przetriażowanych`
-              : `${autoApplyItems.length} items auto-triaged`
-          );
-          emitMyWorkEvent({ type: 'item:triaged', entityType: 'inbox', entityId: 'bulk' });
-        }
-        setAutoTriageSuggestions(suggestions.filter((s: any) => !s.autoApply));
       }
+      if (autoApplyItems.length > 0) {
+        toast.success(
+          isPolish
+            ? `${autoApplyItems.length} elementów automatycznie przetriażowanych`
+            : `${autoApplyItems.length} items auto-triaged`
+        );
+        emitMyWorkEvent({ type: 'item:triaged', entityType: 'inbox', entityId: 'bulk' });
+        fetchInbox();
+      }
+      setAutoTriageSuggestions(suggestions.filter((s: any) => !s.autoApply));
+      fetchAIOperations();
     } catch {
       toast.error(isPolish ? 'Auto-triage nieudany' : 'Auto-triage failed');
     }
@@ -1699,13 +1766,20 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       if (selectedItems.length === 0) return;
       try {
         const itemKeys = selectedItems.map((i) => i._key);
-        await Api.post('/my-work/inbox/bulk-triage', { itemKeys, action });
+        const aiItems = selectedItems
+          .filter((item) => item.suggestedAction === action && item.suggestedConfidence != null)
+          .map((item) => ({
+            itemKey: item._key,
+            confidence: item.suggestedConfidence ?? null,
+          }));
+        await Api.post('/my-work/inbox/bulk-triage', { itemKeys, action, aiItems });
         const removedKeys = new Set(itemKeys);
         setData((prev) => {
           if (!prev) return prev;
           return { ...prev, items: prev.items.filter((x) => !removedKeys.has(x._key)) };
         });
         setSelectedIds(new Set());
+        fetchAIOperations();
         toast.success(
           isPolish
             ? `${selectedItems.length} elementów przetworzonych`
@@ -1716,7 +1790,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         toast.error(isPolish ? 'Nie udało się wykonać akcji' : 'Failed to process items');
       }
     },
-    [filteredItems, selectedIds, isPolish]
+    [fetchAIOperations, filteredItems, selectedIds, isPolish]
   );
 
   // ── Preview item (single click) ──
@@ -2645,6 +2719,105 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         <div
           className="flex-1 min-w-0 overflow-y-auto pl-4 pr-1.5 pt-3 pb-4 transition-all duration-200"
         >
+          <div className="mb-3 grid grid-cols-1 xl:grid-cols-3 gap-3">
+            <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.06] bg-white/80 dark:bg-white/[0.04] px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'AI triage' : 'AI triage'}
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    {isPolish ? 'Próg auto-apply' : 'Auto-apply threshold'} {Math.round(aiTriageThreshold * 100)}%
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish
+                      ? `${autoTriageSuggestions.length} sugestii czeka na ręczną decyzję`
+                      : `${autoTriageSuggestions.length} suggestions waiting for manual review`}
+                  </div>
+                </div>
+                <button
+                  onClick={handleAutoTriage}
+                  disabled={autoTriageLoading}
+                  className="inline-flex items-center gap-2 h-9 px-4 rounded-full border border-cyan-300/40 dark:border-cyan-500/30 bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-200 hover:bg-cyan-100/70 dark:hover:bg-cyan-500/15 transition-colors disabled:opacity-50"
+                >
+                  {autoTriageLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                  {isPolish ? 'Uruchom' : 'Run'}
+                </button>
+              </div>
+              <input
+                type="range"
+                min={0.5}
+                max={0.99}
+                step={0.01}
+                value={aiTriageThreshold}
+                onChange={(e) => setAiTriageThreshold(Number(e.target.value))}
+                className="mt-3 w-full accent-cyan-600"
+              />
+            </div>
+
+            <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.06] bg-white/80 dark:bg-white/[0.04] px-4 py-3">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                {isPolish ? 'Evale i koszt' : 'Evals and cost'}
+              </div>
+              <div className="mt-2 flex items-center gap-4">
+                <div>
+                  <div className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                    {aiEvalRuns[0] ? `${Math.round((aiEvalRuns[0].accuracy || 0) * 100)}%` : '—'}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'ostatni eval accuracy' : 'latest eval accuracy'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                    {aiCostSummary ? `$${(aiCostSummary.totalCostUsd || 0).toFixed(2)}` : '—'}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'koszt 30 dni' : '30-day cost'}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                {aiOpsLoading
+                  ? isPolish
+                    ? 'Ładowanie diagnostyki AI...'
+                    : 'Loading AI diagnostics...'
+                  : isPolish
+                    ? `${aiCostSummary?.callCount || 0} wywołań, ${aiEvalRuns.length} ostatnich runów`
+                    : `${aiCostSummary?.callCount || 0} calls, ${aiEvalRuns.length} recent runs`}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.06] bg-white/80 dark:bg-white/[0.04] px-4 py-3">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                {isPolish ? 'Canonical inbox' : 'Canonical inbox'}
+              </div>
+              <div className="mt-2 flex items-center gap-4">
+                <div>
+                  <div className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                    {canonicalStats?.total ?? data?.summary?.total ?? 0}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'łączna liczba pozycji' : 'total items'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                    {canonicalStats?.actionRequired ?? data?.summary?.actionRequired ?? 0}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'wymaga akcji' : 'action required'}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                {isPolish
+                  ? 'Inbox materializuje canonical items przed odświeżeniem widoku.'
+                  : 'Inbox materializes canonical items before refreshing the view.'}
+              </div>
+            </div>
+          </div>
+
           {loading ? (
             <div className="flex items-center justify-center py-12 text-slate-600 dark:text-slate-300">
               <Loader2 className="animate-spin mr-2" size={18} />

@@ -30,6 +30,7 @@ import { normalizeGraphForStorage, validateAndNormalizeGraph } from '../validato
 import { materializeClusters, createOutcomeFromCluster } from '../services/ideaClusterService.js';
 import type { OutcomeType } from '../services/ideaClusterService.js';
 import inboxService from '../services/inboxService.js';
+import { getCapacityOverview, getOverloadAlerts } from '../services/workloadCapacityService.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -128,6 +129,108 @@ interface InboxItem {
 }
 
 const todayIsoDate = (): string => new Date().toISOString().slice(0, 10);
+
+async function applyInboxTriageSideEffects({
+  userId,
+  orgId,
+  itemKey,
+  action,
+  params,
+  triagedAt,
+}: {
+  userId: string;
+  orgId: string;
+  itemKey: string;
+  action: TriageAction;
+  params?: Record<string, unknown>;
+  triagedAt: string;
+}): Promise<void> {
+  const [kind, rawId] = itemKey.split(':') as [string, string];
+  if (!kind || !rawId) return;
+
+  const upsertFocusState = async (column: FocusColumn) => {
+    await queryHelpers.queryRun(
+      `INSERT INTO my_work_focus_state (user_id, focus_date, item_key, column_name, position, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT (user_id, focus_date, item_key) DO UPDATE SET
+         column_name = excluded.column_name,
+         position = excluded.position,
+         updated_at = excluded.updated_at`,
+      [userId, todayIsoDate(), itemKey, column, 0, triagedAt]
+    );
+  };
+
+  if (action === 'accept_today') await upsertFocusState('today');
+  if (action === 'accept_week') await upsertFocusState('thisWeek');
+  if (action === 'accept_later') await upsertFocusState('later');
+
+  if (action === 'schedule') {
+    const date = typeof params?.date === 'string' ? params.date : undefined;
+    if (date && kind === 'task') {
+      await queryHelpers.queryRun(
+        `UPDATE tasks SET due_date = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+        [date, rawId, orgId]
+      );
+    }
+    if (date && kind === 'decision') {
+      await queryHelpers.queryRun(
+        `UPDATE decisions SET deadline = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+        [date, rawId, orgId]
+      );
+    }
+  }
+
+  if (action === 'delegate') {
+    const delegateUserId = typeof params?.userId === 'string' ? params.userId : undefined;
+    if (delegateUserId && kind === 'task') {
+      await queryHelpers.queryRun(
+        `UPDATE tasks SET assignee_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+        [delegateUserId, rawId, orgId]
+      );
+      await NotificationService.send({
+        userId: delegateUserId,
+        organizationId: orgId,
+        type: 'TASK_ASSIGNED',
+        title: 'Task delegated to you',
+        body: 'A task was delegated to you from My Work inbox.',
+        entityType: 'task',
+        entityId: rawId,
+        priority: 'normal',
+      });
+    }
+    if (delegateUserId && kind === 'decision') {
+      await queryHelpers.queryRun(
+        `UPDATE decisions SET decision_maker_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+        [delegateUserId, rawId, orgId]
+      );
+      await NotificationService.send({
+        userId: delegateUserId,
+        organizationId: orgId,
+        type: 'DECISION_DELEGATED',
+        title: 'Decision delegated to you',
+        body: 'A decision was delegated to you from My Work inbox.',
+        entityType: 'decision',
+        entityId: rawId,
+        priority: 'high',
+      });
+    }
+  }
+
+  if ((action === 'archive' || action === 'dismiss') && kind === 'notification') {
+    try {
+      await NotificationService.markAsRead(rawId, userId);
+    } catch {
+      // ignore read-state failures for notifications
+    }
+  }
+
+  if (action === 'done' && kind === 'task') {
+    await queryHelpers.queryRun(
+      `UPDATE tasks SET status = 'Completed', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+      [rawId, orgId]
+    );
+  }
+}
 
 const normalizeTaskStatus = (status?: string | null) => String(status || '').toLowerCase();
 const isTaskDone = (status?: string | null) => {
@@ -2011,113 +2114,7 @@ router.post(
       );
     }
 
-    // Side-effects (minimal, real)
-    const [kind, rawId] = itemKey.split(':') as [string, string];
-    if (action === 'accept_today') {
-      // Add to focus "today"
-      await queryHelpers.queryRun(
-        `INSERT INTO my_work_focus_state (user_id, focus_date, item_key, column_name, position, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?)
-         ON CONFLICT (user_id, focus_date, item_key) DO UPDATE SET
-           column_name = excluded.column_name,
-           position = excluded.position,
-           updated_at = excluded.updated_at`,
-        [userId, todayIsoDate(), itemKey, 'today', 0, triagedAt]
-      );
-    }
-
-    if (action === 'schedule') {
-      const date = typeof params?.date === 'string' ? params.date : undefined;
-      if (date && kind === 'task') {
-        await queryHelpers.queryRun(
-          `UPDATE tasks SET due_date = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-          [date, rawId, orgId]
-        );
-      }
-      if (date && kind === 'decision') {
-        await queryHelpers.queryRun(
-          `UPDATE decisions SET deadline = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-          [date, rawId, orgId]
-        );
-      }
-    }
-
-    if (action === 'delegate') {
-      const delegateUserId = typeof params?.userId === 'string' ? params.userId : undefined;
-      if (delegateUserId && kind === 'task') {
-        await queryHelpers.queryRun(
-          `UPDATE tasks SET assignee_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-          [delegateUserId, rawId, orgId]
-        );
-        await NotificationService.send({
-          userId: delegateUserId,
-          organizationId: orgId,
-          type: 'TASK_ASSIGNED',
-          title: 'Task delegated to you',
-          body: 'A task was delegated to you from My Work inbox.',
-          entityType: 'task',
-          entityId: rawId,
-          priority: 'normal',
-        });
-      }
-      if (delegateUserId && kind === 'decision') {
-        await queryHelpers.queryRun(
-          `UPDATE decisions SET decision_maker_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-          [delegateUserId, rawId, orgId]
-        );
-        await NotificationService.send({
-          userId: delegateUserId,
-          organizationId: orgId,
-          type: 'DECISION_DELEGATED',
-          title: 'Decision delegated to you',
-          body: 'A decision was delegated to you from My Work inbox.',
-          entityType: 'decision',
-          entityId: rawId,
-          priority: 'high',
-        });
-      }
-    }
-
-    // N11: Route to Focus — accept_week / accept_later
-    if (action === 'accept_week') {
-      await queryHelpers.queryRun(
-        `INSERT INTO my_work_focus_state (user_id, focus_date, item_key, column_name, position, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?)
-         ON CONFLICT (user_id, focus_date, item_key) DO UPDATE SET
-           column_name = excluded.column_name,
-           position = excluded.position,
-           updated_at = excluded.updated_at`,
-        [userId, todayIsoDate(), itemKey, 'thisWeek', 0, triagedAt]
-      );
-    }
-    if (action === 'accept_later') {
-      await queryHelpers.queryRun(
-        `INSERT INTO my_work_focus_state (user_id, focus_date, item_key, column_name, position, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?)
-         ON CONFLICT (user_id, focus_date, item_key) DO UPDATE SET
-           column_name = excluded.column_name,
-           position = excluded.position,
-           updated_at = excluded.updated_at`,
-        [userId, todayIsoDate(), itemKey, 'later', 0, triagedAt]
-      );
-    }
-
-    // N8: Archive/Dismiss unified
-    if ((action === 'archive' || action === 'dismiss') && kind === 'notification') {
-      try {
-        await NotificationService.markAsRead(rawId, userId);
-      } catch (_e) {
-        // ignore
-      }
-    }
-
-    // N1: Done — mark source task as completed if possible
-    if (action === 'done' && kind === 'task') {
-      await queryHelpers.queryRun(
-        `UPDATE tasks SET status = 'Completed', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-        [rawId, orgId]
-      );
-    }
+    await applyInboxTriageSideEffects({ userId, orgId, itemKey, action, params, triagedAt });
 
     res.json({ success: true, triagedAt });
   })
@@ -2170,12 +2167,22 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const { userId } = identity;
-    if (!(await requireTables(res, ['my_work_inbox_triage']))) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_work_inbox_triage', 'my_work_focus_state']))) return;
 
     const action = String(req.body?.action || '') as TriageAction;
     const params = (req.body?.params || undefined) as Record<string, unknown> | undefined;
     const itemKeys = (req.body?.itemKeys || req.body?.item_keys || []) as string[];
+    const aiItemsRaw = Array.isArray(req.body?.aiItems) ? req.body.aiItems : [];
+    const aiItems = new Map<string, number | null>();
+    for (const row of aiItemsRaw) {
+      const key = typeof row?.itemKey === 'string' ? row.itemKey : '';
+      if (!key) continue;
+      aiItems.set(
+        key,
+        typeof row?.confidence === 'number' && Number.isFinite(row.confidence) ? row.confidence : null
+      );
+    }
 
     const VALID_BULK: TriageAction[] = [
       'accept_today',
@@ -2197,16 +2204,34 @@ router.post(
     }
 
     const triagedAt = new Date().toISOString();
+    const triageCols = await getTableColumns('my_work_inbox_triage');
+    const hasAiCols = triageCols.has('from_ai') && triageCols.has('ai_confidence');
     for (const key of itemKeys) {
-      await queryHelpers.queryRun(
-        `INSERT INTO my_work_inbox_triage (user_id, item_key, action, params_json, triaged_at)
-         VALUES (?, ?, ?, ?, ?)
-         ON CONFLICT (user_id, item_key) DO UPDATE SET
-           action = excluded.action,
-           params_json = excluded.params_json,
-           triaged_at = excluded.triaged_at`,
-        [userId, String(key), action, params ? JSON.stringify(params) : null, triagedAt]
-      );
+      const itemKey = String(key);
+      if (hasAiCols && aiItems.has(itemKey)) {
+        await queryHelpers.queryRun(
+          `INSERT INTO my_work_inbox_triage (user_id, item_key, action, params_json, triaged_at, from_ai, ai_confidence)
+           VALUES (?, ?, ?, ?, ?, 1, ?)
+           ON CONFLICT (user_id, item_key) DO UPDATE SET
+             action = excluded.action,
+             params_json = excluded.params_json,
+             triaged_at = excluded.triaged_at,
+             from_ai = excluded.from_ai,
+             ai_confidence = excluded.ai_confidence`,
+          [userId, itemKey, action, params ? JSON.stringify(params) : null, triagedAt, aiItems.get(itemKey)]
+        );
+      } else {
+        await queryHelpers.queryRun(
+          `INSERT INTO my_work_inbox_triage (user_id, item_key, action, params_json, triaged_at)
+           VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT (user_id, item_key) DO UPDATE SET
+             action = excluded.action,
+             params_json = excluded.params_json,
+             triaged_at = excluded.triaged_at`,
+          [userId, itemKey, action, params ? JSON.stringify(params) : null, triagedAt]
+        );
+      }
+      await applyInboxTriageSideEffects({ userId, orgId, itemKey, action, params, triagedAt });
     }
 
     res.json({ success: true, count: itemKeys.length, triagedAt });
@@ -2737,45 +2762,32 @@ router.get(
     const identity = requireUser(req, res);
     if (!identity) return;
     const { orgId } = identity;
-
-    // Basic list of active users in org
-    const users =
-      (await queryHelpers.queryAll<any>(
-        `SELECT id, first_name as firstName, last_name as lastName, email FROM users WHERE organization_id = ? LIMIT 50`,
+    const [overview, completedRows] = await Promise.all([
+      getCapacityOverview(orgId),
+      queryHelpers.queryAll<{ assignee_id: string; cnt: number }>(
+        `SELECT assignee_id, COUNT(*) as cnt
+         FROM tasks
+         WHERE organization_id = ? AND completed_at IS NOT NULL
+           AND completed_at >= datetime('now', '-7 days')
+         GROUP BY assignee_id`,
         [orgId]
-      )) || [];
-
-    // For each user: count assigned open tasks + completed last 7d
-    const sinceIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const rows: any[] = [];
-    for (const u of users) {
-      const name = `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || u.id;
-      const tasksAssigned = await queryHelpers.queryOne<{ cnt: number }>(
-        `SELECT COUNT(*) as cnt FROM tasks
-         WHERE organization_id = ? AND assignee_id = ? AND lower(coalesce(status,'')) NOT IN ('done','completed','validated')`,
-        [orgId, u.id]
-      );
-      const tasksCompleted = await queryHelpers.queryOne<{ cnt: number }>(
-        `SELECT COUNT(*) as cnt FROM tasks
-         WHERE organization_id = ? AND assignee_id = ? AND completed_at IS NOT NULL AND completed_at >= ?`,
-        [orgId, u.id, sinceIso]
-      );
-      const openCnt = Number((tasksAssigned as any)?.cnt || 0);
-      const doneCnt = Number((tasksCompleted as any)?.cnt || 0);
-
-      // Capacity heuristic (real data not available here): use 80 as neutral baseline
-      // NOTE: This is not mock business data, it's a UI capacity default until a capacity model exists.
-      const capacity = 80;
-      rows.push({
-        id: u.id,
-        name,
-        capacity: Math.min(140, Math.max(0, capacity + openCnt * 2)),
-        tasksAssigned: openCnt,
-        tasksCompleted: doneCnt,
-      });
-    }
-
-    res.json(rows);
+      ),
+    ]);
+    const completedMap = new Map(
+      (completedRows || []).map((row) => [String(row.assignee_id), Number(row.cnt || 0)])
+    );
+    res.json(
+      overview.users.map((user) => ({
+        id: user.userId,
+        name: user.name,
+        capacity: user.utilizationPercent,
+        tasksAssigned: Math.round(user.allocatedHours),
+        tasksCompleted: completedMap.get(user.userId) || 0,
+        capacityHours: user.capacityHours,
+        allocatedHours: user.allocatedHours,
+        overloaded: user.overloaded,
+      }))
+    );
   })
 );
 
@@ -7542,68 +7554,156 @@ router.post(
     const identity = requireUser(req, res);
     if (!identity) return;
     const { userId, orgId } = identity;
-
-    const notifCols = await getTableColumns('notifications');
-    if (notifCols.size === 0) return res.json({ suggestions: [] });
-
-    const readExpr = notifCols.has('read') ? 'COALESCE(n.read, 0)' : '0';
-    const items = await queryHelpers.queryAll<any>(
-      `SELECT n.id, n.title, n.message, n.type, n.priority, n.created_at
-       FROM notifications n
-       LEFT JOIN my_work_inbox_triage t ON t.item_key = 'notification:' || n.id AND t.user_id = ?
-       WHERE n.user_id = ? AND n.organization_id = ? AND ${readExpr} = 0 AND t.item_key IS NULL
-       ORDER BY n.created_at DESC LIMIT 20`,
-      [userId, userId, orgId]
-    );
+    const thresholdRaw = Number(req.body?.threshold);
+    const threshold =
+      Number.isFinite(thresholdRaw) && thresholdRaw >= 0.5 && thresholdRaw <= 0.99
+        ? thresholdRaw
+        : 0.85;
 
     const suggestions: any[] = [];
+    const triagedKeys = new Set(
+      ((await queryHelpers.queryAll<{ item_key: string }>(
+        `SELECT item_key FROM my_work_inbox_triage WHERE user_id = ?`,
+        [userId]
+      )) || []).map((row) => String(row.item_key))
+    );
 
-    for (const item of items || []) {
-      const text = `${item.title || ''} ${item.message || ''}`.toLowerCase();
-      let action = 'accept_today';
-      let confidence = 0.5;
-      let reason = '';
+    const notifCols = await getTableColumns('notifications');
+    if (notifCols.size > 0) {
+      const readExpr = notifCols.has('read') ? 'COALESCE(n.read, 0)' : '0';
+      const notificationItems = await queryHelpers.queryAll<any>(
+        `SELECT n.id, n.title, n.message, n.type, n.priority, n.created_at
+         FROM notifications n
+         WHERE n.user_id = ? AND n.organization_id = ? AND ${readExpr} = 0
+         ORDER BY n.created_at DESC LIMIT 20`,
+        [userId, orgId]
+      );
 
-      if (
-        item.priority === 'critical' ||
-        item.priority === 'high' ||
-        text.includes('urgent') ||
-        text.includes('asap')
-      ) {
+      for (const item of notificationItems || []) {
+        const itemKey = `notification:${item.id}`;
+        if (triagedKeys.has(itemKey)) continue;
+        const text = `${item.title || ''} ${item.message || ''}`.toLowerCase();
+        let action: TriageAction = 'accept_today';
+        let confidence = 0.55;
+        let reason = 'Default attention rule';
+
+        if (
+          item.priority === 'critical' ||
+          item.priority === 'high' ||
+          text.includes('urgent') ||
+          text.includes('asap')
+        ) {
+          action = 'accept_today';
+          confidence = 0.9;
+          reason = 'High-priority notification requires same-day attention';
+        } else if (
+          item.priority === 'low' ||
+          text.includes('fyi') ||
+          text.includes('for your information') ||
+          text.includes('newsletter')
+        ) {
+          action = 'archive';
+          confidence = 0.82;
+          reason = 'Informational notification can be archived';
+        } else if (text.includes('review') || text.includes('feedback') || text.includes('mention')) {
+          action = 'accept_week';
+          confidence = 0.74;
+          reason = 'Review-style item fits this-week planning';
+        }
+
+        suggestions.push({
+          itemId: item.id,
+          itemKey,
+          title: item.title,
+          suggestedAction: action,
+          confidence,
+          reason,
+          sourceType: 'notification',
+          autoApply: confidence >= threshold,
+        });
+      }
+    }
+
+    const taskItems = await queryHelpers.queryAll<any>(
+      `SELECT t.id, t.title, t.description, t.priority, t.due_date, t.estimated_hours
+       FROM tasks t
+       WHERE t.organization_id = ? AND t.assignee_id = ?
+         AND lower(coalesce(t.status,'')) NOT IN ('done','completed','validated','cancelled')
+       ORDER BY COALESCE(t.due_date, '9999-12-31') ASC, t.updated_at DESC
+       LIMIT 20`,
+      [orgId, userId]
+    );
+    for (const item of taskItems || []) {
+      const itemKey = `task:${item.id}`;
+      if (triagedKeys.has(itemKey)) continue;
+      const dueTs = item.due_date ? new Date(item.due_date).getTime() : Number.NaN;
+      const daysToDue = Number.isFinite(dueTs) ? (dueTs - Date.now()) / 86400000 : Number.POSITIVE_INFINITY;
+      const priority = String(item.priority || '').toLowerCase();
+      let action: TriageAction = 'accept_later';
+      let confidence = 0.62;
+      let reason = 'Default task planning rule';
+
+      if (daysToDue <= 1 || priority === 'critical' || priority === 'urgent') {
         action = 'accept_today';
-        confidence = 0.85;
-        reason = 'High priority item — needs attention today';
-      } else if (
-        item.priority === 'low' ||
-        text.includes('fyi') ||
-        text.includes('for your information') ||
-        text.includes('newsletter')
-      ) {
-        action = 'archive';
-        confidence = 0.8;
-        reason = 'Low priority / informational';
-      } else if (text.includes('review') || text.includes('feedback') || text.includes('mention')) {
+        confidence = 0.93;
+        reason = 'Overdue, near-due, or critical task should land in Today';
+      } else if (daysToDue <= 7 || priority === 'high') {
         action = 'accept_week';
-        confidence = 0.7;
-        reason = 'Review or feedback request — schedule for this week';
-      } else {
-        action = 'accept_today';
-        confidence = 0.5;
-        reason = 'Standard priority — default to today';
+        confidence = 0.81;
+        reason = 'Upcoming or high-priority task should be planned this week';
       }
 
       suggestions.push({
         itemId: item.id,
-        itemKey: `notification:${item.id}`,
+        itemKey,
         title: item.title,
         suggestedAction: action,
         confidence,
         reason,
-        autoApply: confidence >= 0.85,
+        sourceType: 'task',
+        autoApply: confidence >= threshold,
       });
     }
 
-    res.json({ suggestions, totalUntriaged: items?.length || 0 });
+    const decisionItems = await queryHelpers.queryAll<any>(
+      `SELECT d.id, d.title, d.description, d.priority, d.deadline,
+              CAST(julianday('now') - julianday(d.created_at) AS INTEGER) as days_waiting
+       FROM decisions d
+       WHERE d.organization_id = ?
+         AND (d.decision_maker_id = ? OR d.created_by = ?)
+         AND upper(coalesce(d.status,'')) IN ('PENDING','ESCALATED')
+       ORDER BY COALESCE(d.deadline, '9999-12-31') ASC, d.created_at ASC
+       LIMIT 20`,
+      [orgId, userId, userId]
+    );
+    for (const item of decisionItems || []) {
+      const itemKey = `decision:${item.id}`;
+      if (triagedKeys.has(itemKey)) continue;
+      const priority = String(item.priority || '').toLowerCase();
+      const waiting = Number(item.days_waiting || 0);
+      let action: TriageAction = 'accept_week';
+      let confidence = 0.73;
+      let reason = 'Pending decision should stay visible this week';
+
+      if (waiting >= 3 || priority === 'critical' || priority === 'high') {
+        action = 'accept_today';
+        confidence = 0.88;
+        reason = 'Aging or high-priority decision should be handled today';
+      }
+
+      suggestions.push({
+        itemId: item.id,
+        itemKey,
+        title: item.title,
+        suggestedAction: action,
+        confidence,
+        reason,
+        sourceType: 'decision',
+        autoApply: confidence >= threshold,
+      });
+    }
+
+    res.json({ suggestions, totalUntriaged: suggestions.length, threshold });
   })
 );
 
@@ -8019,7 +8119,85 @@ router.get(
     if (!identity) return;
     const { orgId } = identity;
     const projectId = String(req.query.projectId || '');
-    if (!projectId) return res.status(400).json({ error: 'projectId required' });
+    if (!projectId) {
+      const [capacityOverview, overloads, initiativeSummary, initiativeBreakdown] = await Promise.all([
+        getCapacityOverview(orgId),
+        getOverloadAlerts(orgId),
+        queryHelpers.queryOne<{ total: number; executing: number; blocked: number }>(
+          `SELECT
+             COUNT(*) as total,
+             SUM(CASE WHEN UPPER(status) IN ('EXECUTING','ACTIVE','IN_PROGRESS') THEN 1 ELSE 0 END) as executing,
+             SUM(CASE WHEN UPPER(status) = 'BLOCKED' THEN 1 ELSE 0 END) as blocked
+           FROM initiatives
+           WHERE organization_id = ?`,
+          [orgId]
+        ),
+        queryHelpers.queryAll<{
+          id: string;
+          name: string;
+          status: string;
+          total_tasks: number;
+          open_tasks: number;
+          overdue_tasks: number;
+        }>(
+          `SELECT i.id, i.name, i.status,
+                  COUNT(t.id) as total_tasks,
+                  SUM(CASE WHEN lower(coalesce(t.status,'')) NOT IN ('done','completed','validated','cancelled') THEN 1 ELSE 0 END) as open_tasks,
+                  SUM(CASE WHEN t.due_date IS NOT NULL
+                             AND datetime(t.due_date) < datetime('now')
+                             AND lower(coalesce(t.status,'')) NOT IN ('done','completed','validated','cancelled')
+                           THEN 1 ELSE 0 END) as overdue_tasks
+           FROM initiatives i
+           LEFT JOIN tasks t ON t.initiative_id = i.id AND t.organization_id = i.organization_id
+           WHERE i.organization_id = ?
+           GROUP BY i.id, i.name, i.status
+           ORDER BY overdue_tasks DESC, open_tasks DESC, i.updated_at DESC
+           LIMIT 6`,
+          [orgId]
+        ),
+      ]);
+
+      const totalRequired = Number(capacityOverview.summary.totalAllocated || 0);
+      const totalCapacity = Number(capacityOverview.summary.totalCapacity || 0);
+      return res.json({
+        projectId: null,
+        capacity: {
+          totalTeamCapacityHours: totalCapacity,
+          totalRequiredHours: totalRequired,
+          shortfallHours: Math.max(0, Math.round((totalRequired - totalCapacity) * 10) / 10),
+          avgUtilization: capacityOverview.summary.avgUtilization,
+        },
+        initiatives: {
+          total: Number(initiativeSummary?.total || 0),
+          executing: Number(initiativeSummary?.executing || 0),
+          blocked: Number(initiativeSummary?.blocked || 0),
+        },
+        initiativeBreakdown: (initiativeBreakdown || []).map((row) => ({
+          id: row.id,
+          name: row.name,
+          status: row.status,
+          tasksTotal: Number(row.total_tasks || 0),
+          tasksOpen: Number(row.open_tasks || 0),
+          overdueCount: Number(row.overdue_tasks || 0),
+          completionPct:
+            Number(row.total_tasks || 0) > 0
+              ? Math.round(
+                  ((Number(row.total_tasks || 0) - Number(row.open_tasks || 0)) /
+                    Number(row.total_tasks || 0)) *
+                    100
+                )
+              : 0,
+        })),
+        overloads: overloads.map((row) => ({
+          userId: row.userId,
+          assignedHours: row.allocatedHours,
+          capacityHours: row.capacityHours,
+          overloadHours: row.overloadHours,
+          severity: row.severity,
+          name: row.name,
+        })),
+      });
+    }
 
     const DEFAULT_WEEKLY_HOURS = 40;
     const [capacityRow, initiativeRow, overloadRows] = await Promise.all([
