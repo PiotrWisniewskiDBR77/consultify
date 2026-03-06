@@ -1,8 +1,8 @@
 /**
- * CollaborationOverlay — Frontend stub for multi-cursor + presence indicators.
- * Attempts WebSocket connection; gracefully falls back to single-user mode.
+ * CollaborationOverlay — Multi-cursor + presence + shared session state.
+ * Connects via authenticated WebSocket; gracefully falls back to single-user mode.
  */
-import { Users } from 'lucide-react';
+import { Lock, Users } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 interface CollaborationUser {
@@ -15,6 +15,13 @@ interface CollaborationUser {
   lastSeen: number;
 }
 
+interface SessionState {
+  lockedNodes: Record<string, string>; // nodeId -> userId
+  selections: Record<string, string[]>; // userId -> nodeIds
+  viewportSync: boolean;
+  lastActivity: number;
+}
+
 interface CollaborationOverlayProps {
   ideaId: string;
   currentUserId: string;
@@ -23,34 +30,63 @@ interface CollaborationOverlayProps {
 
 const CURSOR_COLORS = ['#f43f5e', '#8b5cf6', '#06b6d4', '#22c55e', '#f59e0b', '#ec4899'];
 
+function getAuthToken(): string | null {
+  return localStorage.getItem('token');
+}
+
 function useCollaboration(ideaId: string, userId: string, userName: string) {
   const [connected, setConnected] = useState(false);
   const [users, setUsers] = useState<CollaborationUser[]>([]);
+  const [sessionState, setSessionState] = useState<SessionState | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectAttempt = useRef(0);
 
   const connect = useCallback(() => {
     try {
+      const token = getAuthToken();
+      if (!token) return;
+
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const ws = new WebSocket(`${protocol}//${window.location.host}/ws/collab/${ideaId}`);
+      const ws = new WebSocket(
+        `${protocol}//${window.location.host}/ws/collab/${ideaId}?token=${encodeURIComponent(token)}`
+      );
 
       ws.onopen = () => {
         setConnected(true);
+        reconnectAttempt.current = 0;
         ws.send(JSON.stringify({ type: 'join', userId, userName }));
       };
 
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
-          if (msg.type === 'presence') {
-            setUsers(msg.users || []);
+          switch (msg.type) {
+            case 'presence':
+              setUsers(msg.users || []);
+              break;
+            case 'session_state':
+              setSessionState({
+                lockedNodes: msg.lockedNodes || {},
+                selections: msg.selections || {},
+                viewportSync: msg.viewportSync ?? false,
+                lastActivity: msg.lastActivity || 0,
+              });
+              break;
+            case 'lock_rejected':
+              break;
+            default:
+              break;
           }
-        } catch { /* ignore malformed messages */ }
+        } catch { /* ignore malformed */ }
       };
 
       ws.onclose = () => {
         setConnected(false);
         wsRef.current = null;
+        const delay = Math.min(1000 * 2 ** reconnectAttempt.current, 30_000);
+        reconnectAttempt.current += 1;
+        reconnectTimer.current = setTimeout(connect, delay);
       };
 
       ws.onerror = () => {
@@ -77,7 +113,25 @@ function useCollaboration(ideaId: string, userId: string, userName: string) {
     }
   }, [userId]);
 
-  return { connected, users, sendCursor };
+  const lockNode = useCallback((nodeId: string) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'lock_node', nodeId }));
+    }
+  }, []);
+
+  const unlockNode = useCallback((nodeId: string) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'unlock_node', nodeId }));
+    }
+  }, []);
+
+  const selectNodes = useCallback((nodeIds: string[]) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'select_nodes', nodeIds }));
+    }
+  }, []);
+
+  return { connected, users, sessionState, sendCursor, lockNode, unlockNode, selectNodes };
 }
 
 export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
@@ -85,12 +139,30 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
   currentUserId,
   currentUserName,
 }) => {
-  const { connected, users } = useCollaboration(ideaId, currentUserId, currentUserName);
+  const { connected, users, sessionState } = useCollaboration(ideaId, currentUserId, currentUserName);
 
   const otherUsers = useMemo(
     () => users.filter((u) => u.id !== currentUserId && Date.now() - u.lastSeen < 30000),
     [currentUserId, users]
   );
+
+  const userColorMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    users.forEach((u) => { map[u.id] = u.color; });
+    return map;
+  }, [users]);
+
+  const lockedNodeEntries = useMemo(() => {
+    if (!sessionState?.lockedNodes) return [];
+    return Object.entries(sessionState.lockedNodes).filter(([, uid]) => uid !== currentUserId);
+  }, [sessionState, currentUserId]);
+
+  const otherSelections = useMemo(() => {
+    if (!sessionState?.selections) return [];
+    return Object.entries(sessionState.selections)
+      .filter(([uid]) => uid !== currentUserId)
+      .flatMap(([uid, nodeIds]) => nodeIds.map((nid) => ({ userId: uid, nodeId: nid })));
+  }, [sessionState, currentUserId]);
 
   if (!connected && otherUsers.length === 0) return null;
 
@@ -115,6 +187,34 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
           </div>
         </div>
       )}
+
+      {/* Locked node indicators */}
+      {lockedNodeEntries.map(([nodeId, uid]) => (
+        <div
+          key={`lock-${nodeId}`}
+          className="absolute z-40 pointer-events-none"
+          data-locked-node={nodeId}
+        >
+          <div
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-bold text-white whitespace-nowrap"
+            style={{ backgroundColor: userColorMap[uid] || '#94a3b8' }}
+          >
+            <Lock size={8} />
+            {users.find((u) => u.id === uid)?.name || 'User'}
+          </div>
+        </div>
+      ))}
+
+      {/* Other users' selections (visual indicator) */}
+      {otherSelections.map(({ userId: uid, nodeId }) => (
+        <div
+          key={`sel-${uid}-${nodeId}`}
+          className="absolute z-30 pointer-events-none rounded ring-2"
+          style={{ borderColor: userColorMap[uid] || '#94a3b8', ringColor: userColorMap[uid] || '#94a3b8' }}
+          data-selected-node={nodeId}
+          data-selected-by={uid}
+        />
+      ))}
 
       {/* Remote cursors */}
       {otherUsers.map((u, idx) => (

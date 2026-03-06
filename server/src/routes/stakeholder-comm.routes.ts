@@ -173,4 +173,94 @@ router.get(
   })
 );
 
+/* ------------------------------------------------------------------ */
+/*  V4-EXEC-08: Steerco Packs                                         */
+/* ------------------------------------------------------------------ */
+
+router.post(
+  '/steerco-packs',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId ?? '';
+    const pack = await commSvc.createSteercoPack(orgId, {
+      ...req.body,
+      createdBy: req.user?.id,
+    });
+    res.status(201).json({ data: pack });
+  })
+);
+
+router.get(
+  '/steerco-packs',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId ?? '';
+    const packs = await commSvc.getSteercoPacks(orgId, {
+      initiativeId: req.query.initiativeId as string | undefined,
+      status: req.query.status as string | undefined,
+    });
+    res.json({ data: packs });
+  })
+);
+
+router.get(
+  '/steerco-packs/:packId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId ?? '';
+    const result = await commSvc.getSteercoPackWithRecipients(orgId, req.params.packId);
+    if (!result) return res.status(404).json({ error: 'Pack not found' });
+    res.json({ data: result });
+  })
+);
+
+router.put(
+  '/steerco-packs/:packId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId ?? '';
+    const pack = await commSvc.updateSteercoPack(orgId, req.params.packId, req.body);
+    if (!pack) return res.status(404).json({ error: 'Pack not found' });
+    res.json({ data: pack });
+  })
+);
+
+router.post(
+  '/steerco-packs/:packId/distribute',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId ?? '';
+    const recipients = await commSvc.distributeSteercoPack(orgId, req.params.packId, {
+      ...req.body,
+      sentBy: req.user?.id,
+    });
+    res.json({ data: recipients, count: recipients.length });
+  })
+);
+
+router.patch(
+  '/steerco-packs/:packId/recipients/:recipientId/acknowledge',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const recipient = await commSvc.acknowledgeRecipient(req.params.packId, req.params.recipientId);
+    if (!recipient) return res.status(404).json({ error: 'Recipient not found' });
+    res.json({ data: recipient });
+  })
+);
+
+router.get(
+  '/steerco-packs/:packId/tracking',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId ?? '';
+    const tracking = await commSvc.getDistributionTracking(orgId, req.params.packId);
+    if (!tracking) return res.status(404).json({ error: 'Pack not found' });
+    res.json({ data: tracking });
+  })
+);
+
+router.post(
+  '/steerco-packs/generate-status',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId ?? '';
+    const { initiativeId } = req.body;
+    if (!initiativeId) return res.status(400).json({ error: 'initiativeId is required' });
+    const content = await commSvc.generateStatusPackContent(orgId, initiativeId);
+    res.json({ data: content });
+  })
+);
+
 export default router;

@@ -8,7 +8,7 @@ import jwt from 'jsonwebtoken';
 
 import { AuthenticatedRequest, AuthenticatedUser as GlobalUser, UserRole } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { get as dbGet } from '../utils/DbPromise.js';
+import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 // Used by security integrity gate and to ensure test bypasses never run in prod.
@@ -237,6 +237,37 @@ const attachUser = async (
 };
 
 /**
+ * V4-ENT-01: Session hardening — track activity & validate active sessions.
+ * Runs fire-and-forget after attachUser so it doesn't add latency.
+ */
+const trackSessionActivity = (req: AuthRequest, res: Response): void => {
+  if (!req.userId) return;
+  const userId = req.userId;
+
+  (async () => {
+    try {
+      const session = await dbGet<{ id: string; is_active: number }>(
+        `SELECT id, is_active FROM user_sessions
+         WHERE user_id = ? AND is_active = 1
+         ORDER BY last_activity_at DESC LIMIT 1`,
+        [userId],
+      );
+
+      if (session) {
+        if (!session.is_active) return;
+        res.setHeader('X-Session-Id', session.id);
+        await dbRun(
+          `UPDATE user_sessions SET last_activity_at = datetime('now') WHERE id = ?`,
+          [session.id],
+        );
+      }
+    } catch {
+      // Non-critical — don't break auth flow on session tracking errors
+    }
+  })();
+};
+
+/**
  * Check if token has been revoked
  */
 const checkTokenRevocation = async (
@@ -416,6 +447,7 @@ export const verifyToken = asyncHandler(
       });
 
       await checkTokenRevocation(decoded, req, res, next);
+      trackSessionActivity(req, res);
     } catch (err: any) {
       logger.error('[AuthMiddleware] Verification failed:', err.message);
       if (err.name === 'TokenExpiredError') {

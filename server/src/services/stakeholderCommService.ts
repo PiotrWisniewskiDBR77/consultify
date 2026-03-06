@@ -559,6 +559,373 @@ export async function advancePlanDue(
   return getPlan(orgId, planId);
 }
 
+/* ------------------------------------------------------------------ */
+/*  V4-EXEC-08: Steerco Packs                                         */
+/* ------------------------------------------------------------------ */
+
+export interface SteercoPack {
+  id: string;
+  organizationId: string;
+  initiativeId: string | null;
+  title: string;
+  packType: string;
+  contentJson: Record<string, unknown>;
+  status: string;
+  scheduledDate: string | null;
+  distributedAt: string | null;
+  distributionChannels: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SteercoPackRecipient {
+  id: string;
+  packId: string;
+  userId: string | null;
+  segmentId: string | null;
+  channel: string;
+  sentAt: string | null;
+  readAt: string | null;
+  acknowledgedAt: string | null;
+}
+
+function mapPack(row: any): SteercoPack {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    initiativeId: row.initiative_id,
+    title: row.title,
+    packType: row.pack_type,
+    contentJson:
+      typeof row.content_json === 'string'
+        ? JSON.parse(row.content_json)
+        : (row.content_json ?? {}),
+    status: row.status,
+    scheduledDate: row.scheduled_date,
+    distributedAt: row.distributed_at,
+    distributionChannels: row.distribution_channels,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapRecipient(row: any): SteercoPackRecipient {
+  return {
+    id: row.id,
+    packId: row.pack_id,
+    userId: row.user_id,
+    segmentId: row.segment_id,
+    channel: row.channel ?? 'in_app',
+    sentAt: row.sent_at,
+    readAt: row.read_at,
+    acknowledgedAt: row.acknowledged_at,
+  };
+}
+
+export async function createSteercoPack(
+  orgId: string,
+  data: {
+    initiativeId?: string;
+    title: string;
+    packType?: string;
+    contentJson?: Record<string, unknown>;
+    scheduledDate?: string;
+    distributionChannels?: string;
+    createdBy?: string;
+  }
+): Promise<SteercoPack> {
+  const id = uuidv4();
+  await dbRun(
+    `INSERT INTO steerco_packs (id, organization_id, initiative_id, title, pack_type, content_json, scheduled_date, distribution_channels, created_by)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+    [
+      id,
+      orgId,
+      data.initiativeId ?? null,
+      data.title,
+      data.packType ?? 'status_update',
+      JSON.stringify(data.contentJson ?? {}),
+      data.scheduledDate ?? null,
+      data.distributionChannels ?? null,
+      data.createdBy ?? null,
+    ]
+  );
+  const row = await dbGet(`SELECT * FROM steerco_packs WHERE id = $1`, [id]);
+  return mapPack(row);
+}
+
+export async function getSteercoPacks(
+  orgId: string,
+  filters?: { initiativeId?: string; status?: string }
+): Promise<SteercoPack[]> {
+  const params: unknown[] = [orgId];
+  let sql = `SELECT * FROM steerco_packs WHERE organization_id = $1`;
+  let idx = 2;
+  if (filters?.initiativeId) {
+    sql += ` AND initiative_id = $${idx++}`;
+    params.push(filters.initiativeId);
+  }
+  if (filters?.status) {
+    sql += ` AND status = $${idx++}`;
+    params.push(filters.status);
+  }
+  sql += ` ORDER BY created_at DESC`;
+  const rows = await dbAll(sql, params);
+  return rows.map(mapPack);
+}
+
+export async function getSteercoPack(orgId: string, packId: string): Promise<SteercoPack | null> {
+  const row = await dbGet(
+    `SELECT * FROM steerco_packs WHERE id = $1 AND organization_id = $2`,
+    [packId, orgId]
+  );
+  return row ? mapPack(row) : null;
+}
+
+export async function getSteercoPackWithRecipients(
+  orgId: string,
+  packId: string
+): Promise<{ pack: SteercoPack; recipients: SteercoPackRecipient[] } | null> {
+  const pack = await getSteercoPack(orgId, packId);
+  if (!pack) return null;
+  const rows = await dbAll(
+    `SELECT * FROM steerco_pack_recipients WHERE pack_id = $1 ORDER BY sent_at DESC NULLS LAST`,
+    [packId]
+  );
+  return { pack, recipients: rows.map(mapRecipient) };
+}
+
+export async function updateSteercoPack(
+  orgId: string,
+  packId: string,
+  data: Partial<{
+    title: string;
+    packType: string;
+    contentJson: Record<string, unknown>;
+    status: string;
+    scheduledDate: string;
+    distributionChannels: string;
+  }>
+): Promise<SteercoPack | null> {
+  const sets: string[] = [];
+  const params: unknown[] = [];
+  let idx = 1;
+  if (data.title !== undefined) { sets.push(`title = $${idx++}`); params.push(data.title); }
+  if (data.packType !== undefined) { sets.push(`pack_type = $${idx++}`); params.push(data.packType); }
+  if (data.contentJson !== undefined) { sets.push(`content_json = $${idx++}`); params.push(JSON.stringify(data.contentJson)); }
+  if (data.status !== undefined) { sets.push(`status = $${idx++}`); params.push(data.status); }
+  if (data.scheduledDate !== undefined) { sets.push(`scheduled_date = $${idx++}`); params.push(data.scheduledDate); }
+  if (data.distributionChannels !== undefined) { sets.push(`distribution_channels = $${idx++}`); params.push(data.distributionChannels); }
+  if (sets.length === 0) return getSteercoPack(orgId, packId);
+  sets.push(`updated_at = NOW()`);
+  params.push(packId, orgId);
+  await dbRun(
+    `UPDATE steerco_packs SET ${sets.join(', ')} WHERE id = $${idx++} AND organization_id = $${idx}`,
+    params
+  );
+  return getSteercoPack(orgId, packId);
+}
+
+export async function distributeSteercoPack(
+  orgId: string,
+  packId: string,
+  data: {
+    segmentIds?: string[];
+    userIds?: string[];
+    channels?: string[];
+    sentBy?: string;
+  }
+): Promise<SteercoPackRecipient[]> {
+  const pack = await getSteercoPack(orgId, packId);
+  if (!pack) throw new Error('Pack not found');
+
+  const now = new Date().toISOString();
+  const recipients: SteercoPackRecipient[] = [];
+  const defaultChannel = data.channels?.[0] ?? 'in_app';
+
+  if (data.userIds) {
+    for (const userId of data.userIds) {
+      for (const ch of data.channels ?? [defaultChannel]) {
+        const id = uuidv4();
+        await dbRun(
+          `INSERT INTO steerco_pack_recipients (id, pack_id, user_id, channel, sent_at)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [id, packId, userId, ch, now]
+        );
+        recipients.push({ id, packId, userId, segmentId: null, channel: ch, sentAt: now, readAt: null, acknowledgedAt: null });
+      }
+    }
+  }
+
+  if (data.segmentIds) {
+    for (const segmentId of data.segmentIds) {
+      for (const ch of data.channels ?? [defaultChannel]) {
+        const id = uuidv4();
+        await dbRun(
+          `INSERT INTO steerco_pack_recipients (id, pack_id, segment_id, channel, sent_at)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [id, packId, segmentId, ch, now]
+        );
+        recipients.push({ id, packId, userId: null, segmentId, channel: ch, sentAt: now, readAt: null, acknowledgedAt: null });
+      }
+    }
+  }
+
+  await dbRun(
+    `UPDATE steerco_packs SET distributed_at = $1, status = 'distributed', distribution_channels = $2, updated_at = $1 WHERE id = $3 AND organization_id = $4`,
+    [now, (data.channels ?? [defaultChannel]).join(','), packId, orgId]
+  );
+
+  await logSend(orgId, {
+    initiativeId: pack.initiativeId ?? undefined,
+    channel: defaultChannel,
+    recipientCount: recipients.length,
+    sentBy: data.sentBy,
+    metadata: { steercoPackId: packId, packType: pack.packType },
+  });
+
+  return recipients;
+}
+
+export async function acknowledgeRecipient(
+  packId: string,
+  recipientId: string
+): Promise<SteercoPackRecipient | null> {
+  await dbRun(
+    `UPDATE steerco_pack_recipients SET acknowledged_at = NOW() WHERE id = $1 AND pack_id = $2`,
+    [recipientId, packId]
+  );
+  const row = await dbGet(
+    `SELECT * FROM steerco_pack_recipients WHERE id = $1 AND pack_id = $2`,
+    [recipientId, packId]
+  );
+  return row ? mapRecipient(row) : null;
+}
+
+export async function getDistributionTracking(
+  orgId: string,
+  packId: string
+): Promise<{
+  totalRecipients: number;
+  sent: number;
+  read: number;
+  acknowledged: number;
+  channels: Record<string, number>;
+} | null> {
+  const pack = await getSteercoPack(orgId, packId);
+  if (!pack) return null;
+
+  const rows = await dbAll(
+    `SELECT * FROM steerco_pack_recipients WHERE pack_id = $1`,
+    [packId]
+  );
+
+  const channels: Record<string, number> = {};
+  let sent = 0;
+  let read = 0;
+  let acknowledged = 0;
+
+  for (const r of rows) {
+    const ch = (r as any).channel ?? 'in_app';
+    channels[ch] = (channels[ch] || 0) + 1;
+    if ((r as any).sent_at) sent++;
+    if ((r as any).read_at) read++;
+    if ((r as any).acknowledged_at) acknowledged++;
+  }
+
+  return { totalRecipients: rows.length, sent, read, acknowledged, channels };
+}
+
+export async function generateStatusPackContent(
+  orgId: string,
+  initiativeId: string
+): Promise<Record<string, unknown>> {
+  const initiative = await dbGet(
+    `SELECT * FROM initiatives WHERE id = $1 AND organization_id = $2`,
+    [initiativeId, orgId]
+  );
+  if (!initiative) throw new Error('Initiative not found');
+  const init = initiative as any;
+
+  let kpis: any[] = [];
+  try {
+    kpis = await dbAll(
+      `SELECT name, unit, target_value, current_value FROM initiative_kpis WHERE initiative_id = $1 AND organization_id = $2`,
+      [initiativeId, orgId]
+    );
+  } catch { /* table may not exist */ }
+
+  let risks: any[] = [];
+  try {
+    risks = await dbAll(
+      `SELECT title, severity, status FROM raid_items WHERE initiative_id = $1 AND organization_id = $2 AND type = 'RISK' AND status != 'RESOLVED' ORDER BY severity DESC LIMIT 5`,
+      [initiativeId, orgId]
+    );
+  } catch { /* table may not exist */ }
+
+  let milestones: any[] = [];
+  try {
+    milestones = await dbAll(
+      `SELECT name, status, due_date FROM initiative_milestones WHERE initiative_id = $1 AND organization_id = $2 ORDER BY order_index LIMIT 10`,
+      [initiativeId, orgId]
+    );
+  } catch { /* table may not exist */ }
+
+  let decisions: any[] = [];
+  try {
+    decisions = await dbAll(
+      `SELECT title, status, priority FROM decisions WHERE initiative_id = $1 AND organization_id = $2 AND status NOT IN ('approved','rejected') ORDER BY created_at DESC LIMIT 5`,
+      [initiativeId, orgId]
+    );
+  } catch { /* table may not exist */ }
+
+  return {
+    sections: {
+      executiveSummary: {
+        initiativeName: init.name || init.title || 'Initiative',
+        status: init.status || 'UNKNOWN',
+        progress: Number(init.progress) || 0,
+        summary: init.summary || '',
+      },
+      progress: {
+        overallProgress: Number(init.progress) || 0,
+        milestones: milestones.map((m: any) => ({
+          name: m.name,
+          status: m.status,
+          dueDate: m.due_date,
+        })),
+        kpis: kpis.map((k: any) => ({
+          name: k.name,
+          unit: k.unit,
+          target: k.target_value,
+          current: k.current_value,
+        })),
+      },
+      risks: risks.map((r: any) => ({
+        title: r.title,
+        severity: r.severity,
+        status: r.status,
+      })),
+      decisions: decisions.map((d: any) => ({
+        title: d.title,
+        status: d.status,
+        priority: d.priority,
+      })),
+      nextSteps: {
+        upcomingMilestones: milestones
+          .filter((m: any) => m.status !== 'COMPLETED' && m.status !== 'DONE')
+          .slice(0, 3)
+          .map((m: any) => ({ name: m.name, dueDate: m.due_date })),
+        pendingDecisions: decisions.length,
+        openRisks: risks.length,
+      },
+    },
+    generatedAt: new Date().toISOString(),
+  };
+}
+
 export function computeNextDue(cadence: string, from?: Date): string {
   const base = from ?? new Date();
   const next = new Date(base);
