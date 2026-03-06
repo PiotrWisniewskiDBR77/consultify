@@ -1321,3 +1321,27 @@ export interface PromptVariable {
   defaultValue?: string;
   required: boolean;
 }
+
+// ==========================================
+// V4-AI-03: CLAIM-CITATION VALIDATION TYPES
+// ==========================================
+
+export interface ClaimWithCitation {
+  id: string;
+  text: string;
+  startOffset: number;
+  endOffset: number;
+  citations: Array<{ citationId: string; relevance: number }>;
+  verified: boolean;
+  verificationStatus: 'verified' | 'unverified' | 'missing_citation' | 'weak_citation';
+}
+
+export interface ClaimValidationResult {
+  totalClaims: number;
+  citedClaims: number;
+  uncitedClaims: number;
+  coverageScore: number;
+  claims: ClaimWithCitation[];
+  passesPolicy: boolean;
+  policyViolations: string[];
+}

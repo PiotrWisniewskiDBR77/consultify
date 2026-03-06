@@ -11,6 +11,7 @@ import { LLMController } from '../controllers/ai/LLMController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import * as aiGov from '../services/aiGovernanceService.js';
+import * as evalHarness from '../services/ai/evalHarnessService.js';
 import circuitBreaker from '../services/ai/circuitBreaker.js';
 import llmConfigService from '../services/ai/llmConfigService.js';
 import { llmService } from '../services/ai/llmService.js';
@@ -1815,6 +1816,114 @@ router.get(
     const { from, to } = parseDateRange(req);
     const trend = await aiGov.getMeteringTrend(orgId, from, to);
     return res.json({ success: true, trend });
+  })
+);
+
+// ==================== V4-AI-07: EVAL HARNESS ====================
+
+router.post(
+  '/governance/eval-harness/run',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+
+    const parsed = evalHarness.EvalRunConfigSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: 'Invalid config', details: parsed.error.issues });
+    }
+
+    const result = await evalHarness.runEvalHarness(orgId, parsed.data, getAuditActor(req));
+    return res.status(201).json({ success: true, result });
+  })
+);
+
+router.get(
+  '/governance/eval-harness/citation-coverage',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const { from, to } = parseDateRange(req);
+    const report = await evalHarness.getCitationCoverageReport(orgId, from, to);
+    return res.json({ success: true, report });
+  })
+);
+
+router.get(
+  '/governance/eval-harness/compare/:runId1/:runId2',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const runId1 = String(req.params.runId1 || '').trim();
+    const runId2 = String(req.params.runId2 || '').trim();
+    if (!runId1 || !runId2) return res.status(400).json({ success: false, error: 'Both runId1 and runId2 are required' });
+    const comparison = await evalHarness.compareEvalRuns(orgId, runId1, runId2);
+    return res.json({ success: true, comparison });
+  })
+);
+
+router.get(
+  '/governance/regression-gates',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const gates = await evalHarness.listRegressionGates(orgId);
+    return res.json({ success: true, gates });
+  })
+);
+
+router.post(
+  '/governance/regression-gates',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const metricName = String(req.body?.metricName || req.body?.metric_name || '').trim();
+    if (!metricName) return res.status(400).json({ success: false, error: 'metricName is required' });
+    const gate = await evalHarness.createRegressionGate(orgId, {
+      purpose: req.body?.purpose || undefined,
+      metricName,
+      minThreshold: req.body?.minThreshold ?? req.body?.min_threshold ?? undefined,
+      maxDegradation: req.body?.maxDegradation ?? req.body?.max_degradation ?? undefined,
+      isBlocking: req.body?.isBlocking ?? req.body?.is_blocking ?? true,
+    });
+    return res.status(201).json({ success: true, gate });
+  })
+);
+
+router.put(
+  '/governance/regression-gates/:gateId',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const gateId = String(req.params.gateId || '').trim();
+    if (!gateId) return res.status(400).json({ success: false, error: 'gateId is required' });
+    const gate = await evalHarness.updateRegressionGate(orgId, gateId, {
+      purpose: req.body?.purpose,
+      metricName: req.body?.metricName || req.body?.metric_name,
+      minThreshold: req.body?.minThreshold ?? req.body?.min_threshold,
+      maxDegradation: req.body?.maxDegradation ?? req.body?.max_degradation,
+      isBlocking: req.body?.isBlocking ?? req.body?.is_blocking,
+    });
+    if (!gate) return res.status(404).json({ success: false, error: 'Gate not found' });
+    return res.json({ success: true, gate });
+  })
+);
+
+router.delete(
+  '/governance/regression-gates/:gateId',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const gateId = String(req.params.gateId || '').trim();
+    if (!gateId) return res.status(400).json({ success: false, error: 'gateId is required' });
+    await evalHarness.deleteRegressionGate(orgId, gateId);
+    return res.json({ success: true });
   })
 );
 

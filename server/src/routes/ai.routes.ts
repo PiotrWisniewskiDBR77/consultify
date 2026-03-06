@@ -5682,6 +5682,7 @@ router.post(
       });
 
       advisorResponse.metadata = {
+        contextArtifacts: advisorResponse.metadata?.contextArtifacts || [],
         ...advisorResponse.metadata,
         latencyMs: Date.now() - startMs,
       };
@@ -5817,7 +5818,11 @@ router.post(
     }
 
     try {
-      const { executeProposedAction } = await import('../services/ai/actionProposalEngine.js');
+      const actionProposalEngineMod = await import('../services/ai/actionProposalEngine.js');
+      const executeProposedAction = (actionProposalEngineMod as any).executeProposedAction;
+      if (typeof executeProposedAction !== 'function') {
+        throw new Error('Proposed action executor is unavailable');
+      }
       const result = await executeProposedAction({
         action,
         userId,
@@ -5828,6 +5833,536 @@ router.post(
       logger.error('[Advisor] Action execution failed:', execErr);
       return res.status(500).json({ error: execErr?.message || 'Action execution failed' });
     }
+  })
+);
+
+// ==========================================
+// V4-AI-03: Claim-Citation Validation
+// ==========================================
+
+const ClaimValidateRequestSchema = z.object({
+  responseId: z.string().optional(),
+  text: z.string().min(1),
+  citations: z.array(
+    z.object({
+      id: z.string(),
+      excerpt: z.string().optional(),
+      startOffset: z.number().optional(),
+      endOffset: z.number().optional(),
+    }),
+  ).default([]),
+  policy: z.object({
+    minCoverageScore: z.number().min(0).max(1).optional(),
+    requireAllFactualCited: z.boolean().optional(),
+    maxUncitedClaims: z.number().int().min(0).optional(),
+  }).optional(),
+});
+
+const ClaimExtractRequestSchema = z.object({
+  text: z.string().min(1),
+});
+
+const CoverageStatsQuerySchema = z.object({
+  from: z.string().optional(),
+  to: z.string().optional(),
+});
+
+router.post(
+  '/citations/validate',
+  verifyToken,
+  validateBody(ClaimValidateRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { text, citations, policy } = req.body;
+
+    const { extractClaims, matchClaimsToCitations, validateClaimCitations } = await import(
+      '../services/ai/claimCitationValidator.js'
+    );
+
+    const rawClaims = extractClaims(text);
+    const matched = matchClaimsToCitations(rawClaims, citations, text);
+    const result = validateClaimCitations(matched, policy || {});
+
+    return res.json({ success: true, data: result });
+  }),
+);
+
+router.post(
+  '/citations/extract-claims',
+  verifyToken,
+  validateBody(ClaimExtractRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { text } = req.body;
+
+    const { extractClaims } = await import('../services/ai/claimCitationValidator.js');
+    const claims = extractClaims(text);
+
+    return res.json({ success: true, data: { claims } });
+  }),
+);
+
+router.get(
+  '/citations/coverage-stats',
+  verifyToken,
+  validateQuery(CoverageStatsQuerySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId!;
+    const { from, to } = req.query as { from?: string; to?: string };
+
+    const conditions = ['organization_id = ?'];
+    const params: any[] = [orgId];
+
+    if (from) {
+      conditions.push('created_at >= ?');
+      params.push(from);
+    }
+    if (to) {
+      conditions.push('created_at <= ?');
+      params.push(to);
+    }
+
+    const where = conditions.join(' AND ');
+
+    try {
+      const stats = await dbGet(
+        `SELECT
+           COUNT(*) as totalResponses,
+           AVG(CAST(citations_count AS REAL) / NULLIF(
+             json_array_length(json_extract(response_json, '$.answer')), 0
+           )) as avgCoverage,
+           SUM(CASE WHEN citations_count = 0 THEN 1 ELSE 0 END) as responsesBelowThreshold
+         FROM advisor_response_log
+         WHERE ${where}`,
+        params,
+      );
+
+      return res.json({
+        success: true,
+        data: {
+          totalResponses: (stats as any)?.totalResponses || 0,
+          avgCoverage: Math.round(((stats as any)?.avgCoverage || 0) * 100) / 100,
+          responsesBelowThreshold: (stats as any)?.responsesBelowThreshold || 0,
+        },
+      });
+    } catch (err: any) {
+      logger.warn('[Citations] Coverage stats query failed:', err?.message);
+      return res.json({
+        success: true,
+        data: { totalResponses: 0, avgCoverage: 0, responsesBelowThreshold: 0 },
+      });
+    }
+  }),
+);
+
+// -------------------- V4-AI-02: Intent routing + context pack --------------------
+
+const IntentClassifyBodySchema = z.object({
+  message: z.string().min(1),
+  conversationId: z.string().optional(),
+});
+
+const IntentRouteBodySchema = z.object({
+  message: z.string().min(1),
+  conversationId: z.string().optional(),
+  artifactIds: z.array(z.string()).optional(),
+});
+
+const IntentRoutingLogQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  intent: z.string().optional(),
+});
+
+const ContextBuildBodySchema = z.object({
+  intent: z.string().min(1),
+  requiredContext: z.array(z.string()),
+  artifactIds: z.array(z.string()).optional(),
+});
+
+const SnapshotIdParamSchema = z.object({
+  id: z.string().min(1),
+});
+
+router.post(
+  '/intent/classify',
+  verifyToken,
+  validateBody(IntentClassifyBodySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { message } = req.body;
+
+    const { classifyIntent } = await import('../services/ai/intentRouter.js');
+    const { intent, confidence } = classifyIntent(message);
+
+    const rule = [
+      { intent: 'create', contextNeeds: ['tasks', 'initiatives'] },
+      { intent: 'update', contextNeeds: ['tasks', 'initiatives'] },
+      { intent: 'analyze', contextNeeds: ['kpis', 'risks', 'tasks', 'initiatives'] },
+      { intent: 'recommend', contextNeeds: ['tasks', 'risks', 'decisions', 'initiatives'] },
+      { intent: 'compare', contextNeeds: ['initiatives', 'kpis', 'benchmarks'] },
+      { intent: 'summarize', contextNeeds: ['initiatives', 'tasks', 'decisions'] },
+      { intent: 'diagnose', contextNeeds: ['tasks', 'risks', 'decisions', 'signals'] },
+      { intent: 'plan', contextNeeds: ['tasks', 'milestones', 'dependencies'] },
+      { intent: 'explain', contextNeeds: ['knowledge'] },
+      { intent: 'clarify', contextNeeds: [] },
+    ].find(r => r.intent === intent);
+
+    return res.json({
+      success: true,
+      data: {
+        intent,
+        confidence,
+        requiredContext: rule?.contextNeeds || ['knowledge'],
+      },
+    });
+  }),
+);
+
+router.post(
+  '/intent/route',
+  verifyToken,
+  validateBody(IntentRouteBodySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { message, conversationId, artifactIds } = req.body;
+    const orgId = req.organizationId!;
+    const userId = req.userId!;
+
+    const { routeIntent } = await import('../services/ai/intentRouter.js');
+    const { buildContextForIntent, saveContextSnapshot } = await import(
+      '../services/ai/contextPackService.js'
+    );
+
+    const result = await routeIntent(message, orgId, { artifactIds });
+
+    const pack = await buildContextForIntent(
+      orgId,
+      result.intent,
+      result.requiredContext,
+      artifactIds,
+    );
+    const snapshotId = await saveContextSnapshot(pack, conversationId);
+
+    try {
+      await dbRun(
+        `INSERT INTO ai_intent_routing_log
+          (organization_id, user_id, message_preview, classified_intent, confidence,
+           selected_tier, selected_purpose, context_snapshot_id, routing_trace_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          orgId,
+          userId,
+          message.slice(0, 200),
+          result.intent,
+          result.confidence,
+          result.suggestedModel.tier,
+          result.suggestedModel.purpose,
+          snapshotId,
+          JSON.stringify(result.routingTrace),
+        ],
+      );
+    } catch (logErr: any) {
+      logger.warn('[IntentRouter] Failed to log routing decision:', logErr?.message);
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        ...result,
+        contextSnapshotId: snapshotId,
+        tokenEstimate: pack.metadata.tokenEstimate,
+      },
+    });
+  }),
+);
+
+router.get(
+  '/intent/routing-log',
+  verifyToken,
+  validateQuery(IntentRoutingLogQuerySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId!;
+    const { limit, intent } = req.query as any;
+
+    let sql = `SELECT id, user_id, message_preview, classified_intent, confidence,
+                      selected_tier, selected_purpose, context_snapshot_id, created_at
+               FROM ai_intent_routing_log WHERE organization_id = ?`;
+    const params: any[] = [orgId];
+
+    if (intent) {
+      sql += ` AND classified_intent = ?`;
+      params.push(intent);
+    }
+
+    sql += ` ORDER BY created_at DESC LIMIT ?`;
+    params.push(Number(limit) || 20);
+
+    const rows = await dbAll(sql, params);
+    return res.json({ success: true, data: rows });
+  }),
+);
+
+router.post(
+  '/context/build',
+  verifyToken,
+  validateBody(ContextBuildBodySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { intent, requiredContext, artifactIds } = req.body;
+    const orgId = req.organizationId!;
+
+    const { buildContextForIntent } = await import('../services/ai/contextPackService.js');
+    const pack = await buildContextForIntent(orgId, intent, requiredContext, artifactIds);
+
+    return res.json({ success: true, data: pack });
+  }),
+);
+
+router.get(
+  '/context/snapshots/:id',
+  verifyToken,
+  validateParams(SnapshotIdParamSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const orgId = req.organizationId!;
+
+    const { getContextSnapshot } = await import('../services/ai/contextPackService.js');
+    const snapshot = await getContextSnapshot(id);
+
+    if (!snapshot) {
+      return res.status(404).json({ error: 'Context snapshot not found' });
+    }
+
+    if (snapshot.organizationId !== orgId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    return res.json({ success: true, data: snapshot });
+  }),
+);
+
+// ==================== V4-AI-05: Data Classification & Governance ====================
+
+router.post(
+  '/governance/classify',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { artifacts } = req.body;
+    if (!Array.isArray(artifacts) || artifacts.length === 0) {
+      return res.status(400).json({ error: 'artifacts array is required' });
+    }
+
+    const { classifyAndPersist } = await import(
+      '../services/ai/dataClassificationService.js'
+    );
+
+    const results = await Promise.all(
+      artifacts.map((a: { artifactType: string; artifactId: string; metadata?: Record<string, any> }) =>
+        classifyAndPersist(orgId, a.artifactType, a.artifactId, a.metadata)
+      )
+    );
+
+    return res.json({ success: true, data: results });
+  })
+);
+
+router.post(
+  '/governance/check-permission',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { artifactType, artifactId, dataClass, purpose } = req.body;
+    if (!artifactType) {
+      return res.status(400).json({ error: 'artifactType is required' });
+    }
+
+    const { classifyDataClass, checkPermittedSource } = await import(
+      '../services/ai/dataClassificationService.js'
+    );
+
+    const resolvedClass = dataClass || classifyDataClass(artifactType);
+    const result = await checkPermittedSource(orgId, artifactType, resolvedClass);
+
+    return res.json({
+      success: true,
+      data: {
+        artifactType,
+        artifactId: artifactId || null,
+        dataClass: resolvedClass,
+        purpose: purpose || null,
+        ...result,
+      },
+    });
+  })
+);
+
+router.post(
+  '/governance/approval-request',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const userId = req.userId;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { actionType, dataClass, context } = req.body;
+    if (!actionType || !dataClass) {
+      return res.status(400).json({ error: 'actionType and dataClass are required' });
+    }
+
+    const { createApprovalRequest } = await import(
+      '../services/ai/dataClassificationService.js'
+    );
+
+    const request = await createApprovalRequest(orgId, userId, actionType, dataClass, context);
+    return res.json({ success: true, data: request });
+  })
+);
+
+router.get(
+  '/governance/approval-requests',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+
+    const { listApprovalRequests } = await import(
+      '../services/ai/dataClassificationService.js'
+    );
+
+    const requests = await listApprovalRequests(orgId, status);
+    return res.json({ success: true, data: requests });
+  })
+);
+
+router.post(
+  '/governance/approval-requests/:id/approve',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const userId = req.userId;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { approveRequest } = await import(
+      '../services/ai/dataClassificationService.js'
+    );
+
+    const result = await approveRequest(req.params.id, orgId, userId);
+    if (!result) {
+      return res.status(404).json({ error: 'Approval request not found or already processed' });
+    }
+    return res.json({ success: true, data: result });
+  })
+);
+
+router.post(
+  '/governance/approval-requests/:id/reject',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const userId = req.userId;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { reason } = req.body;
+    if (!reason) {
+      return res.status(400).json({ error: 'reason is required' });
+    }
+
+    const { rejectRequest } = await import(
+      '../services/ai/dataClassificationService.js'
+    );
+
+    const result = await rejectRequest(req.params.id, orgId, userId, reason);
+    if (!result) {
+      return res.status(404).json({ error: 'Approval request not found or already processed' });
+    }
+    return res.json({ success: true, data: result });
+  })
+);
+
+// ==================== V4-AI-06: Budget Preflight & Status ====================
+
+router.post(
+  '/budget/preflight',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { message, intent, contextTokens } = req.body;
+    if (!message) {
+      return res.status(400).json({ error: 'message is required' });
+    }
+
+    const { preflightCostEstimate } = await import(
+      '../services/ai/preflightCostService.js'
+    );
+
+    const estimate = await preflightCostEstimate(
+      orgId,
+      message,
+      intent || 'chat',
+      Number(contextTokens) || 0
+    );
+
+    return res.json({ success: true, data: estimate });
+  })
+);
+
+router.get(
+  '/budget/status',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { getBudgetStatus } = await import(
+      '../services/ai/preflightCostService.js'
+    );
+
+    const status = await getBudgetStatus(orgId);
+    return res.json({ success: true, data: status });
+  })
+);
+
+router.post(
+  '/budget/tier-override',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const userId = req.userId;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const userRole = (req as any).userRole || (req as any).role;
+    if (userRole !== 'admin' && userRole !== 'owner') {
+      return res.status(403).json({ error: 'Admin role required for tier override' });
+    }
+
+    const { requestId, tier, reason } = req.body;
+    if (!requestId || !tier) {
+      return res.status(400).json({ error: 'requestId and tier are required' });
+    }
+
+    const validTiers = ['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING'];
+    if (!validTiers.includes(tier)) {
+      return res.status(400).json({ error: `tier must be one of: ${validTiers.join(', ')}` });
+    }
+
+    try {
+      await dbRun(
+        `INSERT INTO ai_tier_overrides (id, organization_id, request_id, tier, reason, created_by, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
+        [uuidv4(), orgId, requestId, tier, reason || null, userId]
+      );
+    } catch (err: any) {
+      logger.warn(`[Budget] Failed to persist tier override: ${err?.message}`);
+    }
+
+    return res.json({
+      success: true,
+      data: { requestId, tier, reason: reason || null, overriddenBy: userId },
+    });
   })
 );
 
