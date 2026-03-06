@@ -1261,6 +1261,14 @@
       "dropHere": "Upuść tutaj",
       "noTasks": "Brak zadań"
     },
+    "actionQueue": {
+      "title": "Kolejka akcji",
+      "items": "elementów",
+      "due": "Termin",
+      "decision": "Decyzja",
+      "risk": "Ryzyko",
+      "task": "Zadanie"
+    },
     "attention": {
       "blocked": "Zablokowane",
       "overdueDecisions": "Przeterminowane decyzje",

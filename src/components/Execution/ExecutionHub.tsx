@@ -536,6 +536,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [isLoadingHealth, setIsLoadingHealth] = useState(false);
   const [riskSignals, setRiskSignals] = useState<RiskSignalItem[]>([]);
   const [delaySignals, setDelaySignals] = useState<DelaySignalItem[]>([]);
+  /** V4-EXEC-02: Action Queue — overdue decisions, high P×I risks, overdue tasks */
+  const [actionQueueItems, setActionQueueItems] = useState<
+    Array<{
+      type: 'decision_overdue' | 'risk_high' | 'task_overdue';
+      id: string;
+      title: string;
+      dueDate?: string;
+      initiativeId?: string;
+      initiativeName?: string;
+      [k: string]: any;
+    }>
+  >([]);
+  const [isLoadingActionQueue, setIsLoadingActionQueue] = useState(false);
 
   // Executive aggregate snapshot (Module 7, sections 7.1–7.6)
   const [execPeriod, setExecPeriod] = useState<ExecPeriod>('week');
@@ -898,6 +911,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadExecutionHealth();
+  }, [currentProjectId]);
+
+  // V4-EXEC-02: Fetch Action Queue — overdue decisions, high risks, overdue tasks
+  useEffect(() => {
+    if (!currentProjectId) return;
+    setIsLoadingActionQueue(true);
+    Api.get(`/execution/${currentProjectId}/action-queue`)
+      .then((data: any) => {
+        const items = (data?.items as any[]) || [];
+        setActionQueueItems(items);
+      })
+      .catch(() => setActionQueueItems([]))
+      .finally(() => setIsLoadingActionQueue(false));
   }, [currentProjectId]);
 
   const loadExecutiveSnapshot = useCallback(
@@ -3396,7 +3422,72 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, [activeFilters, actionCenter, activeStatusFilter, openInitiativesWithAttention, t]);
 
   const renderActionCenter = () => (
-    <div className="grid gap-4 lg:grid-cols-4" data-testid="execution-action-center">
+    <div className="space-y-4">
+      {/* V4-EXEC-02: Action Queue — overdue decisions, high P×I risks, overdue tasks */}
+      <div
+        className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4"
+        data-testid="execution-action-queue"
+      >
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+            {t('execution.actionQueue.title', 'Action Queue')}
+          </h3>
+          {isLoadingActionQueue ? (
+            <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+          ) : (
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {actionQueueItems.length}{' '}
+              {t('execution.actionQueue.items', 'items')}
+            </span>
+          )}
+        </div>
+        {actionQueueItems.length === 0 && !isLoadingActionQueue ? (
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('execution.attention.none', 'Nothing urgent')}
+          </p>
+        ) : (
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {actionQueueItems.slice(0, 15).map((item) => (
+              <div
+                key={`${item.type}-${item.id}`}
+                className="flex items-center justify-between gap-2 py-2 px-3 rounded-lg bg-slate-50 dark:bg-navy-800/50 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                    {item.title}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                    {item.initiativeName || '—'}
+                    {item.type === 'decision_overdue' && item.dueDate
+                      ? ` • ${t('execution.actionQueue.due', 'Due')} ${new Date(item.dueDate).toLocaleDateString()}`
+                      : ''}
+                    {item.type === 'risk_high' && item.impact
+                      ? ` • ${item.impact}`
+                      : ''}
+                  </p>
+                </div>
+                <span
+                  className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-medium ${
+                    item.type === 'decision_overdue'
+                      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                      : item.type === 'risk_high'
+                        ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'
+                        : 'bg-slate-200 dark:bg-navy-600 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  {item.type === 'decision_overdue'
+                    ? t('execution.actionQueue.decision', 'Decision')
+                    : item.type === 'risk_high'
+                      ? t('execution.actionQueue.risk', 'Risk')
+                      : t('execution.actionQueue.task', 'Task')}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-4" data-testid="execution-action-center">
       <button
         type="button"
         onClick={() => openInitiativesWithAttention('blocked')}
@@ -3518,6 +3609,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           )}
         </div>
       </button>
+    </div>
     </div>
   );
 

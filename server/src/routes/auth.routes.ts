@@ -543,7 +543,12 @@ router.post(
       return res.status(500).json({ error: 'Failed to create account' });
     }
 
-    await setUserDemoPreference(userId, true, { setStartedAt: true });
+    try {
+      await setUserDemoPreference(userId, true, { setStartedAt: true });
+    } catch (prefErr: any) {
+      logger.warn('[Auth] Demo preference storage failed (non-blocking):', prefErr?.message || prefErr);
+      // Continue — user is created; preference is for analytics only
+    }
 
     const user = await dbGet<{
       id: string;

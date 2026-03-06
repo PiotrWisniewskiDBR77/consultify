@@ -65,8 +65,12 @@ router.post(
     const isDemoEnabled = enabled === true || enabled === 'true' || enabled === 1;
 
     try {
-      // Save preference to database
-      await setUserDemoPreference(userId, isDemoEnabled);
+      // Save preference to database (non-blocking if storage unavailable)
+      try {
+        await setUserDemoPreference(userId, isDemoEnabled);
+      } catch (prefErr: any) {
+        logger.warn('[DemoMode] Preference storage failed (continuing):', prefErr?.message || prefErr);
+      }
 
       if (isDemoEnabled) {
         let demoOrganization: any;

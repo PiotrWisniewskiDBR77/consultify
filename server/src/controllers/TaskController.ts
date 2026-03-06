@@ -242,6 +242,22 @@ export class TaskController {
         scope,
       } = query as any;
 
+      // V4-TASK-01: scope=personal|initiative|program — validate required params
+      if (scope === 'initiative' && !initiativeId) {
+        res.status(400).json({
+          error: 'initiativeId required when scope=initiative',
+          code: 'SCOPE_INITIATIVE_REQUIRES_ID',
+        });
+        return;
+      }
+      if (scope === 'program' && !programId) {
+        res.status(400).json({
+          error: 'programId required when scope=program',
+          code: 'SCOPE_PROGRAM_REQUIRES_ID',
+        });
+        return;
+      }
+
       const sql = `
             SELECT 
                 t.*,

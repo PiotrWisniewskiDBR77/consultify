@@ -13,7 +13,9 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {
   Archive,
+  AlertTriangle,
   BookOpen,
+  CheckCircle2,
   CheckSquare,
   ChevronDown,
   Clock,
@@ -25,6 +27,7 @@ import {
   Pin,
   Play,
   Plus,
+  RefreshCw,
   Sparkles,
   Tag,
   Trash2,
@@ -44,6 +47,8 @@ import type {
   NotebookMaturity,
   NotebookPage,
   NotebookPageStatus,
+  NotebookReviewCadence,
+  NotebookVerificationStatus,
   NotebookVisibility,
 } from '@/types/myWork';
 
@@ -754,6 +759,18 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           contentJson: updated.contentJson,
           contentText: updated.contentText,
           maturity: newMaturity,
+          ...(updated.verificationStatus !== undefined && {
+            verificationStatus: updated.verificationStatus,
+          }),
+          ...(updated.reviewCadence !== undefined && {
+            reviewCadence: updated.reviewCadence,
+          }),
+          ...(updated.lastReviewedAt !== undefined && {
+            lastReviewedAt: updated.lastReviewedAt,
+          }),
+          ...(updated.staleAt !== undefined && {
+            staleAt: updated.staleAt,
+          }),
         })
           .then(() => {
             // Trigger auto-summary generation for substantial content
@@ -1446,6 +1463,16 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               <span className={`w-1.5 h-1.5 rounded-full ${matCfg.dot}`} />
                               {isPolish ? matCfg.labelPl : matCfg.label}
                             </span>
+                            {(p as any).verificationStatus === 'verified' && (
+                              <span className="rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 text-[9px]" title={isPolish ? 'Zweryfikowana' : 'Verified'}>
+                                <CheckCircle2 size={9} className="inline" />
+                              </span>
+                            )}
+                            {(p as any).staleAt && (
+                              <span className="rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 text-[9px]" title={isPolish ? 'Nieaktualna' : 'Stale'}>
+                                <AlertTriangle size={9} className="inline" />
+                              </span>
+                            )}
                             {p.convertedTo && p.convertedTo.length > 0 && (
                               <span className="rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 text-[9px] font-medium">
                                 ✓ {p.convertedTo[0].type}
@@ -1714,6 +1741,106 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                           />
                         </div>
                       </div>
+                    </div>
+
+                    {/* V4-NOTE-05: Lifecycle strip — verification, review cadence, stale */}
+                    <div className="mt-3 flex items-center gap-3 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                          {isPolish ? 'Weryfikacja' : 'Verification'}
+                        </span>
+                        <select
+                          value={
+                            (activePage.verificationStatus as NotebookVerificationStatus) ?? 'unverified'
+                          }
+                          onChange={(e) => {
+                            const v = e.target.value as NotebookVerificationStatus;
+                            scheduleSave({ verificationStatus: v });
+                            setPages((prev) =>
+                              prev.map((p) =>
+                                p.id === activePage.id ? { ...p, verificationStatus: v } : p
+                              )
+                            );
+                          }}
+                          className="text-[11px] px-2 py-1 rounded-md bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300"
+                        >
+                          <option value="unverified">
+                            {isPolish ? 'Nieweryfikowana' : 'Unverified'}
+                          </option>
+                          <option value="verified">{isPolish ? 'Zweryfikowana' : 'Verified'}</option>
+                          <option value="disputed">{isPolish ? 'Zakwestionowana' : 'Disputed'}</option>
+                        </select>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                          {isPolish ? 'Recenzja' : 'Review'}
+                        </span>
+                        <select
+                          value={
+                            (activePage.reviewCadence as NotebookReviewCadence) ?? 'monthly'
+                          }
+                          onChange={(e) => {
+                            const v = e.target.value as NotebookReviewCadence;
+                            scheduleSave({ reviewCadence: v });
+                            setPages((prev) =>
+                              prev.map((p) =>
+                                p.id === activePage.id ? { ...p, reviewCadence: v } : p
+                              )
+                            );
+                          }}
+                          className="text-[11px] px-2 py-1 rounded-md bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300"
+                        >
+                          <option value="weekly">{isPolish ? 'Tygodniowo' : 'Weekly'}</option>
+                          <option value="monthly">{isPolish ? 'Miesięcznie' : 'Monthly'}</option>
+                          <option value="quarterly">{isPolish ? 'Kwartalnie' : 'Quarterly'}</option>
+                          <option value="never">{isPolish ? 'Nigdy' : 'Never'}</option>
+                        </select>
+                      </div>
+                      {(activePage.staleAt || activePage.lastReviewedAt) && (
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                          {activePage.staleAt ? (
+                            <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                              <AlertTriangle size={10} />
+                              {isPolish ? 'Nieaktualna' : 'Stale'}
+                            </span>
+                          ) : activePage.lastReviewedAt ? (
+                            <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                              <CheckCircle2 size={10} />
+                              {isPolish ? 'Sprawdzono' : 'Reviewed'}{' '}
+                              {relativeTime(activePage.lastReviewedAt)}
+                            </span>
+                          ) : null}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const now = new Date().toISOString();
+                          scheduleSave({
+                            lastReviewedAt: now,
+                            staleAt: null,
+                            verificationStatus:
+                              (activePage.verificationStatus as NotebookVerificationStatus) || 'verified',
+                          });
+                          setPages((prev) =>
+                            prev.map((p) =>
+                              p.id === activePage.id
+                                ? {
+                                    ...p,
+                                    lastReviewedAt: now,
+                                    staleAt: null,
+                                    verificationStatus:
+                                      (p.verificationStatus as NotebookVerificationStatus) || 'verified',
+                                  }
+                                : p
+                            )
+                          );
+                        }}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 text-[11px] font-medium transition-colors"
+                      >
+                        <RefreshCw size={10} />
+                        {isPolish ? 'Oznacz jako sprawdzone' : 'Mark as reviewed'}
+                      </button>
                     </div>
 
                     {/* Subtle divider */}

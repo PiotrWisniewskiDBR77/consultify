@@ -68,6 +68,7 @@ import { buildArtifactPermalink } from '@/utils/artifactLinks';
 import { exportToPDF } from '@/utils/pdfExport';
 
 import { type Comment, CommentsSection } from '../MyWork/shared';
+import { EmbeddedView } from '../shared/NModeBlocks';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 import { GenerateInitiativesModal } from './GenerateInitiativesModal';
 import { ToolCanvas } from './ToolCanvas';
@@ -487,6 +488,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   }>({});
   const [comments, setComments] = useState<Comment[]>([]);
   const [history, setHistory] = useState<HistoryEvent[]>([]);
+  const [toolBacklinks, setToolBacklinks] = useState<
+    Array<{ id: string; sourceType: string; sourceId: string }>
+  >([]);
+  const [toolBacklinksLoading, setToolBacklinksLoading] = useState(false);
   const [users, setUsers] = useState<
     { id: string; firstName: string; lastName: string; email?: string }[]
   >([]);
@@ -627,6 +632,26 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       setLoading(false);
     }
   }, [toolSessionId, loadSession, isPolish]);
+
+  // V4-IDEA-09: Fetch LinkGraph backlinks for "Used in" section
+  useEffect(() => {
+    if (!toolSessionId) return;
+    setToolBacklinksLoading(true);
+    Api.getLinkGraphBacklinks({ type: 'tool_session', id: toolSessionId, limit: 50 })
+      .then((rows: any) => {
+        setToolBacklinks(
+          (Array.isArray(rows) ? rows : [])
+            .map((x: any) => ({
+              id: String(x?.id || ''),
+              sourceType: String(x?.sourceType || ''),
+              sourceId: String(x?.sourceId || ''),
+            }))
+            .filter((x) => x.sourceType && x.sourceId)
+        );
+      })
+      .catch(() => setToolBacklinks([]))
+      .finally(() => setToolBacklinksLoading(false));
+  }, [toolSessionId]);
 
   // ==================== EFFECTS ====================
 
@@ -1327,6 +1352,64 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   </div>
                 ))}
               </div>
+            </CollapsibleSection>
+
+            {/* V4-IDEA-09: Used in (backlinks) — LinkGraph parity with Ideas/Notebook/Initiatives */}
+            <CollapsibleSection
+              id="used-in"
+              title={isPolish ? 'Użyte w (powiązania)' : 'Used in (backlinks)'}
+              icon={<Target size={18} className="text-white" />}
+              iconBg="bg-gradient-to-br from-cyan-500 to-blue-500"
+              expanded={expandedSections.has('used-in')}
+              onToggle={() => toggleSection('used-in')}
+            >
+              <EmbeddedView
+                title={isPolish ? 'Użyte w (powiązania)' : 'Used in (backlinks)'}
+                count={toolBacklinks.length}
+                loading={toolBacklinksLoading}
+                readOnly
+                viewModes={['list']}
+              >
+                {toolBacklinks.length === 0 && !toolBacklinksLoading ? (
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
+                    {isPolish ? 'Brak powiązań' : 'No links yet'}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {toolBacklinks.slice(0, 10).map((bl) => (
+                      <div
+                        key={bl.id}
+                        className="rounded-xl border border-slate-200/40 dark:border-white/[0.04] bg-white/40 dark:bg-white/[0.02] p-2.5 flex items-center justify-between gap-2"
+                      >
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
+                            {bl.sourceType}
+                          </div>
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                            {bl.sourceId}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() =>
+                            window.dispatchEvent(
+                              new CustomEvent('mywork-open-item', {
+                                detail: {
+                                  type: bl.sourceType,
+                                  id: bl.sourceId,
+                                  name: `${bl.sourceType} ${bl.sourceId}`,
+                                },
+                              })
+                            )
+                          }
+                          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
+                        >
+                          <ExternalLink size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </EmbeddedView>
             </CollapsibleSection>
           </div>
 

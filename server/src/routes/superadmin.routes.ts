@@ -15,7 +15,12 @@ import { Response, Router } from 'express';
 import SuperAdminController from '../controllers/SuperAdminController.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireConfirmation } from '../middleware/confirmAction.middleware.js';
-import { requireNoLegalHold } from '../services/OrgPoliciesService.js';
+import {
+  getAllOrgPolicies,
+  getOrgPolicy,
+  requireNoLegalHold,
+  upsertOrgPolicy,
+} from '../services/OrgPoliciesService.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
@@ -68,6 +73,42 @@ router.delete(
   })
 );
 router.get('/organizations/:id/billing', SuperAdminController.getOrgBilling);
+
+// ==========================================
+// ORG POLICIES (V4-ENT-04) — retention, legal hold, residency
+// ==========================================
+
+router.get(
+  '/org-policies',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    const policies = await getAllOrgPolicies();
+    res.json({ policies });
+  })
+);
+
+router.get(
+  '/org-policies/:orgId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const policy = await getOrgPolicy(req.params.orgId);
+    if (!policy) return res.status(404).json({ error: 'Policy not found' });
+    res.json(policy);
+  })
+);
+
+router.put(
+  '/org-policies/:orgId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { retentionDays, legalHoldEnabled, residencyRegion } = req.body || {};
+    const policy = await upsertOrgPolicy(req.params.orgId, {
+      retentionDays: retentionDays != null ? Number(retentionDays) : undefined,
+      legalHoldEnabled:
+        legalHoldEnabled !== undefined ? Boolean(legalHoldEnabled) : undefined,
+      residencyRegion:
+        residencyRegion !== undefined ? (residencyRegion === null ? null : String(residencyRegion)) : undefined,
+    });
+    res.json(policy);
+  })
+);
 
 // ==========================================
 // USERS

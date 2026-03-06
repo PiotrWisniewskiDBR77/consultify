@@ -1764,6 +1764,49 @@ export const Api = {
     return res.json();
   },
 
+  // V4-ENT-04: Org policies (retention, legal hold, residency)
+  getOrgPolicies: async (): Promise<{ policies: Array<{
+    id: string;
+    organization_id: string;
+    retention_days: number | null;
+    legal_hold_enabled: number;
+    residency_region: string | null;
+    created_at: string | null;
+    updated_at: string | null;
+  }> }> => {
+    const res = await fetch(`${API_URL}/superadmin/org-policies`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch org policies');
+    return res.json();
+  },
+  getOrgPolicy: async (orgId: string): Promise<{
+    id: string;
+    organization_id: string;
+    retention_days: number | null;
+    legal_hold_enabled: number;
+    residency_region: string | null;
+    created_at: string | null;
+    updated_at: string | null;
+  } | null> => {
+    const res = await fetch(`${API_URL}/superadmin/org-policies/${encodeURIComponent(orgId)}`, {
+      headers: getHeaders(),
+    });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error('Failed to fetch org policy');
+    return res.json();
+  },
+  putOrgPolicy: async (
+    orgId: string,
+    patch: { retentionDays?: number | null; legalHoldEnabled?: boolean; residencyRegion?: string | null }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/superadmin/org-policies/${encodeURIComponent(orgId)}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(patch),
+    });
+    if (!res.ok) throw new Error('Failed to update org policy');
+    return res.json();
+  },
+
   getSuperAdminDashboard: async (): Promise<{
     activity: { total: number; last_hour: number; last_24h: number; last_7d: number };
     ai: { total_ai_calls: number; total_tokens: number; active_users: number };

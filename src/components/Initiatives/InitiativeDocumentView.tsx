@@ -30,6 +30,7 @@ import {
   FolderOpen,
   GitBranch,
   History,
+  Link2,
   ListChecks,
   Loader2,
   MessageSquare,
@@ -55,7 +56,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
 import {
@@ -521,6 +522,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [commentsAiSelectedRemoveIds, setCommentsAiSelectedRemoveIds] = useState<
     Record<string, boolean>
   >({});
+
+  // V4-IDEA-09: LinkGraph "Used in" backlinks
+  const [initiativeBacklinks, setInitiativeBacklinks] = useState<
+    Array<{ id: string; sourceType: string; sourceId: string }>
+  >([]);
+  const [initiativeBacklinksLoading, setInitiativeBacklinksLoading] = useState(false);
 
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
@@ -1997,6 +2004,26 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
+
+  // V4-IDEA-09: Fetch LinkGraph backlinks for "Used in" section
+  useEffect(() => {
+    if (!initiativeId) return;
+    setInitiativeBacklinksLoading(true);
+    Api.getLinkGraphBacklinks({ type: 'initiative', id: initiativeId, limit: 50 })
+      .then((rows: any) => {
+        setInitiativeBacklinks(
+          (Array.isArray(rows) ? rows : [])
+            .map((x: any) => ({
+              id: String(x?.id || ''),
+              sourceType: String(x?.sourceType || ''),
+              sourceId: String(x?.sourceId || ''),
+            }))
+            .filter((x) => x.sourceType && x.sourceId)
+        );
+      })
+      .catch(() => setInitiativeBacklinks([]))
+      .finally(() => setInitiativeBacklinksLoading(false));
+  }, [initiativeId]);
 
   // ==========================================
   // HANDLERS
@@ -3978,7 +4005,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       comments: ['comments'],
       history: ['activity-log'],
       attachments: ['attachments-links'],
-      linkedItems: ['attachments-links'],
+      linkedItems: ['attachments-links', 'used-in'],
       kpis: ['kpi'],
     }),
     []
@@ -4107,6 +4134,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           attachments.length + linkedItems.length > 0
             ? attachments.length + linkedItems.length
             : undefined,
+        component: null,
+      },
+      {
+        id: 'used-in',
+        icon: Link2,
+        label: { en: 'Used in (backlinks)', pl: 'Użyte w (powiązania)' },
         component: null,
       },
       {
@@ -6864,6 +6897,57 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           );
           break;
         }
+
+        // ── V4-IDEA-09: Used in (backlinks) — LinkGraph parity with Ideas/Notebook/Tools ──
+        case 'used-in': {
+          const openBacklinkItem = (sourceType: string, sourceId: string) => {
+            window.dispatchEvent(
+              new CustomEvent('mywork-open-item', {
+                detail: { type: sourceType, id: sourceId, name: `${sourceType} ${sourceId}` },
+              })
+            );
+          };
+          component = (
+            <EmbeddedView
+              title={isPolish ? 'Użyte w (powiązania)' : 'Used in (backlinks)'}
+              count={initiativeBacklinks.length}
+              loading={initiativeBacklinksLoading}
+              readOnly
+              viewModes={['list']}
+            >
+              {initiativeBacklinks.length === 0 && !initiativeBacklinksLoading ? (
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
+                  {isPolish ? 'Brak powiązań' : 'No links yet'}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {initiativeBacklinks.slice(0, 10).map((bl) => (
+                    <div
+                      key={bl.id}
+                      className="rounded-xl border border-slate-200/40 dark:border-white/[0.04] bg-white/40 dark:bg-white/[0.02] p-2.5 flex items-center justify-between gap-2"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
+                          {bl.sourceType}
+                        </div>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                          {bl.sourceId}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => openBacklinkItem(bl.sourceType, bl.sourceId)}
+                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
+                      >
+                        <ExternalLink size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </EmbeddedView>
+          );
+          break;
+        }
       }
 
       return { ...section, component };
@@ -6959,6 +7043,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     handleRemoveLinkedItem,
     searchLinkedItems,
     openLinkedItemTarget,
+    initiativeBacklinks,
+    initiativeBacklinksLoading,
   ]);
 
   const orderedNModeSectionsWithContent: NModeSection[] = useMemo(() => {

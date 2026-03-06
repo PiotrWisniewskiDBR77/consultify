@@ -183,23 +183,23 @@ Reguła: `done` bez smoke = nie istnieje.
 
 | Moduł | Tasks | Spec (locked) | Impl (done) | QA (smoke) | Blockers | Owner |
 | --- | --- | --- | --- | --- | --- | --- |
-| **5.1 Ideas** | 9 | 0/9 | 0/9 | 0/9 | — | — |
+| **5.1 Ideas** | 9 | 0/9 | 3/9 | 0/9 | — | — |
 | **5.2 Notebook** | 7 | 0/7 | 0/7 | 0/7 | — | — |
-| **5.3 Tasks+Decisions** | 8 | 1/8 | 0/8 | 0/8 | — | — |
+| **5.3 Tasks+Decisions** | 8 | 1/8 | 3/8 | 0/8 | — | — |
 | **5.4 Inbox+Focus** | 7 | 0/7 | 0/7 | 0/7 | — | — |
 | **6.1 Interview** | 7 | 0/7 | 0/7 | 0/7 | — | — |
-| **6.2 Consulting Tools** | 7 | 0/7 | 0/7 | 0/7 | — | — |
-| **6.3 Assessments** | 7 | 0/7 | 0/7 | 0/7 | — | — |
-| **6.4 Initiatives** | 7 | 1/7 | 0/7 | 0/7 | — | — |
-| **6.5 Execution** | 8 | 0/8 | 0/8 | 0/8 | — | — |
-| **6.6 Results** | 6 | 0/6 | 0/6 | 0/6 | — | — |
+| **6.2 Consulting Tools** | 7 | 0/7 | 2/7 | 0/7 | — | — |
+| **6.3 Assessments** | 7 | 0/7 | 3/7 | 0/7 | — | — |
+| **6.4 Initiatives** | 7 | 1/7 | 2/7 | 0/7 | — | — |
+| **6.5 Execution** | 8 | 0/8 | 3/8 | 0/8 | — | — |
+| **6.6 Results** | 6 | 0/6 | 2/6 | 0/6 | — | — |
 | **6.7 Finance** | 7 | 0/7 | 0/7 | 0/7 | — | — |
 | **6.8 Reports** | 6 | 0/6 | 0/6 | 0/6 | — | — |
 | **6.9 Presentations** | 7 | 0/7 | 0/7 | 0/7 | — | — |
-| **6.10 Enterprise Platform** | 8 | 2/8 | 0/8 | 0/8 | — | — |
-| **6.11 Organization** | 9 | 1/9 | 0/9 | 0/9 | — | — |
+| **6.10 Enterprise Platform** | 8 | 2/8 | 2/8 | 0/8 | — | — |
+| **6.11 Organization** | 9 | 1/9 | 1/9 | 0/9 | — | — |
 | **6.12 AI Advisor** | 8 | 0/8 | 0/8 | 0/8 | — | — |
-| **TOTAL** | **120** | **5/120** | **0/120** | **0/120** | | |
+| **TOTAL** | **120** | **5/120** | **24/120** | **0/120** | | |
 
 ### 2.4 Current blockers
 
@@ -228,6 +228,10 @@ Reguła: `done` bez smoke = nie istnieje.
 | Date | Done | Notes / link |
 | --- | --- | --- |
 | 2026-03-04 | (initial) | V4 Implementation Program utworzony. 120 tasków z V4_GAP_ANALYSIS zmapowanych do V4-XXX-NN. |
+| 2026-03-04 | Faza 2 R0 | INIT-02, EXEC-06, ASMT-01/02/03, RSLT-01/03, TOOL-01/02 (eca9e9d, 12ee900). |
+| 2026-03-04 | Faza C / Wave 1–4 | ENT-03, ENT-04, ORG-01, TASK-01/03/08, INIT-01, IDEA-01/04/08, EXEC-01/02. Dashboard updated. scope=initiative|program validation w TaskController. |
+| 2026-03-04 | V4-ENT-04 Admin UI | Zakładka Data Governance w SecurityPoliciesView: retention, legal hold, residency per org. API: GET/PUT /superadmin/org-policies. OrgPoliciesService.queryRun. |
+| 2026-03-04 | V4-NOTE-05 | Notebook lifecycle UI: verificationStatus (unverified/verified/disputed), reviewCadence (weekly/monthly/quarterly/never), staleAt badge, "Mark as reviewed". Typy w myWork.ts, scheduleSave rozszerzony. |
 
 ---
 
@@ -260,7 +264,7 @@ Reguła: `done` bez smoke = nie istnieje.
 | V4-NOTE-02 | Pipeline ingestii: plik → extract (OCR) → tokenize → indeks (full-text + embedding) | draft | todo | not_tested | V4-NOTE-01 | P0 |
 | V4-NOTE-03 | Full-text search (PostgreSQL FTS lub Elasticsearch) zamiast SQL LIKE + filtry tags/space/project | draft | todo | not_tested | — | P0 |
 | V4-NOTE-04 | Semantic search z RAG + citations (permission-safe, sourceRef) | draft | todo | not_tested | V4-NOTE-02 | P0 |
-| V4-NOTE-05 | Model owner, verificationStatus, reviewCadence, staleAt w notebook_pages + UI lifecycle | draft | todo | not_tested | — | P0 |
+| V4-NOTE-05 | Model owner, verificationStatus, reviewCadence, staleAt w notebook_pages + UI lifecycle | draft | impl | not_tested | — | P0 |
 | V4-NOTE-06 | AI insert-as-blocks z audit log (propozycja zapisana, apply rejestrowane) | draft | todo | not_tested | V4-ENT-03 | P0 |
 | V4-NOTE-07 | Embed chips + preview shell (NModeBlocks.EmbeddedView) w Notebook, Reports, Decks | draft | todo | not_tested | — | P0 |
 
@@ -405,7 +409,7 @@ Reguła: `done` bez smoke = nie istnieje.
 | V4-ENT-01 | SSO (OIDC/SAML): provider config per org, session hardening, logout propagation | draft | todo | not_tested | — | P0 |
 | V4-ENT-02 | SCIM: provisioning/deprovisioning, group sync, conflict handling | draft | todo | not_tested | — | P0 |
 | V4-ENT-03 | Unified audit log: tabela audit_events, middleware per route, query API | **locked** | todo | not_tested | — | P0 |
-| V4-ENT-04 | Policy engine: retention/legal hold/residency; enforcement hooks; admin UI | **locked** | todo | not_tested | — | P0 |
+| V4-ENT-04 | Policy engine: retention/legal hold/residency; enforcement hooks; admin UI | **locked** | impl | not_tested | — | P0 |
 | V4-ENT-05 | Integration hub: connector registry, queue/retry, secrets vaulting, allowlists | draft | todo | not_tested | — | P0 |
 | V4-ENT-06 | Realtime platform: WebSocket gateway, presence, CRDT store (Yjs/Automerge) | draft | todo | not_tested | — | P0 |
 | V4-ENT-07 | AI governance: purposes registry, metering, budgets + alerts, prompt/version registry, evals | draft | todo | not_tested | — | P0 |
