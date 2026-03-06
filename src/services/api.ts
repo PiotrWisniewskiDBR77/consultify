@@ -2182,6 +2182,16 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch purposes');
   },
 
+  getLLMUseCaseOverview: async (organizationId?: string): Promise<any> => {
+    const qs = new URLSearchParams();
+    if (organizationId) qs.set('organizationId', organizationId);
+    const res = await fetchWithRetry(
+      `${API_URL}/llm/use-cases/overview${qs.toString() ? `?${qs.toString()}` : ''}`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to fetch AI use-case overview');
+  },
+
   upsertLLMPurpose: async (payload: any): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/llm/purposes`, {
       method: 'POST',
