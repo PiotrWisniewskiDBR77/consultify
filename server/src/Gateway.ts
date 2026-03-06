@@ -109,6 +109,8 @@ import presentationEnterpriseRoutes from './routes/presentation-enterprise.route
 import reportEnterpriseRoutes from './routes/report-enterprise.routes.js';
 import resultsEnterpriseRoutes from './routes/results-enterprise.routes.js';
 import realtimePlatformRoutes from './routes/realtime-platform.routes.js';
+import inboxEnterpriseRoutes from './routes/inbox-enterprise.routes.js';
+import assessmentEnterpriseRoutes from './routes/assessment-enterprise.routes.js';
 import interviewEnterpriseRoutes from './routes/interview-enterprise.routes.js';
 import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
 import knowledgeRoutes from './routes/knowledge.routes.js';
@@ -602,6 +604,8 @@ export class ApiGateway {
       app.use('/api/results', resultsKpiReportsRoutes);
       app.use('/api/results-v4', resultsEnterpriseRoutes);
       app.use('/api/realtime-v4', realtimePlatformRoutes);
+      app.use('/api/inbox-v4', inboxEnterpriseRoutes);
+      app.use('/api/assessments-v4', assessmentEnterpriseRoutes);
       mountStub('/api/locations', locationsRoutes, 'locationsRoutes');
       mountStub(
         '/api/notification-settings',

@@ -12234,6 +12234,254 @@ export const Api = {
     const res = await fetch(`${API_URL}/realtime-v4/tool-sessions/${toolSessionId}/locks`, { headers: getHeaders() });
     return handleResponse(res, 'Failed to list edit locks');
   },
+
+  // ── V4-INBX-06: Inbox Connectors ──
+
+  inboxIngestConnector: async (data: { sourceChannel: string; sourceId?: string; payloadJson?: string; targetUserId?: string; senderEmail?: string; senderName?: string; subject?: string }) => {
+    const res = await fetch(`${API_URL}/inbox-v4/connectors/ingest`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to ingest connector item');
+  },
+  inboxRouteConnectorItem: async (itemId: string) => {
+    const res = await fetch(`${API_URL}/inbox-v4/connectors/${itemId}/route`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to route connector item');
+  },
+  inboxListConnectorItems: async (status?: string) => {
+    const qs = status ? `?status=${status}` : '';
+    const res = await fetch(`${API_URL}/inbox-v4/connectors${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list connector items');
+  },
+  inboxCreateRoutingRule: async (data: { channel: string; ruleName?: string; conditionsJson?: object; targetUserId?: string; targetProjectId?: string; priority?: number; actionType?: string; actionConfig?: object }) => {
+    const res = await fetch(`${API_URL}/inbox-v4/routing-rules`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create routing rule');
+  },
+  inboxListRoutingRules: async (channel?: string) => {
+    const qs = channel ? `?channel=${channel}` : '';
+    const res = await fetch(`${API_URL}/inbox-v4/routing-rules${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list routing rules');
+  },
+  inboxUpdateRoutingRule: async (ruleId: string, data: object) => {
+    const res = await fetch(`${API_URL}/inbox-v4/routing-rules/${ruleId}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to update routing rule');
+  },
+  inboxDeleteRoutingRule: async (ruleId: string) => {
+    const res = await fetch(`${API_URL}/inbox-v4/routing-rules/${ruleId}`, { method: 'DELETE', headers: getHeaders() });
+    return handleResponse(res, 'Failed to delete routing rule');
+  },
+
+  // ── V4-INBX-02: Focus Board ──
+
+  focusCreateBoard: async (data: { name?: string; capacityLimit?: number; rulesJson?: object; templateId?: string }) => {
+    const res = await fetch(`${API_URL}/inbox-v4/focus/boards`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create focus board');
+  },
+  focusGetBoards: async () => {
+    const res = await fetch(`${API_URL}/inbox-v4/focus/boards`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get focus boards');
+  },
+  focusUpdateBoard: async (boardId: string, data: object) => {
+    const res = await fetch(`${API_URL}/inbox-v4/focus/boards/${boardId}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to update focus board');
+  },
+  focusAddItem: async (boardId: string, data: { inboxItemId?: string; sourceEntityType?: string; sourceEntityId?: string; title: string; priority?: string; plannedDate?: string; timeEstimateMinutes?: number; sortOrder?: number }) => {
+    const res = await fetch(`${API_URL}/inbox-v4/focus/boards/${boardId}/items`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to add focus item');
+  },
+  focusGetItems: async (boardId: string, status?: string) => {
+    const qs = status ? `?status=${status}` : '';
+    const res = await fetch(`${API_URL}/inbox-v4/focus/boards/${boardId}/items${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get focus items');
+  },
+  focusCompleteItem: async (itemId: string) => {
+    const res = await fetch(`${API_URL}/inbox-v4/focus/items/${itemId}/complete`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to complete focus item');
+  },
+  focusRemoveItem: async (itemId: string) => {
+    const res = await fetch(`${API_URL}/inbox-v4/focus/items/${itemId}`, { method: 'DELETE', headers: getHeaders() });
+    return handleResponse(res, 'Failed to remove focus item');
+  },
+  focusCreateTemplate: async (data: { name: string; description?: string; rulesJson?: object; capacityLimit?: number; isOrgDefault?: boolean }) => {
+    const res = await fetch(`${API_URL}/inbox-v4/focus/templates`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create focus template');
+  },
+  focusListTemplates: async () => {
+    const res = await fetch(`${API_URL}/inbox-v4/focus/templates`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list focus templates');
+  },
+
+  // ── V4-INBX-03: AI Triage ──
+
+  inboxTriageItem: async (data: { inboxItemId: string; suggestedPriority?: string; suggestedSection?: string; suggestedAction?: string; confidenceScore: number; reasoning?: string; originalPriority?: string; originalSection?: string }) => {
+    const res = await fetch(`${API_URL}/inbox-v4/triage`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to triage inbox item');
+  },
+  inboxAcceptTriage: async (triageId: string) => {
+    const res = await fetch(`${API_URL}/inbox-v4/triage/${triageId}/accept`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to accept triage');
+  },
+  inboxRejectTriage: async (triageId: string) => {
+    const res = await fetch(`${API_URL}/inbox-v4/triage/${triageId}/reject`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to reject triage');
+  },
+  inboxUndoTriage: async (triageId: string) => {
+    const res = await fetch(`${API_URL}/inbox-v4/triage/${triageId}/undo`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to undo triage');
+  },
+  inboxGetTriageLog: async (inboxItemId?: string) => {
+    const qs = inboxItemId ? `?inboxItemId=${inboxItemId}` : '';
+    const res = await fetch(`${API_URL}/inbox-v4/triage/log${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get triage log');
+  },
+  inboxGetTriageConfig: async () => {
+    const res = await fetch(`${API_URL}/inbox-v4/triage/config`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get triage config');
+  },
+  inboxUpdateTriageConfig: async (data: { autoTriageEnabled?: boolean; confidenceThreshold?: number; allowedActions?: string[] }) => {
+    const res = await fetch(`${API_URL}/inbox-v4/triage/config`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to update triage config');
+  },
+
+  // ── V4-INBX-05: Inbox Table ──
+
+  inboxGetTable: async (filters?: { status?: string; priority?: string; section?: string; slaStatus?: string; search?: string; sortBy?: string; sortDir?: string; limit?: number; offset?: number }) => {
+    const params = new URLSearchParams();
+    if (filters) { Object.entries(filters).forEach(([k, v]) => { if (v !== undefined) params.set(k, String(v)); }); }
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_URL}/inbox-v4/table${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get inbox table');
+  },
+  inboxGetItemPreview: async (itemId: string) => {
+    const res = await fetch(`${API_URL}/inbox-v4/items/${itemId}/preview`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get inbox item preview');
+  },
+
+  // ── V4-ASMT-04: Findings + CAPA ──
+
+  assessmentCreateFinding: async (assessmentId: string, data: { findingType?: string; severity?: string; clauseRef?: string; frameworkId?: string; title: string; description?: string; evidenceRefs?: string[]; assignedTo?: string; dueDate?: string }) => {
+    const res = await fetch(`${API_URL}/assessments-v4/assessments/${assessmentId}/findings`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create finding');
+  },
+  assessmentGetFindings: async (assessmentId: string, filters?: { status?: string; severity?: string; findingType?: string; clauseRef?: string }) => {
+    const params = new URLSearchParams();
+    if (filters) { Object.entries(filters).forEach(([k, v]) => { if (v) params.set(k, v); }); }
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_URL}/assessments-v4/assessments/${assessmentId}/findings${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get findings');
+  },
+  assessmentGetFinding: async (findingId: string) => {
+    const res = await fetch(`${API_URL}/assessments-v4/findings/${findingId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get finding');
+  },
+  assessmentUpdateFinding: async (findingId: string, data: object) => {
+    const res = await fetch(`${API_URL}/assessments-v4/findings/${findingId}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to update finding');
+  },
+  assessmentCreateCapa: async (findingId: string, data: { actionType?: string; title: string; description?: string; assignedTo?: string; dueDate?: string; verificationMethod?: string }) => {
+    const res = await fetch(`${API_URL}/assessments-v4/findings/${findingId}/capa`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create CAPA action');
+  },
+  assessmentGetCapaActions: async (findingId: string) => {
+    const res = await fetch(`${API_URL}/assessments-v4/findings/${findingId}/capa`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get CAPA actions');
+  },
+  assessmentUpdateCapa: async (actionId: string, data: object) => {
+    const res = await fetch(`${API_URL}/assessments-v4/capa/${actionId}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to update CAPA action');
+  },
+
+  // ── V4-ASMT-05: Evidence Clause Mapping ──
+
+  assessmentMapClause: async (data: { evidenceId: string; frameworkId: string; clauseRef: string; coverageLevel?: string; notes?: string }) => {
+    const res = await fetch(`${API_URL}/assessments-v4/evidence/clause-map`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to map clause');
+  },
+  assessmentGetClauseMappings: async (filters?: { evidenceId?: string; frameworkId?: string; clauseRef?: string }) => {
+    const params = new URLSearchParams();
+    if (filters) { Object.entries(filters).forEach(([k, v]) => { if (v) params.set(k, v); }); }
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_URL}/assessments-v4/evidence/clause-map${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get clause mappings');
+  },
+  assessmentDeleteClauseMapping: async (mappingId: string) => {
+    const res = await fetch(`${API_URL}/assessments-v4/evidence/clause-map/${mappingId}`, { method: 'DELETE', headers: getHeaders() });
+    return handleResponse(res, 'Failed to delete clause mapping');
+  },
+  assessmentGetClauseCoverage: async (frameworkId: string) => {
+    const res = await fetch(`${API_URL}/assessments-v4/evidence/clause-coverage/${frameworkId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get clause coverage');
+  },
+  assessmentLogEvidenceAccess: async (evidenceId: string, action: string) => {
+    const res = await fetch(`${API_URL}/assessments-v4/evidence/${evidenceId}/access-log`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ action }) });
+    return handleResponse(res, 'Failed to log evidence access');
+  },
+  assessmentGetEvidenceAccessLog: async (evidenceId?: string, limit?: number) => {
+    const params = new URLSearchParams();
+    if (evidenceId) params.set('evidenceId', evidenceId);
+    if (limit) params.set('limit', String(limit));
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_URL}/assessments-v4/evidence/access-log${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get evidence access log');
+  },
+
+  // ── V4-ASMT-06: AI Scoring + Eval ──
+
+  assessmentCreateScoringProposal: async (assessmentId: string, data: { axisId?: string; questionId?: string; proposedScore: number; currentScore?: number; citations?: string[]; reasoning?: string; confidence?: number; aiModelUsed?: string }) => {
+    const res = await fetch(`${API_URL}/assessments-v4/assessments/${assessmentId}/scoring-proposals`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create scoring proposal');
+  },
+  assessmentGetScoringProposals: async (assessmentId: string, status?: string) => {
+    const qs = status ? `?status=${status}` : '';
+    const res = await fetch(`${API_URL}/assessments-v4/assessments/${assessmentId}/scoring-proposals${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get scoring proposals');
+  },
+  assessmentReviewScoringProposal: async (proposalId: string, status: 'accepted' | 'rejected') => {
+    const res = await fetch(`${API_URL}/assessments-v4/scoring-proposals/${proposalId}/review`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ status }) });
+    return handleResponse(res, 'Failed to review scoring proposal');
+  },
+  assessmentCreateEvalDataset: async (data: { frameworkId: string; name: string; description?: string; goldenItems?: object[] }) => {
+    const res = await fetch(`${API_URL}/assessments-v4/eval/datasets`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create eval dataset');
+  },
+  assessmentGetEvalDatasets: async (frameworkId?: string) => {
+    const qs = frameworkId ? `?frameworkId=${frameworkId}` : '';
+    const res = await fetch(`${API_URL}/assessments-v4/eval/datasets${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get eval datasets');
+  },
+  assessmentCreateEvalRun: async (data: { datasetId: string; aiModelUsed?: string; accuracy?: number; precisionScore?: number; recall?: number; f1Score?: number; detailsJson?: object }) => {
+    const res = await fetch(`${API_URL}/assessments-v4/eval/runs`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create eval run');
+  },
+  assessmentGetEvalRuns: async (datasetId: string) => {
+    const res = await fetch(`${API_URL}/assessments-v4/eval/datasets/${datasetId}/runs`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get eval runs');
+  },
+  assessmentCompareEvalRuns: async (runIdA: string, runIdB: string) => {
+    const res = await fetch(`${API_URL}/assessments-v4/eval/runs/${runIdA}/compare/${runIdB}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to compare eval runs');
+  },
+
+  // ── V4-ASMT-07: Report Reviews + Diff ──
+
+  assessmentRequestReview: async (assessmentId: string, data: { versionId: string; reviewerId: string }) => {
+    const res = await fetch(`${API_URL}/assessments-v4/assessments/${assessmentId}/reviews`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to request review');
+  },
+  assessmentGetReviews: async (assessmentId: string, versionId?: string) => {
+    const qs = versionId ? `?versionId=${versionId}` : '';
+    const res = await fetch(`${API_URL}/assessments-v4/assessments/${assessmentId}/reviews${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get reviews');
+  },
+  assessmentSignOff: async (reviewId: string, comments?: string) => {
+    const res = await fetch(`${API_URL}/assessments-v4/reviews/${reviewId}/sign-off`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ comments }) });
+    return handleResponse(res, 'Failed to sign off review');
+  },
+  assessmentRejectReview: async (reviewId: string, comments: string) => {
+    const res = await fetch(`${API_URL}/assessments-v4/reviews/${reviewId}/reject`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ comments }) });
+    return handleResponse(res, 'Failed to reject review');
+  },
+  assessmentGetVersionDiff: async (assessmentId: string, fromVersionId: string, toVersionId: string) => {
+    const res = await fetch(`${API_URL}/assessments-v4/assessments/${assessmentId}/versions/${fromVersionId}/diff/${toVersionId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get version diff');
+  },
 };
 
 // Export as 'api' for backwards compatibility with lowercase import
