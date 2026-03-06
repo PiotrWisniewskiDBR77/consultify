@@ -21,6 +21,8 @@ import auditEventsService from '../services/AuditEventsService.js';
 import { getBlockingReadinessItems } from '../services/initiative/initiativeGateReadinessService.js';
 import { resolveInitiativeAccessContext } from '../services/initiative/initiativeAccessResolver.js';
 import notificationService from '../services/notificationService.js';
+import { calculateRiskScore, categorizeScore, DEFAULT_THRESHOLDS } from '../services/raidScoringService.js';
+import { syncInitiativeCapacity } from '../services/staffingPlanService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -4104,6 +4106,8 @@ export class InitiativeController {
         ]
       );
 
+      try { await syncInitiativeCapacity(initiativeId, orgId); } catch { /* best-effort */ }
+
       res.status(201).json({
         success: true,
         resource: {
@@ -4138,6 +4142,9 @@ export class InitiativeController {
         `DELETE FROM initiative_resources WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
         [resourceId, initiativeId, orgId]
       );
+
+      try { await syncInitiativeCapacity(initiativeId, orgId); } catch { /* best-effort */ }
+
       res.json({ success: true });
     }
   );
@@ -4180,6 +4187,8 @@ export class InitiativeController {
           orgId,
         ]
       );
+
+      try { await syncInitiativeCapacity(initiativeId, orgId); } catch { /* best-effort */ }
 
       res.json({ success: true });
     }
@@ -5061,6 +5070,9 @@ export class InitiativeController {
           r.description,
           r.status,
           r.impact as severity,
+          r.probability,
+          r.risk_score as riskScore,
+          r.score_category as scoreCategory,
           r.owner_id as ownerId,
           r.due_date as dueDate,
           r.mitigation_plan,
@@ -5085,7 +5097,7 @@ export class InitiativeController {
       const orgId = req.user?.organizationId;
       const actorId = req.user?.id;
       const { id: initiativeId } = req.params;
-      const { type, title, description, severity, dueDate, ownerId } = req.body || {};
+      const { type, title, description, severity, probability, dueDate, ownerId } = req.body || {};
       if (!orgId || !actorId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
@@ -5096,10 +5108,14 @@ export class InitiativeController {
       }
 
       const id = uuidv4();
+      const impactVal = severity ? String(severity).toUpperCase() : null;
+      const probVal = probability ? String(probability).toUpperCase() : null;
+      const riskScore = calculateRiskScore(probVal || 'LOW', impactVal || 'LOW');
+      const scoreCategory = categorizeScore(riskScore, DEFAULT_THRESHOLDS);
       await queryHelpers.queryRun(
         `INSERT INTO raid_items (
-          id, organization_id, initiative_id, type, title, description, impact, due_date, owner_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          id, organization_id, initiative_id, type, title, description, impact, probability, risk_score, score_category, due_date, owner_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           orgId,
@@ -5107,7 +5123,10 @@ export class InitiativeController {
           String(type).toUpperCase(),
           title,
           description || null,
-          severity ? String(severity).toUpperCase() : null,
+          impactVal,
+          probVal,
+          riskScore,
+          scoreCategory,
           dueDate || null,
           ownerId || null,
         ]
@@ -5136,14 +5155,14 @@ export class InitiativeController {
       const orgId = req.user?.organizationId;
       const actorId = req.user?.id;
       const { id: initiativeId, raidId } = req.params as any;
-      const { title, description, status, severity, dueDate, ownerId } = req.body || {};
+      const { title, description, status, severity, probability, dueDate, ownerId } = req.body || {};
       if (!orgId || !actorId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
 
-      const existing = await queryHelpers.queryOne(
-        `SELECT id, title, description, status, impact, due_date, owner_id
+      const existing = await queryHelpers.queryOne<any>(
+        `SELECT id, title, description, status, impact, probability, due_date, owner_id
          FROM raid_items
          WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
         [raidId, orgId, initiativeId]
@@ -5153,12 +5172,20 @@ export class InitiativeController {
         return;
       }
 
+      const finalImpact = severity ? String(severity).toUpperCase() : (existing.impact || 'LOW');
+      const finalProb = probability ? String(probability).toUpperCase() : (existing.probability || 'LOW');
+      const riskScore = calculateRiskScore(finalProb, finalImpact);
+      const scoreCategory = categorizeScore(riskScore, DEFAULT_THRESHOLDS);
+
       await queryHelpers.queryRun(
         `UPDATE raid_items
          SET title = COALESCE(?, title),
              description = COALESCE(?, description),
              status = COALESCE(?, status),
              impact = COALESCE(?, impact),
+             probability = COALESCE(?, probability),
+             risk_score = ?,
+             score_category = ?,
              due_date = COALESCE(?, due_date),
              owner_id = COALESCE(?, owner_id),
              updated_at = datetime('now')
@@ -5168,6 +5195,9 @@ export class InitiativeController {
           description ?? null,
           status ?? null,
           severity ? String(severity).toUpperCase() : null,
+          probability ? String(probability).toUpperCase() : null,
+          riskScore,
+          scoreCategory,
           dueDate ?? null,
           ownerId ?? null,
           raidId,

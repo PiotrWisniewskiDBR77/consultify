@@ -34,9 +34,9 @@ export const ToolDoDGateSchema = z.object({
     'manual_approval',
     'score_threshold',
   ]),
-  config: z.record(z.unknown()).optional(),
+  config: z.record(z.string(), z.unknown()).optional(),
   passed: z.boolean().default(false),
-  passedAt: z.string().datetime().optional(),
+  passedAt: z.string().optional(),
   passedBy: z.string().optional(),
 });
 

@@ -935,6 +935,40 @@ export class TaskController {
         finalStatus === 'blocked' ? blockedByDecisionId || null : null;
       const effectiveBlockedAt = finalStatus === 'blocked' ? now : null;
 
+      let finalCustomFieldsJson = '{}';
+      const rawCustomFields = (body as any).customFields;
+      if (rawCustomFields && typeof rawCustomFields === 'object') {
+        try {
+          const { validateCustomFieldValues } = await import('../services/customFieldsService.js');
+          const fieldRows = await DbPromise.all<Record<string, unknown>>(
+            `SELECT * FROM task_custom_field_schemas WHERE organization_id = ? AND entity_type = 'task' AND is_active = 1`,
+            [orgId]
+          );
+          if (fieldRows.length > 0) {
+            const defs = fieldRows.map((r: any) => ({
+              fieldKey: r.field_key,
+              label: r.label || r.field_key,
+              fieldType: r.field_type,
+              required: Boolean(r.required),
+              entityType: r.entity_type || 'task',
+              options: r.options_json ? JSON.parse(r.options_json) : undefined,
+              validation: r.validation_json ? JSON.parse(r.validation_json) : undefined,
+              isActive: true,
+              sortOrder: r.sort_order ?? 0,
+            }));
+            const result = validateCustomFieldValues(defs as any, rawCustomFields);
+            if (!result.valid) {
+              res.status(400).json({ error: 'Custom field validation failed', fieldErrors: result.errors });
+              return;
+            }
+          }
+          finalCustomFieldsJson = JSON.stringify(rawCustomFields);
+        } catch (cfErr: any) {
+          logger.warn('[TaskController.createTask] Custom fields validation skipped:', cfErr?.message);
+          finalCustomFieldsJson = JSON.stringify(rawCustomFields);
+        }
+      }
+
       const sql = `
             INSERT INTO tasks (
                 id, project_id, organization_id, title, description,
@@ -947,9 +981,10 @@ export class TaskController {
                 expected_outcome, decision_impact, evidence_required, strategic_contribution,
                 roadmap_initiative_id, kpi_id, raid_item_id, assignees,
                 progress, blocked_reason, blocked_by_decision_id, blocked_at,
+                custom_fields_json,
                 created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
       const result = await DbPromise.run(sql, [
@@ -991,6 +1026,7 @@ export class TaskController {
         finalBlockedReason,
         effectiveBlockedByDecisionId,
         effectiveBlockedAt,
+        finalCustomFieldsJson,
         now,
         now,
       ]);
@@ -1180,6 +1216,39 @@ export class TaskController {
         }
       }
 
+      if (updates.customFields && typeof updates.customFields === 'object') {
+        try {
+          const { validateCustomFieldValues } = await import('../services/customFieldsService.js');
+          const fieldRows = await DbPromise.all<Record<string, unknown>>(
+            `SELECT * FROM task_custom_field_schemas WHERE organization_id = ? AND entity_type = 'task' AND is_active = 1`,
+            [orgId]
+          );
+          if (fieldRows.length > 0) {
+            const defs = fieldRows.map((r: any) => ({
+              fieldKey: r.field_key,
+              label: r.label || r.field_key,
+              fieldType: r.field_type,
+              required: Boolean(r.required),
+              entityType: r.entity_type || 'task',
+              options: r.options_json ? JSON.parse(r.options_json) : undefined,
+              validation: r.validation_json ? JSON.parse(r.validation_json) : undefined,
+              isActive: true,
+              sortOrder: r.sort_order ?? 0,
+            }));
+            const cfResult = validateCustomFieldValues(defs as any, updates.customFields);
+            if (!cfResult.valid) {
+              res.status(400).json({ error: 'Custom field validation failed', fieldErrors: cfResult.errors });
+              return;
+            }
+          }
+          updates.custom_fields_json = JSON.stringify(updates.customFields);
+        } catch (cfErr: any) {
+          logger.warn('[TaskController.updateTask] Custom fields validation skipped:', cfErr?.message);
+          updates.custom_fields_json = JSON.stringify(updates.customFields);
+        }
+        delete updates.customFields;
+      }
+
       const allowedFields = [
         'title',
         'description',
@@ -1217,6 +1286,7 @@ export class TaskController {
         'blocked_reason',
         'blocked_by_decision_id',
         'blocked_at',
+        'custom_fields_json',
       ];
 
       const fieldMap: Record<string, string> = {
@@ -1381,6 +1451,24 @@ export class TaskController {
           organizationId: orgId,
         })
         .catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
+
+      // V4-TASK-05: Emit task.updated event for automation rules engine
+      try {
+        const { EventBus } = await import('../services/event/EventBus.js');
+        EventBus.getInstance().publish('task.updated', {
+          taskId: id,
+          organizationId: orgId,
+          userId,
+          oldStatus: beforeSnapshot.status,
+          newStatus: afterSnapshot.status,
+          assigneeId: (updates as any).assigneeId || currentTask.assignee_id,
+          priority: (updates as any).priority || currentTask.priority,
+          title: currentTask.title,
+          changedFields: Object.keys(updates),
+        });
+      } catch (evtErr: any) {
+        logger.warn('[TaskController] EventBus publish failed:', evtErr?.message);
+      }
 
       // Notifications
       const affectedUserId = (updates as any).assigneeId || currentTask.assignee_id;

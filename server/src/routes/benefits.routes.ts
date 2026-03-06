@@ -579,10 +579,10 @@ router.post(
 
     try {
       await req.emitAuditEvent?.({
-        actorType: 'user',
+        actorType: 'USER',
         action: 'deviation_case.acknowledge',
         resourceType: 'kpi_deviation_case',
-        resourceId: caseId,
+        resourceId: String(caseId),
         before: before ? { status: before.status } : undefined,
         after: { status: 'ACKNOWLEDGED' },
         metadata: { kpiId: before?.kpi_id },
@@ -617,10 +617,10 @@ router.put(
 
     try {
       await req.emitAuditEvent?.({
-        actorType: 'user',
+        actorType: 'USER',
         action: 'deviation_case.update_rca',
         resourceType: 'kpi_deviation_case',
-        resourceId: caseId,
+        resourceId: String(caseId),
         before: before ? { status: before.status, rcaText: before.rca_text } : undefined,
         after: { rcaText: rcaText ?? null },
         metadata: { kpiId: before?.kpi_id },
@@ -656,10 +656,10 @@ router.post(
 
     try {
       await req.emitAuditEvent?.({
-        actorType: 'user',
+        actorType: 'USER',
         action: 'deviation_case.add_action',
         resourceType: 'kpi_deviation_case',
-        resourceId: caseId,
+        resourceId: String(caseId),
         after: { actionId: id, title: safeTitle },
         metadata: { kpiId: deviationCase?.kpi_id },
       });
@@ -709,10 +709,10 @@ router.put(
 
     try {
       await req.emitAuditEvent?.({
-        actorType: 'user',
+        actorType: 'USER',
         action: 'deviation_case.update_action',
         resourceType: 'kpi_deviation_case',
-        resourceId: caseId,
+        resourceId: String(caseId),
         before: beforeAction ? { actionId, status: beforeAction.status, title: beforeAction.title } : undefined,
         after: { actionId, status: status || beforeAction?.status, title: title || beforeAction?.title },
         metadata: { kpiId: deviationCase?.kpi_id },
@@ -745,10 +745,10 @@ router.post(
 
     try {
       await req.emitAuditEvent?.({
-        actorType: 'user',
+        actorType: 'USER',
         action: 'deviation_case.resolve',
         resourceType: 'kpi_deviation_case',
-        resourceId: caseId,
+        resourceId: String(caseId),
         before: before ? { status: before.status } : undefined,
         after: { status: 'RESOLVED' },
         metadata: { kpiId: before?.kpi_id },
@@ -800,10 +800,10 @@ router.post(
 
     try {
       await req.emitAuditEvent?.({
-        actorType: 'user',
+        actorType: 'USER',
         action: 'deviation_case.close',
         resourceType: 'kpi_deviation_case',
-        resourceId: caseId,
+        resourceId: String(caseId),
         before: before ? { status: before.status } : undefined,
         after: { status: 'CLOSED', hasEvidence: !!(evidenceText || evidenceRef), linkedInitiativeId, linkedTaskId },
         metadata: { kpiId: before?.kpi_id },

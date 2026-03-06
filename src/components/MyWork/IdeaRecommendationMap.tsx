@@ -1137,11 +1137,36 @@ function MindMapInner({
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      if (detail?.action) quickActionRef.current(detail.action);
+      if (!detail?.action) return;
+
+      if (detail.action === 'convert_initiative' || detail.action === 'convert_decision') {
+        const target = detail.action === 'convert_initiative' ? 'initiative' : 'decision';
+        const selectedNode = getSelectedNode();
+        const nodeIds: string[] = Array.isArray(detail.nodeIds) ? detail.nodeIds : (selectedNode ? [selectedNode.id] : []);
+        if (nodeIds.length === 0) return;
+
+        Api.convertMyIdea(ideaId, { target, options: { nodeIds } })
+          .then((result) => {
+            for (const nid of nodeIds) {
+              setNodes((prev: Node[]) => prev.map((n) =>
+                n.id === nid
+                  ? { ...n, data: { ...n.data, status: 'converted', artifactRef: { type: target, id: result?.promotedEntityId || result?.created?.initiativeId || result?.created?.decisionId } } }
+                  : n
+              ));
+            }
+            toast.success(isPolish ? `Przekonwertowano na ${target}` : `Converted to ${target}`, { duration: 2000 });
+          })
+          .catch((err: any) => {
+            toast.error(isPolish ? 'Błąd konwersji' : `Convert failed: ${err?.message || 'unknown error'}`);
+          });
+        return;
+      }
+
+      quickActionRef.current(detail.action);
     };
     window.addEventListener('idea-workspace-quick-action', handler);
     return () => window.removeEventListener('idea-workspace-quick-action', handler);
-  }, []);
+  }, [getSelectedNode, ideaId, isPolish, setNodes]);
 
   // ── Insert from AI Suggestions panel ─────────────────────────────────────
   useEffect(() => {

@@ -316,6 +316,17 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     }
   })();
 
+  // V4-TASK-05: Init Automation Rules Engine - non-blocking
+  (async () => {
+    try {
+      const { initAutomationRulesEngine } = await import('./services/automationRulesEngine.js');
+      initAutomationRulesEngine();
+      logger.info('[Server] ✅ Automation Rules Engine initialized');
+    } catch (err: any) {
+      logger.error('[Server] Automation Rules Engine initialization failed:', err?.message);
+    }
+  })();
+
   // ============================================================
   // LLM CONFIG INITIALIZATION - Create tables & sync providers
   // ============================================================

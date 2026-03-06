@@ -17,6 +17,11 @@ import { type AuthRequest, isAuthenticated, verifyToken } from '../middleware/au
 import { requireOrgRole } from '../middleware/rbac.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import {
+  advanceWorkaround,
+  buildWorkaroundFromSignal,
+  type ClosedLoopWorkaround,
+} from '../services/closedLoopService.js';
+import {
   detectDelaySignals,
   getPersistedDelaySignals,
   persistDelaySignals,
@@ -30,6 +35,10 @@ import {
   getPortfolioBudgetSummary,
 } from '../services/executionBudgetService.js';
 import { detectRiskSignals } from '../services/riskDetectionService.js';
+import {
+  getCapacityTimeline,
+  getLevelingAlerts,
+} from '../services/workloadCapacityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 
@@ -574,6 +583,305 @@ router.get(
   })
 );
 
+// ================================================================
+// V4-EXEC-05: Closed-loop workarounds
+// ================================================================
+
+const CreateWorkaroundSchema = z.object({
+  signalId: z.string().min(1),
+  signalType: z.string().min(1),
+  initiativeId: z.string().min(1),
+});
+
+router.post(
+  '/workarounds',
+  verifyToken,
+  isAuthenticated,
+  requireOrgRole('admin'),
+  validateBody(CreateWorkaroundSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { signalId, signalType, initiativeId } = req.body;
+    const partial = buildWorkaroundFromSignal({ id: signalId, signalType, initiativeId });
+
+    const id = `clw-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const now = new Date().toISOString();
+
+    if (partial.steps?.[0]) {
+      partial.steps[0].completedBy = userId;
+    }
+
+    await dbRun(
+      `INSERT INTO closed_loop_workarounds (id, organization_id, initiative_id, signal_id, signal_type, status, steps_json, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, orgId, initiativeId, signalId, signalType, partial.status, JSON.stringify(partial.steps), now, now]
+    );
+
+    await dbRun(
+      `INSERT INTO execution_audit_log (id, organization_id, initiative_id, field_changed, old_value, new_value, change_reason, changed_by)
+       VALUES (gen_random_uuid()::TEXT, ?, ?, 'closed_loop_workaround', NULL, ?, 'Workaround created from signal', ?)`,
+      [orgId, initiativeId, id, userId]
+    );
+
+    return res.json({
+      id,
+      signalId,
+      signalType,
+      initiativeId,
+      organizationId: orgId,
+      status: partial.status,
+      steps: partial.steps,
+      createdAt: now,
+    });
+  })
+);
+
+router.get(
+  '/workarounds',
+  verifyToken,
+  isAuthenticated,
+  requireOrgRole('user'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { initiativeId, status, limit = '50', offset = '0' } = req.query;
+    let query = `SELECT * FROM closed_loop_workarounds WHERE organization_id = ?`;
+    const params: unknown[] = [orgId];
+
+    if (initiativeId) {
+      query += ' AND initiative_id = ?';
+      params.push(initiativeId);
+    }
+    if (status) {
+      query += ' AND status = ?';
+      params.push(status);
+    }
+
+    query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+    params.push(Math.min(parseInt(limit as string, 10) || 50, 200));
+    params.push(parseInt(offset as string, 10) || 0);
+
+    const rows = ((await dbAll(query, params)) || []) as ClosedLoopWorkaroundRow[];
+    const workarounds = rows.map(parseWorkaroundRow);
+    return res.json({ workarounds, count: workarounds.length });
+  })
+);
+
+router.get(
+  '/workarounds/:id',
+  verifyToken,
+  isAuthenticated,
+  requireOrgRole('user'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const rows = (await dbAll(
+      `SELECT * FROM closed_loop_workarounds WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as ClosedLoopWorkaroundRow[];
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ error: 'Workaround not found' });
+    }
+
+    return res.json(parseWorkaroundRow(rows[0]));
+  })
+);
+
+const AdvanceWorkaroundSchema = z.object({
+  stepId: z.string().min(1),
+  entityType: z.string().optional(),
+  entityId: z.string().optional(),
+});
+
+router.patch(
+  '/workarounds/:id/advance',
+  verifyToken,
+  isAuthenticated,
+  requireOrgRole('admin'),
+  validateBody(AdvanceWorkaroundSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const rows = (await dbAll(
+      `SELECT * FROM closed_loop_workarounds WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as ClosedLoopWorkaroundRow[];
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ error: 'Workaround not found' });
+    }
+
+    const workaround = parseWorkaroundRow(rows[0]);
+    const { stepId, entityType, entityId } = req.body;
+
+    const updated = advanceWorkaround(workaround, stepId, entityType, entityId, userId);
+
+    if (stepId === 'raid' && entityId) {
+      await dbRun(
+        `UPDATE closed_loop_workarounds SET raid_item_id = ?, status = ?, steps_json = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+        [entityId, updated.status, JSON.stringify(updated.steps), req.params.id, orgId]
+      );
+    } else {
+      await dbRun(
+        `UPDATE closed_loop_workarounds SET status = ?, steps_json = ?, updated_at = NOW()${updated.closedAt ? ', closed_at = NOW()' : ''} WHERE id = ? AND organization_id = ?`,
+        [updated.status, JSON.stringify(updated.steps), req.params.id, orgId]
+      );
+    }
+
+    await dbRun(
+      `INSERT INTO execution_audit_log (id, organization_id, initiative_id, field_changed, old_value, new_value, change_reason, changed_by)
+       VALUES (gen_random_uuid()::TEXT, ?, ?, 'closed_loop_step', ?, ?, ?, ?)`,
+      [orgId, updated.initiativeId, stepId, updated.status, `Step ${stepId} advanced`, userId]
+    );
+
+    return res.json(updated);
+  })
+);
+
+const CreateMitigationTaskSchema = z.object({
+  title: z.string().min(1),
+  assigneeId: z.string().optional(),
+  dueDate: z.string().optional(),
+});
+
+router.post(
+  '/workarounds/:id/create-mitigation-task',
+  verifyToken,
+  isAuthenticated,
+  requireOrgRole('admin'),
+  validateBody(CreateMitigationTaskSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const rows = (await dbAll(
+      `SELECT * FROM closed_loop_workarounds WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as ClosedLoopWorkaroundRow[];
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ error: 'Workaround not found' });
+    }
+
+    const workaround = parseWorkaroundRow(rows[0]);
+    if (!workaround.raidItemId) {
+      return res.status(400).json({ error: 'Workaround has no linked RAID item. Advance the raid step first.' });
+    }
+
+    const { title, assigneeId, dueDate } = req.body;
+    const taskId = `task-clw-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const now = new Date().toISOString();
+
+    await dbRun(
+      `INSERT INTO tasks (id, organization_id, initiative_id, raid_item_id, title, status, priority, assignee_id, due_date, reporter_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 'todo', 'high', ?, ?, ?, ?, ?)`,
+      [taskId, orgId, workaround.initiativeId, workaround.raidItemId, title, assigneeId || null, dueDate || null, userId, now, now]
+    );
+
+    const updated = advanceWorkaround(workaround, 'task', 'task', taskId, userId);
+
+    await dbRun(
+      `UPDATE closed_loop_workarounds SET status = ?, steps_json = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+      [updated.status, JSON.stringify(updated.steps), req.params.id, orgId]
+    );
+
+    return res.json({
+      task: { id: taskId, title, assigneeId, dueDate, raidItemId: workaround.raidItemId, status: 'todo' },
+      workaround: updated,
+    });
+  })
+);
+
+const VerifyWorkaroundSchema = z.object({
+  verificationNotes: z.string().optional(),
+});
+
+router.post(
+  '/workarounds/:id/verify',
+  verifyToken,
+  isAuthenticated,
+  requireOrgRole('admin'),
+  validateBody(VerifyWorkaroundSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const rows = (await dbAll(
+      `SELECT * FROM closed_loop_workarounds WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as ClosedLoopWorkaroundRow[];
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ error: 'Workaround not found' });
+    }
+
+    let workaround = parseWorkaroundRow(rows[0]);
+    workaround = advanceWorkaround(workaround, 'verify', undefined, undefined, userId);
+    workaround = advanceWorkaround(workaround, 'close', undefined, undefined, userId);
+
+    await dbRun(
+      `UPDATE closed_loop_workarounds SET status = ?, steps_json = ?, updated_at = NOW(), closed_at = NOW() WHERE id = ? AND organization_id = ?`,
+      [workaround.status, JSON.stringify(workaround.steps), req.params.id, orgId]
+    );
+
+    if (workaround.raidItemId) {
+      await dbRun(
+        `UPDATE raid_items SET status = 'CLOSED', mitigation_status = 'CLOSED', updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+        [workaround.raidItemId, orgId]
+      );
+    }
+
+    await dbRun(
+      `INSERT INTO execution_audit_log (id, organization_id, initiative_id, field_changed, old_value, new_value, change_reason, changed_by)
+       VALUES (gen_random_uuid()::TEXT, ?, ?, 'closed_loop_verified', 'in_progress', 'closed', ?, ?)`,
+      [orgId, workaround.initiativeId, req.body.verificationNotes || 'Workaround verified and closed', userId]
+    );
+
+    return res.json(workaround);
+  })
+);
+
+// ================================================================
+// V4-EXEC-04: Capacity leveling & timeline
+// ================================================================
+
+router.get(
+  '/capacity/leveling-alerts',
+  verifyToken,
+  isAuthenticated,
+  requireOrgRole('user'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const alerts = await getLevelingAlerts(orgId);
+    return res.json(alerts);
+  })
+);
+
+router.get(
+  '/capacity/timeline',
+  verifyToken,
+  isAuthenticated,
+  requireOrgRole('user'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const { initiativeId } = req.query;
+    const weeks = await getCapacityTimeline(orgId, initiativeId as string | undefined);
+    return res.json({ weeks });
+  })
+);
+
 export default router;
 
 // ================================================================
@@ -600,4 +908,39 @@ interface TimelineWarning {
   severity: 'low' | 'medium' | 'high' | 'critical';
   message: string;
   daysOverdue?: number;
+}
+
+interface ClosedLoopWorkaroundRow {
+  id: string;
+  organization_id: string;
+  initiative_id: string;
+  signal_id: string;
+  signal_type: string;
+  raid_item_id: string | null;
+  status: string;
+  steps_json: string;
+  created_at: string;
+  updated_at: string;
+  closed_at: string | null;
+}
+
+function parseWorkaroundRow(row: ClosedLoopWorkaroundRow): ClosedLoopWorkaround {
+  let steps = [];
+  try {
+    steps = JSON.parse(row.steps_json || '[]');
+  } catch {
+    steps = [];
+  }
+  return {
+    id: row.id,
+    signalId: row.signal_id,
+    signalType: row.signal_type,
+    raidItemId: row.raid_item_id || undefined,
+    initiativeId: row.initiative_id,
+    organizationId: row.organization_id,
+    status: row.status as ClosedLoopWorkaround['status'],
+    steps,
+    createdAt: row.created_at,
+    closedAt: row.closed_at || undefined,
+  };
 }

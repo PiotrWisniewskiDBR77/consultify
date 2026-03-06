@@ -27,6 +27,9 @@ import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { normalizeGraphForStorage, validateAndNormalizeGraph } from '../validators/ideaWorkspaceGraph.validators.js';
+import { materializeClusters, createOutcomeFromCluster } from '../services/ideaClusterService.js';
+import type { OutcomeType } from '../services/ideaClusterService.js';
+import inboxService from '../services/inboxService.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -2207,6 +2210,166 @@ router.post(
     }
 
     res.json({ success: true, count: itemKeys.length, triagedAt });
+  })
+);
+
+// ==========================================
+// V4-INBX-01: CANONICAL INBOX ENDPOINTS
+// ==========================================
+
+/**
+ * POST /api/my-work/inbox/materialize
+ * Trigger materialization of inbox items from tasks/decisions/notifications
+ */
+router.post(
+  '/inbox/materialize',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['canonical_inbox_items']))) return;
+
+    const result = await inboxService.materializeInboxItems(userId, orgId);
+    res.json({ success: true, ...result });
+  })
+);
+
+/**
+ * GET /api/my-work/inbox/canonical
+ * Get canonical inbox items with filtering
+ */
+router.get(
+  '/inbox/canonical',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['canonical_inbox_items']))) return;
+
+    const filters = {
+      section: req.query.section ? String(req.query.section) : undefined,
+      status: req.query.status ? String(req.query.status) : undefined,
+      priority: req.query.priority ? String(req.query.priority) : undefined,
+      slaStatus: req.query.slaStatus ? String(req.query.slaStatus) : undefined,
+      limit: req.query.limit ? Number(req.query.limit) : undefined,
+      offset: req.query.offset ? Number(req.query.offset) : undefined,
+    };
+
+    const items = await inboxService.getInboxItems(userId, orgId, filters);
+    res.json({ items });
+  })
+);
+
+/**
+ * GET /api/my-work/inbox/canonical/stats
+ * Inbox statistics by section, SLA status, priority
+ */
+router.get(
+  '/inbox/canonical/stats',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['canonical_inbox_items']))) return;
+
+    const stats = await inboxService.getInboxStats(userId, orgId);
+    res.json(stats);
+  })
+);
+
+/**
+ * POST /api/my-work/inbox/canonical/:id/delegate
+ * Delegate an inbox item to another user
+ */
+router.post(
+  '/inbox/canonical/:id/delegate',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId } = identity;
+    if (!(await requireTables(res, ['canonical_inbox_items']))) return;
+
+    const { id } = req.params;
+    const { toUserId, notes } = req.body || {};
+    if (!toUserId || typeof toUserId !== 'string') {
+      return res.status(400).json({ error: 'toUserId is required' });
+    }
+
+    const item = await inboxService.delegateItem(id, toUserId, notes, userId);
+    if (!item) return res.status(404).json({ error: 'Inbox item not found' });
+    res.json({ success: true, item });
+  })
+);
+
+/**
+ * POST /api/my-work/inbox/canonical/:id/snooze
+ * Snooze an inbox item until a given date
+ */
+router.post(
+  '/inbox/canonical/:id/snooze',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    if (!(await requireTables(res, ['canonical_inbox_items']))) return;
+
+    const { id } = req.params;
+    const { until } = req.body || {};
+    if (!until || typeof until !== 'string') {
+      return res.status(400).json({ error: 'until (ISO date) is required' });
+    }
+
+    const item = await inboxService.triageItem(id, 'snooze', { snoozedUntil: until });
+    if (!item) return res.status(404).json({ error: 'Inbox item not found' });
+    res.json({ success: true, item });
+  })
+);
+
+/**
+ * PATCH /api/my-work/inbox/canonical/:id/sla
+ * Update SLA deadline for an inbox item
+ */
+router.patch(
+  '/inbox/canonical/:id/sla',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    if (!(await requireTables(res, ['canonical_inbox_items']))) return;
+
+    const { id } = req.params;
+    const { slaDeadline } = req.body || {};
+    if (!slaDeadline || typeof slaDeadline !== 'string') {
+      return res.status(400).json({ error: 'slaDeadline (ISO datetime) is required' });
+    }
+
+    const now = new Date().toISOString();
+    await queryHelpers.queryRun(
+      `UPDATE canonical_inbox_items SET sla_deadline = ?, updated_at = ? WHERE id = ?`,
+      [slaDeadline, now, id]
+    );
+
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT * FROM canonical_inbox_items WHERE id = ?`,
+      [id]
+    );
+    if (!row) return res.status(404).json({ error: 'Inbox item not found' });
+    res.json({ success: true, slaDeadline });
+  })
+);
+
+/**
+ * POST /api/my-work/inbox/sla/refresh
+ * Recalculate SLA statuses for the organization
+ */
+router.post(
+  '/inbox/sla/refresh',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+    if (!(await requireTables(res, ['canonical_inbox_items']))) return;
+
+    const result = await inboxService.updateSlaStatus(orgId);
+    res.json({ success: true, ...result });
   })
 );
 
@@ -4393,6 +4556,339 @@ router.post(
       logger.error('[IdeaAIGenerate] Failed:', err?.message);
       res.status(500).json({ error: err?.message || 'AI generation failed' });
     }
+  })
+);
+
+// ============================================================================
+// V4-IDEA-05: Cluster / Outcome model
+// ============================================================================
+
+/**
+ * POST /api/my-work/my-ideas/:id/clusters/materialize
+ * Convert AI cluster assignments to first-class cluster nodes in the graph.
+ * Body: { clusters: [{ id, name, nodeIds, color? }] }
+ */
+router.post(
+  '/my-ideas/:id/clusters/materialize',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_ideas', 'my_idea_maps']))) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId) return res.status(400).json({ error: 'Missing idea id' });
+
+    const clusters = req.body?.clusters;
+    if (!Array.isArray(clusters) || clusters.length === 0) {
+      return res.status(400).json({ error: 'clusters array is required' });
+    }
+
+    const idea = await queryHelpers.queryOne<any>(
+      `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!idea) return res.status(404).json({ error: 'Idea not found' });
+
+    const mapRow = await queryHelpers.queryOne<any>(
+      `SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!mapRow) return res.status(404).json({ error: 'Idea map not found' });
+
+    let existingNodes: any[] = [];
+    let existingEdges: any[] = [];
+    try {
+      existingNodes = typeof mapRow.nodesJson === 'string' ? JSON.parse(mapRow.nodesJson) : (mapRow.nodesJson || []);
+      existingEdges = typeof mapRow.edgesJson === 'string' ? JSON.parse(mapRow.edgesJson) : (mapRow.edgesJson || []);
+    } catch { /* keep defaults */ }
+
+    const assignments = clusters.map((c: any) => ({
+      id: String(c.id || ''),
+      name: String(c.name || 'Cluster'),
+      nodeIds: Array.isArray(c.nodeIds) ? c.nodeIds.map(String) : [],
+      color: c.color ? String(c.color) : undefined,
+    }));
+
+    const { clusterNodes, edges: newEdges } = materializeClusters(existingNodes, assignments);
+
+    const mergedNodes = [...existingNodes, ...clusterNodes];
+    const existingEdgeIds = new Set(existingEdges.map((e: any) => e.id));
+    const mergedEdges = [...existingEdges, ...newEdges.filter((e) => !existingEdgeIds.has(e.id))];
+
+    const { normalized } = validateAndNormalizeGraph({
+      nodes: mergedNodes,
+      edges: mergedEdges,
+    });
+
+    const nextVersion = Number(mapRow.version || 1) + 1;
+    const now = new Date().toISOString();
+
+    await queryHelpers.queryRun(
+      `UPDATE my_idea_maps SET nodes_json = ?, edges_json = ?, version = ?, updated_at = ? WHERE idea_id = ? AND user_id = ? AND organization_id = ?`,
+      [JSON.stringify(normalized.nodes), JSON.stringify(normalized.edges), nextVersion, now, ideaId, userId, orgId]
+    );
+
+    req.emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'IDEA_CLUSTERS_MATERIALIZE',
+      resourceType: 'idea_map',
+      resourceId: ideaId,
+      after: { clusterCount: clusterNodes.length, version: nextVersion },
+    });
+
+    res.json({ graph: normalized, clusterIds: clusterNodes.map((n) => n.id), version: nextVersion });
+  })
+);
+
+/**
+ * POST /api/my-work/my-ideas/:id/clusters/:clusterId/outcome
+ * Create an outcome node from a cluster.
+ * Body: { outcomeType: 'task' | 'decision' | 'initiative' | 'insight', label: string }
+ */
+router.post(
+  '/my-ideas/:id/clusters/:clusterId/outcome',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_ideas', 'my_idea_maps']))) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    const clusterId = String(req.params.clusterId || '').trim();
+    if (!ideaId) return res.status(400).json({ error: 'Missing idea id' });
+    if (!clusterId) return res.status(400).json({ error: 'Missing cluster id' });
+
+    const outcomeType = String(req.body?.outcomeType || '').trim() as OutcomeType;
+    const label = String(req.body?.label || '').trim();
+    if (!['task', 'decision', 'initiative', 'insight'].includes(outcomeType)) {
+      return res.status(400).json({ error: 'Invalid outcomeType' });
+    }
+    if (!label) return res.status(400).json({ error: 'label is required' });
+
+    const idea = await queryHelpers.queryOne<any>(
+      `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!idea) return res.status(404).json({ error: 'Idea not found' });
+
+    const mapRow = await queryHelpers.queryOne<any>(
+      `SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!mapRow) return res.status(404).json({ error: 'Idea map not found' });
+
+    let existingNodes: any[] = [];
+    let existingEdges: any[] = [];
+    try {
+      existingNodes = typeof mapRow.nodesJson === 'string' ? JSON.parse(mapRow.nodesJson) : (mapRow.nodesJson || []);
+      existingEdges = typeof mapRow.edgesJson === 'string' ? JSON.parse(mapRow.edgesJson) : (mapRow.edgesJson || []);
+    } catch { /* keep defaults */ }
+
+    const clusterNode = existingNodes.find((n: any) => n.id === clusterId && (n.kind === 'cluster' || n.type === 'cluster'));
+    if (!clusterNode) return res.status(404).json({ error: 'Cluster node not found in graph' });
+
+    const outcomeNode = createOutcomeFromCluster(clusterId, outcomeType, label, clusterNode);
+
+    const outcomeEdge = {
+      id: `e-${clusterId}-${outcomeNode.id}`,
+      fromNodeId: clusterId,
+      toNodeId: outcomeNode.id,
+      relationType: 'flow' as const,
+      label: outcomeType,
+    };
+
+    const mergedNodes = [...existingNodes, outcomeNode];
+    const mergedEdges = [...existingEdges, outcomeEdge];
+
+    const { normalized } = validateAndNormalizeGraph({
+      nodes: mergedNodes,
+      edges: mergedEdges,
+    });
+
+    const nextVersion = Number(mapRow.version || 1) + 1;
+    const now = new Date().toISOString();
+
+    await queryHelpers.queryRun(
+      `UPDATE my_idea_maps SET nodes_json = ?, edges_json = ?, version = ?, updated_at = ? WHERE idea_id = ? AND user_id = ? AND organization_id = ?`,
+      [JSON.stringify(normalized.nodes), JSON.stringify(normalized.edges), nextVersion, now, ideaId, userId, orgId]
+    );
+
+    req.emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'IDEA_OUTCOME_CREATE',
+      resourceType: 'idea_map',
+      resourceId: ideaId,
+      after: { outcomeId: outcomeNode.id, outcomeType, clusterId },
+    });
+
+    res.json({ outcome: outcomeNode, version: nextVersion });
+  })
+);
+
+/**
+ * POST /api/my-work/my-ideas/:id/outcomes/:outcomeId/convert
+ * Convert an outcome node to a real entity (task/decision/initiative).
+ * Body: { target: 'task' | 'decision' | 'initiative' }
+ */
+router.post(
+  '/my-ideas/:id/outcomes/:outcomeId/convert',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_ideas', 'my_idea_maps']))) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    const outcomeId = String(req.params.outcomeId || '').trim();
+    if (!ideaId) return res.status(400).json({ error: 'Missing idea id' });
+    if (!outcomeId) return res.status(400).json({ error: 'Missing outcome id' });
+
+    const target = String(req.body?.target || '').trim();
+    if (!['task', 'decision', 'initiative'].includes(target)) {
+      return res.status(400).json({ error: 'Invalid target — must be task, decision, or initiative' });
+    }
+
+    const idea = await queryHelpers.queryOne<any>(
+      `SELECT id, title, body, seed_text as "seedText", ai_expansion as "aiExpansion" FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!idea) return res.status(404).json({ error: 'Idea not found' });
+
+    const mapRow = await queryHelpers.queryOne<any>(
+      `SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!mapRow) return res.status(404).json({ error: 'Idea map not found' });
+
+    let existingNodes: any[] = [];
+    let existingEdges: any[] = [];
+    try {
+      existingNodes = typeof mapRow.nodesJson === 'string' ? JSON.parse(mapRow.nodesJson) : (mapRow.nodesJson || []);
+      existingEdges = typeof mapRow.edgesJson === 'string' ? JSON.parse(mapRow.edgesJson) : (mapRow.edgesJson || []);
+    } catch { /* keep defaults */ }
+
+    const outcomeNode = existingNodes.find((n: any) => n.id === outcomeId && (n.kind === 'outcome' || n.type === 'outcome'));
+    if (!outcomeNode) return res.status(404).json({ error: 'Outcome node not found in graph' });
+
+    const safeTitle = String(outcomeNode.label || idea.title || 'Outcome').trim().slice(0, 255);
+    const safeBody = String(idea.body || '').trim();
+    const safeExpansion = String(idea.aiExpansion || '').trim();
+
+    const toolSessionId = await createMyWorkToolSession({
+      userId,
+      orgId,
+      sourceType: 'idea',
+      sourceId: ideaId,
+      title: safeTitle,
+      summary: safeExpansion || safeBody,
+    });
+
+    let entityId: string | null = null;
+    let entityType = target;
+
+    if (target === 'initiative') {
+      if (!(await requireTables(res, ['initiatives']))) return;
+      const cols = await getTableColumns('initiatives');
+      entityId = uuidv4();
+      const insertCols: string[] = ['id'];
+      const insertVals: string[] = ['?'];
+      const insertParams: any[] = [entityId];
+      const add = (col: string, val: any) => { if (!cols.has(col)) return; insertCols.push(col); insertVals.push('?'); insertParams.push(val); };
+      add('organization_id', orgId);
+      add('name', safeTitle);
+      add('summary', (safeExpansion || safeBody).slice(0, 5000) || null);
+      add('owner_execution_id', userId);
+      add('source_type', 'tool');
+      add('source_id', toolSessionId);
+      await queryHelpers.queryRun(`INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`, insertParams);
+    } else if (target === 'decision') {
+      if (!(await requireTables(res, ['decisions']))) return;
+      const cols = await getTableColumns('decisions');
+      entityId = uuidv4();
+      const insertCols: string[] = ['id'];
+      const insertVals: string[] = ['?'];
+      const insertParams: any[] = [entityId];
+      const add = (col: string, val: any) => { if (!cols.has(col)) return; insertCols.push(col); insertVals.push('?'); insertParams.push(val); };
+      add('organization_id', orgId);
+      add('title', safeTitle);
+      add('description', (safeExpansion || safeBody).slice(0, 12000) || null);
+      add('type', 'general');
+      add('decision_maker_id', userId);
+      add('created_by', userId);
+      add('status', 'pending');
+      add('source_type', 'idea');
+      add('source_id', ideaId);
+      await queryHelpers.queryRun(`INSERT INTO decisions (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`, insertParams);
+    } else if (target === 'task') {
+      if (!(await requireTables(res, ['tasks']))) return;
+      const cols = await getTableColumns('tasks');
+      entityId = uuidv4();
+      const insertCols: string[] = ['id'];
+      const insertVals: string[] = ['?'];
+      const insertParams: any[] = [entityId];
+      const add = (col: string, val: any) => { if (!cols.has(col)) return; insertCols.push(col); insertVals.push('?'); insertParams.push(val); };
+      add('organization_id', orgId);
+      add('title', safeTitle);
+      add('description', `Origin idea: ${String(idea.title || '')}\n${safeBody}`.slice(0, 9000) || null);
+      add('status', 'todo');
+      add('priority', 'medium');
+      add('assignee_id', userId);
+      add('reporter_id', userId);
+      add('source_type', 'idea');
+      add('source_id', ideaId);
+      await queryHelpers.queryRun(`INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`, insertParams);
+    }
+
+    if (entityId) {
+      await linkGraphAddEdge({
+        orgId,
+        userId,
+        sourceType: entityType,
+        sourceId: entityId,
+        targetType: 'idea',
+        targetId: ideaId,
+        relation: 'ref',
+        containerType: 'mywork_convert',
+        containerId: toolSessionId,
+        nodeId: outcomeId,
+      });
+
+      const updatedNodes = existingNodes.map((n: any) => {
+        if (n.id !== outcomeId) return n;
+        return {
+          ...n,
+          artifactRef: { type: entityType, id: entityId },
+          metadata: { ...(n.metadata || {}), convertedAt: new Date().toISOString() },
+        };
+      });
+
+      const { normalized } = validateAndNormalizeGraph({
+        nodes: updatedNodes,
+        edges: existingEdges,
+      });
+
+      const nextVersion = Number(mapRow.version || 1) + 1;
+      const now = new Date().toISOString();
+
+      await queryHelpers.queryRun(
+        `UPDATE my_idea_maps SET nodes_json = ?, edges_json = ?, version = ?, updated_at = ? WHERE idea_id = ? AND user_id = ? AND organization_id = ?`,
+        [JSON.stringify(normalized.nodes), JSON.stringify(normalized.edges), nextVersion, now, ideaId, userId, orgId]
+      );
+
+      req.emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'IDEA_OUTCOME_CONVERT',
+        resourceType: entityType,
+        resourceId: entityId,
+        after: { outcomeId, entityType, entityId, ideaId },
+      });
+    }
+
+    res.json({ entityId, entityType, outcomeId, sourceSessionId: toolSessionId });
   })
 );
 
@@ -7641,6 +8137,109 @@ router.post(
       [id, orgId, name, triggerType, JSON.stringify(Array.isArray(conditions) ? conditions : []), JSON.stringify(actions), userId]
     );
     res.status(201).json({ success: true, id });
+  })
+);
+
+router.put(
+  '/automation-rules/:ruleId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+    if (!(await requireTables(res, ['task_automation_rules']))) return res.status(503).json({ error: 'Schema not ready' });
+
+    const { ruleId } = req.params;
+    const { updateRule } = await import('../services/automationRulesService.js');
+    const updated = await updateRule(ruleId, orgId, req.body);
+    if (!updated) return res.status(404).json({ error: 'Rule not found' });
+
+    res.json({
+      success: true,
+      rule: {
+        id: updated.id,
+        name: updated.name,
+        triggerType: updated.triggerType,
+        conditions: updated.conditions,
+        actions: updated.actions,
+        isActive: updated.isActive,
+      },
+    });
+  })
+);
+
+router.delete(
+  '/automation-rules/:ruleId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+    if (!(await requireTables(res, ['task_automation_rules']))) return res.status(503).json({ error: 'Schema not ready' });
+
+    const { ruleId } = req.params;
+    const { deleteRule } = await import('../services/automationRulesService.js');
+    const deleted = await deleteRule(ruleId, orgId);
+    if (!deleted) return res.status(404).json({ error: 'Rule not found' });
+
+    res.json({ success: true });
+  })
+);
+
+router.post(
+  '/automation-rules/:ruleId/dry-run',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+    if (!(await requireTables(res, ['task_automation_rules']))) return res.status(503).json({ error: 'Schema not ready' });
+
+    const { ruleId } = req.params;
+    const context = req.body?.context;
+    if (!context || typeof context !== 'object') {
+      return res.status(400).json({ error: 'context object required in body' });
+    }
+
+    const { getRuleById, dryRunRule } = await import('../services/automationRulesService.js');
+    const rule = await getRuleById(ruleId, orgId);
+    if (!rule) return res.status(404).json({ error: 'Rule not found' });
+
+    const result = dryRunRule(rule, context as Record<string, unknown>);
+    res.json(result);
+  })
+);
+
+router.post(
+  '/automation-rules/:ruleId/test',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+    if (!(await requireTables(res, ['task_automation_rules']))) return res.status(503).json({ error: 'Schema not ready' });
+
+    const { ruleId } = req.params;
+    const taskId = req.body?.taskId as string;
+    if (!taskId) return res.status(400).json({ error: 'taskId required in body' });
+
+    const { getRuleById, dryRunRule } = await import('../services/automationRulesService.js');
+    const rule = await getRuleById(ruleId, orgId);
+    if (!rule) return res.status(404).json({ error: 'Rule not found' });
+
+    const task = await queryHelpers.queryOne<Record<string, unknown>>(
+      `SELECT * FROM tasks WHERE id = ? AND organization_id = ?`,
+      [taskId, orgId],
+    );
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+
+    const context: Record<string, unknown> = {
+      taskId: task.id,
+      status: task.status,
+      priority: task.priority,
+      assigneeId: task.assignee_id,
+      title: task.title,
+      dueDate: task.due_date,
+    };
+
+    const result = dryRunRule(rule, context);
+    res.json({ ...result, task: { id: task.id, title: task.title, status: task.status } });
   })
 );
 

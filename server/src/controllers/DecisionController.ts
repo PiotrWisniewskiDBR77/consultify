@@ -10,6 +10,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 import auditEventsService from '../services/AuditEventsService.js';
 import {
+  validateRequiredFields,
+  type DecisionPlaybook,
+} from '../services/decisionPlaybookService.js';
+import {
   validateDecisionWorkflowTransition,
   type DecisionWorkflowStatus,
 } from '../services/decisionWorkflowService.js';
@@ -48,6 +52,7 @@ interface DecisionRow {
   impact: string | null;
   escalation_level: string | null;
   pmo_domain?: string | null;
+  workflow_status?: string | null;
   created_by: string;
   created_at: string;
   decided_at?: string | null;
@@ -604,6 +609,7 @@ export class DecisionController {
         dueDate: decision.deadline || undefined,
         outcome: decision.decision_rationale || undefined,
         decidedAt: decision.decided_at || undefined,
+        workflowStatus: decision.workflow_status || 'proposed',
         relatedObjectType,
         relatedObjectId,
         impacts: impacts.map((impact: any) => ({
@@ -1338,6 +1344,56 @@ export class DecisionController {
   );
 
   /**
+   * V4-EXEC-06: Get tasks created from a published decision
+   * GET /api/decisions/:id/created-tasks
+   */
+  static getCreatedTasks = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id } = req.params;
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const decision = await queryHelpers.queryOne<{ id: string }>(
+        `SELECT id FROM decisions WHERE id = ? AND organization_id = ? LIMIT 1`,
+        [id, orgId]
+      );
+      if (!decision) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+
+      let tasks: any[] = [];
+      try {
+        tasks = await queryHelpers.queryAll(
+          `SELECT t.id, t.title, t.status, t.assignee_id,
+                  u.first_name || ' ' || u.last_name as assignee_name
+           FROM tasks t
+           LEFT JOIN users u ON t.assignee_id = u.id
+           WHERE t.source_type = 'decision' AND t.source_id = ? AND t.organization_id = ?
+           ORDER BY t.created_at ASC`,
+          [id, orgId]
+        );
+      } catch (_e) {
+        tasks = [];
+      }
+
+      res.json({
+        decisionId: id,
+        tasks: tasks.map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          status: t.status,
+          assigneeId: t.assignee_id || null,
+          assigneeName: t.assignee_name || null,
+        })),
+      });
+    }
+  );
+
+  /**
    * V4-EXEC-06: Decision workflow — propose→review→approve→publish; auto-create tasks on publish
    * PATCH /api/decisions/:id/workflow
    * Body: { toStatus: 'review'|'approve'|'published' }
@@ -1367,9 +1423,18 @@ export class DecisionController {
         initiative_id?: string | null;
         project_id?: string | null;
         title?: string | null;
+        description?: string | null;
         status?: string | null;
+        playbook_id?: string | null;
+        type?: string | null;
+        priority?: string | null;
+        impact?: string | null;
+        deadline?: string | null;
+        decision_maker_id?: string | null;
+        decision_rationale?: string | null;
+        options?: string | null;
       }>(
-        `SELECT id, workflow_status, initiative_id, project_id, title, status FROM decisions WHERE id = ? AND organization_id = ? LIMIT 1`,
+        `SELECT id, workflow_status, initiative_id, project_id, title, description, status, playbook_id, type, priority, impact, deadline, decision_maker_id, decision_rationale, options FROM decisions WHERE id = ? AND organization_id = ? LIMIT 1`,
         [id, orgId]
       );
 
@@ -1388,6 +1453,57 @@ export class DecisionController {
         return;
       }
 
+      // V4-TASK-07: Check required fields from playbook before allowing transition
+      try {
+        let playbookRow: any = null;
+        if (decision.playbook_id) {
+          playbookRow = await queryHelpers.queryOne(
+            `SELECT * FROM decision_playbooks WHERE id = ? AND organization_id = ?`,
+            [decision.playbook_id, orgId]
+          );
+        }
+        if (!playbookRow && decision.type) {
+          playbookRow = await queryHelpers.queryOne(
+            `SELECT * FROM decision_playbooks WHERE organization_id = ? AND decision_type = ? AND is_default = true AND is_active = true LIMIT 1`,
+            [orgId, decision.type]
+          );
+        }
+        if (playbookRow) {
+          const playbook: DecisionPlaybook = {
+            id: playbookRow.id,
+            organizationId: playbookRow.organization_id,
+            name: playbookRow.name,
+            description: playbookRow.description ?? undefined,
+            decisionType: playbookRow.decision_type,
+            requiredFields: JSON.parse(playbookRow.required_fields_json || '[]'),
+            workflowStages: JSON.parse(playbookRow.workflow_stages_json || '[]'),
+            approvalConfig: playbookRow.approval_config_json ? JSON.parse(playbookRow.approval_config_json) : undefined,
+            isDefault: Boolean(playbookRow.is_default),
+            isActive: Boolean(playbookRow.is_active),
+          };
+          const decisionData: Record<string, unknown> = {
+            title: decision.title,
+            description: decision.description,
+            priority: decision.priority,
+            impact: decision.impact,
+            deadline: decision.deadline,
+            decisionMakerId: decision.decision_maker_id,
+            rationale: decision.decision_rationale,
+          };
+          const fieldsCheck = validateRequiredFields(playbook, decisionData, targetWorkflow);
+          if (!fieldsCheck.complete) {
+            res.status(400).json({
+              error: 'Required fields are incomplete for this workflow stage',
+              missing: fieldsCheck.missing,
+              playbook: { id: playbook.id, name: playbook.name },
+            });
+            return;
+          }
+        }
+      } catch (err: any) {
+        logger.warn('[DecisionController.transitionWorkflow] Playbook check failed (continuing):', err?.message);
+      }
+
       const hasWorkflowCol = (await getTableColumns('decisions'))?.has?.('workflow_status') ?? true;
       if (hasWorkflowCol) {
         await queryHelpers.queryRun(
@@ -1397,27 +1513,71 @@ export class DecisionController {
       }
 
       const createdTaskIds: string[] = [];
-      if (targetWorkflow === 'published' && decision.initiative_id) {
-        const taskId = uuidv4();
+      if (targetWorkflow === 'published') {
         const now = new Date().toISOString();
-        const taskTitle = `Implement: ${String(decision.title || 'Decision').slice(0, 200)}`;
+
+        let parsedOptions: Array<{ id?: string; label?: string; description?: string }> = [];
         try {
+          parsedOptions = JSON.parse(decision.options || '[]');
+          if (!Array.isArray(parsedOptions)) parsedOptions = [];
+        } catch { parsedOptions = []; }
+
+        const taskSources = parsedOptions.length > 0
+          ? parsedOptions.map(opt => ({
+              title: `Implement: ${String(opt.label || opt.id || 'Option').slice(0, 200)}`,
+              description: opt.description || null,
+            }))
+          : [{
+              title: `Implement: ${String(decision.title || 'Decision').slice(0, 200)}`,
+              description: decision.description || null,
+            }];
+
+        const hasLinkGraph = (await getTableColumns('link_graph_edges'))?.size > 0;
+
+        for (const src of taskSources) {
+          const taskId = uuidv4();
           try {
-            await queryHelpers.queryRun(
-              `INSERT INTO tasks (id, organization_id, initiative_id, project_id, title, status, created_by, created_at, updated_at, source_type, source_id)
-               VALUES (?, ?, ?, ?, ?, 'todo', ?, ?, ?, 'decision', ?)`,
-              [taskId, orgId, decision.initiative_id, decision.project_id ?? null, taskTitle, userId, now, now, id]
-            );
-          } catch (_e) {
-            await queryHelpers.queryRun(
-              `INSERT INTO tasks (id, organization_id, initiative_id, project_id, title, status, created_by, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, 'todo', ?, ?, ?)`,
-              [taskId, orgId, decision.initiative_id, decision.project_id ?? null, taskTitle, userId, now, now]
-            );
+            try {
+              await queryHelpers.queryRun(
+                `INSERT INTO tasks (id, organization_id, initiative_id, project_id, title, description, status, created_by, created_at, updated_at, source_type, source_id)
+                 VALUES (?, ?, ?, ?, ?, ?, 'todo', ?, ?, ?, 'decision', ?)`,
+                [taskId, orgId, decision.initiative_id ?? null, decision.project_id ?? null, src.title, src.description, userId, now, now, id]
+              );
+            } catch (_e) {
+              await queryHelpers.queryRun(
+                `INSERT INTO tasks (id, organization_id, initiative_id, project_id, title, description, status, created_by, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, 'todo', ?, ?, ?)`,
+                [taskId, orgId, decision.initiative_id ?? null, decision.project_id ?? null, src.title, src.description, userId, now, now]
+              );
+            }
+            createdTaskIds.push(taskId);
+
+            if (hasLinkGraph) {
+              const edgeId = uuidv4();
+              try {
+                await queryHelpers.queryRun(
+                  `INSERT INTO link_graph_edges (id, organization_id, created_by, source_type, source_id, target_type, target_id, relation, created_at)
+                   VALUES (?, ?, ?, 'decision', ?, 'task', ?, 'created_from', ?)`,
+                  [edgeId, orgId, userId, id, taskId, now]
+                );
+              } catch (linkErr: any) {
+                logger.warn('[DecisionController.transitionWorkflow] LinkGraph edge failed:', linkErr?.message);
+              }
+            }
+
+            auditEventsService.log({
+              actorId: userId,
+              actorType: 'USER',
+              action: 'TASK_CREATE',
+              resourceType: 'task',
+              resourceId: taskId,
+              after: { title: src.title, status: 'todo', sourceType: 'decision', sourceId: id },
+              metadata: { decisionId: id },
+              organizationId: orgId,
+            }).catch((e: any) => logger.warn('[DecisionController] Task audit log failed:', e?.message));
+          } catch (err: any) {
+            logger.warn('[DecisionController.transitionWorkflow] Auto-create task failed:', err?.message);
           }
-          createdTaskIds.push(taskId);
-        } catch (err: any) {
-          logger.warn('[DecisionController.transitionWorkflow] Auto-create task failed:', err?.message);
         }
       }
 

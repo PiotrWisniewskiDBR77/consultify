@@ -50,8 +50,8 @@ export const CanonicalNodeSchema = z.object({
       id: z.string(),
     })
     .optional(),
-  extensions: z.record(z.unknown()).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  extensions: z.record(z.string(), z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const CanonicalEdgeSchema = z.object({
@@ -60,13 +60,13 @@ export const CanonicalEdgeSchema = z.object({
   toNodeId: z.string(),
   relationType: RelationTypeEnum.optional(),
   label: z.string().optional(),
-  extensions: z.record(z.unknown()).optional(),
+  extensions: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const IdeaWorkspaceGraphSchema = z.object({
   nodes: z.array(CanonicalNodeSchema),
   edges: z.array(CanonicalEdgeSchema),
-  extensions: z.record(z.unknown()).optional(),
+  extensions: z.record(z.string(), z.unknown()).optional(),
   preferredTool: PreferredToolEnum.nullable().optional(),
   schemaVersion: z.number().optional().default(2),
 });

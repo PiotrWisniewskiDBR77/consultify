@@ -83,6 +83,7 @@ export const CreateTaskSchema = z.object({
   roadmapInitiativeId: FlexibleId.optional().nullable(),
   kpiId: FlexibleId.optional().nullable(),
   raidItemId: FlexibleId.optional().nullable(),
+  customFields: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const UpdateTaskSchema = CreateTaskSchema.partial().omit({ organizationId: true });
