@@ -208,14 +208,14 @@ Reguła: `done` bez smoke = nie istnieje.
 | **6.3 Assessments** | 7 | 0/7 | 3/7 | 0/7 | — | — |
 | **6.4 Initiatives** | 7 | 1/7 | 4/7 | 0/7 | — | — |
 | **6.5 Execution** | 8 | 0/8 | 8/8 | 0/8 | — | — |
-| **6.6 Results** | 6 | 0/6 | 2/6 | 0/6 | — | — |
+| **6.6 Results** | 6 | 0/6 | 6/6 | 0/6 | — | — |
 | **6.7 Finance** | 7 | 0/7 | 7/7 | 0/7 | — | — |
 | **6.8 Reports** | 6 | 0/6 | 6/6 | 0/6 | — | — |
-| **6.9 Presentations** | 7 | 0/7 | 1/7 | 0/7 | — | — |
+| **6.9 Presentations** | 7 | 0/7 | 7/7 | 0/7 | — | — |
 | **6.10 Enterprise Platform** | 8 | 2/8 | 5/8 | 0/8 | — | — |
 | **6.11 Organization** | 9 | 1/9 | 6/9 | 0/9 | — | — |
 | **6.12 AI Advisor** | 8 | 0/8 | 1/8 | 0/8 | — | — |
-| **TOTAL** | **120** | **5/120** | **75/120** | **0/120** | | |
+| **TOTAL** | **120** | **5/120** | **85/120** | **0/120** | | |
 
 ### 2.4 Current blockers
 
@@ -267,6 +267,7 @@ Reguła: `done` bez smoke = nie istnieje.
 | 2026-03-06 | Batch 6 (5 tasków) | V4-ENT-07: aiGovernanceService (metering dashboard, eval harness, policy enforcement) + ai_evaluations/ai_eval_datasets/ai_governance_policies tables + 16 governance endpoints w llm.routes.ts. V4-AI-01: AdvisorResponseSchema (Zod) z citations/proposedActions/questions/confidence/safetyNotes + normalizeToAdvisorResponse() + advisor_response_log table + 4 advisor endpoints + frontend types. V4-INBX-01: canonical_inbox_items table + inboxService (materialize, triage, delegate, SLA tracking) + 7 canonical inbox endpoints. V4-INIT-03: blueprint_wbs_items table + blueprintService (WBS tree CRUD, apply WBS/milestones/roles/DoD, validate, clone) + 8 blueprint endpoints. V4-ENT-02: SCIM 2.0 full protocol (GET/PUT/PATCH/DELETE Users, POST/GET/PATCH/DELETE Groups) + verifyScimToken middleware + conflict log + group sync + frontend conflicts tab. Dashboard: 39→44/120 impl (36.7%). |
 | 2026-03-06 | V4-ASMT-03 | Na istniejącej tabeli `assessment_versions` dołożono backendowy kontrakt freeze + diff: `POST /api/assessment-workflow/:assessmentId/versions` tworzy snapshot oceny z `answers` + `score_summary`, a `GET /api/assessment-workflow/:assessmentId/versions/:fromVersion/diff/:toVersion` zwraca delty overall score i changed axes. Razem z wcześniejszym evidence gate domyka to checkpointowy zakres taska. |
 | 2026-03-06 | V4-IDEA-07 | Keyboard layer domknięto o add child/sibling, AI expand, focus selected i reparent promote/demote, a semantyki `aria-label` / `role=region` są już na `IdeaMapWorkspace`, `IdeaRecommendationMap`, `IdeaTableTool`, `IdeaProcessFlowTool` i `IdeaWhiteboardTool`. Checkpointowy zakres a11y/shortcut contract został domknięty bez dalszego zawyżania statusu. |
+| 2026-03-06 | R1 batch 5: DECK-02..07 + RSLT-02,04,05,06 (10 tasków) | **V4-DECK-02**: Migracja 655 — `deck_data_bindings` z artifact/dataset refs, diff preview on refresh, approval workflow. **V4-DECK-03**: `deck_layout_rules` (spacing/alignment/grid guardrails) + `deck_export_qa_results` z fidelity scoring i regression baseline. **V4-DECK-04**: `deck_template_governance` + `deck_template_versions`; consulting pack types, variables, versioning. **V4-DECK-05**: `deck_pptx_imports` z slide mapping, import warnings, round-trip tracking. **V4-DECK-06**: `deck_collab_sessions` z cursor position, active slide, heartbeat; join/leave/presence/getActiveCollaborators. **V4-DECK-07**: `deck_media_library` z rights_status, license tracking, watermark_applied + `deck_media_usage_log`. **V4-RSLT-02**: Migracja 656 — `kpi_connectors` (api/csv/database/webhook/manual) + `kpi_ingestion_log` z provenance i quality_score. **V4-RSLT-04**: `roi_evidence` z evidence_type, provenance_assumptions, finance_model_id, verification workflow. **V4-RSLT-05**: `kpi_report_schedules` + `kpi_report_delivery_log`; approval gates, recipient policies. **V4-RSLT-06**: `kpi_wallboards` z refresh interval, auto-rotation + `kpi_wallboard_alerts` z threshold/severity. 40+ REST endpoints pod `/api/presentations-v4/*` i `/api/results-v4/*`. 35+ frontend API methods. Dashboard: 75→85/120 impl. |
 | 2026-03-06 | R1 batch 4: RPT-01..06 (6 tasków) | **V4-RPT-01**: Migracja 654 — `report_source_packs` + `report_source_pack_items`; createSourcePack, addSourcePackItem z citation_policy (required/recommended/optional). **V4-RPT-02**: `report_data_bindings` z binding_type (kpi/finance/custom), dataset_ref, auto-diff on refresh, approval workflow. **V4-RPT-03**: `report_templates` + `report_template_versions`; variables, versioning, governance_level, publishTemplate z snapshot. **V4-RPT-04**: `report_brand_voice_policies` z tone, forbidden_phrases, required_source_citation, no_marketing_language; validateAgainstBrandVoice (marketing term detection). **V4-RPT-05**: `report_ai_proposals` z diff_preview, citations, ai_model_used; propose→accept/reject audit. **V4-RPT-06**: `report_distribution_schedules` + `report_distribution_log`; approval gates, recipient policies, delivery proof. 25 REST endpoints pod `/api/reports-v4/*`. 20+ frontend API methods. Dashboard: 69→75/120 impl. |
 | 2026-03-06 | R1 batch 3: FINC-01..07 (7 tasków) | **V4-FINC-01**: Migracja 653 — `financial_model_versions` (branch/compare/merge scenarios) + `financial_model_version_diffs`; createModelVersion, compareVersions, mergeVersion. **V4-FINC-02**: `financial_dimensions` + `financial_allocations` + `financial_consolidations` tables; multi-dim planning z proportional/custom allocation, consolidation across models. **V4-FINC-03**: `financial_budget_versions` (planned vs actual + auto-variance), `financial_forecast_cycles`, `financial_variance_alerts`; updateBudgetActuals z auto-variance calc, approveBudget gate. **V4-FINC-04**: `financial_connectors` (excel/erp_sap/erp_oracle/csv/api) + `financial_sync_log`; bidirectional sync tracking, reconciliation status, provenance. **V4-FINC-05**: `financial_valuation_snapshots` z assumptions_hash + `financial_valuation_audit`; auto-audit on create. **V4-FINC-06**: `financial_ai_assumptions` z confidence, source_citations, ai_model_used; propose→accept workflow. **V4-FINC-07**: `financial_roi_links` z initiative/benefit binding, realized_value capture z evidence. 30 REST endpoints pod `/api/finance-v4/*`. 25+ frontend API methods. Dashboard: 62→69/120 impl. |
 | 2026-03-06 | R1 batch 2: INTV-01..07 (7 tasków) | **V4-INTV-01**: Migracja 652 rozszerza `interview_template_questions/interview_questions` o `question_config` (matrix rows/cols, ranking items, scale), `branching_rules`, `is_repeatable`; `interview_respondent_segments` + `interview_quotas` tables. **V4-INTV-02**: `interview_distributions` table z `public_token`, status tracking (pending→sent→opened→started→completed), `interview_reminder_schedules`; `interviewEnterpriseService` z createDistribution, getDistributionStats, markDistributionSent, getDistributionByToken. **V4-INTV-03**: `interview_evidence` rozszerzony o storage_backend, content_hash, virus_scan_status, retention_until; `interview_evidence_access_log` z logEvidenceAccess/getEvidenceAccessLog. **V4-INTV-04**: `interview_diagnostics_snapshots` (themes/sentiment/trends/segments/drivers); createDiagnosticsSnapshot/getDiagnosticsSnapshots. **V4-INTV-05**: `interview_findings` table z finding_type (gap/strength/risk/opportunity), severity, evidence_refs, status pipeline (identified→recommended→initiative_created); promoteFindingToInitiative z traceability. **V4-INTV-06**: anonymity_mode/min_cohort_size/redaction_rules/export_gating na interview_sessions; checkCohortSize (suppressed jeśli <min), checkExportGating. **V4-INTV-07**: `organization_context_versions` z version, confidence_scores, source_citations, reviewer sign-off; diffContextVersions. 30 REST endpoints pod `/api/interview-v4/*`. 20+ frontend API methods. Dashboard: 55→62/120 impl. |
@@ -443,11 +444,11 @@ Reguła: `done` bez smoke = nie istnieje.
 | ID | Task | Spec | Impl | QA | Deps | P |
 | --- | --- | --- | --- | --- | --- | --- |
 | V4-RSLT-01 | Metrics semantic layer: KPI definitions + dimensions + slices, RLS, versioning | draft | impl | not_tested | — | P0 |
-| V4-RSLT-02 | KPI connectors: ingestion pipeline, scheduled refresh, provenance per datapoint | draft | todo | not_tested | — | P0 |
+| V4-RSLT-02 | KPI connectors: ingestion pipeline, scheduled refresh, provenance per datapoint | draft | impl | not_tested | — | P0 |
 | V4-RSLT-03 | Deviation loop: verify/close z evidence; linkage do tasks/initiatives; audit | draft | impl | not_tested | V4-ENT-03 | P0 |
-| V4-RSLT-04 | ROI: evidence dla realized values, provenance assumptions, linkage do finance | draft | todo | not_tested | — | P0 |
-| V4-RSLT-05 | Scheduled KPI reporting: templates, approval gates, distribution policies | draft | todo | not_tested | — | P0 |
-| V4-RSLT-06 | Wallboard mode: real-time refresh, alert banners, auto-rotation | draft | todo | not_tested | — | P1 |
+| V4-RSLT-04 | ROI: evidence dla realized values, provenance assumptions, linkage do finance | draft | impl | not_tested | — | P0 |
+| V4-RSLT-05 | Scheduled KPI reporting: templates, approval gates, distribution policies | draft | impl | not_tested | — | P0 |
+| V4-RSLT-06 | Wallboard mode: real-time refresh, alert banners, auto-rotation | draft | impl | not_tested | — | P1 |
 
 #### 6.7 Financial Analysis (7)
 
@@ -477,12 +478,12 @@ Reguła: `done` bez smoke = nie istnieje.
 | ID | Task | Spec | Impl | QA | Deps | P |
 | --- | --- | --- | --- | --- | --- | --- |
 | V4-DECK-01 | Block-level traceability: sourceRefs; citation UI przy hover/click | draft | impl | not_tested | — | P0 |
-| V4-DECK-02 | Deck refresh engine: bindings do artifacts, refresh z diff preview, approval gates | draft | todo | not_tested | — | P0 |
-| V4-DECK-03 | Layout rules: auto-layout z guardrails; export fidelity QA + regression tests | draft | todo | not_tested | — | P0 |
-| V4-DECK-04 | Template governance: variables, versioning, consulting pack templates | draft | todo | not_tested | — | P0 |
-| V4-DECK-05 | PPTX import: mapowanie slajdów do blocks, round-trip gdzie możliwe | draft | todo | not_tested | — | P1 |
-| V4-DECK-06 | Realtime (EPIC‑ENT‑RT‑01): WebSocket, presence, cursors | draft | todo | not_tested | V4-IDEA-02 | P0 |
-| V4-DECK-07 | Media library governance: rights, entitlements, watermarking | draft | todo | not_tested | — | P1 |
+| V4-DECK-02 | Deck refresh engine: bindings do artifacts, refresh z diff preview, approval gates | draft | impl | not_tested | — | P0 |
+| V4-DECK-03 | Layout rules: auto-layout z guardrails; export fidelity QA + regression tests | draft | impl | not_tested | — | P0 |
+| V4-DECK-04 | Template governance: variables, versioning, consulting pack templates | draft | impl | not_tested | — | P0 |
+| V4-DECK-05 | PPTX import: mapowanie slajdów do blocks, round-trip gdzie możliwe | draft | impl | not_tested | — | P1 |
+| V4-DECK-06 | Realtime (EPIC‑ENT‑RT‑01): WebSocket, presence, cursors | draft | impl | not_tested | V4-IDEA-02 | P0 |
+| V4-DECK-07 | Media library governance: rights, entitlements, watermarking | draft | impl | not_tested | — | P1 |
 
 #### 6.10 Enterprise Platform (8)
 

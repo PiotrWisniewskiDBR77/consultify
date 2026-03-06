@@ -105,7 +105,9 @@ import webhookSubRoutes from './routes/integrations/webhookSubscriptions.routes.
 import intelligenceRoutes from './routes/intelligence.routes.js';
 import financeEnterpriseRoutes from './routes/finance-enterprise.routes.js';
 import interviewRoutes from './routes/interview.routes.js';
+import presentationEnterpriseRoutes from './routes/presentation-enterprise.routes.js';
 import reportEnterpriseRoutes from './routes/report-enterprise.routes.js';
+import resultsEnterpriseRoutes from './routes/results-enterprise.routes.js';
 import interviewEnterpriseRoutes from './routes/interview-enterprise.routes.js';
 import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
 import knowledgeRoutes from './routes/knowledge.routes.js';
@@ -595,7 +597,9 @@ export class ApiGateway {
       );
       app.use('/api/economics', economicsRoutes);
       app.use('/api/presentations', presentationsRoutes);
+      app.use('/api/presentations-v4', presentationEnterpriseRoutes);
       app.use('/api/results', resultsKpiReportsRoutes);
+      app.use('/api/results-v4', resultsEnterpriseRoutes);
       mountStub('/api/locations', locationsRoutes, 'locationsRoutes');
       mountStub(
         '/api/notification-settings',

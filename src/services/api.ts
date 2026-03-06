@@ -11907,6 +11907,157 @@ export const Api = {
     const res = await fetch(`${API_URL}/reports-v4/distribution-schedules/${scheduleId}/log`, { headers: getHeaders() });
     return handleResponse(res, 'Failed to get distribution log');
   },
+
+  // ──────────────────────────────────────────────
+  // V4-DECK: Presentations Enterprise API
+  // ──────────────────────────────────────────────
+
+  deckCreateBinding: async (deckId: string, data: { slideIndex: number; blockId?: string; bindingType?: string; artifactType?: string; artifactId?: string }) => {
+    const res = await fetch(`${API_URL}/presentations-v4/decks/${deckId}/bindings`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create deck binding');
+  },
+  deckGetBindings: async (deckId: string) => {
+    const res = await fetch(`${API_URL}/presentations-v4/decks/${deckId}/bindings`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get deck bindings');
+  },
+  deckRefreshBinding: async (bindingId: string, valueHash: string) => {
+    const res = await fetch(`${API_URL}/presentations-v4/bindings/${bindingId}/refresh`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ valueHash }) });
+    return handleResponse(res, 'Failed to refresh binding');
+  },
+  deckApproveBinding: async (bindingId: string) => {
+    const res = await fetch(`${API_URL}/presentations-v4/bindings/${bindingId}/approve`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to approve binding');
+  },
+  deckCreateLayoutRule: async (data: { ruleName: string; ruleType?: string; config: Record<string, unknown> }) => {
+    const res = await fetch(`${API_URL}/presentations-v4/layout-rules`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create layout rule');
+  },
+  deckGetLayoutRules: async () => {
+    const res = await fetch(`${API_URL}/presentations-v4/layout-rules`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get layout rules');
+  },
+  deckCreateExportQA: async (deckId: string, data: { fidelityScore: number; passed: boolean; issues?: unknown[] }) => {
+    const res = await fetch(`${API_URL}/presentations-v4/decks/${deckId}/export-qa`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create export QA');
+  },
+  deckGetExportQA: async (deckId: string) => {
+    const res = await fetch(`${API_URL}/presentations-v4/decks/${deckId}/export-qa`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get export QA');
+  },
+  deckCreateTemplateGovernance: async (data: { templateId: string; name: string; category?: string; variables?: unknown[]; consultingPackType?: string }) => {
+    const res = await fetch(`${API_URL}/presentations-v4/template-governance`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create template governance');
+  },
+  deckPublishTemplate: async (governanceId: string) => {
+    const res = await fetch(`${API_URL}/presentations-v4/template-governance/${governanceId}/publish`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to publish template');
+  },
+  deckGetTemplateGovernance: async () => {
+    const res = await fetch(`${API_URL}/presentations-v4/template-governance`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get template governance');
+  },
+  deckCreatePPTXImport: async (data: { originalFilename: string; fileSizeBytes?: number; slideCount?: number }) => {
+    const res = await fetch(`${API_URL}/presentations-v4/pptx-imports`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create PPTX import');
+  },
+  deckGetPPTXImports: async () => {
+    const res = await fetch(`${API_URL}/presentations-v4/pptx-imports`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get PPTX imports');
+  },
+  deckJoinCollab: async (deckId: string) => {
+    const res = await fetch(`${API_URL}/presentations-v4/decks/${deckId}/collab/join`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to join collab');
+  },
+  deckUpdatePresence: async (sessionId: string, data: { cursorPosition?: Record<string, unknown>; activeSlideIndex?: number }) => {
+    const res = await fetch(`${API_URL}/presentations-v4/collab/${sessionId}/presence`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to update presence');
+  },
+  deckLeaveCollab: async (sessionId: string) => {
+    const res = await fetch(`${API_URL}/presentations-v4/collab/${sessionId}/leave`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to leave collab');
+  },
+  deckGetCollaborators: async (deckId: string) => {
+    const res = await fetch(`${API_URL}/presentations-v4/decks/${deckId}/collab/active`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get collaborators');
+  },
+  deckAddMedia: async (data: { filename: string; mimeType: string; fileSizeBytes?: number; storageUrl?: string; rightsStatus?: string }) => {
+    const res = await fetch(`${API_URL}/presentations-v4/media`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to add media');
+  },
+  deckGetMediaLibrary: async (rightsFilter?: string) => {
+    const params = rightsFilter ? `?rights=${rightsFilter}` : '';
+    const res = await fetch(`${API_URL}/presentations-v4/media${params}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get media library');
+  },
+  deckApplyWatermark: async (mediaId: string) => {
+    const res = await fetch(`${API_URL}/presentations-v4/media/${mediaId}/watermark`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to apply watermark');
+  },
+
+  // ──────────────────────────────────────────────
+  // V4-RSLT: Results Enterprise API
+  // ──────────────────────────────────────────────
+
+  resultsCreateKPIConnector: async (data: { connectorName: string; connectorType?: string; config: Record<string, unknown>; targetKpiIds?: string[]; scheduleCron?: string }) => {
+    const res = await fetch(`${API_URL}/results-v4/kpi-connectors`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create KPI connector');
+  },
+  resultsGetKPIConnectors: async () => {
+    const res = await fetch(`${API_URL}/results-v4/kpi-connectors`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get KPI connectors');
+  },
+  resultsIngestKPI: async (connectorId: string, data: { kpiId: string; value: number; period: string; provenance?: Record<string, unknown> }) => {
+    const res = await fetch(`${API_URL}/results-v4/kpi-connectors/${connectorId}/ingest`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to ingest KPI value');
+  },
+  resultsGetIngestionLog: async (connectorId: string) => {
+    const res = await fetch(`${API_URL}/results-v4/kpi-connectors/${connectorId}/ingestion-log`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get ingestion log');
+  },
+  resultsCreateROIEvidence: async (data: { value: number; period: string; initiativeId?: string; benefitId?: string; evidenceType?: string; sourceDescription?: string; financeModelId?: string }) => {
+    const res = await fetch(`${API_URL}/results-v4/roi-evidence`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create ROI evidence');
+  },
+  resultsGetROIEvidence: async (filters?: { initiativeId?: string; benefitId?: string }) => {
+    const params = new URLSearchParams();
+    if (filters?.initiativeId) params.set('initiativeId', filters.initiativeId);
+    if (filters?.benefitId) params.set('benefitId', filters.benefitId);
+    const qs = params.toString() ? `?${params}` : '';
+    const res = await fetch(`${API_URL}/results-v4/roi-evidence${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get ROI evidence');
+  },
+  resultsVerifyROIEvidence: async (evidenceId: string) => {
+    const res = await fetch(`${API_URL}/results-v4/roi-evidence/${evidenceId}/verify`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to verify ROI evidence');
+  },
+  resultsCreateReportSchedule: async (data: { reportName: string; kpiIds: string[]; recipientPolicy: Record<string, unknown>; scheduleCron?: string; approvalRequired?: boolean }) => {
+    const res = await fetch(`${API_URL}/results-v4/kpi-report-schedules`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create report schedule');
+  },
+  resultsGetReportSchedules: async () => {
+    const res = await fetch(`${API_URL}/results-v4/kpi-report-schedules`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get report schedules');
+  },
+  resultsApproveReportSchedule: async (scheduleId: string) => {
+    const res = await fetch(`${API_URL}/results-v4/kpi-report-schedules/${scheduleId}/approve`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to approve report schedule');
+  },
+  resultsCreateWallboard: async (data: { name: string; kpiIds: string[]; refreshIntervalSeconds?: number; autoRotationSeconds?: number }) => {
+    const res = await fetch(`${API_URL}/results-v4/wallboards`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create wallboard');
+  },
+  resultsGetWallboards: async () => {
+    const res = await fetch(`${API_URL}/results-v4/wallboards`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get wallboards');
+  },
+  resultsGetWallboard: async (wallboardId: string) => {
+    const res = await fetch(`${API_URL}/results-v4/wallboards/${wallboardId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get wallboard');
+  },
+  resultsGetWallboardAlerts: async (wallboardId: string) => {
+    const res = await fetch(`${API_URL}/results-v4/wallboards/${wallboardId}/alerts`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get wallboard alerts');
+  },
 };
 
 // Export as 'api' for backwards compatibility with lowercase import
