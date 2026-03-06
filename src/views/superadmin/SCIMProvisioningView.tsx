@@ -10,9 +10,6 @@ import {
   Check,
   ChevronRight,
   Copy,
-  Download,
-  Eye,
-  EyeOff,
   History,
   Key,
   Link2,
@@ -61,6 +58,19 @@ interface SyncLog {
   createdAt: string;
 }
 
+interface SCIMConflict {
+  id: string;
+  organizationId: string;
+  conflictType: string;
+  resourceType: string;
+  externalId: string | null;
+  internalId: string | null;
+  details: Record<string, unknown> | null;
+  resolution: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+}
+
 interface ServiceProvider {
   id: string;
   organizationId: string;
@@ -72,7 +82,7 @@ interface ServiceProvider {
   syncStatus: string;
 }
 
-type TabType = 'overview' | 'tokens' | 'mappings' | 'logs';
+type TabType = 'overview' | 'tokens' | 'mappings' | 'logs' | 'conflicts';
 
 const SCIMProvisioningView: React.FC = () => {
   const { t } = useTranslation();
@@ -84,6 +94,8 @@ const SCIMProvisioningView: React.FC = () => {
   const [tokens, setTokens] = useState<SCIMToken[]>([]);
   const [groupMappings, setGroupMappings] = useState<GroupMapping[]>([]);
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
+  const [conflicts, setConflicts] = useState<SCIMConflict[]>([]);
+  const [syncing, setSyncing] = useState(false);
 
   // UI state
   const [showTokenModal, setShowTokenModal] = useState(false);
@@ -107,17 +119,20 @@ const SCIMProvisioningView: React.FC = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [spResponse, tokensResponse, mappingsResponse, logsResponse] = await Promise.all([
-        api.get('/scim/admin/service-provider').catch(() => ({ data: { data: null } })),
-        api.get('/scim/admin/tokens').catch(() => ({ data: { data: [] } })),
-        api.get('/scim/admin/group-mappings').catch(() => ({ data: { data: [] } })),
-        api.get('/scim/admin/sync-logs?limit=50').catch(() => ({ data: { data: [] } })),
-      ]);
+      const [spResponse, tokensResponse, mappingsResponse, logsResponse, conflictsResponse] =
+        await Promise.all([
+          api.get('/scim/admin/service-provider').catch(() => ({ data: { data: null } })),
+          api.get('/scim/admin/tokens').catch(() => ({ data: { data: [] } })),
+          api.get('/scim/admin/group-mappings').catch(() => ({ data: { data: [] } })),
+          api.get('/scim/admin/sync-logs?limit=50').catch(() => ({ data: { data: [] } })),
+          api.get('/scim/admin/conflicts').catch(() => ({ data: { data: [] } })),
+        ]);
 
       setServiceProvider(spResponse.data.data);
       setTokens(tokensResponse.data.data || []);
       setGroupMappings(mappingsResponse.data.data || []);
       setSyncLogs(logsResponse.data.data || []);
+      setConflicts(conflictsResponse.data.data || []);
     } catch (error) {
       console.error('[SCIM] Fetch data error:', error);
     } finally {
@@ -191,6 +206,29 @@ const SCIMProvisioningView: React.FC = () => {
     }
   };
 
+  // Trigger Full Sync
+  const handleTriggerSync = async () => {
+    setSyncing(true);
+    try {
+      await api.post('/scim/admin/sync');
+      fetchData();
+    } catch (error) {
+      console.error('[SCIM] Sync error:', error);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  // Resolve Conflict
+  const handleResolveConflict = async (conflictId: string, resolution: 'merge' | 'skip' | 'overwrite') => {
+    try {
+      await api.post(`/scim/admin/conflicts/${conflictId}/resolve`, { resolution });
+      setConflicts(conflicts.map((c) => (c.id === conflictId ? { ...c, resolution, resolvedAt: new Date().toISOString() } : c)));
+    } catch (error) {
+      console.error('[SCIM] Resolve conflict error:', error);
+    }
+  };
+
   // Copy to clipboard
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -202,6 +240,7 @@ const SCIMProvisioningView: React.FC = () => {
     { id: 'overview' as TabType, label: 'Overview', icon: Settings },
     { id: 'tokens' as TabType, label: 'API Tokens', icon: Key },
     { id: 'mappings' as TabType, label: 'Group Mappings', icon: Users },
+    { id: 'conflicts' as TabType, label: 'Conflicts', icon: AlertTriangle },
     { id: 'logs' as TabType, label: 'Sync Logs', icon: History },
   ];
 
@@ -246,28 +285,48 @@ const SCIMProvisioningView: React.FC = () => {
         </div>
 
         {serviceProvider && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-slate-50 dark:bg-gray-900/50 rounded-lg p-4 border border-slate-200/60 dark:border-transparent">
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">{tokens.length}</div>
-              <div className="text-sm text-slate-600 dark:text-gray-400">
-                Active Tokens
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-slate-50 dark:bg-gray-900/50 rounded-lg p-4 border border-slate-200/60 dark:border-transparent">
+                <div className="text-2xl font-bold text-slate-900 dark:text-white">{tokens.length}</div>
+                <div className="text-sm text-slate-600 dark:text-gray-400">
+                  Active Tokens
+                </div>
+              </div>
+              <div className="bg-slate-50 dark:bg-gray-900/50 rounded-lg p-4 border border-slate-200/60 dark:border-transparent">
+                <div className="text-2xl font-bold text-slate-900 dark:text-white">{groupMappings.length}</div>
+                <div className="text-sm text-slate-600 dark:text-gray-400">
+                  Group Mappings
+                </div>
+              </div>
+              <div className="bg-slate-50 dark:bg-gray-900/50 rounded-lg p-4 border border-slate-200/60 dark:border-transparent">
+                <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {syncLogs.filter((l) => l.status === 'success').length}
+                </div>
+                <div className="text-sm text-slate-600 dark:text-gray-400">
+                  Successful Syncs (24h)
+                </div>
+              </div>
+              <div className="bg-slate-50 dark:bg-gray-900/50 rounded-lg p-4 border border-slate-200/60 dark:border-transparent">
+                <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {conflicts.filter((c) => !c.resolution).length}
+                </div>
+                <div className="text-sm text-slate-600 dark:text-gray-400">
+                  Unresolved Conflicts
+                </div>
               </div>
             </div>
-            <div className="bg-slate-50 dark:bg-gray-900/50 rounded-lg p-4 border border-slate-200/60 dark:border-transparent">
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">{groupMappings.length}</div>
-              <div className="text-sm text-slate-600 dark:text-gray-400">
-                Group Mappings
-              </div>
+            <div className="mt-4">
+              <button
+                onClick={handleTriggerSync}
+                disabled={syncing}
+                className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+              >
+                <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
+                {syncing ? 'Syncing...' : 'Trigger Full Sync'}
+              </button>
             </div>
-            <div className="bg-slate-50 dark:bg-gray-900/50 rounded-lg p-4 border border-slate-200/60 dark:border-transparent">
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                {syncLogs.filter((l) => l.status === 'success').length}
-              </div>
-              <div className="text-sm text-slate-600 dark:text-gray-400">
-                Successful Syncs (24h)
-              </div>
-            </div>
-          </div>
+          </>
         )}
       </div>
 
@@ -811,6 +870,147 @@ const SCIMProvisioningView: React.FC = () => {
     </div>
   );
 
+  const renderConflicts = () => {
+    const unresolved = conflicts.filter((c) => !c.resolution);
+    const resolved = conflicts.filter((c) => c.resolution);
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Provisioning Conflicts
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-gray-400">
+              Resolve conflicts from duplicate users or groups during SCIM sync
+            </p>
+          </div>
+          <button
+            onClick={fetchData}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white rounded-lg transition-colors"
+          >
+            <RefreshCw size={18} />
+            Refresh
+          </button>
+        </div>
+
+        {unresolved.length === 0 && resolved.length === 0 ? (
+          <div className="text-center py-12 bg-white dark:bg-gray-800/50 rounded-xl border border-slate-200 dark:border-gray-700">
+            <Shield className="mx-auto text-green-400 mb-4" size={48} />
+            <p className="text-slate-700 dark:text-gray-300">No conflicts detected</p>
+            <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
+              All SCIM provisioning operations completed without conflicts
+            </p>
+          </div>
+        ) : (
+          <>
+            {unresolved.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium text-slate-700 dark:text-gray-300 mb-3">
+                  Unresolved ({unresolved.length})
+                </h4>
+                <div className="space-y-3">
+                  {unresolved.map((conflict) => (
+                    <div
+                      key={conflict.id}
+                      className="bg-white dark:bg-gray-800/50 border border-yellow-500/30 rounded-xl p-4"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-yellow-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <AlertTriangle className="text-yellow-500" size={16} />
+                          </div>
+                          <div>
+                            <div className="font-medium text-slate-900 dark:text-white">
+                              {conflict.conflictType === 'duplicate_email'
+                                ? 'Duplicate Email'
+                                : conflict.conflictType === 'duplicate_group_name'
+                                  ? 'Duplicate Group Name'
+                                  : conflict.conflictType}
+                            </div>
+                            <div className="text-sm text-slate-600 dark:text-gray-400 mt-1">
+                              {conflict.resourceType} •{' '}
+                              {conflict.details
+                                ? Object.entries(conflict.details)
+                                    .map(([k, v]) => `${k}: ${v}`)
+                                    .join(', ')
+                                : 'No details'}
+                            </div>
+                            {conflict.externalId && (
+                              <div className="text-xs text-slate-500 dark:text-gray-500 mt-1">
+                                External: {conflict.externalId} → Internal: {conflict.internalId}
+                              </div>
+                            )}
+                            <div className="text-xs text-slate-400 dark:text-gray-500 mt-1">
+                              {new Date(conflict.createdAt).toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 flex-shrink-0">
+                          <button
+                            onClick={() => handleResolveConflict(conflict.id, 'merge')}
+                            className="px-3 py-1.5 text-xs bg-green-500/15 text-green-700 dark:text-green-300 hover:bg-green-500/25 rounded-lg transition-colors"
+                          >
+                            Merge
+                          </button>
+                          <button
+                            onClick={() => handleResolveConflict(conflict.id, 'overwrite')}
+                            className="px-3 py-1.5 text-xs bg-violet-500/15 text-violet-700 dark:text-violet-300 hover:bg-violet-500/25 rounded-lg transition-colors"
+                          >
+                            Overwrite
+                          </button>
+                          <button
+                            onClick={() => handleResolveConflict(conflict.id, 'skip')}
+                            className="px-3 py-1.5 text-xs bg-slate-100 text-slate-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                          >
+                            Skip
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {resolved.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium text-slate-700 dark:text-gray-300 mb-3">
+                  Resolved ({resolved.length})
+                </h4>
+                <div className="space-y-2">
+                  {resolved.map((conflict) => (
+                    <div
+                      key={conflict.id}
+                      className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-lg p-4 opacity-70"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Check className="text-green-400" size={16} />
+                          <span className="text-slate-900 dark:text-white text-sm">
+                            {conflict.conflictType} — {conflict.resourceType}
+                          </span>
+                          <span className="px-2 py-0.5 bg-green-500/15 text-green-700 dark:text-green-300 rounded text-xs">
+                            {conflict.resolution}
+                          </span>
+                        </div>
+                        <span className="text-xs text-slate-500 dark:text-gray-400">
+                          {conflict.resolvedAt
+                            ? new Date(conflict.resolvedAt).toLocaleString()
+                            : ''}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -856,6 +1056,7 @@ const SCIMProvisioningView: React.FC = () => {
           {activeTab === 'overview' && renderOverview()}
           {activeTab === 'tokens' && renderTokens()}
           {activeTab === 'mappings' && renderMappings()}
+          {activeTab === 'conflicts' && renderConflicts()}
           {activeTab === 'logs' && renderLogs()}
         </>
       )}

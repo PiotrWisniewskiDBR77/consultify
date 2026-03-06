@@ -10,6 +10,7 @@ import { Router } from 'express';
 import { LLMController } from '../controllers/ai/LLMController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
+import * as aiGov from '../services/aiGovernanceService.js';
 import circuitBreaker from '../services/ai/circuitBreaker.js';
 import llmConfigService from '../services/ai/llmConfigService.js';
 import { llmService } from '../services/ai/llmService.js';
@@ -1567,6 +1568,253 @@ router.post(
     }
 
     return res.json({ success: true, item: updated, actions });
+  })
+);
+
+// ==================== V4-ENT-07: AI GOVERNANCE ====================
+
+function resolveOrgId(req: any): string {
+  return String(
+    req?.organizationId ||
+      req?.user?.organizationId ||
+      req?.query?.organizationId ||
+      ''
+  ).trim();
+}
+
+function parseDateRange(req: any): { from: string; to: string } {
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const from = req.query?.from ? String(req.query.from).trim() : thirtyDaysAgo.toISOString();
+  const to = req.query?.to ? String(req.query.to).trim() : now.toISOString();
+  return { from, to };
+}
+
+router.get(
+  '/governance/dashboard',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const { from, to } = parseDateRange(req);
+    const dashboard = await aiGov.getMeteringDashboard(orgId, from, to);
+    return res.json({ success: true, dashboard });
+  })
+);
+
+router.get(
+  '/governance/policies',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const policies = await aiGov.getGovernancePolicies(orgId);
+    return res.json({ success: true, policies });
+  })
+);
+
+router.post(
+  '/governance/policies',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const policyType = String(req.body?.policyType || req.body?.policy_type || '').trim();
+    if (!policyType) return res.status(400).json({ success: false, error: 'policyType is required' });
+    const config = req.body?.config || req.body?.config_json || {};
+    const policy = await aiGov.createGovernancePolicy(orgId, {
+      policyType,
+      config: typeof config === 'string' ? JSON.parse(config) : config,
+      createdBy: getAuditActor(req),
+    });
+    return res.status(201).json({ success: true, policy });
+  })
+);
+
+router.put(
+  '/governance/policies/:policyId',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const policyId = String(req.params.policyId || '').trim();
+    if (!policyId) return res.status(400).json({ success: false, error: 'policyId is required' });
+    const config = req.body?.config || req.body?.config_json;
+    const policy = await aiGov.updateGovernancePolicy(orgId, policyId, {
+      policyType: req.body?.policyType || req.body?.policy_type,
+      config: config !== undefined ? (typeof config === 'string' ? JSON.parse(config) : config) : undefined,
+      isActive: req.body?.isActive ?? req.body?.is_active,
+    });
+    if (!policy) return res.status(404).json({ success: false, error: 'Policy not found' });
+    return res.json({ success: true, policy });
+  })
+);
+
+router.delete(
+  '/governance/policies/:policyId',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const policyId = String(req.params.policyId || '').trim();
+    if (!policyId) return res.status(400).json({ success: false, error: 'policyId is required' });
+    await aiGov.deleteGovernancePolicy(orgId, policyId);
+    return res.json({ success: true });
+  })
+);
+
+router.get(
+  '/governance/eval-datasets',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const datasets = await aiGov.listEvalDatasets(orgId);
+    return res.json({ success: true, datasets });
+  })
+);
+
+router.post(
+  '/governance/eval-datasets',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const name = String(req.body?.name || '').trim();
+    const purpose = String(req.body?.purpose || '').trim();
+    if (!name || !purpose) return res.status(400).json({ success: false, error: 'name and purpose are required' });
+    const samples = Array.isArray(req.body?.samples) ? req.body.samples : [];
+    const dataset = await aiGov.createEvalDataset(orgId, {
+      name,
+      purpose,
+      samples,
+      createdBy: getAuditActor(req),
+    });
+    return res.status(201).json({ success: true, dataset });
+  })
+);
+
+router.get(
+  '/governance/eval-datasets/:datasetId',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const datasetId = String(req.params.datasetId || '').trim();
+    const dataset = await aiGov.getEvalDataset(orgId, datasetId);
+    if (!dataset) return res.status(404).json({ success: false, error: 'Dataset not found' });
+    return res.json({ success: true, dataset });
+  })
+);
+
+router.put(
+  '/governance/eval-datasets/:datasetId',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const datasetId = String(req.params.datasetId || '').trim();
+    const dataset = await aiGov.updateEvalDataset(orgId, datasetId, {
+      name: req.body?.name,
+      purpose: req.body?.purpose,
+      samples: req.body?.samples,
+    });
+    if (!dataset) return res.status(404).json({ success: false, error: 'Dataset not found' });
+    return res.json({ success: true, dataset });
+  })
+);
+
+router.post(
+  '/governance/evaluations/run',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const datasetId = String(req.body?.datasetId || req.body?.dataset_id || '').trim();
+    const purpose = String(req.body?.purpose || '').trim();
+    if (!datasetId || !purpose) {
+      return res.status(400).json({ success: false, error: 'datasetId and purpose are required' });
+    }
+    const modelId = req.body?.modelId || req.body?.model_id || undefined;
+    const evaluation = await aiGov.runEvaluation(orgId, datasetId, purpose, modelId, getAuditActor(req));
+    return res.status(201).json({ success: true, evaluation });
+  })
+);
+
+router.get(
+  '/governance/evaluations',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const purpose = req.query?.purpose ? String(req.query.purpose).trim() : undefined;
+    const limitRaw = Number(req.query?.limit ?? 50);
+    const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(500, limitRaw)) : 50;
+    const evaluations = await aiGov.listEvaluations(orgId, { purpose, limit });
+    return res.json({ success: true, evaluations });
+  })
+);
+
+router.get(
+  '/governance/evaluations/:evalId',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const evalId = String(req.params.evalId || '').trim();
+    const evaluation = await aiGov.getEvaluation(orgId, evalId);
+    if (!evaluation) return res.status(404).json({ success: false, error: 'Evaluation not found' });
+    return res.json({ success: true, evaluation });
+  })
+);
+
+router.post(
+  '/governance/enforce',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const policyType = String(req.body?.policyType || req.body?.policy_type || '').trim();
+    if (!policyType) return res.status(400).json({ success: false, error: 'policyType is required' });
+    const context = req.body?.context || {};
+    const result = await aiGov.enforcePolicy(orgId, policyType, context);
+    return res.json({ success: true, ...result });
+  })
+);
+
+router.get(
+  '/governance/metering/by-purpose',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const { from, to } = parseDateRange(req);
+    const breakdown = await aiGov.getMeteringByPurpose(orgId, from, to);
+    return res.json({ success: true, breakdown });
+  })
+);
+
+router.get(
+  '/governance/metering/by-user',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const { from, to } = parseDateRange(req);
+    const breakdown = await aiGov.getMeteringByUser(orgId, from, to);
+    return res.json({ success: true, breakdown });
+  })
+);
+
+router.get(
+  '/governance/metering/trend',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const { from, to } = parseDateRange(req);
+    const trend = await aiGov.getMeteringTrend(orgId, from, to);
+    return res.json({ success: true, trend });
   })
 );
 

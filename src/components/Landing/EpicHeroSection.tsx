@@ -2,7 +2,6 @@ import { motion, useReducedMotion } from 'framer-motion';
 import {
   ArrowRight,
   CheckCircle2,
-  Handshake,
   Play,
   Sparkles,
 } from 'lucide-react';
@@ -255,7 +254,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
             >
               {t(
                 'landing.epicHero.sub',
-                'Diagnose. Plan. Execute. Track ROI — all in one AI workspace built for transformations.'
+                'Consulting Intelligence Platform'
               )}
             </motion.p>
 
@@ -407,30 +406,6 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
             </div>
           </div>
 
-          {/* Right: Become Partner */}
-          <a
-            href="/become-partner"
-            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition-all duration-200"
-            style={{
-              background: 'linear-gradient(135deg, rgba(109,40,217,0.80), rgba(192,38,211,0.80))',
-              border: '1px solid rgba(168,85,247,0.35)',
-              color: '#fff',
-              boxShadow: '0 0 20px -8px rgba(124,58,237,0.55)',
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.boxShadow =
-                '0 0 30px -6px rgba(124,58,237,0.75)';
-              (e.currentTarget as HTMLAnchorElement).style.opacity = '0.90';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.boxShadow =
-                '0 0 20px -8px rgba(124,58,237,0.55)';
-              (e.currentTarget as HTMLAnchorElement).style.opacity = '1';
-            }}
-          >
-            <Handshake size={13} />
-            <span>{t('partner.becomePartner', 'Become Partner')}</span>
-          </a>
         </motion.div>
       </div>
     </section>

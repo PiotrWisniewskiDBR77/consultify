@@ -1,0 +1,438 @@
+/**
+ * Canonical Inbox Service (V4-INBX-01)
+ *
+ * Materializes inbox items from tasks/decisions/notifications into a persistent
+ * canonical_inbox_items table with lifecycle, SLA, and delegation support.
+ */
+
+import { v4 as uuidv4 } from 'uuid';
+import * as queryHelpers from '../utils/queryHelpers.js';
+import logger from '../utils/Logger.js';
+
+export interface CanonicalInboxItem {
+  id: string;
+  userId: string;
+  organizationId: string;
+  itemType: 'task' | 'decision' | 'approval' | 'signal' | 'mention' | 'escalation';
+  sourceEntityType: string;
+  sourceEntityId: string;
+  title: string;
+  description?: string;
+  priority: 'critical' | 'high' | 'normal' | 'low';
+  section: string;
+  status: 'pending' | 'triaged' | 'delegated' | 'resolved' | 'snoozed';
+  slaDeadline?: string;
+  slaStatus: 'on_track' | 'at_risk' | 'breached' | 'resolved';
+  delegatedTo?: string;
+  delegatedAt?: string;
+  delegatedBy?: string;
+  delegationNotes?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt?: string;
+  resolvedAt?: string;
+}
+
+export interface InboxFilters {
+  section?: string;
+  status?: string;
+  priority?: string;
+  slaStatus?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface InboxStats {
+  total: number;
+  bySection: Record<string, number>;
+  bySlaStatus: Record<string, number>;
+  byPriority: Record<string, number>;
+  byStatus: Record<string, number>;
+}
+
+function rowToItem(r: any): CanonicalInboxItem {
+  let metadata: Record<string, unknown> | undefined;
+  if (r.metadata_json) {
+    try {
+      metadata = JSON.parse(r.metadata_json);
+    } catch {
+      metadata = undefined;
+    }
+  }
+  return {
+    id: r.id,
+    userId: r.user_id,
+    organizationId: r.organization_id,
+    itemType: r.item_type,
+    sourceEntityType: r.source_entity_type,
+    sourceEntityId: r.source_entity_id,
+    title: r.title,
+    description: r.description || undefined,
+    priority: r.priority || 'normal',
+    section: r.section,
+    status: r.status,
+    slaDeadline: r.sla_deadline || undefined,
+    slaStatus: r.sla_status || 'on_track',
+    delegatedTo: r.delegated_to || undefined,
+    delegatedAt: r.delegated_at || undefined,
+    delegatedBy: r.delegated_by || undefined,
+    delegationNotes: r.delegation_notes || undefined,
+    metadata,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at || undefined,
+    resolvedAt: r.resolved_at || undefined,
+  };
+}
+
+function sectionForTask(status: string, dueDate: string | null, today: string, isBlocked: boolean): string {
+  if (isBlocked) return 'blocked_escalations';
+  const s = (status || '').toLowerCase();
+  if (s === 'done' || s === 'completed' || s === 'validated') return 'assigned_tasks';
+  if (dueDate && dueDate < today) return 'overdue_sla_breach';
+  return 'assigned_tasks';
+}
+
+function priorityForItem(raw?: string | null): CanonicalInboxItem['priority'] {
+  const p = (raw || '').toLowerCase();
+  if (p === 'urgent' || p === 'critical') return 'critical';
+  if (p === 'high') return 'high';
+  if (p === 'low') return 'low';
+  return 'normal';
+}
+
+export async function materializeInboxItems(
+  userId: string,
+  orgId: string
+): Promise<{ upserted: number }> {
+  const now = new Date().toISOString();
+  const today = now.slice(0, 10);
+  let upserted = 0;
+
+  const tasks = await queryHelpers.queryAll<any>(
+    `SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date,
+            t.initiative_id, t.blocked_reason, t.blocked_by_decision_id
+     FROM tasks t
+     WHERE t.organization_id = ?
+       AND t.assignee_id = ?
+       AND lower(coalesce(t.status,'')) NOT IN ('done','completed','validated')
+     LIMIT 500`,
+    [orgId, userId]
+  );
+
+  for (const t of tasks) {
+    const isBlocked = !!(t.blocked_reason || t.blocked_by_decision_id);
+    const section = sectionForTask(t.status, t.due_date, today, isBlocked);
+    const priority = priorityForItem(t.priority);
+    try {
+      await queryHelpers.queryRun(
+        `INSERT INTO canonical_inbox_items
+           (id, user_id, organization_id, item_type, source_entity_type, source_entity_id,
+            title, description, priority, section, status, sla_deadline, created_at, updated_at)
+         VALUES (?, ?, ?, 'task', 'task', ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
+         ON CONFLICT (user_id, source_entity_type, source_entity_id) DO UPDATE SET
+           title = excluded.title,
+           description = excluded.description,
+           priority = excluded.priority,
+           section = excluded.section,
+           sla_deadline = excluded.sla_deadline,
+           updated_at = excluded.updated_at`,
+        [
+          uuidv4(), userId, orgId, t.id,
+          t.title, t.description || null, priority, section,
+          t.due_date || null, now, now,
+        ]
+      );
+      upserted++;
+    } catch (err: any) {
+      logger.warn(`[InboxService] Failed to upsert task ${t.id}: ${err.message}`);
+    }
+  }
+
+  const decisions = await queryHelpers.queryAll<any>(
+    `SELECT d.id, d.title, d.description, d.type, d.priority, d.deadline, d.status
+     FROM decisions d
+     WHERE d.organization_id = ?
+       AND d.decision_maker_id = ?
+       AND lower(coalesce(d.status,'')) IN ('pending','escalated')
+     LIMIT 200`,
+    [orgId, userId]
+  );
+
+  for (const d of decisions) {
+    const itemType = (d.type || '').toUpperCase().includes('APPROVAL') ? 'approval' : 'decision';
+    const section = itemType === 'approval' ? 'approvals_gates' : 'decisions_required';
+    const priority = priorityForItem(d.priority);
+    try {
+      await queryHelpers.queryRun(
+        `INSERT INTO canonical_inbox_items
+           (id, user_id, organization_id, item_type, source_entity_type, source_entity_id,
+            title, description, priority, section, status, sla_deadline, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'decision', ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
+         ON CONFLICT (user_id, source_entity_type, source_entity_id) DO UPDATE SET
+           title = excluded.title,
+           description = excluded.description,
+           priority = excluded.priority,
+           section = excluded.section,
+           sla_deadline = excluded.sla_deadline,
+           updated_at = excluded.updated_at`,
+        [
+          uuidv4(), userId, orgId, itemType, d.id,
+          d.title, d.description || null, priority, section,
+          d.deadline || null, now, now,
+        ]
+      );
+      upserted++;
+    } catch (err: any) {
+      logger.warn(`[InboxService] Failed to upsert decision ${d.id}: ${err.message}`);
+    }
+  }
+
+  try {
+    const notifications = await queryHelpers.queryAll<any>(
+      `SELECT id, type, title, COALESCE(message, body, '') as body, priority, created_at
+       FROM notifications
+       WHERE user_id = ? AND COALESCE(read, 0) = 0
+       LIMIT 200`,
+      [userId]
+    );
+
+    for (const n of notifications) {
+      const nType = (n.type || '').toUpperCase();
+      let itemType: CanonicalInboxItem['itemType'] = 'signal';
+      let section = 'fyi_system';
+      if (nType.includes('MENTION')) { itemType = 'mention'; section = 'fyi_mentions'; }
+      else if (nType.includes('ESCALATION')) { itemType = 'escalation'; section = 'blocked_escalations'; }
+      else if (nType.includes('REVIEW') || nType.includes('APPROVAL')) { itemType = 'approval'; section = 'approvals_gates'; }
+      else if (nType.includes('AI') || nType.includes('INSIGHT')) { itemType = 'signal'; section = 'ai_insights'; }
+
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO canonical_inbox_items
+             (id, user_id, organization_id, item_type, source_entity_type, source_entity_id,
+              title, description, priority, section, status, created_at, updated_at)
+           VALUES (?, ?, ?, ?, 'notification', ?, ?, ?, ?, ?, 'pending', ?, ?)
+           ON CONFLICT (user_id, source_entity_type, source_entity_id) DO UPDATE SET
+             title = excluded.title,
+             description = excluded.description,
+             section = excluded.section,
+             updated_at = excluded.updated_at`,
+          [
+            uuidv4(), userId, orgId, itemType, n.id,
+            n.title || 'Notification', n.body || null,
+            priorityForItem(n.priority), section, now, now,
+          ]
+        );
+        upserted++;
+      } catch (err: any) {
+        logger.warn(`[InboxService] Failed to upsert notification ${n.id}: ${err.message}`);
+      }
+    }
+  } catch {
+    // notifications table may have different schema
+  }
+
+  return { upserted };
+}
+
+export async function getInboxItems(
+  userId: string,
+  orgId: string,
+  filters: InboxFilters = {}
+): Promise<CanonicalInboxItem[]> {
+  const conditions = ['user_id = ?', 'organization_id = ?'];
+  const params: unknown[] = [userId, orgId];
+
+  if (filters.section) {
+    conditions.push('section = ?');
+    params.push(filters.section);
+  }
+  if (filters.status) {
+    conditions.push('status = ?');
+    params.push(filters.status);
+  }
+  if (filters.priority) {
+    conditions.push('priority = ?');
+    params.push(filters.priority);
+  }
+  if (filters.slaStatus) {
+    conditions.push('sla_status = ?');
+    params.push(filters.slaStatus);
+  }
+
+  const limit = Math.min(filters.limit || 100, 500);
+  const offset = filters.offset || 0;
+
+  const rows = await queryHelpers.queryAll<any>(
+    `SELECT * FROM canonical_inbox_items
+     WHERE ${conditions.join(' AND ')}
+     ORDER BY
+       CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 WHEN 'low' THEN 3 ELSE 2 END,
+       CASE sla_status WHEN 'breached' THEN 0 WHEN 'at_risk' THEN 1 WHEN 'on_track' THEN 2 ELSE 3 END,
+       created_at DESC
+     LIMIT ? OFFSET ?`,
+    [...params, limit, offset]
+  );
+
+  return rows.map(rowToItem);
+}
+
+export async function triageItem(
+  itemId: string,
+  action: string,
+  params?: Record<string, unknown>
+): Promise<CanonicalInboxItem | null> {
+  const now = new Date().toISOString();
+  let newStatus: string;
+  switch (action) {
+    case 'resolve':
+    case 'done':
+      newStatus = 'resolved';
+      break;
+    case 'snooze':
+      newStatus = 'snoozed';
+      break;
+    case 'delegate':
+      newStatus = 'delegated';
+      break;
+    default:
+      newStatus = 'triaged';
+  }
+
+  await queryHelpers.queryRun(
+    `UPDATE canonical_inbox_items
+     SET status = ?, updated_at = ?,
+         resolved_at = CASE WHEN ? = 'resolved' THEN ? ELSE resolved_at END,
+         metadata_json = COALESCE(?, metadata_json)
+     WHERE id = ?`,
+    [
+      newStatus, now,
+      newStatus, now,
+      params ? JSON.stringify(params) : null,
+      itemId,
+    ]
+  );
+
+  const row = await queryHelpers.queryOne<any>(
+    `SELECT * FROM canonical_inbox_items WHERE id = ?`,
+    [itemId]
+  );
+  return row ? rowToItem(row) : null;
+}
+
+export async function delegateItem(
+  itemId: string,
+  toUserId: string,
+  notes: string | undefined,
+  delegatedBy: string
+): Promise<CanonicalInboxItem | null> {
+  const now = new Date().toISOString();
+
+  const original = await queryHelpers.queryOne<any>(
+    `SELECT * FROM canonical_inbox_items WHERE id = ?`,
+    [itemId]
+  );
+  if (!original) return null;
+
+  await queryHelpers.queryRun(
+    `UPDATE canonical_inbox_items
+     SET status = 'delegated', delegated_to = ?, delegated_at = ?,
+         delegated_by = ?, delegation_notes = ?, updated_at = ?
+     WHERE id = ?`,
+    [toUserId, now, delegatedBy, notes || null, now, itemId]
+  );
+
+  const newId = uuidv4();
+  await queryHelpers.queryRun(
+    `INSERT INTO canonical_inbox_items
+       (id, user_id, organization_id, item_type, source_entity_type, source_entity_id,
+        title, description, priority, section, status, sla_deadline, metadata_json, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)`,
+    [
+      newId, toUserId, original.organization_id,
+      original.item_type, original.source_entity_type, original.source_entity_id,
+      original.title, original.description,
+      original.priority, original.section,
+      original.sla_deadline || null,
+      JSON.stringify({ delegatedFrom: delegatedBy, originalItemId: itemId }),
+      now, now,
+    ]
+  );
+
+  const row = await queryHelpers.queryOne<any>(
+    `SELECT * FROM canonical_inbox_items WHERE id = ?`,
+    [itemId]
+  );
+  return row ? rowToItem(row) : null;
+}
+
+export async function updateSlaStatus(orgId: string): Promise<{ updated: number }> {
+  const now = new Date();
+  const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000).toISOString();
+  const nowIso = now.toISOString();
+
+  const breached = await queryHelpers.queryRun(
+    `UPDATE canonical_inbox_items
+     SET sla_status = 'breached', updated_at = ?
+     WHERE organization_id = ?
+       AND sla_deadline IS NOT NULL
+       AND sla_deadline < ?
+       AND sla_status NOT IN ('breached', 'resolved')
+       AND status NOT IN ('resolved')`,
+    [nowIso, orgId, nowIso]
+  );
+
+  const atRisk = await queryHelpers.queryRun(
+    `UPDATE canonical_inbox_items
+     SET sla_status = 'at_risk', updated_at = ?
+     WHERE organization_id = ?
+       AND sla_deadline IS NOT NULL
+       AND sla_deadline >= ?
+       AND sla_deadline <= ?
+       AND sla_status NOT IN ('at_risk', 'breached', 'resolved')
+       AND status NOT IN ('resolved')`,
+    [nowIso, orgId, nowIso, twoHoursFromNow]
+  );
+
+  return { updated: (breached?.changes || 0) + (atRisk?.changes || 0) };
+}
+
+export async function getInboxStats(
+  userId: string,
+  orgId: string
+): Promise<InboxStats> {
+  const rows = await queryHelpers.queryAll<any>(
+    `SELECT section, sla_status, priority, status, COUNT(*) as cnt
+     FROM canonical_inbox_items
+     WHERE user_id = ? AND organization_id = ?
+     GROUP BY section, sla_status, priority, status`,
+    [userId, orgId]
+  );
+
+  const stats: InboxStats = {
+    total: 0,
+    bySection: {},
+    bySlaStatus: {},
+    byPriority: {},
+    byStatus: {},
+  };
+
+  for (const r of rows) {
+    const cnt = Number(r.cnt) || 0;
+    stats.total += cnt;
+    stats.bySection[r.section] = (stats.bySection[r.section] || 0) + cnt;
+    stats.bySlaStatus[r.sla_status] = (stats.bySlaStatus[r.sla_status] || 0) + cnt;
+    stats.byPriority[r.priority] = (stats.byPriority[r.priority] || 0) + cnt;
+    stats.byStatus[r.status] = (stats.byStatus[r.status] || 0) + cnt;
+  }
+
+  return stats;
+}
+
+export default {
+  materializeInboxItems,
+  getInboxItems,
+  triageItem,
+  delegateItem,
+  updateSlaStatus,
+  getInboxStats,
+};

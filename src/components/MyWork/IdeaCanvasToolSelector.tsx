@@ -23,6 +23,9 @@ export interface IdeaNode {
   position?: { x: number; y: number };
   parentId?: string;
   metadata?: Record<string, unknown>;
+  clusterIds?: string[];
+  outcomeType?: 'task' | 'decision' | 'initiative' | 'insight';
+  artifactRef?: { type: string; id: string };
 }
 
 export interface IdeaEdge {

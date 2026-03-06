@@ -906,7 +906,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 <InitiativeGridCard
                   key={initiative.id}
                   initiative={initiative}
-                  onClick={() => handleInitiativeClick(initiative)}
+                  onClick={() => handleOpenFullScreen(initiative)}
                 />
               ))}
             </div>
@@ -921,7 +921,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         return (
           <PortfolioKanbanView
             initiatives={searchedInitiatives}
-            onInitiativeClick={handleInitiativeClick}
+            onInitiativeClick={handleOpenFullScreen}
             onStatusChange={handleStatusChange}
             scope={scope}
           />
@@ -930,7 +930,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         return (
           <InitiativesTimelineView
             initiatives={searchedInitiatives}
-            onInitiativeClick={handleInitiativeClick}
+            onInitiativeClick={handleOpenFullScreen}
             projectId={currentProjectId || undefined}
           />
         );
@@ -938,7 +938,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         return (
           <PortfolioMatrixView
             initiatives={searchedInitiatives}
-            onInitiativeClick={handleInitiativeClick}
+            onInitiativeClick={handleOpenFullScreen}
           />
         );
       default:

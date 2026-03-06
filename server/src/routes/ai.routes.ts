@@ -72,6 +72,14 @@ import {
   UpdatePolicyRequestSchema,
   UpdateUserPreferencesRequestSchema,
 } from '../validators/ai.validators.js';
+import {
+  AdvisorExecuteActionRequestSchema,
+  AdvisorFeedbackRequestSchema,
+  AdvisorRespondRequestSchema,
+  AdvisorResponseIdParamSchema,
+  AdvisorResponsesQuerySchema,
+  normalizeToAdvisorResponse,
+} from '../validators/advisorResponse.validators.js';
 
 const router = Router();
 
@@ -5640,6 +5648,186 @@ router.post(
     }
 
     return res.json({ success: true });
+  })
+);
+
+// ==========================================
+// V4-AI-01: Canonical Advisor Response Pipeline
+// ==========================================
+
+router.post(
+  '/advisor/respond',
+  verifyToken,
+  validateBody(AdvisorRespondRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { query, conversationId, context } = req.body;
+    const orgId = req.organizationId!;
+    const userId = req.userId!;
+
+    const startMs = Date.now();
+
+    try {
+      const { default: aiChat } = await import('../services/ai/aiChatService.js');
+      const rawResult = await aiChat.processMessage({
+        message: query,
+        userId,
+        organizationId: orgId,
+        conversationId,
+        context: context || {},
+      });
+
+      const advisorResponse = normalizeToAdvisorResponse(rawResult, {
+        intent: rawResult.intent,
+        purpose: context?.purpose,
+      });
+
+      advisorResponse.metadata = {
+        ...advisorResponse.metadata,
+        latencyMs: Date.now() - startMs,
+      };
+
+      try {
+        await dbRun(
+          `INSERT INTO advisor_response_log
+            (organization_id, user_id, conversation_id, intent, answer_preview,
+             citations_count, actions_count, questions_count, confidence,
+             safety_notes_json, model, tokens_used, latency_ms, purpose, response_json)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            orgId,
+            userId,
+            conversationId || null,
+            advisorResponse.intent,
+            advisorResponse.answer.slice(0, 500),
+            advisorResponse.citations.length,
+            advisorResponse.proposedActions.length,
+            advisorResponse.questions.length,
+            advisorResponse.confidence,
+            JSON.stringify(advisorResponse.safetyNotes),
+            advisorResponse.metadata?.model || null,
+            advisorResponse.metadata?.tokensUsed || null,
+            advisorResponse.metadata?.latencyMs || null,
+            advisorResponse.metadata?.purpose || null,
+            JSON.stringify(advisorResponse),
+          ]
+        );
+      } catch (logErr: any) {
+        logger.warn('[Advisor] Failed to log response:', logErr?.message);
+      }
+
+      return res.json({ success: true, data: advisorResponse });
+    } catch (err: any) {
+      logger.error('[Advisor] respond error:', err);
+      return res.status(500).json({ error: err?.message || 'Advisor processing failed' });
+    }
+  })
+);
+
+router.post(
+  '/advisor/response/:responseId/feedback',
+  verifyToken,
+  validateParams(AdvisorResponseIdParamSchema),
+  validateBody(AdvisorFeedbackRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { responseId } = req.params;
+    const { score, text } = req.body;
+    const userId = req.userId!;
+    const orgId = req.organizationId!;
+
+    const existing = await dbGet(
+      `SELECT id FROM advisor_response_log WHERE id = ? AND organization_id = ?`,
+      [responseId, orgId]
+    );
+    if (!existing) {
+      return res.status(404).json({ error: 'Advisor response not found' });
+    }
+
+    await dbRun(
+      `UPDATE advisor_response_log SET feedback_score = ?, feedback_text = ? WHERE id = ?`,
+      [score, text || null, responseId]
+    );
+
+    return res.json({ success: true });
+  })
+);
+
+router.get(
+  '/advisor/responses',
+  verifyToken,
+  validateQuery(AdvisorResponsesQuerySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId!;
+    const { conversationId, intent, limit, offset } = req.query as any;
+
+    let sql = `SELECT id, intent, answer_preview, citations_count, actions_count,
+               questions_count, confidence, model, purpose, feedback_score, created_at
+               FROM advisor_response_log WHERE organization_id = ?`;
+    const params: any[] = [orgId];
+
+    if (conversationId) {
+      sql += ` AND conversation_id = ?`;
+      params.push(conversationId);
+    }
+    if (intent) {
+      sql += ` AND intent = ?`;
+      params.push(intent);
+    }
+
+    sql += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+    params.push(Number(limit) || 20, Number(offset) || 0);
+
+    const rows = await dbAll(sql, params);
+    return res.json({ success: true, data: rows });
+  })
+);
+
+router.post(
+  '/advisor/response/:responseId/execute-action',
+  verifyToken,
+  validateParams(AdvisorResponseIdParamSchema),
+  validateBody(AdvisorExecuteActionRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { responseId } = req.params;
+    const { actionId } = req.body;
+    const orgId = req.organizationId!;
+    const userId = req.userId!;
+
+    const row = await dbGet(
+      `SELECT response_json FROM advisor_response_log WHERE id = ? AND organization_id = ?`,
+      [responseId, orgId]
+    );
+    if (!row) {
+      return res.status(404).json({ error: 'Advisor response not found' });
+    }
+
+    let advisorResponse: any;
+    try {
+      advisorResponse = JSON.parse((row as any).response_json);
+    } catch {
+      return res.status(500).json({ error: 'Corrupted response data' });
+    }
+
+    const action = (advisorResponse.proposedActions || []).find((a: any) => a.id === actionId);
+    if (!action) {
+      return res.status(404).json({ error: 'Action not found in response' });
+    }
+
+    if (action.requiresApproval) {
+      return res.status(403).json({ error: 'Action requires explicit approval flow' });
+    }
+
+    try {
+      const { executeProposedAction } = await import('../services/ai/actionProposalEngine.js');
+      const result = await executeProposedAction({
+        action,
+        userId,
+        organizationId: orgId,
+      });
+      return res.json({ success: true, data: result });
+    } catch (execErr: any) {
+      logger.error('[Advisor] Action execution failed:', execErr);
+      return res.status(500).json({ error: execErr?.message || 'Action execution failed' });
+    }
   })
 );
 
