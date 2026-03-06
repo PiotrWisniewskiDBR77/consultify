@@ -107,6 +107,7 @@ import interviewRoutes from './routes/interview.routes.js';
 import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
 import knowledgeRoutes from './routes/knowledge.routes.js';
 import knowledgeBaseRoutes from './routes/knowledgeBase.routes.js';
+import knowledgeGraphRoutes from './routes/knowledge-graph.routes.js';
 import knownToolsRoutes from './routes/knownTools.routes.js';
 import toolAssetsRoutes from './routes/toolAssets.routes.js';
 import assessmentEvidenceRoutes from './routes/assessmentEvidence.routes.js';
@@ -125,6 +126,7 @@ import modelRegistryRoutes from './routes/modelRegistry.routes.js';
 import multiFrameworkAssessmentRoutes from './routes/multi-framework-assessment.routes.js';
 import multiFrameworkWorkflowRoutes from './routes/multi-framework-workflow.routes.js';
 import myWorkRoutes from './routes/my-work.routes.js';
+import notebookV4Routes from './routes/notebook.routes.js';
 import notificationRulesRoutes from './routes/notifications/notification-rules.routes.js';
 import notificationRoutes from './routes/notifications/notifications.routes.js';
 import notificationSettingsRoutes from './routes/notifications/notificationSettings.routes.js';
@@ -435,6 +437,7 @@ export class ApiGateway {
       // Core API routes
       app.use('/api/projects', projectRoutes);
       app.use('/api/knowledge', knowledgeRoutes);
+      app.use('/api/knowledge-graph', knowledgeGraphRoutes);
       app.use('/api/kb', knowledgeBaseRoutes); // Public Knowledge Base API
       app.use('/api/media-ingestion', mediaIngestionRoutes);
       app.use('/api/llm', llmRoutes);
@@ -506,6 +509,7 @@ export class ApiGateway {
       // My Work is a production-critical module (not a stub).
       // It must remain available in production to avoid broken navigation from notifications/actionUrl deep links.
       app.use('/api/my-work', myWorkRoutes);
+      app.use('/api/notebook', notebookV4Routes);
 
       // Governance routes
       app.use('/api/governance', governanceRoutes);

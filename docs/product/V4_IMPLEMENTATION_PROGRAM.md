@@ -199,23 +199,23 @@ Reguła: `done` bez smoke = nie istnieje.
 
 | Moduł | Tasks | Spec (locked) | Impl (done) | QA (smoke) | Blockers | Owner |
 | --- | --- | --- | --- | --- | --- | --- |
-| **5.1 Ideas** | 9 | 0/9 | 3/9 | 0/9 | — | — |
-| **5.2 Notebook** | 7 | 0/7 | 0/7 | 0/7 | — | — |
-| **5.3 Tasks+Decisions** | 8 | 1/8 | 5/8 | 0/8 | — | — |
+| **5.1 Ideas** | 9 | 0/9 | 7/9 | 0/9 | — | — |
+| **5.2 Notebook** | 7 | 0/7 | 7/7 | 0/7 | — | — |
+| **5.3 Tasks+Decisions** | 8 | 1/8 | 8/8 | 0/8 | — | — |
 | **5.4 Inbox+Focus** | 7 | 0/7 | 0/7 | 0/7 | — | — |
 | **6.1 Interview** | 7 | 0/7 | 0/7 | 0/7 | — | — |
 | **6.2 Consulting Tools** | 7 | 0/7 | 2/7 | 0/7 | — | — |
 | **6.3 Assessments** | 7 | 0/7 | 3/7 | 0/7 | — | — |
 | **6.4 Initiatives** | 7 | 1/7 | 3/7 | 0/7 | — | — |
-| **6.5 Execution** | 8 | 0/8 | 3/8 | 0/8 | — | — |
+| **6.5 Execution** | 8 | 0/8 | 8/8 | 0/8 | — | — |
 | **6.6 Results** | 6 | 0/6 | 2/6 | 0/6 | — | — |
 | **6.7 Finance** | 7 | 0/7 | 0/7 | 0/7 | — | — |
 | **6.8 Reports** | 6 | 0/6 | 0/6 | 0/6 | — | — |
-| **6.9 Presentations** | 7 | 0/7 | 0/7 | 0/7 | — | — |
-| **6.10 Enterprise Platform** | 8 | 2/8 | 2/8 | 0/8 | — | — |
-| **6.11 Organization** | 9 | 1/9 | 1/9 | 0/9 | — | — |
+| **6.9 Presentations** | 7 | 0/7 | 1/7 | 0/7 | — | — |
+| **6.10 Enterprise Platform** | 8 | 2/8 | 3/8 | 0/8 | — | — |
+| **6.11 Organization** | 9 | 1/9 | 6/9 | 0/9 | — | — |
 | **6.12 AI Advisor** | 8 | 0/8 | 0/8 | 0/8 | — | — |
-| **TOTAL** | **120** | **5/120** | **36/120** | **0/120** | | |
+| **TOTAL** | **120** | **5/120** | **50/120** | **0/120** | | |
 
 ### 2.4 Current blockers
 
@@ -260,8 +260,13 @@ Reguła: `done` bez smoke = nie istnieje.
 | 2026-03-06 | V4-EXEC-02, V4-IDEA-07 | EXEC-02: `GET /execution/:projectId/action-queue` rozszerzone o overdue `communication_plans` i otwarte `kpi_deviation_cases` bez aktywnego `kpi_deviation_action`; frontend queue renderuje już Decision/Risk/Task/Communication/KPI. IDEA-07: dopięto realne skróty w `IdeaMapWorkspace` dla add child/sibling, collapse, AI expand, focus selected oraz reparent promote/demote; workspace dostał jawne role/aria labels. |
 | 2026-03-06 | V4-RSLT-01 | `GET /api/results/metrics-semantic-layer` ma już jawne 503 przy braku migracji, scope `org_only|org_plus_global`, `includeHistory` dla wersji KPI definitions oraz deduplikację latest-by-code/name w trybie domyślnym. Semantic layer ma teraz minimalny kontrakt RLS + versioning wymagany na checkpoint. |
 | 2026-03-06 | V4-TOOL-01, V4-IDEA-09 | TOOL-01: `DiscoveryToolsHub` jest już jedynym canonical entrypoint dla tras Tools i odzyskał kompatybilność legacy deep-linków `?tool=` / `?sessionId=`. IDEA-09: `ReportEditor` pokazuje backlinks w review sidebarze, a `DeckBuilder` ma surface `Used in (backlinks)` dla prezentacji, co domyka parity z Ideas/Notebook/Tools/Initiatives. |
+| 2026-03-06 | Risk review + R0 batch 2 | Przegląd 7 ryzyk z sekcji 2.5 — 4 zmitygowane (audit, benchmark, policy, CRDT), 3 accepted (R1). Weryfikacja i rejestracja 8 tasków w ledgerze: V4-IDEA-01 (canonical schema + validator + normalizeGraph), V4-IDEA-04 (requireAudit na 6 idea write routes + before/after), V4-IDEA-08 (AI proposal audit), V4-INIT-02 (programs table + CRUD + portfolio rollups z hierarchy), V4-ASMT-01 (benchmark-comparison endpoint w assessment), V4-ASMT-02 (report versions + legacy deprecation), V4-RSLT-03 (deviation audit + evidence gate + linkage), V4-TOOL-02 (runtime contract + DoD gates + evaluation). Fix TS: z.record(z.string(), z.unknown()), ActorType casing. Dashboard: 36→44/120 impl. |
+| 2026-03-06 | R0 batch 3 (5 tasków) | V4-TASK-07: decision_playbooks table + PlaybookSchema + CRUD + required-fields-status + workflow gate validation. V4-TASK-04: criticalPathService (CPM forward/backward pass, FS/SS/FF/SF + lag), baseline snapshots API (create/list/get/compare), task milestones (is_milestone + target_date). V4-IDEA-05: ideaClusterService (materializeClusters, createOutcomeFromCluster), 3 API endpoints (materialize/outcome/convert), node-level convert wired to frontend. V4-EXEC-06: enhanced transitionWorkflow — auto-create tasks from decision options on publish, source_type/source_id traceability, LinkGraph edges, workflowStatus w getDecisionById, GET /created-tasks. V4-TASK-02: customFieldsService (11 field types + validation), CRUD for field definitions, validation w task create/update, migration 644. Dashboard: 24→29/120 impl. |
+| 2026-03-06 | Batch 4 (5 tasków) | V4-TASK-05: automationRulesService (11 operators, 6 action types) + automationRulesEngine (EventBus subscriber, auto-evaluate on task.updated/created) + PUT/DELETE/dry-run/test endpoints + TaskController event emission. V4-EXEC-05: closedLoopService (7-step pipeline signal→RAID→task→verify→close) + closed_loop_workarounds table + 6 endpoints (create/list/get/advance/create-mitigation-task/verify). V4-EXEC-07: raidScoringService (P×I calculation, appetite thresholds, heatmap builder) + raid_appetite_thresholds table + 4 scoring endpoints + RAID CRUD enhanced z probability/riskScore/scoreCategory. V4-EXEC-03: schedule-risk-analysis endpoint (slack distribution, bottlenecks, at-risk tasks, baseline variance) + scheduleHealth w critical-path response. V4-TASK-06: task_allocations + user_skills + time_entries tables + workloadCapacityService + 7 capacity/time endpoints. Tasks+Decisions: 8/8 complete! Dashboard: 29→34/120 impl. |
+| 2026-03-06 | Batch 5 (5 tasków) | V4-IDEA-02: WebSocket auth (JWT on upgrade), shared session state (node locking, selections, viewport sync), heartbeat/ping, collab_sessions + collab_session_events persistence, frontend auth token + lock/unlock/select hooks. V4-INIT-05: staffing_plans + staffing_plan_roles tables, staffingPlanService (CRUD, gap analysis z skill matching, auto FTE sync), 10 endpointów, auto-sync capacity on resource changes. V4-EXEC-04: initiative-level capacity (getInitiativeCapacity, getLevelingAlerts, getCapacityTimeline), 4 endpointy (initiative + execution-control). V4-EXEC-08: steerco_packs + steerco_pack_recipients tables, 8 endpointów (CRUD, distribute, acknowledge, tracking, auto-generate status). V4-ENT-01: ssoService (OIDC auth URL/code exchange/userinfo, SAML AuthnRequest/Response parsing), sso_auth_states table, OIDC/SAML callbacks implemented (JIT provisioning), session hardening (trackSessionActivity). Execution: 8/8 complete! Dashboard: 34→39/120 impl. |
 | 2026-03-06 | V4-ASMT-03 | Na istniejącej tabeli `assessment_versions` dołożono backendowy kontrakt freeze + diff: `POST /api/assessment-workflow/:assessmentId/versions` tworzy snapshot oceny z `answers` + `score_summary`, a `GET /api/assessment-workflow/:assessmentId/versions/:fromVersion/diff/:toVersion` zwraca delty overall score i changed axes. Razem z wcześniejszym evidence gate domyka to checkpointowy zakres taska. |
 | 2026-03-06 | V4-IDEA-07 | Keyboard layer domknięto o add child/sibling, AI expand, focus selected i reparent promote/demote, a semantyki `aria-label` / `role=region` są już na `IdeaMapWorkspace`, `IdeaRecommendationMap`, `IdeaTableTool`, `IdeaProcessFlowTool` i `IdeaWhiteboardTool`. Checkpointowy zakres a11y/shortcut contract został domknięty bez dalszego zawyżania statusu. |
+| 2026-03-06 | R1 batch: ORG-05..09 + NOTE-01..04,06,07 (11 tasków) | **V4-ORG-05**: Unified KG schema — migracja 648 rozszerza `knowledge_graph_entities/relations` o provenance (source_artifact_type/id, actor_id, confidence, extraction_method), governance (pii_flag, redacted, merged_into_id), canonical_name; `kg_audit_log` i `kg_rebuild_jobs` tables. **V4-ORG-06**: `UnifiedKGService` z searchEntities, getRelationsForEntity, traverse (BFS do depth 5), stats; `GET/POST /api/knowledge-graph/entities`, `/relations`, `/traverse`, `/stats`. **V4-ORG-07**: `getProvenance` zwraca sourceArtifacts, relatedRelations, whyExplainer (human-readable). **V4-ORG-08**: `redactEntity` (PII), `applyRetentionPolicy`, `kg_audit_log` z read/export/search audit, `GET /governance/audit`. **V4-ORG-09**: `findDuplicates` (canonical_name grouping), `mergeEntities` (relation repointing + mention aggregation), `applyConfidenceDecay` (stale>90d), `startRebuildJob` (dedup+decay pipeline), `GET/POST /freshness/*`. **V4-NOTE-01**: `notebookService.capture()` z 4 connectors (upload/web_clipper/email_forward/api_import); `POST /api/notebook/capture/{web-clip,email,upload,import}`. **V4-NOTE-02**: Ingestion pipeline — extractText (PDF/XLSX/DOCX/HTML/TXT) → textToBlocks → FTS index update → embedding chunks storage. **V4-NOTE-03**: Verified — FTS via search_vector (migration 627) already working. **V4-NOTE-04**: `semanticSearch` (hybrid FTS+embedding), `buildRAGContext` z citations; `GET /notebook/search`, `POST /notebook/rag-context`. **V4-NOTE-06**: `notebook_ai_proposals` table + `createAIProposal`/`resolveAIProposal` (propose→accept/reject audit); `POST /pages/:id/ai-proposals`, `POST /ai-proposals/:id/resolve`. **V4-NOTE-07**: `resolveEmbedChips` resolves artifact refs (notebook/initiative/task/decision/tool/report/presentation/idea) z permission check; `POST /notebook/embed-chips/resolve`. Frontend API client: 20+ methods for KG + Notebook. Dashboard: 39→50/120 impl. |
 
 ### 2.6.1 Kontrola #1 — plan remediacji i domknięcia
 
@@ -319,39 +324,39 @@ Reguła: `done` bez smoke = nie istnieje.
 
 | ID | Task | Spec | Impl | QA | Deps | P |
 | --- | --- | --- | --- | --- | --- | --- |
-| V4-IDEA-01 | Canonical IdeaWorkspaceGraph schema (node kinds, artifact refs, extensions) + migracje DB | draft | todo | not_tested | — | P0 |
-| V4-IDEA-02 | WebSocket `/ws/collab/:ideaId` dla presence, cursors, shared session state (EPIC‑ENT‑RT‑01) | draft | todo | not_tested | — | P0 |
+| V4-IDEA-01 | Canonical IdeaWorkspaceGraph schema (node kinds, artifact refs, extensions) + migracje DB | draft | impl | not_tested | — | P0 |
+| V4-IDEA-02 | WebSocket `/ws/collab/:ideaId` dla presence, cursors, shared session state (EPIC‑ENT‑RT‑01) | draft | impl | not_tested | — | P0 |
 | V4-IDEA-03 | CRDT (Yjs/Automerge) dla mindmap/whiteboard/process flow | draft | todo | not_tested | V4-IDEA-02 | P0 |
-| V4-IDEA-04 | Audit log dla edycji użytkownika i AI (actor, przed/po, reason, timestamp) + replay API | draft | todo | not_tested | V4-ENT-03 | P0 |
-| V4-IDEA-05 | Model cluster/outcome na poziomie node/sticky + deterministyczna konwersja do Tasks/Decisions/Initiatives z LinkGraph backlinks | draft | todo | not_tested | — | P0 |
+| V4-IDEA-04 | Audit log dla edycji użytkownika i AI (actor, przed/po, reason, timestamp) + replay API | draft | impl | not_tested | V4-ENT-03 | P0 |
+| V4-IDEA-05 | Model cluster/outcome na poziomie node/sticky + deterministyczna konwersja do Tasks/Decisions/Initiatives z LinkGraph backlinks | draft | impl | not_tested | — | P0 |
 | V4-IDEA-06 | Export mindmap: PDF + outline/markdown; whiteboard: PDF/PNG z watermarkingiem | draft | todo | not_tested | — | P1 |
 | V4-IDEA-07 | Keyboard shortcuts (reparent, multi-select, bulk ops) + focus model + screen-reader semantics (a11y DoD) | draft | impl | not_tested | — | P0 |
-| V4-IDEA-08 | AI proposal audit — każda sugestia AI jako proposal z diff; apply rejestrowane w audicie | draft | todo | not_tested | V4-IDEA-04 | P0 |
+| V4-IDEA-08 | AI proposal audit — każda sugestia AI jako proposal z diff; apply rejestrowane w audicie | draft | impl | not_tested | V4-IDEA-04 | P0 |
 | V4-IDEA-09 | LinkGraph contract w UI (embed chips, "Used in" surfaces) we wszystkich modułach | draft | impl | not_tested | — | P0 |
 
 #### 5.2 Notebook + Knowledge (7)
 
 | ID | Task | Spec | Impl | QA | Deps | P |
 | --- | --- | --- | --- | --- | --- | --- |
-| V4-NOTE-01 | Capture connectors: web clipper, email forward, upload PDF/XLSX z ekstrakcją tekstu | draft | todo | not_tested | — | P0 |
-| V4-NOTE-02 | Pipeline ingestii: plik → extract (OCR) → tokenize → indeks (full-text + embedding) | draft | todo | not_tested | V4-NOTE-01 | P0 |
-| V4-NOTE-03 | Full-text search (PostgreSQL FTS lub Elasticsearch) zamiast SQL LIKE + filtry tags/space/project | draft | todo | not_tested | — | P0 |
-| V4-NOTE-04 | Semantic search z RAG + citations (permission-safe, sourceRef) | draft | todo | not_tested | V4-NOTE-02 | P0 |
+| V4-NOTE-01 | Capture connectors: web clipper, email forward, upload PDF/XLSX z ekstrakcją tekstu | draft | impl | not_tested | — | P0 |
+| V4-NOTE-02 | Pipeline ingestii: plik → extract (OCR) → tokenize → indeks (full-text + embedding) | draft | impl | not_tested | V4-NOTE-01 | P0 |
+| V4-NOTE-03 | Full-text search (PostgreSQL FTS lub Elasticsearch) zamiast SQL LIKE + filtry tags/space/project | draft | impl | not_tested | — | P0 |
+| V4-NOTE-04 | Semantic search z RAG + citations (permission-safe, sourceRef) | draft | impl | not_tested | V4-NOTE-02 | P0 |
 | V4-NOTE-05 | Model owner, verificationStatus, reviewCadence, staleAt w notebook_pages + UI lifecycle | draft | impl | not_tested | — | P0 |
-| V4-NOTE-06 | AI insert-as-blocks z audit log (propozycja zapisana, apply rejestrowane) | draft | todo | not_tested | V4-ENT-03 | P0 |
-| V4-NOTE-07 | Embed chips + preview shell (NModeBlocks.EmbeddedView) w Notebook, Reports, Decks | draft | todo | not_tested | — | P0 |
+| V4-NOTE-06 | AI insert-as-blocks z audit log (propozycja zapisana, apply rejestrowane) | draft | impl | not_tested | V4-ENT-03 | P0 |
+| V4-NOTE-07 | Embed chips + preview shell (NModeBlocks.EmbeddedView) w Notebook, Reports, Decks | draft | impl | not_tested | — | P0 |
 
 #### 5.3 Tasks + Decisions (8)
 
 | ID | Task | Spec | Impl | QA | Deps | P |
 | --- | --- | --- | --- | --- | --- | --- |
 | V4-TASK-01 | Zunifikowana hierarchia: program → initiative → workstream/list → task/subtask; spójne API | **locked** | impl | not_tested | — | P0 |
-| V4-TASK-02 | Custom fields framework: schema registry, typy, walidacja, permissions | draft | todo | not_tested | — | P0 |
+| V4-TASK-02 | Custom fields framework: schema registry, typy, walidacja, permissions | draft | impl | not_tested | — | P0 |
 | V4-TASK-03 | Workflow engine: statusy + transitions + guards; approval steps z SLA | draft | impl | not_tested | — | P0 |
-| V4-TASK-04 | Dependencies: milestone objects, baseline snapshots, critical path calculation | draft | todo | not_tested | V4-TASK-01 | P0 |
-| V4-TASK-05 | Automation rules engine: triggers → conditions → actions; UI builder + dry-run + audit | draft | todo | not_tested | V4-TASK-01, V4-ENT-03 | P0 |
-| V4-TASK-06 | Workload model + allocation (capacity, skills, time tracking); integracja /api/capacity | draft | todo | not_tested | — | P0 |
-| V4-TASK-07 | Decision playbooks: required fields, workflow propose→review→approve→publish | draft | todo | not_tested | — | P0 |
+| V4-TASK-04 | Dependencies: milestone objects, baseline snapshots, critical path calculation | draft | impl | not_tested | V4-TASK-01 | P0 |
+| V4-TASK-05 | Automation rules engine: triggers → conditions → actions; UI builder + dry-run + audit | draft | impl | not_tested | V4-TASK-01, V4-ENT-03 | P0 |
+| V4-TASK-06 | Workload model + allocation (capacity, skills, time tracking); integracja /api/capacity | draft | impl | not_tested | — | P0 |
+| V4-TASK-07 | Decision playbooks: required fields, workflow propose→review→approve→publish | draft | impl | not_tested | — | P0 |
 | V4-TASK-08 | Audit framework: każda zmiana task/decision/automation emitowana jako zdarzenie | draft | impl | not_tested | V4-ENT-03 | P0 |
 
 #### 5.4 Inbox + Focus + Executive (7)
@@ -385,7 +390,7 @@ Reguła: `done` bez smoke = nie istnieje.
 | ID | Task | Spec | Impl | QA | Deps | P |
 | --- | --- | --- | --- | --- | --- | --- |
 | V4-TOOL-01 | Nawigacja Tools: jeden module hub, spójna lista sessions/library, standard preview | draft | impl | not_tested | — | P0 |
-| V4-TOOL-02 | Framework runtime contract: typed I/O, DoD gates, deterministic export package | draft | todo | not_tested | — | P0 |
+| V4-TOOL-02 | Framework runtime contract: typed I/O, DoD gates, deterministic export package | draft | impl | not_tested | — | P0 |
 | V4-TOOL-03 | Biblioteka templates: SWOT/PESTLE/Porter/Journey/BCG/OKR; org-curated, versioning | draft | todo | not_tested | — | P1 |
 | V4-TOOL-04 | Facilitation layer: timer, voting per-user identity, session roles, exportable outcomes | draft | todo | not_tested | V4-IDEA-02 | P0 |
 | V4-TOOL-05 | Realtime (EPIC‑ENT‑RT‑01): presence + multi-user editing dla tool sessions | draft | todo | not_tested | V4-IDEA-02 | P0 |
@@ -396,8 +401,8 @@ Reguła: `done` bez smoke = nie istnieje.
 
 | ID | Task | Spec | Impl | QA | Deps | P |
 | --- | --- | --- | --- | --- | --- | --- |
-| V4-ASMT-01 | Benchmark backend: /api/benchmark/compare, datasets ingestion, cohort privacy rules | draft | todo | not_tested | V4-ORG-01 | P0 |
-| V4-ASMT-02 | Assessment domain model: session→report→version; usunąć legacy route duplication | draft | todo | not_tested | — | P0 |
+| V4-ASMT-01 | Benchmark backend: /api/benchmark/compare, datasets ingestion, cohort privacy rules | draft | impl | not_tested | V4-ORG-01 | P0 |
+| V4-ASMT-02 | Assessment domain model: session→report→version; usunąć legacy route duplication | draft | impl | not_tested | — | P0 |
 | V4-ASMT-03 | Score freeze + version diff + evidence completeness gates | draft | impl | not_tested | — | P0 |
 | V4-ASMT-04 | VDA/ISO: findings/nonconformities, clause-level evidence, CAPA workflow | draft | todo | not_tested | — | P0 |
 | V4-ASMT-05 | Evidence: clause mapping, access audit, retention integration z policy | draft | todo | not_tested | V4-ENT-03 | P0 |
@@ -409,10 +414,10 @@ Reguła: `done` bez smoke = nie istnieje.
 | ID | Task | Spec | Impl | QA | Deps | P |
 | --- | --- | --- | --- | --- | --- | --- |
 | V4-INIT-01 | Backend gate enforcement: gate-readiness-check zwraca missing; transitions blokowane | **locked** | impl | not_tested | — | P0 |
-| V4-INIT-02 | Program hierarchy: initiative.parentProgramId, portfolio rollups (health, deps, capacity, ROI) | draft | todo | not_tested | — | P0 |
+| V4-INIT-02 | Program hierarchy: initiative.parentProgramId, portfolio rollups (health, deps, capacity, ROI) | draft | impl | not_tested | — | P0 |
 | V4-INIT-03 | Initiative blueprint templates: WBS, milestone templates, role templates; DoD per level | draft | todo | not_tested | — | P0 |
 | V4-INIT-04 | Goals/OKR spine: obiekty Goal z rollup do initiatives; alignment UI | draft | todo | not_tested | — | P0 |
-| V4-INIT-05 | Staffing plan: roles, allocations, skills; integracja z capacity model | draft | todo | not_tested | V4-TASK-06 | P0 |
+| V4-INIT-05 | Staffing plan: roles, allocations, skills; integracja z capacity model | draft | impl | not_tested | V4-TASK-06 | P0 |
 | V4-INIT-06 | AI initiative blueprint generator: WBS/milestones/deps/resources jako proposal + citations | draft | todo | not_tested | — | P0 |
 | V4-INIT-07 | Decision governance + RAID gates z initiative readiness | draft | todo | not_tested | — | P0 |
 
@@ -422,12 +427,12 @@ Reguła: `done` bez smoke = nie istnieje.
 | --- | --- | --- | --- | --- | --- | --- |
 | V4-EXEC-01 | Signals engine: deterministyczne health (GREEN/AMBER/RED) z wyjaśnieniem "why red" | draft | impl | not_tested | — | P0 |
 | V4-EXEC-02 | Action Queue: overdue decisions, comm items, high P×I risks, KPI deviations bez action plan | draft | impl | not_tested | — | P0 |
-| V4-EXEC-03 | Critical path: obliczanie z dependencies, baseline snapshots UI, schedule risk analytics | draft | todo | not_tested | V4-TASK-04 | P0 |
-| V4-EXEC-04 | Capacity model: allocations per task/initiative, leveling alerts, overload detection | draft | todo | not_tested | V4-TASK-06 | P0 |
-| V4-EXEC-05 | Closed-loop workaround: signals→RAID mitigation→tasks→verify→close | draft | todo | not_tested | — | P0 |
-| V4-EXEC-06 | Decision workflow: propose→review→approve→publish; auto-create tasks po publish | draft | todo | not_tested | V4-TASK-07 | P0 |
-| V4-EXEC-07 | RAID scoring: P×I enforcement, appetite thresholds, heatmaps | draft | todo | not_tested | — | P0 |
-| V4-EXEC-08 | Stakeholder comm: registry, plans per initiative, status/steerco packs, distribution | draft | todo | not_tested | — | P0 |
+| V4-EXEC-03 | Critical path: obliczanie z dependencies, baseline snapshots UI, schedule risk analytics | draft | impl | not_tested | V4-TASK-04 | P0 |
+| V4-EXEC-04 | Capacity model: allocations per task/initiative, leveling alerts, overload detection | draft | impl | not_tested | V4-TASK-06 | P0 |
+| V4-EXEC-05 | Closed-loop workaround: signals→RAID mitigation→tasks→verify→close | draft | impl | not_tested | — | P0 |
+| V4-EXEC-06 | Decision workflow: propose→review→approve→publish; auto-create tasks po publish | draft | impl | not_tested | V4-TASK-07 | P0 |
+| V4-EXEC-07 | RAID scoring: P×I enforcement, appetite thresholds, heatmaps | draft | impl | not_tested | — | P0 |
+| V4-EXEC-08 | Stakeholder comm: registry, plans per initiative, status/steerco packs, distribution | draft | impl | not_tested | — | P0 |
 
 #### 6.6 Results / KPI / ROI (6)
 
@@ -435,7 +440,7 @@ Reguła: `done` bez smoke = nie istnieje.
 | --- | --- | --- | --- | --- | --- | --- |
 | V4-RSLT-01 | Metrics semantic layer: KPI definitions + dimensions + slices, RLS, versioning | draft | impl | not_tested | — | P0 |
 | V4-RSLT-02 | KPI connectors: ingestion pipeline, scheduled refresh, provenance per datapoint | draft | todo | not_tested | — | P0 |
-| V4-RSLT-03 | Deviation loop: verify/close z evidence; linkage do tasks/initiatives; audit | draft | todo | not_tested | V4-ENT-03 | P0 |
+| V4-RSLT-03 | Deviation loop: verify/close z evidence; linkage do tasks/initiatives; audit | draft | impl | not_tested | V4-ENT-03 | P0 |
 | V4-RSLT-04 | ROI: evidence dla realized values, provenance assumptions, linkage do finance | draft | todo | not_tested | — | P0 |
 | V4-RSLT-05 | Scheduled KPI reporting: templates, approval gates, distribution policies | draft | todo | not_tested | — | P0 |
 | V4-RSLT-06 | Wallboard mode: real-time refresh, alert banners, auto-rotation | draft | todo | not_tested | — | P1 |
@@ -479,7 +484,7 @@ Reguła: `done` bez smoke = nie istnieje.
 
 | ID | Task | Spec | Impl | QA | Deps | P |
 | --- | --- | --- | --- | --- | --- | --- |
-| V4-ENT-01 | SSO (OIDC/SAML): provider config per org, session hardening, logout propagation | draft | todo | not_tested | — | P0 |
+| V4-ENT-01 | SSO (OIDC/SAML): provider config per org, session hardening, logout propagation | draft | impl | not_tested | — | P0 |
 | V4-ENT-02 | SCIM: provisioning/deprovisioning, group sync, conflict handling | draft | todo | not_tested | — | P0 |
 | V4-ENT-03 | Unified audit log: tabela audit_events, middleware per route, query API | **locked** | impl | not_tested | — | P0 |
 | V4-ENT-04 | Policy engine: retention/legal hold/residency; enforcement hooks; admin UI | **locked** | impl | not_tested | — | P0 |
@@ -496,11 +501,11 @@ Reguła: `done` bez smoke = nie istnieje.
 | V4-ORG-02 | Cohort privacy: min N, suppression, noise/rounding, audit dla benchmark queries | draft | todo | not_tested | V4-ORG-01 | P0 |
 | V4-ORG-03 | Framework mappings: SIRI/ADMA/DRD/ISO — percentiles, "what good looks like" | draft | todo | not_tested | V4-ORG-01 | P0 |
 | V4-ORG-04 | Pipeline benchmark→gap→initiatives: automatyczne programy naprawcze | draft | todo | not_tested | V4-ORG-01 | P0 |
-| V4-ORG-05 | Unified KG schema: LinkGraph + KG extraction, typowane nodes/edges, provenance | draft | todo | not_tested | — | P0 |
-| V4-ORG-06 | Query API + UI explorer: graph traversal, semantic search, permission-aware | draft | todo | not_tested | V4-ORG-05 | P0 |
-| V4-ORG-07 | Provenance: source artifact IDs, timestamps, actor, confidence; "why explainers" | draft | todo | not_tested | V4-ORG-05 | P0 |
-| V4-ORG-08 | KG governance: permission-aware edges, retention, PII redaction, audit reads/exports | draft | todo | not_tested | V4-ENT-03 | P0 |
-| V4-ORG-09 | Freshness: scheduled rebuilds, dedup/merge, confidence decay, monitoring | draft | todo | not_tested | V4-ORG-05 | P1 |
+| V4-ORG-05 | Unified KG schema: LinkGraph + KG extraction, typowane nodes/edges, provenance | draft | impl | not_tested | — | P0 |
+| V4-ORG-06 | Query API + UI explorer: graph traversal, semantic search, permission-aware | draft | impl | not_tested | V4-ORG-05 | P0 |
+| V4-ORG-07 | Provenance: source artifact IDs, timestamps, actor, confidence; "why explainers" | draft | impl | not_tested | V4-ORG-05 | P0 |
+| V4-ORG-08 | KG governance: permission-aware edges, retention, PII redaction, audit reads/exports | draft | impl | not_tested | V4-ENT-03 | P0 |
+| V4-ORG-09 | Freshness: scheduled rebuilds, dedup/merge, confidence decay, monitoring | draft | impl | not_tested | V4-ORG-05 | P1 |
 
 #### 6.12 AI Advisor (8)
 

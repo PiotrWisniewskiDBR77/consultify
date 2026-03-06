@@ -3272,6 +3272,45 @@ export const Api = {
     return handleResponse(res, 'Failed to convert idea');
   },
 
+  // --- V4-IDEA-05: Cluster / Outcome ---
+  materializeIdeaClusters: async (
+    ideaId: string,
+    clusters: Array<{ id: string; name: string; nodeIds: string[]; color?: string }>
+  ): Promise<{ graph: any; clusterIds: string[]; version: number }> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/clusters/materialize`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ clusters }),
+    });
+    return handleResponse(res, 'Failed to materialize clusters');
+  },
+
+  createClusterOutcome: async (
+    ideaId: string,
+    clusterId: string,
+    payload: { outcomeType: 'task' | 'decision' | 'initiative' | 'insight'; label: string }
+  ): Promise<{ outcome: any; version: number }> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/clusters/${encodeURIComponent(clusterId)}/outcome`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create outcome');
+  },
+
+  convertOutcome: async (
+    ideaId: string,
+    outcomeId: string,
+    payload: { target: 'task' | 'decision' | 'initiative' }
+  ): Promise<{ entityId: string; entityType: string; outcomeId: string; sourceSessionId?: string }> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/outcomes/${encodeURIComponent(outcomeId)}/convert`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to convert outcome');
+  },
+
   // ==========================================
   // LINK GRAPH v3 (MVP): Backlinks + edge create
   // SSOT: docs/product/LINK_GRAPH_V3.md
@@ -3990,6 +4029,72 @@ export const Api = {
     });
     const data = await handleResponse(res, 'Failed to fetch initiative tasks');
     return data?.tasks || data || [];
+  },
+
+  // --- V4-INIT-05: STAFFING PLANS ---
+
+  getStaffingPlans: async (initiativeId: string): Promise<{ plans: any[] }> => {
+    const res = await fetchWithRetry(`${API_URL}/initiatives/${initiativeId}/staffing-plans`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch staffing plans');
+  },
+
+  createStaffingPlan: async (initiativeId: string, data: { name: string; status?: string; plannedStart?: string; plannedEnd?: string; notes?: string }): Promise<any> => {
+    const res = await fetch(`${API_URL}/initiatives/${initiativeId}/staffing-plans`, {
+      method: 'POST', headers: getHeaders(), body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to create staffing plan');
+  },
+
+  getStaffingPlan: async (initiativeId: string, planId: string): Promise<{ plan: any; roles: any[] }> => {
+    const res = await fetchWithRetry(`${API_URL}/initiatives/${initiativeId}/staffing-plans/${planId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch staffing plan');
+  },
+
+  updateStaffingPlan: async (initiativeId: string, planId: string, data: any): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/initiatives/${initiativeId}/staffing-plans/${planId}`, {
+      method: 'PUT', headers: getHeaders(), body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to update staffing plan');
+  },
+
+  deleteStaffingPlan: async (initiativeId: string, planId: string): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/initiatives/${initiativeId}/staffing-plans/${planId}`, {
+      method: 'DELETE', headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to delete staffing plan');
+  },
+
+  addStaffingPlanRole: async (initiativeId: string, planId: string, data: { roleName: string; requiredSkills?: string[]; fteRequired?: number; assignedUserId?: string; startDate?: string; endDate?: string; priority?: string }): Promise<any> => {
+    const res = await fetch(`${API_URL}/initiatives/${initiativeId}/staffing-plans/${planId}/roles`, {
+      method: 'POST', headers: getHeaders(), body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to add staffing plan role');
+  },
+
+  updateStaffingPlanRole: async (initiativeId: string, planId: string, roleId: string, data: any): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/initiatives/${initiativeId}/staffing-plans/${planId}/roles/${roleId}`, {
+      method: 'PUT', headers: getHeaders(), body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to update staffing plan role');
+  },
+
+  deleteStaffingPlanRole: async (initiativeId: string, planId: string, roleId: string): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/initiatives/${initiativeId}/staffing-plans/${planId}/roles/${roleId}`, {
+      method: 'DELETE', headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to delete staffing plan role');
+  },
+
+  getStaffingGaps: async (initiativeId: string, planId: string): Promise<{ gaps: any[] }> => {
+    const res = await fetchWithRetry(`${API_URL}/initiatives/${initiativeId}/staffing-plans/${planId}/gaps`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch staffing gaps');
+  },
+
+  syncStaffingCapacity: async (initiativeId: string, planId: string): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/initiatives/${initiativeId}/staffing-plans/${planId}/sync-capacity`, {
+      method: 'POST', headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to sync staffing capacity');
   },
 
   // --- TOOLS -> INITIATIVES ---
@@ -11235,6 +11340,268 @@ export const Api = {
     const token = tokenService.getToken();
     const url = `${API_URL}/my-work/notebook/pages/${id}/extract-actions?token=${encodeURIComponent(token || '')}`;
     return new EventSource(url);
+  },
+
+  // ──────────────────────────────────────────────
+  // V4-NOTE-01: Notebook capture connectors
+  // ──────────────────────────────────────────────
+
+  notebookCaptureWebClip: async (data: {
+    url: string;
+    title?: string;
+    content: string;
+    tags?: string[];
+    projectId?: string;
+  }) => {
+    const res = await fetch(`${API_URL}/notebook/capture/web-clip`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to capture web clip');
+  },
+
+  notebookCaptureEmail: async (data: {
+    emailFrom?: string;
+    emailSubject?: string;
+    content: string;
+    tags?: string[];
+    projectId?: string;
+  }) => {
+    const res = await fetch(`${API_URL}/notebook/capture/email`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to capture email');
+  },
+
+  notebookCaptureImport: async (data: {
+    title: string;
+    content: string;
+    tags?: string[];
+    projectId?: string;
+    metadata?: Record<string, unknown>;
+  }) => {
+    const res = await fetch(`${API_URL}/notebook/capture/import`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to import note');
+  },
+
+  // ──────────────────────────────────────────────
+  // V4-NOTE-04: Semantic search + RAG
+  // ──────────────────────────────────────────────
+
+  notebookSemanticSearch: async (
+    query: string,
+    options?: { limit?: number; projectId?: string }
+  ): Promise<{ results: Array<{ pageId: string; title: string; snippet: string; score: number; matchType: string }>; total: number }> => {
+    const params = new URLSearchParams({ q: query });
+    if (options?.limit) params.set('limit', String(options.limit));
+    if (options?.projectId) params.set('projectId', options.projectId);
+    const res = await fetch(`${API_URL}/notebook/search?${params}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to search notebook');
+  },
+
+  notebookRAGContext: async (data: {
+    query: string;
+    maxTokens?: number;
+    limit?: number;
+  }): Promise<{ context: string; citations: Array<{ pageId: string; title: string; snippet: string }> }> => {
+    const res = await fetch(`${API_URL}/notebook/rag-context`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to build RAG context');
+  },
+
+  // ──────────────────────────────────────────────
+  // V4-NOTE-06: AI proposals
+  // ──────────────────────────────────────────────
+
+  notebookCreateAIProposal: async (
+    pageId: string,
+    data: { proposalType: 'insert' | 'replace' | 'append'; blockContent: Record<string, unknown>; rationale: string }
+  ) => {
+    const res = await fetch(`${API_URL}/notebook/pages/${pageId}/ai-proposals`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to create AI proposal');
+  },
+
+  notebookGetAIProposals: async (
+    pageId: string,
+    options?: { status?: string; limit?: number }
+  ) => {
+    const params = new URLSearchParams();
+    if (options?.status) params.set('status', options.status);
+    if (options?.limit) params.set('limit', String(options.limit));
+    const res = await fetch(`${API_URL}/notebook/pages/${pageId}/ai-proposals?${params}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get AI proposals');
+  },
+
+  notebookResolveAIProposal: async (
+    proposalId: string,
+    action: 'accepted' | 'rejected'
+  ) => {
+    const res = await fetch(`${API_URL}/notebook/ai-proposals/${proposalId}/resolve`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ action }),
+    });
+    return handleResponse(res, 'Failed to resolve AI proposal');
+  },
+
+  // ──────────────────────────────────────────────
+  // V4-NOTE-07: Embed chips
+  // ──────────────────────────────────────────────
+
+  notebookResolveEmbedChips: async (
+    refs: Array<{ type: string; id: string }>
+  ): Promise<{ chips: Array<{ artifactType: string; artifactId: string; title: string; snippet: string; status?: string; permissionOk: boolean }> }> => {
+    const res = await fetch(`${API_URL}/notebook/embed-chips/resolve`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ refs }),
+    });
+    return handleResponse(res, 'Failed to resolve embed chips');
+  },
+
+  // ──────────────────────────────────────────────
+  // V4-ORG-05..09: Knowledge Graph API
+  // ──────────────────────────────────────────────
+
+  kgSearchEntities: async (
+    options?: { q?: string; types?: string; minConfidence?: number; limit?: number; offset?: number }
+  ) => {
+    const params = new URLSearchParams();
+    if (options?.q) params.set('q', options.q);
+    if (options?.types) params.set('types', options.types);
+    if (options?.minConfidence) params.set('minConfidence', String(options.minConfidence));
+    if (options?.limit) params.set('limit', String(options.limit));
+    if (options?.offset) params.set('offset', String(options.offset));
+    const res = await fetch(`${API_URL}/knowledge-graph/entities?${params}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to search KG entities');
+  },
+
+  kgGetEntity: async (entityId: string) => {
+    const res = await fetch(`${API_URL}/knowledge-graph/entities/${entityId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get KG entity');
+  },
+
+  kgCreateEntity: async (data: {
+    name: string;
+    type: string;
+    description?: string;
+    attributes?: Record<string, unknown>;
+    confidence?: number;
+    sourceArtifactType?: string;
+    sourceArtifactId?: string;
+  }) => {
+    const res = await fetch(`${API_URL}/knowledge-graph/entities`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to create KG entity');
+  },
+
+  kgGetEntityRelations: async (
+    entityId: string,
+    options?: { direction?: string; relationTypes?: string; limit?: number }
+  ) => {
+    const params = new URLSearchParams();
+    if (options?.direction) params.set('direction', options.direction);
+    if (options?.relationTypes) params.set('relationTypes', options.relationTypes);
+    if (options?.limit) params.set('limit', String(options.limit));
+    const res = await fetch(`${API_URL}/knowledge-graph/entities/${entityId}/relations?${params}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get entity relations');
+  },
+
+  kgCreateRelation: async (data: {
+    sourceEntityId: string;
+    targetEntityId: string;
+    relationType: string;
+    attributes?: Record<string, unknown>;
+    confidence?: number;
+  }) => {
+    const res = await fetch(`${API_URL}/knowledge-graph/relations`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to create KG relation');
+  },
+
+  kgTraverse: async (data: {
+    startEntityId: string;
+    maxDepth?: number;
+    relationTypes?: string[];
+    minConfidence?: number;
+    direction?: 'outgoing' | 'incoming' | 'both';
+    limit?: number;
+  }) => {
+    const res = await fetch(`${API_URL}/knowledge-graph/traverse`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to traverse KG');
+  },
+
+  kgGetProvenance: async (entityId: string) => {
+    const res = await fetch(`${API_URL}/knowledge-graph/entities/${entityId}/provenance`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get entity provenance');
+  },
+
+  kgRedactEntity: async (entityId: string) => {
+    const res = await fetch(`${API_URL}/knowledge-graph/entities/${entityId}/redact`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to redact entity');
+  },
+
+  kgGetStats: async () => {
+    const res = await fetch(`${API_URL}/knowledge-graph/stats`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get KG stats');
+  },
+
+  kgFindDuplicates: async () => {
+    const res = await fetch(`${API_URL}/knowledge-graph/freshness/duplicates`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to find KG duplicates');
+  },
+
+  kgMergeEntities: async (keepEntityId: string, mergeEntityId: string) => {
+    const res = await fetch(`${API_URL}/knowledge-graph/freshness/merge`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ keepEntityId, mergeEntityId }),
+    });
+    return handleResponse(res, 'Failed to merge KG entities');
+  },
+
+  kgRebuild: async () => {
+    const res = await fetch(`${API_URL}/knowledge-graph/freshness/rebuild`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to start KG rebuild');
+  },
+
+  kgGetAuditLog: async (options?: { actorId?: string; action?: string; limit?: number }) => {
+    const params = new URLSearchParams();
+    if (options?.actorId) params.set('actorId', options.actorId);
+    if (options?.action) params.set('action', options.action);
+    if (options?.limit) params.set('limit', String(options.limit));
+    const res = await fetch(`${API_URL}/knowledge-graph/governance/audit?${params}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get KG audit log');
   },
 };
 

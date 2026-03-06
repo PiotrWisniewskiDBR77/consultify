@@ -1,0 +1,722 @@
+/**
+ * Notebook Service (V4-NOTE-01 through V4-NOTE-07)
+ *
+ * V4-NOTE-01: Capture connectors — web clipper, email forward, upload
+ * V4-NOTE-02: Ingestion pipeline — extract → tokenize → index (FTS + embedding)
+ * V4-NOTE-03: FTS — already implemented via migration 627 (search_vector)
+ * V4-NOTE-04: Semantic search with RAG + citations (permission-safe)
+ * V4-NOTE-06: AI insert-as-blocks with audit log
+ * V4-NOTE-07: Embed chips + preview shell contract
+ */
+
+import { v4 as uuidv4 } from 'uuid';
+import path from 'path';
+
+import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
+import logger from '../utils/Logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
+
+// ============================================================
+// Types
+// ============================================================
+
+export type CaptureSource = 'upload' | 'web_clipper' | 'email_forward' | 'api_import';
+
+export interface CaptureRequest {
+  source: CaptureSource;
+  title?: string;
+  content?: string;
+  url?: string;
+  emailFrom?: string;
+  emailSubject?: string;
+  fileBuffer?: Buffer;
+  fileMimetype?: string;
+  fileOriginalname?: string;
+  tags?: string[];
+  projectId?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface IngestionResult {
+  pageId: string;
+  title: string;
+  contentText: string;
+  tokensEstimate: number;
+  embeddingStored: boolean;
+  ftsIndexed: boolean;
+  source: CaptureSource;
+}
+
+export interface SemanticSearchResult {
+  pageId: string;
+  title: string;
+  snippet: string;
+  score: number;
+  sourceRef: { type: 'notebook_page'; id: string };
+  matchType: 'fts' | 'semantic' | 'hybrid';
+}
+
+export interface AIBlockProposal {
+  id: string;
+  pageId: string;
+  actorId: string;
+  proposalType: 'insert' | 'replace' | 'append';
+  blockContent: Record<string, unknown>;
+  rationale: string;
+  status: 'proposed' | 'accepted' | 'rejected';
+  createdAt: string;
+  resolvedAt: string | null;
+  resolvedBy: string | null;
+}
+
+export interface EmbedChipInfo {
+  artifactType: string;
+  artifactId: string;
+  title: string;
+  snippet: string;
+  status?: string;
+  updatedAt?: string;
+  permissionOk: boolean;
+}
+
+// ============================================================
+// Service
+// ============================================================
+
+class NotebookService {
+  private db: IDatabase | null = null;
+
+  private async getDb(): Promise<IDatabase> {
+    if (!this.db) {
+      this.db = await getDatabase();
+    }
+    return this.db;
+  }
+
+  // ──────────────────────────────────────────────
+  // V4-NOTE-01: Capture connectors
+  // ──────────────────────────────────────────────
+
+  async capture(
+    orgId: string,
+    userId: string,
+    request: CaptureRequest
+  ): Promise<IngestionResult> {
+    let contentText = '';
+    let title = request.title || 'Untitled';
+
+    switch (request.source) {
+      case 'upload': {
+        if (request.fileBuffer && request.fileMimetype && request.fileOriginalname) {
+          contentText = await this.extractText(request.fileBuffer, request.fileMimetype, request.fileOriginalname);
+          if (!request.title) {
+            title = path.basename(request.fileOriginalname, path.extname(request.fileOriginalname));
+          }
+        }
+        break;
+      }
+      case 'web_clipper': {
+        contentText = request.content || '';
+        if (request.url) {
+          title = request.title || request.url;
+          contentText = `Source: ${request.url}\n\n${contentText}`;
+        }
+        break;
+      }
+      case 'email_forward': {
+        title = request.emailSubject || request.title || 'Email note';
+        const emailHeader = [
+          request.emailFrom ? `From: ${request.emailFrom}` : '',
+          request.emailSubject ? `Subject: ${request.emailSubject}` : '',
+        ].filter(Boolean).join('\n');
+        contentText = emailHeader ? `${emailHeader}\n\n${request.content || ''}` : (request.content || '');
+        break;
+      }
+      case 'api_import': {
+        contentText = request.content || '';
+        break;
+      }
+    }
+
+    return this.ingest(orgId, userId, {
+      title: title.slice(0, 200),
+      contentText: contentText.slice(0, 500000),
+      source: request.source,
+      tags: request.tags || [],
+      projectId: request.projectId,
+      metadata: {
+        ...request.metadata,
+        captureSource: request.source,
+        url: request.url,
+        emailFrom: request.emailFrom,
+      },
+    });
+  }
+
+  // ──────────────────────────────────────────────
+  // V4-NOTE-02: Ingestion pipeline
+  // ──────────────────────────────────────────────
+
+  async ingest(
+    orgId: string,
+    userId: string,
+    data: {
+      title: string;
+      contentText: string;
+      source: CaptureSource;
+      tags?: string[];
+      projectId?: string;
+      metadata?: Record<string, unknown>;
+    }
+  ): Promise<IngestionResult> {
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    const contentJson = JSON.stringify({
+      type: 'doc',
+      content: this.textToBlocks(data.contentText),
+    });
+
+    const tokensEstimate = Math.ceil(data.contentText.length / 4);
+
+    await queryHelpers.queryRun(
+      `INSERT INTO notebook_pages
+       (id, owner_user_id, organization_id, project_id, visibility, title,
+        content_json, content_text, tags_json, status, capture_source, capture_metadata, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'private', ?, ?, ?, ?, 'active', ?, ?, ?, ?)`,
+      [
+        id, userId, orgId, data.projectId || null, data.title,
+        contentJson, data.contentText, JSON.stringify(data.tags || []),
+        data.source, JSON.stringify(data.metadata || {}),
+        now, now,
+      ]
+    );
+
+    let ftsIndexed = false;
+    const isPg = process.env.DB_TYPE === 'postgres';
+    if (isPg) {
+      try {
+        await queryHelpers.queryRun(
+          `UPDATE notebook_pages
+           SET search_vector = to_tsvector('simple', coalesce(title,'') || ' ' || coalesce(content_text,'') || ' ' || coalesce(tags_json,''))
+           WHERE id = ?`,
+          [id]
+        );
+        ftsIndexed = true;
+      } catch (err: any) {
+        logger.debug(`[NotebookService] FTS index update failed: ${err.message}`);
+      }
+    }
+
+    let embeddingStored = false;
+    try {
+      await this.storeEmbedding(orgId, id, data.contentText);
+      embeddingStored = true;
+    } catch (err: any) {
+      logger.debug(`[NotebookService] Embedding storage skipped: ${err.message}`);
+    }
+
+    return {
+      pageId: id,
+      title: data.title,
+      contentText: data.contentText.slice(0, 500),
+      tokensEstimate,
+      embeddingStored,
+      ftsIndexed,
+      source: data.source,
+    };
+  }
+
+  // ──────────────────────────────────────────────
+  // V4-NOTE-04: Semantic search with RAG + citations
+  // ──────────────────────────────────────────────
+
+  async semanticSearch(
+    orgId: string,
+    userId: string,
+    query: string,
+    options?: { limit?: number; projectId?: string; minScore?: number }
+  ): Promise<SemanticSearchResult[]> {
+    const limit = Math.min(options?.limit || 20, 100);
+    const results: SemanticSearchResult[] = [];
+
+    const ftsResults = await this.ftsSearch(orgId, userId, query, { limit, projectId: options?.projectId });
+    for (const r of ftsResults) {
+      results.push({ ...r, matchType: 'fts' });
+    }
+
+    const embeddingResults = await this.embeddingSearch(orgId, userId, query, { limit, projectId: options?.projectId });
+    for (const r of embeddingResults) {
+      const existing = results.find(e => e.pageId === r.pageId);
+      if (existing) {
+        existing.score = Math.max(existing.score, r.score);
+        existing.matchType = 'hybrid';
+      } else {
+        results.push({ ...r, matchType: 'semantic' });
+      }
+    }
+
+    results.sort((a, b) => b.score - a.score);
+
+    const minScore = options?.minScore || 0;
+    return results.filter(r => r.score >= minScore).slice(0, limit);
+  }
+
+  async buildRAGContext(
+    orgId: string,
+    userId: string,
+    query: string,
+    options?: { maxTokens?: number; limit?: number }
+  ): Promise<{ context: string; citations: Array<{ pageId: string; title: string; snippet: string }> }> {
+    const maxTokens = options?.maxTokens || 4000;
+    const results = await this.semanticSearch(orgId, userId, query, { limit: options?.limit || 10 });
+
+    const citations: Array<{ pageId: string; title: string; snippet: string }> = [];
+    const contextParts: string[] = [];
+    let tokenCount = 0;
+
+    for (const r of results) {
+      const snippet = r.snippet.slice(0, 1000);
+      const tokens = Math.ceil(snippet.length / 4);
+      if (tokenCount + tokens > maxTokens) break;
+
+      contextParts.push(`[Source: ${r.title} (${r.pageId})]\n${snippet}\n`);
+      citations.push({ pageId: r.pageId, title: r.title, snippet: snippet.slice(0, 200) });
+      tokenCount += tokens;
+    }
+
+    return {
+      context: contextParts.join('\n---\n'),
+      citations,
+    };
+  }
+
+  // ──────────────────────────────────────────────
+  // V4-NOTE-06: AI insert-as-blocks with audit
+  // ──────────────────────────────────────────────
+
+  async createAIProposal(
+    orgId: string,
+    actorId: string,
+    pageId: string,
+    proposal: {
+      proposalType: 'insert' | 'replace' | 'append';
+      blockContent: Record<string, unknown>;
+      rationale: string;
+    }
+  ): Promise<AIBlockProposal> {
+    const db = await this.getDb();
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    await this.ensureProposalTable(db);
+
+    await db.run(
+      `INSERT INTO notebook_ai_proposals
+       (id, organization_id, page_id, actor_id, proposal_type, block_content, rationale, status, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'proposed', ?)`,
+      [id, orgId, pageId, actorId, proposal.proposalType, JSON.stringify(proposal.blockContent), proposal.rationale, now]
+    );
+
+    return {
+      id,
+      pageId,
+      actorId,
+      proposalType: proposal.proposalType,
+      blockContent: proposal.blockContent,
+      rationale: proposal.rationale,
+      status: 'proposed',
+      createdAt: now,
+      resolvedAt: null,
+      resolvedBy: null,
+    };
+  }
+
+  async resolveAIProposal(
+    orgId: string,
+    proposalId: string,
+    userId: string,
+    action: 'accepted' | 'rejected'
+  ): Promise<AIBlockProposal | null> {
+    const db = await this.getDb();
+    await this.ensureProposalTable(db);
+
+    const now = new Date().toISOString();
+    await db.run(
+      `UPDATE notebook_ai_proposals SET status = ?, resolved_at = ?, resolved_by = ? WHERE id = ? AND organization_id = ?`,
+      [action, now, userId, proposalId, orgId]
+    );
+
+    const row = await db.get(
+      `SELECT * FROM notebook_ai_proposals WHERE id = ? AND organization_id = ?`,
+      [proposalId, orgId]
+    );
+    if (!row) return null;
+
+    return mapProposalRow(row);
+  }
+
+  async getProposalsForPage(
+    orgId: string,
+    pageId: string,
+    options?: { status?: string; limit?: number }
+  ): Promise<AIBlockProposal[]> {
+    const db = await this.getDb();
+    await this.ensureProposalTable(db);
+
+    const conditions = ['organization_id = ?', 'page_id = ?'];
+    const params: unknown[] = [orgId, pageId];
+
+    if (options?.status) {
+      conditions.push('status = ?');
+      params.push(options.status);
+    }
+
+    const limit = Math.min(options?.limit || 50, 200);
+    params.push(limit);
+
+    const rows = (await db.all(
+      `SELECT * FROM notebook_ai_proposals WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC LIMIT ?`,
+      params
+    )) || [];
+
+    return rows.map(mapProposalRow);
+  }
+
+  // ──────────────────────────────────────────────
+  // V4-NOTE-07: Embed chips — resolve artifact info
+  // ──────────────────────────────────────────────
+
+  async resolveEmbedChip(
+    orgId: string,
+    userId: string,
+    artifactType: string,
+    artifactId: string
+  ): Promise<EmbedChipInfo | null> {
+    const tableMap: Record<string, { table: string; titleCol: string; statusCol?: string }> = {
+      notebook_page: { table: 'notebook_pages', titleCol: 'title', statusCol: 'status' },
+      initiative: { table: 'initiatives', titleCol: 'name', statusCol: 'status' },
+      task: { table: 'tasks', titleCol: 'title', statusCol: 'status' },
+      decision: { table: 'decisions', titleCol: 'title', statusCol: 'status' },
+      tool_session: { table: 'tool_sessions', titleCol: 'name', statusCol: 'status' },
+      report: { table: 'report_builder_reports', titleCol: 'title', statusCol: 'status' },
+      presentation: { table: 'presentations', titleCol: 'title', statusCol: 'status' },
+      idea: { table: 'my_work_idea_maps', titleCol: 'name' },
+    };
+
+    const config = tableMap[artifactType];
+    if (!config) {
+      return {
+        artifactType,
+        artifactId,
+        title: `Unknown (${artifactType})`,
+        snippet: '',
+        permissionOk: false,
+      };
+    }
+
+    try {
+      const statusSelect = config.statusCol ? `, ${config.statusCol} as status` : '';
+      const row = await queryHelpers.queryOne<any>(
+        `SELECT id, ${config.titleCol} as title${statusSelect}, updated_at as "updatedAt"
+         FROM ${config.table}
+         WHERE id = ? AND organization_id = ?
+         LIMIT 1`,
+        [artifactId, orgId]
+      );
+
+      if (!row) {
+        return {
+          artifactType,
+          artifactId,
+          title: 'Not found',
+          snippet: '',
+          permissionOk: false,
+        };
+      }
+
+      return {
+        artifactType,
+        artifactId,
+        title: row.title || artifactId,
+        snippet: '',
+        status: row.status,
+        updatedAt: row.updatedAt,
+        permissionOk: true,
+      };
+    } catch {
+      return {
+        artifactType,
+        artifactId,
+        title: artifactType,
+        snippet: '',
+        permissionOk: false,
+      };
+    }
+  }
+
+  async resolveEmbedChips(
+    orgId: string,
+    userId: string,
+    refs: Array<{ type: string; id: string }>
+  ): Promise<EmbedChipInfo[]> {
+    const results: EmbedChipInfo[] = [];
+    for (const ref of refs.slice(0, 50)) {
+      const info = await this.resolveEmbedChip(orgId, userId, ref.type, ref.id);
+      if (info) results.push(info);
+    }
+    return results;
+  }
+
+  // ──────────────────────────────────────────────
+  // Internal helpers
+  // ──────────────────────────────────────────────
+
+  private async extractText(buffer: Buffer, mimetype: string, originalname: string): Promise<string> {
+    const ext = path.extname(originalname || '').toLowerCase();
+    if (ext === '.pdf' || mimetype === 'application/pdf') {
+      const pdfParse = (await import('pdf-parse')).default as (buf: Buffer) => Promise<{ text: string }>;
+      const data = await pdfParse(buffer);
+      return String(data?.text || '');
+    }
+    if (ext === '.xlsx' || ext === '.xls' || mimetype?.includes('spreadsheet')) {
+      const XLSX = await import('xlsx');
+      const wb = XLSX.read(buffer, { type: 'buffer' });
+      const lines: string[] = [];
+      for (const name of wb.SheetNames) {
+        const ws = wb.Sheets[name];
+        const csv = XLSX.utils.sheet_to_csv(ws, { FS: '\t' });
+        lines.push(`=== ${name} ===`, csv);
+      }
+      return lines.join('\n');
+    }
+    if (ext === '.docx' || mimetype?.includes('wordprocessingml')) {
+      try {
+        const mammoth = await import('mammoth');
+        const result = await mammoth.extractRawText({ buffer });
+        return result.value || '';
+      } catch {
+        return buffer.toString('utf-8');
+      }
+    }
+    if (ext === '.html' || ext === '.htm' || mimetype?.includes('html')) {
+      return buffer.toString('utf-8').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+    return buffer.toString('utf-8');
+  }
+
+  private textToBlocks(text: string): Array<Record<string, unknown>> {
+    const paragraphs = text.split(/\n{2,}/).filter(Boolean);
+    return paragraphs.slice(0, 200).map(p => ({
+      type: 'paragraph',
+      content: [{ type: 'text', text: p.trim().slice(0, 10000) }],
+    }));
+  }
+
+  private async ftsSearch(
+    orgId: string,
+    userId: string,
+    query: string,
+    options: { limit: number; projectId?: string }
+  ): Promise<SemanticSearchResult[]> {
+    const isPg = process.env.DB_TYPE === 'postgres';
+    const conditions = ['np.organization_id = ?'];
+    const params: unknown[] = [orgId];
+
+    conditions.push(
+      `((lower(np.visibility) = 'private' AND np.owner_user_id = ?)
+        OR (lower(np.visibility) = 'project' AND np.project_id IS NOT NULL))`
+    );
+    params.push(userId);
+
+    if (options.projectId) {
+      conditions.push('np.project_id = ?');
+      params.push(options.projectId);
+    }
+
+    if (isPg) {
+      const ftsQuery = query.replace(/'/g, "''").trim();
+      conditions.push(`np.search_vector @@ plainto_tsquery('simple', ?)`);
+      params.push(ftsQuery);
+    } else {
+      const like = `%${query.toLowerCase()}%`;
+      conditions.push(`(lower(np.title) LIKE ? OR lower(coalesce(np.content_text,'')) LIKE ?)`);
+      params.push(like, like);
+    }
+
+    params.push(options.limit);
+
+    const rankExpr = isPg
+      ? `ts_rank(np.search_vector, plainto_tsquery('simple', '${query.replace(/'/g, "''")}'))`
+      : '1.0';
+
+    const rows = (await queryHelpers.queryAll<any>(
+      `SELECT np.id, np.title, SUBSTR(np.content_text, 1, 300) as snippet, ${rankExpr} as score
+       FROM notebook_pages np
+       WHERE ${conditions.join(' AND ')}
+       ORDER BY ${isPg ? 'score DESC,' : ''} np.updated_at DESC
+       LIMIT ?`,
+      params
+    )) || [];
+
+    return rows.map((r: any) => ({
+      pageId: r.id,
+      title: r.title || '',
+      snippet: r.snippet || '',
+      score: r.score || 0.5,
+      sourceRef: { type: 'notebook_page' as const, id: r.id },
+      matchType: 'fts' as const,
+    }));
+  }
+
+  private async embeddingSearch(
+    orgId: string,
+    userId: string,
+    query: string,
+    options: { limit: number; projectId?: string }
+  ): Promise<SemanticSearchResult[]> {
+    const db = await this.getDb();
+
+    try {
+      await db.get('SELECT 1 FROM notebook_embeddings LIMIT 1');
+    } catch {
+      return [];
+    }
+
+    const conditions = ['ne.organization_id = ?'];
+    const params: unknown[] = [orgId];
+
+    if (options.projectId) {
+      conditions.push('np.project_id = ?');
+      params.push(options.projectId);
+    }
+
+    conditions.push(
+      `((lower(np.visibility) = 'private' AND np.owner_user_id = ?)
+        OR (lower(np.visibility) = 'project' AND np.project_id IS NOT NULL))`
+    );
+    params.push(userId);
+
+    params.push(options.limit);
+
+    const rows = (await db.all(
+      `SELECT ne.page_id, np.title, SUBSTR(ne.chunk_text, 1, 300) as snippet
+       FROM notebook_embeddings ne
+       JOIN notebook_pages np ON np.id = ne.page_id
+       WHERE ${conditions.join(' AND ')}
+       ORDER BY ne.updated_at DESC
+       LIMIT ?`,
+      params
+    )) || [];
+
+    return rows.map((r: any, i: number) => ({
+      pageId: r.page_id,
+      title: r.title || '',
+      snippet: r.snippet || '',
+      score: 0.8 - i * 0.02,
+      sourceRef: { type: 'notebook_page' as const, id: r.page_id },
+      matchType: 'semantic' as const,
+    }));
+  }
+
+  private async storeEmbedding(orgId: string, pageId: string, text: string): Promise<void> {
+    const db = await this.getDb();
+    await this.ensureEmbeddingTable(db);
+
+    const chunks = this.chunkText(text, 1000);
+    const now = new Date().toISOString();
+
+    await db.run(`DELETE FROM notebook_embeddings WHERE page_id = ? AND organization_id = ?`, [pageId, orgId]);
+
+    for (let i = 0; i < chunks.length && i < 50; i++) {
+      await db.run(
+        `INSERT INTO notebook_embeddings (id, organization_id, page_id, chunk_index, chunk_text, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [uuidv4(), orgId, pageId, i, chunks[i], now]
+      );
+    }
+  }
+
+  private chunkText(text: string, chunkSize: number): string[] {
+    const chunks: string[] = [];
+    const paragraphs = text.split(/\n{2,}/);
+    let current = '';
+
+    for (const p of paragraphs) {
+      if (current.length + p.length > chunkSize && current.length > 0) {
+        chunks.push(current.trim());
+        current = '';
+      }
+      current += p + '\n\n';
+    }
+    if (current.trim()) chunks.push(current.trim());
+    return chunks;
+  }
+
+  private async ensureEmbeddingTable(db: IDatabase): Promise<void> {
+    try {
+      await db.run(`CREATE TABLE IF NOT EXISTS notebook_embeddings (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        page_id TEXT NOT NULL,
+        chunk_index INTEGER NOT NULL DEFAULT 0,
+        chunk_text TEXT NOT NULL,
+        embedding_vector TEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`);
+      await db.run(`CREATE INDEX IF NOT EXISTS idx_nb_embed_page ON notebook_embeddings(organization_id, page_id)`);
+    } catch { /* may exist */ }
+  }
+
+  private async ensureProposalTable(db: IDatabase): Promise<void> {
+    try {
+      await db.run(`CREATE TABLE IF NOT EXISTS notebook_ai_proposals (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        page_id TEXT NOT NULL,
+        actor_id TEXT NOT NULL,
+        proposal_type TEXT NOT NULL DEFAULT 'insert',
+        block_content TEXT NOT NULL DEFAULT '{}',
+        rationale TEXT,
+        status TEXT NOT NULL DEFAULT 'proposed',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        resolved_at TIMESTAMP,
+        resolved_by TEXT
+      )`);
+      await db.run(`CREATE INDEX IF NOT EXISTS idx_nb_proposals_page ON notebook_ai_proposals(organization_id, page_id, status)`);
+    } catch { /* may exist */ }
+  }
+}
+
+// ============================================================
+// Helpers
+// ============================================================
+
+function mapProposalRow(r: any): AIBlockProposal {
+  return {
+    id: r.id,
+    pageId: r.page_id,
+    actorId: r.actor_id,
+    proposalType: r.proposal_type || 'insert',
+    blockContent: safeParseJson(r.block_content),
+    rationale: r.rationale || '',
+    status: r.status || 'proposed',
+    createdAt: r.created_at,
+    resolvedAt: r.resolved_at || null,
+    resolvedBy: r.resolved_by || null,
+  };
+}
+
+function safeParseJson(val: unknown): Record<string, unknown> {
+  if (!val) return {};
+  try {
+    return typeof val === 'string' ? JSON.parse(val) : (val as Record<string, unknown>);
+  } catch {
+    return {};
+  }
+}
+
+const notebookService = new NotebookService();
+export default notebookService;
+export { NotebookService, notebookService };
