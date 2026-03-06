@@ -755,6 +755,7 @@ export async function generateDeck(
       try {
         const engineInput: NarrativeEngineInput = {
           context_pack: contextPack,
+          organizationId,
           report_config: {
             report_type_v3: 'presentation',
             goal_v3: setup.goal,
@@ -769,6 +770,10 @@ export async function generateDeck(
           section_key: slide.intent,
           section_type: slide.intent,
           section_title: slide.key_message || slide.intent,
+          aiPurpose:
+            slide.intent === 'executive_summary' || slide.intent === 'key_messages'
+              ? 'presentation_slide_copy'
+              : 'presentation_deck_outline',
         };
         const narrativeOutput = await generateNarrative(engineInput);
         if (narrativeOutput.post_check.passed && narrativeOutput.content) {

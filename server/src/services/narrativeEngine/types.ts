@@ -59,6 +59,7 @@ export interface PostCheckResult {
 
 export interface NarrativeEngineInput {
   context_pack: any;
+  organizationId?: string;
   report_config: {
     report_type_v3: string;
     goal_v3: string;
@@ -71,6 +72,7 @@ export interface NarrativeEngineInput {
   section_key: string;
   section_type: string;
   section_title: string;
+  aiPurpose?: string;
   previous_sections_summaries?: Array<{ key: string; summary: string }>;
 }
 

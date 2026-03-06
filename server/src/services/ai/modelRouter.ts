@@ -6,6 +6,7 @@ import * as DbPromise from '../../utils/DbPromise.js';
 import { appCache } from '../redis/CacheService.js';
 import type { LLMConfigService } from './llmConfigService.js';
 import { aiLogger } from './logger.js';
+import { getRoutingPurposeKeys, normalizePurposeKey } from './aiTaskCatalog.js';
 import { modelMeetsRequirements, type ModelRequirements } from './modelCapabilities.js';
 import { modelRegistryService } from './modelRegistryService.js';
 import { routingRulesService } from './routingRulesService.js';
@@ -19,10 +20,23 @@ export const CAPABILITY_TIERS: Record<string, Tier> = {
   magic_wand: 'BUDGET',
   chat_confirm: 'BUDGET',
   chat_complex: 'STANDARD',
+  chat_with_pdf: 'PREMIUM',
+  chat_with_files: 'STANDARD',
+  document_extract: 'STANDARD',
+  document_compare: 'REASONING',
+  document_answer: 'PREMIUM',
   report_section: 'STANDARD',
+  report_section_draft: 'STANDARD',
+  report_executive_synthesis: 'REASONING',
+  report_evidence_validation: 'REASONING',
+  report_quality_gate: 'STANDARD',
   analysis: 'STANDARD',
   full_report: 'PREMIUM',
   assessment: 'PREMIUM',
+  presentation_deck_outline: 'STANDARD',
+  presentation_slide_copy: 'STANDARD',
+  presentation_vision_qc: 'REASONING',
+  presentation_visual_generation: 'STANDARD',
   max_mode: 'REASONING',
   strategic: 'REASONING',
   vision: 'VISION',
@@ -197,11 +211,13 @@ export class ModelRouter {
   }
 
   async select(params: SelectParams): Promise<ProviderConfig> {
-    const capability = params.purpose || params.capability;
+    const requestedPurpose = params.purpose || params.capability;
+    const capability = normalizePurposeKey(requestedPurpose) || requestedPurpose;
     const { organizationId, options = {}, requirements } = params;
     let tier = (options.tier ||
       params.tier ||
       CAPABILITY_TIERS[capability || ''] ||
+      CAPABILITY_TIERS[String(requestedPurpose || '')] ||
       'STANDARD') as Tier;
 
     aiLogger.info(
@@ -253,9 +269,15 @@ export class ModelRouter {
           const thresholdPct = Number(process.env.AI_COST_SOFT_CAP_THRESHOLD_PCT || 90) || 90;
           const severePct = Number(process.env.AI_COST_SOFT_CAP_SEVERE_PCT || 110) || 110;
 
-          const purpose = String(capability || '').trim();
+          const purpose = String(capability || requestedPurpose || '').trim();
           const nonCritical =
-            ['chat_simple', 'chat_confirm', 'deck_copy_polish', 'chat_complex'].includes(purpose) ||
+            [
+              'chat_simple',
+              'chat_confirm',
+              'chat_complex',
+              'presentation_slide_copy',
+              'deck_copy_polish',
+            ].includes(purpose) ||
             purpose.startsWith('results_');
 
           // Respect explicit tier override from the caller.
@@ -304,11 +326,20 @@ export class ModelRouter {
       // V3-A06: Try model registry first (health gating, fallback chain)
       if (MODEL_REGISTRY_ENABLED && organizationId) {
         try {
-          const config = await this.resolveByPurpose(capability, organizationId, {
-            ...options,
-            requirements,
-            dataClass: params.dataClass,
-          });
+          let config: ProviderConfig | null = null;
+          for (const routingKey of getRoutingPurposeKeys(capability)) {
+            try {
+              config = await this.resolveByPurpose(routingKey, organizationId, {
+                ...options,
+                requirements,
+                dataClass: params.dataClass,
+              });
+              break;
+            } catch {
+              // try next compatible routing key
+            }
+          }
+          if (!config) throw new Error(`No model registry route for ${capability}`);
           aiLogger.info(
             'ModelRouter',
             `Selected via model registry: ${config.id} (${config.provider})`
@@ -529,9 +560,9 @@ export class ModelRouter {
     const p = String(purpose || '').trim();
     if (!p) return [];
 
-    // Prefer org assignments, then global (NULL org) assignments
-    const query = organizationId
-      ? `
+    const fetchRows = async (routingKey: string): Promise<ProviderRow[]> => {
+      const query = organizationId
+        ? `
         SELECT lp.*, apa.priority as purpose_priority
         FROM ai_purpose_assignments apa
         INNER JOIN llm_providers lp ON lp.id = apa.provider_id
@@ -548,7 +579,7 @@ export class ModelRouter {
           lp.cost_per_1k,
           lp.priority
       `
-      : `
+        : `
         SELECT lp.*, apa.priority as purpose_priority
         FROM ai_purpose_assignments apa
         INNER JOIN llm_providers lp ON lp.id = apa.provider_id
@@ -560,13 +591,23 @@ export class ModelRouter {
         ORDER BY apa.priority, lp.cost_per_1k, lp.priority
       `;
 
-    const params = organizationId ? [organizationId, p, organizationId, organizationId] : [p];
+      const params = organizationId
+        ? [organizationId, routingKey, organizationId, organizationId]
+        : [routingKey];
 
-    try {
-      return await DbPromise.all<ProviderRow>(query, params, { fallback: true });
-    } catch {
-      return [];
+      try {
+        return await DbPromise.all<ProviderRow>(query, params, { fallback: true });
+      } catch {
+        return [];
+      }
+    };
+
+    for (const routingKey of getRoutingPurposeKeys(p)) {
+      const rows = await fetchRows(routingKey);
+      if (rows.length > 0) return rows;
     }
+
+    return [];
   }
 
   async getModelsForTier(tier: Tier, organizationId?: string): Promise<ProviderRow[]> {

@@ -13,6 +13,7 @@ import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import * as aiGov from '../services/aiGovernanceService.js';
 import * as evalHarness from '../services/ai/evalHarnessService.js';
 import circuitBreaker from '../services/ai/circuitBreaker.js';
+import { EXECUTIVE_USE_CASES, getRoutingPurposeKeys } from '../services/ai/aiTaskCatalog.js';
 import llmConfigService from '../services/ai/llmConfigService.js';
 import { llmService } from '../services/ai/llmService.js';
 import { syncOpenRouterMarket } from '../services/ai/openRouterMarketService.js';
@@ -844,6 +845,162 @@ router.post(
 );
 
 // ==================== ENTERPRISE: PURPOSES / POLICY / PRICING / MARKET ====================
+
+router.get(
+  '/use-cases/overview',
+  verifyToken,
+  asyncHandler(async (req: any, res) => {
+    await ensureEnterpriseSchema();
+    const organizationId = req.query.organizationId
+      ? String(req.query.organizationId).trim()
+      : req.organizationId
+        ? String(req.organizationId).trim()
+        : null;
+
+    const useCases = await Promise.all(
+      EXECUTIVE_USE_CASES.map(async (useCase) => {
+        const purposes = await Promise.all(
+          useCase.purposes.map(async (purpose) => {
+            const purposeKeys = getRoutingPurposeKeys(purpose);
+            const placeholders = purposeKeys.map(() => '?').join(',');
+            const params: unknown[] = [...purposeKeys];
+            let assignmentsSql = `
+              SELECT
+                apa.purpose,
+                apa.priority,
+                apa.organization_id,
+                lp.id as provider_id,
+                lp.name as provider_name,
+                lp.provider,
+                lp.model_id,
+                lp.health_status,
+                lp.cost_per_1k
+              FROM ai_purpose_assignments apa
+              INNER JOIN llm_providers lp ON lp.id = apa.provider_id
+              WHERE apa.purpose IN (${placeholders})
+                AND apa.is_active = 1
+                AND lp.is_active = 1
+            `;
+
+            if (organizationId) {
+              assignmentsSql += ` AND (apa.organization_id = ? OR apa.organization_id IS NULL)`;
+              params.push(organizationId);
+            } else {
+              assignmentsSql += ` AND apa.organization_id IS NULL`;
+            }
+
+            assignmentsSql += `
+              ORDER BY
+                CASE
+                  WHEN ${organizationId ? 'apa.organization_id = ?' : '1 = 1'} THEN 0
+                  ELSE 1
+                END,
+                apa.priority ASC
+            `;
+            if (organizationId) params.push(organizationId);
+
+            const assignments = (await dbAll(assignmentsSql, params, {
+              fallback: true,
+            } as any)) as any[];
+
+            let usage: any = null;
+            try {
+              usage = await dbGet(
+                `SELECT
+                   COUNT(*) as requests,
+                   COALESCE(SUM(estimated_cost_usd), 0) as costUsd,
+                   COALESCE(AVG(latency_ms), 0) as avgLatencyMs
+                 FROM ai_usage_logs
+                 WHERE purpose IN (${placeholders})
+                   ${organizationId ? 'AND organization_id = ?' : ''}
+                   AND created_at >= datetime('now', '-30 day')`,
+                organizationId ? [...purposeKeys, organizationId] : purposeKeys,
+                { fallback: true } as any
+              );
+            } catch {
+              usage = { requests: 0, costUsd: 0, avgLatencyMs: 0 };
+            }
+
+            const primary = assignments[0] || null;
+            const fallbacks = assignments.slice(1, 4).map((row) => ({
+              providerId: row.provider_id,
+              provider: row.provider,
+              name: row.provider_name,
+              modelId: row.model_id,
+              healthStatus: row.health_status || 'unknown',
+            }));
+            const healthyAssignments = assignments.filter((row) =>
+              ['healthy', 'degraded', null, undefined, 'unknown'].includes(row.health_status)
+            );
+            const status =
+              assignments.length === 0
+                ? 'missing'
+                : healthyAssignments.length === 0
+                  ? 'critical'
+                  : primary?.health_status === 'unhealthy'
+                    ? 'degraded'
+                    : 'healthy';
+
+            return {
+              purpose,
+              assignmentCount: assignments.length,
+              status,
+              primary: primary
+                ? {
+                    providerId: primary.provider_id,
+                    provider: primary.provider,
+                    name: primary.provider_name,
+                    modelId: primary.model_id,
+                    healthStatus: primary.health_status || 'unknown',
+                    costPer1k: Number(primary.cost_per_1k || 0),
+                  }
+                : null,
+              fallbacks,
+              usage: {
+                requests30d: Number((usage as any)?.requests || 0),
+                costUsd30d: Number((usage as any)?.costUsd || 0),
+                avgLatencyMs30d: Number((usage as any)?.avgLatencyMs || 0),
+              },
+            };
+          })
+        );
+
+        const covered = purposes.filter((item) => item.assignmentCount > 0).length;
+        const healthy = purposes.filter((item) => item.status === 'healthy').length;
+        const degraded = purposes.filter((item) => item.status === 'degraded').length;
+        const critical = purposes.filter((item) => item.status === 'critical' || item.status === 'missing').length;
+        const overallStatus =
+          critical > 0 ? 'critical' : degraded > 0 ? 'degraded' : healthy > 0 ? 'healthy' : 'unknown';
+
+        return {
+          key: useCase.key,
+          label: useCase.label,
+          description: useCase.description,
+          businessOwner: useCase.businessOwner,
+          status: overallStatus,
+          coveragePct: useCase.purposes.length > 0 ? Math.round((covered / useCase.purposes.length) * 100) : 0,
+          healthyPurposes: healthy,
+          degradedPurposes: degraded,
+          criticalPurposes: critical,
+          costUsd30d: purposes.reduce((sum, item) => sum + Number(item.usage.costUsd30d || 0), 0),
+          requests30d: purposes.reduce((sum, item) => sum + Number(item.usage.requests30d || 0), 0),
+          purposes,
+        };
+      })
+    );
+
+    return res.json({
+      success: true,
+      useCases,
+      summary: {
+        total: useCases.length,
+        healthy: useCases.filter((u) => u.status === 'healthy').length,
+        degraded: useCases.filter((u) => u.status === 'degraded').length,
+        critical: useCases.filter((u) => u.status === 'critical').length,
+      },
+    });
+  })
+);
 
 /**
  * GET /api/llm/purposes

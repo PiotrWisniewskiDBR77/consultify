@@ -25,6 +25,10 @@ export const ALERT_TYPE = {
   PROVIDER_RECOVERED: 'provider_recovered',
   HIGH_LATENCY: 'high_latency',
   ERROR_SPIKE: 'error_spike',
+  PURPOSE_COVERAGE_MISSING: 'purpose_coverage_missing',
+  DELIVERY_THREATENED: 'delivery_threatened',
+  DOCUMENT_PATH_DEGRADED: 'document_path_degraded',
+  IMAGE_PROVIDER_UNAVAILABLE: 'image_provider_unavailable',
 } as const;
 
 type Severity = (typeof SEVERITY)[keyof typeof SEVERITY];
@@ -227,6 +231,33 @@ export class AlertingService {
         emoji = '📈';
         title = 'Error Rate Spike';
         message = `Error rate increased to ${data.errorRate}% (${data.errorCount} errors in last ${data.windowMinutes || 5} minutes).`;
+        break;
+      case ALERT_TYPE.PURPOSE_COVERAGE_MISSING:
+        severity = SEVERITY.CRITICAL;
+        emoji = '🧭';
+        title = `Purpose Coverage Missing: ${data.purpose || data.useCase || 'unknown'}`;
+        message = `No healthy primary/fallback chain is available for ${data.purpose || data.useCase || 'this AI use case'}. User-visible delivery is at risk.`;
+        break;
+      case ALERT_TYPE.DELIVERY_THREATENED:
+        severity = (data.severity as Severity) || SEVERITY.WARNING;
+        emoji = severity === SEVERITY.CRITICAL ? '🚨' : '⚠️';
+        title = `LLM Delivery Threatened: ${data.useCase || data.purpose || 'runtime'}`;
+        message = String(
+          data.message ||
+            `Delivery risk detected for ${data.useCase || data.purpose || 'an AI runtime path'}.`
+        );
+        break;
+      case ALERT_TYPE.DOCUMENT_PATH_DEGRADED:
+        severity = SEVERITY.WARNING;
+        emoji = '📄';
+        title = `Document Path Degraded: ${data.purpose || 'document runtime'}`;
+        message = `Document understanding path is degraded for ${data.purpose || 'document runtime'}. Fallbacks may still work, but grounded answers are at risk.`;
+        break;
+      case ALERT_TYPE.IMAGE_PROVIDER_UNAVAILABLE:
+        severity = SEVERITY.WARNING;
+        emoji = '🖼️';
+        title = `Image Provider Unavailable: ${data.providerId || 'visual generation'}`;
+        message = `Image generation capacity is degraded for ${data.purpose || 'presentation visuals'}. Asset generation may fall back or fail.`;
         break;
       default:
         title = alertType;

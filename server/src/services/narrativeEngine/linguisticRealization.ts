@@ -12,6 +12,7 @@
  */
 
 import logger from '../../utils/Logger.js';
+import modelRouter from '../ai/modelRouter.js';
 import type {
   DiscoursePlan,
   FactSet,
@@ -215,7 +216,11 @@ function buildFallbackContent(
   return lines.join('\n');
 }
 
-async function callLLM(systemPrompt: string, userPrompt: string): Promise<string> {
+async function callLLM(
+  systemPrompt: string,
+  userPrompt: string,
+  input: NarrativeEngineInput
+): Promise<string> {
   const llm = await getLLMService();
   if (!llm) {
     logger.warn('[NarrativeEngine:L4] LLM service not available, using fallback');
@@ -225,10 +230,21 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
   try {
     const totalWords = userPrompt.split(/\s+/).length;
     const maxTokens = Math.max(800, Math.min(totalWords * 3, 4096));
+    const modelConfig = await modelRouter.select({
+      capability: 'report_section',
+      purpose: input.aiPurpose || 'report_section_draft',
+      organizationId: input.organizationId,
+      tier: 'STANDARD',
+    });
 
     const result = await llm.call({
       type: 'text',
-      modelConfig: { id: 'standard' },
+      modelConfig: {
+        provider: modelConfig.provider,
+        id: modelConfig.id,
+        endpoint: modelConfig.endpoint || undefined,
+        apiKey: modelConfig.apiKey || undefined,
+      },
       systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],
       maxTokens,
@@ -262,7 +278,7 @@ export async function realizeLinguistically(
   const systemPrompt = buildSystemPrompt(input);
   const userPrompt = buildUserPrompt(plan, facts, observations, input);
 
-  const llmResponse = await callLLM(systemPrompt, userPrompt);
+  const llmResponse = await callLLM(systemPrompt, userPrompt, input);
 
   if (llmResponse && llmResponse.trim().length > 0) {
     return llmResponse;

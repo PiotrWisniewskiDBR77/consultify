@@ -118,6 +118,7 @@ class AlertAggregator {
       this.alertGroups.set(alertKey, group);
     } else {
       // Existing alert - update count and timestamp
+      const previousLastOccurrence = group.alert.lastOccurrence;
       group.alert.count++;
       group.alert.lastOccurrence = now;
 
@@ -130,7 +131,7 @@ class AlertAggregator {
       }
 
       // Check rate limiting
-      const timeSinceLastAlert = now - group.alert.lastOccurrence;
+      const timeSinceLastAlert = now - previousLastOccurrence;
       if (timeSinceLastAlert < this.rateLimitMs) {
         logger.debug(
           `[AlertAggregator] Alert rate limited: ${alertKey} (last sent ${Math.round(timeSinceLastAlert / 1000)}s ago)`

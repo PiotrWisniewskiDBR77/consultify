@@ -24,6 +24,7 @@ import type {
 } from '../../types/ai.types.js';
 import logger from '../../utils/Logger.js';
 import { llmService } from './llmService.js';
+import { inferChatTaskPurpose, normalizePurposeKey } from './aiTaskCatalog.js';
 import modelRouter from './modelRouter.js';
 
 // Lazy load AIContextBuilder to avoid circular dependencies
@@ -1807,11 +1808,28 @@ export class AIPipeline {
       };
     }
 
-    // 2) Dynamic routing by tier/capability
+    // 2) Dynamic routing by tier/purpose
     const routingCapability = request.capability === 'chatStream' ? 'chat' : request.capability;
+    const attachmentDocIdsRaw =
+      (request.context as any)?.attachmentDocIds ||
+      (Array.isArray((request.context as any)?.attachments)
+        ? (request.context as any)?.attachments.map((a: any) => a?.docId).filter(Boolean)
+        : []);
+    const resolvedPurpose =
+      normalizePurposeKey(request.purpose) ||
+      (routingCapability === 'chat'
+        ? inferChatTaskPurpose({
+            explicitPurpose: request.purpose,
+            capability: routingCapability,
+            message: request.prompt,
+            attachments: ((request.context as any)?.attachments || []) as any[],
+            attachmentDocIds: attachmentDocIdsRaw,
+            deepResearch: Boolean((request.options as any)?.aiModes?.deepResearch),
+          })
+        : normalizePurposeKey(routingCapability) || routingCapability);
     const routed = await modelRouter.select({
       capability: routingCapability,
-      purpose: request.purpose || routingCapability,
+      purpose: resolvedPurpose,
       dataClass: (request as any).dataClass,
       organizationId: request.organizationId,
       options: { tier: selectedTier },

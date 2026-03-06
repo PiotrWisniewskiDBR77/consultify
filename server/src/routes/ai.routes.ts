@@ -16,6 +16,7 @@ import {
   validateQuery,
 } from '../middleware/validation.middleware.js';
 import { buildHelpDocsContext } from '../services/ai/helpDocsContext.js';
+import { inferChatTaskPurpose } from '../services/ai/aiTaskCatalog.js';
 import {
   triggerAIDependencyConflict,
   triggerAIOverloadDetected,
@@ -1282,6 +1283,16 @@ router.post(
           null;
 
       const focusMode = (context as any)?.focusMode || bodyFocusMode || 'all';
+      const attachmentDocIdsForPurpose = Array.isArray((context as any)?.attachmentDocIds)
+        ? ((context as any).attachmentDocIds as any[]).map((id: any) => String(id)).filter(Boolean)
+        : [];
+      const resolvedChatPurpose = inferChatTaskPurpose({
+        capability: 'chat',
+        message,
+        attachments: Array.isArray((context as any)?.attachments) ? (context as any).attachments : [],
+        attachmentDocIds: attachmentDocIdsForPurpose,
+        deepResearch: Boolean(aiModes?.deepResearch),
+      });
 
       let pipelineRequest = {
         type: 'chat',
@@ -1294,6 +1305,7 @@ router.post(
           content: (m as { parts?: Array<{ text: string }> }).parts?.[0]?.text || m.content || '',
         })),
         capability: 'chat',
+        purpose: resolvedChatPurpose,
         screenContext, // Full screen context for AI awareness
         focusMode, // Focus mode for context filtering
         context: {
@@ -1349,6 +1361,7 @@ router.post(
             responseStyle: responseStyle || null,
             selectedTier: selectedTier || null,
             selectedModelId: selectedModelId || null,
+            purpose: resolvedChatPurpose,
             language: language || null,
             resumeFromPartial: Boolean(resumeFromPartial),
             privateMode: Boolean(privateMode),
