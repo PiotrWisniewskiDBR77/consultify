@@ -11813,6 +11813,100 @@ export const Api = {
     const res = await fetch(`${API_URL}/finance-v4/roi-links/${linkId}/realize`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
     return handleResponse(res, 'Failed to realize ROI link');
   },
+
+  // ──────────────────────────────────────────────
+  // V4-RPT: Reports Enterprise API
+  // ──────────────────────────────────────────────
+
+  reportCreateSourcePack: async (reportId: string, data: { name: string; description?: string; citationPolicy?: string }) => {
+    const res = await fetch(`${API_URL}/reports-v4/reports/${reportId}/source-packs`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create source pack');
+  },
+  reportAddSourcePackItem: async (packId: string, data: { artifactType: string; artifactId: string; artifactTitle?: string; citationLabel?: string }) => {
+    const res = await fetch(`${API_URL}/reports-v4/source-packs/${packId}/items`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to add source pack item');
+  },
+  reportGetSourcePacks: async (reportId: string) => {
+    const res = await fetch(`${API_URL}/reports-v4/reports/${reportId}/source-packs`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get source packs');
+  },
+  reportGetSourcePackItems: async (packId: string) => {
+    const res = await fetch(`${API_URL}/reports-v4/source-packs/${packId}/items`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get source pack items');
+  },
+  reportCreateDataBinding: async (reportId: string, data: { sectionId: string; datasetRef: string; bindingType?: string }) => {
+    const res = await fetch(`${API_URL}/reports-v4/reports/${reportId}/data-bindings`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create data binding');
+  },
+  reportRefreshDataBinding: async (bindingId: string, value: string) => {
+    const res = await fetch(`${API_URL}/reports-v4/data-bindings/${bindingId}/refresh`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ value }) });
+    return handleResponse(res, 'Failed to refresh data binding');
+  },
+  reportApproveDataBinding: async (bindingId: string) => {
+    const res = await fetch(`${API_URL}/reports-v4/data-bindings/${bindingId}/approve`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to approve data binding');
+  },
+  reportGetDataBindings: async (reportId: string) => {
+    const res = await fetch(`${API_URL}/reports-v4/reports/${reportId}/data-bindings`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get data bindings');
+  },
+  reportCreateTemplate: async (data: { name: string; templateData: Record<string, unknown>; variables?: unknown[]; category?: string }) => {
+    const res = await fetch(`${API_URL}/reports-v4/templates`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create template');
+  },
+  reportPublishTemplate: async (templateId: string) => {
+    const res = await fetch(`${API_URL}/reports-v4/templates/${templateId}/publish`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to publish template');
+  },
+  reportGetTemplates: async () => {
+    const res = await fetch(`${API_URL}/reports-v4/templates`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get templates');
+  },
+  reportGetTemplateVersions: async (templateId: string) => {
+    const res = await fetch(`${API_URL}/reports-v4/templates/${templateId}/versions`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get template versions');
+  },
+  reportCreateBrandVoice: async (data: { policyName: string; tone?: string; forbiddenPhrases?: string[]; requiredSourceCitation?: boolean; noMarketingLanguage?: boolean }) => {
+    const res = await fetch(`${API_URL}/reports-v4/brand-voice`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create brand voice policy');
+  },
+  reportGetBrandVoicePolicies: async () => {
+    const res = await fetch(`${API_URL}/reports-v4/brand-voice`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get brand voice policies');
+  },
+  reportValidateBrandVoice: async (text: string) => {
+    const res = await fetch(`${API_URL}/reports-v4/brand-voice/validate`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ text }) });
+    return handleResponse(res, 'Failed to validate brand voice');
+  },
+  reportCreateAIProposal: async (reportId: string, data: { proposedContent: string; sectionId?: string; blockId?: string; originalContent?: string; citations?: unknown[] }) => {
+    const res = await fetch(`${API_URL}/reports-v4/reports/${reportId}/ai-proposals`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create AI proposal');
+  },
+  reportResolveAIProposal: async (proposalId: string, action: 'accept' | 'reject') => {
+    const res = await fetch(`${API_URL}/reports-v4/ai-proposals/${proposalId}/resolve`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ action }) });
+    return handleResponse(res, 'Failed to resolve AI proposal');
+  },
+  reportGetAIProposals: async (reportId: string, status?: string) => {
+    const params = status ? `?status=${status}` : '';
+    const res = await fetch(`${API_URL}/reports-v4/reports/${reportId}/ai-proposals${params}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get AI proposals');
+  },
+  reportCreateDistributionSchedule: async (reportId: string, data: { recipientPolicy: Record<string, unknown>; scheduleCron?: string; sendAt?: string; approvalRequired?: boolean }) => {
+    const res = await fetch(`${API_URL}/reports-v4/reports/${reportId}/distribution-schedules`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create distribution schedule');
+  },
+  reportApproveDistribution: async (scheduleId: string) => {
+    const res = await fetch(`${API_URL}/reports-v4/distribution-schedules/${scheduleId}/approve`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to approve distribution');
+  },
+  reportGetDistributionSchedules: async (reportId: string) => {
+    const res = await fetch(`${API_URL}/reports-v4/reports/${reportId}/distribution-schedules`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get distribution schedules');
+  },
+  reportGetDistributionLog: async (scheduleId: string) => {
+    const res = await fetch(`${API_URL}/reports-v4/distribution-schedules/${scheduleId}/log`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get distribution log');
+  },
 };
 
 // Export as 'api' for backwards compatibility with lowercase import

@@ -105,6 +105,7 @@ import webhookSubRoutes from './routes/integrations/webhookSubscriptions.routes.
 import intelligenceRoutes from './routes/intelligence.routes.js';
 import financeEnterpriseRoutes from './routes/finance-enterprise.routes.js';
 import interviewRoutes from './routes/interview.routes.js';
+import reportEnterpriseRoutes from './routes/report-enterprise.routes.js';
 import interviewEnterpriseRoutes from './routes/interview-enterprise.routes.js';
 import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
 import knowledgeRoutes from './routes/knowledge.routes.js';
@@ -576,6 +577,7 @@ export class ApiGateway {
       app.use('/api/reports', reportsRoutes);
       app.use('/api/reports/premium', premiumReportsRoutes);
       app.use('/api/report-builder', reportBuilderRoutes);
+      app.use('/api/reports-v4', reportEnterpriseRoutes);
       app.use('/api/report-import', reportImportRoutes);
       app.use('/api/ai-suggestions', aiSuggestionsRoutes);
       app.use('/api/report-initiatives', reportInitiativesRoutes);
