@@ -274,6 +274,12 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
     { id: 'metadata' as const, label: isPl ? 'Meta' : 'Meta' },
     { id: 'convert' as const, label: isPl ? 'Konwersja' : 'Convert' },
   ];
+  const supportedConvertTargets = new Set<ConvertTarget>([
+    'initiative',
+    'task_set',
+    'decision',
+    'team_chat',
+  ]);
 
   const convertActions: {
     id: ConvertTarget;
@@ -841,8 +847,15 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                 <button
                   key={id}
                   onClick={() => onConvert(id)}
-                  disabled={isDraft}
+                  disabled={isDraft || !supportedConvertTargets.has(id)}
                   className="group relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl overflow-hidden transition-all duration-200 hover:shadow-md disabled:opacity-40"
+                  title={
+                    supportedConvertTargets.has(id)
+                      ? undefined
+                      : isPl
+                        ? 'Jeszcze niedostępne w mapie idei'
+                        : 'Not yet available for idea maps'
+                  }
                 >
                   <div
                     className={`absolute inset-0 bg-gradient-to-br ${gradient} group-hover:opacity-150 transition-opacity`}
@@ -858,7 +871,13 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                       {isPl ? labelPl : labelEn}
                     </div>
                     <div className="text-[9px] text-slate-400 dark:text-slate-500">
-                      {isPl ? descPl : descEn}
+                      {supportedConvertTargets.has(id)
+                        ? isPl
+                          ? descPl
+                          : descEn
+                        : isPl
+                          ? 'Wkrótce. Ukryte do czasu realnego wsparcia end-to-end.'
+                          : 'Coming soon. Hidden until end-to-end support is real.'}
                     </div>
                   </div>
                 </button>

@@ -1,4 +1,11 @@
-import { AlertTriangle, CheckCircle2, RefreshCw, ShieldAlert } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  DollarSign,
+  RefreshCw,
+  ShieldAlert,
+  Users,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -63,7 +70,23 @@ const formatUsd = (value: number) =>
 export const AIUseCaseControlPlane: React.FC = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
-  const [overview, setOverview] = useState<{ useCases: UseCaseCard[]; summary: any } | null>(null);
+  const [overview, setOverview] = useState<{
+    useCases: UseCaseCard[];
+    summary: any;
+    riskFeed?: Array<{
+      severity: string;
+      title: string;
+      blastRadius: string;
+      recommendation: string;
+    }>;
+    vendorScorecards?: Array<{
+      provider: string;
+      costUsd: number;
+      requests: number;
+      avgLatencyMs: number;
+      sharePct: number;
+    }>;
+  } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -130,6 +153,97 @@ export const AIUseCaseControlPlane: React.FC = () => {
         />
       </div>
 
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <MetricCard
+          label={t('aiPlatform.controlPlane.kpi.mtdSpend', 'MTD spend')}
+          value={formatUsd(Number(summary.mtdSpendUsd || 0))}
+          icon={DollarSign}
+        />
+        <MetricCard
+          label={t('aiPlatform.controlPlane.kpi.monthEndForecast', 'Month-end forecast')}
+          value={formatUsd(Number(summary.projectedMonthEndSpendUsd || 0))}
+          icon={AlertTriangle}
+        />
+        <MetricCard
+          label={t('aiPlatform.controlPlane.kpi.impactedOrgs', 'Impacted orgs')}
+          value={String(summary.impactedOrganizations || 0)}
+          icon={Users}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <Card className="p-5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+              {t('aiPlatform.controlPlane.risks', 'Top risks')}
+            </h3>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {overview?.riskFeed?.length || 0}
+            </span>
+          </div>
+          <div className="mt-4 space-y-3">
+            {(overview?.riskFeed || []).slice(0, 5).map((risk, index) => (
+              <div
+                key={`${risk.title}-${index}`}
+                className="rounded-xl bg-slate-100/70 px-4 py-3 dark:bg-white/[0.04]"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="text-sm font-medium text-slate-900 dark:text-white">
+                    {risk.title}
+                  </div>
+                  <span
+                    className={`rounded-full px-2 py-1 text-[11px] font-medium ${STATUS_STYLES[risk.severity] || STATUS_STYLES.unknown}`}
+                  >
+                    {risk.severity}
+                  </span>
+                </div>
+                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  {risk.blastRadius}
+                </div>
+                <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                  {risk.recommendation}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="p-5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+              {t('aiPlatform.controlPlane.vendors', 'Vendor scorecards')}
+            </h3>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {summary.topVendor
+                ? `${summary.topVendor} ${summary.vendorConcentrationPct || 0}%`
+                : 'n/a'}
+            </span>
+          </div>
+          <div className="mt-4 space-y-3">
+            {(overview?.vendorScorecards || []).slice(0, 5).map((vendor) => (
+              <div
+                key={vendor.provider}
+                className="rounded-xl bg-slate-100/70 px-4 py-3 dark:bg-white/[0.04]"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="text-sm font-medium text-slate-900 dark:text-white">
+                    {vendor.provider}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {vendor.sharePct}% share
+                  </div>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                  <span>{formatUsd(vendor.costUsd)}</span>
+                  <span>{vendor.requests} requests</span>
+                  <span>{Math.round(vendor.avgLatencyMs || 0)} ms avg latency</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         {useCases.map((useCase) => (
           <Card key={useCase.key} className="p-5">
@@ -153,9 +267,16 @@ export const AIUseCaseControlPlane: React.FC = () => {
                 </p>
               </div>
               <div className="text-right text-xs text-slate-500 dark:text-slate-400">
-                <div>{t('aiPlatform.controlPlane.coverage', 'Coverage')}: {useCase.coveragePct}%</div>
-                <div>{t('aiPlatform.controlPlane.requests30d', 'Requests 30d')}: {useCase.requests30d}</div>
-                <div>{t('aiPlatform.controlPlane.cost30d', 'Cost 30d')}: {formatUsd(useCase.costUsd30d)}</div>
+                <div>
+                  {t('aiPlatform.controlPlane.coverage', 'Coverage')}: {useCase.coveragePct}%
+                </div>
+                <div>
+                  {t('aiPlatform.controlPlane.requests30d', 'Requests 30d')}: {useCase.requests30d}
+                </div>
+                <div>
+                  {t('aiPlatform.controlPlane.cost30d', 'Cost 30d')}:{' '}
+                  {formatUsd(useCase.costUsd30d)}
+                </div>
               </div>
             </div>
 
@@ -211,15 +332,27 @@ export const AIUseCaseControlPlane: React.FC = () => {
                   </div>
 
                   <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-                    <span>{t('aiPlatform.controlPlane.assignments', 'Assignments')}: {purpose.assignmentCount}</span>
-                    <span>{t('aiPlatform.controlPlane.requests', 'Requests')}: {purpose.usage.requests30d}</span>
-                    <span>{t('aiPlatform.controlPlane.avgLatency', 'Avg latency')}: {Math.round(purpose.usage.avgLatencyMs30d || 0)} ms</span>
-                    <span>{t('aiPlatform.controlPlane.cost', 'Cost')}: {formatUsd(purpose.usage.costUsd30d || 0)}</span>
+                    <span>
+                      {t('aiPlatform.controlPlane.assignments', 'Assignments')}:{' '}
+                      {purpose.assignmentCount}
+                    </span>
+                    <span>
+                      {t('aiPlatform.controlPlane.requests', 'Requests')}:{' '}
+                      {purpose.usage.requests30d}
+                    </span>
+                    <span>
+                      {t('aiPlatform.controlPlane.avgLatency', 'Avg latency')}:{' '}
+                      {Math.round(purpose.usage.avgLatencyMs30d || 0)} ms
+                    </span>
+                    <span>
+                      {t('aiPlatform.controlPlane.cost', 'Cost')}:{' '}
+                      {formatUsd(purpose.usage.costUsd30d || 0)}
+                    </span>
                   </div>
 
                   {purpose.fallbacks.length > 0 ? (
                     <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                      {t('aiPlatform.controlPlane.fallbacks', 'Fallbacks')}: {' '}
+                      {t('aiPlatform.controlPlane.fallbacks', 'Fallbacks')}:{' '}
                       {purpose.fallbacks.map((fallback) => fallback.modelId).join(' -> ')}
                     </div>
                   ) : null}

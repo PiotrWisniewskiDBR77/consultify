@@ -3,7 +3,9 @@
  * Supports particle flow animation and neon glow in dark mode.
  */
 import React, { useMemo } from 'react';
-import { type EdgeProps, getBezierPath } from 'reactflow';
+import { type EdgeProps } from 'reactflow';
+// @ts-ignore reactflow version mismatch
+import { getBezierPath } from '@reactflow/core';
 
 const BRANCH_EDGE_COLORS: Record<string, string> = {
   problem: '#fb7185',

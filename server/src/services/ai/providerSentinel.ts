@@ -19,8 +19,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import { getAlertAggregator } from '../AlertAggregator.js';
-import { ALERT_TYPE, SEVERITY } from './alerting.js';
 import { EXECUTIVE_USE_CASES, getRoutingPurposeKeys } from './aiTaskCatalog.js';
+import { ALERT_TYPE, SEVERITY } from './alerting.js';
 import { llmService } from './llmService.js';
 
 type HealthStatus = 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
@@ -254,7 +254,10 @@ async function emitAggregatedAlert(
   try {
     await getAlertAggregator().processAlert(alertType, severity, title, message, data);
   } catch (err: any) {
-    logger.warn('[ProviderSentinel] Failed to emit alert', { error: err?.message || err, alertType });
+    logger.warn('[ProviderSentinel] Failed to emit alert', {
+      error: err?.message || err,
+      alertType,
+    });
   }
 }
 
@@ -365,13 +368,19 @@ class ProviderSentinel {
           // Mark as degraded (not unhealthy) so modelRouter's health gating doesn't exclude it,
           // but still record the error and report it as unavailable for diagnostics.
           const statusToWrite: HealthStatus =
-            providerId === 'openrouter' && r.status === 'unhealthy' && (cat === 'auth' || cat === 'billing')
+            providerId === 'openrouter' &&
+            r.status === 'unhealthy' &&
+            (cat === 'auth' || cat === 'billing')
               ? 'degraded'
               : r.status;
 
           const available =
             (statusToWrite === 'healthy' || statusToWrite === 'degraded') &&
-            !(providerId === 'openrouter' && (cat === 'auth' || cat === 'billing') && r.status === 'unhealthy');
+            !(
+              providerId === 'openrouter' &&
+              (cat === 'auth' || cat === 'billing') &&
+              r.status === 'unhealthy'
+            );
           const errorMsg = r.errorMessage
             ? `${cat ? `${cat.toUpperCase()}: ` : ''}${r.errorMessage}`
             : null;

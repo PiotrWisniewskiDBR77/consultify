@@ -39,7 +39,7 @@ function useCollaboration(ideaId: string, userId: string, userName: string) {
   const [users, setUsers] = useState<CollaborationUser[]>([]);
   const [sessionState, setSessionState] = useState<SessionState | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimer = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttempt = useRef(0);
 
   const connect = useCallback(() => {
@@ -102,7 +102,7 @@ function useCollaboration(ideaId: string, userId: string, userName: string) {
   useEffect(() => {
     connect();
     return () => {
-      clearTimeout(reconnectTimer.current);
+      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
       wsRef.current?.close();
     };
   }, [connect]);
@@ -210,7 +210,10 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
         <div
           key={`sel-${uid}-${nodeId}`}
           className="absolute z-30 pointer-events-none rounded ring-2"
-          style={{ borderColor: userColorMap[uid] || '#94a3b8', ringColor: userColorMap[uid] || '#94a3b8' }}
+          style={{
+            borderColor: userColorMap[uid] || '#94a3b8',
+            boxShadow: `0 0 0 2px ${userColorMap[uid] || '#94a3b8'}`,
+          }}
           data-selected-node={nodeId}
           data-selected-by={uid}
         />

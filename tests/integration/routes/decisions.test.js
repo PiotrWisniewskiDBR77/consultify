@@ -201,4 +201,5 @@ describe('Decisions Routes', () => {
       expect(response.body.title).toBe('New budget decision');
     });
   });
+
 });

@@ -6,11 +6,27 @@
 import { DollarSign, Loader2, RefreshCw, TrendingDown, TrendingUp, Zap } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { Api } from '@/services/api';
+
 interface CostData {
   totalCost: number;
   currency: string;
   period: string;
   byProvider: Record<string, { tokens: number; cost: number }>;
+}
+
+interface FinOpsOverview {
+  mtdSpendUsd: number;
+  projectedMonthEndSpendUsd: number;
+  budgetUtilizationPct: number;
+  vendorConcentrationPct: number;
+  topVendor: string | null;
+  anomalies: Array<{
+    key: string;
+    deltaPct: number;
+    severity: 'warning' | 'critical';
+    scope: string;
+  }>;
 }
 
 interface CostMetric {
@@ -22,6 +38,7 @@ interface CostMetric {
 
 export const AICostDashboard: React.FC = () => {
   const [costData, setCostData] = useState<CostData | null>(null);
+  const [finOps, setFinOps] = useState<FinOpsOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,12 +46,12 @@ export const AICostDashboard: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/llm/costs', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      if (!response.ok) throw new Error('Failed to fetch costs');
-      const data = await response.json();
-      setCostData(data);
+      const [costPayload, finOpsPayload] = await Promise.all([
+        Api.getLLMCosts(),
+        Api.getAIFinOpsOverview().catch(() => null),
+      ]);
+      setCostData(costPayload);
+      setFinOps(finOpsPayload?.overview || finOpsPayload || null);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch cost data');
     } finally {
@@ -70,7 +87,7 @@ export const AICostDashboard: React.FC = () => {
     },
     {
       label: 'Est. Monthly',
-      value: `$${(((costData?.totalCost || 0) * 30) / new Date().getDate()).toFixed(2)}`,
+      value: `$${(finOps?.projectedMonthEndSpendUsd || ((costData?.totalCost || 0) * 30) / new Date().getDate()).toFixed(2)}`,
       change: 0,
       trend: 'neutral',
     },
@@ -174,6 +191,39 @@ export const AICostDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {finOps ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-4">
+            <div className="text-xs text-slate-600 dark:text-slate-400">Budget Utilization</div>
+            <div className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
+              {finOps.budgetUtilizationPct.toFixed(1)}%
+            </div>
+          </div>
+          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-4">
+            <div className="text-xs text-slate-600 dark:text-slate-400">
+              Top Vendor Concentration
+            </div>
+            <div className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
+              {(finOps.topVendor || 'unknown').toUpperCase()}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {finOps.vendorConcentrationPct.toFixed(1)}% of MTD spend
+            </div>
+          </div>
+          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-4">
+            <div className="text-xs text-slate-600 dark:text-slate-400">Spend Anomalies</div>
+            <div className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
+              {finOps.anomalies.length}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {finOps.anomalies[0]
+                ? `${finOps.anomalies[0].scope}: ${finOps.anomalies[0].key} +${finOps.anomalies[0].deltaPct.toFixed(1)}%`
+                : 'No major spikes detected'}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

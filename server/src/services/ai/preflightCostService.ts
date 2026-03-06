@@ -5,7 +5,7 @@
 
 import { get as dbGet } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
-import { CAPABILITY_TIERS, TIER_DEFAULTS, type Tier } from './modelRouter.js';
+import modelRouter, { CAPABILITY_TIERS, type Tier, TIER_DEFAULTS } from './modelRouter.js';
 
 const PRICING: Record<string, { input: number; output: number }> = {
   'openai/gpt-4o': { input: 2.5, output: 10 },
@@ -56,20 +56,73 @@ export function estimateTokens(
   return { input: inputTokens, output: outputTokens };
 }
 
-function estimateCostForModel(
+async function estimateCostForModel(
   modelId: string,
   inputTokens: number,
   outputTokens: number
-): number {
+): Promise<number> {
+  const [provider, model] = String(modelId || '').includes('/')
+    ? String(modelId).split('/', 2)
+    : ['openrouter', String(modelId || '')];
+  try {
+    const snapshot = await dbGet<{ units?: string | null }>(
+      `SELECT units
+       FROM ai_price_snapshots
+       WHERE provider = ? AND model_id = ?
+         AND (effective_to IS NULL OR effective_to > CURRENT_TIMESTAMP)
+       ORDER BY effective_from DESC, created_at DESC
+       LIMIT 1`,
+      [provider, modelId],
+      { fallback: true } as any
+    );
+    let units: any = snapshot?.units;
+    if (typeof units === 'string') {
+      try {
+        units = JSON.parse(units);
+      } catch {
+        units = null;
+      }
+    }
+    if (units && typeof units === 'object') {
+      const inputPer1M = Number((units as any).input_per_1m_tokens);
+      const outputPer1M = Number((units as any).output_per_1m_tokens);
+      const inputPer1K = Number((units as any).input_per_1k_tokens);
+      const outputPer1K = Number((units as any).output_per_1k_tokens);
+      const legacyPer1K = Number((units as any).cost_per_1k);
+      if (Number.isFinite(inputPer1M) || Number.isFinite(outputPer1M)) {
+        return (
+          Math.round(
+            ((inputTokens / 1_000_000) * (Number.isFinite(inputPer1M) ? inputPer1M : 0) +
+              (outputTokens / 1_000_000) * (Number.isFinite(outputPer1M) ? outputPer1M : 0)) *
+              1_000_000
+          ) / 1_000_000
+        );
+      }
+      if (Number.isFinite(inputPer1K) || Number.isFinite(outputPer1K)) {
+        return (
+          Math.round(
+            ((inputTokens / 1_000) * (Number.isFinite(inputPer1K) ? inputPer1K : 0) +
+              (outputTokens / 1_000) * (Number.isFinite(outputPer1K) ? outputPer1K : 0)) *
+              1_000_000
+          ) / 1_000_000
+        );
+      }
+      if (Number.isFinite(legacyPer1K)) {
+        return (
+          Math.round(((inputTokens + outputTokens) / 1_000) * legacyPer1K * 1_000_000) / 1_000_000
+        );
+      }
+    }
+  } catch {
+    logger.warn(`[PreflightCostService] Failed to load snapshot pricing for ${provider}/${model}`);
+  }
   const pricing = PRICING[modelId] || PRICING['default'];
   const inputCost = (inputTokens / 1_000_000) * pricing.input;
   const outputCost = (outputTokens / 1_000_000) * pricing.output;
   return Math.round((inputCost + outputCost) * 1_000_000) / 1_000_000;
 }
 
-async function getOrgBudgetInfo(
-  orgId: string
-): Promise<{ budgetUsd: number; spentUsd: number }> {
+async function getOrgBudgetInfo(orgId: string): Promise<{ budgetUsd: number; spentUsd: number }> {
   let budgetUsd = 0;
   let spentUsd = 0;
 
@@ -127,8 +180,24 @@ export async function preflightCostEstimate(
   );
 
   const selectedTier = selectTierForIntent(intent);
-  const selectedModel = TIER_DEFAULTS[selectedTier] || TIER_DEFAULTS.STANDARD;
-  const estimatedCostUsd = estimateCostForModel(
+  let selectedModel = TIER_DEFAULTS[selectedTier] || TIER_DEFAULTS.STANDARD;
+  try {
+    const routed = await modelRouter.select({
+      capability: intent,
+      purpose: intent,
+      organizationId: orgId,
+      tier: selectedTier,
+      options: { tier: selectedTier },
+    } as any);
+    if (routed?.id) {
+      selectedModel = String(routed.id);
+    }
+  } catch (error) {
+    logger.warn(
+      `[PreflightCostService] Falling back to tier default for ${intent}: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+  const estimatedCostUsd = await estimateCostForModel(
     selectedModel,
     estimatedInputTokens,
     estimatedOutputTokens
@@ -145,7 +214,11 @@ export async function preflightCostEstimate(
     for (let i = tierIdx - 1; i >= 0; i--) {
       const altTier = TIER_ORDER[i];
       const altModel = TIER_DEFAULTS[altTier] || TIER_DEFAULTS.BUDGET;
-      const altCost = estimateCostForModel(altModel, estimatedInputTokens, estimatedOutputTokens);
+      const altCost = await estimateCostForModel(
+        altModel,
+        estimatedInputTokens,
+        estimatedOutputTokens
+      );
       if (spentUsd + altCost <= budgetUsd) {
         suggestedDowngrade = altTier;
         break;
@@ -158,7 +231,7 @@ export async function preflightCostEstimate(
   for (const tier of TIER_ORDER) {
     if (tier === selectedTier) continue;
     const model = TIER_DEFAULTS[tier] || TIER_DEFAULTS.STANDARD;
-    const cost = estimateCostForModel(model, estimatedInputTokens, estimatedOutputTokens);
+    const cost = await estimateCostForModel(model, estimatedInputTokens, estimatedOutputTokens);
     alternatives.push({
       tier,
       model,
@@ -197,7 +270,7 @@ export async function getBudgetStatus(orgId: string): Promise<BudgetStatusResult
   const tierAvailability: Record<string, boolean> = {};
   for (const tier of TIER_ORDER) {
     const model = TIER_DEFAULTS[tier] || TIER_DEFAULTS.STANDARD;
-    const minCost = estimateCostForModel(model, 500, 250);
+    const minCost = await estimateCostForModel(model, 500, 250);
     tierAvailability[tier] = remaining >= minCost;
   }
 

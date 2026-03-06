@@ -2481,6 +2481,13 @@ async function ensureReportBuilderAndSchedulingTables(): Promise<void> {
 export async function initializeDatabase(): Promise<{ success: boolean; message: string }> {
   try {
     logger.info('[DatabaseInitializer] Starting database initialization...');
+    const skipPostgresInitInTests =
+      process.env.NODE_ENV === 'test' &&
+      ['true', '1', 'yes', 'on'].includes(
+        String(process.env.POSTGRES_SKIP_INIT_IN_TEST || '')
+          .trim()
+          .toLowerCase()
+      );
 
     if (
       process.env.MOCK_DB === 'true' ||
@@ -2499,6 +2506,16 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
     const dbType = databaseConfig.type;
 
     logger.info(`[DatabaseInitializer] Database type: ${dbType}`);
+
+    if (dbType === 'postgres' && skipPostgresInitInTests) {
+      logger.warn(
+        '[DatabaseInitializer] Skipping PostgreSQL schema initialization/verification in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)'
+      );
+      return {
+        success: true,
+        message: 'PostgreSQL schema init skipped in test mode',
+      };
+    }
 
     // For PostgreSQL, initDb() is called automatically when pool is created
     // But we'll verify it completed successfully

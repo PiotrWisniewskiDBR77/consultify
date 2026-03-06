@@ -5680,11 +5680,8 @@ router.post(
     const startMs = Date.now();
 
     try {
-      const { default: aiChat } = await import('../services/ai/aiChatService.js');
-      const rawResult = await aiChat.processMessage({
-        message: query,
-        userId,
-        organizationId: orgId,
+      const AIOrchestrator = await getAIOrchestrator();
+      const rawResult = await AIOrchestrator.processMessage(query, userId, orgId, null, {
         conversationId,
         context: context || {},
       });
@@ -5831,7 +5828,7 @@ router.post(
     }
 
     try {
-      const actionProposalEngineMod = await import('../services/ai/actionProposalEngine.js');
+      const actionProposalEngineMod = await import('../ai/actionProposalEngine.js');
       const executeProposedAction = (actionProposalEngineMod as any).executeProposedAction;
       if (typeof executeProposedAction !== 'function') {
         throw new Error('Proposed action executor is unavailable');

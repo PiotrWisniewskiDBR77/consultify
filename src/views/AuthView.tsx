@@ -71,20 +71,24 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const handleQuickAccess = async (code: string) => {
     const quickAccessCodes: Record<string, { email: string; password: string } | { demo: true }> =
       {
-      '7777': { email: 'piotr.wisniewski@dbr77.com', password: '123456' }, // Admin
-      '7775': { email: 'pawel.mroczkowski@dbr77.com', password: '123456' }, // Paweł (DBR77)
-      '1212': { email: 'pawel.mroczkowski@plastmetcentrum.pl', password: '123456' }, // Paweł (Plast-Met)
-      '7776': { email: 'admin@dbr77.com', password: '123456' }, // SuperAdmin
-      // Demo uses a dedicated endpoint (doesn't rely on seeded user credentials).
-      '7778': { demo: true },
-    };
+        '7777': { email: 'piotr.wisniewski@dbr77.com', password: '123456' }, // Admin
+        '7775': { email: 'pawel.mroczkowski@dbr77.com', password: '123456' }, // Paweł (DBR77)
+        '1212': { email: 'pawel.mroczkowski@plastmetcentrum.pl', password: '123456' }, // Paweł (Plast-Met)
+        '7776': { email: 'admin@dbr77.com', password: '123456' }, // SuperAdmin
+        // Demo uses a dedicated endpoint (doesn't rely on seeded user credentials).
+        '7778': { demo: true },
+      };
 
     const credentials = quickAccessCodes[code];
     if (credentials) {
       setIsDemoLoading(true);
       try {
-        const user =
-          'demo' in credentials && credentials.demo ? await Api.demoLogin() : await Api.login(credentials.email, credentials.password);
+        let user;
+        if ('email' in credentials) {
+          user = await Api.login(credentials.email, credentials.password);
+        } else {
+          user = await Api.demoLogin();
+        }
         onAuthSuccess(user);
       } catch (err: any) {
         setError('Quick access failed: ' + err.message);

@@ -88,7 +88,8 @@ export const RoutingRulesTab: React.FC = () => {
         Api.getLLMRoutingRules(),
       ]);
 
-      const assignmentsPayload = assignmentsRes.status === 'fulfilled' ? assignmentsRes.value : null;
+      const assignmentsPayload =
+        assignmentsRes.status === 'fulfilled' ? assignmentsRes.value : null;
       const providersPayload = providersRes.status === 'fulfilled' ? providersRes.value : [];
       const healthPayload = healthRes.status === 'fulfilled' ? healthRes.value : null;
       const rulesPayload = rulesRes.status === 'fulfilled' ? rulesRes.value : [];
@@ -369,7 +370,8 @@ export const RoutingRulesTab: React.FC = () => {
             Routing Rules
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Configure intelligent model routing and failover policies (persisted; applied by ModelRouter)
+            Configure intelligent model routing and failover policies (persisted; applied by
+            ModelRouter)
           </p>
         </div>
         <button
@@ -418,6 +420,7 @@ export const RoutingRulesTab: React.FC = () => {
                   <option value="gpt-4o-mini">gpt-4o-mini</option>
                   <option value="gpt-4o">gpt-4o</option>
                   <option value="o1-preview">o1-preview</option>
+                  <option value="claude-sonnet-4-6">claude-sonnet-4-6</option>
                   <option value="claude-3-haiku">claude-3-haiku</option>
                   <option value="claude-3-5-sonnet">claude-3-5-sonnet</option>
                 </select>
@@ -440,6 +443,7 @@ export const RoutingRulesTab: React.FC = () => {
                   ))}
                   <option value="gpt-4o-mini">gpt-4o-mini</option>
                   <option value="gpt-4o">gpt-4o</option>
+                  <option value="claude-sonnet-4-6">claude-sonnet-4-6</option>
                   <option value="claude-3-haiku">claude-3-haiku</option>
                   <option value="claude-3-5-sonnet">claude-3-5-sonnet</option>
                   <option value="groq-llama">groq-llama</option>
@@ -457,7 +461,8 @@ export const RoutingRulesTab: React.FC = () => {
           Persisted Routing Rules
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-          Rules are evaluated in priority order (lower first). Applicable rules can filter/reorder candidates.
+          Rules are evaluated in priority order (lower first). Applicable rules can filter/reorder
+          candidates.
         </p>
 
         <div className="space-y-3">
@@ -467,58 +472,60 @@ export const RoutingRulesTab: React.FC = () => {
             </div>
           ) : (
             rules.map((rule) => (
-            <div
-              key={rule.id}
-              className={`flex items-center gap-4 p-4 rounded-lg border transition-all ${
-                rule.isActive
-                  ? 'bg-slate-50 dark:bg-navy-900/50 border-slate-200 dark:border-navy-700'
-                  : 'bg-slate-100 dark:bg-navy-950/50 border-slate-200 dark:border-navy-800 opacity-60'
-              }`}
-            >
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 font-mono text-sm">
-                {rule.priority}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-slate-900 dark:text-white">{rule.name}</span>
-                  <span
-                    className={`px-2 py-0.5 rounded text-xs font-medium ${getTypeBadgeColor(rule.type)}`}
-                  >
-                    {getTypeIcon(rule.type)}
-                    <span className="ml-1">{rule.type}</span>
-                  </span>
+              <div
+                key={rule.id}
+                className={`flex items-center gap-4 p-4 rounded-lg border transition-all ${
+                  rule.isActive
+                    ? 'bg-slate-50 dark:bg-navy-900/50 border-slate-200 dark:border-navy-700'
+                    : 'bg-slate-100 dark:bg-navy-950/50 border-slate-200 dark:border-navy-800 opacity-60'
+                }`}
+              >
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 font-mono text-sm">
+                  {rule.priority}
                 </div>
-                <div className="text-sm text-slate-500 dark:text-slate-400">{rule.description}</div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium text-slate-900 dark:text-white">{rule.name}</span>
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs font-medium ${getTypeBadgeColor(rule.type)}`}
+                    >
+                      {getTypeIcon(rule.type)}
+                      <span className="ml-1">{rule.type}</span>
+                    </span>
+                  </div>
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                    {rule.description}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleRule(rule)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      rule.isActive
+                        ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                        : 'bg-slate-200 dark:bg-navy-700 text-slate-500 hover:text-emerald-500'
+                    }`}
+                    title={rule.isActive ? 'Disable' : 'Enable'}
+                  >
+                    <Check size={16} />
+                  </button>
+                  <button
+                    onClick={() => openEditModal(rule)}
+                    className="p-2 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-navy-600 transition-colors"
+                    title="Edit"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                  <button
+                    onClick={() => deleteRuleQuick(rule)}
+                    className="p-2 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-200 hover:bg-red-500/20 hover:text-red-500 transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => toggleRule(rule)}
-                  className={`p-2 rounded-lg transition-colors ${
-                    rule.isActive
-                      ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
-                      : 'bg-slate-200 dark:bg-navy-700 text-slate-500 hover:text-emerald-500'
-                  }`}
-                  title={rule.isActive ? 'Disable' : 'Enable'}
-                >
-                  <Check size={16} />
-                </button>
-                <button
-                  onClick={() => openEditModal(rule)}
-                  className="p-2 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-navy-600 transition-colors"
-                  title="Edit"
-                >
-                  <Edit2 size={16} />
-                </button>
-                <button
-                  onClick={() => deleteRuleQuick(rule)}
-                  className="p-2 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-200 hover:bg-red-500/20 hover:text-red-500 transition-colors"
-                  title="Delete"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-          ))
+            ))
           )}
         </div>
       </div>
@@ -530,7 +537,8 @@ export const RoutingRulesTab: React.FC = () => {
           Suggestions (derived from live signals)
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-          These are computed from current providers/health. You can convert them into persisted rules.
+          These are computed from current providers/health. You can convert them into persisted
+          rules.
         </p>
 
         <div className="space-y-3">

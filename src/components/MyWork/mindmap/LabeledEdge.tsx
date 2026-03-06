@@ -1,11 +1,7 @@
 import React, { useCallback, useState } from 'react';
-// @ts-expect-error — reactflow version mismatch
-import {
-  BaseEdge,
-  EdgeLabelRenderer,
-  type EdgeProps,
-  getSmoothStepPath,
-} from 'reactflow';
+import { type EdgeProps } from 'reactflow';
+// @ts-ignore reactflow version mismatch
+import { EdgeLabelRenderer, getSmoothStepPath } from '@reactflow/core';
 
 export const LabeledEdge: React.FC<EdgeProps> = ({
   id,

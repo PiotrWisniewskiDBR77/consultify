@@ -210,7 +210,7 @@ const SCIMProvisioningView: React.FC = () => {
   const handleTriggerSync = async () => {
     setSyncing(true);
     try {
-      await api.post('/scim/admin/sync');
+      await api.post('/scim/admin/sync', {});
       fetchData();
     } catch (error) {
       console.error('[SCIM] Sync error:', error);

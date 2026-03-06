@@ -103,6 +103,16 @@ type IdeaMapWorkspaceProps = {
   onLockedChange?: (locked: boolean) => void;
 };
 
+type IdeaConvertTarget =
+  | 'initiative'
+  | 'task_set'
+  | 'decision'
+  | 'team_chat'
+  | 'report'
+  | 'presentation'
+  | 'action_plan'
+  | 'raid_log';
+
 function safeTitleFromSeed(seedText: string, isPolish: boolean): string {
   const firstLine = String(seedText || '')
     .trim()
@@ -602,25 +612,34 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   // ── Convert ─────────────────────────────────────────────────────────────────
   const handleConvert = useCallback(
-    async (target: 'initiative' | 'task_set' | 'decision' | 'team_chat') => {
+    async (target: IdeaConvertTarget) => {
       if (isDraft) return;
+      if (!['initiative', 'task_set', 'decision', 'team_chat'].includes(target)) {
+        toast.error(
+          isPolish
+            ? 'Ten typ konwersji nie jest jeszcze wspierany dla mapy idei'
+            : 'This conversion target is not supported for idea maps yet'
+        );
+        return;
+      }
+      const supportedTarget = target as 'initiative' | 'task_set' | 'decision' | 'team_chat';
       setSaving(true);
       try {
-        trackFunnelEvent('mywork_convert_clicked', { from: 'idea', to: target });
+        trackFunnelEvent('mywork_convert_clicked', { from: 'idea', to: supportedTarget });
         const result = await Api.convertMyIdea(realId, {
-          target,
+          target: supportedTarget,
           options: { language: i18n.language },
         });
         trackFunnelEvent('mywork_convert_completed', {
           from: 'idea',
-          toType: target,
+          toType: supportedTarget,
           has_source: Boolean(result?.sourceSessionId),
         });
         if (result?.sourceSessionId) {
           trackFunnelEvent('mywork_session_materialized', {
             source: 'idea_convert',
             sourceEntityId: realId,
-            target,
+            target: supportedTarget,
             sessionId: result.sourceSessionId,
           });
         }

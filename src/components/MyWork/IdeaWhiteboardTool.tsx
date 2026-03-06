@@ -64,7 +64,13 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { EMPTY_SELECTION, type CanvasToolType, type IdeaWorkspaceSelection } from './ideaSelectionTypes';
+import {
+  EMPTY_SELECTION,
+  IDEA_WORKSPACE_INSERT_EVENT,
+  type CanvasToolType,
+  type IdeaWorkspaceInsertDetail,
+  type IdeaWorkspaceSelection,
+} from './ideaSelectionTypes';
 import { IdeaDrawingLayer, type DrawingPath } from './IdeaDrawingLayer';
 import { KPIBadgeNode, ProgressNode, ScoreNode } from './IdeaMetricNodes';
 import { IdeaScenesManager, type Scene } from './IdeaScenesManager';
@@ -811,7 +817,10 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
         deleteKeyCode={locked ? null : 'Delete'}
         className="bg-slate-50/50 dark:bg-navy-950"
         defaultEdgeOptions={{ type: 'labeled' }}
-        onMoveEnd={(_event, viewport) => onViewportChange?.(viewport)}
+        onMoveEnd={(
+          _event: unknown,
+          viewport: { x: number; y: number; zoom: number }
+        ) => onViewportChange?.(viewport)}
       >
         {bgPattern !== 'blank' && (
           <Background
@@ -1072,6 +1081,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       if (locked) return;
       const id = `wb-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
       const offset = nodes.length * 30;
+      const explicitPosition = extraData?.position as { x: number; y: number } | undefined;
 
       const typeMap: Record<WbNodeKind, string> = {
         sticky: 'stickyNote',
@@ -1125,8 +1135,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             nds.map((nd: Node) => (nd.id === id ? { ...nd, data: { ...nd.data, label: next } } : nd))
           );
         },
-        ...extraData,
+        ...(extraData || {}),
       };
+      delete nodeData.position;
 
       if (kind === 'sticky') nodeData.colorIndex = colorIndex % STICKY_COLORS.length;
       if (shapeMap[kind]) nodeData.shape = shapeMap[kind];
@@ -1145,7 +1156,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       const newNode: Node = {
         id,
         type: typeMap[kind],
-        position: { x: 100 + offset, y: 100 + offset },
+        position: explicitPosition || { x: 100 + offset, y: 100 + offset },
         data: nodeData,
         ...(kind === 'group' ? { style: { width: 300, height: 200 } } : {}),
         ...(kind === 'frame' ? { style: { width: 400, height: 300 } } : {}),
@@ -1187,12 +1198,12 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   useEffect(() => {
     if (!open) return;
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
+      const detail = ((e as CustomEvent).detail || {}) as IdeaWorkspaceInsertDetail;
       if (!detail) return;
       if (Array.isArray(detail.items)) {
         for (const item of detail.items) {
           const label = item.text || item.label || '';
-          const position = item.position as { x: number; y: number } | undefined;
+          const position = item.position || detail.position;
           addElement('sticky', { label, position });
         }
         return;
@@ -1200,10 +1211,14 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       const kind = detail.nodeType || 'sticky';
       const label = detail.label || detail.text || '';
       const color = detail.color;
-      addElement(kind, { label, colorIndex: color ? STICKY_COLORS.findIndex((c) => c.hex === color) : undefined });
+      addElement(kind, {
+        label,
+        position: detail.position,
+        colorIndex: color ? STICKY_COLORS.findIndex((c) => c.hex === color) : undefined,
+      });
     };
-    window.addEventListener('idea-workspace-insert', handler);
-    return () => window.removeEventListener('idea-workspace-insert', handler);
+    window.addEventListener(IDEA_WORKSPACE_INSERT_EVENT, handler);
+    return () => window.removeEventListener(IDEA_WORKSPACE_INSERT_EVENT, handler);
   }, [open, addElement]);
 
   // ── Scene navigation (idea-whiteboard-navigate) ────────────────────────

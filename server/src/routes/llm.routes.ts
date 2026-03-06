@@ -8,17 +8,19 @@ import { randomUUID } from 'node:crypto';
 import { Router } from 'express';
 
 import { LLMController } from '../controllers/ai/LLMController.js';
+import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
-import * as aiGov from '../services/aiGovernanceService.js';
-import * as evalHarness from '../services/ai/evalHarnessService.js';
-import circuitBreaker from '../services/ai/circuitBreaker.js';
 import { EXECUTIVE_USE_CASES, getRoutingPurposeKeys } from '../services/ai/aiTaskCatalog.js';
+import circuitBreaker from '../services/ai/circuitBreaker.js';
+import * as evalHarness from '../services/ai/evalHarnessService.js';
 import llmConfigService from '../services/ai/llmConfigService.js';
+import { getFinOpsOverview } from '../services/ai/llmFinOpsService.js';
 import { llmService } from '../services/ai/llmService.js';
 import { syncOpenRouterMarket } from '../services/ai/openRouterMarketService.js';
 import { applyRecommendedModelPreset } from '../services/ai/recommendedModelPresetService.js';
 import { routingRulesService } from '../services/ai/routingRulesService.js';
+import * as aiGov from '../services/aiGovernanceService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
@@ -91,6 +93,20 @@ async function ensureEnterpriseSchema(): Promise<void> {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
           )`,
+        },
+        {
+          sql: `CREATE TABLE IF NOT EXISTS organization_ai_policy_versions (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            policy TEXT NOT NULL DEFAULT '{}',
+            status TEXT NOT NULL DEFAULT 'draft',
+            change_summary TEXT,
+            changed_by TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )`,
+        },
+        {
+          sql: `CREATE INDEX IF NOT EXISTS idx_org_ai_policy_versions_org ON organization_ai_policy_versions(organization_id, created_at DESC)`,
         },
 
         // ai_price_snapshots
@@ -234,16 +250,11 @@ async function buildStatusSnapshot(options?: { timeoutMs?: number }) {
 
   const providers = (await llmConfigService.getAllProviders(true).catch(() => [])) as any[];
 
-  const byProvider = new Map<string, any>();
-  for (const p of providers || []) {
-    const key = String(p.provider || '').toLowerCase();
-    if (key && !byProvider.has(key)) byProvider.set(key, p);
-  }
-
   const providerHealth = await Promise.all(
-    Array.from(byProvider.values()).map(async (p) => {
+    (providers || []).map(async (p) => {
       const startedAt = Date.now();
       const providerId = String(p.provider || '').toLowerCase();
+      const providerModel = String(p.model_id || p.model || p.id || '').trim();
       const isLocal = providerId === 'ollama';
       const providerTimeoutMs = isLocal ? Math.min(timeoutMs, 800) : timeoutMs;
 
@@ -259,6 +270,7 @@ async function buildStatusSnapshot(options?: { timeoutMs?: number }) {
         const ok = !!result?.success;
         return {
           provider: p.provider,
+          model: providerModel || null,
           healthStatus: ok ? 'healthy' : 'unhealthy',
           lastCheck: new Date().toISOString(),
           latency: result?.latency ?? Date.now() - startedAt,
@@ -267,6 +279,7 @@ async function buildStatusSnapshot(options?: { timeoutMs?: number }) {
       } catch (e: any) {
         return {
           provider: p.provider,
+          model: providerModel || null,
           healthStatus: 'unhealthy',
           lastCheck: new Date().toISOString(),
           latency: Date.now() - startedAt,
@@ -278,12 +291,16 @@ async function buildStatusSnapshot(options?: { timeoutMs?: number }) {
 
   const healthByProvider = new Map<string, any>();
   for (const h of providerHealth) {
-    healthByProvider.set(String(h.provider || '').toLowerCase(), h);
+    const providerKey = String(h.provider || '').toLowerCase();
+    const modelKey = String(h.model || '').toLowerCase();
+    healthByProvider.set(`${providerKey}::${modelKey}`, h);
   }
 
   const enrichedProviders = (providers || []).map((p) => {
-    const key = String(p.provider || '').toLowerCase();
-    const health = healthByProvider.get(key);
+    const providerKey = String(p.provider || '').toLowerCase();
+    const modelKey = String(p.model_id || p.model || p.id || '').toLowerCase();
+    const health =
+      healthByProvider.get(`${providerKey}::${modelKey}`) || healthByProvider.get(`${providerKey}::`);
     return sanitizeProviderForStatus({
       ...p,
       // normalize to shape expected by UI (AdminLLMView / ModelsProvidersTab)
@@ -292,9 +309,9 @@ async function buildStatusSnapshot(options?: { timeoutMs?: number }) {
       isDefault: Boolean(p.is_default ?? p.isDefault),
       isConfigured:
         Boolean(p.api_key) ||
-        (key === 'openai' ? !!process.env.OPENAI_API_KEY : false) ||
-        (key === 'openrouter' ? !!process.env.OPENROUTER_API_KEY : false) ||
-        (key === 'anthropic' ? !!process.env.ANTHROPIC_API_KEY : false),
+        (providerKey === 'openai' ? !!process.env.OPENAI_API_KEY : false) ||
+        (providerKey === 'openrouter' ? !!process.env.OPENROUTER_API_KEY : false) ||
+        (providerKey === 'anthropic' ? !!process.env.ANTHROPIC_API_KEY : false),
       tier: String(p.tier || '').toUpperCase() || 'STANDARD',
       priority: p.priority ?? 0,
       healthStatus: health?.healthStatus || p.health_status || p.healthStatus || 'unknown',
@@ -705,8 +722,12 @@ router.get(
       null;
     const organizationId = organizationIdRaw ? String(organizationIdRaw).trim() : null;
     const includeInactive =
-      String(req.query?.includeInactive || '').trim().toLowerCase() === 'true' ||
-      String(req.query?.include_inactive || '').trim().toLowerCase() === 'true';
+      String(req.query?.includeInactive || '')
+        .trim()
+        .toLowerCase() === 'true' ||
+      String(req.query?.include_inactive || '')
+        .trim()
+        .toLowerCase() === 'true';
 
     const rules = await routingRulesService.listRules({ organizationId, includeInactive });
     return res.json({ success: true, rules });
@@ -968,9 +989,17 @@ router.get(
         const covered = purposes.filter((item) => item.assignmentCount > 0).length;
         const healthy = purposes.filter((item) => item.status === 'healthy').length;
         const degraded = purposes.filter((item) => item.status === 'degraded').length;
-        const critical = purposes.filter((item) => item.status === 'critical' || item.status === 'missing').length;
+        const critical = purposes.filter(
+          (item) => item.status === 'critical' || item.status === 'missing'
+        ).length;
         const overallStatus =
-          critical > 0 ? 'critical' : degraded > 0 ? 'degraded' : healthy > 0 ? 'healthy' : 'unknown';
+          critical > 0
+            ? 'critical'
+            : degraded > 0
+              ? 'degraded'
+              : healthy > 0
+                ? 'healthy'
+                : 'unknown';
 
         return {
           key: useCase.key,
@@ -978,7 +1007,8 @@ router.get(
           description: useCase.description,
           businessOwner: useCase.businessOwner,
           status: overallStatus,
-          coveragePct: useCase.purposes.length > 0 ? Math.round((covered / useCase.purposes.length) * 100) : 0,
+          coveragePct:
+            useCase.purposes.length > 0 ? Math.round((covered / useCase.purposes.length) * 100) : 0,
           healthyPurposes: healthy,
           degradedPurposes: degraded,
           criticalPurposes: critical,
@@ -989,6 +1019,53 @@ router.get(
       })
     );
 
+    const finOps = organizationId
+      ? await getFinOpsOverview(organizationId).catch(() => null)
+      : null;
+    const impactedOrganizationsRow = await dbGet(
+      `SELECT COUNT(DISTINCT organization_id) as impacted
+       FROM ai_usage_logs
+       WHERE purpose IN (${EXECUTIVE_USE_CASES.flatMap((useCase) => useCase.purposes)
+         .flatMap((purpose) => getRoutingPurposeKeys(purpose))
+         .map(() => '?')
+         .join(',')})
+         ${organizationId ? 'AND organization_id = ?' : ''}
+         AND created_at >= datetime('now', '-30 day')`,
+      organizationId
+        ? [
+            ...EXECUTIVE_USE_CASES.flatMap((useCase) => useCase.purposes).flatMap((purpose) =>
+              getRoutingPurposeKeys(purpose)
+            ),
+            organizationId,
+          ]
+        : EXECUTIVE_USE_CASES.flatMap((useCase) => useCase.purposes).flatMap((purpose) =>
+            getRoutingPurposeKeys(purpose)
+          ),
+      { fallback: true } as any
+    ).catch(() => ({ impacted: 0 }));
+    const criticalUseCases = useCases.filter((u) => u.status === 'critical');
+    const degradedUseCases = useCases.filter((u) => u.status === 'degraded');
+    const riskFeed = [
+      ...criticalUseCases.map((useCase) => ({
+        severity: 'critical',
+        title: `${useCase.label} delivery threatened`,
+        blastRadius: `${useCase.criticalPurposes} critical purpose(s)`,
+        recommendation: 'Switch vendor or freeze affected purpose',
+      })),
+      ...degradedUseCases.slice(0, 3).map((useCase) => ({
+        severity: 'warning',
+        title: `${useCase.label} degraded`,
+        blastRadius: `${useCase.degradedPurposes} degraded purpose(s)`,
+        recommendation: 'Downgrade tier or increase fallback coverage',
+      })),
+      ...((finOps?.anomalies || []).slice(0, 3).map((anomaly) => ({
+        severity: anomaly.severity,
+        title: `Spend anomaly: ${anomaly.scope} ${anomaly.key}`,
+        blastRadius: `+${anomaly.deltaPct}% vs baseline`,
+        recommendation: 'Review routing mix and budget guardrails',
+      })) as any[]),
+    ];
+
     return res.json({
       success: true,
       useCases,
@@ -997,7 +1074,15 @@ router.get(
         healthy: useCases.filter((u) => u.status === 'healthy').length,
         degraded: useCases.filter((u) => u.status === 'degraded').length,
         critical: useCases.filter((u) => u.status === 'critical').length,
+        mtdSpendUsd: finOps?.mtdSpendUsd || 0,
+        projectedMonthEndSpendUsd: finOps?.projectedMonthEndSpendUsd || 0,
+        vendorConcentrationPct: finOps?.vendorConcentrationPct || 0,
+        topVendor: finOps?.topVendor || null,
+        impactedOrganizations: Number((impactedOrganizationsRow as any)?.impacted || 0),
       },
+      vendorScorecards: finOps?.vendorScorecards || [],
+      finOps,
+      riskFeed,
     });
   })
 );
@@ -1028,7 +1113,7 @@ router.get(
  */
 router.post(
   '/purposes',
-  verifyToken,
+  verifyAdmin,
   asyncHandler(async (req, res) => {
     await ensureEnterpriseSchema();
     const purpose = String(req.body?.purpose || '').trim();
@@ -1132,7 +1217,7 @@ router.get(
  */
 router.post(
   '/purposes/:purpose/assignments',
-  verifyToken,
+  verifyAdmin,
   asyncHandler(async (req, res) => {
     await ensureEnterpriseSchema();
     const purpose = String(req.params.purpose || '').trim();
@@ -1145,6 +1230,44 @@ router.post(
 
     if (!purpose || !providerId) {
       return res.status(400).json({ success: false, error: 'purpose and providerId are required' });
+    }
+    const executivePurposes = new Set(
+      EXECUTIVE_USE_CASES.flatMap((useCase) => useCase.purposes).flatMap((item) =>
+        getRoutingPurposeKeys(item)
+      )
+    );
+    const releaseBundleId = String(req.body?.releaseBundleId || '').trim();
+    if (executivePurposes.has(purpose)) {
+      if (!releaseBundleId) {
+        return res.status(400).json({
+          success: false,
+          error: 'releaseBundleId is required for executive use-case routing changes',
+        });
+      }
+      const bundle = await dbGet(
+        `SELECT id, gate_passed, status, purpose
+         FROM ai_eval_release_bundles
+         WHERE id = ? AND organization_id = ?`,
+        [releaseBundleId, organizationId || resolveOrgId(req)],
+        { fallback: false } as any
+      );
+      if (!bundle || !(bundle as any).gate_passed) {
+        return res.status(400).json({
+          success: false,
+          error: 'release bundle has not passed eval gates',
+        });
+      }
+      const bundlePurpose = String((bundle as any).purpose || '').trim();
+      if (
+        bundlePurpose &&
+        !getRoutingPurposeKeys(bundlePurpose).includes(purpose) &&
+        bundlePurpose !== purpose
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: 'release bundle purpose does not match assignment purpose',
+        });
+      }
     }
     const id = `${organizationId || 'global'}-${purpose}-${providerId}-${modelId || 'default'}`;
     await dbRun(
@@ -1182,7 +1305,7 @@ router.post(
  */
 router.delete(
   '/purposes/:purpose/assignments',
-  verifyToken,
+  verifySuperAdmin,
   asyncHandler(async (req, res) => {
     await ensureEnterpriseSchema();
     const purpose = String(req.params.purpose || '').trim();
@@ -1253,9 +1376,19 @@ router.get(
       [organizationId],
       { fallback: false } as any
     );
+    const latestDraft = await dbGet(
+      `SELECT id, policy, status, change_summary, changed_by, created_at
+       FROM organization_ai_policy_versions
+       WHERE organization_id = ? AND status IN ('draft', 'review', 'approved')
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [organizationId],
+      { fallback: false } as any
+    ).catch(() => null);
     return res.json({
       success: true,
       policy: row || { organization_id: organizationId, policy: {} },
+      latestDraft,
     });
   })
 );
@@ -1266,22 +1399,47 @@ router.get(
  */
 router.put(
   '/org/:organizationId/policy',
-  verifyToken,
+  verifyAdmin,
   asyncHandler(async (req, res) => {
     await ensureEnterpriseSchema();
     const organizationId = String(req.params.organizationId || '').trim();
     if (!organizationId)
       return res.status(400).json({ success: false, error: 'organizationId is required' });
     const policy = req.body?.policy ?? req.body ?? {};
+    const mode = String(req.body?.mode || 'published')
+      .trim()
+      .toLowerCase();
+    const changeSummary = req.body?.changeSummary ? String(req.body.changeSummary).trim() : null;
+    const versionId = randomUUID();
+    const normalizedStatus = ['draft', 'review', 'approved', 'published'].includes(mode)
+      ? mode
+      : 'published';
+
     await dbRun(
-      `INSERT INTO organization_ai_policy (organization_id, policy, updated_at, created_at)
-       VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-       ON CONFLICT(organization_id) DO UPDATE SET
-         policy = excluded.policy,
-         updated_at = CURRENT_TIMESTAMP`,
-      [organizationId, JSON.stringify(policy)],
+      `INSERT INTO organization_ai_policy_versions (id, organization_id, policy, status, change_summary, changed_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      [
+        versionId,
+        organizationId,
+        JSON.stringify(policy),
+        normalizedStatus,
+        changeSummary,
+        getAuditActor(req),
+      ],
       { fallback: false } as any
     );
+
+    if (normalizedStatus === 'published') {
+      await dbRun(
+        `INSERT INTO organization_ai_policy (organization_id, policy, updated_at, created_at)
+         VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+         ON CONFLICT(organization_id) DO UPDATE SET
+           policy = excluded.policy,
+           updated_at = CURRENT_TIMESTAMP`,
+        [organizationId, JSON.stringify(policy)],
+        { fallback: false } as any
+      );
+    }
     const row = await dbGet(
       `SELECT organization_id, policy, updated_at, created_at FROM organization_ai_policy WHERE organization_id = ?`,
       [organizationId],
@@ -1292,9 +1450,75 @@ router.put(
       entityType: 'policy',
       entityId: `org:${organizationId}`,
       changedBy: getAuditActor(req),
-      changes: { organizationId, policy },
+      changes: { organizationId, policy, mode: normalizedStatus, versionId, changeSummary },
     });
-    return res.json({ success: true, policy: row });
+    return res.json({ success: true, policy: row, versionId, mode: normalizedStatus });
+  })
+);
+
+router.get(
+  '/org/:organizationId/policy/history',
+  verifyToken,
+  asyncHandler(async (req, res) => {
+    await ensureEnterpriseSchema();
+    const organizationId = String(req.params.organizationId || '').trim();
+    if (!organizationId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const versions = await dbAll(
+      `SELECT id, organization_id, policy, status, change_summary, changed_by, created_at
+       FROM organization_ai_policy_versions
+       WHERE organization_id = ?
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [organizationId],
+      { fallback: false } as any
+    );
+    return res.json({ success: true, versions });
+  })
+);
+
+router.post(
+  '/org/:organizationId/policy/rollback',
+  verifySuperAdmin,
+  asyncHandler(async (req, res) => {
+    await ensureEnterpriseSchema();
+    const organizationId = String(req.params.organizationId || '').trim();
+    const versionId = String(req.body?.versionId || '').trim();
+    if (!organizationId || !versionId) {
+      return res
+        .status(400)
+        .json({ success: false, error: 'organizationId and versionId are required' });
+    }
+    const version = await dbGet(
+      `SELECT id, policy FROM organization_ai_policy_versions WHERE id = ? AND organization_id = ?`,
+      [versionId, organizationId],
+      { fallback: false } as any
+    );
+    if (!version)
+      return res.status(404).json({ success: false, error: 'Policy version not found' });
+
+    await dbRun(
+      `INSERT INTO organization_ai_policy (organization_id, policy, updated_at, created_at)
+       VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+       ON CONFLICT(organization_id) DO UPDATE SET
+         policy = excluded.policy,
+         updated_at = CURRENT_TIMESTAMP`,
+      [organizationId, String((version as any).policy || '{}')],
+      { fallback: false } as any
+    );
+    await dbRun(
+      `INSERT INTO organization_ai_policy_versions (id, organization_id, policy, status, change_summary, changed_by, created_at)
+       VALUES (?, ?, ?, 'published', ?, ?, CURRENT_TIMESTAMP)`,
+      [
+        randomUUID(),
+        organizationId,
+        String((version as any).policy || '{}'),
+        `Rollback to version ${versionId}`,
+        getAuditActor(req),
+      ],
+      { fallback: false } as any
+    );
+    return res.json({ success: true });
   })
 );
 
@@ -1733,10 +1957,7 @@ router.post(
 
 function resolveOrgId(req: any): string {
   return String(
-    req?.organizationId ||
-      req?.user?.organizationId ||
-      req?.query?.organizationId ||
-      ''
+    req?.organizationId || req?.user?.organizationId || req?.query?.organizationId || ''
   ).trim();
 }
 
@@ -1753,7 +1974,8 @@ router.get(
   verifyToken,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const { from, to } = parseDateRange(req);
     const dashboard = await aiGov.getMeteringDashboard(orgId, from, to);
     return res.json({ success: true, dashboard });
@@ -1765,7 +1987,8 @@ router.get(
   verifyToken,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const policies = await aiGov.getGovernancePolicies(orgId);
     return res.json({ success: true, policies });
   })
@@ -1773,12 +1996,14 @@ router.get(
 
 router.post(
   '/governance/policies',
-  verifyToken,
+  verifyAdmin,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const policyType = String(req.body?.policyType || req.body?.policy_type || '').trim();
-    if (!policyType) return res.status(400).json({ success: false, error: 'policyType is required' });
+    if (!policyType)
+      return res.status(400).json({ success: false, error: 'policyType is required' });
     const config = req.body?.config || req.body?.config_json || {};
     const policy = await aiGov.createGovernancePolicy(orgId, {
       policyType,
@@ -1791,16 +2016,22 @@ router.post(
 
 router.put(
   '/governance/policies/:policyId',
-  verifyToken,
+  verifyAdmin,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const policyId = String(req.params.policyId || '').trim();
     if (!policyId) return res.status(400).json({ success: false, error: 'policyId is required' });
     const config = req.body?.config || req.body?.config_json;
     const policy = await aiGov.updateGovernancePolicy(orgId, policyId, {
       policyType: req.body?.policyType || req.body?.policy_type,
-      config: config !== undefined ? (typeof config === 'string' ? JSON.parse(config) : config) : undefined,
+      config:
+        config !== undefined
+          ? typeof config === 'string'
+            ? JSON.parse(config)
+            : config
+          : undefined,
       isActive: req.body?.isActive ?? req.body?.is_active,
     });
     if (!policy) return res.status(404).json({ success: false, error: 'Policy not found' });
@@ -1810,10 +2041,11 @@ router.put(
 
 router.delete(
   '/governance/policies/:policyId',
-  verifyToken,
+  verifyAdmin,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const policyId = String(req.params.policyId || '').trim();
     if (!policyId) return res.status(400).json({ success: false, error: 'policyId is required' });
     await aiGov.deleteGovernancePolicy(orgId, policyId);
@@ -1826,7 +2058,8 @@ router.get(
   verifyToken,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const datasets = await aiGov.listEvalDatasets(orgId);
     return res.json({ success: true, datasets });
   })
@@ -1834,13 +2067,15 @@ router.get(
 
 router.post(
   '/governance/eval-datasets',
-  verifyToken,
+  verifyAdmin,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const name = String(req.body?.name || '').trim();
     const purpose = String(req.body?.purpose || '').trim();
-    if (!name || !purpose) return res.status(400).json({ success: false, error: 'name and purpose are required' });
+    if (!name || !purpose)
+      return res.status(400).json({ success: false, error: 'name and purpose are required' });
     const samples = Array.isArray(req.body?.samples) ? req.body.samples : [];
     const dataset = await aiGov.createEvalDataset(orgId, {
       name,
@@ -1857,7 +2092,8 @@ router.get(
   verifyToken,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const datasetId = String(req.params.datasetId || '').trim();
     const dataset = await aiGov.getEvalDataset(orgId, datasetId);
     if (!dataset) return res.status(404).json({ success: false, error: 'Dataset not found' });
@@ -1867,10 +2103,11 @@ router.get(
 
 router.put(
   '/governance/eval-datasets/:datasetId',
-  verifyToken,
+  verifyAdmin,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const datasetId = String(req.params.datasetId || '').trim();
     const dataset = await aiGov.updateEvalDataset(orgId, datasetId, {
       name: req.body?.name,
@@ -1884,17 +2121,24 @@ router.put(
 
 router.post(
   '/governance/evaluations/run',
-  verifyToken,
+  verifyAdmin,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const datasetId = String(req.body?.datasetId || req.body?.dataset_id || '').trim();
     const purpose = String(req.body?.purpose || '').trim();
     if (!datasetId || !purpose) {
       return res.status(400).json({ success: false, error: 'datasetId and purpose are required' });
     }
     const modelId = req.body?.modelId || req.body?.model_id || undefined;
-    const evaluation = await aiGov.runEvaluation(orgId, datasetId, purpose, modelId, getAuditActor(req));
+    const evaluation = await aiGov.runEvaluation(
+      orgId,
+      datasetId,
+      purpose,
+      modelId,
+      getAuditActor(req)
+    );
     return res.status(201).json({ success: true, evaluation });
   })
 );
@@ -1904,7 +2148,8 @@ router.get(
   verifyToken,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const purpose = req.query?.purpose ? String(req.query.purpose).trim() : undefined;
     const limitRaw = Number(req.query?.limit ?? 50);
     const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(500, limitRaw)) : 50;
@@ -1918,7 +2163,8 @@ router.get(
   verifyToken,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const evalId = String(req.params.evalId || '').trim();
     const evaluation = await aiGov.getEvaluation(orgId, evalId);
     if (!evaluation) return res.status(404).json({ success: false, error: 'Evaluation not found' });
@@ -1931,9 +2177,11 @@ router.post(
   verifyToken,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const policyType = String(req.body?.policyType || req.body?.policy_type || '').trim();
-    if (!policyType) return res.status(400).json({ success: false, error: 'policyType is required' });
+    if (!policyType)
+      return res.status(400).json({ success: false, error: 'policyType is required' });
     const context = req.body?.context || {};
     const result = await aiGov.enforcePolicy(orgId, policyType, context);
     return res.json({ success: true, ...result });
@@ -1945,7 +2193,8 @@ router.get(
   verifyToken,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const { from, to } = parseDateRange(req);
     const breakdown = await aiGov.getMeteringByPurpose(orgId, from, to);
     return res.json({ success: true, breakdown });
@@ -1957,7 +2206,8 @@ router.get(
   verifyToken,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const { from, to } = parseDateRange(req);
     const breakdown = await aiGov.getMeteringByUser(orgId, from, to);
     return res.json({ success: true, breakdown });
@@ -1969,7 +2219,8 @@ router.get(
   verifyToken,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const { from, to } = parseDateRange(req);
     const trend = await aiGov.getMeteringTrend(orgId, from, to);
     return res.json({ success: true, trend });
@@ -1980,14 +2231,17 @@ router.get(
 
 router.post(
   '/governance/eval-harness/run',
-  verifyToken,
+  verifyAdmin,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
 
     const parsed = evalHarness.EvalRunConfigSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ success: false, error: 'Invalid config', details: parsed.error.issues });
+      return res
+        .status(400)
+        .json({ success: false, error: 'Invalid config', details: parsed.error.issues });
     }
 
     const result = await evalHarness.runEvalHarness(orgId, parsed.data, getAuditActor(req));
@@ -2000,7 +2254,8 @@ router.get(
   verifyToken,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const { from, to } = parseDateRange(req);
     const report = await evalHarness.getCitationCoverageReport(orgId, from, to);
     return res.json({ success: true, report });
@@ -2012,10 +2267,12 @@ router.get(
   verifyToken,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const runId1 = String(req.params.runId1 || '').trim();
     const runId2 = String(req.params.runId2 || '').trim();
-    if (!runId1 || !runId2) return res.status(400).json({ success: false, error: 'Both runId1 and runId2 are required' });
+    if (!runId1 || !runId2)
+      return res.status(400).json({ success: false, error: 'Both runId1 and runId2 are required' });
     const comparison = await evalHarness.compareEvalRuns(orgId, runId1, runId2);
     return res.json({ success: true, comparison });
   })
@@ -2026,7 +2283,8 @@ router.get(
   verifyToken,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const gates = await evalHarness.listRegressionGates(orgId);
     return res.json({ success: true, gates });
   })
@@ -2034,12 +2292,14 @@ router.get(
 
 router.post(
   '/governance/regression-gates',
-  verifyToken,
+  verifyAdmin,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const metricName = String(req.body?.metricName || req.body?.metric_name || '').trim();
-    if (!metricName) return res.status(400).json({ success: false, error: 'metricName is required' });
+    if (!metricName)
+      return res.status(400).json({ success: false, error: 'metricName is required' });
     const gate = await evalHarness.createRegressionGate(orgId, {
       purpose: req.body?.purpose || undefined,
       metricName,
@@ -2053,10 +2313,11 @@ router.post(
 
 router.put(
   '/governance/regression-gates/:gateId',
-  verifyToken,
+  verifyAdmin,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const gateId = String(req.params.gateId || '').trim();
     if (!gateId) return res.status(400).json({ success: false, error: 'gateId is required' });
     const gate = await evalHarness.updateRegressionGate(orgId, gateId, {
@@ -2073,14 +2334,81 @@ router.put(
 
 router.delete(
   '/governance/regression-gates/:gateId',
-  verifyToken,
+  verifySuperAdmin,
   asyncHandler(async (req: any, res: any) => {
     const orgId = resolveOrgId(req);
-    if (!orgId) return res.status(400).json({ success: false, error: 'organizationId is required' });
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
     const gateId = String(req.params.gateId || '').trim();
     if (!gateId) return res.status(400).json({ success: false, error: 'gateId is required' });
     await evalHarness.deleteRegressionGate(orgId, gateId);
     return res.json({ success: true });
+  })
+);
+
+router.get(
+  '/governance/release-bundles',
+  verifyToken,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const bundles = await evalHarness.listReleaseBundles(orgId);
+    return res.json({ success: true, bundles });
+  })
+);
+
+router.post(
+  '/governance/release-bundles',
+  verifyAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const purpose = String(req.body?.purpose || '').trim();
+    if (!purpose) return res.status(400).json({ success: false, error: 'purpose is required' });
+    const bundle = await evalHarness.createReleaseBundle(orgId, {
+      purpose,
+      promptKey: req.body?.promptKey,
+      promptVersion: req.body?.promptVersion,
+      primaryModelId: req.body?.primaryModelId,
+      fallbackModelId: req.body?.fallbackModelId,
+      policyVersion: req.body?.policyVersion,
+      baselineEvalId: req.body?.baselineEvalId,
+      candidateEvalId: req.body?.candidateEvalId,
+      changedBy: getAuditActor(req),
+    });
+    return res.status(201).json({ success: true, bundle });
+  })
+);
+
+router.post(
+  '/governance/release-bundles/:bundleId/check',
+  verifyAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const bundleId = String(req.params.bundleId || '').trim();
+    if (!bundleId) return res.status(400).json({ success: false, error: 'bundleId is required' });
+    const bundle = await evalHarness.evaluateReleaseBundle(orgId, bundleId, getAuditActor(req));
+    if (!bundle) return res.status(404).json({ success: false, error: 'Bundle not found' });
+    return res.json({ success: true, bundle });
+  })
+);
+
+router.post(
+  '/governance/release-bundles/:bundleId/publish',
+  verifySuperAdmin,
+  asyncHandler(async (req: any, res: any) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId)
+      return res.status(400).json({ success: false, error: 'organizationId is required' });
+    const bundleId = String(req.params.bundleId || '').trim();
+    if (!bundleId) return res.status(400).json({ success: false, error: 'bundleId is required' });
+    const bundle = await evalHarness.publishReleaseBundle(orgId, bundleId, getAuditActor(req));
+    if (!bundle) return res.status(404).json({ success: false, error: 'Bundle not found' });
+    return res.json({ success: true, bundle });
   })
 );
 

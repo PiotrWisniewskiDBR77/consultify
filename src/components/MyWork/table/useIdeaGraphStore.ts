@@ -11,18 +11,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Api } from '@/services/api';
+import {
+  IDEA_GRAPH_SAVE_EVENT,
+  IDEA_GRAPH_UPDATE_EVENT,
+  type CanvasToolType,
+} from '../ideaSelectionTypes';
 
 interface GraphState {
   nodes: any[];
   edges: any[];
   extensions: Record<string, unknown>;
-  preferredTool?: string;
+  preferredTool?: CanvasToolType;
   lastUpdatedBy?: string;
   lastUpdatedAt?: number;
 }
 
-const GRAPH_UPDATE_EVENT = 'idea-graph-updated';
-const GRAPH_SAVE_EVENT = 'idea-graph-save-requested';
+const LEGACY_GRAPH_UPDATE_EVENT = 'idea-graph-updated';
 
 let sharedCache: Record<string, GraphState> = {};
 
@@ -46,13 +50,13 @@ export function useIdeaGraphStore(ideaId: string, toolName: string) {
         nodes: Array.isArray(map.nodes) ? map.nodes : [],
         edges: Array.isArray(map.edges) ? map.edges : [],
         extensions: map?.extensions && typeof map.extensions === 'object' ? map.extensions as Record<string, unknown> : {},
-        preferredTool: map?.preferredTool ? String(map.preferredTool) : undefined,
+        preferredTool: map?.preferredTool as CanvasToolType | undefined,
         lastUpdatedAt: Date.now(),
       };
       sharedCache[ideaId] = graphState;
       setState(graphState);
 
-      window.dispatchEvent(new CustomEvent(GRAPH_UPDATE_EVENT, {
+      window.dispatchEvent(new CustomEvent(IDEA_GRAPH_UPDATE_EVENT, {
         detail: { ideaId, state: graphState, source: toolNameRef.current },
       }));
 
@@ -76,7 +80,7 @@ export function useIdeaGraphStore(ideaId: string, toolName: string) {
     sharedCache[ideaId] = next;
     setState(next);
 
-    window.dispatchEvent(new CustomEvent(GRAPH_UPDATE_EVENT, {
+    window.dispatchEvent(new CustomEvent(IDEA_GRAPH_UPDATE_EVENT, {
       detail: { ideaId, state: next, source: toolNameRef.current },
     }));
   }, [ideaId]);
@@ -93,7 +97,7 @@ export function useIdeaGraphStore(ideaId: string, toolName: string) {
         preferredTool: current.preferredTool,
       });
 
-      window.dispatchEvent(new CustomEvent(GRAPH_SAVE_EVENT, {
+      window.dispatchEvent(new CustomEvent(IDEA_GRAPH_SAVE_EVENT, {
         detail: { ideaId, source: toolNameRef.current },
       }));
     } catch (err) {
@@ -115,8 +119,12 @@ export function useIdeaGraphStore(ideaId: string, toolName: string) {
       setState(detail.state);
     };
 
-    window.addEventListener(GRAPH_UPDATE_EVENT, handler);
-    return () => window.removeEventListener(GRAPH_UPDATE_EVENT, handler);
+    window.addEventListener(IDEA_GRAPH_UPDATE_EVENT, handler);
+    window.addEventListener(LEGACY_GRAPH_UPDATE_EVENT, handler);
+    return () => {
+      window.removeEventListener(IDEA_GRAPH_UPDATE_EVENT, handler);
+      window.removeEventListener(LEGACY_GRAPH_UPDATE_EVENT, handler);
+    };
   }, [ideaId]);
 
   return {

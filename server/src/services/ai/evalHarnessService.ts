@@ -4,10 +4,10 @@ import { z } from 'zod';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
-import { citationVerifier } from './citationVerifier.js';
-import { citationExtractor } from './citationExtractor.js';
-import { classifyIntent } from './intentRouter.js';
 import { enforcePolicy, getGovernancePolicies } from '../aiGovernanceService.js';
+import { citationExtractor } from './citationExtractor.js';
+import { citationVerifier } from './citationVerifier.js';
+import { classifyIntent } from './intentRouter.js';
 
 // ---------------------------------------------------------------------------
 // Schemas
@@ -125,11 +125,43 @@ export async function ensureHarnessSchema(): Promise<void> {
         {
           sql: `CREATE INDEX IF NOT EXISTS idx_eval_gates_org ON ai_eval_regression_gates(organization_id)`,
         },
-        { sql: `ALTER TABLE ai_evaluations ADD COLUMN eval_types_json TEXT DEFAULT '[]'`, optional: true },
-        { sql: `ALTER TABLE ai_evaluations ADD COLUMN regression_baseline_id TEXT`, optional: true },
+        {
+          sql: `CREATE TABLE IF NOT EXISTS ai_eval_release_bundles (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            purpose TEXT NOT NULL,
+            prompt_key TEXT,
+            prompt_version TEXT,
+            primary_model_id TEXT,
+            fallback_model_id TEXT,
+            policy_version TEXT,
+            baseline_eval_id TEXT,
+            candidate_eval_id TEXT,
+            gate_passed BOOLEAN,
+            gate_report_json TEXT DEFAULT '{}',
+            status TEXT NOT NULL DEFAULT 'draft',
+            changed_by TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )`,
+        },
+        {
+          sql: `CREATE INDEX IF NOT EXISTS idx_eval_release_bundles_org ON ai_eval_release_bundles(organization_id, purpose, created_at DESC)`,
+        },
+        {
+          sql: `ALTER TABLE ai_evaluations ADD COLUMN eval_types_json TEXT DEFAULT '[]'`,
+          optional: true,
+        },
+        {
+          sql: `ALTER TABLE ai_evaluations ADD COLUMN regression_baseline_id TEXT`,
+          optional: true,
+        },
         { sql: `ALTER TABLE ai_evaluations ADD COLUMN regression_delta_json TEXT`, optional: true },
         { sql: `ALTER TABLE ai_evaluations ADD COLUMN passes_gate BOOLEAN`, optional: true },
-        { sql: `ALTER TABLE ai_evaluations ADD COLUMN gate_violations_json TEXT DEFAULT '[]'`, optional: true },
+        {
+          sql: `ALTER TABLE ai_evaluations ADD COLUMN gate_violations_json TEXT DEFAULT '[]'`,
+          optional: true,
+        },
       ];
 
       for (const s of stmts) {
@@ -210,7 +242,8 @@ export async function runEvalHarness(
         result.intentMatch = match;
         intentTotal++;
         if (match) intentMatches++;
-        if (!match) result.notes = `Expected intent '${sample.expectedIntent}', got '${routing.intent}'`;
+        if (!match)
+          result.notes = `Expected intent '${sample.expectedIntent}', got '${routing.intent}'`;
       } catch (e: any) {
         result.intentMatch = false;
         result.notes = `Intent classification error: ${e?.message}`;
@@ -228,9 +261,7 @@ export async function runEvalHarness(
           sample.expectedCitations.map((c) => `${c.artifactType}:${c.artifactId}`)
         );
         const foundIds = new Set(
-          extraction.citations
-            .filter((c) => c.sourceId)
-            .map((c) => `${c.sourceType}:${c.sourceId}`)
+          extraction.citations.filter((c) => c.sourceId).map((c) => `${c.sourceType}:${c.sourceId}`)
         );
 
         const covered = [...expectedIds].filter((id) => foundIds.has(id)).length;
@@ -304,12 +335,18 @@ export async function runEvalHarness(
   }
 
   const metrics: EvalMetrics = {};
-  if (intentTotal > 0) metrics.intentAccuracy = Math.round((intentMatches / intentTotal) * 10000) / 10000;
-  if (citCoverageCount > 0) metrics.citationCoverage = Math.round((citCoverageSum / citCoverageCount) * 10000) / 10000;
-  if (citPrecisionCount > 0) metrics.citationPrecision = Math.round((citPrecisionSum / citPrecisionCount) * 10000) / 10000;
-  if (actionTotal > 0) metrics.actionAccuracy = Math.round((actionMatches / actionTotal) * 10000) / 10000;
-  if (policyTotal > 0) metrics.policyComplianceRate = Math.round((policyPassed / policyTotal) * 10000) / 10000;
-  if (qualityCount > 0) metrics.avgResponseQuality = Math.round((qualitySum / qualityCount) * 10000) / 10000;
+  if (intentTotal > 0)
+    metrics.intentAccuracy = Math.round((intentMatches / intentTotal) * 10000) / 10000;
+  if (citCoverageCount > 0)
+    metrics.citationCoverage = Math.round((citCoverageSum / citCoverageCount) * 10000) / 10000;
+  if (citPrecisionCount > 0)
+    metrics.citationPrecision = Math.round((citPrecisionSum / citPrecisionCount) * 10000) / 10000;
+  if (actionTotal > 0)
+    metrics.actionAccuracy = Math.round((actionMatches / actionTotal) * 10000) / 10000;
+  if (policyTotal > 0)
+    metrics.policyComplianceRate = Math.round((policyPassed / policyTotal) * 10000) / 10000;
+  if (qualityCount > 0)
+    metrics.avgResponseQuality = Math.round((qualitySum / qualityCount) * 10000) / 10000;
   if (latencies.length > 0) {
     metrics.avgLatencyMs = Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length);
     const sorted = [...latencies].sort((a, b) => a - b);
@@ -366,7 +403,7 @@ export async function runEvalHarness(
 
   const totalSamples = samples.length;
   const passed = sampleResults.filter(
-    (r) => (r.intentMatch !== false) && (r.policyPassed !== false) && (r.actionMatch !== false)
+    (r) => r.intentMatch !== false && r.policyPassed !== false && r.actionMatch !== false
   ).length;
   const failed = totalSamples - passed;
   const accuracy = totalSamples > 0 ? Math.round((passed / totalSamples) * 10000) / 100 : null;
@@ -540,16 +577,12 @@ export async function compareEvalRuns(
   await ensureHarnessSchema();
 
   const [row1, row2] = await Promise.all([
-    dbGet(
-      `SELECT * FROM ai_evaluations WHERE id = ? AND organization_id = ?`,
-      [runId1, orgId],
-      { fallback: false } as any
-    ),
-    dbGet(
-      `SELECT * FROM ai_evaluations WHERE id = ? AND organization_id = ?`,
-      [runId2, orgId],
-      { fallback: false } as any
-    ),
+    dbGet(`SELECT * FROM ai_evaluations WHERE id = ? AND organization_id = ?`, [runId1, orgId], {
+      fallback: false,
+    } as any),
+    dbGet(`SELECT * FROM ai_evaluations WHERE id = ? AND organization_id = ?`, [runId2, orgId], {
+      fallback: false,
+    } as any),
   ]);
 
   if (!row1) throw new Error(`Eval run ${runId1} not found`);
@@ -637,11 +670,9 @@ export async function createRegressionGate(
     ],
     { fallback: false } as any
   );
-  const row = await dbGet(
-    `SELECT * FROM ai_eval_regression_gates WHERE id = ?`,
-    [id],
-    { fallback: false } as any
-  );
+  const row = await dbGet(`SELECT * FROM ai_eval_regression_gates WHERE id = ?`, [id], {
+    fallback: false,
+  } as any);
   return row as RegressionGate;
 }
 
@@ -669,7 +700,8 @@ export async function updateRegressionGate(
   const metricName = data.metricName ?? ex.metric_name;
   const minThreshold = data.minThreshold !== undefined ? data.minThreshold : ex.min_threshold;
   const maxDegradation = data.maxDegradation ?? ex.max_degradation;
-  const isBlocking = data.isBlocking !== undefined ? (data.isBlocking ? 1 : 0) : ex.is_blocking ? 1 : 0;
+  const isBlocking =
+    data.isBlocking !== undefined ? (data.isBlocking ? 1 : 0) : ex.is_blocking ? 1 : 0;
 
   await dbRun(
     `UPDATE ai_eval_regression_gates
@@ -679,11 +711,9 @@ export async function updateRegressionGate(
     { fallback: false } as any
   );
 
-  const row = await dbGet(
-    `SELECT * FROM ai_eval_regression_gates WHERE id = ?`,
-    [gateId],
-    { fallback: false } as any
-  );
+  const row = await dbGet(`SELECT * FROM ai_eval_regression_gates WHERE id = ?`, [gateId], {
+    fallback: false,
+  } as any);
   return row as RegressionGate;
 }
 
@@ -697,6 +727,190 @@ export async function deleteRegressionGate(orgId: string, gateId: string): Promi
   return true;
 }
 
+export interface EvalReleaseBundle {
+  id: string;
+  organization_id: string;
+  purpose: string;
+  prompt_key: string | null;
+  prompt_version: string | null;
+  primary_model_id: string | null;
+  fallback_model_id: string | null;
+  policy_version: string | null;
+  baseline_eval_id: string | null;
+  candidate_eval_id: string | null;
+  gate_passed: boolean | null;
+  gate_report_json: string;
+  status: 'draft' | 'blocked' | 'ready' | 'published';
+  changed_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function listReleaseBundles(orgId: string): Promise<EvalReleaseBundle[]> {
+  await ensureHarnessSchema();
+  const rows = await dbAll(
+    `SELECT * FROM ai_eval_release_bundles WHERE organization_id = ? ORDER BY updated_at DESC, created_at DESC`,
+    [orgId],
+    { fallback: false } as any
+  );
+  return (rows as EvalReleaseBundle[]) || [];
+}
+
+export async function createReleaseBundle(
+  orgId: string,
+  data: {
+    purpose: string;
+    promptKey?: string;
+    promptVersion?: string;
+    primaryModelId?: string;
+    fallbackModelId?: string;
+    policyVersion?: string;
+    baselineEvalId?: string;
+    candidateEvalId?: string;
+    changedBy?: string;
+  }
+): Promise<EvalReleaseBundle> {
+  await ensureHarnessSchema();
+  const id = randomUUID();
+  await dbRun(
+    `INSERT INTO ai_eval_release_bundles (
+      id, organization_id, purpose, prompt_key, prompt_version, primary_model_id, fallback_model_id,
+      policy_version, baseline_eval_id, candidate_eval_id, gate_passed, gate_report_json, status,
+      changed_by, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, '{}', 'draft', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+    [
+      id,
+      orgId,
+      data.purpose,
+      data.promptKey || null,
+      data.promptVersion || null,
+      data.primaryModelId || null,
+      data.fallbackModelId || null,
+      data.policyVersion || null,
+      data.baselineEvalId || null,
+      data.candidateEvalId || null,
+      data.changedBy || null,
+    ],
+    { fallback: false } as any
+  );
+  const row = await dbGet(`SELECT * FROM ai_eval_release_bundles WHERE id = ?`, [id], {
+    fallback: false,
+  } as any);
+  return row as EvalReleaseBundle;
+}
+
+export async function evaluateReleaseBundle(
+  orgId: string,
+  bundleId: string,
+  changedBy?: string
+): Promise<EvalReleaseBundle | null> {
+  await ensureHarnessSchema();
+  const bundle = await dbGet(
+    `SELECT * FROM ai_eval_release_bundles WHERE id = ? AND organization_id = ?`,
+    [bundleId, orgId],
+    { fallback: false } as any
+  );
+  if (!bundle) return null;
+  const baselineEvalId = String((bundle as any).baseline_eval_id || '').trim();
+  const candidateEvalId = String((bundle as any).candidate_eval_id || '').trim();
+  if (!baselineEvalId || !candidateEvalId) {
+    throw new Error(
+      'baseline_eval_id and candidate_eval_id are required to evaluate a release bundle'
+    );
+  }
+
+  const [baselineRow, candidateRow] = await Promise.all([
+    dbGet(
+      `SELECT * FROM ai_evaluations WHERE id = ? AND organization_id = ?`,
+      [baselineEvalId, orgId],
+      {
+        fallback: false,
+      } as any
+    ),
+    dbGet(
+      `SELECT * FROM ai_evaluations WHERE id = ? AND organization_id = ?`,
+      [candidateEvalId, orgId],
+      {
+        fallback: false,
+      } as any
+    ),
+  ]);
+  if (!baselineRow || !candidateRow) throw new Error('Evaluation run not found');
+
+  const baselineMetrics = parseStoredMetrics(baselineRow);
+  const candidateMetrics = parseStoredMetrics(candidateRow);
+  const gates = await loadRegressionGates(orgId, String((bundle as any).purpose || ''));
+  const gateResult = checkRegressionGate(candidateMetrics, baselineMetrics, {
+    maxDegradation:
+      gates.length > 0 ? Math.min(...gates.map((g) => g.max_degradation ?? 0.05)) : 0.05,
+    requiredMetrics:
+      gates.length > 0 ? gates.map((g) => g.metric_name) : Object.keys(candidateMetrics),
+  });
+
+  const thresholdViolations: string[] = [];
+  for (const gate of gates) {
+    if (gate.min_threshold == null) continue;
+    const metricValue = (candidateMetrics as any)[gate.metric_name];
+    if (metricValue !== undefined && metricValue < gate.min_threshold) {
+      thresholdViolations.push(
+        `${gate.metric_name}=${Number(metricValue).toFixed(4)} below ${Number(gate.min_threshold).toFixed(4)}`
+      );
+    }
+  }
+
+  const report = {
+    baselineEvalId,
+    candidateEvalId,
+    candidateMetrics,
+    baselineMetrics,
+    regression: gateResult,
+    thresholdViolations,
+    evaluatedAt: new Date().toISOString(),
+  };
+  const gatePassed = gateResult.passes && thresholdViolations.length === 0;
+  const status = gatePassed ? 'ready' : 'blocked';
+
+  await dbRun(
+    `UPDATE ai_eval_release_bundles
+     SET gate_passed = ?, gate_report_json = ?, status = ?, changed_by = ?, updated_at = CURRENT_TIMESTAMP
+     WHERE id = ? AND organization_id = ?`,
+    [gatePassed ? 1 : 0, JSON.stringify(report), status, changedBy || null, bundleId, orgId],
+    { fallback: false } as any
+  );
+  const updated = await dbGet(`SELECT * FROM ai_eval_release_bundles WHERE id = ?`, [bundleId], {
+    fallback: false,
+  } as any);
+  return updated as EvalReleaseBundle;
+}
+
+export async function publishReleaseBundle(
+  orgId: string,
+  bundleId: string,
+  changedBy?: string
+): Promise<EvalReleaseBundle | null> {
+  await ensureHarnessSchema();
+  const bundle = await dbGet(
+    `SELECT * FROM ai_eval_release_bundles WHERE id = ? AND organization_id = ?`,
+    [bundleId, orgId],
+    { fallback: false } as any
+  );
+  if (!bundle) return null;
+  if (!(Boolean((bundle as any).gate_passed) || String((bundle as any).status) === 'ready')) {
+    throw new Error('Release bundle cannot be published before passing eval gates');
+  }
+  await dbRun(
+    `UPDATE ai_eval_release_bundles
+     SET status = 'published', changed_by = ?, updated_at = CURRENT_TIMESTAMP
+     WHERE id = ? AND organization_id = ?`,
+    [changedBy || null, bundleId, orgId],
+    { fallback: false } as any
+  );
+  const updated = await dbGet(`SELECT * FROM ai_eval_release_bundles WHERE id = ?`, [bundleId], {
+    fallback: false,
+  } as any);
+  return updated as EvalReleaseBundle;
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -704,7 +918,14 @@ export async function deleteRegressionGate(orgId: string, gateId: string): Promi
 async function loadRegressionGates(
   orgId: string,
   purpose?: string
-): Promise<Array<{ metric_name: string; min_threshold: number | null; max_degradation: number; is_blocking: boolean }>> {
+): Promise<
+  Array<{
+    metric_name: string;
+    min_threshold: number | null;
+    max_degradation: number;
+    is_blocking: boolean;
+  }>
+> {
   try {
     let sql = `SELECT * FROM ai_eval_regression_gates WHERE organization_id = ? AND is_blocking = TRUE`;
     const params: unknown[] = [orgId];
@@ -732,20 +953,24 @@ function parseStoredMetrics(row: any): EvalMetrics {
   if (row.avg_latency_ms != null) metrics.avgLatencyMs = Number(row.avg_latency_ms);
 
   try {
-    const results = typeof row.results_json === 'string' ? JSON.parse(row.results_json) : row.results_json;
+    const results =
+      typeof row.results_json === 'string' ? JSON.parse(row.results_json) : row.results_json;
     if (Array.isArray(results) && results.length > 0) {
       const withCoverage = results.filter((r: any) => r.citationCoverage !== undefined);
       if (withCoverage.length > 0) {
         metrics.citationCoverage =
-          withCoverage.reduce((s: number, r: any) => s + Number(r.citationCoverage || 0), 0) / withCoverage.length;
+          withCoverage.reduce((s: number, r: any) => s + Number(r.citationCoverage || 0), 0) /
+          withCoverage.length;
       }
       const withAction = results.filter((r: any) => r.actionMatch !== undefined);
       if (withAction.length > 0) {
-        metrics.actionAccuracy = withAction.filter((r: any) => r.actionMatch).length / withAction.length;
+        metrics.actionAccuracy =
+          withAction.filter((r: any) => r.actionMatch).length / withAction.length;
       }
       const withPolicy = results.filter((r: any) => r.policyPassed !== undefined);
       if (withPolicy.length > 0) {
-        metrics.policyComplianceRate = withPolicy.filter((r: any) => r.policyPassed).length / withPolicy.length;
+        metrics.policyComplianceRate =
+          withPolicy.filter((r: any) => r.policyPassed).length / withPolicy.length;
       }
       const withScore = results.filter((r: any) => r.score !== undefined);
       if (withScore.length > 0) {
@@ -757,7 +982,8 @@ function parseStoredMetrics(row: any): EvalMetrics {
         const lats = withLatency.map((r: any) => Number(r.latencyMs));
         metrics.avgLatencyMs = lats.reduce((a: number, b: number) => a + b, 0) / lats.length;
         const sorted = [...lats].sort((a, b) => a - b);
-        metrics.p95LatencyMs = sorted[Math.floor(sorted.length * 0.95)] ?? sorted[sorted.length - 1];
+        metrics.p95LatencyMs =
+          sorted[Math.floor(sorted.length * 0.95)] ?? sorted[sorted.length - 1];
       }
     }
   } catch {

@@ -2098,6 +2098,13 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch LLM costs');
   },
 
+  getAIFinOpsOverview: async (): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/ai-analytics/finops/overview`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch AI FinOps overview');
+  },
+
   getMissionControlProviders: async (): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/ai-operations/mission-control/providers`, {
       headers: getHeaders(),
@@ -2266,13 +2273,43 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch org AI policy');
   },
 
-  updateOrgLLMPolicy: async (organizationId: string, policy: any): Promise<any> => {
+  updateOrgLLMPolicy: async (
+    organizationId: string,
+    policy: any,
+    options?: { mode?: 'draft' | 'review' | 'approved' | 'published'; changeSummary?: string }
+  ): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/llm/org/${encodeURIComponent(organizationId)}/policy`, {
       method: 'PUT',
       headers: getHeaders(),
-      body: JSON.stringify({ policy }),
+      body: JSON.stringify({
+        policy,
+        mode: options?.mode,
+        changeSummary: options?.changeSummary,
+      }),
     });
     return handleResponse(res, 'Failed to update org AI policy');
+  },
+
+  getOrgLLMPolicyHistory: async (organizationId: string): Promise<any> => {
+    const res = await fetchWithRetry(
+      `${API_URL}/llm/org/${encodeURIComponent(organizationId)}/policy/history`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to fetch org AI policy history');
+  },
+
+  rollbackOrgLLMPolicy: async (organizationId: string, versionId: string): Promise<any> => {
+    const res = await fetchWithRetry(
+      `${API_URL}/llm/org/${encodeURIComponent(organizationId)}/policy/rollback`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ versionId }),
+      }
+    );
+    return handleResponse(res, 'Failed to rollback org AI policy');
   },
 
   updateAIGovernanceDocumentVisibility: async (docId: string, visibility: string): Promise<any> => {
@@ -3786,7 +3823,7 @@ export const Api = {
 
   transitionDecisionWorkflow: async (
     id: string,
-    toStatus: 'review' | 'approve' | 'published' | 'publish'
+    toStatus: 'proposed' | 'review' | 'approve' | 'published' | 'publish'
   ): Promise<{ id: string; workflowStatus: string; createdTaskIds: string[] }> => {
     const res = await fetch(`${API_URL}/decisions/${id}/workflow`, {
       method: 'PATCH',

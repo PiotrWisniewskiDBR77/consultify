@@ -6,6 +6,9 @@
  */
 
 export type CanvasToolType = 'mindmap' | 'process_flow' | 'table' | 'whiteboard';
+export const IDEA_GRAPH_UPDATE_EVENT = 'idea-workspace-graph-update';
+export const IDEA_GRAPH_SAVE_EVENT = 'idea-graph-save-requested';
+export const IDEA_WORKSPACE_INSERT_EVENT = 'idea-workspace-insert';
 
 export type SelectionKind = 'none' | 'node' | 'edge' | 'lane' | 'row';
 
@@ -38,6 +41,28 @@ export const EMPTY_SELECTION: IdeaWorkspaceSelection = {
   ids: [],
 };
 
+export interface IdeaWorkspaceInsertItem {
+  text?: string;
+  label?: string;
+  type?: string;
+  anchorNodeId?: string;
+  parentId?: string;
+  position?: { x: number; y: number };
+  color?: string;
+}
+
+export interface IdeaWorkspaceInsertDetail {
+  ideaId?: string;
+  items?: IdeaWorkspaceInsertItem[];
+  anchorNodeId?: string;
+  parentId?: string;
+  position?: { x: number; y: number };
+  nodeType?: string;
+  label?: string;
+  text?: string;
+  color?: string;
+}
+
 export interface AIProposal {
   id: string;
   type: 'graph_patch' | 'view_patch';
@@ -49,6 +74,11 @@ export interface AIProposal {
     removeNodeIds?: string[];
     removeEdgeIds?: string[];
     updateNodes?: Array<{ id: string; data: Record<string, unknown> }>;
+    moveNodes?: Array<{
+      nodeId: string;
+      parentId?: string;
+      position?: { x: number; y: number };
+    }>;
     extensions?: Record<string, unknown>;
   };
   status: 'pending' | 'accepted' | 'rejected';

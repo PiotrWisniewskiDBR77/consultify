@@ -116,7 +116,7 @@ router.get('/:id/created-tasks', DecisionController.getCreatedTasks);
 /**
  * PATCH /api/decisions/:id/workflow
  * V4-EXEC-06: Decision workflow — propose→review→approve→publish; auto-create tasks on publish
- * Body: { toStatus: 'review'|'approve'|'published' }
+ * Body: { toStatus: 'proposed'|'review'|'approve'|'published' }
  */
 router.patch('/:id/workflow', DecisionController.transitionWorkflow);
 

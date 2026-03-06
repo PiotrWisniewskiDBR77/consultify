@@ -1048,8 +1048,13 @@ export class DecisionController {
         return;
       }
 
-      const { decisionOwnerId, dueDate, priority, impact, title, description, delegationNote } =
+      const { decisionOwnerId, dueDate, priority, impact, status, title, description, delegationNote } =
         req.body;
+
+      if (status && !isDecisionStatusInput(status)) {
+        res.status(400).json({ error: 'Invalid decision status' });
+        return;
+      }
 
       const currentDecision = await queryHelpers.queryOne<DecisionRow>(
         `SELECT * FROM decisions WHERE id = ?`,
@@ -1093,6 +1098,10 @@ export class DecisionController {
         updates.push('impact = ?');
         params.push(normalizeImpact(impact));
       }
+      if (status) {
+        updates.push('status = ?');
+        params.push(normalizeStatus(status));
+      }
       if (title) {
         updates.push('title = ?');
         params.push(title);
@@ -1122,7 +1131,7 @@ export class DecisionController {
           uuidv4(),
           id,
           normalizeStatus(currentDecision.status),
-          normalizeStatus(currentDecision.status),
+          status ? normalizeStatus(status) : normalizeStatus(currentDecision.status),
           userId,
           JSON.stringify({ notes: delegationNote || 'Decision updated' }),
         ]
@@ -1148,6 +1157,7 @@ export class DecisionController {
               ...(decisionOwnerId && { decisionMakerId: decisionOwnerId }),
               ...(dueDate && { dueDate }),
               ...(priority && { priority: normalizePriority(priority) }),
+              ...(status && { status: normalizeStatus(status) }),
               ...(title && { title }),
             },
             metadata: {},
@@ -1396,7 +1406,7 @@ export class DecisionController {
   /**
    * V4-EXEC-06: Decision workflow — propose→review→approve→publish; auto-create tasks on publish
    * PATCH /api/decisions/:id/workflow
-   * Body: { toStatus: 'review'|'approve'|'published' }
+   * Body: { toStatus: 'proposed'|'review'|'approve'|'published' }
    */
   static transitionWorkflow = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -1409,10 +1419,15 @@ export class DecisionController {
       }
 
       const toStatus = (req.body as { toStatus?: string })?.toStatus;
-      if (!toStatus || !['review', 'approve', 'published', 'publish'].includes(String(toStatus).toLowerCase())) {
+      if (
+        !toStatus ||
+        !['proposed', 'review', 'approve', 'published', 'publish'].includes(
+          String(toStatus).toLowerCase()
+        )
+      ) {
         res.status(400).json({
           error: 'toStatus required',
-          allowed: ['review', 'approve', 'published'],
+          allowed: ['proposed', 'review', 'approve', 'published'],
         });
         return;
       }

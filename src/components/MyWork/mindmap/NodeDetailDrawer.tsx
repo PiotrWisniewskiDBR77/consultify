@@ -203,6 +203,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
             items: [{ text, type: 'topics' }],
             ideaId,
             anchorNodeId: nodeData.nodeId,
+            parentId: nodeData.nodeId,
           },
         })
       );
@@ -350,7 +351,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
             title={isPl ? 'Kontekst firmy' : 'Company Context'}
             badge={loadingContext ? '...' : String(companyContext.length)}
             defaultOpen={companyContext.length > 0}
-            icon={FileText}
+            icon={<FileText size={14} />}
           >
             {loadingContext ? (
               <div className="flex items-center gap-2 py-4 justify-center text-[11px] text-slate-400">
@@ -408,7 +409,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
               title={isPl ? 'Powiązane węzły' : 'Related Nodes'}
               badge={String(relatedNodes.length)}
               defaultOpen
-              icon={Link2}
+              icon={<Link2 size={14} />}
             >
               <div className="space-y-1 mt-1">
                 {relatedNodes.map((rn) => (

@@ -2663,11 +2663,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   setIdeaActiveTool(next);
                   setIdeaSelection(EMPTY_SELECTION);
                 }}
-                selection={ideaSelection}
-                locked={ideaLocked}
-                onQuickAction={(action, payload) => {
-                  window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action, ...payload } }));
-                }}
+                isAccepted={!ideaLocked}
               />
             )}
 

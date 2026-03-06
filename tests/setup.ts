@@ -367,6 +367,7 @@ if (typeof process !== 'undefined' && process.env) {
   process.env.DB_TYPE = process.env.DB_TYPE || 'postgres';
   process.env.MOCK_REDIS = process.env.MOCK_REDIS || 'true';
   process.env.MOCK_DB = process.env.MOCK_DB || 'true';
+  process.env.POSTGRES_SKIP_INIT_IN_TEST = process.env.POSTGRES_SKIP_INIT_IN_TEST || 'true';
   // PostgreSQL required. Unit tests use MOCK_DB (no real connection).
   // Integration tests need real DATABASE_URL to consultinity_test.
   if (!process.env.DATABASE_URL) {

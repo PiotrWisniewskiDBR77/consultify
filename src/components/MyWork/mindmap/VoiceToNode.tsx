@@ -87,6 +87,7 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
       const timer = setTimeout(parseTranscript, 500);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [parseTranscript, transcript]);
 
   useEffect(() => {

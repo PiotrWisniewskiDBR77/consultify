@@ -1805,8 +1805,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const handleApprove = async () => {
     if (!decisionId) return;
     try {
-      await Api.updateDecision(decisionId, { status: 'APPROVED' });
-      const oldStatus = status;
+      await Api.decideDecision(decisionId, 'approved', rationale || undefined);
       setStatus('approved');
       setDecisionDate(new Date().toISOString());
       addActivityLogEntry(
@@ -1883,8 +1882,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const handleReject = async () => {
     if (!decisionId) return;
     try {
-      await Api.updateDecision(decisionId, { status: 'REJECTED' });
-      const oldStatus = status;
+      await Api.decideDecision(decisionId, 'rejected', rationale || undefined);
       setStatus('rejected');
       setDecisionDate(new Date().toISOString());
       addActivityLogEntry(
@@ -1905,7 +1903,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const handleDefer = async () => {
     if (!decisionId) return;
     try {
-      await Api.updateDecision(decisionId, { status: 'DEFERRED' });
+      await Api.decideDecision(decisionId, 'deferred', rationale || undefined);
       setStatus('deferred');
       addActivityLogEntry(
         'deferred',
@@ -1923,7 +1921,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const handleEscalate = async () => {
     if (!decisionId) return;
     try {
-      await Api.updateDecision(decisionId, { status: 'ESCALATED' });
+      await Api.escalateDecision(decisionId, isPolish ? 'Eskalacja z widoku decyzji' : 'Escalated from decision detail');
       setStatus('escalated');
       addActivityLogEntry(
         'escalated',

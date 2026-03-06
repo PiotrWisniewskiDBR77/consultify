@@ -39,7 +39,11 @@ import ReactFlow, {
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
-import type { CanvasToolType } from './ideaSelectionTypes';
+import {
+  IDEA_WORKSPACE_INSERT_EVENT,
+  type CanvasToolType,
+  type IdeaWorkspaceInsertDetail,
+} from './ideaSelectionTypes';
 import { LabeledEdge } from './mindmap/LabeledEdge';
 import { NodeContextMenu } from './mindmap/NodeContextMenu';
 import { AIBlindSpotsDetector } from './mindmap/AIBlindSpotsDetector';
@@ -436,11 +440,21 @@ function MindMapInner({
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const [persistence, setPersistence] = useState<PersistenceStatus>('online');
 
-  const [nodes, setNodes, baseOnNodesChange] = useNodesState([] as Node[]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]);
+  const [nodes, setNodes, baseOnNodesChange] = useNodesState([] as Node[]) as [
+    Node[],
+    React.Dispatch<React.SetStateAction<Node[]>>,
+    (changes: unknown) => void,
+  ];
+  const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]) as [
+    Edge[],
+    React.Dispatch<React.SetStateAction<Edge[]>>,
+    (changes: unknown) => void,
+  ];
 
   // ── Collapse/Expand ──────────────────────────────────────────────────────
   const [collapsedNodeIds, setCollapsedNodeIds] = useState<Set<string>>(new Set());
+  const [drillPath, setDrillPath] = useState<BreadcrumbItem[]>([]);
+  const drillFocusId = drillPath.length > 0 ? drillPath[drillPath.length - 1].nodeId : null;
 
   const toggleCollapse = useCallback(
     (nodeId: string) => {
@@ -599,10 +613,6 @@ function MindMapInner({
       try { fitView({ nodes: [{ id: nodeId } as any], padding: 0.5, duration: 400 }); } catch { /* ignore */ }
     }, 100);
   }, [fitView, setNodes]);
-
-  // ── Sub-map / Drill-down ────────────────────────────────────────────────
-  const [drillPath, setDrillPath] = useState<BreadcrumbItem[]>([]);
-  const drillFocusId = drillPath.length > 0 ? drillPath[drillPath.length - 1].nodeId : null;
 
   const handleDrillDown = useCallback((nodeId: string) => {
     const node = nodes.find((n) => n.id === nodeId);
@@ -1171,7 +1181,8 @@ function MindMapInner({
   // ── Insert from AI Suggestions panel ─────────────────────────────────────
   useEffect(() => {
     const handler = (e: Event) => {
-      const { items, ideaId: evtIdeaId } = (e as CustomEvent).detail || {};
+      const detail = ((e as CustomEvent).detail || {}) as IdeaWorkspaceInsertDetail;
+      const { items, ideaId: evtIdeaId } = detail;
       if (evtIdeaId && evtIdeaId !== ideaId) return;
       if (!Array.isArray(items) || items.length === 0) return;
       pushUndo();
@@ -1183,26 +1194,41 @@ function MindMapInner({
       };
 
       for (const item of items) {
-        const branchKey = branchMap[item.type] || 'options';
+        const anchorId =
+          String(item.anchorNodeId || detail.anchorNodeId || item.parentId || detail.parentId || '').trim() ||
+          null;
+        const anchorNode = anchorId ? nodes.find((n) => n.id === anchorId) : null;
+        const branchKey =
+          String(anchorNode?.data?.branchKey || branchMap[item.type || ''] || 'options').trim() || 'options';
         const branchNode = nodes.find((n) => n.data?.branchKey === branchKey);
-        const childrenOfBranch = edges.filter((e) => e.source === branchNode?.id);
-        const yOffset = childrenOfBranch.length * 70;
+        const sourceNode = anchorNode || branchNode || nodes.find((n) => n.id === 'root') || null;
+        const childrenOfSource = edges.filter((edge) => edge.source === sourceNode?.id);
+        const yOffset = childrenOfSource.length * 70;
+        const explicitPosition = item.position || detail.position;
+        const defaultPosition = sourceNode
+          ? sourceNode.id.startsWith('branch-')
+            ? { x: (sourceNode.position?.x ?? 0) + 220, y: (sourceNode.position?.y ?? 0) + yOffset }
+            : { x: (sourceNode.position?.x ?? 0) + 180, y: (sourceNode.position?.y ?? 0) + 60 + yOffset }
+          : { x: 220, y: yOffset };
 
         const newId = `node-${uid()}`;
         const newNode: Node = {
           id: newId,
           type: 'idea',
-          position: {
-            x: (branchNode?.position?.x ?? 0) + 220,
-            y: (branchNode?.position?.y ?? 0) + yOffset,
+          position: explicitPosition || defaultPosition,
+          data: {
+            label: item.text || item.label,
+            branchKey,
+            sourceType: 'ai_suggestion',
+            priority: 50,
+            ...(anchorId ? { parentId: anchorId } : {}),
           },
-          data: { label: item.text, branchKey, sourceType: 'ai_suggestion', priority: 50 },
         } as any;
 
         const colors = branchColor(branchKey);
         const newEdge: Edge = {
           id: `edge-${uid()}`,
-          source: branchNode?.id || `branch-${branchKey}`,
+          source: sourceNode?.id || `branch-${branchKey}`,
           target: newId,
           type: 'smoothstep',
           style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
@@ -1215,8 +1241,8 @@ function MindMapInner({
       }
       toast.success(isPolish ? 'Wstawiono do mapy' : 'Inserted into map', { duration: 1000 });
     };
-    window.addEventListener('idea-workspace-insert', handler);
-    return () => window.removeEventListener('idea-workspace-insert', handler);
+    window.addEventListener(IDEA_WORKSPACE_INSERT_EVENT, handler);
+    return () => window.removeEventListener(IDEA_WORKSPACE_INSERT_EVENT, handler);
   }, [edges, ideaId, isPolish, nodes, pushUndo, setEdges, setNodes]);
 
   // ── Keyboard shortcuts ───────────────────────────────────────────────────
@@ -1813,7 +1839,7 @@ function MindMapInner({
             <RotateCcw size={14} />
           </button>
           <div className="w-px h-5 bg-slate-200 dark:bg-white/[0.06] mx-0.5" />
-          <button onClick={handleAIExpand} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/15 transition-colors" title={isPolish ? 'AI: rozbuduj wybraną gałąź' : 'AI: expand selected branch'} disabled={locked || saving || persistence !== 'online'}>
+          <button onClick={() => void handleAIExpand()} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/15 transition-colors" title={isPolish ? 'AI: rozbuduj wybraną gałąź' : 'AI: expand selected branch'} disabled={locked || saving || persistence !== 'online'}>
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
             AI
           </button>
