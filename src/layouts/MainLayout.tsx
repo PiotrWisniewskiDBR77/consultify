@@ -134,7 +134,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   return (
     <div className="flex h-screen w-full bg-slate-100 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden">
       {/* Global Floating Action Buttons - Order: Help, Feedback, Docs */}
-      <div className="fixed right-0 top-[70%] z-50 flex flex-col gap-2 items-end pointer-events-none">
+      <div className="fixed right-0 top-[70%] z-50 flex flex-col gap-1 items-end pointer-events-none">
         <div className="pointer-events-auto">
           <HelpToggleButton />
         </div>

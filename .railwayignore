@@ -30,3 +30,12 @@ server/backups/
 /dist/
 /dist-ssr/
 server/dist/
+
+# Heavy directories excluded from upload (Railway builds from source)
+node_modules/
+server/node_modules/
+.git/
+
+# IDE / agent artifacts
+.cursor/
+agent-transcripts/
