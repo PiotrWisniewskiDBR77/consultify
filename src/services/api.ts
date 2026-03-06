@@ -2755,24 +2755,61 @@ export const Api = {
   // ==========================================
   getTasks: async (filters?: {
     projectId?: string;
+    programId?: string;
     status?: string;
     assigneeId?: string;
     priority?: string;
     initiativeId?: string;
+    listId?: string;
+    scope?: 'personal' | 'initiative' | 'program';
   }): Promise<any[]> => {
     let url = `${API_URL}/tasks`;
     if (filters) {
       const params = new URLSearchParams();
       if (filters.projectId) params.append('projectId', filters.projectId);
+      if (filters.programId) params.append('programId', filters.programId);
       if (filters.status) params.append('status', filters.status);
       if (filters.assigneeId) params.append('assigneeId', filters.assigneeId);
       if (filters.priority) params.append('priority', filters.priority);
       if (filters.initiativeId) params.append('initiativeId', filters.initiativeId);
+      if (filters.listId) params.append('listId', filters.listId);
+      if (filters.scope) params.append('scope', filters.scope);
       // IMPORTANT: no leading space after "?" (breaks query parsing in some servers)
       if (params.toString()) url += `?${params.toString()}`;
     }
     const res = await fetch(url, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch tasks');
+    return res.json();
+  },
+
+  getTaskRollups: async (filters?: {
+    projectId?: string;
+    programId?: string;
+    initiativeId?: string;
+    listId?: string;
+    scope?: 'personal' | 'initiative' | 'program';
+  }): Promise<any> => {
+    let url = `${API_URL}/tasks/rollups`;
+    if (filters) {
+      const params = new URLSearchParams();
+      if (filters.projectId) params.append('projectId', filters.projectId);
+      if (filters.programId) params.append('programId', filters.programId);
+      if (filters.initiativeId) params.append('initiativeId', filters.initiativeId);
+      if (filters.listId) params.append('listId', filters.listId);
+      if (filters.scope) params.append('scope', filters.scope);
+      if (params.toString()) url += `?${params.toString()}`;
+    }
+    const res = await fetch(url, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch task rollups');
+    return res.json();
+  },
+
+  getTaskWorkflowConfig: async (): Promise<{
+    statuses: string[];
+    transitions: Record<string, string[]>;
+  }> => {
+    const res = await fetch(`${API_URL}/tasks/workflow-config`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch task workflow config');
     return res.json();
   },
 
@@ -2795,6 +2832,7 @@ export const Api = {
     tags?: string[];
     taskType?: string;
     initiativeId?: string;
+    listId?: string;
     why?: string;
     stepPhase?: 'design' | 'pilot' | 'rollout';
   }): Promise<any> => {
@@ -3584,6 +3622,7 @@ export const Api = {
       projectName: d?.projectName || d?.project_name || null,
       createdAt: d?.createdAt || d?.created_at || null,
       updatedAt: d?.updatedAt || d?.updated_at || null,
+      workflowStatus: d?.workflowStatus || d?.workflow_status || 'proposed',
     };
   },
 
@@ -3694,6 +3733,20 @@ export const Api = {
       body: JSON.stringify(updates),
     });
     if (!res.ok) throw new Error('Failed to update decision');
+  },
+
+  transitionDecisionWorkflow: async (
+    id: string,
+    toStatus: 'review' | 'approve' | 'published' | 'publish'
+  ): Promise<{ id: string; workflowStatus: string; createdTaskIds: string[] }> => {
+    const res = await fetch(`${API_URL}/decisions/${id}/workflow`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ toStatus }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || 'Failed to transition decision workflow');
+    return data;
   },
 
   // ==========================================

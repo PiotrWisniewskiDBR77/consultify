@@ -84,6 +84,295 @@ router.delete(
   InitiativeController.deletePortfolioDependency
 );
 
+// ==========================================
+// V4-INIT-02: PROGRAM HIERARCHY CRUD
+// ==========================================
+
+router.get('/programs', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const rows = await queryHelpers.queryAll(
+      `SELECT p.*,
+              (SELECT COUNT(*) FROM initiatives i WHERE i.program_id = p.id AND i.organization_id = p.organization_id) AS initiative_count,
+              (SELECT COUNT(*) FROM programs cp WHERE cp.parent_program_id = p.id) AS child_program_count
+       FROM programs p
+       WHERE p.organization_id = ?
+       ORDER BY p.name ASC`,
+      [String(orgId)]
+    );
+
+    const programs = rows.map((r: any) => ({
+      id: r.id,
+      organizationId: r.organization_id,
+      name: r.name,
+      description: r.description,
+      parentProgramId: r.parent_program_id || null,
+      status: r.status,
+      ownerUserId: r.owner_user_id || null,
+      startDate: r.start_date || null,
+      endDate: r.end_date || null,
+      initiativeCount: Number(r.initiative_count) || 0,
+      childProgramCount: Number(r.child_program_count) || 0,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    }));
+
+    return res.json({ programs });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to fetch programs', message: err.message });
+  }
+});
+
+router.post('/programs', requireOrgRole('user'), async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { name, description, parentProgramId, status, ownerUserId, startDate, endDate } =
+      req.body;
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'name is required' });
+    }
+
+    if (parentProgramId) {
+      const parent = await queryHelpers.queryOne(
+        `SELECT id FROM programs WHERE id = ? AND organization_id = ?`,
+        [String(parentProgramId), String(orgId)]
+      );
+      if (!parent) return res.status(400).json({ error: 'Parent program not found' });
+    }
+
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    await queryHelpers.queryRun(
+      `INSERT INTO programs (id, organization_id, name, description, parent_program_id, status, owner_user_id, start_date, end_date, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        String(orgId),
+        name.trim(),
+        description || null,
+        parentProgramId || null,
+        status || 'active',
+        ownerUserId || null,
+        startDate || null,
+        endDate || null,
+        now,
+        now,
+      ]
+    );
+
+    return res.status(201).json({
+      id,
+      organizationId: String(orgId),
+      name: name.trim(),
+      description: description || null,
+      parentProgramId: parentProgramId || null,
+      status: status || 'active',
+      ownerUserId: ownerUserId || null,
+      startDate: startDate || null,
+      endDate: endDate || null,
+      createdAt: now,
+      updatedAt: now,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to create program', message: err.message });
+  }
+});
+
+router.get('/programs/:programId', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { programId } = req.params;
+    const program = (await queryHelpers.queryOne(
+      `SELECT * FROM programs WHERE id = ? AND organization_id = ?`,
+      [String(programId), String(orgId)]
+    )) as any;
+    if (!program) return res.status(404).json({ error: 'Program not found' });
+
+    const childPrograms = await queryHelpers.queryAll(
+      `SELECT p.*,
+              (SELECT COUNT(*) FROM initiatives i WHERE i.program_id = p.id AND i.organization_id = p.organization_id) AS initiative_count
+       FROM programs p
+       WHERE p.parent_program_id = ? AND p.organization_id = ?
+       ORDER BY p.name ASC`,
+      [String(programId), String(orgId)]
+    );
+
+    const initiatives = await queryHelpers.queryAll(
+      `SELECT id, name, title, status, priority, progress,
+              COALESCE(cost_capex, 0) + COALESCE(cost_opex, 0) AS budget,
+              COALESCE(business_value, 0) AS value
+       FROM initiatives
+       WHERE program_id = ? AND organization_id = ?
+       ORDER BY name ASC`,
+      [String(programId), String(orgId)]
+    );
+
+    return res.json({
+      program: {
+        id: program.id,
+        organizationId: program.organization_id,
+        name: program.name,
+        description: program.description,
+        parentProgramId: program.parent_program_id || null,
+        status: program.status,
+        ownerUserId: program.owner_user_id || null,
+        startDate: program.start_date || null,
+        endDate: program.end_date || null,
+        createdAt: program.created_at,
+        updatedAt: program.updated_at,
+      },
+      childPrograms: childPrograms.map((cp: any) => ({
+        id: cp.id,
+        name: cp.name,
+        status: cp.status,
+        parentProgramId: cp.parent_program_id,
+        initiativeCount: Number(cp.initiative_count) || 0,
+      })),
+      initiatives: initiatives.map((i: any) => ({
+        id: i.id,
+        name: i.name || i.title,
+        status: i.status,
+        priority: i.priority,
+        progress: Number(i.progress) || 0,
+        budget: Number(i.budget) || 0,
+        value: Number(i.value) || 0,
+      })),
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to fetch program', message: err.message });
+  }
+});
+
+router.put('/programs/:programId', requireOrgRole('user'), async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { programId } = req.params;
+    const existing = await queryHelpers.queryOne(
+      `SELECT id FROM programs WHERE id = ? AND organization_id = ?`,
+      [String(programId), String(orgId)]
+    );
+    if (!existing) return res.status(404).json({ error: 'Program not found' });
+
+    const { name, description, parentProgramId, status, ownerUserId, startDate, endDate } =
+      req.body;
+
+    if (parentProgramId === programId) {
+      return res.status(400).json({ error: 'Program cannot be its own parent' });
+    }
+
+    if (parentProgramId) {
+      const parent = await queryHelpers.queryOne(
+        `SELECT id FROM programs WHERE id = ? AND organization_id = ?`,
+        [String(parentProgramId), String(orgId)]
+      );
+      if (!parent) return res.status(400).json({ error: 'Parent program not found' });
+    }
+
+    const now = new Date().toISOString();
+    await queryHelpers.queryRun(
+      `UPDATE programs
+       SET name = COALESCE(?, name),
+           description = COALESCE(?, description),
+           parent_program_id = ?,
+           status = COALESCE(?, status),
+           owner_user_id = ?,
+           start_date = ?,
+           end_date = ?,
+           updated_at = ?
+       WHERE id = ? AND organization_id = ?`,
+      [
+        name || null,
+        description !== undefined ? description : null,
+        parentProgramId !== undefined ? parentProgramId || null : null,
+        status || null,
+        ownerUserId !== undefined ? ownerUserId || null : null,
+        startDate !== undefined ? startDate || null : null,
+        endDate !== undefined ? endDate || null : null,
+        now,
+        String(programId),
+        String(orgId),
+      ]
+    );
+
+    const updated = (await queryHelpers.queryOne(
+      `SELECT * FROM programs WHERE id = ? AND organization_id = ?`,
+      [String(programId), String(orgId)]
+    )) as any;
+
+    return res.json({
+      id: updated.id,
+      organizationId: updated.organization_id,
+      name: updated.name,
+      description: updated.description,
+      parentProgramId: updated.parent_program_id || null,
+      status: updated.status,
+      ownerUserId: updated.owner_user_id || null,
+      startDate: updated.start_date || null,
+      endDate: updated.end_date || null,
+      createdAt: updated.created_at,
+      updatedAt: updated.updated_at,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to update program', message: err.message });
+  }
+});
+
+router.delete('/programs/:programId', requireOrgRole('user'), async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { programId } = req.params;
+    const existing = await queryHelpers.queryOne(
+      `SELECT id FROM programs WHERE id = ? AND organization_id = ?`,
+      [String(programId), String(orgId)]
+    );
+    if (!existing) return res.status(404).json({ error: 'Program not found' });
+
+    const initiativeCount = (await queryHelpers.queryOne(
+      `SELECT COUNT(*) AS cnt FROM initiatives WHERE program_id = ? AND organization_id = ?`,
+      [String(programId), String(orgId)]
+    )) as any;
+    if (Number(initiativeCount?.cnt) > 0) {
+      return res.status(409).json({
+        error: 'Cannot delete program with linked initiatives. Reassign or remove them first.',
+      });
+    }
+
+    const childCount = (await queryHelpers.queryOne(
+      `SELECT COUNT(*) AS cnt FROM programs WHERE parent_program_id = ?`,
+      [String(programId)]
+    )) as any;
+    if (Number(childCount?.cnt) > 0) {
+      return res.status(409).json({
+        error: 'Cannot delete program with child programs. Reassign or remove them first.',
+      });
+    }
+
+    await queryHelpers.queryRun(
+      `DELETE FROM programs WHERE id = ? AND organization_id = ?`,
+      [String(programId), String(orgId)]
+    );
+
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to delete program', message: err.message });
+  }
+});
+
+// ==========================================
+// INITIATIVE CRUD
+// ==========================================
+
 /**
  * GET /api/initiatives
  * Get all initiatives for organization

@@ -23,10 +23,15 @@ export interface KeyboardShortcutsConfig {
   onOpen?: () => void;
 
   // Canvas-specific
+  onAddChild?: () => void;
+  onAddSibling?: () => void;
   onGroup?: () => void;
   onAIExpand?: () => void;
   onSlashCommand?: () => void;
   onToggleCollapse?: () => void;
+  onFocusSelection?: () => void;
+  onReparentPromote?: () => void;
+  onReparentDemote?: () => void;
 
   // Status changes
   onSetPriority?: (priority: 'low' | 'medium' | 'high' | 'critical') => void;
@@ -77,7 +82,12 @@ export const SHORTCUTS_HELP: ShortcutHelp[] = [
   // Canvas
   { key: 'Ctrl+G', description: 'Group selected nodes', category: 'actions' },
   { key: 'Ctrl+Shift+A', description: 'AI expand selected', category: 'actions' },
+  { key: 'Tab', description: 'Add child node', category: 'actions' },
+  { key: 'Shift+Enter', description: 'Add sibling node', category: 'actions' },
   { key: 'Space', description: 'Toggle collapse/expand (mindmap)', category: 'actions' },
+  { key: 'f', description: 'Focus selected node', category: 'actions' },
+  { key: 'Alt+Shift+←', description: 'Promote node one level', category: 'actions' },
+  { key: 'Alt+Shift+→', description: 'Demote node under previous sibling', category: 'actions' },
 
   // Selection
   { key: 'Ctrl+A', description: 'Select all', category: 'selection' },
@@ -99,6 +109,8 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
     onSave,
     onCancel,
     onOpen,
+    onAddChild,
+    onAddSibling,
     onSetPriority,
     onToggleComplete,
     onSelectAll,
@@ -108,6 +120,9 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
     onAIExpand,
     onSlashCommand,
     onToggleCollapse,
+    onFocusSelection,
+    onReparentPromote,
+    onReparentDemote,
     onSearch,
     enabled = true,
   } = config;
@@ -168,7 +183,7 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
         return;
       }
 
-      if (event.key === 'Enter' && !event.ctrlKey && !event.metaKey) {
+      if (event.key === 'Enter' && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
         event.preventDefault();
         onOpen?.();
         return;
@@ -212,6 +227,22 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
         return;
       }
 
+      if (event.key === 'Tab' && !event.shiftKey) {
+        if (onAddChild) {
+          event.preventDefault();
+          onAddChild();
+          return;
+        }
+      }
+
+      if (event.key === 'Enter' && event.shiftKey) {
+        if (onAddSibling) {
+          event.preventDefault();
+          onAddSibling();
+          return;
+        }
+      }
+
       if (event.key === '/') {
         event.preventDefault();
         if (onSlashCommand) onSlashCommand();
@@ -230,6 +261,30 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
         event.preventDefault();
         onAIExpand?.();
         return;
+      }
+
+      if (event.key.toLowerCase() === 'f' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        if (onFocusSelection) {
+          event.preventDefault();
+          onFocusSelection();
+          return;
+        }
+      }
+
+      if (event.altKey && event.shiftKey && event.key === 'ArrowLeft') {
+        if (onReparentPromote) {
+          event.preventDefault();
+          onReparentPromote();
+          return;
+        }
+      }
+
+      if (event.altKey && event.shiftKey && event.key === 'ArrowRight') {
+        if (onReparentDemote) {
+          event.preventDefault();
+          onReparentDemote();
+          return;
+        }
       }
 
       // Priority shortcuts (1-4)
@@ -296,10 +351,15 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
       onSave,
       onCancel,
       onOpen,
+      onAddChild,
+      onAddSibling,
       onGroup,
       onAIExpand,
       onSlashCommand,
       onToggleCollapse,
+      onFocusSelection,
+      onReparentPromote,
+      onReparentDemote,
       onSetPriority,
       onToggleComplete,
       onSelectAll,

@@ -12,6 +12,9 @@
 **Implementation program (SSOT dla wdrożenia):**
 - `docs/product/V4_IMPLEMENTATION_PROGRAM.md` — task ledger (120 tasków), statusy, dashboard, zależności, PR checklist
 
+Business truth / product positioning:
+- `docs/product/BUSINESS_POSITIONING_SSOT.md`
+
 System axis & artefacts:
 - `docs/product/SYSTEM_ARCHITECTURE_BRIEF.md`
 - `docs/product/SOURCE_TRACEABILITY_SPEC.md`

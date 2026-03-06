@@ -539,10 +539,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   /** V4-EXEC-02: Action Queue — overdue decisions, high P×I risks, overdue tasks */
   const [actionQueueItems, setActionQueueItems] = useState<
     Array<{
-      type: 'decision_overdue' | 'risk_high' | 'task_overdue';
+      type:
+        | 'decision_overdue'
+        | 'risk_high'
+        | 'task_overdue'
+        | 'comm_overdue'
+        | 'kpi_deviation_no_plan';
       id: string;
       title: string;
       dueDate?: string;
+      periodStart?: string;
       initiativeId?: string;
       initiativeName?: string;
       [k: string]: any;
@@ -3461,8 +3467,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                     {item.type === 'decision_overdue' && item.dueDate
                       ? ` • ${t('execution.actionQueue.due', 'Due')} ${new Date(item.dueDate).toLocaleDateString()}`
                       : ''}
+                    {item.type === 'comm_overdue' && item.dueDate
+                      ? ` • ${t('execution.actionQueue.commDue', 'Comm due')} ${new Date(item.dueDate).toLocaleDateString()}`
+                      : ''}
                     {item.type === 'risk_high' && item.impact
                       ? ` • ${item.impact}`
+                      : ''}
+                    {item.type === 'kpi_deviation_no_plan' && item.severity
+                      ? ` • ${t('execution.actionQueue.severity', 'Severity')} ${item.severity}`
+                      : ''}
+                    {item.type === 'kpi_deviation_no_plan' && item.periodStart
+                      ? ` • ${t('execution.actionQueue.period', 'Period')} ${new Date(item.periodStart).toLocaleDateString()}`
                       : ''}
                   </p>
                 </div>
@@ -3472,14 +3487,22 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                       ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
                       : item.type === 'risk_high'
                         ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'
-                        : 'bg-slate-200 dark:bg-navy-600 text-slate-700 dark:text-slate-300'
+                        : item.type === 'comm_overdue'
+                          ? 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300'
+                          : item.type === 'kpi_deviation_no_plan'
+                            ? 'bg-fuchsia-100 dark:bg-fuchsia-900/30 text-fuchsia-700 dark:text-fuchsia-300'
+                            : 'bg-slate-200 dark:bg-navy-600 text-slate-700 dark:text-slate-300'
                   }`}
                 >
                   {item.type === 'decision_overdue'
                     ? t('execution.actionQueue.decision', 'Decision')
                     : item.type === 'risk_high'
                       ? t('execution.actionQueue.risk', 'Risk')
-                      : t('execution.actionQueue.task', 'Task')}
+                      : item.type === 'comm_overdue'
+                        ? t('execution.actionQueue.communication', 'Communication')
+                        : item.type === 'kpi_deviation_no_plan'
+                          ? t('execution.actionQueue.kpi', 'KPI')
+                          : t('execution.actionQueue.task', 'Task')}
                 </span>
               </div>
             ))}

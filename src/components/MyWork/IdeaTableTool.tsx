@@ -853,7 +853,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   };
 
   return (
-    <div className="w-full h-full flex overflow-hidden" ref={tableRef}>
+    <div
+      className="w-full h-full flex overflow-hidden"
+      ref={tableRef}
+      role="region"
+      aria-label={isPl ? 'Tabela pomysłów z operacjami zbiorczymi' : 'Ideas table with bulk operations'}
+    >
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Toolbar */}
         <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 flex-shrink-0">

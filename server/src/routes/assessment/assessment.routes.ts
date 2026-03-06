@@ -1,3 +1,6 @@
+// DEPRECATED: Use /api/assessment-workflow-v2 instead. This file is kept for backward compatibility.
+// V4-ASMT-02: All new assessment features go to assessment-workflow-v2.routes.ts
+
 /**
  * assessment Routes (degraded mode)
  * Read operations return an empty contract to avoid hard UI dead-ends.

@@ -1,9 +1,17 @@
 /**
- * SourceTraceability — UI components showing source references on cards and blocks.
+ * SourceTraceability — V4-DECK-01: Block-level traceability
  * Per-card footer with source chips, per-block subtle indicator.
+ * Citation UI on hover/click.
  */
 
-import { Database, ExternalLink, FileText, Target, TrendingUp, Zap } from 'lucide-react';
+import {
+  Database,
+  ExternalLink,
+  FileText,
+  Target,
+  TrendingUp,
+  Zap,
+} from 'lucide-react';
 import React from 'react';
 
 interface SourceRef {
@@ -38,19 +46,27 @@ export const CardSourceFooter: React.FC<CardSourceFooterProps> = ({
         {sourceRefs.map((ref) => {
           const Icon = SOURCE_ICONS[ref.artifact_type] || FileText;
           return (
-            <button
-              key={ref.artifact_id}
-              onClick={(e) => {
-                e.stopPropagation();
-                onClickSource?.(ref);
-              }}
-              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-500/10 hover:bg-blue-500/10 text-[8px] text-slate-500 hover:text-blue-600 transition-colors"
-              title={`${ref.artifact_type}: ${ref.artifact_name}`}
-            >
-              <Icon size={8} />
-              <span className="max-w-[80px] truncate">{ref.artifact_name}</span>
-              <ExternalLink size={7} className="opacity-0 group-hover:opacity-100" />
-            </button>
+            <div key={ref.artifact_id} className="relative group/chip">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClickSource?.(ref);
+                }}
+                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-500/10 hover:bg-blue-500/10 text-[8px] text-slate-500 hover:text-blue-600 transition-colors"
+                title={`${ref.artifact_type}: ${ref.artifact_name}`}
+              >
+                <Icon size={8} />
+                <span className="max-w-[80px] truncate">{ref.artifact_name}</span>
+                <ExternalLink size={7} className="opacity-0 group-hover/chip:opacity-100" />
+              </button>
+              {/* V4-DECK-01: Hover citation tooltip */}
+              <div className="absolute bottom-full left-0 mb-0.5 hidden group-hover/chip:block z-50 pointer-events-none">
+                <div className="px-2 py-1 rounded bg-slate-800 text-white text-[9px] shadow-lg whitespace-nowrap">
+                  <span className="font-medium">{ref.artifact_type}</span>: {ref.artifact_name}
+                  <div className="text-slate-300 text-[8px] mt-0.5">Click to navigate</div>
+                </div>
+              </div>
+            </div>
           );
         })}
       </div>

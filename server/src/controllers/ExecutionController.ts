@@ -726,14 +726,42 @@ export class ExecutionController {
       const projectFilterR = projectId
         ? ` AND r.initiative_id IN (SELECT id FROM initiatives WHERE project_id = ? AND organization_id = ?)`
         : '';
+      const projectFilterComm = projectId
+        ? ` AND cp.initiative_id IN (SELECT id FROM initiatives WHERE project_id = ? AND organization_id = ?)`
+        : '';
+      const projectFilterKpi = projectId
+        ? ` AND c.kpi_id IN (
+              SELECT ik.id
+              FROM initiative_kpis ik
+              LEFT JOIN initiatives i ON i.id = ik.initiative_id
+              WHERE COALESCE(ik.organization_id, i.organization_id) = ?
+                AND i.project_id = ?
+            )`
+        : '';
       const paramsDec: (string | number)[] = [orgId];
       const paramsTask: (string | number)[] = [orgId];
       const paramsRisk: (string | number)[] = [orgId];
+      const paramsComm: (string | number)[] = [orgId];
+      const paramsKpi: (string | number)[] = [orgId];
       if (projectId) {
         paramsDec.push(String(projectId));
         paramsTask.push(String(projectId));
         paramsRisk.push(String(projectId), orgId);
+        paramsComm.push(String(projectId), orgId);
+        paramsKpi.push(orgId, String(projectId));
       }
+
+      const safeQueryAll = async (sql: string, params: (string | number)[]) => {
+        try {
+          return (await queryHelpers.queryAll(sql, params)) || [];
+        } catch (error: any) {
+          const msg = String(error?.message || '').toLowerCase();
+          if (msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')) {
+            return [];
+          }
+          throw error;
+        }
+      };
 
       // Overdue decisions (pending/escalated, past deadline)
       const decisionsSql = `
@@ -750,7 +778,7 @@ export class ExecutionController {
           ${projectFilter}
         ORDER BY d.deadline ASC LIMIT 50
       `;
-      const overdueDecisions = (await queryHelpers.queryAll(decisionsSql, paramsDec)) || [];
+      const overdueDecisions = await safeQueryAll(decisionsSql, paramsDec);
 
       // High P×I risks (CRITICAL or HIGH impact, OPEN status)
       const risksSql = `
@@ -766,7 +794,7 @@ export class ExecutionController {
         ORDER BY CASE UPPER(r.impact) WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 ELSE 3 END
         LIMIT 30
       `;
-      const highRisks = (await queryHelpers.queryAll(risksSql, paramsRisk)) || [];
+      const highRisks = await safeQueryAll(risksSql, paramsRisk);
 
       // Overdue tasks (not DONE, past due)
       const tasksSql = `
@@ -783,7 +811,50 @@ export class ExecutionController {
           ${projectFilterT}
         ORDER BY t.due_date ASC LIMIT 50
       `;
-      const overdueTasks = (await queryHelpers.queryAll(tasksSql, paramsTask)) || [];
+      const overdueTasks = await safeQueryAll(tasksSql, paramsTask);
+
+      // Overdue stakeholder communication plans (active cadence past due)
+      const commSql = `
+        SELECT cp.id, cp.description, cp.cadence, cp.next_due_at, cp.initiative_id,
+               i.name as initiative_name,
+               u.first_name || ' ' || u.last_name as owner_name
+        FROM communication_plans cp
+        LEFT JOIN initiatives i ON cp.initiative_id = i.id
+        LEFT JOIN users u ON cp.owner_user_id = u.id
+        WHERE cp.organization_id = ?
+          AND cp.is_active = 1
+          AND cp.next_due_at IS NOT NULL
+          AND (cp.next_due_at < datetime('now') OR julianday(cp.next_due_at) < julianday('now'))
+          ${projectFilterComm}
+        ORDER BY cp.next_due_at ASC
+        LIMIT 30
+      `;
+      const overdueComms = await safeQueryAll(commSql, paramsComm);
+
+      // KPI deviations without an open mitigation action plan
+      const kpiSql = `
+        SELECT c.id, c.severity, c.period_start, c.kpi_id, c.owner_user_id, c.deviation_summary,
+               k.name as kpi_name,
+               i.id as initiative_id,
+               i.name as initiative_name,
+               u.first_name || ' ' || u.last_name as owner_name
+        FROM kpi_deviation_cases c
+        LEFT JOIN initiative_kpis k ON k.id = c.kpi_id
+        LEFT JOIN initiatives i ON i.id = k.initiative_id
+        LEFT JOIN users u ON u.id = COALESCE(c.owner_user_id, k.owner_user_id)
+        WHERE c.organization_id = ?
+          AND UPPER(COALESCE(c.status, 'OPEN')) IN ('OPEN', 'ACKNOWLEDGED', 'IN_PROGRESS', 'MITIGATING')
+          AND NOT EXISTS (
+            SELECT 1
+            FROM kpi_deviation_actions a
+            WHERE a.case_id = c.id
+              AND UPPER(COALESCE(a.status, 'OPEN')) = 'OPEN'
+          )
+          ${projectFilterKpi}
+        ORDER BY CASE UPPER(COALESCE(c.severity, 'AMBER')) WHEN 'RED' THEN 1 ELSE 2 END, c.period_start ASC
+        LIMIT 30
+      `;
+      const kpiDeviations = await safeQueryAll(kpiSql, paramsKpi);
 
       const items = [
         ...overdueDecisions.map((d: any) => ({
@@ -815,7 +886,43 @@ export class ExecutionController {
           initiativeName: t.initiative_name,
           assigneeName: t.assignee_name,
         })),
-      ];
+        ...overdueComms.map((c: any) => ({
+          type: 'comm_overdue' as const,
+          id: c.id,
+          title: c.description || 'Stakeholder communication due',
+          dueDate: c.next_due_at,
+          cadence: c.cadence,
+          initiativeId: c.initiative_id,
+          initiativeName: c.initiative_name,
+          ownerName: c.owner_name,
+        })),
+        ...kpiDeviations.map((k: any) => ({
+          type: 'kpi_deviation_no_plan' as const,
+          id: k.id,
+          title: k.kpi_name || 'KPI deviation',
+          severity: k.severity,
+          periodStart: k.period_start,
+          summary: k.deviation_summary,
+          initiativeId: k.initiative_id,
+          initiativeName: k.initiative_name,
+          ownerName: k.owner_name,
+        })),
+      ].sort((a: any, b: any) => {
+        const severityRank = (item: any) => {
+          if (item.type === 'kpi_deviation_no_plan') {
+            return String(item.severity || '').toUpperCase() === 'RED' ? 0 : 1;
+          }
+          if (item.type === 'risk_high') {
+            return String(item.impact || '').toUpperCase() === 'CRITICAL' ? 0 : 1;
+          }
+          return 2;
+        };
+        const rankDiff = severityRank(a) - severityRank(b);
+        if (rankDiff !== 0) return rankDiff;
+        const aTs = a.dueDate ? new Date(a.dueDate).getTime() : a.periodStart ? new Date(a.periodStart).getTime() : Number.POSITIVE_INFINITY;
+        const bTs = b.dueDate ? new Date(b.dueDate).getTime() : b.periodStart ? new Date(b.periodStart).getTime() : Number.POSITIVE_INFINITY;
+        return aTs - bTs;
+      });
 
       res.json({
         items,
@@ -823,6 +930,8 @@ export class ExecutionController {
           decision_overdue: overdueDecisions.length,
           risk_high: highRisks.length,
           task_overdue: overdueTasks.length,
+          comm_overdue: overdueComms.length,
+          kpi_deviation_no_plan: kpiDeviations.length,
           total: items.length,
         },
         updatedAt: new Date().toISOString(),

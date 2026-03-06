@@ -4,6 +4,7 @@
  * GET /api/benchmark/compare — percentiles, cohort size, category comparison
  */
 import { Request, Response, Router } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 import industryBenchmarkService from '../services/ai/industryBenchmarkService.js';
@@ -14,6 +15,7 @@ import * as queryHelpers from '../utils/queryHelpers.js';
 const router = Router();
 
 const MIN_COHORT_SIZE = 5;
+const DEFAULT_DATASET_VERSION = '2026-r0';
 
 // Map framework category keys to industry benchmark axes (best-effort)
 const CATEGORY_TO_AXIS: Record<string, string> = {
@@ -33,6 +35,123 @@ const CATEGORY_TO_AXIS: Record<string, string> = {
   INTELLIGENCE: 'automation',
   WORKFORCE: 'digital_culture',
 };
+
+type BenchmarkDatasetRow = {
+  id: string;
+  framework: string;
+  industry: string;
+  region: string | null;
+  company_size: string | null;
+  p25: number | null;
+  p50: number | null;
+  p75: number | null;
+  p90: number | null;
+  cohort_size: number | null;
+  last_updated: string | null;
+  version_tag?: string | null;
+};
+
+function normalizeCompanySize(size: string): string | null {
+  const raw = String(size || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9_]/g, '_');
+  if (!raw) return null;
+  if (['SMALL', 'SMB', 'STARTUP'].includes(raw)) return 'SMB';
+  if (['MID', 'MID_MARKET', 'MIDMARKET', 'MEDIUM'].includes(raw)) return 'MID_MARKET';
+  if (['LARGE', 'ENTERPRISE'].includes(raw)) return 'ENTERPRISE';
+  return raw;
+}
+
+function normalizeRegion(region: string): string | null {
+  const raw = String(region || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '_');
+  return raw || null;
+}
+
+function calculatePercentileFromDataset(score: number, dataset: BenchmarkDatasetRow): number {
+  const p25 = Number(dataset.p25 ?? 0);
+  const p50 = Number(dataset.p50 ?? 0);
+  const p75 = Number(dataset.p75 ?? 0);
+  const p90 = Number(dataset.p90 ?? p75);
+
+  if (score <= p25) return 25;
+  if (score <= p50) return Math.round(25 + ((score - p25) / Math.max(p50 - p25, 0.01)) * 25);
+  if (score <= p75) return Math.round(50 + ((score - p50) / Math.max(p75 - p50, 0.01)) * 25);
+  if (score <= p90) return Math.round(75 + ((score - p75) / Math.max(p90 - p75, 0.01)) * 15);
+  return 95;
+}
+
+async function ensureBenchmarkDatasetSeed(framework: string): Promise<void> {
+  const existing = await queryHelpers.queryOne<{ count: number }>(
+    'SELECT COUNT(*) as count FROM benchmark_datasets WHERE framework = ?',
+    [framework]
+  );
+  if (Number(existing?.count || 0) > 0) return;
+
+  try {
+    await queryHelpers.queryRun(
+      `INSERT INTO benchmark_datasets_versions (id, framework, version_tag, is_active, source_json)
+       VALUES (?, ?, ?, 1, ?)
+       ON CONFLICT (framework, version_tag) DO NOTHING`,
+      [
+        `bdv-${uuidv4()}`,
+        framework,
+        DEFAULT_DATASET_VERSION,
+        JSON.stringify({ seededBy: 'benchmark.routes', source: 'industryBenchmarkService' }),
+      ]
+    );
+  } catch {
+    // Table may not exist yet in older environments; dataset rows still work without it.
+  }
+
+  const industries = ['manufacturing', 'financial_services', 'retail', 'healthcare', 'energy'];
+  for (const industry of industries) {
+    const benchmarks = industryBenchmarkService.getBenchmarks(industry);
+    if (benchmarks.length === 0) continue;
+
+    const averages = benchmarks.map((item) => item.average);
+    const bottoms = benchmarks.map((item) => item.bottomQuartile);
+    const tops = benchmarks.map((item) => item.topQuartile);
+    const avg = averages.reduce((sum, value) => sum + value, 0) / averages.length;
+    const p25 = bottoms.reduce((sum, value) => sum + value, 0) / bottoms.length;
+    const p75 = tops.reduce((sum, value) => sum + value, 0) / tops.length;
+    const p90 = Math.min(5, p75 + 0.4);
+
+    await queryHelpers.queryRun(
+      `INSERT INTO benchmark_datasets (
+         id, organization_id, framework, industry, region, company_size,
+         p25, p50, p75, p90, cohort_size, last_updated, version_tag, source_json
+       )
+       VALUES (?, NULL, ?, ?, NULL, NULL, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
+       ON CONFLICT DO NOTHING`,
+      [
+        `bd-${uuidv4()}`,
+        framework,
+        industry,
+        Number(p25.toFixed(2)),
+        Number(avg.toFixed(2)),
+        Number(p75.toFixed(2)),
+        Number(p90.toFixed(2)),
+        12,
+        DEFAULT_DATASET_VERSION,
+        JSON.stringify({
+          seededBy: 'benchmark.routes',
+          industry,
+          framework,
+          benchmarkAxes: benchmarks.map((item) => ({
+            axis: item.axis,
+            average: item.average,
+            topQuartile: item.topQuartile,
+            bottomQuartile: item.bottomQuartile,
+          })),
+        }),
+      ]
+    );
+  }
+}
 
 router.get(
   '/compare',
@@ -81,6 +200,10 @@ router.get(
 
     const normalizedIndustry =
       industry === 'manufacturing_discrete' || industry === 'manufacturing_process' ? 'manufacturing' : industry;
+    const normalizedRegion = normalizeRegion(region);
+    const normalizedSize = normalizeCompanySize(size);
+
+    await ensureBenchmarkDatasetSeed(framework);
 
     const orgScores = Object.entries(categories).map(([k, v]) => ({
       axis: CATEGORY_TO_AXIS[k] || k.toLowerCase().replace(/[^a-z_]/g, '_'),
@@ -88,8 +211,39 @@ router.get(
     }));
 
     const comparisons = industryBenchmarkService.compareToBenchmarks(normalizedIndustry, orgScores);
+    const dataset = await queryHelpers.queryOne<BenchmarkDatasetRow>(
+      `SELECT id, framework, industry, region, company_size, p25, p50, p75, p90,
+              cohort_size, last_updated, version_tag
+       FROM benchmark_datasets
+       WHERE framework = ?
+         AND industry = ?
+         AND (region = ? OR region IS NULL)
+         AND (company_size = ? OR company_size IS NULL)
+       ORDER BY
+         CASE WHEN region = ? THEN 0 ELSE 1 END,
+         CASE WHEN company_size = ? THEN 0 ELSE 1 END,
+         last_updated DESC
+       LIMIT 1`,
+      [
+        framework,
+        normalizedIndustry,
+        normalizedRegion,
+        normalizedSize,
+        normalizedRegion,
+        normalizedSize,
+      ]
+    );
 
-    const cohortSize = 50;
+    if (!dataset) {
+      return res.status(503).json({
+        error: 'Benchmark dataset unavailable',
+        code: 'BENCHMARK_DATASET_NOT_READY',
+        framework,
+        industry: normalizedIndustry,
+      });
+    }
+
+    const cohortSize = Number(dataset.cohort_size || 0);
     const suppressed = cohortSize < MIN_COHORT_SIZE;
 
     if (suppressed) {
@@ -100,7 +254,8 @@ router.get(
         industry: normalizedIndustry,
         industryName: normalizedIndustry.replace(/_/g, ' '),
         sampleSize: cohortSize,
-        lastUpdated: new Date().toISOString().slice(0, 10),
+        lastUpdated: dataset.last_updated || new Date().toISOString(),
+        datasetVersion: dataset.version_tag || DEFAULT_DATASET_VERSION,
         percentile: 50,
         percentileLabel: 'Average',
         industryAverage: score,
@@ -111,14 +266,9 @@ router.get(
       });
     }
 
-    const { percentile, ranking } = BenchmarkingService.calculatePercentileSync(score, { overall: score * 0.95 });
+    const percentile = calculatePercentileFromDataset(score, dataset);
     const percentileLabel = BenchmarkingService.getPercentileLabel(percentile);
-
-    const industryData = industryBenchmarkService.getBenchmarks(normalizedIndustry);
-    const avgOverall =
-      industryData.length > 0
-        ? industryData.reduce((s, d) => s + (d.average || 0), 0) / industryData.length
-        : score;
+    const avgOverall = Number(dataset.p50 ?? score);
     const gapToAverage = parseFloat((score - avgOverall).toFixed(2));
 
     const categoryComparison: Record<string, { score: number; benchmark: number; gap: number; status: 'above' | 'below' }> = {};
@@ -138,13 +288,21 @@ router.get(
     }
 
     res.json({
-      percentiles: { p25: avgOverall - 0.5, p50: avgOverall, p75: avgOverall + 0.5 },
+      percentiles: {
+        p25: Number(dataset.p25 ?? avgOverall),
+        p50: avgOverall,
+        p75: Number(dataset.p75 ?? avgOverall),
+        p90: Number(dataset.p90 ?? dataset.p75 ?? avgOverall),
+      },
       cohortSize,
       suppressed: false,
       industry: normalizedIndustry,
       industryName: normalizedIndustry.replace(/_/g, ' '),
       sampleSize: cohortSize,
-      lastUpdated: new Date().toISOString().slice(0, 10),
+      lastUpdated: dataset.last_updated || new Date().toISOString(),
+      datasetVersion: dataset.version_tag || DEFAULT_DATASET_VERSION,
+      region: normalizedRegion,
+      companySize: normalizedSize,
       percentile: Math.round(percentile),
       percentileLabel,
       industryAverage: parseFloat(avgOverall.toFixed(2)),

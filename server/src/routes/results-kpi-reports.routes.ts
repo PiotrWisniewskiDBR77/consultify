@@ -8,6 +8,7 @@ import { type NextFunction, type Request, type Response, Router } from 'express'
 import { verifyToken } from '../middleware/auth.middleware.js';
 import * as ReportBuilderService from '../services/reportBuilderService.js';
 import { createKpiReportSnapshot, getKpiReportSnapshot } from '../services/results/kpiReportSnapshotService.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 import { all as dbAll } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -28,8 +29,105 @@ function getUserId(req: any): string {
 }
 
 // ============================================================
-// V4-RSLT-01: Metrics semantic layer — KPI definitions + dimensions
+// V4-RSLT-01: Metrics semantic layer — KPI definitions + dimensions + slices
 // ============================================================
+
+router.get(
+  '/metrics-semantic-layer',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const includeHistory =
+      String(req.query.includeHistory || '').toLowerCase() === 'true' || String(req.query.includeHistory) === '1';
+    const scope = String(req.query.scope || 'org_plus_global').toLowerCase() === 'org'
+      ? 'org_only'
+      : 'org_plus_global';
+
+    try {
+      const rows = await queryHelpers.queryAll<any>(
+        `SELECT id, organization_id, name, code, description, category, unit, unit_display,
+                direction, precision, default_target, default_baseline, formula,
+                coalesce(dimensions_json, '[]') as dimensions_json,
+                coalesce(slices_json, '[]') as slices_json,
+                coalesce(version, 1) as version, is_active,
+                coalesce(is_global, 0) as is_global
+         FROM kpi_definitions
+         WHERE (
+           organization_id = ?
+           OR (? = 'org_plus_global' AND is_global = 1 AND organization_id = '*')
+         )
+           AND (is_active = 1 OR is_active IS NULL)
+         ORDER BY category, coalesce(code, name), coalesce(version, 1) DESC, name`,
+        [orgId, scope]
+      );
+
+      const parsedDefinitions = (rows || []).map((r: any) => {
+        let dimensions: string[] = [];
+        let slices: Array<{ dim: string; op: string; val?: string }> = [];
+        try {
+          dimensions = JSON.parse(r.dimensions_json || '[]');
+        } catch {
+          /* ignore */
+        }
+        try {
+          slices = JSON.parse(r.slices_json || '[]');
+        } catch {
+          /* ignore */
+        }
+        return {
+          id: r.id,
+          name: r.name,
+          code: r.code || null,
+          description: r.description || null,
+          category: r.category,
+          unit: r.unit,
+          unitDisplay: r.unit_display || null,
+          direction: r.direction,
+          defaultTarget: r.default_target,
+          defaultBaseline: r.default_baseline,
+          formula: r.formula || null,
+          dimensions,
+          slices,
+          version: r.version ?? 1,
+          scope: r.is_global ? 'global' : 'organization',
+        };
+      });
+
+      const definitions = includeHistory
+        ? parsedDefinitions
+        : Array.from(
+            parsedDefinitions
+              .reduce((acc, definition) => {
+                const key = String(definition.code || definition.name || definition.id);
+                if (!acc.has(key)) acc.set(key, definition);
+                return acc;
+              }, new Map<string, any>())
+              .values()
+          );
+
+      res.json({
+        success: true,
+        definitions,
+        meta: {
+          scope,
+          versionMode: includeHistory ? 'history' : 'latest',
+          sourceRows: Array.isArray(rows) ? rows.length : 0,
+          returnedDefinitions: definitions.length,
+        },
+      });
+    } catch (err: any) {
+      const msg = String(err?.message || '').toLowerCase();
+      if (msg.includes('no such table') || msg.includes('does not exist')) {
+        return res.status(503).json({
+          success: false,
+          error: 'Metrics semantic layer is not initialized',
+          code: 'METRICS_LAYER_NOT_READY',
+        });
+      }
+      throw err;
+    }
+  })
+);
 
 router.get(
   '/kpi-definitions',

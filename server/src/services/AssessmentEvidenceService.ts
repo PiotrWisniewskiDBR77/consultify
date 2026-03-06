@@ -19,6 +19,12 @@ type EvidenceRow = {
   updated_at: string;
 };
 
+type AssessmentContext = {
+  id: string;
+  organization_id: string;
+  assessment_type: string;
+};
+
 export type EvidenceItem = {
   id: string;
   assessmentId: string;
@@ -47,7 +53,32 @@ class AssessmentEvidenceService {
     return getDatabase();
   }
 
-  async getEvidenceForAssessment(assessmentId: string): Promise<EvidenceItem[]> {
+  async getAssessmentContext(
+    assessmentId: string,
+    organizationId: string
+  ): Promise<{ id: string; frameworkId: string } | null> {
+    const db = await this.getDb();
+    const qa = new QueryAdapter(db);
+    const assessment = await qa.get<AssessmentContext>(
+      `SELECT id, organization_id, assessment_type
+       FROM assessments
+       WHERE id = $1 AND organization_id = $2`,
+      [assessmentId, organizationId]
+    );
+    if (!assessment) return null;
+    return {
+      id: assessment.id,
+      frameworkId: String(assessment.assessment_type || 'DRD').toUpperCase(),
+    };
+  }
+
+  async getEvidenceForAssessment(
+    assessmentId: string,
+    organizationId: string
+  ): Promise<EvidenceItem[]> {
+    const context = await this.getAssessmentContext(assessmentId, organizationId);
+    if (!context) return [];
+
     const db = await this.getDb();
     const qa = new QueryAdapter(db);
     const rows = await qa.all<EvidenceRow>(
@@ -58,6 +89,7 @@ class AssessmentEvidenceService {
   }
 
   async upsertEvidence(data: {
+    organizationId: string;
     assessmentId: string;
     frameworkId: string;
     dimensionId: string;
@@ -66,6 +98,15 @@ class AssessmentEvidenceService {
     evidenceText?: string;
     attachments?: string[];
   }): Promise<EvidenceItem> {
+    const context = await this.getAssessmentContext(data.assessmentId, data.organizationId);
+    if (!context) {
+      throw new Error('ASSESSMENT_NOT_FOUND');
+    }
+
+    if (String(data.frameworkId || '').toUpperCase() !== context.frameworkId) {
+      throw new Error('FRAMEWORK_MISMATCH');
+    }
+
     const db = await this.getDb();
     const qa = new QueryAdapter(db);
 
@@ -103,7 +144,7 @@ class AssessmentEvidenceService {
     return this.mapRow(row!);
   }
 
-  async getEvidenceReport(assessmentId: string): Promise<{
+  async getEvidenceReport(assessmentId: string, organizationId: string): Promise<{
     frameworkId: string | null;
     totalDimensions: number;
     withEvidence: number;
@@ -113,32 +154,71 @@ class AssessmentEvidenceService {
     blockers: string[];
     dimensions: EvidenceItem[];
   }> {
-    const items = await this.getEvidenceForAssessment(assessmentId);
-    const total = items.length;
-    const withEvidence = items.filter((i) => i.evidenceStatus === 'provided').length;
-    const missing = items.filter(
-      (i) => i.evidenceStatus === 'missing' && (i.currentScore ?? 0) > 0
-    ).length;
+    const context = await this.getAssessmentContext(assessmentId, organizationId);
+    if (!context) {
+      throw new Error('ASSESSMENT_NOT_FOUND');
+    }
+
+    const db = await this.getDb();
+    const qa = new QueryAdapter(db);
+    const items = await this.getEvidenceForAssessment(assessmentId, organizationId);
+    const requiredDimensionsRows = await qa.all<{ dimension_id: string }>(
+      `SELECT DISTINCT dimension_id
+       FROM assessment_questions
+       WHERE framework_id = $1
+         AND is_active = 1
+         AND dimension_id IS NOT NULL
+       ORDER BY dimension_id`,
+      [context.frameworkId]
+    );
+
+    const requiredDimensionIds =
+      requiredDimensionsRows.length > 0
+        ? requiredDimensionsRows.map((row) => row.dimension_id)
+        : Array.from(new Set(items.map((item) => item.dimensionId)));
+
+    const itemByDimension = new Map(items.map((item) => [item.dimensionId, item]));
+    const dimensions =
+      requiredDimensionIds.length > 0
+        ? requiredDimensionIds.map(
+            (dimensionId) =>
+              itemByDimension.get(dimensionId) || {
+                id: `missing:${assessmentId}:${dimensionId}`,
+                assessmentId,
+                frameworkId: context.frameworkId,
+                dimensionId,
+                currentScore: null,
+                targetScore: null,
+                evidenceText: null,
+                evidenceStatus: 'missing',
+                attachments: [],
+                lastScoreChange: null,
+                lastEvidenceUpdate: null,
+              }
+          )
+        : items;
+
+    const total = dimensions.length;
+    const withEvidence = dimensions.filter((i) => i.evidenceStatus === 'provided').length;
+    const missing = dimensions.filter((i) => i.evidenceStatus !== 'provided').length;
     const completeness = total > 0 ? Math.round((withEvidence / total) * 100) : 0;
 
     const blockers: string[] = [];
-    for (const item of items) {
-      if (item.evidenceStatus === 'missing' && (item.currentScore ?? 0) > 0) {
-        blockers.push(
-          `Dimension "${item.dimensionId}" scored ${item.currentScore} but has no evidence`
-        );
+    for (const item of dimensions) {
+      if (item.evidenceStatus !== 'provided') {
+        blockers.push(`Dimension "${item.dimensionId}" has no evidence`);
       }
     }
 
     return {
-      frameworkId: items[0]?.frameworkId ?? null,
+      frameworkId: context.frameworkId,
       totalDimensions: total,
       withEvidence,
       missingEvidence: missing,
       completenessPercent: completeness,
-      isReadyForConsolidation: blockers.length === 0,
+      isReadyForConsolidation: total > 0 && blockers.length === 0,
       blockers,
-      dimensions: items,
+      dimensions,
     };
   }
 

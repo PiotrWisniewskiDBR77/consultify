@@ -6,6 +6,7 @@ import { Request, Response, Router } from 'express';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 const isAuthenticated = verifyToken; // alias for compatibility
+import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { requireNoLegalHold } from '../services/OrgPoliciesService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -33,7 +34,7 @@ const db = {
  * POST /api/data-export/request
  * Create a new data export request
  */
-router.post('/request', verifyToken, isAuthenticated, async (req: Request, res: Response) => {
+router.post('/request', verifyToken, isAuthenticated, requireAudit, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) {
@@ -54,6 +55,14 @@ router.post('/request', verifyToken, isAuthenticated, async (req: Request, res: 
     );
 
     logger.info(`[DataExport] Export request created: ${requestId} for user ${userId}`);
+    await (req as any).emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'create',
+      resourceType: 'data_export_request',
+      resourceId: requestId,
+      after: { format, includeAIData, includeActivityLogs, status: 'PENDING' },
+      metadata: { userId },
+    });
 
     res.json({
       success: true,
@@ -197,6 +206,7 @@ router.post(
   '/delete-request',
   verifyToken,
   isAuthenticated,
+  requireAudit,
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user?.id;
@@ -229,6 +239,14 @@ router.post(
       );
 
       logger.info(`[DataExport] Deletion request created: ${requestId} for user ${userId}`);
+      await (req as any).emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'create',
+        resourceType: 'data_delete_request',
+        resourceId: requestId,
+        after: { status: 'SCHEDULED', scheduledDate: scheduledDate.toISOString() },
+        metadata: { userId, reason: reason || null },
+      });
 
       res.json({
         success: true,
@@ -256,6 +274,7 @@ router.delete(
   '/delete-request/:requestId',
   verifyToken,
   isAuthenticated,
+  requireAudit,
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user?.id;
@@ -273,6 +292,15 @@ router.delete(
       if ((result as any).changes === 0) {
         return res.status(404).json({ error: 'Deletion request not found or already processed' });
       }
+
+      await (req as any).emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'cancel',
+        resourceType: 'data_delete_request',
+        resourceId: requestId,
+        after: { status: 'CANCELLED' },
+        metadata: { userId },
+      });
 
       res.json({ success: true, message: 'Deletion request cancelled' });
     } catch (error: any) {

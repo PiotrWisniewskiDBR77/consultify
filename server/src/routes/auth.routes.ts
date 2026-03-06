@@ -55,7 +55,7 @@ import logger from '../utils/Logger.js';
 router.use(authRateLimiter);
 
 const FORCED_SUPERADMIN_EMAILS = (() => {
-  const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || 'admin@dbr77.com');
+  const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || '');
   return new Set(
     raw
       .split(',')

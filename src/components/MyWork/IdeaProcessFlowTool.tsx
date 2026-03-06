@@ -1381,7 +1381,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   if (!open) return null;
 
   return (
-    <div className="w-full h-full flex flex-col bg-white dark:bg-navy-950">
+    <div
+      className="w-full h-full flex flex-col bg-white dark:bg-navy-950"
+      role="region"
+      aria-label={isPl ? 'Edytor przepływu procesu' : 'Process flow editor'}
+    >
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 flex-shrink-0">
         <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mr-2">

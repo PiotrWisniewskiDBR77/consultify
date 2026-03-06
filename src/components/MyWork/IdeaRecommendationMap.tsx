@@ -935,6 +935,65 @@ function MindMapInner({
     setEdges((prev: Edge[]) => [...prev, newEdge]);
   }, [findParentId, getSelectedNode, locked, pushUndo, setEdges, setNodes]);
 
+  const focusSelectedNode = useCallback(() => {
+    const selected = getSelectedNode();
+    if (!selected) return;
+    try {
+      fitView({ nodes: [{ id: selected.id } as any], padding: 0.45, duration: 350 });
+    } catch {
+      /* ignore */
+    }
+  }, [fitView, getSelectedNode]);
+
+  const reparentSelectedPromote = useCallback(() => {
+    if (locked) return;
+    const selected = getSelectedNode();
+    if (!selected || selected.id === 'root' || selected.id.startsWith('branch-')) return;
+    const parentId = findParentId(selected.id);
+    if (!parentId) return;
+    const grandParentId = findParentId(parentId);
+    if (!grandParentId) return;
+
+    pushUndo();
+    setEdges((prev: Edge[]) =>
+      prev.map((edge) =>
+        edge.target === selected.id
+          ? {
+              ...edge,
+              source: grandParentId,
+            }
+          : edge
+      )
+    );
+    setTimeout(() => focusSelectedNode(), 30);
+  }, [findParentId, focusSelectedNode, getSelectedNode, locked, pushUndo, setEdges]);
+
+  const reparentSelectedDemote = useCallback(() => {
+    if (locked) return;
+    const selected = getSelectedNode();
+    if (!selected || selected.id === 'root' || selected.id.startsWith('branch-')) return;
+    const parentId = findParentId(selected.id);
+    if (!parentId) return;
+    const siblings = findChildrenIds(parentId);
+    const selectedIndex = siblings.indexOf(selected.id);
+    if (selectedIndex <= 0) return;
+    const previousSiblingId = siblings[selectedIndex - 1];
+    if (!previousSiblingId) return;
+
+    pushUndo();
+    setEdges((prev: Edge[]) =>
+      prev.map((edge) =>
+        edge.target === selected.id
+          ? {
+              ...edge,
+              source: previousSiblingId,
+            }
+          : edge
+      )
+    );
+    setTimeout(() => focusSelectedNode(), 30);
+  }, [findChildrenIds, findParentId, focusSelectedNode, getSelectedNode, locked, pushUndo, setEdges]);
+
   const startEditingSelected = useCallback(() => {
     const selected = getSelectedNode();
     if (!selected || selected.id === 'root' || selected.id.startsWith('branch-')) return;
@@ -992,10 +1051,14 @@ function MindMapInner({
   quickActionRef.current = (action: string) => {
     if (action === 'mm_add_child') addChildNode();
     if (action === 'mm_add_sibling') addSiblingNode();
+    if (action === 'mm_duplicate') duplicateSelected();
     if (action === 'mm_toggle_collapse') {
       const sel = getSelectedNode();
       if (sel) toggleCollapse(sel.id);
     }
+    if (action === 'mm_focus_selected') focusSelectedNode();
+    if (action === 'mm_reparent_promote') reparentSelectedPromote();
+    if (action === 'mm_reparent_demote') reparentSelectedDemote();
     if (action === 'mm_delete') deleteSelected();
     if (action === 'mm_undo') undo();
     if (action === 'mm_redo') redo();

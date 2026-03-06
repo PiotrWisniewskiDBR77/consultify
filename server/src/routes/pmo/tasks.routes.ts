@@ -11,16 +11,19 @@ import TaskControllerRaw from '../../controllers/TaskController.js';
 const TaskController = TaskControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
+import { requireAudit } from '../../middleware/requireAudit.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import logger from '../../utils/Logger.js';
 import {
   AddTaskCommentSchema,
   AssignTaskSchema,
+  BlockTaskSchema,
   CreateTaskSchema,
   EscalateTaskSchema,
   ReassignTaskSchema,
   ResolveEscalationSchema,
+  UnblockTaskSchema,
   UpdateTaskSchema,
 } from '../../validators/task.validators.js';
 
@@ -56,7 +59,7 @@ router.get(
  * POST /api/tasks
  * Create a new task
  */
-router.post('/', validateBody(CreateTaskSchema), TaskController.createTask);
+router.post('/', requireAudit, validateBody(CreateTaskSchema), TaskController.createTask);
 
 /**
  * GET /api/tasks/search
@@ -64,6 +67,18 @@ router.post('/', validateBody(CreateTaskSchema), TaskController.createTask);
  * NOTE: Must be before /:id to avoid Express matching "search" as an id
  */
 router.get('/search', TaskController.searchTasks);
+
+/**
+ * GET /api/tasks/rollups
+ * V4-TASK-01: Hierarchy rollups by initiative/list/program
+ */
+router.get('/rollups', TaskController.getTaskHierarchyRollups);
+
+/**
+ * GET /api/tasks/workflow-config
+ * V4-TASK-03: Canonical workflow statuses + transitions
+ */
+router.get('/workflow-config', TaskController.getWorkflowConfig);
 
 /**
  * GET /api/tasks/:id
@@ -75,13 +90,13 @@ router.get('/:id', TaskController.getTaskById);
  * PUT /api/tasks/:id
  * Update task
  */
-router.put('/:id', validateBody(UpdateTaskSchema), TaskController.updateTask);
+router.put('/:id', requireAudit, validateBody(UpdateTaskSchema), TaskController.updateTask);
 
 /**
  * DELETE /api/tasks/:id
  * Delete task
  */
-router.delete('/:id', TaskController.deleteTask);
+router.delete('/:id', requireAudit, TaskController.deleteTask);
 
 // ==========================================
 // TASK COMMENTS
@@ -97,13 +112,18 @@ router.get('/:taskId/comments', TaskController.getTaskComments);
  * POST /api/tasks/:taskId/comments
  * Add comment to task
  */
-router.post('/:taskId/comments', validateBody(AddTaskCommentSchema), TaskController.addTaskComment);
+router.post(
+  '/:taskId/comments',
+  requireAudit,
+  validateBody(AddTaskCommentSchema),
+  TaskController.addTaskComment
+);
 
 /**
  * DELETE /api/tasks/:taskId/comments/:commentId
  * Delete task comment
  */
-router.delete('/:taskId/comments/:commentId', TaskController.deleteTaskComment);
+router.delete('/:taskId/comments/:commentId', requireAudit, TaskController.deleteTaskComment);
 
 // ==========================================
 // TASK ASSIGNMENT & ESCALATION
@@ -113,25 +133,25 @@ router.delete('/:taskId/comments/:commentId', TaskController.deleteTaskComment);
  * POST /api/tasks/:id/assign
  * Assign task to user
  */
-router.post('/:id/assign', validateBody(AssignTaskSchema), TaskController.assignTask);
+router.post('/:id/assign', requireAudit, validateBody(AssignTaskSchema), TaskController.assignTask);
 
 /**
  * POST /api/tasks/:id/reassign
  * Reassign task
  */
-router.post('/:id/reassign', validateBody(ReassignTaskSchema), TaskController.reassignTask);
+router.post('/:id/reassign', requireAudit, validateBody(ReassignTaskSchema), TaskController.reassignTask);
 
 /**
  * POST /api/tasks/:id/unassign
  * Unassign task
  */
-router.post('/:id/unassign', TaskController.unassignTask);
+router.post('/:id/unassign', requireAudit, TaskController.unassignTask);
 
 /**
  * POST /api/tasks/:id/escalate
  * Escalate task
  */
-router.post('/:id/escalate', validateBody(EscalateTaskSchema), TaskController.escalateTask);
+router.post('/:id/escalate', requireAudit, validateBody(EscalateTaskSchema), TaskController.escalateTask);
 
 /**
  * POST /api/tasks/:taskId/escalations/:escalationId/resolve
@@ -139,6 +159,7 @@ router.post('/:id/escalate', validateBody(EscalateTaskSchema), TaskController.es
  */
 router.post(
   '/:taskId/escalations/:escalationId/resolve',
+  requireAudit,
   validateBody(ResolveEscalationSchema),
   TaskController.resolveEscalation
 );
@@ -185,19 +206,19 @@ router.get('/my-workload', TaskController.getMyWorkload);
  * POST /api/tasks/:id/block
  * Block task (manual or by decision)
  */
-router.post('/:id/block', TaskController.blockTask);
+router.post('/:id/block', requireAudit, validateBody(BlockTaskSchema), TaskController.blockTask);
 
 /**
  * POST /api/tasks/:id/unblock
  * Unblock task
  */
-router.post('/:id/unblock', TaskController.unblockTask);
+router.post('/:id/unblock', requireAudit, validateBody(UnblockTaskSchema), TaskController.unblockTask);
 
 /**
  * POST /api/tasks/:id/move
  * Move task to different initiative
  */
-router.post('/:id/move', TaskController.moveTask);
+router.post('/:id/move', requireAudit, TaskController.moveTask);
 
 /**
  * GET /api/tasks/:id/blocking-decision
@@ -219,12 +240,12 @@ router.get('/:id/dependencies', TaskController.getTaskDependencies);
  * POST /api/tasks/:id/dependencies
  * Add dependency between tasks
  */
-router.post('/:id/dependencies', TaskController.addTaskDependency);
+router.post('/:id/dependencies', requireAudit, TaskController.addTaskDependency);
 
 /**
  * DELETE /api/tasks/:id/dependencies/:depId
  * Remove a dependency
  */
-router.delete('/:id/dependencies/:depId', TaskController.removeTaskDependency);
+router.delete('/:id/dependencies/:depId', requireAudit, TaskController.removeTaskDependency);
 
 export default router;

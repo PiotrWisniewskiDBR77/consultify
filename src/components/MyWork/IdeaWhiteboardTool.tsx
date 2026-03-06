@@ -1369,7 +1369,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   if (!open) return null;
 
   return (
-    <div className="w-full h-full flex flex-col bg-white dark:bg-navy-950">
+    <div
+      className="w-full h-full flex flex-col bg-white dark:bg-navy-950"
+      role="region"
+      aria-label={isPl ? 'Tablica idei z elementami swobodnymi' : 'Idea whiteboard with freeform elements'}
+    >
       {/* Toolbar */}
       <div className="flex items-center gap-1 px-3 py-1.5 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 flex-shrink-0 overflow-x-auto">
         <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mr-1.5 shrink-0">

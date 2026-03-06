@@ -28,7 +28,9 @@ import { IdeaGhostCards } from './IdeaGhostCards';
 import { IdeaNodeDetailDrawer, type ExtendedNodeData } from './IdeaNodeDetailDrawer';
 import { IdeaUnifiedSearch } from './IdeaUnifiedSearch';
 import { CommandPalette, useCommandPalette } from './CommandPalette';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { IdeaVotingMode } from './IdeaVotingMode';
+import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { IdeaWorkspaceToolbar } from './IdeaWorkspaceToolbar';
 import { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
 import type { MyIdea } from './MyIdeasListContent';
@@ -474,7 +476,28 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     }
   }, [setActiveTool]);
 
-  // ── Keyboard shortcuts (Cmd+F for search) ──────────────────────────────────
+  // ── V4-IDEA-07: Keyboard shortcuts ─────────────────────────────────────────
+  const { showHelp: shortcutsHelpOpen, setShowHelp: setShortcutsHelpOpen } = useKeyboardShortcuts({
+    enabled: !loading,
+    onCancel: () => {
+      if (nodeDetailOpen) setNodeDetailOpen(false);
+      else if (templateGalleryOpen) setTemplateGalleryOpen(false);
+      else if (searchOpen) setSearchOpen(false);
+      else if (votingActive) setVotingActive(false);
+    },
+    onSlashCommand: () => setSearchOpen(true),
+    onAddChild: () => handleQuickAction('mm_add_child'),
+    onAddSibling: () => handleQuickAction('mm_add_sibling'),
+    onGroup: () => handleQuickAction('group'),
+    onAIExpand: () => handleQuickAction('mm_ai_expand_branch'),
+    onToggleCollapse: () => handleQuickAction('mm_toggle_collapse'),
+    onFocusSelection: () => handleQuickAction('mm_focus_selected'),
+    onReparentPromote: () => handleQuickAction('mm_reparent_promote'),
+    onReparentDemote: () => handleQuickAction('mm_reparent_demote'),
+    onSelectAll: () => handleQuickAction('selectAll'),
+    onClearSelection: () => handleQuickAction('clearSelection'),
+  });
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
@@ -694,9 +717,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   }
 
   return (
-    <div className="w-full h-full flex overflow-hidden bg-white dark:bg-navy-950">
+    <div
+      className="w-full h-full flex overflow-hidden bg-white dark:bg-navy-950"
+      role="region"
+      aria-label={isPolish ? 'Obszar roboczy mapy idei' : 'Idea map workspace'}
+    >
       {/* Canvas area */}
-      <div className="flex-1 min-w-0 h-full relative">
+      <div
+        className="flex-1 min-w-0 h-full relative"
+        role="group"
+        aria-label={isPolish ? 'Płótno idei i narzędzia mapy' : 'Idea canvas and map tools'}
+      >
         {/* Breadcrumb for drill-down navigation */}
         {drillDownStack.length > 0 && (
           <div className="absolute top-2 left-4 z-[60] flex items-center gap-1 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm rounded-xl px-3 py-1.5 border border-slate-200/60 dark:border-navy-700/60 shadow-sm">
@@ -998,6 +1029,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       <CommandPalette
         isOpen={cmdPalette.isOpen}
         onClose={cmdPalette.close}
+      />
+
+      <KeyboardShortcutsHelp
+        isOpen={shortcutsHelpOpen}
+        onClose={() => setShortcutsHelpOpen(false)}
       />
     </div>
   );

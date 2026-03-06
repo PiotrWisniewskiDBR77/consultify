@@ -9,13 +9,14 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { requireAudit } from '../middleware/requireAudit.middleware.js';
+import { OrgPoliciesError, requireNoLegalHold } from '../services/OrgPoliciesService.js';
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
-router.use(verifyToken);
 
 const asyncHandler =
   (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) =>
@@ -25,6 +26,50 @@ const asyncHandler =
 function getOrgId(req: any): string {
   return req.user?.organizationId || req.user?.organization_id || '';
 }
+
+function normalizeDeckRow(row: any) {
+  return {
+    ...row,
+    source_artifacts: JSON.parse(row.source_artifacts || '[]'),
+    source_refs: JSON.parse(row.source_refs_json || '[]'),
+    outline_json: JSON.parse(row.outline_json || '[]'),
+    validation_warnings: JSON.parse(row.validation_warnings || '[]'),
+  };
+}
+
+async function enforceNoLegalHold(res: Response, organizationId: string, operation: string) {
+  try {
+    await requireNoLegalHold(organizationId, operation);
+    return true;
+  } catch (error: any) {
+    if (error instanceof OrgPoliciesError || error?.code === 'LEGAL_HOLD') {
+      res.status(403).json({ success: false, error: error.message, code: 'LEGAL_HOLD' });
+      return false;
+    }
+    throw error;
+  }
+}
+
+router.get(
+  '/shared/:token',
+  asyncHandler(async (req, res) => {
+    const row = (await dbGet(
+      `SELECT *
+       FROM presentation_decks
+       WHERE share_token = ?
+         AND (share_expires_at IS NULL OR share_expires_at > CURRENT_TIMESTAMP)`,
+      [req.params.token]
+    )) as any;
+
+    if (!row) {
+      return res.status(404).json({ success: false, error: 'Shared presentation not found' });
+    }
+
+    res.json({ success: true, data: normalizeDeckRow(row) });
+  })
+);
+
+router.use(verifyToken);
 
 // ============================================================
 // TEMPLATES (T059)
@@ -222,7 +267,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
     const rows = await dbAll(
-      `SELECT id, title, description, deck_type, audience, goal, language, theme, slide_count, status, export_format, exported_at, created_at, updated_at FROM presentation_decks WHERE organization_id = ? ORDER BY updated_at DESC`,
+      `SELECT id, title, description, deck_type, audience, goal, language, theme, slide_count, status, export_format, exported_at, created_at, updated_at, source_id, thumbnail_url, source_refs_json FROM presentation_decks WHERE organization_id = ? ORDER BY updated_at DESC`,
       [orgId]
     );
     res.json({ success: true, data: rows || [] });
@@ -238,10 +283,7 @@ router.get(
       [req.params.id, orgId]
     )) as any;
     if (!row) return res.status(404).json({ success: false, error: 'Deck not found' });
-    row.source_artifacts = JSON.parse(row.source_artifacts || '[]');
-    row.outline_json = JSON.parse(row.outline_json || '[]');
-    row.validation_warnings = JSON.parse(row.validation_warnings || '[]');
-    res.json({ success: true, data: row });
+    res.json({ success: true, data: normalizeDeckRow(row) });
   })
 );
 
@@ -249,6 +291,7 @@ router.get(
   '/decks/:id/download',
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
+    if (!(await enforceNoLegalHold(res, orgId, 'Presentation export'))) return;
     const deck = (await dbGet(
       `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
       [req.params.id, orgId]
@@ -271,12 +314,17 @@ router.get(
 
 router.delete(
   '/decks/:id',
+  requireAudit,
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
+    if (!(await enforceNoLegalHold(res, orgId, 'Presentation deletion'))) return;
     const deck = (await dbGet(
-      `SELECT export_path FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      `SELECT id, title, export_path, share_token, share_expires_at FROM presentation_decks WHERE id = ? AND organization_id = ?`,
       [req.params.id, orgId]
     )) as any;
+    if (!deck) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
     if (deck?.export_path && fs.existsSync(deck.export_path)) {
       try {
         fs.unlinkSync(deck.export_path);
@@ -286,6 +334,18 @@ router.delete(
       req.params.id,
       orgId,
     ]);
+    await (req as any).emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'delete',
+      resourceType: 'presentation_deck',
+      resourceId: req.params.id,
+      before: {
+        title: deck.title,
+        shareToken: deck.share_token,
+        shareExpiresAt: deck.share_expires_at,
+      },
+      metadata: { organizationId: orgId },
+    });
     res.json({ success: true });
   })
 );
@@ -293,9 +353,17 @@ router.delete(
 // Share link
 router.post(
   '/decks/:id/share',
+  requireAudit,
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
     const { expiresInDays } = req.body;
+    const before = (await dbGet(
+      `SELECT id, title, share_token, share_expires_at FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as any;
+    if (!before) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
     const token = uuidv4().replace(/-/g, '');
     const expiresAt = expiresInDays
       ? new Date(Date.now() + expiresInDays * 86400000).toISOString()
@@ -305,6 +373,21 @@ router.post(
       `UPDATE presentation_decks SET share_token = ?, share_expires_at = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
       [token, expiresAt, req.params.id, orgId]
     );
+    await (req as any).emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'share',
+      resourceType: 'presentation_deck',
+      resourceId: req.params.id,
+      before: {
+        shareToken: before.share_token,
+        shareExpiresAt: before.share_expires_at,
+      },
+      after: {
+        shareToken: token,
+        shareExpiresAt: expiresAt,
+      },
+      metadata: { organizationId: orgId, title: before.title },
+    });
     res.json({ success: true, data: { shareToken: token, expiresAt } });
   })
 );
@@ -337,6 +420,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const { deckId } = req.params;
     const orgId = getOrgId(req);
+    if (!(await enforceNoLegalHold(res, orgId, 'Presentation HTML export'))) return;
 
     const deck = await dbGet(
       'SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?',

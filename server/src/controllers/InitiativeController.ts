@@ -2423,11 +2423,17 @@ export class InitiativeController {
         return;
       }
 
-      const { projectId } = req.query as { projectId?: string };
-      const params: unknown[] = [orgId];
-      let sql = `
+      const { projectId, parentProgramId } = req.query as {
+        projectId?: string;
+        parentProgramId?: string;
+      };
+
+      const rollupParams: unknown[] = [orgId];
+      let rollupSql = `
         SELECT
-          COALESCE(i.program_id, i.project_id, '__ungrouped__') AS program_id,
+          COALESCE(i.program_id, '__ungrouped__') AS program_id,
+          p.name AS program_name,
+          p.parent_program_id,
           COUNT(*) AS initiative_count,
           SUM(COALESCE(i.cost_capex, 0) + COALESCE(i.cost_opex, 0)) AS total_budget,
           SUM(COALESCE(i.business_value, 0)) AS total_value,
@@ -2435,27 +2441,59 @@ export class InitiativeController {
           SUM(CASE WHEN UPPER(COALESCE(i.status,'')) IN ('APPROVED','REVIEW','PROMOTED','SCHEDULED','PLANNING') THEN 1 ELSE 0 END) AS health_amber,
           SUM(CASE WHEN UPPER(COALESCE(i.status,'')) NOT IN ('EXECUTING','DONE','TRACKING','APPROVED','REVIEW','PROMOTED','SCHEDULED','PLANNING') OR i.status IS NULL THEN 1 ELSE 0 END) AS health_red
         FROM initiatives i
+        LEFT JOIN programs p ON p.id = i.program_id AND p.organization_id = i.organization_id
         WHERE i.organization_id = ?
       `;
       if (projectId) {
-        sql += ` AND i.project_id = ?`;
-        params.push(String(projectId));
+        rollupSql += ` AND i.project_id = ?`;
+        rollupParams.push(String(projectId));
       }
-      sql += ` GROUP BY COALESCE(i.program_id, i.project_id, '__ungrouped__') ORDER BY initiative_count DESC`;
+      if (parentProgramId) {
+        rollupSql += ` AND p.parent_program_id = ?`;
+        rollupParams.push(String(parentProgramId));
+      }
+      rollupSql += ` GROUP BY COALESCE(i.program_id, '__ungrouped__'), p.name, p.parent_program_id ORDER BY initiative_count DESC`;
 
-      const rows = await queryHelpers.queryAll(sql, params);
+      const rows = await queryHelpers.queryAll(rollupSql, rollupParams);
 
-      const programs = rows.map((r: Record<string, unknown>) => ({
-        programId: (r.program_id as string) === '__ungrouped__' ? null : (r.program_id as string),
-        initiativeCount: Number(r.initiative_count),
-        totalBudget: Number(r.total_budget) || 0,
-        totalValue: Number(r.total_value) || 0,
-        health: {
-          green: Number(r.health_green) || 0,
-          amber: Number(r.health_amber) || 0,
-          red: Number(r.health_red) || 0,
-        },
-      }));
+      let childProgramsMap: Record<string, Array<{ id: string; name: string; status: string }>> = {};
+      try {
+        const allPrograms = await queryHelpers.queryAll(
+          `SELECT id, name, status, parent_program_id FROM programs WHERE organization_id = ?`,
+          [orgId]
+        );
+        for (const cp of allPrograms as Array<Record<string, unknown>>) {
+          const parentId = cp.parent_program_id as string | null;
+          if (parentId) {
+            if (!childProgramsMap[parentId]) childProgramsMap[parentId] = [];
+            childProgramsMap[parentId].push({
+              id: cp.id as string,
+              name: cp.name as string,
+              status: cp.status as string,
+            });
+          }
+        }
+      } catch {
+        childProgramsMap = {};
+      }
+
+      const programs = rows.map((r: Record<string, unknown>) => {
+        const pid = (r.program_id as string) === '__ungrouped__' ? null : (r.program_id as string);
+        return {
+          programId: pid,
+          programName: (r.program_name as string) || null,
+          parentProgramId: (r.parent_program_id as string) || null,
+          initiativeCount: Number(r.initiative_count),
+          totalBudget: Number(r.total_budget) || 0,
+          totalValue: Number(r.total_value) || 0,
+          health: {
+            green: Number(r.health_green) || 0,
+            amber: Number(r.health_amber) || 0,
+            red: Number(r.health_red) || 0,
+          },
+          childPrograms: pid ? (childProgramsMap[pid] || []) : [],
+        };
+      });
 
       res.json({ programs });
     }
@@ -5791,10 +5829,21 @@ export class InitiativeController {
         allowedSectionKeys: cards.canEditCards && !isTerminal ? ['*'] : [],
       };
 
+      const blockingItems = await getBlockingReadinessItems(orgId, initiativeId);
+
       res.json({
         currentStatus,
         userRoles,
         availableTransitions,
+        passed: blockingItems.length === 0,
+        missing: blockingItems.map((item) => ({
+          section: item.section,
+          field: item.field,
+          requirement: item.requirement,
+          key: item.key,
+          label: item.label,
+          suggestedAction: item.suggestedAction,
+        })),
         capabilities: {
           version: 1,
           source: 'backend',
@@ -5821,8 +5870,7 @@ export class InitiativeController {
           },
         },
         readiness,
-        allBlocking:
-          readiness.filter((r: any) => r.severity === 'blocking' && !r.pass).length === 0,
+        allBlocking: blockingItems.length === 0,
         allWarnings: readiness.filter((r: any) => r.severity === 'warning' && !r.pass).length === 0,
       });
     }

@@ -19,13 +19,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import NotificationService from '../services/notificationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
-import { normalizeGraphForStorage } from '../validators/ideaWorkspaceGraph.validators.js';
+import { normalizeGraphForStorage, validateAndNormalizeGraph } from '../validators/ideaWorkspaceGraph.validators.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -3116,6 +3117,7 @@ router.get(
 
 router.post(
   '/my-ideas',
+  requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
@@ -3175,6 +3177,15 @@ router.post(
       [id, userId, orgId]
     );
 
+    req.emitAuditEvent?.({
+      actorType: req.body?.fromAI ? 'AI' : 'USER',
+      action: 'IDEA_CREATE',
+      resourceType: 'idea',
+      resourceId: id,
+      after: { title, body, tags, sourceType },
+      metadata: { fromAI: Boolean(req.body?.fromAI) },
+    }).catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
+
     res.status(201).json({ ...row, tags: parseTagsArray((row as any)?.tags) });
   })
 );
@@ -3231,6 +3242,7 @@ router.get(
 
 router.put(
   '/my-ideas/:id',
+  requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
@@ -3239,7 +3251,7 @@ router.put(
 
     const id = String(req.params.id || '').trim();
     const existing = await queryHelpers.queryOne<any>(
-      `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      `SELECT id, title, body, tags, stage, branch, area, priority FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
       [id, userId, orgId]
     );
     if (!existing) {
@@ -3313,12 +3325,23 @@ router.put(
       [id, userId, orgId]
     );
 
+    req.emitAuditEvent?.({
+      actorType: req.body?.fromAI ? 'AI' : 'USER',
+      action: 'IDEA_UPDATE',
+      resourceType: 'idea',
+      resourceId: id,
+      before: { title: existing.title, body: existing.body, tags: existing.tags, stage: existing.stage, branch: existing.branch, area: existing.area, priority: existing.priority },
+      after: { title: (row as any)?.title, body: (row as any)?.body, tags: (row as any)?.tags, stage: (row as any)?.stage },
+      metadata: { fromAI: Boolean(req.body?.fromAI) },
+    }).catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
+
     res.json({ ...row, tags: parseTagsArray((row as any)?.tags) });
   })
 );
 
 router.delete(
   '/my-ideas/:id',
+  requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
@@ -3326,10 +3349,26 @@ router.delete(
     if (!(await requireTables(res, ['my_ideas']))) return;
 
     const id = String(req.params.id || '').trim();
+    const before = await queryHelpers.queryOne<any>(
+      `SELECT id, title, tags, stage FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [id, userId, orgId]
+    );
+
     await queryHelpers.queryRun(
       `DELETE FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ?`,
       [id, userId, orgId]
     );
+
+    if (before) {
+      req.emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'IDEA_DELETE',
+        resourceType: 'idea',
+        resourceId: id,
+        before: { title: before.title, tags: before.tags, stage: before.stage },
+      }).catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
+    }
+
     res.status(204).send();
   })
 );
@@ -3392,6 +3431,7 @@ router.get(
  */
 router.post(
   '/my-ideas/:id/edges',
+  requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
@@ -3448,6 +3488,14 @@ router.post(
       [userId, orgId, sourceIdeaId, targetIdeaId, kind]
     );
 
+    req.emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'IDEA_EDGE_CREATE',
+      resourceType: 'idea_edge',
+      resourceId: (row as any)?.id || id,
+      after: { sourceIdeaId, targetIdeaId, kind },
+    }).catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
+
     res.status(201).json({ edge: row });
   })
 );
@@ -3457,6 +3505,7 @@ router.post(
  */
 router.delete(
   '/my-ideas/:id/edges/:edgeId',
+  requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
@@ -3467,12 +3516,27 @@ router.delete(
     const edgeId = String(req.params.edgeId || '').trim();
     if (!edgeId) return res.status(400).json({ error: 'edgeId is required' });
 
+    const before = await queryHelpers.queryOne<any>(
+      `SELECT id, source_idea_id as "sourceIdeaId", target_idea_id as "targetIdeaId", kind FROM my_idea_edges WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [edgeId, userId, orgId]
+    );
+
     await queryHelpers.queryRun(
       `DELETE FROM my_idea_edges
        WHERE id = ? AND user_id = ? AND organization_id = ?
          ${ideaId && ideaId !== 'all' ? 'AND source_idea_id = ?' : ''}`,
       ideaId && ideaId !== 'all' ? [edgeId, userId, orgId, ideaId] : [edgeId, userId, orgId]
     );
+
+    if (before) {
+      req.emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'IDEA_EDGE_DELETE',
+        resourceType: 'idea_edge',
+        resourceId: edgeId,
+        before: { sourceIdeaId: before.sourceIdeaId, targetIdeaId: before.targetIdeaId, kind: before.kind },
+      }).catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
+    }
 
     res.status(204).send();
   })
@@ -3567,10 +3631,13 @@ router.get(
     const extensionsSelect = mapCols.has('extensions_json')
       ? `, extensions_json as "extensionsJson"`
       : `, '{}' as "extensionsJson"`;
+    const schemaVersionSelect = mapCols.has('schema_version')
+      ? `, schema_version as "schemaVersion"`
+      : `, 1 as "schemaVersion"`;
 
     const row = await queryHelpers.queryOne<any>(
       `
-      SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version, updated_at as "updatedAt"${preferredToolSelect}${extensionsSelect}
+      SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version, updated_at as "updatedAt"${preferredToolSelect}${extensionsSelect}${schemaVersionSelect}
       FROM my_idea_maps
       WHERE idea_id = ? AND user_id = ? AND organization_id = ?
       LIMIT 1
@@ -3581,7 +3648,7 @@ router.get(
     if (!row) {
       const def = buildDefaultIdeaMap({ id: ideaId, title: String(idea?.title || '') }, isPl);
       return res.json({
-        map: { ...def, preferredTool: null, extensions: {} },
+        map: { ...def, preferredTool: null, extensions: {}, schemaVersion: 1 },
         isDefault: true,
       });
     }
@@ -3612,6 +3679,7 @@ router.get(
         version: Number(row.version || 1),
         preferredTool: row?.preferredTool ? String(row.preferredTool) : null,
         extensions: extensions && typeof extensions === 'object' ? extensions : {},
+        schemaVersion: Number(row.schemaVersion || 1),
       },
       isDefault: false,
       updatedAt: row.updatedAt,
@@ -3703,6 +3771,7 @@ router.get(
  */
 router.put(
   '/my-ideas/:id/map',
+  requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
@@ -3717,25 +3786,6 @@ router.put(
     if (!nodes || !edges)
       return res.status(400).json({ error: 'nodes and edges are required arrays' });
 
-    // V4-IDEA-01: Validate and normalize canonical schema (no data loss, reject invalid)
-    let normalizedNodes: any[];
-    let normalizedEdges: any[];
-    try {
-      const normalized = normalizeGraphForStorage({
-        nodes,
-        edges,
-        extensions: {},
-        preferredTool: null,
-      });
-      normalizedNodes = normalized.nodes;
-      normalizedEdges = normalized.edges;
-    } catch (err: any) {
-      return res.status(400).json({
-        error: 'Invalid graph schema',
-        details: err?.message || err?.issues?.[0]?.message,
-      });
-    }
-
     const preferredToolRaw = req.body?.preferredTool ?? req.body?.preferred_tool ?? null;
     const preferredTool =
       typeof preferredToolRaw === 'string' && preferredToolRaw.trim() ? preferredToolRaw.trim() : null;
@@ -3744,6 +3794,22 @@ router.put(
       extensionsRaw && typeof extensionsRaw === 'object' && !Array.isArray(extensionsRaw)
         ? extensionsRaw
         : null;
+
+    // V4-IDEA-01: Validate and normalize canonical schema (no data loss, reject invalid)
+    const validation = validateAndNormalizeGraph({
+      nodes,
+      edges,
+      extensions: extensions ?? {},
+      preferredTool,
+    });
+    if (!validation.valid) {
+      return res.status(400).json({
+        error: 'Invalid graph schema',
+        details: validation.errors,
+      });
+    }
+    const normalizedNodes = validation.normalized.nodes;
+    const normalizedEdges = validation.normalized.edges;
 
     const ideaOk = await queryHelpers.queryOne<any>(
       `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
@@ -3794,6 +3860,7 @@ router.put(
       add('nodes_json', JSON.stringify(normalizedNodes));
       add('edges_json', JSON.stringify(normalizedEdges));
       add('version', nextVersion);
+      add('schema_version', 2);
       if (preferredTool) add('preferred_tool', preferredTool);
       if (mergedExtensions) add('extensions_json', JSON.stringify(mergedExtensions));
       add('created_at', now);
@@ -3813,6 +3880,7 @@ router.put(
       set('nodes_json', JSON.stringify(normalizedNodes));
       set('edges_json', JSON.stringify(normalizedEdges));
       set('version', nextVersion);
+      set('schema_version', 2);
       if (preferredTool !== null) set('preferred_tool', preferredTool);
       if (mergedExtensions !== null) set('extensions_json', JSON.stringify(mergedExtensions));
       set('updated_at', now);
@@ -3825,7 +3893,6 @@ router.put(
       );
     }
 
-    // V4-IDEA-04 / V4-IDEA-08: Audit log for idea map edits; fromAI = user applied AI proposal
     const appliedFromAI = Boolean(req.body?.fromAI);
     let beforeSummary: { nodeCount: number; edgeCount: number; version: number } | undefined;
     if (existing) {
@@ -3837,19 +3904,15 @@ router.put(
         beforeSummary = undefined;
       }
     }
-    auditEventsService
-      .log({
-        actorId: userId,
-        actorType: 'USER',
-        action: existing ? 'IDEA_MAP_UPDATE' : 'IDEA_MAP_CREATE',
-        resourceType: 'idea_map',
-        resourceId: ideaId,
-        before: beforeSummary,
-        after: { nodeCount: normalizedNodes.length, edgeCount: normalizedEdges.length, version: nextVersion },
-        metadata: { preferredTool: preferredTool || undefined, appliedFromAI: appliedFromAI || undefined },
-        organizationId: orgId,
-      })
-      .catch((err: any) => logger.warn('[IdeaMap] Audit log failed:', err?.message));
+    req.emitAuditEvent?.({
+      actorType: appliedFromAI ? 'AI' : 'USER',
+      action: existing ? 'IDEA_MAP_UPDATE' : 'IDEA_MAP_CREATE',
+      resourceType: 'idea_map',
+      resourceId: ideaId,
+      before: beforeSummary,
+      after: { nodeCount: normalizedNodes.length, edgeCount: normalizedEdges.length, version: nextVersion },
+      metadata: { preferredTool: preferredTool || undefined, appliedFromAI: appliedFromAI || undefined },
+    }).catch((err: any) => logger.warn('[IdeaMap] Audit log failed:', err?.message));
 
     res.json({ success: true, version: nextVersion });
   })

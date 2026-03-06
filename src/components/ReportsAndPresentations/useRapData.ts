@@ -78,6 +78,16 @@ export function useReports() {
 // ─── Presentations (Decks) ────────────────────────────────────────
 
 function mapDeck(raw: any): PresentationItem {
+  const sourceRefs = raw.source_refs_json
+    ? typeof raw.source_refs_json === 'string'
+      ? JSON.parse(raw.source_refs_json)
+      : raw.source_refs_json
+    : raw.source_refs
+      ? typeof raw.source_refs === 'string'
+        ? JSON.parse(raw.source_refs)
+        : raw.source_refs
+      : [];
+
   return {
     id: raw.id,
     title: raw.title || 'Untitled',
@@ -90,6 +100,7 @@ function mapDeck(raw: any): PresentationItem {
     exportFormats: raw.export_format ? [raw.export_format] : [],
     sourceId: raw.source_id,
     thumbnailUrl: raw.thumbnail_url,
+    sourceRefs: Array.isArray(sourceRefs) ? sourceRefs : [],
   };
 }
 

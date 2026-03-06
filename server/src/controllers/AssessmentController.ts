@@ -16,6 +16,7 @@ import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import AssessmentInitiativeService from '../services/assessmentInitiativeService.js';
+import AssessmentEvidenceService from '../services/AssessmentEvidenceService.js';
 import { getAssessmentRoles } from '../services/assessmentPermissionService.js';
 import NotificationService from '../services/notificationService.js';
 import { hasPermission } from '../services/permissionService.js';
@@ -1420,15 +1421,18 @@ export class AssessmentController {
       const requireEvidence = Boolean((req.body as any)?.requireEvidence);
       if (requireEvidence) {
         try {
-          const evidenceRows = await queryHelpers.queryAll<{ id: string }>(
-            `SELECT id FROM assessment_evidence WHERE assessment_id = ? LIMIT 1`,
-            [assessmentId]
+          const evidenceReport = await AssessmentEvidenceService.getEvidenceReport(
+            assessmentId,
+            user.organizationId
           );
-          if (Array.isArray(evidenceRows) && evidenceRows.length === 0) {
+          if (!evidenceReport.isReadyForConsolidation) {
             res.status(400).json({
               error: 'Evidence completeness required',
               code: 'EVIDENCE_GATE',
-              message: 'Add evidence for key dimensions before generating initiatives.',
+              message:
+                evidenceReport.blockers[0] ||
+                'Add evidence for required dimensions before generating initiatives.',
+              blockers: evidenceReport.blockers,
             });
             return;
           }

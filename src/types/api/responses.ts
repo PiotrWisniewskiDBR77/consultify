@@ -143,7 +143,15 @@ export interface TaskResponse {
   projectId: string;
   title: string;
   description?: string;
-  status: 'todo' | 'in_progress' | 'review' | 'done' | 'blocked';
+  status:
+    | 'backlog'
+    | 'todo'
+    | 'in_progress'
+    | 'review'
+    | 'done'
+    | 'blocked'
+    | 'on_hold'
+    | 'cancelled';
   priority: 'low' | 'medium' | 'high' | 'critical';
   assigneeId?: string;
   assigneeName?: string;

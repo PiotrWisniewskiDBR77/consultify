@@ -11,7 +11,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 import auditEventsService from '../services/AuditEventsService.js';
 import ActivityService from '../services/ActivityService.js';
-import { validateTaskStatusTransition } from '../services/taskWorkflowService.js';
+import {
+  getAllowedTaskTransitions,
+  TASK_STATUSES,
+  validateTaskStatusTransition,
+} from '../services/taskWorkflowService.js';
 import NotificationService from '../services/notificationService.js';
 import { PMO_DOMAIN_IDS } from '../services/pmoDomainRegistry.js';
 import TaskAssignmentService from '../services/taskAssignmentService.js';
@@ -22,11 +26,13 @@ import logger from '../utils/Logger.js';
 import type {
   AddTaskCommentRequest,
   AssignTaskRequest,
+  BlockTaskRequest,
   CreateTaskRequest,
   EscalateTaskRequest,
   GetTasksQuery,
   ReassignTaskRequest,
   ResolveEscalationRequest,
+  UnblockTaskRequest,
   UpdateTaskRequest,
 } from '../validators/task.validators.js';
 
@@ -59,6 +65,7 @@ interface TaskRow {
   id: string;
   project_id: string;
   project_name?: string;
+  program_id?: string;
   organization_id: string;
   title: string;
   source?: string;
@@ -104,6 +111,8 @@ interface TaskRow {
   assignees?: string;
   initiative_id?: string;
   initiative_name?: string;
+  list_id?: string;
+  list_name?: string;
   progress?: number;
   blocked_reason?: string;
   blocked_at?: string;
@@ -193,11 +202,56 @@ async function getTaskDepsSchema(): Promise<TaskDepsSchema> {
   return taskDepsSchemaCache;
 }
 
+async function logTaskAuditEvent(params: {
+  actorId: string;
+  organizationId: string;
+  action: string;
+  resourceId: string;
+  before?: Record<string, unknown> | null;
+  after?: Record<string, unknown> | null;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  const { actorId, organizationId, action, resourceId, before, after, metadata } = params;
+  await auditEventsService.log({
+    actorId,
+    actorType: 'USER',
+    action,
+    resourceType: 'task',
+    resourceId,
+    before: before ?? undefined,
+    after: after ?? undefined,
+    metadata: metadata ?? {},
+    organizationId,
+  });
+}
+
+function buildTransitionErrorPayload(from: string | null | undefined, to: string | null | undefined) {
+  return {
+    from,
+    to,
+    allowedNext: getAllowedTaskTransitions(from),
+  };
+}
+
 // ==========================================
 // CONTROLLER METHODS
 // ==========================================
 
 export class TaskController {
+  /**
+   * V4-TASK-03: Canonical workflow statuses + transitions for UI/API clients.
+   */
+  static getWorkflowConfig = asyncHandler(
+    async (_req: AuthenticatedRequest, res: Response): Promise<void> => {
+      res.json({
+        statuses: TASK_STATUSES,
+        transitions: Object.fromEntries(
+          TASK_STATUSES.map((status) => [status, getAllowedTaskTransitions(status)])
+        ),
+      });
+    }
+  );
+
   /**
    * Get all tasks with filters
    */
@@ -232,6 +286,7 @@ export class TaskController {
       const {
         projectId,
         programId,
+        listId,
         status,
         assigneeId,
         priority,
@@ -268,12 +323,16 @@ export class TaskController {
                 r.last_name as reporter_last_name,
                 r.avatar_url as reporter_avatar,
                 p.name as project_name,
-                i.name as initiative_name
+                i.name as initiative_name,
+                i.program_id as program_id,
+                COALESCE(t.list_id, t.workstream_id) as list_id,
+                w.name as list_name
             FROM tasks t
             LEFT JOIN users a ON t.assignee_id = a.id
             LEFT JOIN users r ON t.reporter_id = r.id
             LEFT JOIN projects p ON t.project_id = p.id
             LEFT JOIN initiatives i ON t.initiative_id = i.id
+            LEFT JOIN workstreams w ON w.id = COALESCE(t.list_id, t.workstream_id)
             WHERE t.organization_id = ?
         `;
       const countSql = `SELECT COUNT(*) as total FROM tasks t
@@ -308,6 +367,10 @@ export class TaskController {
         if (programId) {
           s += ` AND i.program_id = ?`;
           p.push(programId);
+        }
+        if (listId) {
+          s += ` AND COALESCE(t.list_id, t.workstream_id) = ?`;
+          p.push(listId);
         }
         if (scope === 'personal') {
           s += ` AND (t.assignee_id = ? OR t.reporter_id = ?)`;
@@ -452,8 +515,11 @@ export class TaskController {
         kpiId: t.kpi_id,
         raidItemId: t.raid_item_id,
         assignees: t.assignees ? JSON.parse(t.assignees) : [],
+        programId: t.program_id || t.project_id || null,
         initiativeId: t.initiative_id,
         initiativeName: getMultilingualText(t.initiative_name, lang),
+        listId: t.list_id || null,
+        listName: t.list_name || null,
         progress: t.progress || 0,
         blockedReason: t.blocked_reason || '',
         // SLA / Escalation
@@ -465,6 +531,130 @@ export class TaskController {
       }));
 
       res.json(tasks);
+    }
+  );
+
+  /**
+   * V4-TASK-01: Hierarchy rollups (program -> initiative -> list -> task)
+   */
+  static getTaskHierarchyRollups = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
+      if (!orgId || !userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const query = req.query as unknown as GetTasksQuery & { listId?: string };
+      const { projectId, programId, initiativeId, scope, listId } = query as any;
+
+      if (scope === 'initiative' && !initiativeId) {
+        res.status(400).json({ error: 'initiativeId required when scope=initiative' });
+        return;
+      }
+      if (scope === 'program' && !programId) {
+        res.status(400).json({ error: 'programId required when scope=program' });
+        return;
+      }
+
+      const params: SQLParam[] = [orgId];
+      let sql = '';
+      let level: 'program' | 'initiative' | 'list' | 'personal' = 'initiative';
+
+      if (scope === 'initiative' || initiativeId) {
+        level = 'list';
+        sql = `
+          SELECT
+            COALESCE(t.list_id, t.workstream_id, 'unassigned') as id,
+            COALESCE(w.name, 'Unassigned') as name,
+            COUNT(*) as task_count,
+            SUM(CASE WHEN UPPER(COALESCE(t.status, '')) = 'DONE' THEN 1 ELSE 0 END) as done_count,
+            ROUND(AVG(COALESCE(t.progress, 0))) as avg_progress
+          FROM tasks t
+          LEFT JOIN workstreams w ON w.id = COALESCE(t.list_id, t.workstream_id)
+          WHERE t.organization_id = ?
+            AND t.initiative_id = ?
+          GROUP BY COALESCE(t.list_id, t.workstream_id, 'unassigned'), COALESCE(w.name, 'Unassigned')
+          ORDER BY name ASC
+        `;
+        params.push(initiativeId);
+      } else if (scope === 'personal') {
+        level = 'personal';
+        sql = `
+          SELECT
+            COALESCE(t.initiative_id, 'unassigned') as id,
+            COALESCE(i.name, 'Unassigned') as name,
+            COUNT(*) as task_count,
+            SUM(CASE WHEN UPPER(COALESCE(t.status, '')) = 'DONE' THEN 1 ELSE 0 END) as done_count,
+            ROUND(AVG(COALESCE(t.progress, 0))) as avg_progress
+          FROM tasks t
+          LEFT JOIN initiatives i ON i.id = t.initiative_id
+          WHERE t.organization_id = ?
+            AND (t.assignee_id = ? OR t.reporter_id = ?)
+          GROUP BY COALESCE(t.initiative_id, 'unassigned'), COALESCE(i.name, 'Unassigned')
+          ORDER BY name ASC
+        `;
+        params.push(userId, userId);
+      } else {
+        level = 'initiative';
+        sql = `
+          SELECT
+            COALESCE(t.initiative_id, 'unassigned') as id,
+            COALESCE(i.name, 'Unassigned') as name,
+            COUNT(*) as task_count,
+            SUM(CASE WHEN UPPER(COALESCE(t.status, '')) = 'DONE' THEN 1 ELSE 0 END) as done_count,
+            ROUND(AVG(COALESCE(t.progress, 0))) as avg_progress
+          FROM tasks t
+          LEFT JOIN initiatives i ON i.id = t.initiative_id
+          WHERE t.organization_id = ?
+        `;
+        if (programId) {
+          sql += ` AND i.program_id = ?`;
+          params.push(programId);
+        }
+        if (projectId) {
+          sql += ` AND t.project_id = ?`;
+          params.push(projectId);
+        }
+        if (listId) {
+          sql += ` AND COALESCE(t.list_id, t.workstream_id) = ?`;
+          params.push(listId);
+        }
+        sql += `
+          GROUP BY COALESCE(t.initiative_id, 'unassigned'), COALESCE(i.name, 'Unassigned')
+          ORDER BY name ASC
+        `;
+      }
+
+      const rows = await DbPromise.all<any>(sql, params);
+      const items = (rows || []).map((row: any) => {
+        const taskCount = Number(row.task_count || 0);
+        const doneCount = Number(row.done_count || 0);
+        const progress = Number(row.avg_progress || 0);
+        return {
+          id: row.id,
+          name: row.name,
+          taskCount,
+          doneCount,
+          progress,
+        };
+      });
+
+      res.json({
+        level,
+        items,
+        totals: {
+          taskCount: items.reduce((sum: number, item: any) => sum + item.taskCount, 0),
+          doneCount: items.reduce((sum: number, item: any) => sum + item.doneCount, 0),
+          avgProgress:
+            items.length > 0
+              ? Math.round(
+                  items.reduce((sum: number, item: any) => sum + item.progress, 0) / items.length
+                )
+              : 0,
+        },
+      });
     }
   );
 
@@ -496,12 +686,16 @@ export class TaskController {
                 r.last_name as reporter_last_name,
                 r.avatar_url as reporter_avatar,
                 p.name as project_name,
-                i.name as initiative_name
+                i.name as initiative_name,
+                i.program_id as program_id,
+                COALESCE(t.list_id, t.workstream_id) as list_id,
+                w.name as list_name
             FROM tasks t
             LEFT JOIN users a ON t.assignee_id = a.id
             LEFT JOIN users r ON t.reporter_id = r.id
             LEFT JOIN projects p ON t.project_id = p.id
             LEFT JOIN initiatives i ON t.initiative_id = i.id
+            LEFT JOIN workstreams w ON w.id = COALESCE(t.list_id, t.workstream_id)
             WHERE t.id = ? AND t.organization_id = ?
         `;
 
@@ -626,8 +820,11 @@ export class TaskController {
         kpiId: t.kpi_id,
         raidItemId: t.raid_item_id,
         assignees: t.assignees ? JSON.parse(t.assignees) : [],
+        programId: t.program_id || t.project_id || null,
         initiativeId: t.initiative_id,
         initiativeName: getMultilingualText(t.initiative_name, lang),
+        listId: t.list_id || null,
+        listName: t.list_name || null,
         progress: t.progress || 0,
         blockedReason: t.blocked_reason || '',
         blockedAt: (t as any).blocked_at || null,
@@ -675,6 +872,8 @@ export class TaskController {
         tags,
         taskType,
         initiativeId,
+        listId,
+        workstreamId,
         ownerId,
         blockedByDecisionId,
         requiresAcceptance,
@@ -696,12 +895,20 @@ export class TaskController {
       } = body;
 
       let effectiveProjectId = projectId || null;
+      const effectiveListId = listId || workstreamId || null;
       if (!effectiveProjectId && initiativeId) {
         const parentInitiative = await DbPromise.get<{ project_id?: string }>(
           `SELECT project_id FROM initiatives WHERE id = ? AND organization_id = ?`,
           [initiativeId, orgId]
         );
         effectiveProjectId = parentInitiative?.project_id || null;
+      }
+      if (!effectiveProjectId && effectiveListId) {
+        const parentWorkstream = await DbPromise.get<{ project_id?: string }>(
+          `SELECT project_id FROM workstreams WHERE id = ? LIMIT 1`,
+          [effectiveListId]
+        );
+        effectiveProjectId = parentWorkstream?.project_id || null;
       }
 
       const id = uuidv4();
@@ -733,7 +940,7 @@ export class TaskController {
                 id, project_id, organization_id, title, description,
                 status, priority, assignee_id, backup_assignee_id, reporter_id,
                 due_date, started_at, estimated_hours, tags,
-                task_type, initiative_id, why,
+                task_type, initiative_id, list_id, workstream_id, why,
                 source,
                 owner_id, requires_acceptance, acceptance_type, acceptor_id,
                 weight, weight_reason,
@@ -742,7 +949,7 @@ export class TaskController {
                 progress, blocked_reason, blocked_by_decision_id, blocked_at,
                 created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
       const result = await DbPromise.run(sql, [
@@ -762,6 +969,8 @@ export class TaskController {
         tags ? JSON.stringify(tags) : '[]',
         finalTaskType,
         initiativeId,
+        effectiveListId,
+        effectiveListId,
         why,
         finalSource,
         effectiveOwnerId,
@@ -882,7 +1091,6 @@ export class TaskController {
   static updateTask = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { id } = req.params;
-      const updates = req.body as UpdateTaskRequest;
       const userId = req.user?.id;
       const orgId = req.user?.organizationId;
       if (!userId || !orgId) {
@@ -899,6 +1107,20 @@ export class TaskController {
       if (!currentTask) {
         res.status(404).json({ error: 'Task not found' });
         return;
+      }
+
+      const updates = { ...(req.body as UpdateTaskRequest) } as Record<string, any>;
+      if (
+        Object.prototype.hasOwnProperty.call(updates, 'listId') &&
+        !Object.prototype.hasOwnProperty.call(updates, 'workstreamId')
+      ) {
+        updates.workstreamId = updates.listId;
+      }
+      if (
+        Object.prototype.hasOwnProperty.call(updates, 'workstreamId') &&
+        !Object.prototype.hasOwnProperty.call(updates, 'listId')
+      ) {
+        updates.listId = updates.workstreamId;
       }
 
       // Owner is mandatory (system contract). Prevent explicitly clearing.
@@ -923,8 +1145,7 @@ export class TaskController {
           res.status(400).json({
             error: validation.message,
             code: validation.rule,
-            from: currentTask.status,
-            to: newStatus,
+            ...buildTransitionErrorPayload(currentTask.status, newStatus),
           });
           return;
         }
@@ -975,6 +1196,8 @@ export class TaskController {
         'custom_status_id',
         'task_type',
         'initiative_id',
+        'list_id',
+        'workstream_id',
         'why',
         'owner_id',
         'requires_acceptance',
@@ -1005,6 +1228,8 @@ export class TaskController {
         customStatusId: 'custom_status_id',
         taskType: 'task_type',
         initiativeId: 'initiative_id',
+        listId: 'list_id',
+        workstreamId: 'workstream_id',
         ownerId: 'owner_id',
         requiresAcceptance: 'requires_acceptance',
         acceptanceType: 'acceptance_type',
@@ -1447,8 +1672,8 @@ export class TaskController {
       }
 
       // Verify task belongs to org
-      const task = await DbPromise.get<{ id: string }>(
-        'SELECT id FROM tasks WHERE id = ? AND organization_id = ?',
+      const task = await DbPromise.get<{ id: string; title: string }>(
+        'SELECT id, title FROM tasks WHERE id = ? AND organization_id = ?',
         [taskId, orgId]
       );
 
@@ -1511,8 +1736,8 @@ export class TaskController {
       }
 
       // Verify task belongs to org
-      const task = await DbPromise.get<{ id: string }>(
-        'SELECT id FROM tasks WHERE id = ? AND organization_id = ?',
+      const task = await DbPromise.get<{ id: string; title: string }>(
+        'SELECT id, title FROM tasks WHERE id = ? AND organization_id = ?',
         [taskId, orgId]
       );
 
@@ -1527,6 +1752,15 @@ export class TaskController {
       const sql = `INSERT INTO task_comments (id, task_id, user_id, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`;
 
       await DbPromise.run(sql, [id, taskId, userId, content, now, now]);
+
+      logTaskAuditEvent({
+        actorId: userId,
+        organizationId: orgId,
+        action: 'TASK_COMMENT_ADD',
+        resourceId: taskId,
+        after: { commentId: id, taskId, content },
+        metadata: { taskTitle: task.title },
+      }).catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
 
       res.json({
         id,
@@ -1545,16 +1779,25 @@ export class TaskController {
   static deleteTaskComment = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { commentId } = req.params;
+      const orgId = req.user?.organizationId;
       const userId = req.user?.id;
-      if (!userId) {
+      if (!userId || !orgId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
 
       // Check if user owns the comment or is admin
-      const comment = await DbPromise.get<{ user_id: string }>(
-        'SELECT user_id FROM task_comments WHERE id = ?',
-        [commentId]
+      const comment = await DbPromise.get<{
+        user_id: string;
+        task_id: string;
+        content: string;
+        title: string;
+      }>(
+        `SELECT tc.user_id, tc.task_id, tc.content, t.title
+         FROM task_comments tc
+         JOIN tasks t ON t.id = tc.task_id
+         WHERE tc.id = ? AND t.organization_id = ?`,
+        [commentId, orgId]
       );
 
       if (!comment) {
@@ -1573,6 +1816,15 @@ export class TaskController {
 
       await DbPromise.run('DELETE FROM task_comments WHERE id = ?', [commentId]);
 
+      logTaskAuditEvent({
+        actorId: userId,
+        organizationId: orgId,
+        action: 'TASK_COMMENT_DELETE',
+        resourceId: comment.task_id,
+        before: { commentId, content: comment.content },
+        metadata: { taskTitle: comment.title },
+      }).catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
+
       res.json({ message: 'Comment deleted' });
     }
   );
@@ -1584,11 +1836,36 @@ export class TaskController {
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { id: taskId } = req.params;
       const { assigneeId, slaHours } = req.body as AssignTaskRequest;
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const beforeTask = await DbPromise.get<{ assignee_id: string | null; title: string }>(
+        'SELECT assignee_id, title FROM tasks WHERE id = ? AND organization_id = ?',
+        [taskId, orgId]
+      );
+      if (!beforeTask) {
+        res.status(404).json({ error: 'Task not found' });
+        return;
+      }
 
       const result = await TaskAssignmentService.assignTask(taskId, assigneeId, {
-        assignedById: req.user?.id,
+        assignedById: actorId,
         slaHours,
       });
+
+      logTaskAuditEvent({
+        actorId,
+        organizationId: orgId,
+        action: 'TASK_ASSIGN',
+        resourceId: taskId,
+        before: { assigneeId: beforeTask.assignee_id },
+        after: { assigneeId: result?.assigneeId || assigneeId, slaHours: result?.slaHours || slaHours },
+        metadata: { taskTitle: beforeTask.title },
+      }).catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
 
       res.json(result);
     }
@@ -1601,12 +1878,37 @@ export class TaskController {
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { id: taskId } = req.params;
       const { toAssigneeId, reason } = req.body as ReassignTaskRequest;
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const beforeTask = await DbPromise.get<{ assignee_id: string | null; title: string }>(
+        'SELECT assignee_id, title FROM tasks WHERE id = ? AND organization_id = ?',
+        [taskId, orgId]
+      );
+      if (!beforeTask) {
+        res.status(404).json({ error: 'Task not found' });
+        return;
+      }
 
       const result = await TaskAssignmentService.reassignTask(taskId, toAssigneeId, {
-        reassignedById: req.user?.id,
+        reassignedById: actorId,
         reason,
         resetSla: true,
       });
+
+      logTaskAuditEvent({
+        actorId,
+        organizationId: orgId,
+        action: 'TASK_REASSIGN',
+        resourceId: taskId,
+        before: { assigneeId: beforeTask.assignee_id },
+        after: { assigneeId: result?.assigneeId || toAssigneeId },
+        metadata: { reason, taskTitle: beforeTask.title },
+      }).catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
 
       res.json(result);
     }
@@ -1618,8 +1920,33 @@ export class TaskController {
   static unassignTask = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { id } = req.params;
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const beforeTask = await DbPromise.get<{ assignee_id: string | null; title: string }>(
+        'SELECT assignee_id, title FROM tasks WHERE id = ? AND organization_id = ?',
+        [id, orgId]
+      );
+      if (!beforeTask) {
+        res.status(404).json({ error: 'Task not found' });
+        return;
+      }
 
       const result = await TaskAssignmentService.unassignTask(id);
+
+      logTaskAuditEvent({
+        actorId,
+        organizationId: orgId,
+        action: 'TASK_UNASSIGN',
+        resourceId: id,
+        before: { assigneeId: beforeTask.assignee_id },
+        after: { assigneeId: null },
+        metadata: { taskTitle: beforeTask.title },
+      }).catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
 
       res.json(result);
     }
@@ -1632,12 +1959,37 @@ export class TaskController {
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { id: taskId } = req.params;
       const { reason } = req.body as EscalateTaskRequest;
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const beforeTask = await DbPromise.get<{ escalation_level: number | null; title: string }>(
+        'SELECT escalation_level, title FROM tasks WHERE id = ? AND organization_id = ?',
+        [taskId, orgId]
+      );
+      if (!beforeTask) {
+        res.status(404).json({ error: 'Task not found' });
+        return;
+      }
 
       const result = await TaskAssignmentService.escalateTask(taskId, {
         reason: reason || 'Manual escalation',
         triggerType: ESCALATION_TRIGGERS.MANUAL,
-        escalatedById: req.user?.id,
+        escalatedById: actorId,
       });
+
+      logTaskAuditEvent({
+        actorId,
+        organizationId: orgId,
+        action: 'TASK_ESCALATE',
+        resourceId: taskId,
+        before: { escalationLevel: beforeTask.escalation_level },
+        after: { escalationLevel: result?.escalationLevel },
+        metadata: { reason: reason || 'Manual escalation', taskTitle: beforeTask.title },
+      }).catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
 
       res.json(result);
     }
@@ -1650,11 +2002,36 @@ export class TaskController {
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { escalationId } = req.params;
       const { resolution } = req.body as ResolveEscalationRequest;
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const escalation = await DbPromise.get<{ task_id: string; resolution_note: string | null }>(
+        'SELECT task_id, resolution_note FROM task_escalations WHERE id = ?',
+        [escalationId]
+      );
+      if (!escalation) {
+        res.status(404).json({ error: 'Escalation not found' });
+        return;
+      }
 
       const result = await TaskAssignmentService.resolveEscalation(escalationId, {
         resolutionNote: resolution,
-        resolvedById: req.user?.id,
+        resolvedById: actorId,
       });
+
+      logTaskAuditEvent({
+        actorId,
+        organizationId: orgId,
+        action: 'TASK_ESCALATION_RESOLVE',
+        resourceId: escalation.task_id,
+        before: { escalationId, resolution: escalation.resolution_note },
+        after: { escalationId, resolution },
+        metadata: {},
+      }).catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
 
       res.json(result);
     }
@@ -1763,7 +2140,7 @@ export class TaskController {
       const orgId = req.user?.organizationId;
       const userId = req.user?.id;
       const taskId = req.params.id;
-      const { reason, decisionId } = req.body;
+      const { reason, decisionId } = req.body as BlockTaskRequest;
 
       if (!orgId || !userId) {
         res.status(401).json({ error: 'Unauthorized' });
@@ -1776,6 +2153,24 @@ export class TaskController {
       }
 
       const now = new Date().toISOString();
+      const task = await DbPromise.get<{ status: string; blocked_reason: string | null; title: string }>(
+        'SELECT status, blocked_reason, title FROM tasks WHERE id = ? AND organization_id = ?',
+        [taskId, orgId]
+      );
+      if (!task) {
+        res.status(404).json({ error: 'Task not found' });
+        return;
+      }
+
+      const validation = validateTaskStatusTransition(task.status, 'blocked');
+      if (!validation.allowed && 'rule' in validation && 'message' in validation) {
+        res.status(400).json({
+          error: validation.message,
+          code: validation.rule,
+          ...buildTransitionErrorPayload(task.status, 'blocked'),
+        });
+        return;
+      }
 
       await DbPromise.run(
         `UPDATE tasks SET 
@@ -1787,6 +2182,16 @@ export class TaskController {
              WHERE id = ?`,
         [now, reason, decisionId || null, now, taskId]
       );
+
+      logTaskAuditEvent({
+        actorId: userId,
+        organizationId: orgId,
+        action: 'TASK_BLOCK',
+        resourceId: taskId,
+        before: { status: task.status, blockedReason: task.blocked_reason },
+        after: { status: 'blocked', blockedReason: reason, blockedByDecisionId: decisionId || null },
+        metadata: { taskTitle: task.title },
+      }).catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
 
       res.json({
         success: true,
@@ -1803,15 +2208,44 @@ export class TaskController {
   static unblockTask = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
       const taskId = req.params.id;
-      const { newStatus } = req.body;
+      const { newStatus } = req.body as UnblockTaskRequest;
 
-      if (!orgId) {
+      if (!orgId || !userId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
 
       const now = new Date().toISOString();
+      const task = await DbPromise.get<{ status: string; blocked_reason: string | null; title: string }>(
+        'SELECT status, blocked_reason, title FROM tasks WHERE id = ? AND organization_id = ?',
+        [taskId, orgId]
+      );
+      if (!task) {
+        res.status(404).json({ error: 'Task not found' });
+        return;
+      }
+
+      if (String(task.status || '').toLowerCase() !== 'blocked') {
+        res.status(409).json({
+          error: 'Only blocked tasks can be unblocked',
+          code: 'TASK_NOT_BLOCKED',
+          currentStatus: task.status,
+        });
+        return;
+      }
+
+      const targetStatus = newStatus || 'in_progress';
+      const validation = validateTaskStatusTransition(task.status, targetStatus);
+      if (!validation.allowed && 'rule' in validation && 'message' in validation) {
+        res.status(400).json({
+          error: validation.message,
+          code: validation.rule,
+          ...buildTransitionErrorPayload(task.status, targetStatus),
+        });
+        return;
+      }
 
       await DbPromise.run(
         `UPDATE tasks SET 
@@ -1821,14 +2255,24 @@ export class TaskController {
                 blocked_by_decision_id = NULL,
                 updated_at = ?
              WHERE id = ?`,
-        [newStatus || 'in_progress', now, taskId]
+        [targetStatus, now, taskId]
       );
+
+      logTaskAuditEvent({
+        actorId: userId,
+        organizationId: orgId,
+        action: 'TASK_UNBLOCK',
+        resourceId: taskId,
+        before: { status: task.status, blockedReason: task.blocked_reason },
+        after: { status: targetStatus, blockedReason: null },
+        metadata: { taskTitle: task.title },
+      }).catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
 
       res.json({
         success: true,
         message: 'Task unblocked',
         taskId,
-        newStatus: newStatus || 'in_progress',
+        newStatus: targetStatus,
       });
     }
   );
@@ -1865,9 +2309,9 @@ export class TaskController {
       }
 
       // Get current task info
-      const task = await DbPromise.get<{ initiative_id: string; project_id: string }>(
-        'SELECT initiative_id, project_id FROM tasks WHERE id = ?',
-        [taskId]
+      const task = await DbPromise.get<{ initiative_id: string; project_id: string; title: string }>(
+        'SELECT initiative_id, project_id, title FROM tasks WHERE id = ? AND organization_id = ?',
+        [taskId, orgId]
       );
 
       if (!task) {
@@ -1902,6 +2346,16 @@ export class TaskController {
           userId,
         ]
       );
+
+      logTaskAuditEvent({
+        actorId: userId,
+        organizationId: orgId,
+        action: 'TASK_MOVE',
+        resourceId: taskId,
+        before: { initiativeId: task.initiative_id, projectId: task.project_id },
+        after: { initiativeId: targetInitiativeId, projectId: targetInitiative.project_id },
+        metadata: { taskTitle: task.title },
+      }).catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
 
       res.json({
         success: true,
@@ -2157,6 +2611,10 @@ export class TaskController {
         lagDays?: number;
         notes?: string;
       };
+      if (!orgId || !userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
 
       if (!targetTaskId) {
         res.status(400).json({ error: 'targetTaskId is required' });
@@ -2277,11 +2735,11 @@ export class TaskController {
       // Log activity
       try {
         await ActivityService.logActivity({
-          organizationId: orgId!,
+          organizationId: orgId,
           entityType: 'task',
           entityId: taskId,
           action: 'dependency_added',
-          userId: userId!,
+          userId,
           details: {
             targetTaskId,
             targetTaskTitle: targetTask.title,
@@ -2300,6 +2758,21 @@ export class TaskController {
         finish_to_finish: 'FF',
         start_to_finish: 'SF',
       };
+
+      logTaskAuditEvent({
+        actorId: userId,
+        organizationId: orgId,
+        action: 'TASK_DEPENDENCY_ADD',
+        resourceId: taskId,
+        after: {
+          dependencyId: depId,
+          predecessorId,
+          successorId,
+          dependencyType: depType,
+          lagDays: lag,
+        },
+        metadata: { targetTaskId, direction },
+      }).catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
 
       res.status(201).json({
         success: true,
@@ -2330,6 +2803,10 @@ export class TaskController {
       const taskId = req.params.id;
       const depId = req.params.depId;
       const schema = await getTaskDepsSchema();
+      if (!orgId || !userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
 
       // Verify the dependency exists and involves this task
       const dep = await DbPromise.get<{
@@ -2358,14 +2835,28 @@ export class TaskController {
 
       await DbPromise.run('DELETE FROM task_dependencies WHERE id = ?', [depId]);
 
+      logTaskAuditEvent({
+        actorId: userId,
+        organizationId: orgId,
+        action: 'TASK_DEPENDENCY_REMOVE',
+        resourceId: taskId,
+        before: {
+          dependencyId: depId,
+          predecessorId:
+            schema.fromCol === 'predecessor_id' ? dep.predecessor_id : dep.from_task_id,
+          successorId: schema.fromCol === 'predecessor_id' ? dep.successor_id : dep.to_task_id,
+        },
+        metadata: {},
+      }).catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
+
       // Log activity
       try {
         await ActivityService.logActivity({
-          organizationId: orgId!,
+          organizationId: orgId,
           entityType: 'task',
           entityId: taskId,
           action: 'dependency_removed',
-          userId: userId!,
+          userId,
           details: { dependencyId: depId },
         });
       } catch {

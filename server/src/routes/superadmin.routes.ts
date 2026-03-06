@@ -15,6 +15,7 @@ import { Response, Router } from 'express';
 import SuperAdminController from '../controllers/SuperAdminController.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireConfirmation } from '../middleware/confirmAction.middleware.js';
+import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import {
   getAllOrgPolicies,
   getOrgPolicy,
@@ -97,14 +98,35 @@ router.get(
 
 router.put(
   '/org-policies/:orgId',
+  requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { retentionDays, legalHoldEnabled, residencyRegion } = req.body || {};
+    const before = await getOrgPolicy(req.params.orgId);
     const policy = await upsertOrgPolicy(req.params.orgId, {
       retentionDays: retentionDays != null ? Number(retentionDays) : undefined,
       legalHoldEnabled:
         legalHoldEnabled !== undefined ? Boolean(legalHoldEnabled) : undefined,
       residencyRegion:
         residencyRegion !== undefined ? (residencyRegion === null ? null : String(residencyRegion)) : undefined,
+    });
+    await req.emitAuditEvent?.({
+      actorType: 'USER',
+      action: before ? 'update' : 'create',
+      resourceType: 'org_policy',
+      resourceId: req.params.orgId,
+      before: before
+        ? {
+            retentionDays: before.retention_days,
+            legalHoldEnabled: Boolean(before.legal_hold_enabled),
+            residencyRegion: before.residency_region,
+          }
+        : undefined,
+      after: {
+        retentionDays: policy.retention_days,
+        legalHoldEnabled: Boolean(policy.legal_hold_enabled),
+        residencyRegion: policy.residency_region,
+      },
+      metadata: { organizationId: req.params.orgId },
     });
     res.json(policy);
   })

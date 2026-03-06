@@ -35,10 +35,13 @@ export interface DateRangeFilter {
 
 export interface TaskFilters {
   projectId?: string;
+  programId?: string;
   status?: string;
   assigneeId?: string;
   priority?: string;
   initiativeId?: string;
+  listId?: string;
+  scope?: 'personal' | 'initiative' | 'program';
 }
 
 export interface NotificationFilters {

@@ -16,6 +16,12 @@ export type ReportStatus = 'draft' | 'ready' | 'exported' | 'archived';
 export type PresentationSourceType = 'tool' | 'assessment' | 'finance' | 'upload';
 export type PresentationStatus = 'draft' | 'generated' | 'editing' | 'ready' | 'shared' | 'archived';
 
+export interface ArtifactSourceRef {
+  artifact_id: string;
+  artifact_type: string;
+  artifact_name: string;
+}
+
 export interface TemplateItem {
   id: string;
   title: string;
@@ -42,7 +48,7 @@ export interface ReportItem {
   createdAt: string;
   updatedAt: string;
   exportFormats: string[];
-  sourceRefs?: string[];
+  sourceRefs?: Array<string | ArtifactSourceRef>;
   [key: string]: unknown;
 }
 
@@ -58,6 +64,7 @@ export interface PresentationItem {
   thumbnailUrl?: string;
   exportFormats: string[];
   sourceId?: string;
+  sourceRefs?: ArtifactSourceRef[];
   [key: string]: unknown;
 }
 

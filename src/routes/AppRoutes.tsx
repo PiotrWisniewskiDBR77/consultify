@@ -48,30 +48,6 @@ const ContextBuilderView = React.lazy(() =>
 const DiscoveryToolsHub = React.lazy(() =>
   import('@/components/Discovery/DiscoveryToolsHub').then((m) => ({ default: m.DiscoveryToolsHub }))
 );
-// Legacy Discovery Tools Views (keeping for backward compatibility)
-const DiscoveryToolsView = React.lazy(() =>
-  import('@/views/discovery-tools/DiscoveryToolsView').then((m) => ({
-    default: m.DiscoveryToolsView,
-  }))
-);
-const StrategicToolsView = React.lazy(() =>
-  import('@/views/discovery-tools/StrategicToolsView').then((m) => ({
-    default: m.StrategicToolsView,
-  }))
-);
-const OperationalToolsView = React.lazy(() =>
-  import('@/views/discovery-tools/OperationalToolsView').then((m) => ({
-    default: m.OperationalToolsView,
-  }))
-);
-const DigitalToolsView = React.lazy(() =>
-  import('@/views/discovery-tools/DigitalToolsView').then((m) => ({ default: m.DigitalToolsView }))
-);
-const ProcessAutomationView = React.lazy(() =>
-  import('@/views/discovery-tools/ProcessAutomationView').then((m) => ({
-    default: m.ProcessAutomationView,
-  }))
-);
 
 // T064 — Megatrends canonical workspace
 const MegatrendsWorkspace = React.lazy(() =>
@@ -147,6 +123,11 @@ const V4ComingSoonView = React.lazy(() =>
 const PresentationsHub = React.lazy(() =>
   import('@/components/Presentations/PresentationsHub').then((m) => ({
     default: m.PresentationsHub,
+  }))
+);
+const SharedPresentationView = React.lazy(() =>
+  import('@/components/Presentations/SharedPresentationView').then((m) => ({
+    default: m.SharedPresentationView,
   }))
 );
 const ReportsAndPresentationsHub = React.lazy(() =>
@@ -994,7 +975,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Strategic Analysis']} noPadding>
               <RouteErrorBoundary>
-                <StrategicToolsView />
+                <DiscoveryToolsHub initialTab="library" initialCategory="strategic" />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1024,7 +1005,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Operational']} noPadding>
               <RouteErrorBoundary>
-                <DiscoveryToolsHub initialTab="sessions" />
+                <DiscoveryToolsHub initialTab="library" initialCategory="operational" />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1034,7 +1015,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Digital']} noPadding>
               <RouteErrorBoundary>
-                <DiscoveryToolsHub initialTab="sessions" />
+                <DiscoveryToolsHub initialTab="library" initialCategory="digital" />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1044,7 +1025,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Process Automation']} noPadding>
               <RouteErrorBoundary>
-                <DiscoveryToolsHub initialTab="sessions" />
+                <DiscoveryToolsHub initialTab="library" initialCategory="automation" />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1353,6 +1334,22 @@ export const AppRoutes: React.FC = () => {
           element={
             <RouteErrorBoundary>
               <DeckBuilder />
+            </RouteErrorBoundary>
+          }
+        />
+        <Route
+          path="/presentations/shared/:shareToken"
+          element={
+            <RouteErrorBoundary>
+              <SharedPresentationView />
+            </RouteErrorBoundary>
+          }
+        />
+        <Route
+          path="/presentations/embed/:shareToken"
+          element={
+            <RouteErrorBoundary>
+              <SharedPresentationView />
             </RouteErrorBoundary>
           }
         />

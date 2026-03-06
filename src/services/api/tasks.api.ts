@@ -6,12 +6,23 @@
 import { API_URL, fetchWithRetry, getHeaders, handleResponse } from './baseClient';
 import type { TaskFilters } from './types';
 
+export type TaskStatus =
+  | 'backlog'
+  | 'todo'
+  | 'in_progress'
+  | 'review'
+  | 'blocked'
+  | 'on_hold'
+  | 'done'
+  | 'cancelled';
+
 export interface Task {
   id: string;
   projectId: string;
+  programId?: string | null;
   title: string;
   description?: string;
-  status: 'todo' | 'in_progress' | 'review' | 'done' | 'blocked';
+  status: TaskStatus;
   priority: 'low' | 'medium' | 'high' | 'critical';
   assigneeId?: string;
   dueDate?: string;
@@ -21,6 +32,8 @@ export interface Task {
   tags?: string[];
   taskType?: string;
   initiativeId?: string;
+  listId?: string | null;
+  listName?: string | null;
   why?: string;
   stepPhase?: 'design' | 'pilot' | 'rollout';
   createdAt: string;
@@ -54,8 +67,14 @@ export interface CreateTaskInput {
   tags?: string[];
   taskType?: string;
   initiativeId?: string;
+  listId?: string;
   why?: string;
   stepPhase?: 'design' | 'pilot' | 'rollout';
+}
+
+export interface TaskWorkflowConfig {
+  statuses: TaskStatus[];
+  transitions: Record<TaskStatus, TaskStatus[]>;
 }
 
 export const TaskApi = {
@@ -68,10 +87,13 @@ export const TaskApi = {
     if (filters) {
       const params = new URLSearchParams();
       if (filters.projectId) params.append('projectId', filters.projectId);
+      if (filters.programId) params.append('programId', filters.programId);
       if (filters.status) params.append('status', filters.status);
       if (filters.assigneeId) params.append('assigneeId', filters.assigneeId);
       if (filters.priority) params.append('priority', filters.priority);
       if (filters.initiativeId) params.append('initiativeId', filters.initiativeId);
+      if (filters.listId) params.append('listId', filters.listId);
+      if (filters.scope) params.append('scope', filters.scope);
       if (params.toString()) url += `?${params.toString()}`;
     }
     const res = await fetch(url, { headers: getHeaders() });
@@ -101,6 +123,29 @@ export const TaskApi = {
       body: JSON.stringify(updates),
     });
     await handleResponse(res, 'Failed to update task');
+  },
+
+  getTaskRollups: async (filters?: TaskFilters): Promise<any> => {
+    let url = `${API_URL}/tasks/rollups`;
+    if (filters) {
+      const params = new URLSearchParams();
+      if (filters.projectId) params.append('projectId', filters.projectId);
+      if (filters.programId) params.append('programId', filters.programId);
+      if (filters.initiativeId) params.append('initiativeId', filters.initiativeId);
+      if (filters.listId) params.append('listId', filters.listId);
+      if (filters.scope) params.append('scope', filters.scope);
+      if (params.toString()) url += `?${params.toString()}`;
+    }
+    const res = await fetch(url, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch task rollups');
+    return res.json();
+  },
+
+  getWorkflowConfig: async (): Promise<TaskWorkflowConfig> => {
+    const res = await fetchWithRetry(`${API_URL}/tasks/workflow-config`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch task workflow config');
   },
 
   deleteTask: async (id: string): Promise<void> => {

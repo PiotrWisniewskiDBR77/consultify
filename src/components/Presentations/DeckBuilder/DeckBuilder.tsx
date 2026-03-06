@@ -7,8 +7,10 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 
+import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
@@ -50,6 +52,7 @@ function deckFromUnifiedJson(params: {
   deckId: string;
   title?: string;
   unifiedJson: unknown;
+  sourceRefs?: Deck['source_refs'];
   orgId?: string;
   createdBy?: string;
   createdAt?: string;
@@ -207,7 +210,7 @@ function deckFromUnifiedJson(params: {
     status: params.status || 'draft',
     card_size: '16:9',
     cards,
-    source_refs: [],
+    source_refs: Array.isArray(params.sourceRefs) ? params.sourceRefs : [],
     generation_settings: {
       text_mode: 'preserve',
       content_depth: 'concise',
@@ -226,7 +229,9 @@ function deckFromUnifiedJson(params: {
 }
 
 export const DeckBuilder: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { deckId } = useParams<{ deckId: string }>();
+  const isPolish = i18n.language?.startsWith('pl');
   const {
     deck,
     setDeck,
@@ -245,6 +250,7 @@ export const DeckBuilder: React.FC = () => {
   } = useDeckState(null);
 
   const [loadingDeck, setLoadingDeck] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedInitialRef = useRef(false);
 
@@ -259,6 +265,10 @@ export const DeckBuilder: React.FC = () => {
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
   const [qualityGatesOpen, setQualityGatesOpen] = useState(false);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
+  const [deckBacklinks, setDeckBacklinks] = useState<
+    Array<{ id: string; sourceType: string; sourceId: string }>
+  >([]);
+  const [deckBacklinksLoading, setDeckBacklinksLoading] = useState(false);
 
   const {
     versions,
@@ -281,6 +291,7 @@ export const DeckBuilder: React.FC = () => {
     const load = async () => {
       if (!deckId) return;
       setLoadingDeck(true);
+      setLoadError(null);
       hasLoadedInitialRef.current = false;
       setDeck(null);
 
@@ -300,11 +311,17 @@ export const DeckBuilder: React.FC = () => {
             deck_id: deckId,
             title: title || deckJson.title || 'Untitled',
             status,
+            source_refs: Array.isArray(deckJson.source_refs)
+              ? deckJson.source_refs
+              : Array.isArray(row?.source_refs)
+                ? row.source_refs
+                : [],
             updated_at: row?.updated_at || deckJson.updated_at || new Date().toISOString(),
           };
           if (!cancelled) {
             setDeck(loaded);
             setLoadingDeck(false);
+            setLoadError(null);
             hasLoadedInitialRef.current = true;
           }
           return;
@@ -316,6 +333,7 @@ export const DeckBuilder: React.FC = () => {
           deckId,
           title,
           unifiedJson: unified,
+          sourceRefs: Array.isArray(row?.source_refs) ? row.source_refs : [],
           orgId: row?.organization_id,
           createdBy: row?.generated_by || row?.created_by,
           createdAt: row?.created_at,
@@ -326,6 +344,7 @@ export const DeckBuilder: React.FC = () => {
           if (!cancelled) {
             setDeck(converted);
             setLoadingDeck(false);
+            setLoadError(null);
             hasLoadedInitialRef.current = true;
           }
           return;
@@ -345,7 +364,7 @@ export const DeckBuilder: React.FC = () => {
           status,
           card_size: '16:9',
           cards: [],
-          source_refs: [],
+          source_refs: Array.isArray(row?.source_refs) ? row.source_refs : [],
           generation_settings: {
             text_mode: 'preserve',
             content_depth: 'concise',
@@ -364,14 +383,17 @@ export const DeckBuilder: React.FC = () => {
         if (!cancelled) {
           setDeck(emptyDeck);
           setLoadingDeck(false);
+          setLoadError(null);
           hasLoadedInitialRef.current = true;
           toast.error('Deck has no content yet. Generate slides first.');
         }
       } catch (e: any) {
         if (!cancelled) {
-          toast.error(e?.message ? String(e.message) : 'Failed to load presentation deck');
+          const message = e?.message ? String(e.message) : 'Failed to load presentation deck';
+          toast.error(message);
           setDeck(null);
           setLoadingDeck(false);
+          setLoadError(message);
         }
       }
     };
@@ -423,6 +445,26 @@ export const DeckBuilder: React.FC = () => {
   useEffect(() => {
     collab.updatePresence({ activeCardIndex });
   }, [activeCardIndex, collab]);
+
+  useEffect(() => {
+    const targetDeckId = String(deckId || deck?.deck_id || '').trim();
+    if (!targetDeckId) return;
+    setDeckBacklinksLoading(true);
+    Api.getLinkGraphBacklinks({ type: 'presentation', id: targetDeckId, limit: 50 })
+      .then((rows: any) => {
+        setDeckBacklinks(
+          (Array.isArray(rows) ? rows : [])
+            .map((x: any) => ({
+              id: String(x?.id || ''),
+              sourceType: String(x?.sourceType || ''),
+              sourceId: String(x?.sourceId || ''),
+            }))
+            .filter((x) => x.sourceType && x.sourceId)
+        );
+      })
+      .catch(() => setDeckBacklinks([]))
+      .finally(() => setDeckBacklinksLoading(false));
+  }, [deck?.deck_id, deckId]);
 
   const handleTitleChange = useCallback(
     (title: string) => {
@@ -522,6 +564,26 @@ export const DeckBuilder: React.FC = () => {
   );
 
   if (loadingDeck || !deck) {
+    if (!loadingDeck && loadError) {
+      return (
+        <div className="h-screen flex items-center justify-center bg-white dark:bg-navy-950 px-6">
+          <div className="max-w-md rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-6 text-center shadow-xl">
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Failed to load deck
+            </h1>
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{loadError}</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="mt-4 inline-flex rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="h-screen flex items-center justify-center bg-white dark:bg-navy-950">
         <div className="animate-pulse text-slate-400">Loading deck...</div>
@@ -571,6 +633,45 @@ export const DeckBuilder: React.FC = () => {
             isOpen={themeSwitcherOpen}
             onClose={() => setThemeSwitcherOpen(false)}
           />
+        </div>
+
+        <div className="border-b border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/40 px-4 py-2">
+          <EmbeddedView
+            title={t('presentations.builder.usedIn', 'Used in (backlinks)')}
+            count={deckBacklinks.length}
+            loading={deckBacklinksLoading}
+            readOnly
+            viewModes={['list']}
+          >
+            {deckBacklinks.length === 0 && !deckBacklinksLoading ? (
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {isPolish ? 'Brak powiązań' : 'No links yet'}
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {deckBacklinks.slice(0, 8).map((bl) => (
+                  <button
+                    key={bl.id}
+                    type="button"
+                    onClick={() =>
+                      window.dispatchEvent(
+                        new CustomEvent('mywork-open-item', {
+                          detail: {
+                            type: bl.sourceType,
+                            id: bl.sourceId,
+                            name: `${bl.sourceType} ${bl.sourceId}`,
+                          },
+                        })
+                      )
+                    }
+                    className="rounded-full border border-slate-200 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:border-blue-400 dark:hover:border-blue-500/50"
+                  >
+                    {bl.sourceType}: {bl.sourceId}
+                  </button>
+                ))}
+              </div>
+            )}
+          </EmbeddedView>
         </div>
 
         {/* Main Content */}

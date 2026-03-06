@@ -45,6 +45,7 @@ Last update: 2026-03-04
 - V4 Gap Analysis: `docs/product/V4_GAP_ANALYSIS.md`
 
 **Product / architecture:**
+- Business positioning: `docs/product/BUSINESS_POSITIONING_SSOT.md`
 - System axis: `docs/product/SYSTEM_ARCHITECTURE_BRIEF.md`
 - Traceability: `docs/product/SOURCE_TRACEABILITY_SPEC.md`
 - Link Graph: `docs/product/LINK_GRAPH_V3.md`
@@ -95,9 +96,24 @@ Last update: 2026-03-04
 
 ## 1) Kontrakt programu (V4)
 
+### 1.0 Business truth (canonical)
+
+V4 nie jest tylko programem technicznym. Implementujemy biznesową tezę produktu opisaną w `docs/product/BUSINESS_POSITIONING_SSOT.md`.
+
+Kanoniczna definicja produktu:
+
+**Consultify is doing for consulting intelligence what Spotify did for music - making world-class knowledge accessible to everyone.**
+
+To oznacza, że V4 ma wzmacniać nie tylko "AI answers", ale cały ustrukturyzowany workflow consultingowy:
+- understanding the business
+- diagnosis
+- designing initiatives
+- execution
+- results
+
 ### 1.1 North star
 
-V4 ma być **enterprise-ready**: pełna traceability, audit, governance, realtime collaboration, benchmark overlay i AI advisor jako platforma.
+V4 ma być **enterprise-ready** i jednocześnie zgodne z tezą biznesową produktu: demokratyzować consulting intelligence poprzez platformę, która łączy wiedzę, frameworki, guidance i execution w jednym środowisku pracy.
 
 ### 1.2 Nienegocjowalne (MUST)
 
@@ -185,12 +201,12 @@ Reguła: `done` bez smoke = nie istnieje.
 | --- | --- | --- | --- | --- | --- | --- |
 | **5.1 Ideas** | 9 | 0/9 | 3/9 | 0/9 | — | — |
 | **5.2 Notebook** | 7 | 0/7 | 0/7 | 0/7 | — | — |
-| **5.3 Tasks+Decisions** | 8 | 1/8 | 3/8 | 0/8 | — | — |
+| **5.3 Tasks+Decisions** | 8 | 1/8 | 5/8 | 0/8 | — | — |
 | **5.4 Inbox+Focus** | 7 | 0/7 | 0/7 | 0/7 | — | — |
 | **6.1 Interview** | 7 | 0/7 | 0/7 | 0/7 | — | — |
 | **6.2 Consulting Tools** | 7 | 0/7 | 2/7 | 0/7 | — | — |
 | **6.3 Assessments** | 7 | 0/7 | 3/7 | 0/7 | — | — |
-| **6.4 Initiatives** | 7 | 1/7 | 2/7 | 0/7 | — | — |
+| **6.4 Initiatives** | 7 | 1/7 | 3/7 | 0/7 | — | — |
 | **6.5 Execution** | 8 | 0/8 | 3/8 | 0/8 | — | — |
 | **6.6 Results** | 6 | 0/6 | 2/6 | 0/6 | — | — |
 | **6.7 Finance** | 7 | 0/7 | 0/7 | 0/7 | — | — |
@@ -199,7 +215,7 @@ Reguła: `done` bez smoke = nie istnieje.
 | **6.10 Enterprise Platform** | 8 | 2/8 | 2/8 | 0/8 | — | — |
 | **6.11 Organization** | 9 | 1/9 | 1/9 | 0/9 | — | — |
 | **6.12 AI Advisor** | 8 | 0/8 | 0/8 | 0/8 | — | — |
-| **TOTAL** | **120** | **5/120** | **24/120** | **0/120** | | |
+| **TOTAL** | **120** | **5/120** | **36/120** | **0/120** | | |
 
 ### 2.4 Current blockers
 
@@ -210,16 +226,17 @@ Reguła: `done` bez smoke = nie istnieje.
 ### 2.5 Risks (poza blockerami)
 
 > Ryzyka wpływają na planowanie i mitigation; nie blokują startu. Przegląd: co tydzień.
+> **Ostatni przegląd: 2026-03-06**
 
-| Ryzyko | Impact | Mitigation |
-| --- | --- | --- |
-| **Stary kod bez audit** — wiele istniejących write routes nie emituje zdarzeń | Średni — regresja traceability; trudna audytowalność | V4-ENT-03 pierwszy; middleware `requireAudit` na routes; audyt wszystkich write przed R0 gate. Lista route’ów do instrumentacji w Progress log. |
-| **Benchmark wymaga seed data** — `/api/benchmark/compare` zwraca 503; brak datasets | Wysoki — Assessment benchmark UI nie działa | V4-ORG-01: minimum syntetyczny dataset (np. SIRI/ADMA percentiles z CSV seed) lub mock API 200 z przykładowymi danymi. Ingestion pipeline w R1. |
-| **CRDT / tool switch** — przy migracji mindmap↔whiteboard możliwa utrata danych | Wysoki — UX regresja | V4-IDEA-01: canonical schema + validatory; testy „round-trip” przed/po switch; no data loss jako acceptance. |
-| **Policy enforcement regresja** — legal hold / retention może zablokować delete tam gdzie dziś działa | Średni — user confusion, support | V4-ENT-04: jawny błąd 403 + komunikat „Legal hold active”; nie cichy fail. Testy przed/po w regresji. |
-| **Evidence storage (S3)** — vendor lock-in, koszt, virus scan pipeline | Średni | Użyć S3-compatible (MinIO lokálně); adapter pattern; scan opcjonalny w R0, wymagany w R1. |
-| **Realtime WebSocket scale** — R1: wiele sesji, presence, CRDT sync | Niski (R1) | Load test przed R1 release; limity per-org jeśli potrzeba. |
-| **Execution automation rules** — złożony grafy eventów (signal→RAID→decision→task) | Średni | Sekcja 6.5.1 V4_GAP_ANALYSIS ma tabelę automation rules; implementacja krok po kroku; testy integracyjne per trigger. |
+| Ryzyko | Impact | Mitigation | Status (2026-03-06) |
+| --- | --- | --- | --- |
+| **Stary kod bez audit** — wiele istniejących write routes nie emituje zdarzeń | Średni — regresja traceability | `requireAudit` middleware + `audit_events` unified table + `GET /api/audit/events` z filtrami. Instrumentacja reszty write routes = R0 gate task. | **PARTIALLY MITIGATED** — 22 write routes mają `requireAudit`; controllery (Task, Initiative, Decision) logują bezpośrednio. ~90% write routes nadal bez audit — nie blocker, ale R0 gate wymaga pełnego pokrycia. |
+| **Benchmark wymaga seed data** — `/api/benchmark/compare` zwraca 503 | ~~Wysoki~~ → Niski | Auto-seed z `industryBenchmarkService` (McKinsey/Gartner/IDC). Ingestion pipeline = R1. | **MITIGATED** — `benchmark_datasets` + `benchmark_datasets_versions` istnieją. API zwraca 200 z percentiles, cohortSize, suppressed flag. 503 tylko gdy seed fail. |
+| **CRDT / tool switch** — przy migracji mindmap↔whiteboard możliwa utrata danych | ~~Wysoki~~ → Niski (by design) | Wszystkie narzędzia dzielą ten sam graph przez wspólne API `getMyIdeaMap`/`saveMyIdeaMap`. | **LOW RISK** — Przełączanie instant bez konwersji danych. Brak Yjs/Automerge = brak CRDT migration risk. Ryzyko dotyczy R1 (V4-IDEA-02/03), nie R0. |
+| **Policy enforcement regresja** — legal hold może zablokować delete | Średni — user confusion | `requireNoLegalHold` przed delete/export (org, data, prezentacje). Jawny 403. | **MITIGATED** — `org_policies` z `legal_hold_enabled`. Enforcement na delete org, export/delete data, delete/export prezentacji. `residency_region` stored, enforcement = R1. |
+| **Evidence storage (S3)** — vendor lock-in, koszt, virus scan | Średni | Evidence stored w DB (assessment_evidence) z tenant scoping + unique constraint. S3 adapter = R1. | **ACCEPTED (R1)** — Nie blokuje R0. |
+| **Realtime WebSocket scale** — wiele sesji, presence, CRDT sync | Niski (R1) | Bazowy WS (`/ws/collab/:ideaId`) działa dla mindmap presence/cursors. | **ACCEPTED (R1)** — Deck/Table collab = stubs. Pełna implementacja = R1 (V4-ENT-06, V4-IDEA-02/03). |
+| **Execution automation rules** — złożony grafy eventów | Średni | `task_automation_rules` tabela + CRUD API = schema-only stub. Engine = V4-TASK-05 (Wave 4). | **ACCEPTED (schema-only)** — Wystarczy na R0. |
 
 ### 2.6 Progress log (dziennik realizacji)
 
@@ -232,6 +249,62 @@ Reguła: `done` bez smoke = nie istnieje.
 | 2026-03-04 | Faza C / Wave 1–4 | ENT-03, ENT-04, ORG-01, TASK-01/03/08, INIT-01, IDEA-01/04/08, EXEC-01/02. Dashboard updated. scope=initiative|program validation w TaskController. |
 | 2026-03-04 | V4-ENT-04 Admin UI | Zakładka Data Governance w SecurityPoliciesView: retention, legal hold, residency per org. API: GET/PUT /superadmin/org-policies. OrgPoliciesService.queryRun. |
 | 2026-03-04 | V4-NOTE-05 | Notebook lifecycle UI: verificationStatus (unverified/verified/disputed), reviewCadence (weekly/monthly/quarterly/never), staleAt badge, "Mark as reviewed". Typy w myWork.ts, scheduleSave rozszerzony. |
+| 2026-03-04 | Ledger impl | ENT-03, ORG-01, EXEC-01, TOOL-01, IDEA-09, EXEC-02 — już zaimplementowane, oznaczono impl. |
+| 2026-03-04 | V4-DECK-01 | BlockSourceBadge na blokach z source_ref; CardSourceFooter z hover citation tooltip. |
+| 2026-03-04 | V4-IDEA-07 | useKeyboardShortcuts w IdeaMapWorkspace: Escape, /, ?, Ctrl+G, Ctrl+A, Ctrl+D; KeyboardShortcutsHelp modal. |
+| 2026-03-04 | V4-RSLT-01 | Migracja 631: dimensions_json, slices_json, formula, version w kpi_definitions. GET /api/results/metrics-semantic-layer. |
+| 2026-03-04 | Kontrola #1 | V4-ORG-01 oznaczone do naprawy przez osobnego agenta po review jakości. Dalej kontynuujemy R0 od kolejnego taska w kolejce. |
+| 2026-03-04 | V4-TASK-01 | Domknięto kontrakt hierarchii: listId/workstream alias w walidacji i API, programId/listId w odpowiedziach tasków, GET /api/tasks/rollups dla rollupów program/initiative/list. |
+| 2026-03-06 | Kontrola #1 remediation closed | Dodano plan domknięcia checkpointu i wykonano remediację rdzenia: usunięto domyślne wymuszenie `SUPERADMIN`, uszczelniono `assessment_evidence` (tenant scoping, real evidence gate, unique conflict target), wdrożono dataset registry + versions dla benchmark backend, dopięto `requireAudit`/audit events na write-flowach checkpointu, rozszerzono policy enforcement na delete/export, poprawiono Deck share/load flow oraz przestano maskować brak semantic layer jako sukces. Statusy pozostawiono `impl` tylko tam, gdzie kontrakt został realnie dowieziony. |
+| 2026-03-06 | V4-INIT-01, V4-TASK-03, V4-TASK-08 | INIT-01: `GET /initiatives/:id/gate-readiness-check` zwraca teraz kanoniczne `passed` + `missing[{section,field,requirement}]`, a status-change dalej blokuje transition na tych samych brakach. TASK-03: workflow tasków ujednolicony do `backlog/todo/in_progress/review/blocked/on_hold/done/cancelled`, dodano `GET /api/tasks/workflow-config`, walidację `block/unblock` i spójne błędy z `allowedNext`. TASK-08: dołożono unified audit events dla comment add/delete, assign/reassign/unassign, escalate/resolve, block/unblock, move i dependency add/remove. Build green. |
+| 2026-03-06 | V4-EXEC-02, V4-IDEA-07 | EXEC-02: `GET /execution/:projectId/action-queue` rozszerzone o overdue `communication_plans` i otwarte `kpi_deviation_cases` bez aktywnego `kpi_deviation_action`; frontend queue renderuje już Decision/Risk/Task/Communication/KPI. IDEA-07: dopięto realne skróty w `IdeaMapWorkspace` dla add child/sibling, collapse, AI expand, focus selected oraz reparent promote/demote; workspace dostał jawne role/aria labels. |
+| 2026-03-06 | V4-RSLT-01 | `GET /api/results/metrics-semantic-layer` ma już jawne 503 przy braku migracji, scope `org_only|org_plus_global`, `includeHistory` dla wersji KPI definitions oraz deduplikację latest-by-code/name w trybie domyślnym. Semantic layer ma teraz minimalny kontrakt RLS + versioning wymagany na checkpoint. |
+| 2026-03-06 | V4-TOOL-01, V4-IDEA-09 | TOOL-01: `DiscoveryToolsHub` jest już jedynym canonical entrypoint dla tras Tools i odzyskał kompatybilność legacy deep-linków `?tool=` / `?sessionId=`. IDEA-09: `ReportEditor` pokazuje backlinks w review sidebarze, a `DeckBuilder` ma surface `Used in (backlinks)` dla prezentacji, co domyka parity z Ideas/Notebook/Tools/Initiatives. |
+| 2026-03-06 | V4-ASMT-03 | Na istniejącej tabeli `assessment_versions` dołożono backendowy kontrakt freeze + diff: `POST /api/assessment-workflow/:assessmentId/versions` tworzy snapshot oceny z `answers` + `score_summary`, a `GET /api/assessment-workflow/:assessmentId/versions/:fromVersion/diff/:toVersion` zwraca delty overall score i changed axes. Razem z wcześniejszym evidence gate domyka to checkpointowy zakres taska. |
+| 2026-03-06 | V4-IDEA-07 | Keyboard layer domknięto o add child/sibling, AI expand, focus selected i reparent promote/demote, a semantyki `aria-label` / `role=region` są już na `IdeaMapWorkspace`, `IdeaRecommendationMap`, `IdeaTableTool`, `IdeaProcessFlowTool` i `IdeaWhiteboardTool`. Checkpointowy zakres a11y/shortcut contract został domknięty bez dalszego zawyżania statusu. |
+
+### 2.6.1 Kontrola #1 — plan remediacji i domknięcia
+
+> **Cel:** doprowadzić wszystkie taski dowiezione do punktu `Kontrola #1` do stanu zgodnego z DoD, bez „fałszywego impl” w ledgerze.  
+> **Zasada:** status `impl` utrzymujemy tylko wtedy, gdy istnieje działający kod + smoke + brak znanych luk P0/P1 względem DoD.
+
+**Zakres remediacji (wszystko do checkpointu):**
+- Wave 1: `V4-ENT-03`, `V4-ENT-04`, `V4-ORG-01`, `V4-TASK-01`, `V4-INIT-01`
+- Dalsze taski dowiezione przed checkpointem: `V4-IDEA-01`, `V4-IDEA-04`, `V4-IDEA-08`, `V4-IDEA-09`, `V4-TASK-03`, `V4-TASK-08`, `V4-EXEC-01`, `V4-EXEC-02`
+- Dodatkowo oznaczone jako zaimplementowane przed/przy checkpointcie i wymagające uczciwego domknięcia: `V4-TOOL-01`, `V4-DECK-01`, `V4-IDEA-07`, `V4-RSLT-01`
+
+**Najpierw naprawy krytyczne (P0, blokują uznanie tasków za done):**
+1. `V4-ENT-03`
+   Otworzyć audit gap: usunąć niebezpieczne obejścia uprawnień, przejść z "global best effort" na jawne `requireAudit` na write routes, zapewnić `before/after`, ujednolicić query API i smoke testy dla create/update.
+2. `V4-ORG-01`
+   Zastąpić pseudo-backend benchmarku prawdziwym kontraktem minimalnym R0: dataset registry + seed/dataset version + `cohortSize`/`suppressed` liczone z danych, nie hardcoded. API ma zwracać `200`, ale bez maskowania braku danych jako sukcesu.
+3. `V4-ASMT-03` compatibility gap wykryty w review
+   Naprawić `assessment_evidence`: unikalny constraint pod upsert, tenant scoping, real evidence gate, brak cichych false-positive readiness. To jest wymagane, bo taski do checkpointu już weszły w obszary, które konsumują benchmark/evidence.
+4. `V4-DECK-01`
+   Domknąć traceability UI do końca: kliknięcie citation musi prowadzić do artefaktu, share/embed nie może generować martwych linków, a Deck Builder musi mieć poprawny stan błędu zamiast wiecznego loadera.
+
+**Domknięcie tasków „impl, ale niepełne”:**
+- `V4-EXEC-02`: domknięte 2026-03-06 przez dołożenie queue dla overdue comm items i KPI deviations bez action plan; status podniesiony do `impl`.
+- `V4-RSLT-01`: domknięte 2026-03-06 przez brak-maskowania migracji (`503`), scope `org_only|org_plus_global` i tryb `includeHistory/latest` dla KPI definitions.
+- `V4-IDEA-07`: domknięte 2026-03-06 przez realne shortcuts + focus/reparent + semantyki `role`/`aria-label` na canvas tools.
+- `V4-IDEA-09`: domknięte 2026-03-06 po dołożeniu parity `Used in` także do Reports i Presentations.
+- `V4-TASK-03`, `V4-TASK-08`, `V4-INIT-01`, `V4-IDEA-01`, `V4-IDEA-04`, `V4-IDEA-08`: zweryfikować, czy kod faktycznie istnieje; jeśli nie, przywrócić `todo` / `in_progress` i wpisać brakujący zakres.
+
+**Kolejność realizacji (must):**
+1. Bezpieczeństwo i integralność danych: `ENT-03`, auth, audit, `assessment_evidence`.
+2. Backend contracts R0: `ORG-01`, `INIT-01`, `TASK-03`, `TASK-08`, `EXEC-02`, `RSLT-01`.
+3. UI/product completion: `DECK-01`, `IDEA-07`, `IDEA-09`, `TOOL-01`.
+4. Ledger cleanup: aktualizacja statusów `Impl`/`QA`, dopisanie smoke evidence do Progress log.
+
+**Definition of done dla remediacji checkpointu:**
+- Każdy task do `Kontrola #1` ma jeden z trzech stanów: `implemented` z rzeczywistym smoke, `in_progress` z jawnym gapem, albo `todo`.
+- Brak znanych luk `P0` w security, tenant isolation i martwych flow UI.
+- Każdy task oznaczony `impl` ma referencję do konkretnego kodu i przechodzi smoke scenariusz z sekcji 7.
+- Progress log zawiera wpis „Kontrola #1 closed” z listą tasków zamkniętych i listą tasków cofniętych do poprawy.
+
+**Reguła współpracy z drugim agentem:**
+- Ten tor prac naprawia i porządkuje wszystko do `Kontrola #1`.
+- Drugi tor może iść dalej dopiero na taskach po checkpointcie; nie zmienia statusów ani DoD w obszarach checkpointu bez synchronizacji z tym planem.
 
 ---
 
@@ -252,9 +325,9 @@ Reguła: `done` bez smoke = nie istnieje.
 | V4-IDEA-04 | Audit log dla edycji użytkownika i AI (actor, przed/po, reason, timestamp) + replay API | draft | todo | not_tested | V4-ENT-03 | P0 |
 | V4-IDEA-05 | Model cluster/outcome na poziomie node/sticky + deterministyczna konwersja do Tasks/Decisions/Initiatives z LinkGraph backlinks | draft | todo | not_tested | — | P0 |
 | V4-IDEA-06 | Export mindmap: PDF + outline/markdown; whiteboard: PDF/PNG z watermarkingiem | draft | todo | not_tested | — | P1 |
-| V4-IDEA-07 | Keyboard shortcuts (reparent, multi-select, bulk ops) + focus model + screen-reader semantics (a11y DoD) | draft | todo | not_tested | — | P0 |
+| V4-IDEA-07 | Keyboard shortcuts (reparent, multi-select, bulk ops) + focus model + screen-reader semantics (a11y DoD) | draft | impl | not_tested | — | P0 |
 | V4-IDEA-08 | AI proposal audit — każda sugestia AI jako proposal z diff; apply rejestrowane w audicie | draft | todo | not_tested | V4-IDEA-04 | P0 |
-| V4-IDEA-09 | LinkGraph contract w UI (embed chips, "Used in" surfaces) we wszystkich modułach | draft | todo | not_tested | — | P0 |
+| V4-IDEA-09 | LinkGraph contract w UI (embed chips, "Used in" surfaces) we wszystkich modułach | draft | impl | not_tested | — | P0 |
 
 #### 5.2 Notebook + Knowledge (7)
 
@@ -272,14 +345,14 @@ Reguła: `done` bez smoke = nie istnieje.
 
 | ID | Task | Spec | Impl | QA | Deps | P |
 | --- | --- | --- | --- | --- | --- | --- |
-| V4-TASK-01 | Zunifikowana hierarchia: program → initiative → workstream/list → task/subtask; spójne API | **locked** | todo | not_tested | — | P0 |
+| V4-TASK-01 | Zunifikowana hierarchia: program → initiative → workstream/list → task/subtask; spójne API | **locked** | impl | not_tested | — | P0 |
 | V4-TASK-02 | Custom fields framework: schema registry, typy, walidacja, permissions | draft | todo | not_tested | — | P0 |
-| V4-TASK-03 | Workflow engine: statusy + transitions + guards; approval steps z SLA | draft | todo | not_tested | — | P0 |
+| V4-TASK-03 | Workflow engine: statusy + transitions + guards; approval steps z SLA | draft | impl | not_tested | — | P0 |
 | V4-TASK-04 | Dependencies: milestone objects, baseline snapshots, critical path calculation | draft | todo | not_tested | V4-TASK-01 | P0 |
 | V4-TASK-05 | Automation rules engine: triggers → conditions → actions; UI builder + dry-run + audit | draft | todo | not_tested | V4-TASK-01, V4-ENT-03 | P0 |
 | V4-TASK-06 | Workload model + allocation (capacity, skills, time tracking); integracja /api/capacity | draft | todo | not_tested | — | P0 |
 | V4-TASK-07 | Decision playbooks: required fields, workflow propose→review→approve→publish | draft | todo | not_tested | — | P0 |
-| V4-TASK-08 | Audit framework: każda zmiana task/decision/automation emitowana jako zdarzenie | draft | todo | not_tested | V4-ENT-03 | P0 |
+| V4-TASK-08 | Audit framework: każda zmiana task/decision/automation emitowana jako zdarzenie | draft | impl | not_tested | V4-ENT-03 | P0 |
 
 #### 5.4 Inbox + Focus + Executive (7)
 
@@ -311,7 +384,7 @@ Reguła: `done` bez smoke = nie istnieje.
 
 | ID | Task | Spec | Impl | QA | Deps | P |
 | --- | --- | --- | --- | --- | --- | --- |
-| V4-TOOL-01 | Nawigacja Tools: jeden module hub, spójna lista sessions/library, standard preview | draft | todo | not_tested | — | P0 |
+| V4-TOOL-01 | Nawigacja Tools: jeden module hub, spójna lista sessions/library, standard preview | draft | impl | not_tested | — | P0 |
 | V4-TOOL-02 | Framework runtime contract: typed I/O, DoD gates, deterministic export package | draft | todo | not_tested | — | P0 |
 | V4-TOOL-03 | Biblioteka templates: SWOT/PESTLE/Porter/Journey/BCG/OKR; org-curated, versioning | draft | todo | not_tested | — | P1 |
 | V4-TOOL-04 | Facilitation layer: timer, voting per-user identity, session roles, exportable outcomes | draft | todo | not_tested | V4-IDEA-02 | P0 |
@@ -325,7 +398,7 @@ Reguła: `done` bez smoke = nie istnieje.
 | --- | --- | --- | --- | --- | --- | --- |
 | V4-ASMT-01 | Benchmark backend: /api/benchmark/compare, datasets ingestion, cohort privacy rules | draft | todo | not_tested | V4-ORG-01 | P0 |
 | V4-ASMT-02 | Assessment domain model: session→report→version; usunąć legacy route duplication | draft | todo | not_tested | — | P0 |
-| V4-ASMT-03 | Score freeze + version diff + evidence completeness gates | draft | todo | not_tested | — | P0 |
+| V4-ASMT-03 | Score freeze + version diff + evidence completeness gates | draft | impl | not_tested | — | P0 |
 | V4-ASMT-04 | VDA/ISO: findings/nonconformities, clause-level evidence, CAPA workflow | draft | todo | not_tested | — | P0 |
 | V4-ASMT-05 | Evidence: clause mapping, access audit, retention integration z policy | draft | todo | not_tested | V4-ENT-03 | P0 |
 | V4-ASMT-06 | AI scoring proposals z citations; eval harness per framework | draft | todo | not_tested | — | P0 |
@@ -335,7 +408,7 @@ Reguła: `done` bez smoke = nie istnieje.
 
 | ID | Task | Spec | Impl | QA | Deps | P |
 | --- | --- | --- | --- | --- | --- | --- |
-| V4-INIT-01 | Backend gate enforcement: gate-readiness-check zwraca missing; transitions blokowane | **locked** | todo | not_tested | — | P0 |
+| V4-INIT-01 | Backend gate enforcement: gate-readiness-check zwraca missing; transitions blokowane | **locked** | impl | not_tested | — | P0 |
 | V4-INIT-02 | Program hierarchy: initiative.parentProgramId, portfolio rollups (health, deps, capacity, ROI) | draft | todo | not_tested | — | P0 |
 | V4-INIT-03 | Initiative blueprint templates: WBS, milestone templates, role templates; DoD per level | draft | todo | not_tested | — | P0 |
 | V4-INIT-04 | Goals/OKR spine: obiekty Goal z rollup do initiatives; alignment UI | draft | todo | not_tested | — | P0 |
@@ -347,8 +420,8 @@ Reguła: `done` bez smoke = nie istnieje.
 
 | ID | Task | Spec | Impl | QA | Deps | P |
 | --- | --- | --- | --- | --- | --- | --- |
-| V4-EXEC-01 | Signals engine: deterministyczne health (GREEN/AMBER/RED) z wyjaśnieniem "why red" | draft | todo | not_tested | — | P0 |
-| V4-EXEC-02 | Action Queue: overdue decisions, comm items, high P×I risks, KPI deviations bez action plan | draft | todo | not_tested | — | P0 |
+| V4-EXEC-01 | Signals engine: deterministyczne health (GREEN/AMBER/RED) z wyjaśnieniem "why red" | draft | impl | not_tested | — | P0 |
+| V4-EXEC-02 | Action Queue: overdue decisions, comm items, high P×I risks, KPI deviations bez action plan | draft | impl | not_tested | — | P0 |
 | V4-EXEC-03 | Critical path: obliczanie z dependencies, baseline snapshots UI, schedule risk analytics | draft | todo | not_tested | V4-TASK-04 | P0 |
 | V4-EXEC-04 | Capacity model: allocations per task/initiative, leveling alerts, overload detection | draft | todo | not_tested | V4-TASK-06 | P0 |
 | V4-EXEC-05 | Closed-loop workaround: signals→RAID mitigation→tasks→verify→close | draft | todo | not_tested | — | P0 |
@@ -360,7 +433,7 @@ Reguła: `done` bez smoke = nie istnieje.
 
 | ID | Task | Spec | Impl | QA | Deps | P |
 | --- | --- | --- | --- | --- | --- | --- |
-| V4-RSLT-01 | Metrics semantic layer: KPI definitions + dimensions + slices, RLS, versioning | draft | todo | not_tested | — | P0 |
+| V4-RSLT-01 | Metrics semantic layer: KPI definitions + dimensions + slices, RLS, versioning | draft | impl | not_tested | — | P0 |
 | V4-RSLT-02 | KPI connectors: ingestion pipeline, scheduled refresh, provenance per datapoint | draft | todo | not_tested | — | P0 |
 | V4-RSLT-03 | Deviation loop: verify/close z evidence; linkage do tasks/initiatives; audit | draft | todo | not_tested | V4-ENT-03 | P0 |
 | V4-RSLT-04 | ROI: evidence dla realized values, provenance assumptions, linkage do finance | draft | todo | not_tested | — | P0 |
@@ -394,7 +467,7 @@ Reguła: `done` bez smoke = nie istnieje.
 
 | ID | Task | Spec | Impl | QA | Deps | P |
 | --- | --- | --- | --- | --- | --- | --- |
-| V4-DECK-01 | Block-level traceability: sourceRefs; citation UI przy hover/click | draft | todo | not_tested | — | P0 |
+| V4-DECK-01 | Block-level traceability: sourceRefs; citation UI przy hover/click | draft | impl | not_tested | — | P0 |
 | V4-DECK-02 | Deck refresh engine: bindings do artifacts, refresh z diff preview, approval gates | draft | todo | not_tested | — | P0 |
 | V4-DECK-03 | Layout rules: auto-layout z guardrails; export fidelity QA + regression tests | draft | todo | not_tested | — | P0 |
 | V4-DECK-04 | Template governance: variables, versioning, consulting pack templates | draft | todo | not_tested | — | P0 |
@@ -408,7 +481,7 @@ Reguła: `done` bez smoke = nie istnieje.
 | --- | --- | --- | --- | --- | --- | --- |
 | V4-ENT-01 | SSO (OIDC/SAML): provider config per org, session hardening, logout propagation | draft | todo | not_tested | — | P0 |
 | V4-ENT-02 | SCIM: provisioning/deprovisioning, group sync, conflict handling | draft | todo | not_tested | — | P0 |
-| V4-ENT-03 | Unified audit log: tabela audit_events, middleware per route, query API | **locked** | todo | not_tested | — | P0 |
+| V4-ENT-03 | Unified audit log: tabela audit_events, middleware per route, query API | **locked** | impl | not_tested | — | P0 |
 | V4-ENT-04 | Policy engine: retention/legal hold/residency; enforcement hooks; admin UI | **locked** | impl | not_tested | — | P0 |
 | V4-ENT-05 | Integration hub: connector registry, queue/retry, secrets vaulting, allowlists | draft | todo | not_tested | — | P0 |
 | V4-ENT-06 | Realtime platform: WebSocket gateway, presence, CRDT store (Yjs/Automerge) | draft | todo | not_tested | — | P0 |
@@ -419,7 +492,7 @@ Reguła: `done` bez smoke = nie istnieje.
 
 | ID | Task | Spec | Impl | QA | Deps | P |
 | --- | --- | --- | --- | --- | --- | --- |
-| V4-ORG-01 | Benchmark backend: zastąpić stub 503; dataset registry, ingestion, refresh, versioning | **locked** | todo | not_tested | — | P0 |
+| V4-ORG-01 | Benchmark backend: zastąpić stub 503; dataset registry, ingestion, refresh, versioning | **locked** | impl | not_tested | — | P0 |
 | V4-ORG-02 | Cohort privacy: min N, suppression, noise/rounding, audit dla benchmark queries | draft | todo | not_tested | V4-ORG-01 | P0 |
 | V4-ORG-03 | Framework mappings: SIRI/ADMA/DRD/ISO — percentiles, "what good looks like" | draft | todo | not_tested | V4-ORG-01 | P0 |
 | V4-ORG-04 | Pipeline benchmark→gap→initiatives: automatyczne programy naprawcze | draft | todo | not_tested | V4-ORG-01 | P0 |
@@ -482,7 +555,7 @@ Reguła: `done` bez smoke = nie istnieje.
 | V4-IDEA-01 | Schema w SSOT; migracja; walidator; no data loss tool switch | Przełączenie mindmap↔whiteboard nie gubi danych |
 | V4-IDEA-04 | Integracja z ENT-03; event per user/AI edit | Każda edycja mapy → audit event |
 | V4-IDEA-08 | AI proposal stored; apply → audit | AI apply rejestrowane |
-| V4-IDEA-09 | EmbeddedView wszędzie; "Used in" parity | Ideas/Notebook/Tools/Initiatives ten sam pattern |
+| V4-IDEA-09 | EmbeddedView wszędzie; "Used in" parity | Ideas/Notebook/Tools/Initiatives/Reports/Presentations ten sam pattern |
 | V4-TASK-03 | Statusy + transitions + guards | Guard blokuje invalid transition |
 | V4-TASK-08 | Emit audit per task/decision change | Zmiana → event |
 | V4-INIT-02 | parentProgramId; portfolio rollups | Portfolio dashboard pokazuje hierarchy |

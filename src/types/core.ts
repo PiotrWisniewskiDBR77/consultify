@@ -808,6 +808,21 @@ export interface PortfolioSortConfig {
   direction: 'asc' | 'desc';
 }
 
+/** Program - V4-INIT-02 hierarchy entity for portfolio management */
+export interface Program {
+  id: string;
+  organizationId: string;
+  name: string;
+  description?: string;
+  parentProgramId?: string;
+  status: 'active' | 'on_hold' | 'completed' | 'cancelled';
+  ownerUserId?: string;
+  startDate?: string;
+  endDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 /** Portfolio Stats - KPIs for portfolio header */
 export interface PortfolioStats {
   total: number;
@@ -835,6 +850,8 @@ export interface PortfolioInitiative {
   targetQuarter?: string;
   waveId?: string;
   waveName?: string;
+  programId?: string;
+  programName?: string;
   projectId?: string;
   projectName?: string;
   sourceId?: string;

@@ -59,6 +59,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { ToolType as StoreToolType } from '@/store/useToolStore';
 import { listStrategyToolSlugs } from '@/toolCatalog/strategy/catalog';
+import { parseArtifactRef } from '@/utils/artifactLinks';
 
 import { ToolDocumentView, ToolWorkspace } from '../DiscoveryTools';
 import { GenerateInitiativesModal } from '../DiscoveryTools/GenerateInitiativesModal';
@@ -651,9 +652,13 @@ interface FullInitiativeData {
 
 interface DiscoveryToolsHubProps {
   initialTab?: ModuleTab;
+  initialCategory?: 'all' | 'strategic' | 'operational' | 'digital' | 'automation' | 'licensed';
 }
 
-export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab = 'library' }) => {
+export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
+  initialTab = 'library',
+  initialCategory = 'all',
+}) => {
   // V3-E01: Normalize legacy tab ids
   const normalizedInitialTab =
     initialTab === 'list' ? 'sessions' : initialTab === 'reports' ? 'outputs' : initialTab;
@@ -690,7 +695,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [libraryCategoryFilter, setLibraryCategoryFilter] = useState<
     'all' | 'strategic' | 'operational' | 'digital' | 'automation' | 'licensed' | 'other'
-  >('all');
+  >(initialCategory);
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const statusDropdownRef = React.useRef<HTMLDivElement>(null);
   const [isViewDropdownOpen, setIsViewDropdownOpen] = useState(false);
@@ -699,6 +704,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   const [addMenuCategory, setAddMenuCategory] = useState<ToolCategory | 'all'>('all');
   const [addMenuQuery, setAddMenuQuery] = useState('');
   const addMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setLibraryCategoryFilter(initialCategory);
+  }, [initialCategory]);
 
   // Docs-driven strategy catalog (wdrozenia/modules/tools/catalog/strategy/*.md)
   const strategyCatalogSlugs = useMemo(() => listStrategyToolSlugs(), []);
@@ -1976,6 +1985,21 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     void openDocumentById(docId).finally(() => {
       const next = new URLSearchParams(searchParams);
       next.delete('docId');
+      setSearchParams(next, { replace: true });
+    });
+  }, [hydrated, openDocumentById, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const artifact = parseArtifactRef(searchParams.get('artifact'));
+    if (!artifact) return;
+    if (artifact.type !== 'tool') return;
+
+    setActiveTab('sessions');
+    void openDocumentById(artifact.id).finally(() => {
+      const next = new URLSearchParams(searchParams);
+      next.delete('artifact');
+      next.delete('code');
       setSearchParams(next, { replace: true });
     });
   }, [hydrated, openDocumentById, searchParams, setSearchParams]);
