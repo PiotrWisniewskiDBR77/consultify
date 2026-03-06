@@ -103,6 +103,7 @@ import ssoRoutes from './routes/integrations/sso.routes.js';
 import webhookRoutes from './routes/integrations/webhooks.routes.js';
 import webhookSubRoutes from './routes/integrations/webhookSubscriptions.routes.js';
 import intelligenceRoutes from './routes/intelligence.routes.js';
+import financeEnterpriseRoutes from './routes/finance-enterprise.routes.js';
 import interviewRoutes from './routes/interview.routes.js';
 import interviewEnterpriseRoutes from './routes/interview-enterprise.routes.js';
 import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
@@ -649,6 +650,7 @@ export class ApiGateway {
       app.use('/api/benefits', benefitsRoutes);
       app.use('/api/finance-statements', financeStatementsRoutes);
       app.use('/api/financial-modeling', financialModelingRoutes);
+      app.use('/api/finance-v4', financeEnterpriseRoutes);
       app.use('/api/content', contentRoutes);
 
       // Catch-all RBAC or 404 for /api

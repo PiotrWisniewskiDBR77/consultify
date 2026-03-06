@@ -11700,6 +11700,119 @@ export const Api = {
     const res = await fetch(`${API_URL}/interview-v4/context/versions/${fromVersion}/diff/${toVersion}`, { headers: getHeaders() });
     return handleResponse(res, 'Failed to diff context versions');
   },
+
+  // ──────────────────────────────────────────────
+  // V4-FINC: Finance Enterprise API
+  // ──────────────────────────────────────────────
+
+  financeCreateModelVersion: async (modelId: string, data?: { scenarioLabel?: string; parentVersionId?: string }) => {
+    const res = await fetch(`${API_URL}/finance-v4/models/${modelId}/versions`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data || {}) });
+    return handleResponse(res, 'Failed to create model version');
+  },
+  financeGetModelVersions: async (modelId: string) => {
+    const res = await fetch(`${API_URL}/finance-v4/models/${modelId}/versions`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get model versions');
+  },
+  financeCompareVersions: async (fromId: string, toId: string) => {
+    const res = await fetch(`${API_URL}/finance-v4/versions/${fromId}/compare/${toId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to compare versions');
+  },
+  financeMergeVersion: async (versionId: string) => {
+    const res = await fetch(`${API_URL}/finance-v4/versions/${versionId}/merge`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to merge version');
+  },
+  financeCreateDimension: async (data: { dimensionName: string; dimensionType?: string }) => {
+    const res = await fetch(`${API_URL}/finance-v4/dimensions`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create dimension');
+  },
+  financeGetDimensions: async () => {
+    const res = await fetch(`${API_URL}/finance-v4/dimensions`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get dimensions');
+  },
+  financeCreateAllocation: async (modelId: string, data: Record<string, unknown>) => {
+    const res = await fetch(`${API_URL}/finance-v4/models/${modelId}/allocations`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create allocation');
+  },
+  financeGetAllocations: async (modelId: string) => {
+    const res = await fetch(`${API_URL}/finance-v4/models/${modelId}/allocations`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get allocations');
+  },
+  financeCreateConsolidation: async (data: { name: string; sourceModelIds: string[] }) => {
+    const res = await fetch(`${API_URL}/finance-v4/consolidations`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create consolidation');
+  },
+  financeGetConsolidations: async () => {
+    const res = await fetch(`${API_URL}/finance-v4/consolidations`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get consolidations');
+  },
+  financeCreateBudget: async (modelId: string, data: { fiscalYear: number; plannedData: Record<string, unknown>; versionLabel?: string }) => {
+    const res = await fetch(`${API_URL}/finance-v4/models/${modelId}/budgets`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create budget');
+  },
+  financeGetBudgets: async (modelId: string) => {
+    const res = await fetch(`${API_URL}/finance-v4/models/${modelId}/budgets`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get budgets');
+  },
+  financeUpdateBudgetActuals: async (budgetId: string, actualData: Record<string, unknown>) => {
+    const res = await fetch(`${API_URL}/finance-v4/budgets/${budgetId}/actuals`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ actualData }) });
+    return handleResponse(res, 'Failed to update budget actuals');
+  },
+  financeApproveBudget: async (budgetId: string) => {
+    const res = await fetch(`${API_URL}/finance-v4/budgets/${budgetId}/approve`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to approve budget');
+  },
+  financeGetVarianceAlerts: async (budgetId: string) => {
+    const res = await fetch(`${API_URL}/finance-v4/budgets/${budgetId}/variance-alerts`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get variance alerts');
+  },
+  financeCreateConnector: async (data: { connectorType: string; name: string; config: Record<string, unknown>; syncDirection?: string }) => {
+    const res = await fetch(`${API_URL}/finance-v4/connectors`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create connector');
+  },
+  financeGetConnectors: async () => {
+    const res = await fetch(`${API_URL}/finance-v4/connectors`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get connectors');
+  },
+  financeGetSyncLog: async (connectorId: string) => {
+    const res = await fetch(`${API_URL}/finance-v4/connectors/${connectorId}/sync-log`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get sync log');
+  },
+  financeCreateValuation: async (modelId: string, data: { inputs: Record<string, unknown>; outputs: Record<string, unknown>; valuationMethod?: string }) => {
+    const res = await fetch(`${API_URL}/finance-v4/models/${modelId}/valuations`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create valuation');
+  },
+  financeGetValuations: async (modelId: string) => {
+    const res = await fetch(`${API_URL}/finance-v4/models/${modelId}/valuations`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get valuations');
+  },
+  financeGetValuationAudit: async (snapshotId: string) => {
+    const res = await fetch(`${API_URL}/finance-v4/valuations/${snapshotId}/audit`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get valuation audit');
+  },
+  financeCreateAIAssumption: async (modelId: string, data: { assumptionKey: string; assumptionValue: string; confidence?: number; sourceCitations?: unknown[] }) => {
+    const res = await fetch(`${API_URL}/finance-v4/models/${modelId}/ai-assumptions`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create AI assumption');
+  },
+  financeGetAIAssumptions: async (modelId: string) => {
+    const res = await fetch(`${API_URL}/finance-v4/models/${modelId}/ai-assumptions`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get AI assumptions');
+  },
+  financeAcceptAIAssumption: async (assumptionId: string) => {
+    const res = await fetch(`${API_URL}/finance-v4/ai-assumptions/${assumptionId}/accept`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to accept AI assumption');
+  },
+  financeCreateROILink: async (modelId: string, data: { initiativeId?: string; benefitId?: string; assumptionIds?: string[] }) => {
+    const res = await fetch(`${API_URL}/finance-v4/models/${modelId}/roi-links`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create ROI link');
+  },
+  financeGetROILinks: async (modelId: string) => {
+    const res = await fetch(`${API_URL}/finance-v4/models/${modelId}/roi-links`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get ROI links');
+  },
+  financeRealizeROILink: async (linkId: string, data: { realizedValue: number; evidence: unknown[] }) => {
+    const res = await fetch(`${API_URL}/finance-v4/roi-links/${linkId}/realize`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to realize ROI link');
+  },
 };
 
 // Export as 'api' for backwards compatibility with lowercase import
