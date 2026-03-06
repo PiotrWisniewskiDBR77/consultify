@@ -12482,6 +12482,266 @@ export const Api = {
     const res = await fetch(`${API_URL}/assessments-v4/assessments/${assessmentId}/versions/${fromVersionId}/diff/${toVersionId}`, { headers: getHeaders() });
     return handleResponse(res, 'Failed to get version diff');
   },
+
+  // ── V4-INIT-04: Goals/OKR ──
+
+  goalsCreate: async (data: { parentGoalId?: string; goalType?: string; title: string; description?: string; ownerId?: string; timeFrame?: string; startDate?: string; endDate?: string; targetValue?: number; unit?: string }) => {
+    const res = await fetch(`${API_URL}/initiatives-v4/goals`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create goal');
+  },
+  goalsGet: async (parentGoalId?: string) => {
+    const qs = parentGoalId ? `?parentGoalId=${parentGoalId}` : '';
+    const res = await fetch(`${API_URL}/initiatives-v4/goals${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get goals');
+  },
+  goalsGetOne: async (goalId: string) => {
+    const res = await fetch(`${API_URL}/initiatives-v4/goals/${goalId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get goal');
+  },
+  goalsUpdate: async (goalId: string, data: object) => {
+    const res = await fetch(`${API_URL}/initiatives-v4/goals/${goalId}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to update goal');
+  },
+  goalsGetRollup: async (goalId: string) => {
+    const res = await fetch(`${API_URL}/initiatives-v4/goals/${goalId}/rollup`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get goal rollup');
+  },
+  goalsLinkInitiative: async (goalId: string, initiativeId: string, weight?: number) => {
+    const res = await fetch(`${API_URL}/initiatives-v4/goals/${goalId}/initiatives`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ initiativeId, contributionWeight: weight }) });
+    return handleResponse(res, 'Failed to link initiative to goal');
+  },
+  goalsGetInitiatives: async (goalId: string) => {
+    const res = await fetch(`${API_URL}/initiatives-v4/goals/${goalId}/initiatives`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get goal initiatives');
+  },
+  goalsUnlinkInitiative: async (goalId: string, initiativeId: string) => {
+    const res = await fetch(`${API_URL}/initiatives-v4/goals/${goalId}/initiatives/${initiativeId}`, { method: 'DELETE', headers: getHeaders() });
+    return handleResponse(res, 'Failed to unlink initiative');
+  },
+
+  // ── V4-INIT-06: AI Blueprints ──
+
+  blueprintCreate: async (data: { initiativeId?: string; promptText?: string; generatedWbs?: object[]; generatedMilestones?: object[]; citations?: string[]; aiModelUsed?: string; confidence?: number }) => {
+    const res = await fetch(`${API_URL}/initiatives-v4/blueprints`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create blueprint');
+  },
+  blueprintList: async (initiativeId?: string) => {
+    const qs = initiativeId ? `?initiativeId=${initiativeId}` : '';
+    const res = await fetch(`${API_URL}/initiatives-v4/blueprints${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list blueprints');
+  },
+  blueprintApply: async (blueprintId: string) => {
+    const res = await fetch(`${API_URL}/initiatives-v4/blueprints/${blueprintId}/apply`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to apply blueprint');
+  },
+  blueprintReject: async (blueprintId: string) => {
+    const res = await fetch(`${API_URL}/initiatives-v4/blueprints/${blueprintId}/reject`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to reject blueprint');
+  },
+
+  // ── V4-INIT-07: Governance Gates ──
+
+  governanceCreateGate: async (initiativeId: string, data: { gateType?: string; gateName: string; requiredDecisions?: string[]; requiredRaidStatus?: object; requiredApprovers?: string[] }) => {
+    const res = await fetch(`${API_URL}/initiatives-v4/initiatives/${initiativeId}/gates`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create governance gate');
+  },
+  governanceGetGates: async (initiativeId: string) => {
+    const res = await fetch(`${API_URL}/initiatives-v4/initiatives/${initiativeId}/gates`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get governance gates');
+  },
+  governanceEvaluateGate: async (gateId: string) => {
+    const res = await fetch(`${API_URL}/initiatives-v4/gates/${gateId}/evaluate`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to evaluate gate');
+  },
+  governanceLinkDecision: async (initiativeId: string, decisionId: string, linkType?: string) => {
+    const res = await fetch(`${API_URL}/initiatives-v4/initiatives/${initiativeId}/decisions`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ decisionId, linkType }) });
+    return handleResponse(res, 'Failed to link decision');
+  },
+  governanceGetDecisions: async (initiativeId: string) => {
+    const res = await fetch(`${API_URL}/initiatives-v4/initiatives/${initiativeId}/decisions`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get initiative decisions');
+  },
+
+  // ── V4-TOOL-03: Template Library ──
+
+  toolTemplateCreate: async (data: { templateKey: string; templateName: string; category: string; description?: string; schemaJson: object; defaultConfig?: object; isOrgCurated?: boolean }) => {
+    const res = await fetch(`${API_URL}/tools-v4/templates`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create template');
+  },
+  toolTemplateList: async (category?: string) => {
+    const qs = category ? `?category=${category}` : '';
+    const res = await fetch(`${API_URL}/tools-v4/templates${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list templates');
+  },
+  toolTemplateGet: async (templateId: string) => {
+    const res = await fetch(`${API_URL}/tools-v4/templates/${templateId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get template');
+  },
+  toolTemplateUpdate: async (templateId: string, data: object) => {
+    const res = await fetch(`${API_URL}/tools-v4/templates/${templateId}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to update template');
+  },
+  toolTemplateDelete: async (templateId: string) => {
+    const res = await fetch(`${API_URL}/tools-v4/templates/${templateId}`, { method: 'DELETE', headers: getHeaders() });
+    return handleResponse(res, 'Failed to delete template');
+  },
+
+  // ── V4-TOOL-06: Knowledge Bank + RAG ──
+
+  toolKnowledgeAdd: async (data: { toolSessionId?: string; sourceType: string; sourceId: string; contentText?: string; scope?: string }) => {
+    const res = await fetch(`${API_URL}/tools-v4/knowledge`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to add knowledge entry');
+  },
+  toolKnowledgeSearch: async (query: string, toolSessionId?: string, limit?: number) => {
+    const params = new URLSearchParams({ q: query });
+    if (toolSessionId) params.set('toolSessionId', toolSessionId);
+    if (limit) params.set('limit', String(limit));
+    const res = await fetch(`${API_URL}/tools-v4/knowledge/search?${params}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to search knowledge');
+  },
+  toolKnowledgeList: async (toolSessionId?: string) => {
+    const qs = toolSessionId ? `?toolSessionId=${toolSessionId}` : '';
+    const res = await fetch(`${API_URL}/tools-v4/knowledge${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list knowledge');
+  },
+  toolKnowledgeDelete: async (entryId: string) => {
+    const res = await fetch(`${API_URL}/tools-v4/knowledge/${entryId}`, { method: 'DELETE', headers: getHeaders() });
+    return handleResponse(res, 'Failed to delete knowledge entry');
+  },
+  toolRagQuery: async (data: { toolSessionId?: string; queryText: string; results?: object[]; citations?: object[] }) => {
+    const res = await fetch(`${API_URL}/tools-v4/rag/query`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create RAG query');
+  },
+  toolRagGetQueries: async (toolSessionId?: string) => {
+    const qs = toolSessionId ? `?toolSessionId=${toolSessionId}` : '';
+    const res = await fetch(`${API_URL}/tools-v4/rag/queries${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get RAG queries');
+  },
+
+  // ── V4-TOOL-07: Entitlements ──
+
+  toolEntitlementCreate: async (data: { packKey: string; packName: string; licensedTools?: string[]; maxSessionsPerMonth?: number; maxConcurrentUsers?: number; validFrom?: string; validUntil?: string }) => {
+    const res = await fetch(`${API_URL}/tools-v4/entitlements`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create entitlement');
+  },
+  toolEntitlementList: async () => {
+    const res = await fetch(`${API_URL}/tools-v4/entitlements`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list entitlements');
+  },
+  toolEntitlementCheck: async (toolKey: string) => {
+    const res = await fetch(`${API_URL}/tools-v4/entitlements/check/${toolKey}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to check entitlement');
+  },
+  toolUsageLog: async (data: { toolKey: string; entitlementId?: string; action?: string }) => {
+    const res = await fetch(`${API_URL}/tools-v4/usage/log`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to log tool usage');
+  },
+  toolUsageStats: async (toolKey?: string) => {
+    const qs = toolKey ? `?toolKey=${toolKey}` : '';
+    const res = await fetch(`${API_URL}/tools-v4/usage/stats${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get usage stats');
+  },
+  toolEntitlementDeactivate: async (entitlementId: string) => {
+    const res = await fetch(`${API_URL}/tools-v4/entitlements/${entitlementId}/deactivate`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to deactivate entitlement');
+  },
+
+  // ── V4-ENT-05: Integration Hub ──
+
+  integrationCreateConnector: async (data: { connectorType: string; connectorName: string; configJson?: object; secretsRef?: string; allowlistDomains?: string[] }) => {
+    const res = await fetch(`${API_URL}/enterprise-v4/connectors`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create connector');
+  },
+  integrationGetConnectors: async () => {
+    const res = await fetch(`${API_URL}/enterprise-v4/connectors`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get connectors');
+  },
+  integrationGetConnector: async (connectorId: string) => {
+    const res = await fetch(`${API_URL}/enterprise-v4/connectors/${connectorId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get connector');
+  },
+  integrationUpdateConnector: async (connectorId: string, data: object) => {
+    const res = await fetch(`${API_URL}/enterprise-v4/connectors/${connectorId}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to update connector');
+  },
+  integrationDeleteConnector: async (connectorId: string) => {
+    const res = await fetch(`${API_URL}/enterprise-v4/connectors/${connectorId}`, { method: 'DELETE', headers: getHeaders() });
+    return handleResponse(res, 'Failed to delete connector');
+  },
+  integrationHealthCheck: async (connectorId: string, healthStatus: string) => {
+    const res = await fetch(`${API_URL}/enterprise-v4/connectors/${connectorId}/health-check`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ healthStatus }) });
+    return handleResponse(res, 'Failed to health check');
+  },
+  integrationEnqueue: async (data: { connectorId: string; direction?: string; payloadJson: object; maxRetries?: number }) => {
+    const res = await fetch(`${API_URL}/enterprise-v4/queue`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to enqueue message');
+  },
+  integrationGetQueue: async (status?: string) => {
+    const qs = status ? `?status=${status}` : '';
+    const res = await fetch(`${API_URL}/enterprise-v4/queue${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get queue');
+  },
+  integrationProcessQueue: async (itemId: string, success: boolean, errorMessage?: string) => {
+    const res = await fetch(`${API_URL}/enterprise-v4/queue/${itemId}/process`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ success, errorMessage }) });
+    return handleResponse(res, 'Failed to process queue item');
+  },
+  integrationStoreSecret: async (data: { connectorId?: string; secretKey: string; encryptedValue: string }) => {
+    const res = await fetch(`${API_URL}/enterprise-v4/secrets`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to store secret');
+  },
+  integrationGetSecretKeys: async (connectorId?: string) => {
+    const qs = connectorId ? `?connectorId=${connectorId}` : '';
+    const res = await fetch(`${API_URL}/enterprise-v4/secrets${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get secret keys');
+  },
+  integrationDeleteSecret: async (secretId: string) => {
+    const res = await fetch(`${API_URL}/enterprise-v4/secrets/${secretId}`, { method: 'DELETE', headers: getHeaders() });
+    return handleResponse(res, 'Failed to delete secret');
+  },
+
+  // ── V4-ENT-08: Observability ──
+
+  observabilityRecordMetric: async (data: { metricName: string; metricType?: string; value: number; labels?: object }) => {
+    const res = await fetch(`${API_URL}/enterprise-v4/metrics`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to record metric');
+  },
+  observabilityGetMetrics: async (metricName: string, since?: string) => {
+    const qs = since ? `?since=${since}` : '';
+    const res = await fetch(`${API_URL}/enterprise-v4/metrics/${metricName}${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get metrics');
+  },
+  observabilityCreateSlo: async (data: { sloName: string; targetPercentage: number; windowDays?: number }) => {
+    const res = await fetch(`${API_URL}/enterprise-v4/slos`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create SLO');
+  },
+  observabilityGetSlos: async () => {
+    const res = await fetch(`${API_URL}/enterprise-v4/slos`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get SLOs');
+  },
+  observabilityUpdateSlo: async (sloId: string, data: { currentPercentage: number; budgetRemaining: number }) => {
+    const res = await fetch(`${API_URL}/enterprise-v4/slos/${sloId}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to update SLO');
+  },
+  observabilityRecordTrace: async (data: { traceId: string; spanId: string; parentSpanId?: string; operationName: string; durationMs?: number; statusCode?: string; attributes?: object }) => {
+    const res = await fetch(`${API_URL}/enterprise-v4/traces`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to record trace');
+  },
+  observabilityGetTrace: async (traceId: string) => {
+    const res = await fetch(`${API_URL}/enterprise-v4/traces/${traceId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get trace');
+  },
+  observabilityCreateDrDrill: async (data: { drillType: string; scenario: string }) => {
+    const res = await fetch(`${API_URL}/enterprise-v4/dr-drills`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create DR drill');
+  },
+  observabilityUpdateDrDrill: async (drillId: string, data: { status: string; resultsJson?: object }) => {
+    const res = await fetch(`${API_URL}/enterprise-v4/dr-drills/${drillId}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to update DR drill');
+  },
+  observabilityGetDrDrills: async () => {
+    const res = await fetch(`${API_URL}/enterprise-v4/dr-drills`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get DR drills');
+  },
 };
 
 // Export as 'api' for backwards compatibility with lowercase import
