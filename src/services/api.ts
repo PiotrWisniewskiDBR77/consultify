@@ -3877,6 +3877,21 @@ export const Api = {
     return data;
   },
 
+  materializeInbox: async (): Promise<{ success: boolean; created?: number; updated?: number }> => {
+    const res = await fetch(`${API_URL}/my-work/inbox/materialize`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to materialize inbox');
+    return res.json();
+  },
+
+  getCanonicalInboxStats: async () => {
+    const res = await fetch(`${API_URL}/my-work/inbox/canonical/stats`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch canonical inbox stats');
+    return res.json();
+  },
+
   getFocusRules: async (): Promise<{ maxToday: number; maxWeek: number; capacityAware: boolean }> => {
     const res = await fetch(`${API_URL}/my-work/focus/rules`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch focus rules');
@@ -3908,6 +3923,12 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to run eval');
     return res.json();
   },
+  getInboxEvalRuns: async (limit?: number) => {
+    const qs = limit != null ? `?limit=${limit}` : '';
+    const res = await fetch(`${API_URL}/my-work/inbox/evals/runs${qs}`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch inbox eval runs');
+    return res.json();
+  },
   getInboxEvalsCostSummary: async (days?: number) => {
     const qs = days != null ? `?days=${days}` : '';
     const res = await fetch(`${API_URL}/my-work/inbox/evals/cost-summary${qs}`, { headers: getHeaders() });
@@ -3928,10 +3949,9 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to update routing rules');
     return res.json();
   },
-  getExecutiveAnalytics: async (projectId: string) => {
-    const res = await fetch(`${API_URL}/my-work/executive-analytics?projectId=${encodeURIComponent(projectId)}`, {
-      headers: getHeaders(),
-    });
+  getExecutiveAnalytics: async (projectId?: string) => {
+    const qs = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    const res = await fetch(`${API_URL}/my-work/executive-analytics${qs}`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch executive analytics');
     return res.json();
   },
@@ -12057,6 +12077,162 @@ export const Api = {
   resultsGetWallboardAlerts: async (wallboardId: string) => {
     const res = await fetch(`${API_URL}/results-v4/wallboards/${wallboardId}/alerts`, { headers: getHeaders() });
     return handleResponse(res, 'Failed to get wallboard alerts');
+  },
+
+  // ── V4-ENT-06: Realtime Channels & Presence ──
+
+  realtimeCreateChannel: async (data: { channelType: string; resourceType: string; resourceId: string }) => {
+    const res = await fetch(`${API_URL}/realtime-v4/channels`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create channel');
+  },
+  realtimeListChannels: async (resourceType?: string) => {
+    const qs = resourceType ? `?resourceType=${resourceType}` : '';
+    const res = await fetch(`${API_URL}/realtime-v4/channels${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list channels');
+  },
+  realtimeGetChannel: async (resourceType: string, resourceId: string) => {
+    const res = await fetch(`${API_URL}/realtime-v4/channels/${resourceType}/${resourceId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get channel');
+  },
+  realtimeDeleteChannel: async (channelId: string) => {
+    const res = await fetch(`${API_URL}/realtime-v4/channels/${channelId}`, { method: 'DELETE', headers: getHeaders() });
+    return handleResponse(res, 'Failed to delete channel');
+  },
+  realtimeJoinPresence: async (channelId: string, data: { userName?: string; userColor?: string; cursorState?: object; activeElement?: string }) => {
+    const res = await fetch(`${API_URL}/realtime-v4/channels/${channelId}/presence`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to join presence');
+  },
+  realtimeListPresence: async (channelId: string) => {
+    const res = await fetch(`${API_URL}/realtime-v4/channels/${channelId}/presence`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list presence');
+  },
+  realtimeHeartbeat: async (channelId: string) => {
+    const res = await fetch(`${API_URL}/realtime-v4/channels/${channelId}/heartbeat`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to heartbeat');
+  },
+  realtimeDisconnect: async (channelId: string) => {
+    const res = await fetch(`${API_URL}/realtime-v4/channels/${channelId}/disconnect`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to disconnect');
+  },
+  realtimeCleanStale: async (staleMinutes?: number) => {
+    const qs = staleMinutes ? `?staleMinutes=${staleMinutes}` : '';
+    const res = await fetch(`${API_URL}/realtime-v4/presence/clean-stale${qs}`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to clean stale presence');
+  },
+
+  // ── V4-IDEA-03: CRDT Documents ──
+
+  crdtCreateDocument: async (data: { resourceType: string; resourceId: string; crdtType?: string }) => {
+    const res = await fetch(`${API_URL}/realtime-v4/crdt/documents`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create CRDT document');
+  },
+  crdtGetDocument: async (resourceType: string, resourceId: string) => {
+    const res = await fetch(`${API_URL}/realtime-v4/crdt/documents/${resourceType}/${resourceId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get CRDT document');
+  },
+  crdtSaveSnapshot: async (docId: string, data: { stateVector: string; snapshotData: string }) => {
+    const res = await fetch(`${API_URL}/realtime-v4/crdt/documents/${docId}/snapshot`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to save CRDT snapshot');
+  },
+  crdtAppendUpdate: async (docId: string, data: { updateData: string; originClientId?: string }) => {
+    const res = await fetch(`${API_URL}/realtime-v4/crdt/documents/${docId}/updates`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to append CRDT update');
+  },
+  crdtGetUpdates: async (docId: string, afterSequence?: number) => {
+    const qs = afterSequence ? `?afterSequence=${afterSequence}` : '';
+    const res = await fetch(`${API_URL}/realtime-v4/crdt/documents/${docId}/updates${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get CRDT updates');
+  },
+  crdtDeleteDocument: async (docId: string) => {
+    const res = await fetch(`${API_URL}/realtime-v4/crdt/documents/${docId}`, { method: 'DELETE', headers: getHeaders() });
+    return handleResponse(res, 'Failed to delete CRDT document');
+  },
+
+  // ── V4-TOOL-04: Facilitation Layer ──
+
+  facilitationCreateSession: async (data: { toolSessionId: string; settings?: object }) => {
+    const res = await fetch(`${API_URL}/realtime-v4/facilitation/sessions`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create facilitation session');
+  },
+  facilitationGetSession: async (sessionId: string) => {
+    const res = await fetch(`${API_URL}/realtime-v4/facilitation/sessions/${sessionId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get facilitation session');
+  },
+  facilitationUpdateTimer: async (sessionId: string, timerState: object) => {
+    const res = await fetch(`${API_URL}/realtime-v4/facilitation/sessions/${sessionId}/timer`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ timerState }) });
+    return handleResponse(res, 'Failed to update timer');
+  },
+  facilitationUpdatePhase: async (sessionId: string, phase: string) => {
+    const res = await fetch(`${API_URL}/realtime-v4/facilitation/sessions/${sessionId}/phase`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ phase }) });
+    return handleResponse(res, 'Failed to update phase');
+  },
+  facilitationEndSession: async (sessionId: string) => {
+    const res = await fetch(`${API_URL}/realtime-v4/facilitation/sessions/${sessionId}/end`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to end facilitation session');
+  },
+  facilitationCastVote: async (sessionId: string, data: { voteTargetId: string; voteType?: string; voteValue?: number; comment?: string }) => {
+    const res = await fetch(`${API_URL}/realtime-v4/facilitation/sessions/${sessionId}/votes`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to cast vote');
+  },
+  facilitationGetVotes: async (sessionId: string, targetId?: string) => {
+    const qs = targetId ? `?targetId=${targetId}` : '';
+    const res = await fetch(`${API_URL}/realtime-v4/facilitation/sessions/${sessionId}/votes${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get votes');
+  },
+  facilitationGetVoteSummary: async (sessionId: string) => {
+    const res = await fetch(`${API_URL}/realtime-v4/facilitation/sessions/${sessionId}/votes/summary`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get vote summary');
+  },
+  facilitationAssignRole: async (sessionId: string, data: { userId: string; roleName: string; permissions?: string[] }) => {
+    const res = await fetch(`${API_URL}/realtime-v4/facilitation/sessions/${sessionId}/roles`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to assign role');
+  },
+  facilitationGetRoles: async (sessionId: string) => {
+    const res = await fetch(`${API_URL}/realtime-v4/facilitation/sessions/${sessionId}/roles`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get roles');
+  },
+  facilitationCreateOutcome: async (sessionId: string, data: { outcomeType?: string; title: string; description?: string; voteSummary?: object; exportedToType?: string; exportedToId?: string }) => {
+    const res = await fetch(`${API_URL}/realtime-v4/facilitation/sessions/${sessionId}/outcomes`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create outcome');
+  },
+  facilitationGetOutcomes: async (sessionId: string) => {
+    const res = await fetch(`${API_URL}/realtime-v4/facilitation/sessions/${sessionId}/outcomes`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get outcomes');
+  },
+  facilitationExportOutcome: async (outcomeId: string, data: { exportType: string; exportId: string }) => {
+    const res = await fetch(`${API_URL}/realtime-v4/facilitation/outcomes/${outcomeId}/export`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to export outcome');
+  },
+
+  // ── V4-TOOL-05: Tool Session Presence & Locks ──
+
+  toolSessionJoinPresence: async (toolSessionId: string, data: { userName?: string; userColor?: string; cursorState?: object; activeBlockId?: string; editingField?: string }) => {
+    const res = await fetch(`${API_URL}/realtime-v4/tool-sessions/${toolSessionId}/presence`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to join tool session presence');
+  },
+  toolSessionListPresence: async (toolSessionId: string) => {
+    const res = await fetch(`${API_URL}/realtime-v4/tool-sessions/${toolSessionId}/presence`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list tool session presence');
+  },
+  toolSessionHeartbeat: async (toolSessionId: string, cursorState?: object) => {
+    const res = await fetch(`${API_URL}/realtime-v4/tool-sessions/${toolSessionId}/heartbeat`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ cursorState }) });
+    return handleResponse(res, 'Failed to heartbeat tool session');
+  },
+  toolSessionDisconnect: async (toolSessionId: string) => {
+    const res = await fetch(`${API_URL}/realtime-v4/tool-sessions/${toolSessionId}/disconnect`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to disconnect tool session');
+  },
+  toolSessionAcquireLock: async (toolSessionId: string, data: { blockId: string; ttlMinutes?: number }) => {
+    const res = await fetch(`${API_URL}/realtime-v4/tool-sessions/${toolSessionId}/locks`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to acquire edit lock');
+  },
+  toolSessionReleaseLock: async (toolSessionId: string, blockId: string) => {
+    const res = await fetch(`${API_URL}/realtime-v4/tool-sessions/${toolSessionId}/locks/${blockId}`, { method: 'DELETE', headers: getHeaders() });
+    return handleResponse(res, 'Failed to release edit lock');
+  },
+  toolSessionListLocks: async (toolSessionId: string) => {
+    const res = await fetch(`${API_URL}/realtime-v4/tool-sessions/${toolSessionId}/locks`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list edit locks');
   },
 };
 
