@@ -12742,6 +12742,130 @@ export const Api = {
     const res = await fetch(`${API_URL}/enterprise-v4/dr-drills`, { headers: getHeaders() });
     return handleResponse(res, 'Failed to get DR drills');
   },
+
+  // ── V4-IDEA-06: Export ──
+
+  ideaRequestExport: async (ideaId: string, data: { exportType: string; exportFormat: string; watermarkText?: string; includeMetadata?: boolean }) => {
+    const res = await fetch(`${API_URL}/v4-final/ideas/${ideaId}/export`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to request export');
+  },
+  ideaGetExports: async (ideaId: string) => {
+    const res = await fetch(`${API_URL}/v4-final/ideas/${ideaId}/exports`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get exports');
+  },
+
+  // ── V4-ORG-02: Cohort Privacy ──
+
+  cohortGetPolicy: async () => {
+    const res = await fetch(`${API_URL}/v4-final/cohort-policy`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get cohort policy');
+  },
+  cohortUpdatePolicy: async (data: { minCohortSize?: number; suppressionEnabled?: boolean; noiseMethod?: string; noiseMagnitude?: number; auditAllQueries?: boolean }) => {
+    const res = await fetch(`${API_URL}/v4-final/cohort-policy`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to update cohort policy');
+  },
+  cohortApplyPrivacy: async (data: { value: number; cohortSize: number; queryType: string; queryParams?: object }) => {
+    const res = await fetch(`${API_URL}/v4-final/cohort-privacy/apply`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to apply cohort privacy');
+  },
+  cohortGetAudit: async (limit?: number) => {
+    const qs = limit ? `?limit=${limit}` : '';
+    const res = await fetch(`${API_URL}/v4-final/cohort-privacy/audit${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get cohort audit');
+  },
+
+  // ── V4-ORG-03: Framework Mappings ──
+
+  frameworkUpsertMapping: async (data: { frameworkKey: string; frameworkName: string; version?: string; dimensionKey: string; dimensionName: string; percentileP25?: number; percentileP50?: number; percentileP75?: number; percentileP90?: number; whatGoodLooksLike?: string; dataSource?: string }) => {
+    const res = await fetch(`${API_URL}/v4-final/framework-mappings`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to upsert framework mapping');
+  },
+  frameworkGetMappings: async (frameworkKey?: string) => {
+    const qs = frameworkKey ? `?frameworkKey=${frameworkKey}` : '';
+    const res = await fetch(`${API_URL}/v4-final/framework-mappings${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get framework mappings');
+  },
+  frameworkGetAll: async () => {
+    const res = await fetch(`${API_URL}/v4-final/frameworks`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get frameworks');
+  },
+
+  // ── V4-ORG-04: Gap Analysis Pipeline ──
+
+  gapAnalysisCreate: async (data: { frameworkKey: string; assessmentId?: string; gaps?: object[]; recommendations?: object[] }) => {
+    const res = await fetch(`${API_URL}/v4-final/gap-analyses`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create gap analysis');
+  },
+  gapAnalysisList: async (frameworkKey?: string) => {
+    const qs = frameworkKey ? `?frameworkKey=${frameworkKey}` : '';
+    const res = await fetch(`${API_URL}/v4-final/gap-analyses${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list gap analyses');
+  },
+  gapAnalysisLinkInitiative: async (gapId: string, dimensionKey: string, initiativeId: string) => {
+    const res = await fetch(`${API_URL}/v4-final/gap-analyses/${gapId}/initiatives`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ dimensionKey, initiativeId }) });
+    return handleResponse(res, 'Failed to link gap to initiative');
+  },
+  gapAnalysisGetLinks: async (gapId: string) => {
+    const res = await fetch(`${API_URL}/v4-final/gap-analyses/${gapId}/initiatives`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get gap initiative links');
+  },
+
+  // ── V4-AI-04: Typed Actions ──
+
+  aiProposeAction: async (data: { actionType: string; targetEntityType: string; targetEntityId?: string; proposedChanges: object; previewDiff?: string; rbacRequiredRole?: string; idempotencyKey?: string }) => {
+    const res = await fetch(`${API_URL}/v4-final/actions/propose`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to propose action');
+  },
+  aiGetActions: async (status?: string) => {
+    const qs = status ? `?status=${status}` : '';
+    const res = await fetch(`${API_URL}/v4-final/actions${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get actions');
+  },
+  aiGetAction: async (actionId: string) => {
+    const res = await fetch(`${API_URL}/v4-final/actions/${actionId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get action');
+  },
+  aiAcceptAction: async (actionId: string) => {
+    const res = await fetch(`${API_URL}/v4-final/actions/${actionId}/accept`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to accept action');
+  },
+  aiExecuteAction: async (actionId: string, result?: object) => {
+    const res = await fetch(`${API_URL}/v4-final/actions/${actionId}/execute`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ result }) });
+    return handleResponse(res, 'Failed to execute action');
+  },
+  aiRejectAction: async (actionId: string) => {
+    const res = await fetch(`${API_URL}/v4-final/actions/${actionId}/reject`, { method: 'POST', headers: getHeaders() });
+    return handleResponse(res, 'Failed to reject action');
+  },
+
+  // ── V4-AI-08: Domain Playbooks ──
+
+  aiPlaybookCreate: async (data: { domain: string; playbookName: string; description?: string; systemPrompt: string; exampleQueries?: string[]; requiredContext?: string[]; outputSchema?: object }) => {
+    const res = await fetch(`${API_URL}/v4-final/playbooks`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to create playbook');
+  },
+  aiPlaybookList: async (domain?: string) => {
+    const qs = domain ? `?domain=${domain}` : '';
+    const res = await fetch(`${API_URL}/v4-final/playbooks${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list playbooks');
+  },
+  aiPlaybookGet: async (playbookId: string) => {
+    const res = await fetch(`${API_URL}/v4-final/playbooks/${playbookId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get playbook');
+  },
+  aiPlaybookUpdate: async (playbookId: string, data: object) => {
+    const res = await fetch(`${API_URL}/v4-final/playbooks/${playbookId}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to update playbook');
+  },
+  aiPlaybookExecute: async (playbookId: string, data: { inputContext?: object; outputResult?: object; citations?: string[]; confidence?: number; durationMs?: number }) => {
+    const res = await fetch(`${API_URL}/v4-final/playbooks/${playbookId}/execute`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+    return handleResponse(res, 'Failed to execute playbook');
+  },
+  aiPlaybookGetExecutions: async (playbookId: string, limit?: number) => {
+    const qs = limit ? `?limit=${limit}` : '';
+    const res = await fetch(`${API_URL}/v4-final/playbooks/${playbookId}/executions${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get playbook executions');
+  },
 };
 
 // Export as 'api' for backwards compatibility with lowercase import

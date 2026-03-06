@@ -114,6 +114,7 @@ import assessmentEnterpriseRoutes from './routes/assessment-enterprise.routes.js
 import initiativeGovernanceRoutes from './routes/initiative-governance.routes.js';
 import toolEnterpriseRoutes from './routes/tool-enterprise.routes.js';
 import enterprisePlatformRoutes from './routes/enterprise-platform.routes.js';
+import finalBatchRoutes from './routes/final-batch.routes.js';
 import interviewEnterpriseRoutes from './routes/interview-enterprise.routes.js';
 import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
 import knowledgeRoutes from './routes/knowledge.routes.js';
@@ -612,6 +613,7 @@ export class ApiGateway {
       app.use('/api/initiatives-v4', initiativeGovernanceRoutes);
       app.use('/api/tools-v4', toolEnterpriseRoutes);
       app.use('/api/enterprise-v4', enterprisePlatformRoutes);
+      app.use('/api/v4-final', finalBatchRoutes);
       mountStub('/api/locations', locationsRoutes, 'locationsRoutes');
       mountStub(
         '/api/notification-settings',
