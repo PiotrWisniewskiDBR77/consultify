@@ -123,6 +123,10 @@ type ProviderRow = {
   origin_vendor?: string | null;
   execution_regions?: any;
   allowed_data_classes?: any;
+  release_bundle_id?: string | null;
+  prompt_key?: string | null;
+  prompt_version?: string | null;
+  policy_version?: string | null;
 };
 
 type TierAssignmentRow = {
@@ -154,6 +158,10 @@ type ProviderConfig = {
   markupMultiplier?: number;
   raw?: ProviderRow | null;
   routingTrace?: RoutingTrace;
+  releaseBundleId?: string | null;
+  promptKey?: string | null;
+  promptVersion?: string | null;
+  policyVersion?: string | null;
 };
 
 export type RoutingTraceCandidate = {
@@ -166,6 +174,10 @@ export type RoutingTraceCandidate = {
   breakerState?: string | null;
   breakerReason?: string | null;
   originalTier?: string;
+  releaseBundleId?: string | null;
+  promptKey?: string | null;
+  promptVersion?: string | null;
+  policyVersion?: string | null;
 };
 
 export type RoutingTraceSkip = {
@@ -331,10 +343,18 @@ export class ModelRouter {
       breakerState: breaker.state,
       breakerReason: breaker.reason,
       originalTier: normalized.originalTier,
+      releaseBundleId: (normalized.raw as any)?.release_bundle_id || null,
+      promptKey: (normalized.raw as any)?.prompt_key || null,
+      promptVersion: (normalized.raw as any)?.prompt_version || null,
+      policyVersion: (normalized.raw as any)?.policy_version || null,
     };
     this.addTraceCandidate(trace.candidates, candidateSeen, tracedCandidate);
     return {
       ...normalized,
+      releaseBundleId: (normalized.raw as any)?.release_bundle_id || null,
+      promptKey: (normalized.raw as any)?.prompt_key || null,
+      promptVersion: (normalized.raw as any)?.prompt_version || null,
+      policyVersion: (normalized.raw as any)?.policy_version || null,
       routingTrace: trace,
     };
   }
@@ -958,7 +978,13 @@ export class ModelRouter {
     const fetchRows = async (routingKey: string): Promise<ProviderRow[]> => {
       const query = organizationId
         ? `
-        SELECT lp.*, apa.priority as purpose_priority
+        SELECT
+          lp.*,
+          apa.priority as purpose_priority,
+          apa.release_bundle_id,
+          apa.prompt_key,
+          apa.prompt_version,
+          apa.policy_version
         FROM ai_purpose_assignments apa
         INNER JOIN llm_providers lp ON lp.id = apa.provider_id
         LEFT JOIN organization_provider_settings ops ON lp.id = ops.provider_id AND ops.organization_id = ?
@@ -975,7 +1001,13 @@ export class ModelRouter {
           lp.priority
       `
         : `
-        SELECT lp.*, apa.priority as purpose_priority
+        SELECT
+          lp.*,
+          apa.priority as purpose_priority,
+          apa.release_bundle_id,
+          apa.prompt_key,
+          apa.prompt_version,
+          apa.policy_version
         FROM ai_purpose_assignments apa
         INNER JOIN llm_providers lp ON lp.id = apa.provider_id
         WHERE apa.purpose = ?

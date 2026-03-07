@@ -14,6 +14,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  SUPPORTED_CHAT_ATTACHMENT_ACCEPT,
+  SUPPORTED_CHAT_ATTACHMENT_LABEL,
+} from './chatAttachmentSupport';
 import type { CloudProviderId } from '../../hooks/useCloudIntegrations';
 
 // ─── Recent attachments (localStorage) ───────────────────────────────────────
@@ -200,6 +204,8 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
     };
   }, []);
 
+  const connectedCloudProviders = PROVIDERS.filter((provider) => connectedProviders.includes(provider.id));
+
   const handleRecentEnter = () => {
     if (recentTimeoutRef.current) clearTimeout(recentTimeoutRef.current);
     setRecentHover(true);
@@ -240,22 +246,15 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
   };
 
   const handleCloudClick = (provider: ProviderDef) => {
-    const connected = connectedProviders.includes(provider.id);
+    onCloudFileSelect?.(provider.id, '', '');
+    setIsOpen(false);
+  };
 
-    if (!isCloudImplemented) {
-      toast(t('aiChat.menu.toast.cloudComingSoon', 'Cloud integrations coming soon'), {
-        icon: '\u23F3',
-        duration: 3000,
-        style: { borderRadius: '10px', background: '#334155', color: '#fff' },
-      });
-      setIsOpen(false);
-      return;
-    }
-
-    if (connected) {
-      onCloudFileSelect?.(provider.id, '', '');
+  const openIntegrationsSettings = () => {
+    if (typeof window !== 'undefined') {
+      window.location.assign('/settings/integrations');
     } else {
-      onConnectCloud?.(provider.id);
+      onConnectCloud?.('google-drive');
     }
     setIsOpen(false);
   };
@@ -280,7 +279,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
         type="file"
         className="hidden"
         multiple
-        accept=".pdf,.txt,.md,.json,.csv,.docx,.xlsx,.doc,.xls,.pptx"
+        accept={SUPPORTED_CHAT_ATTACHMENT_ACCEPT}
         onChange={handleFileChange}
       />
 
@@ -298,20 +297,40 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
             onClick={() => fileInputRef.current?.click()}
             icon={<Upload size={15} className="text-slate-500 dark:text-slate-400" />}
             label={t('aiChat.menu.uploadFile', 'Upload file')}
+            description={t(
+              'aiChat.menu.supportedLocalTypes',
+              'Supported: {{types}}',
+              { types: SUPPORTED_CHAT_ATTACHMENT_LABEL }
+            )}
           />
 
-          {/* Divider */}
-          <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
-
-          {/* Cloud providers — just name + link icon */}
-          {PROVIDERS.map((p) => (
-            <CloudMenuItem
-              key={p.id}
-              provider={p}
-              connected={connectedProviders.includes(p.id)}
-              onClick={() => handleCloudClick(p)}
-            />
-          ))}
+          {isCloudImplemented && connectedCloudProviders.length > 0 ? (
+            <>
+              <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
+              {connectedCloudProviders.map((p) => (
+                <CloudMenuItem key={p.id} provider={p} connected={true} onClick={() => handleCloudClick(p)} />
+              ))}
+            </>
+          ) : (
+            <>
+              <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
+              <div className="px-3.5 py-2">
+                <p className="text-[12px] leading-5 text-slate-500 dark:text-slate-400">
+                  {t(
+                    'aiChat.menu.cloudSetupHint',
+                    'Cloud files are available only from sources already connected in Integrations.'
+                  )}
+                </p>
+                <button
+                  type="button"
+                  onClick={openIntegrationsSettings}
+                  className="mt-2 text-[12px] font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+                >
+                  {t('aiChat.menu.manageIntegrations', 'Manage cloud sources')}
+                </button>
+              </div>
+            </>
+          )}
 
           {/* Divider */}
           <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
@@ -404,13 +423,21 @@ const MenuItem: React.FC<{
   onClick: () => void;
   icon: React.ReactNode;
   label: string;
-}> = ({ onClick, icon, label }) => (
+  description?: string;
+}> = ({ onClick, icon, label, description }) => (
   <button
     onClick={onClick}
-    className="w-full flex items-center gap-3 px-3.5 py-2 text-[13px] text-slate-700 dark:text-slate-200 hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors"
+    className="w-full flex items-start gap-3 px-3.5 py-2 text-[13px] text-slate-700 dark:text-slate-200 hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors"
   >
-    <span className="w-4 h-4 flex items-center justify-center shrink-0">{icon}</span>
-    <span className="flex-1 text-left">{label}</span>
+    <span className="w-4 h-4 flex items-center justify-center shrink-0 mt-0.5">{icon}</span>
+    <span className="flex-1 text-left">
+      <span className="block">{label}</span>
+      {description && (
+        <span className="mt-0.5 block text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+          {description}
+        </span>
+      )}
+    </span>
   </button>
 );
 

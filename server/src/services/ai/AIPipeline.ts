@@ -240,6 +240,10 @@ export class AIPipeline {
       (request as any)._modelConfigForLog = {
         provider: modelConfig?.provider || null,
         model: modelConfig?.model || null,
+        releaseBundleId: (modelConfig as any)?.releaseBundleId || null,
+        promptKey: (modelConfig as any)?.promptKey || null,
+        promptVersion: (modelConfig as any)?.promptVersion || null,
+        policyVersion: (modelConfig as any)?.policyVersion || null,
       };
 
       // 6b. Enforce AI Budgets + Model Permissions (SuperAdmin)
@@ -1790,6 +1794,10 @@ export class AIPipeline {
     endpoint?: string | null;
     apiKey?: string | null;
     routingTrace?: any;
+    releaseBundleId?: string | null;
+    promptKey?: string | null;
+    promptVersion?: string | null;
+    policyVersion?: string | null;
   }> {
     // 1) Explicit overrides from request options (user-selected model or direct provider/model)
     const selectedTier = request.options?.selectedTier;
@@ -1930,6 +1938,10 @@ export class AIPipeline {
       endpoint: routed.endpoint,
       apiKey: routed.apiKey,
       routingTrace: (routed as any).routingTrace,
+        releaseBundleId: (routed as any).releaseBundleId || null,
+        promptKey: (routed as any).promptKey || null,
+        promptVersion: (routed as any).promptVersion || null,
+        policyVersion: (routed as any).policyVersion || null,
     };
   }
 
@@ -1943,6 +1955,10 @@ export class AIPipeline {
       endpoint?: string | null;
       apiKey?: string | null;
       routingTrace?: any;
+      releaseBundleId?: string | null;
+      promptKey?: string | null;
+      promptVersion?: string | null;
+      policyVersion?: string | null;
     },
     options?: AIOptions
   ): Promise<{
@@ -2029,7 +2045,14 @@ export class AIPipeline {
           );
           (request as any)._routingTrace =
             (candidate as any)?.routingTrace || (request as any)._routingTrace;
-          (request as any)._modelConfigForLog = { provider: providerId, model: modelId };
+          (request as any)._modelConfigForLog = {
+            provider: providerId,
+            model: modelId,
+            releaseBundleId: (candidate as any)?.releaseBundleId || null,
+            promptKey: (candidate as any)?.promptKey || null,
+            promptVersion: (candidate as any)?.promptVersion || null,
+            policyVersion: (candidate as any)?.policyVersion || null,
+          };
           return await callOnce({ provider: providerId, model: modelId, endpoint, apiKey });
         } catch (fbError: any) {
           lastError = fbError as Error;

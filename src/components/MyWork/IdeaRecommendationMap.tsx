@@ -39,50 +39,61 @@ import ReactFlow, {
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
+import { useAppStore } from '@/store/useAppStore';
+
 import {
-  IDEA_WORKSPACE_INSERT_EVENT,
   type CanvasToolType,
+  IDEA_WORKSPACE_INSERT_EVENT,
   type IdeaWorkspaceInsertDetail,
 } from './ideaSelectionTypes';
-import { LabeledEdge } from './mindmap/LabeledEdge';
-import { NodeContextMenu } from './mindmap/NodeContextMenu';
+import { ActivityFeed, pushActivity } from './mindmap/ActivityFeed';
+import { AIAutoClustering, type Cluster } from './mindmap/AIAutoClustering';
 import { AIBlindSpotsDetector } from './mindmap/AIBlindSpotsDetector';
 import { AIBranchBalancer } from './mindmap/AIBranchBalancer';
-import { AIWhatIfScenarios } from './mindmap/AIWhatIfScenarios';
-import { GradientEdge } from './mindmap/GradientEdge';
-import { BatchConvertModal } from './mindmap/BatchConvertModal';
-import { ClusterBubbles } from './mindmap/ClusterBubbles';
-import { DocumentToMap } from './mindmap/DocumentToMap';
-import { InterviewToMap } from './mindmap/InterviewToMap';
-import { GlowWrapper, MaturityRing, StatusDot, VoteStars, type NodeStatusType } from './mindmap/NodeEnhancements';
-import { PresentationMode } from './mindmap/PresentationMode';
-import { SnapshotHistory } from './mindmap/SnapshotHistory';
-import { TimelineView } from './mindmap/TimelineView';
-import { VoiceToNode } from './mindmap/VoiceToNode';
-import { NodeDetailDrawer, type NodeDetailData, type NodeStatus } from './mindmap/NodeDetailDrawer';
-import { SubMapBreadcrumb, type BreadcrumbItem } from './mindmap/SubMapBreadcrumb';
+import { AICompetitiveLandscape } from './mindmap/AICompetitiveLandscape';
 import { AIDependencyDetector, type DetectedDependency } from './mindmap/AIDependencyDetector';
 import { AIPriorityRecommender } from './mindmap/AIPriorityRecommender';
-import { AIAutoClustering, type Cluster } from './mindmap/AIAutoClustering';
 import { AISentimentOverlay, type SentimentResult } from './mindmap/AISentimentOverlay';
-import { NodeCommentThread, type NodeComment } from './mindmap/NodeCommentThread';
-import { ActivityFeed, pushActivity } from './mindmap/ActivityFeed';
-import { MapHealthScore } from './mindmap/MapHealthScore';
-import { IdeaFunnelAnalytics } from './mindmap/IdeaFunnelAnalytics';
-import { applyRadialLayout } from './mindmap/RadialTreeLayout';
-import { ExportPowerPoint } from './mindmap/ExportPowerPoint';
-import { EmbedInReports } from './mindmap/EmbedInReports';
-import { AICompetitiveLandscape } from './mindmap/AICompetitiveLandscape';
+import { AIWhatIfScenarios } from './mindmap/AIWhatIfScenarios';
+import { BatchConvertModal } from './mindmap/BatchConvertModal';
 import { BranchComparison } from './mindmap/BranchComparison';
-import { TimeHeatmap } from './mindmap/TimeHeatmap';
+import { ClusterBubbles } from './mindmap/ClusterBubbles';
+import {
+  CollaborationOverlay,
+  type CollaborationSessionState,
+} from './mindmap/CollaborationOverlay';
+import { DocumentToMap } from './mindmap/DocumentToMap';
+import { EmbedInReports } from './mindmap/EmbedInReports';
 import { ExportDiagramCode } from './mindmap/ExportDiagramCode';
+import { ExportPowerPoint } from './mindmap/ExportPowerPoint';
 import { applyForceLayout } from './mindmap/ForceDirectedLayout';
+import { GradientEdge } from './mindmap/GradientEdge';
+import { IdeaFunnelAnalytics } from './mindmap/IdeaFunnelAnalytics';
 import { ImportExternalMap } from './mindmap/ImportExternalMap';
+import { InterviewToMap } from './mindmap/InterviewToMap';
+import { LabeledEdge } from './mindmap/LabeledEdge';
+import { MapHealthScore } from './mindmap/MapHealthScore';
 import { MindMap3DView } from './mindmap/MindMap3DView';
-import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
-import { WebhookSettings, triggerWebhooks } from './mindmap/WebhookSettings';
+import { type NodeComment, NodeCommentThread } from './mindmap/NodeCommentThread';
+import { NodeContextMenu } from './mindmap/NodeContextMenu';
+import { type NodeDetailData, NodeDetailDrawer, type NodeStatus } from './mindmap/NodeDetailDrawer';
+import {
+  GlowWrapper,
+  MaturityRing,
+  type NodeStatusType,
+  StatusDot,
+  VoteStars,
+} from './mindmap/NodeEnhancements';
+import { PresentationMode } from './mindmap/PresentationMode';
+import { applyRadialLayout } from './mindmap/RadialTreeLayout';
+import { SnapshotHistory } from './mindmap/SnapshotHistory';
+import { type BreadcrumbItem, SubMapBreadcrumb } from './mindmap/SubMapBreadcrumb';
+import { TimeHeatmap } from './mindmap/TimeHeatmap';
+import { TimelineView } from './mindmap/TimelineView';
 import { useAutoLayout } from './mindmap/useAutoLayout';
 import { useMapExport } from './mindmap/useMapExport';
+import { VoiceToNode } from './mindmap/VoiceToNode';
+import { triggerWebhooks, WebhookSettings } from './mindmap/WebhookSettings';
 
 type PersistenceStatus = 'online' | 'no_route' | 'missing_table' | 'offline';
 
@@ -157,19 +168,91 @@ const BRANCH_COLORS: Record<
   string,
   { bg: string; border: string; text: string; ring: string; edge: string }
 > = {
-  problem: { bg: 'bg-rose-100 dark:bg-rose-900/25', border: 'border-rose-400/70', text: 'text-rose-700 dark:text-rose-300', ring: 'ring-rose-400', edge: '#fb7185' },
-  goal: { bg: 'bg-emerald-100 dark:bg-emerald-900/25', border: 'border-emerald-400/70', text: 'text-emerald-700 dark:text-emerald-300', ring: 'ring-emerald-400', edge: '#34d399' },
-  options: { bg: 'bg-amber-100 dark:bg-amber-900/25', border: 'border-amber-400/70', text: 'text-amber-700 dark:text-amber-300', ring: 'ring-amber-400', edge: '#fbbf24' },
-  evidence: { bg: 'bg-sky-100 dark:bg-sky-900/25', border: 'border-sky-400/70', text: 'text-sky-700 dark:text-sky-300', ring: 'ring-sky-400', edge: '#38bdf8' },
-  risks: { bg: 'bg-purple-100 dark:bg-purple-900/25', border: 'border-purple-400/70', text: 'text-purple-700 dark:text-purple-300', ring: 'ring-purple-400', edge: '#a78bfa' },
-  experiments: { bg: 'bg-cyan-100 dark:bg-cyan-900/25', border: 'border-cyan-400/70', text: 'text-cyan-700 dark:text-cyan-300', ring: 'ring-cyan-400', edge: '#22d3ee' },
-  plan: { bg: 'bg-blue-100 dark:bg-blue-900/25', border: 'border-blue-400/70', text: 'text-blue-700 dark:text-blue-300', ring: 'ring-blue-400', edge: '#60a5fa' },
+  problem: {
+    bg: 'bg-rose-100 dark:bg-rose-900/25',
+    border: 'border-rose-400/70',
+    text: 'text-rose-700 dark:text-rose-300',
+    ring: 'ring-rose-400',
+    edge: '#fb7185',
+  },
+  goal: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/25',
+    border: 'border-emerald-400/70',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    ring: 'ring-emerald-400',
+    edge: '#34d399',
+  },
+  options: {
+    bg: 'bg-amber-100 dark:bg-amber-900/25',
+    border: 'border-amber-400/70',
+    text: 'text-amber-700 dark:text-amber-300',
+    ring: 'ring-amber-400',
+    edge: '#fbbf24',
+  },
+  evidence: {
+    bg: 'bg-sky-100 dark:bg-sky-900/25',
+    border: 'border-sky-400/70',
+    text: 'text-sky-700 dark:text-sky-300',
+    ring: 'ring-sky-400',
+    edge: '#38bdf8',
+  },
+  risks: {
+    bg: 'bg-purple-100 dark:bg-purple-900/25',
+    border: 'border-purple-400/70',
+    text: 'text-purple-700 dark:text-purple-300',
+    ring: 'ring-purple-400',
+    edge: '#a78bfa',
+  },
+  experiments: {
+    bg: 'bg-cyan-100 dark:bg-cyan-900/25',
+    border: 'border-cyan-400/70',
+    text: 'text-cyan-700 dark:text-cyan-300',
+    ring: 'ring-cyan-400',
+    edge: '#22d3ee',
+  },
+  plan: {
+    bg: 'bg-blue-100 dark:bg-blue-900/25',
+    border: 'border-blue-400/70',
+    text: 'text-blue-700 dark:text-blue-300',
+    ring: 'ring-blue-400',
+    edge: '#60a5fa',
+  },
   // Consulting templates
-  strengths: { bg: 'bg-emerald-100 dark:bg-emerald-900/25', border: 'border-emerald-400/70', text: 'text-emerald-700 dark:text-emerald-300', ring: 'ring-emerald-400', edge: '#34d399' },
-  weaknesses: { bg: 'bg-rose-100 dark:bg-rose-900/25', border: 'border-rose-400/70', text: 'text-rose-700 dark:text-rose-300', ring: 'ring-rose-400', edge: '#fb7185' },
-  opportunities: { bg: 'bg-amber-100 dark:bg-amber-900/25', border: 'border-amber-400/70', text: 'text-amber-700 dark:text-amber-300', ring: 'ring-amber-400', edge: '#fbbf24' },
-  threats: { bg: 'bg-purple-100 dark:bg-purple-900/25', border: 'border-purple-400/70', text: 'text-purple-700 dark:text-purple-300', ring: 'ring-purple-400', edge: '#a78bfa' },
-  uncategorized: { bg: 'bg-slate-100 dark:bg-slate-800/40', border: 'border-slate-300/70', text: 'text-slate-600 dark:text-slate-400', ring: 'ring-slate-400', edge: '#94a3b8' },
+  strengths: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/25',
+    border: 'border-emerald-400/70',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    ring: 'ring-emerald-400',
+    edge: '#34d399',
+  },
+  weaknesses: {
+    bg: 'bg-rose-100 dark:bg-rose-900/25',
+    border: 'border-rose-400/70',
+    text: 'text-rose-700 dark:text-rose-300',
+    ring: 'ring-rose-400',
+    edge: '#fb7185',
+  },
+  opportunities: {
+    bg: 'bg-amber-100 dark:bg-amber-900/25',
+    border: 'border-amber-400/70',
+    text: 'text-amber-700 dark:text-amber-300',
+    ring: 'ring-amber-400',
+    edge: '#fbbf24',
+  },
+  threats: {
+    bg: 'bg-purple-100 dark:bg-purple-900/25',
+    border: 'border-purple-400/70',
+    text: 'text-purple-700 dark:text-purple-300',
+    ring: 'ring-purple-400',
+    edge: '#a78bfa',
+  },
+  uncategorized: {
+    bg: 'bg-slate-100 dark:bg-slate-800/40',
+    border: 'border-slate-300/70',
+    text: 'text-slate-600 dark:text-slate-400',
+    ring: 'ring-slate-400',
+    edge: '#94a3b8',
+  },
 };
 
 function branchColor(key: string) {
@@ -206,8 +289,15 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected })
       <Handle type="target" position={Position.Left} className="!opacity-0 !w-1 !h-1" />
       <Handle type="source" position={Position.Right} id="right" className="!opacity-0 !w-1 !h-1" />
       <Handle type="source" position={Position.Top} id="top" className="!opacity-0 !w-1 !h-1" />
-      <Handle type="source" position={Position.Bottom} id="bottom" className="!opacity-0 !w-1 !h-1" />
-      <div className={`text-xs font-semibold ${colors.text} flex items-center gap-1 justify-center`}>
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="bottom"
+        className="!opacity-0 !w-1 !h-1"
+      />
+      <div
+        className={`text-xs font-semibold ${colors.text} flex items-center gap-1 justify-center`}
+      >
         {collapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
         <GitBranch size={12} />
         {data.label}
@@ -227,13 +317,25 @@ const handleSource = `${handleBase} !bg-amber-300 dark:!bg-amber-600 !border-amb
 
 const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, selected }) => {
   const colors = branchColor(data.branchKey);
-  const isAI = data.sourceType === 'ai_chat' || data.sourceType === 'ai_hint' || data.sourceType === 'ai_suggestion';
+  const isAI =
+    data.sourceType === 'ai_chat' ||
+    data.sourceType === 'ai_hint' ||
+    data.sourceType === 'ai_suggestion';
   const isNew = data._isNew;
   const nodeStatus: NodeStatusType = data.status || 'idea';
   const p = data.priority ?? 50;
   const priorityColor = p >= 75 ? 'bg-emerald-400' : p >= 50 ? 'bg-amber-400' : 'bg-slate-400';
   const votes = data.votes ?? 0;
-  const maturityScore = nodeStatus === 'converted' ? 100 : nodeStatus === 'ready_to_convert' ? 80 : nodeStatus === 'validated' ? 60 : nodeStatus === 'exploring' ? 35 : 10;
+  const maturityScore =
+    nodeStatus === 'converted'
+      ? 100
+      : nodeStatus === 'ready_to_convert'
+        ? 80
+        : nodeStatus === 'validated'
+          ? 60
+          : nodeStatus === 'exploring'
+            ? 35
+            : 10;
 
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(String(data.label || ''));
@@ -272,11 +374,14 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
     );
   }, [data.label, id]);
 
-  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditValue(String(data.label || ''));
-    setEditing(true);
-  }, [data.label]);
+  const handleDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setEditValue(String(data.label || ''));
+      setEditing(true);
+    },
+    [data.label]
+  );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -294,10 +399,13 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
 
   const shape = data.shape || 'default';
   const shapeClass =
-    shape === 'circle' ? 'rounded-full aspect-square flex items-center justify-center' :
-    shape === 'diamond' ? 'rotate-45' :
-    shape === 'hexagon' ? '[clip-path:polygon(25%_0%,75%_0%,100%_50%,75%_100%,25%_100%,0%_50%)]' :
-    'rounded-xl';
+    shape === 'circle'
+      ? 'rounded-full aspect-square flex items-center justify-center'
+      : shape === 'diamond'
+        ? 'rotate-45'
+        : shape === 'hexagon'
+          ? '[clip-path:polygon(25%_0%,75%_0%,100%_50%,75%_100%,25%_100%,0%_50%)]'
+          : 'rounded-xl';
 
   const innerRotate = shape === 'diamond' ? '-rotate-45' : '';
 
@@ -311,8 +419,18 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
       >
         <Handle type="target" position={Position.Left} id="target-left" className={handleTarget} />
         <Handle type="target" position={Position.Top} id="target-top" className={handleTarget} />
-        <Handle type="source" position={Position.Right} id="source-right" className={handleSource} />
-        <Handle type="source" position={Position.Bottom} id="source-bottom" className={handleSource} />
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="source-right"
+          className={handleSource}
+        />
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          id="source-bottom"
+          className={handleSource}
+        />
 
         {/* Status dot */}
         {nodeStatus !== 'idea' && (
@@ -325,7 +443,14 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
           {/* Image thumbnail (R3.5) */}
           {data.imageUrl && !editing && (
             <div className="mb-1.5 -mx-1 -mt-1 rounded-lg overflow-hidden">
-              <img src={data.imageUrl} alt="" className="w-full h-16 object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+              <img
+                src={data.imageUrl}
+                alt=""
+                className="w-full h-16 object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
             </div>
           )}
 
@@ -344,10 +469,16 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
             <>
               <div className="flex items-start gap-1.5">
                 <div className="flex-shrink-0 mt-0.5">
-                  {isAI ? <Bot size={10} className="text-purple-500" /> : <Lightbulb size={10} className="text-amber-500" />}
+                  {isAI ? (
+                    <Bot size={10} className="text-purple-500" />
+                  ) : (
+                    <Lightbulb size={10} className="text-amber-500" />
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className={`text-[11px] font-semibold ${colors.text} line-clamp-2 leading-tight`}>
+                  <div
+                    className={`text-[11px] font-semibold ${colors.text} line-clamp-2 leading-tight`}
+                  >
                     {data.label || '...'}
                   </div>
                   {data.nodeType && (
@@ -365,7 +496,10 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
               </div>
               <div className="mt-1.5 flex items-center gap-1.5">
                 <div className="w-8 h-0.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                  <div className={`h-full rounded-full ${priorityColor}`} style={{ width: `${Math.max(10, p)}%` }} />
+                  <div
+                    className={`h-full rounded-full ${priorityColor}`}
+                    style={{ width: `${Math.max(10, p)}%` }}
+                  />
                 </div>
                 {votes > 0 && <VoteStars votes={votes} compact disabled />}
                 {data.assignee && (
@@ -430,6 +564,7 @@ function MindMapInner({
   onSelectionChange,
 }: IdeaRecommendationMapProps) {
   const { i18n } = useTranslation();
+  const currentUser = useAppStore((state) => state.currentUser);
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
   const { zoomIn, zoomOut, fitView } = useReactFlow();
   const { autoLayout } = useAutoLayout();
@@ -454,19 +589,17 @@ function MindMapInner({
   // ── Collapse/Expand ──────────────────────────────────────────────────────
   const [collapsedNodeIds, setCollapsedNodeIds] = useState<Set<string>>(new Set());
   const [drillPath, setDrillPath] = useState<BreadcrumbItem[]>([]);
+  const [remoteLockedNodeIds, setRemoteLockedNodeIds] = useState<Set<string>>(new Set());
   const drillFocusId = drillPath.length > 0 ? drillPath[drillPath.length - 1].nodeId : null;
 
-  const toggleCollapse = useCallback(
-    (nodeId: string) => {
-      setCollapsedNodeIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(nodeId)) next.delete(nodeId);
-        else next.add(nodeId);
-        return next;
-      });
-    },
-    []
-  );
+  const toggleCollapse = useCallback((nodeId: string) => {
+    setCollapsedNodeIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(nodeId)) next.delete(nodeId);
+      else next.add(nodeId);
+      return next;
+    });
+  }, []);
 
   // Apply collapse visibility + drill-down filtering
   const visibleNodes = useMemo(() => {
@@ -505,7 +638,9 @@ function MindMapInner({
 
     return nodes.map((n) => {
       const isCollapsed = collapsedNodeIds.has(n.id);
-      const childCount = (childrenOf.get(n.id) || []).filter((c) => !c.startsWith('branch-') && c !== 'root').length;
+      const childCount = (childrenOf.get(n.id) || []).filter(
+        (c) => !c.startsWith('branch-') && c !== 'root'
+      ).length;
       const hiddenByDrill = drillVisibleIds ? !drillVisibleIds.has(n.id) : false;
       return {
         ...n,
@@ -560,11 +695,18 @@ function MindMapInner({
   }, [edges, nodes, setEdges, setNodes]);
 
   // ── Context menu ─────────────────────────────────────────────────────────
-  const [contextMenu, setContextMenu] = useState<{ nodeId: string; nodeType: string; x: number; y: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    nodeId: string;
+    nodeType: string;
+    x: number;
+    y: number;
+  } | null>(null);
 
   // ── Node Detail Drawer ──────────────────────────────────────────────────
   const [drawerNodeId, setDrawerNodeId] = useState<string | null>(null);
-  const [nodeMetaMap, setNodeMetaMap] = useState<Record<string, { notes?: string; status?: NodeStatus }>>({});
+  const [nodeMetaMap, setNodeMetaMap] = useState<
+    Record<string, { notes?: string; status?: NodeStatus }>
+  >({});
 
   const drawerNodeData = useMemo((): NodeDetailData | null => {
     if (!drawerNodeId) return null;
@@ -585,62 +727,91 @@ function MindMapInner({
     };
   }, [drawerNodeId, edges, nodeMetaMap, nodes]);
 
-  const handleUpdateNode = useCallback((nodeId: string, patch: Partial<NodeDetailData>) => {
-    if (patch.notes !== undefined || patch.status !== undefined) {
-      setNodeMetaMap((prev) => ({
-        ...prev,
-        [nodeId]: { ...prev[nodeId], ...patch },
-      }));
-    }
-    if (patch.status) {
-      setNodes((prev: Node[]) =>
-        prev.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, status: patch.status } } : n)
-      );
-    }
-  }, [setNodes]);
+  const handleUpdateNode = useCallback(
+    (nodeId: string, patch: Partial<NodeDetailData>) => {
+      if (patch.notes !== undefined || patch.status !== undefined) {
+        setNodeMetaMap((prev) => ({
+          ...prev,
+          [nodeId]: { ...prev[nodeId], ...patch },
+        }));
+      }
+      if (patch.status) {
+        setNodes((prev: Node[]) =>
+          prev.map((n) =>
+            n.id === nodeId ? { ...n, data: { ...n.data, status: patch.status } } : n
+          )
+        );
+      }
+    },
+    [setNodes]
+  );
 
-  const handleConvertNode = useCallback((nodeId: string, target: 'initiative' | 'decision') => {
-    const action = target === 'initiative' ? 'convert_initiative' : 'convert_decision';
-    setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
-    window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action } }));
-    setDrawerNodeId(null);
-  }, [setNodes]);
+  const handleConvertNode = useCallback(
+    (nodeId: string, target: 'initiative' | 'decision') => {
+      const action = target === 'initiative' ? 'convert_initiative' : 'convert_decision';
+      setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
+      window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action } }));
+      setDrawerNodeId(null);
+    },
+    [setNodes]
+  );
 
-  const handleNavigateToNode = useCallback((nodeId: string) => {
-    setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
-    setDrawerNodeId(nodeId);
-    setTimeout(() => {
-      try { fitView({ nodes: [{ id: nodeId } as any], padding: 0.5, duration: 400 }); } catch { /* ignore */ }
-    }, 100);
-  }, [fitView, setNodes]);
+  const handleNavigateToNode = useCallback(
+    (nodeId: string) => {
+      setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
+      setDrawerNodeId(nodeId);
+      setTimeout(() => {
+        try {
+          fitView({ nodes: [{ id: nodeId } as any], padding: 0.5, duration: 400 });
+        } catch {
+          /* ignore */
+        }
+      }, 100);
+    },
+    [fitView, setNodes]
+  );
 
-  const handleDrillDown = useCallback((nodeId: string) => {
-    const node = nodes.find((n) => n.id === nodeId);
-    if (!node) return;
-    setDrillPath((prev) => {
-      const existingIdx = prev.findIndex((p) => p.nodeId === nodeId);
-      if (existingIdx >= 0) return prev.slice(0, existingIdx + 1);
-      return [...prev, { nodeId, label: node.data?.label || nodeId }];
-    });
-    setDrawerNodeId(null);
-    setTimeout(() => {
-      try { fitView({ padding: 0.3, duration: 400 }); } catch { /* ignore */ }
-    }, 100);
-  }, [fitView, nodes]);
-
-  const handleBreadcrumbNavigate = useCallback((nodeId: string | null) => {
-    if (!nodeId) {
-      setDrillPath([]);
-    } else {
+  const handleDrillDown = useCallback(
+    (nodeId: string) => {
+      const node = nodes.find((n) => n.id === nodeId);
+      if (!node) return;
       setDrillPath((prev) => {
-        const idx = prev.findIndex((p) => p.nodeId === nodeId);
-        return idx >= 0 ? prev.slice(0, idx + 1) : prev;
+        const existingIdx = prev.findIndex((p) => p.nodeId === nodeId);
+        if (existingIdx >= 0) return prev.slice(0, existingIdx + 1);
+        return [...prev, { nodeId, label: node.data?.label || nodeId }];
       });
-    }
-    setTimeout(() => {
-      try { fitView({ padding: 0.3, duration: 400 }); } catch { /* ignore */ }
-    }, 100);
-  }, [fitView]);
+      setDrawerNodeId(null);
+      setTimeout(() => {
+        try {
+          fitView({ padding: 0.3, duration: 400 });
+        } catch {
+          /* ignore */
+        }
+      }, 100);
+    },
+    [fitView, nodes]
+  );
+
+  const handleBreadcrumbNavigate = useCallback(
+    (nodeId: string | null) => {
+      if (!nodeId) {
+        setDrillPath([]);
+      } else {
+        setDrillPath((prev) => {
+          const idx = prev.findIndex((p) => p.nodeId === nodeId);
+          return idx >= 0 ? prev.slice(0, idx + 1) : prev;
+        });
+      }
+      setTimeout(() => {
+        try {
+          fitView({ padding: 0.3, duration: 400 });
+        } catch {
+          /* ignore */
+        }
+      }, 100);
+    },
+    [fitView]
+  );
 
   // ── Selection ────────────────────────────────────────────────────────────
   const editingNodeIdRef = useRef<string | null>(null);
@@ -684,13 +855,22 @@ function MindMapInner({
       const nextEdges = Array.isArray(map.edges) ? map.edges : [];
       const loadedPreferred = map?.preferredTool ? String(map.preferredTool) : null;
       const loadedPreferredSafe =
-        loadedPreferred && ['mindmap', 'process_flow', 'table', 'whiteboard'].includes(loadedPreferred)
-          ? (loadedPreferred as CanvasToolType) : null;
+        loadedPreferred &&
+        ['mindmap', 'process_flow', 'table', 'whiteboard'].includes(loadedPreferred)
+          ? (loadedPreferred as CanvasToolType)
+          : null;
       onPreferredToolLoaded?.(loadedPreferredSafe);
 
       const patchedNodes = nextNodes.map((n: any) => {
         if (String(n?.id) !== 'root') return n;
-        return { ...n, data: { ...(n.data || {}), label: ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea'), hint: isPolish ? 'Kliknij, aby edytować' : 'Click to edit' } };
+        return {
+          ...n,
+          data: {
+            ...(n.data || {}),
+            label: ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea'),
+            hint: isPolish ? 'Kliknij, aby edytować' : 'Click to edit',
+          },
+        };
       });
 
       // Restore collapsed state from extensions
@@ -704,19 +884,36 @@ function MindMapInner({
       redoStackRef.current = [];
       setTimeout(() => {
         isHydratingRef.current = false;
-        try { fitView({ padding: 0.3, duration: 300 }); } catch { /* ignore */ }
+        try {
+          fitView({ padding: 0.3, duration: 300 });
+        } catch {
+          /* ignore */
+        }
       }, 50);
     } catch (err: any) {
       const msg = String(err?.message || '');
-      const isNoRoute = msg.toLowerCase().includes('route get') && msg.toLowerCase().includes('/my-work/my-ideas') && msg.toLowerCase().includes('/map');
-      const isMissingTable = msg.toLowerCase().includes('database table missing') && msg.toLowerCase().includes('my_idea_maps');
+      const isNoRoute =
+        msg.toLowerCase().includes('route get') &&
+        msg.toLowerCase().includes('/my-work/my-ideas') &&
+        msg.toLowerCase().includes('/map');
+      const isMissingTable =
+        msg.toLowerCase().includes('database table missing') &&
+        msg.toLowerCase().includes('my_idea_maps');
 
       if (isNoRoute) {
         setPersistence('no_route');
-        toast((isPolish ? 'Backend wymaga restartu (route mapy jeszcze nie działa).' : 'Backend needs restart (map route not active).') as any);
+        toast(
+          (isPolish
+            ? 'Backend wymaga restartu (route mapy jeszcze nie działa).'
+            : 'Backend needs restart (map route not active).') as any
+        );
       } else if (isMissingTable) {
         setPersistence('missing_table');
-        toast((isPolish ? 'Brakuje tabeli mapy — uruchom migracje DB.' : 'Map table missing — run DB migrations.') as any);
+        toast(
+          (isPolish
+            ? 'Brakuje tabeli mapy — uruchom migracje DB.'
+            : 'Map table missing — run DB migrations.') as any
+        );
       } else {
         setPersistence('offline');
         toast.error(msg || (isPolish ? 'Nie udało się wczytać mapy' : 'Failed to load map'));
@@ -728,21 +925,43 @@ function MindMapInner({
       setEdges(def.edges);
       setTimeout(() => {
         isHydratingRef.current = false;
-        try { fitView({ padding: 0.3, duration: 250 }); } catch { /* ignore */ }
+        try {
+          fitView({ padding: 0.3, duration: 250 });
+        } catch {
+          /* ignore */
+        }
       }, 30);
     } finally {
       setLoading(false);
     }
-  }, [fitView, i18n.language, ideaId, ideaTitle, isPolish, onPreferredToolLoaded, setEdges, setNodes]);
+  }, [
+    fitView,
+    i18n.language,
+    ideaId,
+    ideaTitle,
+    isPolish,
+    onPreferredToolLoaded,
+    setEdges,
+    setNodes,
+  ]);
 
-  useEffect(() => { hydrate(); }, [ideaId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    hydrate();
+  }, [ideaId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const label = ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea');
     setNodes((prev: Node[]) =>
       (prev || []).map((n: any) => {
         if (String(n?.id) !== 'root') return n;
-        return { ...n, data: { ...(n.data || {}), label, hint: isPolish ? 'Kliknij, aby edytować' : 'Click to edit' } };
+        return {
+          ...n,
+          data: {
+            ...(n.data || {}),
+            label,
+            hint: isPolish ? 'Kliknij, aby edytować' : 'Click to edit',
+          },
+        };
       })
     );
   }, [ideaTitle, isPolish, setNodes]);
@@ -757,7 +976,11 @@ function MindMapInner({
     if (target) {
       setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === focusId })));
       setTimeout(() => {
-        try { fitView({ nodes: [{ id: focusId } as any], padding: 0.5, duration: 400 }); } catch { /* ignore */ }
+        try {
+          fitView({ nodes: [{ id: focusId } as any], padding: 0.5, duration: 400 });
+        } catch {
+          /* ignore */
+        }
       }, 100);
     }
   }, [loading]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -789,7 +1012,9 @@ function MindMapInner({
           });
           setLastSavedAt(Date.now());
         } catch (err: any) {
-          toast.error(err?.message || (isPolish ? 'Nie udało się zapisać mapy' : 'Failed to save map'));
+          toast.error(
+            err?.message || (isPolish ? 'Nie udało się zapisać mapy' : 'Failed to save map')
+          );
         } finally {
           setSaving(false);
         }
@@ -798,13 +1023,84 @@ function MindMapInner({
     [collapsedNodeIds, extensions, ideaId, isPolish, locked, persistence, preferredTool]
   );
 
-  useEffect(() => { scheduleSave(nodes as any, edges as any); }, [nodes, edges, scheduleSave]);
+  useEffect(() => {
+    scheduleSave(nodes as any, edges as any);
+  }, [nodes, edges, scheduleSave]);
 
   // ── Node operations ──────────────────────────────────────────────────────
 
+  const isNodeLockedByPeer = useCallback(
+    (nodeId?: string | null) => (nodeId ? remoteLockedNodeIds.has(String(nodeId)) : false),
+    [remoteLockedNodeIds]
+  );
+
   const getSelectedNode = useCallback((): Node | undefined => {
-    return nodes.find((n: any) => n?.selected);
-  }, [nodes]);
+    return nodes.find((n: any) => n?.selected && !isNodeLockedByPeer(n.id));
+  }, [isNodeLockedByPeer, nodes]);
+
+  const selectedNodeIds = useMemo(
+    () => nodes.filter((node) => node.selected).map((node) => node.id),
+    [nodes]
+  );
+
+  const currentUserName = useMemo(() => {
+    const fullName = [currentUser?.firstName, currentUser?.lastName]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    return fullName || currentUser?.email || (isPolish ? 'Ty' : 'You');
+  }, [currentUser?.email, currentUser?.firstName, currentUser?.lastName, isPolish]);
+
+  const notifyLockedNode = useCallback(() => {
+    toast.error(
+      isPolish
+        ? 'Ten węzeł jest aktualnie zablokowany przez inną osobę'
+        : 'This node is currently locked by another collaborator'
+    );
+  }, [isPolish]);
+
+  const handleCollabSessionStateChange = useCallback(
+    (state: CollaborationSessionState | null) => {
+      const next = new Set(
+        Object.entries(state?.lockedNodes || {})
+          .filter(([, userId]) => userId !== currentUser?.id)
+          .map(([nodeId]) => nodeId)
+      );
+
+      setRemoteLockedNodeIds((prev) => {
+        if (prev.size === next.size && Array.from(next).every((nodeId) => prev.has(nodeId))) {
+          return prev;
+        }
+        return next;
+      });
+    },
+    [currentUser?.id]
+  );
+
+  useEffect(() => {
+    if (remoteLockedNodeIds.size === 0) return;
+
+    setNodes((prev: Node[]) => {
+      let hasChanges = false;
+      const nextNodes = prev.map((node) => {
+        if (!node.selected || !remoteLockedNodeIds.has(node.id)) {
+          return node;
+        }
+
+        hasChanges = true;
+        return { ...node, selected: false };
+      });
+
+      return hasChanges ? nextNodes : prev;
+    });
+
+    if (contextMenu && remoteLockedNodeIds.has(contextMenu.nodeId)) {
+      setContextMenu(null);
+    }
+    if (drawerNodeId && remoteLockedNodeIds.has(drawerNodeId)) {
+      setDrawerNodeId(null);
+    }
+  }, [contextMenu, drawerNodeId, remoteLockedNodeIds, setNodes]);
 
   const findParentId = useCallback(
     (nodeId: string): string | undefined => {
@@ -832,8 +1128,9 @@ function MindMapInner({
 
     const branchKey = selected.data?.branchKey || 'options';
     const children = findChildrenIds(selected.id);
-    const lastChild = children.length > 0 ? nodes.find((n) => n.id === children[children.length - 1]) : null;
-    const newX = (lastChild?.position?.x ?? selected.position.x + 220);
+    const lastChild =
+      children.length > 0 ? nodes.find((n) => n.id === children[children.length - 1]) : null;
+    const newX = lastChild?.position?.x ?? selected.position.x + 220;
     const newY = (lastChild?.position?.y ?? selected.position.y) + (lastChild ? 70 : 0);
 
     const newId = `node-${uid()}`;
@@ -856,9 +1153,22 @@ function MindMapInner({
     } as any;
 
     editingNodeIdRef.current = newId;
-    setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }]);
+    setNodes((prev: Node[]) => [
+      ...prev.map((n) => ({ ...n, selected: false })),
+      { ...newNode, selected: true },
+    ]);
     setEdges((prev: Edge[]) => [...prev, newEdge]);
-  }, [edges, findChildrenIds, getSelectedNode, isPolish, locked, nodes, pushUndo, setEdges, setNodes]);
+  }, [
+    edges,
+    findChildrenIds,
+    getSelectedNode,
+    isPolish,
+    locked,
+    nodes,
+    pushUndo,
+    setEdges,
+    setNodes,
+  ]);
 
   const addSiblingNode = useCallback(() => {
     if (locked) return;
@@ -893,7 +1203,10 @@ function MindMapInner({
     } as any;
 
     editingNodeIdRef.current = newId;
-    setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }]);
+    setNodes((prev: Node[]) => [
+      ...prev.map((n) => ({ ...n, selected: false })),
+      { ...newNode, selected: true },
+    ]);
     setEdges((prev: Edge[]) => [...prev, newEdge]);
   }, [findParentId, getSelectedNode, isPolish, locked, pushUndo, setEdges, setNodes]);
 
@@ -903,12 +1216,16 @@ function MindMapInner({
     let removedIds: Set<string>;
     setNodes((prev: Node[]) => {
       removedIds = new Set(
-        prev.filter((n: Node) => n.selected && n.id !== 'root' && !n.id.startsWith('branch-')).map((n: Node) => n.id)
+        prev
+          .filter((n: Node) => n.selected && n.id !== 'root' && !n.id.startsWith('branch-'))
+          .map((n: Node) => n.id)
       );
       return prev.filter((n: Node) => !removedIds.has(n.id));
     });
     setEdges((prev: Edge[]) =>
-      prev.filter((e: Edge) => !e.selected && !removedIds!.has(e.source) && !removedIds!.has(e.target))
+      prev.filter(
+        (e: Edge) => !e.selected && !removedIds!.has(e.source) && !removedIds!.has(e.target)
+      )
     );
   }, [locked, pushUndo, setEdges, setNodes]);
 
@@ -1002,14 +1319,24 @@ function MindMapInner({
       )
     );
     setTimeout(() => focusSelectedNode(), 30);
-  }, [findChildrenIds, findParentId, focusSelectedNode, getSelectedNode, locked, pushUndo, setEdges]);
+  }, [
+    findChildrenIds,
+    findParentId,
+    focusSelectedNode,
+    getSelectedNode,
+    locked,
+    pushUndo,
+    setEdges,
+  ]);
 
   const startEditingSelected = useCallback(() => {
     const selected = getSelectedNode();
     if (!selected || selected.id === 'root' || selected.id.startsWith('branch-')) return;
     editingNodeIdRef.current = selected.id;
     setNodes((prev: Node[]) =>
-      prev.map((n) => n.id === selected.id ? { ...n, data: { ...n.data, _startEditing: Date.now() } } : n)
+      prev.map((n) =>
+        n.id === selected.id ? { ...n, data: { ...n.data, _startEditing: Date.now() } } : n
+      )
     );
   }, [getSelectedNode, setNodes]);
 
@@ -1023,10 +1350,14 @@ function MindMapInner({
         setNodes((prev: Node[]) => {
           const node = prev.find((n) => n.id === nodeId);
           if (node && !node.data?.label) {
-            setEdges((pe: Edge[]) => pe.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
+            setEdges((pe: Edge[]) =>
+              pe.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
+            );
             return prev.filter((n) => n.id !== nodeId);
           }
-          return prev.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, _startEditing: undefined } } : n);
+          return prev.map((n) =>
+            n.id === nodeId ? { ...n, data: { ...n.data, _startEditing: undefined } } : n
+          );
         });
         return;
       }
@@ -1037,7 +1368,9 @@ function MindMapInner({
         return;
       }
       setNodes((prev: Node[]) =>
-        prev.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, label, _startEditing: undefined } } : n)
+        prev.map((n) =>
+          n.id === nodeId ? { ...n, data: { ...n.data, label, _startEditing: undefined } } : n
+        )
       );
     };
     window.addEventListener('idea-mindmap-node-edit', handler);
@@ -1049,7 +1382,7 @@ function MindMapInner({
     const handler = (e: Event) => {
       const { edgeId, label } = (e as CustomEvent).detail;
       setEdges((prev: Edge[]) =>
-        prev.map((edge) => edge.id === edgeId ? { ...edge, data: { ...edge.data, label } } : edge)
+        prev.map((edge) => (edge.id === edgeId ? { ...edge, data: { ...edge.data, label } } : edge))
       );
     };
     window.addEventListener('idea-mindmap-edge-label', handler);
@@ -1076,7 +1409,13 @@ function MindMapInner({
       pushUndo();
       const laid = autoLayout(nodes, edges);
       setNodes(laid);
-      setTimeout(() => { try { fitView({ padding: 0.3, duration: 400 }); } catch { /* ignore */ } }, 50);
+      setTimeout(() => {
+        try {
+          fitView({ padding: 0.3, duration: 400 });
+        } catch {
+          /* ignore */
+        }
+      }, 50);
     }
     if (action === 'mm_ai_expand_branch') handleAIExpand();
     if (action === 'mm_toggle_bubbles') setShowClusterBubbles((p) => !p);
@@ -1108,7 +1447,13 @@ function MindMapInner({
         const laid = autoLayout(nodes, edges);
         setNodes(laid);
       }
-      setTimeout(() => { try { fitView({ padding: 0.3, duration: 400 }); } catch { /* ignore */ } }, 50);
+      setTimeout(() => {
+        try {
+          fitView({ padding: 0.3, duration: 400 });
+        } catch {
+          /* ignore */
+        }
+      }, 50);
     }
     if (action === 'mm_comments') {
       const sel = getSelectedNode();
@@ -1131,15 +1476,25 @@ function MindMapInner({
         const laid = autoLayout(nodes, edges);
         setNodes(laid);
       }
-      setTimeout(() => { try { fitView({ padding: 0.3, duration: 400 }); } catch { /* ignore */ } }, 50);
+      setTimeout(() => {
+        try {
+          fitView({ padding: 0.3, duration: 400 });
+        } catch {
+          /* ignore */
+        }
+      }, 50);
     }
     if (action === 'mm_import_external') setShowImportExternalMap(true);
     if (action === 'mm_3d_view') setShowMindMap3D(true);
     if (action === 'mm_webhooks') setShowWebhookSettings(true);
     if (action === 'mm_export') {
-      const format = window.prompt(isPolish ? 'Format eksportu: png, svg, json' : 'Export format: png, svg, json', 'png');
+      const format = window.prompt(
+        isPolish ? 'Format eksportu: png, svg, json' : 'Export format: png, svg, json',
+        'png'
+      );
       if (format === 'svg') exportAsSVG(`${ideaTitle || 'mindmap'}.svg`);
-      else if (format === 'json') exportAsJSON(nodes, edges, extensions, `${ideaTitle || 'mindmap'}.json`);
+      else if (format === 'json')
+        exportAsJSON(nodes, edges, extensions, `${ideaTitle || 'mindmap'}.json`);
       else exportAsPNG(`${ideaTitle || 'mindmap'}.png`);
     }
   };
@@ -1152,22 +1507,45 @@ function MindMapInner({
       if (detail.action === 'convert_initiative' || detail.action === 'convert_decision') {
         const target = detail.action === 'convert_initiative' ? 'initiative' : 'decision';
         const selectedNode = getSelectedNode();
-        const nodeIds: string[] = Array.isArray(detail.nodeIds) ? detail.nodeIds : (selectedNode ? [selectedNode.id] : []);
+        const nodeIds: string[] = Array.isArray(detail.nodeIds)
+          ? detail.nodeIds
+          : selectedNode
+            ? [selectedNode.id]
+            : [];
         if (nodeIds.length === 0) return;
 
         Api.convertMyIdea(ideaId, { target, options: { nodeIds } })
           .then((result) => {
             for (const nid of nodeIds) {
-              setNodes((prev: Node[]) => prev.map((n) =>
-                n.id === nid
-                  ? { ...n, data: { ...n.data, status: 'converted', artifactRef: { type: target, id: result?.promotedEntityId || result?.created?.initiativeId || result?.created?.decisionId } } }
-                  : n
-              ));
+              setNodes((prev: Node[]) =>
+                prev.map((n) =>
+                  n.id === nid
+                    ? {
+                        ...n,
+                        data: {
+                          ...n.data,
+                          status: 'converted',
+                          artifactRef: {
+                            type: target,
+                            id:
+                              result?.promotedEntityId ||
+                              result?.created?.initiativeId ||
+                              result?.created?.decisionId,
+                          },
+                        },
+                      }
+                    : n
+                )
+              );
             }
-            toast.success(isPolish ? `Przekonwertowano na ${target}` : `Converted to ${target}`, { duration: 2000 });
+            toast.success(isPolish ? `Przekonwertowano na ${target}` : `Converted to ${target}`, {
+              duration: 2000,
+            });
           })
           .catch((err: any) => {
-            toast.error(isPolish ? 'Błąd konwersji' : `Convert failed: ${err?.message || 'unknown error'}`);
+            toast.error(
+              isPolish ? 'Błąd konwersji' : `Convert failed: ${err?.message || 'unknown error'}`
+            );
           });
         return;
       }
@@ -1195,11 +1573,13 @@ function MindMapInner({
 
       for (const item of items) {
         const anchorId =
-          String(item.anchorNodeId || detail.anchorNodeId || item.parentId || detail.parentId || '').trim() ||
-          null;
+          String(
+            item.anchorNodeId || detail.anchorNodeId || item.parentId || detail.parentId || ''
+          ).trim() || null;
         const anchorNode = anchorId ? nodes.find((n) => n.id === anchorId) : null;
         const branchKey =
-          String(anchorNode?.data?.branchKey || branchMap[item.type || ''] || 'options').trim() || 'options';
+          String(anchorNode?.data?.branchKey || branchMap[item.type || ''] || 'options').trim() ||
+          'options';
         const branchNode = nodes.find((n) => n.data?.branchKey === branchKey);
         const sourceNode = anchorNode || branchNode || nodes.find((n) => n.id === 'root') || null;
         const childrenOfSource = edges.filter((edge) => edge.source === sourceNode?.id);
@@ -1208,7 +1588,10 @@ function MindMapInner({
         const defaultPosition = sourceNode
           ? sourceNode.id.startsWith('branch-')
             ? { x: (sourceNode.position?.x ?? 0) + 220, y: (sourceNode.position?.y ?? 0) + yOffset }
-            : { x: (sourceNode.position?.x ?? 0) + 180, y: (sourceNode.position?.y ?? 0) + 60 + yOffset }
+            : {
+                x: (sourceNode.position?.x ?? 0) + 180,
+                y: (sourceNode.position?.y ?? 0) + 60 + yOffset,
+              }
           : { x: 220, y: yOffset };
 
         const newId = `node-${uid()}`;
@@ -1250,7 +1633,8 @@ function MindMapInner({
     const handler = (e: KeyboardEvent) => {
       const isEditing = editingNodeIdRef.current !== null;
       const target = e.target as HTMLElement;
-      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+      const isInput =
+        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
 
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
@@ -1340,16 +1724,34 @@ function MindMapInner({
         if (!parentId) return;
         const siblings = findChildrenIds(parentId);
         const idx = siblings.indexOf(sel.id);
-        const nextIdx = e.key === 'ArrowDown' ? Math.min(idx + 1, siblings.length - 1) : Math.max(idx - 1, 0);
+        const nextIdx =
+          e.key === 'ArrowDown' ? Math.min(idx + 1, siblings.length - 1) : Math.max(idx - 1, 0);
         if (nextIdx !== idx) {
-          setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === siblings[nextIdx] })));
+          setNodes((prev: Node[]) =>
+            prev.map((n) => ({ ...n, selected: n.id === siblings[nextIdx] }))
+          );
         }
         return;
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [addChildNode, addSiblingNode, deleteSelected, edges, findChildrenIds, findParentId, getSelectedNode, nodes, redo, scheduleSave, setNodes, startEditingSelected, toggleCollapse, undo]);
+  }, [
+    addChildNode,
+    addSiblingNode,
+    deleteSelected,
+    edges,
+    findChildrenIds,
+    findParentId,
+    getSelectedNode,
+    nodes,
+    redo,
+    scheduleSave,
+    setNodes,
+    startEditingSelected,
+    toggleCollapse,
+    undo,
+  ]);
 
   // ── Connect ──────────────────────────────────────────────────────────────
   const onConnect = useCallback(
@@ -1389,19 +1791,44 @@ function MindMapInner({
       }
 
       setEdges((prev: Edge[]) =>
-        (prev || []).map((e: Edge) => {
-          if (e.id !== edge.id) return e;
-          if (currentState === 'forward') {
-            return { ...e, animated: false, style: { ...e.style, opacity: 0.8, strokeDasharray: '5 5' }, data: { ...e.data, flowState: 'stopped' } };
-          }
-          if (currentState === 'stopped') {
-            return { ...e, source: e.target, target: e.source, sourceHandle: e.targetHandle, targetHandle: e.sourceHandle, animated: true, style: { ...e.style, opacity: 0.7, strokeDasharray: undefined }, data: { ...e.data, flowState: 'reversed' } };
-          }
-          if (currentState === 'reversed') {
-            return { ...e, source: e.target, target: e.source, sourceHandle: e.targetHandle, targetHandle: e.sourceHandle, animated: true, style: { ...e.style, opacity: 0.6, strokeDasharray: undefined }, data: { ...e.data, flowState: 'forward' } };
-          }
-          return e;
-        }).filter(Boolean)
+        (prev || [])
+          .map((e: Edge) => {
+            if (e.id !== edge.id) return e;
+            if (currentState === 'forward') {
+              return {
+                ...e,
+                animated: false,
+                style: { ...e.style, opacity: 0.8, strokeDasharray: '5 5' },
+                data: { ...e.data, flowState: 'stopped' },
+              };
+            }
+            if (currentState === 'stopped') {
+              return {
+                ...e,
+                source: e.target,
+                target: e.source,
+                sourceHandle: e.targetHandle,
+                targetHandle: e.sourceHandle,
+                animated: true,
+                style: { ...e.style, opacity: 0.7, strokeDasharray: undefined },
+                data: { ...e.data, flowState: 'reversed' },
+              };
+            }
+            if (currentState === 'reversed') {
+              return {
+                ...e,
+                source: e.target,
+                target: e.source,
+                sourceHandle: e.targetHandle,
+                targetHandle: e.sourceHandle,
+                animated: true,
+                style: { ...e.style, opacity: 0.6, strokeDasharray: undefined },
+                data: { ...e.data, flowState: 'forward' },
+              };
+            }
+            return e;
+          })
+          .filter(Boolean)
       );
     },
     [isPolish, locked, pushUndo, setEdges]
@@ -1444,6 +1871,12 @@ function MindMapInner({
   const [commentNodeId, setCommentNodeId] = useState<string | null>(null);
   const [nodeComments, setNodeComments] = useState<Record<string, NodeComment[]>>({});
   const [showActivityFeed, setShowActivityFeed] = useState(false);
+
+  useEffect(() => {
+    if (commentNodeId && remoteLockedNodeIds.has(commentNodeId)) {
+      setCommentNodeId(null);
+    }
+  }, [commentNodeId, remoteLockedNodeIds]);
 
   // ── R5: Analytics ─────────────────────────────────────────────────────
   const [showHealthScore, setShowHealthScore] = useState(true);
@@ -1492,16 +1925,25 @@ function MindMapInner({
 
   const selectedAddCount = useMemo(() => {
     if (!aiProposal) return 0;
-    return (aiProposal.add?.nodes || []).reduce((sum, _n, idx) => sum + (selectedAddIdx[idx] ? 1 : 0), 0);
+    return (aiProposal.add?.nodes || []).reduce(
+      (sum, _n, idx) => sum + (selectedAddIdx[idx] ? 1 : 0),
+      0
+    );
   }, [aiProposal, selectedAddIdx]);
 
   const applyAIProposal = useCallback(async () => {
     if (!aiProposal) return;
-    if (locked) { toast((isPolish ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.') as any); return; }
+    if (locked) {
+      toast((isPolish ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.') as any);
+      return;
+    }
     const toAddNodes = (aiProposal.add?.nodes || []).filter((_n, idx) => selectedAddIdx[idx]);
     const toAddEdges = aiProposal.add?.edges || [];
 
-    if (toAddNodes.length === 0) { toast((isPolish ? 'Brak wybranych zmian' : 'No selected changes') as any); return; }
+    if (toAddNodes.length === 0) {
+      toast((isPolish ? 'Brak wybranych zmian' : 'No selected changes') as any);
+      return;
+    }
 
     pushUndo();
     setSaving(true);
@@ -1523,193 +1965,299 @@ function MindMapInner({
       setEdges(nextEdges as any);
 
       if (persistence === 'online') {
-        await Api.saveMyIdeaMap(ideaId, { nodes: nextNodes as any, edges: nextEdges as any, preferredTool: preferredTool || undefined, extensions: extensions || undefined, fromAI: true });
+        await Api.saveMyIdeaMap(ideaId, {
+          nodes: nextNodes as any,
+          edges: nextEdges as any,
+          preferredTool: preferredTool || undefined,
+          extensions: extensions || undefined,
+          fromAI: true,
+        });
         setLastSavedAt(Date.now());
       }
 
-      toast.success(isPolish ? `Zastosowano propozycje AI (${toAddNodes.length} dodano)` : `Applied AI proposals (${toAddNodes.length} added)`, { duration: 1200 });
+      toast.success(
+        isPolish
+          ? `Zastosowano propozycje AI (${toAddNodes.length} dodano)`
+          : `Applied AI proposals (${toAddNodes.length} added)`,
+        { duration: 1200 }
+      );
       closeAIModal();
     } catch (err: any) {
-      toast.error(err?.message || (isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals'));
+      toast.error(
+        err?.message ||
+          (isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals')
+      );
     } finally {
       setSaving(false);
     }
-  }, [aiProposal, closeAIModal, edges, extensions, ideaId, isPolish, locked, nodes, persistence, preferredTool, pushUndo, selectedAddIdx, setEdges, setNodes]);
+  }, [
+    aiProposal,
+    closeAIModal,
+    edges,
+    extensions,
+    ideaId,
+    isPolish,
+    locked,
+    nodes,
+    persistence,
+    preferredTool,
+    pushUndo,
+    selectedAddIdx,
+    setEdges,
+    setNodes,
+  ]);
 
-  const handleAIExpand = useCallback(async (targetNodeId?: string) => {
-    if (locked) { toast((isPolish ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.') as any); return; }
-    if (persistence !== 'online') { toast((isPolish ? 'AI wymaga działającego backendu.' : 'AI requires backend.') as any); return; }
-    setSaving(true);
-    try {
-      const anchor = targetNodeId
-        ? nodes.find((n: any) => n?.id === targetNodeId)
-        : (nodes.find((n: any) => n?.selected) || nodes.find((n: any) => String(n?.id) === 'root'));
-      const anchorLabel = anchor?.data?.label || '';
-      const anchorBranch = anchor?.data?.branchKey || selectedBranchKey;
-
-      // Gather ancestor context for node-specific generation
-      const ancestorLabels: string[] = [];
-      if (anchor && anchor.id !== 'root') {
-        let currentId = anchor.id;
-        for (let depth = 0; depth < 5; depth++) {
-          const parentEdge = edges.find((e) => e.target === currentId);
-          if (!parentEdge) break;
-          const parentNode = nodes.find((n) => n.id === parentEdge.source);
-          if (parentNode?.data?.label) ancestorLabels.unshift(parentNode.data.label);
-          currentId = parentEdge.source;
-        }
+  const handleAIExpand = useCallback(
+    async (targetNodeId?: string) => {
+      if (locked) {
+        toast((isPolish ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.') as any);
+        return;
       }
+      if (persistence !== 'online') {
+        toast((isPolish ? 'AI wymaga działającego backendu.' : 'AI requires backend.') as any);
+        return;
+      }
+      setSaving(true);
+      try {
+        const anchor = targetNodeId
+          ? nodes.find((n: any) => n?.id === targetNodeId)
+          : nodes.find((n: any) => n?.selected) || nodes.find((n: any) => String(n?.id) === 'root');
+        const anchorLabel = anchor?.data?.label || '';
+        const anchorBranch = anchor?.data?.branchKey || selectedBranchKey;
 
-      const res = await Api.expandMyIdeaMap(ideaId, {
-        anchorNodeId: String(anchor?.id || 'root'),
-        branchKey: anchorBranch,
-        count: 5,
-        language: i18n.language,
-        proposeOnly: true,
-        context: anchorLabel ? `Node: "${anchorLabel}"${ancestorLabels.length > 0 ? ` | Path: ${ancestorLabels.join(' → ')} → ${anchorLabel}` : ''}` : undefined,
-      });
-      const proposedNodes = (() => {
-        if (Array.isArray(res?.proposal?.add?.nodes)) return res.proposal.add.nodes;
-        if (Array.isArray(res?.proposal?.add)) return res.proposal.add;
-        return [];
-      })();
-      const proposedEdges = (() => {
-        if (Array.isArray(res?.proposal?.add?.edges)) return res.proposal.add.edges;
-        if (Array.isArray(res?.proposal?.edges)) return res.proposal.edges;
-        return [];
-      })();
-      if (!proposedNodes.length) { toast((isPolish ? 'Brak nowych propozycji' : 'No new suggestions') as any); return; }
+        // Gather ancestor context for node-specific generation
+        const ancestorLabels: string[] = [];
+        if (anchor && anchor.id !== 'root') {
+          let currentId = anchor.id;
+          for (let depth = 0; depth < 5; depth++) {
+            const parentEdge = edges.find((e) => e.target === currentId);
+            if (!parentEdge) break;
+            const parentNode = nodes.find((n) => n.id === parentEdge.source);
+            if (parentNode?.data?.label) ancestorLabels.unshift(parentNode.data.label);
+            currentId = parentEdge.source;
+          }
+        }
 
-      setAiProposal({ add: { nodes: proposedNodes, edges: proposedEdges }, remove: { nodeIds: [], edgeIds: [] }, reorder: null, rationale: null });
-      setSelectedAddIdx(Object.fromEntries(proposedNodes.map((_: any, idx: number) => [idx, true])) as Record<number, boolean>);
-      setApplySuggestedOrder(false);
-      setShowAIModal(true);
-    } catch (err: any) {
-      toast.error(err?.message || (isPolish ? 'AI nie zadziałało' : 'AI failed'));
-    } finally {
-      setSaving(false);
-    }
-  }, [edges, i18n.language, ideaId, isPolish, locked, nodes, persistence, selectedBranchKey]);
+        const res = await Api.expandMyIdeaMap(ideaId, {
+          anchorNodeId: String(anchor?.id || 'root'),
+          branchKey: anchorBranch,
+          count: 5,
+          language: i18n.language,
+          proposeOnly: true,
+          context: anchorLabel
+            ? `Node: "${anchorLabel}"${ancestorLabels.length > 0 ? ` | Path: ${ancestorLabels.join(' → ')} → ${anchorLabel}` : ''}`
+            : undefined,
+        });
+        const proposedNodes = (() => {
+          if (Array.isArray(res?.proposal?.add?.nodes)) return res.proposal.add.nodes;
+          if (Array.isArray(res?.proposal?.add)) return res.proposal.add;
+          return [];
+        })();
+        const proposedEdges = (() => {
+          if (Array.isArray(res?.proposal?.add?.edges)) return res.proposal.add.edges;
+          if (Array.isArray(res?.proposal?.edges)) return res.proposal.edges;
+          return [];
+        })();
+        if (!proposedNodes.length) {
+          toast((isPolish ? 'Brak nowych propozycji' : 'No new suggestions') as any);
+          return;
+        }
+
+        setAiProposal({
+          add: { nodes: proposedNodes, edges: proposedEdges },
+          remove: { nodeIds: [], edgeIds: [] },
+          reorder: null,
+          rationale: null,
+        });
+        setSelectedAddIdx(
+          Object.fromEntries(proposedNodes.map((_: any, idx: number) => [idx, true])) as Record<
+            number,
+            boolean
+          >
+        );
+        setApplySuggestedOrder(false);
+        setShowAIModal(true);
+      } catch (err: any) {
+        toast.error(err?.message || (isPolish ? 'AI nie zadziałało' : 'AI failed'));
+      } finally {
+        setSaving(false);
+      }
+    },
+    [edges, i18n.language, ideaId, isPolish, locked, nodes, persistence, selectedBranchKey]
+  );
 
   // ── Node click / context menu ────────────────────────────────────────────
-  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
-    if (node.type === 'center') onCenterEdit?.();
-    if (node.type === 'branch') toggleCollapse(node.id);
-  }, [onCenterEdit, toggleCollapse]);
-
-  const onNodeDoubleClick = useCallback((_: React.MouseEvent, node: Node) => {
-    if (node.type === 'idea') {
-      setDrawerNodeId(node.id);
-    }
-  }, []);
-
-  const onNodeContextMenu = useCallback((e: React.MouseEvent, node: Node) => {
-    e.preventDefault();
-    setContextMenu({ nodeId: node.id, nodeType: node.type || 'idea', x: e.clientX, y: e.clientY });
-  }, []);
-
-  const handleContextAction = useCallback((action: string) => {
-    if (action === 'ctx_edit') startEditingSelected();
-    if (action === 'ctx_open_detail') {
-      const sel = getSelectedNode();
-      if (sel && sel.type === 'idea') setDrawerNodeId(sel.id);
-    }
-    if (action === 'ctx_drill_down') {
-      const sel = getSelectedNode();
-      if (sel) handleDrillDown(sel.id);
-    }
-    if (action === 'ctx_add_child') addChildNode();
-    if (action === 'ctx_add_sibling') addSiblingNode();
-    if (action === 'ctx_ai_expand' || action === 'ctx_ai_deepen') {
-      const sel = getSelectedNode();
-      handleAIExpand(sel?.id);
-    }
-    if (action === 'ctx_what_if') setShowWhatIf(true);
-    if (action === 'ctx_vote_up') {
-      const sel = getSelectedNode();
-      if (sel && sel.type === 'idea') {
-        const currentVotes = sel.data?.votes ?? 0;
-        const newVotes = currentVotes >= 5 ? 0 : currentVotes + 1;
-        setNodes((prev: Node[]) =>
-          prev.map((n) => n.id === sel.id ? { ...n, data: { ...n.data, votes: newVotes } } : n)
-        );
+  const onNodeClick = useCallback(
+    (_: React.MouseEvent, node: Node) => {
+      if (isNodeLockedByPeer(node.id)) {
+        notifyLockedNode();
+        return;
       }
-    }
-    if (action === 'ctx_assign') {
-      const sel = getSelectedNode();
-      if (sel && sel.type === 'idea') {
-        const name = window.prompt(isPolish ? 'Przypisz osobę:' : 'Assign person:');
-        if (name) {
+      if (node.type === 'center') onCenterEdit?.();
+      if (node.type === 'branch') toggleCollapse(node.id);
+    },
+    [isNodeLockedByPeer, notifyLockedNode, onCenterEdit, toggleCollapse]
+  );
+
+  const onNodeDoubleClick = useCallback(
+    (_: React.MouseEvent, node: Node) => {
+      if (isNodeLockedByPeer(node.id)) {
+        notifyLockedNode();
+        return;
+      }
+      if (node.type === 'idea') {
+        setDrawerNodeId(node.id);
+      }
+    },
+    [isNodeLockedByPeer, notifyLockedNode]
+  );
+
+  const onNodeContextMenu = useCallback(
+    (e: React.MouseEvent, node: Node) => {
+      e.preventDefault();
+      if (isNodeLockedByPeer(node.id)) {
+        notifyLockedNode();
+        return;
+      }
+      setContextMenu({
+        nodeId: node.id,
+        nodeType: node.type || 'idea',
+        x: e.clientX,
+        y: e.clientY,
+      });
+    },
+    [isNodeLockedByPeer, notifyLockedNode]
+  );
+
+  const handleContextAction = useCallback(
+    (action: string) => {
+      if (action === 'ctx_edit') startEditingSelected();
+      if (action === 'ctx_open_detail') {
+        const sel = getSelectedNode();
+        if (sel && sel.type === 'idea') setDrawerNodeId(sel.id);
+      }
+      if (action === 'ctx_drill_down') {
+        const sel = getSelectedNode();
+        if (sel) handleDrillDown(sel.id);
+      }
+      if (action === 'ctx_add_child') addChildNode();
+      if (action === 'ctx_add_sibling') addSiblingNode();
+      if (action === 'ctx_ai_expand' || action === 'ctx_ai_deepen') {
+        const sel = getSelectedNode();
+        handleAIExpand(sel?.id);
+      }
+      if (action === 'ctx_what_if') setShowWhatIf(true);
+      if (action === 'ctx_vote_up') {
+        const sel = getSelectedNode();
+        if (sel && sel.type === 'idea') {
+          const currentVotes = sel.data?.votes ?? 0;
+          const newVotes = currentVotes >= 5 ? 0 : currentVotes + 1;
           setNodes((prev: Node[]) =>
-            prev.map((n) => n.id === sel.id ? { ...n, data: { ...n.data, assignee: name } } : n)
+            prev.map((n) => (n.id === sel.id ? { ...n, data: { ...n.data, votes: newVotes } } : n))
           );
-          toast.success(isPolish ? `Przypisano: ${name}` : `Assigned: ${name}`, { duration: 1000 });
         }
       }
-    }
-    if (action === 'ctx_comments') {
-      const sel = getSelectedNode();
-      if (sel && sel.type === 'idea') setCommentNodeId(sel.id);
-    }
-    if (action === 'ctx_dependencies') setShowDependencyDetector(true);
-    if (action === 'ctx_priority') setShowPriorityRecommender(true);
-    if (action === 'ctx_competitive') setShowCompetitiveLandscape(true);
-    if (action === 'ctx_change_shape') {
-      const sel = getSelectedNode();
-      if (sel && sel.type === 'idea') {
-        const shapes = ['default', 'circle', 'diamond', 'hexagon'];
-        const current = sel.data?.shape || 'default';
-        const nextIdx = (shapes.indexOf(current) + 1) % shapes.length;
-        setNodes((prev: Node[]) =>
-          prev.map((n) => n.id === sel.id ? { ...n, data: { ...n.data, shape: shapes[nextIdx] } } : n)
-        );
-        toast.success(`Shape: ${shapes[nextIdx]}`, { duration: 800 });
-      }
-    }
-    if (action === 'ctx_add_image') {
-      const sel = getSelectedNode();
-      if (sel && sel.type === 'idea') {
-        const url = window.prompt(isPolish ? 'URL obrazka:' : 'Image URL:');
-        if (url) {
-          setNodes((prev: Node[]) =>
-            prev.map((n) => n.id === sel.id ? { ...n, data: { ...n.data, imageUrl: url } } : n)
-          );
-          toast.success(isPolish ? 'Obraz dodany' : 'Image added', { duration: 800 });
+      if (action === 'ctx_assign') {
+        const sel = getSelectedNode();
+        if (sel && sel.type === 'idea') {
+          const name = window.prompt(isPolish ? 'Przypisz osobę:' : 'Assign person:');
+          if (name) {
+            setNodes((prev: Node[]) =>
+              prev.map((n) => (n.id === sel.id ? { ...n, data: { ...n.data, assignee: name } } : n))
+            );
+            toast.success(isPolish ? `Przypisano: ${name}` : `Assigned: ${name}`, {
+              duration: 1000,
+            });
+          }
         }
       }
-    }
-    if (action === 'ctx_share_branch') {
-      const sel = getSelectedNode();
-      if (sel) {
-        const url = `${window.location.origin}${window.location.pathname}?focusNode=${sel.id}`;
-        navigator.clipboard.writeText(url).then(() => {
-          toast.success(isPolish ? 'Link skopiowany!' : 'Link copied!', { duration: 1200 });
-        }).catch(() => {
-          window.prompt(isPolish ? 'Skopiuj link:' : 'Copy link:', url);
-        });
+      if (action === 'ctx_comments') {
+        const sel = getSelectedNode();
+        if (sel && sel.type === 'idea') setCommentNodeId(sel.id);
       }
-    }
-    if (action === 'ctx_duplicate') duplicateSelected();
-    if (action === 'ctx_delete') deleteSelected();
-    if (action === 'ctx_convert_initiative') {
-      window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action: 'convert_initiative' } }));
-    }
-    if (action === 'ctx_convert_decision') {
-      window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action: 'convert_decision' } }));
-    }
-  }, [addChildNode, addSiblingNode, deleteSelected, duplicateSelected, getSelectedNode, handleAIExpand, handleDrillDown, startEditingSelected]);
+      if (action === 'ctx_dependencies') setShowDependencyDetector(true);
+      if (action === 'ctx_priority') setShowPriorityRecommender(true);
+      if (action === 'ctx_competitive') setShowCompetitiveLandscape(true);
+      if (action === 'ctx_change_shape') {
+        const sel = getSelectedNode();
+        if (sel && sel.type === 'idea') {
+          const shapes = ['default', 'circle', 'diamond', 'hexagon'];
+          const current = sel.data?.shape || 'default';
+          const nextIdx = (shapes.indexOf(current) + 1) % shapes.length;
+          setNodes((prev: Node[]) =>
+            prev.map((n) =>
+              n.id === sel.id ? { ...n, data: { ...n.data, shape: shapes[nextIdx] } } : n
+            )
+          );
+          toast.success(`Shape: ${shapes[nextIdx]}`, { duration: 800 });
+        }
+      }
+      if (action === 'ctx_add_image') {
+        const sel = getSelectedNode();
+        if (sel && sel.type === 'idea') {
+          const url = window.prompt(isPolish ? 'URL obrazka:' : 'Image URL:');
+          if (url) {
+            setNodes((prev: Node[]) =>
+              prev.map((n) => (n.id === sel.id ? { ...n, data: { ...n.data, imageUrl: url } } : n))
+            );
+            toast.success(isPolish ? 'Obraz dodany' : 'Image added', { duration: 800 });
+          }
+        }
+      }
+      if (action === 'ctx_share_branch') {
+        const sel = getSelectedNode();
+        if (sel) {
+          const url = `${window.location.origin}${window.location.pathname}?focusNode=${sel.id}`;
+          navigator.clipboard
+            .writeText(url)
+            .then(() => {
+              toast.success(isPolish ? 'Link skopiowany!' : 'Link copied!', { duration: 1200 });
+            })
+            .catch(() => {
+              window.prompt(isPolish ? 'Skopiuj link:' : 'Copy link:', url);
+            });
+        }
+      }
+      if (action === 'ctx_duplicate') duplicateSelected();
+      if (action === 'ctx_delete') deleteSelected();
+      if (action === 'ctx_convert_initiative') {
+        window.dispatchEvent(
+          new CustomEvent('idea-workspace-quick-action', {
+            detail: { action: 'convert_initiative' },
+          })
+        );
+      }
+      if (action === 'ctx_convert_decision') {
+        window.dispatchEvent(
+          new CustomEvent('idea-workspace-quick-action', { detail: { action: 'convert_decision' } })
+        );
+      }
+    },
+    [
+      addChildNode,
+      addSiblingNode,
+      deleteSelected,
+      duplicateSelected,
+      getSelectedNode,
+      handleAIExpand,
+      handleDrillDown,
+      startEditingSelected,
+    ]
+  );
 
   const savedLabel = useMemo(() => {
-    if (persistence !== 'online') return isPolish ? 'Tryb lokalny (bez zapisu)' : 'Local mode (not saved)';
+    if (persistence !== 'online')
+      return isPolish ? 'Tryb lokalny (bez zapisu)' : 'Local mode (not saved)';
     if (saving) return isPolish ? 'Zapisuję...' : 'Saving...';
     if (!lastSavedAt) return isPolish ? 'Nie zapisano' : 'Not saved yet';
     const sec = Math.max(1, Math.round((Date.now() - lastSavedAt) / 1000));
     return isPolish ? `Zapisano ${sec}s temu` : `Saved ${sec}s ago`;
   }, [isPolish, lastSavedAt, persistence, saving]);
 
-  const containerClassName = variant === 'overlay'
-    ? 'fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950'
-    : `relative w-full h-full bg-slate-50 dark:bg-navy-950 ${className || ''}`;
+  const containerClassName =
+    variant === 'overlay'
+      ? 'fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950'
+      : `relative w-full h-full bg-slate-50 dark:bg-navy-950 ${className || ''}`;
 
   return (
     <div className={containerClassName}>
@@ -1737,10 +2285,16 @@ function MindMapInner({
                   {isPolish ? 'Proponowane zmiany mapy (AI)' : 'Proposed map changes (AI)'}
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  {isPolish ? 'Zaznacz elementy do dodania, a następnie kliknij „Zastosuj".' : 'Select items to add, then click "Apply".'}
+                  {isPolish
+                    ? 'Zaznacz elementy do dodania, a następnie kliknij „Zastosuj".'
+                    : 'Select items to add, then click "Apply".'}
                 </p>
               </div>
-              <button onClick={closeAIModal} className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors" title={isPolish ? 'Zamknij' : 'Close'}>
+              <button
+                onClick={closeAIModal}
+                className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                title={isPolish ? 'Zamknij' : 'Close'}
+              >
                 <X size={16} />
               </button>
             </div>
@@ -1750,7 +2304,12 @@ function MindMapInner({
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
                   {isPolish ? 'Do wywalenia' : 'To remove'} (0)
                 </span>
-                <EmptyStateInline icon={GitBranch} dashed={false} className="p-5" message={isPolish ? 'Brak sugestii usunięć.' : 'No removal suggestions.'} />
+                <EmptyStateInline
+                  icon={GitBranch}
+                  dashed={false}
+                  className="p-5"
+                  message={isPolish ? 'Brak sugestii usunięć.' : 'No removal suggestions.'}
+                />
               </div>
 
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
@@ -1759,21 +2318,50 @@ function MindMapInner({
                     {isPolish ? 'Do dodania' : 'To add'} ({aiProposal.add.nodes.length})
                   </span>
                   {aiProposal.add.nodes.length > 0 && (
-                    <button onClick={() => setSelectedAddIdx(Object.fromEntries(aiProposal.add.nodes.map((_, idx) => [idx, true])) as Record<number, boolean>)} className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+                    <button
+                      onClick={() =>
+                        setSelectedAddIdx(
+                          Object.fromEntries(
+                            aiProposal.add.nodes.map((_, idx) => [idx, true])
+                          ) as Record<number, boolean>
+                        )
+                      }
+                      className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    >
                       {isPolish ? 'Zaznacz wszystko' : 'Select all'}
                     </button>
                   )}
                 </div>
                 {aiProposal.add.nodes.length === 0 ? (
-                  <EmptyStateInline icon={Plus} dashed={false} className="p-5" message={isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'} />
+                  <EmptyStateInline
+                    icon={Plus}
+                    dashed={false}
+                    className="p-5"
+                    message={isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'}
+                  />
                 ) : (
                   <div className="space-y-1.5">
                     {aiProposal.add.nodes.map((n, idx) => (
-                      <label key={String((n as any)?.id || idx)} className="flex items-start gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/30 hover:bg-white/80 dark:hover:bg-navy-900/40 transition-colors">
-                        <input type="checkbox" checked={!!selectedAddIdx[idx]} onChange={(e) => setSelectedAddIdx((prev) => ({ ...prev, [idx]: e.target.checked }))} className="mt-1" />
+                      <label
+                        key={String((n as any)?.id || idx)}
+                        className="flex items-start gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/30 hover:bg-white/80 dark:hover:bg-navy-900/40 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!!selectedAddIdx[idx]}
+                          onChange={(e) =>
+                            setSelectedAddIdx((prev) => ({ ...prev, [idx]: e.target.checked }))
+                          }
+                          className="mt-1"
+                        />
                         <div className="min-w-0">
-                          <div className="text-sm font-medium text-slate-800 dark:text-white">{String((n as any)?.data?.label || (n as any)?.id || 'Node')}</div>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{isPolish ? 'Gałąź' : 'Branch'}: {String((n as any)?.data?.branchKey || selectedBranchKey)}</div>
+                          <div className="text-sm font-medium text-slate-800 dark:text-white">
+                            {String((n as any)?.data?.label || (n as any)?.id || 'Node')}
+                          </div>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            {isPolish ? 'Gałąź' : 'Branch'}:{' '}
+                            {String((n as any)?.data?.branchKey || selectedBranchKey)}
+                          </div>
                         </div>
                       </label>
                     ))}
@@ -1782,22 +2370,44 @@ function MindMapInner({
               </div>
 
               <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{isPolish ? 'Proponowana kolejność' : 'Suggested order'} (0)</span>
-                <EmptyStateInline icon={Sparkles} dashed={false} className="p-5" message={isPolish ? 'Brak sugestii kolejności.' : 'No ordering suggestion.'} />
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  {isPolish ? 'Proponowana kolejność' : 'Suggested order'} (0)
+                </span>
+                <EmptyStateInline
+                  icon={Sparkles}
+                  dashed={false}
+                  className="p-5"
+                  message={isPolish ? 'Brak sugestii kolejności.' : 'No ordering suggestion.'}
+                />
               </div>
 
-              <Callout variant="purple" title={isPolish ? 'Plan' : 'Plan'} compact className="rounded-xl">
+              <Callout
+                variant="purple"
+                title={isPolish ? 'Plan' : 'Plan'}
+                compact
+                className="rounded-xl"
+              >
                 <ul className="list-disc pl-4 space-y-1">
-                  <li>{isPolish ? `Dodaj zaznaczone węzły: ${selectedAddCount}.` : `Add selected nodes: ${selectedAddCount}.`}</li>
+                  <li>
+                    {isPolish
+                      ? `Dodaj zaznaczone węzły: ${selectedAddCount}.`
+                      : `Add selected nodes: ${selectedAddCount}.`}
+                  </li>
                 </ul>
               </Callout>
             </div>
 
             <div className="px-5 py-4 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center justify-end gap-2">
-              <button onClick={closeAIModal} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors">
+              <button
+                onClick={closeAIModal}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              >
                 {isPolish ? 'Anuluj' : 'Cancel'}
               </button>
-              <button onClick={() => void applyAIProposal()} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors">
+              <button
+                onClick={() => void applyAIProposal()}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors"
+              >
                 {isPolish ? 'Zastosuj' : 'Apply'}
               </button>
             </div>
@@ -1808,7 +2418,11 @@ function MindMapInner({
       {/* Breadcrumb for drill-down */}
       {drillPath.length > 0 && (
         <div className="absolute top-14 left-3 z-[91]">
-          <SubMapBreadcrumb path={drillPath} onNavigate={handleBreadcrumbNavigate} isPl={isPolish} />
+          <SubMapBreadcrumb
+            path={drillPath}
+            onNavigate={handleBreadcrumbNavigate}
+            isPl={isPolish}
+          />
         </div>
       )}
 
@@ -1816,7 +2430,11 @@ function MindMapInner({
       <div className="absolute top-3 left-3 right-3 z-[90] flex items-center justify-between">
         <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/85 dark:bg-navy-900/80 backdrop-blur-sm border border-slate-200/60 dark:border-white/[0.06] shadow-2xl">
           {showClose && (
-            <button onClick={onClose} className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors" title={isPolish ? 'Zamknij mapę' : 'Close map'}>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+              title={isPolish ? 'Zamknij mapę' : 'Close map'}
+            >
               <X size={16} />
             </button>
           )}
@@ -1828,24 +2446,43 @@ function MindMapInner({
         </div>
 
         <div className="flex items-center gap-1 px-2 py-1.5 bg-white/85 dark:bg-navy-900/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-white/[0.06] shadow-2xl">
-          <button onClick={() => zoomIn({ duration: 250 })} className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors" title={isPolish ? 'Przybliż' : 'Zoom in'}>
+          <button
+            onClick={() => zoomIn({ duration: 250 })}
+            className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+            title={isPolish ? 'Przybliż' : 'Zoom in'}
+          >
             <Plus size={16} />
           </button>
-          <button onClick={() => zoomOut({ duration: 250 })} className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors" title={isPolish ? 'Oddal' : 'Zoom out'}>
+          <button
+            onClick={() => zoomOut({ duration: 250 })}
+            className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+            title={isPolish ? 'Oddal' : 'Zoom out'}
+          >
             <Minus size={16} />
           </button>
           <div className="w-px h-5 bg-slate-200 dark:bg-white/[0.06] mx-0.5" />
-          <button onClick={() => fitView({ padding: 0.3, duration: 300 })} className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors" title={isPolish ? 'Dopasuj widok' : 'Fit view'}>
+          <button
+            onClick={() => fitView({ padding: 0.3, duration: 300 })}
+            className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+            title={isPolish ? 'Dopasuj widok' : 'Fit view'}
+          >
             <RotateCcw size={14} />
           </button>
           <div className="w-px h-5 bg-slate-200 dark:bg-white/[0.06] mx-0.5" />
-          <button onClick={() => void handleAIExpand()} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/15 transition-colors" title={isPolish ? 'AI: rozbuduj wybraną gałąź' : 'AI: expand selected branch'} disabled={locked || saving || persistence !== 'online'}>
+          <button
+            onClick={() => void handleAIExpand()}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/15 transition-colors"
+            title={isPolish ? 'AI: rozbuduj wybraną gałąź' : 'AI: expand selected branch'}
+            disabled={locked || saving || persistence !== 'online'}
+          >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
             AI
           </button>
           <div className="w-px h-5 bg-slate-200 dark:bg-white/[0.06] mx-0.5" />
           <div className="text-[10px] text-slate-500 dark:text-slate-400 px-1">
-            {isPolish ? 'Tab=child Enter=sibling Space=collapse' : 'Tab=child Enter=sibling Space=collapse'}
+            {isPolish
+              ? 'Tab=child Enter=sibling Space=collapse'
+              : 'Tab=child Enter=sibling Space=collapse'}
           </div>
         </div>
       </div>
@@ -1878,7 +2515,11 @@ function MindMapInner({
           maxZoom={3}
           proOptions={{ hideAttribution: true }}
           className="bg-slate-50 dark:bg-navy-950"
-          aria-label={isPolish ? 'Mapa rekomendacji pomysłu — nawigacja strzałkami, Enter/Tab dodawanie węzłów' : 'Idea recommendation map — arrow navigation, Enter/Tab add nodes'}
+          aria-label={
+            isPolish
+              ? 'Mapa rekomendacji pomysłu — nawigacja strzałkami, Enter/Tab dodawanie węzłów'
+              : 'Idea recommendation map — arrow navigation, Enter/Tab add nodes'
+          }
           defaultEdgeOptions={{
             type: 'gradient',
             style: { stroke: '#8b5cf6', strokeWidth: 2, opacity: 0.7 },
@@ -1897,8 +2538,12 @@ function MindMapInner({
           {/* Cluster Bubbles overlay */}
           {showClusterBubbles && (
             <ClusterBubbles
-              nodes={visibleNodes.filter((n) => !n.hidden).map((n) => ({ id: n.id, position: n.position, data: n.data }))}
-              edges={visibleEdges.filter((e) => !e.hidden).map((e) => ({ source: e.source, target: e.target }))}
+              nodes={visibleNodes
+                .filter((n) => !n.hidden)
+                .map((n) => ({ id: n.id, position: n.position, data: n.data }))}
+              edges={visibleEdges
+                .filter((e) => !e.hidden)
+                .map((e) => ({ source: e.source, target: e.target }))}
               enabled={showClusterBubbles}
             />
           )}
@@ -1911,8 +2556,12 @@ function MindMapInner({
               <span className="text-slate-400">·</span>
               <span>
                 {locked
-                  ? isPolish ? 'Zaakceptuj wyzwanie, aby odblokować edycję' : 'Accept the challenge to unlock editing'
-                  : isPolish ? 'Prawy klik = menu kontekstowe' : 'Right-click = context menu'}
+                  ? isPolish
+                    ? 'Zaakceptuj wyzwanie, aby odblokować edycję'
+                    : 'Accept the challenge to unlock editing'
+                  : isPolish
+                    ? 'Prawy klik = menu kontekstowe'
+                    : 'Right-click = context menu'}
               </span>
             </div>
           </Panel>
@@ -1925,42 +2574,58 @@ function MindMapInner({
         edges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
         locked={locked}
         onFocusBranch={(branchKey) => {
-          const branchNode = nodes.find((n) => n.data?.branchKey === branchKey && n.id.startsWith('branch-'));
+          const branchNode = nodes.find(
+            (n) => n.data?.branchKey === branchKey && n.id.startsWith('branch-')
+          );
           if (branchNode) {
-            setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === branchNode.id })));
-            setTimeout(() => { try { fitView({ nodes: [{ id: branchNode.id } as any], padding: 0.5, duration: 400 }); } catch { /* ignore */ } }, 100);
+            setNodes((prev: Node[]) =>
+              prev.map((n) => ({ ...n, selected: n.id === branchNode.id }))
+            );
+            setTimeout(() => {
+              try {
+                fitView({ nodes: [{ id: branchNode.id } as any], padding: 0.5, duration: 400 });
+              } catch {
+                /* ignore */
+              }
+            }, 100);
           }
         }}
       />
 
       {/* AI What-If Scenarios */}
-      {showWhatIf && (() => {
-        const sel = nodes.find((n: any) => n?.selected);
-        return (
-          <AIWhatIfScenarios
-            open={showWhatIf}
-            onClose={() => setShowWhatIf(false)}
-            ideaId={ideaId}
-            ideaTitle={ideaTitle}
-            selectedNodeLabel={sel?.data?.label || ideaTitle}
-            selectedNodeId={sel?.id || 'root'}
-            branchKey={sel?.data?.branchKey || 'options'}
-            allNodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
-            locked={locked}
-            onApplyScenario={(scenario) => {
-              pushUndo();
-              window.dispatchEvent(
-                new CustomEvent('idea-workspace-insert', {
-                  detail: {
-                    items: [{ text: scenario.title, type: scenario.type === 'risk' ? 'risk_flags' : 'topics' }],
-                    ideaId,
-                  },
-                })
-              );
-            }}
-          />
-        );
-      })()}
+      {showWhatIf &&
+        (() => {
+          const sel = nodes.find((n: any) => n?.selected);
+          return (
+            <AIWhatIfScenarios
+              open={showWhatIf}
+              onClose={() => setShowWhatIf(false)}
+              ideaId={ideaId}
+              ideaTitle={ideaTitle}
+              selectedNodeLabel={sel?.data?.label || ideaTitle}
+              selectedNodeId={sel?.id || 'root'}
+              branchKey={sel?.data?.branchKey || 'options'}
+              allNodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
+              locked={locked}
+              onApplyScenario={(scenario) => {
+                pushUndo();
+                window.dispatchEvent(
+                  new CustomEvent('idea-workspace-insert', {
+                    detail: {
+                      items: [
+                        {
+                          text: scenario.title,
+                          type: scenario.type === 'risk' ? 'risk_flags' : 'topics',
+                        },
+                      ],
+                      ideaId,
+                    },
+                  })
+                );
+              }}
+            />
+          );
+        })()}
 
       {/* AI Blind Spots Detector */}
       <AIBlindSpotsDetector
@@ -1989,13 +2654,29 @@ function MindMapInner({
         onClose={() => setShowBatchConvert(false)}
         nodes={nodes
           .filter((n) => n.type === 'idea')
-          .map((n) => ({ id: n.id, label: n.data?.label || '', branchKey: n.data?.branchKey || '', status: n.data?.status }))}
+          .map((n) => ({
+            id: n.id,
+            label: n.data?.label || '',
+            branchKey: n.data?.branchKey || '',
+            status: n.data?.status,
+          }))}
         locked={locked}
         onConvert={(nodeIds, target) => {
           for (const nid of nodeIds) {
-            setNodes((prev: Node[]) => prev.map((n) => n.id === nid ? { ...n, data: { ...n.data, status: 'converted' } } : n));
+            setNodes((prev: Node[]) =>
+              prev.map((n) =>
+                n.id === nid ? { ...n, data: { ...n.data, status: 'converted' } } : n
+              )
+            );
           }
-          window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action: target === 'initiative' ? 'convert_initiative' : 'convert_decision', nodeIds } }));
+          window.dispatchEvent(
+            new CustomEvent('idea-workspace-quick-action', {
+              detail: {
+                action: target === 'initiative' ? 'convert_initiative' : 'convert_decision',
+                nodeIds,
+              },
+            })
+          );
         }}
       />
 
@@ -2005,11 +2686,22 @@ function MindMapInner({
         onClose={() => setShowTimeline(false)}
         nodes={nodes
           .filter((n) => n.type === 'idea')
-          .map((n) => ({ id: n.id, label: n.data?.label || '', branchKey: n.data?.branchKey || '', status: n.data?.status || 'idea' }))}
+          .map((n) => ({
+            id: n.id,
+            label: n.data?.label || '',
+            branchKey: n.data?.branchKey || '',
+            status: n.data?.status || 'idea',
+          }))}
         onSelectNode={(nodeId) => {
           setShowTimeline(false);
           setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
-          setTimeout(() => { try { fitView({ nodes: [{ id: nodeId } as any], padding: 0.5, duration: 400 }); } catch { /* ignore */ } }, 100);
+          setTimeout(() => {
+            try {
+              fitView({ nodes: [{ id: nodeId } as any], padding: 0.5, duration: 400 });
+            } catch {
+              /* ignore */
+            }
+          }, 100);
         }}
       />
 
@@ -2027,16 +2719,28 @@ function MindMapInner({
               .filter((e) => e.source === bn.id)
               .map((e) => {
                 const child = nodes.find((n) => n.id === e.target);
-                return child ? { id: child.id, label: child.data?.label || '', status: child.data?.status } : null;
+                return child
+                  ? { id: child.id, label: child.data?.label || '', status: child.data?.status }
+                  : null;
               })
               .filter(Boolean) as Array<{ id: string; label: string; status?: string }>,
           }))}
         onFocusBranch={(branchKey) => {
           setShowPresentation(false);
-          const branchNode = nodes.find((n) => n.data?.branchKey === branchKey && n.id.startsWith('branch-'));
+          const branchNode = nodes.find(
+            (n) => n.data?.branchKey === branchKey && n.id.startsWith('branch-')
+          );
           if (branchNode) {
-            setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === branchNode.id })));
-            setTimeout(() => { try { fitView({ nodes: [{ id: branchNode.id } as any], padding: 0.5, duration: 400 }); } catch { /* ignore */ } }, 100);
+            setNodes((prev: Node[]) =>
+              prev.map((n) => ({ ...n, selected: n.id === branchNode.id }))
+            );
+            setTimeout(() => {
+              try {
+                fitView({ nodes: [{ id: branchNode.id } as any], padding: 0.5, duration: 400 });
+              } catch {
+                /* ignore */
+              }
+            }, 100);
           }
         }}
       />
@@ -2097,7 +2801,10 @@ function MindMapInner({
           for (const item of items) {
             window.dispatchEvent(
               new CustomEvent('idea-workspace-insert', {
-                detail: { items: [{ text: item.text, type: branchMap[item.branchKey] || 'topics' }], ideaId },
+                detail: {
+                  items: [{ text: item.text, type: branchMap[item.branchKey] || 'topics' }],
+                  ideaId,
+                },
               })
             );
           }
@@ -2151,37 +2858,71 @@ function MindMapInner({
           pushUndo();
           const edgeId = `dep-edge-${uid()}`;
           const depType = dep.type || 'related_to';
-          const color = depType === 'depends_on' ? '#ef4444' : depType === 'enables' ? '#22c55e' : depType === 'conflicts_with' ? '#f59e0b' : '#8b5cf6';
+          const color =
+            depType === 'depends_on'
+              ? '#ef4444'
+              : depType === 'enables'
+                ? '#22c55e'
+                : depType === 'conflicts_with'
+                  ? '#f59e0b'
+                  : '#8b5cf6';
           const newEdge: Edge = {
             id: edgeId,
             source: dep.sourceNodeId,
             target: dep.targetNodeId,
             type: 'labeled',
             animated: true,
-            style: { stroke: color, strokeWidth: 2, opacity: 0.7, strokeDasharray: depType === 'conflicts_with' ? '5 5' : undefined },
+            style: {
+              stroke: color,
+              strokeWidth: 2,
+              opacity: 0.7,
+              strokeDasharray: depType === 'conflicts_with' ? '5 5' : undefined,
+            },
             data: { label: dep.relationship, depType, userCreated: true },
           };
           setEdges((prev: Edge[]) => addEdge(newEdge, prev));
-          pushActivity(ideaId, { type: 'node_edited', actor: 'You', nodeLabel: dep.sourceLabel, nodeId: dep.sourceNodeId, detail: `Dependency → ${dep.targetLabel}` });
+          pushActivity(ideaId, {
+            type: 'node_edited',
+            actor: 'You',
+            nodeLabel: dep.sourceLabel,
+            nodeId: dep.sourceNodeId,
+            detail: `Dependency → ${dep.targetLabel}`,
+          });
         }}
         onAddAll={(deps) => {
           pushUndo();
           for (const dep of deps) {
             const edgeId = `dep-edge-${uid()}`;
             const depType = dep.type || 'related_to';
-            const color = depType === 'depends_on' ? '#ef4444' : depType === 'enables' ? '#22c55e' : depType === 'conflicts_with' ? '#f59e0b' : '#8b5cf6';
+            const color =
+              depType === 'depends_on'
+                ? '#ef4444'
+                : depType === 'enables'
+                  ? '#22c55e'
+                  : depType === 'conflicts_with'
+                    ? '#f59e0b'
+                    : '#8b5cf6';
             const newEdge: Edge = {
               id: edgeId,
               source: dep.sourceNodeId,
               target: dep.targetNodeId,
               type: 'labeled',
               animated: true,
-              style: { stroke: color, strokeWidth: 2, opacity: 0.7, strokeDasharray: depType === 'conflicts_with' ? '5 5' : undefined },
+              style: {
+                stroke: color,
+                strokeWidth: 2,
+                opacity: 0.7,
+                strokeDasharray: depType === 'conflicts_with' ? '5 5' : undefined,
+              },
               data: { label: dep.relationship, depType, userCreated: true },
             };
             setEdges((prev: Edge[]) => addEdge(newEdge, prev));
           }
-          pushActivity(ideaId, { type: 'node_edited', actor: 'You', detail: `Added ${deps.length} dependencies` });
+          pushActivity(ideaId, {
+            type: 'node_edited',
+            actor: 'You',
+            detail: `Added ${deps.length} dependencies`,
+          });
         }}
       />
 
@@ -2202,7 +2943,11 @@ function MindMapInner({
               return { ...n, data: { ...n.data, priority: upd.priority } };
             })
           );
-          pushActivity(ideaId, { type: 'ai_suggestion', actor: 'AI', detail: `Updated ${updates.length} node priorities` });
+          pushActivity(ideaId, {
+            type: 'ai_suggestion',
+            actor: 'AI',
+            detail: `Updated ${updates.length} node priorities`,
+          });
         }}
       />
 
@@ -2220,10 +2965,17 @@ function MindMapInner({
             prev.map((n) => {
               const cluster = clusters.find((c) => c.nodeIds.includes(n.id));
               if (!cluster) return n;
-              return { ...n, data: { ...n.data, clusterColor: cluster.color, clusterName: cluster.name } };
+              return {
+                ...n,
+                data: { ...n.data, clusterColor: cluster.color, clusterName: cluster.name },
+              };
             })
           );
-          pushActivity(ideaId, { type: 'ai_suggestion', actor: 'AI', detail: `Applied ${clusters.length} clusters` });
+          pushActivity(ideaId, {
+            type: 'ai_suggestion',
+            actor: 'AI',
+            detail: `Applied ${clusters.length} clusters`,
+          });
         }}
       />
 
@@ -2241,42 +2993,58 @@ function MindMapInner({
             prev.map((n) => {
               const r = results.find((s) => s.nodeId === n.id);
               if (!r) return n;
-              const sentimentColor = r.sentiment === 'positive' ? '#22c55e' : r.sentiment === 'negative' ? '#ef4444' : '#94a3b8';
+              const sentimentColor =
+                r.sentiment === 'positive'
+                  ? '#22c55e'
+                  : r.sentiment === 'negative'
+                    ? '#ef4444'
+                    : '#94a3b8';
               return { ...n, data: { ...n.data, sentimentColor, sentiment: r.sentiment } };
             })
           );
-          pushActivity(ideaId, { type: 'ai_suggestion', actor: 'AI', detail: `Sentiment analysis applied to ${results.length} nodes` });
+          pushActivity(ideaId, {
+            type: 'ai_suggestion',
+            actor: 'AI',
+            detail: `Sentiment analysis applied to ${results.length} nodes`,
+          });
         }}
       />
 
       {/* R2.3: Comment Threads */}
-      {commentNodeId && (() => {
-        const node = nodes.find((n) => n.id === commentNodeId);
-        return (
-          <NodeCommentThread
-            open={!!commentNodeId}
-            onClose={() => setCommentNodeId(null)}
-            nodeId={commentNodeId}
-            nodeLabel={node?.data?.label || commentNodeId}
-            comments={nodeComments[commentNodeId] || []}
-            locked={locked}
-            currentUser="You"
-            onAddComment={(nid, comment) => {
-              setNodeComments((prev) => ({
-                ...prev,
-                [nid]: [...(prev[nid] || []), comment],
-              }));
-              pushActivity(ideaId, { type: 'comment', actor: comment.author, nodeLabel: node?.data?.label, nodeId: nid, detail: comment.text.slice(0, 60) });
-            }}
-            onDeleteComment={(nid, commentId) => {
-              setNodeComments((prev) => ({
-                ...prev,
-                [nid]: (prev[nid] || []).filter((c) => c.id !== commentId),
-              }));
-            }}
-          />
-        );
-      })()}
+      {commentNodeId &&
+        (() => {
+          const node = nodes.find((n) => n.id === commentNodeId);
+          return (
+            <NodeCommentThread
+              open={!!commentNodeId}
+              onClose={() => setCommentNodeId(null)}
+              nodeId={commentNodeId}
+              nodeLabel={node?.data?.label || commentNodeId}
+              comments={nodeComments[commentNodeId] || []}
+              locked={locked}
+              currentUser="You"
+              onAddComment={(nid, comment) => {
+                setNodeComments((prev) => ({
+                  ...prev,
+                  [nid]: [...(prev[nid] || []), comment],
+                }));
+                pushActivity(ideaId, {
+                  type: 'comment',
+                  actor: comment.author,
+                  nodeLabel: node?.data?.label,
+                  nodeId: nid,
+                  detail: comment.text.slice(0, 60),
+                });
+              }}
+              onDeleteComment={(nid, commentId) => {
+                setNodeComments((prev) => ({
+                  ...prev,
+                  [nid]: (prev[nid] || []).filter((c) => c.id !== commentId),
+                }));
+              }}
+            />
+          );
+        })()}
 
       {/* R2.4: Activity Feed */}
       <ActivityFeed
@@ -2314,7 +3082,9 @@ function MindMapInner({
               .filter((e) => e.source === bn.id)
               .map((e) => {
                 const child = nodes.find((n) => n.id === e.target);
-                return child ? { id: child.id, label: child.data?.label || '', status: child.data?.status } : null;
+                return child
+                  ? { id: child.id, label: child.data?.label || '', status: child.data?.status }
+                  : null;
               })
               .filter(Boolean) as Array<{ id: string; label: string; status?: string }>,
           }))}
@@ -2346,7 +3116,11 @@ function MindMapInner({
               })
             );
           }
-          pushActivity(ideaId, { type: 'ai_suggestion', actor: 'AI', detail: `Competitive landscape: ${items.length} items` });
+          pushActivity(ideaId, {
+            type: 'ai_suggestion',
+            actor: 'AI',
+            detail: `Competitive landscape: ${items.length} items`,
+          });
         }}
       />
 
@@ -2388,7 +3162,11 @@ function MindMapInner({
               })
             );
           }
-          pushActivity(ideaId, { type: 'node_added', actor: 'You', detail: `Imported ${items.length} nodes from external file` });
+          pushActivity(ideaId, {
+            type: 'node_added',
+            actor: 'You',
+            detail: `Imported ${items.length} nodes from external file`,
+          });
         }}
       />
 
@@ -2404,8 +3182,10 @@ function MindMapInner({
       {/* R2.1+R2.2: Collaboration Overlay (auto-hides when no connection) */}
       <CollaborationOverlay
         ideaId={ideaId}
-        currentUserId="current-user"
-        currentUserName="You"
+        currentUserId={currentUser?.id || 'anonymous'}
+        currentUserName={currentUserName}
+        selectedNodeIds={selectedNodeIds}
+        onSessionStateChange={handleCollabSessionStateChange}
       />
 
       {/* R4.5: Webhook Settings */}

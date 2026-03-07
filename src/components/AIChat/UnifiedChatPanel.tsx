@@ -66,6 +66,10 @@ import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
 // import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { PendingActionsIndicator } from './PendingActionsIndicator';
+import {
+  SUPPORTED_CHAT_ATTACHMENT_LABEL,
+  isSupportedChatAttachment,
+} from './chatAttachmentSupport';
 
 // ============================================================================
 // Types
@@ -1274,17 +1278,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       }
 
       for (const file of files) {
-        const ext = String(file.name || '')
-          .split('.')
-          .pop()
-          ?.toLowerCase();
-        const supported =
-          file.type === 'application/pdf' ||
-          file.type.startsWith('text/') ||
-          file.type === 'application/json' ||
-          ['txt', 'md', 'csv', 'json'].includes(ext || '');
-
-        if (!supported) {
+        if (!isSupportedChatAttachment(file)) {
           console.warn('[UnifiedChatPanel] Skipping unsupported attachment type:', {
             name: file.name,
             type: file.type,
@@ -1293,8 +1287,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           toast.error(
             t(
               'aiChat.attachments.unsupportedType',
-              'Plik "{{name}}" nie jest obsługiwany. Dozwolone formaty: PDF, TXT, MD, CSV, JSON.',
-              { name: file.name }
+              'Plik "{{name}}" nie jest obsługiwany. Dozwolone formaty: {{types}}.',
+              { name: file.name, types: SUPPORTED_CHAT_ATTACHMENT_LABEL }
             ),
             { duration: 5000 }
           );
@@ -2576,27 +2570,29 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             </button>
           )}
 
-          {/* T105: 3rd "Business/Actions" button */}
-          <button
-            onClick={() => {
-              trackFunnelEvent('chat_business_button_clicked', {
-                mode: isSplitMode ? 'split' : 'full',
-                pendingCount: pendingActionsCount,
-              });
-              onNavigateToActions?.();
-            }}
-            data-testid="chat-business-button"
-            className="relative p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
-            title={t('aiChat.business', 'Business actions')}
-            aria-label={t('aiChat.business', 'Business actions')}
-          >
-            <Briefcase size={18} strokeWidth={1.75} />
-            {pendingActionsCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary-500 text-[10px] font-medium text-white px-1 leading-none">
-                {pendingActionsCount > 9 ? '9+' : pendingActionsCount}
-              </span>
-            )}
-          </button>
+          {/* Show the business/actions button only when a real navigation target exists. */}
+          {onNavigateToActions && (
+            <button
+              onClick={() => {
+                trackFunnelEvent('chat_business_button_clicked', {
+                  mode: isSplitMode ? 'split' : 'full',
+                  pendingCount: pendingActionsCount,
+                });
+                onNavigateToActions();
+              }}
+              data-testid="chat-business-button"
+              className="relative p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
+              title={t('aiChat.business', 'Business actions')}
+              aria-label={t('aiChat.business', 'Business actions')}
+            >
+              <Briefcase size={18} strokeWidth={1.75} />
+              {pendingActionsCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary-500 text-[10px] font-medium text-white px-1 leading-none">
+                  {pendingActionsCount > 9 ? '9+' : pendingActionsCount}
+                </span>
+              )}
+            </button>
+          )}
 
           {/* T012: Important signals (chat-active) */}
           {signalsEnabled && (

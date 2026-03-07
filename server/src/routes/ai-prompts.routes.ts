@@ -19,6 +19,31 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
+const normalizePromptRow = (prompt: {
+  variables?: string;
+  is_active?: number | boolean;
+  template?: string;
+  [key: string]: unknown;
+}) => ({
+  ...prompt,
+  system_prompt: String(prompt.template || ''),
+  user_prompt_template: String((prompt as any).user_prompt_template || ''),
+  variables:
+    typeof prompt.variables === 'string'
+      ? JSON.parse(prompt.variables || '[]')
+      : Array.isArray(prompt.variables)
+        ? prompt.variables
+        : [],
+  is_active: Boolean(prompt.is_active),
+});
+
+const normalizeVersions = (versions: Array<Record<string, unknown>>) =>
+  versions.map((version) => ({
+    ...version,
+    system_prompt: String(version.template || ''),
+    user_prompt_template: String(version.user_prompt_template || ''),
+  }));
+
 /**
  * GET /api/ai-prompts
  * List all prompts with optional filtering
@@ -63,15 +88,12 @@ router.get(
       }>;
 
       // Parse JSON fields
-      const parsedPrompts = prompts.map((p) => ({
-        ...p,
-        variables: p.variables ? JSON.parse(p.variables) : [],
-        is_active: Boolean(p.is_active),
-      }));
+      const parsedPrompts = prompts.map((p) => normalizePromptRow(p));
 
       res.json({
         success: true,
         data: parsedPrompts,
+        prompts: parsedPrompts,
         count: parsedPrompts.length,
       });
     } catch (error: unknown) {
@@ -154,14 +176,17 @@ router.get(
         [id]
       );
 
+      const normalizedVersions = normalizeVersions((versions as any[]) || []);
+      const normalizedPrompt = {
+        ...normalizePromptRow(prompt),
+        versions: normalizedVersions,
+      };
+
       res.json({
         success: true,
-        data: {
-          ...prompt,
-          variables: prompt.variables ? JSON.parse(prompt.variables) : [],
-          is_active: Boolean(prompt.is_active),
-          versions,
-        },
+        data: normalizedPrompt,
+        prompt: normalizedPrompt,
+        versions: normalizedVersions,
       });
     } catch (error: unknown) {
       console.error('[AI Prompts API] Error getting prompt:', error);
@@ -183,14 +208,16 @@ router.post(
   requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const { name, category, description, template, variables, is_active } = req.body;
+      const { name, category, description, template, system_prompt, variables, is_active } = req.body;
       const userId = req.user?.id;
 
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      if (!name || !category || !template) {
+      const resolvedTemplate = String(template || system_prompt || '').trim();
+
+      if (!name || !category || !resolvedTemplate) {
         return res.status(400).json({ error: 'Name, category, and template are required' });
       }
 
@@ -207,7 +234,7 @@ router.post(
           name,
           category,
           description,
-          template,
+          resolvedTemplate,
           JSON.stringify(variables || []),
           is_active !== false ? 1 : 0,
         ]
@@ -223,7 +250,7 @@ router.post(
             INSERT INTO ai_prompt_versions (id, prompt_id, version, template, created_at, created_by)
             VALUES (?, ?, 1, ?, datetime('now'), ?)
         `,
-        [randomUUID(), id, template, userId]
+        [randomUUID(), id, resolvedTemplate, userId]
       );
 
       if (!runResult2.success) {
@@ -232,7 +259,8 @@ router.post(
 
       res.status(201).json({
         success: true,
-        data: { id, name, category, version: 1 },
+        data: { id, name, category, version: 1, system_prompt: resolvedTemplate },
+        prompt: { id, name, category, version: 1, system_prompt: resolvedTemplate },
       });
     } catch (error: unknown) {
       console.error('[AI Prompts API] Error creating prompt:', error);
@@ -255,7 +283,7 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { name, category, description, template, variables, is_active } = req.body;
+      const { name, category, description, template, system_prompt, variables, is_active } = req.body;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -278,6 +306,8 @@ router.put(
 
       const newVersion = (existing.version || 0) + 1;
 
+      const resolvedTemplate = String(template || system_prompt || existing.template || '').trim();
+
       const runResult1 = await dbRun(
         `
             UPDATE ai_system_prompts 
@@ -289,7 +319,7 @@ router.put(
           name || existing.name,
           category || existing.category,
           description || existing.description,
-          template || existing.template,
+          resolvedTemplate,
           JSON.stringify(variables || JSON.parse(existing.variables || '[]')),
           is_active !== undefined ? (is_active ? 1 : 0) : existing.is_active,
           newVersion,
@@ -302,13 +332,13 @@ router.put(
       }
 
       // Store version history
-      if (template && template !== existing.template) {
+      if (resolvedTemplate && resolvedTemplate !== existing.template) {
         const runResult2 = await dbRun(
           `
                 INSERT INTO ai_prompt_versions (id, prompt_id, version, template, created_at, created_by)
                 VALUES (?, ?, ?, ?, datetime('now'), ?)
             `,
-          [randomUUID(), id, newVersion, template, userId]
+          [randomUUID(), id, newVersion, resolvedTemplate, userId]
         );
 
         if (!runResult2.success) {
@@ -318,12 +348,37 @@ router.put(
 
       res.json({
         success: true,
-        data: { id, version: newVersion },
+        data: { id, version: newVersion, system_prompt: resolvedTemplate },
+        prompt: { id, version: newVersion, system_prompt: resolvedTemplate },
       });
     } catch (error: unknown) {
       console.error('[AI Prompts API] Error updating prompt:', error);
       return res.status(500).json({
         error: 'Failed to update prompt',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
+);
+
+router.get(
+  '/:id/versions',
+  verifyToken,
+  requireRole('super_admin', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const versions = await dbAll(
+        `SELECT id, prompt_id, version, template, created_at, created_by
+         FROM ai_prompt_versions
+         WHERE prompt_id = ?
+         ORDER BY version DESC`,
+        [req.params.id]
+      );
+      const normalizedVersions = normalizeVersions((versions as any[]) || []);
+      return res.json({ success: true, data: normalizedVersions, versions: normalizedVersions });
+    } catch (error: unknown) {
+      return res.status(500).json({
+        error: 'Failed to get prompt versions',
         details: error instanceof Error ? error.message : 'Unknown error',
       });
     }
@@ -407,6 +462,7 @@ router.post(
           unreplacedVariables: unreplacedVars,
           characterCount: renderedTemplate.length,
         },
+        result: renderedTemplate,
       });
     } catch (error: unknown) {
       console.error('[AI Prompts API] Error testing prompt:', error);

@@ -84,6 +84,22 @@ async function ensureEnterpriseSchema(): Promise<void> {
           sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN fallback_model_id TEXT`,
           optional: true,
         },
+        {
+          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN release_bundle_id TEXT`,
+          optional: true,
+        },
+        {
+          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN prompt_key TEXT`,
+          optional: true,
+        },
+        {
+          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN prompt_version TEXT`,
+          optional: true,
+        },
+        {
+          sql: `ALTER TABLE ai_purpose_assignments ADD COLUMN policy_version TEXT`,
+          optional: true,
+        },
 
         // organization_ai_policy
         {
@@ -1330,6 +1346,13 @@ router.post(
     const priority = Number.isFinite(Number(req.body?.priority)) ? Number(req.body.priority) : 0;
     const isActive = req.body?.is_active === false ? 0 : 1;
     const fallbackModelId = req.body?.fallback_model_id || req.body?.fallbackModelId || null;
+    const releaseBundleId =
+      req.body?.release_bundle_id || req.body?.releaseBundleId
+        ? String(req.body?.release_bundle_id || req.body?.releaseBundleId).trim()
+        : null;
+    const promptKey = req.body?.prompt_key || req.body?.promptKey || null;
+    const promptVersion = req.body?.prompt_version || req.body?.promptVersion || null;
+    const policyVersion = req.body?.policy_version || req.body?.policyVersion || null;
 
     if (!purpose || !providerId) {
       return res.status(400).json({ success: false, error: 'purpose and providerId are required' });
@@ -1339,7 +1362,6 @@ router.post(
         getRoutingPurposeKeys(item)
       )
     );
-    const releaseBundleId = String(req.body?.releaseBundleId || '').trim();
     if (executivePurposes.has(purpose)) {
       if (!releaseBundleId) {
         return res.status(400).json({
@@ -1374,14 +1396,34 @@ router.post(
     }
     const id = `${organizationId || 'global'}-${purpose}-${providerId}-${modelId || 'default'}`;
     await dbRun(
-      `INSERT INTO ai_purpose_assignments (id, organization_id, purpose, provider_id, model_id, priority, is_active, fallback_model_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `INSERT INTO ai_purpose_assignments (
+         id, organization_id, purpose, provider_id, model_id, priority, is_active, fallback_model_id,
+         release_bundle_id, prompt_key, prompt_version, policy_version, created_at, updated_at
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
        ON CONFLICT(organization_id, purpose, provider_id, model_id) DO UPDATE SET
          priority = excluded.priority,
          is_active = excluded.is_active,
          fallback_model_id = excluded.fallback_model_id,
+         release_bundle_id = excluded.release_bundle_id,
+         prompt_key = excluded.prompt_key,
+         prompt_version = excluded.prompt_version,
+         policy_version = excluded.policy_version,
          updated_at = CURRENT_TIMESTAMP`,
-      [id, organizationId, purpose, providerId, modelId, priority, isActive, fallbackModelId],
+      [
+        id,
+        organizationId,
+        purpose,
+        providerId,
+        modelId,
+        priority,
+        isActive,
+        fallbackModelId,
+        releaseBundleId,
+        promptKey,
+        promptVersion,
+        policyVersion,
+      ],
       { fallback: false } as any
     );
     await logModelAuditEntry({
@@ -1396,6 +1438,11 @@ router.post(
         modelId: modelId || null,
         priority,
         isActive,
+        fallbackModelId,
+        releaseBundleId,
+        promptKey,
+        promptVersion,
+        policyVersion,
       },
     });
     return res.json({ success: true });
@@ -2511,6 +2558,22 @@ router.post(
     if (!bundleId) return res.status(400).json({ success: false, error: 'bundleId is required' });
     const bundle = await evalHarness.publishReleaseBundle(orgId, bundleId, getAuditActor(req));
     if (!bundle) return res.status(404).json({ success: false, error: 'Bundle not found' });
+    await logModelAuditEntry({
+      action: 'published',
+      entityType: 'release_bundle',
+      entityId: bundleId,
+      changedBy: getAuditActor(req),
+      changes: {
+        organizationId: orgId,
+        purpose: (bundle as any).purpose || null,
+        promptKey: (bundle as any).prompt_key || null,
+        promptVersion: (bundle as any).prompt_version || null,
+        primaryModelId: (bundle as any).primary_model_id || null,
+        fallbackModelId: (bundle as any).fallback_model_id || null,
+        policyVersion: (bundle as any).policy_version || null,
+        activation: (bundle as any).activation || null,
+      },
+    });
     return res.json({ success: true, bundle });
   })
 );

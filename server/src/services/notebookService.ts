@@ -14,6 +14,7 @@ import path from 'path';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import { embeddingService } from './ai/embeddingService.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
@@ -342,11 +343,21 @@ class NotebookService {
     const db = await this.getDb();
     await this.ensureProposalTable(db);
 
+    const existing = await db.get(
+      `SELECT * FROM notebook_ai_proposals WHERE id = ? AND organization_id = ?`,
+      [proposalId, orgId]
+    );
+    if (!existing) return null;
+
     const now = new Date().toISOString();
     await db.run(
       `UPDATE notebook_ai_proposals SET status = ?, resolved_at = ?, resolved_by = ? WHERE id = ? AND organization_id = ?`,
       [action, now, userId, proposalId, orgId]
     );
+
+    if (action === 'accepted') {
+      await this.applyAcceptedProposal(db, orgId, existing);
+    }
 
     const row = await db.get(
       `SELECT * FROM notebook_ai_proposals WHERE id = ? AND organization_id = ?`,
@@ -601,7 +612,7 @@ class NotebookService {
     params.push(options.limit);
 
     const rows = (await db.all(
-      `SELECT ne.page_id, np.title, SUBSTR(ne.chunk_text, 1, 300) as snippet
+      `SELECT ne.page_id, np.title, SUBSTR(ne.chunk_text, 1, 300) as snippet, ne.embedding_vector
        FROM notebook_embeddings ne
        JOIN notebook_pages np ON np.id = ne.page_id
        WHERE ${conditions.join(' AND ')}
@@ -610,14 +621,35 @@ class NotebookService {
       params
     )) || [];
 
-    return rows.map((r: any, i: number) => ({
-      pageId: r.page_id,
-      title: r.title || '',
-      snippet: r.snippet || '',
-      score: 0.8 - i * 0.02,
-      sourceRef: { type: 'notebook_page' as const, id: r.page_id },
-      matchType: 'semantic' as const,
-    }));
+    if (rows.length === 0) return [];
+
+    let queryEmbedding: number[] | null = null;
+    try {
+      queryEmbedding = await embeddingService.generateEmbedding(query);
+    } catch {
+      queryEmbedding = null;
+    }
+
+    const scored = rows.map((r: any) => {
+      const snippet = r.snippet || '';
+      const storedEmbedding = parseEmbeddingVector(r.embedding_vector);
+      const score = queryEmbedding && storedEmbedding
+        ? cosineSimilarity(queryEmbedding, storedEmbedding)
+        : lexicalSimilarity(query, snippet);
+      return {
+        pageId: r.page_id,
+        title: r.title || '',
+        snippet,
+        score,
+        sourceRef: { type: 'notebook_page' as const, id: r.page_id },
+        matchType: 'semantic' as const,
+      };
+    });
+
+    return scored
+      .filter((item) => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, options.limit);
   }
 
   private async storeEmbedding(orgId: string, pageId: string, text: string): Promise<void> {
@@ -630,10 +662,19 @@ class NotebookService {
     await db.run(`DELETE FROM notebook_embeddings WHERE page_id = ? AND organization_id = ?`, [pageId, orgId]);
 
     for (let i = 0; i < chunks.length && i < 50; i++) {
+      let embeddingVector: string | null = null;
+      try {
+        const embedding = await embeddingService.generateEmbedding(chunks[i]);
+        if (Array.isArray(embedding) && embedding.length > 0) {
+          embeddingVector = JSON.stringify(embedding);
+        }
+      } catch {
+        embeddingVector = null;
+      }
       await db.run(
-        `INSERT INTO notebook_embeddings (id, organization_id, page_id, chunk_index, chunk_text, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [uuidv4(), orgId, pageId, i, chunks[i], now]
+        `INSERT INTO notebook_embeddings (id, organization_id, page_id, chunk_index, chunk_text, embedding_vector, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [uuidv4(), orgId, pageId, i, chunks[i], embeddingVector, now]
       );
     }
   }
@@ -687,6 +728,38 @@ class NotebookService {
       await db.run(`CREATE INDEX IF NOT EXISTS idx_nb_proposals_page ON notebook_ai_proposals(organization_id, page_id, status)`);
     } catch { /* may exist */ }
   }
+
+  private async applyAcceptedProposal(db: IDatabase, orgId: string, proposalRow: any): Promise<void> {
+    const page = (await db.get(
+      `SELECT id, content_json, content_text FROM notebook_pages WHERE id = ? AND organization_id = ?`,
+      [proposalRow.page_id, orgId]
+    )) as { id: string; content_json?: string | null; content_text?: string | null } | undefined;
+    if (!page) return;
+
+    const currentDoc = safeParseDocument(page.content_json);
+    const proposalType = String(proposalRow.proposal_type || 'insert') as 'insert' | 'replace' | 'append';
+    const nextBlock = normalizeNotebookBlock(safeParseJson(proposalRow.block_content));
+    const existingBlocks = Array.isArray(currentDoc.content) ? currentDoc.content : [];
+
+    let updatedBlocks = existingBlocks;
+    if (proposalType === 'replace') {
+      updatedBlocks = [nextBlock];
+    } else if (proposalType === 'append') {
+      updatedBlocks = [...existingBlocks, nextBlock];
+    } else {
+      updatedBlocks = [nextBlock, ...existingBlocks];
+    }
+
+    const nextDoc = { ...currentDoc, type: 'doc', content: updatedBlocks };
+    const nextText = blocksToPlainText(updatedBlocks);
+
+    await db.run(
+      `UPDATE notebook_pages
+       SET content_json = ?, content_text = ?, updated_at = ?
+       WHERE id = ? AND organization_id = ?`,
+      [JSON.stringify(nextDoc), nextText, new Date().toISOString(), proposalRow.page_id, orgId]
+    );
+  }
 }
 
 // ============================================================
@@ -715,6 +788,88 @@ function safeParseJson(val: unknown): Record<string, unknown> {
   } catch {
     return {};
   }
+}
+
+function safeParseDocument(val: unknown): { type: string; content: Array<Record<string, unknown>> } {
+  if (!val) return { type: 'doc', content: [] };
+  try {
+    const parsed = typeof val === 'string' ? JSON.parse(val) : val;
+    if (parsed && typeof parsed === 'object') {
+      const candidate = parsed as { type?: string; content?: Array<Record<string, unknown>> };
+      return {
+        type: candidate.type || 'doc',
+        content: Array.isArray(candidate.content) ? candidate.content : [],
+      };
+    }
+  } catch {
+    // fall through
+  }
+  return { type: 'doc', content: [] };
+}
+
+function normalizeNotebookBlock(block: Record<string, unknown>): Record<string, unknown> {
+  if (block.type && Array.isArray(block.content)) return block;
+  const text = String((block as any).text || (block as any).content || '').trim();
+  return {
+    type: 'paragraph',
+    content: [{ type: 'text', text }],
+  };
+}
+
+function blocksToPlainText(blocks: Array<Record<string, unknown>>): string {
+  return blocks
+    .map((block) => {
+      const content = Array.isArray((block as any).content) ? (block as any).content : [];
+      return content
+        .map((node: any) => (typeof node?.text === 'string' ? node.text : ''))
+        .filter(Boolean)
+        .join('');
+    })
+    .filter(Boolean)
+    .join('\n\n');
+}
+
+function parseEmbeddingVector(value: unknown): number[] | null {
+  if (!value) return null;
+  try {
+    const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+    return Array.isArray(parsed) ? parsed.map(Number) : null;
+  } catch {
+    return null;
+  }
+}
+
+function cosineSimilarity(a: number[], b: number[]): number {
+  if (!a || !b || a.length !== b.length || a.length === 0) return 0;
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+  if (normA === 0 || normB === 0) return 0;
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+function lexicalSimilarity(query: string, text: string): number {
+  const queryTerms = tokenize(query);
+  const textTerms = new Set(tokenize(text));
+  if (queryTerms.length === 0 || textTerms.size === 0) return 0;
+  let matches = 0;
+  for (const term of queryTerms) {
+    if (textTerms.has(term)) matches++;
+  }
+  return matches / queryTerms.length;
+}
+
+function tokenize(input: string): string[] {
+  return input
+    .toLowerCase()
+    .split(/[^a-z0-9]+/i)
+    .map((term) => term.trim())
+    .filter((term) => term.length > 1);
 }
 
 const notebookService = new NotebookService();

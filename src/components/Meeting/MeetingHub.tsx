@@ -68,6 +68,7 @@ export const MeetingHub: React.FC = () => {
   const [meetings, setMeetings] = useState<MeetingItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [draft, setDraft] = useState({
     title: '',
     startAt: '',
@@ -76,6 +77,10 @@ export const MeetingHub: React.FC = () => {
     attendees: '',
     preRead: '',
     agenda: '',
+  });
+  const [followUpDraft, setFollowUpDraft] = useState({
+    title: '',
+    owner: '',
   });
 
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
@@ -134,6 +139,27 @@ export const MeetingHub: React.FC = () => {
     () => filteredMeetings.find((item) => item.id === selectedId) || null,
     [filteredMeetings, selectedId]
   );
+  const activeMeeting = useMemo(
+    () => meetings.find((item) => item.id === activeDocumentId) || null,
+    [meetings, activeDocumentId]
+  );
+
+  const updateMeeting = (meetingId: string, updater: (meeting: MeetingItem) => MeetingItem) => {
+    setMeetings((prev) => prev.map((item) => (item.id === meetingId ? updater(item) : item)));
+  };
+
+  const openMeetingDocument = (row: MeetingItem) => {
+    setSelectedId(row.id);
+    const doc = {
+      id: row.id,
+      type: 'report' as const,
+      subType: 'meeting',
+      name: row.title,
+      status: 'DRAFT' as const,
+    };
+    setOpenDocuments((prev) => (prev.some((item) => item.id === row.id) ? prev : [...prev, doc]));
+    setActiveDocumentId(row.id);
+  };
 
   const tabs = useMemo(
     () => [
@@ -334,6 +360,42 @@ export const MeetingHub: React.FC = () => {
     });
   };
 
+  const handleToggleMeetingStatus = (meetingId: string) => {
+    updateMeeting(meetingId, (meeting) => ({
+      ...meeting,
+      status: meeting.status === 'completed' ? 'scheduled' : 'completed',
+    }));
+  };
+
+  const handleAddFollowUp = () => {
+    if (!activeMeeting || !followUpDraft.title.trim()) return;
+    updateMeeting(activeMeeting.id, (meeting) => ({
+      ...meeting,
+      followUps: [
+        ...meeting.followUps,
+        {
+          id: `${meeting.id}-fu-${Date.now()}`,
+          title: followUpDraft.title.trim(),
+          owner: followUpDraft.owner.trim() || (isPolish ? 'Nieprzypisane' : 'Unassigned'),
+          status: 'open',
+        },
+      ],
+    }));
+    setFollowUpDraft({ title: '', owner: '' });
+    setShowFollowUpModal(false);
+  };
+
+  const handleToggleFollowUpStatus = (meetingId: string, followUpId: string) => {
+    updateMeeting(meetingId, (meeting) => ({
+      ...meeting,
+      followUps: meeting.followUps.map((item) =>
+        item.id === followUpId
+          ? { ...item, status: item.status === 'done' ? 'open' : 'done' }
+          : item
+      ),
+    }));
+  };
+
   const previewItem = selectedMeeting ? { ...selectedMeeting, title: selectedMeeting.title } : null;
 
   return (
@@ -368,7 +430,7 @@ export const MeetingHub: React.FC = () => {
         }
         rightControls={
           <div className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] px-3 h-9 text-xs text-slate-500 dark:text-slate-400">
-            {t('meeting.sync.localOnly', 'Workspace-local MVP')}
+            {t('meeting.sync.localOnly', 'This device only')}
           </div>
         }
         aiControl={
@@ -385,7 +447,18 @@ export const MeetingHub: React.FC = () => {
         availableViewModes={['table', 'calendar']}
         showTabCounts
       >
-        {viewMode === 'calendar' ? (
+        {activeMeeting ? (
+          <MeetingDetailView
+            meeting={activeMeeting}
+            isPolish={isPolish}
+            onBack={() => setActiveDocumentId(null)}
+            onToggleStatus={() => handleToggleMeetingStatus(activeMeeting.id)}
+            onAddFollowUp={() => setShowFollowUpModal(true)}
+            onToggleFollowUpStatus={(followUpId) =>
+              handleToggleFollowUpStatus(activeMeeting.id, followUpId)
+            }
+          />
+        ) : viewMode === 'calendar' ? (
           <MeetingCalendarView meetings={filteredMeetings} isPolish={isPolish} />
         ) : (
           <div className="h-full overflow-hidden">
@@ -393,6 +466,10 @@ export const MeetingHub: React.FC = () => {
               selectedId={selectedId}
               selectedItem={previewItem}
               onSelect={setSelectedId}
+              onOpenFull={(id) => {
+                const meeting = meetings.find((item) => item.id === id);
+                if (meeting) openMeetingDocument(meeting);
+              }}
               itemIds={filteredMeetings.map((item) => item.id)}
               renderPreview={(item) => <MeetingPreview meeting={item} isPolish={isPolish} />}
             >
@@ -400,20 +477,8 @@ export const MeetingHub: React.FC = () => {
                 columns={columns}
                 data={filteredMeetings}
                 selectedRowId={selectedId}
-                onRowClick={(row) => {
-                  setSelectedId(row.id);
-                  const doc = {
-                    id: row.id,
-                    type: 'report' as const,
-                    subType: 'meeting',
-                    name: row.title,
-                    status: 'DRAFT' as const,
-                  };
-                  setOpenDocuments((prev) =>
-                    prev.some((item) => item.id === row.id) ? prev : [...prev, doc]
-                  );
-                  setActiveDocumentId(row.id);
-                }}
+                onRowClick={(row) => setSelectedId(row.id)}
+                onRowDoubleClick={(row) => openMeetingDocument(row as MeetingItem)}
                 activeFilters={activeFilters}
                 onFilterChange={setActiveFilters}
                 emptyMessage={t('meeting.empty', 'No meetings yet')}
@@ -525,6 +590,61 @@ export const MeetingHub: React.FC = () => {
           </div>
         </div>
       ) : null}
+      {showFollowUpModal && activeMeeting ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+              <div>
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {t('meeting.followUp.title', 'Add follow-up')}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {activeMeeting.title}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFollowUpModal(false)}
+                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="space-y-4 p-5">
+              <Field label={t('meeting.followUp.fields.title', 'Action item')}>
+                <input
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm"
+                  value={followUpDraft.title}
+                  onChange={(e) => setFollowUpDraft((prev) => ({ ...prev, title: e.target.value }))}
+                />
+              </Field>
+              <Field label={t('meeting.followUp.fields.owner', 'Owner')}>
+                <input
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm"
+                  value={followUpDraft.owner}
+                  onChange={(e) => setFollowUpDraft((prev) => ({ ...prev, owner: e.target.value }))}
+                />
+              </Field>
+            </div>
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-200 dark:border-navy-700">
+              <button
+                type="button"
+                onClick={() => setShowFollowUpModal(false)}
+                className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm"
+              >
+                {t('common.cancel', 'Cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleAddFollowUp}
+                className="h-9 px-4 rounded-full bg-primary-600 text-white text-sm font-medium"
+              >
+                {t('meeting.followUp.actions.add', 'Add follow-up')}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 };
@@ -534,6 +654,134 @@ const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, 
     <div className="mb-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">{label}</div>
     {children}
   </label>
+);
+
+const MeetingDetailView: React.FC<{
+  meeting: MeetingItem;
+  isPolish: boolean;
+  onBack: () => void;
+  onToggleStatus: () => void;
+  onAddFollowUp: () => void;
+  onToggleFollowUpStatus: (followUpId: string) => void;
+}> = ({ meeting, isPolish, onBack, onToggleStatus, onAddFollowUp, onToggleFollowUpStatus }) => (
+  <div className="p-4 lg:p-6">
+    <div className="rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] overflow-hidden">
+      <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-200/70 dark:border-white/[0.08]">
+        <div className="min-w-0">
+          <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Spotkanie' : 'Meeting'}
+          </div>
+          <div className="text-lg font-semibold text-slate-900 dark:text-white truncate">
+            {meeting.title}
+          </div>
+          <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            {formatDateTime(meeting.startAt, isPolish)}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onToggleStatus}
+            className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm font-medium"
+          >
+            {meeting.status === 'completed'
+              ? isPolish
+                ? 'Oznacz jako zaplanowane'
+                : 'Mark scheduled'
+              : isPolish
+                ? 'Oznacz jako zakończone'
+                : 'Mark completed'}
+          </button>
+          <button
+            type="button"
+            onClick={onAddFollowUp}
+            className="h-9 px-4 rounded-full bg-primary-600 text-white text-sm font-medium"
+          >
+            {isPolish ? 'Dodaj follow-up' : 'Add follow-up'}
+          </button>
+          <button
+            type="button"
+            onClick={onBack}
+            className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm"
+          >
+            {isPolish ? 'Wróć do listy' : 'Back to list'}
+          </button>
+        </div>
+      </div>
+      <div className="grid gap-4 p-5 lg:grid-cols-2">
+        <PreviewSection
+          icon={<Users size={14} />}
+          title={isPolish ? 'Uczestnicy' : 'Attendees'}
+          items={meeting.attendees}
+          emptyLabel={isPolish ? 'Brak listy uczestników' : 'No attendees yet'}
+        />
+        <PreviewSection
+          icon={<FileText size={14} />}
+          title={isPolish ? 'Pre-read' : 'Pre-read'}
+          items={meeting.preRead}
+          emptyLabel={isPolish ? 'Brak materiałów' : 'No pre-read yet'}
+        />
+        <PreviewSection
+          icon={<ClipboardList size={14} />}
+          title={isPolish ? 'Agenda' : 'Agenda'}
+          items={meeting.agenda}
+          emptyLabel={isPolish ? 'Brak agendy' : 'No agenda yet'}
+        />
+        <PreviewSection
+          icon={<CheckSquare2 size={14} />}
+          title={isPolish ? 'Decyzje' : 'Decisions'}
+          items={meeting.decisions}
+          emptyLabel={isPolish ? 'Brak decyzji' : 'No decisions yet'}
+        />
+        <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3 lg:col-span-2">
+          <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <CheckSquare2 size={14} />
+            <span>{isPolish ? 'Follow-upy' : 'Follow-ups'}</span>
+          </div>
+          {meeting.followUps.length ? (
+            <div className="space-y-2">
+              {meeting.followUps.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onToggleFollowUpStatus(item.id)}
+                  className="w-full rounded-xl border border-slate-200/70 dark:border-white/[0.08] px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                        {item.title}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">{item.owner}</div>
+                    </div>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        item.status === 'done'
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                          : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                      }`}
+                    >
+                      {item.status === 'done'
+                        ? isPolish
+                          ? 'Zrobione'
+                          : 'Done'
+                        : isPolish
+                          ? 'Otwarte'
+                          : 'Open'}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="text-sm text-slate-400">
+              {isPolish ? 'Brak follow-upów' : 'No follow-ups yet'}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
 );
 
 const MeetingPreview: React.FC<{ meeting: MeetingItem; isPolish: boolean }> = ({
@@ -574,6 +822,12 @@ const MeetingPreview: React.FC<{ meeting: MeetingItem; isPolish: boolean }> = ({
         title={isPolish ? 'Agenda' : 'Agenda'}
         items={meeting.agenda}
         emptyLabel={isPolish ? 'Brak agendy' : 'No agenda yet'}
+      />
+      <PreviewSection
+        icon={<CheckSquare2 size={14} />}
+        title={isPolish ? 'Decyzje' : 'Decisions'}
+        items={meeting.decisions}
+        emptyLabel={isPolish ? 'Brak decyzji' : 'No decisions yet'}
       />
       <PreviewSection
         icon={<CheckSquare2 size={14} />}

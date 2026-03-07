@@ -6,6 +6,7 @@
 import { type NextFunction, type Request, type Response, Router } from 'express';
 import fs from 'fs';
 import path from 'path';
+import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
@@ -35,6 +36,17 @@ function normalizeDeckRow(row: any) {
     outline_json: JSON.parse(row.outline_json || '[]'),
     validation_warnings: JSON.parse(row.validation_warnings || '[]'),
   };
+}
+
+async function getTemplateForOrgOrSystem(templateId: string, organizationId: string) {
+  return (await dbGet(
+    `SELECT *
+     FROM presentation_templates
+     WHERE id = ?
+       AND is_active = TRUE
+       AND (organization_id IS NULL OR organization_id = ?)`,
+    [templateId, organizationId]
+  )) as any;
 }
 
 async function enforceNoLegalHold(res: Response, organizationId: string, operation: string) {
@@ -96,7 +108,8 @@ router.get(
 router.get(
   '/templates/:id',
   asyncHandler(async (req, res) => {
-    const row = await dbGet(`SELECT * FROM presentation_templates WHERE id = ?`, [req.params.id]);
+    const orgId = getOrgId(req);
+    const row = await getTemplateForOrgOrSystem(String(req.params.id), orgId);
     if (!row) return res.status(404).json({ success: false, error: 'Template not found' });
     const template = row as any;
     template.outline_json = JSON.parse(template.outline_json || '[]');
@@ -110,9 +123,7 @@ router.post(
   '/templates/:id/clone',
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
-    const source = (await dbGet(`SELECT * FROM presentation_templates WHERE id = ?`, [
-      req.params.id,
-    ])) as any;
+    const source = await getTemplateForOrgOrSystem(String(req.params.id), orgId);
     if (!source) return res.status(404).json({ success: false, error: 'Template not found' });
 
     const id = uuidv4().replace(/-/g, '');
@@ -443,14 +454,22 @@ router.post(
       title: deck.title || 'Presentation',
       cards: deckData.cards || [],
       theme: deckData.theme || {
-        primary: '#6366F1', secondary: '#8B5CF6', accent: '#EC4899',
-        background: '#0F172A', surface: '#1E293B', textPrimary: '#F1F5F9',
-        textSecondary: '#94A3B8', heading: '#F8FAFC',
+        primary: '#6366F1',
+        secondary: '#8B5CF6',
+        accent: '#EC4899',
+        background: '#0F172A',
+        surface: '#1E293B',
+        textPrimary: '#F1F5F9',
+        textSecondary: '#94A3B8',
+        heading: '#F8FAFC',
       },
     });
 
     res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Content-Disposition', `attachment; filename="${deck.title || 'presentation'}.html"`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${deck.title || 'presentation'}.html"`
+    );
     res.send(htmlBuffer);
   })
 );
@@ -492,7 +511,11 @@ router.post(
           [sourceRef.artifact_id, orgId]
         );
         if (init) {
-          freshContent = { ...freshContent, ...(init as any), _refreshed_at: new Date().toISOString() };
+          freshContent = {
+            ...freshContent,
+            ...(init as any),
+            _refreshed_at: new Date().toISOString(),
+          };
         }
       } else if (sourceRef.artifact_type === 'kpi' && sourceRef.artifact_id) {
         const kpi = await dbGet(
@@ -500,7 +523,11 @@ router.post(
           [sourceRef.artifact_id, orgId]
         );
         if (kpi) {
-          freshContent = { ...freshContent, ...(kpi as any), _refreshed_at: new Date().toISOString() };
+          freshContent = {
+            ...freshContent,
+            ...(kpi as any),
+            _refreshed_at: new Date().toISOString(),
+          };
         }
       } else {
         freshContent._refreshed_at = new Date().toISOString();
@@ -581,9 +608,8 @@ router.post(
     const orgId = getOrgId(req);
     const { deckId } = req.params;
 
-    const { checkDeckQualityGates } = await import(
-      '../services/presentationQualityGatesService.js'
-    );
+    const { checkDeckQualityGates } =
+      await import('../services/presentationQualityGatesService.js');
     const report = await checkDeckQualityGates(orgId, String(deckId));
     res.json({ success: true, data: report });
   })
@@ -634,10 +660,10 @@ router.post(
       const safeName = cardTitle.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60);
 
       const svg = renderCardToSvg(card, i, title, deck.theme || 'corporate');
-      const svgBuffer = svgToBuffer(svg);
+      const pngBuffer = await sharp(Buffer.from(svg, 'utf-8')).png().toBuffer();
 
-      archive.append(Readable.from(svgBuffer), {
-        name: `${String(i + 1).padStart(2, '0')}_${safeName}.svg`,
+      archive.append(Readable.from(pngBuffer), {
+        name: `${String(i + 1).padStart(2, '0')}_${safeName}.png`,
       });
     }
 
@@ -645,12 +671,7 @@ router.post(
   })
 );
 
-function renderCardToSvg(
-  card: any,
-  index: number,
-  deckTitle: string,
-  theme: string
-): string {
+function renderCardToSvg(card: any, index: number, deckTitle: string, theme: string): string {
   const bgColor = theme === 'minimal' ? '#FFFFFF' : theme === 'modern' ? '#0F172A' : '#1E293B';
   const textColor = theme === 'minimal' ? '#1E293B' : '#F1F5F9';
   const accentColor = theme === 'modern' ? '#8B5CF6' : '#6366F1';
@@ -698,11 +719,11 @@ function extractBlockText(block: any): string {
 }
 
 function escapeXml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function svgToBuffer(svg: string): Buffer {
-  return Buffer.from(svg, 'utf-8');
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 // ============================================================
@@ -774,7 +795,10 @@ router.get(
 
 function hashIp(ip: string): string {
   const { createHash } = require('crypto');
-  return createHash('sha256').update(ip + 'consultify-salt').digest('hex').slice(0, 16);
+  return createHash('sha256')
+    .update(ip + 'consultify-salt')
+    .digest('hex')
+    .slice(0, 16);
 }
 
 // ============================================================

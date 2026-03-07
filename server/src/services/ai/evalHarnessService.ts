@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import { enforcePolicy, getGovernancePolicies } from '../aiGovernanceService.js';
+import { getRoutingPurposeKeys } from './aiTaskCatalog.js';
 import { citationExtractor } from './citationExtractor.js';
 import { citationVerifier } from './citationVerifier.js';
 import { classifyIntent } from './intentRouter.js';
@@ -746,6 +747,20 @@ export interface EvalReleaseBundle {
   updated_at: string;
 }
 
+export interface ReleaseBundleActivation {
+  organizationId: string;
+  purpose: string;
+  assignmentIds: string[];
+  primaryProviderId: string | null;
+  primaryModelId: string | null;
+  fallbackProviderId: string | null;
+  fallbackModelId: string | null;
+  promptKey: string | null;
+  promptVersion: string | null;
+  policyVersion: string | null;
+  policyApplied: boolean;
+}
+
 export async function listReleaseBundles(orgId: string): Promise<EvalReleaseBundle[]> {
   await ensureHarnessSchema();
   const rows = await dbAll(
@@ -887,7 +902,7 @@ export async function publishReleaseBundle(
   orgId: string,
   bundleId: string,
   changedBy?: string
-): Promise<EvalReleaseBundle | null> {
+): Promise<(EvalReleaseBundle & { activation?: ReleaseBundleActivation | null }) | null> {
   await ensureHarnessSchema();
   const bundle = await dbGet(
     `SELECT * FROM ai_eval_release_bundles WHERE id = ? AND organization_id = ?`,
@@ -898,17 +913,203 @@ export async function publishReleaseBundle(
   if (!(Boolean((bundle as any).gate_passed) || String((bundle as any).status) === 'ready')) {
     throw new Error('Release bundle cannot be published before passing eval gates');
   }
+
+  const purpose = String((bundle as any).purpose || '').trim();
+  const promptKey = String((bundle as any).prompt_key || '').trim() || null;
+  const promptVersion = String((bundle as any).prompt_version || '').trim() || null;
+  const primaryModelId = String((bundle as any).primary_model_id || '').trim() || null;
+  const fallbackModelId = String((bundle as any).fallback_model_id || '').trim() || null;
+  const policyVersion = String((bundle as any).policy_version || '').trim() || null;
+
+  if (promptKey) {
+    const promptRow = await dbGet(
+      `SELECT id FROM ai_system_prompts WHERE id = ? OR key = ? OR name = ? LIMIT 1`,
+      [promptKey, promptKey, promptKey],
+      { fallback: false } as any
+    );
+    if (!promptRow) {
+      throw new Error(`Prompt reference not found for key ${promptKey}`);
+    }
+    if (promptVersion) {
+      const promptVersionRow = await dbGet(
+        `SELECT id
+         FROM ai_prompt_versions
+         WHERE prompt_id = ?
+           AND (CAST(version AS TEXT) = ? OR id = ?)
+         LIMIT 1`,
+        [String((promptRow as any).id), promptVersion, promptVersion],
+        { fallback: false } as any
+      );
+      if (!promptVersionRow) {
+        throw new Error(`Prompt version ${promptVersion} not found for ${promptKey}`);
+      }
+    }
+  }
+
+  let policyPayload: string | null = null;
+  if (policyVersion) {
+    const policyRow = await dbGet(
+      `SELECT policy FROM organization_ai_policy_versions WHERE id = ? AND organization_id = ?`,
+      [policyVersion, orgId],
+      { fallback: false } as any
+    );
+    if (!policyRow) {
+      throw new Error(`Policy version ${policyVersion} not found`);
+    }
+    policyPayload = String((policyRow as any).policy || '{}');
+  }
+
+  const resolveProviderIdForModel = async (modelId: string): Promise<string | null> => {
+    const row = await dbGet(
+      `SELECT id
+       FROM llm_providers
+       WHERE model_id = ? AND is_active = 1
+       ORDER BY
+         CASE
+           WHEN health_status = 'healthy' THEN 0
+           WHEN health_status = 'degraded' THEN 1
+           WHEN health_status IS NULL OR health_status = 'unknown' THEN 2
+           ELSE 3
+         END,
+         priority ASC
+       LIMIT 1`,
+      [modelId],
+      { fallback: false } as any
+    );
+    return row ? String((row as any).id || '') : null;
+  };
+
+  const primaryProviderId = primaryModelId ? await resolveProviderIdForModel(primaryModelId) : null;
+  if (primaryModelId && !primaryProviderId) {
+    throw new Error(`Primary model ${primaryModelId} is not available in llm_providers`);
+  }
+  const fallbackProviderId = fallbackModelId
+    ? await resolveProviderIdForModel(fallbackModelId)
+    : null;
+
+  const assignmentIds: string[] = [];
+  if (primaryProviderId && purpose) {
+    const routingPurposes = getRoutingPurposeKeys(purpose);
+    for (const routingPurpose of routingPurposes) {
+      await dbRun(
+        `UPDATE ai_purpose_assignments
+         SET is_active = 0, updated_at = CURRENT_TIMESTAMP
+         WHERE organization_id = ? AND purpose = ?`,
+        [orgId, routingPurpose],
+        { fallback: false } as any
+      );
+
+      const primaryAssignmentId = `${orgId}-${routingPurpose}-${primaryProviderId}-${primaryModelId || 'default'}`;
+      await dbRun(
+        `INSERT INTO ai_purpose_assignments (
+           id, organization_id, purpose, provider_id, model_id, priority, is_active, fallback_model_id,
+           release_bundle_id, prompt_key, prompt_version, policy_version, created_at, updated_at
+         )
+         VALUES (?, ?, ?, ?, ?, 0, 1, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+         ON CONFLICT(organization_id, purpose, provider_id, model_id) DO UPDATE SET
+           priority = 0,
+           is_active = 1,
+           fallback_model_id = excluded.fallback_model_id,
+           release_bundle_id = excluded.release_bundle_id,
+           prompt_key = excluded.prompt_key,
+           prompt_version = excluded.prompt_version,
+           policy_version = excluded.policy_version,
+           updated_at = CURRENT_TIMESTAMP`,
+        [
+          primaryAssignmentId,
+          orgId,
+          routingPurpose,
+          primaryProviderId,
+          primaryModelId,
+          fallbackModelId,
+          bundleId,
+          promptKey,
+          promptVersion,
+          policyVersion,
+        ],
+        { fallback: false } as any
+      );
+      assignmentIds.push(primaryAssignmentId);
+
+      if (fallbackProviderId && fallbackModelId) {
+        const fallbackAssignmentId = `${orgId}-${routingPurpose}-${fallbackProviderId}-${fallbackModelId}`;
+        await dbRun(
+          `INSERT INTO ai_purpose_assignments (
+             id, organization_id, purpose, provider_id, model_id, priority, is_active, fallback_model_id,
+             release_bundle_id, prompt_key, prompt_version, policy_version, created_at, updated_at
+           )
+           VALUES (?, ?, ?, ?, ?, 1, 1, NULL, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+           ON CONFLICT(organization_id, purpose, provider_id, model_id) DO UPDATE SET
+             priority = 1,
+             is_active = 1,
+             release_bundle_id = excluded.release_bundle_id,
+             prompt_key = excluded.prompt_key,
+             prompt_version = excluded.prompt_version,
+             policy_version = excluded.policy_version,
+             updated_at = CURRENT_TIMESTAMP`,
+          [
+            fallbackAssignmentId,
+            orgId,
+            routingPurpose,
+            fallbackProviderId,
+            fallbackModelId,
+            bundleId,
+            promptKey,
+            promptVersion,
+            policyVersion,
+          ],
+          { fallback: false } as any
+        );
+        assignmentIds.push(fallbackAssignmentId);
+      }
+    }
+  }
+
+  if (policyPayload) {
+    await dbRun(
+      `INSERT INTO organization_ai_policy (organization_id, policy, updated_at, created_at)
+       VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+       ON CONFLICT(organization_id) DO UPDATE SET
+         policy = excluded.policy,
+         updated_at = CURRENT_TIMESTAMP`,
+      [orgId, policyPayload],
+      { fallback: false } as any
+    );
+  }
+
+  const activation: ReleaseBundleActivation = {
+    organizationId: orgId,
+    purpose,
+    assignmentIds,
+    primaryProviderId,
+    primaryModelId,
+    fallbackProviderId,
+    fallbackModelId,
+    promptKey,
+    promptVersion,
+    policyVersion,
+    policyApplied: Boolean(policyPayload),
+  };
   await dbRun(
     `UPDATE ai_eval_release_bundles
-     SET status = 'published', changed_by = ?, updated_at = CURRENT_TIMESTAMP
+     SET status = 'published', changed_by = ?, gate_report_json = ?, updated_at = CURRENT_TIMESTAMP
      WHERE id = ? AND organization_id = ?`,
-    [changedBy || null, bundleId, orgId],
+    [
+      changedBy || null,
+      JSON.stringify({
+        ...(safeParseGateReport((bundle as any).gate_report_json) || {}),
+        activation,
+        publishedAt: new Date().toISOString(),
+      }),
+      bundleId,
+      orgId,
+    ],
     { fallback: false } as any
   );
   const updated = await dbGet(`SELECT * FROM ai_eval_release_bundles WHERE id = ?`, [bundleId], {
     fallback: false,
   } as any);
-  return updated as EvalReleaseBundle;
+  return updated ? ({ ...(updated as EvalReleaseBundle), activation } as any) : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -993,6 +1194,17 @@ function parseStoredMetrics(row: any): EvalMetrics {
   return metrics;
 }
 
+function safeParseGateReport(raw: unknown): Record<string, unknown> | null {
+  if (!raw) return null;
+  if (typeof raw === 'object') return raw as Record<string, unknown>;
+  if (typeof raw !== 'string') return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 function computeRegression(
   current: EvalMetrics,
   baseline: EvalMetrics,
@@ -1069,6 +1281,17 @@ export function evaluateResearchLedgerContract(input: {
 } {
   const responseText = String(input.responseText || '').trim();
   const extracted = citationExtractor.extract(responseText);
+  const responseSentences = responseText
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+  const normalizeClaim = (value: string) =>
+    value
+      .replace(/\[\d+\]/g, '')
+      .replace(/[^a-z0-9\s]/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
   const claims = Array.isArray(input.expectedClaims)
     ? input.expectedClaims.map((claim) => String(claim).trim()).filter(Boolean)
     : responseText
@@ -1077,6 +1300,15 @@ export function evaluateResearchLedgerContract(input: {
         .filter((claim) => claim.length >= 40);
   const citedClaimCount = claims.filter(
     (claim) =>
+      responseSentences.some((sentence) => {
+        const normalizedSentence = normalizeClaim(sentence);
+        const normalizedClaim = normalizeClaim(claim);
+        if (!normalizedSentence || !normalizedClaim) return false;
+        const sameClaim =
+          normalizedSentence.includes(normalizedClaim) ||
+          normalizedClaim.includes(normalizedSentence);
+        return sameClaim && /\[\d+\]/.test(sentence);
+      }) ||
       /\[\d+\]/.test(claim) ||
       extracted.citations.some((citation) => {
         const raw = String((citation as any)?.raw || '').trim();

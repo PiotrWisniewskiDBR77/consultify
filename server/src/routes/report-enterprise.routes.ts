@@ -45,19 +45,34 @@ router.post('/source-packs/:packId/items', asyncHandler(async (req: AuthRequest,
   const schema = z.object({ artifactType: z.string().min(1), artifactId: z.string().min(1), artifactTitle: z.string().optional(), citationLabel: z.string().optional(), sortOrder: z.number().int().optional() });
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-  const item = await reportEnterpriseService.addSourcePackItem(identity.orgId, req.params.packId, parsed.data);
+  let item;
+  try {
+    item = await reportEnterpriseService.addSourcePackItem(identity.orgId, req.params.packId, parsed.data);
+  } catch (error: any) {
+    if (error?.message === 'source_pack_not_found') {
+      res.status(404).json({ error: 'Source pack not found' });
+      return;
+    }
+    throw error;
+  }
   res.status(201).json(item);
 }));
 
 router.get('/reports/:reportId/source-packs', asyncHandler(async (req: AuthRequest, res: Response) => {
   const identity = requireUser(req, res); if (!identity) return;
-  const packs = await reportEnterpriseService.getSourcePacks(identity.orgId, req.params.reportId);
+  const packs = await reportEnterpriseService.getSourcePacks(
+    identity.orgId,
+    String(req.params.reportId)
+  );
   res.json({ packs });
 }));
 
 router.get('/source-packs/:packId/items', asyncHandler(async (req: AuthRequest, res: Response) => {
   const identity = requireUser(req, res); if (!identity) return;
-  const items = await reportEnterpriseService.getSourcePackItems(req.params.packId);
+  const items = await reportEnterpriseService.getSourcePackItems(
+    identity.orgId,
+    String(req.params.packId)
+  );
   res.json({ items });
 }));
 
@@ -181,9 +196,13 @@ router.post('/ai-proposals/:proposalId/resolve', asyncHandler(async (req: AuthRe
   const schema = z.object({ action: z.enum(['accept', 'reject']) });
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-  const ok = await reportEnterpriseService.resolveAIProposal(identity.orgId, req.params.proposalId, identity.userId, parsed.data.action);
-  if (!ok) { res.status(404).json({ error: 'Proposal not found' }); return; }
-  res.json({ ok: true });
+  const result = await reportEnterpriseService.resolveAIProposal(identity.orgId, req.params.proposalId, identity.userId, parsed.data.action);
+  if (!result.ok && result.reason === 'not_found') { res.status(404).json({ error: 'Proposal not found' }); return; }
+  if (!result.ok && result.reason === 'target_not_found') {
+    res.status(409).json({ error: 'Proposal target section not found' });
+    return;
+  }
+  res.json(result);
 }));
 
 router.get('/reports/:reportId/ai-proposals', asyncHandler(async (req: AuthRequest, res: Response) => {

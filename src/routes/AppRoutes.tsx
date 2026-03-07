@@ -172,7 +172,7 @@ const SuperAdminView = React.lazy(() =>
 );
 
 // AI Chat (Full Screen Chat View)
-const AIChatWelcomeView = React.lazy(() => import('@/views/AIChatWelcomeView'));
+const AIChatView = React.lazy(() => import('@/views/AIChatView'));
 
 // Discovery Consultant (AI Discovery with Canvas)
 const DiscoveryConsultantView = React.lazy(() =>
@@ -892,7 +892,7 @@ export const AppRoutes: React.FC = () => {
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
                   <ConversationRouteSync />
-                  <AIChatWelcomeView />
+                  <AIChatView />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
@@ -907,7 +907,7 @@ export const AppRoutes: React.FC = () => {
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
                   <ConversationRouteSync />
-                  <AIChatWelcomeView />
+                  <AIChatView />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>

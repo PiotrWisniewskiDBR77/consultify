@@ -22,6 +22,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  SUPPORTED_CHAT_ATTACHMENT_LABEL,
+  isSupportedChatAttachment,
+} from './chatAttachmentSupport';
 import type { CloudFile, CloudProviderId } from '../../hooks/useCloudIntegrations';
 import { Api } from '../../services/api';
 
@@ -172,8 +176,9 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
   };
 
   // Filter files by search
-  const filteredFiles = files.filter((file) =>
-    file.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredFiles = files.filter(
+    (file) =>
+      isSupportedChatAttachment(file) && file.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (!isOpen) return null;
@@ -218,6 +223,11 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
 
         {/* Search */}
         <div className="px-4 py-2 border-b border-slate-200 dark:border-navy-700">
+          <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">
+            {t('aiChat.cloudPicker.supportedTypes', 'Supported in chat: {{types}}', {
+              types: SUPPORTED_CHAT_ATTACHMENT_LABEL,
+            })}
+          </p>
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
