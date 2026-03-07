@@ -12,8 +12,8 @@ import UnderlineExt from '@tiptap/extension-underline';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {
-  Archive,
   AlertTriangle,
+  Archive,
   BookOpen,
   CheckCircle2,
   CheckSquare,
@@ -1464,12 +1464,18 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               {isPolish ? matCfg.labelPl : matCfg.label}
                             </span>
                             {(p as any).verificationStatus === 'verified' && (
-                              <span className="rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 text-[9px]" title={isPolish ? 'Zweryfikowana' : 'Verified'}>
+                              <span
+                                className="rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 text-[9px]"
+                                title={isPolish ? 'Zweryfikowana' : 'Verified'}
+                              >
                                 <CheckCircle2 size={9} className="inline" />
                               </span>
                             )}
                             {(p as any).staleAt && (
-                              <span className="rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 text-[9px]" title={isPolish ? 'Nieaktualna' : 'Stale'}>
+                              <span
+                                className="rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 text-[9px]"
+                                title={isPolish ? 'Nieaktualna' : 'Stale'}
+                              >
                                 <AlertTriangle size={9} className="inline" />
                               </span>
                             )}
@@ -1751,7 +1757,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         </span>
                         <select
                           value={
-                            (activePage.verificationStatus as NotebookVerificationStatus) ?? 'unverified'
+                            (activePage.verificationStatus as NotebookVerificationStatus) ??
+                            'unverified'
                           }
                           onChange={(e) => {
                             const v = e.target.value as NotebookVerificationStatus;
@@ -1767,8 +1774,12 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                           <option value="unverified">
                             {isPolish ? 'Nieweryfikowana' : 'Unverified'}
                           </option>
-                          <option value="verified">{isPolish ? 'Zweryfikowana' : 'Verified'}</option>
-                          <option value="disputed">{isPolish ? 'Zakwestionowana' : 'Disputed'}</option>
+                          <option value="verified">
+                            {isPolish ? 'Zweryfikowana' : 'Verified'}
+                          </option>
+                          <option value="disputed">
+                            {isPolish ? 'Zakwestionowana' : 'Disputed'}
+                          </option>
                         </select>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1776,9 +1787,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                           {isPolish ? 'Recenzja' : 'Review'}
                         </span>
                         <select
-                          value={
-                            (activePage.reviewCadence as NotebookReviewCadence) ?? 'monthly'
-                          }
+                          value={(activePage.reviewCadence as NotebookReviewCadence) ?? 'monthly'}
                           onChange={(e) => {
                             const v = e.target.value as NotebookReviewCadence;
                             scheduleSave({ reviewCadence: v });
@@ -1820,7 +1829,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             lastReviewedAt: now,
                             staleAt: null,
                             verificationStatus:
-                              (activePage.verificationStatus as NotebookVerificationStatus) || 'verified',
+                              (activePage.verificationStatus as NotebookVerificationStatus) ||
+                              'verified',
                           });
                           setPages((prev) =>
                             prev.map((p) =>
@@ -1830,7 +1840,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                                     lastReviewedAt: now,
                                     staleAt: null,
                                     verificationStatus:
-                                      (p.verificationStatus as NotebookVerificationStatus) || 'verified',
+                                      (p.verificationStatus as NotebookVerificationStatus) ||
+                                      'verified',
                                   }
                                 : p
                             )
@@ -1845,6 +1856,35 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
                     {/* Subtle divider */}
                     <div className="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-navy-700 to-transparent mt-3" />
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-indigo-200/70 bg-indigo-50/80 px-3 py-2 dark:border-indigo-500/20 dark:bg-indigo-500/10">
+                      <div className="text-[11px] font-medium text-indigo-700 dark:text-indigo-300">
+                        {isPolish
+                          ? 'Notebook → Deliverables: najpierw dopracuj outline, potem konwertuj do raportu lub prezentacji.'
+                          : 'Notebook → Deliverables: refine the outline first, then convert to a report or presentation.'}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setChatOpen(true)}
+                        className="rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-200 dark:hover:bg-indigo-900/30"
+                      >
+                        {isPolish ? 'Otwórz AI outline' : 'Open AI outline'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleConvertFromPanel('report')}
+                        className="rounded-full bg-indigo-600 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-indigo-500"
+                      >
+                        {isPolish ? 'Do raportu' : 'To report'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleConvertFromPanel('presentation')}
+                        className="rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-200 dark:hover:bg-indigo-900/30"
+                      >
+                        {isPolish ? 'Do prezentacji' : 'To presentation'}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Rich editor */}
@@ -1978,7 +2018,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         onUploadComplete={async (page) => {
           await fetchPages();
           if (page?.id) setActiveId(page.id);
-          toast.success(isPolish ? 'Plik wgrano, utworzono notatkę' : 'File uploaded, note created');
+          toast.success(
+            isPolish ? 'Plik wgrano, utworzono notatkę' : 'File uploaded, note created'
+          );
         }}
       />
 

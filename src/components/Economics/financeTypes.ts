@@ -1,4 +1,4 @@
-import { Calculator, BarChart3, TrendingUp, Target } from 'lucide-react';
+import { BarChart3, Calculator, Target, TrendingUp } from 'lucide-react';
 import React from 'react';
 
 import { type PreviewableItem } from '../shared/TableWithPreviewLayout';
@@ -50,10 +50,22 @@ export const KIND_LABELS: Record<FinanceKind, { code: string; en: string; pl: st
 };
 
 export const KIND_ICONS: Record<FinanceKind, React.ReactNode> = {
-  models: React.createElement(Calculator, { size: 14, className: 'text-blue-500 dark:text-blue-400' }),
-  analysis: React.createElement(BarChart3, { size: 14, className: 'text-emerald-500 dark:text-emerald-400' }),
-  prediction: React.createElement(TrendingUp, { size: 14, className: 'text-purple-500 dark:text-purple-400' }),
-  valuation: React.createElement(Target, { size: 14, className: 'text-amber-500 dark:text-amber-400' }),
+  models: React.createElement(Calculator, {
+    size: 14,
+    className: 'text-blue-500 dark:text-blue-400',
+  }),
+  analysis: React.createElement(BarChart3, {
+    size: 14,
+    className: 'text-emerald-500 dark:text-emerald-400',
+  }),
+  prediction: React.createElement(TrendingUp, {
+    size: 14,
+    className: 'text-purple-500 dark:text-purple-400',
+  }),
+  valuation: React.createElement(Target, {
+    size: 14,
+    className: 'text-amber-500 dark:text-amber-400',
+  }),
 };
 
 export const KIND_ACCENT: Record<FinanceKind, string> = {
@@ -107,8 +119,21 @@ export function formatAge(dateStr: string, isPl: boolean): string {
 
 export interface PreviewDataState {
   predictionValidations: { total: number; pass: number; fail: number; warning: number } | null;
-  analysisPreviewRatios: { category: string; ratio_code: string; ratio_name: string; value: number | null }[] | null;
-  budgetPreviewScenarios: { scenarioType: string; name: string; isActive: boolean; summaryMetrics: Record<string, number> }[] | null;
-  valuationPreviewResults: { enterpriseValue: number | null; equityValue: number | null; evEbitda: number | null } | null;
+  analysisPreviewRatios:
+    | { category: string; ratio_code: string; ratio_name: string; value: number | null }[]
+    | null;
+  budgetPreviewScenarios:
+    | {
+        scenarioType: string;
+        name: string;
+        isActive: boolean;
+        summaryMetrics: Record<string, number>;
+      }[]
+    | null;
+  valuationPreviewResults: {
+    enterpriseValue: number | null;
+    equityValue: number | null;
+    evEbitda: number | null;
+  } | null;
   valuationPreviewDetail: { advisory: any; negotiationPack: any; sensitivity: any } | null;
 }

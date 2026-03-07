@@ -267,7 +267,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
     const rows = await dbAll(
-      `SELECT id, title, description, deck_type, audience, goal, language, theme, slide_count, status, export_format, exported_at, created_at, updated_at, source_id, thumbnail_url, source_refs_json FROM presentation_decks WHERE organization_id = ? ORDER BY updated_at DESC`,
+      `SELECT id, title, description, deck_type, audience, goal, language, theme, presentation_mode, slide_count, status, export_format, exported_at, created_at, updated_at, source_id, thumbnail_url, source_refs_json FROM presentation_decks WHERE organization_id = ? ORDER BY updated_at DESC`,
       [orgId]
     );
     res.json({ success: true, data: rows || [] });

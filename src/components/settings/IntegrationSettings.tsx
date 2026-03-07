@@ -86,6 +86,8 @@ interface Integration {
   name?: string;
   provider: string;
   config: any;
+  sync_scope?: 'read_only' | 'bidirectional' | string;
+  sync_scope_label?: string | null;
   status: 'active' | 'paused' | 'error' | 'disconnected' | 'connected' | 'disabled' | string;
   created_at?: string | null;
   last_synced_at?: string | null;
@@ -167,6 +169,22 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
     toolsText: '["*"]',
     saving: false,
   });
+
+  const getSyncScopeMeta = useCallback(
+    (scope?: string | null) => {
+      const normalized = String(scope || '').toLowerCase();
+      const readOnly = normalized === 'read_only' || normalized === 'readonly';
+      return {
+        label: readOnly
+          ? t('integrations.scope.readOnly', 'Read-only sync')
+          : t('integrations.scope.bidirectional', 'Bidirectional sync'),
+        className: readOnly
+          ? 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300'
+          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300',
+      };
+    },
+    [t]
+  );
 
   const fetchMcpProviders = useCallback(async () => {
     setMcpLoading(true);
@@ -763,6 +781,13 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         <div className="text-xs bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 px-2 py-1 rounded inline-flex items-center gap-1">
                           <CheckCircle size={12} /> Connected
                         </div>
+                        <div
+                          className={`text-xs px-2 py-1 rounded inline-flex items-center gap-1 ${getSyncScopeMeta(connected.sync_scope).className}`}
+                        >
+                          <Info size={12} />
+                          {connected.sync_scope_label ||
+                            getSyncScopeMeta(connected.sync_scope).label}
+                        </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
                           <div>
                             Status:{' '}
@@ -926,6 +951,9 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         Processed
                       </th>
                       <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
+                        Scope
+                      </th>
+                      <th className="text-left p-3 text-slate-600 dark:text-slate-300 font-medium">
                         Duration
                       </th>
                     </tr>
@@ -954,6 +982,13 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         </td>
                         <td className="p-3 text-slate-700 dark:text-slate-200">
                           {typeof l.itemsProcessed === 'number' ? l.itemsProcessed : '—'}
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2 py-0.5 rounded text-xs font-medium ${getSyncScopeMeta(l.syncScope).className}`}
+                          >
+                            {l.syncScopeLabel || getSyncScopeMeta(l.syncScope).label}
+                          </span>
                         </td>
                         <td className="p-3 text-slate-700 dark:text-slate-200">
                           {typeof l.durationMs === 'number' ? `${l.durationMs}ms` : '—'}

@@ -4,18 +4,22 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
+import { type FilterChip, type ModuleTab } from '../../shared/ModuleHub';
 import {
   type FinanceKind,
-  type FinanceRow,
   type FinanceModelRow,
+  type FinanceRow,
   type FinanceStatus,
-  type PredictionType,
   normalizeModelStatus,
   normalizeStatus,
+  type PredictionType,
 } from '../financeTypes';
-import { type FilterChip, type ModuleTab } from '../../shared/ModuleHub';
 
-export function useFinanceData(activeTab: ModuleTab, searchQuery: string, activeFilters: FilterChip[]) {
+export function useFinanceData(
+  activeTab: ModuleTab,
+  searchQuery: string,
+  activeFilters: FilterChip[]
+) {
   const { t } = useTranslation();
 
   const [models, setModels] = useState<any[]>([]);
@@ -46,9 +50,12 @@ export function useFinanceData(activeTab: ModuleTab, searchQuery: string, active
 
   useEffect(() => {
     const kind: FinanceKind =
-      activeTab === 'models' ? 'models'
-        : activeTab === 'analysis' ? 'analysis'
-          : activeTab === 'prediction' ? 'prediction'
+      activeTab === 'models'
+        ? 'models'
+        : activeTab === 'analysis' || activeTab === 'investment'
+          ? 'analysis'
+          : activeTab === 'prediction'
+            ? 'prediction'
             : 'valuation';
 
     let cancelled = false;
@@ -67,7 +74,9 @@ export function useFinanceData(activeTab: ModuleTab, searchQuery: string, active
       }
     };
     run();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [activeTab, loadModels, loadAnalyses, loadValuations, loadBudgets, t]);
 
   const rowsForActiveTab: FinanceRow[] = useMemo(() => {
@@ -111,11 +120,13 @@ export function useFinanceData(activeTab: ModuleTab, searchQuery: string, active
         periodStart: String(b.periodStart || b.period_start || ''),
         periodEnd: String(b.periodEnd || b.period_end || ''),
         granularity: String(b.granularity || 'monthly'),
-        updatedAt: String(b.updatedAt || b.updated_at || b.createdAt || b.created_at || new Date().toISOString()),
+        updatedAt: String(
+          b.updatedAt || b.updated_at || b.createdAt || b.created_at || new Date().toISOString()
+        ),
       }));
       return [...modelRows, ...budgetRows];
     }
-    if (activeTab === 'analysis') {
+    if (activeTab === 'analysis' || activeTab === 'investment') {
       return (analyses || []).map((a: any) => ({
         id: String(a.id),
         title: String(a.title || t('common.untitled', 'Untitled')),
@@ -124,7 +135,9 @@ export function useFinanceData(activeTab: ModuleTab, searchQuery: string, active
         analysisType: String(a.analysisType || a.analysis_type || 'comprehensive'),
         currency: String(a.currency || 'PLN'),
         periodCount: Array.isArray(a.periods) ? a.periods.length : 0,
-        updatedAt: String(a.updatedAt || a.updated_at || a.createdAt || a.created_at || new Date().toISOString()),
+        updatedAt: String(
+          a.updatedAt || a.updated_at || a.createdAt || a.created_at || new Date().toISOString()
+        ),
       }));
     }
     return (valuations || []).map((v: any) => ({
@@ -146,7 +159,9 @@ export function useFinanceData(activeTab: ModuleTab, searchQuery: string, active
       const q = searchQuery.trim().toLowerCase();
       rows = rows.filter((r) => r.title.toLowerCase().includes(q));
     }
-    const statusFilterValues = activeFilters.filter((f) => f.column === 'status').map((f) => f.value);
+    const statusFilterValues = activeFilters
+      .filter((f) => f.column === 'status')
+      .map((f) => f.value);
     if (statusFilterValues.length) {
       rows = rows.filter((r) => statusFilterValues.includes(r.status));
     }
@@ -155,13 +170,24 @@ export function useFinanceData(activeTab: ModuleTab, searchQuery: string, active
 
   const statusCounts = useMemo(() => {
     const counts: Record<FinanceStatus, number> = { DRAFT: 0, REVIEW: 0, APPROVED: 0 };
-    rowsForActiveTab.forEach((r) => { counts[r.status] = (counts[r.status] || 0) + 1; });
+    rowsForActiveTab.forEach((r) => {
+      counts[r.status] = (counts[r.status] || 0) + 1;
+    });
     return counts;
   }, [rowsForActiveTab]);
 
   return {
-    models, analyses, valuations, budgets, loadingTab,
-    loadModels, loadAnalyses, loadValuations, loadBudgets,
-    rowsForActiveTab, filteredRows, statusCounts,
+    models,
+    analyses,
+    valuations,
+    budgets,
+    loadingTab,
+    loadModels,
+    loadAnalyses,
+    loadValuations,
+    loadBudgets,
+    rowsForActiveTab,
+    filteredRows,
+    statusCounts,
   };
 }

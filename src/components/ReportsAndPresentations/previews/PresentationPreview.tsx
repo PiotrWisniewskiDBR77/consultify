@@ -7,7 +7,7 @@ import { Download, ExternalLink } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { PRESENTATION_STATUS_META, SOURCE_TYPE_META, type PresentationItem } from '../types';
+import { PRESENTATION_STATUS_META, type PresentationItem, SOURCE_TYPE_META } from '../types';
 
 interface PresentationPreviewProps {
   presentation: PresentationItem;
@@ -22,7 +22,8 @@ export const PresentationPreview: React.FC<PresentationPreviewProps> = ({
 }) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
-  const statusMeta = PRESENTATION_STATUS_META[presentation.status] || PRESENTATION_STATUS_META.draft;
+  const statusMeta =
+    PRESENTATION_STATUS_META[presentation.status] || PRESENTATION_STATUS_META.draft;
   const sourceMeta = SOURCE_TYPE_META[presentation.sourceType] || SOURCE_TYPE_META.tool;
 
   return (
@@ -30,7 +31,11 @@ export const PresentationPreview: React.FC<PresentationPreviewProps> = ({
       {/* Thumbnail */}
       <div className="w-full aspect-[16/9] rounded-lg bg-gradient-to-br from-slate-200 to-slate-300 dark:from-navy-700 dark:to-navy-600 flex items-center justify-center overflow-hidden">
         {presentation.thumbnailUrl ? (
-          <img src={presentation.thumbnailUrl} alt={presentation.title} className="w-full h-full object-cover" />
+          <img
+            src={presentation.thumbnailUrl}
+            alt={presentation.title}
+            className="w-full h-full object-cover"
+          />
         ) : (
           <div className="text-center">
             <span className="text-2xl font-bold text-slate-400 dark:text-slate-500">PPT</span>
@@ -43,7 +48,9 @@ export const PresentationPreview: React.FC<PresentationPreviewProps> = ({
 
       {/* Entity Meta Bar */}
       <div className="flex items-center gap-2 flex-wrap">
-        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-white/[0.06] ${sourceMeta.color}`}>
+        <span
+          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-white/[0.06] ${sourceMeta.color}`}
+        >
           {isPolish ? sourceMeta.labelPl : sourceMeta.label}
         </span>
         <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-500/10">
@@ -62,9 +69,10 @@ export const PresentationPreview: React.FC<PresentationPreviewProps> = ({
           value={isPolish ? sourceMeta.labelPl : sourceMeta.label}
         />
         <DetailRow
-          label={isPolish ? 'Slajdy' : 'Slides'}
-          value={String(presentation.slideCount)}
+          label={isPolish ? 'Tryb' : 'Mode'}
+          value={presentation.presentationMode || 'briefing'}
         />
+        <DetailRow label={isPolish ? 'Slajdy' : 'Slides'} value={String(presentation.slideCount)} />
         <DetailRow
           label={isPolish ? 'Utworzono' : 'Created'}
           value={new Date(presentation.createdAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
@@ -98,6 +106,17 @@ export const PresentationPreview: React.FC<PresentationPreviewProps> = ({
                 {fmt}
               </span>
             ))}
+          </div>
+        </div>
+      )}
+
+      {presentation.sourceRefs && presentation.sourceRefs.length > 0 && (
+        <div className="space-y-1.5">
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            {isPolish ? 'Powiązane źródła' : 'Linked sources'}
+          </span>
+          <div className="text-xs text-slate-600 dark:text-slate-300">
+            {presentation.sourceRefs.length} {isPolish ? 'referencji' : 'references'}
           </div>
         </div>
       )}

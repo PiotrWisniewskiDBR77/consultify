@@ -17,6 +17,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
@@ -62,6 +63,7 @@ export const KPIAttributionPanel: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [loadingKpis, setLoadingKpis] = useState(true);
   const [expandedContrib, setExpandedContrib] = useState<string | null>(null);
+  const [savingSnapshot, setSavingSnapshot] = useState(false);
 
   useEffect(() => {
     loadKPIs();
@@ -108,6 +110,22 @@ export const KPIAttributionPanel: React.FC = () => {
     setAttribution(null);
     loadAttribution(kpiId);
   };
+
+  const handleSaveSnapshot = useCallback(async () => {
+    if (!selectedKpi || !attribution) return;
+    setSavingSnapshot(true);
+    try {
+      await Api.post(`/benefits/attribution/${selectedKpi}/snapshot`, {
+        periodStart: attribution.periodStart,
+        periodEnd: attribution.periodEnd,
+      });
+      toast.success(t('kpi.attribution.snapshotSaved', 'Attribution snapshot saved'));
+    } catch {
+      toast.error(t('kpi.attribution.snapshotFailed', 'Failed to save attribution snapshot'));
+    } finally {
+      setSavingSnapshot(false);
+    }
+  }, [attribution, selectedKpi, t]);
 
   if (loadingKpis) {
     return (
@@ -163,6 +181,35 @@ export const KPIAttributionPanel: React.FC = () => {
 
       {attribution && !loading && (
         <>
+          <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-500/20 dark:bg-blue-500/10">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-2">
+                <Shield className="mt-0.5 h-5 w-5 text-blue-500" />
+                <div>
+                  <p className="text-sm font-medium text-blue-900 dark:text-blue-300">
+                    {t('kpi.attribution.policyTitle', 'Attribution policy')}
+                  </p>
+                  <p className="mt-1 text-sm text-blue-800 dark:text-blue-200/90">
+                    {t(
+                      'kpi.attribution.policyBody',
+                      'Manual KPI-to-initiative mappings are the source of truth. Heuristic attribution is advisory and should be reviewed before downstream finance or reporting decisions.'
+                    )}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => void handleSaveSnapshot()}
+                disabled={savingSnapshot}
+                className="rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 disabled:opacity-60 dark:border-blue-400/20 dark:bg-blue-950/40 dark:text-blue-200 dark:hover:bg-blue-900/30"
+              >
+                {savingSnapshot
+                  ? t('common.saving', 'Saving...')
+                  : t('kpi.attribution.saveSnapshot', 'Save snapshot')}
+              </button>
+            </div>
+          </div>
+
           {/* Overview */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard

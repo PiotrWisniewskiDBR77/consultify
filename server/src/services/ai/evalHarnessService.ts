@@ -1055,3 +1055,44 @@ function computeResponseQuality(expectedOutput: string, actualInput: string): nu
   const overlap = [...expectedWords].filter((w) => inputWords.has(w)).length;
   return Math.round((overlap / expectedWords.size) * 10000) / 10000;
 }
+
+export function evaluateResearchLedgerContract(input: {
+  responseText: string;
+  expectedClaims?: string[];
+  unsupportedClaimThreshold?: number;
+}): {
+  citationCoverage: number;
+  unsupportedClaimRate: number;
+  claimCount: number;
+  citedClaimCount: number;
+  passes: boolean;
+} {
+  const responseText = String(input.responseText || '').trim();
+  const extracted = citationExtractor.extract(responseText);
+  const claims = Array.isArray(input.expectedClaims)
+    ? input.expectedClaims.map((claim) => String(claim).trim()).filter(Boolean)
+    : responseText
+        .split(/(?<=[.!?])\s+/)
+        .map((claim) => claim.trim())
+        .filter((claim) => claim.length >= 40);
+  const citedClaimCount = claims.filter(
+    (claim) =>
+      /\[\d+\]/.test(claim) ||
+      extracted.citations.some((citation) => {
+        const raw = String((citation as any)?.raw || '').trim();
+        return raw ? claim.includes(raw) : false;
+      })
+  ).length;
+  const claimCount = claims.length;
+  const citationCoverage = claimCount > 0 ? citedClaimCount / claimCount : 1;
+  const unsupportedClaimRate = claimCount > 0 ? (claimCount - citedClaimCount) / claimCount : 0;
+  const maxUnsupported = input.unsupportedClaimThreshold ?? 0.2;
+
+  return {
+    citationCoverage: Math.round(citationCoverage * 10000) / 10000,
+    unsupportedClaimRate: Math.round(unsupportedClaimRate * 10000) / 10000,
+    claimCount,
+    citedClaimCount,
+    passes: unsupportedClaimRate <= maxUnsupported,
+  };
+}

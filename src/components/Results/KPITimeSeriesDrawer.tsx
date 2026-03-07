@@ -44,6 +44,12 @@ type KpiMappingRow = {
   impact_direction?: string | null;
 };
 
+const measurementDate = (measurement: KPIMeasurement): string =>
+  String(measurement.periodStart || measurement.measuredAt || '');
+
+const measurementLabel = (measurement: KPIMeasurement): string =>
+  measurement.periodKey || measurementDate(measurement);
+
 export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   kpiId,
   onClose,
@@ -74,10 +80,15 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   const [settingsUnit, setSettingsUnit] = useState('');
   const [settingsBaseline, setSettingsBaseline] = useState('');
   const [settingsTarget, setSettingsTarget] = useState('');
-  const [settingsFrequency, setSettingsFrequency] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY'>(
-    'MONTHLY'
-  );
+  const [settingsFrequency, setSettingsFrequency] = useState<
+    'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY'
+  >('MONTHLY');
   const [settingsDirection, setSettingsDirection] = useState<'increase' | 'decrease'>('increase');
+  const [settingsThresholdMode, setSettingsThresholdMode] = useState<
+    'ABSOLUTE' | 'PERCENT_FROM_TARGET'
+  >('PERCENT_FROM_TARGET');
+  const [settingsAmberThreshold, setSettingsAmberThreshold] = useState('');
+  const [settingsRedThreshold, setSettingsRedThreshold] = useState('');
 
   const [initiatives, setInitiatives] = useState<InitiativeOption[]>([]);
   const [initiativeSearch, setInitiativeSearch] = useState('');
@@ -119,7 +130,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         setMeasurements(
           (ts || []).sort(
             (a: KPIMeasurement, b: KPIMeasurement) =>
-              new Date(b.measuredAt).getTime() - new Date(a.measuredAt).getTime()
+              new Date(measurementDate(b)).getTime() - new Date(measurementDate(a)).getTime()
           )
         );
       }
@@ -171,6 +182,25 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     );
     setSettingsFrequency(((kpi as any)?.measurementFrequency || 'MONTHLY') as any);
     setSettingsDirection((kpi as any)?.direction === 'LOWER_IS_BETTER' ? 'decrease' : 'increase');
+    setSettingsThresholdMode(((kpi as any)?.thresholdMode || 'PERCENT_FROM_TARGET') as any);
+    setSettingsAmberThreshold(
+      (kpi as any)?.thresholdMode === 'ABSOLUTE'
+        ? (kpi as any)?.amberThresholdAbs != null
+          ? String((kpi as any).amberThresholdAbs)
+          : ''
+        : (kpi as any)?.amberThresholdPct != null
+          ? String((kpi as any).amberThresholdPct)
+          : ''
+    );
+    setSettingsRedThreshold(
+      (kpi as any)?.thresholdMode === 'ABSOLUTE'
+        ? (kpi as any)?.redThresholdAbs != null
+          ? String((kpi as any).redThresholdAbs)
+          : ''
+        : (kpi as any)?.redThresholdPct != null
+          ? String((kpi as any).redThresholdPct)
+          : ''
+    );
   }, [kpi, editMode]);
 
   const handleRecord = useCallback(
@@ -201,7 +231,8 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     if (!settingsName.trim()) return;
     setSavingSettings(true);
     try {
-      const kpiDirection = settingsDirection === 'decrease' ? 'LOWER_IS_BETTER' : 'HIGHER_IS_BETTER';
+      const kpiDirection =
+        settingsDirection === 'decrease' ? 'LOWER_IS_BETTER' : 'HIGHER_IS_BETTER';
       await Api.put(`/benefits/kpis/${kpiId}`, {
         name: settingsName.trim(),
         description: settingsDescription.trim() || undefined,
@@ -210,6 +241,23 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         targetValue: settingsTarget !== '' ? Number(settingsTarget) : null,
         measurementFrequency: settingsFrequency,
         direction: kpiDirection,
+        thresholdMode: settingsThresholdMode,
+        amberThresholdPct:
+          settingsThresholdMode === 'PERCENT_FROM_TARGET' && settingsAmberThreshold !== ''
+            ? Number(settingsAmberThreshold)
+            : null,
+        redThresholdPct:
+          settingsThresholdMode === 'PERCENT_FROM_TARGET' && settingsRedThreshold !== ''
+            ? Number(settingsRedThreshold)
+            : null,
+        amberThresholdAbs:
+          settingsThresholdMode === 'ABSOLUTE' && settingsAmberThreshold !== ''
+            ? Number(settingsAmberThreshold)
+            : null,
+        redThresholdAbs:
+          settingsThresholdMode === 'ABSOLUTE' && settingsRedThreshold !== ''
+            ? Number(settingsRedThreshold)
+            : null,
       });
       setEditMode(false);
       fetchData();
@@ -224,11 +272,14 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     kpiId,
     onValueRecorded,
     settingsBaseline,
+    settingsAmberThreshold,
     settingsDescription,
     settingsDirection,
     settingsFrequency,
     settingsName,
+    settingsRedThreshold,
     settingsTarget,
+    settingsThresholdMode,
     settingsUnit,
   ]);
 
@@ -485,14 +536,20 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       {t('results.deviation.title', 'Deviation case')}
                     </div>
-                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border ${caseBadgeCls}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${openCase.severity === 'RED' ? 'bg-red-500' : 'bg-amber-500'}`} />
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border ${caseBadgeCls}`}
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${openCase.severity === 'RED' ? 'bg-red-500' : 'bg-amber-500'}`}
+                      />
                       {openCase.severity} · {openCase.status}
                     </span>
                   </div>
 
                   {openCase.deviationSummary ? (
-                    <div className="text-sm text-slate-700 dark:text-slate-200">{openCase.deviationSummary}</div>
+                    <div className="text-sm text-slate-700 dark:text-slate-200">
+                      {openCase.deviationSummary}
+                    </div>
                   ) : null}
 
                   <div className="flex items-center gap-2 flex-wrap">
@@ -532,7 +589,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                       className={`w-full min-h-[90px] px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/40 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30`}
                       value={rcaDraft}
                       onChange={(e) => setRcaDraft(e.target.value)}
-                      placeholder={t('results.deviation.rcaPlaceholder', 'Explain the root cause...')}
+                      placeholder={t(
+                        'results.deviation.rcaPlaceholder',
+                        'Explain the root cause...'
+                      )}
                     />
                     <button
                       type="button"
@@ -551,8 +611,13 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     {(openCase.actions || []).length > 0 ? (
                       <div className="space-y-1">
                         {(openCase.actions || []).map((a) => (
-                          <div key={a.id} className="flex items-center justify-between gap-2 text-sm">
-                            <span className="text-slate-700 dark:text-slate-200 truncate">{a.title}</span>
+                          <div
+                            key={a.id}
+                            className="flex items-center justify-between gap-2 text-sm"
+                          >
+                            <span className="text-slate-700 dark:text-slate-200 truncate">
+                              {a.title}
+                            </span>
                             <span className="text-xs text-slate-500 dark:text-slate-400 shrink-0">
                               {a.status}
                               {a.dueDate ? ` · ${a.dueDate}` : ''}
@@ -616,7 +681,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         <div
                           key={m.id}
                           className="flex-1 min-w-[12px] group/bar relative"
-                          title={`${new Date(m.measuredAt).toLocaleDateString()}: ${m.value}`}
+                          title={`${measurementLabel(m)}: ${m.value}`}
                         >
                           <div
                             className={`w-full rounded-t transition-all ${
@@ -713,7 +778,14 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                             <td className="px-3 py-2 text-slate-400">
                               <div className="flex items-center gap-1.5">
                                 <Calendar size={12} className="text-slate-500" />
-                                {new Date(m.measuredAt).toLocaleDateString()}
+                                {measurementDate(m)
+                                  ? new Date(measurementDate(m)).toLocaleDateString()
+                                  : '—'}
+                                {m.periodKey && m.periodKey !== measurementDate(m) ? (
+                                  <span className="ml-2 text-[10px] uppercase tracking-wide text-slate-500">
+                                    {m.periodKey}
+                                  </span>
+                                ) : null}
                               </div>
                             </td>
                             <td className="px-3 py-2 text-right font-medium text-slate-300">
@@ -852,9 +924,60 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         onChange={(e) => setSettingsDirection(e.target.value as any)}
                         disabled={!editMode}
                       >
-                        <option value="increase">{t('results.direction.increase', 'Increase')}</option>
-                        <option value="decrease">{t('results.direction.decrease', 'Decrease')}</option>
+                        <option value="increase">
+                          {t('results.direction.increase', 'Increase')}
+                        </option>
+                        <option value="decrease">
+                          {t('results.direction.decrease', 'Decrease')}
+                        </option>
                       </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                        {t('results.drawer.thresholdMode', 'Threshold mode')}
+                      </div>
+                      <select
+                        className={`${inputCls} appearance-none`}
+                        value={settingsThresholdMode}
+                        onChange={(e) => setSettingsThresholdMode(e.target.value as any)}
+                        disabled={!editMode}
+                      >
+                        <option value="PERCENT_FROM_TARGET">
+                          {t('results.drawer.thresholdPercent', 'Percent from target')}
+                        </option>
+                        <option value="ABSOLUTE">
+                          {t('results.drawer.thresholdAbsolute', 'Absolute gap')}
+                        </option>
+                      </select>
+                    </div>
+                    <div>
+                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                        {t('results.drawer.amberThreshold', 'Amber threshold')}
+                      </div>
+                      <input
+                        className={inputCls}
+                        type="number"
+                        step="any"
+                        value={settingsAmberThreshold}
+                        onChange={(e) => setSettingsAmberThreshold(e.target.value)}
+                        disabled={!editMode}
+                      />
+                    </div>
+                    <div>
+                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                        {t('results.drawer.redThreshold', 'Red threshold')}
+                      </div>
+                      <input
+                        className={inputCls}
+                        type="number"
+                        step="any"
+                        value={settingsRedThreshold}
+                        onChange={(e) => setSettingsRedThreshold(e.target.value)}
+                        disabled={!editMode}
+                      />
                     </div>
                   </div>
 
@@ -866,7 +989,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         onClick={() => void handleSaveSettings()}
                         className="h-8 px-3 rounded-full text-xs font-medium border border-primary-500/30 bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/15 transition-colors disabled:opacity-60"
                       >
-                        {savingSettings ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
+                        {savingSettings
+                          ? t('common.saving', 'Saving...')
+                          : t('common.save', 'Save')}
                       </button>
                       <button
                         type="button"
@@ -877,14 +1002,41 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                           setSettingsDescription(String((kpi as any)?.description || ''));
                           setSettingsUnit(String((kpi as any)?.unit || ''));
                           setSettingsBaseline(
-                            (kpi as any)?.baselineValue != null ? String((kpi as any).baselineValue) : ''
+                            (kpi as any)?.baselineValue != null
+                              ? String((kpi as any).baselineValue)
+                              : ''
                           );
                           setSettingsTarget(
-                            (kpi as any)?.targetValue != null ? String((kpi as any).targetValue) : ''
+                            (kpi as any)?.targetValue != null
+                              ? String((kpi as any).targetValue)
+                              : ''
                           );
-                          setSettingsFrequency(((kpi as any)?.measurementFrequency || 'MONTHLY') as any);
+                          setSettingsFrequency(
+                            ((kpi as any)?.measurementFrequency || 'MONTHLY') as any
+                          );
                           setSettingsDirection(
                             (kpi as any)?.direction === 'LOWER_IS_BETTER' ? 'decrease' : 'increase'
+                          );
+                          setSettingsThresholdMode(
+                            ((kpi as any)?.thresholdMode || 'PERCENT_FROM_TARGET') as any
+                          );
+                          setSettingsAmberThreshold(
+                            (kpi as any)?.thresholdMode === 'ABSOLUTE'
+                              ? (kpi as any)?.amberThresholdAbs != null
+                                ? String((kpi as any).amberThresholdAbs)
+                                : ''
+                              : (kpi as any)?.amberThresholdPct != null
+                                ? String((kpi as any).amberThresholdPct)
+                                : ''
+                          );
+                          setSettingsRedThreshold(
+                            (kpi as any)?.thresholdMode === 'ABSOLUTE'
+                              ? (kpi as any)?.redThresholdAbs != null
+                                ? String((kpi as any).redThresholdAbs)
+                                : ''
+                              : (kpi as any)?.redThresholdPct != null
+                                ? String((kpi as any).redThresholdPct)
+                                : ''
                           );
                         }}
                         className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-500 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors disabled:opacity-60"
@@ -947,7 +1099,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         if (!initiativeSearch.trim()) return true;
                         return i.name.toLowerCase().includes(initiativeSearch.toLowerCase());
                       })
-                      .filter((i) => !mappings.some((m) => String(m.initiative_id) === String(i.id)))
+                      .filter(
+                        (i) => !mappings.some((m) => String(m.initiative_id) === String(i.id))
+                      )
                       .slice(0, 25)
                       .map((i) => (
                         <button

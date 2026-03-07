@@ -6,7 +6,17 @@
 export type RapTab = 'templates' | 'reports' | 'presentations';
 
 export type TemplateType = 'report' | 'presentation';
-export type TemplateCategory = 'R1' | 'R2' | 'R3' | 'R4' | 'executive_update' | 'project_kickoff' | 'initiative_review' | 'financial_review' | 'assessment_results' | 'custom';
+export type TemplateCategory =
+  | 'R1'
+  | 'R2'
+  | 'R3'
+  | 'R4'
+  | 'executive_update'
+  | 'project_kickoff'
+  | 'initiative_review'
+  | 'financial_review'
+  | 'assessment_results'
+  | 'custom';
 export type TemplateScope = 'application' | 'organization';
 export type TemplateStatus = 'active' | 'archived' | 'draft';
 
@@ -14,7 +24,13 @@ export type ReportType = 'R1' | 'R2' | 'R3' | 'R4' | 'custom';
 export type ReportStatus = 'draft' | 'ready' | 'exported' | 'archived';
 
 export type PresentationSourceType = 'tool' | 'assessment' | 'finance' | 'upload';
-export type PresentationStatus = 'draft' | 'generated' | 'editing' | 'ready' | 'shared' | 'archived';
+export type PresentationStatus =
+  | 'draft'
+  | 'generated'
+  | 'editing'
+  | 'ready'
+  | 'shared'
+  | 'archived';
 
 export interface ArtifactSourceRef {
   artifact_id: string;
@@ -43,6 +59,9 @@ export interface ReportItem {
   reportType: ReportType;
   status: ReportStatus;
   owner: string;
+  goal?: string;
+  communicationRegister?: string;
+  confidentiality?: string;
   periodFrom?: string;
   periodTo?: string;
   createdAt: string;
@@ -58,6 +77,7 @@ export interface PresentationItem {
   sourceType: PresentationSourceType;
   owner: string;
   status: PresentationStatus;
+  presentationMode?: 'show' | 'document' | 'briefing' | 'workshop' | string;
   createdAt: string;
   updatedAt: string;
   slideCount: number;
@@ -68,22 +88,51 @@ export interface PresentationItem {
   [key: string]: unknown;
 }
 
-export const REPORT_TYPE_META: Record<ReportType, { label: string; labelPl: string; color: string; dotColor: string }> = {
-  R1: { label: 'Weekly Execution', labelPl: 'Raport tygodniowy', color: 'text-blue-400', dotColor: 'bg-blue-400' },
-  R2: { label: 'Steering Committee', labelPl: 'Komitet sterujący', color: 'text-purple-400', dotColor: 'bg-purple-400' },
-  R3: { label: 'Benefits Tracking', labelPl: 'Śledzenie korzyści', color: 'text-emerald-400', dotColor: 'bg-emerald-400' },
-  R4: { label: 'Portfolio Overview', labelPl: 'Przegląd portfela', color: 'text-amber-400', dotColor: 'bg-amber-400' },
+export const REPORT_TYPE_META: Record<
+  ReportType,
+  { label: string; labelPl: string; color: string; dotColor: string }
+> = {
+  R1: {
+    label: 'Weekly Execution',
+    labelPl: 'Raport tygodniowy',
+    color: 'text-blue-400',
+    dotColor: 'bg-blue-400',
+  },
+  R2: {
+    label: 'Steering Committee',
+    labelPl: 'Komitet sterujący',
+    color: 'text-purple-400',
+    dotColor: 'bg-purple-400',
+  },
+  R3: {
+    label: 'Benefits Tracking',
+    labelPl: 'Śledzenie korzyści',
+    color: 'text-emerald-400',
+    dotColor: 'bg-emerald-400',
+  },
+  R4: {
+    label: 'Portfolio Overview',
+    labelPl: 'Przegląd portfela',
+    color: 'text-amber-400',
+    dotColor: 'bg-amber-400',
+  },
   custom: { label: 'Custom', labelPl: 'Własny', color: 'text-slate-400', dotColor: 'bg-slate-400' },
 };
 
-export const REPORT_STATUS_META: Record<ReportStatus, { label: string; labelPl: string; dotColor: string }> = {
+export const REPORT_STATUS_META: Record<
+  ReportStatus,
+  { label: string; labelPl: string; dotColor: string }
+> = {
   draft: { label: 'Draft', labelPl: 'Szkic', dotColor: 'bg-slate-400' },
   ready: { label: 'Ready', labelPl: 'Gotowy', dotColor: 'bg-emerald-400' },
   exported: { label: 'Exported', labelPl: 'Wyeksportowany', dotColor: 'bg-blue-400' },
   archived: { label: 'Archived', labelPl: 'Zarchiwizowany', dotColor: 'bg-slate-500' },
 };
 
-export const PRESENTATION_STATUS_META: Record<PresentationStatus, { label: string; labelPl: string; dotColor: string }> = {
+export const PRESENTATION_STATUS_META: Record<
+  PresentationStatus,
+  { label: string; labelPl: string; dotColor: string }
+> = {
   draft: { label: 'Draft', labelPl: 'Szkic', dotColor: 'bg-slate-400' },
   generated: { label: 'Generated', labelPl: 'Wygenerowana', dotColor: 'bg-blue-400' },
   editing: { label: 'Editing', labelPl: 'Edycja', dotColor: 'bg-amber-400' },
@@ -92,14 +141,20 @@ export const PRESENTATION_STATUS_META: Record<PresentationStatus, { label: strin
   archived: { label: 'Archived', labelPl: 'Zarchiwizowana', dotColor: 'bg-slate-500' },
 };
 
-export const SOURCE_TYPE_META: Record<PresentationSourceType, { label: string; labelPl: string; color: string }> = {
+export const SOURCE_TYPE_META: Record<
+  PresentationSourceType,
+  { label: string; labelPl: string; color: string }
+> = {
   tool: { label: 'Tool', labelPl: 'Narzędzie', color: 'text-emerald-400' },
   assessment: { label: 'Assessment', labelPl: 'Ocena', color: 'text-purple-400' },
   finance: { label: 'Finance', labelPl: 'Finanse', color: 'text-blue-400' },
   upload: { label: 'Upload', labelPl: 'Przesłane', color: 'text-amber-400' },
 };
 
-export const TEMPLATE_TYPE_META: Record<TemplateType, { label: string; labelPl: string; dotColor: string }> = {
+export const TEMPLATE_TYPE_META: Record<
+  TemplateType,
+  { label: string; labelPl: string; dotColor: string }
+> = {
   report: { label: 'Report', labelPl: 'Raport', dotColor: 'bg-blue-400' },
   presentation: { label: 'Presentation', labelPl: 'Prezentacja', dotColor: 'bg-purple-400' },
 };

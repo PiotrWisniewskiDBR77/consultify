@@ -41,6 +41,7 @@
     "smoke:b02-chat-actions": "tsx server/scripts/smoke-b02-chat-actions.ts",
     "smoke:a06-model-registry": "tsx server/scripts/smoke-a06-model-registry.ts",
     "smoke:ai:providers": "tsx server/scripts/smoke-ai-provider-connections.ts",
+    "smoke:ai:research-ledger": "tsx server/scripts/smoke-ai-research-ledger.ts",
     "smoke:a03-ui-compliance": "tsx server/scripts/smoke-a03-ui-hub-compliance.ts",
     "smoke:e06-methodology-parity": "tsx server/scripts/smoke-e06-methodology-parity.ts",
     "audit:e07-known-tools": "tsx server/scripts/audit-known-tools-completeness.ts",

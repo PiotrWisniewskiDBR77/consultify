@@ -89,6 +89,9 @@ export interface DeepResearchOutput {
     queriesExecuted: number;
     /** Number of iterative deepening rounds */
     rounds: number;
+    citationCount?: number;
+    evidenceCoverage?: number;
+    unsupportedClaimRate?: number;
   };
 }
 
@@ -1306,6 +1309,14 @@ export async function conductDeepResearch(
   const uniqueDomains = new Set(sources.map((s) => s.domain)).size;
   const avgConfidence =
     results.length > 0 ? results.reduce((acc, r) => acc + r.confidence, 0) / results.length : 0;
+  const synthesisSentences = synthesis
+    .split(/(?<=[.!?])\s+/)
+    .map((item) => item.trim())
+    .filter((item) => item.length >= 40);
+  const citedSentences = synthesisSentences.filter((sentence) => /\[\d+\]/.test(sentence)).length;
+  const evidenceCoverage =
+    synthesisSentences.length > 0 ? citedSentences / synthesisSentences.length : citations.length > 0 ? 1 : 0;
+  const unsupportedClaimRate = synthesisSentences.length > 0 ? 1 - evidenceCoverage : 0;
 
   const output: DeepResearchOutput = {
     topic,
@@ -1323,6 +1334,9 @@ export async function conductDeepResearch(
       researchDuration: duration,
       queriesExecuted: allQueries.filter((q) => q.status === 'done').length,
       rounds,
+      citationCount: citations.length,
+      evidenceCoverage: Math.round(evidenceCoverage * 10000) / 10000,
+      unsupportedClaimRate: Math.round(unsupportedClaimRate * 10000) / 10000,
     },
   };
 

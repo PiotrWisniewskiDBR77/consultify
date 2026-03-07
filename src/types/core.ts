@@ -91,6 +91,7 @@ export enum AppView {
   REPORTS_MANAGEMENT = 'REPORTS_MANAGEMENT', // Management Reports (PMO)
   DRD_AUDIT_REPORT = 'DRD_AUDIT_REPORT', // DRD Audit Report Builder
   PRESENTATIONS = 'PRESENTATIONS', // Presentations library
+  MEETING = 'MEETING', // Meeting workspace
   KPI_OKR_DASHBOARD = 'KPI_OKR_DASHBOARD', // Module: KPI/OKR post-implementation tracking
 
   MASTERCLASS = 'MASTERCLASS',
@@ -962,6 +963,9 @@ export interface KPIMeasurement {
   kpiId: string;
   value: number;
   measuredAt: string;
+  periodStart?: string | null;
+  periodEnd?: string | null;
+  periodKey?: string | null;
   notes?: string;
   explanation?: string;
   actionItems?: string[];

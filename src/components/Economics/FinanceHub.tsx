@@ -165,7 +165,7 @@ export const FinanceHub: React.FC = () => {
     const kind: FinanceKind =
       activeTab === 'models'
         ? 'models'
-        : activeTab === 'analysis'
+        : activeTab === 'analysis' || activeTab === 'investment'
           ? 'analysis'
           : activeTab === 'prediction'
             ? 'prediction'
@@ -249,7 +249,7 @@ export const FinanceHub: React.FC = () => {
     const createFrom = searchParams.get('createFrom') as 'financial_model' | 'budget' | null;
     const sourceId = searchParams.get('sourceId');
 
-    if (tab && ['models', 'analysis', 'prediction', 'valuation'].includes(tab)) {
+    if (tab && ['models', 'analysis', 'prediction', 'valuation', 'investment'].includes(tab)) {
       setActiveTab(tab as ModuleTab);
     }
 
@@ -286,6 +286,12 @@ export const FinanceHub: React.FC = () => {
         label: t('finance.tabs.valuation', 'Wycena przedsiębiorstw'),
         icon: <Target size={16} />,
         count: valuations.length,
+      },
+      {
+        id: 'investment' as ModuleTab,
+        label: t('finance.tabs.investment', 'Analiza inwestycyjna'),
+        icon: <Target size={16} />,
+        count: analyses.length,
       },
     ],
     [t, models.length, analyses.length, valuations.length, budgets.length]
@@ -400,7 +406,7 @@ export const FinanceHub: React.FC = () => {
         baseUpdatedCol,
       ];
     }
-    if (activeTab === 'analysis') {
+    if (activeTab === 'analysis' || activeTab === 'investment') {
       return [
         baseTypeCol,
         baseTitleCol,
@@ -577,20 +583,24 @@ export const FinanceHub: React.FC = () => {
 
   // ---- Primary CTA ----
   const primaryCta = useMemo(() => {
-    const labels: Record<FinanceKind, string> = {
+    const labels: Record<FinanceKind | 'investment', string> = {
       models: t('finance.cta.newModel', '+ Nowy model'),
       analysis: t('finance.cta.newAnalysis', '+ Nowa analiza'),
       prediction: t('finance.cta.newScenario', '+ Nowy scenariusz'),
       valuation: t('finance.cta.newValuation', '+ Nowa wycena'),
+      investment: t('finance.cta.newInvestment', '+ Nowy case inwestycyjny'),
     };
-    const kind = activeTab as FinanceKind;
+    const currentKind = (activeTab === 'investment' ? 'investment' : activeTab) as
+      | FinanceKind
+      | 'investment';
     return (
       <button
         onClick={() => {
-          if (kind === 'models') setShowCreateModelModal(true);
-          else if (kind === 'analysis') setShowAnalysisCreateModal(true);
-          else if (kind === 'prediction') setShowPredictionCreateModal(true);
-          else if (kind === 'valuation') {
+          if (currentKind === 'models') setShowCreateModelModal(true);
+          else if (currentKind === 'analysis' || currentKind === 'investment')
+            setShowAnalysisCreateModal(true);
+          else if (currentKind === 'prediction') setShowPredictionCreateModal(true);
+          else if (currentKind === 'valuation') {
             setValuationInitialSource({});
             setShowValuationCreateModal(true);
           }
@@ -598,21 +608,32 @@ export const FinanceHub: React.FC = () => {
         className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors duration-150 active:scale-[0.98]"
       >
         <Plus size={16} />
-        <span>{labels[kind] || labels.models}</span>
+        <span>{labels[currentKind] || labels.models}</span>
       </button>
     );
   }, [activeTab, t]);
 
   const rightControls = useMemo(() => {
-    if (activeTab !== 'models') return null;
-    return (
-      <button
-        onClick={() => setShowImportWizard(true)}
-        className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors duration-150 active:scale-[0.98]"
-      >
-        {t('finance.cta.importPdf', 'Import PDF')}
-      </button>
-    );
+    if (activeTab === 'models') {
+      return (
+        <button
+          onClick={() => setShowImportWizard(true)}
+          className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors duration-150 active:scale-[0.98]"
+        >
+          {t('finance.cta.importPdf', 'Import PDF')}
+        </button>
+      );
+    }
+
+    if (activeTab === 'investment') {
+      return (
+        <div className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300">
+          {t('finance.investment.meta', 'Investment cases: NPV • IRR • Payback • ROI')}
+        </div>
+      );
+    }
+
+    return null;
   }, [activeTab, t]);
 
   const aiControl = useMemo(
@@ -712,13 +733,20 @@ export const FinanceHub: React.FC = () => {
   }, [rowsForActiveTab.length, statusCounts, activeFilters, t]);
 
   const emptyMessage = useMemo(() => {
-    const messages: Record<FinanceKind, string> = {
+    const messages: Record<FinanceKind | 'investment', string> = {
       models: t('finance.empty.models', 'Brak modeli. Dodaj pierwszy model finansowy.'),
       analysis: t('finance.empty.analysis', 'Brak analiz. Utwórz pierwszą analizę.'),
       prediction: t('finance.empty.prediction', 'Brak danych do predykcji. Najpierw utwórz model.'),
       valuation: t('finance.empty.valuation', 'Brak wycen. Utwórz pierwszą wycenę.'),
+      investment: t(
+        'finance.empty.investment',
+        'Brak case studies inwestycyjnych. Utwórz pierwszą analizę inwestycyjną.'
+      ),
     };
-    return messages[activeTab as FinanceKind] || messages.models;
+    const currentKind = (activeTab === 'investment' ? 'investment' : activeTab) as
+      | FinanceKind
+      | 'investment';
+    return messages[currentKind] || messages.models;
   }, [activeTab, t]);
 
   // ---- Table + Preview ----
@@ -880,6 +908,45 @@ export const FinanceHub: React.FC = () => {
         <div className="flex items-center justify-center h-full py-24">
           <div className="text-sm text-slate-500 dark:text-slate-400">
             {t('common.loading', 'Loading…')}
+          </div>
+        </div>
+      );
+    if (!activeDocumentId && activeTab === 'investment' && filteredRows.length === 0)
+      return (
+        <div className="flex items-center justify-center h-full p-6">
+          <div className="w-full max-w-3xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-6">
+            <div className="flex items-start gap-4">
+              <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-300">
+                <Target size={20} />
+              </div>
+              <div className="min-w-0">
+                <div className="text-lg font-semibold text-slate-900 dark:text-white">
+                  {t('finance.investment.emptyTitle', 'Investment analysis workspace')}
+                </div>
+                <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                  {t(
+                    'finance.investment.emptyBody',
+                    'Use this tab for initiative-level investment cases and go/no-go decisions based on NPV, IRR, payback, and ROI.'
+                  )}
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {['NPV', 'IRR', 'Payback', 'ROI'].map((metric) => (
+                    <span
+                      key={metric}
+                      className="inline-flex items-center rounded-full bg-slate-100 dark:bg-white/[0.06] px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-200"
+                    >
+                      {metric}
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {t(
+                    'finance.investment.emptyHint',
+                    'Create a financial analysis and treat it as an investment case from this tab.'
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       );

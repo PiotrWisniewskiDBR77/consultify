@@ -49,7 +49,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
 import {
   Callout,
@@ -59,6 +58,7 @@ import {
   ToggleBlock,
 } from '@/components/shared/NModeBlocks';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, API_URL, getHeaders } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
@@ -502,7 +502,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
-  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(InitiativeStatus.EXECUTING);
+  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(
+    InitiativeStatus.EXECUTING
+  );
   // Active/All toggle (consistent with InitiativesHub)
   const [scope, setScope] = useState<'active' | 'all'>('active');
   const [selectedInitiative, setSelectedInitiative] = useState<FullInitiative | null>(null);
@@ -1242,8 +1244,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (q) {
       result = result.filter(
         (i) =>
-          String(i.name || '').toLowerCase().includes(q) ||
-          String(i.summary || i.description || '').toLowerCase().includes(q)
+          String(i.name || '')
+            .toLowerCase()
+            .includes(q) ||
+          String(i.summary || i.description || '')
+            .toLowerCase()
+            .includes(q)
       );
     }
 
@@ -1291,15 +1297,18 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [addChatMessage, isChatCollapsed, openChatWithContext, t, toggleChatCollapse]
   );
 
-  const copyExecutionLink = useCallback(async (id: string) => {
-    try {
-      const url = `${window.location.origin}${ROUTES.IMPLEMENTATION}?open=${encodeURIComponent(id)}&mode=doc`;
-      await navigator.clipboard.writeText(url);
-      toast.success(t('common.copied', 'Copied'));
-    } catch {
-      toast.error(t('common.copyFailed', 'Copy failed'));
-    }
-  }, [t]);
+  const copyExecutionLink = useCallback(
+    async (id: string) => {
+      try {
+        const url = `${window.location.origin}${ROUTES.IMPLEMENTATION}?open=${encodeURIComponent(id)}&mode=doc`;
+        await navigator.clipboard.writeText(url);
+        toast.success(t('common.copied', 'Copied'));
+      } catch {
+        toast.error(t('common.copyFailed', 'Copy failed'));
+      }
+    },
+    [t]
+  );
 
   // Tab configuration
   const tabs = useMemo(
@@ -1725,11 +1734,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       ) : null;
 
     if (!showScope && !showHeatmapShortcut && !showHeatmapControls) {
-      return (
-        <div className="flex items-center gap-2">
-          {execChip}
-        </div>
-      );
+      return <div className="flex items-center gap-2">{execChip}</div>;
     }
 
     const navigateWorkload = (direction: 'prev' | 'next') => {
@@ -3442,8 +3447,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
           ) : (
             <span className="text-xs text-slate-500 dark:text-slate-400">
-              {actionQueueItems.length}{' '}
-              {t('execution.actionQueue.items', 'items')}
+              {actionQueueItems.length} {t('execution.actionQueue.items', 'items')}
             </span>
           )}
         </div>
@@ -3470,9 +3474,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                     {item.type === 'comm_overdue' && item.dueDate
                       ? ` • ${t('execution.actionQueue.commDue', 'Comm due')} ${new Date(item.dueDate).toLocaleDateString()}`
                       : ''}
-                    {item.type === 'risk_high' && item.impact
-                      ? ` • ${item.impact}`
-                      : ''}
+                    {item.type === 'risk_high' && item.impact ? ` • ${item.impact}` : ''}
                     {item.type === 'kpi_deviation_no_plan' && item.severity
                       ? ` • ${t('execution.actionQueue.severity', 'Severity')} ${item.severity}`
                       : ''}
@@ -3511,128 +3513,128 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       </div>
 
       <div className="grid gap-4 lg:grid-cols-4" data-testid="execution-action-center">
-      <button
-        type="button"
-        onClick={() => openInitiativesWithAttention('blocked')}
-        className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-rose-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
-      >
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              {t('execution.attention.blocked', 'Blocked')}
-            </p>
-            <p className="text-2xl font-semibold text-slate-900 dark:text-white">
-              {actionCenter.blocked.length}
-            </p>
+        <button
+          type="button"
+          onClick={() => openInitiativesWithAttention('blocked')}
+          className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-rose-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                {t('execution.attention.blocked', 'Blocked')}
+              </p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+                {actionCenter.blocked.length}
+              </p>
+            </div>
+            <AlertTriangle className="text-rose-400" size={18} />
           </div>
-          <AlertTriangle className="text-rose-400" size={18} />
-        </div>
-        <div className="space-y-1">
-          {actionCenter.blocked.slice(0, 3).map((i) => (
-            <div key={i.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
-              {i.name}
-            </div>
-          ))}
-          {actionCenter.blocked.length === 0 && (
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('execution.attention.none', 'Nothing urgent')}
-            </div>
-          )}
-        </div>
-      </button>
+          <div className="space-y-1">
+            {actionCenter.blocked.slice(0, 3).map((i) => (
+              <div key={i.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
+                {i.name}
+              </div>
+            ))}
+            {actionCenter.blocked.length === 0 && (
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {t('execution.attention.none', 'Nothing urgent')}
+              </div>
+            )}
+          </div>
+        </button>
 
-      <button
-        type="button"
-        onClick={() => openInitiativesWithAttention('overdue_decisions')}
-        className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-amber-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
-      >
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              {t('execution.attention.overdueDecisions', 'Overdue decisions')}
-            </p>
-            <p className="text-2xl font-semibold text-slate-900 dark:text-white">
-              {actionCenter.overdueDecisions.length}
-            </p>
+        <button
+          type="button"
+          onClick={() => openInitiativesWithAttention('overdue_decisions')}
+          className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-amber-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                {t('execution.attention.overdueDecisions', 'Overdue decisions')}
+              </p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+                {actionCenter.overdueDecisions.length}
+              </p>
+            </div>
+            <Scale className="text-amber-400" size={18} />
           </div>
-          <Scale className="text-amber-400" size={18} />
-        </div>
-        <div className="space-y-1">
-          {actionCenter.overdueDecisions.slice(0, 3).map((d) => (
-            <div key={d.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
-              <span className="font-medium text-slate-900 dark:text-white">{d.title}</span>
-              <span className="text-slate-500"> · {d.relatedObjectName || '—'}</span>
-            </div>
-          ))}
-          {actionCenter.overdueDecisions.length === 0 && (
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('execution.attention.none', 'Nothing urgent')}
-            </div>
-          )}
-        </div>
-      </button>
+          <div className="space-y-1">
+            {actionCenter.overdueDecisions.slice(0, 3).map((d) => (
+              <div key={d.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
+                <span className="font-medium text-slate-900 dark:text-white">{d.title}</span>
+                <span className="text-slate-500"> · {d.relatedObjectName || '—'}</span>
+              </div>
+            ))}
+            {actionCenter.overdueDecisions.length === 0 && (
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {t('execution.attention.none', 'Nothing urgent')}
+              </div>
+            )}
+          </div>
+        </button>
 
-      <button
-        type="button"
-        onClick={() => openInitiativesWithAttention('missing_dates')}
-        className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-cyan-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
-      >
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              {t('execution.attention.missingDates', 'Missing dates')}
-            </p>
-            <p className="text-2xl font-semibold text-slate-900 dark:text-white">
-              {actionCenter.missingDates.length}
-            </p>
+        <button
+          type="button"
+          onClick={() => openInitiativesWithAttention('missing_dates')}
+          className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-cyan-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                {t('execution.attention.missingDates', 'Missing dates')}
+              </p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+                {actionCenter.missingDates.length}
+              </p>
+            </div>
+            <Calendar className="text-cyan-400" size={18} />
           </div>
-          <Calendar className="text-cyan-400" size={18} />
-        </div>
-        <div className="space-y-1">
-          {actionCenter.missingDates.slice(0, 3).map((i) => (
-            <div key={i.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
-              {i.name}
-            </div>
-          ))}
-          {actionCenter.missingDates.length === 0 && (
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('execution.attention.none', 'Nothing urgent')}
-            </div>
-          )}
-        </div>
-      </button>
+          <div className="space-y-1">
+            {actionCenter.missingDates.slice(0, 3).map((i) => (
+              <div key={i.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
+                {i.name}
+              </div>
+            ))}
+            {actionCenter.missingDates.length === 0 && (
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {t('execution.attention.none', 'Nothing urgent')}
+              </div>
+            )}
+          </div>
+        </button>
 
-      <button
-        type="button"
-        onClick={() => openInitiativesWithAttention('due_soon_tasks')}
-        className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-violet-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
-      >
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              {t('execution.attention.dueSoonTasks', 'Due soon')}
-            </p>
-            <p className="text-2xl font-semibold text-slate-900 dark:text-white">
-              {actionCenter.dueSoonTasks.length}
-            </p>
+        <button
+          type="button"
+          onClick={() => openInitiativesWithAttention('due_soon_tasks')}
+          className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-violet-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                {t('execution.attention.dueSoonTasks', 'Due soon')}
+              </p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+                {actionCenter.dueSoonTasks.length}
+              </p>
+            </div>
+            <ClipboardList className="text-violet-400" size={18} />
           </div>
-          <ClipboardList className="text-violet-400" size={18} />
-        </div>
-        <div className="space-y-1">
-          {actionCenter.dueSoonTasks.slice(0, 3).map((task) => (
-            <div key={task.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
-              <span className="font-medium text-slate-900 dark:text-white">{task.title}</span>
-              <span className="text-slate-500"> · {task.initiativeName || '—'}</span>
-            </div>
-          ))}
-          {actionCenter.dueSoonTasks.length === 0 && (
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('execution.attention.none', 'Nothing urgent')}
-            </div>
-          )}
-        </div>
-      </button>
-    </div>
+          <div className="space-y-1">
+            {actionCenter.dueSoonTasks.slice(0, 3).map((task) => (
+              <div key={task.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
+                <span className="font-medium text-slate-900 dark:text-white">{task.title}</span>
+                <span className="text-slate-500"> · {task.initiativeName || '—'}</span>
+              </div>
+            ))}
+            {actionCenter.dueSoonTasks.length === 0 && (
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {t('execution.attention.none', 'Nothing urgent')}
+              </div>
+            )}
+          </div>
+        </button>
+      </div>
     </div>
   );
 
@@ -3949,17 +3951,60 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }
 
     if (activeTab === ('people_change' as ModuleTab)) {
+      const kpiAlerts = actionQueueItems.filter(
+        (item) => item.type === 'kpi_deviation_no_plan'
+      ).length;
+      const overdueItems = actionQueueItems.filter(
+        (item) => item.type === 'decision_overdue' || item.type === 'comm_overdue'
+      ).length;
       return (
         <div className="p-4 space-y-4">
-          <Callout
-            variant="info"
-            title={t('execution.management.backlogTitle', 'Change management')}
-          >
-            {t(
-              'execution.management.backlogBody',
-              'Timeline change proposals and workout plans (propose→accept) are tracked as an R1 backlog (V3-G02).'
-            )}
-          </Callout>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
+              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {t('execution.management.workloadTitle', 'Workload changes')}
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                {actionQueueItems.length}
+              </div>
+              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {t(
+                  'execution.management.workloadBody',
+                  'Items that need review, acceptance, or follow-up this cycle.'
+                )}
+              </div>
+            </div>
+            <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
+              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {t('execution.management.overdueTitle', 'Overdue approvals')}
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                {overdueItems}
+              </div>
+              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {t(
+                  'execution.management.overdueBody',
+                  'Decisions and communications that are past due and should move first.'
+                )}
+              </div>
+            </div>
+            <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
+              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {t('execution.management.kpiAlertsTitle', 'KPI alerts without plan')}
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                {kpiAlerts}
+              </div>
+              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {t(
+                  'execution.management.kpiAlertsBody',
+                  'Deviation cases surface here so teams can turn them into actions and staffing changes.'
+                )}
+              </div>
+            </div>
+          </div>
+
+          {renderActionCenter()}
 
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
             <ExecutionWorkloadView
@@ -4710,7 +4755,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         }}
         whyRed={
           sidePanelInitiative
-            ? initiativeHealthMap.get(sidePanelInitiative.id)?.whyRed ?? null
+            ? (initiativeHealthMap.get(sidePanelInitiative.id)?.whyRed ?? null)
             : null
         }
       />

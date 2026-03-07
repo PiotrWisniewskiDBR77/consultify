@@ -145,6 +145,9 @@ const PresentationWizard = React.lazy(() =>
     default: m.PresentationWizard,
   }))
 );
+const MeetingHub = React.lazy(() =>
+  import('@/components/Meeting/MeetingHub').then((m) => ({ default: m.MeetingHub }))
+);
 // NOTE: Legacy Management Reports UI has been deprecated in favor of the unified
 // Reports & Presentations hub under /presentations (tab=reports).
 
@@ -1312,6 +1315,16 @@ export const AppRoutes: React.FC = () => {
             >
               <RouteErrorBoundary>
                 <ReportsAndPresentationsHub />
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        <Route
+          path={ROUTES.MEETING}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.meeting', 'Meeting')]} noPadding>
+              <RouteErrorBoundary>
+                <MeetingHub />
               </RouteErrorBoundary>
             </MainLayout>
           }

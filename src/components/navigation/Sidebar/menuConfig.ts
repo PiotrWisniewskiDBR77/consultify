@@ -117,6 +117,12 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       viewId: AppView.PRESENTATIONS,
     },
     {
+      id: 'MODULE_MEETING',
+      label: t('sidebar.meeting', 'Meeting'),
+      icon: React.createElement(Users, { size: 20 }),
+      viewId: AppView.MEETING,
+    },
+    {
       id: 'MCP_IRIS',
       label: t('sidebar.mcpIris', 'MCP IRIS'),
       icon: React.createElement(Brain, { size: 20 }),

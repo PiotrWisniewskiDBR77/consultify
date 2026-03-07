@@ -225,6 +225,80 @@ function summarizeProviderHealth(providers: any[]) {
   return { total, configured, healthy, degraded, unhealthy };
 }
 
+function parseJsonRecord(raw: unknown): Record<string, unknown> | null {
+  if (!raw) return null;
+  if (typeof raw === 'object' && !Array.isArray(raw)) return raw as Record<string, unknown>;
+  if (typeof raw !== 'string') return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function parseStringList(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw.map((item) => String(item).trim()).filter(Boolean);
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map((item) => String(item).trim()).filter(Boolean);
+    } catch {
+      return raw
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+  }
+  return [];
+}
+
+function evaluateProviderPolicy(
+  provider: { provider_type?: string | null; execution_regions?: unknown },
+  orgPolicy: Record<string, unknown> | null
+): { policyAllowed: boolean; residencyStatus: 'allowed' | 'review' | 'restricted' } {
+  if (!orgPolicy) return { policyAllowed: true, residencyStatus: 'allowed' };
+
+  const providerType = String(provider.provider_type || '').toLowerCase();
+  const regions = parseStringList(provider.execution_regions).map((item) => item.toUpperCase());
+  const denyProviderTypes = new Set(
+    (Array.isArray(orgPolicy.deny_provider_types)
+      ? orgPolicy.deny_provider_types
+      : (orgPolicy.denyProviderTypes as string[]) || []
+    ).map((item) => String(item).toLowerCase())
+  );
+  if (denyProviderTypes.has(providerType)) {
+    return { policyAllowed: false, residencyStatus: 'restricted' };
+  }
+
+  const requireLocal = new Set(
+    (Array.isArray(orgPolicy.require_local_for_data_classes)
+      ? orgPolicy.require_local_for_data_classes
+      : (orgPolicy.requireLocalForDataClasses as string[]) || []
+    ).map((item) => String(item).toLowerCase())
+  );
+  if (requireLocal.has('no_pii') && providerType && providerType !== 'local' && providerType !== 'customer_managed') {
+    return { policyAllowed: false, residencyStatus: 'restricted' };
+  }
+
+  const allowedRegions = new Set(
+    (Array.isArray(orgPolicy.allowed_execution_regions)
+      ? orgPolicy.allowed_execution_regions
+      : (orgPolicy.allowedExecutionRegions as string[]) || []
+    ).map((item) => String(item).toUpperCase())
+  );
+  if (allowedRegions.size > 0 && regions.length > 0 && !regions.some((region) => allowedRegions.has(region))) {
+    return { policyAllowed: false, residencyStatus: 'restricted' };
+  }
+  if (allowedRegions.size > 0 && regions.length === 0) {
+    return { policyAllowed: true, residencyStatus: 'review' };
+  }
+
+  return { policyAllowed: true, residencyStatus: 'allowed' };
+}
+
 // ---------------------------------------------------------------------------
 // Routing rules schema bootstrap (safe in DB_MANAGED_SCHEMA=off environments)
 // ---------------------------------------------------------------------------
@@ -877,6 +951,23 @@ router.get(
       : req.organizationId
         ? String(req.organizationId).trim()
         : null;
+    const orgPolicy = organizationId
+      ? parseJsonRecord(
+          (
+            await dbGet<{ policy?: string }>(
+              `SELECT policy FROM organization_ai_policy WHERE organization_id = ?`,
+              [organizationId],
+              { fallback: true } as any
+            ).catch(() => null)
+          )?.policy
+        )
+      : null;
+    const orgProviders = organizationId
+      ? await llmConfigService.getOrganizationProviders(organizationId).catch(() => [])
+      : [];
+    const orgProviderState = new Map(
+      (orgProviders || []).map((provider: any) => [String(provider.id), provider.is_enabled_for_org !== false])
+    );
 
     const useCases = await Promise.all(
       EXECUTIVE_USE_CASES.map(async (useCase) => {
@@ -895,7 +986,9 @@ router.get(
                 lp.provider,
                 lp.model_id,
                 lp.health_status,
-                lp.cost_per_1k
+                lp.cost_per_1k,
+                lp.provider_type,
+                lp.execution_regions
               FROM ai_purpose_assignments apa
               INNER JOIN llm_providers lp ON lp.id = apa.provider_id
               WHERE apa.purpose IN (${placeholders})
@@ -950,13 +1043,19 @@ router.get(
               modelId: row.model_id,
               healthStatus: row.health_status || 'unknown',
             }));
+            const eligibleAssignments = assignments.filter((row) => {
+              const policy = evaluateProviderPolicy(row, orgPolicy);
+              const enabledForOrg = organizationId ? orgProviderState.get(String(row.provider_id)) !== false : true;
+              return policy.policyAllowed && enabledForOrg;
+            });
+            const primaryPolicy = primary ? evaluateProviderPolicy(primary, orgPolicy) : null;
             const healthyAssignments = assignments.filter((row) =>
               ['healthy', 'degraded', null, undefined, 'unknown'].includes(row.health_status)
             );
             const status =
               assignments.length === 0
                 ? 'missing'
-                : healthyAssignments.length === 0
+                : eligibleAssignments.length === 0 || healthyAssignments.length === 0
                   ? 'critical'
                   : primary?.health_status === 'unhealthy'
                     ? 'degraded'
@@ -965,7 +1064,11 @@ router.get(
             return {
               purpose,
               assignmentCount: assignments.length,
+              eligibleAssignmentCount: eligibleAssignments.length,
               status,
+              policyAllowed: primaryPolicy?.policyAllowed ?? assignments.length === 0,
+              enabledForOrg: organizationId ? orgProviderState.get(String(primary?.provider_id || '')) !== false : true,
+              residencyStatus: primaryPolicy?.residencyStatus ?? 'allowed',
               primary: primary
                 ? {
                     providerId: primary.provider_id,
@@ -986,7 +1089,7 @@ router.get(
           })
         );
 
-        const covered = purposes.filter((item) => item.assignmentCount > 0).length;
+        const covered = purposes.filter((item) => item.eligibleAssignmentCount > 0).length;
         const healthy = purposes.filter((item) => item.status === 'healthy').length;
         const degraded = purposes.filter((item) => item.status === 'degraded').length;
         const critical = purposes.filter(

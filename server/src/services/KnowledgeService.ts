@@ -49,6 +49,14 @@ const safeFilename = (name: string): string => {
     .trim();
 };
 
+const buildDocKey = (row: { organization_id?: unknown; project_id?: unknown; filename?: unknown; id?: unknown }) => {
+  return [
+    String(row.organization_id || 'global').trim() || 'global',
+    String(row.project_id || 'default').trim() || 'default',
+    String(row.filename || row.id || 'document').trim() || 'document',
+  ].join(':');
+};
+
 const chunkText = (text: string, opts?: { chunkSize?: number; overlap?: number }): string[] => {
   const chunkSize = Math.max(200, Math.min(2000, opts?.chunkSize ?? 1000));
   const overlap = Math.max(0, Math.min(chunkSize - 50, opts?.overlap ?? 200));
@@ -176,6 +184,9 @@ const normalizeStrategy = (row: StrategyRow) => ({
 const normalizeDocument = (row: DocumentRow) => ({
   ...row,
   tags: parseJson<string[]>(row.tags, []),
+  doc_key: buildDocKey(row),
+  storage_backend: 'local_embedded',
+  external_provider: null,
 });
 
 const KnowledgeService = {

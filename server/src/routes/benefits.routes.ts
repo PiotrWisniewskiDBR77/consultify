@@ -34,6 +34,18 @@ function getUserId(req: any): string {
   return req.user?.id || req.user?.userId || '';
 }
 
+function deriveKpiPeriodKey(periodStart?: string | null, measurementFrequency?: string | null): string | null {
+  const start = String(periodStart || '').slice(0, 10);
+  if (!start) return null;
+  const [year, month = '01', day = '01'] = start.split('-');
+  const frequency = String(measurementFrequency || 'MONTHLY').toUpperCase();
+
+  if (frequency === 'DAILY') return start;
+  if (frequency === 'WEEKLY') return `${year}-W${String(Math.max(1, Math.ceil(Number(day) / 7))).padStart(2, '0')}`;
+  if (frequency === 'QUARTERLY') return `${year}-Q${String(Math.max(1, Math.ceil(Number(month) / 3)))}`;
+  return `${year}-${month}`;
+}
+
 // ============================================================
 // V3-H01: KPI LIST + CREATE (global KPI)
 // ============================================================
@@ -366,10 +378,12 @@ router.get(
       `
       SELECT
         ts.*,
+        k.measurement_frequency,
         u.id AS user_id,
         u.first_name AS user_first_name,
         u.last_name AS user_last_name
       FROM kpi_time_series ts
+      LEFT JOIN initiative_kpis k ON k.id = ts.kpi_id
       LEFT JOIN users u ON u.id = ts.recorded_by
       WHERE ts.kpi_id = ? AND ts.organization_id = ?
       ORDER BY ts.period_start DESC, ts.created_at DESC
@@ -382,6 +396,9 @@ router.get(
       kpiId: r.kpi_id,
       value: r.value,
       measuredAt: r.period_start ? String(r.period_start) : null,
+      periodStart: r.period_start ? String(r.period_start) : null,
+      periodEnd: r.period_end ? String(r.period_end) : null,
+      periodKey: deriveKpiPeriodKey(r.period_start, r.measurement_frequency),
       notes: r.notes || null,
       createdAt: r.created_at,
       createdBy: r.user_id
@@ -421,6 +438,12 @@ router.post(
     if (!periodStart) {
       return res.status(400).json({ success: false, error: 'periodStart (or measuredAt) is required' });
     }
+
+    const kpiMeta = await dbGet<{ measurement_frequency?: string | null }>(
+      `SELECT measurement_frequency FROM initiative_kpis WHERE id = ? LIMIT 1`,
+      [kpiId]
+    ).catch(() => null);
+    const periodKey = deriveKpiPeriodKey(periodStart, kpiMeta?.measurement_frequency);
 
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
@@ -472,7 +495,15 @@ router.post(
 
     res.json({
       success: true,
-      data: { id, kpiId, value: Number(value), measuredAt: periodStart, periodStart, periodEnd },
+      data: {
+        id,
+        kpiId,
+        value: Number(value),
+        measuredAt: periodStart,
+        periodStart,
+        periodEnd,
+        periodKey,
+      },
     });
   })
 );

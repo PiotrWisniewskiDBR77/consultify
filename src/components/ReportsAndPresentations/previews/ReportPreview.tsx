@@ -41,7 +41,9 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ report, onOpen, on
     <div className="space-y-4">
       {/* Entity Meta Bar */}
       <div className="flex items-center gap-2 flex-wrap">
-        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${typeMeta.color} bg-current/10`}>
+        <span
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${typeMeta.color} bg-current/10`}
+        >
           {report.reportType}
         </span>
         <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-500/10">
@@ -54,8 +56,23 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ report, onOpen, on
 
       {/* Details */}
       <div className="space-y-2">
-        <DetailRow label={isPolish ? 'Typ raportu' : 'Report type'} value={isPolish ? typeMeta.labelPl : typeMeta.label} />
+        <DetailRow
+          label={isPolish ? 'Typ raportu' : 'Report type'}
+          value={isPolish ? typeMeta.labelPl : typeMeta.label}
+        />
         <DetailRow label={isPolish ? 'Właściciel' : 'Owner'} value={report.owner} />
+        <DetailRow
+          label={isPolish ? 'Cel' : 'Goal'}
+          value={report.goal || (isPolish ? 'Online report' : 'Online report')}
+        />
+        <DetailRow
+          label={isPolish ? 'Rejestr komunikacji' : 'Communication register'}
+          value={report.communicationRegister || '—'}
+        />
+        <DetailRow
+          label={isPolish ? 'Poufność' : 'Confidentiality'}
+          value={report.confidentiality || '—'}
+        />
         <DetailRow label={isPolish ? 'Okres' : 'Period'} value={periodLabel} />
         <DetailRow
           label={isPolish ? 'Utworzony' : 'Created'}

@@ -72,6 +72,23 @@ function extractWebhookUrl(cfg: Record<string, unknown>): string | null {
   return null;
 }
 
+type SyncScope = 'read_only' | 'bidirectional';
+
+function resolveSyncScope(provider: string | null | undefined, cfg?: Record<string, unknown>): SyncScope {
+  const explicit = String((cfg as any)?.syncScope || (cfg as any)?.sync_scope || '')
+    .trim()
+    .toLowerCase();
+  if (explicit === 'bidirectional') return 'bidirectional';
+  if (explicit === 'read_only' || explicit === 'readonly') return 'read_only';
+
+  const providerKey = String(provider || '').trim().toLowerCase();
+  return ['jira', 'asana', 'monday', 'trello'].includes(providerKey) ? 'bidirectional' : 'read_only';
+}
+
+function syncScopeLabel(scope: SyncScope): string {
+  return scope === 'bidirectional' ? 'Bidirectional sync' : 'Read-only sync';
+}
+
 async function tryGetColumns(table: string): Promise<Set<string>> {
   try {
     return await getTableColumns(table);
@@ -336,18 +353,24 @@ router.get(
         [orgId]
       );
 
-      const integrations = (rows || []).map((r: any) => ({
-        id: r.id,
-        name: r.provider_display_name || r.provider_name || r.provider_id,
-        provider: r.provider_name || r.provider_id,
-        type: r.auth_type || 'standard',
-        status: r.status,
-        config: r.settings,
-        last_synced_at: r.last_sync_at || null,
-        last_error: r.last_error || null,
-        error_count: r.error_count || 0,
-        created_at: r.connected_at || r.updated_at || null,
-      }));
+      const integrations = (rows || []).map((r: any) => {
+        const settings = parseJsonObject(r.settings || null);
+        const syncScope = resolveSyncScope(r.provider_name || r.provider_id, settings);
+        return {
+          id: r.id,
+          name: r.provider_display_name || r.provider_name || r.provider_id,
+          provider: r.provider_name || r.provider_id,
+          type: r.auth_type || 'standard',
+          status: r.status,
+          config: settings,
+          sync_scope: syncScope,
+          sync_scope_label: syncScopeLabel(syncScope),
+          last_synced_at: r.last_sync_at || null,
+          last_error: r.last_error || null,
+          error_count: r.error_count || 0,
+          created_at: r.connected_at || r.updated_at || null,
+        };
+      });
 
       return res.json(integrations);
     }
@@ -644,6 +667,11 @@ router.get(
             status: r.status,
             syncType: r.sync_type,
             direction: r.direction,
+            syncScope: String(r.direction || '').toLowerCase() === 'bidirectional' ? 'bidirectional' : 'read_only',
+            syncScopeLabel:
+              String(r.direction || '').toLowerCase() === 'bidirectional'
+                ? 'Bidirectional sync'
+                : 'Read-only sync',
             triggerType: r.trigger_type,
             itemsProcessed: r.items_processed ?? 0,
             itemsCreated: r.items_created ?? 0,
@@ -668,6 +696,11 @@ router.get(
             status: r.status,
             syncType: r.sync_type,
             direction: r.direction,
+            syncScope: String(r.direction || '').toLowerCase() === 'bidirectional' ? 'bidirectional' : 'read_only',
+            syncScopeLabel:
+              String(r.direction || '').toLowerCase() === 'bidirectional'
+                ? 'Bidirectional sync'
+                : 'Read-only sync',
             itemsProcessed: r.items_synced ?? 0,
             itemsFailed: r.items_failed ?? 0,
             errorDetails: r.error_details
@@ -729,6 +762,7 @@ router.post(
     }
 
     const settings = parseJsonObject(settingsRaw);
+    const scope = resolveSyncScope(providerName, settings);
     let status: 'success' | 'partial' | 'failed' = 'success';
     let itemsProcessed = 0;
     let itemsCreated = 0;
@@ -818,7 +852,7 @@ router.post(
             logId,
             id,
             'single_item',
-            'bidirectional',
+            scope === 'bidirectional' ? 'bidirectional' : 'read_only',
             'manual',
             status,
             itemsProcessed,
@@ -843,7 +877,7 @@ router.post(
             logId,
             id,
             'single_item',
-            'bidirectional',
+            scope === 'bidirectional' ? 'bidirectional' : 'read_only',
             status,
             itemsProcessed,
             itemsFailed,
@@ -879,6 +913,8 @@ router.post(
     return res.json({
       success: status !== 'failed',
       status,
+      syncScope: scope,
+      syncScopeLabel: syncScopeLabel(scope),
       message: status === 'failed' ? 'Sync failed' : 'Sync completed',
       counts: { itemsProcessed, itemsCreated, itemsUpdated, itemsFailed },
       errors: errors.slice(0, 5),

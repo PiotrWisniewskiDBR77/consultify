@@ -5998,8 +5998,9 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { message } = req.body;
 
-    const { classifyIntent } = await import('../services/ai/intentRouter.js');
+    const { classifyIntent, routeIntent } = await import('../services/ai/intentRouter.js');
     const { intent, confidence } = classifyIntent(message);
+    const routed = await routeIntent(message, req.organizationId || req.user?.organizationId || 'unknown');
 
     const rule = [
       { intent: 'create', contextNeeds: ['tasks', 'initiatives'] },
@@ -6018,6 +6019,7 @@ router.post(
       success: true,
       data: {
         intent,
+        workflow: routed.workflow,
         confidence,
         requiredContext: rule?.contextNeeds || ['knowledge'],
       },

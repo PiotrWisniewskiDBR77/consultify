@@ -18,8 +18,12 @@ export const ContextArtifactRefSchema = z.object({
 
 export type ContextArtifactRef = z.infer<typeof ContextArtifactRefSchema>;
 
+export const WorkflowSchema = z.enum(['chat', 'deep_research', 'execution', 'reports', 'tools']);
+export type Workflow = z.infer<typeof WorkflowSchema>;
+
 export const IntentRoutingResultSchema = z.object({
   intent: IntentSchema,
+  workflow: WorkflowSchema,
   confidence: z.number().min(0).max(1),
   requiredContext: z.array(z.string()),
   suggestedModel: z.object({
@@ -84,6 +88,25 @@ const INTENT_TO_PURPOSE: Record<string, string> = {
   unknown: 'general',
 };
 
+function inferWorkflow(message: string, intent: Intent): Workflow {
+  const lower = String(message || '').toLowerCase();
+  if (
+    /\b(research|sources|evidence|citations|market|competitor|benchmark|deep research)\b/i.test(lower)
+  ) {
+    return 'deep_research';
+  }
+  if (/\b(report|reports|deck|presentation|slides)\b/i.test(lower)) {
+    return 'reports';
+  }
+  if (/\b(task|initiative|timeline|milestone|risk|execution|delivery|owner)\b/i.test(lower)) {
+    return 'execution';
+  }
+  if (/\b(tool|framework|assessment|template|methodology)\b/i.test(lower)) {
+    return 'tools';
+  }
+  return intent === 'plan' || intent === 'update' || intent === 'create' ? 'execution' : 'chat';
+}
+
 export function classifyIntent(message: string): { intent: Intent; confidence: number } {
   let bestIntent: Intent = 'unknown';
   let bestScore = 0;
@@ -112,9 +135,10 @@ export async function routeIntent(
   const trace: IntentRoutingResult['routingTrace'] = [];
 
   const { intent, confidence } = classifyIntent(message);
+  const workflow = inferWorkflow(message, intent);
   trace.push({
     step: 'classify_intent',
-    result: `${intent} (${confidence})`,
+    result: `${intent}/${workflow} (${confidence})`,
     durationMs: Date.now() - startTime,
   });
 
@@ -129,14 +153,24 @@ export async function routeIntent(
   }));
   trace.push({ step: 'resolve_artifacts', result: `${contextArtifacts.length} artifacts` });
 
-  const tier = INTENT_TO_TIER[intent] || 'STANDARD';
-  const purpose = INTENT_TO_PURPOSE[intent] || 'general';
-  trace.push({ step: 'select_model', result: `tier=${tier}, purpose=${purpose}` });
+  const tier = workflow === 'deep_research' || intent === 'analyze' || intent === 'diagnose' ? 'PREMIUM' : INTENT_TO_TIER[intent] || 'STANDARD';
+  const purpose =
+    workflow === 'deep_research'
+      ? 'deep_research_synthesis'
+      : workflow === 'reports'
+        ? 'report_section_draft'
+        : workflow === 'tools'
+          ? 'tool_recommendation'
+          : workflow === 'execution'
+            ? 'task_management'
+            : INTENT_TO_PURPOSE[intent] || 'general';
+  trace.push({ step: 'select_model', result: `tier=${tier}, purpose=${purpose}, workflow=${workflow}` });
 
   aiLogger.info('IntentRouter', `Routed intent="${intent}" conf=${confidence} tier=${tier} org=${orgId}`);
 
   return {
     intent,
+    workflow,
     confidence,
     requiredContext,
     suggestedModel: {

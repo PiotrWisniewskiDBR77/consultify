@@ -136,6 +136,16 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
       createdAt?: string;
     }>
   >([]);
+  const [backlinkChips, setBacklinkChips] = useState<
+    Record<
+      string,
+      {
+        title: string;
+        snippet?: string;
+        status?: string;
+      }
+    >
+  >({});
 
   const [expanded, setExpanded] = useState<Record<SectionKey, boolean>>({
     idea: false,
@@ -177,13 +187,14 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
       try {
         const q = searchTerms.slice(0, 300);
 
-        const [ideasRes, initiativesRes, tasksRes, decisionsRes, backlinksRes] = await Promise.allSettled([
-          q ? Api.suggestMyIdeas(q, 12) : Api.getMyIdeas({ limit: 12 }),
-          Api.get(`/initiatives?q=${encodeURIComponent(q.slice(0, 100))}&limit=12`),
-          Api.get(`/my-work/tasks?q=${encodeURIComponent(q.slice(0, 100))}&limit=12`),
-          Api.get(`/decisions?q=${encodeURIComponent(q.slice(0, 100))}&limit=12`),
-          Api.getLinkGraphBacklinks({ type: 'notebook', id: noteId, limit: 50 }),
-        ]);
+        const [ideasRes, initiativesRes, tasksRes, decisionsRes, backlinksRes] =
+          await Promise.allSettled([
+            q ? Api.suggestMyIdeas(q, 12) : Api.getMyIdeas({ limit: 12 }),
+            Api.get(`/initiatives?q=${encodeURIComponent(q.slice(0, 100))}&limit=12`),
+            Api.get(`/my-work/tasks?q=${encodeURIComponent(q.slice(0, 100))}&limit=12`),
+            Api.get(`/decisions?q=${encodeURIComponent(q.slice(0, 100))}&limit=12`),
+            Api.getLinkGraphBacklinks({ type: 'notebook', id: noteId, limit: 50 }),
+          ]);
 
         if (!cancelled) {
           const ideasList = ideasRes.status === 'fulfilled' ? ideasRes.value : [];
@@ -237,17 +248,41 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
             backlinksRes.status === 'fulfilled' && Array.isArray(backlinksRes.value)
               ? (backlinksRes.value as any[])
               : [];
-          setUsedIn(
-            backlinks
-              .map((x: any) => ({
-                id: String(x?.id || ''),
-                sourceType: String(x?.sourceType || ''),
-                sourceId: String(x?.sourceId || ''),
-                createdAt: x?.createdAt ? String(x.createdAt) : undefined,
-              }))
-              .filter((x: any) => x.sourceType && x.sourceId)
-              .slice(0, 50)
-          );
+          const backlinkRows = backlinks
+            .map((x: any) => ({
+              id: String(x?.id || ''),
+              sourceType: String(x?.sourceType || ''),
+              sourceId: String(x?.sourceId || ''),
+              createdAt: x?.createdAt ? String(x.createdAt) : undefined,
+            }))
+            .filter((x: any) => x.sourceType && x.sourceId)
+            .slice(0, 50);
+          setUsedIn(backlinkRows);
+
+          if (backlinkRows.length > 0) {
+            try {
+              const chipRes = await Api.notebookResolveEmbedChips(
+                backlinkRows.slice(0, 20).map((row) => ({ type: row.sourceType, id: row.sourceId }))
+              );
+              if (!cancelled) {
+                const nextChips = Object.fromEntries(
+                  ((chipRes as any)?.chips || []).map((chip: any) => [
+                    `${chip.artifactType}:${chip.artifactId}`,
+                    {
+                      title: String(chip.title || `${chip.artifactType} ${chip.artifactId}`),
+                      snippet: chip.snippet ? String(chip.snippet) : undefined,
+                      status: chip.status ? String(chip.status) : undefined,
+                    },
+                  ])
+                );
+                setBacklinkChips(nextChips);
+              }
+            } catch {
+              if (!cancelled) setBacklinkChips({});
+            }
+          } else {
+            setBacklinkChips({});
+          }
 
           trackFunnelEvent('notebook_context_panel_opened', {
             noteId,
@@ -262,6 +297,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
           setTasks([]);
           setDecisions([]);
           setUsedIn([]);
+          setBacklinkChips({});
         }
       } finally {
         if (!cancelled) {
@@ -477,40 +513,57 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {usedIn.slice(0, 8).map((x) => (
-                      <div
-                        key={x.id || `${x.sourceType}:${x.sourceId}`}
-                        className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/60 px-3 py-2.5"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <div className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
-                              {x.sourceType}
+                    {usedIn.slice(0, 8).map((x) => {
+                      const chip = backlinkChips[`${x.sourceType}:${x.sourceId}`];
+                      return (
+                        <div
+                          key={x.id || `${x.sourceType}:${x.sourceId}`}
+                          className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/60 px-3 py-2.5"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                                {chip?.title || x.sourceType}
+                              </div>
+                              <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                {chip?.snippet || x.sourceId}
+                              </div>
+                              {chip?.status ? (
+                                <div className="mt-1 text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                  {chip.status}
+                                </div>
+                              ) : null}
+                              <div className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 truncate">
+                                {x.sourceType} · {x.sourceId}
+                              </div>
                             </div>
-                            <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                              {x.sourceId}
-                            </div>
+                            {[
+                              'task',
+                              'decision',
+                              'idea',
+                              'initiative',
+                              'notebook',
+                              'report',
+                              'presentation',
+                            ].includes(String(x.sourceType)) ? (
+                              <button
+                                onClick={() =>
+                                  openItem(
+                                    x.sourceType as any,
+                                    x.sourceId,
+                                    `${x.sourceType} ${x.sourceId}`.slice(0, 120)
+                                  )
+                                }
+                                className="flex items-center justify-center gap-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-2 py-1 text-[11px] font-medium hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
+                              >
+                                <ExternalLink size={12} />
+                                {pl ? 'Otwórz' : 'Open'}
+                              </button>
+                            ) : null}
                           </div>
-                          {['task', 'decision', 'idea', 'initiative', 'notebook', 'report', 'presentation'].includes(
-                            String(x.sourceType)
-                          ) ? (
-                            <button
-                              onClick={() =>
-                                openItem(
-                                  x.sourceType as any,
-                                  x.sourceId,
-                                  `${x.sourceType} ${x.sourceId}`.slice(0, 120)
-                                )
-                              }
-                              className="flex items-center justify-center gap-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-2 py-1 text-[11px] font-medium hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
-                            >
-                              <ExternalLink size={12} />
-                              {pl ? 'Otwórz' : 'Open'}
-                            </button>
-                          ) : null}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </EmbeddedView>

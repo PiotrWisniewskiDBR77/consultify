@@ -17,7 +17,11 @@ import { Api } from '@/services/api';
 type UseCasePurpose = {
   purpose: string;
   assignmentCount: number;
+  eligibleAssignmentCount?: number;
   status: 'healthy' | 'degraded' | 'critical' | 'missing' | 'unknown';
+  policyAllowed?: boolean;
+  enabledForOrg?: boolean;
+  residencyStatus?: 'allowed' | 'review' | 'restricted' | string;
   primary: null | {
     provider: string;
     name: string;
@@ -337,6 +341,10 @@ export const AIUseCaseControlPlane: React.FC = () => {
                       {purpose.assignmentCount}
                     </span>
                     <span>
+                      {t('aiPlatform.controlPlane.eligibleAssignments', 'Eligible')}:{' '}
+                      {purpose.eligibleAssignmentCount ?? purpose.assignmentCount}
+                    </span>
+                    <span>
                       {t('aiPlatform.controlPlane.requests', 'Requests')}:{' '}
                       {purpose.usage.requests30d}
                     </span>
@@ -347,6 +355,35 @@ export const AIUseCaseControlPlane: React.FC = () => {
                     <span>
                       {t('aiPlatform.controlPlane.cost', 'Cost')}:{' '}
                       {formatUsd(purpose.usage.costUsd30d || 0)}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span
+                      className={`rounded-full px-2 py-1 text-[10px] font-medium ${
+                        purpose.policyAllowed === false
+                          ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300'
+                          : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
+                      }`}
+                    >
+                      {purpose.policyAllowed === false
+                        ? t('aiPlatform.controlPlane.policyBlocked', 'Policy blocked')
+                        : t('aiPlatform.controlPlane.policyAllowed', 'Policy allowed')}
+                    </span>
+                    <span
+                      className={`rounded-full px-2 py-1 text-[10px] font-medium ${
+                        purpose.enabledForOrg === false
+                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300'
+                          : 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300'
+                      }`}
+                    >
+                      {purpose.enabledForOrg === false
+                        ? t('aiPlatform.controlPlane.disabledForOrg', 'Disabled for org')
+                        : t('aiPlatform.controlPlane.enabledForOrg', 'Enabled for org')}
+                    </span>
+                    <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-700 dark:bg-white/10 dark:text-slate-300">
+                      {t('aiPlatform.controlPlane.residency', 'Residency')}:{' '}
+                      {purpose.residencyStatus || 'allowed'}
                     </span>
                   </div>
 

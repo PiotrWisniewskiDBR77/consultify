@@ -18,21 +18,36 @@ import type { PresentationItem, ReportItem, TemplateItem } from './types';
 // ─── Reports ──────────────────────────────────────────────────────
 
 function mapReport(raw: any): ReportItem {
+  const exportFormats = raw.export_formats
+    ? typeof raw.export_formats === 'string'
+      ? JSON.parse(raw.export_formats)
+      : raw.export_formats
+    : [];
+
   return {
     id: raw.id,
     title: raw.title || raw.name || 'Untitled',
-    reportType: raw.report_type || raw.reportType || raw.source_type || 'custom',
+    reportType:
+      raw.report_type_v3 ||
+      raw.reportTypeV3 ||
+      raw.report_type ||
+      raw.reportType ||
+      raw.source_type ||
+      'custom',
     status: (raw.status || 'draft').toLowerCase() as ReportItem['status'],
     owner: raw.created_by_name || raw.owner || raw.created_by || '—',
+    goal: raw.goal_v3 || raw.goal || undefined,
+    communicationRegister: raw.communication_register || raw.communicationRegister || undefined,
+    confidentiality: raw.confidentiality || undefined,
     periodFrom: raw.period_from || raw.periodFrom || undefined,
     periodTo: raw.period_to || raw.periodTo || undefined,
     createdAt: raw.created_at || raw.createdAt || new Date().toISOString(),
     updatedAt: raw.updated_at || raw.updatedAt || new Date().toISOString(),
-    exportFormats: raw.export_formats
-      ? (typeof raw.export_formats === 'string' ? JSON.parse(raw.export_formats) : raw.export_formats)
-      : [],
+    exportFormats: Array.isArray(exportFormats) ? exportFormats : [],
     sourceRefs: raw.source_refs_json
-      ? (typeof raw.source_refs_json === 'string' ? JSON.parse(raw.source_refs_json) : raw.source_refs_json)
+      ? typeof raw.source_refs_json === 'string'
+        ? JSON.parse(raw.source_refs_json)
+        : raw.source_refs_json
       : [],
     sourceType: raw.source_type,
     sourceId: raw.source_id,
@@ -52,11 +67,16 @@ export function useReports() {
         const list = data.reports || data.data || [];
         setReports(list.map(mapReport));
       }
-    } catch { /* noop */ }
-    finally { setLoading(false); }
+    } catch {
+      /* noop */
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { fetchReports(); }, [fetchReports]);
+  useEffect(() => {
+    fetchReports();
+  }, [fetchReports]);
 
   const deleteReport = useCallback(async (id: string) => {
     try {
@@ -68,7 +88,9 @@ export function useReports() {
         setReports((prev) => prev.filter((r) => r.id !== id));
         return true;
       }
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
     return false;
   }, []);
 
@@ -94,6 +116,7 @@ function mapDeck(raw: any): PresentationItem {
     sourceType: raw.deck_type || raw.sourceType || 'tool',
     owner: raw.owner || raw.created_by || '—',
     status: (raw.status || 'draft').toLowerCase() as PresentationItem['status'],
+    presentationMode: raw.presentation_mode || raw.presentationMode || 'briefing',
     createdAt: raw.created_at || raw.createdAt || new Date().toISOString(),
     updatedAt: raw.updated_at || raw.updatedAt || new Date().toISOString(),
     slideCount: raw.slide_count || raw.slideCount || 0,
@@ -117,11 +140,16 @@ export function usePresentations() {
         const list = data.data || data.decks || [];
         setPresentations(list.map(mapDeck));
       }
-    } catch { /* noop */ }
-    finally { setLoading(false); }
+    } catch {
+      /* noop */
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { fetchPresentations(); }, [fetchPresentations]);
+  useEffect(() => {
+    fetchPresentations();
+  }, [fetchPresentations]);
 
   const deleteDeck = useCallback(async (id: string) => {
     try {
@@ -133,7 +161,9 @@ export function usePresentations() {
         setPresentations((prev) => prev.filter((p) => p.id !== id));
         return true;
       }
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
     return false;
   }, []);
 
@@ -143,9 +173,10 @@ export function usePresentations() {
 // ─── Templates (merged: report + presentation) ───────────────────
 
 function mapReportTemplate(raw: any): TemplateItem {
-  const sections = typeof raw.sections_json === 'string'
-    ? JSON.parse(raw.sections_json || '[]')
-    : (raw.sections_json || raw.sections || []);
+  const sections =
+    typeof raw.sections_json === 'string'
+      ? JSON.parse(raw.sections_json || '[]')
+      : raw.sections_json || raw.sections || [];
   return {
     id: raw.id,
     title: raw.name || raw.title || 'Untitled',
@@ -153,7 +184,7 @@ function mapReportTemplate(raw: any): TemplateItem {
     type: 'report',
     category: raw.report_type || raw.category || 'custom',
     scope: raw.is_system ? 'application' : 'organization',
-    status: (raw.is_active === false || raw.status === 'archived') ? 'archived' : 'active',
+    status: raw.is_active === false || raw.status === 'archived' ? 'archived' : 'active',
     updatedAt: raw.updated_at || raw.createdAt || new Date().toISOString(),
     createdBy: raw.created_by || 'System',
     sectionCount: Array.isArray(sections) ? sections.length : 0,
@@ -161,9 +192,10 @@ function mapReportTemplate(raw: any): TemplateItem {
 }
 
 function mapPresentationTemplate(raw: any): TemplateItem {
-  const outline = typeof raw.outline_json === 'string'
-    ? JSON.parse(raw.outline_json || '[]')
-    : (raw.outline_json || []);
+  const outline =
+    typeof raw.outline_json === 'string'
+      ? JSON.parse(raw.outline_json || '[]')
+      : raw.outline_json || [];
   return {
     id: raw.id,
     title: raw.name || raw.title || 'Untitled',
@@ -206,11 +238,16 @@ export function useTemplates() {
 
       merged.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
       setTemplates(merged);
-    } catch { /* noop */ }
-    finally { setLoading(false); }
+    } catch {
+      /* noop */
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { fetchTemplates(); }, [fetchTemplates]);
+  useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
 
   return { templates, loading, fetchTemplates };
 }
@@ -220,75 +257,95 @@ export function useTemplates() {
 export function useRapActions() {
   const { t } = useTranslation();
 
-  const exportReportPdf = useCallback(async (reportId: string) => {
-    try {
-      const res = await fetch(`${API_URL}/report-builder/${reportId}/export/pdf`, {
-        headers: getHeaders(),
-      });
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `report-${reportId.slice(0, 8)}.pdf`;
-        a.click();
-        URL.revokeObjectURL(url);
-        toast.success(t('rap.toast.exported', 'Report exported'));
-      } else {
+  const exportReportPdf = useCallback(
+    async (reportId: string) => {
+      try {
+        const res = await fetch(`${API_URL}/report-builder/${reportId}/export/pdf`, {
+          headers: getHeaders(),
+        });
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `report-${reportId.slice(0, 8)}.pdf`;
+          a.click();
+          URL.revokeObjectURL(url);
+          toast.success(t('rap.toast.exported', 'Report exported'));
+        } else {
+          toast.error(t('rap.toast.exportFailed', 'Export failed'));
+        }
+      } catch {
         toast.error(t('rap.toast.exportFailed', 'Export failed'));
       }
-    } catch { toast.error(t('rap.toast.exportFailed', 'Export failed')); }
-  }, [t]);
+    },
+    [t]
+  );
 
-  const exportDeckPptx = useCallback(async (deckId: string) => {
-    try {
-      const res = await fetch(`${API_URL}/presentations/decks/${deckId}/download`, {
-        headers: getHeaders(),
-      });
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `presentation-${deckId.slice(0, 8)}.pptx`;
-        a.click();
-        URL.revokeObjectURL(url);
-        toast.success(t('rap.toast.exported', 'Exported'));
-      } else {
+  const exportDeckPptx = useCallback(
+    async (deckId: string) => {
+      try {
+        const res = await fetch(`${API_URL}/presentations/decks/${deckId}/download`, {
+          headers: getHeaders(),
+        });
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `presentation-${deckId.slice(0, 8)}.pptx`;
+          a.click();
+          URL.revokeObjectURL(url);
+          toast.success(t('rap.toast.exported', 'Exported'));
+        } else {
+          toast.error(t('rap.toast.exportFailed', 'Export failed'));
+        }
+      } catch {
         toast.error(t('rap.toast.exportFailed', 'Export failed'));
       }
-    } catch { toast.error(t('rap.toast.exportFailed', 'Export failed')); }
-  }, [t]);
+    },
+    [t]
+  );
 
-  const archiveReport = useCallback(async (reportId: string) => {
-    try {
-      const res = await fetch(`${API_URL}/report-builder/${reportId}`, {
-        method: 'DELETE',
-        headers: getHeaders(),
-      });
-      if (res.ok) {
-        toast.success(t('rap.toast.archived', 'Archived'));
-        return true;
+  const archiveReport = useCallback(
+    async (reportId: string) => {
+      try {
+        const res = await fetch(`${API_URL}/report-builder/${reportId}`, {
+          method: 'DELETE',
+          headers: getHeaders(),
+        });
+        if (res.ok) {
+          toast.success(t('rap.toast.archived', 'Archived'));
+          return true;
+        }
+      } catch {
+        /* noop */
       }
-    } catch { /* noop */ }
-    toast.error(t('rap.toast.archiveFailed', 'Failed to archive'));
-    return false;
-  }, [t]);
+      toast.error(t('rap.toast.archiveFailed', 'Failed to archive'));
+      return false;
+    },
+    [t]
+  );
 
-  const archiveDeck = useCallback(async (deckId: string) => {
-    try {
-      const res = await fetch(`${API_URL}/presentations/decks/${deckId}`, {
-        method: 'DELETE',
-        headers: getHeaders(),
-      });
-      if (res.ok) {
-        toast.success(t('rap.toast.archived', 'Archived'));
-        return true;
+  const archiveDeck = useCallback(
+    async (deckId: string) => {
+      try {
+        const res = await fetch(`${API_URL}/presentations/decks/${deckId}`, {
+          method: 'DELETE',
+          headers: getHeaders(),
+        });
+        if (res.ok) {
+          toast.success(t('rap.toast.archived', 'Archived'));
+          return true;
+        }
+      } catch {
+        /* noop */
       }
-    } catch { /* noop */ }
-    toast.error(t('rap.toast.archiveFailed', 'Failed to archive'));
-    return false;
-  }, [t]);
+      toast.error(t('rap.toast.archiveFailed', 'Failed to archive'));
+      return false;
+    },
+    [t]
+  );
 
   return { exportReportPdf, exportDeckPptx, archiveReport, archiveDeck };
 }

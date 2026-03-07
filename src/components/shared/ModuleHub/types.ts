@@ -23,6 +23,7 @@ export type ModuleTab =
   | 'analysis'
   | 'prediction'
   | 'valuation'
+  | 'investment'
   // V3-J02 — Presentations Hub
   | 'all_decks'
   | 'recent'
