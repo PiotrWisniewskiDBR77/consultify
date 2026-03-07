@@ -14,6 +14,16 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
+function isSchemaMissingError(error: unknown): boolean {
+  const msg = String((error as any)?.message || '').toLowerCase();
+  return (
+    msg.includes('no such table') ||
+    msg.includes('does not exist') ||
+    msg.includes('relation') ||
+    msg.includes('no such column')
+  );
+}
+
 /**
  * GET /api/reports/executive-overview
  * Get executive overview report
@@ -29,46 +39,66 @@ router.get(
     }
 
     try {
-      // Get basic counts for executive overview
-      const projectCount = await dbGet<{ count: number }>(
-        `SELECT COUNT(*) as count FROM projects WHERE organization_id = ?`,
-        [orgId]
+      const summary = await dbGet<{
+        totalProjects: number;
+        activeProjects: number;
+        completedProjects: number;
+        totalUsers: number;
+        totalTasks: number;
+        completedTasks: number;
+        avgProjectProgress: number;
+        onTrackProjects: number;
+      }>(
+        `SELECT
+            (SELECT COUNT(*) FROM projects WHERE organization_id = ?) as totalProjects,
+            (SELECT COUNT(*) FROM projects WHERE organization_id = ? AND COALESCE(status, '') NOT IN ('completed', 'COMPLETED', 'done', 'DONE', 'cancelled', 'CANCELLED')) as activeProjects,
+            (SELECT COUNT(*) FROM projects WHERE organization_id = ? AND COALESCE(status, '') IN ('completed', 'COMPLETED', 'done', 'DONE')) as completedProjects,
+            (SELECT COUNT(*) FROM users WHERE organization_id = ?) as totalUsers,
+            (SELECT COUNT(*) FROM tasks WHERE organization_id = ?) as totalTasks,
+            (SELECT COUNT(*) FROM tasks WHERE organization_id = ? AND COALESCE(status, '') IN ('completed', 'COMPLETED', 'done', 'DONE')) as completedTasks,
+            (SELECT COALESCE(AVG(COALESCE(progress, 0)), 0) FROM projects WHERE organization_id = ?) as avgProjectProgress,
+            (SELECT COUNT(*) FROM projects WHERE organization_id = ? AND COALESCE(progress, 0) >= 80) as onTrackProjects`,
+        [orgId, orgId, orgId, orgId, orgId, orgId, orgId, orgId]
       );
-
-      const userCount = await dbGet<{ count: number }>(
-        `SELECT COUNT(*) as count FROM users WHERE organization_id = ?`,
-        [orgId]
-      );
+      const totalProjects = Number(summary?.totalProjects || 0);
+      const totalTasks = Number(summary?.totalTasks || 0);
+      const avgProjectProgress = Math.round(Number(summary?.avgProjectProgress || 0));
+      const onTrackPercentage =
+        totalProjects > 0
+          ? Math.round((Number(summary?.onTrackProjects || 0) / totalProjects) * 100)
+          : 0;
+      const taskCompletionRate =
+        totalTasks > 0
+          ? Math.round((Number(summary?.completedTasks || 0) / totalTasks) * 100)
+          : 0;
+      const healthScore = Math.round((avgProjectProgress + taskCompletionRate) / 2);
+      const riskLevel =
+        healthScore >= 75 ? 'low' : healthScore >= 50 ? 'medium' : 'high';
 
       return res.json({
         success: true,
         data: {
           organizationId: orgId,
           summary: {
-            totalProjects: projectCount?.count || 0,
-            totalUsers: userCount?.count || 0,
-            activeProjects: 0,
-            completedProjects: 0,
+            totalProjects,
+            totalUsers: Number(summary?.totalUsers || 0),
+            activeProjects: Number(summary?.activeProjects || 0),
+            completedProjects: Number(summary?.completedProjects || 0),
           },
           metrics: {
-            healthScore: 85,
-            riskLevel: 'low',
-            onTrackPercentage: 90,
+            healthScore,
+            riskLevel,
+            onTrackPercentage,
           },
           generatedAt: new Date().toISOString(),
         },
       });
     } catch (error: any) {
       logger.error('[Reports] Error generating executive overview:', error);
-      return res.json({
-        success: true,
-        data: {
-          organizationId: orgId,
-          summary: { totalProjects: 0, totalUsers: 0 },
-          metrics: { healthScore: 0, riskLevel: 'unknown' },
-          generatedAt: new Date().toISOString(),
-        },
-      });
+      if (isSchemaMissingError(error)) {
+        return res.status(503).json({ error: 'Reports overview unavailable: storage not ready' });
+      }
+      return res.status(500).json({ error: 'Failed to generate executive overview' });
     }
   })
 );
@@ -89,29 +119,43 @@ router.get(
 
     try {
       const org = await dbGet<any>(`SELECT * FROM organizations WHERE id = ?`, [orgId]);
+      const stats = await dbGet<{
+        memberCount: number;
+        projectCount: number;
+        taskCompletionRate: number;
+      }>(
+        `SELECT
+            (SELECT COUNT(*) FROM users WHERE organization_id = ?) as memberCount,
+            (SELECT COUNT(*) FROM projects WHERE organization_id = ?) as projectCount,
+            CASE
+              WHEN (SELECT COUNT(*) FROM tasks WHERE organization_id = ?) = 0 THEN 0
+              ELSE ROUND(
+                (
+                  (SELECT COUNT(*) FROM tasks WHERE organization_id = ? AND COALESCE(status, '') IN ('completed', 'COMPLETED', 'done', 'DONE')) * 100.0
+                ) / NULLIF((SELECT COUNT(*) FROM tasks WHERE organization_id = ?), 0)
+              )
+            END as taskCompletionRate`,
+        [orgId, orgId, orgId, orgId, orgId]
+      );
 
       return res.json({
         success: true,
         data: {
           organization: org || { id: orgId, name: 'Unknown' },
           statistics: {
-            memberCount: 0,
-            projectCount: 0,
-            taskCompletionRate: 0,
+            memberCount: Number(stats?.memberCount || 0),
+            projectCount: Number(stats?.projectCount || 0),
+            taskCompletionRate: Number(stats?.taskCompletionRate || 0),
           },
           generatedAt: new Date().toISOString(),
         },
       });
     } catch (error: any) {
       logger.error('[Reports] Error generating org overview:', error);
-      return res.json({
-        success: true,
-        data: {
-          organization: { id: orgId },
-          statistics: {},
-          generatedAt: new Date().toISOString(),
-        },
-      });
+      if (isSchemaMissingError(error)) {
+        return res.status(503).json({ error: 'Organization overview unavailable: storage not ready' });
+      }
+      return res.status(500).json({ error: 'Failed to generate organization overview' });
     }
   })
 );
@@ -141,20 +185,38 @@ router.get(
         return res.status(404).json({ error: 'Project not found' });
       }
 
+      const taskMetrics = await dbGet<{
+        tasksCompleted: number;
+        tasksTotal: number;
+        openTasks: number;
+      }>(
+        `SELECT
+            COUNT(*) as tasksTotal,
+            SUM(CASE WHEN COALESCE(status, '') IN ('completed', 'COMPLETED', 'done', 'DONE') THEN 1 ELSE 0 END) as tasksCompleted,
+            SUM(CASE WHEN COALESCE(status, '') NOT IN ('completed', 'COMPLETED', 'done', 'DONE', 'cancelled', 'CANCELLED') THEN 1 ELSE 0 END) as openTasks
+         FROM tasks
+         WHERE project_id = ?`,
+        [projectId]
+      );
+
       return res.json({
         success: true,
         data: {
           project,
           metrics: {
-            progress: 0,
-            tasksCompleted: 0,
-            tasksTotal: 0,
+            progress: Number(project.progress || 0),
+            tasksCompleted: Number(taskMetrics?.tasksCompleted || 0),
+            tasksTotal: Number(taskMetrics?.tasksTotal || 0),
+            openTasks: Number(taskMetrics?.openTasks || 0),
           },
           generatedAt: new Date().toISOString(),
         },
       });
     } catch (error: any) {
       logger.error('[Reports] Error generating project report:', error);
+      if (isSchemaMissingError(error)) {
+        return res.status(503).json({ error: 'Project report unavailable: storage not ready' });
+      }
       return res.status(500).json({ error: 'Failed to generate report' });
     }
   })

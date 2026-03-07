@@ -34,12 +34,13 @@ export const MeetingExecutor = {
     metadata: Record<string, unknown> = {}
   ): Promise<ExecutionResult> {
     return {
-      success: true,
+      success: false,
+      error: 'Feature unavailable: MEETING_SCHEDULE execution is not implemented',
       result: {
         action: 'schedule_meeting',
         payload,
         metadata,
-        message: 'Dry run: would schedule meeting',
+        unavailable: true,
       },
     };
   },

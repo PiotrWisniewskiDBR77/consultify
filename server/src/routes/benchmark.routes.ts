@@ -4,7 +4,6 @@
  * GET /api/benchmark/compare — percentiles, cohort size, category comparison
  */
 import { Request, Response, Router } from 'express';
-import { v4 as uuidv4 } from 'uuid';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 import industryBenchmarkService from '../services/ai/industryBenchmarkService.js';
@@ -16,6 +15,14 @@ const router = Router();
 
 const MIN_COHORT_SIZE = 5;
 const DEFAULT_DATASET_VERSION = '2026-r0';
+
+router.get('/', (_req: Request, res: Response) => {
+  res.status(503).json({
+    error: 'Benchmark dataset endpoint requires a scoped operation',
+    code: 'BENCHMARK_ENDPOINT_NOT_CONFIGURED',
+    availableEndpoints: ['/api/benchmark/compare'],
+  });
+});
 
 // Map framework category keys to industry benchmark axes (best-effort)
 const CATEGORY_TO_AXIS: Record<string, string> = {
@@ -84,75 +91,6 @@ function calculatePercentileFromDataset(score: number, dataset: BenchmarkDataset
   return 95;
 }
 
-async function ensureBenchmarkDatasetSeed(framework: string): Promise<void> {
-  const existing = await queryHelpers.queryOne<{ count: number }>(
-    'SELECT COUNT(*) as count FROM benchmark_datasets WHERE framework = ?',
-    [framework]
-  );
-  if (Number(existing?.count || 0) > 0) return;
-
-  try {
-    await queryHelpers.queryRun(
-      `INSERT INTO benchmark_datasets_versions (id, framework, version_tag, is_active, source_json)
-       VALUES (?, ?, ?, 1, ?)
-       ON CONFLICT (framework, version_tag) DO NOTHING`,
-      [
-        `bdv-${uuidv4()}`,
-        framework,
-        DEFAULT_DATASET_VERSION,
-        JSON.stringify({ seededBy: 'benchmark.routes', source: 'industryBenchmarkService' }),
-      ]
-    );
-  } catch {
-    // Table may not exist yet in older environments; dataset rows still work without it.
-  }
-
-  const industries = ['manufacturing', 'financial_services', 'retail', 'healthcare', 'energy'];
-  for (const industry of industries) {
-    const benchmarks = industryBenchmarkService.getBenchmarks(industry);
-    if (benchmarks.length === 0) continue;
-
-    const averages = benchmarks.map((item) => item.average);
-    const bottoms = benchmarks.map((item) => item.bottomQuartile);
-    const tops = benchmarks.map((item) => item.topQuartile);
-    const avg = averages.reduce((sum, value) => sum + value, 0) / averages.length;
-    const p25 = bottoms.reduce((sum, value) => sum + value, 0) / bottoms.length;
-    const p75 = tops.reduce((sum, value) => sum + value, 0) / tops.length;
-    const p90 = Math.min(5, p75 + 0.4);
-
-    await queryHelpers.queryRun(
-      `INSERT INTO benchmark_datasets (
-         id, organization_id, framework, industry, region, company_size,
-         p25, p50, p75, p90, cohort_size, last_updated, version_tag, source_json
-       )
-       VALUES (?, NULL, ?, ?, NULL, NULL, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
-       ON CONFLICT DO NOTHING`,
-      [
-        `bd-${uuidv4()}`,
-        framework,
-        industry,
-        Number(p25.toFixed(2)),
-        Number(avg.toFixed(2)),
-        Number(p75.toFixed(2)),
-        Number(p90.toFixed(2)),
-        12,
-        DEFAULT_DATASET_VERSION,
-        JSON.stringify({
-          seededBy: 'benchmark.routes',
-          industry,
-          framework,
-          benchmarkAxes: benchmarks.map((item) => ({
-            axis: item.axis,
-            average: item.average,
-            topQuartile: item.topQuartile,
-            bottomQuartile: item.bottomQuartile,
-          })),
-        }),
-      ]
-    );
-  }
-}
-
 router.get(
   '/compare',
   verifyToken,
@@ -202,8 +140,6 @@ router.get(
       industry === 'manufacturing_discrete' || industry === 'manufacturing_process' ? 'manufacturing' : industry;
     const normalizedRegion = normalizeRegion(region);
     const normalizedSize = normalizeCompanySize(size);
-
-    await ensureBenchmarkDatasetSeed(framework);
 
     const orgScores = Object.entries(categories).map(([k, v]) => ({
       axis: CATEGORY_TO_AXIS[k] || k.toLowerCase().replace(/[^a-z_]/g, '_'),

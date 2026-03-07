@@ -59,20 +59,22 @@ class BenchmarkingService {
 
   // Static helper for test compatibility (synchronous logic)
   static calculatePercentileSync(score: number, benchmark: any) {
-    // Logic from test expectations:
-    // returns { score, benchmarkScore, delta, percentile, ranking }
     const benchmarkScore = typeof benchmark === 'object' ? benchmark.overall : benchmark;
     const delta = score - benchmarkScore;
-    // Mock percentile calculation based on delta
-    let percentile = 50 + delta * 10;
-    percentile = Math.max(0, Math.min(100, percentile));
+    const ratio = benchmarkScore > 0 ? score / benchmarkScore : 1;
+    let percentile = 50;
+    if (ratio >= 1.2) percentile = 90;
+    else if (ratio >= 1.05) percentile = 75;
+    else if (ratio >= 0.95) percentile = 50;
+    else if (ratio >= 0.8) percentile = 25;
+    else percentile = 10;
 
     return {
       score,
       benchmarkScore,
       delta,
       percentile,
-      ranking: percentile > 50 ? 'Top 50%' : 'Bottom 50%',
+      ranking: BenchmarkingService.getPercentileLabel(percentile),
     };
   }
 
@@ -154,7 +156,12 @@ class BenchmarkingService {
   }
 
   async assessDataAnalytics(orgData: any) {
-    return 55;
+    let score = 35;
+    if (orgData.project_count > 3) score += 10;
+    if (orgData.project_count > 8) score += 10;
+    if (orgData.avg_project_progress > 40) score += 10;
+    if (orgData.avg_project_progress > 70) score += 10;
+    return Math.min(score, 100);
   }
   async assessOperationalExcellence(orgData: any) {
     let score = 50;
@@ -162,10 +169,18 @@ class BenchmarkingService {
     return Math.min(score, 100);
   }
   async assessCustomerExperience(orgData: any) {
-    return 60;
+    let score = 35;
+    if (orgData.project_count > 2) score += 10;
+    if (orgData.avg_project_progress > 50) score += 15;
+    if (orgData.avg_project_progress > 75) score += 10;
+    return Math.min(score, 100);
   }
   async assessCultureInnovation(orgData: any) {
-    return 55;
+    let score = 30;
+    if (orgData.project_count > 1) score += 10;
+    if (orgData.project_count > 5) score += 15;
+    if (orgData.avg_project_progress > 50) score += 15;
+    return Math.min(score, 100);
   }
 
   /**
@@ -235,11 +250,11 @@ class BenchmarkingService {
     if (!row || row.sample_size === 0) {
       return {
         industry,
-        avgDTI: 55,
-        minDTI: 25,
-        maxDTI: 85,
+        avgDTI: null,
+        minDTI: null,
+        maxDTI: null,
         sampleSize: 0,
-        isDefault: true,
+        isDefault: false,
       };
     }
 
@@ -259,6 +274,7 @@ class BenchmarkingService {
 
     const orgData: any = await this.getOrganizationData(organizationId);
     const industryBenchmarks: any = await this.getIndustryBenchmarks(orgData.industry);
+    const hasBenchmarks = typeof industryBenchmarks.avgDTI === 'number';
 
     return {
       organization: {
@@ -269,9 +285,13 @@ class BenchmarkingService {
       },
       industry: industryBenchmarks,
       comparison: {
-        vsIndustryAvg: dti.overallScore - industryBenchmarks.avgDTI,
+        vsIndustryAvg: hasBenchmarks ? dti.overallScore - industryBenchmarks.avgDTI : null,
         percentile: dti.percentile,
-        ranking: dti.overallScore >= industryBenchmarks.avgDTI ? 'Above Average' : 'Below Average',
+        ranking: hasBenchmarks
+          ? dti.overallScore >= industryBenchmarks.avgDTI
+            ? 'Above Average'
+            : 'Below Average'
+          : 'Insufficient Benchmark Data',
       },
       recommendations: await this.getImprovementRecommendations(dti, industryBenchmarks),
     };

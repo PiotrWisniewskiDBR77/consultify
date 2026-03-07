@@ -540,7 +540,7 @@ export class ApiGateway {
         externalAssessmentsRoutes,
         'externalAssessmentsRoutes'
       );
-      mountStub('/api/generic-reports', genericReportsRoutes, 'genericReportsRoutes');
+      app.use('/api/generic-reports', genericReportsRoutes);
       mountStub('/api/initiatives', initiativeGeneratorRoutes, 'initiativeGeneratorRoutes');
       app.use('/api/assessments', assessmentHubRoutes);
       app.use('/api/assessment-reports', assessmentReportsRoutes);

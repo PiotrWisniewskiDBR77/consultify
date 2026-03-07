@@ -29,9 +29,12 @@ const ERROR_CODES = {
   INVALID_EDGE_REFERENCE: 'INVALID_EDGE_REFERENCE',
   DUPLICATE_NODE_ID: 'DUPLICATE_NODE_ID',
   MISSING_ACTION_TYPE: 'MISSING_ACTION_TYPE',
+  UNSUPPORTED_ACTION_TYPE: 'UNSUPPORTED_ACTION_TYPE',
   INVALID_PAYLOAD_TEMPLATE: 'INVALID_PAYLOAD_TEMPLATE',
   UNREACHABLE_NODE: 'UNREACHABLE_NODE',
 };
+
+const SUPPORTED_ACTION_TYPES = new Set(['TASK_CREATE', 'PLAYBOOK_ASSIGN']);
 
 /**
  * Validate a complete template (graph + metadata)
@@ -253,6 +256,12 @@ function validateGraph(graph: {
           errors.push({
             code: ERROR_CODES.MISSING_ACTION_TYPE,
             message: `Action node "${node.title || node.id}" must have an action type`,
+            nodeId: node.id,
+          });
+        } else if (!SUPPORTED_ACTION_TYPES.has(String(nodeData.actionType).toUpperCase())) {
+          errors.push({
+            code: ERROR_CODES.UNSUPPORTED_ACTION_TYPE,
+            message: `Action node "${node.title || node.id}" uses unsupported action type "${nodeData.actionType}"`,
             nodeId: node.id,
           });
         }

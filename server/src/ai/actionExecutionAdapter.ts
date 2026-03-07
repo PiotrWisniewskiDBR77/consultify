@@ -343,8 +343,9 @@ const ActionExecutionAdapter = {
         if (!payload.entity_id) requiredInputsMissing.push('entity_id (user)');
         break;
       case 'MEETING_SCHEDULE':
-        wouldDo.push('Schedule meeting (mock integration)');
-        externalCalls.push('Calendar API (mock)');
+        wouldDo.push('Meeting scheduling unavailable in this environment');
+        externalCalls.push('Calendar API');
+        requiredInputsMissing.push('calendar integration');
         break;
     }
 
